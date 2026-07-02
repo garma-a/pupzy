@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UsersRepository } from './users.repository';
-import { encryptString } from '../common/utils/crypto.util';
+import { encryptString, decryptString } from '../common/utils/crypto.util';
 import type { User } from '../database/schema';
 
 interface FindOrCreateInput {
@@ -24,6 +24,22 @@ export class UsersService {
   }
 
   /**
+   * Helper to decrypt a user's phone number before returning to the client.
+   */
+  private decryptUserPhone(user: User): User {
+    if (!user.phoneNumber) return user;
+    try {
+      return {
+        ...user,
+        phoneNumber: decryptString(user.phoneNumber, this.phoneEncryptionKey),
+      };
+    } catch (error) {
+      this.logger.error(`Failed to decrypt phone number for user ${user.id}`, error);
+      return user; // Return encrypted or fallback rather than failing the whole request
+    }
+  }
+
+  /**
    * Called by FirebaseAuthGuard on every request.
    * Creates the user on first login, returns existing user thereafter.
    * This is the ONLY place a user row is created — no separate signup mutation needed.
@@ -32,21 +48,23 @@ export class UsersService {
     const existing = await this.usersRepository.findByFirebaseUid(
       input.firebaseUid,
     );
-    if (existing) return existing;
+    if (existing) return this.decryptUserPhone(existing);
 
     this.logger.log(
       `Creating new user account for Firebase UID: ${input.firebaseUid}`,
     );
-    return this.usersRepository.create({
+    const newUser = await this.usersRepository.create({
       firebaseUid: input.firebaseUid,
       email: input.email,
       authProvider: input.authProvider,
       profilePictureUrl: input.photoUrl,
     });
+    return this.decryptUserPhone(newUser);
   }
 
   async findById(id: string): Promise<User | undefined> {
-    return this.usersRepository.findById(id);
+    const user = await this.usersRepository.findById(id);
+    return user ? this.decryptUserPhone(user) : undefined;
   }
 
   /**
@@ -61,11 +79,12 @@ export class UsersService {
       data.phoneNumber,
       this.phoneEncryptionKey,
     );
-    return this.usersRepository.update(userId, {
+    const updatedUser = await this.usersRepository.update(userId, {
       fullName: data.fullName,
       phoneNumber: encryptedPhone,
       cityId: data.cityId,
     });
+    return this.decryptUserPhone(updatedUser);
   }
 
   /**
@@ -75,8 +94,9 @@ export class UsersService {
     userId: string,
     data: { fullName: string },
   ): Promise<User> {
-    return this.usersRepository.update(userId, {
+    const updatedUser = await this.usersRepository.update(userId, {
       fullName: data.fullName,
     });
+    return this.decryptUserPhone(updatedUser);
   }
 }

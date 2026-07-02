@@ -7,6 +7,7 @@ import {
   pgEnum,
   index,
   boolean,
+  integer,
 } from 'drizzle-orm/pg-core';
 
 /**
@@ -90,6 +91,30 @@ export const users = pgTable(
      * Indexed to avoid full-table scans when querying users by city.
      */
     cityId: uuid('city_id'),
+
+    /**
+     * Arabic display name.
+     * Max 120 chars.
+     */
+    fullNameArabic: varchar('full_name_arabic', { length: 120 }),
+
+    /** Number of animals the user has rescued. */
+    rescuesCount: integer('rescues_count').notNull().default(0),
+
+    /** Number of animals the user has adopted. */
+    adoptedCount: integer('adopted_count').notNull().default(0),
+
+    /** Number of animals the user is currently helping. */
+    helpingCount: integer('helping_count').notNull().default(0),
+
+    /** Preferred interface language (e.g. 'en', 'ar'). */
+    languagePreference: varchar('language_preference', { length: 10 }).notNull().default('en'),
+
+    /** Whether push notifications are enabled. */
+    notificationsEnabled: boolean('notifications_enabled').notNull().default(true),
+
+    /** Privacy level for location and contact (e.g., 'strict', 'public'). */
+    privacyLevel: varchar('privacy_level', { length: 50 }).notNull().default('strict'),
 
     /** Timestamp of row creation. Set once by the database. */
     createdAt: timestamp('created_at', { withTimezone: true })

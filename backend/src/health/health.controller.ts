@@ -4,6 +4,7 @@ import {
   HealthCheckService,
   HealthCheckResult,
 } from '@nestjs/terminus';
+import { Public } from '../auth/firebase.guard';
 
 /**
  * Health check controller for Pupzy backend.
@@ -34,6 +35,7 @@ import {
 export class HealthController {
   constructor(private readonly health: HealthCheckService) {}
 
+  @Public()
   @Get()
   @HealthCheck()
   check(): Promise<HealthCheckResult> {

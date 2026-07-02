@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { GqlThrottlerGuard } from './common/guards/gql-throttler.guard';
 import { join } from 'path';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const depthLimit = require('graphql-depth-limit') as (n: number) => unknown;
@@ -120,13 +122,17 @@ import type { GqlContext } from './common/types/gql-context.type';
     FirebaseModule,
     UsersModule,
     HealthModule,
+    CacheModule.register({
+      max: 3600,
+      isGlobal: true,
+    }),
   ],
 
   providers: [
     // ── Rate limiting guard — runs before auth guard ──────────────────────
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: GqlThrottlerGuard,
     },
 
     /**

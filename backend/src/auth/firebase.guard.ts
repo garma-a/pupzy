@@ -9,6 +9,8 @@ import {
 } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { Reflector } from '@nestjs/core';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import type { App } from 'firebase-admin/app';
 import { getAuth, DecodedIdToken } from 'firebase-admin/auth';
 import { FIREBASE_ADMIN_TOKEN } from './firebase.module';
@@ -75,11 +77,6 @@ interface CachedUser {
 export class FirebaseAuthGuard implements CanActivate {
   private readonly logger = new Logger(FirebaseAuthGuard.name);
 
-  /** In-process token verification cache. */
-  private readonly tokenCache = new Map<string, CachedToken>();
-  /** In-process user resolution cache. */
-  private readonly userCache = new Map<string, CachedUser>();
-
   /** How many milliseconds before token expiry to evict the cache entry. */
   private static readonly TOKEN_CACHE_BUFFER_MS = 5 * 60 * 1_000; // 5 min
   /** How long (ms) to cache a resolved user row. */
@@ -89,6 +86,7 @@ export class FirebaseAuthGuard implements CanActivate {
     @Inject(FIREBASE_ADMIN_TOKEN) private readonly firebaseApp: App,
     private readonly usersService: UsersService,
     private readonly reflector: Reflector,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -131,7 +129,8 @@ export class FirebaseAuthGuard implements CanActivate {
    */
   private async verifyToken(idToken: string): Promise<DecodedIdToken> {
     const now = Date.now();
-    const cached = this.tokenCache.get(idToken);
+    const cacheKey = `firebase_token:${idToken}`;
+    const cached = await this.cacheManager.get<CachedToken>(cacheKey);
     if (cached && cached.expiresAt > now) {
       return cached.decoded;
     }
@@ -149,7 +148,14 @@ export class FirebaseAuthGuard implements CanActivate {
     // Cache until (token exp − buffer), max out at 1 hour
     const expiresAt =
       decoded.exp * 1_000 - FirebaseAuthGuard.TOKEN_CACHE_BUFFER_MS;
-    this.tokenCache.set(idToken, { decoded, expiresAt });
+
+    // Calculate TTL in milliseconds
+    const ttlMs = Math.max(0, expiresAt - now);
+
+    // Only cache if it hasn't already passed the buffer time
+    if (ttlMs > 0) {
+      await this.cacheManager.set(cacheKey, { decoded, expiresAt }, ttlMs);
+    }
 
     return decoded;
   }
@@ -160,7 +166,8 @@ export class FirebaseAuthGuard implements CanActivate {
    */
   private async resolveUser(decoded: DecodedIdToken): Promise<User> {
     const now = Date.now();
-    const cached = this.userCache.get(decoded.uid);
+    const cacheKey = `user_resolve:${decoded.uid}`;
+    const cached = await this.cacheManager.get<CachedUser>(cacheKey);
     if (cached && cached.expiresAt > now) {
       return cached.user;
     }
@@ -172,10 +179,11 @@ export class FirebaseAuthGuard implements CanActivate {
       photoUrl: decoded.picture,
     });
 
-    this.userCache.set(decoded.uid, {
-      user,
-      expiresAt: now + FirebaseAuthGuard.USER_CACHE_TTL_MS,
-    });
+    await this.cacheManager.set(
+      cacheKey,
+      { user, expiresAt: now + FirebaseAuthGuard.USER_CACHE_TTL_MS },
+      FirebaseAuthGuard.USER_CACHE_TTL_MS,
+    );
 
     return user;
   }

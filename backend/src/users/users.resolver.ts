@@ -15,7 +15,7 @@ import type { GqlContext } from '../common/types/gql-context.type';
  */
 @Resolver('User')
 export class UsersResolver {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   /**
    * Returns the currently authenticated user.

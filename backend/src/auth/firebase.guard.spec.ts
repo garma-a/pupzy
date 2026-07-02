@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { FirebaseAuthGuard } from './firebase.guard';
 import { UsersService } from '../users/users.service';
 
@@ -34,6 +35,13 @@ describe('FirebaseAuthGuard', () => {
         Reflector,
         { provide: 'FIREBASE_ADMIN', useValue: mockFirebaseApp },
         { provide: UsersService, useValue: mockUsersService },
+        {
+          provide: CACHE_MANAGER,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+          },
+        },
       ],
     }).compile();
 

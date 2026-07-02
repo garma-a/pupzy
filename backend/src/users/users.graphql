@@ -23,6 +23,34 @@ type User {
   UUID of the user's city. Null until the user completes their profile.
   """
   cityId: ID
+  """
+  Arabic display name.
+  """
+  fullNameArabic: String
+  """
+  Number of animals the user has rescued.
+  """
+  rescuesCount: Int!
+  """
+  Number of animals the user has adopted.
+  """
+  adoptedCount: Int!
+  """
+  Number of animals the user is currently helping.
+  """
+  helpingCount: Int!
+  """
+  Preferred interface language (e.g. 'en', 'ar').
+  """
+  languagePreference: String!
+  """
+  Whether push notifications are enabled.
+  """
+  notificationsEnabled: Boolean!
+  """
+  Privacy level for location and contact (e.g., 'strict', 'public').
+  """
+  privacyLevel: String!
   createdAt: DateTime!
   updatedAt: DateTime!
 }
