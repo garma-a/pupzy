@@ -1,0 +1,86 @@
+"""
+Represents a registered Pupzy user.
+Created automatically on first Firebase login — no explicit signup required.
+"""
+type User {
+  id: ID!
+  email: String!
+  """
+  Display name — null until the user completes their profile.
+  """
+  fullName: String
+  profilePictureUrl: String
+  """
+  Authentication provider (Google, Facebook, password).
+  """
+  authProvider: String!
+  """
+  Whether the user has passed additional identity verification.
+  """
+  isVerified: Boolean!
+  phoneNumber: String
+  """
+  UUID of the user's city. Null until the user completes their profile.
+  """
+  cityId: ID
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Input for the completeProfile mutation.
+Must be called once after the very first login to unlock full app functionality.
+"""
+input CompleteProfileInput {
+  """
+  User's display name. Between 2 and 120 characters.
+  """
+  fullName: String!
+  """
+  Phone number in E.164 format (e.g. +201012345678).
+  """
+  phoneNumber: String!
+  """
+  UUID of the user's city from the cities table.
+  """
+  cityId: ID!
+}
+
+"""
+Input for the updateProfile mutation.
+Used to update profile details after the profile has been completed.
+"""
+input UpdateProfileInput {
+  """
+  User's display name. Between 2 and 120 characters.
+  """
+  fullName: String!
+}
+
+"""
+ISO-8601 date-time string, always in UTC.
+"""
+scalar DateTime
+
+type Query {
+  """
+  Returns the currently authenticated user.
+  Requires a valid Firebase Bearer token.
+  """
+  me: User!
+}
+
+type Mutation {
+  """
+  Completes a user's profile on first login.
+  Sets fullName, phoneNumber, and cityId.
+  Requires authentication.
+  """
+  completeProfile(input: CompleteProfileInput!): User!
+
+  """
+  Updates a user's profile (e.g., changing their display name).
+  Requires authentication.
+  """
+  updateProfile(input: UpdateProfileInput!): User!
+}
