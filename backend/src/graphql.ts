@@ -1,3 +1,4 @@
+
 /*
  * -------------------------------------------------------
  * THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
@@ -10,11 +11,29 @@
 export interface CompleteProfileInput {
     fullName: string;
     phoneNumber: string;
-    cityId: string;
+    cityId?: Nullable<string>;
+    location?: Nullable<GeoLocationInput>;
+}
+
+export interface GeoLocationInput {
+    latitude: number;
+    longitude: number;
 }
 
 export interface UpdateProfileInput {
     fullName: string;
+}
+
+export interface City {
+    id: string;
+    nameEn: string;
+    nameAr: string;
+    governorate: string;
+}
+
+export interface IQuery {
+    cities(): City[] | Promise<City[]>;
+    me(): User | Promise<User>;
 }
 
 export interface User {
@@ -25,6 +44,7 @@ export interface User {
     authProvider: string;
     isVerified: boolean;
     phoneNumber?: Nullable<string>;
+    profileComplete: boolean;
     cityId?: Nullable<string>;
     fullNameArabic?: Nullable<string>;
     rescuesCount: number;
@@ -37,13 +57,10 @@ export interface User {
     updatedAt: DateTime;
 }
 
-export interface IQuery {
-    me(): User | Promise<User>;
-}
-
 export interface IMutation {
     completeProfile(input: CompleteProfileInput): User | Promise<User>;
     updateProfile(input: UpdateProfileInput): User | Promise<User>;
+    updateMyLocation(location: GeoLocationInput): User | Promise<User>;
 }
 
 export type DateTime = any;

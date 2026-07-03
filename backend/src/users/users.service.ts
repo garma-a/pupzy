@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UsersRepository } from './users.repository';
+import { CitiesService } from '../cities/cities.service';
 import { encryptString, decryptString } from '../common/utils/crypto.util';
-import { NotFoundError } from '../common/errors/app.errors';
+import { NotFoundError, ValidationError } from '../common/errors/app.errors';
 import type { User } from '../database/schema';
 
 interface FindOrCreateInput {
@@ -19,6 +20,7 @@ export class UsersService {
 
   constructor(
     private readonly usersRepository: UsersRepository,
+    private readonly citiesService: CitiesService,
     config: ConfigService,
   ) {
     this.phoneEncryptionKey = config.get<string>('PHONE_ENCRYPTION_KEY')!;
@@ -26,6 +28,7 @@ export class UsersService {
 
   /**
    * Helper to decrypt a user's phone number before returning to the client.
+   * Returns the user unchanged if phoneNumber is null or decryption fails.
    */
   private decryptUserPhone(user: User): User {
     if (!user.phoneNumber) return user;
@@ -35,8 +38,12 @@ export class UsersService {
         phoneNumber: decryptString(user.phoneNumber, this.phoneEncryptionKey),
       };
     } catch (error) {
-      this.logger.error(`Failed to decrypt phone number for user ${user.id}`, error);
-      return user; // Return encrypted or fallback rather than failing the whole request
+      this.logger.error(
+        `Failed to decrypt phone number for user ${user.id}`,
+        error,
+      );
+      // Return the user without crashing the entire request
+      return user;
     }
   }
 
@@ -44,12 +51,18 @@ export class UsersService {
    * Called by FirebaseAuthGuard on every request.
    * Creates the user on first login, returns existing user thereafter.
    * This is the ONLY place a user row is created — no separate signup mutation needed.
+   *
+   * phoneNumber and cityId will be null until the user calls completeProfile().
    */
   async findOrCreate(input: FindOrCreateInput): Promise<User> {
-    const existing = await this.usersRepository.findByFirebaseUid(input.firebaseUid);
+    const existing = await this.usersRepository.findByFirebaseUid(
+      input.firebaseUid,
+    );
     if (existing) return this.decryptUserPhone(existing);
 
-    this.logger.log(`Creating new user account for Firebase UID: ${input.firebaseUid}`);
+    this.logger.log(
+      `Creating new user account for Firebase UID: ${input.firebaseUid}`,
+    );
     const newUser = await this.usersRepository.create({
       firebaseUid: input.firebaseUid,
       email: input.email,
@@ -66,19 +79,49 @@ export class UsersService {
 
   /**
    * Called once after the user's first login to set required profile fields.
-   * The phone number is immediately encrypted before saving to the database.
+   *
+   * ## Validation
+   * - If `cityId` is provided, validates it exists in the `cities` table before
+   *   saving. This prevents orphaned foreign keys from speculative client input.
+   * - If `location` is provided instead, resolves the nearest city via PostGIS.
+   *
+   * ## Security
+   * The phone number is encrypted with AES-256-GCM before writing to the database.
+   * It is decrypted on read in `decryptUserPhone()`.
    */
   async completeProfile(
     userId: string,
-    data: { fullName: string; phoneNumber: string; cityId?: string; location?: { latitude: number; longitude: number } },
+    data: {
+      fullName: string;
+      phoneNumber: string;
+      cityId?: string;
+      location?: { latitude: number; longitude: number };
+    },
   ): Promise<User> {
-    const encryptedPhone = encryptString(data.phoneNumber, this.phoneEncryptionKey);
+    const encryptedPhone = encryptString(
+      data.phoneNumber,
+      this.phoneEncryptionKey,
+    );
     let resolvedCityId = data.cityId;
 
-    if (!resolvedCityId && data.location) {
-      const city = await this.usersRepository.findNearestCity(data.location.latitude, data.location.longitude);
+    if (resolvedCityId) {
+      // Validate the supplied cityId actually exists in the DB
+      const city = await this.citiesService.findById(resolvedCityId);
       if (!city) {
-        throw new NotFoundError('No nearby city found for the provided coordinates.');
+        throw new ValidationError(
+          `cityId "${resolvedCityId}" does not correspond to a known city`,
+        );
+      }
+    } else if (data.location) {
+      // Auto-resolve city from GPS coordinates via PostGIS ST_Distance
+      const city = await this.usersRepository.findNearestCity(
+        data.location.latitude,
+        data.location.longitude,
+      );
+      if (!city) {
+        throw new NotFoundError(
+          'No nearby city found for the provided coordinates.',
+        );
       }
       resolvedCityId = city.id;
     }
@@ -87,7 +130,11 @@ export class UsersService {
       fullName: data.fullName,
       phoneNumber: encryptedPhone,
       cityId: resolvedCityId,
-      ...(data.location ? { lastKnownLocation: `SRID=4326;POINT(${data.location.longitude} ${data.location.latitude})` as any } : {}),
+      ...(data.location
+        ? {
+            lastKnownLocation: `SRID=4326;POINT(${data.location.longitude} ${data.location.latitude})` as any,
+          }
+        : {}),
     });
     return this.decryptUserPhone(updatedUser);
   }
@@ -95,7 +142,10 @@ export class UsersService {
   /**
    * Updates an already completed profile.
    */
-  async updateProfile(userId: string, data: { fullName: string }): Promise<User> {
+  async updateProfile(
+    userId: string,
+    data: { fullName: string },
+  ): Promise<User> {
     const updatedUser = await this.usersRepository.update(userId, {
       fullName: data.fullName,
     });
@@ -105,10 +155,18 @@ export class UsersService {
   /**
    * Updates the user's location and nearest city based on GPS coordinates.
    */
-  async updateMyLocation(userId: string, location: { latitude: number; longitude: number }): Promise<User> {
-    const city = await this.usersRepository.findNearestCity(location.latitude, location.longitude);
+  async updateMyLocation(
+    userId: string,
+    location: { latitude: number; longitude: number },
+  ): Promise<User> {
+    const city = await this.usersRepository.findNearestCity(
+      location.latitude,
+      location.longitude,
+    );
     if (!city) {
-      throw new NotFoundError('No nearby city found for the provided coordinates.');
+      throw new NotFoundError(
+        'No nearby city found for the provided coordinates.',
+      );
     }
 
     const updatedUser = await this.usersRepository.update(userId, {

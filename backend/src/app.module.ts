@@ -16,6 +16,8 @@ import { DatabaseModule } from './database/database.module';
 import { FirebaseModule } from './auth/firebase.module';
 import { FirebaseAuthGuard } from './auth/firebase.guard';
 import { UsersModule } from './users/users.module';
+import { CitiesModule } from './cities/cities.module';
+import { CitiesService } from './cities/cities.service';
 import { HealthModule } from './health/health.module';
 import { GqlExceptionFilter } from './common/filters/gql-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
@@ -33,6 +35,7 @@ import type { GqlContext } from './common/types/gql-context.type';
  * ├── DatabaseModule     — Drizzle ORM + pg pool, global scope
  * ├── FirebaseModule     — Firebase Admin SDK init, global scope
  * ├── UsersModule        — User entity: resolver, service, repository
+ * ├── CitiesModule       — City list for onboarding city picker (public)
  * └── HealthModule       — GET /health endpoint for probes
  * ```
  *
@@ -55,8 +58,9 @@ import type { GqlContext } from './common/types/gql-context.type';
     // ── GraphQL: schema-first, reads SDL .graphql files ──────────────────
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloDriver,
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
+      imports: [CitiesModule],
+      inject: [ConfigService, CitiesService],
+      useFactory: (config: ConfigService, citiesService: CitiesService) => ({
         /**
          * Schema-first: all type definitions live in `.graphql` files.
          * Drizzle-inferred TypeScript types are generated to src/graphql.ts.
@@ -69,9 +73,14 @@ import type { GqlContext } from './common/types/gql-context.type';
         /**
          * Passes the Express Request into the GQL context so guards and
          * resolvers can access headers, IP, etc.
+         * Also creates fresh per-request DataLoader instances to batch
+         * DB lookups and prevent N+1 queries.
          */
         context: ({ req }: { req: Express.Request }): GqlContext => ({
           req: req as GqlContext['req'],
+          loaders: {
+            cityById: citiesService.createCityByIdLoader(),
+          },
         }),
 
         /**
@@ -121,6 +130,7 @@ import type { GqlContext } from './common/types/gql-context.type';
     DatabaseModule,
     FirebaseModule,
     UsersModule,
+    CitiesModule,
     HealthModule,
     CacheModule.register({
       max: 3600,

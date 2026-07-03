@@ -1,0 +1,27 @@
+"""
+A city/governorate in Egypt available for selection during profile setup.
+"""
+type City {
+  id: ID!
+  """
+  English name of the city (e.g. 'Cairo', 'Aswan').
+  """
+  nameEn: String!
+  """
+  Arabic name of the city (e.g. 'القاهرة', 'أسوان').
+  """
+  nameAr: String!
+  """
+  The governorate this city belongs to.
+  """
+  governorate: String!
+}
+
+extend type Query {
+  """
+  Returns the full list of Egyptian cities for display in the city picker.
+  Sorted alphabetically by English name.
+  This query is PUBLIC — no authentication required.
+  """
+  cities: [City!]!
+}

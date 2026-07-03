@@ -20,9 +20,18 @@ type User {
   isVerified: Boolean!
   phoneNumber: String
   """
+  Whether the user has completed their onboarding profile (phoneNumber + city are both set).
+  Always false after a first Google sign-in — frontend should show the profile-completion screen.
+  """
+  profileComplete: Boolean!
+  """
   UUID of the user's city. Null until the user completes their profile.
   """
   cityId: ID
+  """
+  The user's city, resolved from cityId via DataLoader. Null until completeProfile is called.
+  """
+  city: City
   """
   Arabic display name.
   """

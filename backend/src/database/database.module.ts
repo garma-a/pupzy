@@ -1,4 +1,4 @@
-import { Module, Global, OnApplicationShutdown } from '@nestjs/common';
+import { Module, Global, OnApplicationShutdown, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ModuleRef } from '@nestjs/core';
 import { Pool } from 'pg';
@@ -51,6 +51,8 @@ import { databaseProvider, DATABASE_TOKEN } from './database.provider';
   exports: [DATABASE_TOKEN],
 })
 export class DatabaseModule implements OnApplicationShutdown {
+  private readonly logger = new Logger(DatabaseModule.name);
+
   constructor(private readonly moduleRef: ModuleRef) {}
 
   /**
@@ -58,16 +60,19 @@ export class DatabaseModule implements OnApplicationShutdown {
    * Ends the pg connection pool so in-flight queries complete before exit.
    */
   async onApplicationShutdown(signal?: string): Promise<void> {
-    console.log(`[DatabaseModule] Shutting down pool on signal: ${signal}`);
+    this.logger.log(`Shutting down pool on signal: ${signal ?? 'unknown'}`);
     try {
       const db: unknown = this.moduleRef.get(DATABASE_TOKEN, { strict: false });
       const pool = (db as { _pool?: Pool })._pool;
       if (pool) {
         await pool.end();
-        console.log('[DatabaseModule] Connection pool closed.');
+        this.logger.log('Connection pool closed gracefully.');
       }
     } catch (err) {
-      console.error('[DatabaseModule] Error closing pool:', err);
+      this.logger.error(
+        'Error closing connection pool',
+        err instanceof Error ? err.stack : String(err),
+      );
     }
   }
 }
