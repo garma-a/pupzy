@@ -22,21 +22,15 @@ const envSchema = z.object({
    * Required for encrypting phone numbers (AES-256-GCM).
    * Must be exactly 32 bytes encoded as base64.
    */
-  PHONE_ENCRYPTION_KEY: z
-    .string()
-    .min(43, 'Key must be at least 43 chars (32 bytes base64)'),
+  PHONE_ENCRYPTION_KEY: z.string().min(43, 'Key must be at least 43 chars (32 bytes base64)'),
 
   // ─── Firebase Admin SDK ──────────────────────────────────────────────────
   FIREBASE_PROJECT_ID: z.string().min(1),
-  FIREBASE_CLIENT_EMAIL: z
-    .string()
-    .email({ message: 'FIREBASE_CLIENT_EMAIL must be a valid email' }),
+  FIREBASE_CLIENT_EMAIL: z.string().email({ message: 'FIREBASE_CLIENT_EMAIL must be a valid email' }),
   FIREBASE_PRIVATE_KEY: z.string().min(1),
 
   // ─── Application ─────────────────────────────────────────────────────────
-  NODE_ENV: z
-    .enum(['development', 'production', 'test'])
-    .default('development'),
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(3000),
 
   // ─── CORS ────────────────────────────────────────────────────────────────

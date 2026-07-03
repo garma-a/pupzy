@@ -28,9 +28,7 @@ export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export function validateUpdateProfileInput(raw: unknown): UpdateProfileInput {
   const result = updateProfileSchema.safeParse(raw);
   if (!result.success) {
-    const message = result.error.issues
-      .map((i) => `${i.path.join('.')}: ${i.message}`)
-      .join('; ');
+    const message = result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     throw new ValidationError(message);
   }
   return result.data;

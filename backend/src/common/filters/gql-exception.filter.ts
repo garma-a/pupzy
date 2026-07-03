@@ -1,8 +1,5 @@
 import { Catch, ArgumentsHost, HttpException, Logger } from '@nestjs/common';
-import {
-  GqlExceptionFilter as NestGqlExceptionFilter,
-  GqlContextType,
-} from '@nestjs/graphql';
+import { GqlExceptionFilter as NestGqlExceptionFilter, GqlContextType } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import { AppError } from '../errors/app.errors';
 
@@ -42,10 +39,7 @@ export class GqlExceptionFilter implements NestGqlExceptionFilter {
 
     // ── Domain errors (thrown by services/repositories) ──────────────────
     if (exception instanceof AppError) {
-      this.logger.warn(
-        `[Domain Error] ${exception.code}: ${exception.message}`,
-        exception.stack,
-      );
+      this.logger.warn(`[Domain Error] ${exception.code}: ${exception.message}`, exception.stack);
       return new GraphQLError(exception.message, {
         extensions: { code: exception.code },
       });
@@ -59,8 +53,7 @@ export class GqlExceptionFilter implements NestGqlExceptionFilter {
       const message =
         typeof response === 'string'
           ? response
-          : ((response as Record<string, unknown>).message?.toString() ??
-            exception.message);
+          : ((response as Record<string, unknown>).message?.toString() ?? exception.message);
 
       this.logger.warn(`[HTTP Exception] ${status} ${code}: ${message}`);
       return new GraphQLError(message, {
@@ -69,19 +62,12 @@ export class GqlExceptionFilter implements NestGqlExceptionFilter {
     }
 
     // ── Unexpected errors — log fully, hide details from client ──────────
-    const err =
-      exception instanceof Error ? exception : new Error(String(exception));
-    this.logger.error(
-      `[Unhandled Exception] ${err.message}`,
-      err.stack,
-      'GqlExceptionFilter',
-    );
+    const err = exception instanceof Error ? exception : new Error(String(exception));
+    this.logger.error(`[Unhandled Exception] ${err.message}`, err.stack, 'GqlExceptionFilter');
 
     // Never expose internal details in production
     const message =
-      process.env.NODE_ENV === 'production'
-        ? 'An unexpected error occurred. Please try again later.'
-        : err.message;
+      process.env.NODE_ENV === 'production' ? 'An unexpected error occurred. Please try again later.' : err.message;
 
     return new GraphQLError(message, {
       extensions: { code: 'INTERNAL_SERVER_ERROR' },

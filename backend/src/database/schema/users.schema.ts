@@ -1,14 +1,5 @@
-import {
-  pgTable,
-  uuid,
-  varchar,
-  text,
-  timestamp,
-  pgEnum,
-  index,
-  boolean,
-  integer,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, timestamp, pgEnum, index, boolean, integer, geometry } from 'drizzle-orm/pg-core';
+import { cities } from './cities.schema';
 
 /**
  * `user_role` enum — controls feature access throughout the app.
@@ -86,11 +77,17 @@ export const users = pgTable(
     isVerified: boolean('is_verified').notNull().default(false),
 
     /**
-     * Foreign key to the `cities` table (not yet created).
+     * Foreign key to the `cities` table.
      * Null until `completeProfile` is called.
      * Indexed to avoid full-table scans when querying users by city.
      */
-    cityId: uuid('city_id'),
+    cityId: uuid('city_id').references(() => cities.id),
+
+    /**
+     * Last known location (PostGIS Point) used for ST_Distance queries.
+     * Never exposed to other users directly.
+     */
+    lastKnownLocation: geometry('last_known_location', { type: 'point', srid: 4326 }),
 
     /**
      * Arabic display name.
@@ -117,9 +114,7 @@ export const users = pgTable(
     privacyLevel: varchar('privacy_level', { length: 50 }).notNull().default('strict'),
 
     /** Timestamp of row creation. Set once by the database. */
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 
     /**
      * Timestamp of last update. Manually set in `UsersRepository.update()`.
@@ -128,9 +123,7 @@ export const users = pgTable(
      * production to auto-update this on any UPDATE outside the repository.
      * See drizzle/migrations/README.md for the trigger SQL.
      */
-    updatedAt: timestamp('updated_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     /**

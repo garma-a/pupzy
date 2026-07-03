@@ -87,7 +87,7 @@ export class FirebaseAuthGuard implements CanActivate {
     private readonly usersService: UsersService,
     private readonly reflector: Reflector,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-  ) {}
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // ── 1. Skip public resolvers ────────────────────────────────────────────

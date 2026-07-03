@@ -3,6 +3,7 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import { UsersService } from './users.service';
 import { validateCompleteProfileInput } from './dto/complete-profile.input';
 import { validateUpdateProfileInput } from './dto/update-profile.input';
+import { validateGeoLocationInput } from './dto/geo-location.input';
 import type { User } from '../database/schema';
 import type { GqlContext } from '../common/types/gql-context.type';
 
@@ -15,7 +16,7 @@ import type { GqlContext } from '../common/types/gql-context.type';
  */
 @Resolver('User')
 export class UsersResolver {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   /**
    * Returns the currently authenticated user.
@@ -47,5 +48,17 @@ export class UsersResolver {
   ): Promise<User> {
     const validated = validateUpdateProfileInput(input);
     return this.usersService.updateProfile(context.user!.id, validated);
+  }
+
+  /**
+   * Updates the user's location based on GPS coordinates.
+   */
+  @Mutation('updateMyLocation')
+  async updateMyLocation(
+    @Args('location') location: unknown,
+    @Context() context: GqlContext,
+  ): Promise<User> {
+    const validated = validateGeoLocationInput(location);
+    return this.usersService.updateMyLocation(context.user!.id, validated);
   }
 }

@@ -29,4 +29,4 @@ export const FIREBASE_ADMIN_TOKEN = 'FIREBASE_ADMIN';
   ],
   exports: [FIREBASE_ADMIN_TOKEN],
 })
-export class FirebaseModule {}
+export class FirebaseModule { }

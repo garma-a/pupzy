@@ -1,4 +1,3 @@
-
 /*
  * -------------------------------------------------------
  * THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
@@ -31,7 +30,7 @@ export interface User {
     rescuesCount: number;
     adoptedCount: number;
     helpingCount: number;
-    languagePreference: string;
+    languagePreference?: Nullable<string>;
     notificationsEnabled: boolean;
     privacyLevel: string;
     createdAt: DateTime;

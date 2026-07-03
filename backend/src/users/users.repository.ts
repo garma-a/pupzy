@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
-import { users, type User, type NewUser } from '../database/schema';
+import { users, cities, type User, type NewUser, type City } from '../database/schema';
 import type * as schema from '../database/schema';
 
 @Injectable()
@@ -13,21 +13,23 @@ export class UsersRepository {
   ) {}
 
   async findByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
-    const [user] = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.firebaseUid, firebaseUid))
-      .limit(1);
+    const [user] = await this.db.select().from(users).where(eq(users.firebaseUid, firebaseUid)).limit(1);
     return user;
   }
 
   async findById(id: string): Promise<User | undefined> {
-    const [user] = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.id, id))
-      .limit(1);
+    const [user] = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
     return user;
+  }
+
+  async findNearestCity(latitude: number, longitude: number): Promise<City | undefined> {
+    const point = `SRID=4326;POINT(${longitude} ${latitude})`;
+    const [city] = await this.db
+      .select()
+      .from(cities)
+      .orderBy(sql`ST_Distance(${cities.centerGeom}, ST_GeomFromEWKT(${point}))`)
+      .limit(1);
+    return city;
   }
 
   async create(data: NewUser): Promise<User> {

@@ -42,7 +42,7 @@ type User {
   """
   Preferred interface language (e.g. 'en', 'ar').
   """
-  languagePreference: String!
+  languagePreference: String
   """
   Whether push notifications are enabled.
   """
@@ -69,9 +69,22 @@ input CompleteProfileInput {
   """
   phoneNumber: String!
   """
-  UUID of the user's city from the cities table.
+  UUID of the user's city from the cities table. Optional if location is provided.
   """
-  cityId: ID!
+  cityId: ID
+
+  """
+  GPS coordinates to auto-resolve the nearest city. Optional if cityId is provided.
+  """
+  location: GeoLocationInput
+}
+
+"""
+Input for updating the user's location based on GPS.
+"""
+input GeoLocationInput {
+  latitude: Float!
+  longitude: Float!
 }
 
 """
@@ -111,4 +124,11 @@ type Mutation {
   Requires authentication.
   """
   updateProfile(input: UpdateProfileInput!): User!
+
+  """
+  Updates the user's location based on GPS coordinates.
+  Automatically resolves the nearest city.
+  Requires authentication.
+  """
+  updateMyLocation(location: GeoLocationInput!): User!
 }

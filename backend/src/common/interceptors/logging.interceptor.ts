@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { Observable, tap } from 'rxjs';
 import { randomUUID } from 'crypto';
@@ -49,19 +43,13 @@ export class LoggingInterceptor implements NestInterceptor {
     ctx.requestId = requestId;
 
     const start = Date.now();
-    this.logger.log(
-      `[GraphQL] ${operationType} ${operationName} started`,
-      `requestId=${requestId}`,
-    );
+    this.logger.log(`[GraphQL] ${operationType} ${operationName} started`, `requestId=${requestId}`);
 
     return next.handle().pipe(
       tap({
         next: () => {
           const ms = Date.now() - start;
-          this.logger.log(
-            `[GraphQL] ${operationType} ${operationName} completed in ${ms}ms`,
-            `requestId=${requestId}`,
-          );
+          this.logger.log(`[GraphQL] ${operationType} ${operationName} completed in ${ms}ms`, `requestId=${requestId}`);
         },
         error: (err: unknown) => {
           const ms = Date.now() - start;

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ValidationError } from '../../common/errors/app.errors';
+import { geoLocationSchema } from './geo-location.input';
 
 /**
  * Zod schema for the `completeProfile` mutation input.
@@ -23,18 +24,22 @@ const completeProfileSchema = z.object({
    * Phone number in E.164 format.
    * Examples: +201012345678, +12125551234
    */
-  phoneNumber: z
-    .string()
-    .regex(
-      /^\+[1-9]\d{1,14}$/,
-      'Phone number must be in E.164 format (e.g. +201012345678)',
-    ),
+  phoneNumber: z.string().regex(/^\+[1-9]\d{1,14}$/, 'Phone number must be in E.164 format (e.g. +201012345678)'),
 
   /**
    * UUID of the user's city from the `cities` table.
-   * Will be validated as a real city once the cities table is added.
+   * Optional if `location` is provided.
    */
-  cityId: z.string().uuid('cityId must be a valid UUID'),
+  cityId: z.string().uuid('cityId must be a valid UUID').optional(),
+
+  /**
+   * GPS coordinates to auto-resolve the nearest city.
+   * Optional if `cityId` is provided.
+   */
+  location: geoLocationSchema.optional(),
+}).refine(data => data.cityId || data.location, {
+  message: 'Either cityId or location must be provided',
+  path: ['cityId'], // Attach error to cityId field
 });
 
 /** TypeScript type inferred from the Zod schema — zero duplication. */
@@ -48,14 +53,10 @@ export type CompleteProfileInput = z.infer<typeof completeProfileSchema>;
  * @example
  * const input = validateCompleteProfileInput(args.input);
  */
-export function validateCompleteProfileInput(
-  raw: unknown,
-): CompleteProfileInput {
+export function validateCompleteProfileInput(raw: unknown): CompleteProfileInput {
   const result = completeProfileSchema.safeParse(raw);
   if (!result.success) {
-    const message = result.error.issues
-      .map((i) => `${i.path.join('.')}: ${i.message}`)
-      .join('; ');
+    const message = result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     throw new ValidationError(message);
   }
   return result.data;
