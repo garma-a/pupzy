@@ -1,9 +1,13 @@
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
+import { sql } from 'drizzle-orm';
 import * as schema from './schema';
 
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/pupzy',
+  connectionString: process.env.DATABASE_URL,
 });
 
 const db = drizzle(pool, { schema });
@@ -16,61 +20,61 @@ async function seed() {
       nameEn: 'Cairo',
       nameAr: 'القاهرة',
       governorate: 'Cairo',
-      centerGeom: 'SRID=4326;POINT(31.2357 30.0444)',
+      centerGeom: sql`ST_GeomFromEWKT('SRID=4326;POINT(31.2357 30.0444)')`,
     },
     {
       nameEn: 'Giza',
       nameAr: 'الجيزة',
       governorate: 'Giza',
-      centerGeom: 'SRID=4326;POINT(31.2089 30.0131)',
+      centerGeom: sql`ST_GeomFromEWKT('SRID=4326;POINT(31.2089 30.0131)')`,
     },
     {
       nameEn: 'Alexandria',
       nameAr: 'الإسكندرية',
       governorate: 'Alexandria',
-      centerGeom: 'SRID=4326;POINT(29.9187 31.2001)',
+      centerGeom: sql`ST_GeomFromEWKT('SRID=4326;POINT(29.9187 31.2001)')`,
     },
     {
       nameEn: 'Mansoura',
       nameAr: 'المنصورة',
       governorate: 'Dakahlia',
-      centerGeom: 'SRID=4326;POINT(31.3807 31.0364)',
+      centerGeom: sql`ST_GeomFromEWKT('SRID=4326;POINT(31.3807 31.0364)')`,
     },
     {
       nameEn: 'Tanta',
       nameAr: 'طنطا',
       governorate: 'Gharbia',
-      centerGeom: 'SRID=4326;POINT(31.0016 30.7865)',
+      centerGeom: sql`ST_GeomFromEWKT('SRID=4326;POINT(31.0016 30.7865)')`,
     },
     {
       nameEn: 'Asyut',
       nameAr: 'أسيوط',
       governorate: 'Asyut',
-      centerGeom: 'SRID=4326;POINT(31.1837 27.1810)',
+      centerGeom: sql`ST_GeomFromEWKT('SRID=4326;POINT(31.1837 27.1810)')`,
     },
     {
       nameEn: 'Aswan',
       nameAr: 'أسوان',
       governorate: 'Aswan',
-      centerGeom: 'SRID=4326;POINT(32.8998 24.0889)',
+      centerGeom: sql`ST_GeomFromEWKT('SRID=4326;POINT(32.8998 24.0889)')`,
     },
     {
       nameEn: 'Luxor',
       nameAr: 'الأقصر',
       governorate: 'Luxor',
-      centerGeom: 'SRID=4326;POINT(32.6396 25.6872)',
+      centerGeom: sql`ST_GeomFromEWKT('SRID=4326;POINT(32.6396 25.6872)')`,
     },
     {
       nameEn: 'Hurghada',
       nameAr: 'الغردقة',
       governorate: 'Red Sea',
-      centerGeom: 'SRID=4326;POINT(33.8116 27.2579)',
+      centerGeom: sql`ST_GeomFromEWKT('SRID=4326;POINT(33.8116 27.2579)')`,
     },
     {
       nameEn: 'Sharm El-Sheikh',
       nameAr: 'شرم الشيخ',
       governorate: 'South Sinai',
-      centerGeom: 'SRID=4326;POINT(34.3299 27.9158)',
+      centerGeom: sql`ST_GeomFromEWKT('SRID=4326;POINT(34.3299 27.9158)')`,
     },
   ];
 
