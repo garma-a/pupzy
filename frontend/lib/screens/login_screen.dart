@@ -40,8 +40,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) =>
-              profileComplete ? const AppShell() : const CompleteProfileScreen(),
+          builder: (_) => profileComplete
+              ? const AppShell()
+              : const CompleteProfileScreen(),
         ),
       );
     } catch (e) {
@@ -173,14 +174,28 @@ class _GoogleLogoPainter extends CustomPainter {
     paint.color = const Color(0xFF4285F4);
     final blue = Path()
       ..moveTo(117.6 * f, 61.36 * f)
-      ..cubicTo(117.6 * f, 57.11 * f, 117.22 * f, 53.02 * f, 116.51 * f, 49.09 * f)
+      ..cubicTo(
+        117.6 * f,
+        57.11 * f,
+        117.22 * f,
+        53.02 * f,
+        116.51 * f,
+        49.09 * f,
+      )
       ..lineTo(60 * f, 49.09 * f)
       ..lineTo(60 * f, 72.3 * f)
       ..lineTo(92.29 * f, 72.3 * f)
       ..cubicTo(90.9 * f, 79.8 * f, 86.67 * f, 86.15 * f, 80.32 * f, 90.41 * f)
       ..lineTo(80.32 * f, 105.46 * f)
       ..lineTo(99.71 * f, 105.46 * f)
-      ..cubicTo(111.05 * f, 95.02 * f, 117.6 * f, 79.64 * f, 117.6 * f, 61.36 * f)
+      ..cubicTo(
+        111.05 * f,
+        95.02 * f,
+        117.6 * f,
+        79.64 * f,
+        117.6 * f,
+        61.36 * f,
+      )
       ..close();
     canvas.drawPath(blue, paint);
 
@@ -216,7 +231,14 @@ class _GoogleLogoPainter extends CustomPainter {
     paint.color = const Color(0xFFEA4335);
     final red = Path()
       ..moveTo(60 * f, 23.86 * f)
-      ..cubicTo(68.81 * f, 23.86 * f, 76.72 * f, 26.89 * f, 82.94 * f, 32.84 * f)
+      ..cubicTo(
+        68.81 * f,
+        23.86 * f,
+        76.72 * f,
+        26.89 * f,
+        82.94 * f,
+        32.84 * f,
+      )
       ..lineTo(100.15 * f, 15.63 * f)
       ..cubicTo(89.75 * f, 5.95 * f, 76.17 * f, 0, 60 * f, 0)
       ..cubicTo(36.55 * f, 0, 16.25 * f, 13.45 * f, 6.38 * f, 33.05 * f)
