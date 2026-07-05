@@ -1,5 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { UsersRepository } from './users.repository';
 import { CitiesService } from '../cities/cities.service';
 import { encryptString, decryptString } from '../common/utils/crypto.util';
@@ -22,6 +24,7 @@ export class UsersService {
     private readonly usersRepository: UsersRepository,
     private readonly citiesService: CitiesService,
     config: ConfigService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {
     this.phoneEncryptionKey = config.get<string>('PHONE_ENCRYPTION_KEY')!;
   }
@@ -59,6 +62,19 @@ export class UsersService {
       input.firebaseUid,
     );
     if (existing) return this.decryptUserPhone(existing);
+
+    const existingByEmail = await this.usersRepository.findByEmail(input.email);
+    if (existingByEmail) {
+      this.logger.log(
+        `Firebase UID changed for ${input.email}, updating from ${existingByEmail.firebaseUid} to ${input.firebaseUid}`,
+      );
+      const updated = await this.usersRepository.update(existingByEmail.id, {
+        firebaseUid: input.firebaseUid,
+        authProvider: input.authProvider,
+        profilePictureUrl: input.photoUrl,
+      });
+      return this.decryptUserPhone(updated);
+    }
 
     this.logger.log(
       `Creating new user account for Firebase UID: ${input.firebaseUid}`,
@@ -136,7 +152,12 @@ export class UsersService {
           }
         : {}),
     });
+    await this.invalidateUserCache(updatedUser.firebaseUid);
     return this.decryptUserPhone(updatedUser);
+  }
+
+  private async invalidateUserCache(firebaseUid: string): Promise<void> {
+    await this.cacheManager.del(`user_resolve:${firebaseUid}`);
   }
 
   /**

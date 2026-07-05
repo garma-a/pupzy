@@ -46,6 +46,7 @@ export interface User {
     phoneNumber?: Nullable<string>;
     profileComplete: boolean;
     cityId?: Nullable<string>;
+    city?: Nullable<City>;
     fullNameArabic?: Nullable<string>;
     rescuesCount: number;
     adoptedCount: number;

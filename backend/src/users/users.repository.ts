@@ -17,6 +17,11 @@ export class UsersRepository {
     return user;
   }
 
+  async findByEmail(email: string): Promise<User | undefined> {
+    const [user] = await this.db.select().from(users).where(eq(users.email, email)).limit(1);
+    return user;
+  }
+
   async findById(id: string): Promise<User | undefined> {
     const [user] = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
     return user;
@@ -33,7 +38,8 @@ export class UsersRepository {
   }
 
   async create(data: NewUser): Promise<User> {
-    const [user] = await this.db.insert(users).values(data).returning();
+    const { lastKnownLocation: _loc, ...rest } = data as any;
+    const [user] = await this.db.insert(users).values(rest).returning();
     return user;
   }
 
