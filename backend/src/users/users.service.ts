@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { sql } from 'drizzle-orm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { UsersRepository } from './users.repository';
@@ -133,7 +134,7 @@ export class UsersService {
       cityId: resolvedCityId,
       ...(data.location
         ? {
-            lastKnownLocation: `SRID=4326;POINT(${data.location.longitude} ${data.location.latitude})` as any,
+            lastKnownLocation: sql`ST_GeomFromEWKT(${`SRID=4326;POINT(${data.location.longitude} ${data.location.latitude})`})` as any,
           }
         : {}),
     });
@@ -166,7 +167,7 @@ export class UsersService {
 
     const updatedUser = await this.usersRepository.update(userId, {
       cityId: city.id,
-      lastKnownLocation: `SRID=4326;POINT(${location.longitude} ${location.latitude})` as any,
+      lastKnownLocation: sql`ST_GeomFromEWKT(${`SRID=4326;POINT(${location.longitude} ${location.latitude})`})` as any,
     });
     return this.decryptUserPhone(updatedUser);
   }

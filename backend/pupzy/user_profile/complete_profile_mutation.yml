@@ -16,8 +16,9 @@ graphql:
           id
           fullName
           city{
-            nameEn,
-            nameAr
+            id,
+            nameEn
+            
           }
         }
       }

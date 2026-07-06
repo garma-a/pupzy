@@ -1,0 +1,32 @@
+info:
+  name: update_location_mutation
+  type: graphql
+  seq: 4
+
+graphql:
+  method: POST
+  url: "{{BaseUrl}}"
+  body:
+    query: |
+      mutation updateLocation($locationData: GeoLocationInput!) {
+        updateMyLocation(location: $locationData) {
+          id
+          email
+          fullName
+          cityId
+        }
+      }
+    variables: |-
+      {
+        "locationData": {
+          "latitude": 30.0444,
+          "longitude": 31.2357
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
