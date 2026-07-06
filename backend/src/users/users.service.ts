@@ -70,6 +70,7 @@ export class UsersService {
           authProvider: input.authProvider,
           profilePictureUrl: input.photoUrl,
         });
+        await this.invalidateUserCache(updated.firebaseUid);
         return this.decryptUserPhone(updated);
       }
     }
@@ -134,7 +135,8 @@ export class UsersService {
       cityId: resolvedCityId,
       ...(data.location
         ? {
-            lastKnownLocation: sql`ST_GeomFromEWKT(${`SRID=4326;POINT(${data.location.longitude} ${data.location.latitude})`})` as any,
+            lastKnownLocation:
+              sql`ST_GeomFromEWKT(${`SRID=4326;POINT(${data.location.longitude} ${data.location.latitude})`})` as any,
           }
         : {}),
     });
@@ -153,6 +155,7 @@ export class UsersService {
     const updatedUser = await this.usersRepository.update(userId, {
       fullName: data.fullName,
     });
+    await this.invalidateUserCache(updatedUser.firebaseUid);
     return this.decryptUserPhone(updatedUser);
   }
 
@@ -169,6 +172,7 @@ export class UsersService {
       cityId: city.id,
       lastKnownLocation: sql`ST_GeomFromEWKT(${`SRID=4326;POINT(${location.longitude} ${location.latitude})`})` as any,
     });
+    await this.invalidateUserCache(updatedUser.firebaseUid);
     return this.decryptUserPhone(updatedUser);
   }
 }
