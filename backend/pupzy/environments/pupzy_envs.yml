@@ -1,0 +1,5 @@
+name: pupzy_envs
+color: "#CE4F3B"
+variables:
+  - name: BaseUrl
+    value: http://localhost:8080/graphql

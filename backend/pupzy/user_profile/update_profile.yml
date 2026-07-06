@@ -1,0 +1,32 @@
+info:
+  name: update_profile
+  type: graphql
+  seq: 3
+
+graphql:
+  method: POST
+  url: "{{BaseUrl}}"
+  headers:
+    - name: Authorization
+      value: "{{auth}}"
+  body:
+    query: |
+      mutation updateProfile($input: UpdateProfileInput!) {
+        updateProfile(input: $input) {
+          id
+          fullName
+        }
+      }
+    variables: |-
+      {
+        "input": {
+          "fullName": "patrick"
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,38 @@
+info:
+  name: complete_profile_mutation
+  type: graphql
+  seq: 2
+
+graphql:
+  method: POST
+  url: "{{BaseUrl}}"
+  headers:
+    - name: Authorization
+      value: "{{auth}}"
+  body:
+    query: |
+      mutation CompleteProfile($input: CompleteProfileInput!) {
+        completeProfile(input: $input) {
+          id
+          fullName
+          city{
+            nameEn,
+            nameAr
+          }
+        }
+      }
+    variables: |-
+      {
+        "input": {
+          "fullName": "Your Name",
+          "phoneNumber": "+201012345678",
+          "cityId": "b79f50c3-1000-4df4-ac65-d08647c80d58"
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
