@@ -105,6 +105,10 @@ input UpdateProfileInput {
   User's display name. Between 2 and 120 characters.
   """
   fullName: String!
+  """
+  Phone number in E.164 format (e.g. +201012345678).
+  """
+  phoneNumber: String
 }
 
 """

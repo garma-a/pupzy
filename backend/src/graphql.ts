@@ -22,6 +22,7 @@ export interface GeoLocationInput {
 
 export interface UpdateProfileInput {
     fullName: string;
+    phoneNumber?: Nullable<string>;
 }
 
 export interface City {

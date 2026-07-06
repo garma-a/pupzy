@@ -15,6 +15,7 @@ const updateProfileSchema = z.object({
     .min(2, 'Full name must be at least 2 characters')
     .max(120, 'Full name cannot exceed 120 characters')
     .trim(),
+  phoneNumber: z.string().regex(/^\+[1-9]\d{1,14}$/, 'Phone number must be in E.164 format (e.g. +201012345678)').optional(),
 });
 
 /** TypeScript type inferred from the Zod schema */

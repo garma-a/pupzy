@@ -151,10 +151,16 @@ export class UsersService {
   /**
    * Updates an already completed profile.
    */
-  async updateProfile(userId: string, data: { fullName: string }): Promise<User> {
-    const updatedUser = await this.usersRepository.update(userId, {
+  async updateProfile(userId: string, data: { fullName: string; phoneNumber?: string }): Promise<User> {
+    const updates: Partial<User> = {
       fullName: data.fullName,
-    });
+    };
+
+    if (data.phoneNumber) {
+      updates.phoneNumber = encryptString(data.phoneNumber, this.phoneEncryptionKey);
+    }
+
+    const updatedUser = await this.usersRepository.update(userId, updates);
     await this.invalidateUserCache(updatedUser.firebaseUid);
     return this.decryptUserPhone(updatedUser);
   }

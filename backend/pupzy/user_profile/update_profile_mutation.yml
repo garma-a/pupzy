@@ -1,20 +1,21 @@
 info:
-  name: update_profile
+  name: update_profile_mutation
   type: graphql
   seq: 3
 
 graphql:
   method: POST
   url: "{{BaseUrl}}"
-  headers:
-    - name: Authorization
-      value: "{{auth}}"
   body:
     query: |
       mutation updateProfile($input: UpdateProfileInput!) {
         updateProfile(input: $input) {
           id
           fullName
+          city{
+            id,
+            nameEn
+          }
         }
       }
     variables: |-
