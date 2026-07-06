@@ -21,9 +21,7 @@ import type { GqlContext } from '../common/types/gql-context.type';
  * Returns `undefined` on `@Public()` routes where the guard did not run.
  * Use `User | undefined` as the type in that case.
  */
-export const CurrentUser = createParamDecorator(
-  (_data: unknown, context: ExecutionContext): User => {
-    const ctx = GqlExecutionContext.create(context);
-    return ctx.getContext<GqlContext>().user as User;
-  },
-);
+export const CurrentUser = createParamDecorator((_data: unknown, context: ExecutionContext): User => {
+  const ctx = GqlExecutionContext.create(context);
+  return ctx.getContext<GqlContext>().user as User;
+});

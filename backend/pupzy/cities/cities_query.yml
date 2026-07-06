@@ -6,9 +6,6 @@ info:
 graphql:
   method: POST
   url: "{{BaseUrl}}"
-  headers:
-    - name: Authorization
-      value: "{{auth}}"
   body:
     query: |-
       query{

@@ -22,11 +22,7 @@ export class CitiesRepository {
    * Used to validate that a cityId supplied by the client actually exists.
    */
   async findById(id: string): Promise<City | undefined> {
-    const [city] = await this.db
-      .select()
-      .from(cities)
-      .where(eq(cities.id, id))
-      .limit(1);
+    const [city] = await this.db.select().from(cities).where(eq(cities.id, id)).limit(1);
     return city;
   }
 

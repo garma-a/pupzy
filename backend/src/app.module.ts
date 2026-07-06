@@ -102,8 +102,7 @@ import type { GqlContext } from './common/types/gql-context.type';
          * this is a last-resort fallback for errors that bypass the filter.
          */
         formatError: (error) => {
-          const code =
-            (error.extensions?.code as string) ?? 'INTERNAL_SERVER_ERROR';
+          const code = (error.extensions?.code as string) ?? 'INTERNAL_SERVER_ERROR';
           return {
             message: error.message,
             extensions: { code },

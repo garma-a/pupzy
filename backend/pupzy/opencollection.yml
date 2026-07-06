@@ -2,6 +2,22 @@ opencollection: 1.0.0
 
 info:
   name: pupzy
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  auth:
+    type: bearer
+    token: eyJhbGciOiJSUzI1NiIsImtpZCI6IjY1Y2IzZjAyMGNhZjdiMmE5ZTg2ZWFkOTAxZDg5ZjQ4MTJjYmFjYmMiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vcHVwenktYXBwLTVmNzA3IiwiYXVkIjoicHVwenktYXBwLTVmNzA3IiwiYXV0aF90aW1lIjoxNzgzMzMyMTIyLCJ1c2VyX2lkIjoiVTQxRXVuSHBKVFFFWWNkTjF1bmhMV2Vxc3luMiIsInN1YiI6IlU0MUV1bkhwSlRRRVljZE4xdW5oTFdlcXN5bjIiLCJpYXQiOjE3ODMzMzIxMjIsImV4cCI6MTc4MzMzNTcyMiwiZW1haWwiOiJ0ZXN0QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbInRlc3RAZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.TWRtcDMFiIfWRJ9XHPI5OlKGs8uqT3mNffvRgXFwGeRiwbM7C29sAzz453VNHBj2mocKrGBwubD2NAirEB_Iq48onn7J-0AUKNEuZYW3riRV0FrAvBWfOWlmYkJuSLJhN4MrL-s72Blg98KDNkLdYKxx6WzY2SuCqm42tatRvNxbk2ahk-nkhxeg7A3yzO7PyKCx3vzH74hA69cBCNw9nOnapO6QjYfTMlglOJLOG38jc1YO4p4LQbRbJwHJFjtTqADmNLmjLhe2R8eKJENuyQdjVLHYcCnH48IuSfF1sS2j8_qFsUDzS9jFNJztezdoeiDfCIyM7j-9k76EpgLtVw
 bundled: false
 extensions:
   bruno:

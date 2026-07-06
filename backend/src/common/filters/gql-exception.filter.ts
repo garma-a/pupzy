@@ -63,7 +63,16 @@ export class GqlExceptionFilter implements NestGqlExceptionFilter {
 
     // ── Unexpected errors — log fully, hide details from client ──────────
     const err = exception instanceof Error ? exception : new Error(String(exception));
-    this.logger.error(`[Unhandled Exception] ${err.message}`, err.stack, 'GqlExceptionFilter');
+
+    // Log the error message, stack, and any underlying cause (e.g., from Drizzle/Postgres)
+    let errorLogMessage = `[Unhandled Exception] ${err.message}`;
+    if (err.cause) {
+      const causeVal = err.cause;
+      const cause = causeVal instanceof Error ? causeVal.message : typeof causeVal === 'object' && causeVal !== null && 'message' in causeVal ? String((causeVal as any).message) : String(causeVal);
+      errorLogMessage += ` | Cause: ${cause}`;
+    }
+
+    this.logger.error(errorLogMessage, err.stack, 'GqlExceptionFilter');
 
     // Never expose internal details in production
     const message =

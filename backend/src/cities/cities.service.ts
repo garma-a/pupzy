@@ -36,14 +36,11 @@ export class CitiesService {
    * `WHERE id = ANY($1)` query instead of N separate SELECTs.
    */
   createCityByIdLoader(): DataLoader<string, City | null> {
-    return new DataLoader<string, City | null>(
-      (ids) => this.citiesRepository.findByIds(ids),
-      {
-        // Cache is scoped to this request instance — safe to enable.
-        cache: true,
-        // Max keys batched per DB call — protects against pathological queries.
-        maxBatchSize: 100,
-      },
-    );
+    return new DataLoader<string, City | null>((ids) => this.citiesRepository.findByIds(ids), {
+      // Cache is scoped to this request instance — safe to enable.
+      cache: true,
+      // Max keys batched per DB call — protects against pathological queries.
+      maxBatchSize: 100,
+    });
   }
 }

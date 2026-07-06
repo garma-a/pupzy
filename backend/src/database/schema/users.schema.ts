@@ -1,4 +1,15 @@
-import { pgTable, uuid, varchar, text, timestamp, pgEnum, index, boolean, integer, geometry } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  timestamp,
+  pgEnum,
+  index,
+  boolean,
+  integer,
+  geometry,
+} from 'drizzle-orm/pg-core';
 import { cities } from './cities.schema';
 
 /**

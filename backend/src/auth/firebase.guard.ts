@@ -27,19 +27,6 @@ export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 // ─── In-memory caches ─────────────────────────────────────────────────────────
 
 /**
- * Cache for decoded Firebase tokens, keyed by raw token string.
- * Avoids a Firebase network call on every request for the same session.
- *
- * Entry expires 5 minutes before the token's own expiry to avoid
- * using a cached token that has just become invalid.
- */
-interface CachedToken {
-  decoded: DecodedIdToken;
-  /** Unix timestamp (ms) after which this cache entry must be evicted. */
-  expiresAt: number;
-}
-
-/**
  * Cache for resolved Pupzy User rows, keyed by firebase UID.
  * Avoids a DB round trip on every request once the user is known.
  * TTL is deliberately short (60s) so profile updates propagate quickly.
@@ -62,7 +49,6 @@ interface CachedUser {
  * 5. Attaches the `User` to the GraphQL context for `@CurrentUser()` injection
  *
  * ## Caching strategy
- * - **Token cache** — keyed by raw token, TTL = token exp − 5 min
  * - **User cache** — keyed by firebase UID, TTL = 60 seconds
  *
  * ## Usage
@@ -77,8 +63,7 @@ interface CachedUser {
 export class FirebaseAuthGuard implements CanActivate {
   private readonly logger = new Logger(FirebaseAuthGuard.name);
 
-  /** How many milliseconds before token expiry to evict the cache entry. */
-  private static readonly TOKEN_CACHE_BUFFER_MS = 5 * 60 * 1_000; // 5 min
+
   /** How long (ms) to cache a resolved user row. */
   private static readonly USER_CACHE_TTL_MS = 60 * 1_000; // 60 s
 
@@ -87,7 +72,7 @@ export class FirebaseAuthGuard implements CanActivate {
     private readonly usersService: UsersService,
     private readonly reflector: Reflector,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-  ) { }
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // ── 1. Skip public resolvers ────────────────────────────────────────────
@@ -100,13 +85,10 @@ export class FirebaseAuthGuard implements CanActivate {
     // ── 2. Extract token from GraphQL context ───────────────────────────────
     const ctx = GqlExecutionContext.create(context);
     const { req } = ctx.getContext<GqlContext>();
-    const authHeader =
-      req.headers?.authorization ?? req.headers?.['authorization'];
+    const authHeader = req.headers?.authorization ?? req.headers?.['authorization'];
 
     if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedException(
-        'Missing or malformed Authorization header',
-      );
+      throw new UnauthorizedException('Missing or malformed Authorization header');
     }
 
     const idToken = authHeader.slice(7);
@@ -124,37 +106,22 @@ export class FirebaseAuthGuard implements CanActivate {
   }
 
   /**
-   * Verifies a Firebase ID token, using the in-process cache to avoid
-   * a Firebase network call on every request.
+   * Verifies a Firebase ID token.
+   * `firebase-admin` verifies tokens locally, so no network call is made
+   * (except to periodically fetch Google's public keys).
    */
   private async verifyToken(idToken: string): Promise<DecodedIdToken> {
-    const now = Date.now();
-    const cacheKey = `firebase_token:${idToken}`;
-    const cached = await this.cacheManager.get<CachedToken>(cacheKey);
-    if (cached && cached.expiresAt > now) {
-      return cached.decoded;
-    }
-
     let decoded: DecodedIdToken;
     try {
       decoded = await getAuth(this.firebaseApp).verifyIdToken(idToken);
     } catch (err) {
-      this.logger.warn(
-        `Firebase token verification failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
+      this.logger.warn(`Firebase token verification failed: ${err instanceof Error ? err.message : String(err)}`);
       throw new UnauthorizedException('Invalid or expired Firebase ID token');
     }
 
-    // Cache until (token exp − buffer), max out at 1 hour
-    const expiresAt =
-      decoded.exp * 1_000 - FirebaseAuthGuard.TOKEN_CACHE_BUFFER_MS;
-
-    // Calculate TTL in milliseconds
-    const ttlMs = Math.max(0, expiresAt - now);
-
-    // Only cache if it hasn't already passed the buffer time
-    if (ttlMs > 0) {
-      await this.cacheManager.set(cacheKey, { decoded, expiresAt }, ttlMs);
+    if (decoded.firebase.sign_in_provider === 'password' && !decoded.email_verified) {
+      this.logger.warn(`Firebase token for UID ${decoded.uid} has unverified email`);
+      throw new UnauthorizedException('EMAIL_NOT_VERIFIED');
     }
 
     return decoded;

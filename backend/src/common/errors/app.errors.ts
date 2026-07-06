@@ -31,12 +31,7 @@ export class AppError extends Error {
  */
 export class NotFoundError extends AppError {
   constructor(resource: string, id?: string) {
-    super(
-      id
-        ? `${resource} with id "${id}" was not found`
-        : `${resource} was not found`,
-      'NOT_FOUND',
-    );
+    super(id ? `${resource} with id "${id}" was not found` : `${resource} was not found`, 'NOT_FOUND');
   }
 }
 

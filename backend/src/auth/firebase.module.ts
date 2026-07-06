@@ -16,9 +16,7 @@ export const FIREBASE_ADMIN_TOKEN = 'FIREBASE_ADMIN';
               projectId: config.get<string>('FIREBASE_PROJECT_ID'),
               clientEmail: config.get<string>('FIREBASE_CLIENT_EMAIL'),
               // The \n characters come escaped from .env — unescape them
-              privateKey: config
-                .get<string>('FIREBASE_PRIVATE_KEY')!
-                .replace(/\\n/g, '\n'),
+              privateKey: config.get<string>('FIREBASE_PRIVATE_KEY')!.replace(/\\n/g, '\n'),
             }),
           });
         }
@@ -29,4 +27,4 @@ export const FIREBASE_ADMIN_TOKEN = 'FIREBASE_ADMIN';
   ],
   exports: [FIREBASE_ADMIN_TOKEN],
 })
-export class FirebaseModule { }
+export class FirebaseModule {}

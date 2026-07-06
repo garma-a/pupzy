@@ -29,12 +29,7 @@ export const DATABASE_TOKEN = 'DATABASE';
  */
 export const databaseProvider = {
   provide: DATABASE_TOKEN,
-  useFactory: (
-    databaseUrl: string,
-    poolMax: number,
-    idleTimeoutMs: number,
-    connectionTimeoutMs: number,
-  ) => {
+  useFactory: (databaseUrl: string, poolMax: number, idleTimeoutMs: number, connectionTimeoutMs: number) => {
     const pool = new Pool({
       connectionString: databaseUrl,
       max: poolMax,
@@ -44,7 +39,7 @@ export const databaseProvider = {
 
     // Log pool errors to avoid unhandled promise rejection crashes
     pool.on('error', (err) => {
-      console.error('[Database] Unexpected pool error:', err.message);
+      console.error('[Database] Unexpected pool error:', err);
     });
 
     const db = drizzle(pool, { schema });
@@ -58,10 +53,5 @@ export const databaseProvider = {
 
     return db;
   },
-  inject: [
-    'DATABASE_URL',
-    'DB_POOL_MAX',
-    'DB_IDLE_TIMEOUT_MS',
-    'DB_CONNECTION_TIMEOUT_MS',
-  ],
+  inject: ['DATABASE_URL', 'DB_POOL_MAX', 'DB_IDLE_TIMEOUT_MS', 'DB_CONNECTION_TIMEOUT_MS'],
 };

@@ -41,11 +41,7 @@ export class UsersResolver {
    */
   @ResolveField('profileComplete')
   profileComplete(@Root() user: User): boolean {
-    return (
-      user.phoneNumber !== null &&
-      user.phoneNumber !== '' &&
-      user.cityId !== null
-    );
+    return user.phoneNumber !== null && user.phoneNumber !== '' && user.cityId !== null;
   }
 
   /**
@@ -68,10 +64,7 @@ export class UsersResolver {
    * Validates that the supplied cityId actually exists in the database.
    */
   @Mutation('completeProfile')
-  async completeProfile(
-    @Args('input') input: unknown,
-    @Context() context: GqlContext,
-  ): Promise<User> {
+  async completeProfile(@Args('input') input: unknown, @Context() context: GqlContext): Promise<User> {
     const validated = validateCompleteProfileInput(input);
     return this.usersService.completeProfile(context.user!.id, validated);
   }
@@ -80,10 +73,7 @@ export class UsersResolver {
    * Updates the user's profile information.
    */
   @Mutation('updateProfile')
-  async updateProfile(
-    @Args('input') input: unknown,
-    @Context() context: GqlContext,
-  ): Promise<User> {
+  async updateProfile(@Args('input') input: unknown, @Context() context: GqlContext): Promise<User> {
     const validated = validateUpdateProfileInput(input);
     return this.usersService.updateProfile(context.user!.id, validated);
   }
@@ -92,10 +82,7 @@ export class UsersResolver {
    * Updates the user's location based on GPS coordinates.
    */
   @Mutation('updateMyLocation')
-  async updateMyLocation(
-    @Args('location') location: unknown,
-    @Context() context: GqlContext,
-  ): Promise<User> {
+  async updateMyLocation(@Args('location') location: unknown, @Context() context: GqlContext): Promise<User> {
     const validated = validateGeoLocationInput(location);
     return this.usersService.updateMyLocation(context.user!.id, validated);
   }

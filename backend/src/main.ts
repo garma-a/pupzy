@@ -36,8 +36,7 @@ async function bootstrap(): Promise<void> {
         process.env.NODE_ENV === 'production'
           ? undefined // strict CSP in production
           : false, // relaxed CSP so Playground loads in development
-      crossOriginEmbedderPolicy:
-        process.env.NODE_ENV !== 'production' ? false : true,
+      crossOriginEmbedderPolicy: process.env.NODE_ENV !== 'production' ? false : true,
     }),
   );
 

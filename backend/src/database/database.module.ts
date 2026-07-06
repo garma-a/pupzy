@@ -30,20 +30,17 @@ import { databaseProvider, DATABASE_TOKEN } from './database.provider';
     },
     {
       provide: 'DB_POOL_MAX',
-      useFactory: (config: ConfigService) =>
-        config.get<number>('DB_POOL_MAX') ?? 20,
+      useFactory: (config: ConfigService) => config.get<number>('DB_POOL_MAX') ?? 20,
       inject: [ConfigService],
     },
     {
       provide: 'DB_IDLE_TIMEOUT_MS',
-      useFactory: (config: ConfigService) =>
-        config.get<number>('DB_IDLE_TIMEOUT_MS') ?? 30_000,
+      useFactory: (config: ConfigService) => config.get<number>('DB_IDLE_TIMEOUT_MS') ?? 30_000,
       inject: [ConfigService],
     },
     {
       provide: 'DB_CONNECTION_TIMEOUT_MS',
-      useFactory: (config: ConfigService) =>
-        config.get<number>('DB_CONNECTION_TIMEOUT_MS') ?? 2_000,
+      useFactory: (config: ConfigService) => config.get<number>('DB_CONNECTION_TIMEOUT_MS') ?? 2_000,
       inject: [ConfigService],
     },
     databaseProvider,
@@ -69,10 +66,7 @@ export class DatabaseModule implements OnApplicationShutdown {
         this.logger.log('Connection pool closed gracefully.');
       }
     } catch (err) {
-      this.logger.error(
-        'Error closing connection pool',
-        err instanceof Error ? err.stack : String(err),
-      );
+      this.logger.error('Error closing connection pool', err instanceof Error ? err.stack : String(err));
     }
   }
 }
