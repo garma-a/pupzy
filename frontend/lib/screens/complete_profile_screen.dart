@@ -228,6 +228,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     if (v == null || v.trim().isEmpty) return 'Name is required';
                     if (v.trim().length < 2) return 'At least 2 characters';
                     if (v.trim().length > 120) return 'Maximum 120 characters';
+                    if (RegExp(r'\d').hasMatch(v)) return 'Name cannot contain numbers';
+                    if (!v.trim().contains(' ')) return 'Enter first and last name';
                     return null;
                   },
                 ),
@@ -270,8 +272,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) return 'Phone number is required';
                     final digits = v.trim().replaceAll(RegExp(r'\D'), '');
-                    if (!RegExp(r'^0[1][0125]\d{8}$').hasMatch(digits)) {
-                      return 'Enter a valid Egyptian mobile number';
+                    if (digits.length != 11) return 'Phone number must be 11 digits';
+                    if (!RegExp(r'^01[0125]\d{8}$').hasMatch(digits)) {
+                      return 'Must start with 010, 011, 012, or 015';
                     }
                     return null;
                   },

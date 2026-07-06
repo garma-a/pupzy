@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../services/auth_service.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import 'app_shell.dart';
@@ -50,20 +51,30 @@ class _SplashScreenState extends State<SplashScreen>
       return;
     }
 
+    // Verify the Firebase token is still valid
+    try {
+      await user.getIdToken();
+    } catch (_) {
+      // Token invalid (user deleted from Firebase) — sign out and go to login
+      await context.read<AuthService>().signOut();
+      if (mounted) _goTo(const LoginScreen());
+      return;
+    }
+
     try {
       final graphql = context.read<GraphQLService>();
       final me = await graphql.fetchMe();
       if (!mounted) return;
 
       if (me == null) {
-        _goTo(const CompleteProfileScreen());
+        _goTo(const LoginScreen());
         return;
       }
 
       final profileComplete = me['profileComplete'] == true;
       _goTo(profileComplete ? const AppShell() : const CompleteProfileScreen());
     } catch (_) {
-      if (mounted) _goTo(const CompleteProfileScreen());
+      if (mounted) _goTo(const LoginScreen());
     }
   }
 
