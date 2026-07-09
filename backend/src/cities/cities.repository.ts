@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { asc, inArray, eq } from 'drizzle-orm';
+import { asc, inArray, eq, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import { cities, type City } from '../database/schema';
@@ -14,7 +14,7 @@ export class CitiesRepository {
 
   /** Returns all cities ordered A-Z by English name. */
   async findAll(): Promise<City[]> {
-    return this.db.select().from(cities).orderBy(asc(cities.nameEn));
+    return this.db.select().from(cities).orderBy(asc(cities.nameEnglish));
   }
 
   /**
@@ -44,5 +44,19 @@ export class CitiesRepository {
     // Build a map for O(1) lookup so we preserve the input order
     const cityMap = new Map<string, City>(rows.map((c) => [c.id, c]));
     return ids.map((id) => cityMap.get(id) ?? null);
+  }
+
+  /**
+   * Finds the nearest city to the given GPS coordinates using PostGIS ST_Distance.
+   * Used during profile completion and location updates.
+   */
+  async findNearest(latitude: number, longitude: number): Promise<City | undefined> {
+    const point = `SRID=4326;POINT(${longitude} ${latitude})`;
+    const [city] = await this.db
+      .select()
+      .from(cities)
+      .orderBy(sql`ST_Distance(${cities.centerPoint}, ST_GeomFromEWKT(${point}))`)
+      .limit(1);
+    return city;
   }
 }

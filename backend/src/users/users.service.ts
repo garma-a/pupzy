@@ -10,9 +10,8 @@ import { NotFoundError, ValidationError } from '../common/errors/app.errors';
 import type { User } from '../database/schema';
 
 interface FindOrCreateInput {
-  firebaseUid: string;
+  firebaseUserId: string;
   email: string;
-  authProvider: string;
   photoUrl?: string;
 }
 
@@ -53,33 +52,31 @@ export class UsersService {
    * Creates the user on first login, returns existing user thereafter.
    * This is the ONLY place a user row is created — no separate signup mutation needed.
    *
-   * phoneNumber and cityId will be null until the user calls completeProfile().
+   * phoneNumber and homeCityId will be null until the user calls completeProfile().
    */
   async findOrCreate(input: FindOrCreateInput): Promise<User> {
-    const existing = await this.usersRepository.findByFirebaseUid(input.firebaseUid);
+    const existing = await this.usersRepository.findByFirebaseUserId(input.firebaseUserId);
     if (existing) return this.decryptUserPhone(existing);
 
     if (input.email) {
       const existingByEmail = await this.usersRepository.findByEmail(input.email);
       if (existingByEmail) {
         this.logger.log(
-          `Firebase UID changed for ${input.email}, updating from ${existingByEmail.firebaseUid} to ${input.firebaseUid}`,
+          `Firebase UID changed for ${input.email}, updating from ${existingByEmail.firebaseUserId} to ${input.firebaseUserId}`,
         );
         const updated = await this.usersRepository.update(existingByEmail.id, {
-          firebaseUid: input.firebaseUid,
-          authProvider: input.authProvider,
+          firebaseUserId: input.firebaseUserId,
           profilePictureUrl: input.photoUrl,
         });
-        await this.invalidateUserCache(updated.firebaseUid);
+        await this.invalidateUserCache(updated.firebaseUserId);
         return this.decryptUserPhone(updated);
       }
     }
 
-    this.logger.log(`Creating new user account for Firebase UID: ${input.firebaseUid}`);
+    this.logger.log(`Creating new user account for Firebase UID: ${input.firebaseUserId}`);
     const newUser = await this.usersRepository.create({
-      firebaseUid: input.firebaseUid,
+      firebaseUserId: input.firebaseUserId,
       email: input.email,
-      authProvider: input.authProvider,
       profilePictureUrl: input.photoUrl,
     });
     return this.decryptUserPhone(newUser);
@@ -122,7 +119,10 @@ export class UsersService {
       }
     } else if (data.location) {
       // Auto-resolve city from GPS coordinates via PostGIS ST_Distance
-      const city = await this.usersRepository.findNearestCity(data.location.latitude, data.location.longitude);
+      const city = await this.citiesService.findNearest(
+        data.location.latitude,
+        data.location.longitude,
+      );
       if (!city) {
         throw new NotFoundError('No nearby city found for the provided coordinates.');
       }
@@ -132,27 +132,26 @@ export class UsersService {
     const updatedUser = await this.usersRepository.update(userId, {
       fullName: data.fullName,
       phoneNumber: encryptedPhone,
-      cityId: resolvedCityId,
+      homeCityId: resolvedCityId,
       ...(data.location
         ? {
-            lastKnownLocation:
-              sql`ST_GeomFromEWKT(${`SRID=4326;POINT(${data.location.longitude} ${data.location.latitude})`})` as any,
+            lastKnownLocation: `SRID=4326;POINT(${data.location.longitude} ${data.location.latitude})`,
           }
         : {}),
     });
-    await this.invalidateUserCache(updatedUser.firebaseUid);
+    await this.invalidateUserCache(updatedUser.firebaseUserId);
     return this.decryptUserPhone(updatedUser);
   }
 
-  private async invalidateUserCache(firebaseUid: string): Promise<void> {
-    await this.cacheManager.del(`user_resolve:${firebaseUid}`);
+  private async invalidateUserCache(firebaseUserId: string): Promise<void> {
+    await this.cacheManager.del(`user_resolve:${firebaseUserId}`);
   }
 
   /**
    * Updates an already completed profile.
    */
   async updateProfile(userId: string, data: { fullName: string; phoneNumber?: string }): Promise<User> {
-    const updates: Partial<User> = {
+    const updates: Parameters<typeof this.usersRepository.update>[1] = {
       fullName: data.fullName,
     };
 
@@ -161,7 +160,7 @@ export class UsersService {
     }
 
     const updatedUser = await this.usersRepository.update(userId, updates);
-    await this.invalidateUserCache(updatedUser.firebaseUid);
+    await this.invalidateUserCache(updatedUser.firebaseUserId);
     return this.decryptUserPhone(updatedUser);
   }
 
@@ -169,16 +168,16 @@ export class UsersService {
    * Updates the user's location and nearest city based on GPS coordinates.
    */
   async updateMyLocation(userId: string, location: { latitude: number; longitude: number }): Promise<User> {
-    const city = await this.usersRepository.findNearestCity(location.latitude, location.longitude);
+    const city = await this.citiesService.findNearest(location.latitude, location.longitude);
     if (!city) {
       throw new NotFoundError('No nearby city found for the provided coordinates.');
     }
 
     const updatedUser = await this.usersRepository.update(userId, {
-      cityId: city.id,
-      lastKnownLocation: sql`ST_GeomFromEWKT(${`SRID=4326;POINT(${location.longitude} ${location.latitude})`})` as any,
+      homeCityId: city.id,
+      lastKnownLocation: `SRID=4326;POINT(${location.longitude} ${location.latitude})`,
     });
-    await this.invalidateUserCache(updatedUser.firebaseUid);
+    await this.invalidateUserCache(updatedUser.firebaseUserId);
     return this.decryptUserPhone(updatedUser);
   }
 }

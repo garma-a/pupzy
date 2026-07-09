@@ -3,43 +3,44 @@ import {
   uuid,
   varchar,
   text,
-  timestamp,
-  pgEnum,
-  index,
   boolean,
   integer,
-  geometry,
+  timestamp,
+  index,
 } from 'drizzle-orm/pg-core';
 import { cities } from './cities.schema';
-
-/**
- * `user_role` enum — controls feature access throughout the app.
- *
- * - `USER`  — Standard user. Created automatically on first login.
- * - `ADMIN` — Elevated access. Assigned manually by system administrators.
- */
-export const userRoleEnum = pgEnum('user_role', ['USER', 'ADMIN']);
 
 /**
  * `users` table — central identity table for the Pupzy platform.
  *
  * ## Identity model
- * User identity is managed by Firebase Auth (Google sign-in).
- * This table stores application-level data and references the Firebase UID.
+ * User identity is managed by Firebase Auth (Google + Facebook via FlutterFire).
+ * `firebase_user_id` is the ONLY link between Firebase and this table.
+ * Both Google and Facebook sign-in produce a Firebase UID — Firebase manages
+ * multi-provider identity internally, so we never need to store the provider.
  *
  * ## Row lifecycle
  * 1. **First login** — `FirebaseAuthGuard` calls `UsersService.findOrCreate()`,
- *    which inserts a row with just `firebaseUid`, `email`, and `profilePictureUrl`.
- * 2. **Profile completion** — User calls the `completeProfile` mutation to set
- *    `fullName`, `phoneNumber`, and `cityId`.
+ *    inserting a row with just `firebase_user_id`, `email`, and `profile_picture_url`.
+ * 2. **Profile completion** — User calls `completeProfile` to set
+ *    `full_name`, `phone_number`, and `home_city_id`.
+ *
+ * ## Post counters
+ * The 5 `*_post_count` columns are maintained by a single DB trigger so they
+ * stay correct even when posts are changed directly via AdminJS (which bypasses
+ * NestJS resolvers). The trigger is defined in custom migration SQL.
+ *
+ * ## Phone encryption
+ * `phone_number` is stored as an AES-256-GCM encrypted blob. Decrypted
+ * server-side only for approved WhatsApp contact links and product seller contact.
  *
  * ## Indexes
- * | Column       | Index type   | Reason                                    |
- * |--------------|--------------|-------------------------------------------|
- * | firebase_uid | UNIQUE (auto)| Hot path — looked up on every request     |
- * | email        | UNIQUE (auto)| Uniqueness + account recovery lookups     |
- * | city_id      | B-tree       | Prevents full-table scans for city queries|
- * | created_at   | B-tree       | Sorting + cursor pagination               |
+ * | Column                  | Index type | Reason                                    |
+ * |-------------------------|------------|-------------------------------------------|
+ * | firebase_user_id        | UNIQUE     | Hot path — looked up on every request     |
+ * | email                   | UNIQUE     | Uniqueness + account recovery lookups     |
+ * | home_city_id            | B-tree     | Prevents full-table scans by city         |
+ * | last_known_location     | GIST       | ST_Distance proximity queries (custom SQL)|
  */
 export const users = pgTable(
   'users',
@@ -47,112 +48,117 @@ export const users = pgTable(
     /** Internal Pupzy user ID. Primary key, UUIDv4, auto-generated. */
     id: uuid('id').primaryKey().defaultRandom(),
 
+    // ── Firebase Auth ─────────────────────────────────────────────────────────
     /**
      * Firebase Auth UID. Never changes for a given user.
-     * Used to link every Firebase token to a Pupzy user row.
+     * Used to link every Firebase ID token to a Pupzy user row.
+     * Both Google and Facebook sign-in produce the same firebase_user_id.
      */
-    firebaseUid: varchar('firebase_uid', { length: 128 }).notNull().unique(),
-
-    /**
-     * User's display name. Null until `completeProfile` is called.
-     * Max 120 chars matches the GraphQL SDL validation constraint.
-     */
-    fullName: varchar('full_name', { length: 120 }),
+    firebaseUserId: varchar('firebase_user_id', { length: 128 }).notNull().unique(),
 
     /** Email address sourced from Firebase Auth. Unique per user. */
     email: varchar('email', { length: 255 }).notNull().unique(),
 
+    // ── Profile ───────────────────────────────────────────────────────────────
     /**
-     * Authentication provider that was used for signup (e.g. Google, Facebook, password).
-     * Populated from Firebase token's sign_in_provider.
+     * Display name. NULL until `completeProfile` is called.
+     * Max 120 chars matches the GraphQL SDL validation constraint.
      */
-    authProvider: varchar('auth_provider', { length: 50 }).notNull(),
+    fullName: varchar('full_name', { length: 120 }),
 
-    /** URL of the user's profile picture, sourced from their Google account. */
+    /** Arabic display name. Optional. */
+    fullNameArabic: varchar('full_name_arabic', { length: 120 }),
+
+    /**
+     * Profile picture URL synced from Firebase Auth on first sign-in.
+     * User can override via `updateProfile`.
+     */
     profilePictureUrl: text('profile_picture_url'),
 
     /**
-     * Phone number stored securely as an AES-256-GCM encrypted blob.
-     * Null until `completeProfile` is called.
-     * Used later to construct WhatsApp wa.me/ links.
-     */
-    phoneNumber: text('phone_number'),
-
-    /** Application-level role. Defaults to USER on creation. */
-    role: userRoleEnum('role').notNull().default('USER'),
-
-    /**
-     * Placeholder for Block 2 verified badges.
-     * Denotes whether a user has passed additional identity verification.
+     * Trust badge. Set to `true` after the user completes at least one
+     * successful adoption or sale. Shown on profile cards and post cards.
      */
     isVerified: boolean('is_verified').notNull().default(false),
 
+    // ── Phone — encrypted at rest ─────────────────────────────────────────────
     /**
-     * Foreign key to the `cities` table.
-     * Null until `completeProfile` is called.
-     * Indexed to avoid full-table scans when querying users by city.
+     * AES-256-GCM encrypted phone number. NULL until `completeProfile` is called.
+     * Decrypted server-side only for:
+     *   - Approved contact request WhatsApp links (RESCUE/LOST/ADOPTION)
+     *   - Product seller contact (PRODUCT — no approval gate)
      */
-    cityId: uuid('city_id').references(() => cities.id),
+    phoneNumber: text('phone_number'),
+
+    // ── Location ──────────────────────────────────────────────────────────────
+    /**
+     * City set during `completeProfile`. Feeds default to this city when the
+     * client sends no location override.
+     * FK → cities with SET NULL on city delete (won't happen in practice).
+     */
+    homeCityId: uuid('home_city_id').references(() => cities.id, {
+      onDelete: 'set null',
+    }),
 
     /**
-     * Last known location (PostGIS Point) used for ST_Distance queries.
-     * Never exposed to other users directly.
+     * Last known GPS position as a PostGIS POINT. Updated when the Flutter
+     * app has location permission. Used for proximity sort within a city.
+     * NEVER exposed to other users.
+     * GIST index added in custom migration SQL.
      */
-    lastKnownLocation: geometry('last_known_location', { type: 'point', srid: 4326 }),
+    lastKnownLocation: text('last_known_location'),
 
+    // ── Post counters — profile stats ─────────────────────────────────────────
     /**
-     * Arabic display name.
-     * Max 120 chars.
+     * All 5 counters are maintained TOGETHER by a single DB trigger so they
+     * stay accurate even when posts are changed directly via AdminJS.
+     * Trigger SQL: see drizzle/migrations/custom.sql.
      */
-    fullNameArabic: varchar('full_name_arabic', { length: 120 }),
+    postCount: integer('post_count').notNull().default(0),
+    rescuePostCount: integer('rescue_post_count').notNull().default(0),
+    lostPostCount: integer('lost_post_count').notNull().default(0),
+    adoptionPostCount: integer('adoption_post_count').notNull().default(0),
+    productPostCount: integer('product_post_count').notNull().default(0),
 
-    /** Number of animals the user has rescued. */
-    rescuesCount: integer('rescues_count').notNull().default(0),
-
-    /** Number of animals the user has adopted. */
-    adoptedCount: integer('adopted_count').notNull().default(0),
-
-    /** Number of animals the user is currently helping. */
-    helpingCount: integer('helping_count').notNull().default(0),
-
-    /** Preferred interface language (e.g. 'en', 'ar'). */
-    languagePreference: varchar('language_preference', { length: 10 }).notNull().default('en'),
+    // ── Preferences ───────────────────────────────────────────────────────────
+    /** Preferred interface language. Arabic default for Egypt. */
+    languagePreference: varchar('language_preference', { length: 10 })
+      .notNull()
+      .default('ar'),
 
     /** Whether push notifications are enabled. */
     notificationsEnabled: boolean('notifications_enabled').notNull().default(true),
 
-    /** Privacy level for location and contact (e.g., 'strict', 'public'). */
-    privacyLevel: varchar('privacy_level', { length: 50 }).notNull().default('strict'),
+    /**
+     * Timestamp of the user's most recent authenticated request.
+     * Updated by the auth guard on every request.
+     */
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
 
-    /** Timestamp of row creation. Set once by the database. */
+    /** Row creation timestamp. Set once by the database. */
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 
     /**
-     * Timestamp of last update. Manually set in `UsersRepository.update()`.
-     *
-     * Note: A PostgreSQL trigger (`set_updated_at`) is recommended for
-     * production to auto-update this on any UPDATE outside the repository.
-     * See drizzle/migrations/README.md for the trigger SQL.
+     * Row last-update timestamp. Manually set in `UsersRepository.update()`.
+     * A DB trigger (`set_updated_at`) is recommended — see custom migration SQL.
      */
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    /**
-     * Index on city_id — prevents full-table scans when listing users
-     * in a city, or when joining users to the cities table.
-     */
-    cityIdIdx: index('idx_users_city_id').on(table.cityId),
+    /** Prevents full-table scans when listing users in a city. */
+    homeCityIdx: index('idx_users_home_city').on(table.homeCityId),
 
     /**
-     * Index on created_at — used for sorting newest users first and
-     * for cursor-based pagination queries.
+     * GIST index on last_known_location for ST_Distance proximity queries.
+     * Cannot be expressed here — see custom migration SQL.
      */
-    createdAtIdx: index('idx_users_created_at').on(table.createdAt),
+    // NOTE: CREATE INDEX idx_users_last_known_location ON users USING GIST (last_known_location);
+    // (omitted — Drizzle cannot express USING GIST for text/custom types)
   }),
 );
 
-/** TypeScript type for a full User row — inferred from schema, zero duplication. */
+/** TypeScript type for a full `users` row — inferred from schema, zero duplication. */
 export type User = typeof users.$inferSelect;
 
-/** TypeScript type for inserting a new User row. */
+/** TypeScript type for inserting a new `users` row. */
 export type NewUser = typeof users.$inferInsert;

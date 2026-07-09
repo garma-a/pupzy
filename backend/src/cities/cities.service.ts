@@ -23,6 +23,14 @@ export class CitiesService {
   }
 
   /**
+   * Finds the nearest city to the given GPS coordinates.
+   * Used by UsersService during profile completion and location updates.
+   */
+  findNearest(latitude: number, longitude: number): Promise<City | undefined> {
+    return this.citiesRepository.findNearest(latitude, longitude);
+  }
+
+  /**
    * Creates a fresh DataLoader instance for batch-loading cities by ID.
    *
    * ## Why a factory method?

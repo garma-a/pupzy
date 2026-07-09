@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
-import { users, cities, type User, type NewUser, type City } from '../database/schema';
+import { users, type User, type NewUser } from '../database/schema';
 import type * as schema from '../database/schema';
 
 @Injectable()
@@ -12,34 +12,35 @@ export class UsersRepository {
     private readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
-  async findByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
-    const [user] = await this.db.select().from(users).where(eq(users.firebaseUid, firebaseUid)).limit(1);
+  async findByFirebaseUserId(firebaseUserId: string): Promise<User | undefined> {
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.firebaseUserId, firebaseUserId))
+      .limit(1);
     return user;
   }
 
   async findByEmail(email: string): Promise<User | undefined> {
-    const [user] = await this.db.select().from(users).where(eq(users.email, email)).limit(1);
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
     return user;
   }
 
   async findById(id: string): Promise<User | undefined> {
-    const [user] = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
     return user;
   }
 
-  async findNearestCity(latitude: number, longitude: number): Promise<City | undefined> {
-    const point = `SRID=4326;POINT(${longitude} ${latitude})`;
-    const [city] = await this.db
-      .select()
-      .from(cities)
-      .orderBy(sql`ST_Distance(${cities.centerGeom}, ST_GeomFromEWKT(${point}))`)
-      .limit(1);
-    return city;
-  }
-
   async create(data: NewUser): Promise<User> {
-    const { lastKnownLocation: _loc, ...rest } = data as any;
-    const [user] = await this.db.insert(users).values(rest).returning();
+    const [user] = await this.db.insert(users).values(data).returning();
     return user;
   }
 

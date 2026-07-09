@@ -14,14 +14,17 @@ graphql:
           fullName
           city{
             id,
-            nameEn
+            nameEn,
+            governorate,
+            
           }
         }
       }
     variables: |-
       {
         "input": {
-          "fullName": "patrick"
+          "fullName": "patrick",
+          "phoneNumber":"+201278203355"
         }
       }
   auth: inherit
