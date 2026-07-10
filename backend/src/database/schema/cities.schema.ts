@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { pgTable, uuid, varchar, timestamp, geometry, uniqueIndex, index } from 'drizzle-orm/pg-core';
 
 /**
@@ -20,7 +21,7 @@ export const cities = pgTable(
   'cities',
   {
     /** Internal city ID. Primary key, UUIDv4. */
-    id: uuid('id').primaryKey().defaultRandom(),
+    id: uuid('id').primaryKey().default(sql`uuidv7()`),
 
     /** English display name, e.g. 'Cairo'. */
     nameEnglish: varchar('name_english', { length: 100 }).notNull(),

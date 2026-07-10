@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
   pgTable,
   uuid,
@@ -37,7 +38,7 @@ export const adoptionApplications = pgTable(
   'adoption_applications',
   {
     /** Internal application ID. Primary key, UUIDv4. */
-    id: uuid('id').primaryKey().defaultRandom(),
+    id: uuid('id').primaryKey().default(sql`uuidv7()`),
 
     /**
      * FK → posts (must be an ADOPTION post — enforced in resolver).

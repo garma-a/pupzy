@@ -1,5 +1,5 @@
 {
-  "id": "a9693841-5ce9-4dc8-8405-31d7c3312e3a",
+  "id": "61b39647-dd60-4c9d-8258-fd86d25f74c3",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -13,7 +13,7 @@
           "type": "uuid",
           "primaryKey": true,
           "notNull": true,
-          "default": "gen_random_uuid()"
+          "default": "uuidv7()"
         },
         "name_english": {
           "name": "name_english",
@@ -101,7 +101,7 @@
           "type": "uuid",
           "primaryKey": true,
           "notNull": true,
-          "default": "gen_random_uuid()"
+          "default": "uuidv7()"
         },
         "firebase_user_id": {
           "name": "firebase_user_id",
@@ -290,7 +290,7 @@
           "type": "uuid",
           "primaryKey": true,
           "notNull": true,
-          "default": "gen_random_uuid()"
+          "default": "uuidv7()"
         },
         "creator_id": {
           "name": "creator_id",
@@ -536,7 +536,7 @@
           "type": "uuid",
           "primaryKey": true,
           "notNull": true,
-          "default": "gen_random_uuid()"
+          "default": "uuidv7()"
         },
         "post_id": {
           "name": "post_id",
@@ -1229,7 +1229,7 @@
           "type": "uuid",
           "primaryKey": true,
           "notNull": true,
-          "default": "gen_random_uuid()"
+          "default": "uuidv7()"
         },
         "post_id": {
           "name": "post_id",
@@ -1373,7 +1373,7 @@
           "type": "uuid",
           "primaryKey": true,
           "notNull": true,
-          "default": "gen_random_uuid()"
+          "default": "uuidv7()"
         },
         "target_post_id": {
           "name": "target_post_id",
@@ -1594,7 +1594,7 @@
           "type": "uuid",
           "primaryKey": true,
           "notNull": true,
-          "default": "gen_random_uuid()"
+          "default": "uuidv7()"
         },
         "post_id": {
           "name": "post_id",
@@ -1710,7 +1710,7 @@
           "type": "uuid",
           "primaryKey": true,
           "notNull": true,
-          "default": "gen_random_uuid()"
+          "default": "uuidv7()"
         },
         "recipient_id": {
           "name": "recipient_id",
@@ -1862,7 +1862,7 @@
           "type": "uuid",
           "primaryKey": true,
           "notNull": true,
-          "default": "gen_random_uuid()"
+          "default": "uuidv7()"
         },
         "user_id": {
           "name": "user_id",

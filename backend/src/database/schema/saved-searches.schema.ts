@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { pgTable, uuid, varchar, numeric, timestamp, index } from 'drizzle-orm/pg-core';
 import { users } from './users.schema';
 import { cities } from './cities.schema';
@@ -31,7 +32,7 @@ export const savedSearches = pgTable(
   'saved_searches',
   {
     /** Internal saved search ID. Primary key, UUIDv4. */
-    id: uuid('id').primaryKey().defaultRandom(),
+    id: uuid('id').primaryKey().default(sql`uuidv7()`),
 
     /** FK → users (owner of this alert). CASCADE on user delete. */
     userId: uuid('user_id')

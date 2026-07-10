@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
   pgTable,
   uuid,
@@ -34,7 +35,7 @@ export const contactRequests = pgTable(
   'contact_requests',
   {
     /** Internal request ID. Primary key, UUIDv4. */
-    id: uuid('id').primaryKey().defaultRandom(),
+    id: uuid('id').primaryKey().default(sql`uuidv7()`),
 
     /**
      * FK → posts. CASCADE on post delete.

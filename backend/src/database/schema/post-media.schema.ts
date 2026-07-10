@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { pgTable, uuid, text, integer, varchar, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { timestamp } from 'drizzle-orm/pg-core';
 import { posts } from './posts.schema';
@@ -26,7 +27,7 @@ export const postMedia = pgTable(
   'post_media',
   {
     /** Internal media ID. Primary key, UUIDv4. */
-    id: uuid('id').primaryKey().defaultRandom(),
+    id: uuid('id').primaryKey().default(sql`uuidv7()`),
 
     /**
      * FK → posts. CASCADE ensures media rows are cleaned up when a post is deleted.

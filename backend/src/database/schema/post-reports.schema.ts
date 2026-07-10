@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { pgTable, uuid, text, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
 import { posts } from './posts.schema';
 import { users } from './users.schema';
@@ -26,7 +27,7 @@ export const postReports = pgTable(
   'post_reports',
   {
     /** Internal report ID. Primary key, UUIDv4. */
-    id: uuid('id').primaryKey().defaultRandom(),
+    id: uuid('id').primaryKey().default(sql`uuidv7()`),
 
     /** FK → posts. CASCADE on post delete. */
     postId: uuid('post_id')

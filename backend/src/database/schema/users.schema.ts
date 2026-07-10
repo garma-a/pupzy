@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
   pgTable,
   uuid,
@@ -46,7 +47,7 @@ export const users = pgTable(
   'users',
   {
     /** Internal Pupzy user ID. Primary key, UUIDv4, auto-generated. */
-    id: uuid('id').primaryKey().defaultRandom(),
+    id: uuid('id').primaryKey().default(sql`uuidv7()`),
 
     // ── Firebase Auth ─────────────────────────────────────────────────────────
     /**

@@ -16,7 +16,7 @@ CREATE TYPE "public"."space_requirement" AS ENUM('APARTMENT_OK', 'NEEDS_YARD', '
 CREATE TYPE "public"."species_type" AS ENUM('DOG', 'CAT', 'BIRD', 'RABBIT', 'OTHER');--> statement-breakpoint
 CREATE TYPE "public"."urgency_tier" AS ENUM('CRITICAL', 'URGENT', 'MODERATE');--> statement-breakpoint
 CREATE TABLE "cities" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
 	"name_english" varchar(100) NOT NULL,
 	"name_arabic" varchar(100) NOT NULL,
 	"governorate" varchar(100) NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE "cities" (
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
 	"firebase_user_id" varchar(128) NOT NULL,
 	"email" varchar(255) NOT NULL,
 	"full_name" varchar(120),
@@ -50,7 +50,7 @@ CREATE TABLE "users" (
 );
 --> statement-breakpoint
 CREATE TABLE "posts" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
 	"creator_id" uuid NOT NULL,
 	"post_type" "post_type" NOT NULL,
 	"title" varchar(200) NOT NULL,
@@ -73,7 +73,7 @@ CREATE TABLE "posts" (
 );
 --> statement-breakpoint
 CREATE TABLE "post_media" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
 	"post_id" uuid NOT NULL,
 	"public_url" text NOT NULL,
 	"cloudflare_storage_key" text NOT NULL,
@@ -151,7 +151,7 @@ CREATE TABLE "post_saves" (
 );
 --> statement-breakpoint
 CREATE TABLE "contact_requests" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
 	"post_id" uuid NOT NULL,
 	"requester_id" uuid NOT NULL,
 	"message" text NOT NULL,
@@ -161,7 +161,7 @@ CREATE TABLE "contact_requests" (
 );
 --> statement-breakpoint
 CREATE TABLE "adoption_applications" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
 	"target_post_id" uuid NOT NULL,
 	"applicant_id" uuid NOT NULL,
 	"status" "request_status" DEFAULT 'PENDING' NOT NULL,
@@ -183,7 +183,7 @@ CREATE TABLE "adoption_applications" (
 );
 --> statement-breakpoint
 CREATE TABLE "post_reports" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
 	"post_id" uuid NOT NULL,
 	"reporter_id" uuid NOT NULL,
 	"reason" "report_reason" NOT NULL,
@@ -192,7 +192,7 @@ CREATE TABLE "post_reports" (
 );
 --> statement-breakpoint
 CREATE TABLE "notifications" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
 	"recipient_id" uuid NOT NULL,
 	"type" "notification_type" NOT NULL,
 	"title" varchar(200) NOT NULL,
@@ -205,7 +205,7 @@ CREATE TABLE "notifications" (
 );
 --> statement-breakpoint
 CREATE TABLE "saved_searches" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
 	"user_id" uuid NOT NULL,
 	"label" varchar(200),
 	"post_type" "post_type" NOT NULL,
