@@ -6,11 +6,11 @@ type City {
   """
   English name of the city (e.g. 'Cairo', 'Aswan').
   """
-  nameEn: String!
+  nameEnglish: String!
   """
   Arabic name of the city (e.g. 'القاهرة', 'أسوان').
   """
-  nameAr: String!
+  nameArabic: String!
   """
   The governorate this city belongs to.
   """

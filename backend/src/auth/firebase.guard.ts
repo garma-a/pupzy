@@ -63,7 +63,6 @@ interface CachedUser {
 export class FirebaseAuthGuard implements CanActivate {
   private readonly logger = new Logger(FirebaseAuthGuard.name);
 
-
   /** How long (ms) to cache a resolved user row. */
   private static readonly USER_CACHE_TTL_MS = 60 * 1_000; // 60 s
 
@@ -140,9 +139,8 @@ export class FirebaseAuthGuard implements CanActivate {
     }
 
     const user = await this.usersService.findOrCreate({
-      firebaseUid: decoded.uid,
+      firebaseUserId: decoded.uid,
       email: decoded.email ?? '',
-      authProvider: decoded.firebase?.sign_in_provider ?? 'unknown',
       photoUrl: decoded.picture,
     });
 

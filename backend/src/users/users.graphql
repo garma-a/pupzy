@@ -9,47 +9,53 @@ type User {
   Display name — null until the user completes their profile.
   """
   fullName: String
+  """
+  Arabic display name.
+  """
+  fullNameArabic: String
   profilePictureUrl: String
   """
-  Authentication provider (Google, Facebook, password).
-  """
-  authProvider: String!
-  """
-  Whether the user has passed additional identity verification.
+  Whether the user has passed additional identity verification
+  (set after at least one successful adoption or sale).
   """
   isVerified: Boolean!
   phoneNumber: String
   """
   Whether the user has completed their onboarding profile (phoneNumber + city are both set).
-  Always false after a first Google sign-in — frontend should show the profile-completion screen.
+  Always false after the very first login — frontend should redirect to profile-completion screen.
+  This is a computed field and is never stored in the database.
   """
   profileComplete: Boolean!
   """
-  UUID of the user's city. Null until the user completes their profile.
+  UUID of the user's home city. Null until the user completes their profile.
   """
-  cityId: ID
+  homeCityId: ID
   """
-  The user's city, resolved from cityId via DataLoader. Null until completeProfile is called.
+  The user's home city, resolved via DataLoader. Null until completeProfile is called.
   """
   city: City
   """
-  Arabic display name.
+  Total number of posts across all types.
   """
-  fullNameArabic: String
+  postCount: Int!
   """
-  Number of animals the user has rescued.
+  Number of RESCUE posts created.
   """
-  rescuesCount: Int!
+  rescuePostCount: Int!
   """
-  Number of animals the user has adopted.
+  Number of LOST posts created.
   """
-  adoptedCount: Int!
+  lostPostCount: Int!
   """
-  Number of animals the user is currently helping.
+  Number of ADOPTION posts created.
   """
-  helpingCount: Int!
+  adoptionPostCount: Int!
   """
-  Preferred interface language (e.g. 'en', 'ar').
+  Number of PRODUCT posts created.
+  """
+  productPostCount: Int!
+  """
+  Preferred interface language. Default 'ar' (Arabic-first for Egypt).
   """
   languagePreference: String
   """
@@ -57,9 +63,9 @@ type User {
   """
   notificationsEnabled: Boolean!
   """
-  Privacy level for location and contact (e.g., 'strict', 'public').
+  Timestamp of the user's most recent authenticated request.
   """
-  privacyLevel: String!
+  lastSeenAt: DateTime
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -106,7 +112,7 @@ input UpdateProfileInput {
   """
   fullName: String!
   """
-  Phone number in E.164 format (e.g. +201012345678).
+  Phone number in E.164 format (e.g. +201012345678). Optional — only update if changing.
   """
   phoneNumber: String
 }
@@ -127,7 +133,7 @@ type Query {
 type Mutation {
   """
   Completes a user's profile on first login.
-  Sets fullName, phoneNumber, and cityId.
+  Sets fullName, phoneNumber, and home city.
   Requires authentication.
   """
   completeProfile(input: CompleteProfileInput!): User!

@@ -17,7 +17,10 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "ts-node -r tsconfig-paths/register src/database/seed.ts",
+    "db:custom": "PGPASSWORD=admin psql -h localhost -U admin -d pupzy -f drizzle/custom.sql"
   },
   "dependencies": {
     "@apollo/server": "^5.5.1",

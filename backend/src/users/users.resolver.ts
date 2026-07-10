@@ -15,8 +15,8 @@ import type { GqlContext } from '../common/types/gql-context.type';
  * `@CurrentUser()` injects the already-resolved `User` from the GQL context.
  *
  * ## Field resolvers
- * - `profileComplete` — computed from `phoneNumber` + `cityId`, never stored in DB
- * - `city` — resolved from `cityId` via the per-request `cityById` DataLoader,
+ * - `profileComplete` — computed from `phoneNumber` + `homeCityId`, never stored in DB
+ * - `city` — resolved from `homeCityId` via the per-request `cityById` DataLoader,
  *   batching all city lookups in a single query regardless of how many users
  *   are returned in a list
  */
@@ -33,15 +33,15 @@ export class UsersResolver {
   }
 
   /**
-   * Computed field — true only when phoneNumber AND cityId are both set.
+   * Computed field — true only when phoneNumber AND homeCityId are both set.
    *
-   * Google Sign-In never provides a phone number, so this will always be
-   * false on the very first login. The frontend should check this field
+   * Google/Facebook Sign-In never provides a phone number, so this will always
+   * be false on the very first login. The frontend should check this field
    * after every login and redirect to the profile-completion screen if false.
    */
   @ResolveField('profileComplete')
   profileComplete(@Root() user: User): boolean {
-    return user.phoneNumber !== null && user.phoneNumber !== '' && user.cityId !== null;
+    return user.phoneNumber !== null && user.phoneNumber !== '' && user.homeCityId !== null;
   }
 
   /**
@@ -51,12 +51,12 @@ export class UsersResolver {
    * users. DataLoader batches all `cityById.load()` calls within the same
    * event-loop tick into a single `WHERE id = ANY($1)` query.
    *
-   * Returns null if the user has not yet completed their profile (cityId = null).
+   * Returns null if the user has not yet completed their profile (homeCityId = null).
    */
   @ResolveField('city')
   city(@Root() user: User, @Context() ctx: GqlContext): Promise<City | null> {
-    if (!user.cityId) return Promise.resolve(null);
-    return ctx.loaders.cityById.load(user.cityId);
+    if (!user.homeCityId) return Promise.resolve(null);
+    return ctx.loaders.cityById.load(user.homeCityId);
   }
 
   /**

@@ -1,0 +1,282 @@
+"""
+GPS coordinate pair returned for RESCUE and LOST posts only.
+Never returned for ADOPTION or PRODUCT — those show city name + distance only.
+"""
+type GeoLocation {
+  latitude: Float!
+  longitude: Float!
+}
+
+"""
+A media item (image) attached to a post.
+"""
+type PostMedia {
+  id: ID!
+  """
+  Public CDN URL served by Cloudflare R2. Render directly in Flutter Image widget.
+  """
+  publicUrl: String!
+  """
+  Render order within the post. 0 = primary thumbnail shown on feed cards.
+  """
+  displayOrder: Int!
+  """
+  MIME type of the uploaded file, e.g. 'image/webp'.
+  """
+  fileContentType: String
+  """
+  Pixel width — used by Flutter to pre-allocate image placeholder size.
+  """
+  width: Int
+  """
+  Pixel height — used by Flutter to pre-allocate image placeholder size.
+  """
+  height: Int
+}
+
+"""
+Base post type — all feed and list queries return this shape.
+Extension-type-specific fields (RescuePost, LostPost, etc.) are resolved
+only on the single-post detail screen via a separate query.
+"""
+type Post {
+  id: ID!
+  creator: User!
+  postType: PostType!
+  title: String!
+  description: String!
+  status: PostStatus!
+  moderationStatus: ModerationStatus!
+  """
+  Required for RESCUE and LOST. Null for ADOPTION and PRODUCT.
+  """
+  urgency: UrgencyTier
+  city: City!
+  """
+  Human-readable neighborhood, e.g. 'Maadi'. Optional.
+  """
+  areaName: String
+  """
+  GPS coordinates. Only returned for RESCUE and LOST posts.
+  Null for ADOPTION and PRODUCT (city name + distance only).
+  """
+  coordinates: GeoLocation
+  """
+  Populated for PRODUCT posts. Null for RESCUE, LOST, ADOPTION.
+  Denormalized copy of ProductPost.category for feed queries without joining the extension table.
+  """
+  marketCategory: ProductCategory
+  upvoteCount: Int!
+  saveCount: Int!
+  viewCount: Int!
+  effectiveScore: Float!
+  media: [PostMedia!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Extension data for RESCUE posts. Fetched only on the detail screen.
+"""
+type RescuePost {
+  postId: ID!
+  species: SpeciesType!
+  """
+  Free-text condition description, e.g. 'Cat with a broken leg, bleeding from left ear.'
+  """
+  conditionSummary: String!
+  """
+  Coordination signal: REPORTING = animal spotted but reporter is gone;
+  ON_SITE = reporter is with the animal; CAN_TRANSPORT = reporter can move the animal.
+  """
+  reporterRole: ReporterRole!
+}
+
+"""
+Extension data for LOST posts. Fetched only on the detail screen.
+Covers both LOST_PET (owner searching) and FOUND_STRAY (reporter found a stray).
+"""
+type LostPost {
+  postId: ID!
+  reportType: LostFoundType!
+  species: SpeciesType!
+  breed: String
+  """
+  Physical description — e.g. 'Black and white cat with scar on left ear.'
+  """
+  colorAndMarkings: String
+  """
+  Whether the animal has a collar with an identification tag.
+  """
+  hasCollarWithIdentificationTag: Boolean
+  """
+  Context about how the pet was lost (LOST_PET) or found (FOUND_STRAY).
+  """
+  circumstances: String
+  "LOST_PET only — pet's name if known."
+  petName: String
+  "LOST_PET only — date the pet was last seen."
+  dateLastSeen: String
+  "FOUND_STRAY only — physical condition of the found animal."
+  currentCondition: FoundAnimalCondition
+  "FOUND_STRAY only — whether the reporter has the animal in a safe place."
+  isCurrentlySafeWithReporter: Boolean
+  "FOUND_STRAY only — date the reporter found the animal."
+  dateFound: String
+}
+
+"""
+Extension data for ADOPTION posts. Fetched only on the detail screen.
+"""
+type AdoptionPost {
+  postId: ID!
+  petName: String!
+  species: SpeciesType!
+  breed: String
+  """
+  Numeric part of age, e.g. 3 (means '3 months'). Null if age unknown.
+  """
+  ageValue: Int
+  """
+  Unit for ageValue. Always set when ageValue is set.
+  """
+  ageUnit: AgeUnit
+  gender: GenderType!
+  vaccinated: Boolean!
+  neutered: Boolean!
+  healthNotes: String
+  """
+  Personality tags describing the pet's temperament.
+  """
+  personalityTags: [PersonalityTag!]!
+  spaceRequirement: SpaceRequirement
+  """
+  Whether prior experience with this species is required from the adopter.
+  """
+  priorPetExperienceRequired: Boolean!
+  additionalRequirements: String
+  """
+  Where the pet currently is, e.g. 'Foster home in Maadi'.
+  """
+  currentlyWith: String
+}
+
+"""
+Extension data for PRODUCT posts. Fetched only on the detail screen.
+"""
+type ProductPost {
+  postId: ID!
+  category: ProductCategory!
+  condition: ProductCondition!
+  """
+  Price in priceCurrency. Null when isFree is true.
+  """
+  priceAmount: Float
+  """
+  ISO 4217 currency code. Default 'EGP'.
+  """
+  priceCurrency: String!
+  isFree: Boolean!
+  """
+  Whether the seller is open to price negotiation.
+  """
+  openToOffers: Boolean!
+}
+
+"""
+A contact request for RESCUE, LOST, or ADOPTION posts.
+The WhatsApp link is only available when status = APPROVED.
+"""
+type ContactRequest {
+  id: ID!
+  postId: ID!
+  requester: User!
+  """
+  Message from the requester explaining why they want to connect.
+  """
+  message: String!
+  status: RequestStatus!
+  """
+  WhatsApp link (wa.me/...). Only returned when status = APPROVED.
+  Built at query time from decrypted phone number — never stored.
+  """
+  whatsappLink: String
+  respondedAt: DateTime
+  createdAt: DateTime!
+}
+
+"""
+An adoption application questionnaire.
+Visible only to the applicant and the listing owner.
+"""
+type AdoptionApplication {
+  id: ID!
+  targetPostId: ID!
+  applicant: User!
+  status: RequestStatus!
+  speciesPreference: SpeciesType
+  breedPreference: String
+  agePreference: String
+  genderPreference: GenderType
+  livingSituation: LivingSituation!
+  hasOutdoorAccess: Boolean!
+  hasOtherPetsAtHome: Boolean!
+  hasChildrenAtHome: Boolean!
+  hoursAtHomePerDay: Int
+  previousPetExperience: String
+  """
+  Why the applicant wants to adopt this specific animal. Required.
+  """
+  whyAdopt: String!
+  consentHomeVisit: Boolean!
+  canProvideVetReference: Boolean!
+  respondedAt: DateTime
+  createdAt: DateTime!
+}
+
+"""
+A content moderation report submitted by a user.
+"""
+type PostReport {
+  id: ID!
+  postId: ID!
+  reason: ReportReason!
+  details: String
+  createdAt: DateTime!
+}
+
+"""
+An in-app notification for the current user.
+"""
+type Notification {
+  id: ID!
+  type: NotificationType!
+  title: String!
+  body: String!
+  """
+  Related post, if applicable. Null if the post was later deleted.
+  """
+  relatedPostId: ID
+  isRead: Boolean!
+  createdAt: DateTime!
+}
+
+"""
+A saved search alert that fires SYSTEM_ANNOUNCEMENT notifications
+when a new matching post is created.
+Only ADOPTION and PRODUCT post types are supported.
+"""
+type SavedSearch {
+  id: ID!
+  label: String
+  postType: PostType!
+  cityId: ID
+  species: SpeciesType
+  breed: String
+  marketCategory: ProductCategory
+  """
+  Maximum price filter. Null means no price ceiling.
+  """
+  maxPrice: Float
+  createdAt: DateTime!
+}

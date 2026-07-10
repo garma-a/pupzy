@@ -1,0 +1,168 @@
+"Which section a post belongs to."
+enum PostType {
+  "Animal needing immediate rescue."
+  RESCUE
+  "Lost pet or found stray. See LostFoundType for direction."
+  LOST
+  "Owner is rehoming a pet."
+  ADOPTION
+  "Animal-related classifieds (OLX/Dubizzle style)."
+  PRODUCT
+}
+
+"Discriminates the direction within the LOST section."
+enum LostFoundType {
+  "Owner is searching for their own lost pet."
+  LOST_PET
+  "Reporter found a stray of unknown ownership."
+  FOUND_STRAY
+}
+
+"Lifecycle state of a post."
+enum PostStatus {
+  ACTIVE
+  "RESCUE: animal was helped."
+  RESOLVED
+  "LOST: pet returned to owner."
+  REUNITED
+  "ADOPTION: pet was adopted."
+  ADOPTED
+  "PRODUCT: item was sold."
+  SOLD
+  "Admin or creator removed the post."
+  REMOVED
+}
+
+"AI / admin moderation pipeline state."
+enum ModerationStatus {
+  PENDING_AUTO_REVIEW
+  CLEAN
+  FLAGGED
+}
+
+"Emergency urgency tier. Required for RESCUE and LOST, null for ADOPTION and PRODUCT."
+enum UrgencyTier {
+  CRITICAL
+  URGENT
+  MODERATE
+}
+
+"Animal species."
+enum SpeciesType {
+  DOG
+  CAT
+  BIRD
+  RABBIT
+  OTHER
+}
+
+"Animal gender."
+enum GenderType {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+"Unit for the age_value field on adoption posts."
+enum AgeUnit {
+  DAYS
+  WEEKS
+  MONTHS
+  YEARS
+}
+
+"Coordination signal on a rescue post."
+enum ReporterRole {
+  "Animal spotted but reporter no longer on site."
+  REPORTING
+  "Reporter is currently at the animal's location."
+  ON_SITE
+  "Reporter is with the animal and can transport it."
+  CAN_TRANSPORT
+}
+
+"Physical condition of a found stray animal."
+enum FoundAnimalCondition {
+  HEALTHY
+  INJURED
+  UNKNOWN
+}
+
+"Space requirement for an adoption listing."
+enum SpaceRequirement {
+  APARTMENT_OK
+  NEEDS_YARD
+  NEEDS_FARM_OR_LARGE_SPACE
+}
+
+"Applicant's current living situation."
+enum LivingSituation {
+  APARTMENT
+  HOUSE_WITH_YARD
+  FARM
+  OTHER
+}
+
+"Product category for animal-related classifieds."
+enum ProductCategory {
+  CARE
+  FOOD
+  TRANSPORT
+  ACCESSORIES
+  GROOMING
+  MEDICAL_SUPPLIES
+  OTHER
+}
+
+"Physical condition of a listed product."
+enum ProductCondition {
+  NEW
+  LIKE_NEW
+  USED
+}
+
+"Lifecycle status for contact requests and adoption applications."
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+"Reason a user reported a post."
+enum ReportReason {
+  UNRELATED_TO_ANIMALS
+  SPAM
+  INAPPROPRIATE_CONTENT
+  SCAM
+  DUPLICATE
+  OTHER
+}
+
+"Type of in-app notification."
+enum NotificationType {
+  NEW_UPVOTE
+  POST_SAVED
+  CONTACT_REQUEST_RECEIVED
+  CONTACT_REQUEST_APPROVED
+  CONTACT_REQUEST_REJECTED
+  ADOPTION_APPLICATION_RECEIVED
+  ADOPTION_APPLICATION_APPROVED
+  ADOPTION_APPLICATION_REJECTED
+  POST_REMOVED_BY_ADMIN
+  POST_INACTIVITY_NUDGE
+  SYSTEM_ANNOUNCEMENT
+}
+
+"Personality trait tag for an adoption pet."
+enum PersonalityTag {
+  PLAYFUL
+  GENTLE
+  INDOOR
+  OUTDOOR
+  GOOD_WITH_KIDS
+  GOOD_WITH_CATS
+  GOOD_WITH_DOGS
+  SHY
+  ENERGETIC
+  CALM
+}

@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1782878518912,
-      "tag": "0000_clean_shadowcat",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1782894333289,
-      "tag": "0001_conscious_random",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1782976026451,
-      "tag": "0002_old_firebrand",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1783091586270,
-      "tag": "0003_amusing_agent_brand",
+      "when": 1783681139086,
+      "tag": "0000_init",
       "breakpoints": true
     }
   ]
