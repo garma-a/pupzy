@@ -17,6 +17,7 @@
 
 -- RESCUE and LOST posts must have urgency.
 -- ADOPTION and PRODUCT posts must NOT have urgency.
+ALTER TABLE posts DROP CONSTRAINT IF EXISTS chk_posts_urgency_by_type;
 ALTER TABLE posts ADD CONSTRAINT chk_posts_urgency_by_type
   CHECK (
     (post_type IN ('RESCUE', 'LOST') AND urgency IS NOT NULL)
@@ -25,6 +26,7 @@ ALTER TABLE posts ADD CONSTRAINT chk_posts_urgency_by_type
   );
 
 -- PRODUCT: is_free=true requires price_amount=NULL; is_free=false requires price_amount IS NOT NULL.
+ALTER TABLE product_posts DROP CONSTRAINT IF EXISTS chk_product_price_by_free;
 ALTER TABLE product_posts ADD CONSTRAINT chk_product_price_by_free
   CHECK (
     (is_free = TRUE AND price_amount IS NULL)
@@ -33,6 +35,7 @@ ALTER TABLE product_posts ADD CONSTRAINT chk_product_price_by_free
   );
 
 -- ADOPTION: age_value and age_unit must both be set or both be NULL.
+ALTER TABLE adoption_posts DROP CONSTRAINT IF EXISTS chk_adoption_age_pairing;
 ALTER TABLE adoption_posts ADD CONSTRAINT chk_adoption_age_pairing
   CHECK (
     (age_value IS NULL AND age_unit IS NULL)
@@ -41,12 +44,14 @@ ALTER TABLE adoption_posts ADD CONSTRAINT chk_adoption_age_pairing
   );
 
 -- LOST: field-set integrity between LOST_PET and FOUND_STRAY.
--- LOST_PET  → current_condition, is_currently_safe_with_reporter, date_found must be NULL
--- FOUND_STRAY → pet_name, date_last_seen must be NULL
+-- LOST_PET  → date_last_seen required; current_condition, is_currently_safe_with_reporter, date_found must be NULL
+-- FOUND_STRAY → current_condition, is_currently_safe_with_reporter, date_found required; pet_name, date_last_seen must be NULL
+ALTER TABLE lost_posts DROP CONSTRAINT IF EXISTS chk_lost_posts_report_fields;
 ALTER TABLE lost_posts ADD CONSTRAINT chk_lost_posts_report_fields
   CHECK (
     (
       report_type = 'LOST_PET'
+      AND date_last_seen IS NOT NULL
       AND current_condition IS NULL
       AND is_currently_safe_with_reporter IS NULL
       AND date_found IS NULL
@@ -54,6 +59,9 @@ ALTER TABLE lost_posts ADD CONSTRAINT chk_lost_posts_report_fields
     OR
     (
       report_type = 'FOUND_STRAY'
+      AND current_condition IS NOT NULL
+      AND is_currently_safe_with_reporter IS NOT NULL
+      AND date_found IS NOT NULL
       AND pet_name IS NULL
       AND date_last_seen IS NULL
     )
@@ -138,10 +146,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_users_updated_at ON users;
 CREATE TRIGGER trg_users_updated_at
   BEFORE UPDATE ON users
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+DROP TRIGGER IF EXISTS trg_posts_updated_at ON posts;
 CREATE TRIGGER trg_posts_updated_at
   BEFORE UPDATE ON posts
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -189,23 +199,30 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_sync_user_post_counts ON posts;
 CREATE TRIGGER trg_sync_user_post_counts
   AFTER INSERT OR DELETE ON posts
   FOR EACH ROW EXECUTE FUNCTION sync_user_post_counts();
 
 -- ── 5c. Post report_count denormalization ────────────────────────────────────
--- Increments posts.report_count when a new report row is inserted.
+-- Increments posts.report_count when a new report row is inserted,
+-- and decrements when deleted.
 
-CREATE OR REPLACE FUNCTION increment_post_report_count()
+CREATE OR REPLACE FUNCTION sync_post_report_count()
 RETURNS TRIGGER AS $$
 BEGIN
-  UPDATE posts
-  SET report_count = report_count + 1
-  WHERE id = NEW.post_id;
-  RETURN NEW;
+  IF TG_OP = 'INSERT' THEN
+    UPDATE posts SET report_count = report_count + 1 WHERE id = NEW.post_id;
+    RETURN NEW;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE posts SET report_count = report_count - 1 WHERE id = OLD.post_id;
+    RETURN OLD;
+  END IF;
+  RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_post_report_count ON post_reports;
 CREATE TRIGGER trg_post_report_count
-  AFTER INSERT ON post_reports
-  FOR EACH ROW EXECUTE FUNCTION increment_post_report_count();
+  AFTER INSERT OR DELETE ON post_reports
+  FOR EACH ROW EXECUTE FUNCTION sync_post_report_count();
