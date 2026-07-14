@@ -20,8 +20,10 @@ import { pgTable, uuid, varchar, timestamp, geometry, uniqueIndex, index } from 
 export const cities = pgTable(
   'cities',
   {
-    /** Internal city ID. Primary key, UUIDv4. */
-    id: uuid('id').primaryKey().default(sql`uuidv7()`),
+    /** Internal city ID. Primary key, UUIDv7. */
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
 
     /** English display name, e.g. 'Cairo'. */
     nameEnglish: varchar('name_english', { length: 100 }).notNull(),

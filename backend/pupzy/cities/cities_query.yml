@@ -11,8 +11,9 @@ graphql:
       query{
         cities{
           id,
-          nameAr,
-          nameEn
+          nameEnglish,
+          nameArabic,
+          governorate
         }
       }
   auth: inherit
