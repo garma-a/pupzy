@@ -1,0 +1,26 @@
+input RequestMediaUploadInput {
+  """MIME type of the file. Must be one of: image/webp, image/jpeg, image/png."""
+  contentType: String!
+  """File size in bytes. Maximum 5MB (5,242,880 bytes)."""
+  fileSizeBytes: Int!
+}
+
+type MediaUploadResponse {
+  """UUID to reference this media when creating a post."""
+  mediaId: ID!
+  """Presigned PUT URL — upload image bytes here via HTTP PUT."""
+  uploadUrl: String!
+  """URL expiry timestamp. Upload must complete before this time."""
+  expiresAt: DateTime!
+}
+
+extend type Mutation {
+  """
+  Generate a presigned Cloudflare R2 upload URL.
+  Call this BEFORE creating a post. Flutter uploads the image bytes
+  directly to the returned URL via HTTP PUT, then passes the mediaId
+  to the create mutation.
+  Maximum 4 images per post (enforced at post creation time).
+  """
+  requestMediaUploadUrl(input: RequestMediaUploadInput!): MediaUploadResponse!
+}

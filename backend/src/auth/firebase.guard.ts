@@ -81,10 +81,21 @@ export class FirebaseAuthGuard implements CanActivate {
     ]);
     if (isPublic) return true;
 
-    // ── 2. Extract token from GraphQL context ───────────────────────────────
-    const ctx = GqlExecutionContext.create(context);
-    const { req } = ctx.getContext<GqlContext>();
-    const authHeader = req.headers?.authorization ?? req.headers?.['authorization'];
+    // ── 2. Extract token from GraphQL or HTTP context ────────────────────────
+    let authHeader: string | undefined;
+    if (context.getType() === 'http') {
+      const req = context.switchToHttp().getRequest();
+      authHeader = req.headers?.authorization ?? req.headers?.['authorization'];
+    } else {
+      const ctx = GqlExecutionContext.create(context);
+      const gqlCtx = ctx.getContext();
+      const req = gqlCtx.req;
+      if (req) {
+        authHeader = req.headers?.authorization ?? req.headers?.['authorization'];
+      } else if (gqlCtx.connectionParams) {
+        authHeader = gqlCtx.connectionParams.Authorization ?? gqlCtx.connectionParams.authorization;
+      }
+    }
 
     if (!authHeader?.startsWith('Bearer ')) {
       throw new UnauthorizedException('Missing or malformed Authorization header');
@@ -142,6 +153,7 @@ export class FirebaseAuthGuard implements CanActivate {
       firebaseUserId: decoded.uid,
       email: decoded.email ?? '',
       photoUrl: decoded.picture,
+      emailVerified: decoded.email_verified || false,
     });
 
     await this.cacheManager.set(

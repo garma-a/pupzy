@@ -29,6 +29,18 @@ const envSchema = z.object({
   FIREBASE_CLIENT_EMAIL: z.string().email({ message: 'FIREBASE_CLIENT_EMAIL must be a valid email' }),
   FIREBASE_PRIVATE_KEY: z.string().min(1),
 
+  // ─── Cloudflare R2 (S3-compatible object storage) ─────────────────────
+  /** Cloudflare account ID — found in the R2 dashboard URL. */
+  R2_ACCOUNT_ID: z.string().min(1),
+  /** R2 API token access key ID. */
+  R2_ACCESS_KEY_ID: z.string().min(1),
+  /** R2 API token secret access key. */
+  R2_SECRET_ACCESS_KEY: z.string().min(1),
+  /** R2 bucket name, e.g. 'pupzy-media'. */
+  R2_BUCKET_NAME: z.string().min(1),
+  /** Public URL for the R2 bucket, e.g. 'https://pub-xxx.r2.dev'. */
+  R2_PUBLIC_URL: z.string().url({ message: 'R2_PUBLIC_URL must be a valid URL' }),
+
   // ─── Application ─────────────────────────────────────────────────────────
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(3000),

@@ -1,5 +1,5 @@
 import DataLoader from 'dataloader';
-import type { City } from '../../database/schema';
+import type { City, User, PostMedia } from '../../database/schema';
 
 /**
  * DataLoaders bag — one instance per GraphQL request.
@@ -19,4 +19,15 @@ import type { City } from '../../database/schema';
 export interface DataLoaders {
   /** Batch-loads City rows by UUID. Returns `null` for unknown IDs. */
   cityById: DataLoader<string, City | null>;
+
+  /** Batch-loads User rows by UUID. Returns `null` for unknown IDs. */
+  userById: DataLoader<string, User | null>;
+
+  /**
+   * Batch-loads PostMedia rows grouped by post UUID.
+   * Returns an ordered array (by display_order) for each post.
+   * Returns an empty array for posts with no media.
+   */
+  mediaByPostId: DataLoader<string, PostMedia[]>;
 }
+

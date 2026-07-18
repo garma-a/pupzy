@@ -9,6 +9,7 @@ import {
   doublePrecision,
   timestamp,
   index,
+  geometry,
 } from 'drizzle-orm/pg-core';
 import { cities } from './cities.schema';
 import { users } from './users.schema';
@@ -108,7 +109,7 @@ export const posts = pgTable(
      * GIST index added in custom migration SQL.
      * Stored as text EWKT so Drizzle can write/read without PostGIS driver issues.
      */
-    coordinates: text('coordinates').notNull(),
+    coordinates: geometry('coordinates', { type: 'point', srid: 4326 }).notNull(),
 
     // ── Market category — denormalized from product_posts ─────────────────────
 

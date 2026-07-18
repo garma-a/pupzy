@@ -280,3 +280,150 @@ type SavedSearch {
   maxPrice: Float
   createdAt: DateTime!
 }
+
+# ─── Create Mutation Inputs ──────────────────────────────────────────────────
+
+"""
+Input for creating a RESCUE post.
+Urgency is required (enforced by chk_posts_urgency_by_type).
+Coordinates are returned to clients for Google Maps deep-link.
+"""
+input CreateRescuePostInput {
+  title: String!
+  description: String!
+  """UUID of city from the cities dropdown. Optional if coordinates provided."""
+  cityId: ID
+  """GPS coordinates — required. Auto-resolves city if cityId is not provided."""
+  coordinates: GeoLocationInput!
+  """Optional neighborhood name, e.g. 'Maadi'."""
+  areaName: String
+  """Emergency urgency tier. Required for RESCUE."""
+  urgency: UrgencyTier!
+  species: SpeciesType!
+  """Free text condition description, e.g. 'Cat with broken leg, near the school'."""
+  conditionSummary: String!
+  """Coordination signal: REPORTING, ON_SITE, or CAN_TRANSPORT."""
+  reporterRole: ReporterRole!
+  """Media IDs from requestMediaUploadUrl. Max 4."""
+  mediaIds: [ID!]
+}
+
+"""
+Input for creating a LOST post (covers both LOST_PET and FOUND_STRAY).
+The reportType discriminator determines which fields are required.
+Urgency is required.
+"""
+input CreateLostPostInput {
+  title: String!
+  description: String!
+  cityId: ID
+  coordinates: GeoLocationInput!
+  areaName: String
+  urgency: UrgencyTier!
+  """LOST_PET or FOUND_STRAY — drives field validation."""
+  reportType: LostFoundType!
+  species: SpeciesType!
+  breed: String
+  """Physical description, e.g. 'orange tabby, white paws'."""
+  colorAndMarkings: String
+  """Whether the animal has a collar with an identification tag."""
+  hasCollarWithIdentificationTag: Boolean
+  """How the pet was lost or how the animal was found."""
+  circumstances: String
+  """LOST_PET only — pet's name if known."""
+  petName: String
+  """LOST_PET only — date the pet was last seen. ISO date (YYYY-MM-DD)."""
+  dateLastSeen: String
+  """FOUND_STRAY only — physical condition of the found animal."""
+  currentCondition: FoundAnimalCondition
+  """FOUND_STRAY only — is the finder currently keeping the animal safe?"""
+  isCurrentlySafeWithReporter: Boolean
+  """FOUND_STRAY only — date the animal was found. ISO date (YYYY-MM-DD)."""
+  dateFound: String
+  """Media IDs from requestMediaUploadUrl. Max 4."""
+  mediaIds: [ID!]
+}
+
+"""
+Input for creating an ADOPTION post.
+No urgency (null for ADOPTION per chk_posts_urgency_by_type).
+Coordinates never returned to clients — city name + distance only.
+"""
+input CreateAdoptionPostInput {
+  title: String!
+  description: String!
+  cityId: ID
+  coordinates: GeoLocationInput!
+  areaName: String
+  petName: String!
+  species: SpeciesType!
+  breed: String
+  """Numeric part of age, e.g. 3 (means '3 months'). Must pair with ageUnit."""
+  ageValue: Int
+  """Unit for ageValue. Must pair with ageValue."""
+  ageUnit: AgeUnit
+  gender: GenderType!
+  vaccinated: Boolean!
+  neutered: Boolean!
+  healthNotes: String
+  """Personality tags describing the pet's temperament."""
+  personalityTags: [PersonalityTag!]
+  spaceRequirement: SpaceRequirement
+  """Whether prior experience with this species is required from the adopter."""
+  priorPetExperienceRequired: Boolean!
+  additionalRequirements: String
+  """Where the pet currently is, e.g. 'Foster home in Maadi'."""
+  currentlyWith: String
+  """Media IDs from requestMediaUploadUrl. Max 4."""
+  mediaIds: [ID!]
+}
+
+"""
+Input for creating a PRODUCT post.
+No urgency (null for PRODUCT per chk_posts_urgency_by_type).
+Coordinates never returned to clients. No upvote button on Market.
+"""
+input CreateProductPostInput {
+  title: String!
+  description: String!
+  cityId: ID
+  coordinates: GeoLocationInput!
+  areaName: String
+  """Product category. Also sets posts.market_category (denormalized)."""
+  category: ProductCategory!
+  condition: ProductCondition!
+  """Required if isFree is false. Null when free (chk_product_price_by_free)."""
+  priceAmount: Float
+  """ISO 4217 currency code. Defaults to 'EGP'."""
+  priceCurrency: String
+  """Enables 'Free / Giveaway' listings. When true, priceAmount must be null."""
+  isFree: Boolean!
+  """Shows 'price negotiable' badge on the card."""
+  openToOffers: Boolean
+  """Media IDs from requestMediaUploadUrl. Max 4."""
+  mediaIds: [ID!]
+}
+
+extend type Mutation {
+  """
+  Create a RESCUE post. Urgency is required.
+  Coordinates returned to Flutter for Google Maps deep-link.
+  """
+  createRescuePost(input: CreateRescuePostInput!): Post!
+  """
+  Create a LOST/FOUND post. reportType discriminates LOST_PET vs FOUND_STRAY.
+  Coordinates returned to Flutter for Google Maps deep-link.
+  """
+  createLostPost(input: CreateLostPostInput!): Post!
+  """
+  Create an ADOPTION post. No coordinates returned to clients.
+  Contact goes through the contact request approval gate.
+  """
+  createAdoptionPost(input: CreateAdoptionPostInput!): Post!
+  """
+  Create a PRODUCT post. No coordinates returned to clients.
+  No upvote button on Market. Seller phone decrypted directly.
+  """
+  createProductPost(input: CreateProductPostInput!): Post!
+}
+

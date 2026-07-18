@@ -18,6 +18,10 @@ import { FirebaseAuthGuard } from './auth/firebase.guard';
 import { UsersModule } from './users/users.module';
 import { CitiesModule } from './cities/cities.module';
 import { CitiesService } from './cities/cities.service';
+import { UsersService } from './users/users.service';
+import { PostsModule } from './posts/posts.module';
+import { PostsRepository } from './posts/posts.repository';
+import { UploadModule } from './upload/upload.module';
 import { HealthModule } from './health/health.module';
 import { GqlExceptionFilter } from './common/filters/gql-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
@@ -58,9 +62,14 @@ import type { GqlContext } from './common/types/gql-context.type';
     // ── GraphQL: schema-first, reads SDL .graphql files ──────────────────
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloDriver,
-      imports: [CitiesModule],
-      inject: [ConfigService, CitiesService],
-      useFactory: (config: ConfigService, citiesService: CitiesService) => ({
+      imports: [CitiesModule, UsersModule, PostsModule],
+      inject: [ConfigService, CitiesService, UsersService, PostsRepository],
+      useFactory: (
+        config: ConfigService,
+        citiesService: CitiesService,
+        usersService: UsersService,
+        postsRepository: PostsRepository,
+      ) => ({
         /**
          * Schema-first: all type definitions live in `.graphql` files.
          * Drizzle-inferred TypeScript types are generated to src/graphql.ts.
@@ -80,6 +89,8 @@ import type { GqlContext } from './common/types/gql-context.type';
           req: req as GqlContext['req'],
           loaders: {
             cityById: citiesService.createCityByIdLoader(),
+            userById: usersService.createUserByIdLoader(),
+            mediaByPostId: postsRepository.createMediaByPostIdLoader(),
           },
         }),
 
@@ -130,6 +141,8 @@ import type { GqlContext } from './common/types/gql-context.type';
     FirebaseModule,
     UsersModule,
     CitiesModule,
+    PostsModule,
+    UploadModule,
     HealthModule,
     CacheModule.register({
       max: 3600,

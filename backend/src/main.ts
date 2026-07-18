@@ -27,6 +27,10 @@ async function bootstrap(): Promise<void> {
   });
 
   // ── Security: HTTP headers ────────────────────────────────────────────────
+  // Trust proxy is required so Throttler uses the real IP (e.g., from Cloudflare or Railway)
+  // instead of the load balancer's internal IP.
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+
   // helmet sets X-Frame-Options, X-Content-Type-Options, HSTS, CSP, etc.
   // GraphQL Playground served at /graphql in development needs relaxed CSP.
   app.use(

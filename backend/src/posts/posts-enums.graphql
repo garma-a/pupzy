@@ -1,0 +1,171 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Enum definitions used across Pupzy post types.
+#
+# These enums mirror the Postgres pgEnum definitions in src/database/schema/enums.ts.
+# NestJS auto-generates TypeScript counterparts into src/graphql.ts.
+# ──────────────────────────────────────────────────────────────────────────────
+
+"""Which vertical a post belongs to. Drives CTI join on detail screen."""
+enum PostType {
+  RESCUE
+  LOST
+  ADOPTION
+  PRODUCT
+}
+
+"""Lifecycle state of a post."""
+enum PostStatus {
+  ACTIVE
+  RESOLVED
+  REUNITED
+  ADOPTED
+  SOLD
+  REMOVED
+}
+
+"""AI/admin moderation lifecycle."""
+enum ModerationStatus {
+  PENDING_AUTO_REVIEW
+  CLEAN
+  FLAGGED
+}
+
+"""
+Emergency urgency tier. CRITICAL sorts first in PostgreSQL ASC order
+(enum values declared in CRITICAL → MODERATE order).
+"""
+enum UrgencyTier {
+  CRITICAL
+  URGENT
+  MODERATE
+}
+
+"""Animal species."""
+enum SpeciesType {
+  DOG
+  CAT
+  BIRD
+  RABBIT
+  OTHER
+}
+
+"""Animal gender."""
+enum GenderType {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+"""Unit for age measurement, paired with ageValue."""
+enum AgeUnit {
+  DAYS
+  WEEKS
+  MONTHS
+  YEARS
+}
+
+"""
+Coordination signal on a rescue post — tells responders what kind of help is needed.
+"""
+enum ReporterRole {
+  """Spotted animal but no longer on site — responders must go find it."""
+  REPORTING
+  """Currently with animal — send help to this location."""
+  ON_SITE
+  """On site and can move animal — provide a destination (vet/shelter)."""
+  CAN_TRANSPORT
+}
+
+"""Physical condition of a found stray animal."""
+enum FoundAnimalCondition {
+  HEALTHY
+  INJURED
+  UNKNOWN
+}
+
+"""Space the pet needs in the adopter's home."""
+enum SpaceRequirement {
+  APARTMENT_OK
+  NEEDS_YARD
+  NEEDS_FARM_OR_LARGE_SPACE
+}
+
+"""Discriminator within the LOST section."""
+enum LostFoundType {
+  """Owner is looking for their own pet."""
+  LOST_PET
+  """Reporter has found a stray animal of unknown ownership."""
+  FOUND_STRAY
+}
+
+"""Product category for marketplace listings."""
+enum ProductCategory {
+  CARE
+  FOOD
+  TRANSPORT
+  ACCESSORIES
+  GROOMING
+  MEDICAL_SUPPLIES
+  OTHER
+}
+
+"""Physical condition of a marketplace product."""
+enum ProductCondition {
+  NEW
+  LIKE_NEW
+  USED
+}
+
+"""Status of a contact request or adoption application."""
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+"""Reason for reporting a post."""
+enum ReportReason {
+  UNRELATED_TO_ANIMALS
+  SPAM
+  INAPPROPRIATE_CONTENT
+  SCAM
+  DUPLICATE
+  OTHER
+}
+
+"""Type of in-app notification."""
+enum NotificationType {
+  NEW_UPVOTE
+  POST_SAVED
+  CONTACT_REQUEST_RECEIVED
+  CONTACT_REQUEST_APPROVED
+  CONTACT_REQUEST_REJECTED
+  ADOPTION_APPLICATION_RECEIVED
+  ADOPTION_APPLICATION_APPROVED
+  ADOPTION_APPLICATION_REJECTED
+  POST_REMOVED_BY_ADMIN
+  POST_INACTIVITY_NUDGE
+  SYSTEM_ANNOUNCEMENT
+}
+
+"""Adopter's living situation."""
+enum LivingSituation {
+  APARTMENT
+  HOUSE_WITH_YARD
+  FARM
+  OTHER
+}
+
+"""Personality tag for adoption pets. Stored as text[] in Postgres."""
+enum PersonalityTag {
+  PLAYFUL
+  GENTLE
+  INDOOR
+  OUTDOOR
+  GOOD_WITH_KIDS
+  GOOD_WITH_CATS
+  GOOD_WITH_DOGS
+  SHY
+  ENERGETIC
+  CALM
+}

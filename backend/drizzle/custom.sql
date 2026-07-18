@@ -12,6 +12,11 @@
 -- =============================================================================
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- 0. POSTGIS EXTENSION
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- 1. CHECK CONSTRAINTS
 -- ─────────────────────────────────────────────────────────────────────────────
 
@@ -73,7 +78,7 @@ ALTER TABLE lost_posts ADD CONSTRAINT chk_lost_posts_report_fields
 
 -- Help feed: sorted by (urgency ASC, created_at DESC) — RESCUE and LOST only.
 CREATE INDEX IF NOT EXISTS idx_posts_help_feed
-  ON posts (city_id, post_type, urgency, created_at)
+  ON posts (city_id, post_type, urgency ASC, created_at DESC)
   WHERE status = 'ACTIVE' AND post_type IN ('RESCUE', 'LOST');
 
 -- Adoption feed: sorted by effective_score DESC.
@@ -88,7 +93,7 @@ CREATE INDEX IF NOT EXISTS idx_posts_market_score
 
 -- Market feed — category filter without joining product_posts.
 CREATE INDEX IF NOT EXISTS idx_posts_market_category
-  ON posts (city_id, market_category, effective_score DESC)
+  ON posts (city_id, market_category, effective_score DESC, created_at DESC)
   WHERE status = 'ACTIVE' AND post_type = 'PRODUCT';
 
 -- AdminJS moderation queue: most-reported FLAGGED posts first.
@@ -170,18 +175,34 @@ DECLARE
   delta_product INTEGER;
   target_user_id UUID;
 BEGIN
-  IF TG_OP = 'INSERT' THEN
+  IF TG_OP = 'INSERT' AND NEW.status != 'REMOVED' THEN
     delta_total := 1; target_user_id := NEW.creator_id;
     delta_rescue   := CASE WHEN NEW.post_type = 'RESCUE'   THEN 1 ELSE 0 END;
     delta_lost     := CASE WHEN NEW.post_type = 'LOST'     THEN 1 ELSE 0 END;
     delta_adoption := CASE WHEN NEW.post_type = 'ADOPTION' THEN 1 ELSE 0 END;
     delta_product  := CASE WHEN NEW.post_type = 'PRODUCT'  THEN 1 ELSE 0 END;
-  ELSIF TG_OP = 'DELETE' THEN
+  ELSIF TG_OP = 'DELETE' AND OLD.status != 'REMOVED' THEN
     delta_total := -1; target_user_id := OLD.creator_id;
     delta_rescue   := CASE WHEN OLD.post_type = 'RESCUE'   THEN -1 ELSE 0 END;
     delta_lost     := CASE WHEN OLD.post_type = 'LOST'     THEN -1 ELSE 0 END;
     delta_adoption := CASE WHEN OLD.post_type = 'ADOPTION' THEN -1 ELSE 0 END;
     delta_product  := CASE WHEN OLD.post_type = 'PRODUCT'  THEN -1 ELSE 0 END;
+  ELSIF TG_OP = 'UPDATE' THEN
+    IF NEW.status = 'REMOVED' AND OLD.status != 'REMOVED' THEN
+      delta_total := -1; target_user_id := OLD.creator_id;
+      delta_rescue   := CASE WHEN OLD.post_type = 'RESCUE'   THEN -1 ELSE 0 END;
+      delta_lost     := CASE WHEN OLD.post_type = 'LOST'     THEN -1 ELSE 0 END;
+      delta_adoption := CASE WHEN OLD.post_type = 'ADOPTION' THEN -1 ELSE 0 END;
+      delta_product  := CASE WHEN OLD.post_type = 'PRODUCT'  THEN -1 ELSE 0 END;
+    ELSIF NEW.status != 'REMOVED' AND OLD.status = 'REMOVED' THEN
+      delta_total := 1; target_user_id := NEW.creator_id;
+      delta_rescue   := CASE WHEN NEW.post_type = 'RESCUE'   THEN 1 ELSE 0 END;
+      delta_lost     := CASE WHEN NEW.post_type = 'LOST'     THEN 1 ELSE 0 END;
+      delta_adoption := CASE WHEN NEW.post_type = 'ADOPTION' THEN 1 ELSE 0 END;
+      delta_product  := CASE WHEN NEW.post_type = 'PRODUCT'  THEN 1 ELSE 0 END;
+    ELSE
+      RETURN NEW;
+    END IF;
   ELSE
     RETURN NEW;
   END IF;
@@ -201,7 +222,7 @@ $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_sync_user_post_counts ON posts;
 CREATE TRIGGER trg_sync_user_post_counts
-  AFTER INSERT OR DELETE ON posts
+  AFTER INSERT OR DELETE OR UPDATE OF status ON posts
   FOR EACH ROW EXECUTE FUNCTION sync_user_post_counts();
 
 -- ── 5c. Post report_count denormalization ────────────────────────────────────

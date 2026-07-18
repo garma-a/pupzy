@@ -8,6 +8,7 @@ import {
   integer,
   timestamp,
   index,
+  geometry,
 } from 'drizzle-orm/pg-core';
 import { cities } from './cities.schema';
 
@@ -107,7 +108,7 @@ export const users = pgTable(
      * NEVER exposed to other users.
      * GIST index added in custom migration SQL.
      */
-    lastKnownLocation: text('last_known_location'),
+    lastKnownLocation: geometry('last_known_location', { type: 'point', srid: 4326 }),
 
     // ── Post counters — profile stats ─────────────────────────────────────────
     /**

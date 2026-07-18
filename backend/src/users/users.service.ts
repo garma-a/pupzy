@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import DataLoader from 'dataloader';
 import { ConfigService } from '@nestjs/config';
 import { sql } from 'drizzle-orm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -13,6 +14,7 @@ interface FindOrCreateInput {
   firebaseUserId: string;
   email: string;
   photoUrl?: string;
+  emailVerified?: boolean;
 }
 
 @Injectable()
@@ -42,8 +44,8 @@ export class UsersService {
       };
     } catch (error) {
       this.logger.error(`Failed to decrypt phone number for user ${user.id}`, error);
-      // Return the user without crashing the entire request
-      return user;
+      // Return the user with null phone number to avoid leaking crypto internals
+      return { ...user, phoneNumber: null };
     }
   }
 
@@ -61,6 +63,9 @@ export class UsersService {
     if (input.email) {
       const existingByEmail = await this.usersRepository.findByEmail(input.email);
       if (existingByEmail) {
+        if (!input.emailVerified) {
+           throw new ValidationError('Email must be verified to link with an existing account.');
+        }
         this.logger.log(
           `Firebase UID changed for ${input.email}, updating from ${existingByEmail.firebaseUserId} to ${input.firebaseUserId}`,
         );
@@ -179,5 +184,20 @@ export class UsersService {
     });
     await this.invalidateUserCache(updatedUser.firebaseUserId);
     return this.decryptUserPhone(updatedUser);
+  }
+
+  /**
+   * Creates a fresh DataLoader instance for batch-loading users by ID.
+   *
+   * ## Why a factory method?
+   * DataLoader instances must be created per-request so each request gets
+   * its own in-memory cache. This factory is called once per request from
+   * the GraphQLModule context factory in app.module.ts.
+   */
+  createUserByIdLoader(): DataLoader<string, User | null> {
+    return new DataLoader<string, User | null>(
+      (ids) => this.usersRepository.findByIds(ids),
+      { cache: true, maxBatchSize: 100 },
+    );
   }
 }
