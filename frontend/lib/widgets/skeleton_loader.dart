@@ -1,5 +1,5 @@
+import 'package:auto_shimmer/auto_shimmer.dart';
 import 'package:flutter/material.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../theme/app_theme.dart';
 
@@ -28,7 +28,8 @@ class PostCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Shimmer.fromColors(
+    return AutoShimmer(
+      isLoading: true,
       baseColor: AppColors.border,
       highlightColor: const Color(0xFFF7F4EF),
       child: Container(

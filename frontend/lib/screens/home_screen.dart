@@ -166,11 +166,12 @@ class HomeScreen extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(p.name,
+                                    Text(p.title,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 14)),
-                                    Text('${p.price.toInt()} ${p.currency}',
+                                    Text(
+                                        p.isFree ? 'Free' : '${p.price?.toInt() ?? '-'} ${p.currency}',
                                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
                                   ],
                                 ),

@@ -21,14 +21,21 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _index = 0;
   double _maxDistance = 15.0;
+  bool _postSheetOpen = false;
 
-  void _openNewPost() {
-    showModalBottomSheet(
+  Future<void> _openNewPost() async {
+    setState(() => _postSheetOpen = true);
+    final result = await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => const NewPostSheet(),
     );
+    if (!mounted) return;
+    setState(() {
+      _postSheetOpen = false;
+      if (result == 'adopt') _index = 3;
+    });
   }
 
   @override
@@ -50,6 +57,7 @@ class _AppShellState extends State<AppShell> {
         ),
         bottomNavigationBar: _PupzyBottomNav(
           currentIndex: _index,
+          postOpen: _postSheetOpen,
           onTap: (i) {
             if (i == 2) {
               _openNewPost();
@@ -65,9 +73,14 @@ class _AppShellState extends State<AppShell> {
 
 class _PupzyBottomNav extends StatelessWidget {
   final int currentIndex;
+  final bool postOpen;
   final ValueChanged<int> onTap;
 
-  const _PupzyBottomNav({required this.currentIndex, required this.onTap});
+  const _PupzyBottomNav({
+    required this.currentIndex,
+    required this.postOpen,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -96,15 +109,36 @@ class _PupzyBottomNav extends StatelessWidget {
                   child: GestureDetector(
                     onTap: () => onTap(2),
                     child: Center(
-                      child: Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4))],
+                      child: AnimatedScale(
+                        scale: postOpen ? 0.9 : 1.0,
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOut,
+                        child: Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [AppColors.primaryLight, AppColors.primary],
+                            ),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: postOpen ? 0.2 : 0.4),
+                                blurRadius: postOpen ? 8 : 14,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: AnimatedRotation(
+                            turns: postOpen ? 0.125 : 0,
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeOutBack,
+                            child: const Icon(Icons.add, color: Colors.white, size: 28),
+                          ),
                         ),
-                        child: const Icon(Icons.add, color: Colors.white, size: 26),
                       ),
                     ),
                   ),

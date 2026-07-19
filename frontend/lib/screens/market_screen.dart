@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 import '../data/mock_data.dart';
+import '../models/post.dart';
+import '../models/product.dart';
 import '../theme/app_theme.dart';
 import '../widgets/distance_filter.dart';
 import '../widgets/image_with_fallback.dart';
 import '../widgets/top_bar.dart';
+import 'post_form_screen.dart';
 import 'product_detail_screen.dart';
 
+enum _SortOption { newest, priceLowToHigh, priceHighToLow }
 
 class MarketScreen extends StatefulWidget {
   const MarketScreen({super.key});
@@ -18,11 +21,49 @@ class MarketScreen extends StatefulWidget {
 
 class _MarketScreenState extends State<MarketScreen> {
   String _category = 'All';
-  final _categories = ['All', 'Care', 'Food'];
+  final _categories = ['All', 'Care', 'Food', 'Transport', 'Accessories', 'Grooming', 'Medical Supplies', 'Other'];
+  final _searchController = TextEditingController();
+  String _query = '';
+  _SortOption _sort = _SortOption.newest;
 
-  List get _filtered {
-    if (_category == 'All') return MockData.products;
-    return MockData.products.where((p) => p.category == _category).toList();
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Product> get _filtered {
+    var list = MockData.products.toList();
+    if (_category != 'All') {
+      list = list.where((p) => p.category == _category).toList();
+    }
+    if (_query.trim().isNotEmpty) {
+      final q = _query.trim().toLowerCase();
+      list = list.where((p) => p.title.toLowerCase().contains(q) || p.description.toLowerCase().contains(q)).toList();
+    }
+    switch (_sort) {
+      case _SortOption.newest:
+        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        break;
+      case _SortOption.priceLowToHigh:
+        list.sort((a, b) => (a.price ?? 0).compareTo(b.price ?? 0));
+        break;
+      case _SortOption.priceHighToLow:
+        list.sort((a, b) => (b.price ?? 0).compareTo(a.price ?? 0));
+        break;
+    }
+    return list;
+  }
+
+  String _sortLabel(_SortOption o) {
+    switch (o) {
+      case _SortOption.newest:
+        return 'Newest';
+      case _SortOption.priceLowToHigh:
+        return 'Price: Low to High';
+      case _SortOption.priceHighToLow:
+        return 'Price: High to Low';
+    }
   }
 
   @override
@@ -40,13 +81,26 @@ class _MarketScreenState extends State<MarketScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 decoration: BoxDecoration(color: AppColors.searchBg, borderRadius: BorderRadius.circular(AppRadius.chip)),
                 child: Row(
                   children: [
                     const Icon(Icons.search, size: 18, color: AppColors.textMuted),
                     const SizedBox(width: AppSpacing.sm),
-                    Text('Search pets, posts, users...', style: Theme.of(context).textTheme.bodyMedium),
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (v) => setState(() => _query = v),
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        decoration: InputDecoration(
+                          hintText: 'Search listings...',
+                          hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -62,17 +116,35 @@ class _MarketScreenState extends State<MarketScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                     child: Row(
                       children: [
-                        Text('Rescue Supply', style: Theme.of(context).textTheme.headlineMedium),
+                        Text('Marketplace', style: Theme.of(context).textTheme.headlineMedium),
                         const SizedBox(width: AppSpacing.md),
                         Container(width: 4, height: 32, color: AppColors.sectionLineGreen),
+                        const Spacer(),
+                        PopupMenuButton<_SortOption>(
+                          initialValue: _sort,
+                          onSelected: (v) => setState(() => _sort = v),
+                          itemBuilder: (context) => _SortOption.values
+                              .map((o) => PopupMenuItem(value: o, child: Text(_sortLabel(o))))
+                              .toList(),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.sort, size: 16, color: AppColors.textSecondary),
+                              const SizedBox(width: 4),
+                              Text(_sortLabel(_sort), style: Theme.of(context).textTheme.bodySmall),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   // Category chips
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                    child: Row(
+                  SizedBox(
+                    height: 40,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                       children: _categories.map((c) {
                         final active = _category == c;
                         return Padding(
@@ -103,7 +175,11 @@ class _MarketScreenState extends State<MarketScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                     child: GestureDetector(
-                      onTap: () => Fluttertoast.showToast(msg: 'Seller onboarding coming soon!'),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const PostFormScreen(type: PostType.product)),
+                        );
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
                         decoration: BoxDecoration(
@@ -125,7 +201,7 @@ class _MarketScreenState extends State<MarketScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text('Have something to sell?', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
-                                  Text('Buyers contact you via WhatsApp', style: Theme.of(context).textTheme.bodySmall),
+                                  Text('Buyers contact you directly — no middleman', style: Theme.of(context).textTheme.bodySmall),
                                 ],
                               ),
                             ),
@@ -156,72 +232,115 @@ class _MarketScreenState extends State<MarketScreen> {
                     },
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  // Product grid
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: AppSpacing.md,
-                      crossAxisSpacing: AppSpacing.md,
-                      childAspectRatio: 0.82,
-                    ),
-                    itemCount: _filtered.length,
-                    itemBuilder: (context, i) {
-                      final p = _filtered[i];
-                      return GestureDetector(
-                        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ProductDetailScreen(product: p))),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(AppRadius.card),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 3))],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
-                                      child: ImageWithFallback(url: p.imageUrls.first, width: double.infinity),
-                                    ),
-                                    Positioned(
-                                      top: AppSpacing.sm,
-                                      right: AppSpacing.sm,
-                                      child: CustomPaint(
-                                        size: const Size(22, 28),
-                                        painter: _FlagPainter(color: AppColors.primary.withValues(alpha: 0.85)),
+                  // Listings grid
+                  Builder(builder: (context) {
+                    final filtered = _filtered;
+                    if (filtered.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xxl),
+                        child: Center(
+                          child: Text('No listings match your search', style: Theme.of(context).textTheme.bodyMedium),
+                        ),
+                      );
+                    }
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: AppSpacing.md,
+                        crossAxisSpacing: AppSpacing.md,
+                        childAspectRatio: 0.82,
+                      ),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, i) {
+                        final p = filtered[i];
+                        final sold = p.status == ListingStatus.sold;
+                        return GestureDetector(
+                          onTap: () async {
+                            await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ProductDetailScreen(product: p)));
+                            if (mounted) setState(() {});
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(AppRadius.card),
+                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 3))],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Stack(
+                                    children: [
+                                      Positioned.fill(
+                                        child: ClipRRect(
+                                          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
+                                          child: Opacity(
+                                            opacity: sold ? 0.5 : 1,
+                                            child: ImageWithFallback(url: p.imageUrls.first, width: double.infinity),
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                      if (sold)
+                                        Positioned(
+                                          top: AppSpacing.sm,
+                                          left: AppSpacing.sm,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(color: AppColors.critical, borderRadius: BorderRadius.circular(AppRadius.chip)),
+                                            child: const Text('SOLD', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+                                          ),
+                                        )
+                                      else if (p.isFree)
+                                        Positioned(
+                                          top: AppSpacing.sm,
+                                          left: AppSpacing.sm,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration:
+                                                BoxDecoration(color: AppColors.sectionLineGreen, borderRadius: BorderRadius.circular(AppRadius.chip)),
+                                            child: const Text('FREE', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+                                          ),
+                                        ),
+                                      Positioned(
+                                        top: AppSpacing.sm,
+                                        right: AppSpacing.sm,
+                                        child: CustomPaint(
+                                          size: const Size(22, 28),
+                                          painter: _FlagPainter(color: AppColors.primary.withValues(alpha: 0.85)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(AppSpacing.sm),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(p.name,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 14)),
-                                    Text('${p.price.toInt()} ${p.currency}',
+                                Padding(
+                                  padding: const EdgeInsets.all(AppSpacing.sm),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(p.title,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 14)),
+                                      Text(
+                                        p.isFree ? 'Free' : '${p.price?.toInt() ?? '-'} ${p.currency}',
                                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                               color: AppColors.primary,
                                               fontWeight: FontWeight.w700,
-                                            )),
-                                  ],
+                                            ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
+                        );
+                      },
+                    );
+                  }),
                 ],
               ),
             ),

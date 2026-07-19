@@ -311,7 +311,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                                 )
                               : Text(
                                   _selectedCity != null
-                                      ? '${_selectedCity!['nameEn']} - ${_selectedCity!['nameAr']}'
+                                      ? '${_selectedCity!['nameEnglish']} - ${_selectedCity!['nameArabic']}'
                                       : 'Search and select your city',
                                   style: TextStyle(
                                     color: _selectedCity != null
@@ -414,8 +414,8 @@ class _CityPickerSheetState extends State<_CityPickerSheet> {
         _filtered = widget.cities;
       } else {
         _filtered = widget.cities.where((city) {
-          final en = (city['nameEn'] as String).toLowerCase();
-          final ar = city['nameAr'] as String;
+          final en = (city['nameEnglish'] as String).toLowerCase();
+          final ar = city['nameArabic'] as String;
           final gov = (city['governorate'] as String).toLowerCase();
           return en.contains(query) || ar.contains(query) || gov.contains(query);
         }).toList();
@@ -487,7 +487,7 @@ class _CityPickerSheetState extends State<_CityPickerSheet> {
                       return ListTile(
                         leading: Icon(Icons.location_on_outlined, color: AppColors.primary, size: 20),
                         title: Text(
-                          '${city['nameEn']} - ${city['nameAr']}',
+                          '${city['nameEnglish']} - ${city['nameArabic']}',
                           style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
                         ),
                         subtitle: Text(
