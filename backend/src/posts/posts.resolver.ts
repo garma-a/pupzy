@@ -103,13 +103,23 @@ export class PostsResolver {
       return null;
     }
 
-    // Parse EWKT: "SRID=4326;POINT(lng lat)"
-    const match = post.coordinates.match(/POINT\(([^ ]+) ([^ ]+)\)/);
-    if (!match) return null;
-    return {
-      latitude: parseFloat(match[2]),
-      longitude: parseFloat(match[1]),
-    };
+    // Drizzle geometry(point) is mapped to [longitude, latitude] tuple
+    if (Array.isArray(post.coordinates)) {
+      const [longitude, latitude] = post.coordinates as [number, number];
+      return { latitude, longitude };
+    }
+    
+    // Fallback if returned as EWKT string by pg driver
+    if (typeof post.coordinates === 'string') {
+      const match = (post.coordinates as string).match(/POINT\(([^ ]+) ([^ ]+)\)/);
+      if (!match) return null;
+      return {
+        latitude: parseFloat(match[2]),
+        longitude: parseFloat(match[1]),
+      };
+    }
+    
+    return null;
   }
 
   /**

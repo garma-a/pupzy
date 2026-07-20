@@ -14,7 +14,7 @@ graphql:
           fullName
           city{
             id,
-            nameEn,
+            nameEnglish,
             governorate,
             
           }

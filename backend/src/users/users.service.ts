@@ -140,7 +140,7 @@ export class UsersService {
       homeCityId: resolvedCityId,
       ...(data.location
         ? {
-            lastKnownLocation: `SRID=4326;POINT(${data.location.longitude} ${data.location.latitude})`,
+            lastKnownLocation: [data.location.longitude, data.location.latitude],
           }
         : {}),
     });
@@ -180,7 +180,7 @@ export class UsersService {
 
     const updatedUser = await this.usersRepository.update(userId, {
       homeCityId: city.id,
-      lastKnownLocation: `SRID=4326;POINT(${location.longitude} ${location.latitude})`,
+      lastKnownLocation: [location.longitude, location.latitude],
     });
     await this.invalidateUserCache(updatedUser.firebaseUserId);
     return this.decryptUserPhone(updatedUser);

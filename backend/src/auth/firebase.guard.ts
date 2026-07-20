@@ -110,7 +110,11 @@ export class FirebaseAuthGuard implements CanActivate {
     const user = await this.resolveUser(decoded);
 
     // ── 5. Attach user to context ───────────────────────────────────────────
-    ctx.getContext<GqlContext>().user = user;
+    if (context.getType() === 'http') {
+      context.switchToHttp().getRequest().user = user;
+    } else {
+      GqlExecutionContext.create(context).getContext<GqlContext>().user = user;
+    }
 
     return true;
   }

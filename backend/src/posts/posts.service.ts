@@ -50,7 +50,7 @@ export class PostsService {
       urgency: input.urgency,
       cityId,
       areaName: input.areaName,
-      coordinates: this.toEwkt(input.coordinates),
+      coordinates: [input.coordinates.longitude, input.coordinates.latitude],
       effectiveScore: 0.0,
     };
 
@@ -87,7 +87,7 @@ export class PostsService {
       urgency: input.urgency,
       cityId,
       areaName: input.areaName,
-      coordinates: this.toEwkt(input.coordinates),
+      coordinates: [input.coordinates.longitude, input.coordinates.latitude],
       effectiveScore: 0.0,
     };
 
@@ -132,7 +132,7 @@ export class PostsService {
       urgency: undefined,
       cityId,
       areaName: input.areaName,
-      coordinates: this.toEwkt(input.coordinates),
+      coordinates: [input.coordinates.longitude, input.coordinates.latitude],
       effectiveScore: 0.0,
     };
 
@@ -180,7 +180,7 @@ export class PostsService {
       urgency: undefined,
       cityId,
       areaName: input.areaName,
-      coordinates: this.toEwkt(input.coordinates),
+      coordinates: [input.coordinates.longitude, input.coordinates.latitude],
       marketCategory: input.category,
       effectiveScore: 0.0,
     };
@@ -258,9 +258,5 @@ export class PostsService {
         this.logger.error(`Failed to finalize ${failures.length} media items for post ${postId}`);
       }
     });
-  }
-
-  private toEwkt(coordinates: { latitude: number; longitude: number }): string {
-    return `SRID=4326;POINT(${coordinates.longitude} ${coordinates.latitude})`;
   }
 }

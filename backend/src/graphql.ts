@@ -145,6 +145,83 @@ export enum PersonalityTag {
     CALM = "CALM"
 }
 
+export interface CreateRescuePostInput {
+    title: string;
+    description: string;
+    cityId?: Nullable<string>;
+    coordinates: GeoLocationInput;
+    areaName?: Nullable<string>;
+    urgency: UrgencyTier;
+    species: SpeciesType;
+    conditionSummary: string;
+    reporterRole: ReporterRole;
+    mediaIds?: Nullable<string[]>;
+}
+
+export interface CreateLostPostInput {
+    title: string;
+    description: string;
+    cityId?: Nullable<string>;
+    coordinates: GeoLocationInput;
+    areaName?: Nullable<string>;
+    urgency: UrgencyTier;
+    reportType: LostFoundType;
+    species: SpeciesType;
+    breed?: Nullable<string>;
+    colorAndMarkings?: Nullable<string>;
+    hasCollarWithIdentificationTag?: Nullable<boolean>;
+    circumstances?: Nullable<string>;
+    petName?: Nullable<string>;
+    dateLastSeen?: Nullable<string>;
+    currentCondition?: Nullable<FoundAnimalCondition>;
+    isCurrentlySafeWithReporter?: Nullable<boolean>;
+    dateFound?: Nullable<string>;
+    mediaIds?: Nullable<string[]>;
+}
+
+export interface CreateAdoptionPostInput {
+    title: string;
+    description: string;
+    cityId?: Nullable<string>;
+    coordinates: GeoLocationInput;
+    areaName?: Nullable<string>;
+    petName: string;
+    species: SpeciesType;
+    breed?: Nullable<string>;
+    ageValue?: Nullable<number>;
+    ageUnit?: Nullable<AgeUnit>;
+    gender: GenderType;
+    vaccinated: boolean;
+    neutered: boolean;
+    healthNotes?: Nullable<string>;
+    personalityTags?: Nullable<PersonalityTag[]>;
+    spaceRequirement?: Nullable<SpaceRequirement>;
+    priorPetExperienceRequired: boolean;
+    additionalRequirements?: Nullable<string>;
+    currentlyWith?: Nullable<string>;
+    mediaIds?: Nullable<string[]>;
+}
+
+export interface CreateProductPostInput {
+    title: string;
+    description: string;
+    cityId?: Nullable<string>;
+    coordinates: GeoLocationInput;
+    areaName?: Nullable<string>;
+    category: ProductCategory;
+    condition: ProductCondition;
+    priceAmount?: Nullable<number>;
+    priceCurrency?: Nullable<string>;
+    isFree: boolean;
+    openToOffers?: Nullable<boolean>;
+    mediaIds?: Nullable<string[]>;
+}
+
+export interface RequestMediaUploadInput {
+    contentType: string;
+    fileSizeBytes: number;
+}
+
 export interface CompleteProfileInput {
     fullName: string;
     phoneNumber: string;
@@ -323,6 +400,23 @@ export interface SavedSearch {
     createdAt: DateTime;
 }
 
+export interface IMutation {
+    createRescuePost(input: CreateRescuePostInput): Post | Promise<Post>;
+    createLostPost(input: CreateLostPostInput): Post | Promise<Post>;
+    createAdoptionPost(input: CreateAdoptionPostInput): Post | Promise<Post>;
+    createProductPost(input: CreateProductPostInput): Post | Promise<Post>;
+    requestMediaUploadUrl(input: RequestMediaUploadInput): MediaUploadResponse | Promise<MediaUploadResponse>;
+    completeProfile(input: CompleteProfileInput): User | Promise<User>;
+    updateProfile(input: UpdateProfileInput): User | Promise<User>;
+    updateMyLocation(location: GeoLocationInput): User | Promise<User>;
+}
+
+export interface MediaUploadResponse {
+    mediaId: string;
+    uploadUrl: string;
+    expiresAt: DateTime;
+}
+
 export interface User {
     id: string;
     email: string;
@@ -344,12 +438,6 @@ export interface User {
     lastSeenAt?: Nullable<DateTime>;
     createdAt: DateTime;
     updatedAt: DateTime;
-}
-
-export interface IMutation {
-    completeProfile(input: CompleteProfileInput): User | Promise<User>;
-    updateProfile(input: UpdateProfileInput): User | Promise<User>;
-    updateMyLocation(location: GeoLocationInput): User | Promise<User>;
 }
 
 export type DateTime = any;
