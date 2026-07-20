@@ -1,10 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
+import '../localization/lang_provider.dart';
 import '../services/auth_service.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
@@ -18,7 +18,6 @@ class ProfileSheet extends StatefulWidget {
 }
 
 class _ProfileSheetState extends State<ProfileSheet> {
-  bool _english = true;
   Map<String, dynamic>? _user;
   bool _loadingProfile = true;
 
@@ -35,19 +34,18 @@ class _ProfileSheetState extends State<ProfileSheet> {
       setState(() {
         _user = data;
         _loadingProfile = false;
-        if (data != null && data['languagePreference'] == 'ar') {
-          _english = false;
-        }
       });
     }
   }
 
   void _showEditProfile() {
+    final lang = context.read<LangProvider>().lang;
     final nameController = TextEditingController(text: _user?['fullName'] ?? '');
     final existingPhone = (_user?['phoneNumber'] as String?) ?? '';
     final phoneController = TextEditingController(
       text: existingPhone.replaceAll(RegExp(r'^\+20'), '0').replaceAll(RegExp(r'\D'), ''),
     );
+    final cityField = lang == Lang.ar ? 'nameArabic' : 'nameEnglish';
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -56,7 +54,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
         return _EditProfileSheet(
           nameController: nameController,
           phoneController: phoneController,
-          initialCity: _user?['city']?['nameEnglish'] ?? 'Not set',
+          initialCity: _user?['city']?[cityField] ?? t(ctx, 'Not set', 'غير محدد'),
           onUpdateLocation: _updateLocation,
           onSave: (name, phone) async {
             final graphql = context.read<GraphQLService>();
@@ -70,13 +68,13 @@ class _ProfileSheetState extends State<ProfileSheet> {
               Navigator.of(ctx).pop();
               _fetchProfile();
               Fluttertoast.showToast(
-                msg: 'Profile updated',
+                msg: t(ctx, 'Profile updated', 'تم تحديث الملف الشخصي'),
                 backgroundColor: AppColors.primary,
                 textColor: Colors.white,
               );
             } else {
               Fluttertoast.showToast(
-                msg: 'Failed to update profile',
+                msg: t(ctx, 'Failed to update profile', 'فشل تحديث الملف الشخصي'),
                 backgroundColor: AppColors.critical,
                 textColor: Colors.white,
               );
@@ -88,8 +86,9 @@ class _ProfileSheetState extends State<ProfileSheet> {
   }
 
   Future<String?> _updateLocation() async {
+    final lang = context.read<LangProvider>().lang;
     Fluttertoast.showToast(
-      msg: 'Getting your location...',
+      msg: t(context, 'Getting your location...', 'جارٍ تحديد موقعك...'),
       backgroundColor: AppColors.primary,
       textColor: Colors.white,
     );
@@ -98,7 +97,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         Fluttertoast.showToast(
-          msg: 'Please enable location services',
+          msg: t(context, 'Please enable location services', 'يرجى تفعيل خدمات الموقع'),
           backgroundColor: AppColors.critical,
           textColor: Colors.white,
         );
@@ -111,7 +110,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
         if (permission == LocationPermission.denied ||
             permission == LocationPermission.deniedForever) {
           Fluttertoast.showToast(
-            msg: 'Location permission denied',
+            msg: t(context, 'Location permission denied', 'تم رفض إذن الموقع'),
             backgroundColor: AppColors.critical,
             textColor: Colors.white,
           );
@@ -135,9 +134,10 @@ class _ProfileSheetState extends State<ProfileSheet> {
 
       if (result != null && mounted) {
         _fetchProfile();
-        final cityName = result['city']?['nameEnglish'] ?? 'Unknown';
+        final cityField = lang == Lang.ar ? 'nameArabic' : 'nameEnglish';
+        final cityName = result['city']?[cityField] ?? t(context, 'Unknown', 'غير معروف');
         Fluttertoast.showToast(
-          msg: 'Location updated — $cityName',
+          msg: '${t(context, 'Location updated', 'تم تحديث الموقع')} — $cityName',
           backgroundColor: AppColors.primary,
           textColor: Colors.white,
         );
@@ -147,7 +147,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
     } catch (e) {
       debugPrint('Location error: $e');
       Fluttertoast.showToast(
-        msg: 'Location error: $e',
+        msg: '${t(context, 'Location error', 'خطأ في تحديد الموقع')}: $e',
         backgroundColor: AppColors.critical,
         textColor: Colors.white,
         toastLength: Toast.LENGTH_LONG,
@@ -169,16 +169,18 @@ class _ProfileSheetState extends State<ProfileSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LangProvider>().lang;
+    final cityField = lang == Lang.ar ? 'nameArabic' : 'nameEnglish';
     final auth = context.read<AuthService>();
     final firebaseUser = auth.currentUser;
-    final displayName = _user?['fullName'] ?? firebaseUser?.displayName ?? 'Pupzy User';
+    final displayName = _user?['fullName'] ?? firebaseUser?.displayName ?? t(context, 'Pupzy User', 'مستخدم بابزي');
     final arabicName = _user?['fullNameArabic'] ?? '';
     final email = _user?['email'] ?? firebaseUser?.email ?? '';
     final photoUrl = _user?['profilePictureUrl'] ?? firebaseUser?.photoURL;
     final rescues = _user?['rescuePostCount']?.toString() ?? '0';
     final adopted = _user?['adoptionPostCount']?.toString() ?? '0';
     final lost = _user?['lostPostCount']?.toString() ?? '0';
-    final cityName = _user?['city']?['nameEnglish'] as String?;
+    final cityName = _user?['city']?[cityField] as String?;
 
     return Container(
       decoration: const BoxDecoration(
@@ -239,11 +241,11 @@ class _ProfileSheetState extends State<ProfileSheet> {
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Row(
                 children: [
-                  _StatCard(value: rescues, label: 'RESCUES', arabic: 'إنقاذ'),
+                  _StatCard(value: rescues, label: t(context, 'RESCUES', 'إنقاذ')),
                   const SizedBox(width: AppSpacing.sm),
-                  _StatCard(value: adopted, label: 'ADOPTED', arabic: 'تبني'),
+                  _StatCard(value: adopted, label: t(context, 'ADOPTED', 'تبني')),
                   const SizedBox(width: AppSpacing.sm),
-                  _StatCard(value: lost, label: 'LOST', arabic: 'مفقود'),
+                  _StatCard(value: lost, label: t(context, 'LOST', 'مفقود')),
                 ],
               ),
             ),
@@ -255,7 +257,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
               children: [
                 Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
                 const SizedBox(width: 6),
-                Text('LANGUAGE  ·  لغة', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                Text(t(context, 'LANGUAGE', 'اللغة'), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
               ],
             ),
           ),
@@ -272,30 +274,30 @@ class _ProfileSheetState extends State<ProfileSheet> {
                 children: [
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => setState(() => _english = true),
+                      onTap: () => context.read<LangProvider>().setLang(Lang.en),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: _english ? AppColors.primary : Colors.transparent,
+                          color: lang == Lang.en ? AppColors.primary : Colors.transparent,
                           borderRadius: BorderRadius.circular(AppRadius.chip),
                         ),
                         child: Center(
-                          child: Text('English', style: TextStyle(color: _english ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                          child: Text('English', style: TextStyle(color: lang == Lang.en ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ),
                   ),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => setState(() => _english = false),
+                      onTap: () => context.read<LangProvider>().setLang(Lang.ar),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: !_english ? AppColors.primary : Colors.transparent,
+                          color: lang == Lang.ar ? AppColors.primary : Colors.transparent,
                           borderRadius: BorderRadius.circular(AppRadius.chip),
                         ),
                         child: Center(
-                          child: Text('العربية', style: TextStyle(color: !_english ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                          child: Text('العربية', style: TextStyle(color: lang == Lang.ar ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ),
@@ -312,7 +314,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
               children: [
                 Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
                 const SizedBox(width: 6),
-                Text('SETTINGS', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                Text(t(context, 'SETTINGS', 'الإعدادات'), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
               ],
             ),
           ),
@@ -329,17 +331,17 @@ class _ProfileSheetState extends State<ProfileSheet> {
                 children: [
                   _SettingsRow(
                     icon: Icons.person_outline,
-                    label: 'Edit profile',
+                    label: t(context, 'Edit profile', 'تعديل الملف الشخصي'),
                     onTap: () => _showEditProfile(),
                   ),
                   const Divider(height: 1, indent: 48),
                   _SettingsRow(
                     icon: Icons.notifications_none,
-                    label: 'Notifications',
-                    trailing: _user?['notificationsEnabled'] == true ? 'On' : 'Off',
+                    label: t(context, 'Notifications', 'الإشعارات'),
+                    trailing: _user?['notificationsEnabled'] == true ? t(context, 'On', 'مفعّل') : t(context, 'Off', 'متوقف'),
                   ),
                   const Divider(height: 1, indent: 48),
-                  _SettingsRow(icon: Icons.mail_outline, label: 'Contact Requests', trailing: '3'),
+                  _SettingsRow(icon: Icons.mail_outline, label: t(context, 'Contact Requests', 'طلبات التواصل'), trailing: '3'),
                 ],
               ),
             ),
@@ -353,7 +355,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
               child: OutlinedButton.icon(
                 onPressed: _signOut,
                 icon: const Icon(Icons.logout, size: 18),
-                label: const Text('Sign Out'),
+                label: Text(t(context, 'Sign Out', 'تسجيل الخروج')),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.critical,
                   side: BorderSide(color: AppColors.critical.withValues(alpha: 0.3)),
@@ -371,8 +373,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
 class _StatCard extends StatelessWidget {
   final String value;
   final String label;
-  final String arabic;
-  const _StatCard({required this.value, required this.label, required this.arabic});
+  const _StatCard({required this.value, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -388,7 +389,6 @@ class _StatCard extends StatelessWidget {
           children: [
             Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.primary)),
             Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, fontSize: 10, letterSpacing: 0.5)),
-            Text(arabic, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10, color: AppColors.textMuted)),
           ],
         ),
       ),
@@ -507,17 +507,17 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.background,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
-        title: const Text('Discard changes?'),
-        content: const Text('Your edits haven\'t been saved yet.'),
+        title: Text(t(ctx, 'Discard changes?', 'تجاهل التغييرات؟')),
+        content: Text(t(ctx, 'Your edits haven\'t been saved yet.', 'لم يتم حفظ تعديلاتك بعد.')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Keep editing'),
+            child: Text(t(ctx, 'Keep editing', 'متابعة التعديل')),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(foregroundColor: AppColors.critical),
-            child: const Text('Discard'),
+            child: Text(t(ctx, 'Discard', 'تجاهل')),
           ),
         ],
       ),
@@ -595,7 +595,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                   Row(
                     children: [
                       Expanded(
-                        child: Text('Edit Profile', style: Theme.of(context).textTheme.headlineSmall),
+                        child: Text(t(context, 'Edit Profile', 'تعديل الملف الشخصي'), style: Theme.of(context).textTheme.headlineSmall),
                       ),
                       GestureDetector(
                         onTap: _handleClose,
@@ -614,11 +614,15 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Keep your details current so fellow rescuers can recognize and reach you.',
+                    t(
+                      context,
+                      'Keep your details current so fellow rescuers can recognize and reach you.',
+                      'حافظ على تحديث بياناتك حتى يتمكن باقي المنقذين من التعرف عليك والتواصل معك.',
+                    ),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  Text('Full Name', style: Theme.of(context).textTheme.labelLarge),
+                  Text(t(context, 'Full Name', 'الاسم الكامل'), style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
                   TextFormField(
                     controller: widget.nameController,
@@ -626,22 +630,26 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                     textCapitalization: TextCapitalization.words,
                     textInputAction: TextInputAction.next,
                     maxLength: 120,
-                    decoration: _fieldDecoration(hint: 'Enter your full name', icon: Icons.person_outline),
+                    decoration: _fieldDecoration(hint: t(context, 'Enter your full name', 'أدخل اسمك الكامل'), icon: Icons.person_outline),
                     validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Name is required';
-                      if (v.trim().length < 2) return 'At least 2 characters';
-                      if (RegExp(r'\d').hasMatch(v)) return 'Name cannot contain numbers';
-                      if (!v.trim().contains(' ')) return 'Enter first and last name';
+                      if (v == null || v.trim().isEmpty) return t(context, 'Name is required', 'الاسم مطلوب');
+                      if (v.trim().length < 2) return t(context, 'At least 2 characters', 'حرفان على الأقل');
+                      if (RegExp(r'\d').hasMatch(v)) return t(context, 'Name cannot contain numbers', 'لا يمكن أن يحتوي الاسم على أرقام');
+                      if (!v.trim().contains(' ')) return t(context, 'Enter first and last name', 'أدخل الاسم الأول والأخير');
                       return null;
                     },
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'This is how other members will see you on posts and messages.',
+                    t(
+                      context,
+                      'This is how other members will see you on posts and messages.',
+                      'هكذا سيراك الأعضاء الآخرون في المنشورات والرسائل.',
+                    ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  Text('Phone Number  ·  optional', style: Theme.of(context).textTheme.labelLarge),
+                  Text(t(context, 'Phone Number  ·  optional', 'رقم الهاتف  ·  اختياري'), style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
                   TextFormField(
                     controller: widget.phoneController,
@@ -656,20 +664,24 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) return null;
                       final digits = v.trim().replaceAll(RegExp(r'\D'), '');
-                      if (digits.length != 11) return 'Phone number must be 11 digits';
+                      if (digits.length != 11) return t(context, 'Phone number must be 11 digits', 'يجب أن يتكون رقم الهاتف من 11 رقمًا');
                       if (!RegExp(r'^01[0125]\d{8}$').hasMatch(digits)) {
-                        return 'Must start with 010, 011, 012, or 015';
+                        return t(context, 'Must start with 010, 011, 012, or 015', 'يجب أن يبدأ بـ 010 أو 011 أو 012 أو 015');
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Only shared with adopters once you accept their request — never shown publicly.',
+                    t(
+                      context,
+                      'Only shared with adopters once you accept their request — never shown publicly.',
+                      'يُشارك فقط مع من يتبنى بعد قبولك لطلبه — لا يُعرض للعامة أبدًا.',
+                    ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  Text('Location', style: Theme.of(context).textTheme.labelLarge),
+                  Text(t(context, 'Location', 'الموقع'), style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -686,7 +698,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Current city', style: Theme.of(context).textTheme.bodySmall),
+                              Text(t(context, 'Current city', 'المدينة الحالية'), style: Theme.of(context).textTheme.bodySmall),
                               const SizedBox(height: 2),
                               Text(
                                 _cityName,
@@ -715,7 +727,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                       const Icon(Icons.my_location, size: 13, color: AppColors.primary),
                                       const SizedBox(width: 4),
                                       Text(
-                                        'Update',
+                                        t(context, 'Update', 'تحديث'),
                                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                               color: AppColors.primary,
                                               fontWeight: FontWeight.w700,
@@ -730,7 +742,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Used to show nearby rescues and pets in your area.',
+                    t(context, 'Used to show nearby rescues and pets in your area.', 'يُستخدم لعرض عمليات الإنقاذ والحيوانات القريبة منك.'),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: AppSpacing.xl),
@@ -741,7 +753,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                           height: 54,
                           child: OutlinedButton(
                             onPressed: _saving ? null : _handleClose,
-                            child: const Text('Cancel'),
+                            child: Text(t(context, 'Cancel', 'إلغاء')),
                           ),
                         ),
                       ),
@@ -761,7 +773,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                       color: Colors.white,
                                     ),
                                   )
-                                : const Text('Save Changes'),
+                                : Text(t(context, 'Save Changes', 'حفظ التغييرات')),
                           ),
                         ),
                       ),

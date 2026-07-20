@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../localization/lang_provider.dart';
 import '../theme/app_theme.dart';
 
 class DistanceProvider extends InheritedWidget {
@@ -33,17 +34,18 @@ class DistanceFilter extends StatefulWidget {
 }
 
 class _DistanceFilterState extends State<DistanceFilter> {
+  // (English label, Arabic label, icon, canonical max-distance value the chip selects)
   static const _chips = [
-    ('5km', null, 5.0),
-    ('15km', null, 15.0),
-    ('30km', null, 30.0),
-    ('50+km', null, double.infinity),
-    ('Vets', Icons.local_hospital_outlined, double.infinity),
+    ('5km', '5km', null, 5.0),
+    ('15km', '15km', null, 15.0),
+    ('30km', '30km', null, 30.0),
+    ('50+km', '+50km', null, double.infinity),
+    ('Vets', 'الأطباء البيطريون', Icons.local_hospital_outlined, double.infinity),
   ];
 
   int _indexForDistance(double d) {
     for (int i = 0; i < _chips.length - 1; i++) {
-      if (_chips[i].$3 == d) return i;
+      if (_chips[i].$4 == d) return i;
     }
     return 1;
   }
@@ -58,7 +60,8 @@ class _DistanceFilterState extends State<DistanceFilter> {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Row(
         children: List.generate(_chips.length, (i) {
-          final (label, icon, maxDist) = _chips[i];
+          final (labelEn, labelAr, icon, maxDist) = _chips[i];
+          final label = t(context, labelEn, labelAr);
           final active = selectedIndex == i;
           return Padding(
             padding: const EdgeInsets.only(right: AppSpacing.sm),

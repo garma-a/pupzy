@@ -8,9 +8,14 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../data/mock_data.dart';
+import '../localization/lang_provider.dart';
 import '../models/post.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+
+/// A fixed-choice option: (canonical value sent to the backend, English label, Arabic label).
+/// The canonical value is what state/logic keys off of — never the translated label.
+typedef Choice = (String value, String en, String ar);
 
 class PostFormScreen extends StatefulWidget {
   final PostType type;
@@ -40,36 +45,88 @@ class _PostFormScreenState extends State<PostFormScreen> {
   bool _openToOffers = false;
   bool _submitting = false;
 
+  static const List<Choice> _speciesOptions = [
+    ('DOG', 'Dog', 'كلب'),
+    ('CAT', 'Cat', 'قطة'),
+    ('OTHER', 'Other', 'أخرى'),
+  ];
+
+  static const List<Choice> _urgencyOptions = [
+    ('CRITICAL', 'Critical — needs help now', 'حرجة — تحتاج مساعدة فورية'),
+    ('URGENT', 'Urgent — needs help soon', 'عاجلة — تحتاج مساعدة قريبًا'),
+    ('MODERATE', 'Moderate — stable but needs care', 'متوسطة — مستقرة لكن تحتاج رعاية'),
+  ];
+
+  static const List<Choice> _roleOptions = [
+    ('REPORTING', "Reporting — I saw it but can't stay", 'مُبلّغ — رأيت الحيوان لكن لا أستطيع البقاء'),
+    ('ON_SITE', "On-site — I'm with the animal", 'في الموقع — أنا مع الحيوان'),
+    ('CAN_TRANSPORT', 'Can transport — I have a vehicle', 'يمكنني النقل — لدي وسيلة نقل'),
+  ];
+
+  static const List<Choice> _conditionOptions = [
+    ('NEW', 'New', 'جديد'),
+    ('LIKE_NEW', 'Like New', 'شبه جديد'),
+    ('USED', 'Used', 'مستعمل'),
+  ];
+
   @override
   void initState() {
     super.initState();
     _selectedCategory = widget.initialCategory;
   }
 
-  List<String> get _categories {
+  List<Choice> get _categories {
     switch (widget.type) {
       case PostType.adoption:
-        return ['Dog', 'Puppy', 'Senior', 'Special Needs'];
+        return const [
+          ('DOG', 'Dog', 'كلب'),
+          ('PUPPY', 'Puppy', 'جرو'),
+          ('SENIOR', 'Senior', 'كبير السن'),
+          ('SPECIAL_NEEDS', 'Special Needs', 'احتياجات خاصة'),
+        ];
       case PostType.rescue:
-        return ['Urgent', 'Found', 'Lost', 'Needs Foster'];
+        return const [
+          ('URGENT', 'Urgent', 'عاجل'),
+          ('FOUND', 'Found', 'تم العثور عليه'),
+          ('LOST', 'Lost', 'مفقود'),
+          ('NEEDS_FOSTER', 'Needs Foster', 'يحتاج حاضنة'),
+        ];
       case PostType.product:
-        return ['Care', 'Food', 'Transport', 'Accessories', 'Grooming', 'Medical Supplies', 'Other'];
+        return const [
+          ('CARE', 'Care', 'رعاية'),
+          ('FOOD', 'Food', 'طعام'),
+          ('TRANSPORT', 'Transport', 'نقل'),
+          ('ACCESSORIES', 'Accessories', 'إكسسوارات'),
+          ('GROOMING', 'Grooming', 'تجميل'),
+          ('MEDICAL_SUPPLIES', 'Medical Supplies', 'مستلزمات طبية'),
+          ('OTHER', 'Other', 'أخرى'),
+        ];
       case PostType.general:
-        return ['Funny', 'Cute', 'Training', 'Story'];
+        return const [
+          ('FUNNY', 'Funny', 'مضحك'),
+          ('CUTE', 'Cute', 'لطيف'),
+          ('TRAINING', 'Training', 'تدريب'),
+          ('STORY', 'Story', 'قصة'),
+        ];
     }
   }
 
   String get _title {
     switch (widget.type) {
       case PostType.adoption:
-        return 'New Adoption Listing';
+        return t(context, 'New Adoption Listing', 'إعلان تبني جديد');
       case PostType.rescue:
-        return 'New Rescue Alert';
+        return t(context, 'New Rescue Alert', 'تنبيه إنقاذ جديد');
       case PostType.product:
-        return 'New Product';
+        return t(context, 'New Product', 'منتج جديد');
       case PostType.general:
-        return 'New Post';
+        return t(context, 'New Post', 'منشور جديد');
     }
+  }
+
+  String _labelFor(List<Choice> options, String value) {
+    final match = options.firstWhere((o) => o.$1 == value);
+    return t(context, match.$2, match.$3);
   }
 
   Future<void> _pickImage() async {
@@ -81,7 +138,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
   void _submit() {
     final caption = _captionController.text.trim();
     if (caption.isEmpty) {
-      Fluttertoast.showToast(msg: 'Please add a caption');
+      Fluttertoast.showToast(msg: t(context, 'Please add a caption', 'يرجى إضافة وصف'));
       return;
     }
     MockData.posts.insert(
@@ -96,7 +153,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         type: widget.type,
       ),
     );
-    Fluttertoast.showToast(msg: 'Post submitted!');
+    Fluttertoast.showToast(msg: t(context, 'Post submitted!', 'تم نشر المنشور!'));
     Navigator.of(context).pop();
   }
 
@@ -126,7 +183,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       Fluttertoast.showToast(
-        msg: 'Please enable location services',
+        msg: t(context, 'Please enable location services', 'يرجى تفعيل خدمات الموقع'),
         backgroundColor: AppColors.critical,
         textColor: Colors.white,
       );
@@ -138,7 +195,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
         Fluttertoast.showToast(
-          msg: 'Location permission denied',
+          msg: t(context, 'Location permission denied', 'تم رفض إذن الموقع'),
           backgroundColor: AppColors.critical,
           textColor: Colors.white,
         );
@@ -151,26 +208,6 @@ class _PostFormScreenState extends State<PostFormScreen> {
       locationSettings: const LocationSettings(accuracy: LocationAccuracy.low, timeLimit: Duration(seconds: 30)),
     );
     return pos;
-  }
-
-  String _reporterRoleFor(String role) {
-    switch (role) {
-      case "On-site — I'm with the animal":
-        return 'ON_SITE';
-      case 'Can transport — I have a vehicle':
-        return 'CAN_TRANSPORT';
-      default:
-        return 'REPORTING';
-    }
-  }
-
-  String _productCategoryEnumFor(String label) {
-    switch (label) {
-      case 'Medical Supplies':
-        return 'MEDICAL_SUPPLIES';
-      default:
-        return label.toUpperCase();
-    }
   }
 
   bool get _productFormValid {
@@ -188,7 +225,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
     setState(() => _submitting = true);
 
     try {
-      Fluttertoast.showToast(msg: 'Getting your location...');
+      Fluttertoast.showToast(msg: t(context, 'Getting your location...', 'جارٍ تحديد موقعك...'));
       final position = await _getCurrentPosition();
       if (position == null) return;
 
@@ -223,8 +260,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
         latitude: position.latitude,
         longitude: position.longitude,
         areaName: areaName.isEmpty ? null : areaName,
-        category: _productCategoryEnumFor(_selectedCategory!),
-        condition: _condition!.toUpperCase().replaceAll(' ', '_'),
+        category: _selectedCategory!,
+        condition: _condition!,
         priceAmount: _isFree ? null : double.tryParse(_priceController.text.trim()),
         isFree: _isFree,
         openToOffers: _openToOffers,
@@ -232,11 +269,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
       );
 
       if (result != null) {
-        Fluttertoast.showToast(msg: 'Listing posted!');
+        Fluttertoast.showToast(msg: t(context, 'Listing posted!', 'تم نشر الإعلان!'));
         if (mounted) Navigator.of(context).pop();
       } else {
         Fluttertoast.showToast(
-          msg: 'Failed to post listing',
+          msg: t(context, 'Failed to post listing', 'فشل نشر الإعلان'),
           backgroundColor: AppColors.critical,
           textColor: Colors.white,
         );
@@ -251,7 +288,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
     setState(() => _submitting = true);
 
     try {
-      Fluttertoast.showToast(msg: 'Getting your location...');
+      Fluttertoast.showToast(msg: t(context, 'Getting your location...', 'جارٍ تحديد موقعك...'));
       final position = await _getCurrentPosition();
       if (position == null) return;
 
@@ -280,26 +317,28 @@ class _PostFormScreenState extends State<PostFormScreen> {
       final landmark = _landmarkController.text.trim();
       final areaName = landmark.isEmpty ? neighborhood : '$neighborhood — near $landmark';
       final condition = _conditionController.text.trim();
+      final urgencyLabel = _labelFor(_urgencyOptions, _urgency!);
+      final speciesLabel = _labelFor(_speciesOptions, _species!);
 
       final result = await graphql.createRescuePost(
-        title: '$_urgency rescue: $_species',
+        title: '$urgencyLabel ${t(context, 'rescue', 'إنقاذ')}: $speciesLabel',
         description: condition,
         latitude: position.latitude,
         longitude: position.longitude,
         areaName: areaName.isEmpty ? null : areaName,
-        urgency: _urgency!.toUpperCase(),
-        species: _species!.toUpperCase(),
+        urgency: _urgency!,
+        species: _species!,
         conditionSummary: condition,
-        reporterRole: _reporterRoleFor(_role!),
+        reporterRole: _role!,
         mediaIds: mediaIds,
       );
 
       if (result != null) {
-        Fluttertoast.showToast(msg: 'Rescue alert posted!');
+        Fluttertoast.showToast(msg: t(context, 'Rescue alert posted!', 'تم نشر تنبيه الإنقاذ!'));
         if (mounted) Navigator.of(context).pop();
       } else {
         Fluttertoast.showToast(
-          msg: 'Failed to post rescue alert',
+          msg: t(context, 'Failed to post rescue alert', 'فشل نشر تنبيه الإنقاذ'),
           backgroundColor: AppColors.critical,
           textColor: Colors.white,
         );
@@ -333,7 +372,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
-          Text('Photos', style: Theme.of(context).textTheme.headlineSmall),
+          Text(t(context, 'Photos', 'الصور'), style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: AppSpacing.sm),
           SizedBox(
             height: 90,
@@ -378,13 +417,13 @@ class _PostFormScreenState extends State<PostFormScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text('Caption', style: Theme.of(context).textTheme.headlineSmall),
+          Text(t(context, 'Caption', 'الوصف'), style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: AppSpacing.sm),
           TextField(
             controller: _captionController,
             maxLines: 4,
             decoration: InputDecoration(
-              hintText: 'Tell the community about it...',
+              hintText: t(context, 'Tell the community about it...', 'أخبر المجتمع عن الأمر...'),
               filled: true,
               fillColor: AppColors.background,
               border: OutlineInputBorder(
@@ -394,24 +433,24 @@ class _PostFormScreenState extends State<PostFormScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text('Category', style: Theme.of(context).textTheme.headlineSmall),
+          Text(t(context, 'Category', 'الفئة'), style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: AppSpacing.sm),
           Wrap(
             spacing: AppSpacing.sm,
             children: _categories.map((c) {
-              final selected = _selectedCategory == c;
+              final selected = _selectedCategory == c.$1;
               return ChoiceChip(
-                label: Text(c),
+                label: Text(t(context, c.$2, c.$3)),
                 selected: selected,
                 selectedColor: AppColors.primary.withValues(alpha: 0.15),
-                onSelected: (_) => setState(() => _selectedCategory = c),
+                onSelected: (_) => setState(() => _selectedCategory = c.$1),
               );
             }).toList(),
           ),
           const SizedBox(height: AppSpacing.xxl),
           ElevatedButton(
             onPressed: _submit,
-            child: const SizedBox(width: double.infinity, child: Text('Submit', textAlign: TextAlign.center)),
+            child: SizedBox(width: double.infinity, child: Text(t(context, 'Submit', 'نشر'), textAlign: TextAlign.center)),
           ),
         ],
       ),
@@ -434,8 +473,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Post a Rescue Alert', style: Theme.of(context).textTheme.headlineMedium),
-                        Text('Help an animal in distress', style: Theme.of(context).textTheme.bodyMedium),
+                        Text(t(context, 'Post a Rescue Alert', 'نشر تنبيه إنقاذ'), style: Theme.of(context).textTheme.headlineMedium),
+                        Text(t(context, 'Help an animal in distress', 'ساعد حيوانًا في محنة'), style: Theme.of(context).textTheme.bodyMedium),
                       ],
                     ),
                   ),
@@ -447,7 +486,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
                 children: [
-                  _SectionLabel('ANIMAL DETAILS'),
+                  _SectionLabel(t(context, 'ANIMAL DETAILS', 'تفاصيل الحيوان')),
                   const SizedBox(height: AppSpacing.sm),
                   InkWell(
                     onTap: _pickImage,
@@ -466,11 +505,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
                             const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
                             const SizedBox(height: AppSpacing.sm),
                             Text(
-                              'Add photos of the animal',
+                              t(context, 'Add photos of the animal', 'أضف صورًا للحيوان'),
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
                             ),
                             const SizedBox(height: 2),
-                            Text('Up to 5 photos', style: Theme.of(context).textTheme.bodySmall),
+                            Text(t(context, 'Up to 5 photos', 'حتى 5 صور'), style: Theme.of(context).textTheme.bodySmall),
                           ] else
                             SizedBox(
                               height: 90,
@@ -507,27 +546,27 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Species', style: Theme.of(context).textTheme.labelLarge),
+                  Text(t(context, 'Species', 'النوع'), style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: AppSpacing.sm,
-                    children: ['Dog', 'Cat', 'Other'].map((s) {
+                    children: _speciesOptions.map((s) {
                       return _PillChoice(
-                        label: s,
-                        selected: _species == s,
-                        onTap: () => setState(() => _species = s),
+                        label: t(context, s.$2, s.$3),
+                        selected: _species == s.$1,
+                        onTap: () => setState(() => _species = s.$1),
                       );
                     }).toList(),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Condition description', style: Theme.of(context).textTheme.labelLarge),
+                  Text(t(context, 'Condition description', 'وصف الحالة'), style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
                   TextField(
                     controller: _conditionController,
                     maxLines: 3,
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
-                      hintText: "Describe the animal's visible condition...",
+                      hintText: t(context, "Describe the animal's visible condition...", 'صف الحالة الظاهرة للحيوان...'),
                       hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 14),
                       filled: true,
                       fillColor: AppColors.surfaceWarm,
@@ -539,48 +578,48 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Urgency level', style: Theme.of(context).textTheme.labelLarge),
+                  Text(t(context, 'Urgency level', 'مستوى الخطورة'), style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: AppSpacing.sm,
                     runSpacing: AppSpacing.sm,
                     children: [
                       _UrgencyChoice(
-                        label: 'Critical — needs help now',
-                        selected: _urgency == 'Critical',
+                        label: t(context, _urgencyOptions[0].$2, _urgencyOptions[0].$3),
+                        selected: _urgency == 'CRITICAL',
                         color: AppColors.critical,
-                        onTap: () => setState(() => _urgency = 'Critical'),
+                        onTap: () => setState(() => _urgency = 'CRITICAL'),
                       ),
                       _UrgencyChoice(
-                        label: 'Urgent — needs help soon',
-                        selected: _urgency == 'Urgent',
+                        label: t(context, _urgencyOptions[1].$2, _urgencyOptions[1].$3),
+                        selected: _urgency == 'URGENT',
                         color: AppColors.primary,
-                        onTap: () => setState(() => _urgency = 'Urgent'),
+                        onTap: () => setState(() => _urgency = 'URGENT'),
                       ),
                       _UrgencyChoice(
-                        label: 'Moderate — stable but needs care',
-                        selected: _urgency == 'Moderate',
+                        label: t(context, _urgencyOptions[2].$2, _urgencyOptions[2].$3),
+                        selected: _urgency == 'MODERATE',
                         color: AppColors.textSecondary,
-                        onTap: () => setState(() => _urgency = 'Moderate'),
+                        onTap: () => setState(() => _urgency = 'MODERATE'),
                       ),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel('LOCATION'),
+                  _SectionLabel(t(context, 'LOCATION', 'الموقع')),
                   const SizedBox(height: AppSpacing.md),
-                  Text('Neighborhood or area', style: Theme.of(context).textTheme.labelLarge),
+                  Text(t(context, 'Neighborhood or area', 'الحي أو المنطقة'), style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
                   TextField(
                     controller: _neighborhoodController,
                     onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration('e.g. Maadi area'),
+                    decoration: _fieldDecoration(t(context, 'e.g. Maadi area', 'مثال: منطقة المعادي')),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Nearby landmark', style: Theme.of(context).textTheme.labelLarge),
+                  Text(t(context, 'Nearby landmark', 'أقرب معلم'), style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
                   TextField(
                     controller: _landmarkController,
-                    decoration: _fieldDecoration('e.g. near Al-Razi pharmacy'),
+                    decoration: _fieldDecoration(t(context, 'e.g. near Al-Razi pharmacy', 'مثال: بجوار صيدلية الرازي')),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Container(
@@ -596,7 +635,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Exact address will never be shown publicly',
+                            t(context, 'Exact address will never be shown publicly', 'العنوان الدقيق لن يُعرض للعامة أبدًا'),
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ),
@@ -604,22 +643,18 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel('YOUR ROLE'),
+                  _SectionLabel(t(context, 'YOUR ROLE', 'دورك')),
                   const SizedBox(height: AppSpacing.md),
-                  Text('I am', style: Theme.of(context).textTheme.labelLarge),
+                  Text(t(context, 'I am', 'أنا'), style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
                   Column(
-                    children: [
-                      'Reporting — I saw it but can\'t stay',
-                      'On-site — I\'m with the animal',
-                      'Can transport — I have a vehicle',
-                    ].map((r) {
+                    children: _roleOptions.map((r) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                         child: _RoleChoice(
-                          label: r,
-                          selected: _role == r,
-                          onTap: () => setState(() => _role = r),
+                          label: t(context, r.$2, r.$3),
+                          selected: _role == r.$1,
+                          onTap: () => setState(() => _role = r.$1),
                         ),
                       );
                     }).toList(),
@@ -627,7 +662,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
                   const SizedBox(height: AppSpacing.xl),
                   Center(
                     child: Text(
-                      'Complete all required fields to post',
+                      t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر'),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
@@ -647,7 +682,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
                               height: 22,
                               child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
                             )
-                          : const Text('Post Rescue Alert'),
+                          : Text(t(context, 'Post Rescue Alert', 'نشر تنبيه الإنقاذ')),
                     ),
                   ),
                 ],
@@ -675,8 +710,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('List a Product', style: Theme.of(context).textTheme.headlineMedium),
-                        Text('Buyers contact you directly', style: Theme.of(context).textTheme.bodyMedium),
+                        Text(t(context, 'List a Product', 'إضافة منتج'), style: Theme.of(context).textTheme.headlineMedium),
+                        Text(t(context, 'Buyers contact you directly', 'يتواصل معك المشترون مباشرة'), style: Theme.of(context).textTheme.bodyMedium),
                       ],
                     ),
                   ),
@@ -688,7 +723,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
                 children: [
-                  _SectionLabel('LISTING DETAILS'),
+                  _SectionLabel(t(context, 'LISTING DETAILS', 'تفاصيل الإعلان')),
                   const SizedBox(height: AppSpacing.sm),
                   InkWell(
                     onTap: _pickImage,
@@ -707,11 +742,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
                             const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
                             const SizedBox(height: AppSpacing.sm),
                             Text(
-                              'Add photos of the item',
+                              t(context, 'Add photos of the item', 'أضف صورًا للمنتج'),
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
                             ),
                             const SizedBox(height: 2),
-                            Text('Up to 5 photos', style: Theme.of(context).textTheme.bodySmall),
+                            Text(t(context, 'Up to 5 photos', 'حتى 5 صور'), style: Theme.of(context).textTheme.bodySmall),
                           ] else
                             SizedBox(
                               height: 90,
@@ -748,55 +783,57 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Title', style: Theme.of(context).textTheme.labelLarge),
+                  Text(t(context, 'Title', 'العنوان'), style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
                   TextField(
                     controller: _productTitleController,
                     onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration('e.g. Field carrier, barely used'),
+                    decoration: _fieldDecoration(t(context, 'e.g. Field carrier, barely used', 'مثال: حقيبة نقل، شبه جديدة')),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Description', style: Theme.of(context).textTheme.labelLarge),
+                  Text(t(context, 'Description', 'الوصف'), style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
                   TextField(
                     controller: _captionController,
                     maxLines: 3,
                     onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration('Describe the item, condition, and any details buyers should know...'),
+                    decoration: _fieldDecoration(
+                      t(context, 'Describe the item, condition, and any details buyers should know...', 'صف المنتج وحالته وأي تفاصيل يجب أن يعرفها المشترون...'),
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Category', style: Theme.of(context).textTheme.labelLarge),
+                  Text(t(context, 'Category', 'الفئة'), style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: AppSpacing.sm,
                     runSpacing: AppSpacing.sm,
                     children: _categories.map((c) {
                       return _PillChoice(
-                        label: c,
-                        selected: _selectedCategory == c,
-                        onTap: () => setState(() => _selectedCategory = c),
+                        label: t(context, c.$2, c.$3),
+                        selected: _selectedCategory == c.$1,
+                        onTap: () => setState(() => _selectedCategory = c.$1),
                       );
                     }).toList(),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Condition', style: Theme.of(context).textTheme.labelLarge),
+                  Text(t(context, 'Condition', 'الحالة'), style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: AppSpacing.sm,
-                    children: ['New', 'Like New', 'Used'].map((c) {
+                    children: _conditionOptions.map((c) {
                       return _PillChoice(
-                        label: c,
-                        selected: _condition == c,
-                        onTap: () => setState(() => _condition = c),
+                        label: t(context, c.$2, c.$3),
+                        selected: _condition == c.$1,
+                        onTap: () => setState(() => _condition = c.$1),
                       );
                     }).toList(),
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel('PRICE'),
+                  _SectionLabel(t(context, 'PRICE', 'السعر')),
                   const SizedBox(height: AppSpacing.md),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('List as free / giveaway'),
+                    title: Text(t(context, 'List as free / giveaway', 'إعلان مجاني / تبرع')),
                     value: _isFree,
                     onChanged: (v) => setState(() => _isFree = v),
                   ),
@@ -806,37 +843,37 @@ class _PostFormScreenState extends State<PostFormScreen> {
                       controller: _priceController,
                       keyboardType: TextInputType.number,
                       onChanged: (_) => setState(() {}),
-                      decoration: _fieldDecoration('Price in EGP'),
+                      decoration: _fieldDecoration(t(context, 'Price in EGP', 'السعر بالجنيه المصري')),
                     ),
                   ],
                   const SizedBox(height: AppSpacing.sm),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Open to offers'),
+                    title: Text(t(context, 'Open to offers', 'قابل للتفاوض')),
                     value: _openToOffers,
                     onChanged: (v) => setState(() => _openToOffers = v),
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel('LOCATION'),
+                  _SectionLabel(t(context, 'LOCATION', 'الموقع')),
                   const SizedBox(height: AppSpacing.md),
-                  Text('Neighborhood or area', style: Theme.of(context).textTheme.labelLarge),
+                  Text(t(context, 'Neighborhood or area', 'الحي أو المنطقة'), style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
                   TextField(
                     controller: _neighborhoodController,
                     onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration('e.g. Maadi area'),
+                    decoration: _fieldDecoration(t(context, 'e.g. Maadi area', 'مثال: منطقة المعادي')),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Nearby landmark', style: Theme.of(context).textTheme.labelLarge),
+                  Text(t(context, 'Nearby landmark', 'أقرب معلم'), style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: AppSpacing.sm),
                   TextField(
                     controller: _landmarkController,
-                    decoration: _fieldDecoration('e.g. near Al-Razi pharmacy'),
+                    decoration: _fieldDecoration(t(context, 'e.g. near Al-Razi pharmacy', 'مثال: بجوار صيدلية الرازي')),
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   Center(
                     child: Text(
-                      'Complete all required fields to post',
+                      t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر'),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
@@ -852,7 +889,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
                               height: 22,
                               child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
                             )
-                          : const Text('Post Listing'),
+                          : Text(t(context, 'Post Listing', 'نشر الإعلان')),
                     ),
                   ),
                 ],

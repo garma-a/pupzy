@@ -1,6 +1,7 @@
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
 
+import '../localization/lang_provider.dart';
 import '../models/pet.dart';
 import '../theme/app_theme.dart';
 import '../widgets/pet_carousel.dart';
@@ -52,7 +53,11 @@ class AdoptionDetailScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(AppRadius.chip),
                             ),
                             child: Text(
-                              '\$${pet.adoptionFee.toStringAsFixed(0)} fee',
+                              t(
+                                context,
+                                '\$${pet.adoptionFee.toStringAsFixed(0)} fee',
+                                'رسوم \$${pet.adoptionFee.toStringAsFixed(0)}',
+                              ),
                               style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
                             ),
                           ),
@@ -70,7 +75,7 @@ class AdoptionDetailScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: AppSpacing.lg),
-                      Text('About', style: Theme.of(context).textTheme.headlineSmall),
+                      Text(t(context, 'About', 'نبذة'), style: Theme.of(context).textTheme.headlineSmall),
                       const SizedBox(height: AppSpacing.xs),
                       Text(pet.description, style: Theme.of(context).textTheme.bodyMedium),
                       const SizedBox(height: 96),
@@ -89,9 +94,11 @@ class AdoptionDetailScreen extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                Fluttertoast.showToast(msg: 'Adoption request sent for ${pet.name}!');
+                Fluttertoast.showToast(
+                  msg: t(context, 'Adoption request sent for ${pet.name}!', 'تم إرسال طلب التبني لـ ${pet.name}!'),
+                );
               },
-              child: const Text('Adopt Me'),
+              child: Text(t(context, 'Adopt Me', 'تبنَّني')),
             ),
           ),
         ),

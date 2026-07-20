@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../localization/lang_provider.dart';
 import '../models/post.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
@@ -25,14 +27,14 @@ class PostCard extends StatelessWidget {
     required this.onBookmark,
   });
 
-  String? get _badgeLabel {
+  String? _badgeLabel(BuildContext context) {
     switch (post.type) {
       case PostType.adoption:
-        return 'Adoption';
+        return t(context, 'Adoption', 'تبني');
       case PostType.rescue:
-        return 'Rescue';
+        return t(context, 'Rescue', 'إنقاذ');
       case PostType.product:
-        return 'Shop';
+        return t(context, 'Shop', 'متجر');
       case PostType.general:
         return null;
     }
@@ -53,7 +55,7 @@ class PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final badge = _badgeLabel;
+    final badge = _badgeLabel(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
       decoration: BoxDecoration(
@@ -78,7 +80,7 @@ class PostCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(post.username, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
-                        Text(timeAgo(post.timestamp), style: Theme.of(context).textTheme.bodySmall),
+                        Text(timeAgo(post.timestamp, context.watch<LangProvider>().lang), style: Theme.of(context).textTheme.bodySmall),
                       ],
                     ),
                   ),

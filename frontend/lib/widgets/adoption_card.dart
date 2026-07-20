@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
+import '../localization/lang_provider.dart';
 import '../models/pet.dart';
 import '../theme/app_theme.dart';
 import 'image_with_fallback.dart';
@@ -77,7 +78,7 @@ class _AdoptionCardState extends State<AdoptionCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'MEET  ·  تعرّف',
+                        t(context, 'MEET', 'تعرّف'),
                         style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11, letterSpacing: 2, fontWeight: FontWeight.w700),
                       ),
                       Text(
@@ -133,7 +134,7 @@ class _AdoptionCardState extends State<AdoptionCard> {
               children: [
                 _ActionBtn(
                   icon: Icons.arrow_upward,
-                  label: '$_boosts  ${_boosted ? 'Boosted' : 'Boost'}',
+                  label: '$_boosts  ${_boosted ? t(context, 'Boosted', 'مُعزَّز') : t(context, 'Boost', 'تعزيز')}',
                   onTap: () => setState(() {
                     _boosted = !_boosted;
                     _boosts += _boosted ? 1 : -1;
@@ -143,8 +144,8 @@ class _AdoptionCardState extends State<AdoptionCard> {
                 const Spacer(),
                 _ActionBtn(
                   icon: Icons.flag_outlined,
-                  label: 'Report',
-                  onTap: () => Fluttertoast.showToast(msg: 'Report submitted'),
+                  label: t(context, 'Report', 'إبلاغ'),
+                  onTap: () => Fluttertoast.showToast(msg: t(context, 'Report submitted', 'تم إرسال البلاغ')),
                   color: AppColors.textMuted,
                 ),
               ],
@@ -154,9 +155,11 @@ class _AdoptionCardState extends State<AdoptionCard> {
           Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: ElevatedButton(
-              onPressed: () => Fluttertoast.showToast(msg: 'Request sent to adopt ${pet.name}!'),
+              onPressed: () => Fluttertoast.showToast(
+                msg: t(context, 'Request sent to adopt ${pet.name}!', 'تم إرسال طلب تبني ${pet.name}!'),
+              ),
               style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 48)),
-              child: Text('Ask to adopt ${pet.name}'),
+              child: Text(t(context, 'Ask to adopt ${pet.name}', 'اطلب تبني ${pet.name}')),
             ),
           ),
         ],

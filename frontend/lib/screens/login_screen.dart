@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
+import '../localization/lang_provider.dart';
 import '../services/auth_service.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
@@ -48,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         Fluttertoast.showToast(
-          msg: 'Google sign-in failed. Please try again.',
+          msg: t(context, 'Google sign-in failed. Please try again.', 'فشل تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.'),
           backgroundColor: AppColors.critical,
           textColor: Colors.white,
         );
@@ -80,12 +81,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 Text(
-                  'Welcome to Pupzy',
+                  t(context, 'Welcome to Pupzy', 'مرحبًا بك في Pupzy'),
                   style: Theme.of(context).textTheme.headlineLarge,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Help animals in need around Egypt',
+                  t(context, 'Help animals in need around Egypt', 'ساعد الحيوانات المحتاجة في جميع أنحاء مصر'),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 48),
@@ -124,9 +125,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: const _GoogleLogo(size: 20),
                               ),
                               const SizedBox(width: 12),
-                              const Text(
-                                'Continue with Google',
-                                style: TextStyle(
+                              Text(
+                                t(context, 'Continue with Google', 'المتابعة باستخدام Google'),
+                                style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -137,7 +138,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 Text(
-                  'By continuing, you agree to our\nTerms of Service and Privacy Policy',
+                  t(
+                    context,
+                    'By continuing, you agree to our\nTerms of Service and Privacy Policy',
+                    'بالمتابعة، فإنك توافق على شروط الخدمة وسياسة الخصوصية الخاصة بنا',
+                  ),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),

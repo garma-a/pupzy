@@ -1,13 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../data/mock_data.dart';
+import '../localization/lang_provider.dart';
 import '../models/product.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
 import '../widgets/pet_carousel.dart';
+
+const Map<String, String> _categoryAr = {
+  'Care': 'رعاية',
+  'Food': 'طعام',
+  'Transport': 'نقل',
+  'Accessories': 'إكسسوارات',
+  'Grooming': 'تجميل',
+  'Medical Supplies': 'مستلزمات طبية',
+  'Other': 'أخرى',
+};
+
+const Map<String, String> _conditionAr = {
+  'New': 'جديد',
+  'Like New': 'شبه جديد',
+  'Used': 'مستعمل',
+};
+
+String _categoryLabel(BuildContext context, String category) => t(context, category, _categoryAr[category] ?? category);
+String _conditionLabel(BuildContext context, String condition) => t(context, condition, _conditionAr[condition] ?? condition);
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -39,7 +60,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Future<void> _launchPhone(String phone) async {
     final uri = Uri(scheme: 'tel', path: phone);
     if (!await launchUrl(uri)) {
-      Fluttertoast.showToast(msg: 'Could not open phone dialer');
+      Fluttertoast.showToast(msg: t(context, 'Could not open phone dialer', 'تعذر فتح تطبيق الهاتف'));
     }
   }
 
@@ -47,7 +68,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
     final uri = Uri.parse('https://wa.me/$digits?text=${Uri.encodeComponent(message)}');
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      Fluttertoast.showToast(msg: 'Could not open WhatsApp');
+      Fluttertoast.showToast(msg: t(context, 'Could not open WhatsApp', 'تعذر فتح واتساب'));
     }
   }
 
@@ -59,13 +80,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         MockData.savedProductIds.add(_product.id);
       }
     });
-    Fluttertoast.showToast(msg: _isSaved ? 'Saved to favorites' : 'Removed from favorites');
+    Fluttertoast.showToast(msg: _isSaved ? t(context, 'Saved to favorites', 'تم الحفظ في المفضلة') : t(context, 'Removed from favorites', 'تمت الإزالة من المفضلة'));
   }
 
   void _shareListing() {
-    final priceLabel = _product.isFree ? 'Free' : '${_product.price?.toStringAsFixed(0)} ${_product.currency}';
+    final priceLabel = _product.isFree ? t(context, 'Free', 'مجاني') : '${_product.price?.toStringAsFixed(0)} ${_product.currency}';
     SharePlus.instance.share(
-      ShareParams(text: 'Check out this listing on Pupzy: ${_product.title} — $priceLabel\n${_product.description}'),
+      ShareParams(text: '${t(context, 'Check out this listing on Pupzy', 'شاهد هذا الإعلان على بابزي')}: ${_product.title} — $priceLabel\n${_product.description}'),
     );
   }
 
@@ -77,7 +98,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       builder: (_) => _ReportSheet(
         onSubmit: (reason) {
           Navigator.of(context).pop();
-          Fluttertoast.showToast(msg: 'Listing reported. Thank you for keeping Pupzy safe.');
+          Fluttertoast.showToast(msg: t(context, 'Listing reported. Thank you for keeping Pupzy safe.', 'تم الإبلاغ عن الإعلان. شكرًا لمساهمتك في أمان بابزي.'));
         },
       ),
     );
@@ -86,31 +107,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void _markSold() {
     setState(() => _product = _product.copyWith(status: ListingStatus.sold));
     _syncToMockList();
-    Fluttertoast.showToast(msg: 'Listing marked as sold');
+    Fluttertoast.showToast(msg: t(context, 'Listing marked as sold', 'تم تحديد الإعلان كمباع'));
   }
 
   void _renew() {
     setState(() => _product = _product.copyWith(status: ListingStatus.available));
     _syncToMockList();
-    Fluttertoast.showToast(msg: 'Listing renewed');
+    Fluttertoast.showToast(msg: t(context, 'Listing renewed', 'تم تجديد الإعلان'));
   }
 
   void _deleteListing() {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete listing?'),
-        content: const Text('This cannot be undone.'),
+        title: Text(t(ctx, 'Delete listing?', 'حذف الإعلان؟')),
+        content: Text(t(ctx, 'This cannot be undone.', 'لا يمكن التراجع عن هذا الإجراء.')),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(t(ctx, 'Cancel', 'إلغاء'))),
           TextButton(
             onPressed: () {
               MockData.products.removeWhere((p) => p.id == _product.id);
               Navigator.of(ctx).pop();
               Navigator.of(context).pop();
-              Fluttertoast.showToast(msg: 'Listing deleted');
+              Fluttertoast.showToast(msg: t(ctx, 'Listing deleted', 'تم حذف الإعلان'));
             },
-            child: const Text('Delete', style: TextStyle(color: AppColors.critical)),
+            child: Text(t(ctx, 'Delete', 'حذف'), style: const TextStyle(color: AppColors.critical)),
           ),
         ],
       ),
@@ -128,7 +149,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           setState(() => _product = updated);
           _syncToMockList();
           Navigator.of(context).pop();
-          Fluttertoast.showToast(msg: 'Listing updated');
+          Fluttertoast.showToast(msg: t(context, 'Listing updated', 'تم تحديث الإعلان'));
         },
       ),
     );
@@ -137,6 +158,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final product = _product;
+    final lang = context.watch<LangProvider>().lang;
     return Scaffold(
       body: Column(
         children: [
@@ -158,9 +180,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 color: AppColors.critical,
                                 borderRadius: BorderRadius.circular(AppRadius.chip),
                               ),
-                              child: const Text(
-                                'SOLD',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 1.2),
+                              child: Text(
+                                t(context, 'SOLD', 'مباع'),
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 1.2),
                               ),
                             ),
                           ),
@@ -185,7 +207,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(product.category.toUpperCase(),
+                      Text(_categoryLabel(context, product.category).toUpperCase(),
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 4),
                       Text(product.title, style: Theme.of(context).textTheme.headlineLarge),
@@ -196,12 +218,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
-                            product.isFree ? 'Free' : '${product.price?.toStringAsFixed(0) ?? '-'} ${product.currency}',
+                            product.isFree ? t(context, 'Free', 'مجاني') : '${product.price?.toStringAsFixed(0) ?? '-'} ${product.currency}',
                             style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: AppColors.primary),
                           ),
-                          _Badge(label: product.condition, color: AppColors.textSecondary),
-                          if (product.openToOffers) _Badge(label: 'Negotiable', color: AppColors.sectionLineGreen),
-                          if (product.status == ListingStatus.reserved) _Badge(label: 'Reserved', color: Colors.amber.shade800),
+                          _Badge(label: _conditionLabel(context, product.condition), color: AppColors.textSecondary),
+                          if (product.openToOffers) _Badge(label: t(context, 'Negotiable', 'قابل للتفاوض'), color: AppColors.sectionLineGreen),
+                          if (product.status == ListingStatus.reserved) _Badge(label: t(context, 'Reserved', 'محجوز'), color: Colors.amber.shade800),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -211,11 +233,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           const SizedBox(width: 2),
                           Text(product.location, style: Theme.of(context).textTheme.bodySmall),
                           const SizedBox(width: AppSpacing.sm),
-                          Text('· Posted ${timeAgo(product.createdAt)} ago', style: Theme.of(context).textTheme.bodySmall),
+                          Text(
+                            '· ${t(context, 'Posted', 'نُشر')} ${timeAgo(product.createdAt, lang)} ${t(context, 'ago', 'مضت')}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
                         ],
                       ),
                       const SizedBox(height: AppSpacing.lg),
-                      Text('Description', style: Theme.of(context).textTheme.headlineSmall),
+                      Text(t(context, 'Description', 'الوصف'), style: Theme.of(context).textTheme.headlineSmall),
                       const SizedBox(height: AppSpacing.xs),
                       Text(product.description, style: Theme.of(context).textTheme.bodyMedium),
                       const SizedBox(height: AppSpacing.lg),
@@ -242,6 +267,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Widget _buildBuyerActions() {
     final product = _product;
+    final contactMessage = "${t(context, "Hi, I'm interested in your listing", 'مرحبًا، أنا مهتم بإعلانك')} \"${product.title}\" ${t(context, 'on Pupzy.', 'على بابزي.')}";
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -249,36 +275,30 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           children: [
             _IconAction(
               icon: Icons.call_outlined,
-              label: 'Call',
+              label: t(context, 'Call', 'اتصال'),
               onTap: product.sellerPhone != null ? () => _launchPhone(product.sellerPhone!) : null,
             ),
             _IconAction(
               icon: Icons.chat_bubble_outline,
-              label: 'Message',
-              onTap: product.sellerPhone != null
-                  ? () => _launchWhatsApp(
-                      product.sellerPhone!, "Hi, I'm interested in your listing \"${product.title}\" on Pupzy.")
-                  : null,
+              label: t(context, 'Message', 'رسالة'),
+              onTap: product.sellerPhone != null ? () => _launchWhatsApp(product.sellerPhone!, contactMessage) : null,
             ),
             _IconAction(
               icon: _isSaved ? Icons.bookmark : Icons.bookmark_border,
-              label: 'Save',
+              label: t(context, 'Save', 'حفظ'),
               color: _isSaved ? AppColors.primary : null,
               onTap: _toggleSave,
             ),
-            _IconAction(icon: Icons.share_outlined, label: 'Share', onTap: _shareListing),
-            _IconAction(icon: Icons.flag_outlined, label: 'Report', onTap: _reportListing),
+            _IconAction(icon: Icons.share_outlined, label: t(context, 'Share', 'مشاركة'), onTap: _shareListing),
+            _IconAction(icon: Icons.flag_outlined, label: t(context, 'Report', 'إبلاغ'), onTap: _reportListing),
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: _isSold || product.sellerPhone == null
-                ? null
-                : () => _launchWhatsApp(
-                    product.sellerPhone!, "Hi, I'm interested in your listing \"${product.title}\" on Pupzy."),
-            child: Text(_isSold ? 'Sold' : 'Contact Seller'),
+            onPressed: _isSold || product.sellerPhone == null ? null : () => _launchWhatsApp(product.sellerPhone!, contactMessage),
+            child: Text(_isSold ? t(context, 'Sold', 'مباع') : t(context, 'Contact Seller', 'تواصل مع البائع')),
           ),
         ),
       ],
@@ -289,21 +309,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Row(
       children: [
         Expanded(
-          child: OutlinedButton(onPressed: _editListing, child: const Text('Edit')),
+          child: OutlinedButton(onPressed: _editListing, child: Text(t(context, 'Edit', 'تعديل'))),
         ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: OutlinedButton(
             onPressed: _deleteListing,
             style: OutlinedButton.styleFrom(foregroundColor: AppColors.critical, side: const BorderSide(color: AppColors.critical)),
-            child: const Text('Delete'),
+            child: Text(t(context, 'Delete', 'حذف')),
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: ElevatedButton(
             onPressed: _isSold ? _renew : _markSold,
-            child: Text(_isSold ? 'Renew' : 'Mark Sold'),
+            child: Text(_isSold ? t(context, 'Renew', 'تجديد') : t(context, 'Mark Sold', 'تحديد كمباع')),
           ),
         ),
       ],
@@ -382,7 +402,11 @@ class _SafetyNotice extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'Meet in a safe public place. Inspect the item before paying. Never send money in advance.',
+              t(
+                context,
+                'Meet in a safe public place. Inspect the item before paying. Never send money in advance.',
+                'قابل البائع في مكان عام آمن. افحص الغرض قبل الدفع. لا ترسل المال مقدمًا أبدًا.',
+              ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
@@ -397,14 +421,22 @@ class _SellerCard extends StatelessWidget {
 
   const _SellerCard({required this.product});
 
-  static const _months = [
+  static const _monthsEn = [
     '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  static const _monthsAr = [
+    '', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
   ];
 
   @override
   Widget build(BuildContext context) {
     final joined = product.sellerJoinDate;
-    final joinLabel = '${_months[joined.month]} ${joined.year}';
+    final lang = context.watch<LangProvider>().lang;
+    final monthName = lang == Lang.ar ? _monthsAr[joined.month] : _monthsEn[joined.month];
+    final joinLabel = '$monthName ${joined.year}';
+    final listingsLabel = product.sellerActiveListingsCount == 1
+        ? t(context, '1 active listing', 'إعلان نشط واحد')
+        : '${product.sellerActiveListingsCount} ${t(context, 'active listings', 'إعلانات نشطة')}';
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -427,11 +459,8 @@ class _SellerCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(product.sellerName, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
-                Text('Member since $joinLabel', style: Theme.of(context).textTheme.bodySmall),
-                Text(
-                  '${product.sellerActiveListingsCount} active listing${product.sellerActiveListingsCount == 1 ? '' : 's'}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                Text('${t(context, 'Member since', 'عضو منذ')} $joinLabel', style: Theme.of(context).textTheme.bodySmall),
+                Text(listingsLabel, style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
           ),
@@ -453,13 +482,13 @@ class _ReportSheet extends StatefulWidget {
 class _ReportSheetState extends State<_ReportSheet> {
   String? _reason;
 
-  static const _reasons = [
-    'Spam',
-    'Scam',
-    'Inappropriate content',
-    'Duplicate listing',
-    'Unrelated to animals',
-    'Other',
+  static const List<(String, String, String)> _reasons = [
+    ('SPAM', 'Spam', 'رسائل مزعجة'),
+    ('SCAM', 'Scam', 'احتيال'),
+    ('INAPPROPRIATE_CONTENT', 'Inappropriate content', 'محتوى غير لائق'),
+    ('DUPLICATE', 'Duplicate listing', 'إعلان مكرر'),
+    ('UNRELATED_TO_ANIMALS', 'Unrelated to animals', 'غير متعلق بالحيوانات'),
+    ('OTHER', 'Other', 'أخرى'),
   ];
 
   @override
@@ -474,17 +503,17 @@ class _ReportSheetState extends State<_ReportSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Report this listing', style: Theme.of(context).textTheme.headlineSmall),
+          Text(t(context, 'Report this listing', 'الإبلاغ عن هذا الإعلان'), style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: AppSpacing.md),
           Wrap(
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: _reasons.map((r) {
-              final selected = _reason == r;
+              final selected = _reason == r.$1;
               return ChoiceChip(
-                label: Text(r),
+                label: Text(t(context, r.$2, r.$3)),
                 selected: selected,
-                onSelected: (_) => setState(() => _reason = r),
+                onSelected: (_) => setState(() => _reason = r.$1),
               );
             }).toList(),
           ),
@@ -493,7 +522,7 @@ class _ReportSheetState extends State<_ReportSheet> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _reason == null ? null : () => widget.onSubmit(_reason!),
-              child: const Text('Submit report'),
+              child: Text(t(context, 'Submit report', 'إرسال البلاغ')),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -587,17 +616,17 @@ class _EditListingSheetState extends State<_EditListingSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Edit listing', style: Theme.of(context).textTheme.headlineSmall),
+              Text(t(context, 'Edit listing', 'تعديل الإعلان'), style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: AppSpacing.md),
-              TextField(controller: _titleController, decoration: const InputDecoration(labelText: 'Title')),
+              TextField(controller: _titleController, decoration: InputDecoration(labelText: t(context, 'Title', 'العنوان'))),
               const SizedBox(height: AppSpacing.sm),
-              TextField(controller: _descController, maxLines: 3, decoration: const InputDecoration(labelText: 'Description')),
+              TextField(controller: _descController, maxLines: 3, decoration: InputDecoration(labelText: t(context, 'Description', 'الوصف'))),
               const SizedBox(height: AppSpacing.sm),
               Wrap(
                 spacing: AppSpacing.sm,
                 children: _conditions.map((c) {
                   return ChoiceChip(
-                    label: Text(c),
+                    label: Text(_conditionLabel(context, c)),
                     selected: _condition == c,
                     onSelected: (_) => setState(() => _condition = c),
                   );
@@ -606,7 +635,7 @@ class _EditListingSheetState extends State<_EditListingSheet> {
               const SizedBox(height: AppSpacing.sm),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('List as free / giveaway'),
+                title: Text(t(context, 'List as free / giveaway', 'إعلان مجاني / تبرع')),
                 value: _isFree,
                 onChanged: (v) => setState(() => _isFree = v),
               ),
@@ -614,18 +643,18 @@ class _EditListingSheetState extends State<_EditListingSheet> {
                 TextField(
                   controller: _priceController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Price (EGP)'),
+                  decoration: InputDecoration(labelText: t(context, 'Price (EGP)', 'السعر (جنيه مصري)')),
                 ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Open to offers'),
+                title: Text(t(context, 'Open to offers', 'قابل للتفاوض')),
                 value: _openToOffers,
                 onChanged: (v) => setState(() => _openToOffers = v),
               ),
               const SizedBox(height: AppSpacing.md),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(onPressed: _save, child: const Text('Save changes')),
+                child: ElevatedButton(onPressed: _save, child: Text(t(context, 'Save changes', 'حفظ التغييرات'))),
               ),
               const SizedBox(height: AppSpacing.sm),
             ],

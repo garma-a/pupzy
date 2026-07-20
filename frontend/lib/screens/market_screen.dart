@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/mock_data.dart';
+import '../localization/lang_provider.dart';
 import '../models/post.dart';
 import '../models/product.dart';
 import '../theme/app_theme.dart';
@@ -12,6 +13,9 @@ import 'product_detail_screen.dart';
 
 enum _SortOption { newest, priceLowToHigh, priceHighToLow }
 
+/// A fixed-choice category: (canonical value compared against Product.category, English label, Arabic label).
+typedef _CategoryChoice = (String value, String en, String ar);
+
 class MarketScreen extends StatefulWidget {
   const MarketScreen({super.key});
 
@@ -21,7 +25,16 @@ class MarketScreen extends StatefulWidget {
 
 class _MarketScreenState extends State<MarketScreen> {
   String _category = 'All';
-  final _categories = ['All', 'Care', 'Food', 'Transport', 'Accessories', 'Grooming', 'Medical Supplies', 'Other'];
+  static const List<_CategoryChoice> _categories = [
+    ('All', 'All', 'الكل'),
+    ('Care', 'Care', 'رعاية'),
+    ('Food', 'Food', 'طعام'),
+    ('Transport', 'Transport', 'نقل'),
+    ('Accessories', 'Accessories', 'إكسسوارات'),
+    ('Grooming', 'Grooming', 'تجميل'),
+    ('Medical Supplies', 'Medical Supplies', 'مستلزمات طبية'),
+    ('Other', 'Other', 'أخرى'),
+  ];
   final _searchController = TextEditingController();
   String _query = '';
   _SortOption _sort = _SortOption.newest;
@@ -55,14 +68,14 @@ class _MarketScreenState extends State<MarketScreen> {
     return list;
   }
 
-  String _sortLabel(_SortOption o) {
+  String _sortLabel(BuildContext context, _SortOption o) {
     switch (o) {
       case _SortOption.newest:
-        return 'Newest';
+        return t(context, 'Newest', 'الأحدث');
       case _SortOption.priceLowToHigh:
-        return 'Price: Low to High';
+        return t(context, 'Price: Low to High', 'السعر: من الأقل للأعلى');
       case _SortOption.priceHighToLow:
-        return 'Price: High to Low';
+        return t(context, 'Price: High to Low', 'السعر: من الأعلى للأقل');
     }
   }
 
@@ -93,7 +106,7 @@ class _MarketScreenState extends State<MarketScreen> {
                         onChanged: (v) => setState(() => _query = v),
                         style: Theme.of(context).textTheme.bodyMedium,
                         decoration: InputDecoration(
-                          hintText: 'Search listings...',
+                          hintText: t(context, 'Search listings...', 'ابحث في الإعلانات...'),
                           hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
                           border: InputBorder.none,
                           isDense: true,
@@ -116,7 +129,7 @@ class _MarketScreenState extends State<MarketScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                     child: Row(
                       children: [
-                        Text('Marketplace', style: Theme.of(context).textTheme.headlineMedium),
+                        Text(t(context, 'Marketplace', 'السوق'), style: Theme.of(context).textTheme.headlineMedium),
                         const SizedBox(width: AppSpacing.md),
                         Container(width: 4, height: 32, color: AppColors.sectionLineGreen),
                         const Spacer(),
@@ -124,14 +137,14 @@ class _MarketScreenState extends State<MarketScreen> {
                           initialValue: _sort,
                           onSelected: (v) => setState(() => _sort = v),
                           itemBuilder: (context) => _SortOption.values
-                              .map((o) => PopupMenuItem(value: o, child: Text(_sortLabel(o))))
+                              .map((o) => PopupMenuItem(value: o, child: Text(_sortLabel(context, o))))
                               .toList(),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(Icons.sort, size: 16, color: AppColors.textSecondary),
                               const SizedBox(width: 4),
-                              Text(_sortLabel(_sort), style: Theme.of(context).textTheme.bodySmall),
+                              Text(_sortLabel(context, _sort), style: Theme.of(context).textTheme.bodySmall),
                             ],
                           ),
                         ),
@@ -146,11 +159,11 @@ class _MarketScreenState extends State<MarketScreen> {
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                       children: _categories.map((c) {
-                        final active = _category == c;
+                        final active = _category == c.$1;
                         return Padding(
                           padding: const EdgeInsets.only(right: AppSpacing.sm),
                           child: GestureDetector(
-                            onTap: () => setState(() => _category = c),
+                            onTap: () => setState(() => _category = c.$1),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                               decoration: BoxDecoration(
@@ -158,7 +171,7 @@ class _MarketScreenState extends State<MarketScreen> {
                                 borderRadius: BorderRadius.circular(AppRadius.chip),
                                 border: Border.all(color: active ? AppColors.primary : AppColors.border),
                               ),
-                              child: Text(c,
+                              child: Text(t(context, c.$2, c.$3),
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -200,8 +213,8 @@ class _MarketScreenState extends State<MarketScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Have something to sell?', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
-                                  Text('Buyers contact you directly — no middleman', style: Theme.of(context).textTheme.bodySmall),
+                                  Text(t(context, 'Have something to sell?', 'لديك شيء تريد بيعه؟'), style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                                  Text(t(context, 'Buyers contact you directly — no middleman', 'يتواصل معك المشترون مباشرة — بدون وسيط'), style: Theme.of(context).textTheme.bodySmall),
                                 ],
                               ),
                             ),
@@ -215,16 +228,17 @@ class _MarketScreenState extends State<MarketScreen> {
                   Builder(
                     builder: (context) {
                       final maxDist = DistanceProvider.of(context).maxDistance;
-                      final distLabel = maxDist.isFinite ? '${maxDist.toInt()}km' : '50+km';
+                      final kmLabel = t(context, 'km', 'كم');
+                      final distLabel = maxDist.isFinite ? '${maxDist.toInt()}$kmLabel' : '50+$kmLabel';
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                         child: RichText(
                           text: TextSpan(
                             style: Theme.of(context).textTheme.bodySmall,
                             children: [
-                              const TextSpan(text: 'Listings within '),
+                              TextSpan(text: t(context, 'Listings within ', 'إعلانات ضمن ')),
                               TextSpan(text: distLabel, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
-                              const TextSpan(text: ' of you'),
+                              TextSpan(text: t(context, ' of you', ' منك')),
                             ],
                           ),
                         ),
@@ -239,7 +253,7 @@ class _MarketScreenState extends State<MarketScreen> {
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xxl),
                         child: Center(
-                          child: Text('No listings match your search', style: Theme.of(context).textTheme.bodyMedium),
+                          child: Text(t(context, 'No listings match your search', 'لا توجد إعلانات مطابقة لبحثك'), style: Theme.of(context).textTheme.bodyMedium),
                         ),
                       );
                     }
@@ -290,7 +304,7 @@ class _MarketScreenState extends State<MarketScreen> {
                                           child: Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                             decoration: BoxDecoration(color: AppColors.critical, borderRadius: BorderRadius.circular(AppRadius.chip)),
-                                            child: const Text('SOLD', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+                                            child: Text(t(context, 'SOLD', 'مباع'), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
                                           ),
                                         )
                                       else if (p.isFree)
@@ -301,7 +315,7 @@ class _MarketScreenState extends State<MarketScreen> {
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                             decoration:
                                                 BoxDecoration(color: AppColors.sectionLineGreen, borderRadius: BorderRadius.circular(AppRadius.chip)),
-                                            child: const Text('FREE', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+                                            child: Text(t(context, 'FREE', 'مجاني'), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
                                           ),
                                         ),
                                       Positioned(
@@ -325,7 +339,7 @@ class _MarketScreenState extends State<MarketScreen> {
                                           overflow: TextOverflow.ellipsis,
                                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 14)),
                                       Text(
-                                        p.isFree ? 'Free' : '${p.price?.toInt() ?? '-'} ${p.currency}',
+                                        p.isFree ? t(context, 'Free', 'مجاني') : '${p.price?.toInt() ?? '-'} ${p.currency}',
                                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                               color: AppColors.primary,
                                               fontWeight: FontWeight.w700,

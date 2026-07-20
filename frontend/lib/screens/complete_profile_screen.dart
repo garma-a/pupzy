@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
+import '../localization/lang_provider.dart';
 import '../services/auth_service.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
@@ -86,7 +87,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCity == null) {
       Fluttertoast.showToast(
-        msg: 'Please select your city',
+        msg: t(context, 'Please select your city', 'يرجى اختيار مدينتك'),
         backgroundColor: AppColors.critical,
         textColor: Colors.white,
       );
@@ -117,7 +118,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       );
     } else {
       Fluttertoast.showToast(
-        msg: 'Something went wrong. Please try again.',
+        msg: t(context, 'Something went wrong. Please try again.', 'حدث خطأ ما. يرجى المحاولة مرة أخرى.'),
         backgroundColor: AppColors.critical,
         textColor: Colors.white,
       );
@@ -149,6 +150,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     final auth = context.read<AuthService>();
     final user = auth.currentUser;
     final email = user?.email ?? '';
+    final lang = context.watch<LangProvider>().lang;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -176,12 +178,12 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                       ),
                       const SizedBox(height: AppSpacing.lg),
                       Text(
-                        'Complete your profile',
+                        t(context, 'Complete your profile', 'أكمل ملفك الشخصي'),
                         style: Theme.of(context).textTheme.headlineLarge,
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Just a few details to get started',
+                        t(context, 'Just a few details to get started', 'بضع تفاصيل فقط للبدء'),
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
@@ -190,7 +192,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                 const SizedBox(height: AppSpacing.xxl),
 
                 // Email (read-only, from Google OAuth)
-                Text('Email', style: Theme.of(context).textTheme.labelLarge),
+                Text(t(context, 'Email', 'البريد الإلكتروني'), style: Theme.of(context).textTheme.labelLarge),
                 const SizedBox(height: AppSpacing.sm),
                 Container(
                   width: double.infinity,
@@ -217,26 +219,26 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                 const SizedBox(height: AppSpacing.xl),
 
                 // Full name
-                Text('Full Name', style: Theme.of(context).textTheme.labelLarge),
+                Text(t(context, 'Full Name', 'الاسم الكامل'), style: Theme.of(context).textTheme.labelLarge),
                 const SizedBox(height: AppSpacing.sm),
                 TextFormField(
                   controller: _nameController,
                   textInputAction: TextInputAction.next,
                   textCapitalization: TextCapitalization.words,
-                  decoration: _inputDecoration('Enter your full name', Icons.person_outline),
+                  decoration: _inputDecoration(t(context, 'Enter your full name', 'أدخل اسمك الكامل'), Icons.person_outline),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Name is required';
-                    if (v.trim().length < 2) return 'At least 2 characters';
-                    if (v.trim().length > 120) return 'Maximum 120 characters';
-                    if (RegExp(r'\d').hasMatch(v)) return 'Name cannot contain numbers';
-                    if (!v.trim().contains(' ')) return 'Enter first and last name';
+                    if (v == null || v.trim().isEmpty) return t(context, 'Name is required', 'الاسم مطلوب');
+                    if (v.trim().length < 2) return t(context, 'At least 2 characters', 'حرفان على الأقل');
+                    if (v.trim().length > 120) return t(context, 'Maximum 120 characters', 'الحد الأقصى 120 حرفًا');
+                    if (RegExp(r'\d').hasMatch(v)) return t(context, 'Name cannot contain numbers', 'لا يمكن أن يحتوي الاسم على أرقام');
+                    if (!v.trim().contains(' ')) return t(context, 'Enter first and last name', 'أدخل الاسم الأول والأخير');
                     return null;
                   },
                 ),
                 const SizedBox(height: AppSpacing.xl),
 
                 // Phone number
-                Text('Phone Number', style: Theme.of(context).textTheme.labelLarge),
+                Text(t(context, 'Phone Number', 'رقم الهاتف'), style: Theme.of(context).textTheme.labelLarge),
                 const SizedBox(height: AppSpacing.sm),
                 TextFormField(
                   controller: _phoneController,
@@ -270,11 +272,11 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     ),
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Phone number is required';
+                    if (v == null || v.trim().isEmpty) return t(context, 'Phone number is required', 'رقم الهاتف مطلوب');
                     final digits = v.trim().replaceAll(RegExp(r'\D'), '');
-                    if (digits.length != 11) return 'Phone number must be 11 digits';
+                    if (digits.length != 11) return t(context, 'Phone number must be 11 digits', 'يجب أن يتكون رقم الهاتف من 11 رقمًا');
                     if (!RegExp(r'^01[0125]\d{8}$').hasMatch(digits)) {
-                      return 'Must start with 010, 011, 012, or 015';
+                      return t(context, 'Must start with 010, 011, 012, or 015', 'يجب أن يبدأ بـ 010 أو 011 أو 012 أو 015');
                     }
                     return null;
                   },
@@ -282,7 +284,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                 const SizedBox(height: AppSpacing.xl),
 
                 // City picker
-                Text('City', style: Theme.of(context).textTheme.labelLarge),
+                Text(t(context, 'City', 'المدينة'), style: Theme.of(context).textTheme.labelLarge),
                 const SizedBox(height: AppSpacing.sm),
                 GestureDetector(
                   onTap: _loadingCities ? null : _showCityPicker,
@@ -311,8 +313,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                                 )
                               : Text(
                                   _selectedCity != null
-                                      ? '${_selectedCity!['nameEnglish']} - ${_selectedCity!['nameArabic']}'
-                                      : 'Search and select your city',
+                                      ? (lang == Lang.ar ? _selectedCity!['nameArabic'] : _selectedCity!['nameEnglish'])
+                                      : t(context, 'Search and select your city', 'ابحث واختر مدينتك'),
                                   style: TextStyle(
                                     color: _selectedCity != null
                                         ? AppColors.textPrimary
@@ -342,7 +344,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text('Get Started'),
+                        : Text(t(context, 'Get Started', 'ابدأ الآن')),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xxl),
@@ -426,6 +428,7 @@ class _CityPickerSheetState extends State<_CityPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.of(context).viewInsets.bottom;
+    final lang = context.watch<LangProvider>().lang;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
@@ -440,7 +443,7 @@ class _CityPickerSheetState extends State<_CityPickerSheet> {
           const SizedBox(height: AppSpacing.lg),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Text('Select your city', style: Theme.of(context).textTheme.headlineSmall),
+            child: Text(t(context, 'Select your city', 'اختر مدينتك'), style: Theme.of(context).textTheme.headlineSmall),
           ),
           const SizedBox(height: AppSpacing.md),
           Padding(
@@ -449,7 +452,7 @@ class _CityPickerSheetState extends State<_CityPickerSheet> {
               controller: widget.searchController,
               autofocus: true,
               decoration: InputDecoration(
-                hintText: 'Search by city, governorate...',
+                hintText: t(context, 'Search by city, governorate...', 'ابحث بالمدينة أو المحافظة...'),
                 hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 14),
                 prefixIcon: const Icon(Icons.search, color: AppColors.textMuted, size: 20),
                 filled: true,
@@ -475,7 +478,7 @@ class _CityPickerSheetState extends State<_CityPickerSheet> {
             child: _filtered.isEmpty
                 ? Center(
                     child: Text(
-                      'No cities found',
+                      t(context, 'No cities found', 'لا توجد مدن'),
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   )
@@ -487,7 +490,7 @@ class _CityPickerSheetState extends State<_CityPickerSheet> {
                       return ListTile(
                         leading: Icon(Icons.location_on_outlined, color: AppColors.primary, size: 20),
                         title: Text(
-                          '${city['nameEnglish']} - ${city['nameArabic']}',
+                          lang == Lang.ar ? city['nameArabic'] as String : city['nameEnglish'] as String,
                           style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
                         ),
                         subtitle: Text(

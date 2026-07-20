@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/mock_data.dart';
+import '../localization/lang_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/adoption_card.dart';
 import '../widgets/distance_filter.dart';
@@ -36,7 +37,7 @@ class AdoptScreen extends StatelessWidget {
                     children: [
                       const Icon(Icons.search, size: 18, color: AppColors.textMuted),
                       const SizedBox(width: AppSpacing.sm),
-                      Text('Search pets, posts, users...', style: Theme.of(context).textTheme.bodyMedium),
+                      Text(t(context, 'Search pets, posts, users...', 'ابحث عن حيوانات، منشورات، مستخدمين...'), style: Theme.of(context).textTheme.bodyMedium),
                     ],
                   ),
                 ),
@@ -44,9 +45,12 @@ class AdoptScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               const DistanceFilter(),
               const SizedBox(height: AppSpacing.sm),
-              const TabBar(
-                tabs: [Tab(text: 'Adoption'), Tab(text: 'Matching')],
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              TabBar(
+                tabs: [
+                  Tab(text: t(context, 'Adoption', 'تبني')),
+                  Tab(text: t(context, 'Matching', 'مطابقة')),
+                ],
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
@@ -54,9 +58,9 @@ class AdoptScreen extends StatelessWidget {
                   text: TextSpan(
                     style: Theme.of(context).textTheme.bodySmall,
                     children: [
-                      const TextSpan(text: 'Within '),
+                      TextSpan(text: '${t(context, 'Within', 'ضمن')} '),
                       TextSpan(text: distLabel, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
-                      const TextSpan(text: ' of you'),
+                      TextSpan(text: ' ${t(context, 'of you', 'منك')}'),
                     ],
                   ),
                 ),
@@ -67,7 +71,7 @@ class AdoptScreen extends StatelessWidget {
                     filtered.isEmpty
                         ? Center(
                             child: Text(
-                              'No pets for adoption within this distance',
+                              t(context, 'No pets for adoption within this distance', 'لا توجد حيوانات للتبني ضمن هذه المسافة'),
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
                             ),
                           )
@@ -82,7 +86,7 @@ class AdoptScreen extends StatelessWidget {
                         children: [
                           const Icon(Icons.favorite_border, size: 52, color: AppColors.textMuted),
                           const SizedBox(height: 12),
-                          Text('Matching coming soon', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.textMuted)),
+                          Text(t(context, 'Matching coming soon', 'المطابقة قريبًا'), style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.textMuted)),
                         ],
                       ),
                     ),

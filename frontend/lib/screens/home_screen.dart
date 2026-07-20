@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 import '../data/mock_data.dart';
+import '../localization/lang_provider.dart';
 import '../models/pet.dart';
 import '../theme/app_theme.dart';
 import '../widgets/adoption_card.dart';
@@ -39,7 +40,7 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     const Icon(Icons.search, size: 18, color: AppColors.textMuted),
                     const SizedBox(width: AppSpacing.sm),
-                    Text('Search pets, posts, users...', style: Theme.of(context).textTheme.bodyMedium),
+                    Text(t(context, 'Search pets, posts, users...', 'ابحث عن حيوانات، منشورات، مستخدمين...'), style: Theme.of(context).textTheme.bodyMedium),
                   ],
                 ),
               ),
@@ -54,10 +55,10 @@ class HomeScreen extends StatelessWidget {
                   // FAVORITES
                   _SectionHeader(
                     leading: const Icon(Icons.favorite, size: 16, color: AppColors.critical),
-                    title: 'FAVORITES',
+                    title: t(context, 'FAVORITES', 'المفضلة'),
                     trailing: GestureDetector(
-                      onTap: () => Fluttertoast.showToast(msg: 'See all favorites'),
-                      child: Text('See more →', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                      onTap: () => Fluttertoast.showToast(msg: t(context, 'See all favorites', 'عرض كل المفضلة')),
+                      child: Text(t(context, 'See more →', 'المزيد ←'), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -77,7 +78,7 @@ class HomeScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                     child: Row(
                       children: [
-                        Text('Help a Pet', style: Theme.of(context).textTheme.headlineMedium),
+                        Text(t(context, 'Help a Pet', 'ساعد حيوانًا'), style: Theme.of(context).textTheme.headlineMedium),
                         const SizedBox(width: AppSpacing.md),
                         Container(width: 4, height: 32, color: AppColors.critical),
                       ],
@@ -88,7 +89,7 @@ class HomeScreen extends StatelessWidget {
                     RescueAlertBanner(animal: rescue.firstWhere((a) => a.isUrgent)),
                   const SizedBox(height: AppSpacing.sm),
                   if (rescue.isEmpty)
-                    _EmptySection(message: 'No rescue animals within this distance')
+                    _EmptySection(message: t(context, 'No rescue animals within this distance', 'لا توجد حيوانات إنقاذ ضمن هذه المسافة'))
                   else
                     SizedBox(
                       height: 340,
@@ -106,7 +107,7 @@ class HomeScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                     child: Row(
                       children: [
-                        Text('Find a Pet', style: Theme.of(context).textTheme.headlineMedium),
+                        Text(t(context, 'Find a Pet', 'ابحث عن حيوان'), style: Theme.of(context).textTheme.headlineMedium),
                         const SizedBox(width: AppSpacing.md),
                         Container(width: 4, height: 32, color: AppColors.critical),
                       ],
@@ -114,7 +115,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   if (adoption.isEmpty)
-                    _EmptySection(message: 'No pets for adoption within this distance')
+                    _EmptySection(message: t(context, 'No pets for adoption within this distance', 'لا توجد حيوانات للتبني ضمن هذه المسافة'))
                   else
                     AdoptionCard(pet: adoption.first),
 
@@ -124,7 +125,7 @@ class HomeScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                     child: Row(
                       children: [
-                        Text('Marketplace', style: Theme.of(context).textTheme.headlineMedium),
+                        Text(t(context, 'Marketplace', 'السوق'), style: Theme.of(context).textTheme.headlineMedium),
                         const SizedBox(width: AppSpacing.md),
                         Container(width: 4, height: 32, color: AppColors.sectionLineGreen),
                       ],
@@ -186,13 +187,13 @@ class HomeScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                     child: OutlinedButton(
-                      onPressed: () => Fluttertoast.showToast(msg: 'Navigate to Market tab'),
+                      onPressed: () => Fluttertoast.showToast(msg: t(context, 'Navigate to Market tab', 'انتقل إلى تبويب السوق')),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 48),
                         side: const BorderSide(color: AppColors.border),
                         shape: const StadiumBorder(),
                       ),
-                      child: Text('See all in Marketplace →', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                      child: Text(t(context, 'See all in Marketplace →', 'عرض الكل في السوق ←'), style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -293,7 +294,7 @@ class _HomeRescueCardState extends State<_HomeRescueCard> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(color: AppColors.critical, borderRadius: BorderRadius.circular(AppRadius.chip)),
-                        child: const Text('CRITICAL', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                        child: Text(t(context, 'CRITICAL', 'حرجة'), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
                       ),
                     const SizedBox(width: 6),
                     Container(
@@ -351,7 +352,7 @@ class _HomeRescueCardState extends State<_HomeRescueCard> {
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(width: 3),
-                Text('km', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted)),
+                Text(t(context, 'km', 'كم'), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted)),
               ],
             ),
           ),

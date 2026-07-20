@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/mock_data.dart';
+import '../localization/lang_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/distance_filter.dart';
 import '../widgets/rescue_card.dart';
@@ -35,7 +36,7 @@ class HelpScreen extends StatelessWidget {
                     children: [
                       const Icon(Icons.search, size: 18, color: AppColors.textMuted),
                       const SizedBox(width: AppSpacing.sm),
-                      Text('Search pets, posts, users...', style: Theme.of(context).textTheme.bodyMedium),
+                      Text(t(context, 'Search pets, posts, users...', 'ابحث عن حيوانات، منشورات، مستخدمين...'), style: Theme.of(context).textTheme.bodyMedium),
                     ],
                   ),
                 ),
@@ -43,9 +44,12 @@ class HelpScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               const DistanceFilter(),
               const SizedBox(height: AppSpacing.sm),
-              const TabBar(
-                tabs: [Tab(text: 'Rescue calls'), Tab(text: 'Lost & Found')],
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              TabBar(
+                tabs: [
+                  Tab(text: t(context, 'Rescue calls', 'نداءات الإنقاذ')),
+                  Tab(text: t(context, 'Lost & Found', 'المفقودات')),
+                ],
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
@@ -53,9 +57,9 @@ class HelpScreen extends StatelessWidget {
                   text: TextSpan(
                     style: Theme.of(context).textTheme.bodySmall,
                     children: [
-                      const TextSpan(text: 'Showing posts within '),
+                      TextSpan(text: '${t(context, 'Showing posts within', 'عرض المنشورات ضمن')} '),
                       TextSpan(text: distLabel, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
-                      const TextSpan(text: ' of you'),
+                      TextSpan(text: ' ${t(context, 'of you', 'منك')}'),
                     ],
                   ),
                 ),
@@ -90,7 +94,7 @@ class _RescueList extends StatelessWidget {
     if (items.isEmpty) {
       return Center(
         child: Text(
-          'No rescue animals within this distance',
+          t(context, 'No rescue animals within this distance', 'لا توجد حيوانات إنقاذ ضمن هذه المسافة'),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
         ),
       );

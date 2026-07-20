@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../localization/lang_provider.dart';
+
 class AppColors {
   AppColors._();
 
@@ -44,7 +46,13 @@ class AppSpacing {
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get light {
+  static ThemeData light(Lang lang) {
+    final isArabic = lang == Lang.ar;
+    // Cairo has full Arabic glyph coverage; DM Sans/Playfair Display don't,
+    // so Arabic mode uses Cairo throughout instead of the English display pairing.
+    final bodyFont = isArabic ? GoogleFonts.cairo : GoogleFonts.dmSans;
+    final headlineFont = isArabic ? GoogleFonts.cairo : GoogleFonts.playfairDisplay;
+
     final base = ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
@@ -57,35 +65,39 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.background,
     );
 
-    final textTheme = GoogleFonts.dmSansTextTheme(base.textTheme).copyWith(
-      headlineLarge: GoogleFonts.playfairDisplay(
+    final baseTextTheme = isArabic
+        ? GoogleFonts.cairoTextTheme(base.textTheme)
+        : GoogleFonts.dmSansTextTheme(base.textTheme);
+
+    final textTheme = baseTextTheme.copyWith(
+      headlineLarge: headlineFont(
         fontSize: 26,
         fontWeight: FontWeight.w800,
         color: AppColors.textPrimary,
       ),
-      headlineMedium: GoogleFonts.playfairDisplay(
+      headlineMedium: headlineFont(
         fontSize: 22,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
       ),
-      headlineSmall: GoogleFonts.playfairDisplay(
+      headlineSmall: headlineFont(
         fontSize: 18,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
       ),
-      bodyLarge: GoogleFonts.dmSans(
+      bodyLarge: bodyFont(
         fontSize: 16,
         color: AppColors.textPrimary,
       ),
-      bodyMedium: GoogleFonts.dmSans(
+      bodyMedium: bodyFont(
         fontSize: 14,
         color: AppColors.textSecondary,
       ),
-      bodySmall: GoogleFonts.dmSans(
+      bodySmall: bodyFont(
         fontSize: 12,
         color: AppColors.textMuted,
       ),
-      labelLarge: GoogleFonts.dmSans(
+      labelLarge: bodyFont(
         fontSize: 15,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
@@ -115,7 +127,7 @@ class AppTheme {
           foregroundColor: AppColors.onPrimary,
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           shape: const StadiumBorder(),
-          textStyle: GoogleFonts.dmSans(fontSize: 15, fontWeight: FontWeight.w600),
+          textStyle: bodyFont(fontSize: 15, fontWeight: FontWeight.w600),
           elevation: 0,
         ),
       ),
@@ -125,7 +137,7 @@ class AppTheme {
           side: BorderSide(color: AppColors.border),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
           shape: const StadiumBorder(),
-          textStyle: GoogleFonts.dmSans(fontSize: 15, fontWeight: FontWeight.w600),
+          textStyle: bodyFont(fontSize: 15, fontWeight: FontWeight.w600),
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
@@ -138,8 +150,8 @@ class AppTheme {
         unselectedLabelColor: AppColors.textMuted,
         indicatorColor: AppColors.primary,
         indicatorSize: TabBarIndicatorSize.tab,
-        labelStyle: GoogleFonts.dmSans(fontWeight: FontWeight.w600, fontSize: 15),
-        unselectedLabelStyle: GoogleFonts.dmSans(fontWeight: FontWeight.w400, fontSize: 15),
+        labelStyle: bodyFont(fontWeight: FontWeight.w600, fontSize: 15),
+        unselectedLabelStyle: bodyFont(fontWeight: FontWeight.w400, fontSize: 15),
         dividerColor: AppColors.border,
       ),
     );

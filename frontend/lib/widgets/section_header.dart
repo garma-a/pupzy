@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../localization/lang_provider.dart';
 import '../theme/app_theme.dart';
 
 class SectionHeader extends StatelessWidget {
@@ -19,7 +20,7 @@ class SectionHeader extends StatelessWidget {
           if (onSeeAll != null)
             TextButton(
               onPressed: onSeeAll,
-              child: const Text('See all', style: TextStyle(color: AppColors.primary)),
+              child: Text(t(context, 'See all', 'عرض الكل'), style: const TextStyle(color: AppColors.primary)),
             ),
         ],
       ),

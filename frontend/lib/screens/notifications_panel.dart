@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../data/mock_data.dart';
+import '../localization/lang_provider.dart';
 import '../models/notification_item.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
@@ -38,7 +40,7 @@ class NotificationsPanel extends StatelessWidget {
               Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Text('Notifications', style: Theme.of(context).textTheme.headlineMedium),
+                child: Text(t(context, 'Notifications', 'الإشعارات'), style: Theme.of(context).textTheme.headlineMedium),
               ),
               Expanded(
                 child: ListView.builder(
@@ -70,7 +72,7 @@ class NotificationsPanel extends StatelessWidget {
                           ],
                         ),
                       ),
-                      subtitle: Text(timeAgo(n.timestamp), style: Theme.of(context).textTheme.bodySmall),
+                      subtitle: Text(timeAgo(n.timestamp, context.watch<LangProvider>().lang), style: Theme.of(context).textTheme.bodySmall),
                       tileColor: n.isRead ? null : AppColors.primary.withValues(alpha: 0.05),
                     );
                   },

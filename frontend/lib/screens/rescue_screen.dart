@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../data/mock_data.dart';
+import '../localization/lang_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/image_with_fallback.dart';
 import 'rescue_detail_screen.dart';
@@ -20,7 +21,7 @@ class _RescueScreenState extends State<RescueScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Rescue')),
+      appBar: AppBar(title: Text(t(context, 'Rescue', 'الإنقاذ'))),
       body: ListView.builder(
         padding: const EdgeInsets.all(AppSpacing.lg),
         itemCount: MockData.rescueAnimals.length,
@@ -99,7 +100,7 @@ class _RescueScreenState extends State<RescueScreen> {
                                     color: AppColors.critical,
                                     borderRadius: BorderRadius.circular(AppRadius.chip),
                                   ),
-                                  child: const Text('Urgent', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                                  child: Text(t(context, 'Urgent', 'عاجل'), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                                 ),
                             ],
                           ),

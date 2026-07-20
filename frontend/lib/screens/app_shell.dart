@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../localization/lang_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/distance_filter.dart';
 import 'adopt_screen.dart';
@@ -103,8 +104,8 @@ class _PupzyBottomNav extends StatelessWidget {
             ),
             child: Row(
               children: [
-                _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home', index: 0, currentIndex: currentIndex, onTap: onTap),
-                _NavItem(icon: Icons.favorite_border, activeIcon: Icons.favorite, label: 'Help', index: 1, currentIndex: currentIndex, onTap: onTap),
+                _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: t(context, 'Home', 'الرئيسية'), index: 0, currentIndex: currentIndex, onTap: onTap),
+                _NavItem(icon: Icons.favorite_border, activeIcon: Icons.favorite, label: t(context, 'Help', 'المساعدة'), index: 1, currentIndex: currentIndex, onTap: onTap),
                 Expanded(
                   child: GestureDetector(
                     onTap: () => onTap(2),
@@ -143,8 +144,8 @@ class _PupzyBottomNav extends StatelessWidget {
                     ),
                   ),
                 ),
-                _NavItem(icon: Icons.pets_outlined, activeIcon: Icons.pets, label: 'Adopt', index: 3, currentIndex: currentIndex, onTap: onTap),
-                _NavItem(icon: Icons.shopping_bag_outlined, activeIcon: Icons.shopping_bag, label: 'Market', index: 4, currentIndex: currentIndex, onTap: onTap),
+                _NavItem(icon: Icons.pets_outlined, activeIcon: Icons.pets, label: t(context, 'Adopt', 'تبني'), index: 3, currentIndex: currentIndex, onTap: onTap),
+                _NavItem(icon: Icons.shopping_bag_outlined, activeIcon: Icons.shopping_bag, label: t(context, 'Market', 'المتجر'), index: 4, currentIndex: currentIndex, onTap: onTap),
               ],
             ),
           ),

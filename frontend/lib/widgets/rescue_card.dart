@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
+import '../localization/lang_provider.dart';
 import '../models/pet.dart';
 import '../theme/app_theme.dart';
 import 'image_with_fallback.dart';
@@ -65,7 +66,7 @@ class _RescueCardState extends State<RescueCard> {
                       ),
                       if (a.isUrgent) ...[
                         const SizedBox(width: AppSpacing.xs),
-                        _Badge(label: 'CRITICAL', color: AppColors.critical),
+                        _Badge(label: t(context, 'CRITICAL', 'حرج'), color: AppColors.critical),
                       ],
                     ],
                   ),
@@ -85,7 +86,7 @@ class _RescueCardState extends State<RescueCard> {
                         children: [
                           const Icon(Icons.visibility_outlined, size: 14, color: Colors.white),
                           const SizedBox(width: 4),
-                          Text(_revealed ? 'Hide' : 'Tap to see',
+                          Text(_revealed ? t(context, 'Hide', 'إخفاء') : t(context, 'Tap to see', 'اضغط للعرض'),
                               style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
                         ],
                       ),
@@ -105,7 +106,7 @@ class _RescueCardState extends State<RescueCard> {
                           style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(width: 2),
-                        const Text('km', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                        Text(t(context, 'km', 'كم'), style: const TextStyle(color: Colors.white70, fontSize: 11)),
                       ],
                     ),
                   ),
@@ -119,7 +120,7 @@ class _RescueCardState extends State<RescueCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${a.distance.toStringAsFixed(1)} km away   ·   ${a.timeAgoLabel}',
+                    '${a.distance.toStringAsFixed(1)} ${t(context, 'km away', 'كم')}   ·   ${a.timeAgoLabel}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
@@ -141,7 +142,7 @@ class _RescueCardState extends State<RescueCard> {
                 children: [
                   _ActionBtn(
                     icon: Icons.arrow_upward,
-                    label: '$_boosts  ${_boosted ? 'Boosted' : 'Boost'}',
+                    label: '$_boosts  ${_boosted ? t(context, 'Boosted', 'مُعزَّز') : t(context, 'Boost', 'تعزيز')}',
                     onTap: () => setState(() {
                       _boosted = !_boosted;
                       _boosts += _boosted ? 1 : -1;
@@ -151,8 +152,8 @@ class _RescueCardState extends State<RescueCard> {
                   const Spacer(),
                   _ActionBtn(
                     icon: Icons.flag_outlined,
-                    label: 'Report',
-                    onTap: () => Fluttertoast.showToast(msg: 'Report submitted'),
+                    label: t(context, 'Report', 'إبلاغ'),
+                    onTap: () => Fluttertoast.showToast(msg: t(context, 'Report submitted', 'تم إرسال البلاغ')),
                     color: AppColors.textMuted,
                   ),
                 ],
@@ -161,7 +162,9 @@ class _RescueCardState extends State<RescueCard> {
             Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
               child: ElevatedButton(
-                onPressed: () => Fluttertoast.showToast(msg: 'Connecting you to rescue team...'),
+                onPressed: () => Fluttertoast.showToast(
+                  msg: t(context, 'Connecting you to rescue team...', 'جارٍ توصيلك بفريق الإنقاذ...'),
+                ),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 48),
                   backgroundColor: AppColors.primary.withValues(alpha: 0.12),
@@ -169,7 +172,7 @@ class _RescueCardState extends State<RescueCard> {
                   elevation: 0,
                   shape: const StadiumBorder(),
                 ),
-                child: const Text('I Can Help →'),
+                child: Text(t(context, 'I Can Help →', 'يمكنني المساعدة ←')),
               ),
             ),
           ],
@@ -277,7 +280,7 @@ class RescueAlertBanner extends StatelessWidget {
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      'CRITICAL  ·  NEARBY',
+                      t(context, 'CRITICAL  ·  NEARBY', 'حرج  ·  قريب'),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted, letterSpacing: 0.5),
                     ),
                   ],
@@ -286,7 +289,9 @@ class RescueAlertBanner extends StatelessWidget {
                 Text(animal.description.split('.').first, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 16)),
                 const SizedBox(height: 2),
                 Text(
-                  animal.timeAgoLabel.isNotEmpty ? 'Night clinic open for 42 min' : '',
+                  animal.timeAgoLabel.isNotEmpty
+                      ? t(context, 'Night clinic open for 42 min', 'العيادة الليلية مفتوحة لمدة 42 دقيقة')
+                      : '',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -298,7 +303,7 @@ class RescueAlertBanner extends StatelessWidget {
                 animal.distance.toStringAsFixed(1),
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 30, color: AppColors.textPrimary),
               ),
-              Text('km away', style: Theme.of(context).textTheme.bodySmall),
+              Text(t(context, 'km away', 'كم'), style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
         ],

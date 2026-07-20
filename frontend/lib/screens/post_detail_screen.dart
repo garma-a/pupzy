@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../localization/lang_provider.dart';
 import '../models/post.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
@@ -32,7 +34,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   Widget build(BuildContext context) {
     final post = widget.post;
     return Scaffold(
-      appBar: AppBar(title: const Text('Post')),
+      appBar: AppBar(title: Text(t(context, 'Post', 'المنشور'))),
       body: Column(
         children: [
           Expanded(
@@ -49,7 +51,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(post.username, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
-                          Text(timeAgo(post.timestamp), style: Theme.of(context).textTheme.bodySmall),
+                          Text(timeAgo(post.timestamp, context.watch<LangProvider>().lang), style: Theme.of(context).textTheme.bodySmall),
                         ],
                       ),
                     ],
@@ -66,12 +68,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 const Divider(height: 1),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
-                  child: Text('Comments (${post.comments.length})', style: Theme.of(context).textTheme.headlineSmall),
+                  child: Text(
+                    post.comments.isEmpty
+                        ? t(context, 'No comments', 'لا توجد تعليقات')
+                        : t(context, 'Comments (${post.comments.length})', 'التعليقات (${post.comments.length})'),
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
                 ),
                 if (post.comments.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                    child: Text('No comments yet. Be the first!', style: Theme.of(context).textTheme.bodySmall),
+                    child: Text(t(context, 'No comments yet. Be the first!', 'لا توجد تعليقات بعد. كن أول من يعلّق!'), style: Theme.of(context).textTheme.bodySmall),
                   )
                 else
                   ...post.comments.map(

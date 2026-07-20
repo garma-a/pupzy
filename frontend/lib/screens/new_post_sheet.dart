@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../localization/lang_provider.dart';
 import '../models/post.dart';
 import '../theme/app_theme.dart';
 import 'post_form_screen.dart';
@@ -68,10 +69,10 @@ class NewPostSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text('What are you posting?', style: Theme.of(context).textTheme.headlineMedium),
+            Text(t(context, 'What are you posting?', 'ماذا تريد أن تنشر؟'), style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Every post connects an animal to help.',
+              t(context, 'Every post connects an animal to help.', 'كل منشور يصل حيوانًا بالمساعدة.'),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -79,26 +80,26 @@ class NewPostSheet extends StatelessWidget {
               index: 0,
               icon: Icons.favorite_border,
               accent: AppColors.critical,
-              title: 'Rescue Alert',
-              subtitle: 'Animal in distress nearby',
-              onTap: () => _openForm(context, PostType.rescue, initialCategory: 'Urgent'),
+              title: t(context, 'Rescue Alert', 'تنبيه إنقاذ'),
+              subtitle: t(context, 'Animal in distress nearby', 'حيوان في محنة قريب منك'),
+              onTap: () => _openForm(context, PostType.rescue, initialCategory: 'URGENT'),
             ),
             const SizedBox(height: AppSpacing.md),
             _TypeOption(
               index: 1,
               icon: Icons.search,
               accent: _lostPetAccent,
-              title: 'Lost Pet',
-              subtitle: 'My pet is missing',
-              onTap: () => _openForm(context, PostType.rescue, initialCategory: 'Lost'),
+              title: t(context, 'Lost Pet', 'حيوان مفقود'),
+              subtitle: t(context, 'My pet is missing', 'حيواني الأليف مفقود'),
+              onTap: () => _openForm(context, PostType.rescue, initialCategory: 'LOST'),
             ),
             const SizedBox(height: AppSpacing.md),
             _TypeOption(
               index: 2,
               icon: Icons.home_outlined,
               accent: _adoptionAccent,
-              title: 'Adoption',
-              subtitle: 'Put a pet up for adoption',
+              title: t(context, 'Adoption', 'تبني'),
+              subtitle: t(context, 'Put a pet up for adoption', 'اعرض حيوانًا للتبني'),
               onTap: () => _openForm(context, PostType.adoption),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -106,8 +107,8 @@ class NewPostSheet extends StatelessWidget {
               index: 3,
               icon: Icons.shield_outlined,
               accent: _matchingAccent,
-              title: 'Responsible Matching',
-              subtitle: 'Apply to adopt — verified process',
+              title: t(context, 'Responsible Matching', 'مطابقة مسؤولة'),
+              subtitle: t(context, 'Apply to adopt — verified process', 'قدّم طلب تبني — عملية موثوقة'),
               onTap: () => Navigator.of(context).pop('adopt'),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -115,8 +116,8 @@ class NewPostSheet extends StatelessWidget {
               index: 4,
               icon: Icons.shopping_bag_outlined,
               accent: _productAccent,
-              title: 'List a Product',
-              subtitle: 'Sell or donate rescue supplies',
+              title: t(context, 'List a Product', 'إضافة منتج'),
+              subtitle: t(context, 'Sell or donate rescue supplies', 'بِع أو تبرّع بمستلزمات الإنقاذ'),
               onTap: () => _openForm(context, PostType.product),
             ),
           ],

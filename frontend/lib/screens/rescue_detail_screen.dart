@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
 
+import '../localization/lang_provider.dart';
 import '../models/pet.dart';
 import '../theme/app_theme.dart';
 import '../widgets/image_with_fallback.dart';
@@ -70,9 +71,9 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                                 color: AppColors.critical,
                                 borderRadius: BorderRadius.circular(AppRadius.chip),
                               ),
-                              child: const Text(
-                                'Urgent',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                              child: Text(
+                                t(context, 'Urgent', 'عاجل'),
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
                               ),
                             ),
                         ],
@@ -87,11 +88,11 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                         ],
                       ),
                       const SizedBox(height: AppSpacing.lg),
-                      Text('Details', style: Theme.of(context).textTheme.headlineSmall),
+                      Text(t(context, 'Details', 'التفاصيل'), style: Theme.of(context).textTheme.headlineSmall),
                       const SizedBox(height: AppSpacing.xs),
                       Text(animal.description, style: Theme.of(context).textTheme.bodyMedium),
                       const SizedBox(height: AppSpacing.lg),
-                      Text('Contact', style: Theme.of(context).textTheme.headlineSmall),
+                      Text(t(context, 'Contact', 'التواصل'), style: Theme.of(context).textTheme.headlineSmall),
                       const SizedBox(height: AppSpacing.xs),
                       Text('${animal.contactName} · ${animal.contactPhone}',
                           style: Theme.of(context).textTheme.bodyMedium),
@@ -111,15 +112,19 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => Fluttertoast.showToast(msg: 'Found report submitted for ${animal.name}'),
-                  child: const Text('Report Found'),
+                  onPressed: () => Fluttertoast.showToast(
+                    msg: '${t(context, 'Found report submitted for', 'تم إرسال بلاغ العثور عن')} ${animal.name}',
+                  ),
+                  child: Text(t(context, 'Report Found', 'الإبلاغ عن العثور عليه')),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => Fluttertoast.showToast(msg: 'Contacting ${animal.contactName}...'),
-                  child: const Text('Contact Rescue'),
+                  onPressed: () => Fluttertoast.showToast(
+                    msg: '${t(context, 'Contacting', 'جارٍ التواصل مع')} ${animal.contactName}...',
+                  ),
+                  child: Text(t(context, 'Contact Rescue', 'تواصل مع فريق الإنقاذ')),
                 ),
               ),
             ],
@@ -167,14 +172,14 @@ class _BlurredCarousel extends StatelessWidget {
                         color: Colors.black54,
                         borderRadius: BorderRadius.circular(AppRadius.chip),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.visibility_outlined, color: Colors.white, size: 18),
-                          SizedBox(width: 8),
+                          const Icon(Icons.visibility_outlined, color: Colors.white, size: 18),
+                          const SizedBox(width: 8),
                           Text(
-                            'Tap to see photo',
-                            style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                            t(context, 'Tap to see photo', 'اضغط لرؤية الصورة'),
+                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
