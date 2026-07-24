@@ -25,7 +25,7 @@
 
 Pubzy is a modern, high-performance mobile application engineered to solve critical animal welfare challenges in Egypt. By combining **emergency rescue dispatching**, **lost & found reporting**, **responsible pet adoption matching**, and a **community pet marketplace**, Pubzy bridges the emotional and operational gap left by generic classified platforms like OLX or Dubizzle.
 
-https://github.com/user-attachments/assets/final_pupzy.mp4
+[https://github.com/user-attachments/assets/final_pupzy.mp4](https://github.com/user-attachments/assets/1d313b69-22be-4815-a44d-a7a3a4762301)
 
 <div align="center">
   <video src="./final_pupzy.mp4" controls width="100%" style="border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);"></video>
