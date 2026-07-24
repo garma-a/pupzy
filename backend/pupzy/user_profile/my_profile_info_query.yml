@@ -7,11 +7,34 @@ graphql:
   method: POST
   url: "{{BaseUrl}}"
   body:
-    query: |
-      query {
+    query: |-
+      query Me {
         me {
-          id,
+          id
+          email
           fullName
+          fullNameArabic
+          profilePictureUrl
+          isVerified
+          phoneNumber
+          profileComplete
+          homeCityId
+          city {
+            id
+            nameEnglish
+            nameArabic
+            governorate
+          }
+          postCount
+          rescuePostCount
+          lostPostCount
+          adoptionPostCount
+          productPostCount
+          languagePreference
+          notificationsEnabled
+          lastSeenAt
+          createdAt
+          updatedAt
         }
       }
   auth: inherit

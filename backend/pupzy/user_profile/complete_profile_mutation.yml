@@ -10,25 +10,47 @@ graphql:
     - name: Authorization
       value: "{{auth}}"
   body:
-    query: |
-      mutation CompleteProfile($input: CompleteProfileInput!) {
-        completeProfile(input: $input) {
+    query: |-
+      mutation CompleteProfile(
+        $fullName: String!
+        $phoneNumber: String!
+        $cityId: ID
+      ) {
+        completeProfile(
+          input: { fullName: $fullName, phoneNumber: $phoneNumber, cityId: $cityId }
+        ) {
           id
+          email
           fullName
-          city{
-            id,
-            nameEn
-            
+          fullNameArabic
+          profilePictureUrl
+          isVerified
+          phoneNumber
+          profileComplete
+          homeCityId
+          city {
+            id
+            nameEnglish
+            nameArabic
+            governorate
           }
+          postCount
+          rescuePostCount
+          lostPostCount
+          adoptionPostCount
+          productPostCount
+          languagePreference
+          notificationsEnabled
+          lastSeenAt
+          createdAt
+          updatedAt
         }
       }
     variables: |-
       {
-        "input": {
-          "fullName": "Your Name",
-          "phoneNumber": "+201012345678",
-          "cityId": "b79f50c3-1000-4df4-ac65-d08647c80d58"
-        }
+        "fullName": "Your Name",
+        "phoneNumber": "+201012345678",
+        "cityId": "019f4d3c-eef1-70f9-aa58-d55d778c897d"
       }
   auth: inherit
 

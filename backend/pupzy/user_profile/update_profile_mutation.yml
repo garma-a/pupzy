@@ -7,25 +7,40 @@ graphql:
   method: POST
   url: "{{BaseUrl}}"
   body:
-    query: |
-      mutation updateProfile($input: UpdateProfileInput!) {
-        updateProfile(input: $input) {
+    query: |-
+      mutation updateProfile($fullName: String!, $phoneNumber: String) {
+        updateProfile(input: { fullName: $fullName, phoneNumber: $phoneNumber }) {
           id
+          email
           fullName
-          city{
-            id,
-            nameEnglish,
-            governorate,
-            
+          fullNameArabic
+          profilePictureUrl
+          isVerified
+          phoneNumber
+          profileComplete
+          homeCityId
+          city {
+            id
+            nameEnglish
+            nameArabic
+            governorate
           }
+          postCount
+          rescuePostCount
+          lostPostCount
+          adoptionPostCount
+          productPostCount
+          languagePreference
+          notificationsEnabled
+          lastSeenAt
+          createdAt
+          updatedAt
         }
       }
     variables: |-
       {
-        "input": {
-          "fullName": "patrick",
-          "phoneNumber":"+201278203355"
-        }
+        "fullName": "patrick",
+        "phoneNumber": "+201278203355"
       }
   auth: inherit
 
