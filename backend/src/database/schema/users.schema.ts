@@ -1,15 +1,5 @@
 import { sql } from 'drizzle-orm';
-import {
-  pgTable,
-  uuid,
-  varchar,
-  text,
-  boolean,
-  integer,
-  timestamp,
-  index,
-  geometry,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, boolean, integer, timestamp, index, geometry } from 'drizzle-orm/pg-core';
 import { cities } from './cities.schema';
 
 /**
@@ -48,7 +38,9 @@ export const users = pgTable(
   'users',
   {
     /** Internal Pupzy user ID. Primary key, UUIDv4, auto-generated. */
-    id: uuid('id').primaryKey().default(sql`uuidv7()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
 
     // ── Firebase Auth ─────────────────────────────────────────────────────────
     /**
@@ -124,9 +116,7 @@ export const users = pgTable(
 
     // ── Preferences ───────────────────────────────────────────────────────────
     /** Preferred interface language. Arabic default for Egypt. */
-    languagePreference: varchar('language_preference', { length: 10 })
-      .notNull()
-      .default('ar'),
+    languagePreference: varchar('language_preference', { length: 10 }).notNull().default('ar'),
 
     /** Whether push notifications are enabled. */
     notificationsEnabled: boolean('notifications_enabled').notNull().default(true),
