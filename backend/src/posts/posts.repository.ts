@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { eq, inArray, asc, sql, and, ne } from 'drizzle-orm';
+import { eq, inArray, asc, desc, sql, and, ne, type SQL } from 'drizzle-orm';
 import DataLoader from 'dataloader';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import {
@@ -12,6 +12,7 @@ import {
   postMedia,
   postUpvotes,
   postSaves,
+  cities,
   type Post,
   type PostMedia,
   type NewPost,
@@ -44,6 +45,25 @@ import type * as schema from '../database/schema';
  * the appropriate counter on the `users` table when a `posts` row is
  * inserted. This repository does NOT manually update user counters.
  */
+
+/**
+ * A single row returned by feed queries.
+ * Wraps the Drizzle Post type with a computed distance field.
+ */
+export interface FeedResultRow {
+  post: Post;
+  distanceKm: number | null;
+}
+
+/**
+ * Result shape for all feed queries.
+ * Uses the limit+1 trick to determine hasNextPage without COUNT(*).
+ */
+export interface FeedResult {
+  rows: FeedResultRow[];
+  hasNextPage: boolean;
+}
+
 @Injectable()
 export class PostsRepository {
   constructor(
@@ -551,5 +571,406 @@ export class PostsRepository {
       },
       { cache: true, maxBatchSize: 100 },
     );
+  }
+
+  // ─── Feed Query Helpers ──────────────────────────────────────────────
+
+  /**
+   * Builds the city/governorate WHERE condition.
+   * If cityId is provided, filters to that exact city.
+   * Otherwise, includes all cities in the governorate via subquery.
+   */
+  private buildLocationFilter(
+    governorate: string,
+    cityId: string | null | undefined,
+  ): SQL {
+    if (cityId) {
+      return sql`p.city_id = ${cityId}`;
+    }
+    return sql`p.city_id IN (SELECT id FROM cities WHERE governorate = ${governorate})`;
+  }
+
+  /**
+   * Converts viewer GPS coordinates to PostGIS EWKT point string.
+   * Returns null if no viewer location provided.
+   */
+  private buildViewerPointEwkt(
+    viewerLocation: { latitude: number; longitude: number } | null | undefined,
+  ): string | null {
+    if (!viewerLocation) return null;
+    return `SRID=4326;POINT(${viewerLocation.longitude} ${viewerLocation.latitude})`;
+  }
+
+  /**
+   * Builds the ST_Distance expression for distance-in-km calculation.
+   * Returns NULL::double precision when no viewer location is provided.
+   *
+   * Uses ::geography cast for accurate meter-based distance on Earth's surface.
+   */
+  private buildDistanceExpr(viewerPoint: string | null): SQL {
+    if (viewerPoint) {
+      return sql`ST_Distance(p.coordinates::geography, ST_GeomFromEWKT(${viewerPoint})::geography) / 1000.0`;
+    }
+    return sql`NULL::double precision`;
+  }
+
+  /**
+   * Maps a raw PostgreSQL row (snake_case) to a Drizzle Post object (camelCase).
+   * Required because raw SQL via db.execute() returns snake_case column names.
+   */
+  private mapRawToPost(raw: Record<string, unknown>): Post {
+    return {
+      id: raw.id as string,
+      creatorId: raw.creator_id as string,
+      postType: raw.post_type as Post['postType'],
+      title: raw.title as string,
+      description: raw.description as string,
+      status: raw.status as Post['status'],
+      moderationStatus: raw.moderation_status as Post['moderationStatus'],
+      urgency: (raw.urgency as Post['urgency']) ?? null,
+      cityId: raw.city_id as string,
+      areaName: (raw.area_name as string) ?? null,
+      coordinates: raw.coordinates as Post['coordinates'],
+      marketCategory: (raw.market_category as Post['marketCategory']) ?? null,
+      upvoteCount: Number(raw.upvote_count),
+      saveCount: Number(raw.save_count),
+      viewCount: Number(raw.view_count),
+      reportCount: Number(raw.report_count),
+      effectiveScore: Number(raw.effective_score),
+      lastEngagedAt: new Date(raw.last_engaged_at as string),
+      createdAt: new Date(raw.created_at as string),
+      updatedAt: new Date(raw.updated_at as string),
+    };
+  }
+
+  /**
+   * Maps raw SQL result rows to FeedResultRow[] with hasNextPage detection.
+   * Uses the limit+1 trick: if we got more rows than requested, there are more pages.
+   */
+  private mapFeedResult(
+    rawRows: Record<string, unknown>[],
+    limit: number,
+  ): FeedResult {
+    const hasNextPage = rawRows.length > limit;
+    const trimmed = hasNextPage ? rawRows.slice(0, limit) : rawRows;
+
+    return {
+      rows: trimmed.map((raw) => ({
+        post: this.mapRawToPost(raw),
+        distanceKm:
+          raw.distance_km != null ? Number(raw.distance_km) : null,
+      })),
+      hasNextPage,
+    };
+  }
+
+  // ─── Feed Queries ───────────────────────────────────────────────────────
+
+  /**
+   * Help Feed — RESCUE + LOST posts sorted by urgency ASC, then newest.
+   *
+   * ## Index
+   * `idx_posts_help_feed (city_id, post_type, urgency ASC, created_at DESC)`
+   * `WHERE status = 'ACTIVE' AND post_type IN ('RESCUE', 'LOST')`
+   *
+   * ## Cursor (keyset pagination, no OFFSET)
+   * Composite: `urgency|createdAt|id`
+   * Uses UUIDv7 id as final tiebreaker for deterministic ordering.
+   *
+   * ## PostGIS
+   * - ST_DWithin: radius filter (uses GIST index on coordinates)
+   * - ST_Distance: computes distance in meters, converted to km
+   * - Both use ::geography cast for accurate Earth-surface distances
+   */
+  async findHelpFeed(params: {
+    governorate: string;
+    cityId: string | null | undefined;
+    viewerLocation: { latitude: number; longitude: number } | null | undefined;
+    radiusKm: number;
+    limit: number;
+    cursor: { urgency: string; createdAt: string; id: string } | null;
+  }): Promise<FeedResult> {
+    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor } = params;
+    const fetchLimit = limit + 1;
+    const viewerPoint = this.buildViewerPointEwkt(viewerLocation);
+    const radiusMeters = radiusKm * 1000;
+
+    const conditions: SQL[] = [
+      sql`p.status = 'ACTIVE'`,
+      sql`p.post_type IN ('RESCUE', 'LOST')`,
+      this.buildLocationFilter(governorate, cityId),
+    ];
+
+    if (viewerPoint) {
+      conditions.push(
+        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${viewerPoint})::geography, ${radiusMeters})`,
+      );
+    }
+
+    if (cursor) {
+      conditions.push(sql`(
+        p.urgency > ${cursor.urgency}::urgency_tier
+        OR (p.urgency = ${cursor.urgency}::urgency_tier AND p.created_at < ${cursor.createdAt}::timestamptz)
+        OR (p.urgency = ${cursor.urgency}::urgency_tier AND p.created_at = ${cursor.createdAt}::timestamptz AND p.id < ${cursor.id}::uuid)
+      )`);
+    }
+
+    const whereClause = sql.join(conditions, sql` AND `);
+    const distanceExpr = this.buildDistanceExpr(viewerPoint);
+
+    const result = await this.db.execute(sql`
+      SELECT p.*, ${distanceExpr} AS distance_km
+      FROM posts p
+      WHERE ${whereClause}
+      ORDER BY p.urgency ASC, p.created_at DESC, p.id DESC
+      LIMIT ${fetchLimit}
+    `);
+
+    const rawRows = (result as unknown as { rows: Record<string, unknown>[] }).rows;
+    return this.mapFeedResult(rawRows, limit);
+  }
+
+  /**
+   * Adopt Feed — ADOPTION posts sorted by effective_score (HOT) or newest.
+   *
+   * ## Indexes
+   * HOT:  `idx_posts_adopt_score (city_id, effective_score DESC, created_at DESC)`
+   * NEWEST: Primary key index (UUIDv7 id is time-ordered)
+   *
+   * ## Cursor
+   * HOT: `score|createdAt|id` — composite keyset
+   * NEWEST: `id` — simple UUIDv7 cursor (embeds timestamp)
+   */
+  async findAdoptFeed(params: {
+    governorate: string;
+    cityId: string | null | undefined;
+    viewerLocation: { latitude: number; longitude: number } | null | undefined;
+    radiusKm: number;
+    sort: 'HOT' | 'NEWEST';
+    limit: number;
+    cursor: { score?: string; createdAt?: string; id: string } | null;
+  }): Promise<FeedResult> {
+    const { governorate, cityId, viewerLocation, radiusKm, sort, limit, cursor } = params;
+    const fetchLimit = limit + 1;
+    const viewerPoint = this.buildViewerPointEwkt(viewerLocation);
+    const radiusMeters = radiusKm * 1000;
+
+    const conditions: SQL[] = [
+      sql`p.status = 'ACTIVE'`,
+      sql`p.post_type = 'ADOPTION'`,
+      this.buildLocationFilter(governorate, cityId),
+    ];
+
+    if (viewerPoint) {
+      conditions.push(
+        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${viewerPoint})::geography, ${radiusMeters})`,
+      );
+    }
+
+    let orderClause: SQL;
+
+    if (sort === 'HOT') {
+      if (cursor) {
+        conditions.push(sql`(
+          p.effective_score < ${Number(cursor.score)}
+          OR (p.effective_score = ${Number(cursor.score)} AND p.created_at < ${cursor.createdAt!}::timestamptz)
+          OR (p.effective_score = ${Number(cursor.score)} AND p.created_at = ${cursor.createdAt!}::timestamptz AND p.id < ${cursor.id}::uuid)
+        )`);
+      }
+      orderClause = sql`p.effective_score DESC, p.created_at DESC, p.id DESC`;
+    } else {
+      if (cursor) {
+        conditions.push(sql`p.id < ${cursor.id}::uuid`);
+      }
+      orderClause = sql`p.id DESC`;
+    }
+
+    const whereClause = sql.join(conditions, sql` AND `);
+    const distanceExpr = this.buildDistanceExpr(viewerPoint);
+
+    const result = await this.db.execute(sql`
+      SELECT p.*, ${distanceExpr} AS distance_km
+      FROM posts p
+      WHERE ${whereClause}
+      ORDER BY ${orderClause}
+      LIMIT ${fetchLimit}
+    `);
+
+    const rawRows = (result as unknown as { rows: Record<string, unknown>[] }).rows;
+    return this.mapFeedResult(rawRows, limit);
+  }
+
+  /**
+   * Market Feed — PRODUCT posts sorted by effective_score (HOT) or newest.
+   * Supports optional category filtering using denormalized market_category.
+   *
+   * ## Indexes
+   * HOT (no category):  `idx_posts_market_score (city_id, effective_score DESC, created_at DESC)`
+   * HOT (with category): `idx_posts_market_category (city_id, market_category, effective_score DESC, created_at DESC)`
+   * NEWEST: Primary key index (UUIDv7)
+   */
+  async findMarketFeed(params: {
+    governorate: string;
+    cityId: string | null | undefined;
+    viewerLocation: { latitude: number; longitude: number } | null | undefined;
+    radiusKm: number;
+    sort: 'HOT' | 'NEWEST';
+    category: string | null | undefined;
+    limit: number;
+    cursor: { score?: string; createdAt?: string; id: string } | null;
+  }): Promise<FeedResult> {
+    const { governorate, cityId, viewerLocation, radiusKm, sort, category, limit, cursor } = params;
+    const fetchLimit = limit + 1;
+    const viewerPoint = this.buildViewerPointEwkt(viewerLocation);
+    const radiusMeters = radiusKm * 1000;
+
+    const conditions: SQL[] = [
+      sql`p.status = 'ACTIVE'`,
+      sql`p.post_type = 'PRODUCT'`,
+      this.buildLocationFilter(governorate, cityId),
+    ];
+
+    if (category) {
+      conditions.push(sql`p.market_category = ${category}`);
+    }
+
+    if (viewerPoint) {
+      conditions.push(
+        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${viewerPoint})::geography, ${radiusMeters})`,
+      );
+    }
+
+    let orderClause: SQL;
+
+    if (sort === 'HOT') {
+      if (cursor) {
+        conditions.push(sql`(
+          p.effective_score < ${Number(cursor.score)}
+          OR (p.effective_score = ${Number(cursor.score)} AND p.created_at < ${cursor.createdAt!}::timestamptz)
+          OR (p.effective_score = ${Number(cursor.score)} AND p.created_at = ${cursor.createdAt!}::timestamptz AND p.id < ${cursor.id}::uuid)
+        )`);
+      }
+      orderClause = sql`p.effective_score DESC, p.created_at DESC, p.id DESC`;
+    } else {
+      if (cursor) {
+        conditions.push(sql`p.id < ${cursor.id}::uuid`);
+      }
+      orderClause = sql`p.id DESC`;
+    }
+
+    const whereClause = sql.join(conditions, sql` AND `);
+    const distanceExpr = this.buildDistanceExpr(viewerPoint);
+
+    const result = await this.db.execute(sql`
+      SELECT p.*, ${distanceExpr} AS distance_km
+      FROM posts p
+      WHERE ${whereClause}
+      ORDER BY ${orderClause}
+      LIMIT ${fetchLimit}
+    `);
+
+    const rawRows = (result as unknown as { rows: Record<string, unknown>[] }).rows;
+    return this.mapFeedResult(rawRows, limit);
+  }
+
+  /**
+   * Home Feed — All post types combined, sorted by newest (UUIDv7 id DESC).
+   *
+   * ## Sort rationale
+   * Mixing post types with different scoring algorithms (urgency for RESCUE,
+   * effective_score for ADOPTION) in a single ranked feed would be confusing.
+   * Chronological order (newest first) is the industry standard for mixed-type
+   * home feeds (Instagram, Twitter/X).
+   *
+   * ## Cursor
+   * Simple UUIDv7 id cursor — no composite needed since sort is single-column.
+   */
+  async findHomeFeed(params: {
+    governorate: string;
+    cityId: string | null | undefined;
+    viewerLocation: { latitude: number; longitude: number } | null | undefined;
+    radiusKm: number;
+    limit: number;
+    cursor: { id: string } | null;
+  }): Promise<FeedResult> {
+    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor } = params;
+    const fetchLimit = limit + 1;
+    const viewerPoint = this.buildViewerPointEwkt(viewerLocation);
+    const radiusMeters = radiusKm * 1000;
+
+    const conditions: SQL[] = [
+      sql`p.status = 'ACTIVE'`,
+      this.buildLocationFilter(governorate, cityId),
+    ];
+
+    if (viewerPoint) {
+      conditions.push(
+        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${viewerPoint})::geography, ${radiusMeters})`,
+      );
+    }
+
+    if (cursor) {
+      conditions.push(sql`p.id < ${cursor.id}::uuid`);
+    }
+
+    const whereClause = sql.join(conditions, sql` AND `);
+    const distanceExpr = this.buildDistanceExpr(viewerPoint);
+
+    const result = await this.db.execute(sql`
+      SELECT p.*, ${distanceExpr} AS distance_km
+      FROM posts p
+      WHERE ${whereClause}
+      ORDER BY p.id DESC
+      LIMIT ${fetchLimit}
+    `);
+
+    const rawRows = (result as unknown as { rows: Record<string, unknown>[] }).rows;
+    return this.mapFeedResult(rawRows, limit);
+  }
+
+  // ─── View Count Batch Update ────────────────────────────────────────────
+
+  /**
+   * Atomically increments view counts for multiple posts in a single SQL UPDATE.
+   * Also recomputes effective_score for ADOPTION and PRODUCT posts.
+   * Updates last_engaged_at for PRODUCT posts (views are primary organic signal).
+   *
+   * ## SQL strategy
+   * Uses a VALUES list joined via FROM clause for O(1) round-trips:
+   *   UPDATE posts SET view_count += v.cnt
+   *   FROM (VALUES ('id1', 5), ('id2', 3)) AS v(post_id, cnt)
+   *   WHERE posts.id = v.post_id
+   *
+   * ## Called by
+   * ViewFlushCron.handleFlush() — every 3 minutes.
+   */
+  async bulkIncrementViews(viewCounts: Map<string, number>): Promise<void> {
+    if (viewCounts.size === 0) return;
+
+    const entries = [...viewCounts.entries()];
+    const valuesList = entries.map(
+      ([postId, count]) => sql`(${postId}::uuid, ${count}::int)`,
+    );
+
+    await this.db.execute(sql`
+      UPDATE posts p
+      SET
+        view_count = p.view_count + v.cnt,
+        effective_score = CASE
+          WHEN p.post_type = 'ADOPTION' THEN
+            ((p.upvote_count * 3 + p.save_count * 2 + (p.view_count + v.cnt) * 0.1 + 1)
+             / POWER(EXTRACT(EPOCH FROM (now() - p.created_at)) / 3600.0 + 2, 1.5))
+          WHEN p.post_type = 'PRODUCT' THEN
+            (((p.view_count + v.cnt) * 1 + p.save_count * 5 + 1)
+             / POWER(EXTRACT(EPOCH FROM (now() - p.created_at)) / 3600.0 + 2, 1.5))
+          ELSE p.effective_score
+        END,
+        last_engaged_at = CASE
+          WHEN p.post_type = 'PRODUCT' THEN now()
+          ELSE p.last_engaged_at
+        END
+      FROM (VALUES ${sql.join(valuesList, sql`, `)}) AS v(post_id, cnt)
+      WHERE p.id = v.post_id AND p.status = 'ACTIVE'
+    `);
   }
 }

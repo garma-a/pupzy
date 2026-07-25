@@ -5,6 +5,12 @@ import { validateCreateLostPostInput } from './dto/create-lost-post.input';
 import { validateCreateAdoptionPostInput } from './dto/create-adoption-post.input';
 import { validateCreateProductPostInput } from './dto/create-product-post.input';
 import { validateUpdatePostStatusInput } from './dto/update-post-status.input';
+import {
+  validateHelpFeedInput,
+  validateAdoptFeedInput,
+  validateMarketFeedInput,
+  validateHomeFeedInput,
+} from './dto/feed-query.input';
 import type {
   Post,
   City,
@@ -82,6 +88,44 @@ export class PostsResolver {
   @Query('productPostDetail')
   async productPostDetail(@Args('postId') postId: string): Promise<ProductPost> {
     return this.postsService.getProductDetail(postId);
+  }
+
+  // ─── Feeds ──────────────────────────────────────────────────────────────
+
+  /**
+   * Help Feed — RESCUE and LOST posts.
+   */
+  @Query('helpFeed')
+  async helpFeed(@Args() args: unknown) {
+    const input = validateHelpFeedInput(args);
+    return this.postsService.getHelpFeed(input);
+  }
+
+  /**
+   * Adopt Feed — ADOPTION posts.
+   */
+  @Query('adoptFeed')
+  async adoptFeed(@Args() args: unknown) {
+    const input = validateAdoptFeedInput(args);
+    return this.postsService.getAdoptFeed(input);
+  }
+
+  /**
+   * Market Feed — PRODUCT posts.
+   */
+  @Query('marketFeed')
+  async marketFeed(@Args() args: unknown) {
+    const input = validateMarketFeedInput(args);
+    return this.postsService.getMarketFeed(input);
+  }
+
+  /**
+   * Home Feed — All post types combined.
+   */
+  @Query('homeFeed')
+  async homeFeed(@Args() args: unknown) {
+    const input = validateHomeFeedInput(args);
+    return this.postsService.getHomeFeed(input);
   }
 
   // ─── Create Mutations ──────────────────────────────────────────────────
@@ -192,6 +236,19 @@ export class PostsResolver {
   ): Promise<Post> {
     const validated = validateUpdatePostStatusInput({ postId, status });
     return this.postsService.updatePostStatus(validated.postId, ctx.user!.id, validated.status);
+  }
+
+  // ─── View Tracking ──────────────────────────────────────────────────────
+
+  /**
+   * Records a view on a post. Deduplicated per user per hour.
+   */
+  @Mutation('recordView')
+  async recordView(
+    @Args('postId') postId: string,
+    @Context() ctx: GqlContext,
+  ): Promise<boolean> {
+    return this.postsService.recordView(postId, ctx.user!.id);
   }
 
   // ─── Field Resolvers ───────────────────────────────────────────────────

@@ -408,6 +408,64 @@ input CreateProductPostInput {
   mediaIds: [ID!]
 }
 
+"""
+Cursor-based pagination info for infinite scroll feeds.
+Flutter checks hasNextPage to decide whether to request more.
+"""
+type PageInfo {
+  """Opaque cursor pointing to the last item in the current page."""
+  endCursor: String
+  """True if more items exist beyond endCursor."""
+  hasNextPage: Boolean!
+}
+
+"""
+A paginated edge wrapping a Post with its distance from the viewer.
+"""
+type PostEdge {
+  """The post itself."""
+  node: Post!
+  """Opaque cursor for this item (used as 'after' in the next request)."""
+  cursor: String!
+  """
+  Distance in kilometers from the viewer's current location to this post.
+  Null if the viewer did not provide their location.
+  """
+  distanceKm: Float
+}
+
+"""
+Paginated feed response — Relay-style connection.
+"""
+type PostConnection {
+  edges: [PostEdge!]!
+  pageInfo: PageInfo!
+}
+
+"""
+Viewer's current GPS location for distance calculations and radius filtering.
+"""
+input ViewerLocationInput {
+  latitude: Float!
+  longitude: Float!
+}
+
+"""Sort modes for the Adopt Feed."""
+enum AdoptFeedSort {
+  """Default. Ranked by engagement-weighted score with time decay."""
+  HOT
+  """Newest posts first, ignoring engagement."""
+  NEWEST
+}
+
+"""Sort modes for the Market Feed."""
+enum MarketFeedSort {
+  """Default. Ranked by view+save engagement with time decay."""
+  HOT
+  """Newest listings first."""
+  NEWEST
+}
+
 extend type Query {
   """
   Fetch a single post by ID. Returns null if the post does not exist or has been removed.
@@ -437,6 +495,69 @@ extend type Query {
   Returns null if the post is not of type PRODUCT.
   """
   productPostDetail(postId: ID!): ProductPost
+
+  """
+  Help Feed — RESCUE and LOST posts sorted by urgency (CRITICAL first), then newest.
+  Filtered by governorate and optional city. Optional radius proximity filter.
+  """
+  helpFeed(
+    """Required. Governorate name to filter posts."""
+    governorate: String!
+    """Optional. Specific city ID within the governorate."""
+    cityId: ID
+    """Optional. Viewer's GPS for distance calc and radius filtering."""
+    viewerLocation: ViewerLocationInput
+    """Optional. Radius in km for proximity filter. Default 25, max 100."""
+    radiusKm: Float
+    """Number of items per page. Default 20, max 50."""
+    first: Int
+    """Cursor from previous page's endCursor."""
+    after: String
+  ): PostConnection!
+
+  """
+  Adopt Feed — ADOPTION posts ranked by engagement score (HOT) or newest.
+  """
+  adoptFeed(
+    governorate: String!
+    cityId: ID
+    viewerLocation: ViewerLocationInput
+    radiusKm: Float
+    """Sort mode. Default HOT."""
+    sort: AdoptFeedSort
+    first: Int
+    after: String
+  ): PostConnection!
+
+  """
+  Market Feed — PRODUCT posts ranked by engagement score or newest.
+  Supports optional category filtering without joining product_posts.
+  """
+  marketFeed(
+    governorate: String!
+    cityId: ID
+    viewerLocation: ViewerLocationInput
+    radiusKm: Float
+    """Optional. Filter by product category."""
+    category: ProductCategory
+    """Sort mode. Default HOT."""
+    sort: MarketFeedSort
+    first: Int
+    after: String
+  ): PostConnection!
+
+  """
+  Home Feed — All post types combined, sorted by newest first.
+  The main landing screen combining RESCUE, LOST, ADOPTION, and PRODUCT posts.
+  """
+  homeFeed(
+    governorate: String!
+    cityId: ID
+    viewerLocation: ViewerLocationInput
+    radiusKm: Float
+    first: Int
+    after: String
+  ): PostConnection!
 }
 
 extend type Mutation {
@@ -494,5 +615,11 @@ extend type Mutation {
   Only the post creator can change their own post's status.
   """
   updatePostStatus(postId: ID!, status: PostStatus!): Post!
+
+  """
+  Records a view on a post. Deduplicated per user per hour.
+  Fire-and-forget from Flutter — always returns true.
+  """
+  recordView(postId: ID!): Boolean!
 }
 

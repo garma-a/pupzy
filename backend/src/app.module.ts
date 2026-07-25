@@ -11,7 +11,7 @@ import { join } from 'path';
 const depthLimit = require('graphql-depth-limit') as (n: number) => unknown;
 import type { ValidationRule } from 'graphql';
 import DataLoader from 'dataloader';
-
+import { ScheduleModule } from '@nestjs/schedule';
 import { validateEnv } from './config/env.config';
 import { DatabaseModule } from './database/database.module';
 import { FirebaseModule } from './auth/firebase.module';
@@ -37,6 +37,7 @@ import type { GqlContext } from './common/types/gql-context.type';
  * ├── ConfigModule       — env validation (Zod), global scope
  * ├── GraphQLModule      — Apollo + schema-first SDL, depth limiting
  * ├── ThrottlerModule    — rate limiting (configurable via env)
+ * ├── ScheduleModule     — cron job scheduler
  * ├── DatabaseModule     — Drizzle ORM + pg pool, global scope
  * ├── FirebaseModule     — Firebase Admin SDK init, global scope
  * ├── UsersModule        — User entity: resolver, service, repository
@@ -164,6 +165,7 @@ import type { GqlContext } from './common/types/gql-context.type';
       ],
     }),
 
+    ScheduleModule.forRoot(),
     DatabaseModule,
     FirebaseModule,
     UsersModule,

@@ -1,4 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { randomUUID } from 'crypto';
 import { PostsRepository } from './posts.repository';
 import { CitiesService } from '../cities/cities.service';
@@ -18,6 +20,14 @@ import type { CreateRescuePostInput } from './dto/create-rescue-post.input';
 import type { CreateLostPostInput } from './dto/create-lost-post.input';
 import type { CreateAdoptionPostInput } from './dto/create-adoption-post.input';
 import type { CreateProductPostInput } from './dto/create-product-post.input';
+import type { FeedResult } from './posts.repository';
+import type {
+  HelpFeedInput,
+  AdoptFeedInput,
+  MarketFeedInput,
+  HomeFeedInput,
+} from './dto/feed-query.input';
+import { ViewFlushCron } from './view-flush.cron';
 
 /**
  * PostsService — business logic layer for post creation.
@@ -37,6 +47,8 @@ export class PostsService {
     private readonly postsRepository: PostsRepository,
     private readonly citiesService: CitiesService,
     private readonly uploadService: UploadService,
+    private readonly viewFlushCron: ViewFlushCron,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
   // ─── RESCUE ──────────────────────────────────────────────────────────────
@@ -380,6 +392,121 @@ export class PostsService {
 
     const { updatedPost } = await this.postsRepository.toggleSave(postId, userId);
     return updatedPost;
+  }
+
+  // ─── Feeds ──────────────────────────────────────────────────────────────
+
+  private decodeCursor(cursorBase64: string | null | undefined): any {
+    if (!cursorBase64) return null;
+    try {
+      return JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8'));
+    } catch {
+      throw new ValidationError('Invalid cursor format');
+    }
+  }
+
+  private encodeCursor(cursorObj: any): string {
+    return Buffer.from(JSON.stringify(cursorObj), 'utf8').toString('base64url');
+  }
+
+  private mapFeedResultToConnection(result: FeedResult, buildCursorObj: (post: Post) => any) {
+    return {
+      edges: result.rows.map((row) => ({
+        node: row.post,
+        cursor: this.encodeCursor(buildCursorObj(row.post)),
+        distanceKm: row.distanceKm,
+      })),
+      pageInfo: {
+        hasNextPage: result.hasNextPage,
+        endCursor:
+          result.rows.length > 0
+            ? this.encodeCursor(buildCursorObj(result.rows[result.rows.length - 1].post))
+            : null,
+      },
+    };
+  }
+
+  async getHelpFeed(input: HelpFeedInput) {
+    const result = await this.postsRepository.findHelpFeed({
+      governorate: input.governorate,
+      cityId: input.cityId,
+      viewerLocation: input.viewerLocation,
+      radiusKm: input.radiusKm ?? 25,
+      limit: input.first ?? 20,
+      cursor: this.decodeCursor(input.after),
+    });
+    return this.mapFeedResultToConnection(result, (post) => ({
+      urgency: post.urgency,
+      createdAt: post.createdAt.toISOString(),
+      id: post.id,
+    }));
+  }
+
+  async getAdoptFeed(input: AdoptFeedInput) {
+    const sort = input.sort ?? 'HOT';
+    const result = await this.postsRepository.findAdoptFeed({
+      governorate: input.governorate,
+      cityId: input.cityId,
+      viewerLocation: input.viewerLocation,
+      radiusKm: input.radiusKm ?? 25,
+      sort,
+      limit: input.first ?? 20,
+      cursor: this.decodeCursor(input.after),
+    });
+    return this.mapFeedResultToConnection(result, (post) =>
+      sort === 'HOT'
+        ? { score: post.effectiveScore, createdAt: post.createdAt.toISOString(), id: post.id }
+        : { id: post.id }
+    );
+  }
+
+  async getMarketFeed(input: MarketFeedInput) {
+    const sort = input.sort ?? 'HOT';
+    const result = await this.postsRepository.findMarketFeed({
+      governorate: input.governorate,
+      cityId: input.cityId,
+      viewerLocation: input.viewerLocation,
+      radiusKm: input.radiusKm ?? 25,
+      sort,
+      category: input.category,
+      limit: input.first ?? 20,
+      cursor: this.decodeCursor(input.after),
+    });
+    return this.mapFeedResultToConnection(result, (post) =>
+      sort === 'HOT'
+        ? { score: post.effectiveScore, createdAt: post.createdAt.toISOString(), id: post.id }
+        : { id: post.id }
+    );
+  }
+
+  async getHomeFeed(input: HomeFeedInput) {
+    const result = await this.postsRepository.findHomeFeed({
+      governorate: input.governorate,
+      cityId: input.cityId,
+      viewerLocation: input.viewerLocation,
+      radiusKm: input.radiusKm ?? 25,
+      limit: input.first ?? 20,
+      cursor: this.decodeCursor(input.after),
+    });
+    return this.mapFeedResultToConnection(result, (post) => ({ id: post.id }));
+  }
+
+  // ─── View Tracking ──────────────────────────────────────────────────────
+
+  /**
+   * Records a view on a post. Deduplicated per user per hour.
+   * If not seen in the last hour, buffers the view for the cron to flush.
+   */
+  async recordView(postId: string, userId: string): Promise<boolean> {
+    const lockKey = `view_dedup:${postId}:${userId}`;
+    const alreadyViewed = await this.cacheManager.get(lockKey);
+    
+    if (!alreadyViewed) {
+      await this.cacheManager.set(lockKey, true, 3600_000); // 1 hour TTL
+      this.viewFlushCron.bufferView(postId);
+    }
+    
+    return true; // Always return true (fire and forget)
   }
 
   // ─── Private helpers ─────────────────────────────────────────────────────
