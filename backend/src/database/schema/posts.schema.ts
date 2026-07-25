@@ -13,13 +13,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { cities } from './cities.schema';
 import { users } from './users.schema';
-import {
-  postTypeEnum,
-  postStatusEnum,
-  moderationStatusEnum,
-  urgencyTierEnum,
-  productCategoryEnum,
-} from './enums';
+import { postTypeEnum, postStatusEnum, moderationStatusEnum, urgencyTierEnum, productCategoryEnum } from './enums';
 
 /**
  * `posts` table — Class Table Inheritance (CTI) base table.
@@ -58,7 +52,9 @@ export const posts = pgTable(
   'posts',
   {
     /** Internal post ID. Primary key, UUIDv4. */
-    id: uuid('id').primaryKey().default(sql`uuidv7()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
 
     /** FK → users. CASCADE on user delete. */
     creatorId: uuid('creator_id')
@@ -78,9 +74,7 @@ export const posts = pgTable(
     status: postStatusEnum('status').notNull().default('ACTIVE'),
 
     /** Moderation state. Posts are live immediately — rescue cannot wait. */
-    moderationStatus: moderationStatusEnum('moderation_status')
-      .notNull()
-      .default('PENDING_AUTO_REVIEW'),
+    moderationStatus: moderationStatusEnum('moderation_status').notNull().default('PENDING_AUTO_REVIEW'),
 
     /**
      * Emergency urgency tier. Required for RESCUE and LOST; must be NULL for
@@ -169,9 +163,7 @@ export const posts = pgTable(
      *   RESCUE / LOST → never updated. Never auto-removed.
      * Before the cron removes a post, POST_INACTIVITY_NUDGE is sent to the creator.
      */
-    lastEngagedAt: timestamp('last_engaged_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    lastEngagedAt: timestamp('last_engaged_at', { withTimezone: true }).notNull().defaultNow(),
 
     /** Row creation timestamp. */
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -181,15 +173,8 @@ export const posts = pgTable(
   },
   (table) => ({
     // ── Profile / post history ──────────────────────────────────────────────
-    creatorCreatedIdx: index('idx_posts_creator_created').on(
-      table.creatorId,
-      table.createdAt,
-    ),
-    creatorStatusIdx: index('idx_posts_creator_status').on(
-      table.creatorId,
-      table.status,
-      table.createdAt,
-    ),
+    creatorCreatedIdx: index('idx_posts_creator_created').on(table.creatorId, table.createdAt),
+    creatorStatusIdx: index('idx_posts_creator_status').on(table.creatorId, table.status, table.createdAt),
 
     // ── City scoping (used by all feed queries) ──────────────────────────────
     cityTypeIdx: index('idx_posts_city_type').on(table.cityId, table.postType),

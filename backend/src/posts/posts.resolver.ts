@@ -1,14 +1,23 @@
-import { Resolver, Mutation, Args, Context, ResolveField, Root } from '@nestjs/graphql';
+import { Resolver, Mutation, Query, Args, Context, ResolveField, Root } from '@nestjs/graphql';
 import { PostsService } from './posts.service';
 import { validateCreateRescuePostInput } from './dto/create-rescue-post.input';
 import { validateCreateLostPostInput } from './dto/create-lost-post.input';
 import { validateCreateAdoptionPostInput } from './dto/create-adoption-post.input';
 import { validateCreateProductPostInput } from './dto/create-product-post.input';
-import type { Post, City, PostMedia } from '../database/schema';
+import { validateUpdatePostStatusInput } from './dto/update-post-status.input';
+import type {
+  Post,
+  City,
+  PostMedia,
+  RescuePost,
+  LostPost,
+  AdoptionPost,
+  ProductPost,
+} from '../database/schema';
 import type { GqlContext } from '../common/types/gql-context.type';
 
 /**
- * PostsResolver — GraphQL resolver for post creation and field resolution.
+ * PostsResolver — GraphQL resolver for post CRUD, engagement, and field resolution.
  *
  * ## Authentication
  * All mutations are protected by the global `FirebaseAuthGuard`.
@@ -27,6 +36,53 @@ import type { GqlContext } from '../common/types/gql-context.type';
 @Resolver('Post')
 export class PostsResolver {
   constructor(private readonly postsService: PostsService) {}
+
+  // ─── Queries ────────────────────────────────────────────────────────────
+
+  /**
+   * Fetches a single post by ID.
+   * Returns null if the post does not exist or has been soft-deleted.
+   */
+  @Query('post')
+  async post(@Args('id') id: string): Promise<Post | null> {
+    return this.postsService.getPost(id);
+  }
+
+  /**
+   * Fetches RESCUE extension data for the single-post detail screen.
+   * Returns null if the post is not of type RESCUE.
+   */
+  @Query('rescuePostDetail')
+  async rescuePostDetail(@Args('postId') postId: string): Promise<RescuePost> {
+    return this.postsService.getRescueDetail(postId);
+  }
+
+  /**
+   * Fetches LOST extension data for the single-post detail screen.
+   * Returns null if the post is not of type LOST.
+   */
+  @Query('lostPostDetail')
+  async lostPostDetail(@Args('postId') postId: string): Promise<LostPost> {
+    return this.postsService.getLostDetail(postId);
+  }
+
+  /**
+   * Fetches ADOPTION extension data for the single-post detail screen.
+   * Returns null if the post is not of type ADOPTION.
+   */
+  @Query('adoptionPostDetail')
+  async adoptionPostDetail(@Args('postId') postId: string): Promise<AdoptionPost> {
+    return this.postsService.getAdoptionDetail(postId);
+  }
+
+  /**
+   * Fetches PRODUCT extension data for the single-post detail screen.
+   * Returns null if the post is not of type PRODUCT.
+   */
+  @Query('productPostDetail')
+  async productPostDetail(@Args('postId') postId: string): Promise<ProductPost> {
+    return this.postsService.getProductDetail(postId);
+  }
 
   // ─── Create Mutations ──────────────────────────────────────────────────
 
@@ -80,6 +136,62 @@ export class PostsResolver {
   ): Promise<Post> {
     const validated = validateCreateProductPostInput(input);
     return this.postsService.createProductPost(ctx.user!.id, validated);
+  }
+
+  // ─── Engagement Mutations ──────────────────────────────────────────────
+
+  /**
+   * Soft-deletes a post by setting status to REMOVED.
+   * Only the post creator can delete their own post.
+   */
+  @Mutation('deletePost')
+  async deletePost(
+    @Args('id') id: string,
+    @Context() ctx: GqlContext,
+  ): Promise<boolean> {
+    await this.postsService.deletePost(id, ctx.user!.id);
+    return true;
+  }
+
+  /**
+   * Toggles an upvote on a post.
+   * Rejected for PRODUCT posts (Market has no upvote button).
+   * Recalculates effective_score for ADOPTION posts.
+   */
+  @Mutation('toggleUpvote')
+  async toggleUpvote(
+    @Args('postId') postId: string,
+    @Context() ctx: GqlContext,
+  ): Promise<Post> {
+    return this.postsService.toggleUpvote(postId, ctx.user!.id);
+  }
+
+  /**
+   * Toggles a save/bookmark on a post.
+   * Works on all 4 post types. On PRODUCT acts as buyer wishlist.
+   * Recalculates effective_score for ADOPTION and PRODUCT.
+   */
+  @Mutation('toggleSave')
+  async toggleSave(
+    @Args('postId') postId: string,
+    @Context() ctx: GqlContext,
+  ): Promise<Post> {
+    return this.postsService.toggleSave(postId, ctx.user!.id);
+  }
+
+  /**
+   * Updates a post's lifecycle status (e.g., ACTIVE → RESOLVED).
+   * Only the post creator can change their own post's status.
+   * Status transitions are validated per post type.
+   */
+  @Mutation('updatePostStatus')
+  async updatePostStatus(
+    @Args('postId') postId: string,
+    @Args('status') status: string,
+    @Context() ctx: GqlContext,
+  ): Promise<Post> {
+    const validated = validateUpdatePostStatusInput({ postId, status });
+    return this.postsService.updatePostStatus(validated.postId, ctx.user!.id, validated.status);
   }
 
   // ─── Field Resolvers ───────────────────────────────────────────────────
@@ -148,5 +260,25 @@ export class PostsResolver {
   @ResolveField('media')
   media(@Root() post: Post, @Context() ctx: GqlContext): Promise<PostMedia[]> {
     return ctx.loaders.mediaByPostId.load(post.id);
+  }
+
+  /**
+   * Resolves whether the current viewer has upvoted this post.
+   * Uses the per-request DataLoader to batch all checks into a single query.
+   * Returns `false` for unauthenticated viewers.
+   */
+  @ResolveField('isUpvotedByMe')
+  isUpvotedByMe(@Root() post: Post, @Context() ctx: GqlContext): Promise<boolean> {
+    return ctx.loaders.upvotedByMe.load(post.id);
+  }
+
+  /**
+   * Resolves whether the current viewer has saved/bookmarked this post.
+   * Uses the per-request DataLoader to batch all checks into a single query.
+   * Returns `false` for unauthenticated viewers.
+   */
+  @ResolveField('isSavedByMe')
+  isSavedByMe(@Root() post: Post, @Context() ctx: GqlContext): Promise<boolean> {
+    return ctx.loaders.savedByMe.load(post.id);
   }
 }

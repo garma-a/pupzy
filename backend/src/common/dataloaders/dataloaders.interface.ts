@@ -29,5 +29,19 @@ export interface DataLoaders {
    * Returns an empty array for posts with no media.
    */
   mediaByPostId: DataLoader<string, PostMedia[]>;
+
+  /**
+   * Batch-checks if the current viewer has upvoted each post.
+   * Returns `false` for all posts if the viewer is not authenticated.
+   * Created per-request using the authenticated user's ID.
+   */
+  upvotedByMe: DataLoader<string, boolean>;
+
+  /**
+   * Batch-checks if the current viewer has saved/bookmarked each post.
+   * Returns `false` for all posts if the viewer is not authenticated.
+   * Created per-request using the authenticated user's ID.
+   */
+  savedByMe: DataLoader<string, boolean>;
 }
 

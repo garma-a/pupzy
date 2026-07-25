@@ -70,6 +70,10 @@ type Post {
   saveCount: Int!
   viewCount: Int!
   effectiveScore: Float!
+  """Whether the current viewer has upvoted this post. False if not authenticated."""
+  isUpvotedByMe: Boolean!
+  """Whether the current viewer has saved/bookmarked this post. False if not authenticated."""
+  isSavedByMe: Boolean!
   media: [PostMedia!]!
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -404,6 +408,37 @@ input CreateProductPostInput {
   mediaIds: [ID!]
 }
 
+extend type Query {
+  """
+  Fetch a single post by ID. Returns null if the post does not exist or has been removed.
+  """
+  post(id: ID!): Post
+
+  """
+  Fetch RESCUE extension data for the single-post detail screen.
+  Returns null if the post is not of type RESCUE.
+  """
+  rescuePostDetail(postId: ID!): RescuePost
+
+  """
+  Fetch LOST extension data for the single-post detail screen.
+  Returns null if the post is not of type LOST.
+  """
+  lostPostDetail(postId: ID!): LostPost
+
+  """
+  Fetch ADOPTION extension data for the single-post detail screen.
+  Returns null if the post is not of type ADOPTION.
+  """
+  adoptionPostDetail(postId: ID!): AdoptionPost
+
+  """
+  Fetch PRODUCT extension data for the single-post detail screen.
+  Returns null if the post is not of type PRODUCT.
+  """
+  productPostDetail(postId: ID!): ProductPost
+}
+
 extend type Mutation {
   """
   Create a RESCUE post. Urgency is required.
@@ -425,5 +460,39 @@ extend type Mutation {
   No upvote button on Market. Seller phone decrypted directly.
   """
   createProductPost(input: CreateProductPostInput!): Post!
+
+  """
+  Soft-delete a post. Sets status to REMOVED.
+  Only the post creator can delete their own post.
+  Returns true on success.
+  """
+  deletePost(id: ID!): Boolean!
+
+  """
+  Toggle upvote on a post (insert if not upvoted, remove if already upvoted).
+  Rejected for PRODUCT posts (Market has no upvote button).
+  Recalculates effective_score for ADOPTION posts.
+  Returns the updated post with new upvoteCount.
+  """
+  toggleUpvote(postId: ID!): Post!
+
+  """
+  Toggle save/bookmark on a post (insert if not saved, remove if already saved).
+  Works on all 4 post types. On PRODUCT acts as buyer wishlist.
+  Recalculates effective_score for ADOPTION and PRODUCT posts.
+  Returns the updated post with new saveCount.
+  """
+  toggleSave(postId: ID!): Post!
+
+  """
+  Update a post's lifecycle status.
+  Allowed transitions depend on post type:
+    RESCUE  → RESOLVED
+    LOST    → REUNITED
+    ADOPTION → ADOPTED
+    PRODUCT  → SOLD
+  Only the post creator can change their own post's status.
+  """
+  updatePostStatus(postId: ID!, status: PostStatus!): Post!
 }
 

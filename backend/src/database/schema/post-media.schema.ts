@@ -27,7 +27,9 @@ export const postMedia = pgTable(
   'post_media',
   {
     /** Internal media ID. Primary key, UUIDv4. */
-    id: uuid('id').primaryKey().default(sql`uuidv7()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
 
     /**
      * FK → posts. CASCADE ensures media rows are cleaned up when a post is deleted.
@@ -79,15 +81,10 @@ export const postMedia = pgTable(
   },
   (table) => ({
     /** Orders images within a post — used to fetch them in display_order ASC. */
-    postDisplayOrderIdx: index('idx_post_media_post_display_order').on(
-      table.postId,
-      table.displayOrder,
-    ),
+    postDisplayOrderIdx: index('idx_post_media_post_display_order').on(table.postId, table.displayOrder),
 
     /** Enforces R2 object key uniqueness. */
-    cloudflareKeyUniq: uniqueIndex('uq_post_media_cloudflare_storage_key').on(
-      table.cloudflareStorageKey,
-    ),
+    cloudflareKeyUniq: uniqueIndex('uq_post_media_cloudflare_storage_key').on(table.cloudflareStorageKey),
   }),
 );
 

@@ -4,8 +4,16 @@ import { PostsRepository } from './posts.repository';
 import { CitiesService } from '../cities/cities.service';
 import { UploadService } from '../upload/upload.service';
 import { shouldFlagContent } from '../common/utils/moderation.util';
-import { ValidationError, NotFoundError } from '../common/errors/app.errors';
-import type { Post, NewPost, NewPostMedia } from '../database/schema';
+import { ValidationError, NotFoundError, ForbiddenError } from '../common/errors/app.errors';
+import type {
+  Post,
+  NewPost,
+  NewPostMedia,
+  RescuePost,
+  LostPost,
+  AdoptionPost,
+  ProductPost,
+} from '../database/schema';
 import type { CreateRescuePostInput } from './dto/create-rescue-post.input';
 import type { CreateLostPostInput } from './dto/create-lost-post.input';
 import type { CreateAdoptionPostInput } from './dto/create-adoption-post.input';
@@ -200,6 +208,178 @@ export class PostsService {
 
     this.runFinalizeMediaAsync(input.mediaIds, creatorId, postId);
     return post;
+  }
+
+  // ─── Read ───────────────────────────────────────────────────────────────
+
+  /**
+   * Fetches a single post by ID.
+   * Returns null if the post does not exist or has been soft-deleted (REMOVED).
+   * Used by the `post(id)` query resolver.
+   */
+  async getPost(postId: string): Promise<Post | null> {
+    const post = await this.postsRepository.findById(postId);
+    if (!post || post.status === 'REMOVED') return null;
+    return post;
+  }
+
+  /**
+   * Fetches the RESCUE extension data for a post's detail screen.
+   * @throws {NotFoundError} if the extension row does not exist.
+   */
+  async getRescueDetail(postId: string): Promise<RescuePost> {
+    const detail = await this.postsRepository.findRescueDetail(postId);
+    if (!detail) throw new NotFoundError('RescuePost', postId);
+    return detail;
+  }
+
+  /**
+   * Fetches the LOST extension data for a post's detail screen.
+   * @throws {NotFoundError} if the extension row does not exist.
+   */
+  async getLostDetail(postId: string): Promise<LostPost> {
+    const detail = await this.postsRepository.findLostDetail(postId);
+    if (!detail) throw new NotFoundError('LostPost', postId);
+    return detail;
+  }
+
+  /**
+   * Fetches the ADOPTION extension data for a post's detail screen.
+   * @throws {NotFoundError} if the extension row does not exist.
+   */
+  async getAdoptionDetail(postId: string): Promise<AdoptionPost> {
+    const detail = await this.postsRepository.findAdoptionDetail(postId);
+    if (!detail) throw new NotFoundError('AdoptionPost', postId);
+    return detail;
+  }
+
+  /**
+   * Fetches the PRODUCT extension data for a post's detail screen.
+   * @throws {NotFoundError} if the extension row does not exist.
+   */
+  async getProductDetail(postId: string): Promise<ProductPost> {
+    const detail = await this.postsRepository.findProductDetail(postId);
+    if (!detail) throw new NotFoundError('ProductPost', postId);
+    return detail;
+  }
+
+  // ─── Delete ─────────────────────────────────────────────────────────────
+
+  /**
+   * Soft-deletes a post by setting its status to REMOVED.
+   * Only the post creator can delete their own post.
+   *
+   * The DB trigger `trg_sync_user_post_counts` automatically decrements
+   * the user's post counters when status changes to REMOVED.
+   *
+   * @throws {NotFoundError} if the post does not exist or is already REMOVED.
+   * @throws {ForbiddenError} if the caller is not the post creator.
+   */
+  async deletePost(postId: string, userId: string): Promise<void> {
+    const post = await this.postsRepository.findById(postId);
+    if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Post', postId);
+    }
+    if (post.creatorId !== userId) {
+      throw new ForbiddenError('You can only delete your own posts');
+    }
+    await this.postsRepository.softDelete(postId);
+  }
+
+  // ─── Status Update ──────────────────────────────────────────────────────
+
+  /**
+   * Valid status transitions per post type.
+   * - RESCUE  → RESOLVED (animal was helped)
+   * - LOST    → REUNITED (pet was found)
+   * - ADOPTION → ADOPTED (pet was adopted)
+   * - PRODUCT  → SOLD (item was sold)
+   *
+   * All transitions are from ACTIVE to a terminal state.
+   * REMOVED is handled by `deletePost`, not this method.
+   */
+  private static readonly ALLOWED_TRANSITIONS: Record<string, string[]> = {
+    RESCUE: ['RESOLVED'],
+    LOST: ['REUNITED'],
+    ADOPTION: ['ADOPTED'],
+    PRODUCT: ['SOLD'],
+  };
+
+  /**
+   * Updates a post's lifecycle status with transition validation.
+   *
+   * @throws {NotFoundError} if the post does not exist or is REMOVED.
+   * @throws {ForbiddenError} if the caller is not the post creator.
+   * @throws {ValidationError} if the status transition is invalid for this post type.
+   */
+  async updatePostStatus(postId: string, userId: string, status: string): Promise<Post> {
+    const post = await this.postsRepository.findById(postId);
+    if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Post', postId);
+    }
+    if (post.creatorId !== userId) {
+      throw new ForbiddenError('You can only update the status of your own posts');
+    }
+    if (post.status !== 'ACTIVE') {
+      throw new ValidationError(
+        `Post is already in "${post.status}" status and cannot be changed`,
+      );
+    }
+
+    const allowed = PostsService.ALLOWED_TRANSITIONS[post.postType] ?? [];
+    if (!allowed.includes(status)) {
+      throw new ValidationError(
+        `${post.postType} posts can only transition to: ${allowed.join(', ')}. Got: "${status}"`,
+      );
+    }
+
+    return this.postsRepository.updateStatus(postId, status);
+  }
+
+  // ─── Engagement Toggles ─────────────────────────────────────────────────
+
+  /**
+   * Toggles an upvote on a post.
+   *
+   * ## Business rules
+   * - PRODUCT posts cannot be upvoted (Market has no upvote button).
+   * - RESCUE/LOST upvotes exist but don't affect effective_score (urgency sort).
+   * - ADOPTION upvotes recalculate effective_score inside the transaction.
+   *
+   * @throws {NotFoundError} if the post does not exist or is REMOVED.
+   * @throws {ValidationError} if the post is a PRODUCT post.
+   */
+  async toggleUpvote(postId: string, userId: string): Promise<Post> {
+    const post = await this.postsRepository.findById(postId);
+    if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Post', postId);
+    }
+    if (post.postType === 'PRODUCT') {
+      throw new ValidationError('PRODUCT posts cannot be upvoted — Market has no upvote button');
+    }
+
+    const { updatedPost } = await this.postsRepository.toggleUpvote(postId, userId);
+    return updatedPost;
+  }
+
+  /**
+   * Toggles a save/bookmark on a post.
+   *
+   * ## Business rules
+   * - All 4 post types support saves.
+   * - On PRODUCT, a save acts as a buyer wishlist/bookmark.
+   * - Recalculates effective_score for ADOPTION and PRODUCT.
+   *
+   * @throws {NotFoundError} if the post does not exist or is REMOVED.
+   */
+  async toggleSave(postId: string, userId: string): Promise<Post> {
+    const post = await this.postsRepository.findById(postId);
+    if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Post', postId);
+    }
+
+    const { updatedPost } = await this.postsRepository.toggleSave(postId, userId);
+    return updatedPost;
   }
 
   // ─── Private helpers ─────────────────────────────────────────────────────
