@@ -51,13 +51,33 @@ class _SplashScreenState extends State<SplashScreen>
       return;
     }
 
-    // Verify the Firebase token is still valid
+    final authService = context.read<AuthService>();
+
+    // Verify the Firebase token is still valid, and force a fresh read of
+    // emailVerified + the ID token itself — the cached values can be stale
+    // (e.g. verified via the email link in a browser, then the app reopened
+    // without ever refreshing locally), and a stale token keeps carrying an
+    // old email_verified claim regardless of what the local flag says.
     try {
-      await user.getIdToken();
+      await authService.reloadUser();
+      user = authService.currentUser;
     } catch (_) {
       // Token invalid (user deleted from Firebase) — sign out and go to login
-      await context.read<AuthService>().signOut();
+      await authService.signOut();
       if (mounted) _goTo(const LoginScreen());
+      return;
+    }
+
+    if (user == null) {
+      _goTo(const LoginScreen());
+      return;
+    }
+
+    // An unverified email/password account can't call the backend at all
+    // (it rejects with EMAIL_NOT_VERIFIED) — send them straight to the
+    // "verify your email" screen instead of a doomed fetchMe() call.
+    if (!user.emailVerified) {
+      _goTo(LoginScreen(pendingVerificationEmail: user.email));
       return;
     }
 

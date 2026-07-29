@@ -109,7 +109,7 @@ class NewPostSheet extends StatelessWidget {
               accent: _matchingAccent,
               title: t(context, 'Responsible Matching', 'مطابقة مسؤولة'),
               subtitle: t(context, 'Apply to adopt — verified process', 'قدّم طلب تبني — عملية موثوقة'),
-              onTap: () => Navigator.of(context).pop('adopt'),
+              onTap: () => _openMatchingForm(context),
             ),
             const SizedBox(height: AppSpacing.md),
             _TypeOption(
@@ -136,6 +136,15 @@ class NewPostSheet extends StatelessWidget {
         builder: (_) => PostFormScreen(type: type, initialCategory: initialCategory),
       ),
     );
+  }
+
+  Future<void> _openMatchingForm(BuildContext context) async {
+    final submitted = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const AdoptionMatchingScreen()),
+    );
+    if (submitted == true && context.mounted) {
+      Navigator.of(context).pop('adopt');
+    }
   }
 }
 

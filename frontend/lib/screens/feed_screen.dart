@@ -50,6 +50,7 @@ class _FeedScreenState extends State<FeedScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none),
+            tooltip: 'Notifications',
             onPressed: () {
               showModalBottomSheet(
                 context: context,

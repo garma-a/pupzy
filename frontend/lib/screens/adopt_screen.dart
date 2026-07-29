@@ -6,9 +6,20 @@ import '../theme/app_theme.dart';
 import '../widgets/adoption_card.dart';
 import '../widgets/distance_filter.dart';
 import '../widgets/top_bar.dart';
+import 'adoption_detail_screen.dart';
 
-class AdoptScreen extends StatelessWidget {
+class AdoptScreen extends StatefulWidget {
   const AdoptScreen({super.key});
+
+  @override
+  State<AdoptScreen> createState() => _AdoptScreenState();
+}
+
+class _AdoptScreenState extends State<AdoptScreen> {
+  Future<void> _refresh() async {
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +38,6 @@ class AdoptScreen extends StatelessWidget {
             children: [
               const SizedBox(height: AppSpacing.md),
               const PupzyTopBar(),
-              const SizedBox(height: AppSpacing.md),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: Container(
@@ -68,18 +78,48 @@ class AdoptScreen extends StatelessWidget {
               Expanded(
                 child: TabBarView(
                   children: [
-                    filtered.isEmpty
-                        ? Center(
-                            child: Text(
-                              t(context, 'No pets for adoption within this distance', 'لا توجد حيوانات للتبني ضمن هذه المسافة'),
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                    RefreshIndicator(
+                      onRefresh: _refresh,
+                      color: AppColors.primary,
+                      child: filtered.isEmpty
+                          ? ListView(
+                              padding: const EdgeInsets.only(bottom: 100),
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+                                  child: Center(
+                                    child: Column(
+                                      children: [
+                                        const Icon(Icons.pets_outlined, size: 48, color: AppColors.textMuted),
+                                        const SizedBox(height: AppSpacing.md),
+                                        Text(
+                                          t(context, 'No pets for adoption within this distance', 'لا توجد حيوانات للتبني ضمن هذه المسافة'),
+                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          t(context, 'Try widening your distance filter', 'جرّب توسيع نطاق المسافة'),
+                                          style: Theme.of(context).textTheme.bodySmall,
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.only(bottom: 100),
+                              itemCount: filtered.length,
+                              itemBuilder: (_, i) => AdoptionCard(
+                                pet: filtered[i],
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (_) => AdoptionDetailScreen(pet: filtered[i])),
+                                ),
+                              ),
                             ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.only(bottom: 100),
-                            itemCount: filtered.length,
-                            itemBuilder: (_, i) => AdoptionCard(pet: filtered[i]),
-                          ),
+                    ),
                     Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,

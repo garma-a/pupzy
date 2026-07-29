@@ -1,15 +1,31 @@
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
 
+import '../data/mock_data.dart';
 import '../localization/lang_provider.dart';
 import '../models/pet.dart';
 import '../theme/app_theme.dart';
 import '../widgets/pet_carousel.dart';
 
-class AdoptionDetailScreen extends StatelessWidget {
+class AdoptionDetailScreen extends StatefulWidget {
   final AdoptionPet pet;
 
   const AdoptionDetailScreen({super.key, required this.pet});
+
+  @override
+  State<AdoptionDetailScreen> createState() => _AdoptionDetailScreenState();
+}
+
+class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
+  AdoptionPet get pet => widget.pet;
+  bool get _applied => MockData.appliedAdoptionIds.contains(pet.id);
+
+  void _adopt() {
+    setState(() => MockData.appliedAdoptionIds.add(pet.id));
+    Fluttertoast.showToast(
+      msg: t(context, 'Adoption request sent for ${pet.name}!', 'تم إرسال طلب التبني لـ ${pet.name}!'),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +47,7 @@ class AdoptionDetailScreen extends StatelessWidget {
                           child: IconButton(
                             icon: const Icon(Icons.arrow_back, color: Colors.white),
                             onPressed: () => Navigator.of(context).pop(),
+                            tooltip: t(context, 'Back', 'رجوع'),
                           ),
                         ),
                       ),
@@ -93,12 +110,10 @@ class AdoptionDetailScreen extends StatelessWidget {
           child: SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                Fluttertoast.showToast(
-                  msg: t(context, 'Adoption request sent for ${pet.name}!', 'تم إرسال طلب التبني لـ ${pet.name}!'),
-                );
-              },
-              child: Text(t(context, 'Adopt Me', 'تبنَّني')),
+              onPressed: _applied ? null : _adopt,
+              child: Text(
+                _applied ? t(context, 'Request sent ✓', 'تم إرسال الطلب ✓') : t(context, 'Adopt Me', 'تبنَّني'),
+              ),
             ),
           ),
         ),

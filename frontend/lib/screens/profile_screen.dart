@@ -4,10 +4,13 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
+import '../data/mock_data.dart';
 import '../localization/lang_provider.dart';
+import '../models/contact_request_item.dart';
 import '../services/auth_service.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import 'contact_requests_screen.dart';
 import 'login_screen.dart';
 
 class ProfileSheet extends StatefulWidget {
@@ -65,6 +68,13 @@ class _ProfileSheetState extends State<ProfileSheet> {
             }
             final result = await graphql.updateProfile(fullName: name, phoneNumber: e164Phone);
             if (result != null) {
+              try {
+                await context.read<AuthService>().updateDisplayName(name);
+              } catch (_) {
+                // Non-critical — the backend already has the name; this only
+                // affects Firebase-sourced UI (e.g. the top bar avatar initial).
+              }
+              if (!ctx.mounted) return;
               Navigator.of(ctx).pop();
               _fetchProfile();
               Fluttertoast.showToast(
@@ -341,7 +351,20 @@ class _ProfileSheetState extends State<ProfileSheet> {
                     trailing: _user?['notificationsEnabled'] == true ? t(context, 'On', 'مفعّل') : t(context, 'Off', 'متوقف'),
                   ),
                   const Divider(height: 1, indent: 48),
-                  _SettingsRow(icon: Icons.mail_outline, label: t(context, 'Contact Requests', 'طلبات التواصل'), trailing: '3'),
+                  _SettingsRow(
+                    icon: Icons.mail_outline,
+                    label: t(context, 'Contact Requests', 'طلبات التواصل'),
+                    trailing: MockData.contactRequests
+                        .where((r) => r.status == ContactRequestStatus.pending)
+                        .length
+                        .toString(),
+                    onTap: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ContactRequestsScreen()),
+                      );
+                      if (mounted) setState(() {});
+                    },
+                  ),
                 ],
               ),
             ),
@@ -597,17 +620,21 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                       Expanded(
                         child: Text(t(context, 'Edit Profile', 'تعديل الملف الشخصي'), style: Theme.of(context).textTheme.headlineSmall),
                       ),
-                      GestureDetector(
-                        onTap: _handleClose,
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.border),
+                      Semantics(
+                        button: true,
+                        label: 'Close',
+                        child: GestureDetector(
+                          onTap: _handleClose,
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: const Icon(Icons.close, size: 16, color: AppColors.textSecondary),
                           ),
-                          child: const Icon(Icons.close, size: 16, color: AppColors.textSecondary),
                         ),
                       ),
                     ],

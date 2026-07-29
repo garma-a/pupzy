@@ -2,7 +2,9 @@ import 'dart:ui';
 
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../data/mock_data.dart';
 import '../localization/lang_provider.dart';
 import '../models/pet.dart';
 import '../theme/app_theme.dart';
@@ -22,6 +24,43 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
   bool _revealed = false;
 
   RescueAnimal get animal => widget.animal;
+  bool get _reportedFound => MockData.reportedFoundRescueIds.contains(animal.id);
+
+  Future<void> _reportFound() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
+        title: Text(t(ctx, 'Report this animal as found?', 'الإبلاغ عن العثور على هذا الحيوان؟')),
+        content: Text(
+          t(
+            ctx,
+            'This lets the community know the animal has been rescued or is no longer in distress.',
+            'هذا يُعلم المجتمع أن الحيوان تم إنقاذه أو لم يعد في محنة.',
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(t(ctx, 'Cancel', 'إلغاء'))),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(t(ctx, 'Report Found', 'الإبلاغ عن العثور عليه'))),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      setState(() => MockData.reportedFoundRescueIds.add(animal.id));
+      Fluttertoast.showToast(
+        msg: '${t(context, 'Found report submitted for', 'تم إرسال بلاغ العثور عن')} ${animal.name}',
+      );
+    }
+  }
+
+  Future<void> _contactRescue() async {
+    final digits = animal.contactPhone.replaceAll(RegExp(r'[^0-9+]'), '');
+    final uri = Uri(scheme: 'tel', path: digits);
+    if (!await launchUrl(uri)) {
+      Fluttertoast.showToast(msg: t(context, 'Could not open phone dialer', 'تعذر فتح تطبيق الهاتف'));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +89,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                           child: IconButton(
                             icon: const Icon(Icons.arrow_back, color: Colors.white),
                             onPressed: () => Navigator.of(context).pop(),
+                            tooltip: t(context, 'Back', 'رجوع'),
                           ),
                         ),
                       ),
@@ -112,18 +152,18 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => Fluttertoast.showToast(
-                    msg: '${t(context, 'Found report submitted for', 'تم إرسال بلاغ العثور عن')} ${animal.name}',
+                  onPressed: _reportedFound ? null : _reportFound,
+                  child: Text(
+                    _reportedFound
+                        ? t(context, 'Reported ✓', 'تم الإبلاغ ✓')
+                        : t(context, 'Report Found', 'الإبلاغ عن العثور عليه'),
                   ),
-                  child: Text(t(context, 'Report Found', 'الإبلاغ عن العثور عليه')),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => Fluttertoast.showToast(
-                    msg: '${t(context, 'Contacting', 'جارٍ التواصل مع')} ${animal.contactName}...',
-                  ),
+                  onPressed: _contactRescue,
                   child: Text(t(context, 'Contact Rescue', 'تواصل مع فريق الإنقاذ')),
                 ),
               ),

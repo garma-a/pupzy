@@ -38,6 +38,15 @@ class LangProvider extends ChangeNotifier {
 
 /// Returns [en] or [ar] depending on the app's current language.
 /// Use at every user-facing string call site instead of hardcoding text.
+///
+/// Deliberately uses `read`, not `watch`: `watch` only works during a
+/// widget's `build()` phase and throws if called from an event handler or
+/// async callback (which `t()` is, all over this app — toasts, dialog
+/// callbacks, submit methods). `read` works everywhere. Language-switch
+/// rebuilds are still handled correctly because `main.dart` wraps the whole
+/// `MaterialApp` in a `Consumer<LangProvider>`, so toggling the language
+/// already rebuilds every screen from the root — `t()` doesn't need to
+/// register its own listener on top of that.
 String t(BuildContext context, String en, String ar) {
-  return context.watch<LangProvider>().lang == Lang.ar ? ar : en;
+  return context.read<LangProvider>().lang == Lang.ar ? ar : en;
 }

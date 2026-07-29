@@ -128,6 +128,24 @@ class GraphQLService {
     }
   ''';
 
+  static const String createLostPostMutation = r'''
+    mutation CreateLostPost($input: CreateLostPostInput!) {
+      createLostPost(input: $input) {
+        id
+        title
+      }
+    }
+  ''';
+
+  static const String createAdoptionPostMutation = r'''
+    mutation CreateAdoptionPost($input: CreateAdoptionPostInput!) {
+      createAdoptionPost(input: $input) {
+        id
+        title
+      }
+    }
+  ''';
+
   static const String createProductPostMutation = r'''
     mutation CreateProductPost($input: CreateProductPostInput!) {
       createProductPost(input: $input) {
@@ -163,7 +181,26 @@ class GraphQLService {
     return list?.cast<Map<String, dynamic>>() ?? [];
   }
 
-  Future<Map<String, dynamic>?> completeProfile({
+  /// Extracts a human-readable message from a failed GraphQL result.
+  /// Prefers the server's own error message (e.g. a specific validation
+  /// reason like "phoneNumber: must be in E.164 format") over a generic
+  /// "something went wrong" — the backend already sends one, this just
+  /// stops discarding it. Returns null for network-level failures (no
+  /// response reached the server at all), which the caller should show a
+  /// generic connectivity message for instead.
+  String? _serverErrorMessage(OperationException? exception) {
+    if (exception == null) return null;
+    if (exception.graphqlErrors.isNotEmpty) {
+      return exception.graphqlErrors.first.message;
+    }
+    return null;
+  }
+
+  /// Returns the created/updated profile on success, or `(null, message)`
+  /// on failure — [message] is the specific reason when the server sent
+  /// one (validation error, expired session, etc.), or null for a network
+  /// failure (server unreachable).
+  Future<(Map<String, dynamic>? data, String? errorMessage)> completeProfile({
     required String fullName,
     required String phoneNumber,
     required String cityId,
@@ -189,9 +226,9 @@ class GraphQLService {
     );
     if (result.hasException) {
       debugPrint('GraphQL error: ${result.exception}');
-      return null;
+      return (null, _serverErrorMessage(result.exception));
     }
-    return result.data?['completeProfile'];
+    return (result.data?['completeProfile'] as Map<String, dynamic>?, null);
   }
 
   Future<Map<String, dynamic>?> updateProfile({
@@ -297,6 +334,116 @@ class GraphQLService {
       return null;
     }
     return result.data?['createRescuePost'];
+  }
+
+  Future<Map<String, dynamic>?> createLostPost({
+    required String title,
+    required String description,
+    required double latitude,
+    required double longitude,
+    String? areaName,
+    required String urgency,
+    required String reportType,
+    required String species,
+    String? breed,
+    String? colorAndMarkings,
+    bool? hasCollarWithIdentificationTag,
+    String? circumstances,
+    String? petName,
+    String? dateLastSeen,
+    List<String>? mediaIds,
+  }) async {
+    final input = <String, dynamic>{
+      'title': title,
+      'description': description,
+      'coordinates': {'latitude': latitude, 'longitude': longitude},
+      'urgency': urgency,
+      'reportType': reportType,
+      'species': species,
+    };
+    if (areaName != null && areaName.isNotEmpty) input['areaName'] = areaName;
+    if (breed != null && breed.isNotEmpty) input['breed'] = breed;
+    if (colorAndMarkings != null && colorAndMarkings.isNotEmpty) input['colorAndMarkings'] = colorAndMarkings;
+    if (hasCollarWithIdentificationTag != null) {
+      input['hasCollarWithIdentificationTag'] = hasCollarWithIdentificationTag;
+    }
+    if (circumstances != null && circumstances.isNotEmpty) input['circumstances'] = circumstances;
+    if (petName != null && petName.isNotEmpty) input['petName'] = petName;
+    if (dateLastSeen != null && dateLastSeen.isNotEmpty) input['dateLastSeen'] = dateLastSeen;
+    if (mediaIds != null && mediaIds.isNotEmpty) input['mediaIds'] = mediaIds;
+
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(createLostPostMutation),
+        variables: {'input': input},
+      ),
+    );
+    if (result.hasException) {
+      debugPrint('GraphQL error: ${result.exception}');
+      return null;
+    }
+    return result.data?['createLostPost'];
+  }
+
+  Future<Map<String, dynamic>?> createAdoptionPost({
+    required String title,
+    required String description,
+    required double latitude,
+    required double longitude,
+    String? areaName,
+    required String petName,
+    required String species,
+    String? breed,
+    int? ageValue,
+    String? ageUnit,
+    required String gender,
+    required bool vaccinated,
+    required bool neutered,
+    String? healthNotes,
+    List<String>? personalityTags,
+    String? spaceRequirement,
+    required bool priorPetExperienceRequired,
+    String? additionalRequirements,
+    String? currentlyWith,
+    List<String>? mediaIds,
+  }) async {
+    final input = <String, dynamic>{
+      'title': title,
+      'description': description,
+      'coordinates': {'latitude': latitude, 'longitude': longitude},
+      'petName': petName,
+      'species': species,
+      'gender': gender,
+      'vaccinated': vaccinated,
+      'neutered': neutered,
+      'priorPetExperienceRequired': priorPetExperienceRequired,
+    };
+    if (areaName != null && areaName.isNotEmpty) input['areaName'] = areaName;
+    if (breed != null && breed.isNotEmpty) input['breed'] = breed;
+    if (ageValue != null && ageUnit != null) {
+      input['ageValue'] = ageValue;
+      input['ageUnit'] = ageUnit;
+    }
+    if (healthNotes != null && healthNotes.isNotEmpty) input['healthNotes'] = healthNotes;
+    if (personalityTags != null && personalityTags.isNotEmpty) input['personalityTags'] = personalityTags;
+    if (spaceRequirement != null) input['spaceRequirement'] = spaceRequirement;
+    if (additionalRequirements != null && additionalRequirements.isNotEmpty) {
+      input['additionalRequirements'] = additionalRequirements;
+    }
+    if (currentlyWith != null && currentlyWith.isNotEmpty) input['currentlyWith'] = currentlyWith;
+    if (mediaIds != null && mediaIds.isNotEmpty) input['mediaIds'] = mediaIds;
+
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(createAdoptionPostMutation),
+        variables: {'input': input},
+      ),
+    );
+    if (result.hasException) {
+      debugPrint('GraphQL error: ${result.exception}');
+      return null;
+    }
+    return result.data?['createAdoptionPost'];
   }
 
   Future<Map<String, dynamic>?> createProductPost({

@@ -72,6 +72,45 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
+  void _noContactNumberToast() {
+    Fluttertoast.showToast(
+      msg: t(context, "This seller hasn't added a contact number yet", 'لم يضف هذا البائع رقم تواصل بعد'),
+      backgroundColor: AppColors.critical,
+      textColor: Colors.white,
+    );
+  }
+
+  void _handleCall() {
+    final phone = _product.sellerPhone;
+    if (phone == null) {
+      _noContactNumberToast();
+      return;
+    }
+    _launchPhone(phone);
+  }
+
+  void _handleMessage() {
+    final product = _product;
+    final phone = product.sellerPhone;
+    if (phone == null) {
+      _noContactNumberToast();
+      return;
+    }
+    final defaultMessage =
+        "${t(context, "Hi, I'm interested in your listing", 'مرحبًا، أنا مهتم بإعلانك')} \"${product.title}\" ${t(context, 'on Pupzy.', 'على بابزي.')}";
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _MessageSellerSheet(
+        sellerName: product.sellerName,
+        sellerAvatarUrl: product.sellerAvatarUrl,
+        initialMessage: defaultMessage,
+        onSend: (message) => _launchWhatsApp(phone, message),
+      ),
+    );
+  }
+
   void _toggleSave() {
     setState(() {
       if (_isSaved) {
@@ -87,20 +126,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final priceLabel = _product.isFree ? t(context, 'Free', 'مجاني') : '${_product.price?.toStringAsFixed(0)} ${_product.currency}';
     SharePlus.instance.share(
       ShareParams(text: '${t(context, 'Check out this listing on Pupzy', 'شاهد هذا الإعلان على بابزي')}: ${_product.title} — $priceLabel\n${_product.description}'),
-    );
-  }
-
-  void _reportListing() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _ReportSheet(
-        onSubmit: (reason) {
-          Navigator.of(context).pop();
-          Fluttertoast.showToast(msg: t(context, 'Listing reported. Thank you for keeping Pupzy safe.', 'تم الإبلاغ عن الإعلان. شكرًا لمساهمتك في أمان بابزي.'));
-        },
-      ),
     );
   }
 
@@ -196,6 +221,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           child: IconButton(
                             icon: const Icon(Icons.arrow_back, color: Colors.white),
                             onPressed: () => Navigator.of(context).pop(),
+                            tooltip: t(context, 'Back', 'رجوع'),
                           ),
                         ),
                       ),
@@ -266,8 +292,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildBuyerActions() {
-    final product = _product;
-    final contactMessage = "${t(context, "Hi, I'm interested in your listing", 'مرحبًا، أنا مهتم بإعلانك')} \"${product.title}\" ${t(context, 'on Pupzy.', 'على بابزي.')}";
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -276,12 +300,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             _IconAction(
               icon: Icons.call_outlined,
               label: t(context, 'Call', 'اتصال'),
-              onTap: product.sellerPhone != null ? () => _launchPhone(product.sellerPhone!) : null,
+              onTap: _isSold ? null : _handleCall,
             ),
             _IconAction(
-              icon: Icons.chat_bubble_outline,
-              label: t(context, 'Message', 'رسالة'),
-              onTap: product.sellerPhone != null ? () => _launchWhatsApp(product.sellerPhone!, contactMessage) : null,
+              icon: Icons.chat,
+              label: t(context, 'WhatsApp', 'واتساب'),
+              color: AppColors.sectionLineGreen,
+              onTap: _isSold ? null : _handleMessage,
             ),
             _IconAction(
               icon: _isSaved ? Icons.bookmark : Icons.bookmark_border,
@@ -290,15 +315,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               onTap: _toggleSave,
             ),
             _IconAction(icon: Icons.share_outlined, label: t(context, 'Share', 'مشاركة'), onTap: _shareListing),
-            _IconAction(icon: Icons.flag_outlined, label: t(context, 'Report', 'إبلاغ'), onTap: _reportListing),
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _isSold || product.sellerPhone == null ? null : () => _launchWhatsApp(product.sellerPhone!, contactMessage),
-            child: Text(_isSold ? t(context, 'Sold', 'مباع') : t(context, 'Contact Seller', 'تواصل مع البائع')),
+          child: ElevatedButton.icon(
+            onPressed: _isSold ? null : _handleMessage,
+            icon: _isSold ? null : const Icon(Icons.chat, size: 18),
+            label: Text(_isSold ? t(context, 'Sold', 'مباع') : t(context, 'Message on WhatsApp', 'راسل عبر واتساب')),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.sectionLineGreen,
+              disabledBackgroundColor: AppColors.sectionLineGreen.withValues(alpha: 0.35),
+            ),
           ),
         ),
       ],
@@ -470,68 +499,6 @@ class _SellerCard extends StatelessWidget {
   }
 }
 
-class _ReportSheet extends StatefulWidget {
-  final ValueChanged<String> onSubmit;
-
-  const _ReportSheet({required this.onSubmit});
-
-  @override
-  State<_ReportSheet> createState() => _ReportSheetState();
-}
-
-class _ReportSheetState extends State<_ReportSheet> {
-  String? _reason;
-
-  static const List<(String, String, String)> _reasons = [
-    ('SPAM', 'Spam', 'رسائل مزعجة'),
-    ('SCAM', 'Scam', 'احتيال'),
-    ('INAPPROPRIATE_CONTENT', 'Inappropriate content', 'محتوى غير لائق'),
-    ('DUPLICATE', 'Duplicate listing', 'إعلان مكرر'),
-    ('UNRELATED_TO_ANIMALS', 'Unrelated to animals', 'غير متعلق بالحيوانات'),
-    ('OTHER', 'Other', 'أخرى'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(t(context, 'Report this listing', 'الإبلاغ عن هذا الإعلان'), style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: AppSpacing.md),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: _reasons.map((r) {
-              final selected = _reason == r.$1;
-              return ChoiceChip(
-                label: Text(t(context, r.$2, r.$3)),
-                selected: selected,
-                onSelected: (_) => setState(() => _reason = r.$1),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _reason == null ? null : () => widget.onSubmit(_reason!),
-              child: Text(t(context, 'Submit report', 'إرسال البلاغ')),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-        ],
-      ),
-    );
-  }
-}
-
 class _EditListingSheet extends StatefulWidget {
   final Product product;
   final ValueChanged<Product> onSave;
@@ -655,6 +622,148 @@ class _EditListingSheetState extends State<_EditListingSheet> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(onPressed: _save, child: Text(t(context, 'Save changes', 'حفظ التغييرات'))),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MessageSellerSheet extends StatefulWidget {
+  final String sellerName;
+  final String? sellerAvatarUrl;
+  final String initialMessage;
+  final void Function(String message) onSend;
+
+  const _MessageSellerSheet({
+    required this.sellerName,
+    required this.sellerAvatarUrl,
+    required this.initialMessage,
+    required this.onSend,
+  });
+
+  @override
+  State<_MessageSellerSheet> createState() => _MessageSellerSheetState();
+}
+
+class _MessageSellerSheetState extends State<_MessageSellerSheet> {
+  static const Color _whatsappGreen = Color(0xFF25D366);
+
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialMessage);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPad = MediaQuery.of(context).viewInsets.bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomPad),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: const BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: _whatsappGreen.withValues(alpha: 0.12),
+                    backgroundImage: widget.sellerAvatarUrl != null ? NetworkImage(widget.sellerAvatarUrl!) : null,
+                    child: widget.sellerAvatarUrl == null
+                        ? Text(widget.sellerName.isNotEmpty ? widget.sellerName[0].toUpperCase() : '?')
+                        : null,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(t(context, 'Message seller', 'مراسلة البائع'), style: Theme.of(context).textTheme.headlineSmall),
+                        Text(widget.sellerName, style: Theme.of(context).textTheme.bodySmall),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Text(t(context, 'Your message', 'رسالتك'), style: Theme.of(context).textTheme.labelLarge),
+              const SizedBox(height: AppSpacing.sm),
+              TextField(
+                controller: _controller,
+                maxLines: 4,
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.surfaceWarm,
+                  contentPadding: const EdgeInsets.all(16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                children: [
+                  const Icon(Icons.chat, size: 16, color: _whatsappGreen),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      t(
+                        context,
+                        "You'll be redirected to WhatsApp to send this",
+                        'سيتم تحويلك إلى واتساب لإرسال هذه الرسالة',
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton.icon(
+                  onPressed: _controller.text.trim().isEmpty
+                      ? null
+                      : () {
+                          Navigator.of(context).pop();
+                          widget.onSend(_controller.text.trim());
+                        },
+                  icon: const Icon(Icons.chat, size: 20),
+                  label: Text(t(context, 'Continue to WhatsApp', 'المتابعة إلى واتساب')),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _whatsappGreen,
+                    disabledBackgroundColor: _whatsappGreen.withValues(alpha: 0.35),
+                  ),
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
             ],

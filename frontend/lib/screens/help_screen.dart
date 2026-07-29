@@ -7,8 +7,22 @@ import '../widgets/distance_filter.dart';
 import '../widgets/rescue_card.dart';
 import '../widgets/top_bar.dart';
 
-class HelpScreen extends StatelessWidget {
+class HelpScreen extends StatefulWidget {
   const HelpScreen({super.key});
+
+  @override
+  State<HelpScreen> createState() => _HelpScreenState();
+}
+
+class _HelpScreenState extends State<HelpScreen> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,17 +40,41 @@ class HelpScreen extends StatelessWidget {
             children: [
               const SizedBox(height: AppSpacing.md),
               const PupzyTopBar(),
-              const SizedBox(height: AppSpacing.md),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                   decoration: BoxDecoration(color: AppColors.searchBg, borderRadius: BorderRadius.circular(AppRadius.chip)),
                   child: Row(
                     children: [
                       const Icon(Icons.search, size: 18, color: AppColors.textMuted),
                       const SizedBox(width: AppSpacing.sm),
-                      Text(t(context, 'Search pets, posts, users...', 'ابحث عن حيوانات، منشورات، مستخدمين...'), style: Theme.of(context).textTheme.bodyMedium),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (v) => setState(() => _query = v),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          decoration: InputDecoration(
+                            hintText: t(context, 'Search by breed, area, description...', 'ابحث حسب السلالة أو المنطقة أو الوصف...'),
+                            hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                      if (_query.isNotEmpty)
+                        Semantics(
+                          button: true,
+                          label: t(context, 'Clear search', 'مسح البحث'),
+                          child: GestureDetector(
+                            onTap: () => setState(() {
+                              _searchController.clear();
+                              _query = '';
+                            }),
+                            child: const Icon(Icons.close, size: 18, color: AppColors.textMuted),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -67,8 +105,8 @@ class HelpScreen extends StatelessWidget {
               Expanded(
                 child: TabBarView(
                   children: [
-                    _RescueList(maxDistance: maxDist),
-                    _RescueList(lostAndFound: true, maxDistance: maxDist),
+                    _RescueList(maxDistance: maxDist, query: _query),
+                    _RescueList(lostAndFound: true, maxDistance: maxDist, query: _query),
                   ],
                 ),
               ),
@@ -83,7 +121,8 @@ class HelpScreen extends StatelessWidget {
 class _RescueList extends StatelessWidget {
   final bool lostAndFound;
   final double maxDistance;
-  const _RescueList({this.lostAndFound = false, required this.maxDistance});
+  final String query;
+  const _RescueList({this.lostAndFound = false, required this.maxDistance, this.query = ''});
 
   @override
   Widget build(BuildContext context) {
@@ -91,11 +130,33 @@ class _RescueList extends StatelessWidget {
     if (lostAndFound) {
       items = items.where((a) => !a.isUrgent).toList();
     }
+    final q = query.trim().toLowerCase();
+    if (q.isNotEmpty) {
+      items = items.where((a) {
+        return a.breed.toLowerCase().contains(q) ||
+            a.species.toLowerCase().contains(q) ||
+            a.location.toLowerCase().contains(q) ||
+            a.description.toLowerCase().contains(q);
+      }).toList();
+    }
     if (items.isEmpty) {
       return Center(
-        child: Text(
-          t(context, 'No rescue animals within this distance', 'لا توجد حيوانات إنقاذ ضمن هذه المسافة'),
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(q.isNotEmpty ? Icons.search_off : Icons.pets_outlined, size: 40, color: AppColors.textMuted),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                q.isNotEmpty
+                    ? t(context, 'No results for "$query"', 'لا توجد نتائج لـ "$query"')
+                    : t(context, 'No rescue animals within this distance', 'لا توجد حيوانات إنقاذ ضمن هذه المسافة'),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       );
     }

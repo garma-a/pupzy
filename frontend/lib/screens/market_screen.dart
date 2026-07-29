@@ -45,6 +45,11 @@ class _MarketScreenState extends State<MarketScreen> {
     super.dispose();
   }
 
+  Future<void> _refresh() async {
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (mounted) setState(() {});
+  }
+
   List<Product> get _filtered {
     var list = MockData.products.toList();
     if (_category != 'All') {
@@ -90,7 +95,6 @@ class _MarketScreenState extends State<MarketScreen> {
           children: [
             const SizedBox(height: AppSpacing.md),
             const PupzyTopBar(),
-            const SizedBox(height: AppSpacing.md),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Container(
@@ -121,7 +125,10 @@ class _MarketScreenState extends State<MarketScreen> {
             const SizedBox(height: AppSpacing.md),
             const DistanceFilter(),
             Expanded(
-              child: ListView(
+              child: RefreshIndicator(
+                onRefresh: _refresh,
+                color: AppColors.primary,
+                child: ListView(
                 padding: const EdgeInsets.only(bottom: 100),
                 children: [
                   const SizedBox(height: AppSpacing.lg),
@@ -253,7 +260,23 @@ class _MarketScreenState extends State<MarketScreen> {
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xxl),
                         child: Center(
-                          child: Text(t(context, 'No listings match your search', 'لا توجد إعلانات مطابقة لبحثك'), style: Theme.of(context).textTheme.bodyMedium),
+                          child: Column(
+                            children: [
+                              const Icon(Icons.search_off, size: 48, color: AppColors.textMuted),
+                              const SizedBox(height: AppSpacing.md),
+                              Text(
+                                t(context, 'No listings match your search', 'لا توجد إعلانات مطابقة لبحثك'),
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                t(context, 'Try a different category or search term', 'جرّب فئة أو كلمة بحث مختلفة'),
+                                style: Theme.of(context).textTheme.bodySmall,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     }
@@ -356,6 +379,7 @@ class _MarketScreenState extends State<MarketScreen> {
                     );
                   }),
                 ],
+              ),
               ),
             ),
           ],

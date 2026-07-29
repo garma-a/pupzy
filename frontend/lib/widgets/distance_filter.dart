@@ -40,7 +40,6 @@ class _DistanceFilterState extends State<DistanceFilter> {
     ('15km', '15km', null, 15.0),
     ('30km', '30km', null, 30.0),
     ('50+km', '+50km', null, double.infinity),
-    ('Vets', 'الأطباء البيطريون', Icons.local_hospital_outlined, double.infinity),
   ];
 
   int _indexForDistance(double d) {
@@ -57,14 +56,14 @@ class _DistanceFilterState extends State<DistanceFilter> {
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      padding: const EdgeInsetsDirectional.only(start: AppSpacing.lg, end: AppSpacing.lg),
       child: Row(
         children: List.generate(_chips.length, (i) {
           final (labelEn, labelAr, icon, maxDist) = _chips[i];
           final label = t(context, labelEn, labelAr);
           final active = selectedIndex == i;
           return Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.sm),
+            padding: const EdgeInsetsDirectional.only(end: AppSpacing.sm),
             child: GestureDetector(
               onTap: () => provider?.onChanged(maxDist),
               child: AnimatedContainer(

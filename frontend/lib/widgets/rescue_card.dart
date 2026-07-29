@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
+import '../data/mock_data.dart';
 import '../localization/lang_provider.dart';
 import '../models/pet.dart';
 import '../theme/app_theme.dart';
@@ -21,19 +22,51 @@ class RescueCard extends StatefulWidget {
 
 class _RescueCardState extends State<RescueCard> {
   bool _revealed = false;
-  bool _boosted = false;
-  int _boosts = 0;
+
+  bool get _isBoosted => MockData.boostedRescueIds.contains(widget.animal.id);
+  bool get _isHelping => MockData.helpingRescueIds.contains(widget.animal.id);
 
   @override
   void initState() {
     super.initState();
-    _boosts = widget.animal.boostCount;
     if (!widget.blurPhoto) _revealed = true;
+  }
+
+  void _toggleBoost() {
+    setState(() {
+      if (_isBoosted) {
+        MockData.boostedRescueIds.remove(widget.animal.id);
+      } else {
+        MockData.boostedRescueIds.add(widget.animal.id);
+      }
+    });
+  }
+
+  void _toggleHelping() {
+    final id = widget.animal.id;
+    final nowHelping = !MockData.helpingRescueIds.contains(id);
+    setState(() {
+      if (nowHelping) {
+        MockData.helpingRescueIds.add(id);
+      } else {
+        MockData.helpingRescueIds.remove(id);
+      }
+    });
+    Fluttertoast.showToast(
+      msg: nowHelping
+          ? t(context, "You're marked as helping — the reporter can see you responded", 'تم تسجيلك كمساعد — يمكن للمُبلّغ رؤية أنك استجبت')
+          : t(context, "You're no longer marked as helping", 'لم تعد مُسجّلًا كمساعد'),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final a = widget.animal;
+    final boosted = _isBoosted;
+    final boosts = a.boostCount + (boosted ? 1 : 0);
+    final helping = _isHelping;
+    final dotIndex = a.description.indexOf('.');
+    final restOfDescription = dotIndex != -1 && dotIndex + 2 <= a.description.length ? a.description.substring(dotIndex + 2) : '';
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
@@ -55,9 +88,9 @@ class _RescueCardState extends State<RescueCard> {
                       ? ImageWithFallback(url: a.imageUrls.first, width: double.infinity, height: 180)
                       : _BlurredPhoto(url: a.imageUrls.first),
                 ),
-                Positioned(
+                PositionedDirectional(
                   top: AppSpacing.sm,
-                  left: AppSpacing.sm,
+                  start: AppSpacing.sm,
                   child: Row(
                     children: [
                       _Badge(
@@ -71,9 +104,9 @@ class _RescueCardState extends State<RescueCard> {
                     ],
                   ),
                 ),
-                Positioned(
+                PositionedDirectional(
                   top: AppSpacing.sm,
-                  right: AppSpacing.sm,
+                  end: AppSpacing.sm,
                   child: GestureDetector(
                     onTap: () => setState(() => _revealed = !_revealed),
                     child: Container(
@@ -93,9 +126,9 @@ class _RescueCardState extends State<RescueCard> {
                     ),
                   ),
                 ),
-                Positioned(
+                PositionedDirectional(
                   bottom: AppSpacing.sm,
-                  right: AppSpacing.sm,
+                  end: AppSpacing.sm,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(AppRadius.chip)),
@@ -127,7 +160,7 @@ class _RescueCardState extends State<RescueCard> {
                   Text(a.description.split('.').first, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 17)),
                   const SizedBox(height: 4),
                   Text(
-                    a.description.contains('.') ? a.description.substring(a.description.indexOf('.') + 2) : '',
+                    restOfDescription,
                     style: Theme.of(context).textTheme.bodyMedium,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -142,19 +175,9 @@ class _RescueCardState extends State<RescueCard> {
                 children: [
                   _ActionBtn(
                     icon: Icons.arrow_upward,
-                    label: '$_boosts  ${_boosted ? t(context, 'Boosted', 'مُعزَّز') : t(context, 'Boost', 'تعزيز')}',
-                    onTap: () => setState(() {
-                      _boosted = !_boosted;
-                      _boosts += _boosted ? 1 : -1;
-                    }),
-                    color: _boosted ? AppColors.primary : AppColors.textMuted,
-                  ),
-                  const Spacer(),
-                  _ActionBtn(
-                    icon: Icons.flag_outlined,
-                    label: t(context, 'Report', 'إبلاغ'),
-                    onTap: () => Fluttertoast.showToast(msg: t(context, 'Report submitted', 'تم إرسال البلاغ')),
-                    color: AppColors.textMuted,
+                    label: '$boosts  ${boosted ? t(context, 'Boosted', 'مُعزَّز') : t(context, 'Boost', 'تعزيز')}',
+                    onTap: _toggleBoost,
+                    color: boosted ? AppColors.primary : AppColors.textMuted,
                   ),
                 ],
               ),
@@ -162,17 +185,15 @@ class _RescueCardState extends State<RescueCard> {
             Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
               child: ElevatedButton(
-                onPressed: () => Fluttertoast.showToast(
-                  msg: t(context, 'Connecting you to rescue team...', 'جارٍ توصيلك بفريق الإنقاذ...'),
-                ),
+                onPressed: _toggleHelping,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 48),
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-                  foregroundColor: AppColors.primary,
+                  backgroundColor: helping ? AppColors.primary : AppColors.primary.withValues(alpha: 0.12),
+                  foregroundColor: helping ? Colors.white : AppColors.primary,
                   elevation: 0,
                   shape: const StadiumBorder(),
                 ),
-                child: Text(t(context, 'I Can Help →', 'يمكنني المساعدة ←')),
+                child: Text(helping ? t(context, "You're Helping ✓", 'أنت تساعد ✓') : t(context, 'I Can Help →', 'يمكنني المساعدة ←')),
               ),
             ),
           ],
@@ -287,13 +308,10 @@ class RescueAlertBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(animal.description.split('.').first, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 16)),
-                const SizedBox(height: 2),
-                Text(
-                  animal.timeAgoLabel.isNotEmpty
-                      ? t(context, 'Night clinic open for 42 min', 'العيادة الليلية مفتوحة لمدة 42 دقيقة')
-                      : '',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                if (animal.timeAgoLabel.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(animal.timeAgoLabel, style: Theme.of(context).textTheme.bodySmall),
+                ],
               ],
             ),
           ),

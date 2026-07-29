@@ -49,7 +49,7 @@ class _AppShellState extends State<AppShell> {
         body: IndexedStack(
           index: _index,
           children: [
-            const HomeScreen(),
+            HomeScreen(onNavigateToMarket: () => setState(() => _index = 4)),
             const HelpScreen(),
             const SizedBox.shrink(),
             const AdoptScreen(),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
+import '../data/mock_data.dart';
 import '../localization/lang_provider.dart';
 import '../models/pet.dart';
 import '../theme/app_theme.dart';
@@ -8,26 +9,30 @@ import 'image_with_fallback.dart';
 
 class AdoptionCard extends StatefulWidget {
   final AdoptionPet pet;
-  const AdoptionCard({super.key, required this.pet});
+  final VoidCallback? onTap;
+  const AdoptionCard({super.key, required this.pet, this.onTap});
 
   @override
   State<AdoptionCard> createState() => _AdoptionCardState();
 }
 
 class _AdoptionCardState extends State<AdoptionCard> {
-  bool _boosted = false;
-  int _boosts = 0;
+  AdoptionPet get pet => widget.pet;
+  bool get _applied => MockData.appliedAdoptionIds.contains(pet.id);
 
-  @override
-  void initState() {
-    super.initState();
-    _boosts = widget.pet.boostCount;
+  void _apply() {
+    setState(() => MockData.appliedAdoptionIds.add(pet.id));
+    Fluttertoast.showToast(
+      msg: t(context, 'Request sent to adopt ${pet.name}!', 'تم إرسال طلب تبني ${pet.name}!'),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final pet = widget.pet;
-    return Container(
+    final applied = _applied;
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Container(
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -44,9 +49,9 @@ class _AdoptionCardState extends State<AdoptionCard> {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
                 child: ImageWithFallback(url: pet.imageUrls.first, width: double.infinity, height: 300),
               ),
-              Positioned(
+              PositionedDirectional(
                 top: AppSpacing.sm,
-                right: AppSpacing.sm,
+                end: AppSpacing.sm,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                   decoration: BoxDecoration(
@@ -127,85 +132,56 @@ class _AdoptionCardState extends State<AdoptionCard> {
             padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
             child: Text(pet.description, style: Theme.of(context).textTheme.bodyMedium),
           ),
-          // Boost / Report
-          Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
-            child: Row(
-              children: [
-                _ActionBtn(
-                  icon: Icons.arrow_upward,
-                  label: '$_boosts  ${_boosted ? t(context, 'Boosted', 'مُعزَّز') : t(context, 'Boost', 'تعزيز')}',
-                  onTap: () => setState(() {
-                    _boosted = !_boosted;
-                    _boosts += _boosted ? 1 : -1;
-                  }),
-                  color: _boosted ? AppColors.primary : AppColors.textMuted,
-                ),
-                const Spacer(),
-                _ActionBtn(
-                  icon: Icons.flag_outlined,
-                  label: t(context, 'Report', 'إبلاغ'),
-                  onTap: () => Fluttertoast.showToast(msg: t(context, 'Report submitted', 'تم إرسال البلاغ')),
-                  color: AppColors.textMuted,
-                ),
-              ],
-            ),
-          ),
           // CTA
           Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: ElevatedButton(
-              onPressed: () => Fluttertoast.showToast(
-                msg: t(context, 'Request sent to adopt ${pet.name}!', 'تم إرسال طلب تبني ${pet.name}!'),
-              ),
+              onPressed: applied ? null : _apply,
               style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 48)),
-              child: Text(t(context, 'Ask to adopt ${pet.name}', 'اطلب تبني ${pet.name}')),
+              child: Text(
+                applied
+                    ? t(context, 'Application sent ✓', 'تم إرسال الطلب ✓')
+                    : t(context, 'Ask to adopt ${pet.name}', 'اطلب تبني ${pet.name}'),
+              ),
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ActionBtn extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color color;
-  const _ActionBtn({required this.icon, required this.label, required this.onTap, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(AppRadius.chip),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 15, color: color),
-            const SizedBox(width: 5),
-            Text(label, style: TextStyle(fontSize: 13, color: color, fontWeight: FontWeight.w500)),
-          ],
-        ),
       ),
     );
   }
 }
 
 // Compact favorites card for horizontal scroll
-class FavoritePetCard extends StatelessWidget {
+class FavoritePetCard extends StatefulWidget {
   final AdoptionPet pet;
-  const FavoritePetCard({super.key, required this.pet});
+  final VoidCallback? onTap;
+  const FavoritePetCard({super.key, required this.pet, this.onTap});
+
+  @override
+  State<FavoritePetCard> createState() => _FavoritePetCardState();
+}
+
+class _FavoritePetCardState extends State<FavoritePetCard> {
+  AdoptionPet get pet => widget.pet;
+  bool get _isFavorite => MockData.favoritePetIds.contains(pet.id);
+
+  void _toggleFavorite() {
+    setState(() {
+      if (_isFavorite) {
+        MockData.favoritePetIds.remove(pet.id);
+      } else {
+        MockData.favoritePetIds.add(pet.id);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final favorite = _isFavorite;
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Container(
       width: 150,
       margin: const EdgeInsets.only(right: AppSpacing.md),
       decoration: BoxDecoration(
@@ -233,14 +209,25 @@ class FavoritePetCard extends StatelessWidget {
             ),
           ),
           // heart button
-          Positioned(
+          PositionedDirectional(
             top: AppSpacing.sm,
-            right: AppSpacing.sm,
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-              child: const Icon(Icons.favorite, size: 16, color: AppColors.critical),
+            end: AppSpacing.sm,
+            child: Semantics(
+              button: true,
+              label: favorite ? t(context, 'Remove from favorites', 'إزالة من المفضلة') : t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
+              child: GestureDetector(
+                onTap: _toggleFavorite,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: Icon(
+                    favorite ? Icons.favorite : Icons.favorite_border,
+                    size: 16,
+                    color: AppColors.critical,
+                  ),
+                ),
+              ),
             ),
           ),
           // name / breed
@@ -257,6 +244,7 @@ class FavoritePetCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

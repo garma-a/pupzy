@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
@@ -27,7 +30,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   Map<String, dynamic>? _selectedCity;
   bool _loadingCities = true;
   bool _submitting = false;
+  bool _showCityError = false;
   Position? _position;
+  XFile? _pickedPhoto;
 
   @override
   void initState() {
@@ -36,16 +41,26 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     if (user?.displayName != null && user!.displayName!.isNotEmpty) {
       _nameController.text = user.displayName!;
     }
+    // Repaints the letter-avatar fallback as the user types their name.
+    _nameController.addListener(_onNameChanged);
     _loadCities();
     _fetchLocation();
   }
 
+  void _onNameChanged() => setState(() {});
+
   @override
   void dispose() {
+    _nameController.removeListener(_onNameChanged);
     _nameController.dispose();
     _phoneController.dispose();
     _citySearchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickPhoto() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (picked != null) setState(() => _pickedPhoto = picked);
   }
 
   Future<void> _loadCities() async {
@@ -86,6 +101,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCity == null) {
+      setState(() => _showCityError = true);
       Fluttertoast.showToast(
         msg: t(context, 'Please select your city', 'يرجى اختيار مدينتك'),
         backgroundColor: AppColors.critical,
@@ -102,7 +118,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         ? '+2$rawDigits'
         : '+20$rawDigits';
 
-    final result = await graphql.completeProfile(
+    final (result, errorMessage) = await graphql.completeProfile(
       fullName: _nameController.text.trim(),
       phoneNumber: phone,
       cityId: _selectedCity!['id'] as String,
@@ -113,12 +129,23 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     if (!mounted) return;
 
     if (result != null) {
+      try {
+        await context.read<AuthService>().updateDisplayName(_nameController.text.trim());
+      } catch (_) {
+        // Non-critical — the backend already has the name; this only
+        // affects Firebase-sourced UI (e.g. the top bar avatar initial).
+      }
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const AppShell()),
       );
     } else {
+      // Show the server's actual reason when it sent one (a validation
+      // error, expired session, etc.) instead of a generic message that
+      // hides what actually went wrong — errorMessage is null only for a
+      // genuine network failure (server unreachable).
       Fluttertoast.showToast(
-        msg: t(context, 'Something went wrong. Please try again.', 'حدث خطأ ما. يرجى المحاولة مرة أخرى.'),
+        msg: errorMessage ?? t(context, 'Could not reach the server. Check your connection and try again.', 'تعذر الوصول إلى الخادم. تحقق من اتصالك وحاول مرة أخرى.'),
         backgroundColor: AppColors.critical,
         textColor: Colors.white,
       );
@@ -137,7 +164,10 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           cities: _cities,
           searchController: _citySearchController,
           onSelected: (city) {
-            setState(() => _selectedCity = city);
+            setState(() {
+              _selectedCity = city;
+              _showCityError = false;
+            });
             Navigator.of(ctx).pop();
           },
         );
@@ -167,14 +197,49 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                 Center(
                   child: Column(
                     children: [
-                      CircleAvatar(
-                        radius: 40,
-                        backgroundImage: user?.photoURL != null
-                            ? NetworkImage(user!.photoURL!)
-                            : null,
-                        child: user?.photoURL == null
-                            ? const Icon(Icons.person, size: 40)
-                            : null,
+                      Builder(builder: (context) {
+                        ImageProvider? avatarImage;
+                        if (_pickedPhoto != null) {
+                          avatarImage = FileImage(File(_pickedPhoto!.path));
+                        } else if (user?.photoURL != null) {
+                          avatarImage = NetworkImage(user!.photoURL!);
+                        }
+                        final initial = _nameController.text.trim().isNotEmpty
+                            ? _nameController.text.trim()[0].toUpperCase()
+                            : '?';
+                        return GestureDetector(
+                          onTap: _pickPhoto,
+                          child: Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 40,
+                                backgroundImage: avatarImage,
+                                child: avatarImage == null
+                                    ? Text(initial, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold))
+                                    : null,
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: AppColors.background, width: 2),
+                                  ),
+                                  child: const Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        t(context, 'Tap to add a photo (optional)', 'اضغط لإضافة صورة (اختياري)'),
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: AppSpacing.lg),
                       Text(
@@ -295,7 +360,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: _selectedCity == null && _formKey.currentState?.validate() == false
+                        color: _showCityError && _selectedCity == null
                             ? AppColors.critical
                             : AppColors.border,
                       ),

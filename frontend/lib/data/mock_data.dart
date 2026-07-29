@@ -1,3 +1,4 @@
+import '../models/contact_request_item.dart';
 import '../models/notification_item.dart';
 import '../models/pet.dart';
 import '../models/post.dart';
@@ -15,6 +16,19 @@ class MockData {
 
   /// Product ids the current user has saved/favorited. In-memory only.
   static Set<String> savedProductIds = {};
+
+  /// Rescue animal ids the current user has boosted. In-memory only —
+  /// displayed count is animal.boostCount + (id in this set ? 1 : 0).
+  static Set<String> boostedRescueIds = {};
+
+  /// Rescue animal ids the current user has offered to help with.
+  static Set<String> helpingRescueIds = {};
+
+  /// Rescue animal ids the current user has reported as found/rescued.
+  static Set<String> reportedFoundRescueIds = {};
+
+  /// Adoption pet ids the current user has already applied to adopt.
+  static Set<String> appliedAdoptionIds = {};
 
   // Favorites — pets the user has hearted
   static List<AdoptionPet> favorites = [
@@ -61,6 +75,10 @@ class MockData {
       distance: 28.0,
     ),
   ];
+
+  /// Favorite pet ids currently hearted — starts pre-filled since `favorites`
+  /// above is itself "pets the user has hearted". In-memory only.
+  static Set<String> favoritePetIds = {for (final p in favorites) p.id};
 
   // Adoption pets
   static List<AdoptionPet> adoptionPets = [
@@ -348,6 +366,41 @@ class MockData {
       type: NotificationType.follow,
       timestamp: DateTime.now().subtract(const Duration(hours: 3)),
       isRead: true,
+    ),
+  ];
+
+  static List<ContactRequestItem> contactRequests = [
+    ContactRequestItem(
+      id: 'cr1',
+      requesterName: 'Sara K.',
+      petName: 'Miso',
+      petPhotoUrl: 'assets/images/cat_miso_1.png',
+      message:
+          "Hi! I've been looking for a calm cat for my small apartment in Maadi. I work from home so Miso would always have company. I'd love to learn more about her recovery.",
+      timestamp: DateTime.now().subtract(const Duration(minutes: 12)),
+      isRead: false,
+      status: ContactRequestStatus.pending,
+    ),
+    ContactRequestItem(
+      id: 'cr2',
+      requesterName: 'Ahmed M.',
+      petName: 'Miso',
+      petPhotoUrl: 'assets/images/cat_miso_1.png',
+      message:
+          'My family has experience with cats and we have a quiet home in Heliopolis. We\'d love to give Miso a safe, loving place to fully recover.',
+      timestamp: DateTime.now().subtract(const Duration(hours: 1)),
+      isRead: false,
+      status: ContactRequestStatus.pending,
+    ),
+    ContactRequestItem(
+      id: 'cr3',
+      requesterName: 'Nour H.',
+      petName: 'Miso',
+      petPhotoUrl: 'assets/images/cat_miso_1.png',
+      message: '',
+      timestamp: DateTime.now().subtract(const Duration(days: 2)),
+      isRead: true,
+      status: ContactRequestStatus.approved,
     ),
   ];
 }

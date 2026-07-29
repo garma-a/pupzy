@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -12,8 +14,19 @@ import '../widgets/rescue_card.dart';
 import '../widgets/top_bar.dart';
 import 'product_detail_screen.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  final VoidCallback? onNavigateToMarket;
+  const HomeScreen({super.key, this.onNavigateToMarket});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  Future<void> _refresh() async {
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,27 +43,43 @@ class HomeScreen extends StatelessWidget {
           children: [
             const SizedBox(height: AppSpacing.md),
             const PupzyTopBar(),
-            const SizedBox(height: AppSpacing.md),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
-                decoration: BoxDecoration(color: AppColors.searchBg, borderRadius: BorderRadius.circular(AppRadius.chip)),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search, size: 18, color: AppColors.textMuted),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(t(context, 'Search pets, posts, users...', 'ابحث عن حيوانات، منشورات، مستخدمين...'), style: Theme.of(context).textTheme.bodyMedium),
-                  ],
-                ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
+                      decoration: BoxDecoration(color: AppColors.searchBg, borderRadius: BorderRadius.circular(AppRadius.chip)),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.search, size: 18, color: AppColors.textMuted),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              t(context, 'Search pets, posts, users...', 'ابحث عن حيوانات، منشورات، مستخدمين...'),
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  const _VetsButton(),
+                ],
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            const DistanceFilter(),
             Expanded(
-              child: ListView(
+              child: RefreshIndicator(
+                onRefresh: _refresh,
+                color: AppColors.primary,
+                child: ListView(
                 padding: const EdgeInsets.only(bottom: 100),
                 children: [
+                  const DistanceFilter(),
                   const SizedBox(height: AppSpacing.md),
                   // FAVORITES
                   _SectionHeader(
@@ -89,10 +118,13 @@ class HomeScreen extends StatelessWidget {
                     RescueAlertBanner(animal: rescue.firstWhere((a) => a.isUrgent)),
                   const SizedBox(height: AppSpacing.sm),
                   if (rescue.isEmpty)
-                    _EmptySection(message: t(context, 'No rescue animals within this distance', 'لا توجد حيوانات إنقاذ ضمن هذه المسافة'))
+                    _EmptySection(
+                      icon: Icons.volunteer_activism_outlined,
+                      message: t(context, 'No rescue animals within this distance', 'لا توجد حيوانات إنقاذ ضمن هذه المسافة'),
+                    )
                   else
                     SizedBox(
-                      height: 340,
+                      height: 270,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -109,13 +141,16 @@ class HomeScreen extends StatelessWidget {
                       children: [
                         Text(t(context, 'Find a Pet', 'ابحث عن حيوان'), style: Theme.of(context).textTheme.headlineMedium),
                         const SizedBox(width: AppSpacing.md),
-                        Container(width: 4, height: 32, color: AppColors.critical),
+                        Container(width: 4, height: 32, color: AppColors.sectionLine),
                       ],
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   if (adoption.isEmpty)
-                    _EmptySection(message: t(context, 'No pets for adoption within this distance', 'لا توجد حيوانات للتبني ضمن هذه المسافة'))
+                    _EmptySection(
+                      icon: Icons.pets_outlined,
+                      message: t(context, 'No pets for adoption within this distance', 'لا توجد حيوانات للتبني ضمن هذه المسافة'),
+                    )
                   else
                     AdoptionCard(pet: adoption.first),
 
@@ -187,7 +222,7 @@ class HomeScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                     child: OutlinedButton(
-                      onPressed: () => Fluttertoast.showToast(msg: t(context, 'Navigate to Market tab', 'انتقل إلى تبويب السوق')),
+                      onPressed: widget.onNavigateToMarket,
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 48),
                         side: const BorderSide(color: AppColors.border),
@@ -199,6 +234,7 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.lg),
                 ],
               ),
+              ),
             ),
           ],
         ),
@@ -207,18 +243,201 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+class _VetsButton extends StatelessWidget {
+  const _VetsButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surfaceWarm,
+      borderRadius: BorderRadius.circular(AppRadius.chip),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.chip),
+        onTap: () => showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => const _VetsNearYouSheet(),
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.chip),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.location_on_outlined, size: 16, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                t(context, 'Vets', 'بيطري'),
+                style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Static "coming soon" preview of nearby vets — there's no vet directory
+/// feature or backend for this yet, so this runs on hardcoded mock data.
+class _VetsNearYouSheet extends StatelessWidget {
+  const _VetsNearYouSheet();
+
+  static const List<(String name, String distance, String area)> _vets = [
+    ('Cairo Emergency Vet', '0.6 km', 'Maadi'),
+    ('Amman Night Clinic', '0.9 km', 'Sweifieh'),
+    ('Petcare Centre', '2.1 km', 'Abdoun'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      // Depth shadow lives outside the clip so it isn't cut off
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textPrimary.withValues(alpha: 0.18),
+            blurRadius: 40,
+            offset: const Offset(0, -8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 36, sigmaY: 36),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: 0.78),
+                  AppColors.background.withValues(alpha: 0.55),
+                ],
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+              border: Border(
+                top: BorderSide(color: Colors.white.withValues(alpha: 0.75), width: 1.2),
+              ),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.textMuted.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(t(context, 'Vets near you', 'الأطباء البيطريون القريبون'), style: Theme.of(context).textTheme.headlineLarge),
+                  const SizedBox(height: 4),
+                  Text(
+                    t(context, 'Cairo area · approximate distances only', 'منطقة القاهرة · مسافات تقريبية فقط'),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  ..._vets.map((v) => Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                        child: Container(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.55),
+                            borderRadius: BorderRadius.circular(AppRadius.card),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.65)),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.6), shape: BoxShape.circle),
+                                child: const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 18),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(v.$1, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
+                                    Text('${v.$2}  ·  ${v.$3}', style: Theme.of(context).textTheme.bodySmall),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.sectionLineGreen.withValues(alpha: 0.16),
+                                  borderRadius: BorderRadius.circular(AppRadius.chip),
+                                ),
+                                child: Text(
+                                  t(context, 'Open', 'مفتوح'),
+                                  style: const TextStyle(color: AppColors.sectionLineGreen, fontWeight: FontWeight.w700, fontSize: 12),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )),
+                  const SizedBox(height: AppSpacing.sm),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        Fluttertoast.showToast(msg: t(context, 'Full vet directory coming soon', 'دليل الأطباء البيطريين الكامل قريبًا'));
+                      },
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.55),
+                        side: BorderSide(color: Colors.white.withValues(alpha: 0.65)),
+                      ),
+                      child: Text(t(context, 'View all vets →', 'عرض كل الأطباء البيطريين ←')),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _EmptySection extends StatelessWidget {
   final String message;
-  const _EmptySection({required this.message});
+  final IconData icon;
+  const _EmptySection({required this.message, this.icon = Icons.search_off});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.lg),
       child: Center(
-        child: Text(
-          message,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+        child: Column(
+          children: [
+            Icon(icon, size: 36, color: AppColors.textMuted),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
@@ -256,18 +475,25 @@ class _HomeRescueCard extends StatefulWidget {
 }
 
 class _HomeRescueCardState extends State<_HomeRescueCard> {
-  bool _boosted = false;
-  late int _boosts;
+  bool get _boosted => MockData.boostedRescueIds.contains(widget.animal.id);
 
-  @override
-  void initState() {
-    super.initState();
-    _boosts = widget.animal.boostCount;
+  void _toggleBoost() {
+    setState(() {
+      if (_boosted) {
+        MockData.boostedRescueIds.remove(widget.animal.id);
+      } else {
+        MockData.boostedRescueIds.add(widget.animal.id);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final a = widget.animal;
+    final boosted = _boosted;
+    final boosts = a.boostCount + (boosted ? 1 : 0);
+    final dotIndex = a.description.indexOf('.');
+    final restOfDescription = dotIndex != -1 && dotIndex + 2 <= a.description.length ? a.description.substring(dotIndex + 2) : '';
     return Container(
       width: 280,
       margin: const EdgeInsets.only(right: AppSpacing.md),
@@ -285,9 +511,9 @@ class _HomeRescueCardState extends State<_HomeRescueCard> {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
                 child: ImageWithFallback(url: a.imageUrls.first, width: 280, height: 180),
               ),
-              Positioned(
+              PositionedDirectional(
                 top: AppSpacing.sm,
-                left: AppSpacing.sm,
+                start: AppSpacing.sm,
                 child: Row(
                   children: [
                     if (a.isUrgent)
@@ -332,7 +558,7 @@ class _HomeRescueCardState extends State<_HomeRescueCard> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        a.description.contains('.') ? a.description.substring(a.description.indexOf('.') + 2) : '',
+                        restOfDescription,
                         style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -364,15 +590,14 @@ class _HomeRescueCardState extends State<_HomeRescueCard> {
                   color: Colors.transparent,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(AppRadius.chip),
-                    onTap: () => setState(() {
-                      _boosted = !_boosted;
-                      _boosts += _boosted ? 1 : -1;
-                    }),
-                    child: _SmallActionBtn(icon: Icons.arrow_upward, label: '$_boosts  ${_boosted ? 'Boosted' : 'Boost'}', color: _boosted ? AppColors.primary : AppColors.textMuted),
+                    onTap: _toggleBoost,
+                    child: _SmallActionBtn(
+                      icon: Icons.arrow_upward,
+                      label: '$boosts  ${boosted ? t(context, 'Boosted', 'مُعزَّز') : t(context, 'Boost', 'تعزيز')}',
+                      color: boosted ? AppColors.primary : AppColors.textMuted,
+                    ),
                   ),
                 ),
-                const Spacer(),
-                _SmallActionBtn(icon: Icons.flag_outlined, label: 'Report', color: AppColors.textMuted),
               ],
             ),
           ),

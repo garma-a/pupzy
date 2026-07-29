@@ -43,7 +43,21 @@ class NotificationsPanel extends StatelessWidget {
                 child: Text(t(context, 'Notifications', 'الإشعارات'), style: Theme.of(context).textTheme.headlineMedium),
               ),
               Expanded(
-                child: ListView.builder(
+                child: MockData.notifications.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.notifications_none, size: 44, color: AppColors.textMuted),
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(
+                              t(context, 'No notifications yet', 'لا توجد إشعارات بعد'),
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
                   controller: scrollController,
                   itemCount: MockData.notifications.length,
                   itemBuilder: (context, i) {

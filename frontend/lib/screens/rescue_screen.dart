@@ -18,15 +18,46 @@ class RescueScreen extends StatefulWidget {
 class _RescueScreenState extends State<RescueScreen> {
   final Set<int> _revealedIndices = {};
 
+  Future<void> _refresh() async {
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (mounted) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
+    final animals = MockData.rescueAnimals;
     return Scaffold(
       appBar: AppBar(title: Text(t(context, 'Rescue', 'الإنقاذ'))),
-      body: ListView.builder(
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        color: AppColors.primary,
+        child: animals.isEmpty
+          ? ListView(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        const Icon(Icons.volunteer_activism_outlined, size: 48, color: AppColors.textMuted),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          t(context, 'No rescue animals nearby right now', 'لا توجد حيوانات تحتاج إنقاذ قريبًا الآن'),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : ListView.builder(
         padding: const EdgeInsets.all(AppSpacing.lg),
-        itemCount: MockData.rescueAnimals.length,
+        itemCount: animals.length,
         itemBuilder: (context, i) {
-          final animal = MockData.rescueAnimals[i];
+          final animal = animals[i];
           final revealed = _revealedIndices.contains(i);
           return InkWell(
             borderRadius: BorderRadius.circular(AppRadius.card),
@@ -116,6 +147,7 @@ class _RescueScreenState extends State<RescueScreen> {
             ),
           );
         },
+      ),
       ),
     );
   }
