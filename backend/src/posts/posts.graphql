@@ -587,7 +587,7 @@ extend type Mutation {
   Only the post creator can delete their own post.
   Returns true on success.
   """
-  deletePost(id: ID!): Boolean!
+  deletePost(postId: ID!): Boolean!
 
   """
   Toggle upvote on a post (insert if not upvoted, remove if already upvoted).

@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { UploadModule } from '../upload/upload.module';
 import { CitiesModule } from '../cities/cities.module';
+import { UsersModule } from '../users/users.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { PostsResolver } from './posts.resolver';
 import { PostsService } from './posts.service';
 import { PostsRepository } from './posts.repository';
@@ -12,6 +14,8 @@ import { ViewFlushCron } from './view-flush.cron';
  * ## Dependencies
  * - `UploadModule` — provides `UploadService` for R2 media finalization
  * - `CitiesModule` — provides `CitiesService` for city resolution
+ * - `UsersModule` — provides `UsersService` for user lookups in notifications
+ * - `NotificationsModule` — provides `NotificationsService` for fire-and-forget alerts
  *
  * ## Providers
  * - `PostsResolver` — GraphQL entry point for queries, mutations, and field resolvers
@@ -20,7 +24,7 @@ import { ViewFlushCron } from './view-flush.cron';
  * - `ViewFlushCron` — buffers views in-memory, flushes to Postgres every 3 minutes
  */
 @Module({
-  imports: [UploadModule, CitiesModule],
+  imports: [UploadModule, CitiesModule, UsersModule, NotificationsModule],
   providers: [PostsResolver, PostsService, PostsRepository, ViewFlushCron],
   exports: [PostsService, PostsRepository, ViewFlushCron],
 })

@@ -1,0 +1,33 @@
+"""
+Paginated list of notifications for the current user.
+"""
+type NotificationConnection {
+  edges: [NotificationEdge!]!
+  pageInfo: PageInfo!
+  """Total unread count for the badge indicator."""
+  unreadCount: Int!
+}
+
+type NotificationEdge {
+  node: Notification!
+  cursor: String!
+}
+
+extend type Query {
+  """
+  Returns the current user's notification inbox, newest first.
+  Use 'after' cursor for infinite scroll.
+  """
+  myNotifications(first: Int, after: String): NotificationConnection!
+
+  """Unread notification count for the badge indicator."""
+  myUnreadNotificationCount: Int!
+}
+
+extend type Mutation {
+  """Marks a single notification as read. Returns the updated notification."""
+  markNotificationRead(notificationId: ID!): Notification!
+
+  """Marks ALL notifications for the current user as read. Returns count updated."""
+  markAllNotificationsRead: Int!
+}

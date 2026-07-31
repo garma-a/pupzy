@@ -21,6 +21,9 @@ import { CitiesModule } from './cities/cities.module';
 import { CitiesService } from './cities/cities.service';
 import { UsersService } from './users/users.service';
 import { PostsModule } from './posts/posts.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ContactsModule } from './contacts/contacts.module';
+import { AdoptionsModule } from './adoptions/adoptions.module';
 import { PostsRepository } from './posts/posts.repository';
 import { UploadModule } from './upload/upload.module';
 import { HealthModule } from './health/health.module';
@@ -34,15 +37,19 @@ import type { GqlContext } from './common/types/gql-context.type';
  * ## Module structure
  * ```
  * AppModule
- * ├── ConfigModule       — env validation (Zod), global scope
- * ├── GraphQLModule      — Apollo + schema-first SDL, depth limiting
- * ├── ThrottlerModule    — rate limiting (configurable via env)
- * ├── ScheduleModule     — cron job scheduler
- * ├── DatabaseModule     — Drizzle ORM + pg pool, global scope
- * ├── FirebaseModule     — Firebase Admin SDK init, global scope
- * ├── UsersModule        — User entity: resolver, service, repository
- * ├── CitiesModule       — City list for onboarding city picker (public)
- * └── HealthModule       — GET /health endpoint for probes
+ * ├── ConfigModule            — env validation (Zod), global scope
+ * ├── GraphQLModule           — Apollo + schema-first SDL, depth limiting
+ * ├── ThrottlerModule         — rate limiting (configurable via env)
+ * ├── ScheduleModule          — cron job scheduler
+ * ├── DatabaseModule          — Drizzle ORM + pg pool, global scope
+ * ├── FirebaseModule          — Firebase Admin SDK init, global scope
+ * ├── UsersModule             — User entity: resolver, service, repository
+ * ├── CitiesModule            — City list for onboarding city picker (public)
+ * ├── PostsModule             — Post CRUD, feeds, engagement toggles
+ * ├── NotificationsModule     — In-app notification lifecycle
+ * ├── ContactsModule          — Contact request approval flow
+ * ├── AdoptionsModule         — Adoption application questionnaire flow
+ * └── HealthModule            — GET /health endpoint for probes
  * ```
  *
  * ## Global providers
@@ -171,6 +178,9 @@ import type { GqlContext } from './common/types/gql-context.type';
     UsersModule,
     CitiesModule,
     PostsModule,
+    NotificationsModule,
+    ContactsModule,
+    AdoptionsModule,
     UploadModule,
     HealthModule,
     CacheModule.register({

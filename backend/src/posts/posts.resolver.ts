@@ -190,10 +190,10 @@ export class PostsResolver {
    */
   @Mutation('deletePost')
   async deletePost(
-    @Args('id') id: string,
+    @Args('postId') postId: string,
     @Context() ctx: GqlContext,
   ): Promise<boolean> {
-    await this.postsService.deletePost(id, ctx.user!.id);
+    await this.postsService.deletePost(postId, ctx.user!.id);
     return true;
   }
 

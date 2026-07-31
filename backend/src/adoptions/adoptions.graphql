@@ -1,0 +1,66 @@
+"""Cursor-paginated list of adoption applications."""
+type AdoptionApplicationConnection {
+  edges: [AdoptionApplicationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type AdoptionApplicationEdge {
+  node: AdoptionApplication!
+  cursor: String!
+}
+
+"""Input for submitting an adoption application questionnaire."""
+input SubmitAdoptionApplicationInput {
+  targetPostId: ID!
+  speciesPreference: SpeciesType
+  breedPreference: String
+  agePreference: String
+  genderPreference: GenderType
+  livingSituation: LivingSituation!
+  hasOutdoorAccess: Boolean!
+  hasOtherPetsAtHome: Boolean!
+  hasChildrenAtHome: Boolean!
+  hoursAtHomePerDay: Int
+  previousPetExperience: String
+  whyAdopt: String!
+  consentHomeVisit: Boolean!
+  canProvideVetReference: Boolean!
+}
+
+extend type Query {
+  """My submitted adoption applications, newest first."""
+  myAdoptionApplications(first: Int, after: String): AdoptionApplicationConnection!
+
+  """
+  All applications on MY adoption post. Owner only.
+  Filter by status (default: all).
+  """
+  postAdoptionApplications(
+    postId: ID!
+    status: RequestStatus
+    first: Int
+    after: String
+  ): AdoptionApplicationConnection!
+}
+
+extend type Mutation {
+  """
+  Submit an adoption application questionnaire.
+  Target post must be ADOPTION type and ACTIVE.
+  One application per user per post.
+  """
+  submitAdoptionApplication(input: SubmitAdoptionApplicationInput!): AdoptionApplication!
+
+  """
+  Approve an adoption application. Post owner only.
+  Fires ADOPTION_APPLICATION_APPROVED notification to applicant.
+  Does NOT auto-close the listing — owner calls updatePostStatus(ADOPTED) separately.
+  """
+  approveAdoptionApplication(applicationId: ID!): AdoptionApplication!
+
+  """
+  Reject an adoption application. Post owner only.
+  Fires ADOPTION_APPLICATION_REJECTED notification to applicant.
+  """
+  rejectAdoptionApplication(applicationId: ID!): AdoptionApplication!
+}

@@ -5,6 +5,7 @@
     "test",
     "dist",
     "drizzle",
+    "vet-clinics",
     "**/*spec.ts",
     "drizzle.config.ts",
     "src/database/seed.ts"

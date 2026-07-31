@@ -392,18 +392,28 @@ export class PostsRepository {
 
         added = false;
       } else {
-        // Add upvote
-        await tx.insert(postUpvotes).values({ postId, userId });
+        // Add upvote — handle concurrent duplicate via unique constraint
+        try {
+          await tx.insert(postUpvotes).values({ postId, userId });
 
-        await tx
-          .update(posts)
-          .set({
-            upvoteCount: sql`${posts.upvoteCount} + 1`,
-            lastEngagedAt: sql`now()`,
-          })
-          .where(eq(posts.id, postId));
+          await tx
+            .update(posts)
+            .set({
+              upvoteCount: sql`${posts.upvoteCount} + 1`,
+              lastEngagedAt: sql`now()`,
+            })
+            .where(eq(posts.id, postId));
 
-        added = true;
+          added = true;
+        } catch (err) {
+          if ((err as Record<string, unknown>)?.code === '23505') {
+            // Concurrent toggle — another request already inserted the upvote.
+            // Re-read the current post state and return as idempotent success.
+            const [currentPost] = await tx.select().from(posts).where(eq(posts.id, postId)).limit(1);
+            return { added: true, updatedPost: currentPost };
+          }
+          throw err;
+        }
       }
 
       // Recompute effective_score for ADOPTION posts
@@ -461,17 +471,27 @@ export class PostsRepository {
 
         added = false;
       } else {
-        await tx.insert(postSaves).values({ postId, userId });
+        // Add save — handle concurrent duplicate via unique constraint
+        try {
+          await tx.insert(postSaves).values({ postId, userId });
 
-        await tx
-          .update(posts)
-          .set({
-            saveCount: sql`${posts.saveCount} + 1`,
-            lastEngagedAt: sql`now()`,
-          })
-          .where(eq(posts.id, postId));
+          await tx
+            .update(posts)
+            .set({
+              saveCount: sql`${posts.saveCount} + 1`,
+              lastEngagedAt: sql`now()`,
+            })
+            .where(eq(posts.id, postId));
 
-        added = true;
+          added = true;
+        } catch (err) {
+          if ((err as Record<string, unknown>)?.code === '23505') {
+            // Concurrent toggle — another request already inserted the save.
+            const [currentPost] = await tx.select().from(posts).where(eq(posts.id, postId)).limit(1);
+            return { added: true, updatedPost: currentPost };
+          }
+          throw err;
+        }
       }
 
       // Recompute effective_score for ADOPTION and PRODUCT

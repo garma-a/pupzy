@@ -1,0 +1,69 @@
+"""Cursor-paginated list of contact requests."""
+type ContactRequestConnection {
+  edges: [ContactRequestEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ContactRequestEdge {
+  node: ContactRequest!
+  cursor: String!
+}
+
+extend type Query {
+  """
+  Returns contact requests I have SENT. Optionally filter by postId or status.
+  """
+  myContactRequests(
+    postId: ID
+    status: RequestStatus
+    first: Int
+    after: String
+  ): ContactRequestConnection!
+
+  """
+  Returns contact requests on MY POST. Owner-only.
+  Optionally filter by status (default: all).
+  """
+  postContactRequests(
+    postId: ID!
+    status: RequestStatus
+    first: Int
+    after: String
+  ): ContactRequestConnection!
+
+  """
+  Re-fetches the WhatsApp link for an already-approved contact request.
+  Only the original requester can call this.
+  Returns the wa.me/... link string.
+  """
+  getWhatsAppLink(requestId: ID!): String!
+
+  """
+  Returns the decrypted WhatsApp contact link for a PRODUCT post seller.
+  PRODUCT only — no approval gate required for classifieds.
+  Only available when the post is ACTIVE.
+  """
+  getProductSellerContact(postId: ID!): String!
+}
+
+extend type Mutation {
+  """
+  Sends a contact request to the post owner.
+  RESCUE, LOST, ADOPTION only. One request per user per post.
+  """
+  requestContact(postId: ID!, message: String!): ContactRequest!
+
+  """
+  Approves a pending contact request.
+  Post owner only. Returns the request with whatsappLink populated.
+  Fires CONTACT_REQUEST_APPROVED notification to requester.
+  """
+  approveContactRequest(requestId: ID!): ContactRequest!
+
+  """
+  Rejects a pending contact request.
+  Post owner only.
+  Fires CONTACT_REQUEST_REJECTED notification to requester.
+  """
+  rejectContactRequest(requestId: ID!): ContactRequest!
+}

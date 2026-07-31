@@ -7,6 +7,9 @@ import { CitiesService } from '../cities/cities.service';
 import { UploadService } from '../upload/upload.service';
 import { shouldFlagContent } from '../common/utils/moderation.util';
 import { ValidationError, NotFoundError, ForbiddenError } from '../common/errors/app.errors';
+import { assertUuid } from '../common/utils/validate-uuid';
+import { UsersService } from '../users/users.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import type {
   Post,
   NewPost,
@@ -48,6 +51,8 @@ export class PostsService {
     private readonly citiesService: CitiesService,
     private readonly uploadService: UploadService,
     private readonly viewFlushCron: ViewFlushCron,
+    private readonly usersService: UsersService,
+    private readonly notificationsService: NotificationsService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
@@ -230,6 +235,7 @@ export class PostsService {
    * Used by the `post(id)` query resolver.
    */
   async getPost(postId: string): Promise<Post | null> {
+    assertUuid(postId, 'postId');
     const post = await this.postsRepository.findById(postId);
     if (!post || post.status === 'REMOVED') return null;
     return post;
@@ -240,6 +246,7 @@ export class PostsService {
    * @throws {NotFoundError} if the extension row does not exist.
    */
   async getRescueDetail(postId: string): Promise<RescuePost> {
+    assertUuid(postId, 'postId');
     const detail = await this.postsRepository.findRescueDetail(postId);
     if (!detail) throw new NotFoundError('RescuePost', postId);
     return detail;
@@ -250,6 +257,7 @@ export class PostsService {
    * @throws {NotFoundError} if the extension row does not exist.
    */
   async getLostDetail(postId: string): Promise<LostPost> {
+    assertUuid(postId, 'postId');
     const detail = await this.postsRepository.findLostDetail(postId);
     if (!detail) throw new NotFoundError('LostPost', postId);
     return detail;
@@ -260,6 +268,7 @@ export class PostsService {
    * @throws {NotFoundError} if the extension row does not exist.
    */
   async getAdoptionDetail(postId: string): Promise<AdoptionPost> {
+    assertUuid(postId, 'postId');
     const detail = await this.postsRepository.findAdoptionDetail(postId);
     if (!detail) throw new NotFoundError('AdoptionPost', postId);
     return detail;
@@ -270,6 +279,7 @@ export class PostsService {
    * @throws {NotFoundError} if the extension row does not exist.
    */
   async getProductDetail(postId: string): Promise<ProductPost> {
+    assertUuid(postId, 'postId');
     const detail = await this.postsRepository.findProductDetail(postId);
     if (!detail) throw new NotFoundError('ProductPost', postId);
     return detail;
@@ -288,6 +298,7 @@ export class PostsService {
    * @throws {ForbiddenError} if the caller is not the post creator.
    */
   async deletePost(postId: string, userId: string): Promise<void> {
+    assertUuid(postId, 'postId');
     const post = await this.postsRepository.findById(postId);
     if (!post || post.status === 'REMOVED') {
       throw new NotFoundError('Post', postId);
@@ -325,6 +336,7 @@ export class PostsService {
    * @throws {ValidationError} if the status transition is invalid for this post type.
    */
   async updatePostStatus(postId: string, userId: string, status: string): Promise<Post> {
+    assertUuid(postId, 'postId');
     const post = await this.postsRepository.findById(postId);
     if (!post || post.status === 'REMOVED') {
       throw new NotFoundError('Post', postId);
@@ -360,8 +372,10 @@ export class PostsService {
    *
    * @throws {NotFoundError} if the post does not exist or is REMOVED.
    * @throws {ValidationError} if the post is a PRODUCT post.
+   * @throws {ForbiddenError} if the user tries to upvote their own post.
    */
   async toggleUpvote(postId: string, userId: string): Promise<Post> {
+    assertUuid(postId, 'postId');
     const post = await this.postsRepository.findById(postId);
     if (!post || post.status === 'REMOVED') {
       throw new NotFoundError('Post', postId);
@@ -369,8 +383,27 @@ export class PostsService {
     if (post.postType === 'PRODUCT') {
       throw new ValidationError('PRODUCT posts cannot be upvoted — Market has no upvote button');
     }
+    if (post.creatorId === userId) {
+      throw new ForbiddenError('You cannot upvote your own post');
+    }
 
-    const { updatedPost } = await this.postsRepository.toggleUpvote(postId, userId);
+    const { added, updatedPost } = await this.postsRepository.toggleUpvote(postId, userId);
+
+    // Fire notification to post owner on new upvote (non-blocking)
+    if (added) {
+      const voter = await this.usersService.findById(userId);
+      this.notificationsService.fireNotification(
+        {
+          recipientId: post.creatorId,
+          type: 'NEW_UPVOTE',
+          title: 'New upvote',
+          body: `${voter?.fullName ?? 'Someone'} upvoted your post "${post.title}"`,
+          relatedPostId: postId,
+        },
+        userId,
+      );
+    }
+
     return updatedPost;
   }
 
@@ -385,12 +418,29 @@ export class PostsService {
    * @throws {NotFoundError} if the post does not exist or is REMOVED.
    */
   async toggleSave(postId: string, userId: string): Promise<Post> {
+    assertUuid(postId, 'postId');
     const post = await this.postsRepository.findById(postId);
     if (!post || post.status === 'REMOVED') {
       throw new NotFoundError('Post', postId);
     }
 
-    const { updatedPost } = await this.postsRepository.toggleSave(postId, userId);
+    const { added, updatedPost } = await this.postsRepository.toggleSave(postId, userId);
+
+    // Fire notification to post owner on new save (non-blocking)
+    if (added && post.creatorId !== userId) {
+      const saver = await this.usersService.findById(userId);
+      this.notificationsService.fireNotification(
+        {
+          recipientId: post.creatorId,
+          type: 'POST_SAVED',
+          title: 'Post saved',
+          body: `${saver?.fullName ?? 'Someone'} saved your post "${post.title}"`,
+          relatedPostId: postId,
+        },
+        userId,
+      );
+    }
+
     return updatedPost;
   }
 
@@ -498,6 +548,7 @@ export class PostsService {
    * If not seen in the last hour, buffers the view for the cron to flush.
    */
   async recordView(postId: string, userId: string): Promise<boolean> {
+    assertUuid(postId, 'postId');
     const lockKey = `view_dedup:${postId}:${userId}`;
     const alreadyViewed = await this.cacheManager.get(lockKey);
     
