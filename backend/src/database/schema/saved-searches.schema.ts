@@ -31,7 +31,7 @@ import { postTypeEnum, speciesTypeEnum, productCategoryEnum } from './enums';
 export const savedSearches = pgTable(
   'saved_searches',
   {
-    /** Internal saved search ID. Primary key, UUIDv4. */
+    /** Internal saved search ID. Primary key, UUIDv7. */
     id: uuid('id').primaryKey().default(sql`uuidv7()`),
 
     /** FK → users (owner of this alert). CASCADE on user delete. */

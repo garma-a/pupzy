@@ -26,7 +26,7 @@ import { posts } from './posts.schema';
 export const postMedia = pgTable(
   'post_media',
   {
-    /** Internal media ID. Primary key, UUIDv4. */
+    /** Internal media ID. Primary key, UUIDv7. */
     id: uuid('id')
       .primaryKey()
       .default(sql`uuidv7()`),

@@ -1,4 +1,6 @@
+import { randomUUID } from 'crypto';
 import { Module } from '@nestjs/common';
+import { LoggerModule } from 'nestjs-pino';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
@@ -29,6 +31,7 @@ import { UploadModule } from './upload/upload.module';
 import { HealthModule } from './health/health.module';
 import { GqlExceptionFilter } from './common/filters/gql-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
 import type { GqlContext } from './common/types/gql-context.type';
 
 /**
@@ -41,6 +44,7 @@ import type { GqlContext } from './common/types/gql-context.type';
  * ├── GraphQLModule           — Apollo + schema-first SDL, depth limiting
  * ├── ThrottlerModule         — rate limiting (configurable via env)
  * ├── ScheduleModule          — cron job scheduler
+ * ├── LoggerModule            — Structured Logging: JSON in production, pretty in development
  * ├── DatabaseModule          — Drizzle ORM + pg pool, global scope
  * ├── FirebaseModule          — Firebase Admin SDK init, global scope
  * ├── UsersModule             — User entity: resolver, service, repository
@@ -59,6 +63,7 @@ import type { GqlContext } from './common/types/gql-context.type';
  * | APP_GUARD (2)     | FirebaseAuthGuard    | Firebase token verification + user DI |
  * | APP_FILTER        | GqlExceptionFilter   | Sanitized error responses             |
  * | APP_INTERCEPTOR   | LoggingInterceptor   | Request/response logging + requestId  |
+ * | APP_INTERCEPTOR   | IdempotencyInterceptor| Idempotency key deduplication         |
  */
 @Module({
   imports: [
@@ -173,6 +178,46 @@ import type { GqlContext } from './common/types/gql-context.type';
     }),
 
     ScheduleModule.forRoot(),
+    // ── Structured Logging: JSON in production, pretty in development ────
+    LoggerModule.forRoot({
+      pinoHttp: {
+        /**
+         * Auto-generates a unique requestId per HTTP request.
+         * Propagated to all nested log calls via AsyncLocalStorage.
+         * No manual requestId passing needed in services/repos.
+         */
+        genReqId: (req) => (req.headers['x-request-id'] as string) ?? randomUUID(),
+        level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+        transport: process.env.NODE_ENV !== 'production'
+          ? {
+              target: 'pino-pretty',
+              options: {
+                colorize: true,
+                singleLine: true,
+                translateTime: 'SYS:HH:MM:ss.l',
+                ignore: 'pid,hostname',
+              },
+            }
+          : undefined,
+        /**
+         * Redact sensitive fields from logs.
+         * Prevents accidental exposure of tokens, passwords, phone numbers.
+         */
+        redact: {
+          paths: [
+            'req.headers.authorization',
+            'req.headers.cookie',
+            'req.body.password',
+            'req.body.phoneNumber',
+          ],
+          censor: '[REDACTED]',
+        },
+        // Don't log health check endpoints (noisy)
+        autoLogging: {
+          ignore: (req) => (req as any).url === '/health',
+        },
+      },
+    }),
     DatabaseModule,
     FirebaseModule,
     UsersModule,
@@ -184,7 +229,12 @@ import type { GqlContext } from './common/types/gql-context.type';
     UploadModule,
     HealthModule,
     CacheModule.register({
-      max: 3600,
+      /**
+       * Max cached items across all namespaces (auth, view dedup, idempotency).
+       * Sized for peak: ~5k auth entries + ~40k view dedup keys + ~5k idempotency keys.
+       * LRU eviction ensures least-used entries are dropped first.
+       */
+      max: 50_000,
       isGlobal: true,
     }),
   ],
@@ -218,6 +268,12 @@ import type { GqlContext } from './common/types/gql-context.type';
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
+    },
+
+    // ── Global interceptor — idempotency key deduplication ─────────────────
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: IdempotencyInterceptor,
     },
   ],
 })

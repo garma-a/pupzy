@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
+import { Logger as PinoLogger } from 'nestjs-pino';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
@@ -22,9 +23,12 @@ async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
 
   const app = await NestFactory.create(AppModule, {
-    // Use NestJS built-in logger with timestamps
-    logger: ['error', 'warn', 'log', 'debug'],
+    // Buffer logs until Pino logger is ready — prevents losing startup logs
+    bufferLogs: true,
   });
+
+  // Switch to Pino structured logger (JSON in production, pretty in development)
+  app.useLogger(app.get(PinoLogger));
 
   // ── Security: HTTP headers ────────────────────────────────────────────────
   // Trust proxy is required so Throttler uses the real IP (e.g., from Cloudflare or Railway)
@@ -56,7 +60,7 @@ async function bootstrap(): Promise<void> {
     origin: allowedOrigins.length > 0 ? allowedOrigins : false,
     credentials: true,
     methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Idempotency-Key'],
   });
 
   // ── Graceful shutdown ─────────────────────────────────────────────────────

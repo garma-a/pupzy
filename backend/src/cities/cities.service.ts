@@ -1,15 +1,45 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import DataLoader from 'dataloader';
 import { CitiesRepository } from './cities.repository';
 import type { City } from '../database/schema';
 
+/**
+ * CitiesService — city lookup with in-memory caching.
+ *
+ * ## Caching strategy
+ * Cities are static reference data (rarely change). We cache:
+ * - `findAll()`: 24h TTL — city list for onboarding dropdown
+ * - `findById()`: 24h TTL — city resolution during post creation
+ * - `findNearest()`: NOT cached — GPS-dependent, always different
+ *
+ * Cache invalidation is not needed for cities unless an admin adds a new city,
+ * in which case a server restart clears the cache.
+ */
+const CITIES_TTL_MS = 86_400_000; // 24 hours
+
 @Injectable()
 export class CitiesService {
-  constructor(private readonly citiesRepository: CitiesRepository) {}
+  private readonly logger = new Logger(CitiesService.name);
 
-  /** Returns all cities sorted A-Z by English name. */
-  findAll(): Promise<City[]> {
-    return this.citiesRepository.findAll();
+  constructor(
+    private readonly citiesRepository: CitiesRepository,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+  ) {}
+
+  /**
+   * Returns all cities sorted A-Z by English name.
+   * Cached for 24 hours — city list never changes during normal operation.
+   */
+  async findAll(): Promise<City[]> {
+    const cacheKey = 'cities:all';
+    const cached = await this.cacheManager.get<City[]>(cacheKey);
+    if (cached) return cached;
+
+    const cities = await this.citiesRepository.findAll();
+    await this.cacheManager.set(cacheKey, cities, CITIES_TTL_MS);
+    return cities;
   }
 
   /**
@@ -18,13 +48,22 @@ export class CitiesService {
    *
    * @returns the City row if found, undefined otherwise
    */
-  findById(id: string): Promise<City | undefined> {
-    return this.citiesRepository.findById(id);
+  async findById(id: string): Promise<City | undefined> {
+    const cacheKey = `cities:id:${id}`;
+    const cached = await this.cacheManager.get<City | undefined>(cacheKey);
+    if (cached !== undefined && cached !== null) return cached;
+
+    const city = await this.citiesRepository.findById(id);
+    if (city) {
+      await this.cacheManager.set(cacheKey, city, CITIES_TTL_MS);
+    }
+    return city;
   }
 
   /**
    * Finds the nearest city to the given GPS coordinates.
    * Used by UsersService during profile completion and location updates.
+   * NOT cached — result depends on exact GPS coordinates.
    */
   findNearest(latitude: number, longitude: number): Promise<City | undefined> {
     return this.citiesRepository.findNearest(latitude, longitude);

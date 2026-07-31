@@ -51,7 +51,7 @@ import { postTypeEnum, postStatusEnum, moderationStatusEnum, urgencyTierEnum, pr
 export const posts = pgTable(
   'posts',
   {
-    /** Internal post ID. Primary key, UUIDv4. */
+    /** Internal post ID. Primary key, UUIDv7. */
     id: uuid('id')
       .primaryKey()
       .default(sql`uuidv7()`),

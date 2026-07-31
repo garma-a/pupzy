@@ -37,7 +37,7 @@ import { requestStatusEnum, speciesTypeEnum, genderTypeEnum, livingSituationEnum
 export const adoptionApplications = pgTable(
   'adoption_applications',
   {
-    /** Internal application ID. Primary key, UUIDv4. */
+    /** Internal application ID. Primary key, UUIDv7. */
     id: uuid('id').primaryKey().default(sql`uuidv7()`),
 
     /**

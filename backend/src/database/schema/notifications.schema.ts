@@ -35,7 +35,7 @@ import { notificationTypeEnum } from './enums';
 export const notifications = pgTable(
   'notifications',
   {
-    /** Internal notification ID. Primary key, UUIDv4. */
+    /** Internal notification ID. Primary key, UUIDv7. */
     id: uuid('id').primaryKey().default(sql`uuidv7()`),
 
     /** FK → users (notification recipient). CASCADE on user delete. */

@@ -8,7 +8,7 @@ import {
   HeadObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { randomUUID } from 'crypto';
+import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { NotFoundError } from '../common/errors/app.errors';
 
 /**
@@ -77,7 +77,7 @@ export class UploadService {
     expiresAt: Date;
     stagingKey: string;
   }> {
-    const mediaId = randomUUID();
+    const mediaId = generateUuidV7();
     const stagingKey = `staging/${userId}/${mediaId}.webp`;
 
     const command = new PutObjectCommand({

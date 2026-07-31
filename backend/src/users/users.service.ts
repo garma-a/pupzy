@@ -148,6 +148,20 @@ export class UsersService {
     return this.decryptUserPhone(updatedUser);
   }
 
+  /**
+   * Invalidates the cached user object by Pupzy user ID.
+   * Called by PostsService after post creation to bust stale post counts.
+   *
+   * Looks up the user's firebaseUserId and deletes the cache entry.
+   * Silently no-ops if the user is not found (defensive).
+   */
+  async invalidateUserCacheById(userId: string): Promise<void> {
+    const user = await this.usersRepository.findById(userId);
+    if (user) {
+      await this.invalidateUserCache(user.firebaseUserId);
+    }
+  }
+
   private async invalidateUserCache(firebaseUserId: string): Promise<void> {
     await this.cacheManager.del(`user_resolve:${firebaseUserId}`);
   }

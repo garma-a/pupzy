@@ -1,7 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
-import { randomUUID } from 'crypto';
+import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { PostsRepository } from './posts.repository';
 import { CitiesService } from '../cities/cities.service';
 import { UploadService } from '../upload/upload.service';
@@ -59,7 +59,7 @@ export class PostsService {
   // ─── RESCUE ──────────────────────────────────────────────────────────────
 
   async createRescuePost(creatorId: string, input: CreateRescuePostInput): Promise<Post> {
-    const postId = randomUUID();
+    const postId = generateUuidV7();
     const cityId = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
     const mediaRows = this.prepareMedia(input.mediaIds, postId);
@@ -90,13 +90,15 @@ export class PostsService {
     );
 
     this.runFinalizeMediaAsync(input.mediaIds, creatorId, postId);
+    // Bust stale user cache — DB trigger updated post counts
+    this.usersService.invalidateUserCacheById(creatorId).catch(() => {});
     return post;
   }
 
   // ─── LOST ────────────────────────────────────────────────────────────────
 
   async createLostPost(creatorId: string, input: CreateLostPostInput): Promise<Post> {
-    const postId = randomUUID();
+    const postId = generateUuidV7();
     const cityId = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
     const mediaRows = this.prepareMedia(input.mediaIds, postId);
@@ -135,13 +137,15 @@ export class PostsService {
     );
 
     this.runFinalizeMediaAsync(input.mediaIds, creatorId, postId);
+    // Bust stale user cache — DB trigger updated post counts
+    this.usersService.invalidateUserCacheById(creatorId).catch(() => {});
     return post;
   }
 
   // ─── ADOPTION ────────────────────────────────────────────────────────────
 
   async createAdoptionPost(creatorId: string, input: CreateAdoptionPostInput): Promise<Post> {
-    const postId = randomUUID();
+    const postId = generateUuidV7();
     const cityId = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
     const mediaRows = this.prepareMedia(input.mediaIds, postId);
@@ -183,13 +187,15 @@ export class PostsService {
     );
 
     this.runFinalizeMediaAsync(input.mediaIds, creatorId, postId);
+    // Bust stale user cache — DB trigger updated post counts
+    this.usersService.invalidateUserCacheById(creatorId).catch(() => {});
     return post;
   }
 
   // ─── PRODUCT ─────────────────────────────────────────────────────────────
 
   async createProductPost(creatorId: string, input: CreateProductPostInput): Promise<Post> {
-    const postId = randomUUID();
+    const postId = generateUuidV7();
     const cityId = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
     const mediaRows = this.prepareMedia(input.mediaIds, postId);
@@ -224,6 +230,8 @@ export class PostsService {
     );
 
     this.runFinalizeMediaAsync(input.mediaIds, creatorId, postId);
+    // Bust stale user cache — DB trigger updated post counts
+    this.usersService.invalidateUserCacheById(creatorId).catch(() => {});
     return post;
   }
 

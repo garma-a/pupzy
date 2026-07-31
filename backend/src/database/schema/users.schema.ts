@@ -37,7 +37,7 @@ import { cities } from './cities.schema';
 export const users = pgTable(
   'users',
   {
-    /** Internal Pupzy user ID. Primary key, UUIDv4, auto-generated. */
+    /** Internal Pupzy user ID. Primary key, UUIDv7, auto-generated. */
     id: uuid('id')
       .primaryKey()
       .default(sql`uuidv7()`),

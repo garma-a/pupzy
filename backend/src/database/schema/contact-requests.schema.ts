@@ -34,7 +34,7 @@ import { requestStatusEnum } from './enums';
 export const contactRequests = pgTable(
   'contact_requests',
   {
-    /** Internal request ID. Primary key, UUIDv4. */
+    /** Internal request ID. Primary key, UUIDv7. */
     id: uuid('id').primaryKey().default(sql`uuidv7()`),
 
     /**

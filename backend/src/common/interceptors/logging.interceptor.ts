@@ -1,30 +1,26 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { Observable, tap } from 'rxjs';
-import { randomUUID } from 'crypto';
+import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
 
 /**
- * Logging interceptor for GraphQL operations.
+ * GraphQL operation logging interceptor.
  *
  * ## What it does
- * - Generates a unique `requestId` (UUID v4) per request
- * - Attaches the `requestId` to the GraphQL context so resolvers can log it
- * - Logs operation start with operation name and type
- * - Logs operation completion with duration in milliseconds
- * - Logs failures (the actual error is handled by GqlExceptionFilter)
+ * - Logs the start and end of every GraphQL operation
+ * - Includes operation name, type, and duration
+ * - RequestId is automatically attached by pino-http (via AsyncLocalStorage)
+ *   so ALL log lines within the same request share the same requestId
  *
  * ## Registration
  * Registered globally in app.module.ts via APP_INTERCEPTOR.
- *
- * ## Log format (structured JSON in production via pino)
- * ```json
- * { "level": "log", "msg": "[GraphQL] query me +0ms", "requestId": "abc-123" }
- * { "level": "log", "msg": "[GraphQL] query me +45ms", "requestId": "abc-123" }
- * ```
  */
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
-  private readonly logger = new Logger(LoggingInterceptor.name);
+  constructor(
+    @InjectPinoLogger(LoggingInterceptor.name)
+    private readonly logger: PinoLogger,
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const gqlCtx = GqlExecutionContext.create(context);
@@ -33,30 +29,27 @@ export class LoggingInterceptor implements NestInterceptor {
       fieldName: string;
     }>();
 
-    // Generate a unique ID for this request for log correlation
-    const requestId = randomUUID();
     const operationType = info?.operation?.operation ?? 'unknown';
     const operationName = info?.fieldName ?? 'unknown';
 
-    // Attach requestId to GQL context so resolvers/services can reference it
-    const ctx = gqlCtx.getContext<{ requestId?: string }>();
-    ctx.requestId = requestId;
-
     const start = Date.now();
-    this.logger.log(`[GraphQL] ${operationType} ${operationName} started`, `requestId=${requestId}`);
+    this.logger.info({ operationType, operationName }, 'GraphQL operation started');
 
     return next.handle().pipe(
       tap({
         next: () => {
-          const ms = Date.now() - start;
-          this.logger.log(`[GraphQL] ${operationType} ${operationName} completed in ${ms}ms`, `requestId=${requestId}`);
+          const durationMs = Date.now() - start;
+          this.logger.info(
+            { operationType, operationName, durationMs },
+            'GraphQL operation completed',
+          );
         },
         error: (err: unknown) => {
-          const ms = Date.now() - start;
+          const durationMs = Date.now() - start;
           const message = err instanceof Error ? err.message : String(err);
           this.logger.error(
-            `[GraphQL] ${operationType} ${operationName} failed in ${ms}ms: ${message}`,
-            `requestId=${requestId}`,
+            { operationType, operationName, durationMs, error: message },
+            'GraphQL operation failed',
           );
         },
       }),

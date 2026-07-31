@@ -96,6 +96,11 @@ CREATE INDEX IF NOT EXISTS idx_posts_market_category
   ON posts (city_id, market_category, effective_score DESC, created_at DESC)
   WHERE status = 'ACTIVE' AND post_type = 'PRODUCT';
 
+-- Home feed: all active posts sorted by UUIDv7 ID (newest first).
+-- Covers homeFeed query: WHERE status = 'ACTIVE' AND city_id IN (...) ORDER BY id DESC.
+CREATE INDEX IF NOT EXISTS idx_posts_home_feed
+  ON posts (city_id, id DESC) WHERE status = 'ACTIVE';
+
 -- AdminJS moderation queue: most-reported FLAGGED posts first.
 CREATE INDEX IF NOT EXISTS idx_posts_moderation
   ON posts (report_count DESC, created_at DESC)
