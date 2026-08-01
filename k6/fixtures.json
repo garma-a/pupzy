@@ -1,0 +1,12 @@
+{
+  "__comment": "This file is GENERATED — do not commit real UUIDs to version control.",
+  "__generate": "psql $TEST_DATABASE_URL -t -A -f k6/sql/fixtures.sql > k6/fixtures.json",
+  "rescuePostIds":   ["00000000-0000-0000-0000-000000000001"],
+  "adoptionPostIds": ["00000000-0000-0000-0000-000000000002"],
+  "productPostIds":  ["00000000-0000-0000-0000-000000000003"],
+  "lostPostIds":     ["00000000-0000-0000-0000-000000000004"],
+  "cityIds":         ["00000000-0000-0000-0000-000000000005"],
+  "governorates":    ["Cairo", "Alexandria", "Giza", "Luxor", "Aswan"],
+  "cairoCenter":     { "latitude": 30.0444, "longitude": 31.2357 },
+  "alexCenter":      { "latitude": 31.2001, "longitude": 29.9187 }
+}

@@ -3,17 +3,9 @@ import { AdoptionsRepository } from './adoptions.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import {
-  ValidationError,
-  NotFoundError,
-  ForbiddenError,
-  ConflictError,
-} from '../common/errors/app.errors';
+import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../common/errors/app.errors';
 import { assertUuid } from '../common/utils/validate-uuid';
-import type {
-  AdoptionApplication,
-  NewAdoptionApplication,
-} from '../database/schema';
+import type { AdoptionApplication, NewAdoptionApplication } from '../database/schema';
 import type { SubmitAdoptionApplicationInput } from './dto/submit-adoption-application.input';
 
 /**
@@ -49,10 +41,7 @@ export class AdoptionsService {
    * - Applicant cannot be the post owner
    * - One application per (applicant, post)
    */
-  async submitApplication(
-    applicantId: string,
-    input: SubmitAdoptionApplicationInput,
-  ): Promise<AdoptionApplication> {
+  async submitApplication(applicantId: string, input: SubmitAdoptionApplicationInput): Promise<AdoptionApplication> {
     const { targetPostId, ...questionnaire } = input;
 
     const post = await this.postsRepository.findById(targetPostId);
@@ -60,30 +49,19 @@ export class AdoptionsService {
       throw new NotFoundError('Post', targetPostId);
     }
     if (post.postType !== 'ADOPTION') {
-      throw new ValidationError(
-        'Applications can only be submitted for ADOPTION posts',
-      );
+      throw new ValidationError('Applications can only be submitted for ADOPTION posts');
     }
     if (post.status !== 'ACTIVE') {
-      throw new ValidationError(
-        'Cannot apply to an inactive adoption listing',
-      );
+      throw new ValidationError('Cannot apply to an inactive adoption listing');
     }
     if (post.creatorId === applicantId) {
-      throw new ForbiddenError(
-        'You cannot apply to your own adoption post',
-      );
+      throw new ForbiddenError('You cannot apply to your own adoption post');
     }
 
     // Pre-check for duplicate
-    const existing = await this.adoptionsRepository.findExisting(
-      targetPostId,
-      applicantId,
-    );
+    const existing = await this.adoptionsRepository.findExisting(targetPostId, applicantId);
     if (existing) {
-      throw new ConflictError(
-        'You have already submitted an application for this post',
-      );
+      throw new ConflictError('You have already submitted an application for this post');
     }
 
     const application = await this.adoptionsRepository.create({
@@ -120,37 +98,25 @@ export class AdoptionsService {
   ): Promise<AdoptionApplication & { whatsappLink: string | null }> {
     assertUuid(applicationId, 'applicationId');
 
-    const application =
-      await this.adoptionsRepository.findById(applicationId);
+    const application = await this.adoptionsRepository.findById(applicationId);
     if (!application) {
       throw new NotFoundError('AdoptionApplication', applicationId);
     }
 
-    const post = await this.postsRepository.findById(
-      application.targetPostId,
-    );
+    const post = await this.postsRepository.findById(application.targetPostId);
     if (!post) throw new NotFoundError('Post', application.targetPostId);
     if (post.creatorId !== ownerId) {
-      throw new ForbiddenError(
-        'Only the post owner can approve applications',
-      );
+      throw new ForbiddenError('Only the post owner can approve applications');
     }
     if (application.status !== 'PENDING') {
-      throw new ValidationError(
-        `Application is already ${application.status}`,
-      );
+      throw new ValidationError(`Application is already ${application.status}`);
     }
 
-    const updated = await this.adoptionsRepository.updateStatus(
-      applicationId,
-      'APPROVED',
-    );
+    const updated = await this.adoptionsRepository.updateStatus(applicationId, 'APPROVED');
 
     // Decrypt owner phone → build wa.me link
     const owner = await this.usersService.findById(ownerId);
-    const whatsappLink = owner?.phoneNumber
-      ? `https://wa.me/${owner.phoneNumber.replace(/\\D/g, '')}`
-      : null;
+    const whatsappLink = owner?.phoneNumber ? `https://wa.me/${owner.phoneNumber.replace(/\\D/g, '')}` : null;
 
     // Fire notification to applicant (non-blocking)
     this.notificationsService.fireNotification(
@@ -172,37 +138,24 @@ export class AdoptionsService {
    * Rejects a pending adoption application.
    * Only the post owner can reject.
    */
-  async rejectApplication(
-    ownerId: string,
-    applicationId: string,
-  ): Promise<AdoptionApplication> {
+  async rejectApplication(ownerId: string, applicationId: string): Promise<AdoptionApplication> {
     assertUuid(applicationId, 'applicationId');
 
-    const application =
-      await this.adoptionsRepository.findById(applicationId);
+    const application = await this.adoptionsRepository.findById(applicationId);
     if (!application) {
       throw new NotFoundError('AdoptionApplication', applicationId);
     }
 
-    const post = await this.postsRepository.findById(
-      application.targetPostId,
-    );
+    const post = await this.postsRepository.findById(application.targetPostId);
     if (!post) throw new NotFoundError('Post', application.targetPostId);
     if (post.creatorId !== ownerId) {
-      throw new ForbiddenError(
-        'Only the post owner can reject applications',
-      );
+      throw new ForbiddenError('Only the post owner can reject applications');
     }
     if (application.status !== 'PENDING') {
-      throw new ValidationError(
-        `Application is already ${application.status}`,
-      );
+      throw new ValidationError(`Application is already ${application.status}`);
     }
 
-    const updated = await this.adoptionsRepository.updateStatus(
-      applicationId,
-      'REJECTED',
-    );
+    const updated = await this.adoptionsRepository.updateStatus(applicationId, 'REJECTED');
 
     // Fire notification to applicant (non-blocking)
     this.notificationsService.fireNotification(
@@ -223,11 +176,7 @@ export class AdoptionsService {
   /**
    * Returns paginated applications submitted by the current user.
    */
-  async getMyApplications(
-    userId: string,
-    first: number | null | undefined,
-    afterCursor: string | null | undefined,
-  ) {
+  async getMyApplications(userId: string, first: number | null | undefined, afterCursor: string | null | undefined) {
     const limit = Math.min(first ?? 20, 50);
     const cursor = this.decodeCursor(afterCursor);
 
@@ -259,9 +208,7 @@ export class AdoptionsService {
       throw new NotFoundError('Post', postId);
     }
     if (post.creatorId !== userId) {
-      throw new ForbiddenError(
-        'Only the post owner can view applications',
-      );
+      throw new ForbiddenError('Only the post owner can view applications');
     }
 
     const limit = Math.min(first ?? 20, 50);
@@ -279,14 +226,10 @@ export class AdoptionsService {
 
   // ─── Helpers ─────────────────────────────────────────────────────────
 
-  private decodeCursor(
-    cursorBase64: string | null | undefined,
-  ): { createdAt: string; id: string } | null {
+  private decodeCursor(cursorBase64: string | null | undefined): { createdAt: string; id: string } | null {
     if (!cursorBase64) return null;
     try {
-      return JSON.parse(
-        Buffer.from(cursorBase64, 'base64url').toString('utf8'),
-      );
+      return JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8'));
     } catch {
       throw new ValidationError('Invalid cursor format');
     }
@@ -302,10 +245,7 @@ export class AdoptionsService {
     ).toString('base64url');
   }
 
-  private mapToConnection(result: {
-    rows: AdoptionApplication[];
-    hasNextPage: boolean;
-  }) {
+  private mapToConnection(result: { rows: AdoptionApplication[]; hasNextPage: boolean }) {
     return {
       edges: result.rows.map((app) => ({
         node: app,
@@ -313,10 +253,7 @@ export class AdoptionsService {
       })),
       pageInfo: {
         hasNextPage: result.hasNextPage,
-        endCursor:
-          result.rows.length > 0
-            ? this.encodeCursor(result.rows[result.rows.length - 1])
-            : null,
+        endCursor: result.rows.length > 0 ? this.encodeCursor(result.rows[result.rows.length - 1]) : null,
       },
     };
   }

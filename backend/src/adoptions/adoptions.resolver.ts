@@ -26,11 +26,7 @@ export class AdoptionsResolver {
     @Args('after') after: string | undefined,
     @Context() ctx: GqlContext,
   ) {
-    return this.adoptionsService.getMyApplications(
-      ctx.user!.id,
-      first,
-      after,
-    );
+    return this.adoptionsService.getMyApplications(ctx.user!.id, first, after);
   }
 
   @Query('postAdoptionApplications')
@@ -41,13 +37,7 @@ export class AdoptionsResolver {
     @Args('after') after: string | undefined,
     @Context() ctx: GqlContext,
   ) {
-    return this.adoptionsService.getPostApplications(
-      ctx.user!.id,
-      postId,
-      status,
-      first,
-      after,
-    );
+    return this.adoptionsService.getPostApplications(ctx.user!.id, postId, status, first, after);
   }
 
   // ─── Mutations ──────────────────────────────────────────────────────
@@ -58,21 +48,12 @@ export class AdoptionsResolver {
     @Context() ctx: GqlContext,
   ): Promise<AdoptionApplication> {
     const validated = validateSubmitAdoptionApplicationInput(input);
-    return this.adoptionsService.submitApplication(
-      ctx.user!.id,
-      validated,
-    );
+    return this.adoptionsService.submitApplication(ctx.user!.id, validated);
   }
 
   @Mutation('approveAdoptionApplication')
-  async approveAdoptionApplication(
-    @Args('applicationId') applicationId: string,
-    @Context() ctx: GqlContext,
-  ) {
-    return this.adoptionsService.approveApplication(
-      ctx.user!.id,
-      applicationId,
-    );
+  async approveAdoptionApplication(@Args('applicationId') applicationId: string, @Context() ctx: GqlContext) {
+    return this.adoptionsService.approveApplication(ctx.user!.id, applicationId);
   }
 
   @Mutation('rejectAdoptionApplication')
@@ -80,10 +61,7 @@ export class AdoptionsResolver {
     @Args('applicationId') applicationId: string,
     @Context() ctx: GqlContext,
   ): Promise<AdoptionApplication> {
-    return this.adoptionsService.rejectApplication(
-      ctx.user!.id,
-      applicationId,
-    );
+    return this.adoptionsService.rejectApplication(ctx.user!.id, applicationId);
   }
 
   // ─── Field Resolvers ──────────────────────────────────────────────────
@@ -93,10 +71,7 @@ export class AdoptionsResolver {
    * Uses the `userById` DataLoader to batch-load users efficiently.
    */
   @ResolveField('applicant')
-  async applicant(
-    @Parent() application: AdoptionApplication,
-    @Context() ctx: GqlContext,
-  ): Promise<User | null> {
+  async applicant(@Parent() application: AdoptionApplication, @Context() ctx: GqlContext): Promise<User | null> {
     return ctx.loaders.userById.load(application.applicantId);
   }
 }

@@ -1,15 +1,5 @@
 import { sql } from 'drizzle-orm';
-import {
-  pgTable,
-  uuid,
-  varchar,
-  text,
-  boolean,
-  integer,
-  timestamp,
-  uniqueIndex,
-  index,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, boolean, integer, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
 import { posts } from './posts.schema';
 import { users } from './users.schema';
 import { requestStatusEnum, speciesTypeEnum, genderTypeEnum, livingSituationEnum } from './enums';
@@ -38,7 +28,9 @@ export const adoptionApplications = pgTable(
   'adoption_applications',
   {
     /** Internal application ID. Primary key, UUIDv7. */
-    id: uuid('id').primaryKey().default(sql`uuidv7()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
 
     /**
      * FK → posts (must be an ADOPTION post — enforced in resolver).
@@ -116,19 +108,13 @@ export const adoptionApplications = pgTable(
      * One application per applicant per adoption post.
      * Prevents duplicate or re-application after rejection.
      */
-    uniqueApplication: uniqueIndex('uq_adoption_application').on(
-      table.targetPostId,
-      table.applicantId,
-    ),
+    uniqueApplication: uniqueIndex('uq_adoption_application').on(table.targetPostId, table.applicantId),
 
     /** "My applications" list — all applications by this user across all posts. */
     applicantIdx: index('idx_adoption_applications_applicant').on(table.applicantId),
 
     /** Owner's inbox — all applications for a given post, filterable by status. */
-    postStatusIdx: index('idx_adoption_applications_post_status').on(
-      table.targetPostId,
-      table.status,
-    ),
+    postStatusIdx: index('idx_adoption_applications_post_status').on(table.targetPostId, table.status),
   }),
 );
 

@@ -1,0 +1,12 @@
+# k6 test suite — gitignore
+
+# Generated at runtime — contain secrets and DB-specific UUIDs
+tokens.json
+results/
+
+# Grafana + InfluxDB persistent volumes (docker compose)
+grafana/data/
+influxdb/data/
+
+# Node modules (if you add a package.json here)
+node_modules/

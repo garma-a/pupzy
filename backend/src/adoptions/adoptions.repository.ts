@@ -2,11 +2,7 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { sql, eq, and } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
-import {
-  adoptionApplications,
-  type AdoptionApplication,
-  type NewAdoptionApplication,
-} from '../database/schema';
+import { adoptionApplications, type AdoptionApplication, type NewAdoptionApplication } from '../database/schema';
 
 /**
  * AdoptionsRepository — data access for the adoption_applications table.
@@ -23,22 +19,15 @@ export class AdoptionsRepository {
   /**
    * Creates a new adoption application.
    */
-  async create(
-    data: NewAdoptionApplication,
-  ): Promise<AdoptionApplication> {
-    const [application] = await this.db
-      .insert(adoptionApplications)
-      .values(data)
-      .returning();
+  async create(data: NewAdoptionApplication): Promise<AdoptionApplication> {
+    const [application] = await this.db.insert(adoptionApplications).values(data).returning();
     return application;
   }
 
   /**
    * Finds an adoption application by ID.
    */
-  async findById(
-    applicationId: string,
-  ): Promise<AdoptionApplication | undefined> {
+  async findById(applicationId: string): Promise<AdoptionApplication | undefined> {
     const [application] = await this.db
       .select()
       .from(adoptionApplications)
@@ -50,18 +39,12 @@ export class AdoptionsRepository {
   /**
    * Checks if a user already has an application on a post.
    */
-  async findExisting(
-    targetPostId: string,
-    applicantId: string,
-  ): Promise<AdoptionApplication | undefined> {
+  async findExisting(targetPostId: string, applicantId: string): Promise<AdoptionApplication | undefined> {
     const [existing] = await this.db
       .select()
       .from(adoptionApplications)
       .where(
-        and(
-          eq(adoptionApplications.targetPostId, targetPostId),
-          eq(adoptionApplications.applicantId, applicantId),
-        ),
+        and(eq(adoptionApplications.targetPostId, targetPostId), eq(adoptionApplications.applicantId, applicantId)),
       )
       .limit(1);
     return existing;
@@ -70,10 +53,7 @@ export class AdoptionsRepository {
   /**
    * Updates an application status (PENDING → APPROVED or REJECTED).
    */
-  async updateStatus(
-    applicationId: string,
-    status: 'APPROVED' | 'REJECTED',
-  ): Promise<AdoptionApplication | undefined> {
+  async updateStatus(applicationId: string, status: 'APPROVED' | 'REJECTED'): Promise<AdoptionApplication | undefined> {
     const [updated] = await this.db
       .update(adoptionApplications)
       .set({
