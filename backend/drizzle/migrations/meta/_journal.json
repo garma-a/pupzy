@@ -15,6 +15,13 @@
       "when": 1784405426052,
       "tag": "0001_windy_moondragon",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785662302778,
+      "tag": "0002_lame_anita_blake",
+      "breakpoints": true
     }
   ]
 }

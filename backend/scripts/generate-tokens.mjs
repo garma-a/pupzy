@@ -19,7 +19,7 @@ import { fileURLToPath } from 'url';
 
 // Load .env from the backend root
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const require   = createRequire(import.meta.url);
+const require = createRequire(import.meta.url);
 
 try {
   const { config } = await import('dotenv');
@@ -29,19 +29,13 @@ try {
 }
 
 // ── CLI args ──────────────────────────────────────────────────────────────────
-const COUNT = parseInt(
-  process.argv.find((a) => a.startsWith('--count='))?.split('=')[1] ?? '50',
-);
-const OUT = process.argv.find((a) => a.startsWith('--out='))?.split('=')[1]
-  ?? path.join(__dirname, '..', '..', 'k6', 'tokens.json');
+const COUNT = parseInt(process.argv.find((a) => a.startsWith('--count='))?.split('=')[1] ?? '50');
+const OUT =
+  process.argv.find((a) => a.startsWith('--out='))?.split('=')[1] ??
+  path.join(__dirname, '..', '..', 'k6', 'tokens.json');
 
 // ── Validate required env vars ────────────────────────────────────────────────
-const REQUIRED = [
-  'FIREBASE_PROJECT_ID',
-  'FIREBASE_CLIENT_EMAIL',
-  'FIREBASE_PRIVATE_KEY',
-  'FIREBASE_WEB_API_KEY',
-];
+const REQUIRED = ['FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_PRIVATE_KEY', 'FIREBASE_WEB_API_KEY'];
 const missing = REQUIRED.filter((k) => !process.env[k]);
 if (missing.length > 0) {
   console.error(`❌ Missing required environment variables: ${missing.join(', ')}`);
@@ -54,9 +48,9 @@ const WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
 // ── Firebase Admin init ───────────────────────────────────────────────────────
 initializeApp({
   credential: cert({
-    projectId:   process.env.FIREBASE_PROJECT_ID,
+    projectId: process.env.FIREBASE_PROJECT_ID,
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey:  process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
   }),
 });
 
@@ -79,9 +73,9 @@ async function getIdTokenForUid(uid) {
   const resp = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${WEB_API_KEY}`,
     {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ token: customToken, returnSecureToken: true }),
+      body: JSON.stringify({ token: customToken, returnSecureToken: true }),
     },
   );
 
@@ -92,9 +86,9 @@ async function getIdTokenForUid(uid) {
 
   const data = await resp.json();
   return {
-    idToken:      data.idToken,
+    idToken: data.idToken,
     refreshToken: data.refreshToken,
-    expiresIn:    parseInt(data.expiresIn, 10), // seconds, typically 3600
+    expiresIn: parseInt(data.expiresIn, 10), // seconds, typically 3600
   };
 }
 
@@ -106,7 +100,7 @@ async function getIdTokenForUid(uid) {
  * @returns {Promise<string>} uid
  */
 async function ensureTestUser(index) {
-  const uid   = `k6-test-user-${index}`;
+  const uid = `k6-test-user-${index}`;
   const email = `k6-${index}@pupzy-test.internal`;
 
   try {
@@ -118,7 +112,7 @@ async function ensureTestUser(index) {
         uid,
         email,
         emailVerified: true,
-        displayName:   `K6 User ${index}`,
+        displayName: `K6 User ${index}`,
       });
       console.log(`  ✨ Created Firebase user: ${uid}`);
     } else {
@@ -137,14 +131,11 @@ async function ensureTestUser(index) {
  * @returns {Promise<{ idToken: string; refreshToken: string; expiresIn: number }>}
  */
 export async function refreshIdToken(refreshToken) {
-  const resp = await fetch(
-    `https://securetoken.googleapis.com/v1/token?key=${WEB_API_KEY}`,
-    {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ grant_type: 'refresh_token', refresh_token: refreshToken }),
-    },
-  );
+  const resp = await fetch(`https://securetoken.googleapis.com/v1/token?key=${WEB_API_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ grant_type: 'refresh_token', refresh_token: refreshToken }),
+  });
 
   if (!resp.ok) {
     const body = await resp.text();
@@ -153,9 +144,9 @@ export async function refreshIdToken(refreshToken) {
 
   const data = await resp.json();
   return {
-    idToken:      data.id_token,
+    idToken: data.id_token,
     refreshToken: data.refresh_token,
-    expiresIn:    parseInt(data.expires_in, 10),
+    expiresIn: parseInt(data.expires_in, 10),
   };
 }
 

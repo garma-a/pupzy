@@ -43,3 +43,6 @@ export * from './notifications.schema';
 
 // Alert system
 export * from './saved-searches.schema';
+
+// Vet clinics — proximity lookup for RESCUE/LOST/ADOPTION post detail screens
+export * from './vet-clinics.schema';

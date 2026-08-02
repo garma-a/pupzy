@@ -1,0 +1,110 @@
+# SDL schema for the vet clinics feature.
+#
+# This file adds:
+#   1. `type VetClinic` — proximity result shape
+#   2. `extend type Post` — adds `nearestVetClinics` as a resolved field
+#
+# Field names are camelCase (Pubzy convention).
+# All types come from this SDL file — no @ObjectType or @Field decorators anywhere.
+#
+# The `typePaths: ['./**/*.graphql']` glob in AppModule's GraphQLModule picks
+# this file up automatically — no changes to app.module.ts typePaths needed.
+
+"""
+A veterinary clinic returned as a proximity result on post detail screens.
+All distance values are computed server-side from the post's coordinates.
+"""
+type VetClinic {
+  id: ID!
+
+  """
+  Clinic name in English.
+  Null when OpenStreetMap only recorded an Arabic name for this clinic.
+  """
+  nameEnglish: String
+
+  """
+  Clinic name in Arabic, displayed first for Arabic-locale users in RTL mode.
+  Null when OpenStreetMap only recorded a Latin name for this clinic.
+  """
+  nameArabic: String
+
+  """
+  Phone number in E.164 format, e.g. +201012345678.
+  Null when the clinic had no phone tag in OpenStreetMap.
+  Use whatsappPhoneUrl to open WhatsApp directly — do not format this for display.
+  """
+  phoneNumber: String
+
+  """Full human-readable address. Null when OSM had no addr:* tags."""
+  address: String
+
+  """Clinic website URL. Null when OSM had no website tag."""
+  website: String
+
+  """WGS-84 latitude of the clinic (DD format). Used for the Google Maps deep-link."""
+  latitude: Float!
+
+  """WGS-84 longitude of the clinic (DD format). Used for the Google Maps deep-link."""
+  longitude: Float!
+
+  """
+  Geodesic distance in kilometres from the post location to this clinic.
+  Computed with ST_Distance(::geography) on the WGS-84 ellipsoid for accuracy
+  at any distance on Earth. Rounded to 2 decimal places.
+
+  For RESCUE/LOST posts: distance from exact post GPS coordinates.
+  For ADOPTION posts: distance from the post's city center_point.
+  """
+  distanceKm: Float!
+
+  """
+  Pre-built Google Maps deep-link: https://maps.google.com/?q=lat,lon
+  Open with Flutter's url_launcher package — no Google Maps SDK required.
+  """
+  googleMapsUrl: String!
+
+  """
+  Pre-built WhatsApp deep-link: https://wa.me/PHONENUMBER (without the leading '+').
+  Null when phoneNumber is null — the clinic has no OSM phone tag.
+  Open with Flutter's url_launcher package.
+  """
+  whatsappPhoneUrl: String
+}
+
+"""
+Extends the Post type with a proximity-based vet clinic list.
+
+This field is computed on-demand by VetClinicsResolver and is
+ONLY available on the detail queries (post, rescuePostDetail, etc.).
+NEVER include nearestVetClinics in feed list queries (helpFeed, adoptFeed, etc.) —
+that would trigger one KNN query per post in the feed page (N+1 anti-pattern).
+"""
+extend type Post {
+  """
+  Up to 3 nearest active veterinary clinics relative to this post's location.
+
+  ## Location strategy per post type
+
+  - **RESCUE / LOST**: Uses exact post GPS coordinates (already public for these types).
+    Results are cached per postId with a 1-hour TTL.
+  - **ADOPTION**: Uses the post's city center_point (exact GPS is private for adoption posts).
+    Results are cached per cityId with a 24-hour TTL — all adoption posts in
+    the same city return the same list.
+  - **PRODUCT**: Always returns an empty list. Vet proximity is irrelevant
+    for marketplace listings. No DB query is issued.
+
+  ## Performance
+
+  The underlying PostGIS query uses the `<->` KNN operator on
+  `idx_vet_clinics_coordinates` (GIST index) for O(log n) nearest-neighbour
+  traversal. The query visits at most 3 rows regardless of dataset size.
+
+  ## Caching
+
+  Results are cached in the in-process LRU cache (same instance as the rest
+  of the app). Cache failures (get or set) are swallowed — the API continues
+  to work with a live DB query on every request.
+  """
+  nearestVetClinics: [VetClinic!]!
+}
