@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import '../data/mock_data.dart';
 import '../localization/lang_provider.dart';
-import '../models/contact_request_item.dart';
+import '../models/contact_request.dart';
+import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/image_with_fallback.dart';
 
-/// Contact request inbox for post owners.
+/// Contact requests I've SENT — tracks their approve/reject status.
 ///
-/// There's no backend support for this yet — `ContactRequest` exists only
-/// as a read type in the GraphQL schema, with no query to list them and no
-/// mutation to approve/reject. This screen runs entirely on local mock
-/// data (`MockData.contactRequests`) until that API exists.
+/// There's no aggregate "requests received across all my posts" query on
+/// the backend (only `postContactRequests(postId)`, scoped to one post),
+/// so managing requests received on a listing happens on that listing's
+/// own detail screen instead (see ContactRequestsOwnerSection).
 class ContactRequestsScreen extends StatefulWidget {
   const ContactRequestsScreen({super.key});
 
@@ -20,15 +20,32 @@ class ContactRequestsScreen extends StatefulWidget {
 }
 
 class _ContactRequestsScreenState extends State<ContactRequestsScreen> {
-  void _respond(ContactRequestItem item, ContactRequestStatus status) {
-    final index = MockData.contactRequests.indexWhere((r) => r.id == item.id);
-    if (index == -1) return;
+  bool _loading = true;
+  String? _errorMessage;
+  List<ContactRequest> _requests = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
     setState(() {
-      MockData.contactRequests[index] = item.copyWith(status: status, isRead: true);
+      _loading = true;
+      _errorMessage = null;
+    });
+    final graphql = context.read<GraphQLService>();
+    final (requests, error) = await graphql.fetchMyContactRequests(first: 50);
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _requests = requests;
+      _errorMessage = error;
     });
   }
 
-  String _timeAgoFull(DateTime time) {
+  String _timeAgoFull(BuildContext context, DateTime time) {
     final diff = DateTime.now().difference(time);
     if (diff.inMinutes < 1) return t(context, 'just now', 'الآن');
     if (diff.inMinutes < 60) return t(context, '${diff.inMinutes} min ago', 'قبل ${diff.inMinutes} دقيقة');
@@ -39,8 +56,8 @@ class _ContactRequestsScreenState extends State<ContactRequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pending = MockData.contactRequests.where((r) => r.status == ContactRequestStatus.pending).toList();
-    final resolved = MockData.contactRequests.where((r) => r.status != ContactRequestStatus.pending).toList();
+    final pending = _requests.where((r) => r.status == 'PENDING').toList();
+    final resolved = _requests.where((r) => r.status != 'PENDING').toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -73,12 +90,12 @@ class _ContactRequestsScreenState extends State<ContactRequestsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(t(context, 'Contact Requests', 'طلبات التواصل'), style: Theme.of(context).textTheme.headlineLarge),
+                  Text(t(context, 'My Contact Requests', 'طلبات التواصل الخاصة بي'), style: Theme.of(context).textTheme.headlineLarge),
                   const SizedBox(height: 2),
                   Text(
                     pending.isEmpty
                         ? t(context, 'No pending requests', 'لا توجد طلبات معلقة')
-                        : t(context, '${pending.length} pending', '${pending.length} معلّق'),
+                        : t(context, '${pending.length} awaiting response', '${pending.length} بانتظار الرد'),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
@@ -86,55 +103,68 @@ class _ContactRequestsScreenState extends State<ContactRequestsScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
-                children: [
-                  if (pending.isNotEmpty) ...[
-                    Text(
-                      t(context, 'AWAITING YOUR RESPONSE', 'بانتظار ردك'),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    ...pending.map((r) => Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                          child: _RequestCard(
-                            item: r,
-                            timeLabel: _timeAgoFull(r.timestamp),
-                            onAccept: () => _respond(r, ContactRequestStatus.approved),
-                            onDecline: () => _respond(r, ContactRequestStatus.rejected),
-                          ),
-                        )),
-                  ],
-                  if (resolved.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      t(context, 'RESOLVED', 'تم الرد'),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    ...resolved.map((r) => Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                          child: _ResolvedCard(item: r),
-                        )),
-                  ],
-                  if (pending.isEmpty && resolved.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
-                      child: Center(
-                        child: Column(
-                          children: [
-                            const Icon(Icons.mail_outline, size: 44, color: AppColors.textMuted),
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(
-                              t(context, 'No contact requests yet', 'لا توجد طلبات تواصل بعد'),
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                  : _errorMessage != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.cloud_off_outlined, size: 40, color: AppColors.textMuted),
+                                const SizedBox(height: AppSpacing.sm),
+                                Text(_errorMessage!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted), textAlign: TextAlign.center),
+                                const SizedBox(height: AppSpacing.md),
+                                OutlinedButton(onPressed: _load, child: Text(t(context, 'Retry', 'إعادة المحاولة'))),
+                              ],
                             ),
+                          ),
+                        )
+                      : ListView(
+                          padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
+                          children: [
+                            if (pending.isNotEmpty) ...[
+                              Text(
+                                t(context, 'AWAITING RESPONSE', 'بانتظار الرد'),
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              ...pending.map((r) => Padding(
+                                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                                    child: _RequestCard(item: r, timeLabel: _timeAgoFull(context, r.createdAt)),
+                                  )),
+                            ],
+                            if (resolved.isNotEmpty) ...[
+                              const SizedBox(height: AppSpacing.md),
+                              Text(
+                                t(context, 'RESOLVED', 'تم الرد'),
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              ...resolved.map((r) => Padding(
+                                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                                    child: _ResolvedCard(item: r),
+                                  )),
+                            ],
+                            if (pending.isEmpty && resolved.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+                                child: Center(
+                                  child: Column(
+                                    children: [
+                                      const Icon(Icons.mail_outline, size: 44, color: AppColors.textMuted),
+                                      const SizedBox(height: AppSpacing.sm),
+                                      Text(
+                                        t(context, "You haven't sent any contact requests yet", 'لم ترسل أي طلبات تواصل بعد'),
+                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
-                      ),
-                    ),
-                ],
-              ),
             ),
           ],
         ),
@@ -144,17 +174,10 @@ class _ContactRequestsScreenState extends State<ContactRequestsScreen> {
 }
 
 class _RequestCard extends StatelessWidget {
-  final ContactRequestItem item;
+  final ContactRequest item;
   final String timeLabel;
-  final VoidCallback onAccept;
-  final VoidCallback onDecline;
 
-  const _RequestCard({
-    required this.item,
-    required this.timeLabel,
-    required this.onAccept,
-    required this.onDecline,
-  });
+  const _RequestCard({required this.item, required this.timeLabel});
 
   @override
   Widget build(BuildContext context) {
@@ -169,88 +192,23 @@ class _RequestCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipOval(
-                child: ImageWithFallback(url: item.petPhotoUrl, width: 44, height: 44),
-              ),
+              const Icon(Icons.hourglass_empty, size: 18, color: AppColors.textMuted),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.requesterName, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${t(context, 'Asking about', 'يسأل عن')} ${item.petName}  ·  $timeLabel',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
+                child: Text(
+                  '${t(context, 'Sent', 'أُرسل')} $timeLabel',
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
-              if (!item.isRead)
-                Container(
-                  width: 8,
-                  height: 8,
-                  margin: const EdgeInsets.only(top: 4),
-                  decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceWarm,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-            ),
-            child: Text(
-              '"${item.message}"',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: onAccept,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.sectionLineGreen.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(AppRadius.chip),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'Accept  ·  قبول',
-                        style: TextStyle(color: AppColors.sectionLineGreen, fontWeight: FontWeight.w700, fontSize: 14),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: GestureDetector(
-                  onTap: onDecline,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.critical.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(AppRadius.chip),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'Decline  ·  رفض',
-                        style: TextStyle(color: AppColors.critical, fontWeight: FontWeight.w700, fontSize: 14),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            decoration: BoxDecoration(color: AppColors.surfaceWarm, borderRadius: BorderRadius.circular(AppRadius.card)),
+            child: Text('"${item.message}"', style: Theme.of(context).textTheme.bodyMedium),
           ),
         ],
       ),
@@ -259,15 +217,15 @@ class _RequestCard extends StatelessWidget {
 }
 
 class _ResolvedCard extends StatelessWidget {
-  final ContactRequestItem item;
+  final ContactRequest item;
   const _ResolvedCard({required this.item});
 
   @override
   Widget build(BuildContext context) {
-    final approved = item.status == ContactRequestStatus.approved;
+    final approved = item.status == 'APPROVED';
     final statusColor = approved ? AppColors.sectionLineGreen : AppColors.critical;
     final statusLabel = approved
-        ? t(context, 'Accepted  ·  Number shared', 'مقبول  ·  تمت مشاركة الرقم')
+        ? t(context, 'Approved · WhatsApp shared', 'تمت الموافقة · تمت مشاركة واتساب')
         : t(context, 'Declined', 'مرفوض');
 
     return Opacity(
@@ -280,22 +238,10 @@ class _ResolvedCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            ClipOval(
-              child: ImageWithFallback(url: item.petPhotoUrl, width: 40, height: 40),
+            Expanded(
+              child: Text('"${item.message}"', style: Theme.of(context).textTheme.bodyMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
             const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item.requesterName, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
-                  Text(
-                    '${t(context, 'About', 'بخصوص')} ${item.petName}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../data/mock_data.dart';
 import '../localization/lang_provider.dart';
 import '../screens/notifications_panel.dart';
 import '../screens/profile_screen.dart';
 import '../services/auth_service.dart';
+import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 
 class PupzyTopBar extends StatelessWidget {
@@ -79,11 +79,23 @@ class _NotifButton extends StatefulWidget {
 }
 
 class _NotifButtonState extends State<_NotifButton> {
-  bool get _hasUnread => MockData.notifications.any((n) => !n.isRead);
+  int _unreadCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshUnreadCount();
+  }
+
+  Future<void> _refreshUnreadCount() async {
+    final graphql = context.read<GraphQLService>();
+    final (count, _) = await graphql.fetchMyUnreadNotificationCount();
+    if (mounted) setState(() => _unreadCount = count ?? 0);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final hasUnread = _hasUnread;
+    final hasUnread = _unreadCount > 0;
     return Semantics(
       button: true,
       label: hasUnread
@@ -97,7 +109,7 @@ class _NotifButtonState extends State<_NotifButton> {
             backgroundColor: Colors.transparent,
             builder: (_) => const NotificationsPanel(),
           );
-          if (mounted) setState(() {});
+          _refreshUnreadCount();
         },
         child: Container(
           width: 40,

@@ -4,9 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
-import '../data/mock_data.dart';
 import '../localization/lang_provider.dart';
-import '../models/contact_request_item.dart';
 import '../services/auth_service.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
@@ -23,11 +21,13 @@ class ProfileSheet extends StatefulWidget {
 class _ProfileSheetState extends State<ProfileSheet> {
   Map<String, dynamic>? _user;
   bool _loadingProfile = true;
+  int _pendingSentRequests = 0;
 
   @override
   void initState() {
     super.initState();
     _fetchProfile();
+    _fetchPendingSentCount();
   }
 
   Future<void> _fetchProfile() async {
@@ -39,6 +39,12 @@ class _ProfileSheetState extends State<ProfileSheet> {
         _loadingProfile = false;
       });
     }
+  }
+
+  Future<void> _fetchPendingSentCount() async {
+    final graphql = context.read<GraphQLService>();
+    final (requests, _) = await graphql.fetchMyContactRequests(status: 'PENDING', first: 50);
+    if (mounted) setState(() => _pendingSentRequests = requests.length);
   }
 
   void _showEditProfile() {
@@ -353,16 +359,13 @@ class _ProfileSheetState extends State<ProfileSheet> {
                   const Divider(height: 1, indent: 48),
                   _SettingsRow(
                     icon: Icons.mail_outline,
-                    label: t(context, 'Contact Requests', 'طلبات التواصل'),
-                    trailing: MockData.contactRequests
-                        .where((r) => r.status == ContactRequestStatus.pending)
-                        .length
-                        .toString(),
+                    label: t(context, 'My Contact Requests', 'طلبات التواصل الخاصة بي'),
+                    trailing: _pendingSentRequests > 0 ? _pendingSentRequests.toString() : null,
                     onTap: () async {
                       await Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const ContactRequestsScreen()),
                       );
-                      if (mounted) setState(() {});
+                      if (mounted) _fetchPendingSentCount();
                     },
                   ),
                 ],

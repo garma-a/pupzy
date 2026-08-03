@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
 
-import '../data/mock_data.dart';
 import '../localization/lang_provider.dart';
+import '../models/feed_post.dart';
+import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/adoption_card.dart';
 import '../widgets/distance_filter.dart';
+import '../widgets/image_with_fallback.dart';
 import '../widgets/top_bar.dart';
 import 'adoption_detail_screen.dart';
 
@@ -16,16 +19,90 @@ class AdoptScreen extends StatefulWidget {
 }
 
 class _AdoptScreenState extends State<AdoptScreen> {
-  Future<void> _refresh() async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (mounted) setState(() {});
+  bool _loading = true;
+  String? _errorMessage;
+  List<FeedPost> _posts = [];
+  Position? _position;
+  bool _initialized = false;
+  double? _lastRadius;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final maxDist = DistanceProvider.of(context).maxDistance;
+    if (!_initialized) {
+      _initialized = true;
+      _lastRadius = maxDist;
+      _loadFeed();
+    } else if (maxDist != _lastRadius) {
+      _lastRadius = maxDist;
+      _loadFeed();
+    }
+  }
+
+  Future<void> _fetchLocation() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) return;
+      }
+      _position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 10)),
+      );
+    } catch (_) {
+      // Location is optional — falls back to governorate/city-only filtering.
+    }
+  }
+
+  Future<void> _loadFeed() async {
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
+
+    if (_position == null) await _fetchLocation();
+    if (!mounted) return;
+
+    final graphql = context.read<GraphQLService>();
+    final (governorate, cityId) = await graphql.resolveViewerCity();
+    if (governorate == null) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _errorMessage = t(context, 'Set your city in your profile to see nearby posts.', 'حدد مدينتك في ملفك الشخصي لرؤية المنشورات القريبة.');
+        });
+      }
+      return;
+    }
+    if (!mounted) return;
+
+    final maxDist = DistanceProvider.of(context).maxDistance;
+    final (posts, error) = await graphql.fetchAdoptFeed(
+      governorate: governorate,
+      cityId: cityId,
+      latitude: _position?.latitude,
+      longitude: _position?.longitude,
+      radiusKm: maxDist.isFinite ? maxDist : null,
+    );
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      if (error != null) {
+        _errorMessage = error;
+      } else {
+        _posts = posts;
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final maxDist = DistanceProvider.of(context).maxDistance;
     final distLabel = maxDist.isFinite ? '${maxDist.toInt()}km' : '50+km';
-    final filtered = MockData.adoptionPets.where((p) => p.distance <= maxDist).toList();
 
     return DefaultTabController(
       length: 2,
@@ -79,46 +156,64 @@ class _AdoptScreenState extends State<AdoptScreen> {
                 child: TabBarView(
                   children: [
                     RefreshIndicator(
-                      onRefresh: _refresh,
+                      onRefresh: _loadFeed,
                       color: AppColors.primary,
-                      child: filtered.isEmpty
-                          ? ListView(
-                              padding: const EdgeInsets.only(bottom: 100),
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
-                                  child: Center(
+                      child: _loading && _posts.isEmpty
+                          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                          : _errorMessage != null && _posts.isEmpty
+                              ? Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                                     child: Column(
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.pets_outlined, size: 48, color: AppColors.textMuted),
+                                        const Icon(Icons.cloud_off_outlined, size: 40, color: AppColors.textMuted),
+                                        const SizedBox(height: AppSpacing.sm),
+                                        Text(_errorMessage!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted), textAlign: TextAlign.center),
                                         const SizedBox(height: AppSpacing.md),
-                                        Text(
-                                          t(context, 'No pets for adoption within this distance', 'لا توجد حيوانات للتبني ضمن هذه المسافة'),
-                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          t(context, 'Try widening your distance filter', 'جرّب توسيع نطاق المسافة'),
-                                          style: Theme.of(context).textTheme.bodySmall,
-                                          textAlign: TextAlign.center,
-                                        ),
+                                        OutlinedButton(onPressed: _loadFeed, child: Text(t(context, 'Retry', 'إعادة المحاولة'))),
                                       ],
                                     ),
                                   ),
-                                ),
-                              ],
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.only(bottom: 100),
-                              itemCount: filtered.length,
-                              itemBuilder: (_, i) => AdoptionCard(
-                                pet: filtered[i],
-                                onTap: () => Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (_) => AdoptionDetailScreen(pet: filtered[i])),
-                                ),
-                              ),
-                            ),
+                                )
+                              : _posts.isEmpty
+                                  ? ListView(
+                                      padding: const EdgeInsets.only(bottom: 100),
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+                                          child: Center(
+                                            child: Column(
+                                              children: [
+                                                const Icon(Icons.pets_outlined, size: 48, color: AppColors.textMuted),
+                                                const SizedBox(height: AppSpacing.md),
+                                                Text(
+                                                  t(context, 'No pets for adoption within this distance', 'لا توجد حيوانات للتبني ضمن هذه المسافة'),
+                                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  t(context, 'Try widening your distance filter', 'جرّب توسيع نطاق المسافة'),
+                                                  style: Theme.of(context).textTheme.bodySmall,
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : ListView.builder(
+                                      padding: const EdgeInsets.only(bottom: 100),
+                                      itemCount: _posts.length,
+                                      itemBuilder: (_, i) => _AdoptFeedCard(
+                                        post: _posts[i],
+                                        onTap: () => Navigator.of(context).push(
+                                          MaterialPageRoute(builder: (_) => AdoptionDetailScreen(postId: _posts[i].id)),
+                                        ),
+                                      ),
+                                    ),
                     ),
                     Center(
                       child: Column(
@@ -135,6 +230,81 @@ class _AdoptScreenState extends State<AdoptScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Adoption feed-list card built from base Post fields only — breed/age/
+/// personality tags require the detail screen's extension-type query.
+class _AdoptFeedCard extends StatelessWidget {
+  final FeedPost post;
+  final VoidCallback onTap;
+  const _AdoptFeedCard({required this.post, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final cityName = Localizations.localeOf(context).languageCode == 'ar' ? post.cityNameArabic : post.cityNameEnglish;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 4))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
+                  child: ImageWithFallback(url: post.primaryImageUrl ?? '', width: double.infinity, height: 300),
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 32, AppSpacing.lg, AppSpacing.md),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Colors.black.withValues(alpha: 0.65)],
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          t(context, 'MEET', 'تعرّف'),
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11, letterSpacing: 2, fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          post.title,
+                          style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          post.areaName != null ? '$cityName · ${post.areaName}' : cityName,
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.md),
+              child: Text(post.description, style: Theme.of(context).textTheme.bodyMedium, maxLines: 3, overflow: TextOverflow.ellipsis),
+            ),
+          ],
         ),
       ),
     );
