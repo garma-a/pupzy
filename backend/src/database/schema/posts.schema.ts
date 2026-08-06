@@ -5,7 +5,6 @@ import {
   varchar,
   text,
   integer,
-  boolean,
   doublePrecision,
   timestamp,
   index,

@@ -61,9 +61,9 @@ export const geometryPoint = customType<{
 // ─── Source Enum ──────────────────────────────────────────────────────────────
 
 export const vetClinicSourceEnum = pgEnum('vet_clinic_source', [
-  'OSM',           // OpenStreetMap Overpass API — primary seed source
+  'OSM', // OpenStreetMap Overpass API — primary seed source
   'GOOGLE_PLACES', // Google Places API — optional enrichment pass
-  'MANUAL',        // Hand-curated entry via AdminJS
+  'MANUAL', // Hand-curated entry via AdminJS
 ]);
 
 // ─── Table ────────────────────────────────────────────────────────────────────
@@ -101,15 +101,11 @@ export const vetClinics = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    coordinatesGistIdx: index('idx_vet_clinics_coordinates')
-      .using('gist', table.coordinates),
+    coordinatesGistIdx: index('idx_vet_clinics_coordinates').using('gist', table.coordinates),
 
-    osmIdUniqueIdx: uniqueIndex('idx_vet_clinics_osm_id')
-      .on(table.osmId)
-      .where(isNotNull(table.osmId)),
+    osmIdUniqueIdx: uniqueIndex('idx_vet_clinics_osm_id').on(table.osmId).where(isNotNull(table.osmId)),
 
-    activeCityIdx: index('idx_vet_clinics_active_city')
-      .on(table.isActive, table.cityId),
+    activeCityIdx: index('idx_vet_clinics_active_city').on(table.isActive, table.cityId),
   }),
 );
 

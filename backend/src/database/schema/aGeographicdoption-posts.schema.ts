@@ -1,19 +1,6 @@
-import {
-  pgTable,
-  uuid,
-  varchar,
-  text,
-  boolean,
-  integer,
-  index,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, boolean, integer, index } from 'drizzle-orm/pg-core';
 import { posts } from './posts.schema';
-import {
-  speciesTypeEnum,
-  genderTypeEnum,
-  ageUnitEnum,
-  spaceRequirementEnum,
-} from './enums';
+import { speciesTypeEnum, genderTypeEnum, ageUnitEnum, spaceRequirementEnum } from './enums';
 
 /**
  * `adoption_posts` — CTI extension table for `post_type = 'ADOPTION'`.
@@ -111,9 +98,7 @@ export const adoptionPosts = pgTable(
      * Whether the adopter must have prior experience with this species.
      * Shown prominently on the detail screen.
      */
-    priorPetExperienceRequired: boolean('prior_pet_experience_required')
-      .notNull()
-      .default(false),
+    priorPetExperienceRequired: boolean('prior_pet_experience_required').notNull().default(false),
 
     /**
      * Any additional requirements for adopters beyond the structured fields.
