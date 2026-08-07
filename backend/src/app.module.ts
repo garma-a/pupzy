@@ -211,7 +211,7 @@ import type { GqlContext } from './common/types/gql-context.type';
         },
         // Don't log health check endpoints (noisy)
         autoLogging: {
-          ignore: (req) => (req as any).url === '/health',
+          ignore: (req) => (req as { url?: string }).url === '/health',
         },
       },
     }),

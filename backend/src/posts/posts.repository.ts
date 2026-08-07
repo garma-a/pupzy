@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { eq, inArray, asc, desc, sql, and, ne, type SQL } from 'drizzle-orm';
+import { eq, inArray, asc, sql, and, type SQL } from 'drizzle-orm';
 import DataLoader from 'dataloader';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import {
@@ -12,7 +12,6 @@ import {
   postMedia,
   postUpvotes,
   postSaves,
-  cities,
   type Post,
   type PostMedia,
   type NewPost,

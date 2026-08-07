@@ -72,14 +72,12 @@ type VetClinic {
   whatsappPhoneUrl: String
 }
 
-"""
-Extends the Post type with a proximity-based vet clinic list.
-
-This field is computed on-demand by VetClinicsResolver and is
-ONLY available on the detail queries (post, rescuePostDetail, etc.).
-NEVER include nearestVetClinics in feed list queries (helpFeed, adoptFeed, etc.) —
-that would trigger one KNN query per post in the feed page (N+1 anti-pattern).
-"""
+# Extends the Post type with a proximity-based vet clinic list.
+#
+# This field is computed on-demand by VetClinicsResolver and is
+# ONLY available on the detail queries (post, rescuePostDetail, etc.).
+# NEVER include nearestVetClinics in feed list queries (helpFeed, adoptFeed, etc.) —
+# that would trigger one KNN query per post in the feed page (N+1 anti-pattern).
 extend type Post {
   """
   Up to 3 nearest active veterinary clinics relative to this post's location.

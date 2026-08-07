@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import DataLoader from 'dataloader';
 import { ConfigService } from '@nestjs/config';
-import { sql } from 'drizzle-orm';
+
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { UsersRepository } from './users.repository';

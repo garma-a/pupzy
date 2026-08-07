@@ -5,7 +5,7 @@ import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../common/errors/app.errors';
 import { assertUuid } from '../common/utils/validate-uuid';
-import type { AdoptionApplication, NewAdoptionApplication } from '../database/schema';
+import type { AdoptionApplication } from '../database/schema';
 import type { SubmitAdoptionApplicationInput } from './dto/submit-adoption-application.input';
 
 /**
@@ -68,7 +68,7 @@ export class AdoptionsService {
       targetPostId,
       applicantId,
       ...questionnaire,
-    } as NewAdoptionApplication);
+    });
 
     // Fire notification to post owner (non-blocking)
     const applicant = await this.usersService.findById(applicantId);
@@ -229,7 +229,7 @@ export class AdoptionsService {
   private decodeCursor(cursorBase64: string | null | undefined): { createdAt: string; id: string } | null {
     if (!cursorBase64) return null;
     try {
-      return JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8'));
+      return JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8')) as { createdAt: string; id: string };
     } catch {
       throw new ValidationError('Invalid cursor format');
     }

@@ -1,5 +1,5 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { sql, eq, and, desc } from 'drizzle-orm';
+import { sql, eq, and } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import { notifications, type Notification, type NewNotification } from '../database/schema';

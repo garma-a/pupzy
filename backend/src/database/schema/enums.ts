@@ -39,7 +39,7 @@ export const urgencyTierEnum = pgEnum('urgency_tier', ['CRITICAL', 'URGENT', 'MO
 // ANIMAL ENUMS
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const speciesTypeEnum = pgEnum('species_type', ['DOG', 'CAT', 'BIRD', 'OTHER']);
+export const speciesTypeEnum = pgEnum('species_type', ['DOG', 'CAT', 'BIRD', 'RABBIT', 'OTHER']);
 
 export const genderTypeEnum = pgEnum('gender_type', ['MALE', 'FEMALE', 'UNKNOWN']);
 

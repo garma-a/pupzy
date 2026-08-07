@@ -1,8 +1,7 @@
-import { Resolver, Query, ResolveField, Root, Context } from '@nestjs/graphql';
+import { Resolver, Query } from '@nestjs/graphql';
 import { CitiesService } from './cities.service';
 import { Public } from '../auth/firebase.guard';
 import type { City } from '../database/schema';
-import type { GqlContext } from '../common/types/gql-context.type';
 
 /**
  * CitiesResolver — serves the city list for the onboarding city picker,

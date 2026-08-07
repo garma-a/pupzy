@@ -4,6 +4,10 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { FirebaseAuthGuard } from './firebase.guard';
 import { UsersService } from '../users/users.service';
 
+jest.mock('firebase-admin/auth', () => ({
+  getAuth: jest.fn(),
+}));
+
 /**
  * Unit tests for FirebaseAuthGuard.
  *

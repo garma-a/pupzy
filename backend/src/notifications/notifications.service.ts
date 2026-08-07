@@ -101,7 +101,7 @@ export class NotificationsService {
   private decodeCursor(cursorBase64: string | null | undefined): { createdAt: string; id: string } | null {
     if (!cursorBase64) return null;
     try {
-      return JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8'));
+      return JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8')) as { createdAt: string; id: string };
     } catch {
       throw new ValidationError('Invalid cursor format');
     }

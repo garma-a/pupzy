@@ -141,7 +141,10 @@ export class VetClinicsService {
       }
     } catch (err) {
       // Cache is not guaranteed available — log and fall through to DB.
-      this.logger.warn({ key, err }, 'Cache GET failed for vet:post key');
+      this.logger.warn(
+        { key, err: err instanceof Error ? err.message : String(err) },
+        'Cache GET failed for vet:post key',
+      );
     }
 
     // ── DB query ────────────────────────────────────────────────────────────
@@ -152,7 +155,10 @@ export class VetClinicsService {
     try {
       await this.cacheManager.set(key, dtos, POST_CACHE_TTL_MS);
     } catch (err) {
-      this.logger.warn({ key, err }, 'Cache SET failed for vet:post key');
+      this.logger.warn(
+        { key, err: err instanceof Error ? err.message : String(err) },
+        'Cache SET failed for vet:post key',
+      );
     }
 
     return dtos;
@@ -177,7 +183,10 @@ export class VetClinicsService {
         return cached;
       }
     } catch (err) {
-      this.logger.warn({ key, err }, 'Cache GET failed for vet:city key');
+      this.logger.warn(
+        { key, err: err instanceof Error ? err.message : String(err) },
+        'Cache GET failed for vet:city key',
+      );
     }
 
     // ── DB query ────────────────────────────────────────────────────────────
@@ -188,7 +197,10 @@ export class VetClinicsService {
     try {
       await this.cacheManager.set(key, dtos, CITY_CACHE_TTL_MS);
     } catch (err) {
-      this.logger.warn({ key, err }, 'Cache SET failed for vet:city key');
+      this.logger.warn(
+        { key, err: err instanceof Error ? err.message : String(err) },
+        'Cache SET failed for vet:city key',
+      );
     }
 
     return dtos;

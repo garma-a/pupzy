@@ -72,8 +72,10 @@ export class GqlExceptionFilter implements NestGqlExceptionFilter {
         causeVal instanceof Error
           ? causeVal.message
           : typeof causeVal === 'object' && causeVal !== null && 'message' in causeVal
-            ? String((causeVal as any).message)
-            : String(causeVal);
+            ? String((causeVal as Record<string, unknown>).message)
+            : typeof causeVal === 'string'
+              ? causeVal
+              : JSON.stringify(causeVal);
       errorLogMessage += ` | Cause: ${cause}`;
     }
 

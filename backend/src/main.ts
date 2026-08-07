@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import type { Application } from 'express';
 import { Logger } from '@nestjs/common';
 import { Logger as PinoLogger } from 'nestjs-pino';
 import helmet from 'helmet';
@@ -33,7 +34,7 @@ async function bootstrap(): Promise<void> {
   // ── Security: HTTP headers ────────────────────────────────────────────────
   // Trust proxy is required so Throttler uses the real IP (e.g., from Cloudflare or Railway)
   // instead of the load balancer's internal IP.
-  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  (app.getHttpAdapter().getInstance() as Application).set('trust proxy', 1);
 
   // helmet sets X-Frame-Options, X-Content-Type-Options, HSTS, CSP, etc.
   // GraphQL Playground served at /graphql in development needs relaxed CSP.

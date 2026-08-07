@@ -84,11 +84,14 @@ export class FirebaseAuthGuard implements CanActivate {
     // ── 2. Extract token from GraphQL or HTTP context ────────────────────────
     let authHeader: string | undefined;
     if (context.getType() === 'http') {
-      const req = context.switchToHttp().getRequest();
+      const req = context.switchToHttp().getRequest<{ headers?: Record<string, string | undefined>; user?: unknown }>();
       authHeader = req.headers?.authorization ?? req.headers?.['authorization'];
     } else {
       const ctx = GqlExecutionContext.create(context);
-      const gqlCtx = ctx.getContext();
+      const gqlCtx = ctx.getContext<{
+        req?: { headers?: Record<string, string | undefined> };
+        connectionParams?: Record<string, string | undefined>;
+      }>();
       const req = gqlCtx.req;
       if (req) {
         authHeader = req.headers?.authorization ?? req.headers?.['authorization'];
@@ -111,7 +114,7 @@ export class FirebaseAuthGuard implements CanActivate {
 
     // ── 5. Attach user to context ───────────────────────────────────────────
     if (context.getType() === 'http') {
-      context.switchToHttp().getRequest().user = user;
+      context.switchToHttp().getRequest<{ user?: unknown }>().user = user;
     } else {
       GqlExecutionContext.create(context).getContext<GqlContext>().user = user;
     }

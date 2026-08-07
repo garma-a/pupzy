@@ -1,3 +1,4 @@
+
 /*
  * -------------------------------------------------------
  * THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
@@ -144,6 +145,33 @@ export enum PersonalityTag {
     CALM = "CALM"
 }
 
+export enum AdoptFeedSort {
+    HOT = "HOT",
+    NEWEST = "NEWEST"
+}
+
+export enum MarketFeedSort {
+    HOT = "HOT",
+    NEWEST = "NEWEST"
+}
+
+export interface SubmitAdoptionApplicationInput {
+    targetPostId: string;
+    speciesPreference?: Nullable<SpeciesType>;
+    breedPreference?: Nullable<string>;
+    agePreference?: Nullable<string>;
+    genderPreference?: Nullable<GenderType>;
+    livingSituation: LivingSituation;
+    hasOutdoorAccess: boolean;
+    hasOtherPetsAtHome: boolean;
+    hasChildrenAtHome: boolean;
+    hoursAtHomePerDay?: Nullable<number>;
+    previousPetExperience?: Nullable<string>;
+    whyAdopt: string;
+    consentHomeVisit: boolean;
+    canProvideVetReference: boolean;
+}
+
 export interface CreateRescuePostInput {
     title: string;
     description: string;
@@ -216,6 +244,11 @@ export interface CreateProductPostInput {
     mediaIds?: Nullable<string[]>;
 }
 
+export interface ViewerLocationInput {
+    latitude: number;
+    longitude: number;
+}
+
 export interface RequestMediaUploadInput {
     contentType: string;
     fileSizeBytes: number;
@@ -238,6 +271,62 @@ export interface UpdateProfileInput {
     phoneNumber?: Nullable<string>;
 }
 
+export interface AdoptionApplicationConnection {
+    edges: AdoptionApplicationEdge[];
+    pageInfo: PageInfo;
+}
+
+export interface AdoptionApplicationEdge {
+    node: AdoptionApplication;
+    cursor: string;
+}
+
+export interface IQuery {
+    myAdoptionApplications(first?: Nullable<number>, after?: Nullable<string>): AdoptionApplicationConnection | Promise<AdoptionApplicationConnection>;
+    postAdoptionApplications(postId: string, status?: Nullable<RequestStatus>, first?: Nullable<number>, after?: Nullable<string>): AdoptionApplicationConnection | Promise<AdoptionApplicationConnection>;
+    cities(): City[] | Promise<City[]>;
+    myContactRequests(postId?: Nullable<string>, status?: Nullable<RequestStatus>, first?: Nullable<number>, after?: Nullable<string>): ContactRequestConnection | Promise<ContactRequestConnection>;
+    postContactRequests(postId: string, status?: Nullable<RequestStatus>, first?: Nullable<number>, after?: Nullable<string>): ContactRequestConnection | Promise<ContactRequestConnection>;
+    getWhatsAppLink(requestId: string): string | Promise<string>;
+    getProductSellerContact(postId: string): string | Promise<string>;
+    myNotifications(first?: Nullable<number>, after?: Nullable<string>): NotificationConnection | Promise<NotificationConnection>;
+    myUnreadNotificationCount(): number | Promise<number>;
+    post(id: string): Nullable<Post> | Promise<Nullable<Post>>;
+    rescuePostDetail(postId: string): Nullable<RescuePost> | Promise<Nullable<RescuePost>>;
+    lostPostDetail(postId: string): Nullable<LostPost> | Promise<Nullable<LostPost>>;
+    adoptionPostDetail(postId: string): Nullable<AdoptionPost> | Promise<Nullable<AdoptionPost>>;
+    productPostDetail(postId: string): Nullable<ProductPost> | Promise<Nullable<ProductPost>>;
+    helpFeed(governorate?: Nullable<string>, cityId?: Nullable<string>, viewerLocation?: Nullable<ViewerLocationInput>, radiusKm?: Nullable<number>, first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
+    adoptFeed(governorate?: Nullable<string>, cityId?: Nullable<string>, viewerLocation?: Nullable<ViewerLocationInput>, radiusKm?: Nullable<number>, sort?: Nullable<AdoptFeedSort>, first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
+    marketFeed(governorate?: Nullable<string>, cityId?: Nullable<string>, viewerLocation?: Nullable<ViewerLocationInput>, radiusKm?: Nullable<number>, category?: Nullable<ProductCategory>, sort?: Nullable<MarketFeedSort>, first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
+    homeFeed(governorate?: Nullable<string>, cityId?: Nullable<string>, viewerLocation?: Nullable<ViewerLocationInput>, radiusKm?: Nullable<number>, first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
+    me(): User | Promise<User>;
+}
+
+export interface IMutation {
+    submitAdoptionApplication(input: SubmitAdoptionApplicationInput): AdoptionApplication | Promise<AdoptionApplication>;
+    approveAdoptionApplication(applicationId: string): AdoptionApplication | Promise<AdoptionApplication>;
+    rejectAdoptionApplication(applicationId: string): AdoptionApplication | Promise<AdoptionApplication>;
+    requestContact(postId: string, message: string): ContactRequest | Promise<ContactRequest>;
+    approveContactRequest(requestId: string): ContactRequest | Promise<ContactRequest>;
+    rejectContactRequest(requestId: string): ContactRequest | Promise<ContactRequest>;
+    markNotificationRead(notificationId: string): Notification | Promise<Notification>;
+    markAllNotificationsRead(): number | Promise<number>;
+    createRescuePost(input: CreateRescuePostInput): Post | Promise<Post>;
+    createLostPost(input: CreateLostPostInput): Post | Promise<Post>;
+    createAdoptionPost(input: CreateAdoptionPostInput): Post | Promise<Post>;
+    createProductPost(input: CreateProductPostInput): Post | Promise<Post>;
+    deletePost(postId: string): boolean | Promise<boolean>;
+    toggleUpvote(postId: string): Post | Promise<Post>;
+    toggleSave(postId: string): Post | Promise<Post>;
+    updatePostStatus(postId: string, status: PostStatus): Post | Promise<Post>;
+    recordView(postId: string): boolean | Promise<boolean>;
+    requestMediaUploadUrl(input: RequestMediaUploadInput): MediaUploadResponse | Promise<MediaUploadResponse>;
+    completeProfile(input: CompleteProfileInput): User | Promise<User>;
+    updateProfile(input: UpdateProfileInput): User | Promise<User>;
+    updateMyLocation(location: GeoLocationInput): User | Promise<User>;
+}
+
 export interface City {
     id: string;
     nameEnglish: string;
@@ -245,9 +334,25 @@ export interface City {
     governorate: string;
 }
 
-export interface IQuery {
-    cities(): City[] | Promise<City[]>;
-    me(): User | Promise<User>;
+export interface ContactRequestConnection {
+    edges: ContactRequestEdge[];
+    pageInfo: PageInfo;
+}
+
+export interface ContactRequestEdge {
+    node: ContactRequest;
+    cursor: string;
+}
+
+export interface NotificationConnection {
+    edges: NotificationEdge[];
+    pageInfo: PageInfo;
+    unreadCount: number;
+}
+
+export interface NotificationEdge {
+    node: Notification;
+    cursor: string;
 }
 
 export interface GeoLocation {
@@ -281,9 +386,12 @@ export interface Post {
     saveCount: number;
     viewCount: number;
     effectiveScore: number;
+    isUpvotedByMe: boolean;
+    isSavedByMe: boolean;
     media: PostMedia[];
     createdAt: DateTime;
     updatedAt: DateTime;
+    nearestVetClinics: VetClinic[];
 }
 
 export interface RescuePost {
@@ -399,15 +507,20 @@ export interface SavedSearch {
     createdAt: DateTime;
 }
 
-export interface IMutation {
-    createRescuePost(input: CreateRescuePostInput): Post | Promise<Post>;
-    createLostPost(input: CreateLostPostInput): Post | Promise<Post>;
-    createAdoptionPost(input: CreateAdoptionPostInput): Post | Promise<Post>;
-    createProductPost(input: CreateProductPostInput): Post | Promise<Post>;
-    requestMediaUploadUrl(input: RequestMediaUploadInput): MediaUploadResponse | Promise<MediaUploadResponse>;
-    completeProfile(input: CompleteProfileInput): User | Promise<User>;
-    updateProfile(input: UpdateProfileInput): User | Promise<User>;
-    updateMyLocation(location: GeoLocationInput): User | Promise<User>;
+export interface PageInfo {
+    endCursor?: Nullable<string>;
+    hasNextPage: boolean;
+}
+
+export interface PostEdge {
+    node: Post;
+    cursor: string;
+    distanceKm?: Nullable<number>;
+}
+
+export interface PostConnection {
+    edges: PostEdge[];
+    pageInfo: PageInfo;
 }
 
 export interface MediaUploadResponse {
@@ -437,6 +550,20 @@ export interface User {
     lastSeenAt?: Nullable<DateTime>;
     createdAt: DateTime;
     updatedAt: DateTime;
+}
+
+export interface VetClinic {
+    id: string;
+    nameEnglish?: Nullable<string>;
+    nameArabic?: Nullable<string>;
+    phoneNumber?: Nullable<string>;
+    address?: Nullable<string>;
+    website?: Nullable<string>;
+    latitude: number;
+    longitude: number;
+    distanceKm: number;
+    googleMapsUrl: string;
+    whatsappPhoneUrl?: Nullable<string>;
 }
 
 export type DateTime = any;

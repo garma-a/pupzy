@@ -439,20 +439,20 @@ export class PostsService {
 
   // ─── Feeds ──────────────────────────────────────────────────────────────
 
-  private decodeCursor(cursorBase64: string | null | undefined): any {
+  private decodeCursor<T = Record<string, unknown>>(cursorBase64: string | null | undefined): T | null {
     if (!cursorBase64) return null;
     try {
-      return JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8'));
+      return JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8')) as T;
     } catch {
       throw new ValidationError('Invalid cursor format');
     }
   }
 
-  private encodeCursor(cursorObj: any): string {
+  private encodeCursor(cursorObj: Record<string, unknown>): string {
     return Buffer.from(JSON.stringify(cursorObj), 'utf8').toString('base64url');
   }
 
-  private mapFeedResultToConnection(result: FeedResult, buildCursorObj: (post: Post) => any) {
+  private mapFeedResultToConnection(result: FeedResult, buildCursorObj: (post: Post) => Record<string, unknown>) {
     return {
       edges: result.rows.map((row) => ({
         node: row.post,
@@ -474,7 +474,7 @@ export class PostsService {
       viewerLocation: input.viewerLocation,
       radiusKm: input.radiusKm ?? 25,
       limit: input.first ?? 20,
-      cursor: this.decodeCursor(input.after),
+      cursor: this.decodeCursor<{ urgency: string; createdAt: string; id: string }>(input.after),
     });
     return this.mapFeedResultToConnection(result, (post) => ({
       urgency: post.urgency,
@@ -492,7 +492,7 @@ export class PostsService {
       radiusKm: input.radiusKm ?? 25,
       sort,
       limit: input.first ?? 20,
-      cursor: this.decodeCursor(input.after),
+      cursor: this.decodeCursor<{ score?: string; createdAt?: string; id: string }>(input.after),
     });
     return this.mapFeedResultToConnection(result, (post) =>
       sort === 'HOT'
@@ -511,7 +511,7 @@ export class PostsService {
       sort,
       category: input.category,
       limit: input.first ?? 20,
-      cursor: this.decodeCursor(input.after),
+      cursor: this.decodeCursor<{ score?: string; createdAt?: string; id: string }>(input.after),
     });
     return this.mapFeedResultToConnection(result, (post) =>
       sort === 'HOT'
@@ -527,7 +527,7 @@ export class PostsService {
       viewerLocation: input.viewerLocation,
       radiusKm: input.radiusKm ?? 25,
       limit: input.first ?? 20,
-      cursor: this.decodeCursor(input.after),
+      cursor: this.decodeCursor<{ id: string }>(input.after),
     });
     return this.mapFeedResultToConnection(result, (post) => ({ id: post.id }));
   }
@@ -596,7 +596,7 @@ export class PostsService {
   private runFinalizeMediaAsync(mediaIds: string[] | undefined, userId: string, postId: string): void {
     if (!mediaIds || mediaIds.length === 0) return;
 
-    Promise.allSettled(mediaIds.map((mediaId) => this.uploadService.finalizeMedia(mediaId, userId, postId))).then(
+    void Promise.allSettled(mediaIds.map((mediaId) => this.uploadService.finalizeMedia(mediaId, userId, postId))).then(
       (results) => {
         const failures = results.filter((r) => r.status === 'rejected');
         if (failures.length > 0) {

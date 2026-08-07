@@ -40,11 +40,11 @@ const paginationSchema = z.object({
 
 // ─── Feed-specific schemas ──────────────────────────────────────────────────
 
-const helpFeedSchema = locationFilterSchema.merge(paginationSchema);
+const helpFeedSchema = locationFilterSchema.and(paginationSchema);
 
-const adoptFeedSchema = locationFilterSchema.merge(paginationSchema).extend({
+const adoptFeedSchema = locationFilterSchema.and(paginationSchema).and(z.object({
   sort: z.enum(['HOT', 'NEWEST']).nullish(),
-});
+}));
 
 const PRODUCT_CATEGORIES = [
   'CARE',
@@ -56,12 +56,12 @@ const PRODUCT_CATEGORIES = [
   'OTHER',
 ] as const;
 
-const marketFeedSchema = locationFilterSchema.merge(paginationSchema).extend({
+const marketFeedSchema = locationFilterSchema.and(paginationSchema).and(z.object({
   sort: z.enum(['HOT', 'NEWEST']).nullish(),
   category: z.enum(PRODUCT_CATEGORIES).nullish(),
-});
+}));
 
-const homeFeedSchema = locationFilterSchema.merge(paginationSchema);
+const homeFeedSchema = locationFilterSchema.and(paginationSchema);
 
 // ─── Exported types ─────────────────────────────────────────────────────────
 
