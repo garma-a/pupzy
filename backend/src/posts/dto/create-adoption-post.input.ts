@@ -76,9 +76,7 @@ const createAdoptionPostSchema = z
       .default([]),
 
     /** Living space requirement for potential adopters. */
-    spaceRequirement: z
-      .enum(['APARTMENT_OK', 'NEEDS_YARD', 'NEEDS_FARM_OR_LARGE_SPACE'])
-      .optional(),
+    spaceRequirement: z.enum(['APARTMENT_OK', 'NEEDS_YARD', 'NEEDS_FARM_OR_LARGE_SPACE']).optional(),
 
     /** Whether prior pet ownership experience is required. */
     priorPetExperienceRequired: z.boolean(),

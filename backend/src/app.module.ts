@@ -189,28 +189,24 @@ import type { GqlContext } from './common/types/gql-context.type';
          */
         genReqId: (req) => (req.headers['x-request-id'] as string) ?? randomUUID(),
         level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-        transport: process.env.NODE_ENV !== 'production'
-          ? {
-              target: 'pino-pretty',
-              options: {
-                colorize: true,
-                singleLine: true,
-                translateTime: 'SYS:HH:MM:ss.l',
-                ignore: 'pid,hostname',
-              },
-            }
-          : undefined,
+        transport:
+          process.env.NODE_ENV !== 'production'
+            ? {
+                target: 'pino-pretty',
+                options: {
+                  colorize: true,
+                  singleLine: true,
+                  translateTime: 'SYS:HH:MM:ss.l',
+                  ignore: 'pid,hostname',
+                },
+              }
+            : undefined,
         /**
          * Redact sensitive fields from logs.
          * Prevents accidental exposure of tokens, passwords, phone numbers.
          */
         redact: {
-          paths: [
-            'req.headers.authorization',
-            'req.headers.cookie',
-            'req.body.password',
-            'req.body.phoneNumber',
-          ],
+          paths: ['req.headers.authorization', 'req.headers.cookie', 'req.body.password', 'req.body.phoneNumber'],
           censor: '[REDACTED]',
         },
         // Don't log health check endpoints (noisy)

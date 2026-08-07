@@ -501,8 +501,8 @@ extend type Query {
   Filtered by governorate and optional city. Optional radius proximity filter.
   """
   helpFeed(
-    """Required. Governorate name to filter posts."""
-    governorate: String!
+    """Optional. Governorate name to scope results. Omit when filtering by radius from viewerLocation or city center."""
+    governorate: String
     """Optional. Specific city ID within the governorate."""
     cityId: ID
     """Optional. Viewer's GPS for distance calc and radius filtering."""
@@ -519,7 +519,7 @@ extend type Query {
   Adopt Feed — ADOPTION posts ranked by engagement score (HOT) or newest.
   """
   adoptFeed(
-    governorate: String!
+    governorate: String
     cityId: ID
     viewerLocation: ViewerLocationInput
     radiusKm: Float
@@ -534,7 +534,7 @@ extend type Query {
   Supports optional category filtering without joining product_posts.
   """
   marketFeed(
-    governorate: String!
+    governorate: String
     cityId: ID
     viewerLocation: ViewerLocationInput
     radiusKm: Float
@@ -551,7 +551,7 @@ extend type Query {
   The main landing screen combining RESCUE, LOST, ADOPTION, and PRODUCT posts.
   """
   homeFeed(
-    governorate: String!
+    governorate: String
     cityId: ID
     viewerLocation: ViewerLocationInput
     radiusKm: Float

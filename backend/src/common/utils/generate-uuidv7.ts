@@ -35,11 +35,11 @@ export function generateUuidV7(): string {
   timeBytes.copy(uuid, 0);
 
   // Bytes 6-7: version (0111) + 12 bits random
-  uuid[6] = (0x70 | (randBytes[0] & 0x0f)); // version 7
+  uuid[6] = 0x70 | (randBytes[0] & 0x0f); // version 7
   uuid[7] = randBytes[1];
 
   // Bytes 8-9: variant (10) + 14 bits random
-  uuid[8] = (0x80 | (randBytes[2] & 0x3f)); // variant 10xx
+  uuid[8] = 0x80 | (randBytes[2] & 0x3f); // variant 10xx
   uuid[9] = randBytes[3];
 
   // Bytes 10-15: 48 bits random
@@ -47,11 +47,5 @@ export function generateUuidV7(): string {
 
   // Format as standard UUID string
   const hex = uuid.toString('hex');
-  return [
-    hex.slice(0, 8),
-    hex.slice(8, 12),
-    hex.slice(12, 16),
-    hex.slice(16, 20),
-    hex.slice(20, 32),
-  ].join('-');
+  return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20, 32)].join('-');
 }

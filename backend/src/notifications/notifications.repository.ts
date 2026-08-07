@@ -2,11 +2,7 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { sql, eq, and, desc } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
-import {
-  notifications,
-  type Notification,
-  type NewNotification,
-} from '../database/schema';
+import { notifications, type Notification, type NewNotification } from '../database/schema';
 
 /**
  * NotificationsRepository — data access layer for the notifications table.
@@ -32,10 +28,7 @@ export class NotificationsRepository {
    * Called by NotificationsService.fireNotification() — fire-and-forget.
    */
   async create(data: NewNotification): Promise<Notification> {
-    const [notification] = await this.db
-      .insert(notifications)
-      .values(data)
-      .returning();
+    const [notification] = await this.db.insert(notifications).values(data).returning();
     return notification;
   }
 
@@ -97,19 +90,11 @@ export class NotificationsRepository {
    * Marks a single notification as read.
    * Verifies recipient ownership — only your own notifications can be marked.
    */
-  async markRead(
-    notificationId: string,
-    recipientId: string,
-  ): Promise<Notification | undefined> {
+  async markRead(notificationId: string, recipientId: string): Promise<Notification | undefined> {
     const [updated] = await this.db
       .update(notifications)
       .set({ isRead: true })
-      .where(
-        and(
-          eq(notifications.id, notificationId),
-          eq(notifications.recipientId, recipientId),
-        ),
-      )
+      .where(and(eq(notifications.id, notificationId), eq(notifications.recipientId, recipientId)))
       .returning();
     return updated;
   }

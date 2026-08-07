@@ -28,15 +28,8 @@ export class UploadResolver {
    * before any S3 calls are made.
    */
   @Mutation('requestMediaUploadUrl')
-  async requestMediaUploadUrl(
-    @Args('input') input: unknown,
-    @Context() context: GqlContext,
-  ) {
+  async requestMediaUploadUrl(@Args('input') input: unknown, @Context() context: GqlContext) {
     const validated = validateRequestMediaUploadInput(input);
-    return this.uploadService.generatePresignedUrl(
-      context.user!.id,
-      validated.contentType,
-      validated.fileSizeBytes,
-    );
+    return this.uploadService.generatePresignedUrl(context.user!.id, validated.contentType, validated.fileSizeBytes);
   }
 }

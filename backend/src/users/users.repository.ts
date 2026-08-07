@@ -13,29 +13,17 @@ export class UsersRepository {
   ) {}
 
   async findByFirebaseUserId(firebaseUserId: string): Promise<User | undefined> {
-    const [user] = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.firebaseUserId, firebaseUserId))
-      .limit(1);
+    const [user] = await this.db.select().from(users).where(eq(users.firebaseUserId, firebaseUserId)).limit(1);
     return user;
   }
 
   async findByEmail(email: string): Promise<User | undefined> {
-    const [user] = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
+    const [user] = await this.db.select().from(users).where(eq(users.email, email)).limit(1);
     return user;
   }
 
   async findById(id: string): Promise<User | undefined> {
-    const [user] = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.id, id))
-      .limit(1);
+    const [user] = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
     return user;
   }
 

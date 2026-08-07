@@ -11,15 +11,7 @@ import {
   validateMarketFeedInput,
   validateHomeFeedInput,
 } from './dto/feed-query.input';
-import type {
-  Post,
-  City,
-  PostMedia,
-  RescuePost,
-  LostPost,
-  AdoptionPost,
-  ProductPost,
-} from '../database/schema';
+import type { Post, City, PostMedia, RescuePost, LostPost, AdoptionPost, ProductPost } from '../database/schema';
 import type { GqlContext } from '../common/types/gql-context.type';
 
 /**
@@ -135,10 +127,7 @@ export class PostsResolver {
    * Urgency is required. Coordinates visible to clients.
    */
   @Mutation('createRescuePost')
-  async createRescuePost(
-    @Args('input') input: unknown,
-    @Context() ctx: GqlContext,
-  ): Promise<Post> {
+  async createRescuePost(@Args('input') input: unknown, @Context() ctx: GqlContext): Promise<Post> {
     const validated = validateCreateRescuePostInput(input);
     return this.postsService.createRescuePost(ctx.user!.id, validated);
   }
@@ -148,10 +137,7 @@ export class PostsResolver {
    * Urgency is required. Coordinates visible to clients.
    */
   @Mutation('createLostPost')
-  async createLostPost(
-    @Args('input') input: unknown,
-    @Context() ctx: GqlContext,
-  ): Promise<Post> {
+  async createLostPost(@Args('input') input: unknown, @Context() ctx: GqlContext): Promise<Post> {
     const validated = validateCreateLostPostInput(input);
     return this.postsService.createLostPost(ctx.user!.id, validated);
   }
@@ -161,10 +147,7 @@ export class PostsResolver {
    * No urgency. Coordinates hidden from clients.
    */
   @Mutation('createAdoptionPost')
-  async createAdoptionPost(
-    @Args('input') input: unknown,
-    @Context() ctx: GqlContext,
-  ): Promise<Post> {
+  async createAdoptionPost(@Args('input') input: unknown, @Context() ctx: GqlContext): Promise<Post> {
     const validated = validateCreateAdoptionPostInput(input);
     return this.postsService.createAdoptionPost(ctx.user!.id, validated);
   }
@@ -174,10 +157,7 @@ export class PostsResolver {
    * No urgency. Coordinates hidden from clients.
    */
   @Mutation('createProductPost')
-  async createProductPost(
-    @Args('input') input: unknown,
-    @Context() ctx: GqlContext,
-  ): Promise<Post> {
+  async createProductPost(@Args('input') input: unknown, @Context() ctx: GqlContext): Promise<Post> {
     const validated = validateCreateProductPostInput(input);
     return this.postsService.createProductPost(ctx.user!.id, validated);
   }
@@ -189,10 +169,7 @@ export class PostsResolver {
    * Only the post creator can delete their own post.
    */
   @Mutation('deletePost')
-  async deletePost(
-    @Args('postId') postId: string,
-    @Context() ctx: GqlContext,
-  ): Promise<boolean> {
+  async deletePost(@Args('postId') postId: string, @Context() ctx: GqlContext): Promise<boolean> {
     await this.postsService.deletePost(postId, ctx.user!.id);
     return true;
   }
@@ -203,10 +180,7 @@ export class PostsResolver {
    * Recalculates effective_score for ADOPTION posts.
    */
   @Mutation('toggleUpvote')
-  async toggleUpvote(
-    @Args('postId') postId: string,
-    @Context() ctx: GqlContext,
-  ): Promise<Post> {
+  async toggleUpvote(@Args('postId') postId: string, @Context() ctx: GqlContext): Promise<Post> {
     return this.postsService.toggleUpvote(postId, ctx.user!.id);
   }
 
@@ -216,10 +190,7 @@ export class PostsResolver {
    * Recalculates effective_score for ADOPTION and PRODUCT.
    */
   @Mutation('toggleSave')
-  async toggleSave(
-    @Args('postId') postId: string,
-    @Context() ctx: GqlContext,
-  ): Promise<Post> {
+  async toggleSave(@Args('postId') postId: string, @Context() ctx: GqlContext): Promise<Post> {
     return this.postsService.toggleSave(postId, ctx.user!.id);
   }
 
@@ -244,10 +215,7 @@ export class PostsResolver {
    * Records a view on a post. Deduplicated per user per hour.
    */
   @Mutation('recordView')
-  async recordView(
-    @Args('postId') postId: string,
-    @Context() ctx: GqlContext,
-  ): Promise<boolean> {
+  async recordView(@Args('postId') postId: string, @Context() ctx: GqlContext): Promise<boolean> {
     return this.postsService.recordView(postId, ctx.user!.id);
   }
 
@@ -274,10 +242,10 @@ export class PostsResolver {
 
     // Drizzle geometry(point) is mapped to [longitude, latitude] tuple
     if (Array.isArray(post.coordinates)) {
-      const [longitude, latitude] = post.coordinates as [number, number];
+      const [longitude, latitude] = post.coordinates;
       return { latitude, longitude };
     }
-    
+
     // Fallback if returned as EWKT string by pg driver
     if (typeof post.coordinates === 'string') {
       const match = (post.coordinates as string).match(/POINT\(([^ ]+) ([^ ]+)\)/);
@@ -287,7 +255,7 @@ export class PostsResolver {
         longitude: parseFloat(match[1]),
       };
     }
-    
+
     return null;
   }
 

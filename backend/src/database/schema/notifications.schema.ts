@@ -36,7 +36,9 @@ export const notifications = pgTable(
   'notifications',
   {
     /** Internal notification ID. Primary key, UUIDv7. */
-    id: uuid('id').primaryKey().default(sql`uuidv7()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
 
     /** FK → users (notification recipient). CASCADE on user delete. */
     recipientId: uuid('recipient_id')
@@ -64,19 +66,17 @@ export const notifications = pgTable(
      * Optional link to the related contact request.
      * SET NULL if the contact request is later deleted.
      */
-    relatedContactRequestId: uuid('related_contact_request_id').references(
-      () => contactRequests.id,
-      { onDelete: 'set null' },
-    ),
+    relatedContactRequestId: uuid('related_contact_request_id').references(() => contactRequests.id, {
+      onDelete: 'set null',
+    }),
 
     /**
      * Optional link to the related adoption application.
      * SET NULL if the application is later deleted.
      */
-    relatedApplicationId: uuid('related_application_id').references(
-      () => adoptionApplications.id,
-      { onDelete: 'set null' },
-    ),
+    relatedApplicationId: uuid('related_application_id').references(() => adoptionApplications.id, {
+      onDelete: 'set null',
+    }),
 
     /** Whether the recipient has read this notification. */
     isRead: boolean('is_read').notNull().default(false),
@@ -89,10 +89,7 @@ export const notifications = pgTable(
      * Primary query pattern: fetch latest notifications for a user.
      * `ORDER BY created_at DESC` with a per-recipient filter.
      */
-    recipientTimeIdx: index('idx_notifications_recipient_time').on(
-      table.recipientId,
-      table.createdAt,
-    ),
+    recipientTimeIdx: index('idx_notifications_recipient_time').on(table.recipientId, table.createdAt),
 
     /*
      * Partial index for unread badge count:

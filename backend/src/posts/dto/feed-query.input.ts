@@ -4,33 +4,29 @@ import { ValidationError } from '../../common/errors/app.errors';
 // ─── Shared sub-schemas ─────────────────────────────────────────────────────
 
 const viewerLocationSchema = z.object({
-  latitude: z
-    .number()
-    .min(-90, 'latitude must be >= -90')
-    .max(90, 'latitude must be <= 90'),
-  longitude: z
-    .number()
-    .min(-180, 'longitude must be >= -180')
-    .max(180, 'longitude must be <= 180'),
+  latitude: z.number().min(-90, 'latitude must be >= -90').max(90, 'latitude must be <= 90'),
+  longitude: z.number().min(-180, 'longitude must be >= -180').max(180, 'longitude must be <= 180'),
 });
 
 /**
  * Location filter schema.
- * - governorate: Required. Filters posts by Egyptian governorate.
- * - cityId: Optional. Narrows to a specific city within the governorate.
+ * - governorate: Optional. Filters posts by Egyptian governorate. Omit for radius-only filtering.
+ * - cityId: Optional. Narrows to a specific city; also used as radius center when no GPS.
  * - viewerLocation: Optional. GPS for distance calc and radius filtering.
  * - radiusKm: Optional. Proximity radius in km. Default 25, range [1, 100].
+ *
+ * At least one of governorate, cityId, or viewerLocation must be provided.
  */
-const locationFilterSchema = z.object({
-  governorate: z.string().min(1, 'governorate is required').max(100),
-  cityId: z.string().uuid('cityId must be a valid UUID').nullish(),
-  viewerLocation: viewerLocationSchema.nullish(),
-  radiusKm: z
-    .number()
-    .min(1, 'radiusKm minimum is 1')
-    .max(100, 'radiusKm maximum is 100')
-    .nullish(),
-});
+const locationFilterSchema = z
+  .object({
+    governorate: z.string().min(1).max(100).nullish(),
+    cityId: z.string().uuid('cityId must be a valid UUID').nullish(),
+    viewerLocation: viewerLocationSchema.nullish(),
+    radiusKm: z.number().min(1, 'radiusKm minimum is 1').max(100, 'radiusKm maximum is 100').nullish(),
+  })
+  .refine((data) => data.governorate || data.cityId || data.viewerLocation, {
+    message: 'At least one of governorate, cityId, or viewerLocation must be provided',
+  });
 
 /**
  * Pagination schema.
@@ -77,9 +73,7 @@ export type HomeFeedInput = z.infer<typeof homeFeedSchema>;
 // ─── Validation helpers ─────────────────────────────────────────────────────
 
 function formatZodErrors(error: z.ZodError): string {
-  return error.issues
-    .map((i) => `${i.path.join('.')}: ${i.message}`)
-    .join('; ');
+  return error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
 }
 
 export function validateHelpFeedInput(raw: unknown): HelpFeedInput {

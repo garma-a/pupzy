@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
@@ -21,12 +23,12 @@ import { NotFoundError } from '../common/errors/app.errors';
  *
  * 1. **Staging** (`generatePresignedUrl`):
  *    The client requests a presigned PUT URL. The file is uploaded to a
- *    `staging/{userId}/{mediaId}.webp` key. This key is isolated per user
+ *    `staging/{userId}/{mediaId}.{ext}` key. This key is isolated per user
  *    so one user cannot overwrite another's staging files.
  *
  * 2. **Finalization** (`finalizeMedia`):
  *    When the post is created, the server moves the staged file to its
- *    permanent location at `posts/{postId}/{mediaId}.webp` using a
+ *    permanent location at `posts/{postId}/{mediaId}.{ext}` using a
  *    server-side copy + delete. This ensures only files attached to a valid
  *    post appear in the public namespace.
  *
@@ -35,11 +37,32 @@ import { NotFoundError } from '../common/errors/app.errors';
  */
 @Injectable()
 export class UploadService {
+  private readonly logger = new Logger(UploadService.name);
   private readonly s3Client: S3Client;
   private readonly bucketName: string;
   private readonly publicUrl: string;
 
-  constructor(private readonly config: ConfigService) {
+  /**
+   * Maps an allowed MIME type to its canonical file extension.
+   * Only called with validated content types from the Zod schema.
+   */
+  private static mimeToExtension(contentType: string): string {
+    switch (contentType) {
+      case 'image/jpeg':
+        return '.jpg';
+      case 'image/png':
+        return '.png';
+      case 'image/webp':
+        return '.webp';
+      default:
+        return '.webp';
+    }
+  }
+
+  constructor(
+    private readonly config: ConfigService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+  ) {
     this.s3Client = new S3Client({
       region: 'auto',
       endpoint: `https://${config.get('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com`,
@@ -55,7 +78,7 @@ export class UploadService {
   /**
    * Generates a presigned PUT URL for the client to upload an image directly to R2.
    *
-   * The file lands in a staging namespace (`staging/{userId}/{mediaId}.webp`)
+   * The file lands in a staging namespace (`staging/{userId}/{mediaId}.{ext}`)
    * and is NOT publicly accessible until {@link finalizeMedia} moves it to
    * the permanent `posts/` namespace.
    *
@@ -78,7 +101,8 @@ export class UploadService {
     stagingKey: string;
   }> {
     const mediaId = generateUuidV7();
-    const stagingKey = `staging/${userId}/${mediaId}.webp`;
+    const ext = UploadService.mimeToExtension(contentType);
+    const stagingKey = `staging/${userId}/${mediaId}${ext}`;
 
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
@@ -89,6 +113,9 @@ export class UploadService {
 
     /** 10-minute expiry — long enough for mobile uploads on slow connections. */
     const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 600 });
+
+    // Cache the content type for retrieval during post creation (15 min TTL).
+    await this.cacheManager.set(`media_ct:${mediaId}`, contentType, 900_000);
 
     return {
       mediaId,
@@ -109,7 +136,7 @@ export class UploadService {
    *    rather than creating a post with a broken image.
    *
    * 2. **Copy** — `CopyObjectCommand` copies the object from staging to its
-   *    final key (`posts/{postId}/{mediaId}.webp`).
+   *    final key (`posts/{postId}/{mediaId}.{ext}`).
    *
    * 3. **Delete** — `DeleteObjectCommand` removes the original staging object.
    *
@@ -128,8 +155,10 @@ export class UploadService {
     publicUrl: string;
     cloudflareStorageKey: string;
   }> {
-    const stagingKey = `staging/${userId}/${mediaId}.webp`;
-    const finalKey = `posts/${postId}/${mediaId}.webp`;
+    const contentType = (await this.cacheManager.get<string>(`media_ct:${mediaId}`)) ?? 'image/webp';
+    const ext = UploadService.mimeToExtension(contentType);
+    const stagingKey = `staging/${userId}/${mediaId}${ext}`;
+    const finalKey = `posts/${postId}/${mediaId}${ext}`;
 
     // Step 1: Verify the staged upload actually exists
     try {
@@ -160,6 +189,9 @@ export class UploadService {
       }),
     );
 
+    // Step 4: Clean up cached content type
+    await this.cacheManager.del(`media_ct:${mediaId}`);
+
     return {
       publicUrl: `${this.publicUrl}/${finalKey}`,
       cloudflareStorageKey: finalKey,
@@ -170,16 +202,21 @@ export class UploadService {
    * Predicts the final URLs for a staged media file.
    * Useful for DB insertion before moving the actual bytes.
    */
-  getExpectedMediaUrls(mediaId: string, postId: string): {
+  async getExpectedMediaUrls(
+    mediaId: string,
+    postId: string,
+  ): Promise<{
     publicUrl: string;
     cloudflareStorageKey: string;
-    fileContentType: 'image/webp';
-  } {
-    const finalKey = `posts/${postId}/${mediaId}.webp`;
+    fileContentType: string;
+  }> {
+    const contentType = (await this.cacheManager.get<string>(`media_ct:${mediaId}`)) ?? 'image/webp';
+    const ext = UploadService.mimeToExtension(contentType);
+    const finalKey = `posts/${postId}/${mediaId}${ext}`;
     return {
       publicUrl: `${this.publicUrl}/${finalKey}`,
       cloudflareStorageKey: finalKey,
-      fileContentType: 'image/webp',
+      fileContentType: contentType,
     };
   }
 }

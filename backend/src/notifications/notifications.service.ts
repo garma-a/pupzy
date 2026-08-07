@@ -16,9 +16,7 @@ import type { Notification, NewNotification } from '../database/schema';
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(
-    private readonly notificationsRepository: NotificationsRepository,
-  ) {}
+  constructor(private readonly notificationsRepository: NotificationsRepository) {}
 
   /**
    * Fire-and-forget notification creation.
@@ -44,11 +42,7 @@ export class NotificationsService {
    * Returns paginated notifications for the current user, newest first.
    * Also includes the total unread count for the badge indicator.
    */
-  async getMyNotifications(
-    userId: string,
-    first: number | null | undefined,
-    afterCursor: string | null | undefined,
-  ) {
+  async getMyNotifications(userId: string, first: number | null | undefined, afterCursor: string | null | undefined) {
     const limit = Math.min(first ?? 20, 50);
     const cursor = this.decodeCursor(afterCursor);
 
@@ -68,10 +62,7 @@ export class NotificationsService {
       })),
       pageInfo: {
         hasNextPage: result.hasNextPage,
-        endCursor:
-          result.rows.length > 0
-            ? this.encodeCursor(result.rows[result.rows.length - 1])
-            : null,
+        endCursor: result.rows.length > 0 ? this.encodeCursor(result.rows[result.rows.length - 1]) : null,
       },
       unreadCount,
     };
@@ -88,16 +79,10 @@ export class NotificationsService {
    * Marks a single notification as read.
    * @throws {NotFoundError} if the notification doesn't exist or doesn't belong to the user.
    */
-  async markRead(
-    notificationId: string,
-    userId: string,
-  ): Promise<Notification> {
+  async markRead(notificationId: string, userId: string): Promise<Notification> {
     assertUuid(notificationId, 'notificationId');
 
-    const updated = await this.notificationsRepository.markRead(
-      notificationId,
-      userId,
-    );
+    const updated = await this.notificationsRepository.markRead(notificationId, userId);
     if (!updated) {
       throw new NotFoundError('Notification', notificationId);
     }
@@ -113,14 +98,10 @@ export class NotificationsService {
 
   // ─── Cursor helpers ─────────────────────────────────────────────────────
 
-  private decodeCursor(
-    cursorBase64: string | null | undefined,
-  ): { createdAt: string; id: string } | null {
+  private decodeCursor(cursorBase64: string | null | undefined): { createdAt: string; id: string } | null {
     if (!cursorBase64) return null;
     try {
-      return JSON.parse(
-        Buffer.from(cursorBase64, 'base64url').toString('utf8'),
-      );
+      return JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8'));
     } catch {
       throw new ValidationError('Invalid cursor format');
     }

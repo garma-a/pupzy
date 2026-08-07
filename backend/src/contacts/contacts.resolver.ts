@@ -31,13 +31,7 @@ export class ContactsResolver {
     @Args('after') after: string | undefined,
     @Context() ctx: GqlContext,
   ) {
-    return this.contactsService.getMyContactRequests(
-      ctx.user!.id,
-      postId,
-      status,
-      first,
-      after,
-    );
+    return this.contactsService.getMyContactRequests(ctx.user!.id, postId, status, first, after);
   }
 
   @Query('postContactRequests')
@@ -48,20 +42,11 @@ export class ContactsResolver {
     @Args('after') after: string | undefined,
     @Context() ctx: GqlContext,
   ) {
-    return this.contactsService.getPostContactRequests(
-      ctx.user!.id,
-      postId,
-      status,
-      first,
-      after,
-    );
+    return this.contactsService.getPostContactRequests(ctx.user!.id, postId, status, first, after);
   }
 
   @Query('getWhatsAppLink')
-  async getWhatsAppLink(
-    @Args('requestId') requestId: string,
-    @Context() ctx: GqlContext,
-  ): Promise<string> {
+  async getWhatsAppLink(@Args('requestId') requestId: string, @Context() ctx: GqlContext): Promise<string> {
     return this.contactsService.getWhatsAppLink(ctx.user!.id, requestId);
   }
 
@@ -71,14 +56,8 @@ export class ContactsResolver {
    */
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Query('getProductSellerContact')
-  async getProductSellerContact(
-    @Args('postId') postId: string,
-    @Context() ctx: GqlContext,
-  ): Promise<string> {
-    return this.contactsService.getProductSellerContact(
-      ctx.user!.id,
-      postId,
-    );
+  async getProductSellerContact(@Args('postId') postId: string, @Context() ctx: GqlContext): Promise<string> {
+    return this.contactsService.getProductSellerContact(ctx.user!.id, postId);
   }
 
   // ─── Mutations ──────────────────────────────────────────────────────
@@ -90,22 +69,12 @@ export class ContactsResolver {
     @Context() ctx: GqlContext,
   ): Promise<ContactRequest> {
     const validated = validateRequestContactInput({ postId, message });
-    return this.contactsService.requestContact(
-      ctx.user!.id,
-      validated.postId,
-      validated.message,
-    );
+    return this.contactsService.requestContact(ctx.user!.id, validated.postId, validated.message);
   }
 
   @Mutation('approveContactRequest')
-  async approveContactRequest(
-    @Args('requestId') requestId: string,
-    @Context() ctx: GqlContext,
-  ) {
-    return this.contactsService.approveContactRequest(
-      ctx.user!.id,
-      requestId,
-    );
+  async approveContactRequest(@Args('requestId') requestId: string, @Context() ctx: GqlContext) {
+    return this.contactsService.approveContactRequest(ctx.user!.id, requestId);
   }
 
   @Mutation('rejectContactRequest')
@@ -113,10 +82,7 @@ export class ContactsResolver {
     @Args('requestId') requestId: string,
     @Context() ctx: GqlContext,
   ): Promise<ContactRequest> {
-    return this.contactsService.rejectContactRequest(
-      ctx.user!.id,
-      requestId,
-    );
+    return this.contactsService.rejectContactRequest(ctx.user!.id, requestId);
   }
 
   // ─── Field Resolvers ──────────────────────────────────────────────────
@@ -126,10 +92,7 @@ export class ContactsResolver {
    * Uses the `userById` DataLoader to batch-load users efficiently.
    */
   @ResolveField('requester')
-  async requester(
-    @Parent() contactRequest: ContactRequest,
-    @Context() ctx: GqlContext,
-  ): Promise<User | null> {
+  async requester(@Parent() contactRequest: ContactRequest, @Context() ctx: GqlContext): Promise<User | null> {
     return ctx.loaders.userById.load(contactRequest.requesterId);
   }
 }

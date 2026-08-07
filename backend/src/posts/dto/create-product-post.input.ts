@@ -33,15 +33,7 @@ const createProductPostSchema = z
     areaName: z.string().max(200).trim().optional(),
 
     /** Product category. */
-    category: z.enum([
-      'CARE',
-      'FOOD',
-      'TRANSPORT',
-      'ACCESSORIES',
-      'GROOMING',
-      'MEDICAL_SUPPLIES',
-      'OTHER',
-    ]),
+    category: z.enum(['CARE', 'FOOD', 'TRANSPORT', 'ACCESSORIES', 'GROOMING', 'MEDICAL_SUPPLIES', 'OTHER']),
 
     /** Physical condition of the product. */
     condition: z.enum(['NEW', 'LIKE_NEW', 'USED']),
@@ -54,10 +46,7 @@ const createProductPostSchema = z
     priceAmount: z.number().positive('Price must be greater than 0').optional(),
 
     /** ISO 4217 3-letter currency code — defaults to 'EGP'. */
-    priceCurrency: z
-      .string()
-      .length(3, 'Currency must be a 3-letter ISO code')
-      .default('EGP'),
+    priceCurrency: z.string().length(3, 'Currency must be a 3-letter ISO code').default('EGP'),
 
     /** Whether the product is being given away for free. */
     isFree: z.boolean(),

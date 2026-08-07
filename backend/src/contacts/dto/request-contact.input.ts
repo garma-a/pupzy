@@ -18,9 +18,7 @@ export type RequestContactInput = z.infer<typeof requestContactSchema>;
 export function validateRequestContactInput(raw: unknown): RequestContactInput {
   const result = requestContactSchema.safeParse(raw);
   if (!result.success) {
-    const msg = result.error.issues
-      .map((i) => `${i.path.join('.')}: ${i.message}`)
-      .join('; ');
+    const msg = result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     throw new ValidationError(msg);
   }
   return result.data;

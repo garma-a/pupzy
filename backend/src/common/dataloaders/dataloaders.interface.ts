@@ -44,4 +44,3 @@ export interface DataLoaders {
    */
   savedByMe: DataLoader<string, boolean>;
 }
-

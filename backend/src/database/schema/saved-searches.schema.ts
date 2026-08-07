@@ -32,7 +32,9 @@ export const savedSearches = pgTable(
   'saved_searches',
   {
     /** Internal saved search ID. Primary key, UUIDv7. */
-    id: uuid('id').primaryKey().default(sql`uuidv7()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
 
     /** FK → users (owner of this alert). CASCADE on user delete. */
     userId: uuid('user_id')
@@ -83,11 +85,7 @@ export const savedSearches = pgTable(
      * Match index — used by the post-creation hook to find matching alerts.
      * Covers the most selective filter combination.
      */
-    matchIdx: index('idx_saved_searches_match').on(
-      table.postType,
-      table.cityId,
-      table.species,
-    ),
+    matchIdx: index('idx_saved_searches_match').on(table.postType, table.cityId, table.species),
   }),
 );
 

@@ -756,7 +756,11 @@ async function seed() {
             'User-Agent': 'PupzyVetCollector/1.0 (https://pupzy.app)',
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-          body: 'data=' + encodeURIComponent(`[out:json][timeout:60];area["ISO3166-1"="EG"]->.searchArea;(node["amenity"="veterinary"](area.searchArea);way["amenity"="veterinary"](area.searchArea);relation["amenity"="veterinary"](area.searchArea););out center body;`),
+          body:
+            'data=' +
+            encodeURIComponent(
+              `[out:json][timeout:60];area["ISO3166-1"="EG"]->.searchArea;(node["amenity"="veterinary"](area.searchArea);way["amenity"="veterinary"](area.searchArea);relation["amenity"="veterinary"](area.searchArea););out center body;`,
+            ),
         });
         const text = await res.text();
         if (text.startsWith('{')) {
@@ -812,7 +816,7 @@ async function seed() {
           ORDER BY center_point <-> ST_SetSRID(ST_MakePoint(${clinic.longitude}, ${clinic.latitude}), 4326)
           LIMIT 1
         `);
-        cityId = (res.rows[0]?.id as string) ?? null;
+        cityId = res.rows[0]?.id ?? null;
         cityCache.set(key, cityId);
       }
 
@@ -855,4 +859,3 @@ seed().catch((err) => {
   console.error(err);
   process.exit(1);
 });
-

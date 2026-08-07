@@ -14,11 +14,7 @@ import { NotificationsRepository } from './notifications.repository';
  * - `DatabaseModule` — global, provides DATABASE_TOKEN for Drizzle.
  */
 @Module({
-  providers: [
-    NotificationsResolver,
-    NotificationsService,
-    NotificationsRepository,
-  ],
+  providers: [NotificationsResolver, NotificationsService, NotificationsRepository],
   exports: [NotificationsService],
 })
 export class NotificationsModule {}

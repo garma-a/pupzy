@@ -68,7 +68,12 @@ export class GqlExceptionFilter implements NestGqlExceptionFilter {
     let errorLogMessage = `[Unhandled Exception] ${err.message}`;
     if (err.cause) {
       const causeVal = err.cause;
-      const cause = causeVal instanceof Error ? causeVal.message : typeof causeVal === 'object' && causeVal !== null && 'message' in causeVal ? String((causeVal as any).message) : String(causeVal);
+      const cause =
+        causeVal instanceof Error
+          ? causeVal.message
+          : typeof causeVal === 'object' && causeVal !== null && 'message' in causeVal
+            ? String((causeVal as any).message)
+            : String(causeVal);
       errorLogMessage += ` | Cause: ${cause}`;
     }
 

@@ -10,26 +10,13 @@ import { ValidationError, NotFoundError, ForbiddenError } from '../common/errors
 import { assertUuid } from '../common/utils/validate-uuid';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import type {
-  Post,
-  NewPost,
-  NewPostMedia,
-  RescuePost,
-  LostPost,
-  AdoptionPost,
-  ProductPost,
-} from '../database/schema';
+import type { Post, NewPost, NewPostMedia, RescuePost, LostPost, AdoptionPost, ProductPost } from '../database/schema';
 import type { CreateRescuePostInput } from './dto/create-rescue-post.input';
 import type { CreateLostPostInput } from './dto/create-lost-post.input';
 import type { CreateAdoptionPostInput } from './dto/create-adoption-post.input';
 import type { CreateProductPostInput } from './dto/create-product-post.input';
 import type { FeedResult } from './posts.repository';
-import type {
-  HelpFeedInput,
-  AdoptFeedInput,
-  MarketFeedInput,
-  HomeFeedInput,
-} from './dto/feed-query.input';
+import type { HelpFeedInput, AdoptFeedInput, MarketFeedInput, HomeFeedInput } from './dto/feed-query.input';
 import { ViewFlushCron } from './view-flush.cron';
 
 /**
@@ -62,7 +49,7 @@ export class PostsService {
     const postId = generateUuidV7();
     const cityId = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
-    const mediaRows = this.prepareMedia(input.mediaIds, postId);
+    const mediaRows = await this.prepareMedia(input.mediaIds, postId);
 
     const baseData: NewPost = {
       id: postId,
@@ -101,7 +88,7 @@ export class PostsService {
     const postId = generateUuidV7();
     const cityId = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
-    const mediaRows = this.prepareMedia(input.mediaIds, postId);
+    const mediaRows = await this.prepareMedia(input.mediaIds, postId);
 
     const baseData: NewPost = {
       id: postId,
@@ -148,7 +135,7 @@ export class PostsService {
     const postId = generateUuidV7();
     const cityId = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
-    const mediaRows = this.prepareMedia(input.mediaIds, postId);
+    const mediaRows = await this.prepareMedia(input.mediaIds, postId);
 
     const baseData: NewPost = {
       id: postId,
@@ -198,7 +185,7 @@ export class PostsService {
     const postId = generateUuidV7();
     const cityId = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
-    const mediaRows = this.prepareMedia(input.mediaIds, postId);
+    const mediaRows = await this.prepareMedia(input.mediaIds, postId);
 
     const baseData: NewPost = {
       id: postId,
@@ -353,9 +340,7 @@ export class PostsService {
       throw new ForbiddenError('You can only update the status of your own posts');
     }
     if (post.status !== 'ACTIVE') {
-      throw new ValidationError(
-        `Post is already in "${post.status}" status and cannot be changed`,
-      );
+      throw new ValidationError(`Post is already in "${post.status}" status and cannot be changed`);
     }
 
     const allowed = PostsService.ALLOWED_TRANSITIONS[post.postType] ?? [];
@@ -477,9 +462,7 @@ export class PostsService {
       pageInfo: {
         hasNextPage: result.hasNextPage,
         endCursor:
-          result.rows.length > 0
-            ? this.encodeCursor(buildCursorObj(result.rows[result.rows.length - 1].post))
-            : null,
+          result.rows.length > 0 ? this.encodeCursor(buildCursorObj(result.rows[result.rows.length - 1].post)) : null,
       },
     };
   }
@@ -514,7 +497,7 @@ export class PostsService {
     return this.mapFeedResultToConnection(result, (post) =>
       sort === 'HOT'
         ? { score: post.effectiveScore, createdAt: post.createdAt.toISOString(), id: post.id }
-        : { id: post.id }
+        : { id: post.id },
     );
   }
 
@@ -533,7 +516,7 @@ export class PostsService {
     return this.mapFeedResultToConnection(result, (post) =>
       sort === 'HOT'
         ? { score: post.effectiveScore, createdAt: post.createdAt.toISOString(), id: post.id }
-        : { id: post.id }
+        : { id: post.id },
     );
   }
 
@@ -559,12 +542,12 @@ export class PostsService {
     assertUuid(postId, 'postId');
     const lockKey = `view_dedup:${postId}:${userId}`;
     const alreadyViewed = await this.cacheManager.get(lockKey);
-    
+
     if (!alreadyViewed) {
       await this.cacheManager.set(lockKey, true, 3600_000); // 1 hour TTL
       this.viewFlushCron.bufferView(postId);
     }
-    
+
     return true; // Always return true (fire and forget)
   }
 
@@ -582,10 +565,7 @@ export class PostsService {
       return city.id;
     }
 
-    const city = await this.citiesService.findNearest(
-      coordinates.latitude,
-      coordinates.longitude,
-    );
+    const city = await this.citiesService.findNearest(coordinates.latitude, coordinates.longitude);
     if (!city) {
       throw new NotFoundError('No nearby city found for the provided coordinates.');
     }
@@ -600,12 +580,12 @@ export class PostsService {
     return flagged ? 'FLAGGED' : 'PENDING_AUTO_REVIEW';
   }
 
-  private prepareMedia(mediaIds: string[] | undefined, postId: string): Omit<NewPostMedia, 'postId'>[] {
+  private async prepareMedia(mediaIds: string[] | undefined, postId: string): Promise<Omit<NewPostMedia, 'postId'>[]> {
     if (!mediaIds || mediaIds.length === 0) return [];
     if (mediaIds.length > 4) {
       throw new ValidationError('Maximum 4 images allowed per post');
     }
-    return mediaIds.map(mediaId => this.uploadService.getExpectedMediaUrls(mediaId, postId));
+    return Promise.all(mediaIds.map((mediaId) => this.uploadService.getExpectedMediaUrls(mediaId, postId)));
   }
 
   /**
@@ -616,13 +596,13 @@ export class PostsService {
   private runFinalizeMediaAsync(mediaIds: string[] | undefined, userId: string, postId: string): void {
     if (!mediaIds || mediaIds.length === 0) return;
 
-    Promise.allSettled(
-      mediaIds.map((mediaId) => this.uploadService.finalizeMedia(mediaId, userId, postId))
-    ).then((results) => {
-      const failures = results.filter((r) => r.status === 'rejected');
-      if (failures.length > 0) {
-        this.logger.error(`Failed to finalize ${failures.length} media items for post ${postId}`);
-      }
-    });
+    Promise.allSettled(mediaIds.map((mediaId) => this.uploadService.finalizeMedia(mediaId, userId, postId))).then(
+      (results) => {
+        const failures = results.filter((r) => r.status === 'rejected');
+        if (failures.length > 0) {
+          this.logger.error(`Failed to finalize ${failures.length} media items for post ${postId}`);
+        }
+      },
+    );
   }
 }

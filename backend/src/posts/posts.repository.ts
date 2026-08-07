@@ -219,11 +219,7 @@ export class PostsRepository {
    * Used by the resolver for single-post detail queries.
    */
   async findById(id: string): Promise<Post | undefined> {
-    const [post] = await this.db
-      .select()
-      .from(posts)
-      .where(eq(posts.id, id))
-      .limit(1);
+    const [post] = await this.db.select().from(posts).where(eq(posts.id, id)).limit(1);
     return post;
   }
 
@@ -262,10 +258,10 @@ export class PostsRepository {
    * Posts with no media get an empty array (not null).
    */
   createMediaByPostIdLoader(): DataLoader<string, PostMedia[]> {
-    return new DataLoader<string, PostMedia[]>(
-      (ids) => this.findMediaByPostIds(ids),
-      { cache: true, maxBatchSize: 100 },
-    );
+    return new DataLoader<string, PostMedia[]>((ids) => this.findMediaByPostIds(ids), {
+      cache: true,
+      maxBatchSize: 100,
+    });
   }
 
   // ─── Read ─────────────────────────────────────────────────────────────
@@ -275,11 +271,7 @@ export class PostsRepository {
    * Returns undefined if the post ID doesn't have a rescue extension.
    */
   async findRescueDetail(postId: string): Promise<RescuePost | undefined> {
-    const [row] = await this.db
-      .select()
-      .from(rescuePosts)
-      .where(eq(rescuePosts.postId, postId))
-      .limit(1);
+    const [row] = await this.db.select().from(rescuePosts).where(eq(rescuePosts.postId, postId)).limit(1);
     return row;
   }
 
@@ -287,11 +279,7 @@ export class PostsRepository {
    * Finds a single LOST extension row by post ID.
    */
   async findLostDetail(postId: string): Promise<LostPost | undefined> {
-    const [row] = await this.db
-      .select()
-      .from(lostPosts)
-      .where(eq(lostPosts.postId, postId))
-      .limit(1);
+    const [row] = await this.db.select().from(lostPosts).where(eq(lostPosts.postId, postId)).limit(1);
     return row;
   }
 
@@ -299,11 +287,7 @@ export class PostsRepository {
    * Finds a single ADOPTION extension row by post ID.
    */
   async findAdoptionDetail(postId: string): Promise<AdoptionPost | undefined> {
-    const [row] = await this.db
-      .select()
-      .from(adoptionPosts)
-      .where(eq(adoptionPosts.postId, postId))
-      .limit(1);
+    const [row] = await this.db.select().from(adoptionPosts).where(eq(adoptionPosts.postId, postId)).limit(1);
     return row;
   }
 
@@ -311,11 +295,7 @@ export class PostsRepository {
    * Finds a single PRODUCT extension row by post ID.
    */
   async findProductDetail(postId: string): Promise<ProductPost | undefined> {
-    const [row] = await this.db
-      .select()
-      .from(productPosts)
-      .where(eq(productPosts.postId, postId))
-      .limit(1);
+    const [row] = await this.db.select().from(productPosts).where(eq(productPosts.postId, postId)).limit(1);
     return row;
   }
 
@@ -343,11 +323,7 @@ export class PostsRepository {
    * The DB trigger `trg_sync_user_post_counts` decrements user counters.
    */
   async softDelete(postId: string): Promise<Post> {
-    const [post] = await this.db
-      .update(posts)
-      .set({ status: 'REMOVED' as Post['status'] })
-      .where(eq(posts.id, postId))
-      .returning();
+    const [post] = await this.db.update(posts).set({ status: 'REMOVED' }).where(eq(posts.id, postId)).returning();
     return post;
   }
 
@@ -378,9 +354,7 @@ export class PostsRepository {
 
       if (existing) {
         // Remove upvote
-        await tx
-          .delete(postUpvotes)
-          .where(and(eq(postUpvotes.postId, postId), eq(postUpvotes.userId, userId)));
+        await tx.delete(postUpvotes).where(and(eq(postUpvotes.postId, postId), eq(postUpvotes.userId, userId)));
 
         await tx
           .update(posts)
@@ -429,11 +403,7 @@ export class PostsRepository {
       `);
 
       // Return the updated post
-      const [updatedPost] = await tx
-        .select()
-        .from(posts)
-        .where(eq(posts.id, postId))
-        .limit(1);
+      const [updatedPost] = await tx.select().from(posts).where(eq(posts.id, postId)).limit(1);
 
       return { added, updatedPost };
     });
@@ -457,9 +427,7 @@ export class PostsRepository {
       let added: boolean;
 
       if (existing) {
-        await tx
-          .delete(postSaves)
-          .where(and(eq(postSaves.postId, postId), eq(postSaves.userId, userId)));
+        await tx.delete(postSaves).where(and(eq(postSaves.postId, postId), eq(postSaves.userId, userId)));
 
         await tx
           .update(posts)
@@ -509,11 +477,7 @@ export class PostsRepository {
         WHERE id = ${postId}
       `);
 
-      const [updatedPost] = await tx
-        .select()
-        .from(posts)
-        .where(eq(posts.id, postId))
-        .limit(1);
+      const [updatedPost] = await tx.select().from(posts).where(eq(posts.id, postId)).limit(1);
 
       return { added, updatedPost };
     });
@@ -532,12 +496,7 @@ export class PostsRepository {
     const rows = await this.db
       .select({ postId: postUpvotes.postId })
       .from(postUpvotes)
-      .where(
-        and(
-          eq(postUpvotes.userId, userId),
-          inArray(postUpvotes.postId, postIds as string[]),
-        ),
-      );
+      .where(and(eq(postUpvotes.userId, userId), inArray(postUpvotes.postId, postIds as string[])));
 
     return new Set(rows.map((r) => r.postId));
   }
@@ -553,12 +512,7 @@ export class PostsRepository {
     const rows = await this.db
       .select({ postId: postSaves.postId })
       .from(postSaves)
-      .where(
-        and(
-          eq(postSaves.userId, userId),
-          inArray(postSaves.postId, postIds as string[]),
-        ),
-      );
+      .where(and(eq(postSaves.userId, userId), inArray(postSaves.postId, postIds as string[])));
 
     return new Set(rows.map((r) => r.postId));
   }
@@ -596,18 +550,42 @@ export class PostsRepository {
   // ─── Feed Query Helpers ──────────────────────────────────────────────
 
   /**
-   * Builds the city/governorate WHERE condition.
-   * If cityId is provided, filters to that exact city.
-   * Otherwise, includes all cities in the governorate via subquery.
+   * Builds the city/governorate WHERE clause for feed queries.
+   * Returns null when no administrative boundary filter is needed (radius-only mode).
    */
-  private buildLocationFilter(
-    governorate: string,
-    cityId: string | null | undefined,
-  ): SQL {
+  private buildLocationFilter(governorate: string | null | undefined, cityId: string | null | undefined): SQL | null {
     if (cityId) {
       return sql`p.city_id = ${cityId}`;
     }
+    if (!governorate) {
+      return null;
+    }
     return sql`p.city_id IN (SELECT id FROM cities WHERE governorate = ${governorate})`;
+  }
+
+  /**
+   * Resolves the center point for radius-based filtering.
+   *
+   * Priority:
+   * 1. viewerLocation (GPS) — user is physically there
+   * 2. cityId center_point — user manually browsing another city
+   * 3. null — no radius filtering possible
+   */
+  private async resolveRadiusCenter(
+    viewerLocation: { latitude: number; longitude: number } | null | undefined,
+    cityId: string | null | undefined,
+  ): Promise<string | null> {
+    if (viewerLocation) {
+      return `SRID=4326;POINT(${viewerLocation.longitude} ${viewerLocation.latitude})`;
+    }
+    if (cityId) {
+      const result = await this.db.execute(
+        sql`SELECT ST_AsEWKT(center_point) AS ewkt FROM cities WHERE id = ${cityId}::uuid LIMIT 1`,
+      );
+      const rows = (result as unknown as { rows: { ewkt: string }[] }).rows;
+      return rows[0]?.ewkt ?? null;
+    }
+    return null;
   }
 
   /**
@@ -667,18 +645,14 @@ export class PostsRepository {
    * Maps raw SQL result rows to FeedResultRow[] with hasNextPage detection.
    * Uses the limit+1 trick: if we got more rows than requested, there are more pages.
    */
-  private mapFeedResult(
-    rawRows: Record<string, unknown>[],
-    limit: number,
-  ): FeedResult {
+  private mapFeedResult(rawRows: Record<string, unknown>[], limit: number): FeedResult {
     const hasNextPage = rawRows.length > limit;
     const trimmed = hasNextPage ? rawRows.slice(0, limit) : rawRows;
 
     return {
       rows: trimmed.map((raw) => ({
         post: this.mapRawToPost(raw),
-        distanceKm:
-          raw.distance_km != null ? Number(raw.distance_km) : null,
+        distanceKm: raw.distance_km != null ? Number(raw.distance_km) : null,
       })),
       hasNextPage,
     };
@@ -703,7 +677,7 @@ export class PostsRepository {
    * - Both use ::geography cast for accurate Earth-surface distances
    */
   async findHelpFeed(params: {
-    governorate: string;
+    governorate: string | null | undefined;
     cityId: string | null | undefined;
     viewerLocation: { latitude: number; longitude: number } | null | undefined;
     radiusKm: number;
@@ -712,19 +686,24 @@ export class PostsRepository {
   }): Promise<FeedResult> {
     const { governorate, cityId, viewerLocation, radiusKm, limit, cursor } = params;
     const fetchLimit = limit + 1;
-    const viewerPoint = this.buildViewerPointEwkt(viewerLocation);
     const radiusMeters = radiusKm * 1000;
 
-    const conditions: SQL[] = [
-      sql`p.status = 'ACTIVE'`,
-      sql`p.post_type IN ('RESCUE', 'LOST')`,
-      this.buildLocationFilter(governorate, cityId),
-    ];
+    // Resolve center point for radius: GPS > city center > none
+    const centerPoint = await this.resolveRadiusCenter(viewerLocation, cityId);
 
-    if (viewerPoint) {
+    const conditions: SQL[] = [sql`p.status = 'ACTIVE'`, sql`p.post_type IN ('RESCUE', 'LOST')`];
+
+    if (centerPoint) {
+      // Radius-based filtering — crosses admin boundaries
       conditions.push(
-        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${viewerPoint})::geography, ${radiusMeters})`,
+        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
       );
+    } else {
+      // No GPS, no city → fall back to governorate/city filter
+      const locationFilter = this.buildLocationFilter(governorate, cityId);
+      if (locationFilter) {
+        conditions.push(locationFilter);
+      }
     }
 
     if (cursor) {
@@ -736,7 +715,7 @@ export class PostsRepository {
     }
 
     const whereClause = sql.join(conditions, sql` AND `);
-    const distanceExpr = this.buildDistanceExpr(viewerPoint);
+    const distanceExpr = this.buildDistanceExpr(centerPoint);
 
     const result = await this.db.execute(sql`
       SELECT p.*, ${distanceExpr} AS distance_km
@@ -762,7 +741,7 @@ export class PostsRepository {
    * NEWEST: `id` — simple UUIDv7 cursor (embeds timestamp)
    */
   async findAdoptFeed(params: {
-    governorate: string;
+    governorate: string | null | undefined;
     cityId: string | null | undefined;
     viewerLocation: { latitude: number; longitude: number } | null | undefined;
     radiusKm: number;
@@ -772,19 +751,22 @@ export class PostsRepository {
   }): Promise<FeedResult> {
     const { governorate, cityId, viewerLocation, radiusKm, sort, limit, cursor } = params;
     const fetchLimit = limit + 1;
-    const viewerPoint = this.buildViewerPointEwkt(viewerLocation);
     const radiusMeters = radiusKm * 1000;
 
-    const conditions: SQL[] = [
-      sql`p.status = 'ACTIVE'`,
-      sql`p.post_type = 'ADOPTION'`,
-      this.buildLocationFilter(governorate, cityId),
-    ];
+    // Resolve center point for radius: GPS > city center > none
+    const centerPoint = await this.resolveRadiusCenter(viewerLocation, cityId);
 
-    if (viewerPoint) {
+    const conditions: SQL[] = [sql`p.status = 'ACTIVE'`, sql`p.post_type = 'ADOPTION'`];
+
+    if (centerPoint) {
       conditions.push(
-        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${viewerPoint})::geography, ${radiusMeters})`,
+        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
       );
+    } else {
+      const locationFilter = this.buildLocationFilter(governorate, cityId);
+      if (locationFilter) {
+        conditions.push(locationFilter);
+      }
     }
 
     let orderClause: SQL;
@@ -806,7 +788,7 @@ export class PostsRepository {
     }
 
     const whereClause = sql.join(conditions, sql` AND `);
-    const distanceExpr = this.buildDistanceExpr(viewerPoint);
+    const distanceExpr = this.buildDistanceExpr(centerPoint);
 
     const result = await this.db.execute(sql`
       SELECT p.*, ${distanceExpr} AS distance_km
@@ -830,7 +812,7 @@ export class PostsRepository {
    * NEWEST: Primary key index (UUIDv7)
    */
   async findMarketFeed(params: {
-    governorate: string;
+    governorate: string | null | undefined;
     cityId: string | null | undefined;
     viewerLocation: { latitude: number; longitude: number } | null | undefined;
     radiusKm: number;
@@ -841,23 +823,26 @@ export class PostsRepository {
   }): Promise<FeedResult> {
     const { governorate, cityId, viewerLocation, radiusKm, sort, category, limit, cursor } = params;
     const fetchLimit = limit + 1;
-    const viewerPoint = this.buildViewerPointEwkt(viewerLocation);
     const radiusMeters = radiusKm * 1000;
 
-    const conditions: SQL[] = [
-      sql`p.status = 'ACTIVE'`,
-      sql`p.post_type = 'PRODUCT'`,
-      this.buildLocationFilter(governorate, cityId),
-    ];
+    // Resolve center point for radius: GPS > city center > none
+    const centerPoint = await this.resolveRadiusCenter(viewerLocation, cityId);
+
+    const conditions: SQL[] = [sql`p.status = 'ACTIVE'`, sql`p.post_type = 'PRODUCT'`];
+
+    if (centerPoint) {
+      conditions.push(
+        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
+      );
+    } else {
+      const locationFilter = this.buildLocationFilter(governorate, cityId);
+      if (locationFilter) {
+        conditions.push(locationFilter);
+      }
+    }
 
     if (category) {
       conditions.push(sql`p.market_category = ${category}`);
-    }
-
-    if (viewerPoint) {
-      conditions.push(
-        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${viewerPoint})::geography, ${radiusMeters})`,
-      );
     }
 
     let orderClause: SQL;
@@ -879,7 +864,7 @@ export class PostsRepository {
     }
 
     const whereClause = sql.join(conditions, sql` AND `);
-    const distanceExpr = this.buildDistanceExpr(viewerPoint);
+    const distanceExpr = this.buildDistanceExpr(centerPoint);
 
     const result = await this.db.execute(sql`
       SELECT p.*, ${distanceExpr} AS distance_km
@@ -906,7 +891,7 @@ export class PostsRepository {
    * Simple UUIDv7 id cursor — no composite needed since sort is single-column.
    */
   async findHomeFeed(params: {
-    governorate: string;
+    governorate: string | null | undefined;
     cityId: string | null | undefined;
     viewerLocation: { latitude: number; longitude: number } | null | undefined;
     radiusKm: number;
@@ -915,18 +900,22 @@ export class PostsRepository {
   }): Promise<FeedResult> {
     const { governorate, cityId, viewerLocation, radiusKm, limit, cursor } = params;
     const fetchLimit = limit + 1;
-    const viewerPoint = this.buildViewerPointEwkt(viewerLocation);
     const radiusMeters = radiusKm * 1000;
 
-    const conditions: SQL[] = [
-      sql`p.status = 'ACTIVE'`,
-      this.buildLocationFilter(governorate, cityId),
-    ];
+    // Resolve center point for radius: GPS > city center > none
+    const centerPoint = await this.resolveRadiusCenter(viewerLocation, cityId);
 
-    if (viewerPoint) {
+    const conditions: SQL[] = [sql`p.status = 'ACTIVE'`];
+
+    if (centerPoint) {
       conditions.push(
-        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${viewerPoint})::geography, ${radiusMeters})`,
+        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
       );
+    } else {
+      const locationFilter = this.buildLocationFilter(governorate, cityId);
+      if (locationFilter) {
+        conditions.push(locationFilter);
+      }
     }
 
     if (cursor) {
@@ -934,7 +923,7 @@ export class PostsRepository {
     }
 
     const whereClause = sql.join(conditions, sql` AND `);
-    const distanceExpr = this.buildDistanceExpr(viewerPoint);
+    const distanceExpr = this.buildDistanceExpr(centerPoint);
 
     const result = await this.db.execute(sql`
       SELECT p.*, ${distanceExpr} AS distance_km
@@ -968,9 +957,7 @@ export class PostsRepository {
     if (viewCounts.size === 0) return;
 
     const entries = [...viewCounts.entries()];
-    const valuesList = entries.map(
-      ([postId, count]) => sql`(${postId}::uuid, ${count}::int)`,
-    );
+    const valuesList = entries.map(([postId, count]) => sql`(${postId}::uuid, ${count}::int)`);
 
     await this.db.execute(sql`
       UPDATE posts p

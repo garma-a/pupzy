@@ -13,11 +13,7 @@ import { geoLocationSchema } from '../../users/dto/geo-location.input';
  */
 const createRescuePostSchema = z.object({
   /** Post title — minimum 3, maximum 200 characters. */
-  title: z
-    .string()
-    .min(3, 'Title must be at least 3 characters')
-    .max(200, 'Title cannot exceed 200 characters')
-    .trim(),
+  title: z.string().min(3, 'Title must be at least 3 characters').max(200, 'Title cannot exceed 200 characters').trim(),
 
   /** Free-text description — minimum 10, maximum 5000 characters. */
   description: z
@@ -33,11 +29,7 @@ const createRescuePostSchema = z.object({
   coordinates: geoLocationSchema,
 
   /** Human-readable name for the area (e.g. "Maadi, Cairo"). */
-  areaName: z
-    .string()
-    .max(200, 'Area name cannot exceed 200 characters')
-    .trim()
-    .optional(),
+  areaName: z.string().max(200, 'Area name cannot exceed 200 characters').trim().optional(),
 
   /**
    * How urgent the rescue situation is.
@@ -62,10 +54,7 @@ const createRescuePostSchema = z.object({
   reporterRole: z.enum(['REPORTING', 'ON_SITE', 'CAN_TRANSPORT']),
 
   /** UUIDs of pre-uploaded media assets — maximum 4 images. */
-  mediaIds: z
-    .array(z.string().uuid('Each mediaId must be a valid UUID'))
-    .max(4, 'Maximum 4 images allowed')
-    .optional(),
+  mediaIds: z.array(z.string().uuid('Each mediaId must be a valid UUID')).max(4, 'Maximum 4 images allowed').optional(),
 });
 
 /** TypeScript type inferred from the Zod schema — zero duplication. */

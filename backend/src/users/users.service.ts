@@ -64,7 +64,7 @@ export class UsersService {
       const existingByEmail = await this.usersRepository.findByEmail(input.email);
       if (existingByEmail) {
         if (!input.emailVerified) {
-           throw new ValidationError('Email must be verified to link with an existing account.');
+          throw new ValidationError('Email must be verified to link with an existing account.');
         }
         this.logger.log(
           `Firebase UID changed for ${input.email}, updating from ${existingByEmail.firebaseUserId} to ${input.firebaseUserId}`,
@@ -124,10 +124,7 @@ export class UsersService {
       }
     } else if (data.location) {
       // Auto-resolve city from GPS coordinates via PostGIS ST_Distance
-      const city = await this.citiesService.findNearest(
-        data.location.latitude,
-        data.location.longitude,
-      );
+      const city = await this.citiesService.findNearest(data.location.latitude, data.location.longitude);
       if (!city) {
         throw new NotFoundError('No nearby city found for the provided coordinates.');
       }
@@ -209,9 +206,9 @@ export class UsersService {
    * the GraphQLModule context factory in app.module.ts.
    */
   createUserByIdLoader(): DataLoader<string, User | null> {
-    return new DataLoader<string, User | null>(
-      (ids) => this.usersRepository.findByIds(ids),
-      { cache: true, maxBatchSize: 100 },
-    );
+    return new DataLoader<string, User | null>((ids) => this.usersRepository.findByIds(ids), {
+      cache: true,
+      maxBatchSize: 100,
+    });
   }
 }

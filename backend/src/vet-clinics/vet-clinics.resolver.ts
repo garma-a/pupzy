@@ -70,22 +70,22 @@ export class VetClinicsResolver {
 
     if (Array.isArray(post.coordinates)) {
       // Drizzle ORM select path: geometry is returned as [longitude, latitude]
-      const [lng, lat] = post.coordinates as [number, number];
-      latitude  = lat;
+      const [lng, lat] = post.coordinates;
+      latitude = lat;
       longitude = lng;
     } else if (typeof post.coordinates === 'string') {
       // Raw db.execute path: geometry is returned as EWKT "SRID=4326;POINT(lng lat)"
       const match = (post.coordinates as string).match(/POINT\(([^ ]+) ([^ ]+)\)/);
       if (match) {
         longitude = parseFloat(match[1]);
-        latitude  = parseFloat(match[2]);
+        latitude = parseFloat(match[2]);
       }
     }
 
     return this.vetClinicsService.nearestVetClinicsForPost({
-      id:        post.id,
-      postType:  post.postType,
-      cityId:    post.cityId,
+      id: post.id,
+      postType: post.postType,
+      cityId: post.cityId,
       latitude,
       longitude,
     });

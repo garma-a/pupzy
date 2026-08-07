@@ -2,11 +2,7 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { sql, eq, and } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
-import {
-  contactRequests,
-  type ContactRequest,
-  type NewContactRequest,
-} from '../database/schema';
+import { contactRequests, type ContactRequest, type NewContactRequest } from '../database/schema';
 
 /**
  * ContactsRepository — data access for the contact_requests table.
@@ -25,10 +21,7 @@ export class ContactsRepository {
    * The DB unique constraint (uq_contact_request) prevents duplicates.
    */
   async create(data: NewContactRequest): Promise<ContactRequest> {
-    const [request] = await this.db
-      .insert(contactRequests)
-      .values(data)
-      .returning();
+    const [request] = await this.db.insert(contactRequests).values(data).returning();
     return request;
   }
 
@@ -36,30 +29,18 @@ export class ContactsRepository {
    * Finds a contact request by ID.
    */
   async findById(requestId: string): Promise<ContactRequest | undefined> {
-    const [request] = await this.db
-      .select()
-      .from(contactRequests)
-      .where(eq(contactRequests.id, requestId))
-      .limit(1);
+    const [request] = await this.db.select().from(contactRequests).where(eq(contactRequests.id, requestId)).limit(1);
     return request;
   }
 
   /**
    * Checks if a user already has a contact request on a post.
    */
-  async findExisting(
-    postId: string,
-    requesterId: string,
-  ): Promise<ContactRequest | undefined> {
+  async findExisting(postId: string, requesterId: string): Promise<ContactRequest | undefined> {
     const [existing] = await this.db
       .select()
       .from(contactRequests)
-      .where(
-        and(
-          eq(contactRequests.postId, postId),
-          eq(contactRequests.requesterId, requesterId),
-        ),
-      )
+      .where(and(eq(contactRequests.postId, postId), eq(contactRequests.requesterId, requesterId)))
       .limit(1);
     return existing;
   }
@@ -68,10 +49,7 @@ export class ContactsRepository {
    * Updates a contact request status (PENDING → APPROVED or REJECTED).
    * Also sets respondedAt timestamp.
    */
-  async updateStatus(
-    requestId: string,
-    status: 'APPROVED' | 'REJECTED',
-  ): Promise<ContactRequest | undefined> {
+  async updateStatus(requestId: string, status: 'APPROVED' | 'REJECTED'): Promise<ContactRequest | undefined> {
     const [updated] = await this.db
       .update(contactRequests)
       .set({

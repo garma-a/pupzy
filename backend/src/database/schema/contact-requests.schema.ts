@@ -1,12 +1,5 @@
 import { sql } from 'drizzle-orm';
-import {
-  pgTable,
-  uuid,
-  text,
-  timestamp,
-  index,
-  uniqueIndex,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { posts } from './posts.schema';
 import { users } from './users.schema';
 import { requestStatusEnum } from './enums';
@@ -35,7 +28,9 @@ export const contactRequests = pgTable(
   'contact_requests',
   {
     /** Internal request ID. Primary key, UUIDv7. */
-    id: uuid('id').primaryKey().default(sql`uuidv7()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
 
     /**
      * FK → posts. CASCADE on post delete.
@@ -81,10 +76,7 @@ export const contactRequests = pgTable(
     requesterIdx: index('idx_contact_requests_requester').on(table.requesterId),
 
     /** Used by owner to see pending/approved requests on their post. */
-    postStatusIdx: index('idx_contact_requests_post_status').on(
-      table.postId,
-      table.status,
-    ),
+    postStatusIdx: index('idx_contact_requests_post_status').on(table.postId, table.status),
   }),
 );
 

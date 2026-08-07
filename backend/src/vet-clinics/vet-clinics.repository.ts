@@ -19,18 +19,18 @@ import type * as schema from '../database/schema';
  */
 export interface VetClinicQueryRow {
   [key: string]: unknown;
-  id:           string;
+  id: string;
   name_english: string | null;
-  name_arabic:  string | null;
+  name_arabic: string | null;
   phone_number: string | null;
-  address:      string | null;
-  website:      string | null;
+  address: string | null;
+  website: string | null;
   /** ST_Y(coordinates)::text — WGS-84 latitude */
-  latitude:     string;
+  latitude: string;
   /** ST_X(coordinates)::text — WGS-84 longitude */
-  longitude:    string;
+  longitude: string;
   /** ROUND(ST_Distance / 1000, 2)::text — geodesic km */
-  distance_km:  string;
+  distance_km: string;
 }
 
 @Injectable()
@@ -73,14 +73,8 @@ export class VetClinicsRepository {
    * @param longitude  Post's WGS-84 longitude
    * @param limit      Maximum rows to return (default 3)
    */
-  async findNearest(
-    latitude: number,
-    longitude: number,
-    limit = 3,
-  ): Promise<VetClinicQueryRow[]> {
-    this.logger.debug(
-      `findNearest lat=${latitude} lng=${longitude} limit=${limit}`,
-    );
+  async findNearest(latitude: number, longitude: number, limit = 3): Promise<VetClinicQueryRow[]> {
+    this.logger.debug(`findNearest lat=${latitude} lng=${longitude} limit=${limit}`);
 
     const result = await this.db.execute<VetClinicQueryRow>(sql`
       SELECT
@@ -131,13 +125,8 @@ export class VetClinicsRepository {
    * @param cityId  The post's city_id (UUID), used to resolve center_point
    * @param limit   Maximum rows to return (default 3)
    */
-  async findNearestForCity(
-    cityId: string,
-    limit = 3,
-  ): Promise<VetClinicQueryRow[]> {
-    this.logger.debug(
-      `findNearestForCity cityId=${cityId} limit=${limit}`,
-    );
+  async findNearestForCity(cityId: string, limit = 3): Promise<VetClinicQueryRow[]> {
+    this.logger.debug(`findNearestForCity cityId=${cityId} limit=${limit}`);
 
     const result = await this.db.execute<VetClinicQueryRow>(sql`
       SELECT

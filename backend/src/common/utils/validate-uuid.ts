@@ -5,8 +5,7 @@ import { ValidationError } from '../errors/app.errors';
  * Accepts lowercase hex with standard 8-4-4-4-12 grouping.
  * Case-insensitive to handle both lowercase and uppercase UUIDs.
  */
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Asserts that a string is a valid UUID format.

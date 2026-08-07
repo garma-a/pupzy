@@ -1,11 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Inject,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Inject, Logger } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
@@ -43,14 +36,9 @@ const PROCESSING_SENTINEL = '__PROCESSING__';
 export class IdempotencyInterceptor implements NestInterceptor {
   private readonly logger = new Logger(IdempotencyInterceptor.name);
 
-  constructor(
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-  ) {}
+  constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
 
-  async intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Promise<Observable<unknown>> {
+  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
     const gqlCtx = GqlExecutionContext.create(context);
     const info = gqlCtx.getInfo<{
       operation: { operation: string };
@@ -78,16 +66,12 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
     if (cached === PROCESSING_SENTINEL) {
       // Another request with the same key is currently being processed
-      throw new ConflictError(
-        'This request is already being processed. Please wait.',
-      );
+      throw new ConflictError('This request is already being processed. Please wait.');
     }
 
     if (cached != null) {
       // Return the cached result from the previous execution
-      this.logger.debug(
-        `Idempotent replay for key=${idempotencyKey} mutation=${info.fieldName}`,
-      );
+      this.logger.debug(`Idempotent replay for key=${idempotencyKey} mutation=${info.fieldName}`);
       return of(JSON.parse(cached));
     }
 
@@ -99,11 +83,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
         next: async (result) => {
           try {
             // Cache the successful result for 24 hours
-            await this.cacheManager.set(
-              cacheKey,
-              JSON.stringify(result),
-              IDEMPOTENCY_TTL_MS,
-            );
+            await this.cacheManager.set(cacheKey, JSON.stringify(result), IDEMPOTENCY_TTL_MS);
           } catch (err) {
             this.logger.warn(
               `Failed to cache idempotency result for key=${idempotencyKey}`,

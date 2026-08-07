@@ -39,18 +39,12 @@ export class LoggingInterceptor implements NestInterceptor {
       tap({
         next: () => {
           const durationMs = Date.now() - start;
-          this.logger.info(
-            { operationType, operationName, durationMs },
-            'GraphQL operation completed',
-          );
+          this.logger.info({ operationType, operationName, durationMs }, 'GraphQL operation completed');
         },
         error: (err: unknown) => {
           const durationMs = Date.now() - start;
           const message = err instanceof Error ? err.message : String(err);
-          this.logger.error(
-            { operationType, operationName, durationMs, error: message },
-            'GraphQL operation failed',
-          );
+          this.logger.error({ operationType, operationName, durationMs, error: message }, 'GraphQL operation failed');
         },
       }),
     );

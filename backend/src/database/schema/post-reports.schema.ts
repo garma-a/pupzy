@@ -27,7 +27,9 @@ export const postReports = pgTable(
   'post_reports',
   {
     /** Internal report ID. Primary key, UUIDv7. */
-    id: uuid('id').primaryKey().default(sql`uuidv7()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
 
     /** FK → posts. CASCADE on post delete. */
     postId: uuid('post_id')

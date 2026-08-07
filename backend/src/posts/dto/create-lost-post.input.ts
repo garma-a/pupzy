@@ -19,18 +19,10 @@ import { geoLocationSchema } from '../../users/dto/geo-location.input';
 const createLostPostSchema = z
   .object({
     /** Post title — minimum 3, maximum 200 characters. */
-    title: z
-      .string()
-      .min(3, 'Title must be at least 3 characters')
-      .max(200)
-      .trim(),
+    title: z.string().min(3, 'Title must be at least 3 characters').max(200).trim(),
 
     /** Free-text description — minimum 10, maximum 5000 characters. */
-    description: z
-      .string()
-      .min(10, 'Description must be at least 10 characters')
-      .max(5000)
-      .trim(),
+    description: z.string().min(10, 'Description must be at least 10 characters').max(5000).trim(),
 
     /** Optional UUID of the user's city from the `cities` table. */
     cityId: z.string().uuid().optional(),

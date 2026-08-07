@@ -3,12 +3,7 @@ import { ContactsRepository } from './contacts.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import {
-  ValidationError,
-  NotFoundError,
-  ForbiddenError,
-  ConflictError,
-} from '../common/errors/app.errors';
+import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../common/errors/app.errors';
 import { assertUuid } from '../common/utils/validate-uuid';
 import type { ContactRequest } from '../database/schema';
 
@@ -44,11 +39,7 @@ export class ContactsService {
    * - Requester cannot be the post owner
    * - One request per (requester, post) — duplicate check before DB constraint
    */
-  async requestContact(
-    requesterId: string,
-    postId: string,
-    message: string,
-  ): Promise<ContactRequest> {
+  async requestContact(requesterId: string, postId: string, message: string): Promise<ContactRequest> {
     assertUuid(postId, 'postId');
 
     const post = await this.postsRepository.findById(postId);
@@ -56,9 +47,7 @@ export class ContactsService {
       throw new NotFoundError('Post', postId);
     }
     if (!['RESCUE', 'LOST', 'ADOPTION'].includes(post.postType)) {
-      throw new ValidationError(
-        'Contact requests are only for RESCUE, LOST, and ADOPTION posts',
-      );
+      throw new ValidationError('Contact requests are only for RESCUE, LOST, and ADOPTION posts');
     }
     if (post.status !== 'ACTIVE') {
       throw new ValidationError('Cannot request contact on an inactive post');
@@ -68,14 +57,9 @@ export class ContactsService {
     }
 
     // Pre-check for duplicate before hitting DB constraint for cleaner error
-    const existing = await this.contactsRepository.findExisting(
-      postId,
-      requesterId,
-    );
+    const existing = await this.contactsRepository.findExisting(postId, requesterId);
     if (existing) {
-      throw new ConflictError(
-        'You have already sent a contact request for this post',
-      );
+      throw new ConflictError('You have already sent a contact request for this post');
     }
 
     const contactRequest = await this.contactsRepository.create({
@@ -121,21 +105,14 @@ export class ContactsService {
       throw new ForbiddenError('Only the post owner can approve requests');
     }
     if (request.status !== 'PENDING') {
-      throw new ValidationError(
-        `Request is already ${request.status}`,
-      );
+      throw new ValidationError(`Request is already ${request.status}`);
     }
 
-    const updated = await this.contactsRepository.updateStatus(
-      requestId,
-      'APPROVED',
-    );
+    const updated = await this.contactsRepository.updateStatus(requestId, 'APPROVED');
 
     // Decrypt owner phone → build wa.me link
     const owner = await this.usersService.findById(ownerId);
-    const whatsappLink = owner?.phoneNumber
-      ? `https://wa.me/${owner.phoneNumber.replace(/\\D/g, '')}`
-      : null;
+    const whatsappLink = owner?.phoneNumber ? `https://wa.me/${owner.phoneNumber.replace(/\\D/g, '')}` : null;
 
     // Fire notification to requester (non-blocking)
     this.notificationsService.fireNotification(
@@ -157,10 +134,7 @@ export class ContactsService {
    * Rejects a pending contact request.
    * Only the post owner can reject.
    */
-  async rejectContactRequest(
-    ownerId: string,
-    requestId: string,
-  ): Promise<ContactRequest> {
+  async rejectContactRequest(ownerId: string, requestId: string): Promise<ContactRequest> {
     assertUuid(requestId, 'requestId');
 
     const request = await this.contactsRepository.findById(requestId);
@@ -172,15 +146,10 @@ export class ContactsService {
       throw new ForbiddenError('Only the post owner can reject requests');
     }
     if (request.status !== 'PENDING') {
-      throw new ValidationError(
-        `Request is already ${request.status}`,
-      );
+      throw new ValidationError(`Request is already ${request.status}`);
     }
 
-    const updated = await this.contactsRepository.updateStatus(
-      requestId,
-      'REJECTED',
-    );
+    const updated = await this.contactsRepository.updateStatus(requestId, 'REJECTED');
 
     // Fire notification to requester (non-blocking)
     this.notificationsService.fireNotification(
@@ -202,10 +171,7 @@ export class ContactsService {
    * Re-fetches the WhatsApp link for an already-approved contact request.
    * Only the original requester can call this.
    */
-  async getWhatsAppLink(
-    callerId: string,
-    requestId: string,
-  ): Promise<string> {
+  async getWhatsAppLink(callerId: string, requestId: string): Promise<string> {
     assertUuid(requestId, 'requestId');
 
     const request = await this.contactsRepository.findById(requestId);
@@ -232,10 +198,7 @@ export class ContactsService {
    * Returns the seller's WhatsApp contact for a PRODUCT post.
    * No approval gate — direct phone decrypt for classifieds.
    */
-  async getProductSellerContact(
-    callerId: string,
-    postId: string,
-  ): Promise<string> {
+  async getProductSellerContact(callerId: string, postId: string): Promise<string> {
     assertUuid(postId, 'postId');
 
     const post = await this.postsRepository.findById(postId);
@@ -243,17 +206,13 @@ export class ContactsService {
       throw new NotFoundError('Post', postId);
     }
     if (post.postType !== 'PRODUCT') {
-      throw new ValidationError(
-        'Direct seller contact is only available for PRODUCT posts',
-      );
+      throw new ValidationError('Direct seller contact is only available for PRODUCT posts');
     }
     if (post.status !== 'ACTIVE') {
       throw new ValidationError('This listing is no longer active');
     }
     if (post.creatorId === callerId) {
-      throw new ForbiddenError(
-        'You cannot request contact for your own listing',
-      );
+      throw new ForbiddenError('You cannot request contact for your own listing');
     }
 
     const seller = await this.usersService.findById(post.creatorId);
@@ -307,9 +266,7 @@ export class ContactsService {
       throw new NotFoundError('Post', postId);
     }
     if (post.creatorId !== userId) {
-      throw new ForbiddenError(
-        'Only the post owner can view contact requests',
-      );
+      throw new ForbiddenError('Only the post owner can view contact requests');
     }
 
     const limit = Math.min(first ?? 20, 50);
@@ -327,14 +284,10 @@ export class ContactsService {
 
   // ─── Helpers ─────────────────────────────────────────────────────────
 
-  private decodeCursor(
-    cursorBase64: string | null | undefined,
-  ): { createdAt: string; id: string } | null {
+  private decodeCursor(cursorBase64: string | null | undefined): { createdAt: string; id: string } | null {
     if (!cursorBase64) return null;
     try {
-      return JSON.parse(
-        Buffer.from(cursorBase64, 'base64url').toString('utf8'),
-      );
+      return JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8'));
     } catch {
       throw new ValidationError('Invalid cursor format');
     }
@@ -350,10 +303,7 @@ export class ContactsService {
     ).toString('base64url');
   }
 
-  private mapToConnection(result: {
-    rows: ContactRequest[];
-    hasNextPage: boolean;
-  }) {
+  private mapToConnection(result: { rows: ContactRequest[]; hasNextPage: boolean }) {
     return {
       edges: result.rows.map((request) => ({
         node: request,
@@ -361,10 +311,7 @@ export class ContactsService {
       })),
       pageInfo: {
         hasNextPage: result.hasNextPage,
-        endCursor:
-          result.rows.length > 0
-            ? this.encodeCursor(result.rows[result.rows.length - 1])
-            : null,
+        endCursor: result.rows.length > 0 ? this.encodeCursor(result.rows[result.rows.length - 1]) : null,
       },
     };
   }
