@@ -29,7 +29,7 @@ import { ConflictError } from '../errors/app.errors';
  * - Only when `X-Idempotency-Key` header is present
  * - Queries are always passed through unmodified
  */
-const IDEMPOTENCY_TTL_MS = 86_400_000; // 24 hours
+const IDEMPOTENCY_TTL_MS = 900_000; // 15 minutes
 const PROCESSING_SENTINEL = '__PROCESSING__';
 
 @Injectable()

@@ -26,7 +26,7 @@ export * from './post-media.schema';
 // CTI extension tables (joined only on detail screens)
 export * from './rescue-posts.schema';
 export * from './lost-posts.schema';
-export * from './aGeographicdoption-posts.schema';
+export * from './adoption-posts.schema';
 export * from './product-posts.schema';
 
 // Engagement

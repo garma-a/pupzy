@@ -302,6 +302,7 @@ export class PostsService {
       throw new ForbiddenError('You can only delete your own posts');
     }
     await this.postsRepository.softDelete(postId);
+    await this.usersService.invalidateUserCacheById(userId).catch(() => {});
   }
 
   // ─── Status Update ──────────────────────────────────────────────────────
@@ -350,7 +351,9 @@ export class PostsService {
       );
     }
 
-    return this.postsRepository.updateStatus(postId, status);
+    const updatedPost = await this.postsRepository.updateStatus(postId, status);
+    await this.usersService.invalidateUserCacheById(post.creatorId).catch(() => {});
+    return updatedPost;
   }
 
   // ─── Engagement Toggles ─────────────────────────────────────────────────
@@ -473,7 +476,7 @@ export class PostsService {
       cityId: input.cityId,
       viewerLocation: input.viewerLocation,
       radiusKm: input.radiusKm ?? 25,
-      limit: input.first ?? 20,
+      limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor<{ urgency: string; createdAt: string; id: string }>(input.after),
     });
     return this.mapFeedResultToConnection(result, (post) => ({
@@ -491,7 +494,7 @@ export class PostsService {
       viewerLocation: input.viewerLocation,
       radiusKm: input.radiusKm ?? 25,
       sort,
-      limit: input.first ?? 20,
+      limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor<{ score?: string; createdAt?: string; id: string }>(input.after),
     });
     return this.mapFeedResultToConnection(result, (post) =>
@@ -510,7 +513,7 @@ export class PostsService {
       radiusKm: input.radiusKm ?? 25,
       sort,
       category: input.category,
-      limit: input.first ?? 20,
+      limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor<{ score?: string; createdAt?: string; id: string }>(input.after),
     });
     return this.mapFeedResultToConnection(result, (post) =>
@@ -526,7 +529,7 @@ export class PostsService {
       cityId: input.cityId,
       viewerLocation: input.viewerLocation,
       radiusKm: input.radiusKm ?? 25,
-      limit: input.first ?? 20,
+      limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor<{ id: string }>(input.after),
     });
     return this.mapFeedResultToConnection(result, (post) => ({ id: post.id }));

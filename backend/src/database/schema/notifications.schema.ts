@@ -91,6 +91,10 @@ export const notifications = pgTable(
      */
     recipientTimeIdx: index('idx_notifications_recipient_time').on(table.recipientId, table.createdAt),
 
+    relatedPostIdx: index('idx_notifications_related_post').on(table.relatedPostId),
+    relatedContactRequestIdx: index('idx_notifications_related_contact_request').on(table.relatedContactRequestId),
+    relatedApplicationIdx: index('idx_notifications_related_application').on(table.relatedApplicationId),
+
     /*
      * Partial index for unread badge count:
      *   CREATE INDEX idx_notifications_unread ON notifications (recipient_id, created_at)

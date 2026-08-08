@@ -140,12 +140,7 @@ export const users = pgTable(
     /** Prevents full-table scans when listing users in a city. */
     homeCityIdx: index('idx_users_home_city').on(table.homeCityId),
 
-    /**
-     * GIST index on last_known_location for ST_Distance proximity queries.
-     * Cannot be expressed here — see custom migration SQL.
-     */
-    // NOTE: CREATE INDEX idx_users_last_known_location ON users USING GIST (last_known_location);
-    // (omitted — Drizzle cannot express USING GIST for text/custom types)
+    lastKnownLocationGistIdx: index('idx_users_last_known_location').using('gist', table.lastKnownLocation),
   }),
 );
 

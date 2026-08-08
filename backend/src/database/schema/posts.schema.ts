@@ -178,20 +178,19 @@ export const posts = pgTable(
     // ── City scoping (used by all feed queries) ──────────────────────────────
     cityTypeIdx: index('idx_posts_city_type').on(table.cityId, table.postType),
 
+    coordinatesGistIdx: index('idx_posts_coordinates').using('gist', table.coordinates),
+    helpFeedIdx: index('idx_posts_help_feed').on(table.cityId, table.postType, table.urgency, table.createdAt).where(sql`status='ACTIVE' AND post_type IN ('RESCUE','LOST')`),
+
     /*
      * All partial indexes below require WHERE clauses and cannot be expressed
      * in Drizzle's index() API. They are added in custom migration SQL.
      *
      * See drizzle/migrations/custom.sql for:
-     *   idx_posts_help_feed       — (city_id, post_type, urgency, created_at) WHERE status='ACTIVE' AND post_type IN ('RESCUE','LOST')
      *   idx_posts_adopt_score     — (city_id, effective_score, created_at) WHERE status='ACTIVE' AND post_type='ADOPTION'
      *   idx_posts_market_score    — (city_id, effective_score, created_at) WHERE status='ACTIVE' AND post_type='PRODUCT'
      *   idx_posts_market_category — (city_id, market_category, effective_score) WHERE status='ACTIVE' AND post_type='PRODUCT'
      *   idx_posts_moderation      — (report_count, created_at) WHERE moderation_status='FLAGGED'
      *   idx_posts_last_engaged    — (post_type, last_engaged_at) WHERE status='ACTIVE' AND post_type IN ('ADOPTION','PRODUCT')
-     *
-     * GIST index on coordinates:
-     *   idx_posts_coordinates — USING GIST (coordinates)
      */
   }),
 );

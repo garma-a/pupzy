@@ -40,11 +40,11 @@ export function gql(query, variables = {}, token = null, endpointTag = 'unknown'
   let body = {};
   try {
     body = JSON.parse(res.body || '{}');
-  } catch {
+  } catch (e) {
     // body stays {}
   }
 
-  const errors = body.errors ?? [];
+  const errors = body.errors || [];
   const ok     = res.status === 200 && errors.length === 0;
 
   check(res, {

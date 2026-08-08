@@ -115,9 +115,10 @@ export const adoptionPosts = pgTable(
   (table) => ({
     /**
      * B-tree index on species for species-filtered adoption browsing.
-     * GIN index on personality_tags is in custom migration SQL (Drizzle cannot express USING GIN).
      */
     speciesIdx: index('idx_adoption_posts_species').on(table.species),
+
+    personalityTagsGinIdx: index('idx_adoption_personality_tags').using('gin', table.personalityTags),
   }),
 );
 

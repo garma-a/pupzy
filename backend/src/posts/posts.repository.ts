@@ -353,29 +353,33 @@ export class PostsRepository {
 
       if (existing) {
         // Remove upvote
-        await tx.delete(postUpvotes).where(and(eq(postUpvotes.postId, postId), eq(postUpvotes.userId, userId)));
+        const deleted = await tx.delete(postUpvotes).where(and(eq(postUpvotes.postId, postId), eq(postUpvotes.userId, userId))).returning({ postId: postUpvotes.postId });
 
-        await tx
-          .update(posts)
-          .set({
-            upvoteCount: sql`${posts.upvoteCount} - 1`,
-            lastEngagedAt: sql`now()`,
-          })
-          .where(eq(posts.id, postId));
+        if (deleted.length > 0) {
+          await tx
+            .update(posts)
+            .set({
+              upvoteCount: sql`${posts.upvoteCount} - 1`,
+              lastEngagedAt: sql`now()`,
+            })
+            .where(eq(posts.id, postId));
+        }
 
         added = false;
       } else {
         // Add upvote — handle concurrent duplicate via unique constraint
         try {
-          await tx.insert(postUpvotes).values({ postId, userId });
+          const inserted = await tx.insert(postUpvotes).values({ postId, userId }).onConflictDoNothing().returning({ postId: postUpvotes.postId });
 
-          await tx
-            .update(posts)
-            .set({
-              upvoteCount: sql`${posts.upvoteCount} + 1`,
-              lastEngagedAt: sql`now()`,
-            })
-            .where(eq(posts.id, postId));
+          if (inserted.length > 0) {
+            await tx
+              .update(posts)
+              .set({
+                upvoteCount: sql`${posts.upvoteCount} + 1`,
+                lastEngagedAt: sql`now()`,
+              })
+              .where(eq(posts.id, postId));
+          }
 
           added = true;
         } catch (err) {
@@ -426,29 +430,33 @@ export class PostsRepository {
       let added: boolean;
 
       if (existing) {
-        await tx.delete(postSaves).where(and(eq(postSaves.postId, postId), eq(postSaves.userId, userId)));
+        const deleted = await tx.delete(postSaves).where(and(eq(postSaves.postId, postId), eq(postSaves.userId, userId))).returning({ postId: postSaves.postId });
 
-        await tx
-          .update(posts)
-          .set({
-            saveCount: sql`${posts.saveCount} - 1`,
-            lastEngagedAt: sql`now()`,
-          })
-          .where(eq(posts.id, postId));
+        if (deleted.length > 0) {
+          await tx
+            .update(posts)
+            .set({
+              saveCount: sql`${posts.saveCount} - 1`,
+              lastEngagedAt: sql`now()`,
+            })
+            .where(eq(posts.id, postId));
+        }
 
         added = false;
       } else {
         // Add save — handle concurrent duplicate via unique constraint
         try {
-          await tx.insert(postSaves).values({ postId, userId });
+          const inserted = await tx.insert(postSaves).values({ postId, userId }).onConflictDoNothing().returning({ postId: postSaves.postId });
 
-          await tx
-            .update(posts)
-            .set({
-              saveCount: sql`${posts.saveCount} + 1`,
-              lastEngagedAt: sql`now()`,
-            })
-            .where(eq(posts.id, postId));
+          if (inserted.length > 0) {
+            await tx
+              .update(posts)
+              .set({
+                saveCount: sql`${posts.saveCount} + 1`,
+                lastEngagedAt: sql`now()`,
+              })
+              .where(eq(posts.id, postId));
+          }
 
           added = true;
         } catch (err) {
@@ -604,8 +612,11 @@ export class PostsRepository {
    *
    * Uses ::geography cast for accurate meter-based distance on Earth's surface.
    */
-  private buildDistanceExpr(viewerPoint: string | null): SQL {
+  private buildDistanceExpr(viewerPoint: string | null, round: boolean = false): SQL {
     if (viewerPoint) {
+      if (round) {
+        return sql`ROUND(ST_Distance(p.coordinates::geography, ST_GeomFromEWKT(${viewerPoint})::geography) / 1000.0)`;
+      }
       return sql`ST_Distance(p.coordinates::geography, ST_GeomFromEWKT(${viewerPoint})::geography) / 1000.0`;
     }
     return sql`NULL::double precision`;
@@ -694,8 +705,9 @@ export class PostsRepository {
 
     if (centerPoint) {
       // Radius-based filtering — crosses admin boundaries
+      const radiusDegrees = radiusMeters / 111320.0;
       conditions.push(
-        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
+        sql`ST_DWithin(p.coordinates, ST_GeomFromEWKT(${centerPoint}), ${radiusDegrees}) AND ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
       );
     } else {
       // No GPS, no city → fall back to governorate/city filter
@@ -758,8 +770,9 @@ export class PostsRepository {
     const conditions: SQL[] = [sql`p.status = 'ACTIVE'`, sql`p.post_type = 'ADOPTION'`];
 
     if (centerPoint) {
+      const radiusDegrees = radiusMeters / 111320.0;
       conditions.push(
-        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
+        sql`ST_DWithin(p.coordinates, ST_GeomFromEWKT(${centerPoint}), ${radiusDegrees}) AND ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
       );
     } else {
       const locationFilter = this.buildLocationFilter(governorate, cityId);
@@ -787,7 +800,7 @@ export class PostsRepository {
     }
 
     const whereClause = sql.join(conditions, sql` AND `);
-    const distanceExpr = this.buildDistanceExpr(centerPoint);
+    const distanceExpr = this.buildDistanceExpr(centerPoint, true);
 
     const result = await this.db.execute(sql`
       SELECT p.*, ${distanceExpr} AS distance_km
@@ -830,8 +843,9 @@ export class PostsRepository {
     const conditions: SQL[] = [sql`p.status = 'ACTIVE'`, sql`p.post_type = 'PRODUCT'`];
 
     if (centerPoint) {
+      const radiusDegrees = radiusMeters / 111320.0;
       conditions.push(
-        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
+        sql`ST_DWithin(p.coordinates, ST_GeomFromEWKT(${centerPoint}), ${radiusDegrees}) AND ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
       );
     } else {
       const locationFilter = this.buildLocationFilter(governorate, cityId);
@@ -863,7 +877,7 @@ export class PostsRepository {
     }
 
     const whereClause = sql.join(conditions, sql` AND `);
-    const distanceExpr = this.buildDistanceExpr(centerPoint);
+    const distanceExpr = this.buildDistanceExpr(centerPoint, true);
 
     const result = await this.db.execute(sql`
       SELECT p.*, ${distanceExpr} AS distance_km
@@ -907,8 +921,9 @@ export class PostsRepository {
     const conditions: SQL[] = [sql`p.status = 'ACTIVE'`];
 
     if (centerPoint) {
+      const radiusDegrees = radiusMeters / 111320.0;
       conditions.push(
-        sql`ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
+        sql`ST_DWithin(p.coordinates, ST_GeomFromEWKT(${centerPoint}), ${radiusDegrees}) AND ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
       );
     } else {
       const locationFilter = this.buildLocationFilter(governorate, cityId);

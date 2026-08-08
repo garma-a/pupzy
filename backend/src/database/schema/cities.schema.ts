@@ -58,8 +58,7 @@ export const cities = pgTable(
     /** Enables filtering and grouping by governorate. */
     governorateIdx: index('idx_cities_governorate').on(table.governorate),
 
-    // NOTE: GIST index on center_point cannot be expressed here.
-    // See custom migration SQL: CREATE INDEX idx_cities_center_point ON cities USING GIST (center_point);
+    centerPointGistIdx: index('idx_cities_center_point').using('gist', table.centerPoint),
   }),
 );
 

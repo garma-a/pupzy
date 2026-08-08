@@ -60,16 +60,17 @@ export default function () {
 
   for (let page = 1; page <= 3; page++) {
     const res  = gql(ADOPT_FEED, { governorate: gov, sort: 'HOT', first: 20, after: cursor }, token, 'adoptFeed');
-    const conn = res.data?.adoptFeed;
+    const conn = (res.data && res.data.adoptFeed) ? res.data.adoptFeed : null;
 
     // ── Basic response checks ─────────────────────────────────────────────
     check(res, {
       [`page ${page}: no GQL errors`]: () => res.ok,
-      [`page ${page}: has edges`]:     () => (conn?.edges?.length ?? 0) > 0,
+      [`page ${page}: has edges`]:     () => (conn && conn.edges ? conn.edges.length : 0) > 0,
     });
 
     // ── Pagination correctness: no duplicate IDs across pages ─────────────
-    const pageIds = (conn?.edges ?? []).map((e) => e.node.id);
+    const edges = (conn && conn.edges) ? conn.edges : [];
+    const pageIds = edges.map((e) => e.node.id);
     const hasDuplicates = pageIds.some((id) => seenIds.has(id));
 
     check(
@@ -80,7 +81,7 @@ export default function () {
     pageIds.forEach((id) => seenIds.add(id));
 
     // ── Advance cursor or stop if no more pages ───────────────────────────
-    if (!conn?.pageInfo?.hasNextPage) break;
+    if (!conn || !conn.pageInfo || !conn.pageInfo.hasNextPage) break;
     cursor = conn.pageInfo.endCursor;
 
     // Simulate the user's scroll delay before loading the next page
