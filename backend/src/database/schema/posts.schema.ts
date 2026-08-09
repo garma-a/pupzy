@@ -90,6 +90,9 @@ export const posts = pgTable(
       .notNull()
       .references(() => cities.id, { onDelete: 'restrict' }),
 
+    /** Denormalized governorate from city. Enables sub-15ms governorate-wide queries. */
+    governorate: varchar('governorate', { length: 100 }),
+
     /**
      * Human-readable neighborhood, e.g. "Maadi". Optional.
      * Shown on cards below the city name.

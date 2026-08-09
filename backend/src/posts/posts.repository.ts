@@ -567,7 +567,7 @@ export class PostsRepository {
     if (!governorate) {
       return null;
     }
-    return sql`p.city_id IN (SELECT id FROM cities WHERE governorate = ${governorate})`;
+    return sql`p.governorate = ${governorate}`;
   }
 
   /**

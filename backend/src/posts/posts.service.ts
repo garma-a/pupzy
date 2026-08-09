@@ -47,7 +47,7 @@ export class PostsService {
 
   async createRescuePost(creatorId: string, input: CreateRescuePostInput): Promise<Post> {
     const postId = generateUuidV7();
-    const cityId = await this.resolveCity(input.cityId, input.coordinates);
+    const city = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
     const mediaRows = await this.prepareMedia(input.mediaIds, postId);
 
@@ -60,7 +60,8 @@ export class PostsService {
       status: 'ACTIVE',
       moderationStatus,
       urgency: input.urgency,
-      cityId,
+      cityId: city.id,
+      governorate: city.governorate,
       areaName: input.areaName,
       coordinates: [input.coordinates.longitude, input.coordinates.latitude],
       effectiveScore: 0.0,
@@ -86,7 +87,7 @@ export class PostsService {
 
   async createLostPost(creatorId: string, input: CreateLostPostInput): Promise<Post> {
     const postId = generateUuidV7();
-    const cityId = await this.resolveCity(input.cityId, input.coordinates);
+    const city = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
     const mediaRows = await this.prepareMedia(input.mediaIds, postId);
 
@@ -99,7 +100,8 @@ export class PostsService {
       status: 'ACTIVE',
       moderationStatus,
       urgency: input.urgency,
-      cityId,
+      cityId: city.id,
+      governorate: city.governorate,
       areaName: input.areaName,
       coordinates: [input.coordinates.longitude, input.coordinates.latitude],
       effectiveScore: 0.0,
@@ -133,7 +135,7 @@ export class PostsService {
 
   async createAdoptionPost(creatorId: string, input: CreateAdoptionPostInput): Promise<Post> {
     const postId = generateUuidV7();
-    const cityId = await this.resolveCity(input.cityId, input.coordinates);
+    const city = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
     const mediaRows = await this.prepareMedia(input.mediaIds, postId);
 
@@ -146,7 +148,8 @@ export class PostsService {
       status: 'ACTIVE',
       moderationStatus,
       urgency: undefined,
-      cityId,
+      cityId: city.id,
+      governorate: city.governorate,
       areaName: input.areaName,
       coordinates: [input.coordinates.longitude, input.coordinates.latitude],
       effectiveScore: 0.0,
@@ -183,7 +186,7 @@ export class PostsService {
 
   async createProductPost(creatorId: string, input: CreateProductPostInput): Promise<Post> {
     const postId = generateUuidV7();
-    const cityId = await this.resolveCity(input.cityId, input.coordinates);
+    const city = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
     const mediaRows = await this.prepareMedia(input.mediaIds, postId);
 
@@ -196,7 +199,8 @@ export class PostsService {
       status: 'ACTIVE',
       moderationStatus,
       urgency: undefined,
-      cityId,
+      cityId: city.id,
+      governorate: city.governorate,
       areaName: input.areaName,
       coordinates: [input.coordinates.longitude, input.coordinates.latitude],
       marketCategory: input.category,
@@ -559,20 +563,20 @@ export class PostsService {
   private async resolveCity(
     cityId: string | undefined,
     coordinates: { latitude: number; longitude: number },
-  ): Promise<string> {
+  ): Promise<City> {
     if (cityId) {
       const city = await this.citiesService.findById(cityId);
       if (!city) {
         throw new ValidationError(`cityId "${cityId}" does not correspond to a known city`);
       }
-      return city.id;
+      return city;
     }
 
     const city = await this.citiesService.findNearest(coordinates.latitude, coordinates.longitude);
     if (!city) {
       throw new NotFoundError('No nearby city found for the provided coordinates.');
     }
-    return city.id;
+    return city;
   }
 
   private checkModeration(title: string, description: string): 'FLAGGED' | 'PENDING_AUTO_REVIEW' {
