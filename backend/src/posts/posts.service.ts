@@ -10,7 +10,7 @@ import { ValidationError, NotFoundError, ForbiddenError } from '../common/errors
 import { assertUuid } from '../common/utils/validate-uuid';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import type { Post, NewPost, NewPostMedia, RescuePost, LostPost, AdoptionPost, ProductPost } from '../database/schema';
+import type { Post, NewPost, NewPostMedia, RescuePost, LostPost, AdoptionPost, ProductPost, City } from '../database/schema';
 import type { CreateRescuePostInput } from './dto/create-rescue-post.input';
 import type { CreateLostPostInput } from './dto/create-lost-post.input';
 import type { CreateAdoptionPostInput } from './dto/create-adoption-post.input';

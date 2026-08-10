@@ -637,6 +637,7 @@ export class PostsRepository {
       moderationStatus: raw.moderation_status as Post['moderationStatus'],
       urgency: (raw.urgency as Post['urgency']) ?? null,
       cityId: raw.city_id as string,
+      governorate: (raw.governorate as string) ?? null,
       areaName: (raw.area_name as string) ?? null,
       coordinates: raw.coordinates as Post['coordinates'],
       marketCategory: (raw.market_category as Post['marketCategory']) ?? null,
