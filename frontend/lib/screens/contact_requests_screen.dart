@@ -5,6 +5,7 @@ import '../localization/lang_provider.dart';
 import '../models/contact_request.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/skeleton_loader.dart';
 
 /// Contact requests I've SENT — tracks their approve/reject status.
 ///
@@ -104,7 +105,9 @@ class _ContactRequestsScreenState extends State<ContactRequestsScreen> {
             const SizedBox(height: AppSpacing.md),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                  ? ListView(
+                      children: const [ListRowSkeleton(), ListRowSkeleton(), ListRowSkeleton(), ListRowSkeleton()],
+                    )
                   : _errorMessage != null
                       ? Center(
                           child: Padding(

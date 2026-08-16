@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
@@ -7,9 +8,11 @@ import '../models/post_detail.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/adoption_application_sheet.dart';
+import '../widgets/animated_favorite_icon.dart';
 import '../widgets/adoption_applications_owner_section.dart';
 import '../widgets/nearby_vets_section.dart';
 import '../widgets/pet_carousel.dart';
+import '../widgets/skeleton_loader.dart';
 
 class AdoptionDetailScreen extends StatefulWidget {
   final String postId;
@@ -42,7 +45,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
       _errorMessage = null;
     });
     final graphql = context.read<GraphQLService>();
-    final me = await graphql.fetchMe();
+    final meFuture = graphql.fetchMe();
     final (post, postError) = await graphql.fetchPostDetail(widget.postId);
     if (!mounted) return;
     if (postError != null || post == null) {
@@ -53,6 +56,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
       return;
     }
     graphql.recordView(post.id);
+    final me = await meFuture;
     _myUserId = me?['id'] as String?;
     if (_myUserId != post.creator.id) {
       final (mine, _) = await graphql.fetchMyAdoptionApplications(first: 50);
@@ -84,6 +88,19 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
     setState(() {
       _myApplication = mine.where((a) => a.targetPostId == widget.postId).isEmpty ? null : mine.firstWhere((a) => a.targetPostId == widget.postId);
     });
+  }
+
+  Future<bool> _toggleSave() async {
+    if (_post == null) return false;
+    final graphql = context.read<GraphQLService>();
+    final (count, saved, error) = await graphql.toggleSave(_post!.id);
+    if (!mounted) return false;
+    if (error != null || count == null || saved == null) {
+      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update. Try again.', 'تعذر التحديث. حاول مرة أخرى.'));
+      return false;
+    }
+    setState(() => _post = _post!.copyWith(saveCount: count, isSavedByMe: saved));
+    return true;
   }
 
   String _applyButtonLabel(BuildContext context) {
@@ -124,7 +141,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppColors.primary)));
+      return const Scaffold(body: SingleChildScrollView(child: DetailScreenSkeleton()));
     }
     if (_errorMessage != null || _post == null || _ext == null) {
       return Scaffold(
@@ -187,7 +204,23 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(ext.petName, style: Theme.of(context).textTheme.headlineLarge),
+                      Row(
+                        children: [
+                          Expanded(child: Text(ext.petName, style: Theme.of(context).textTheme.headlineLarge)),
+                          Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: AnimatedFavoriteIcon(
+                              isSaved: post.isSavedByMe,
+                              onToggle: _toggleSave,
+                              semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
+                              semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
+                              activeColor: AppColors.critical,
+                              inactiveColor: AppColors.textSecondary,
+                              size: 24,
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: AppSpacing.sm),
                       Wrap(
                         spacing: AppSpacing.sm,

@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
 import '../models/feed_post.dart';
 import '../models/post.dart';
+import '../services/browse_location_service.dart';
+import '../services/feed_location_resolver.dart';
 import '../services/graphql_service.dart';
+import '../services/location_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/animated_favorite_icon.dart';
 import '../widgets/distance_filter.dart';
 import '../widgets/image_with_fallback.dart';
+import '../widgets/skeleton_loader.dart';
 import '../widgets/top_bar.dart';
 import 'post_form_screen.dart';
 import 'product_detail_screen.dart';
@@ -48,6 +54,7 @@ class _MarketScreenState extends State<MarketScreen> {
   Position? _position;
   bool _initialized = false;
   double? _lastRadius;
+  Object? _lastBrowseCityId;
 
   @override
   void dispose() {
@@ -59,30 +66,16 @@ class _MarketScreenState extends State<MarketScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final maxDist = DistanceProvider.of(context).maxDistance;
+    final browseCityId = context.watch<BrowseLocationService>().selectedCity?['id'];
     if (!_initialized) {
       _initialized = true;
       _lastRadius = maxDist;
+      _lastBrowseCityId = browseCityId;
       _loadFeed();
-    } else if (maxDist != _lastRadius) {
+    } else if (maxDist != _lastRadius || browseCityId != _lastBrowseCityId) {
       _lastRadius = maxDist;
+      _lastBrowseCityId = browseCityId;
       _loadFeed();
-    }
-  }
-
-  Future<void> _fetchLocation() async {
-    try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return;
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) return;
-      }
-      _position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 10)),
-      );
-    } catch (_) {
-      // Location is optional — falls back to governorate/city-only filtering.
     }
   }
 
@@ -93,11 +86,17 @@ class _MarketScreenState extends State<MarketScreen> {
       _errorMessage = null;
     });
 
-    if (_position == null) await _fetchLocation();
-    if (!mounted) return;
-
     final graphql = context.read<GraphQLService>();
-    final (governorate, cityId) = await graphql.resolveViewerCity();
+    final resolved = await resolveFeedLocation(
+      browseLocationService: context.read<BrowseLocationService>(),
+      locationService: context.read<LocationService>(),
+      graphql: graphql,
+    );
+    if (!mounted) return;
+    _position = resolved.position;
+    final governorate = resolved.governorate;
+    final cityId = resolved.cityId;
+
     if (governorate == null) {
       if (mounted) {
         setState(() {
@@ -128,6 +127,20 @@ class _MarketScreenState extends State<MarketScreen> {
         _posts = posts;
       }
     });
+  }
+
+  Future<bool> _toggleSave(FeedPost post) async {
+    final graphql = context.read<GraphQLService>();
+    final (count, saved, error) = await graphql.toggleSave(post.id);
+    if (!mounted) return false;
+    if (error != null || count == null || saved == null) {
+      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update. Try again.', 'تعذر التحديث. حاول مرة أخرى.'));
+      return false;
+    }
+    setState(() {
+      _posts = _posts.map((p) => p.id == post.id ? p.copyWith(saveCount: count, isSavedByMe: saved) : p).toList();
+    });
+    return true;
   }
 
   void _selectCategory(String value) {
@@ -329,9 +342,22 @@ class _MarketScreenState extends State<MarketScreen> {
                     const SizedBox(height: AppSpacing.sm),
                     // Listings grid
                     if (_loading && _posts.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: AppSpacing.xxl),
-                        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                        child: GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 2,
+                          mainAxisSpacing: AppSpacing.md,
+                          crossAxisSpacing: AppSpacing.md,
+                          childAspectRatio: 0.82,
+                          children: const [
+                            GridTileSkeleton(),
+                            GridTileSkeleton(),
+                            GridTileSkeleton(),
+                            GridTileSkeleton(),
+                          ],
+                        ),
                       )
                     else if (_errorMessage != null && _posts.isEmpty)
                       Padding(
@@ -424,6 +450,28 @@ class _MarketScreenState extends State<MarketScreen> {
                                                 child: Text(t(context, 'SOLD', 'مباع'), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
                                               ),
                                             ),
+                                          PositionedDirectional(
+                                            top: AppSpacing.sm,
+                                            end: AppSpacing.sm,
+                                            child: Container(
+                                              width: 28,
+                                              height: 28,
+                                              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                                              child: Center(
+                                                child: AnimatedFavoriteIcon(
+                                                  isSaved: p.isSavedByMe,
+                                                  onToggle: () => _toggleSave(p),
+                                                  semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
+                                                  semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
+                                                  filledIcon: Icons.bookmark,
+                                                  outlineIcon: Icons.bookmark_border,
+                                                  activeColor: AppColors.primary,
+                                                  inactiveColor: AppColors.primary,
+                                                  size: 15,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),

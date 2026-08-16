@@ -1,5 +1,4 @@
 import '../models/pet.dart';
-import '../models/post.dart';
 
 class MockData {
   MockData._();
@@ -53,7 +52,4 @@ class MockData {
   /// Favorite pet ids currently hearted — starts pre-filled since `favorites`
   /// above is itself "pets the user has hearted". In-memory only.
   static Set<String> favoritePetIds = {for (final p in favorites) p.id};
-
-  // Posts (kept for possible use)
-  static List<Post> posts = [];
 }

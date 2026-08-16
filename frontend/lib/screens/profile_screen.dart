@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -161,7 +162,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
       }
       return null;
     } catch (e) {
-      debugPrint('Location error: $e');
+      if (kDebugMode) debugPrint('Location error: $e');
       Fluttertoast.showToast(
         msg: '${t(context, 'Location error', 'خطأ في تحديد الموقع')}: $e',
         backgroundColor: AppColors.critical,

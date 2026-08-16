@@ -10,11 +10,13 @@ import '../models/contact_request.dart';
 import '../models/post_detail.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/animated_favorite_icon.dart';
 import '../widgets/contact_request_sheet.dart';
 import '../widgets/contact_requests_owner_section.dart';
 import '../widgets/image_with_fallback.dart';
 import '../widgets/nearby_vets_section.dart';
 import '../widgets/pet_carousel.dart';
+import '../widgets/skeleton_loader.dart';
 
 class RescueDetailScreen extends StatefulWidget {
   final String postId;
@@ -51,7 +53,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
       _errorMessage = null;
     });
     final graphql = context.read<GraphQLService>();
-    final me = await graphql.fetchMe();
+    final meFuture = graphql.fetchMe();
     final (post, postError) = await graphql.fetchPostDetail(widget.postId);
     if (!mounted) return;
     if (postError != null || post == null) {
@@ -62,6 +64,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
       return;
     }
     graphql.recordView(post.id);
+    final me = await meFuture;
     _myUserId = me?['id'] as String?;
     if (_myUserId != post.creator.id) {
       final (mine, _) = await graphql.fetchMyContactRequests(postId: post.id, first: 1);
@@ -102,6 +105,19 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
       return;
     }
     setState(() => _post = _post!.copyWith(upvoteCount: count, isUpvotedByMe: upvoted));
+  }
+
+  Future<bool> _toggleSave() async {
+    if (_post == null) return false;
+    final graphql = context.read<GraphQLService>();
+    final (count, saved, error) = await graphql.toggleSave(_post!.id);
+    if (!mounted) return false;
+    if (error != null || count == null || saved == null) {
+      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update. Try again.', 'تعذر التحديث. حاول مرة أخرى.'));
+      return false;
+    }
+    setState(() => _post = _post!.copyWith(saveCount: count, isSavedByMe: saved));
+    return true;
   }
 
   Future<void> _reportFound() async {
@@ -167,7 +183,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppColors.primary)));
+      return const Scaffold(body: SingleChildScrollView(child: DetailScreenSkeleton()));
     }
     if (_errorMessage != null || _post == null || (_rescueExt == null && _lostExt == null)) {
       return Scaffold(
@@ -329,6 +345,19 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                               ),
                             ),
                           ],
+                          const Spacer(),
+                          Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: AnimatedFavoriteIcon(
+                              isSaved: post.isSavedByMe,
+                              onToggle: _toggleSave,
+                              semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
+                              semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
+                              activeColor: AppColors.critical,
+                              inactiveColor: AppColors.textSecondary,
+                              size: 24,
+                            ),
+                          ),
                         ],
                       ),
                       if (post.vetClinics.isNotEmpty) ...[

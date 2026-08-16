@@ -22,12 +22,22 @@ class ImageWithFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isAsset = url.startsWith('assets/');
+    // Decode at (roughly) the size the image will actually render at, not
+    // whatever resolution the source file happens to be — keeps memory use
+    // low when a full-size photo is shown as a small feed thumbnail.
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    // width/height are often double.infinity (fill available space) — only
+    // ever pass a concrete decode size when the dimension is actually finite.
+    final memCacheWidth = width != null && width!.isFinite ? (width! * dpr).round() : null;
+    final memCacheHeight = height != null && height!.isFinite ? (height! * dpr).round() : null;
     final image = isAsset
         ? Image.asset(
             url,
             width: width,
             height: height,
             fit: fit,
+            cacheWidth: memCacheWidth,
+            cacheHeight: memCacheHeight,
             errorBuilder: (context, e, s) => Container(
               width: width,
               height: height,
@@ -40,6 +50,8 @@ class ImageWithFallback extends StatelessWidget {
             width: width,
             height: height,
             fit: fit,
+            memCacheWidth: memCacheWidth,
+            memCacheHeight: memCacheHeight,
             placeholder: (context, _) => Container(
               width: width,
               height: height,

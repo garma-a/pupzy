@@ -43,7 +43,7 @@ class _DistanceFilterState extends State<DistanceFilter> {
   ];
 
   int _indexForDistance(double d) {
-    for (int i = 0; i < _chips.length - 1; i++) {
+    for (int i = 0; i < _chips.length; i++) {
       if (_chips[i].$4 == d) return i;
     }
     return 1;

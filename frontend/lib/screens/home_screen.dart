@@ -8,12 +8,17 @@ import 'package:provider/provider.dart';
 import '../data/mock_data.dart';
 import '../localization/lang_provider.dart';
 import '../models/feed_post.dart';
+import '../services/browse_location_service.dart';
+import '../services/feed_location_resolver.dart';
 import '../services/graphql_service.dart';
+import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/adoption_application_sheet.dart';
 import '../widgets/adoption_card.dart';
+import '../widgets/animated_favorite_icon.dart';
 import '../widgets/distance_filter.dart';
 import '../widgets/image_with_fallback.dart';
+import '../widgets/skeleton_loader.dart';
 import '../widgets/top_bar.dart';
 import 'adoption_detail_screen.dart';
 import 'product_detail_screen.dart';
@@ -34,36 +39,22 @@ class _HomeScreenState extends State<HomeScreen> {
   Position? _position;
   bool _initialized = false;
   double? _lastRadius;
+  Object? _lastBrowseCityId;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final maxDist = DistanceProvider.of(context).maxDistance;
+    final browseCityId = context.watch<BrowseLocationService>().selectedCity?['id'];
     if (!_initialized) {
       _initialized = true;
       _lastRadius = maxDist;
+      _lastBrowseCityId = browseCityId;
       _loadFeed();
-    } else if (maxDist != _lastRadius) {
+    } else if (maxDist != _lastRadius || browseCityId != _lastBrowseCityId) {
       _lastRadius = maxDist;
+      _lastBrowseCityId = browseCityId;
       _loadFeed();
-    }
-  }
-
-  Future<void> _fetchLocation() async {
-    try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return;
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) return;
-      }
-      _position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 10)),
-      );
-    } catch (_) {
-      // Location is optional for the home feed — silently fall back to
-      // governorate/city-only filtering (no radius, no distanceKm on cards).
     }
   }
 
@@ -74,11 +65,17 @@ class _HomeScreenState extends State<HomeScreen> {
       _errorMessage = null;
     });
 
-    if (_position == null) await _fetchLocation();
-    if (!mounted) return;
-
     final graphql = context.read<GraphQLService>();
-    final (governorate, cityId) = await graphql.resolveViewerCity();
+    final resolved = await resolveFeedLocation(
+      browseLocationService: context.read<BrowseLocationService>(),
+      locationService: context.read<LocationService>(),
+      graphql: graphql,
+    );
+    if (!mounted) return;
+    _position = resolved.position;
+    final governorate = resolved.governorate;
+    final cityId = resolved.cityId;
+
     if (governorate == null) {
       if (mounted) {
         setState(() {
@@ -120,6 +117,20 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _posts = _posts.map((p) => p.id == post.id ? p.copyWith(upvoteCount: count, isUpvotedByMe: upvoted) : p).toList();
     });
+  }
+
+  Future<bool> _toggleSave(FeedPost post) async {
+    final graphql = context.read<GraphQLService>();
+    final (count, saved, error) = await graphql.toggleSave(post.id);
+    if (!mounted) return false;
+    if (error != null || count == null || saved == null) {
+      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update. Try again.', 'تعذر التحديث. حاول مرة أخرى.'));
+      return false;
+    }
+    setState(() {
+      _posts = _posts.map((p) => p.id == post.id ? p.copyWith(saveCount: count, isSavedByMe: saved) : p).toList();
+    });
+    return true;
   }
 
   @override
@@ -173,9 +184,41 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: AppColors.primary,
                 child: _loading && _posts.isEmpty
                     ? ListView(
-                        children: const [
-                          SizedBox(height: 200),
-                          Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                        padding: const EdgeInsets.only(bottom: 100),
+                        children: [
+                          const SizedBox(height: AppSpacing.md),
+                          SizedBox(
+                            height: 270,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                              children: const [HorizontalCardSkeleton(), HorizontalCardSkeleton()],
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          SizedBox(
+                            height: 270,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                              children: const [HorizontalCardSkeleton(), HorizontalCardSkeleton()],
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          const ListCardSkeleton(imageHeight: 220),
+                          const SizedBox(height: AppSpacing.lg),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                            child: GridView.count(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              crossAxisCount: 2,
+                              mainAxisSpacing: AppSpacing.md,
+                              crossAxisSpacing: AppSpacing.md,
+                              childAspectRatio: 0.75,
+                              children: const [GridTileSkeleton(), GridTileSkeleton()],
+                            ),
+                          ),
                         ],
                       )
                     : _errorMessage != null && _posts.isEmpty
@@ -246,6 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     itemBuilder: (_, i) => _HomeRescueCard(
                                       post: rescueLike[i],
                                       onBoost: () => _toggleUpvote(rescueLike[i]),
+                                      onSave: () => _toggleSave(rescueLike[i]),
                                       onTap: () => Navigator.of(context).push(
                                         MaterialPageRoute(builder: (_) => RescueDetailScreen(postId: rescueLike[i].id)),
                                       ),
@@ -274,6 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               else
                                 _HomeAdoptionPreviewCard(
                                   post: adoption.first,
+                                  onSave: () => _toggleSave(adoption.first),
                                   onTap: () => Navigator.of(context).push(
                                     MaterialPageRoute(builder: (_) => AdoptionDetailScreen(postId: adoption.first.id)),
                                   ),
@@ -325,9 +370,35 @@ class _HomeScreenState extends State<HomeScreen> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Expanded(
-                                              child: ClipRRect(
-                                                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
-                                                child: ImageWithFallback(url: p.primaryImageUrl ?? '', width: double.infinity),
+                                              child: Stack(
+                                                children: [
+                                                  ClipRRect(
+                                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
+                                                    child: ImageWithFallback(url: p.primaryImageUrl ?? '', width: double.infinity),
+                                                  ),
+                                                  PositionedDirectional(
+                                                    top: AppSpacing.xs,
+                                                    end: AppSpacing.xs,
+                                                    child: Container(
+                                                      width: 26,
+                                                      height: 26,
+                                                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                                                      child: Center(
+                                                        child: AnimatedFavoriteIcon(
+                                                          isSaved: p.isSavedByMe,
+                                                          onToggle: () => _toggleSave(p),
+                                                          semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
+                                                          semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
+                                                          filledIcon: Icons.bookmark,
+                                                          outlineIcon: Icons.bookmark_border,
+                                                          activeColor: AppColors.primary,
+                                                          inactiveColor: AppColors.primary,
+                                                          size: 14,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                             Padding(
@@ -669,8 +740,9 @@ class _HomeUrgentBanner extends StatelessWidget {
 class _HomeRescueCard extends StatelessWidget {
   final FeedPost post;
   final VoidCallback onBoost;
+  final Future<bool> Function() onSave;
   final VoidCallback onTap;
-  const _HomeRescueCard({required this.post, required this.onBoost, required this.onTap});
+  const _HomeRescueCard({required this.post, required this.onBoost, required this.onSave, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -703,6 +775,26 @@ class _HomeRescueCard extends StatelessWidget {
                     child: Text(t(context, 'CRITICAL', 'حرجة'), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
                   ),
                 ),
+              PositionedDirectional(
+                top: AppSpacing.sm,
+                end: AppSpacing.sm,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: Center(
+                    child: AnimatedFavoriteIcon(
+                      isSaved: post.isSavedByMe,
+                      onToggle: onSave,
+                      semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
+                      semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
+                      activeColor: AppColors.critical,
+                      inactiveColor: AppColors.critical,
+                      size: 16,
+                    ),
+                  ),
+                ),
+              ),
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -789,8 +881,9 @@ class _HomeRescueCard extends StatelessWidget {
 /// full AdoptionPost extension data.
 class _HomeAdoptionPreviewCard extends StatelessWidget {
   final FeedPost post;
+  final Future<bool> Function() onSave;
   final VoidCallback onTap;
-  const _HomeAdoptionPreviewCard({required this.post, required this.onTap});
+  const _HomeAdoptionPreviewCard({required this.post, required this.onSave, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -812,6 +905,26 @@ class _HomeAdoptionPreviewCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
                 child: ImageWithFallback(url: post.primaryImageUrl ?? '', width: double.infinity, height: 300),
+              ),
+              PositionedDirectional(
+                top: AppSpacing.sm,
+                end: AppSpacing.sm,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: Center(
+                    child: AnimatedFavoriteIcon(
+                      isSaved: post.isSavedByMe,
+                      onToggle: onSave,
+                      semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
+                      semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
+                      activeColor: AppColors.critical,
+                      inactiveColor: AppColors.critical,
+                      size: 18,
+                    ),
+                  ),
+                ),
               ),
               Positioned(
                 bottom: 0,

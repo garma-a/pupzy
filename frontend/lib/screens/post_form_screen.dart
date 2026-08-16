@@ -7,7 +7,6 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-import '../data/mock_data.dart';
 import '../localization/lang_provider.dart';
 import '../models/post.dart';
 import '../services/graphql_service.dart';
@@ -165,19 +164,6 @@ class _PostFormScreenState extends State<PostFormScreen> {
     }
   }
 
-  String get _title {
-    switch (widget.type) {
-      case PostType.adoption:
-        return t(context, 'New Adoption Listing', 'إعلان تبني جديد');
-      case PostType.rescue:
-        return t(context, 'New Rescue Alert', 'تنبيه إنقاذ جديد');
-      case PostType.product:
-        return t(context, 'New Product', 'منتج جديد');
-      case PostType.general:
-        return t(context, 'New Post', 'منشور جديد');
-    }
-  }
-
   String _labelFor(List<Choice> options, String value) {
     final match = options.firstWhere((o) => o.$1 == value);
     return t(context, match.$2, match.$3);
@@ -185,30 +171,16 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
   Future<void> _pickImage() async {
     if (_images.length >= 4) return;
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) setState(() => _images.add(picked));
-  }
-
-  void _submit() {
-    final caption = _captionController.text.trim();
-    if (caption.isEmpty) {
-      Fluttertoast.showToast(msg: t(context, 'Please add a caption', 'يرجى إضافة وصف'));
-      return;
-    }
-    MockData.posts.insert(
-      0,
-      Post(
-        id: 'p${DateTime.now().millisecondsSinceEpoch}',
-        username: 'pup_lover_22',
-        avatarUrl: 'https://i.pravatar.cc/150?img=12',
-        imageUrls: ['https://placedog.net/600/400?id=${DateTime.now().millisecondsSinceEpoch % 50}'],
-        caption: caption,
-        timestamp: DateTime.now(),
-        type: widget.type,
-      ),
+    // Downscale + re-encode at pick time so we never upload a full-resolution
+    // camera photo (can be 10+ MB) — keeps uploads fast and comfortably under
+    // the backend's 5MB-per-image limit.
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 80,
     );
-    Fluttertoast.showToast(msg: t(context, 'Post submitted!', 'تم نشر المنشور!'));
-    Navigator.of(context).pop();
+    if (picked != null) setState(() => _images.add(picked));
   }
 
   bool get _rescueFormValid {
@@ -374,6 +346,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
         );
         if (response.statusCode >= 200 && response.statusCode < 300) {
           mediaIds.add(uploadInfo['mediaId'] as String);
+        } else {
+          Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
         }
       }
 
@@ -437,6 +411,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
         );
         if (response.statusCode >= 200 && response.statusCode < 300) {
           mediaIds.add(uploadInfo['mediaId'] as String);
+        } else {
+          Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
         }
       }
 
@@ -502,6 +478,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
         );
         if (response.statusCode >= 200 && response.statusCode < 300) {
           mediaIds.add(uploadInfo['mediaId'] as String);
+        } else {
+          Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
         }
       }
 
@@ -569,6 +547,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
         );
         if (response.statusCode >= 200 && response.statusCode < 300) {
           mediaIds.add(uploadInfo['mediaId'] as String);
+        } else {
+          Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
         }
       }
 
@@ -655,94 +635,9 @@ class _PostFormScreenState extends State<PostFormScreen> {
     if (widget.type == PostType.adoption) {
       return _buildAdoptionForm(context);
     }
-    return Scaffold(
-      appBar: AppBar(title: Text(_title)),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        children: [
-          Text(t(context, 'Photos', 'الصور'), style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: AppSpacing.sm),
-          SizedBox(
-            height: 90,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                ..._images.map(
-                  (img) => Padding(
-                    padding: const EdgeInsets.only(right: AppSpacing.sm),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.file(
-                        File(img.path),
-                        width: 90,
-                        height: 90,
-                        fit: BoxFit.cover,
-                        errorBuilder: (ctx, err, st) => Container(
-                          width: 90,
-                          height: 90,
-                          color: AppColors.border,
-                          child: const Icon(Icons.image),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                if (_images.length < 4)
-                  InkWell(
-                    onTap: _pickImage,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      width: 90,
-                      height: 90,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.border),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(t(context, 'Caption', 'الوصف'), style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: AppSpacing.sm),
-          TextField(
-            controller: _captionController,
-            maxLines: 4,
-            decoration: InputDecoration(
-              hintText: t(context, 'Tell the community about it...', 'أخبر المجتمع عن الأمر...'),
-              filled: true,
-              fillColor: AppColors.background,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.card),
-                borderSide: const BorderSide(color: AppColors.border),
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(t(context, 'Category', 'الفئة'), style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            spacing: AppSpacing.sm,
-            children: _categories.map((c) {
-              final selected = _selectedCategory == c.$1;
-              return ChoiceChip(
-                label: Text(t(context, c.$2, c.$3)),
-                selected: selected,
-                selectedColor: AppColors.primary.withValues(alpha: 0.15),
-                onSelected: (_) => setState(() => _selectedCategory = c.$1),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: AppSpacing.xxl),
-          ElevatedButton(
-            onPressed: _submit,
-            child: SizedBox(width: double.infinity, child: Text(t(context, 'Submit', 'نشر'), textAlign: TextAlign.center)),
-          ),
-        ],
-      ),
-    );
+    // Every PostType value is handled above (rescue/LOST, rescue, product,
+    // adoption) — PostFormScreen is never constructed with PostType.general.
+    throw StateError('Unhandled PostType: ${widget.type}');
   }
 
   Widget _buildRescueForm(BuildContext context) {

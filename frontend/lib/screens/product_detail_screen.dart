@@ -9,7 +9,9 @@ import '../models/post_detail.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
+import '../widgets/animated_favorite_icon.dart';
 import '../widgets/pet_carousel.dart';
+import '../widgets/skeleton_loader.dart';
 
 const Map<String, (String, String)> _categoryLabels = {
   'CARE': ('Care', 'رعاية'),
@@ -69,7 +71,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       _errorMessage = null;
     });
     final graphql = context.read<GraphQLService>();
-    final me = await graphql.fetchMe();
+    final meFuture = graphql.fetchMe();
+    final extFuture = graphql.fetchProductPostDetail(widget.postId);
     final (post, postError) = await graphql.fetchPostDetail(widget.postId);
     if (!mounted) return;
     if (postError != null || post == null) {
@@ -80,7 +83,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
     graphql.recordView(post.id);
-    final (ext, extError) = await graphql.fetchProductPostDetail(widget.postId);
+    final me = await meFuture;
+    final (ext, extError) = await extFuture;
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -91,17 +95,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     });
   }
 
-  Future<void> _toggleSave() async {
-    if (_post == null) return;
+  Future<bool> _toggleSave() async {
+    if (_post == null) return false;
     final graphql = context.read<GraphQLService>();
     final (count, saved, error) = await graphql.toggleSave(_post!.id);
-    if (!mounted) return;
+    if (!mounted) return false;
     if (error != null || count == null || saved == null) {
       Fluttertoast.showToast(msg: error ?? t(context, 'Could not update. Try again.', 'تعذر التحديث. حاول مرة أخرى.'));
-      return;
+      return false;
     }
     setState(() => _post = _post!.copyWith(saveCount: count, isSavedByMe: saved));
-    Fluttertoast.showToast(msg: saved ? t(context, 'Saved to favorites', 'تم الحفظ في المفضلة') : t(context, 'Removed from favorites', 'تمت الإزالة من المفضلة'));
+    return true;
   }
 
   void _shareListing() {
@@ -196,7 +200,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppColors.primary)));
+      return const Scaffold(body: SingleChildScrollView(child: DetailScreenSkeleton()));
     }
     if (_errorMessage != null || _post == null || _ext == null) {
       return Scaffold(
@@ -344,11 +348,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           children: [
             _IconAction(icon: Icons.call_outlined, label: t(context, 'Call', 'اتصال'), onTap: _isSold ? null : _handleCall),
             _IconAction(icon: Icons.chat, label: t(context, 'WhatsApp', 'واتساب'), color: AppColors.sectionLineGreen, onTap: _isSold ? null : _handleMessage),
-            _IconAction(
-              icon: post.isSavedByMe ? Icons.bookmark : Icons.bookmark_border,
+            _SaveIconAction(
+              isSaved: post.isSavedByMe,
+              onToggle: _toggleSave,
               label: t(context, 'Save', 'حفظ'),
-              color: post.isSavedByMe ? AppColors.primary : null,
-              onTap: _toggleSave,
+              semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
+              semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
             ),
             _IconAction(icon: Icons.share_outlined, label: t(context, 'Share', 'مشاركة'), onTap: _shareListing),
           ],
@@ -437,6 +442,48 @@ class _IconAction extends StatelessWidget {
               Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: c)),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SaveIconAction extends StatelessWidget {
+  final bool isSaved;
+  final Future<bool> Function() onToggle;
+  final String label;
+  final String semanticLabelOn;
+  final String semanticLabelOff;
+
+  const _SaveIconAction({
+    required this.isSaved,
+    required this.onToggle,
+    required this.label,
+    required this.semanticLabelOn,
+    required this.semanticLabelOff,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          children: [
+            AnimatedFavoriteIcon(
+              isSaved: isSaved,
+              onToggle: onToggle,
+              semanticLabelOn: semanticLabelOn,
+              semanticLabelOff: semanticLabelOff,
+              filledIcon: Icons.bookmark,
+              outlineIcon: Icons.bookmark_border,
+              activeColor: AppColors.primary,
+              inactiveColor: AppColors.textSecondary,
+              size: 22,
+            ),
+            const SizedBox(height: 2),
+            Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: isSaved ? AppColors.primary : AppColors.textSecondary)),
+          ],
         ),
       ),
     );

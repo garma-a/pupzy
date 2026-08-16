@@ -588,7 +588,7 @@ class GraphQLService {
       ),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return null;
     }
     return result.data?['me'];
@@ -608,7 +608,7 @@ class GraphQLService {
       QueryOptions(document: gql(citiesQuery)),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return [];
     }
     final list = result.data?['cities'] as List<dynamic>?;
@@ -659,7 +659,7 @@ class GraphQLService {
       ),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     return (result.data?['completeProfile'] as Map<String, dynamic>?, null);
@@ -680,7 +680,7 @@ class GraphQLService {
       ),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return null;
     }
     return result.data?['updateProfile'];
@@ -702,7 +702,7 @@ class GraphQLService {
       ),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return null;
     }
     return result.data?['updateMyLocation'];
@@ -724,7 +724,7 @@ class GraphQLService {
       ),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return null;
     }
     return result.data?['requestMediaUploadUrl'];
@@ -764,7 +764,7 @@ class GraphQLService {
       ),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return null;
     }
     return result.data?['createRescuePost'];
@@ -813,7 +813,7 @@ class GraphQLService {
       ),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return null;
     }
     return result.data?['createLostPost'];
@@ -874,7 +874,7 @@ class GraphQLService {
       ),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return null;
     }
     return result.data?['createAdoptionPost'];
@@ -920,7 +920,7 @@ class GraphQLService {
       ),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return null;
     }
     return result.data?['createProductPost'];
@@ -941,7 +941,7 @@ class GraphQLService {
       ),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (<FeedPost>[], _serverErrorMessage(result.exception));
     }
     final edges = result.data?[feedFieldName]?['edges'] as List<dynamic>? ?? [];
@@ -1054,7 +1054,7 @@ class GraphQLService {
       MutationOptions(document: gql(toggleUpvoteMutation), variables: {'postId': postId}),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, null, _serverErrorMessage(result.exception));
     }
     final data = result.data?['toggleUpvote'] as Map<String, dynamic>?;
@@ -1068,7 +1068,7 @@ class GraphQLService {
       MutationOptions(document: gql(toggleSaveMutation), variables: {'postId': postId}),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, null, _serverErrorMessage(result.exception));
     }
     final data = result.data?['toggleSave'] as Map<String, dynamic>?;
@@ -1082,7 +1082,7 @@ class GraphQLService {
       MutationOptions(document: gql(updatePostStatusMutation), variables: {'postId': postId, 'status': status}),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (false, _serverErrorMessage(result.exception));
     }
     return (true, null);
@@ -1095,7 +1095,7 @@ class GraphQLService {
       MutationOptions(document: gql(deletePostMutation), variables: {'postId': postId}),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (false, _serverErrorMessage(result.exception));
     }
     return (true, null);
@@ -1109,7 +1109,7 @@ class GraphQLService {
         MutationOptions(document: gql(recordViewMutation), variables: {'postId': postId}),
       );
     } catch (e) {
-      debugPrint('recordView failed: $e');
+      if (kDebugMode) debugPrint('recordView failed: $e');
     }
   }
 
@@ -1121,7 +1121,7 @@ class GraphQLService {
       QueryOptions(document: gql(postDetailQuery), variables: {'id': id}, fetchPolicy: FetchPolicy.networkOnly),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     final node = result.data?['post'] as Map<String, dynamic>?;
@@ -1134,7 +1134,7 @@ class GraphQLService {
       QueryOptions(document: gql(rescuePostDetailQuery), variables: {'postId': postId}, fetchPolicy: FetchPolicy.networkOnly),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     final node = result.data?['rescuePostDetail'] as Map<String, dynamic>?;
@@ -1146,7 +1146,7 @@ class GraphQLService {
       QueryOptions(document: gql(lostPostDetailQuery), variables: {'postId': postId}, fetchPolicy: FetchPolicy.networkOnly),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     final node = result.data?['lostPostDetail'] as Map<String, dynamic>?;
@@ -1158,7 +1158,7 @@ class GraphQLService {
       QueryOptions(document: gql(adoptionPostDetailQuery), variables: {'postId': postId}, fetchPolicy: FetchPolicy.networkOnly),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     final node = result.data?['adoptionPostDetail'] as Map<String, dynamic>?;
@@ -1170,7 +1170,7 @@ class GraphQLService {
       QueryOptions(document: gql(productPostDetailQuery), variables: {'postId': postId}, fetchPolicy: FetchPolicy.networkOnly),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     final node = result.data?['productPostDetail'] as Map<String, dynamic>?;
@@ -1193,7 +1193,7 @@ class GraphQLService {
       ),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (<ContactRequest>[], _serverErrorMessage(result.exception));
     }
     final edges = result.data?['myContactRequests']?['edges'] as List<dynamic>? ?? [];
@@ -1214,7 +1214,7 @@ class GraphQLService {
       ),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (<ContactRequest>[], _serverErrorMessage(result.exception));
     }
     final edges = result.data?['postContactRequests']?['edges'] as List<dynamic>? ?? [];
@@ -1227,7 +1227,7 @@ class GraphQLService {
       QueryOptions(document: gql(getWhatsAppLinkQuery), variables: {'requestId': requestId}, fetchPolicy: FetchPolicy.networkOnly),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     return (result.data?['getWhatsAppLink'] as String?, null);
@@ -1239,7 +1239,7 @@ class GraphQLService {
       QueryOptions(document: gql(getProductSellerContactQuery), variables: {'postId': postId}, fetchPolicy: FetchPolicy.networkOnly),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     return (result.data?['getProductSellerContact'] as String?, null);
@@ -1251,7 +1251,7 @@ class GraphQLService {
       MutationOptions(document: gql(requestContactMutation), variables: {'postId': postId, 'message': message}),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     final node = result.data?['requestContact'] as Map<String, dynamic>?;
@@ -1263,7 +1263,7 @@ class GraphQLService {
       MutationOptions(document: gql(approveContactRequestMutation), variables: {'requestId': requestId}),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     final node = result.data?['approveContactRequest'] as Map<String, dynamic>?;
@@ -1275,7 +1275,7 @@ class GraphQLService {
       MutationOptions(document: gql(rejectContactRequestMutation), variables: {'requestId': requestId}),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     final node = result.data?['rejectContactRequest'] as Map<String, dynamic>?;
@@ -1289,7 +1289,7 @@ class GraphQLService {
       QueryOptions(document: gql(myAdoptionApplicationsQuery), variables: {'first': first}, fetchPolicy: FetchPolicy.networkOnly),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (<AdoptionApplication>[], _serverErrorMessage(result.exception));
     }
     final edges = result.data?['myAdoptionApplications']?['edges'] as List<dynamic>? ?? [];
@@ -1309,7 +1309,7 @@ class GraphQLService {
       ),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (<AdoptionApplication>[], _serverErrorMessage(result.exception));
     }
     final edges = result.data?['postAdoptionApplications']?['edges'] as List<dynamic>? ?? [];
@@ -1322,7 +1322,7 @@ class GraphQLService {
       MutationOptions(document: gql(submitAdoptionApplicationMutation), variables: {'input': input}),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     final node = result.data?['submitAdoptionApplication'] as Map<String, dynamic>?;
@@ -1334,7 +1334,7 @@ class GraphQLService {
       MutationOptions(document: gql(approveAdoptionApplicationMutation), variables: {'applicationId': applicationId}),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     final node = result.data?['approveAdoptionApplication'] as Map<String, dynamic>?;
@@ -1346,7 +1346,7 @@ class GraphQLService {
       MutationOptions(document: gql(rejectAdoptionApplicationMutation), variables: {'applicationId': applicationId}),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     final node = result.data?['rejectAdoptionApplication'] as Map<String, dynamic>?;
@@ -1360,7 +1360,7 @@ class GraphQLService {
       QueryOptions(document: gql(myNotificationsQuery), variables: {'first': first}, fetchPolicy: FetchPolicy.networkOnly),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (<AppNotification>[], 0, _serverErrorMessage(result.exception));
     }
     final data = result.data?['myNotifications'] as Map<String, dynamic>?;
@@ -1374,7 +1374,7 @@ class GraphQLService {
       QueryOptions(document: gql(myUnreadNotificationCountQuery), fetchPolicy: FetchPolicy.networkOnly),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     return (result.data?['myUnreadNotificationCount'] as int?, null);
@@ -1385,7 +1385,7 @@ class GraphQLService {
       MutationOptions(document: gql(markNotificationReadMutation), variables: {'notificationId': notificationId}),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (false, _serverErrorMessage(result.exception));
     }
     return (true, null);
@@ -1396,7 +1396,7 @@ class GraphQLService {
       MutationOptions(document: gql(markAllNotificationsReadMutation)),
     );
     if (result.hasException) {
-      debugPrint('GraphQL error: ${result.exception}');
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
     return (result.data?['markAllNotificationsRead'] as int?, null);

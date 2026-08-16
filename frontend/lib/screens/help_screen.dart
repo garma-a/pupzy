@@ -5,11 +5,16 @@ import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
 import '../models/feed_post.dart';
+import '../services/browse_location_service.dart';
+import '../services/feed_location_resolver.dart';
 import '../services/graphql_service.dart';
+import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
+import '../widgets/animated_favorite_icon.dart';
 import '../widgets/distance_filter.dart';
 import '../widgets/image_with_fallback.dart';
+import '../widgets/skeleton_loader.dart';
 import '../widgets/top_bar.dart';
 import 'rescue_detail_screen.dart';
 
@@ -30,6 +35,7 @@ class _HelpScreenState extends State<HelpScreen> {
   Position? _position;
   bool _initialized = false;
   double? _lastRadius;
+  Object? _lastBrowseCityId;
   final Set<String> _helpingIds = {};
 
   @override
@@ -42,30 +48,16 @@ class _HelpScreenState extends State<HelpScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final maxDist = DistanceProvider.of(context).maxDistance;
+    final browseCityId = context.watch<BrowseLocationService>().selectedCity?['id'];
     if (!_initialized) {
       _initialized = true;
       _lastRadius = maxDist;
+      _lastBrowseCityId = browseCityId;
       _loadFeed();
-    } else if (maxDist != _lastRadius) {
+    } else if (maxDist != _lastRadius || browseCityId != _lastBrowseCityId) {
       _lastRadius = maxDist;
+      _lastBrowseCityId = browseCityId;
       _loadFeed();
-    }
-  }
-
-  Future<void> _fetchLocation() async {
-    try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return;
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) return;
-      }
-      _position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 10)),
-      );
-    } catch (_) {
-      // Location is optional — falls back to governorate/city-only filtering.
     }
   }
 
@@ -76,11 +68,17 @@ class _HelpScreenState extends State<HelpScreen> {
       _errorMessage = null;
     });
 
-    if (_position == null) await _fetchLocation();
-    if (!mounted) return;
-
     final graphql = context.read<GraphQLService>();
-    final (governorate, cityId) = await graphql.resolveViewerCity();
+    final resolved = await resolveFeedLocation(
+      browseLocationService: context.read<BrowseLocationService>(),
+      locationService: context.read<LocationService>(),
+      graphql: graphql,
+    );
+    if (!mounted) return;
+    _position = resolved.position;
+    final governorate = resolved.governorate;
+    final cityId = resolved.cityId;
+
     if (governorate == null) {
       if (mounted) {
         setState(() {
@@ -122,6 +120,20 @@ class _HelpScreenState extends State<HelpScreen> {
     setState(() {
       _posts = _posts.map((p) => p.id == post.id ? p.copyWith(upvoteCount: count, isUpvotedByMe: upvoted) : p).toList();
     });
+  }
+
+  Future<bool> _toggleSave(FeedPost post) async {
+    final graphql = context.read<GraphQLService>();
+    final (count, saved, error) = await graphql.toggleSave(post.id);
+    if (!mounted) return false;
+    if (error != null || count == null || saved == null) {
+      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update. Try again.', 'تعذر التحديث. حاول مرة أخرى.'));
+      return false;
+    }
+    setState(() {
+      _posts = _posts.map((p) => p.id == post.id ? p.copyWith(saveCount: count, isSavedByMe: saved) : p).toList();
+    });
+    return true;
   }
 
   void _toggleHelping(FeedPost post) {
@@ -220,7 +232,14 @@ class _HelpScreenState extends State<HelpScreen> {
               ),
               Expanded(
                 child: _loading && _posts.isEmpty
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                    ? ListView(
+                        padding: const EdgeInsets.only(top: AppSpacing.sm),
+                        children: const [
+                          ListCardSkeleton(),
+                          ListCardSkeleton(),
+                          ListCardSkeleton(),
+                        ],
+                      )
                     : _errorMessage != null && _posts.isEmpty
                         ? _HelpFeedError(message: _errorMessage!, onRetry: _loadFeed)
                         : RefreshIndicator(
@@ -233,6 +252,7 @@ class _HelpScreenState extends State<HelpScreen> {
                                   query: _query,
                                   helpingIds: _helpingIds,
                                   onBoost: _toggleUpvote,
+                                  onSave: _toggleSave,
                                   onToggleHelping: _toggleHelping,
                                 ),
                                 _HelpFeedList(
@@ -240,6 +260,7 @@ class _HelpScreenState extends State<HelpScreen> {
                                   query: _query,
                                   helpingIds: _helpingIds,
                                   onBoost: _toggleUpvote,
+                                  onSave: _toggleSave,
                                   onToggleHelping: _toggleHelping,
                                 ),
                               ],
@@ -284,12 +305,14 @@ class _HelpFeedList extends StatelessWidget {
   final String query;
   final Set<String> helpingIds;
   final ValueChanged<FeedPost> onBoost;
+  final Future<bool> Function(FeedPost) onSave;
   final ValueChanged<FeedPost> onToggleHelping;
   const _HelpFeedList({
     required this.posts,
     required this.query,
     required this.helpingIds,
     required this.onBoost,
+    required this.onSave,
     required this.onToggleHelping,
   });
 
@@ -328,6 +351,7 @@ class _HelpFeedList extends StatelessWidget {
         post: items[i],
         helping: helpingIds.contains(items[i].id),
         onBoost: () => onBoost(items[i]),
+        onSave: () => onSave(items[i]),
         onToggleHelping: () => onToggleHelping(items[i]),
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => RescueDetailScreen(postId: items[i].id)),
@@ -341,12 +365,14 @@ class _HelpFeedCard extends StatelessWidget {
   final FeedPost post;
   final bool helping;
   final VoidCallback onBoost;
+  final Future<bool> Function() onSave;
   final VoidCallback onToggleHelping;
   final VoidCallback onTap;
   const _HelpFeedCard({
     required this.post,
     required this.helping,
     required this.onBoost,
+    required this.onSave,
     required this.onToggleHelping,
     required this.onTap,
   });
@@ -382,6 +408,26 @@ class _HelpFeedCard extends StatelessWidget {
                     child: Text(t(context, 'CRITICAL', 'حرج'), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
                   ),
                 ),
+              PositionedDirectional(
+                top: AppSpacing.sm,
+                end: AppSpacing.sm,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: Center(
+                    child: AnimatedFavoriteIcon(
+                      isSaved: post.isSavedByMe,
+                      onToggle: onSave,
+                      semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
+                      semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
+                      activeColor: AppColors.critical,
+                      inactiveColor: AppColors.critical,
+                      size: 16,
+                    ),
+                  ),
+                ),
+              ),
               if (post.distanceKm != null)
                 PositionedDirectional(
                   bottom: AppSpacing.sm,

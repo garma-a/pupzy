@@ -6,6 +6,7 @@ import '../models/app_notification.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
+import '../widgets/skeleton_loader.dart';
 import 'adoption_detail_screen.dart';
 import 'product_detail_screen.dart';
 import 'rescue_detail_screen.dart';
@@ -121,7 +122,9 @@ class _NotificationsPanelState extends State<NotificationsPanel> {
               ),
               Expanded(
                 child: _loading
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                    ? ListView(
+                        children: const [ListRowSkeleton(), ListRowSkeleton(), ListRowSkeleton(), ListRowSkeleton()],
+                      )
                     : _errorMessage != null
                         ? Center(
                             child: Padding(
