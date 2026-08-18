@@ -11,6 +11,7 @@ import '../services/graphql_service.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
+import '../widgets/animated_boost_chip.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/distance_filter.dart';
 import '../widgets/image_with_fallback.dart';
@@ -109,17 +110,18 @@ class _HelpScreenState extends State<HelpScreen> {
     });
   }
 
-  Future<void> _toggleUpvote(FeedPost post) async {
+  Future<bool> _toggleUpvote(FeedPost post) async {
     final graphql = context.read<GraphQLService>();
     final (count, upvoted, error) = await graphql.toggleUpvote(post.id);
-    if (!mounted) return;
+    if (!mounted) return false;
     if (error != null || count == null || upvoted == null) {
       Fluttertoast.showToast(msg: error ?? t(context, 'Could not update boost. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.'));
-      return;
+      return false;
     }
     setState(() {
       _posts = _posts.map((p) => p.id == post.id ? p.copyWith(upvoteCount: count, isUpvotedByMe: upvoted) : p).toList();
     });
+    return true;
   }
 
   Future<bool> _toggleSave(FeedPost post) async {
@@ -304,7 +306,7 @@ class _HelpFeedList extends StatelessWidget {
   final List<FeedPost> posts;
   final String query;
   final Set<String> helpingIds;
-  final ValueChanged<FeedPost> onBoost;
+  final Future<bool> Function(FeedPost) onBoost;
   final Future<bool> Function(FeedPost) onSave;
   final ValueChanged<FeedPost> onToggleHelping;
   const _HelpFeedList({
@@ -364,7 +366,7 @@ class _HelpFeedList extends StatelessWidget {
 class _HelpFeedCard extends StatelessWidget {
   final FeedPost post;
   final bool helping;
-  final VoidCallback onBoost;
+  final Future<bool> Function() onBoost;
   final Future<bool> Function() onSave;
   final VoidCallback onToggleHelping;
   final VoidCallback onTap;
@@ -468,17 +470,14 @@ class _HelpFeedCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
             child: Row(
               children: [
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                    onTap: onBoost,
-                    child: _HelpActionBtn(
-                      icon: Icons.arrow_upward,
-                      label: '${post.upvoteCount}  ${post.isUpvotedByMe ? t(context, 'Boosted', 'مُعزَّز') : t(context, 'Boost', 'تعزيز')}',
-                      color: post.isUpvotedByMe ? AppColors.primary : AppColors.textMuted,
-                    ),
-                  ),
+                AnimatedBoostChip(
+                  count: post.upvoteCount,
+                  boosted: post.isUpvotedByMe,
+                  onToggle: onBoost,
+                  boostedLabel: t(context, 'Boosted', 'مُعزَّز'),
+                  unboostedLabel: t(context, 'Boost', 'تعزيز'),
+                  activeColor: AppColors.primary,
+                  inactiveColor: AppColors.textMuted,
                 ),
               ],
             ),
@@ -504,28 +503,3 @@ class _HelpFeedCard extends StatelessWidget {
   }
 }
 
-class _HelpActionBtn extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  const _HelpActionBtn({required this.icon, required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(AppRadius.chip),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 15, color: color),
-          const SizedBox(width: 5),
-          Text(label, style: TextStyle(fontSize: 13, color: color, fontWeight: FontWeight.w500)),
-        ],
-      ),
-    );
-  }
-}

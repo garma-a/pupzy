@@ -10,6 +10,7 @@ import '../models/contact_request.dart';
 import '../models/post_detail.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/animated_boost_chip.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/contact_request_sheet.dart';
 import '../widgets/contact_requests_owner_section.dart';
@@ -35,7 +36,6 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
   LostPostExtension? _lostExt;
   bool _revealed = false;
   bool _reportedFound = false;
-  bool _boosting = false;
   String? _myUserId;
   ContactRequest? _myContactRequest;
 
@@ -93,18 +93,17 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
     }
   }
 
-  Future<void> _toggleBoost() async {
-    if (_boosting || _post == null) return;
-    setState(() => _boosting = true);
+  Future<bool> _toggleBoost() async {
+    if (_post == null) return false;
     final graphql = context.read<GraphQLService>();
     final (count, upvoted, error) = await graphql.toggleUpvote(_post!.id);
-    if (!mounted) return;
-    setState(() => _boosting = false);
+    if (!mounted) return false;
     if (error != null || count == null || upvoted == null) {
       Fluttertoast.showToast(msg: error ?? t(context, 'Could not update boost. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.'));
-      return;
+      return false;
     }
     setState(() => _post = _post!.copyWith(upvoteCount: count, isUpvotedByMe: upvoted));
+    return true;
   }
 
   Future<bool> _toggleSave() async {
@@ -305,16 +304,14 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                       const SizedBox(height: AppSpacing.lg),
                       Row(
                         children: [
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(AppRadius.chip),
-                              onTap: _toggleBoost,
-                              child: _BoostChip(
-                                count: post.upvoteCount,
-                                boosted: post.isUpvotedByMe,
-                              ),
-                            ),
+                          AnimatedBoostChip(
+                            count: post.upvoteCount,
+                            boosted: post.isUpvotedByMe,
+                            onToggle: _toggleBoost,
+                            boostedLabel: t(context, 'Boosted', 'مُعزَّز'),
+                            unboostedLabel: t(context, 'Boost', 'تعزيز'),
+                            activeColor: AppColors.primary,
+                            inactiveColor: AppColors.textMuted,
                           ),
                           if (post.latitude != null && post.longitude != null) ...[
                             const SizedBox(width: AppSpacing.sm),
@@ -438,35 +435,6 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
       'CAN_TRANSPORT' => t(context, 'Reporter can transport the animal', 'يمكن للمُبلّغ نقل الحيوان'),
       _ => role,
     };
-  }
-}
-
-class _BoostChip extends StatelessWidget {
-  final int count;
-  final bool boosted;
-  const _BoostChip({required this.count, required this.boosted});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(AppRadius.chip),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.arrow_upward, size: 15, color: boosted ? AppColors.primary : AppColors.textMuted),
-          const SizedBox(width: 5),
-          Text(
-            '$count  ${boosted ? t(context, 'Boosted', 'مُعزَّز') : t(context, 'Boost', 'تعزيز')}',
-            style: TextStyle(fontSize: 13, color: boosted ? AppColors.primary : AppColors.textMuted, fontWeight: FontWeight.w500),
-          ),
-        ],
-      ),
-    );
   }
 }
 
