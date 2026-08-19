@@ -209,6 +209,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
   Future<Position?> _getCurrentPosition() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!mounted) return null;
     if (!serviceEnabled) {
       Fluttertoast.showToast(
         msg: t(context, 'Please enable location services', 'يرجى تفعيل خدمات الموقع'),
@@ -221,6 +222,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
+      if (!mounted) return null;
       if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
         Fluttertoast.showToast(
           msg: t(context, 'Location permission denied', 'تم رفض إذن الموقع'),
@@ -327,6 +329,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       Fluttertoast.showToast(msg: t(context, 'Getting your location...', 'جارٍ تحديد موقعك...'));
       final position = await _getCurrentPosition();
       if (position == null) return;
+      if (!mounted) return;
 
       final graphql = context.read<GraphQLService>();
 
@@ -344,6 +347,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
           headers: {'Content-Type': contentType},
           body: bytes,
         );
+        if (!mounted) return;
         if (response.statusCode >= 200 && response.statusCode < 300) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
@@ -368,6 +372,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         openToOffers: _openToOffers,
         mediaIds: mediaIds,
       );
+      if (!mounted) return;
 
       if (result != null) {
         Fluttertoast.showToast(msg: t(context, 'Listing posted!', 'تم نشر الإعلان!'));
@@ -392,6 +397,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       Fluttertoast.showToast(msg: t(context, 'Getting your location...', 'جارٍ تحديد موقعك...'));
       final position = await _getCurrentPosition();
       if (position == null) return;
+      if (!mounted) return;
 
       final graphql = context.read<GraphQLService>();
 
@@ -409,6 +415,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
           headers: {'Content-Type': contentType},
           body: bytes,
         );
+        if (!mounted) return;
         if (response.statusCode >= 200 && response.statusCode < 300) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
@@ -435,6 +442,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         reporterRole: _role!,
         mediaIds: mediaIds,
       );
+      if (!mounted) return;
 
       if (result != null) {
         Fluttertoast.showToast(msg: t(context, 'Rescue alert posted!', 'تم نشر تنبيه الإنقاذ!'));
@@ -459,6 +467,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       Fluttertoast.showToast(msg: t(context, 'Getting your location...', 'جارٍ تحديد موقعك...'));
       final position = await _getCurrentPosition();
       if (position == null) return;
+      if (!mounted) return;
 
       final graphql = context.read<GraphQLService>();
 
@@ -476,6 +485,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
           headers: {'Content-Type': contentType},
           body: bytes,
         );
+        if (!mounted) return;
         if (response.statusCode >= 200 && response.statusCode < 300) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
@@ -504,6 +514,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         dateLastSeen: _dateLastSeen != null ? _isoDate(_dateLastSeen!) : null,
         mediaIds: mediaIds,
       );
+      if (!mounted) return;
 
       if (result != null) {
         Fluttertoast.showToast(msg: t(context, 'Lost pet report posted!', 'تم نشر بلاغ الحيوان المفقود!'));
@@ -528,6 +539,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       Fluttertoast.showToast(msg: t(context, 'Getting your location...', 'جارٍ تحديد موقعك...'));
       final position = await _getCurrentPosition();
       if (position == null) return;
+      if (!mounted) return;
 
       final graphql = context.read<GraphQLService>();
 
@@ -545,6 +557,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
           headers: {'Content-Type': contentType},
           body: bytes,
         );
+        if (!mounted) return;
         if (response.statusCode >= 200 && response.statusCode < 300) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
@@ -586,6 +599,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
             : _additionalRequirementsController.text.trim(),
         mediaIds: mediaIds,
       );
+      if (!mounted) return;
 
       if (result != null) {
         Fluttertoast.showToast(msg: t(context, 'Adoption listing posted!', 'تم نشر إعلان التبني!'));

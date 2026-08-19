@@ -11,6 +11,7 @@ import '../services/graphql_service.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
+import '../widgets/adaptive_search_bar.dart';
 import '../widgets/animated_boost_chip.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/distance_filter.dart';
@@ -27,7 +28,6 @@ class HelpScreen extends StatefulWidget {
 }
 
 class _HelpScreenState extends State<HelpScreen> {
-  final _searchController = TextEditingController();
   String _query = '';
 
   bool _loading = true;
@@ -38,12 +38,11 @@ class _HelpScreenState extends State<HelpScreen> {
   double? _lastRadius;
   Object? _lastBrowseCityId;
   final Set<String> _helpingIds = {};
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
+  String? _governorate;
+  String? _cityId;
+  String? _endCursor;
+  bool _hasNextPage = false;
+  bool _loadingMore = false;
 
   @override
   void didChangeDependencies() {
@@ -77,10 +76,10 @@ class _HelpScreenState extends State<HelpScreen> {
     );
     if (!mounted) return;
     _position = resolved.position;
-    final governorate = resolved.governorate;
-    final cityId = resolved.cityId;
+    _governorate = resolved.governorate;
+    _cityId = resolved.cityId;
 
-    if (governorate == null) {
+    if (_governorate == null) {
       if (mounted) {
         setState(() {
           _loading = false;
@@ -92,9 +91,9 @@ class _HelpScreenState extends State<HelpScreen> {
     if (!mounted) return;
 
     final maxDist = DistanceProvider.of(context).maxDistance;
-    final (posts, error) = await graphql.fetchHelpFeed(
-      governorate: governorate,
-      cityId: cityId,
+    final (posts, endCursor, hasNextPage, error) = await graphql.fetchHelpFeed(
+      governorate: _governorate!,
+      cityId: _cityId,
       latitude: _position?.latitude,
       longitude: _position?.longitude,
       radiusKm: maxDist.isFinite ? maxDist : null,
@@ -106,6 +105,32 @@ class _HelpScreenState extends State<HelpScreen> {
         _errorMessage = error;
       } else {
         _posts = posts;
+        _endCursor = endCursor;
+        _hasNextPage = hasNextPage;
+      }
+    });
+  }
+
+  Future<void> _loadMore() async {
+    if (_loadingMore || !_hasNextPage || _governorate == null) return;
+    setState(() => _loadingMore = true);
+    final graphql = context.read<GraphQLService>();
+    final maxDist = DistanceProvider.of(context).maxDistance;
+    final (more, endCursor, hasNextPage, error) = await graphql.fetchHelpFeed(
+      governorate: _governorate!,
+      cityId: _cityId,
+      latitude: _position?.latitude,
+      longitude: _position?.longitude,
+      radiusKm: maxDist.isFinite ? maxDist : null,
+      after: _endCursor,
+    );
+    if (!mounted) return;
+    setState(() {
+      _loadingMore = false;
+      if (error == null) {
+        _posts = [..._posts, ...more];
+        _endCursor = endCursor;
+        _hasNextPage = hasNextPage;
       }
     });
   }
@@ -172,41 +197,9 @@ class _HelpScreenState extends State<HelpScreen> {
               const PupzyTopBar(),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                  decoration: BoxDecoration(color: AppColors.searchBg, borderRadius: BorderRadius.circular(AppRadius.chip)),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.search, size: 18, color: AppColors.textMuted),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (v) => setState(() => _query = v),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          decoration: InputDecoration(
-                            hintText: t(context, 'Search by title or description...', 'ابحث حسب العنوان أو الوصف...'),
-                            hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                      if (_query.isNotEmpty)
-                        Semantics(
-                          button: true,
-                          label: t(context, 'Clear search', 'مسح البحث'),
-                          child: GestureDetector(
-                            onTap: () => setState(() {
-                              _searchController.clear();
-                              _query = '';
-                            }),
-                            child: const Icon(Icons.close, size: 18, color: AppColors.textMuted),
-                          ),
-                        ),
-                    ],
-                  ),
+                child: AdaptiveSearchBar(
+                  hintText: t(context, 'Search by title, description, or location...', 'ابحث حسب العنوان أو الوصف أو الموقع...'),
+                  onChanged: (v) => setState(() => _query = v),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -256,6 +249,8 @@ class _HelpScreenState extends State<HelpScreen> {
                                   onBoost: _toggleUpvote,
                                   onSave: _toggleSave,
                                   onToggleHelping: _toggleHelping,
+                                  onLoadMore: _loadMore,
+                                  loadingMore: _loadingMore,
                                 ),
                                 _HelpFeedList(
                                   posts: _posts.where((p) => p.postType == 'LOST').toList(),
@@ -264,6 +259,8 @@ class _HelpScreenState extends State<HelpScreen> {
                                   onBoost: _toggleUpvote,
                                   onSave: _toggleSave,
                                   onToggleHelping: _toggleHelping,
+                                  onLoadMore: _loadMore,
+                                  loadingMore: _loadingMore,
                                 ),
                               ],
                             ),
@@ -309,6 +306,8 @@ class _HelpFeedList extends StatelessWidget {
   final Future<bool> Function(FeedPost) onBoost;
   final Future<bool> Function(FeedPost) onSave;
   final ValueChanged<FeedPost> onToggleHelping;
+  final VoidCallback onLoadMore;
+  final bool loadingMore;
   const _HelpFeedList({
     required this.posts,
     required this.query,
@@ -316,15 +315,14 @@ class _HelpFeedList extends StatelessWidget {
     required this.onBoost,
     required this.onSave,
     required this.onToggleHelping,
+    required this.onLoadMore,
+    required this.loadingMore,
   });
 
   @override
   Widget build(BuildContext context) {
-    var items = posts;
-    final q = query.trim().toLowerCase();
-    if (q.isNotEmpty) {
-      items = items.where((p) => p.title.toLowerCase().contains(q) || p.description.toLowerCase().contains(q)).toList();
-    }
+    final q = query.trim();
+    final items = posts.where((p) => p.matchesQuery(query)).toList();
     if (items.isEmpty) {
       return Center(
         child: Padding(
@@ -346,18 +344,34 @@ class _HelpFeedList extends StatelessWidget {
         ),
       );
     }
-    return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 100, top: AppSpacing.xs),
-      itemCount: items.length,
-      itemBuilder: (_, i) => _HelpFeedCard(
-        post: items[i],
-        helping: helpingIds.contains(items[i].id),
-        onBoost: () => onBoost(items[i]),
-        onSave: () => onSave(items[i]),
-        onToggleHelping: () => onToggleHelping(items[i]),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => RescueDetailScreen(postId: items[i].id)),
-        ),
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (q.isEmpty && notification.metrics.pixels >= notification.metrics.maxScrollExtent - 400) {
+          onLoadMore();
+        }
+        return false;
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.only(bottom: 100, top: AppSpacing.xs),
+        itemCount: items.length + (loadingMore ? 1 : 0),
+        itemBuilder: (_, i) {
+          if (i >= items.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            );
+          }
+          return _HelpFeedCard(
+            post: items[i],
+            helping: helpingIds.contains(items[i].id),
+            onBoost: () => onBoost(items[i]),
+            onSave: () => onSave(items[i]),
+            onToggleHelping: () => onToggleHelping(items[i]),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => RescueDetailScreen(postId: items[i].id)),
+            ),
+          );
+        },
       ),
     );
   }

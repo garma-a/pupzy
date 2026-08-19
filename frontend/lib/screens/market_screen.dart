@@ -11,6 +11,7 @@ import '../services/feed_location_resolver.dart';
 import '../services/graphql_service.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/adaptive_search_bar.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/distance_filter.dart';
 import '../widgets/image_with_fallback.dart';
@@ -43,7 +44,6 @@ class _MarketScreenState extends State<MarketScreen> {
     ('OTHER', 'Other', 'أخرى'),
   ];
 
-  final _searchController = TextEditingController();
   String _query = '';
   String _category = 'ALL';
   _SortOption _sort = _SortOption.hot;
@@ -55,11 +55,31 @@ class _MarketScreenState extends State<MarketScreen> {
   bool _initialized = false;
   double? _lastRadius;
   Object? _lastBrowseCityId;
+  String? _governorate;
+  String? _cityId;
+  String? _endCursor;
+  bool _hasNextPage = false;
+  bool _loadingMore = false;
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_loading || _loadingMore || !_hasNextPage || _query.trim().isNotEmpty) return;
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 400) {
+      _loadMore();
+    }
   }
 
   @override
@@ -94,10 +114,10 @@ class _MarketScreenState extends State<MarketScreen> {
     );
     if (!mounted) return;
     _position = resolved.position;
-    final governorate = resolved.governorate;
-    final cityId = resolved.cityId;
+    _governorate = resolved.governorate;
+    _cityId = resolved.cityId;
 
-    if (governorate == null) {
+    if (_governorate == null) {
       if (mounted) {
         setState(() {
           _loading = false;
@@ -109,9 +129,9 @@ class _MarketScreenState extends State<MarketScreen> {
     if (!mounted) return;
 
     final maxDist = DistanceProvider.of(context).maxDistance;
-    final (posts, error) = await graphql.fetchMarketFeed(
-      governorate: governorate,
-      cityId: cityId,
+    final (posts, endCursor, hasNextPage, error) = await graphql.fetchMarketFeed(
+      governorate: _governorate!,
+      cityId: _cityId,
       latitude: _position?.latitude,
       longitude: _position?.longitude,
       radiusKm: maxDist.isFinite ? maxDist : null,
@@ -125,6 +145,34 @@ class _MarketScreenState extends State<MarketScreen> {
         _errorMessage = error;
       } else {
         _posts = posts;
+        _endCursor = endCursor;
+        _hasNextPage = hasNextPage;
+      }
+    });
+  }
+
+  Future<void> _loadMore() async {
+    if (_loadingMore || !_hasNextPage || _governorate == null) return;
+    setState(() => _loadingMore = true);
+    final graphql = context.read<GraphQLService>();
+    final maxDist = DistanceProvider.of(context).maxDistance;
+    final (more, endCursor, hasNextPage, error) = await graphql.fetchMarketFeed(
+      governorate: _governorate!,
+      cityId: _cityId,
+      latitude: _position?.latitude,
+      longitude: _position?.longitude,
+      radiusKm: maxDist.isFinite ? maxDist : null,
+      category: _category == 'ALL' ? null : _category,
+      sort: _sort == _SortOption.hot ? 'HOT' : 'NEWEST',
+      after: _endCursor,
+    );
+    if (!mounted) return;
+    setState(() {
+      _loadingMore = false;
+      if (error == null) {
+        _posts = [..._posts, ...more];
+        _endCursor = endCursor;
+        _hasNextPage = hasNextPage;
       }
     });
   }
@@ -153,14 +201,7 @@ class _MarketScreenState extends State<MarketScreen> {
     _loadFeed();
   }
 
-  List<FeedPost> get _filtered {
-    var list = _posts;
-    final q = _query.trim().toLowerCase();
-    if (q.isNotEmpty) {
-      list = list.where((p) => p.title.toLowerCase().contains(q) || p.description.toLowerCase().contains(q)).toList();
-    }
-    return list;
-  }
+  List<FeedPost> get _filtered => _posts.where((p) => p.matchesQuery(_query)).toList();
 
   String _sortLabel(BuildContext context, _SortOption o) {
     switch (o) {
@@ -184,29 +225,9 @@ class _MarketScreenState extends State<MarketScreen> {
             const PupzyTopBar(),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                decoration: BoxDecoration(color: AppColors.searchBg, borderRadius: BorderRadius.circular(AppRadius.chip)),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search, size: 18, color: AppColors.textMuted),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (v) => setState(() => _query = v),
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        decoration: InputDecoration(
-                          hintText: t(context, 'Search listings...', 'ابحث في الإعلانات...'),
-                          hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              child: AdaptiveSearchBar(
+                hintText: t(context, 'Search listings...', 'ابحث في الإعلانات...'),
+                onChanged: (v) => setState(() => _query = v),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -216,6 +237,7 @@ class _MarketScreenState extends State<MarketScreen> {
                 onRefresh: _loadFeed,
                 color: AppColors.primary,
                 child: ListView(
+                  controller: _scrollController,
                   padding: const EdgeInsets.only(bottom: 100),
                   children: [
                     const SizedBox(height: AppSpacing.lg),
@@ -489,6 +511,11 @@ class _MarketScreenState extends State<MarketScreen> {
                           },
                         );
                       }),
+                    if (_loadingMore)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                      ),
                   ],
                 ),
               ),

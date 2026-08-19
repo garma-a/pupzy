@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../localization/lang_provider.dart';
 import '../models/contact_request.dart';
@@ -223,9 +225,19 @@ class _ResolvedCard extends StatelessWidget {
   final ContactRequest item;
   const _ResolvedCard({required this.item});
 
+  Future<void> _openWhatsApp(BuildContext context) async {
+    final link = item.whatsappLink;
+    if (link == null) return;
+    final opened = await launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      Fluttertoast.showToast(msg: t(context, 'Could not open WhatsApp', 'تعذر فتح واتساب'));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final approved = item.status == 'APPROVED';
+    final canOpen = approved && item.whatsappLink != null;
     final statusColor = approved ? AppColors.sectionLineGreen : AppColors.critical;
     final statusLabel = approved
         ? t(context, 'Approved · WhatsApp shared', 'تمت الموافقة · تمت مشاركة واتساب')
@@ -233,7 +245,9 @@ class _ResolvedCard extends StatelessWidget {
 
     return Opacity(
       opacity: 0.7,
-      child: Container(
+      child: GestureDetector(
+        onTap: canOpen ? () => _openWhatsApp(context) : null,
+        child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -256,7 +270,12 @@ class _ResolvedCard extends StatelessWidget {
                 style: TextStyle(color: statusColor, fontWeight: FontWeight.w600, fontSize: 11),
               ),
             ),
+            if (canOpen) ...[
+              const SizedBox(width: 4),
+              const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+            ],
           ],
+        ),
         ),
       ),
     );

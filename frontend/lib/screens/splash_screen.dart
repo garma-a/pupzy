@@ -67,6 +67,7 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) _goTo(const LoginScreen());
       return;
     }
+    if (!mounted) return;
 
     if (user == null) {
       _goTo(const LoginScreen());

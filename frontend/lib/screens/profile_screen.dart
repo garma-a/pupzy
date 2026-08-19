@@ -74,6 +74,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
               e164Phone = digits.startsWith('0') ? '+2$digits' : '+20$digits';
             }
             final result = await graphql.updateProfile(fullName: name, phoneNumber: e164Phone);
+            if (!mounted) return;
             if (result != null) {
               try {
                 await context.read<AuthService>().updateDisplayName(name);
@@ -81,7 +82,9 @@ class _ProfileSheetState extends State<ProfileSheet> {
                 // Non-critical — the backend already has the name; this only
                 // affects Firebase-sourced UI (e.g. the top bar avatar initial).
               }
-              if (!ctx.mounted) return;
+            }
+            if (!ctx.mounted) return;
+            if (result != null) {
               Navigator.of(ctx).pop();
               _fetchProfile();
               Fluttertoast.showToast(
@@ -112,6 +115,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
 
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!mounted) return null;
       if (!serviceEnabled) {
         Fluttertoast.showToast(
           msg: t(context, 'Please enable location services', 'يرجى تفعيل خدمات الموقع'),
@@ -124,6 +128,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
+        if (!mounted) return null;
         if (permission == LocationPermission.denied ||
             permission == LocationPermission.deniedForever) {
           Fluttertoast.showToast(
@@ -142,6 +147,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
           timeLimit: Duration(seconds: 30),
         ),
       );
+      if (!mounted) return null;
 
       final graphql = context.read<GraphQLService>();
       final result = await graphql.updateMyLocation(
@@ -163,6 +169,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
       return null;
     } catch (e) {
       if (kDebugMode) debugPrint('Location error: $e');
+      if (!mounted) return null;
       Fluttertoast.showToast(
         msg: '${t(context, 'Location error', 'خطأ في تحديد الموقع')}: $e',
         backgroundColor: AppColors.critical,

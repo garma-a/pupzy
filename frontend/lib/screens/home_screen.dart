@@ -13,6 +13,7 @@ import '../services/feed_location_resolver.dart';
 import '../services/graphql_service.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/adaptive_search_bar.dart';
 import '../widgets/adoption_application_sheet.dart';
 import '../widgets/adoption_card.dart';
 import '../widgets/animated_boost_chip.dart';
@@ -34,6 +35,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String _query = '';
   bool _loading = true;
   String? _errorMessage;
   List<FeedPost> _posts = [];
@@ -41,6 +43,32 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _initialized = false;
   double? _lastRadius;
   Object? _lastBrowseCityId;
+  String? _governorate;
+  String? _cityId;
+  String? _endCursor;
+  bool _hasNextPage = false;
+  bool _loadingMore = false;
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_loading || _loadingMore || !_hasNextPage || _query.trim().isNotEmpty) return;
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 400) {
+      _loadMore();
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -74,10 +102,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     if (!mounted) return;
     _position = resolved.position;
-    final governorate = resolved.governorate;
-    final cityId = resolved.cityId;
+    _governorate = resolved.governorate;
+    _cityId = resolved.cityId;
 
-    if (governorate == null) {
+    if (_governorate == null) {
       if (mounted) {
         setState(() {
           _loading = false;
@@ -89,9 +117,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
 
     final maxDist = DistanceProvider.of(context).maxDistance;
-    final (posts, error) = await graphql.fetchHomeFeed(
-      governorate: governorate,
-      cityId: cityId,
+    final (posts, endCursor, hasNextPage, error) = await graphql.fetchHomeFeed(
+      governorate: _governorate!,
+      cityId: _cityId,
       latitude: _position?.latitude,
       longitude: _position?.longitude,
       radiusKm: maxDist.isFinite ? maxDist : null,
@@ -103,6 +131,32 @@ class _HomeScreenState extends State<HomeScreen> {
         _errorMessage = error;
       } else {
         _posts = posts;
+        _endCursor = endCursor;
+        _hasNextPage = hasNextPage;
+      }
+    });
+  }
+
+  Future<void> _loadMore() async {
+    if (_loadingMore || !_hasNextPage || _governorate == null) return;
+    setState(() => _loadingMore = true);
+    final graphql = context.read<GraphQLService>();
+    final maxDist = DistanceProvider.of(context).maxDistance;
+    final (more, endCursor, hasNextPage, error) = await graphql.fetchHomeFeed(
+      governorate: _governorate!,
+      cityId: _cityId,
+      latitude: _position?.latitude,
+      longitude: _position?.longitude,
+      radiusKm: maxDist.isFinite ? maxDist : null,
+      after: _endCursor,
+    );
+    if (!mounted) return;
+    setState(() {
+      _loadingMore = false;
+      if (error == null) {
+        _posts = [..._posts, ...more];
+        _endCursor = endCursor;
+        _hasNextPage = hasNextPage;
       }
     });
   }
@@ -156,22 +210,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
-                      decoration: BoxDecoration(color: AppColors.searchBg, borderRadius: BorderRadius.circular(AppRadius.chip)),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.search, size: 18, color: AppColors.textMuted),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: Text(
-                              t(context, 'Search pets, posts, users...', 'ابحث عن حيوانات، منشورات، مستخدمين...'),
-                              style: Theme.of(context).textTheme.bodyMedium,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
+                    child: AdaptiveSearchBar(
+                      hintText: t(context, 'Search pets, posts, listings...', 'ابحث عن حيوانات، منشورات، إعلانات...'),
+                      onChanged: (v) => setState(() => _query = v),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -230,7 +271,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               _FeedErrorState(message: _errorMessage!, onRetry: _loadFeed),
                             ],
                           )
-                        : ListView(
+                        : _query.trim().isNotEmpty
+                            ? _HomeSearchResults(query: _query, posts: _posts)
+                            : ListView(
+                            controller: _scrollController,
                             padding: const EdgeInsets.only(bottom: 100),
                             children: [
                               const DistanceFilter(),
@@ -429,11 +473,163 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: Text(t(context, 'See all in Marketplace →', 'عرض الكل في السوق ←'), style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
                                 ),
                               ),
+                              if (_loadingMore)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                                  child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                                ),
                               const SizedBox(height: AppSpacing.lg),
                             ],
                           ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Flat cross-type results list shown in place of the curated home sections
+/// while a search query is active.
+class _HomeSearchResults extends StatelessWidget {
+  final String query;
+  final List<FeedPost> posts;
+  const _HomeSearchResults({required this.query, required this.posts});
+
+  @override
+  Widget build(BuildContext context) {
+    final results = posts.where((p) => p.matchesQuery(query)).toList();
+    if (results.isEmpty) {
+      return ListView(
+        padding: const EdgeInsets.only(bottom: 100),
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+            child: Center(
+              child: Column(
+                children: [
+                  const Icon(Icons.search_off, size: 48, color: AppColors.textMuted),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    t(context, 'No results for "${query.trim()}"', 'لا توجد نتائج لـ "${query.trim()}"'),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    t(context, 'Try a different search term', 'جرّب كلمة بحث مختلفة'),
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: 100),
+      itemCount: results.length,
+      itemBuilder: (context, i) => _HomeSearchResultTile(post: results[i]),
+    );
+  }
+}
+
+class _HomeSearchResultTile extends StatelessWidget {
+  final FeedPost post;
+  const _HomeSearchResultTile({required this.post});
+
+  String _typeLabel(BuildContext context) {
+    switch (post.postType) {
+      case 'RESCUE':
+        return t(context, 'Rescue', 'إنقاذ');
+      case 'LOST':
+        return t(context, 'Lost & Found', 'مفقود');
+      case 'ADOPTION':
+        return t(context, 'Adoption', 'تبني');
+      case 'PRODUCT':
+        return t(context, 'Marketplace', 'السوق');
+      default:
+        return post.postType;
+    }
+  }
+
+  Color _typeColor() {
+    switch (post.postType) {
+      case 'RESCUE':
+      case 'LOST':
+        return AppColors.critical;
+      case 'ADOPTION':
+        return AppColors.sectionLine;
+      case 'PRODUCT':
+        return AppColors.sectionLineGreen;
+      default:
+        return AppColors.textMuted;
+    }
+  }
+
+  void _open(BuildContext context) {
+    final Widget screen = switch (post.postType) {
+      'ADOPTION' => AdoptionDetailScreen(postId: post.id),
+      'PRODUCT' => ProductDetailScreen(postId: post.id),
+      _ => RescueDetailScreen(postId: post.id),
+    };
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cityName = Localizations.localeOf(context).languageCode == 'ar' ? post.cityNameArabic : post.cityNameEnglish;
+    final color = _typeColor();
+    return GestureDetector(
+      onTap: () => _open(context),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 2))],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.chip),
+              child: ImageWithFallback(url: post.primaryImageUrl ?? '', width: 64, height: 64),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(AppRadius.chip)),
+                        child: Text(_typeLabel(context), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+                      ),
+                      if (post.distanceKm != null) ...[
+                        const SizedBox(width: 6),
+                        Text('${post.distanceKm!.toStringAsFixed(1)} ${t(context, 'km', 'كم')}', style: Theme.of(context).textTheme.bodySmall),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(post.title, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Text(
+                    post.areaName != null ? '${post.areaName}, $cityName' : cityName,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.textMuted),
           ],
         ),
       ),

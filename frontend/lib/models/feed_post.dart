@@ -47,6 +47,19 @@ class FeedPost {
   bool get isUrgent => urgency == 'CRITICAL';
   String? get primaryImageUrl => mediaUrls.isNotEmpty ? mediaUrls.first : null;
 
+  /// Case-insensitive substring match across every field a user would
+  /// plausibly search by: title, description, category, and location.
+  bool matchesQuery(String query) {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return true;
+    return title.toLowerCase().contains(q) ||
+        description.toLowerCase().contains(q) ||
+        (marketCategory?.toLowerCase().contains(q) ?? false) ||
+        (areaName?.toLowerCase().contains(q) ?? false) ||
+        cityNameEnglish.toLowerCase().contains(q) ||
+        cityNameArabic.contains(query.trim());
+  }
+
   factory FeedPost.fromEdgeJson(Map<String, dynamic> edge) {
     final node = edge['node'] as Map<String, dynamic>;
     final city = node['city'] as Map<String, dynamic>? ?? const {};

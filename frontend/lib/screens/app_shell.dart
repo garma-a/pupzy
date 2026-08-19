@@ -21,8 +21,18 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _index = 0;
+  // Home is visited immediately; the other 3 feed tabs only start fetching
+  // once the user actually opens them, instead of all firing at launch.
+  final Set<int> _visitedIndices = {0};
   double _maxDistance = 15.0;
   bool _postSheetOpen = false;
+
+  void _goToIndex(int i) {
+    setState(() {
+      _index = i;
+      _visitedIndices.add(i);
+    });
+  }
 
   Future<void> _openNewPost() async {
     setState(() => _postSheetOpen = true);
@@ -35,7 +45,10 @@ class _AppShellState extends State<AppShell> {
     if (!mounted) return;
     setState(() {
       _postSheetOpen = false;
-      if (result == 'adopt') _index = 3;
+      if (result == 'adopt') {
+        _index = 3;
+        _visitedIndices.add(3);
+      }
     });
   }
 
@@ -49,11 +62,11 @@ class _AppShellState extends State<AppShell> {
         body: IndexedStack(
           index: _index,
           children: [
-            HomeScreen(onNavigateToMarket: () => setState(() => _index = 4)),
-            const HelpScreen(),
+            HomeScreen(onNavigateToMarket: () => _goToIndex(4)),
+            _visitedIndices.contains(1) ? const HelpScreen() : const SizedBox.shrink(),
             const SizedBox.shrink(),
-            const AdoptScreen(),
-            const MarketScreen(),
+            _visitedIndices.contains(3) ? const AdoptScreen() : const SizedBox.shrink(),
+            _visitedIndices.contains(4) ? const MarketScreen() : const SizedBox.shrink(),
           ],
         ),
         bottomNavigationBar: _PupzyBottomNav(
@@ -63,7 +76,7 @@ class _AppShellState extends State<AppShell> {
             if (i == 2) {
               _openNewPost();
             } else {
-              setState(() => _index = i);
+              _goToIndex(i);
             }
           },
         ),

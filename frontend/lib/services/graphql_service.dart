@@ -927,8 +927,9 @@ class GraphQLService {
   }
 
   /// Runs a feed query and parses its PostConnection into a (posts,
-  /// errorMessage) tuple — shared by fetchHomeFeed/fetchHelpFeed/fetchMarketFeed.
-  Future<(List<FeedPost> posts, String? errorMessage)> _runFeedQuery(
+  /// endCursor, hasNextPage, errorMessage) tuple — shared by
+  /// fetchHomeFeed/fetchHelpFeed/fetchAdoptFeed/fetchMarketFeed.
+  Future<(List<FeedPost> posts, String? endCursor, bool hasNextPage, String? errorMessage)> _runFeedQuery(
     String document,
     String feedFieldName,
     Map<String, dynamic> variables,
@@ -942,29 +943,35 @@ class GraphQLService {
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (<FeedPost>[], _serverErrorMessage(result.exception));
+      return (<FeedPost>[], null, false, _serverErrorMessage(result.exception));
     }
-    final edges = result.data?[feedFieldName]?['edges'] as List<dynamic>? ?? [];
+    final connection = result.data?[feedFieldName] as Map<String, dynamic>?;
+    final edges = connection?['edges'] as List<dynamic>? ?? [];
     final posts = edges.map((e) => FeedPost.fromEdgeJson(e as Map<String, dynamic>)).toList();
-    return (posts, null);
+    final pageInfo = connection?['pageInfo'] as Map<String, dynamic>?;
+    final endCursor = pageInfo?['endCursor'] as String?;
+    final hasNextPage = pageInfo?['hasNextPage'] as bool? ?? false;
+    return (posts, endCursor, hasNextPage, null);
   }
 
   /// Fetches the combined home feed (RESCUE, LOST, ADOPTION, PRODUCT posts
   /// mixed together, newest first). [governorate] is required by the
   /// backend; pass the viewer's home city governorate.
-  Future<(List<FeedPost> posts, String? errorMessage)> fetchHomeFeed({
+  Future<(List<FeedPost> posts, String? endCursor, bool hasNextPage, String? errorMessage)> fetchHomeFeed({
     required String governorate,
     String? cityId,
     double? latitude,
     double? longitude,
     double? radiusKm,
     int first = 20,
+    String? after,
   }) {
     final variables = <String, dynamic>{
       'governorate': governorate,
       'cityId': cityId,
       'radiusKm': radiusKm,
       'first': first,
+      'after': after,
     };
     if (latitude != null && longitude != null) {
       variables['viewerLocation'] = {'latitude': latitude, 'longitude': longitude};
@@ -974,19 +981,21 @@ class GraphQLService {
 
   /// Fetches the Help feed — RESCUE and LOST posts only, urgency-sorted
   /// (CRITICAL first). [governorate] is required by the backend.
-  Future<(List<FeedPost> posts, String? errorMessage)> fetchHelpFeed({
+  Future<(List<FeedPost> posts, String? endCursor, bool hasNextPage, String? errorMessage)> fetchHelpFeed({
     required String governorate,
     String? cityId,
     double? latitude,
     double? longitude,
     double? radiusKm,
     int first = 20,
+    String? after,
   }) {
     final variables = <String, dynamic>{
       'governorate': governorate,
       'cityId': cityId,
       'radiusKm': radiusKm,
       'first': first,
+      'after': after,
     };
     if (latitude != null && longitude != null) {
       variables['viewerLocation'] = {'latitude': latitude, 'longitude': longitude};
@@ -997,7 +1006,7 @@ class GraphQLService {
   /// Fetches the Adopt feed — ADOPTION posts only. [governorate] is
   /// required by the backend. [sort] is 'HOT' or 'NEWEST'; defaults to
   /// 'HOT' server-side.
-  Future<(List<FeedPost> posts, String? errorMessage)> fetchAdoptFeed({
+  Future<(List<FeedPost> posts, String? endCursor, bool hasNextPage, String? errorMessage)> fetchAdoptFeed({
     required String governorate,
     String? cityId,
     double? latitude,
@@ -1005,6 +1014,7 @@ class GraphQLService {
     double? radiusKm,
     String? sort,
     int first = 20,
+    String? after,
   }) {
     final variables = <String, dynamic>{
       'governorate': governorate,
@@ -1012,6 +1022,7 @@ class GraphQLService {
       'radiusKm': radiusKm,
       'sort': sort,
       'first': first,
+      'after': after,
     };
     if (latitude != null && longitude != null) {
       variables['viewerLocation'] = {'latitude': latitude, 'longitude': longitude};
@@ -1023,7 +1034,7 @@ class GraphQLService {
   /// required by the backend. [category] filters server-side when given
   /// (must be a raw ProductCategory enum value, e.g. 'CARE'). [sort] is
   /// 'HOT' or 'NEWEST'; defaults to 'HOT' server-side.
-  Future<(List<FeedPost> posts, String? errorMessage)> fetchMarketFeed({
+  Future<(List<FeedPost> posts, String? endCursor, bool hasNextPage, String? errorMessage)> fetchMarketFeed({
     required String governorate,
     String? cityId,
     double? latitude,
@@ -1032,6 +1043,7 @@ class GraphQLService {
     String? category,
     String? sort,
     int first = 20,
+    String? after,
   }) {
     final variables = <String, dynamic>{
       'governorate': governorate,
@@ -1040,6 +1052,7 @@ class GraphQLService {
       'category': category,
       'sort': sort,
       'first': first,
+      'after': after,
     };
     if (latitude != null && longitude != null) {
       variables['viewerLocation'] = {'latitude': latitude, 'longitude': longitude};

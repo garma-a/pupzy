@@ -89,7 +89,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied ||
-            permission == LocationPermission.deniedForever) return;
+            permission == LocationPermission.deniedForever) {
+          return;
+        }
       }
 
       final pos = await Geolocator.getCurrentPosition(
