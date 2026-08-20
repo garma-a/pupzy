@@ -84,7 +84,7 @@ export const postMedia = pgTable(
     postDisplayOrderIdx: index('idx_post_media_post_display_order').on(table.postId, table.displayOrder),
 
     /** Enforces R2 object key uniqueness. */
-    cloudflareKeyUniq: uniqueIndex('uq_post_media_cloudflare_storage_key').on(table.cloudflareStorageKey),
+    uniqueCloudflareStorageKey: uniqueIndex('unique_post_media_cloudflare_storage_key').on(table.cloudflareStorageKey),
   }),
 );
 

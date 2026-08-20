@@ -42,9 +42,11 @@ const paginationSchema = z.object({
 
 const helpFeedSchema = locationFilterSchema.and(paginationSchema);
 
-const adoptFeedSchema = locationFilterSchema.and(paginationSchema).and(z.object({
-  sort: z.enum(['HOT', 'NEWEST']).nullish(),
-}));
+const adoptFeedSchema = locationFilterSchema.and(paginationSchema).and(
+  z.object({
+    sort: z.enum(['HOT', 'NEWEST']).nullish(),
+  }),
+);
 
 const PRODUCT_CATEGORIES = [
   'CARE',
@@ -56,12 +58,24 @@ const PRODUCT_CATEGORIES = [
   'OTHER',
 ] as const;
 
-const marketFeedSchema = locationFilterSchema.and(paginationSchema).and(z.object({
-  sort: z.enum(['HOT', 'NEWEST']).nullish(),
-  category: z.enum(PRODUCT_CATEGORIES).nullish(),
-}));
+const marketFeedSchema = locationFilterSchema.and(paginationSchema).and(
+  z.object({
+    sort: z.enum(['HOT', 'NEWEST']).nullish(),
+    category: z.enum(PRODUCT_CATEGORIES).nullish(),
+  }),
+);
 
 const homeFeedSchema = locationFilterSchema.and(paginationSchema);
+
+const mySavedPostsSchema = paginationSchema;
+
+const POST_TYPES = ['RESCUE', 'LOST', 'ADOPTION', 'PRODUCT'] as const;
+
+const myPostsSchema = paginationSchema.and(
+  z.object({
+    postType: z.enum(POST_TYPES),
+  }),
+);
 
 // ─── Exported types ─────────────────────────────────────────────────────────
 
@@ -69,6 +83,8 @@ export type HelpFeedInput = z.infer<typeof helpFeedSchema>;
 export type AdoptFeedInput = z.infer<typeof adoptFeedSchema>;
 export type MarketFeedInput = z.infer<typeof marketFeedSchema>;
 export type HomeFeedInput = z.infer<typeof homeFeedSchema>;
+export type MySavedPostsInput = z.infer<typeof mySavedPostsSchema>;
+export type MyPostsInput = z.infer<typeof myPostsSchema>;
 
 // ─── Validation helpers ─────────────────────────────────────────────────────
 
@@ -96,6 +112,18 @@ export function validateMarketFeedInput(raw: unknown): MarketFeedInput {
 
 export function validateHomeFeedInput(raw: unknown): HomeFeedInput {
   const result = homeFeedSchema.safeParse(raw);
+  if (!result.success) throw new ValidationError(formatZodErrors(result.error));
+  return result.data;
+}
+
+export function validateMySavedPostsInput(raw: unknown): MySavedPostsInput {
+  const result = mySavedPostsSchema.safeParse(raw);
+  if (!result.success) throw new ValidationError(formatZodErrors(result.error));
+  return result.data;
+}
+
+export function validateMyPostsInput(raw: unknown): MyPostsInput {
+  const result = myPostsSchema.safeParse(raw);
   if (!result.success) throw new ValidationError(formatZodErrors(result.error));
   return result.data;
 }

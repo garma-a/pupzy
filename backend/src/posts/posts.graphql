@@ -94,6 +94,10 @@ type RescuePost {
   ON_SITE = reporter is with the animal; CAN_TRANSPORT = reporter can move the animal.
   """
   reporterRole: ReporterRole!
+  isLifeThreatening: Boolean!
+  hasVisibleSeriousInjury: Boolean!
+  isInDangerousLocation: Boolean!
+  canAnimalMoveOrEscape: Boolean!
 }
 
 """
@@ -121,6 +125,12 @@ type LostPost {
   petName: String
   "LOST_PET only — date the pet was last seen."
   dateLastSeen: String
+  "LOST_PET only — pet needs regular medication or has an ongoing medical condition."
+  hasMedicalNeeds: Boolean
+  "LOST_PET only — pet is elderly or very young."
+  isElderlyOrVeryYoung: Boolean
+  "LOST_PET only — pet was last seen near a busy road, canal, or hazard."
+  lastSeenNearHazard: Boolean
   "FOUND_STRAY only — physical condition of the found animal."
   currentCondition: FoundAnimalCondition
   "FOUND_STRAY only — whether the reporter has the animal in a safe place."
@@ -301,13 +311,19 @@ input CreateRescuePostInput {
   coordinates: GeoLocationInput!
   """Optional neighborhood name, e.g. 'Maadi'."""
   areaName: String
-  """Emergency urgency tier. Required for RESCUE."""
-  urgency: UrgencyTier!
   species: SpeciesType!
   """Free text condition description, e.g. 'Cat with broken leg, near the school'."""
   conditionSummary: String!
   """Coordination signal: REPORTING, ON_SITE, or CAN_TRANSPORT."""
   reporterRole: ReporterRole!
+  """Animal's life is in immediate danger."""
+  isLifeThreatening: Boolean!
+  """Visible serious injury (heavy bleeding, broken bone, cannot stand)."""
+  hasVisibleSeriousInjury: Boolean!
+  """Animal is somewhere actively dangerous right now (road, construction, trapped)."""
+  isInDangerousLocation: Boolean!
+  """Whether the animal can move or flee on its own."""
+  canAnimalMoveOrEscape: Boolean!
   """Media IDs from requestMediaUploadUrl. Max 4."""
   mediaIds: [ID!]
 }
@@ -315,7 +331,6 @@ input CreateRescuePostInput {
 """
 Input for creating a LOST post (covers both LOST_PET and FOUND_STRAY).
 The reportType discriminator determines which fields are required.
-Urgency is required.
 """
 input CreateLostPostInput {
   title: String!
@@ -323,7 +338,6 @@ input CreateLostPostInput {
   cityId: ID
   coordinates: GeoLocationInput!
   areaName: String
-  urgency: UrgencyTier!
   """LOST_PET or FOUND_STRAY — drives field validation."""
   reportType: LostFoundType!
   species: SpeciesType!
@@ -338,6 +352,12 @@ input CreateLostPostInput {
   petName: String
   """LOST_PET only — date the pet was last seen. ISO date (YYYY-MM-DD)."""
   dateLastSeen: String
+  """LOST_PET only — pet needs regular medication or has an ongoing medical condition."""
+  hasMedicalNeeds: Boolean
+  """LOST_PET only — pet is elderly or very young."""
+  isElderlyOrVeryYoung: Boolean
+  """LOST_PET only — pet was last seen near a busy road, canal, or hazard."""
+  lastSeenNearHazard: Boolean
   """FOUND_STRAY only — physical condition of the found animal."""
   currentCondition: FoundAnimalCondition
   """FOUND_STRAY only — is the finder currently keeping the animal safe?"""
@@ -555,6 +575,26 @@ extend type Query {
     cityId: ID
     viewerLocation: ViewerLocationInput
     radiusKm: Float
+    first: Int
+    after: String
+  ): PostConnection!
+
+  """
+  Favorites / Saved Posts — all posts bookmarked by the currently authenticated user,
+  ordered by the time of the save action DESC (newest save first).
+  """
+  mySavedPosts(
+    first: Int
+    after: String
+  ): PostConnection!
+
+  """
+  My Posts — all posts created by the currently authenticated user, scoped to
+  a specific section (postType) and sorted by newest first (UUIDv7 id DESC).
+  """
+  myPosts(
+    """The vertical section to view: RESCUE, LOST, ADOPTION, or PRODUCT."""
+    postType: PostType!
     first: Int
     after: String
   ): PostConnection!

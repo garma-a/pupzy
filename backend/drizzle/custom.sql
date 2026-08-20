@@ -23,7 +23,8 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 -- RESCUE and LOST posts must have urgency.
 -- ADOPTION and PRODUCT posts must NOT have urgency.
 ALTER TABLE posts DROP CONSTRAINT IF EXISTS chk_posts_urgency_by_type;
-ALTER TABLE posts ADD CONSTRAINT chk_posts_urgency_by_type
+ALTER TABLE posts DROP CONSTRAINT IF EXISTS posts_urgency_matches_post_type_constraint;
+ALTER TABLE posts ADD CONSTRAINT posts_urgency_matches_post_type_constraint
   CHECK (
     (post_type IN ('RESCUE', 'LOST') AND urgency IS NOT NULL)
     OR
@@ -32,7 +33,8 @@ ALTER TABLE posts ADD CONSTRAINT chk_posts_urgency_by_type
 
 -- PRODUCT: is_free=true requires price_amount=NULL; is_free=false requires price_amount IS NOT NULL.
 ALTER TABLE product_posts DROP CONSTRAINT IF EXISTS chk_product_price_by_free;
-ALTER TABLE product_posts ADD CONSTRAINT chk_product_price_by_free
+ALTER TABLE product_posts DROP CONSTRAINT IF EXISTS product_price_matches_is_free_flag_constraint;
+ALTER TABLE product_posts ADD CONSTRAINT product_price_matches_is_free_flag_constraint
   CHECK (
     (is_free = TRUE AND price_amount IS NULL)
     OR
@@ -41,7 +43,8 @@ ALTER TABLE product_posts ADD CONSTRAINT chk_product_price_by_free
 
 -- ADOPTION: age_value and age_unit must both be set or both be NULL.
 ALTER TABLE adoption_posts DROP CONSTRAINT IF EXISTS chk_adoption_age_pairing;
-ALTER TABLE adoption_posts ADD CONSTRAINT chk_adoption_age_pairing
+ALTER TABLE adoption_posts DROP CONSTRAINT IF EXISTS adoption_age_value_and_unit_pairing_constraint;
+ALTER TABLE adoption_posts ADD CONSTRAINT adoption_age_value_and_unit_pairing_constraint
   CHECK (
     (age_value IS NULL AND age_unit IS NULL)
     OR
@@ -50,9 +53,10 @@ ALTER TABLE adoption_posts ADD CONSTRAINT chk_adoption_age_pairing
 
 -- LOST: field-set integrity between LOST_PET and FOUND_STRAY.
 -- LOST_PET  → date_last_seen required; current_condition, is_currently_safe_with_reporter, date_found must be NULL
--- FOUND_STRAY → current_condition, is_currently_safe_with_reporter, date_found required; pet_name, date_last_seen must be NULL
+-- FOUND_STRAY → current_condition, is_currently_safe_with_reporter, date_found required; pet_name, date_last_seen, has_medical_needs, is_elderly_or_very_young, last_seen_near_hazard must be NULL
 ALTER TABLE lost_posts DROP CONSTRAINT IF EXISTS chk_lost_posts_report_fields;
-ALTER TABLE lost_posts ADD CONSTRAINT chk_lost_posts_report_fields
+ALTER TABLE lost_posts DROP CONSTRAINT IF EXISTS lost_posts_report_type_field_consistency_constraint;
+ALTER TABLE lost_posts ADD CONSTRAINT lost_posts_report_type_field_consistency_constraint
   CHECK (
     (
       report_type = 'LOST_PET'
@@ -69,6 +73,9 @@ ALTER TABLE lost_posts ADD CONSTRAINT chk_lost_posts_report_fields
       AND date_found IS NOT NULL
       AND pet_name IS NULL
       AND date_last_seen IS NULL
+      AND has_medical_needs IS NULL
+      AND is_elderly_or_very_young IS NULL
+      AND last_seen_near_hazard IS NULL
     )
   );
 
@@ -133,13 +140,7 @@ CREATE INDEX IF NOT EXISTS idx_notifications_unread
 -- 3. GIST INDEXES (spatial — PostGIS)
 -- ─────────────────────────────────────────────────────────────────────────────
 
--- Nearest-city resolution: ST_Distance(center_point, user_gps).
-CREATE INDEX IF NOT EXISTS idx_cities_center_point
-  ON cities USING GIST (center_point);
 
--- Functional GIST index on posts.coordinates (stored as text EWKT — must cast to geometry).
-CREATE INDEX IF NOT EXISTS idx_posts_coordinates
-  ON posts USING GIST (ST_GeomFromEWKT(coordinates));
 
 -- User proximity sort: last_known_location stored as text EWKT.
 -- Requires a functional GIST index. Uncomment once there is data to index.

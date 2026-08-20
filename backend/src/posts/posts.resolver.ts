@@ -10,6 +10,8 @@ import {
   validateAdoptFeedInput,
   validateMarketFeedInput,
   validateHomeFeedInput,
+  validateMySavedPostsInput,
+  validateMyPostsInput,
 } from './dto/feed-query.input';
 import type { Post, City, PostMedia, RescuePost, LostPost, AdoptionPost, ProductPost } from '../database/schema';
 import type { GqlContext } from '../common/types/gql-context.type';
@@ -118,6 +120,26 @@ export class PostsResolver {
   async homeFeed(@Args() args: unknown) {
     const input = validateHomeFeedInput(args);
     return this.postsService.getHomeFeed(input);
+  }
+
+  /**
+   * Favorites / Saved Posts — posts saved/bookmarked by the current viewer,
+   * newest save first. Keyset-paginated on (post_saves.created_at, post_saves.post_id).
+   */
+  @Query('mySavedPosts')
+  async mySavedPosts(@Args() args: unknown, @Context() ctx: GqlContext) {
+    const input = validateMySavedPostsInput(args);
+    return this.postsService.getPostsSavedByCurrentUser(ctx.user!.id, input);
+  }
+
+  /**
+   * My Posts — posts created by the current viewer, filtered by section (postType),
+   * newest first. Keyset-paginated on UUIDv7 id DESC.
+   */
+  @Query('myPosts')
+  async myPosts(@Args() args: unknown, @Context() ctx: GqlContext) {
+    const input = validateMyPostsInput(args);
+    return this.postsService.getPostsCreatedByCurrentUser(ctx.user!.id, input);
   }
 
   // ─── Create Mutations ──────────────────────────────────────────────────

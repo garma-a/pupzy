@@ -1,5 +1,5 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { sql, eq, and } from 'drizzle-orm';
+import { sql, eq, and, or, lt, desc } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import { adoptionApplications, type AdoptionApplication, type NewAdoptionApplication } from '../database/schema';
@@ -68,105 +68,71 @@ export class AdoptionsRepository {
   /**
    * Paginated fetch of applications submitted BY a user.
    */
-  async findByApplicant(params: {
+  async findByApplicant(parameters: {
     applicantId: string;
     limit: number;
     cursor: { createdAt: string; id: string } | null;
   }): Promise<{ rows: AdoptionApplication[]; hasNextPage: boolean }> {
-    const { applicantId, limit, cursor } = params;
-    const fetchLimit = limit + 1;
+    const { applicantId, limit, cursor } = parameters;
 
-    const conditions = [sql`applicant_id = ${applicantId}`];
-    if (cursor) {
-      conditions.push(sql`(
-        created_at < ${cursor.createdAt}::timestamptz
-        OR (created_at = ${cursor.createdAt}::timestamptz AND id < ${cursor.id}::uuid)
-      )`);
-    }
+    const rows = await this.db
+      .select()
+      .from(adoptionApplications)
+      .where(
+        and(
+          eq(adoptionApplications.applicantId, applicantId),
+          cursor
+            ? or(
+                lt(adoptionApplications.createdAt, new Date(cursor.createdAt)),
+                and(
+                  eq(adoptionApplications.createdAt, new Date(cursor.createdAt)),
+                  lt(adoptionApplications.id, cursor.id),
+                ),
+              )
+            : undefined,
+        ),
+      )
+      .orderBy(desc(adoptionApplications.createdAt), desc(adoptionApplications.id))
+      .limit(limit + 1);
 
-    const whereClause = sql.join(conditions, sql` AND `);
-    const result = await this.db.execute(sql`
-      SELECT * FROM adoption_applications
-      WHERE ${whereClause}
-      ORDER BY created_at DESC, id DESC
-      LIMIT ${fetchLimit}
-    `);
-
-    const rawRows = (result as unknown as { rows: Record<string, unknown>[] }).rows;
-    const hasNextPage = rawRows.length > limit;
-    const trimmed = hasNextPage ? rawRows.slice(0, limit) : rawRows;
-
-    return {
-      rows: trimmed.map((raw) => this.mapRaw(raw)),
-      hasNextPage,
-    };
+    const hasNextPage = rows.length > limit;
+    return { rows: hasNextPage ? rows.slice(0, limit) : rows, hasNextPage };
   }
 
   /**
    * Paginated fetch of applications ON a specific post.
    * Used by the post owner to review incoming applications.
    */
-  async findByPost(params: {
+  async findByPost(parameters: {
     targetPostId: string;
     status?: string | null;
     limit: number;
     cursor: { createdAt: string; id: string } | null;
   }): Promise<{ rows: AdoptionApplication[]; hasNextPage: boolean }> {
-    const { targetPostId, status, limit, cursor } = params;
-    const fetchLimit = limit + 1;
+    const { targetPostId, status, limit, cursor } = parameters;
 
-    const conditions = [sql`target_post_id = ${targetPostId}`];
-    if (status) conditions.push(sql`status = ${status}`);
-    if (cursor) {
-      conditions.push(sql`(
-        created_at < ${cursor.createdAt}::timestamptz
-        OR (created_at = ${cursor.createdAt}::timestamptz AND id < ${cursor.id}::uuid)
-      )`);
-    }
+    const rows = await this.db
+      .select()
+      .from(adoptionApplications)
+      .where(
+        and(
+          eq(adoptionApplications.targetPostId, targetPostId),
+          status ? eq(adoptionApplications.status, status as AdoptionApplication['status']) : undefined,
+          cursor
+            ? or(
+                lt(adoptionApplications.createdAt, new Date(cursor.createdAt)),
+                and(
+                  eq(adoptionApplications.createdAt, new Date(cursor.createdAt)),
+                  lt(adoptionApplications.id, cursor.id),
+                ),
+              )
+            : undefined,
+        ),
+      )
+      .orderBy(desc(adoptionApplications.createdAt), desc(adoptionApplications.id))
+      .limit(limit + 1);
 
-    const whereClause = sql.join(conditions, sql` AND `);
-    const result = await this.db.execute(sql`
-      SELECT * FROM adoption_applications
-      WHERE ${whereClause}
-      ORDER BY created_at DESC, id DESC
-      LIMIT ${fetchLimit}
-    `);
-
-    const rawRows = (result as unknown as { rows: Record<string, unknown>[] }).rows;
-    const hasNextPage = rawRows.length > limit;
-    const trimmed = hasNextPage ? rawRows.slice(0, limit) : rawRows;
-
-    return {
-      rows: trimmed.map((raw) => this.mapRaw(raw)),
-      hasNextPage,
-    };
-  }
-
-  /**
-   * Maps a raw PostgreSQL row to an AdoptionApplication object.
-   * Check the actual schema columns from the schema file you read.
-   */
-  private mapRaw(raw: Record<string, unknown>): AdoptionApplication {
-    return {
-      id: raw.id as string,
-      targetPostId: raw.target_post_id as string,
-      applicantId: raw.applicant_id as string,
-      status: raw.status as AdoptionApplication['status'],
-      speciesPreference: (raw.species_preference as AdoptionApplication['speciesPreference']) ?? null,
-      breedPreference: (raw.breed_preference as string) ?? null,
-      agePreference: (raw.age_preference as string) ?? null,
-      genderPreference: (raw.gender_preference as AdoptionApplication['genderPreference']) ?? null,
-      livingSituation: raw.living_situation as AdoptionApplication['livingSituation'],
-      hasOutdoorAccess: raw.has_outdoor_access as boolean,
-      hasOtherPetsAtHome: raw.has_other_pets_at_home as boolean,
-      hasChildrenAtHome: raw.has_children_at_home as boolean,
-      hoursAtHomePerDay: (raw.hours_at_home_per_day as number) ?? null,
-      previousPetExperience: (raw.previous_pet_experience as string) ?? null,
-      whyAdopt: raw.why_adopt as string,
-      consentHomeVisit: raw.consent_home_visit as boolean,
-      canProvideVetReference: raw.can_provide_vet_reference as boolean,
-      respondedAt: raw.responded_at ? new Date(raw.responded_at as string) : null,
-      createdAt: new Date(raw.created_at as string),
-    };
+    const hasNextPage = rows.length > limit;
+    return { rows: hasNextPage ? rows.slice(0, limit) : rows, hasNextPage };
   }
 }

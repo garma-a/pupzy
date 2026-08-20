@@ -88,6 +88,11 @@ export const lostPosts = pgTable(
      */
     dateLastSeen: date('date_last_seen'),
 
+    // ── Urgency signals (LOST_PET only) ───────────────────────────────────────
+    hasMedicalNeeds: boolean('has_medical_needs'),
+    isElderlyOrVeryYoung: boolean('is_elderly_or_very_young'),
+    lastSeenNearHazard: boolean('last_seen_near_hazard'),
+
     // ── FOUND_STRAY only fields ───────────────────────────────────────────────
 
     /**

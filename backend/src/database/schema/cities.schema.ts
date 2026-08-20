@@ -50,7 +50,7 @@ export const cities = pgTable(
      * Prevents duplicate city rows on repeated seed runs.
      * gen_random_uuid() never collides on PK so without this a re-seed inserts duplicates.
      */
-    uniqueNameEnglishGovernorate: uniqueIndex('uq_cities_name_english_governorate').on(
+    uniqueCityNameEnglishPerGovernorate: uniqueIndex('unique_city_name_english_per_governorate').on(
       table.nameEnglish,
       table.governorate,
     ),

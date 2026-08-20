@@ -70,7 +70,10 @@ export const contactRequests = pgTable(
      * One request per user per post.
      * Prevents a rejected user from spamming new requests.
      */
-    uniqueRequest: uniqueIndex('uq_contact_request').on(table.postId, table.requesterId),
+    uniqueContactRequestPerPostAndRequester: uniqueIndex('unique_contact_request_per_post_and_requester').on(
+      table.postId,
+      table.requesterId,
+    ),
 
     /** Used by "my contact requests sent" list. */
     requesterIdx: index('idx_contact_requests_requester').on(table.requesterId),

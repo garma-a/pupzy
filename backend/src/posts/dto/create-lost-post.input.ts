@@ -33,12 +33,6 @@ const createLostPostSchema = z
     /** Human-readable name for the area (e.g. "Maadi, Cairo"). */
     areaName: z.string().max(200).trim().optional(),
 
-    /**
-     * How urgent the situation is.
-     * Required for LOST posts per `chk_posts_urgency_by_type`.
-     */
-    urgency: z.enum(['CRITICAL', 'URGENT', 'MODERATE']),
-
     /** Whether this is a report of a lost pet or a found stray. */
     reportType: z.enum(['LOST_PET', 'FOUND_STRAY']),
 
@@ -68,6 +62,11 @@ const createLostPostSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'dateLastSeen must be in YYYY-MM-DD format')
       .optional(),
 
+    // ── Urgency signals (LOST_PET only) — used to compute posts.urgency server-side
+    hasMedicalNeeds: z.boolean().optional(),
+    isElderlyOrVeryYoung: z.boolean().optional(),
+    lastSeenNearHazard: z.boolean().optional(),
+
     // ── FOUND_STRAY-only fields ───────────────────────────────────────────
 
     /** Health condition of the found animal — required for FOUND_STRAY. */
@@ -93,6 +92,29 @@ const createLostPostSchema = z
           code: z.ZodIssueCode.custom,
           message: 'dateLastSeen is required for LOST_PET reports',
           path: ['dateLastSeen'],
+        });
+      }
+
+      // Urgency signals are required for LOST_PET
+      if (data.hasMedicalNeeds === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'hasMedicalNeeds is required for LOST_PET reports',
+          path: ['hasMedicalNeeds'],
+        });
+      }
+      if (data.isElderlyOrVeryYoung === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'isElderlyOrVeryYoung is required for LOST_PET reports',
+          path: ['isElderlyOrVeryYoung'],
+        });
+      }
+      if (data.lastSeenNearHazard === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'lastSeenNearHazard is required for LOST_PET reports',
+          path: ['lastSeenNearHazard'],
         });
       }
 
@@ -155,6 +177,27 @@ const createLostPostSchema = z
           code: z.ZodIssueCode.custom,
           message: 'dateLastSeen must not be set for FOUND_STRAY',
           path: ['dateLastSeen'],
+        });
+      }
+      if (data.hasMedicalNeeds != null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'hasMedicalNeeds must not be set for FOUND_STRAY',
+          path: ['hasMedicalNeeds'],
+        });
+      }
+      if (data.isElderlyOrVeryYoung != null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'isElderlyOrVeryYoung must not be set for FOUND_STRAY',
+          path: ['isElderlyOrVeryYoung'],
+        });
+      }
+      if (data.lastSeenNearHazard != null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'lastSeenNearHazard must not be set for FOUND_STRAY',
+          path: ['lastSeenNearHazard'],
         });
       }
     }

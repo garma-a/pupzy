@@ -1,10 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { eq, inArray, asc, sql, and, type SQL } from 'drizzle-orm';
+import { eq, ne, inArray, asc, desc, and, or, gt, lt, sql, getTableColumns, type SQL } from 'drizzle-orm';
 import DataLoader from 'dataloader';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import {
   posts,
+  cities,
   rescuePosts,
   lostPosts,
   adoptionPosts,
@@ -44,6 +45,16 @@ import type * as schema from '../database/schema';
  * the appropriate counter on the `users` table when a `posts` row is
  * inserted. This repository does NOT manually update user counters.
  */
+
+/**
+ * Runtime-safe numeric parser for a nullable raw sql fragment. Needed
+ * because a plain sql`` fragment (unlike a real column) has no declared
+ * Drizzle type to decode with automatically — without this, Number(null)
+ * would incorrectly return 0 instead of staying null.
+ */
+function parseNullableDouble(value: unknown): number | null {
+  return value == null ? null : Number(value);
+}
 
 /**
  * A single row returned by feed queries.
@@ -353,7 +364,10 @@ export class PostsRepository {
 
       if (existing) {
         // Remove upvote
-        const deleted = await tx.delete(postUpvotes).where(and(eq(postUpvotes.postId, postId), eq(postUpvotes.userId, userId))).returning({ postId: postUpvotes.postId });
+        const deleted = await tx
+          .delete(postUpvotes)
+          .where(and(eq(postUpvotes.postId, postId), eq(postUpvotes.userId, userId)))
+          .returning({ postId: postUpvotes.postId });
 
         if (deleted.length > 0) {
           await tx
@@ -369,7 +383,11 @@ export class PostsRepository {
       } else {
         // Add upvote — handle concurrent duplicate via unique constraint
         try {
-          const inserted = await tx.insert(postUpvotes).values({ postId, userId }).onConflictDoNothing().returning({ postId: postUpvotes.postId });
+          const inserted = await tx
+            .insert(postUpvotes)
+            .values({ postId, userId })
+            .onConflictDoNothing()
+            .returning({ postId: postUpvotes.postId });
 
           if (inserted.length > 0) {
             await tx
@@ -395,15 +413,18 @@ export class PostsRepository {
 
       // Recompute effective_score for ADOPTION posts
       // RESCUE/LOST always have score 0 (urgency sort). PRODUCT has no upvotes.
-      await tx.execute(sql`
-        UPDATE posts SET effective_score =
-          CASE WHEN post_type = 'ADOPTION' THEN
-            (upvote_count * 3 + save_count * 2 + view_count * 0.1 + 1)
-            / POWER(EXTRACT(EPOCH FROM (now() - created_at)) / 3600.0 + 2, 1.5)
-          ELSE effective_score
-          END
-        WHERE id = ${postId}
-      `);
+      await tx
+        .update(posts)
+        .set({
+          effectiveScore: sql`
+            CASE WHEN ${posts.postType} = 'ADOPTION' THEN
+              (${posts.upvoteCount} * 3 + ${posts.saveCount} * 2 + ${posts.viewCount} * 0.1 + 1)
+              / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+            ELSE ${posts.effectiveScore}
+            END
+          `,
+        })
+        .where(eq(posts.id, postId));
 
       // Return the updated post
       const [updatedPost] = await tx.select().from(posts).where(eq(posts.id, postId)).limit(1);
@@ -430,7 +451,10 @@ export class PostsRepository {
       let added: boolean;
 
       if (existing) {
-        const deleted = await tx.delete(postSaves).where(and(eq(postSaves.postId, postId), eq(postSaves.userId, userId))).returning({ postId: postSaves.postId });
+        const deleted = await tx
+          .delete(postSaves)
+          .where(and(eq(postSaves.postId, postId), eq(postSaves.userId, userId)))
+          .returning({ postId: postSaves.postId });
 
         if (deleted.length > 0) {
           await tx
@@ -446,7 +470,11 @@ export class PostsRepository {
       } else {
         // Add save — handle concurrent duplicate via unique constraint
         try {
-          const inserted = await tx.insert(postSaves).values({ postId, userId }).onConflictDoNothing().returning({ postId: postSaves.postId });
+          const inserted = await tx
+            .insert(postSaves)
+            .values({ postId, userId })
+            .onConflictDoNothing()
+            .returning({ postId: postSaves.postId });
 
           if (inserted.length > 0) {
             await tx
@@ -470,19 +498,22 @@ export class PostsRepository {
       }
 
       // Recompute effective_score for ADOPTION and PRODUCT
-      await tx.execute(sql`
-        UPDATE posts SET effective_score =
-          CASE
-            WHEN post_type = 'ADOPTION' THEN
-              (upvote_count * 3 + save_count * 2 + view_count * 0.1 + 1)
-              / POWER(EXTRACT(EPOCH FROM (now() - created_at)) / 3600.0 + 2, 1.5)
-            WHEN post_type = 'PRODUCT' THEN
-              (view_count * 1 + save_count * 5 + 1)
-              / POWER(EXTRACT(EPOCH FROM (now() - created_at)) / 3600.0 + 2, 1.5)
-            ELSE effective_score
-          END
-        WHERE id = ${postId}
-      `);
+      await tx
+        .update(posts)
+        .set({
+          effectiveScore: sql`
+            CASE
+              WHEN ${posts.postType} = 'ADOPTION' THEN
+                (${posts.upvoteCount} * 3 + ${posts.saveCount} * 2 + ${posts.viewCount} * 0.1 + 1)
+                / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+              WHEN ${posts.postType} = 'PRODUCT' THEN
+                (${posts.viewCount} * 1 + ${posts.saveCount} * 5 + 1)
+                / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+              ELSE ${posts.effectiveScore}
+            END
+          `,
+        })
+        .where(eq(posts.id, postId));
 
       const [updatedPost] = await tx.select().from(posts).where(eq(posts.id, postId)).limit(1);
 
@@ -557,21 +588,22 @@ export class PostsRepository {
   // ─── Feed Query Helpers ──────────────────────────────────────────────
 
   /**
-   * Builds the city/governorate WHERE clause for feed queries.
-   * Returns null when no administrative boundary filter is needed (radius-only mode).
+   * Builds the city/governorate equality filter for feed queries. Returns
+   * undefined when no administrative-boundary filter applies (radius-only
+   * mode) — and() silently drops an undefined condition, so callers pass
+   * this straight into and(...) with no manual null check.
    */
-  private buildLocationFilter(governorate: string | null | undefined, cityId: string | null | undefined): SQL | null {
-    if (cityId) {
-      return sql`p.city_id = ${cityId}`;
-    }
-    if (!governorate) {
-      return null;
-    }
-    return sql`p.governorate = ${governorate}`;
+  private buildLocationFilterCondition(
+    governorate: string | null | undefined,
+    cityId: string | null | undefined,
+  ): SQL | undefined {
+    if (cityId) return eq(posts.cityId, cityId);
+    if (governorate) return eq(posts.governorate, governorate);
+    return undefined;
   }
 
   /**
-   * Resolves the center point for radius-based filtering.
+   * Resolves the center point for radius-based filtering, as EWKT text.
    *
    * Priority:
    * 1. viewerLocation (GPS) — user is physically there
@@ -586,85 +618,89 @@ export class PostsRepository {
       return `SRID=4326;POINT(${viewerLocation.longitude} ${viewerLocation.latitude})`;
     }
     if (cityId) {
-      const result = await this.db.execute(
-        sql`SELECT ST_AsEWKT(center_point) AS ewkt FROM cities WHERE id = ${cityId}::uuid LIMIT 1`,
-      );
-      const rows = (result as unknown as { rows: { ewkt: string }[] }).rows;
-      return rows[0]?.ewkt ?? null;
+      const [row] = await this.db
+        .select({ centerPointAsText: sql<string>`ST_AsEWKT(${cities.centerPoint})` })
+        .from(cities)
+        .where(eq(cities.id, cityId))
+        .limit(1);
+      return row?.centerPointAsText ?? null;
     }
     return null;
   }
 
   /**
-   * Converts viewer GPS coordinates to PostGIS EWKT point string.
-   * Returns null if no viewer location provided.
+   * Builds the PostGIS radius-filter condition for feed queries. Two
+   * ST_DWithin calls: the raw-geometry one lets PostgreSQL use the GIST
+   * index on posts.coordinates for fast pre-filtering, and the ::geography
+   * one gives an accurate, Earth-curvature-aware distance cutoff in meters.
+   * No Drizzle operator exists for PostGIS functions, so this is "the
+   * manual way" — an sql fragment used as a plain condition inside and().
    */
-  private buildViewerPointEwkt(
-    viewerLocation: { latitude: number; longitude: number } | null | undefined,
-  ): string | null {
-    if (!viewerLocation) return null;
-    return `SRID=4326;POINT(${viewerLocation.longitude} ${viewerLocation.latitude})`;
+  private buildRadiusCondition(centerPointAsEwkt: string, radiusInMeters: number): SQL {
+    const radiusInDegrees = radiusInMeters / 111320.0;
+    return sql`
+      ST_DWithin(${posts.coordinates}, ST_GeomFromEWKT(${centerPointAsEwkt}), ${radiusInDegrees})
+      AND ST_DWithin(${posts.coordinates}::geography, ST_GeomFromEWKT(${centerPointAsEwkt})::geography, ${radiusInMeters})
+    `;
   }
 
   /**
-   * Builds the ST_Distance expression for distance-in-km calculation.
-   * Returns NULL::double precision when no viewer location is provided.
-   *
-   * Uses ::geography cast for accurate meter-based distance on Earth's surface.
+   * Builds the ST_Distance-in-kilometers expression used as a computed
+   * column in every feed query. Returns SQL NULL when there's no viewer
+   * point to measure from. mapWith(parseNullableDouble) guarantees a real
+   * JS number (or null) at runtime regardless of how the pg driver would
+   * otherwise decode a bare double-precision value — a raw sql fragment has
+   * no column-level type decoder the way a real column does, so this is not
+   * optional.
    */
-  private buildDistanceExpr(viewerPoint: string | null, round: boolean = false): SQL {
-    if (viewerPoint) {
-      if (round) {
-        return sql`ROUND(ST_Distance(p.coordinates::geography, ST_GeomFromEWKT(${viewerPoint})::geography) / 1000.0)`;
-      }
-      return sql`ST_Distance(p.coordinates::geography, ST_GeomFromEWKT(${viewerPoint})::geography) / 1000.0`;
+  private buildDistanceInKilometersExpression(viewerPoint: string | null, roundToNearestKilometer = false) {
+    if (!viewerPoint) {
+      return sql<number | null>`NULL::double precision`.mapWith(parseNullableDouble);
     }
-    return sql`NULL::double precision`;
+    const distanceInMeters = sql`ST_Distance(${posts.coordinates}::geography, ST_GeomFromEWKT(${viewerPoint})::geography)`;
+    const distanceInKilometers = roundToNearestKilometer
+      ? sql`ROUND((${distanceInMeters}) / 1000.0)`
+      : sql`(${distanceInMeters}) / 1000.0`;
+    return distanceInKilometers.mapWith(parseNullableDouble);
   }
 
   /**
-   * Maps a raw PostgreSQL row (snake_case) to a Drizzle Post object (camelCase).
-   * Required because raw SQL via db.execute() returns snake_case column names.
+   * Shared keyset-pagination cursor condition for the Adopt Feed and Market
+   * Feed, which both sort by effectiveScore (HOT) or plain id (NEWEST).
+   * Fully expressible with builder operators — no sql fragment needed, since
+   * gt()/lt()/eq() work correctly against Postgres enum and numeric columns
+   * without a manual ::cast.
    */
-  private mapRawToPost(raw: Record<string, unknown>): Post {
-    return {
-      id: raw.id as string,
-      creatorId: raw.creator_id as string,
-      postType: raw.post_type as Post['postType'],
-      title: raw.title as string,
-      description: raw.description as string,
-      status: raw.status as Post['status'],
-      moderationStatus: raw.moderation_status as Post['moderationStatus'],
-      urgency: (raw.urgency as Post['urgency']) ?? null,
-      cityId: raw.city_id as string,
-      governorate: (raw.governorate as string) ?? null,
-      areaName: (raw.area_name as string) ?? null,
-      coordinates: raw.coordinates as Post['coordinates'],
-      marketCategory: (raw.market_category as Post['marketCategory']) ?? null,
-      upvoteCount: Number(raw.upvote_count),
-      saveCount: Number(raw.save_count),
-      viewCount: Number(raw.view_count),
-      reportCount: Number(raw.report_count),
-      effectiveScore: Number(raw.effective_score),
-      lastEngagedAt: new Date(raw.last_engaged_at as string),
-      createdAt: new Date(raw.created_at as string),
-      updatedAt: new Date(raw.updated_at as string),
-    };
+  private buildScoredFeedCursorCondition(
+    sort: 'HOT' | 'NEWEST',
+    cursor: { score?: string; createdAt?: string; id: string } | null,
+  ): SQL | undefined {
+    if (!cursor) return undefined;
+    if (sort === 'NEWEST') return lt(posts.id, cursor.id);
+
+    const score = Number(cursor.score);
+    const createdAt = new Date(cursor.createdAt!);
+    return or(
+      lt(posts.effectiveScore, score),
+      and(eq(posts.effectiveScore, score), lt(posts.createdAt, createdAt)),
+      and(eq(posts.effectiveScore, score), eq(posts.createdAt, createdAt), lt(posts.id, cursor.id)),
+    );
   }
 
   /**
-   * Maps raw SQL result rows to FeedResultRow[] with hasNextPage detection.
-   * Uses the limit+1 trick: if we got more rows than requested, there are more pages.
+   * Applies the limit+1 "has next page" trick to an already-typed array of
+   * feed rows coming straight from the query builder (posts columns plus a
+   * computed distanceKm column) and splits each row back into the
+   * { post, distanceKm } shape FeedResultRow expects.
    */
-  private mapFeedResult(rawRows: Record<string, unknown>[], limit: number): FeedResult {
-    const hasNextPage = rawRows.length > limit;
-    const trimmed = hasNextPage ? rawRows.slice(0, limit) : rawRows;
-
+  private mapFeedRows(rows: (Post & { distanceKm: number | null })[], limit: number): FeedResult {
+    const hasNextPage = rows.length > limit;
+    const trimmedRows = hasNextPage ? rows.slice(0, limit) : rows;
     return {
-      rows: trimmed.map((raw) => ({
-        post: this.mapRawToPost(raw),
-        distanceKm: raw.distance_km != null ? Number(raw.distance_km) : null,
-      })),
+      rows: trimmedRows.map((row) => {
+        const { distanceKm, ...post } = row;
+        return { post: post, distanceKm };
+      }),
       hasNextPage,
     };
   }
@@ -673,86 +709,60 @@ export class PostsRepository {
 
   /**
    * Help Feed — RESCUE + LOST posts sorted by urgency ASC, then newest.
-   *
-   * ## Index
-   * `idx_posts_help_feed (city_id, post_type, urgency ASC, created_at DESC)`
-   * `WHERE status = 'ACTIVE' AND post_type IN ('RESCUE', 'LOST')`
-   *
-   * ## Cursor (keyset pagination, no OFFSET)
-   * Composite: `urgency|createdAt|id`
-   * Uses UUIDv7 id as final tiebreaker for deterministic ordering.
-   *
-   * ## PostGIS
-   * - ST_DWithin: radius filter (uses GIST index on coordinates)
-   * - ST_Distance: computes distance in meters, converted to km
-   * - Both use ::geography cast for accurate Earth-surface distances
+   * Index: idx_posts_help_feed (city_id, post_type, urgency ASC, created_at DESC)
+   *   WHERE status='ACTIVE' AND post_type IN ('RESCUE','LOST')
    */
-  async findHelpFeed(params: {
+  async findHelpFeed(parameters: {
     governorate: string | null | undefined;
     cityId: string | null | undefined;
     viewerLocation: { latitude: number; longitude: number } | null | undefined;
     radiusKm: number;
     limit: number;
-    cursor: { urgency: string; createdAt: string; id: string } | null;
+    cursor: { urgency: NonNullable<Post['urgency']>; createdAt: string; id: string } | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor } = params;
-    const fetchLimit = limit + 1;
-    const radiusMeters = radiusKm * 1000;
+    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor } = parameters;
+    const radiusInMeters = radiusKm * 1000;
 
-    // Resolve center point for radius: GPS > city center > none
-    const centerPoint = await this.resolveRadiusCenter(viewerLocation, cityId);
+    const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
+    const locationCondition = centerPointAsEwkt
+      ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
+      : this.buildLocationFilterCondition(governorate, cityId);
 
-    const conditions: SQL[] = [sql`p.status = 'ACTIVE'`, sql`p.post_type IN ('RESCUE', 'LOST')`];
+    const cursorCondition = cursor
+      ? or(
+          gt(posts.urgency, cursor.urgency),
+          and(eq(posts.urgency, cursor.urgency), lt(posts.createdAt, new Date(cursor.createdAt))),
+          and(
+            eq(posts.urgency, cursor.urgency),
+            eq(posts.createdAt, new Date(cursor.createdAt)),
+            lt(posts.id, cursor.id),
+          ),
+        )
+      : undefined;
 
-    if (centerPoint) {
-      // Radius-based filtering — crosses admin boundaries
-      const radiusDegrees = radiusMeters / 111320.0;
-      conditions.push(
-        sql`ST_DWithin(p.coordinates, ST_GeomFromEWKT(${centerPoint}), ${radiusDegrees}) AND ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
-      );
-    } else {
-      // No GPS, no city → fall back to governorate/city filter
-      const locationFilter = this.buildLocationFilter(governorate, cityId);
-      if (locationFilter) {
-        conditions.push(locationFilter);
-      }
-    }
+    const rows = await this.db
+      .select({ ...getTableColumns(posts), distanceKm: this.buildDistanceInKilometersExpression(centerPointAsEwkt) })
+      .from(posts)
+      .where(
+        and(
+          eq(posts.status, 'ACTIVE'),
+          inArray(posts.postType, ['RESCUE', 'LOST']),
+          locationCondition,
+          cursorCondition,
+        ),
+      )
+      .orderBy(asc(posts.urgency), desc(posts.createdAt), desc(posts.id))
+      .limit(limit + 1);
 
-    if (cursor) {
-      conditions.push(sql`(
-        p.urgency > ${cursor.urgency}::urgency_tier
-        OR (p.urgency = ${cursor.urgency}::urgency_tier AND p.created_at < ${cursor.createdAt}::timestamptz)
-        OR (p.urgency = ${cursor.urgency}::urgency_tier AND p.created_at = ${cursor.createdAt}::timestamptz AND p.id < ${cursor.id}::uuid)
-      )`);
-    }
-
-    const whereClause = sql.join(conditions, sql` AND `);
-    const distanceExpr = this.buildDistanceExpr(centerPoint);
-
-    const result = await this.db.execute(sql`
-      SELECT p.*, ${distanceExpr} AS distance_km
-      FROM posts p
-      WHERE ${whereClause}
-      ORDER BY p.urgency ASC, p.created_at DESC, p.id DESC
-      LIMIT ${fetchLimit}
-    `);
-
-    const rawRows = (result as unknown as { rows: Record<string, unknown>[] }).rows;
-    return this.mapFeedResult(rawRows, limit);
+    return this.mapFeedRows(rows, limit);
   }
 
   /**
    * Adopt Feed — ADOPTION posts sorted by effective_score (HOT) or newest.
-   *
-   * ## Indexes
-   * HOT:  `idx_posts_adopt_score (city_id, effective_score DESC, created_at DESC)`
-   * NEWEST: Primary key index (UUIDv7 id is time-ordered)
-   *
-   * ## Cursor
-   * HOT: `score|createdAt|id` — composite keyset
-   * NEWEST: `id` — simple UUIDv7 cursor (embeds timestamp)
+   * Index (HOT): idx_posts_adopt_score (city_id, effective_score DESC, created_at DESC)
+   * Index (NEWEST): primary key (UUIDv7 id is time-ordered)
    */
-  async findAdoptFeed(params: {
+  async findAdoptFeed(parameters: {
     governorate: string | null | undefined;
     cityId: string | null | undefined;
     viewerLocation: { latitude: number; longitude: number } | null | undefined;
@@ -761,150 +771,84 @@ export class PostsRepository {
     limit: number;
     cursor: { score?: string; createdAt?: string; id: string } | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, sort, limit, cursor } = params;
-    const fetchLimit = limit + 1;
-    const radiusMeters = radiusKm * 1000;
+    const { governorate, cityId, viewerLocation, radiusKm, sort, limit, cursor } = parameters;
+    const radiusInMeters = radiusKm * 1000;
 
-    // Resolve center point for radius: GPS > city center > none
-    const centerPoint = await this.resolveRadiusCenter(viewerLocation, cityId);
+    const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
+    const locationCondition = centerPointAsEwkt
+      ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
+      : this.buildLocationFilterCondition(governorate, cityId);
+    const cursorCondition = this.buildScoredFeedCursorCondition(sort, cursor);
+    const orderByClauses =
+      sort === 'HOT' ? [desc(posts.effectiveScore), desc(posts.createdAt), desc(posts.id)] : [desc(posts.id)];
 
-    const conditions: SQL[] = [sql`p.status = 'ACTIVE'`, sql`p.post_type = 'ADOPTION'`];
+    const rows = await this.db
+      .select({
+        ...getTableColumns(posts),
+        distanceKm: this.buildDistanceInKilometersExpression(centerPointAsEwkt, true),
+      })
+      .from(posts)
+      .where(and(eq(posts.status, 'ACTIVE'), eq(posts.postType, 'ADOPTION'), locationCondition, cursorCondition))
+      .orderBy(...orderByClauses)
+      .limit(limit + 1);
 
-    if (centerPoint) {
-      const radiusDegrees = radiusMeters / 111320.0;
-      conditions.push(
-        sql`ST_DWithin(p.coordinates, ST_GeomFromEWKT(${centerPoint}), ${radiusDegrees}) AND ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
-      );
-    } else {
-      const locationFilter = this.buildLocationFilter(governorate, cityId);
-      if (locationFilter) {
-        conditions.push(locationFilter);
-      }
-    }
-
-    let orderClause: SQL;
-
-    if (sort === 'HOT') {
-      if (cursor) {
-        conditions.push(sql`(
-          p.effective_score < ${Number(cursor.score)}
-          OR (p.effective_score = ${Number(cursor.score)} AND p.created_at < ${cursor.createdAt!}::timestamptz)
-          OR (p.effective_score = ${Number(cursor.score)} AND p.created_at = ${cursor.createdAt!}::timestamptz AND p.id < ${cursor.id}::uuid)
-        )`);
-      }
-      orderClause = sql`p.effective_score DESC, p.created_at DESC, p.id DESC`;
-    } else {
-      if (cursor) {
-        conditions.push(sql`p.id < ${cursor.id}::uuid`);
-      }
-      orderClause = sql`p.id DESC`;
-    }
-
-    const whereClause = sql.join(conditions, sql` AND `);
-    const distanceExpr = this.buildDistanceExpr(centerPoint, true);
-
-    const result = await this.db.execute(sql`
-      SELECT p.*, ${distanceExpr} AS distance_km
-      FROM posts p
-      WHERE ${whereClause}
-      ORDER BY ${orderClause}
-      LIMIT ${fetchLimit}
-    `);
-
-    const rawRows = (result as unknown as { rows: Record<string, unknown>[] }).rows;
-    return this.mapFeedResult(rawRows, limit);
+    return this.mapFeedRows(rows, limit);
   }
 
   /**
    * Market Feed — PRODUCT posts sorted by effective_score (HOT) or newest.
    * Supports optional category filtering using denormalized market_category.
-   *
-   * ## Indexes
-   * HOT (no category):  `idx_posts_market_score (city_id, effective_score DESC, created_at DESC)`
-   * HOT (with category): `idx_posts_market_category (city_id, market_category, effective_score DESC, created_at DESC)`
-   * NEWEST: Primary key index (UUIDv7)
+   * Index (HOT, no category): idx_posts_market_score
+   * Index (HOT, with category): idx_posts_market_category
+   * Index (NEWEST): primary key (UUIDv7 id is time-ordered)
    */
-  async findMarketFeed(params: {
+  async findMarketFeed(parameters: {
     governorate: string | null | undefined;
     cityId: string | null | undefined;
     viewerLocation: { latitude: number; longitude: number } | null | undefined;
     radiusKm: number;
     sort: 'HOT' | 'NEWEST';
-    category: string | null | undefined;
+    category: Post['marketCategory'] | null | undefined;
     limit: number;
     cursor: { score?: string; createdAt?: string; id: string } | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, sort, category, limit, cursor } = params;
-    const fetchLimit = limit + 1;
-    const radiusMeters = radiusKm * 1000;
+    const { governorate, cityId, viewerLocation, radiusKm, sort, category, limit, cursor } = parameters;
+    const radiusInMeters = radiusKm * 1000;
 
-    // Resolve center point for radius: GPS > city center > none
-    const centerPoint = await this.resolveRadiusCenter(viewerLocation, cityId);
+    const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
+    const locationCondition = centerPointAsEwkt
+      ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
+      : this.buildLocationFilterCondition(governorate, cityId);
+    const cursorCondition = this.buildScoredFeedCursorCondition(sort, cursor);
+    const orderByClauses =
+      sort === 'HOT' ? [desc(posts.effectiveScore), desc(posts.createdAt), desc(posts.id)] : [desc(posts.id)];
 
-    const conditions: SQL[] = [sql`p.status = 'ACTIVE'`, sql`p.post_type = 'PRODUCT'`];
+    const rows = await this.db
+      .select({
+        ...getTableColumns(posts),
+        distanceKm: this.buildDistanceInKilometersExpression(centerPointAsEwkt, true),
+      })
+      .from(posts)
+      .where(
+        and(
+          eq(posts.status, 'ACTIVE'),
+          eq(posts.postType, 'PRODUCT'),
+          locationCondition,
+          category ? eq(posts.marketCategory, category) : undefined,
+          cursorCondition,
+        ),
+      )
+      .orderBy(...orderByClauses)
+      .limit(limit + 1);
 
-    if (centerPoint) {
-      const radiusDegrees = radiusMeters / 111320.0;
-      conditions.push(
-        sql`ST_DWithin(p.coordinates, ST_GeomFromEWKT(${centerPoint}), ${radiusDegrees}) AND ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
-      );
-    } else {
-      const locationFilter = this.buildLocationFilter(governorate, cityId);
-      if (locationFilter) {
-        conditions.push(locationFilter);
-      }
-    }
-
-    if (category) {
-      conditions.push(sql`p.market_category = ${category}`);
-    }
-
-    let orderClause: SQL;
-
-    if (sort === 'HOT') {
-      if (cursor) {
-        conditions.push(sql`(
-          p.effective_score < ${Number(cursor.score)}
-          OR (p.effective_score = ${Number(cursor.score)} AND p.created_at < ${cursor.createdAt!}::timestamptz)
-          OR (p.effective_score = ${Number(cursor.score)} AND p.created_at = ${cursor.createdAt!}::timestamptz AND p.id < ${cursor.id}::uuid)
-        )`);
-      }
-      orderClause = sql`p.effective_score DESC, p.created_at DESC, p.id DESC`;
-    } else {
-      if (cursor) {
-        conditions.push(sql`p.id < ${cursor.id}::uuid`);
-      }
-      orderClause = sql`p.id DESC`;
-    }
-
-    const whereClause = sql.join(conditions, sql` AND `);
-    const distanceExpr = this.buildDistanceExpr(centerPoint, true);
-
-    const result = await this.db.execute(sql`
-      SELECT p.*, ${distanceExpr} AS distance_km
-      FROM posts p
-      WHERE ${whereClause}
-      ORDER BY ${orderClause}
-      LIMIT ${fetchLimit}
-    `);
-
-    const rawRows = (result as unknown as { rows: Record<string, unknown>[] }).rows;
-    return this.mapFeedResult(rawRows, limit);
+    return this.mapFeedRows(rows, limit);
   }
 
   /**
-   * Home Feed — All post types combined, sorted by newest (UUIDv7 id DESC).
-   *
-   * ## Sort rationale
-   * Mixing post types with different scoring algorithms (urgency for RESCUE,
-   * effective_score for ADOPTION) in a single ranked feed would be confusing.
-   * Chronological order (newest first) is the industry standard for mixed-type
-   * home feeds (Instagram, Twitter/X).
-   *
-   * ## Cursor
-   * Simple UUIDv7 id cursor — no composite needed since sort is single-column.
+   * Home Feed — all post types combined, sorted by newest (UUIDv7 id DESC).
+   * Cursor: plain id — no composite needed, single-column sort.
    */
-  async findHomeFeed(params: {
+  async findHomeFeed(parameters: {
     governorate: string | null | undefined;
     cityId: string | null | undefined;
     viewerLocation: { latitude: number; longitude: number } | null | undefined;
@@ -912,44 +856,91 @@ export class PostsRepository {
     limit: number;
     cursor: { id: string } | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor } = params;
-    const fetchLimit = limit + 1;
-    const radiusMeters = radiusKm * 1000;
+    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor } = parameters;
+    const radiusInMeters = radiusKm * 1000;
 
-    // Resolve center point for radius: GPS > city center > none
-    const centerPoint = await this.resolveRadiusCenter(viewerLocation, cityId);
+    const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
+    const locationCondition = centerPointAsEwkt
+      ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
+      : this.buildLocationFilterCondition(governorate, cityId);
 
-    const conditions: SQL[] = [sql`p.status = 'ACTIVE'`];
+    const rows = await this.db
+      .select({ ...getTableColumns(posts), distanceKm: this.buildDistanceInKilometersExpression(centerPointAsEwkt) })
+      .from(posts)
+      .where(and(eq(posts.status, 'ACTIVE'), locationCondition, cursor ? lt(posts.id, cursor.id) : undefined))
+      .orderBy(desc(posts.id))
+      .limit(limit + 1);
 
-    if (centerPoint) {
-      const radiusDegrees = radiusMeters / 111320.0;
-      conditions.push(
-        sql`ST_DWithin(p.coordinates, ST_GeomFromEWKT(${centerPoint}), ${radiusDegrees}) AND ST_DWithin(p.coordinates::geography, ST_GeomFromEWKT(${centerPoint})::geography, ${radiusMeters})`,
-      );
-    } else {
-      const locationFilter = this.buildLocationFilter(governorate, cityId);
-      if (locationFilter) {
-        conditions.push(locationFilter);
-      }
-    }
+    return this.mapFeedRows(rows, limit);
+  }
 
-    if (cursor) {
-      conditions.push(sql`p.id < ${cursor.id}::uuid`);
-    }
+  // ─── Favorites & User Post Lists ────────────────────────────────────────
 
-    const whereClause = sql.join(conditions, sql` AND `);
-    const distanceExpr = this.buildDistanceExpr(centerPoint);
+  /**
+   * Returns a paginated page of posts saved by the given user, ordered by
+   * the time of the save action DESC (newest save first), with the post ID
+   * as a tiebreaker. Keyset pagination on (post_saves.created_at, post_saves.post_id).
+   */
+  async findPostsSavedByCurrentUser(parameters: {
+    userId: string;
+    limit: number;
+    cursor: { savedAt: string; postId: string } | null;
+  }): Promise<FeedResult> {
+    const { userId, limit, cursor } = parameters;
 
-    const result = await this.db.execute(sql`
-      SELECT p.*, ${distanceExpr} AS distance_km
-      FROM posts p
-      WHERE ${whereClause}
-      ORDER BY p.id DESC
-      LIMIT ${fetchLimit}
-    `);
+    const cursorCondition = cursor
+      ? or(
+          lt(postSaves.createdAt, new Date(cursor.savedAt)),
+          and(eq(postSaves.createdAt, new Date(cursor.savedAt)), lt(postSaves.postId, cursor.postId)),
+        )
+      : undefined;
 
-    const rawRows = (result as unknown as { rows: Record<string, unknown>[] }).rows;
-    return this.mapFeedResult(rawRows, limit);
+    const rows = await this.db
+      .select({
+        ...getTableColumns(posts),
+        savedAt: postSaves.createdAt,
+        distanceKm: sql<number | null>`NULL::double precision`.mapWith(parseNullableDouble),
+      })
+      .from(postSaves)
+      .innerJoin(posts, eq(postSaves.postId, posts.id))
+      .where(and(eq(postSaves.userId, userId), ne(posts.status, 'REMOVED'), cursorCondition))
+      .orderBy(desc(postSaves.createdAt), desc(postSaves.postId))
+      .limit(limit + 1);
+
+    return this.mapFeedRows(rows, limit);
+  }
+
+  /**
+   * Returns a paginated page of posts created by the given user, filtered
+   * by postType (the section they were created in) and excluding soft-deleted
+   * (REMOVED) rows. Keyset pagination on posts.id DESC.
+   */
+  async findPostsCreatedByCurrentUser(parameters: {
+    creatorId: string;
+    postType: Post['postType'];
+    limit: number;
+    cursor: { id: string } | null;
+  }): Promise<FeedResult> {
+    const { creatorId, postType, limit, cursor } = parameters;
+
+    const rows = await this.db
+      .select({
+        ...getTableColumns(posts),
+        distanceKm: sql<number | null>`NULL::double precision`.mapWith(parseNullableDouble),
+      })
+      .from(posts)
+      .where(
+        and(
+          eq(posts.creatorId, creatorId),
+          eq(posts.postType, postType),
+          ne(posts.status, 'REMOVED'),
+          cursor ? lt(posts.id, cursor.id) : undefined,
+        ),
+      )
+      .orderBy(desc(posts.id))
+      .limit(limit + 1);
+
+    return this.mapFeedRows(rows, limit);
   }
 
   // ─── View Count Batch Update ────────────────────────────────────────────
@@ -961,8 +952,8 @@ export class PostsRepository {
    *
    * ## SQL strategy
    * Uses a VALUES list joined via FROM clause for O(1) round-trips:
-   *   UPDATE posts SET view_count += v.cnt
-   *   FROM (VALUES ('id1', 5), ('id2', 3)) AS v(post_id, cnt)
+   *   UPDATE posts SET view_count += v.additional_view_count
+   *   FROM (VALUES ('id1', 5), ('id2', 3)) AS v(post_id, additional_view_count)
    *   WHERE posts.id = v.post_id
    *
    * ## Called by
@@ -971,28 +962,34 @@ export class PostsRepository {
   async bulkIncrementViews(viewCounts: Map<string, number>): Promise<void> {
     if (viewCounts.size === 0) return;
 
-    const entries = [...viewCounts.entries()];
-    const valuesList = entries.map(([postId, count]) => sql`(${postId}::uuid, ${count}::int)`);
+    const valueRows = [...viewCounts.entries()].map(([postId, count]) => sql`(${postId}::uuid, ${count}::int)`);
 
+    // The one remaining db.execute() call with a hand-written statement in
+    // this file — see the ground rules above for why: a bulk, multi-row
+    // UPDATE driven by a VALUES list has no query-builder equivalent, and
+    // the alternative (hundreds of individual .update() calls) would defeat
+    // the batching this cron job exists for. Column references still go
+    // through the typed posts.* schema objects rather than a hand-typed
+    // p.column_name string.
     await this.db.execute(sql`
-      UPDATE posts p
+      UPDATE posts
       SET
-        view_count = p.view_count + v.cnt,
+        view_count = ${posts.viewCount} + v.additional_view_count,
         effective_score = CASE
-          WHEN p.post_type = 'ADOPTION' THEN
-            ((p.upvote_count * 3 + p.save_count * 2 + (p.view_count + v.cnt) * 0.1 + 1)
-             / POWER(EXTRACT(EPOCH FROM (now() - p.created_at)) / 3600.0 + 2, 1.5))
-          WHEN p.post_type = 'PRODUCT' THEN
-            (((p.view_count + v.cnt) * 1 + p.save_count * 5 + 1)
-             / POWER(EXTRACT(EPOCH FROM (now() - p.created_at)) / 3600.0 + 2, 1.5))
-          ELSE p.effective_score
+          WHEN ${posts.postType} = 'ADOPTION' THEN
+            (${posts.upvoteCount} * 3 + ${posts.saveCount} * 2 + (${posts.viewCount} + v.additional_view_count) * 0.1 + 1)
+            / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+          WHEN ${posts.postType} = 'PRODUCT' THEN
+            ((${posts.viewCount} + v.additional_view_count) * 1 + ${posts.saveCount} * 5 + 1)
+            / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+          ELSE ${posts.effectiveScore}
         END,
         last_engaged_at = CASE
-          WHEN p.post_type = 'PRODUCT' THEN now()
-          ELSE p.last_engaged_at
+          WHEN ${posts.postType} = 'PRODUCT' THEN now()
+          ELSE ${posts.lastEngagedAt}
         END
-      FROM (VALUES ${sql.join(valuesList, sql`, `)}) AS v(post_id, cnt)
-      WHERE p.id = v.post_id AND p.status = 'ACTIVE'
+      FROM (VALUES ${sql.join(valueRows, sql`, `)}) AS v(post_id, additional_view_count)
+      WHERE ${posts.id} = v.post_id AND ${posts.status} = 'ACTIVE'
     `);
   }
 }

@@ -175,14 +175,19 @@ export const posts = pgTable(
   },
   (table) => ({
     // ── Profile / post history ──────────────────────────────────────────────
-    creatorCreatedIdx: index('idx_posts_creator_created').on(table.creatorId, table.createdAt),
-    creatorStatusIdx: index('idx_posts_creator_status').on(table.creatorId, table.status, table.createdAt),
+    postsCreatedByCurrentUserIndex: index('idx_posts_creator_post_type_id').on(
+      table.creatorId,
+      table.postType,
+      table.id,
+    ),
 
     // ── City scoping (used by all feed queries) ──────────────────────────────
     cityTypeIdx: index('idx_posts_city_type').on(table.cityId, table.postType),
 
     coordinatesGistIdx: index('idx_posts_coordinates').using('gist', table.coordinates),
-    helpFeedIdx: index('idx_posts_help_feed').on(table.cityId, table.postType, table.urgency, table.createdAt).where(sql`status='ACTIVE' AND post_type IN ('RESCUE','LOST')`),
+    helpFeedIdx: index('idx_posts_help_feed')
+      .on(table.cityId, table.postType, table.urgency, table.createdAt)
+      .where(sql`status='ACTIVE' AND post_type IN ('RESCUE','LOST')`),
 
     /*
      * All partial indexes below require WHERE clauses and cannot be expressed

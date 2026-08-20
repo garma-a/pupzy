@@ -1,5 +1,5 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { sql, eq, and } from 'drizzle-orm';
+import { sql, eq, and, or, lt, desc } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import { contactRequests, type ContactRequest, type NewContactRequest } from '../database/schema';
@@ -65,96 +65,69 @@ export class ContactsRepository {
    * Paginated fetch of contact requests sent BY a user.
    * Cursor: { createdAt, id } keyset pagination.
    */
-  async findByRequester(params: {
+  async findByRequester(parameters: {
     requesterId: string;
     postId?: string | null;
     status?: string | null;
     limit: number;
     cursor: { createdAt: string; id: string } | null;
   }): Promise<{ rows: ContactRequest[]; hasNextPage: boolean }> {
-    const { requesterId, postId, status, limit, cursor } = params;
-    const fetchLimit = limit + 1;
+    const { requesterId, postId, status, limit, cursor } = parameters;
 
-    const conditions = [sql`requester_id = ${requesterId}`];
-    if (postId) conditions.push(sql`post_id = ${postId}`);
-    if (status) conditions.push(sql`status = ${status}`);
-    if (cursor) {
-      conditions.push(sql`(
-        created_at < ${cursor.createdAt}::timestamptz
-        OR (created_at = ${cursor.createdAt}::timestamptz AND id < ${cursor.id}::uuid)
-      )`);
-    }
+    const rows = await this.db
+      .select()
+      .from(contactRequests)
+      .where(
+        and(
+          eq(contactRequests.requesterId, requesterId),
+          postId ? eq(contactRequests.postId, postId) : undefined,
+          status ? eq(contactRequests.status, status as ContactRequest['status']) : undefined,
+          cursor
+            ? or(
+                lt(contactRequests.createdAt, new Date(cursor.createdAt)),
+                and(eq(contactRequests.createdAt, new Date(cursor.createdAt)), lt(contactRequests.id, cursor.id)),
+              )
+            : undefined,
+        ),
+      )
+      .orderBy(desc(contactRequests.createdAt), desc(contactRequests.id))
+      .limit(limit + 1);
 
-    const whereClause = sql.join(conditions, sql` AND `);
-    const result = await this.db.execute(sql`
-      SELECT * FROM contact_requests
-      WHERE ${whereClause}
-      ORDER BY created_at DESC, id DESC
-      LIMIT ${fetchLimit}
-    `);
-
-    const rawRows = (result as unknown as { rows: Record<string, unknown>[] }).rows;
-    const hasNextPage = rawRows.length > limit;
-    const trimmed = hasNextPage ? rawRows.slice(0, limit) : rawRows;
-
-    return {
-      rows: trimmed.map((raw) => this.mapRaw(raw)),
-      hasNextPage,
-    };
+    const hasNextPage = rows.length > limit;
+    return { rows: hasNextPage ? rows.slice(0, limit) : rows, hasNextPage };
   }
 
   /**
    * Paginated fetch of contact requests ON a specific post.
    * Used by the post owner to review incoming requests.
    */
-  async findByPost(params: {
+  async findByPost(parameters: {
     postId: string;
     status?: string | null;
     limit: number;
     cursor: { createdAt: string; id: string } | null;
   }): Promise<{ rows: ContactRequest[]; hasNextPage: boolean }> {
-    const { postId, status, limit, cursor } = params;
-    const fetchLimit = limit + 1;
+    const { postId, status, limit, cursor } = parameters;
 
-    const conditions = [sql`post_id = ${postId}`];
-    if (status) conditions.push(sql`status = ${status}`);
-    if (cursor) {
-      conditions.push(sql`(
-        created_at < ${cursor.createdAt}::timestamptz
-        OR (created_at = ${cursor.createdAt}::timestamptz AND id < ${cursor.id}::uuid)
-      )`);
-    }
+    const rows = await this.db
+      .select()
+      .from(contactRequests)
+      .where(
+        and(
+          eq(contactRequests.postId, postId),
+          status ? eq(contactRequests.status, status as ContactRequest['status']) : undefined,
+          cursor
+            ? or(
+                lt(contactRequests.createdAt, new Date(cursor.createdAt)),
+                and(eq(contactRequests.createdAt, new Date(cursor.createdAt)), lt(contactRequests.id, cursor.id)),
+              )
+            : undefined,
+        ),
+      )
+      .orderBy(desc(contactRequests.createdAt), desc(contactRequests.id))
+      .limit(limit + 1);
 
-    const whereClause = sql.join(conditions, sql` AND `);
-    const result = await this.db.execute(sql`
-      SELECT * FROM contact_requests
-      WHERE ${whereClause}
-      ORDER BY created_at DESC, id DESC
-      LIMIT ${fetchLimit}
-    `);
-
-    const rawRows = (result as unknown as { rows: Record<string, unknown>[] }).rows;
-    const hasNextPage = rawRows.length > limit;
-    const trimmed = hasNextPage ? rawRows.slice(0, limit) : rawRows;
-
-    return {
-      rows: trimmed.map((raw) => this.mapRaw(raw)),
-      hasNextPage,
-    };
-  }
-
-  /**
-   * Maps a raw PostgreSQL row to a ContactRequest object.
-   */
-  private mapRaw(raw: Record<string, unknown>): ContactRequest {
-    return {
-      id: raw.id as string,
-      postId: raw.post_id as string,
-      requesterId: raw.requester_id as string,
-      message: raw.message as string,
-      status: raw.status as ContactRequest['status'],
-      respondedAt: raw.responded_at ? new Date(raw.responded_at as string) : null,
-      createdAt: new Date(raw.created_at as string),
-    };
+    const hasNextPage = rows.length > limit;
+    return { rows: hasNextPage ? rows.slice(0, limit) : rows, hasNextPage };
   }
 }

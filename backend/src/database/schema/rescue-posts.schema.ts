@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, boolean } from 'drizzle-orm/pg-core';
 import { posts } from './posts.schema';
 import { speciesTypeEnum, reporterRoleEnum } from './enums';
 
@@ -39,6 +39,12 @@ export const rescuePosts = pgTable('rescue_posts', {
 
   /** Coordination signal — see table-level comment above. */
   reporterRole: reporterRoleEnum('reporter_role').notNull(),
+
+  // ── Urgency signals — used to compute posts.urgency on creation ────────────
+  isLifeThreatening: boolean('is_life_threatening').notNull(),
+  hasVisibleSeriousInjury: boolean('has_visible_serious_injury').notNull(),
+  isInDangerousLocation: boolean('is_in_dangerous_location').notNull(),
+  canAnimalMoveOrEscape: boolean('can_animal_move_or_escape').notNull(),
 });
 
 /** TypeScript type for a full `rescue_posts` row. */

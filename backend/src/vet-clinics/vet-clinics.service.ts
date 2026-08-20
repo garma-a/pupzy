@@ -1,7 +1,7 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
-import { VetClinicsRepository, type VetClinicQueryRow } from './vet-clinics.repository';
+import { VetClinicsRepository, type VetClinicProximityResult } from './vet-clinics.repository';
 
 // ─── DTO ─────────────────────────────────────────────────────────────────────
 /**
@@ -36,14 +36,14 @@ export interface VetClinicDto {
  * DB query serves every adoption post detail opened in that city for 24 hours.
  * Highest ROI cache in this feature.
  */
-const CITY_CACHE_TTL_MS = 86_400_000; // 24 h
+const CITY_CACHE_TTL_MILLISECONDS = 86_400_000; // 24 h
 
 /**
  * 1 hour — post coordinates are immutable after creation (no update path).
  * The result is always the same for a given post. Prevents repeated KNN
  * queries when a rescue/lost post detail is viewed many times in succession.
  */
-const POST_CACHE_TTL_MS = 3_600_000; // 1 h
+const POST_CACHE_TTL_MILLISECONDS = 3_600_000; // 1 h
 
 // ─── Cache key namespace ──────────────────────────────────────────────────────
 // Prefix 'vet:' avoids collisions with other cache namespaces:
@@ -139,24 +139,24 @@ export class VetClinicsService {
         this.logger.debug({ postId }, 'vet:post cache hit');
         return cached;
       }
-    } catch (err) {
+    } catch (error) {
       // Cache is not guaranteed available — log and fall through to DB.
       this.logger.warn(
-        { key, err: err instanceof Error ? err.message : String(err) },
+        { key, err: error instanceof Error ? error.message : String(error) },
         'Cache GET failed for vet:post key',
       );
     }
 
     // ── DB query ────────────────────────────────────────────────────────────
     const rows = await this.vetClinicsRepository.findNearest(latitude, longitude);
-    const dtos = rows.map(this.rowToDto);
+    const dtos = rows.map(this.proximityResultToDto);
 
     // ── Cache set ───────────────────────────────────────────────────────────
     try {
-      await this.cacheManager.set(key, dtos, POST_CACHE_TTL_MS);
-    } catch (err) {
+      await this.cacheManager.set(key, dtos, POST_CACHE_TTL_MILLISECONDS);
+    } catch (error) {
       this.logger.warn(
-        { key, err: err instanceof Error ? err.message : String(err) },
+        { key, err: error instanceof Error ? error.message : String(error) },
         'Cache SET failed for vet:post key',
       );
     }
@@ -182,23 +182,23 @@ export class VetClinicsService {
         this.logger.debug({ cityId }, 'vet:city cache hit');
         return cached;
       }
-    } catch (err) {
+    } catch (error) {
       this.logger.warn(
-        { key, err: err instanceof Error ? err.message : String(err) },
+        { key, err: error instanceof Error ? error.message : String(error) },
         'Cache GET failed for vet:city key',
       );
     }
 
     // ── DB query ────────────────────────────────────────────────────────────
     const rows = await this.vetClinicsRepository.findNearestForCity(cityId);
-    const dtos = rows.map(this.rowToDto);
+    const dtos = rows.map(this.proximityResultToDto);
 
     // ── Cache set ───────────────────────────────────────────────────────────
     try {
-      await this.cacheManager.set(key, dtos, CITY_CACHE_TTL_MS);
-    } catch (err) {
+      await this.cacheManager.set(key, dtos, CITY_CACHE_TTL_MILLISECONDS);
+    } catch (error) {
       this.logger.warn(
-        { key, err: err instanceof Error ? err.message : String(err) },
+        { key, err: error instanceof Error ? error.message : String(error) },
         'Cache SET failed for vet:city key',
       );
     }
@@ -206,34 +206,24 @@ export class VetClinicsService {
     return dtos;
   }
 
-  // ─── Row → DTO mapper ─────────────────────────────────────────────────────
+  // ─── ProximityResult → DTO mapper ──────────────────────────────────────────
   /**
-   * Maps a raw DB row (snake_case, numeric strings) to a VetClinicDto
-   * (camelCase, proper number types, pre-built deep-links).
-   *
-   * Uses an arrow function so `this` is always bound — safe to pass as a
-   * callback to Array.prototype.map() without `.bind(this)`.
+   * Maps a VetClinicProximityResult from the query builder to a VetClinicDto
+   * (adds pre-built deep-links for Google Maps and WhatsApp).
    */
-  private readonly rowToDto = (row: VetClinicQueryRow): VetClinicDto => {
-    const lat = Number(row.latitude);
-    const lng = Number(row.longitude);
-
+  private readonly proximityResultToDto = (row: VetClinicProximityResult): VetClinicDto => {
     return {
       id: row.id,
-      nameEnglish: row.name_english,
-      nameArabic: row.name_arabic,
-      phoneNumber: row.phone_number,
+      nameEnglish: row.nameEnglish,
+      nameArabic: row.nameArabic,
+      phoneNumber: row.phoneNumber,
       address: row.address,
       website: row.website,
-      latitude: lat,
-      longitude: lng,
-      distanceKm: Number(row.distance_km),
-      // Google Maps deep-link — opened by Flutter's url_launcher.
-      // Format: https://maps.google.com/?q=lat,lon (WGS-84 decimal degrees)
-      googleMapsUrl: `https://maps.google.com/?q=${lat},${lng}`,
-      // WhatsApp deep-link — strip the leading '+' from E.164 format.
-      // wa.me accepts the number without '+'. Null when no phone in OSM.
-      whatsappPhoneUrl: row.phone_number ? `https://wa.me/${row.phone_number.replace(/^\+/, '')}` : null,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      distanceKm: row.distanceKm,
+      googleMapsUrl: `https://maps.google.com/?q=${row.latitude},${row.longitude}`,
+      whatsappPhoneUrl: row.phoneNumber ? `https://wa.me/${row.phoneNumber.replace(/^\+/, '')}` : null,
     };
   };
 }

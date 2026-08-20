@@ -43,7 +43,10 @@ export class UsersService {
         phoneNumber: decryptString(user.phoneNumber, this.phoneEncryptionKey),
       };
     } catch (error) {
-      this.logger.error(`Failed to decrypt phone number for user ${user.id}`, error instanceof Error ? error.stack : String(error));
+      this.logger.error(
+        `Failed to decrypt phone number for user ${user.id}`,
+        error instanceof Error ? error.stack : String(error),
+      );
       // Return the user with null phone number to avoid leaking crypto internals
       return { ...user, phoneNumber: null };
     }

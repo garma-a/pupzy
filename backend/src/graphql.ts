@@ -178,10 +178,13 @@ export interface CreateRescuePostInput {
     cityId?: Nullable<string>;
     coordinates: GeoLocationInput;
     areaName?: Nullable<string>;
-    urgency: UrgencyTier;
     species: SpeciesType;
     conditionSummary: string;
     reporterRole: ReporterRole;
+    isLifeThreatening: boolean;
+    hasVisibleSeriousInjury: boolean;
+    isInDangerousLocation: boolean;
+    canAnimalMoveOrEscape: boolean;
     mediaIds?: Nullable<string[]>;
 }
 
@@ -191,7 +194,6 @@ export interface CreateLostPostInput {
     cityId?: Nullable<string>;
     coordinates: GeoLocationInput;
     areaName?: Nullable<string>;
-    urgency: UrgencyTier;
     reportType: LostFoundType;
     species: SpeciesType;
     breed?: Nullable<string>;
@@ -200,6 +202,9 @@ export interface CreateLostPostInput {
     circumstances?: Nullable<string>;
     petName?: Nullable<string>;
     dateLastSeen?: Nullable<string>;
+    hasMedicalNeeds?: Nullable<boolean>;
+    isElderlyOrVeryYoung?: Nullable<boolean>;
+    lastSeenNearHazard?: Nullable<boolean>;
     currentCondition?: Nullable<FoundAnimalCondition>;
     isCurrentlySafeWithReporter?: Nullable<boolean>;
     dateFound?: Nullable<string>;
@@ -300,6 +305,8 @@ export interface IQuery {
     adoptFeed(governorate?: Nullable<string>, cityId?: Nullable<string>, viewerLocation?: Nullable<ViewerLocationInput>, radiusKm?: Nullable<number>, sort?: Nullable<AdoptFeedSort>, first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
     marketFeed(governorate?: Nullable<string>, cityId?: Nullable<string>, viewerLocation?: Nullable<ViewerLocationInput>, radiusKm?: Nullable<number>, category?: Nullable<ProductCategory>, sort?: Nullable<MarketFeedSort>, first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
     homeFeed(governorate?: Nullable<string>, cityId?: Nullable<string>, viewerLocation?: Nullable<ViewerLocationInput>, radiusKm?: Nullable<number>, first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
+    mySavedPosts(first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
+    myPosts(postType: PostType, first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
     me(): User | Promise<User>;
 }
 
@@ -399,6 +406,10 @@ export interface RescuePost {
     species: SpeciesType;
     conditionSummary: string;
     reporterRole: ReporterRole;
+    isLifeThreatening: boolean;
+    hasVisibleSeriousInjury: boolean;
+    isInDangerousLocation: boolean;
+    canAnimalMoveOrEscape: boolean;
 }
 
 export interface LostPost {
@@ -411,6 +422,9 @@ export interface LostPost {
     circumstances?: Nullable<string>;
     petName?: Nullable<string>;
     dateLastSeen?: Nullable<string>;
+    hasMedicalNeeds?: Nullable<boolean>;
+    isElderlyOrVeryYoung?: Nullable<boolean>;
+    lastSeenNearHazard?: Nullable<boolean>;
     currentCondition?: Nullable<FoundAnimalCondition>;
     isCurrentlySafeWithReporter?: Nullable<boolean>;
     dateFound?: Nullable<string>;

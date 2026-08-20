@@ -58,7 +58,10 @@ export const postReports = pgTable(
      * One report per user per post.
      * Prevents users from inflating report counts on posts they dislike.
      */
-    uniqueReport: uniqueIndex('uq_post_report').on(table.postId, table.reporterId),
+    uniquePostReportPerPostAndReporter: uniqueIndex('unique_post_report_per_post_and_reporter').on(
+      table.postId,
+      table.reporterId,
+    ),
 
     /** Lets the system fetch all reports for a given post (for admin review). */
     postIdx: index('idx_post_reports_post').on(table.postId),

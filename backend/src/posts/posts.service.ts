@@ -10,13 +10,34 @@ import { ValidationError, NotFoundError, ForbiddenError } from '../common/errors
 import { assertUuid } from '../common/utils/validate-uuid';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import type { Post, NewPost, NewPostMedia, RescuePost, LostPost, AdoptionPost, ProductPost, City } from '../database/schema';
+import {
+  computeRescueUrgency,
+  computeLostPetUrgency,
+  computeFoundStrayUrgency,
+} from '../common/utils/urgency-scoring.util';
+import type {
+  Post,
+  NewPost,
+  NewPostMedia,
+  RescuePost,
+  LostPost,
+  AdoptionPost,
+  ProductPost,
+  City,
+} from '../database/schema';
 import type { CreateRescuePostInput } from './dto/create-rescue-post.input';
 import type { CreateLostPostInput } from './dto/create-lost-post.input';
 import type { CreateAdoptionPostInput } from './dto/create-adoption-post.input';
 import type { CreateProductPostInput } from './dto/create-product-post.input';
 import type { FeedResult } from './posts.repository';
-import type { HelpFeedInput, AdoptFeedInput, MarketFeedInput, HomeFeedInput } from './dto/feed-query.input';
+import type {
+  HelpFeedInput,
+  AdoptFeedInput,
+  MarketFeedInput,
+  HomeFeedInput,
+  MySavedPostsInput,
+  MyPostsInput,
+} from './dto/feed-query.input';
 import { ViewFlushCron } from './view-flush.cron';
 
 /**
@@ -51,6 +72,14 @@ export class PostsService {
     const moderationStatus = this.checkModeration(input.title, input.description);
     const mediaRows = await this.prepareMedia(input.mediaIds, postId);
 
+    const urgency = computeRescueUrgency({
+      isLifeThreatening: input.isLifeThreatening,
+      hasVisibleSeriousInjury: input.hasVisibleSeriousInjury,
+      isInDangerousLocation: input.isInDangerousLocation,
+      canAnimalMoveOrEscape: input.canAnimalMoveOrEscape,
+      reporterRole: input.reporterRole,
+    });
+
     const baseData: NewPost = {
       id: postId,
       creatorId,
@@ -59,7 +88,7 @@ export class PostsService {
       description: input.description,
       status: 'ACTIVE',
       moderationStatus,
-      urgency: input.urgency,
+      urgency,
       cityId: city.id,
       governorate: city.governorate,
       areaName: input.areaName,
@@ -73,6 +102,10 @@ export class PostsService {
         species: input.species,
         conditionSummary: input.conditionSummary,
         reporterRole: input.reporterRole,
+        isLifeThreatening: input.isLifeThreatening,
+        hasVisibleSeriousInjury: input.hasVisibleSeriousInjury,
+        isInDangerousLocation: input.isInDangerousLocation,
+        canAnimalMoveOrEscape: input.canAnimalMoveOrEscape,
       },
       mediaRows,
     );
@@ -91,6 +124,18 @@ export class PostsService {
     const moderationStatus = this.checkModeration(input.title, input.description);
     const mediaRows = await this.prepareMedia(input.mediaIds, postId);
 
+    const urgency =
+      input.reportType === 'LOST_PET'
+        ? computeLostPetUrgency({
+            hasMedicalNeeds: input.hasMedicalNeeds!,
+            isElderlyOrVeryYoung: input.isElderlyOrVeryYoung!,
+            lastSeenNearHazard: input.lastSeenNearHazard!,
+          })
+        : computeFoundStrayUrgency({
+            currentCondition: input.currentCondition!,
+            isCurrentlySafeWithReporter: input.isCurrentlySafeWithReporter!,
+          });
+
     const baseData: NewPost = {
       id: postId,
       creatorId,
@@ -99,7 +144,7 @@ export class PostsService {
       description: input.description,
       status: 'ACTIVE',
       moderationStatus,
-      urgency: input.urgency,
+      urgency,
       cityId: city.id,
       governorate: city.governorate,
       areaName: input.areaName,
@@ -118,6 +163,9 @@ export class PostsService {
         circumstances: input.circumstances,
         petName: input.petName,
         dateLastSeen: input.dateLastSeen,
+        hasMedicalNeeds: input.hasMedicalNeeds,
+        isElderlyOrVeryYoung: input.isElderlyOrVeryYoung,
+        lastSeenNearHazard: input.lastSeenNearHazard,
         currentCondition: input.currentCondition,
         isCurrentlySafeWithReporter: input.isCurrentlySafeWithReporter,
         dateFound: input.dateFound,
@@ -481,7 +529,7 @@ export class PostsService {
       viewerLocation: input.viewerLocation,
       radiusKm: input.radiusKm ?? 25,
       limit: Math.min(input.first ?? 20, 50),
-      cursor: this.decodeCursor<{ urgency: string; createdAt: string; id: string }>(input.after),
+      cursor: this.decodeCursor<{ urgency: NonNullable<Post['urgency']>; createdAt: string; id: string }>(input.after),
     });
     return this.mapFeedResultToConnection(result, (post) => ({
       urgency: post.urgency,
@@ -536,6 +584,30 @@ export class PostsService {
       limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor<{ id: string }>(input.after),
     });
+    return this.mapFeedResultToConnection(result, (post) => ({ id: post.id }));
+  }
+
+  async getPostsSavedByCurrentUser(userId: string, input: MySavedPostsInput) {
+    const result = await this.postsRepository.findPostsSavedByCurrentUser({
+      userId,
+      limit: Math.min(input.first ?? 20, 50),
+      cursor: this.decodeCursor<{ savedAt: string; postId: string }>(input.after),
+    });
+
+    return this.mapFeedResultToConnection(result, (post) => ({
+      savedAt: post.createdAt.toISOString(),
+      postId: post.id,
+    }));
+  }
+
+  async getPostsCreatedByCurrentUser(creatorId: string, input: MyPostsInput) {
+    const result = await this.postsRepository.findPostsCreatedByCurrentUser({
+      creatorId,
+      postType: input.postType,
+      limit: Math.min(input.first ?? 20, 50),
+      cursor: this.decodeCursor<{ id: string }>(input.after),
+    });
+
     return this.mapFeedResultToConnection(result, (post) => ({ id: post.id }));
   }
 

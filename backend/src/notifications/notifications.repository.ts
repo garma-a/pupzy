@@ -1,5 +1,5 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { sql, eq, and } from 'drizzle-orm';
+import { eq, and, or, lt, desc, count } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import { notifications, type Notification, type NewNotification } from '../database/schema';
@@ -36,54 +36,44 @@ export class NotificationsRepository {
    * Fetches paginated notifications for a recipient, newest first.
    * Uses keyset pagination on (created_at, id) for consistency.
    */
-  async findByRecipient(params: {
+  async findByRecipient(parameters: {
     recipientId: string;
     limit: number;
     cursor: { createdAt: string; id: string } | null;
   }): Promise<{ rows: Notification[]; hasNextPage: boolean }> {
-    const { recipientId, limit, cursor } = params;
-    const fetchLimit = limit + 1;
+    const { recipientId, limit, cursor } = parameters;
 
-    const conditions = [sql`recipient_id = ${recipientId}`];
+    const rows = await this.db
+      .select()
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.recipientId, recipientId),
+          cursor
+            ? or(
+                lt(notifications.createdAt, new Date(cursor.createdAt)),
+                and(eq(notifications.createdAt, new Date(cursor.createdAt)), lt(notifications.id, cursor.id)),
+              )
+            : undefined,
+        ),
+      )
+      .orderBy(desc(notifications.createdAt), desc(notifications.id))
+      .limit(limit + 1);
 
-    if (cursor) {
-      conditions.push(sql`(
-        created_at < ${cursor.createdAt}::timestamptz
-        OR (created_at = ${cursor.createdAt}::timestamptz AND id < ${cursor.id}::uuid)
-      )`);
-    }
-
-    const whereClause = sql.join(conditions, sql` AND `);
-
-    const result = await this.db.execute(sql`
-      SELECT * FROM notifications
-      WHERE ${whereClause}
-      ORDER BY created_at DESC, id DESC
-      LIMIT ${fetchLimit}
-    `);
-
-    const rawRows = (result as unknown as { rows: Record<string, unknown>[] }).rows;
-    const hasNextPage = rawRows.length > limit;
-    const trimmed = hasNextPage ? rawRows.slice(0, limit) : rawRows;
-
-    return {
-      rows: trimmed.map((raw) => this.mapRawToNotification(raw)),
-      hasNextPage,
-    };
+    const hasNextPage = rows.length > limit;
+    return { rows: hasNextPage ? rows.slice(0, limit) : rows, hasNextPage };
   }
 
   /**
    * Counts unread notifications for a user.
-   * Uses partial index on is_read = false for fast counts.
+   * Uses the partial index on is_read = false for fast counts.
    */
   async countUnread(recipientId: string): Promise<number> {
-    const result = await this.db.execute(sql`
-      SELECT COUNT(*)::int AS count
-      FROM notifications
-      WHERE recipient_id = ${recipientId} AND is_read = false
-    `);
-    const rows = (result as unknown as { rows: { count: number }[] }).rows;
-    return rows[0]?.count ?? 0;
+    const [row] = await this.db
+      .select({ unreadCount: count() })
+      .from(notifications)
+      .where(and(eq(notifications.recipientId, recipientId), eq(notifications.isRead, false)));
+    return row?.unreadCount ?? 0;
   }
 
   /**
@@ -104,29 +94,11 @@ export class NotificationsRepository {
    * Returns the number of rows updated.
    */
   async markAllRead(recipientId: string): Promise<number> {
-    const result = await this.db.execute(sql`
-      UPDATE notifications
-      SET is_read = true
-      WHERE recipient_id = ${recipientId} AND is_read = false
-    `);
-    return (result as unknown as { rowCount: number }).rowCount ?? 0;
-  }
-
-  /**
-   * Maps a raw PostgreSQL row (snake_case) to a Notification object (camelCase).
-   */
-  private mapRawToNotification(raw: Record<string, unknown>): Notification {
-    return {
-      id: raw.id as string,
-      recipientId: raw.recipient_id as string,
-      type: raw.type as Notification['type'],
-      title: raw.title as string,
-      body: raw.body as string,
-      relatedPostId: (raw.related_post_id as string) ?? null,
-      relatedContactRequestId: (raw.related_contact_request_id as string) ?? null,
-      relatedApplicationId: (raw.related_application_id as string) ?? null,
-      isRead: raw.is_read as boolean,
-      createdAt: new Date(raw.created_at as string),
-    };
+    const updatedRows = await this.db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(and(eq(notifications.recipientId, recipientId), eq(notifications.isRead, false)))
+      .returning({ id: notifications.id });
+    return updatedRows.length;
   }
 }

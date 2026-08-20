@@ -32,10 +32,12 @@ const createRescuePostSchema = z.object({
   areaName: z.string().max(200, 'Area name cannot exceed 200 characters').trim().optional(),
 
   /**
-   * How urgent the rescue situation is.
-   * Required for RESCUE posts per `chk_posts_urgency_by_type`.
+   * Urgency signals collected from the reporter — used to compute posts.urgency server-side.
    */
-  urgency: z.enum(['CRITICAL', 'URGENT', 'MODERATE']),
+  isLifeThreatening: z.boolean(),
+  hasVisibleSeriousInjury: z.boolean(),
+  isInDangerousLocation: z.boolean(),
+  canAnimalMoveOrEscape: z.boolean(),
 
   /** Animal species involved in the rescue. */
   species: z.enum(['DOG', 'CAT', 'BIRD', 'RABBIT', 'OTHER']),

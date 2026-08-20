@@ -108,7 +108,10 @@ export const adoptionApplications = pgTable(
      * One application per applicant per adoption post.
      * Prevents duplicate or re-application after rejection.
      */
-    uniqueApplication: uniqueIndex('uq_adoption_application').on(table.targetPostId, table.applicantId),
+    uniqueAdoptionApplicationPerPostAndApplicant: uniqueIndex('unique_adoption_application_per_post_and_applicant').on(
+      table.targetPostId,
+      table.applicantId,
+    ),
 
     /** "My applications" list — all applications by this user across all posts. */
     applicantIdx: index('idx_adoption_applications_applicant').on(table.applicantId),
