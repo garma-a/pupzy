@@ -136,6 +136,11 @@ CREATE INDEX IF NOT EXISTS idx_notifications_unread
   ON notifications (recipient_id, created_at DESC)
   WHERE is_read = FALSE;
 
+-- Saved posts feed: user's bookmarks sorted by save timestamp (newest first).
+-- Covers the mySavedPosts keyset pagination query: WHERE user_id = $1 ORDER BY created_at DESC, post_id DESC.
+CREATE INDEX IF NOT EXISTS idx_post_saves_user_saved_at
+  ON post_saves (user_id, created_at DESC, post_id DESC);
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 3. GIST INDEXES (spatial — PostGIS)
 -- ─────────────────────────────────────────────────────────────────────────────

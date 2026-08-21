@@ -35,6 +35,13 @@ export const databaseProvider = {
       max: poolMax,
       idleTimeoutMillis: idleTimeoutMs,
       connectionTimeoutMillis: connectionTimeoutMs,
+      /**
+       * Kill any single SQL statement that runs longer than 5 seconds.
+       * All current queries complete in <30ms. This guard prevents a single
+       * slow query (optimizer regression, missing index, lock contention)
+       * from holding a connection forever and starving the pool.
+       */
+      statement_timeout: 5000,
     });
 
     // Log pool errors to avoid unhandled promise rejection crashes

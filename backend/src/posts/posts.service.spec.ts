@@ -45,8 +45,8 @@ describe('PostsService', () => {
     };
 
     mockUploadService = {
-      validateAndClaimUploads: jest.fn().mockResolvedValue([]),
-      finalizeUploads: jest.fn().mockResolvedValue(undefined),
+      getExpectedMediaUrls: jest.fn().mockResolvedValue({ publicUrl: '', fileContentType: '' }),
+      finalizeMedia: jest.fn().mockResolvedValue(undefined),
     };
 
     mockViewFlushCron = {
@@ -192,13 +192,14 @@ describe('PostsService', () => {
 
   describe('getPostsSavedByCurrentUser', () => {
     it('calls repository with capped limit and mapped connection', async () => {
+      const savedDate = new Date('2026-08-10T15:00:00Z');
       const mockPost = {
         id: 'post-save-1',
         createdAt: new Date('2026-08-01T12:00:00Z'),
         title: 'Saved Post',
       } as unknown as Post;
       mockPostsRepo.findPostsSavedByCurrentUser = jest.fn().mockResolvedValue({
-        rows: [{ post: mockPost, distanceKm: null }],
+        rows: [{ post: mockPost, distanceKm: null, savedAt: savedDate }],
         hasNextPage: false,
       });
 
@@ -211,6 +212,14 @@ describe('PostsService', () => {
       expect(result.edges).toHaveLength(1);
       expect(result.edges[0].node).toBe(mockPost);
       expect(result.pageInfo.hasNextPage).toBe(false);
+
+      // Verify cursor uses savedAt (save timestamp), NOT post.createdAt
+      const cursor = JSON.parse(Buffer.from(result.edges[0].cursor, 'base64url').toString('utf8')) as {
+        savedAt: string;
+        postId: string;
+      };
+      expect(cursor.savedAt).toBe(savedDate.toISOString());
+      expect(cursor.postId).toBe('post-save-1');
     });
   });
 

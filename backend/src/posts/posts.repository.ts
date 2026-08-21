@@ -63,6 +63,8 @@ function parseNullableDouble(value: unknown): number | null {
 export interface FeedResultRow {
   post: Post;
   distanceKm: number | null;
+  /** Present only for findPostsSavedByCurrentUser — the timestamp when the user saved this post. */
+  savedAt?: Date;
 }
 
 /**
@@ -344,44 +346,56 @@ export class PostsRepository {
    * If not, inserts a new upvote. All operations run in a single transaction:
    *   1. Check existing upvote
    *   2. INSERT or DELETE the upvote row
-   *   3. Increment or decrement posts.upvote_count
-   *   4. Update posts.last_engaged_at
-   *   5. Recompute effective_score (ADOPTION only)
+   *   3. Update counter + recompute score + RETURNING * (single query)
+   *
+   * PostgreSQL evaluates all SET expressions using the OLD row values, so the
+   * merged score formula explicitly uses (upvote_count + delta) to account for
+   * the counter change within the same UPDATE statement.
    *
    * @returns Object with `added` (true if upvote was added, false if removed)
    *          and the `updatedPost` row.
    */
   async toggleUpvote(postId: string, userId: string): Promise<{ added: boolean; updatedPost: Post }> {
     return this.db.transaction(async (tx) => {
-      // Check if upvote already exists
+      // 1. Check if upvote already exists
       const [existing] = await tx
         .select()
         .from(postUpvotes)
         .where(and(eq(postUpvotes.postId, postId), eq(postUpvotes.userId, userId)))
         .limit(1);
 
-      let added: boolean;
-
       if (existing) {
-        // Remove upvote
+        // 2. Remove upvote
         const deleted = await tx
           .delete(postUpvotes)
           .where(and(eq(postUpvotes.postId, postId), eq(postUpvotes.userId, userId)))
           .returning({ postId: postUpvotes.postId });
 
         if (deleted.length > 0) {
-          await tx
+          // 3. Decrement counter + recompute score + return updated post in one query
+          const [updatedPost] = await tx
             .update(posts)
             .set({
               upvoteCount: sql`${posts.upvoteCount} - 1`,
               lastEngagedAt: sql`now()`,
+              effectiveScore: sql`
+                CASE WHEN ${posts.postType} = 'ADOPTION' THEN
+                  ((${posts.upvoteCount} - 1) * 3 + ${posts.saveCount} * 2 + ${posts.viewCount} * 0.1 + 1)
+                  / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+                ELSE ${posts.effectiveScore}
+                END
+              `,
             })
-            .where(eq(posts.id, postId));
+            .where(eq(posts.id, postId))
+            .returning();
+          return { added: false, updatedPost };
         }
 
-        added = false;
+        // Edge case: DELETE returned empty (concurrent toggle removed it first)
+        const [currentPost] = await tx.select().from(posts).where(eq(posts.id, postId)).limit(1);
+        return { added: false, updatedPost: currentPost };
       } else {
-        // Add upvote — handle concurrent duplicate via unique constraint
+        // 2. Add upvote — handle concurrent duplicate via unique constraint
         try {
           const inserted = await tx
             .insert(postUpvotes)
@@ -390,85 +404,93 @@ export class PostsRepository {
             .returning({ postId: postUpvotes.postId });
 
           if (inserted.length > 0) {
-            await tx
+            // 3. Increment counter + recompute score + return updated post in one query
+            const [updatedPost] = await tx
               .update(posts)
               .set({
                 upvoteCount: sql`${posts.upvoteCount} + 1`,
                 lastEngagedAt: sql`now()`,
+                effectiveScore: sql`
+                  CASE WHEN ${posts.postType} = 'ADOPTION' THEN
+                    ((${posts.upvoteCount} + 1) * 3 + ${posts.saveCount} * 2 + ${posts.viewCount} * 0.1 + 1)
+                    / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+                  ELSE ${posts.effectiveScore}
+                  END
+                `,
               })
-              .where(eq(posts.id, postId));
+              .where(eq(posts.id, postId))
+              .returning();
+            return { added: true, updatedPost };
           }
 
-          added = true;
+          // onConflictDoNothing returned empty — concurrent insert won
+          const [currentPost] = await tx.select().from(posts).where(eq(posts.id, postId)).limit(1);
+          return { added: true, updatedPost: currentPost };
         } catch (err) {
           if ((err as Record<string, unknown>)?.code === '23505') {
-            // Concurrent toggle — another request already inserted the upvote.
-            // Re-read the current post state and return as idempotent success.
             const [currentPost] = await tx.select().from(posts).where(eq(posts.id, postId)).limit(1);
             return { added: true, updatedPost: currentPost };
           }
           throw err;
         }
       }
-
-      // Recompute effective_score for ADOPTION posts
-      // RESCUE/LOST always have score 0 (urgency sort). PRODUCT has no upvotes.
-      await tx
-        .update(posts)
-        .set({
-          effectiveScore: sql`
-            CASE WHEN ${posts.postType} = 'ADOPTION' THEN
-              (${posts.upvoteCount} * 3 + ${posts.saveCount} * 2 + ${posts.viewCount} * 0.1 + 1)
-              / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
-            ELSE ${posts.effectiveScore}
-            END
-          `,
-        })
-        .where(eq(posts.id, postId));
-
-      // Return the updated post
-      const [updatedPost] = await tx.select().from(posts).where(eq(posts.id, postId)).limit(1);
-
-      return { added, updatedPost };
     });
   }
 
   /**
-   * Toggles a save/bookmark on a post. Same pattern as toggleUpvote.
+   * Toggles a save/bookmark on a post. Same 3-query pattern as toggleUpvote.
    * Works on all 4 post types.
-   * Recomputes effective_score for ADOPTION and PRODUCT.
+   *
+   * Merges counter update + effective_score recomputation into a single
+   * UPDATE ... RETURNING to minimize round trips within the transaction.
    *
    * @returns Object with `added` and the `updatedPost` row.
    */
   async toggleSave(postId: string, userId: string): Promise<{ added: boolean; updatedPost: Post }> {
     return this.db.transaction(async (tx) => {
+      // 1. Check if save already exists
       const [existing] = await tx
         .select()
         .from(postSaves)
         .where(and(eq(postSaves.postId, postId), eq(postSaves.userId, userId)))
         .limit(1);
 
-      let added: boolean;
-
       if (existing) {
+        // 2. Remove save
         const deleted = await tx
           .delete(postSaves)
           .where(and(eq(postSaves.postId, postId), eq(postSaves.userId, userId)))
           .returning({ postId: postSaves.postId });
 
         if (deleted.length > 0) {
-          await tx
+          // 3. Decrement counter + recompute score + return in one query
+          const [updatedPost] = await tx
             .update(posts)
             .set({
               saveCount: sql`${posts.saveCount} - 1`,
               lastEngagedAt: sql`now()`,
+              effectiveScore: sql`
+                CASE
+                  WHEN ${posts.postType} = 'ADOPTION' THEN
+                    (${posts.upvoteCount} * 3 + (${posts.saveCount} - 1) * 2 + ${posts.viewCount} * 0.1 + 1)
+                    / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+                  WHEN ${posts.postType} = 'PRODUCT' THEN
+                    (${posts.viewCount} * 1 + (${posts.saveCount} - 1) * 5 + 1)
+                    / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+                  ELSE ${posts.effectiveScore}
+                END
+              `,
             })
-            .where(eq(posts.id, postId));
+            .where(eq(posts.id, postId))
+            .returning();
+          return { added: false, updatedPost };
         }
 
-        added = false;
+        // Edge case: DELETE returned empty (concurrent toggle removed it first)
+        const [currentPost] = await tx.select().from(posts).where(eq(posts.id, postId)).limit(1);
+        return { added: false, updatedPost: currentPost };
       } else {
-        // Add save — handle concurrent duplicate via unique constraint
+        // 2. Add save — handle concurrent duplicate via unique constraint
         try {
           const inserted = await tx
             .insert(postSaves)
@@ -477,47 +499,40 @@ export class PostsRepository {
             .returning({ postId: postSaves.postId });
 
           if (inserted.length > 0) {
-            await tx
+            // 3. Increment counter + recompute score + return in one query
+            const [updatedPost] = await tx
               .update(posts)
               .set({
                 saveCount: sql`${posts.saveCount} + 1`,
                 lastEngagedAt: sql`now()`,
+                effectiveScore: sql`
+                  CASE
+                    WHEN ${posts.postType} = 'ADOPTION' THEN
+                      (${posts.upvoteCount} * 3 + (${posts.saveCount} + 1) * 2 + ${posts.viewCount} * 0.1 + 1)
+                      / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+                    WHEN ${posts.postType} = 'PRODUCT' THEN
+                      (${posts.viewCount} * 1 + (${posts.saveCount} + 1) * 5 + 1)
+                      / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+                    ELSE ${posts.effectiveScore}
+                  END
+                `,
               })
-              .where(eq(posts.id, postId));
+              .where(eq(posts.id, postId))
+              .returning();
+            return { added: true, updatedPost };
           }
 
-          added = true;
+          // onConflictDoNothing returned empty — concurrent insert won
+          const [currentPost] = await tx.select().from(posts).where(eq(posts.id, postId)).limit(1);
+          return { added: true, updatedPost: currentPost };
         } catch (err) {
           if ((err as Record<string, unknown>)?.code === '23505') {
-            // Concurrent toggle — another request already inserted the save.
             const [currentPost] = await tx.select().from(posts).where(eq(posts.id, postId)).limit(1);
             return { added: true, updatedPost: currentPost };
           }
           throw err;
         }
       }
-
-      // Recompute effective_score for ADOPTION and PRODUCT
-      await tx
-        .update(posts)
-        .set({
-          effectiveScore: sql`
-            CASE
-              WHEN ${posts.postType} = 'ADOPTION' THEN
-                (${posts.upvoteCount} * 3 + ${posts.saveCount} * 2 + ${posts.viewCount} * 0.1 + 1)
-                / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
-              WHEN ${posts.postType} = 'PRODUCT' THEN
-                (${posts.viewCount} * 1 + ${posts.saveCount} * 5 + 1)
-                / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
-              ELSE ${posts.effectiveScore}
-            END
-          `,
-        })
-        .where(eq(posts.id, postId));
-
-      const [updatedPost] = await tx.select().from(posts).where(eq(posts.id, postId)).limit(1);
-
-      return { added, updatedPost };
     });
   }
 
@@ -673,12 +688,12 @@ export class PostsRepository {
    */
   private buildScoredFeedCursorCondition(
     sort: 'HOT' | 'NEWEST',
-    cursor: { score?: string; createdAt?: string; id: string } | null,
+    cursor: { score?: number; createdAt?: string; id: string } | null,
   ): SQL | undefined {
     if (!cursor) return undefined;
     if (sort === 'NEWEST') return lt(posts.id, cursor.id);
 
-    const score = Number(cursor.score);
+    const score = cursor.score!;
     const createdAt = new Date(cursor.createdAt!);
     return or(
       lt(posts.effectiveScore, score),
@@ -769,7 +784,7 @@ export class PostsRepository {
     radiusKm: number;
     sort: 'HOT' | 'NEWEST';
     limit: number;
-    cursor: { score?: string; createdAt?: string; id: string } | null;
+    cursor: { score?: number; createdAt?: string; id: string } | null;
   }): Promise<FeedResult> {
     const { governorate, cityId, viewerLocation, radiusKm, sort, limit, cursor } = parameters;
     const radiusInMeters = radiusKm * 1000;
@@ -810,7 +825,7 @@ export class PostsRepository {
     sort: 'HOT' | 'NEWEST';
     category: Post['marketCategory'] | null | undefined;
     limit: number;
-    cursor: { score?: string; createdAt?: string; id: string } | null;
+    cursor: { score?: number; createdAt?: string; id: string } | null;
   }): Promise<FeedResult> {
     const { governorate, cityId, viewerLocation, radiusKm, sort, category, limit, cursor } = parameters;
     const radiusInMeters = radiusKm * 1000;
@@ -907,7 +922,16 @@ export class PostsRepository {
       .orderBy(desc(postSaves.createdAt), desc(postSaves.postId))
       .limit(limit + 1);
 
-    return this.mapFeedRows(rows, limit);
+    const hasNextPage = rows.length > limit;
+    const trimmedRows = hasNextPage ? rows.slice(0, limit) : rows;
+
+    return {
+      rows: trimmedRows.map((row) => {
+        const { distanceKm, savedAt, ...post } = row;
+        return { post, distanceKm, savedAt };
+      }),
+      hasNextPage,
+    };
   }
 
   /**

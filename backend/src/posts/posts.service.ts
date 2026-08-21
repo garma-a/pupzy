@@ -547,7 +547,7 @@ export class PostsService {
       radiusKm: input.radiusKm ?? 25,
       sort,
       limit: Math.min(input.first ?? 20, 50),
-      cursor: this.decodeCursor<{ score?: string; createdAt?: string; id: string }>(input.after),
+      cursor: this.decodeCursor<{ score?: number; createdAt?: string; id: string }>(input.after),
     });
     return this.mapFeedResultToConnection(result, (post) =>
       sort === 'HOT'
@@ -566,7 +566,7 @@ export class PostsService {
       sort,
       category: input.category,
       limit: Math.min(input.first ?? 20, 50),
-      cursor: this.decodeCursor<{ score?: string; createdAt?: string; id: string }>(input.after),
+      cursor: this.decodeCursor<{ score?: number; createdAt?: string; id: string }>(input.after),
     });
     return this.mapFeedResultToConnection(result, (post) =>
       sort === 'HOT'
@@ -594,10 +594,25 @@ export class PostsService {
       cursor: this.decodeCursor<{ savedAt: string; postId: string }>(input.after),
     });
 
-    return this.mapFeedResultToConnection(result, (post) => ({
-      savedAt: post.createdAt.toISOString(),
-      postId: post.id,
-    }));
+    // Custom mapping instead of mapFeedResultToConnection because we need
+    // row.savedAt (the save timestamp from the JOIN) for cursor building —
+    // NOT post.createdAt (the post creation date).
+    const buildCursor = (row: (typeof result.rows)[number]) => ({
+      savedAt: row.savedAt!.toISOString(),
+      postId: row.post.id,
+    });
+
+    return {
+      edges: result.rows.map((row) => ({
+        node: row.post,
+        cursor: this.encodeCursor(buildCursor(row)),
+        distanceKm: row.distanceKm,
+      })),
+      pageInfo: {
+        hasNextPage: result.hasNextPage,
+        endCursor: result.rows.length > 0 ? this.encodeCursor(buildCursor(result.rows[result.rows.length - 1])) : null,
+      },
+    };
   }
 
   async getPostsCreatedByCurrentUser(creatorId: string, input: MyPostsInput) {

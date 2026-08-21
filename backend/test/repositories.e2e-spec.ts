@@ -7,6 +7,7 @@ import { PostsRepository } from '../src/posts/posts.repository';
 import { generateUuidV7 } from '../src/common/utils/generate-uuidv7';
 import { cities, users, posts, vetClinics } from '../src/database/schema';
 import { sql } from 'drizzle-orm';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 describe('Repository Layer with Testcontainers (Integration)', () => {
   let dbHelper: TestDatabaseHelper;
@@ -24,15 +25,10 @@ describe('Repository Layer with Testcontainers (Integration)', () => {
     dbHelper = new TestDatabaseHelper();
     await dbHelper.start();
 
-    notificationsRepo = new NotificationsRepository(
-      dbHelper.db as unknown as Parameters<typeof NotificationsRepository.prototype.constructor>[0],
-    );
-    contactsRepo = new ContactsRepository(
-      dbHelper.db as unknown as Parameters<typeof ContactsRepository.prototype.constructor>[0],
-    );
-    adoptionsRepo = new AdoptionsRepository(
-      dbHelper.db as unknown as Parameters<typeof AdoptionsRepository.prototype.constructor>[0],
-    );
+    const db = dbHelper.db as unknown as NodePgDatabase;
+    notificationsRepo = new NotificationsRepository(db);
+    contactsRepo = new ContactsRepository(db);
+    adoptionsRepo = new AdoptionsRepository(db);
     vetClinicsRepo = new VetClinicsRepository(dbHelper.db);
     postsRepo = new PostsRepository(dbHelper.db);
   }, 120_000);
@@ -51,7 +47,6 @@ describe('Repository Layer with Testcontainers (Integration)', () => {
       nameArabic: 'القاهرة',
       governorate: 'Cairo',
       centerPoint: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
-      radiusKm: 30,
     });
 
     // Insert base users
@@ -199,6 +194,9 @@ describe('Repository Layer with Testcontainers (Integration)', () => {
       // Test help feed
       const helpFeed = await postsRepo.findHelpFeed({
         governorate: 'Cairo',
+        cityId: undefined,
+        viewerLocation: undefined,
+        radiusKm: 25,
         limit: 10,
         cursor: null,
       });
