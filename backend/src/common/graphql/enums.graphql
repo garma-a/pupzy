@@ -8,6 +8,8 @@ enum PostType {
   ADOPTION
   "Animal-related classifieds (OLX/Dubizzle style)."
   PRODUCT
+  "Owner keeps the pet; posts a same-species mating partner search."
+  MATING
 }
 
 "Discriminates the direction within the LOST section."

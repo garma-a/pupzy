@@ -1,0 +1,70 @@
+# ── Mating (تزاوج) ─────────────────────────────────────────────────────────
+# Owner keeps their pet; posts a mating partner search. Contact flow uses the
+# EXISTING requestContact / approveContactRequest / getWhatsAppLink endpoints.
+# matingPostDetail is a separate query (like adoptionPostDetail, productPostDetail)
+# — request it on the detail screen, never in a feed list.
+
+type MatingDetails {
+  petName: String!
+  species: SpeciesType!
+  breed: String!
+  gender: GenderType!
+  ageValue: Int!
+  ageUnit: AgeUnit!
+  isPurebred: Boolean!
+  hasPedigreeCertificate: Boolean!
+  vaccinated: Boolean!
+  dewormed: Boolean!
+  termsSummary: String
+  matingConditions: String
+}
+
+type MatingPostEdge {
+  node: Post!
+  cursor: String!
+}
+
+type MatingPostConnection {
+  edges: [MatingPostEdge!]!
+  pageInfo: PageInfo!
+}
+
+input MatingFeedFilter {
+  species: SpeciesType
+  """The gender being searched FOR (opposite of the searcher's pet). MALE or FEMALE only."""
+  gender: GenderType
+  """Case-insensitive partial match on breed."""
+  breed: String
+  cityId: ID
+}
+
+input CreateMatingPostInput {
+  petName: String!
+  species: SpeciesType!
+  breed: String!
+  """MALE or FEMALE only — UNKNOWN is rejected (opposite-gender search requires a known gender)."""
+  gender: GenderType!
+  ageValue: Int!
+  ageUnit: AgeUnit!
+  isPurebred: Boolean!
+  hasPedigreeCertificate: Boolean
+  vaccinated: Boolean
+  dewormed: Boolean
+  termsSummary: String
+  matingConditions: String
+  cityId: ID!
+  mediaIds: [ID!]!
+}
+
+extend type Query {
+  """Feed of ACTIVE mating posts, newest first, keyset-paginated."""
+  matingFeed(filter: MatingFeedFilter, first: Int, after: String): MatingPostConnection!
+
+  """Fetches MATING extension data for the single-post detail screen."""
+  matingPostDetail(postId: ID!): MatingDetails
+}
+
+extend type Mutation {
+  """Creates a MATING post (parent posts row + mating_posts extension row, atomically)."""
+  createMatingPost(input: CreateMatingPostInput!): Post!
+}

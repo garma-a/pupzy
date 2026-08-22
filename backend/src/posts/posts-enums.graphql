@@ -7,10 +7,16 @@
 
 """Which vertical a post belongs to. Drives CTI join on detail screen."""
 enum PostType {
+  "Animal needing immediate rescue."
   RESCUE
+  "Lost pet or found stray. See LostFoundType for direction."
   LOST
+  "Owner is rehoming a pet."
   ADOPTION
+  "Animal-related classifieds (OLX/Dubizzle style)."
   PRODUCT
+  "Owner keeps the pet; posts a same-species mating partner search."
+  MATING
 }
 
 """Lifecycle state of a post."""
