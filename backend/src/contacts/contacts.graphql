@@ -49,7 +49,7 @@ extend type Query {
 extend type Mutation {
   """
   Sends a contact request to the post owner.
-  RESCUE, LOST, ADOPTION only. One request per user per post.
+  RESCUE, LOST, ADOPTION, MATING only. One request per user per post.
   """
   requestContact(postId: ID!, message: String!): ContactRequest!
 

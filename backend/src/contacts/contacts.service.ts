@@ -55,8 +55,8 @@ export class ContactsService {
     if (!post || post.status === 'REMOVED') {
       throw new NotFoundError('Post', postId);
     }
-    if (!['RESCUE', 'LOST', 'ADOPTION'].includes(post.postType)) {
-      throw new ValidationError('Contact requests are only for RESCUE, LOST, and ADOPTION posts');
+    if (!['RESCUE', 'LOST', 'ADOPTION', 'MATING'].includes(post.postType)) {
+      throw new ValidationError('Contact requests are only for RESCUE, LOST, ADOPTION, and MATING posts');
     }
     if (post.status !== 'ACTIVE') {
       throw new ValidationError('Cannot request contact on an inactive post');

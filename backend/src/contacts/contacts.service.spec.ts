@@ -90,6 +90,13 @@ describe('ContactsService', () => {
       );
     });
 
+    it('creates contact request for MATING posts', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({ ...mockPost, postType: 'MATING' });
+      const result = await service.requestContact(validRequesterId, validPostId, 'Interested in mating');
+      expect(result.id).toBe(validRequestId);
+      expect(mockContactsRepo.create).toHaveBeenCalled();
+    });
+
     it('throws NotFoundError if post does not exist or is REMOVED', async () => {
       mockPostsRepo.findById = jest.fn().mockResolvedValue(null);
       await expect(service.requestContact(validRequesterId, validPostId, 'Hi')).rejects.toThrow(NotFoundError);
