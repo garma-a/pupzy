@@ -28,6 +28,7 @@ export * from './rescue-posts.schema';
 export * from './lost-posts.schema';
 export * from './adoption-posts.schema';
 export * from './product-posts.schema';
+export * from './mating-posts.schema';
 
 // Engagement
 export * from './post-upvotes.schema';
