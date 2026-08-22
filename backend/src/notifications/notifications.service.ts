@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { NotificationsRepository } from './notifications.repository';
 import { NotFoundError, ValidationError } from '../common/errors/app.errors';
 import { assertUuid } from '../common/utils/validate-uuid';
+import { clampFirst } from '../common/utils/pagination.util';
 import type { Notification, NewNotification } from '../database/schema';
 
 /**
@@ -43,7 +44,7 @@ export class NotificationsService {
    * Also includes the total unread count for the badge indicator.
    */
   async getMyNotifications(userId: string, first: number | null | undefined, afterCursor: string | null | undefined) {
-    const limit = Math.min(first ?? 20, 50);
+    const limit = clampFirst(first);
     const cursor = this.decodeCursor(afterCursor);
 
     const [result, unreadCount] = await Promise.all([

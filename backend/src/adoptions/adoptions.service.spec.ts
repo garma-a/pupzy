@@ -83,11 +83,14 @@ describe('AdoptionsService', () => {
     const input = {
       targetPostId: validPostId,
       livingSituation: 'APARTMENT' as const,
-      hasOtherPets: false,
-      hasChildren: false,
-      hoursAlonePerDay: 4,
-      experienceDescription: 'Grew up with dogs',
-      motivationMessage: 'I love animals',
+      hasOutdoorAccess: false,
+      hasOtherPetsAtHome: false,
+      hasChildrenAtHome: false,
+      hoursAtHomePerDay: 4,
+      previousPetExperience: 'Grew up with dogs',
+      whyAdopt: 'I love animals and have space for a pet.',
+      consentHomeVisit: true,
+      canProvideVetReference: true,
     };
 
     it('creates application and fires notification to post owner', async () => {

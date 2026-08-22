@@ -5,6 +5,7 @@ import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../common/errors/app.errors';
 import { assertUuid } from '../common/utils/validate-uuid';
+import { clampFirst } from '../common/utils/pagination.util';
 import type { ContactRequest } from '../database/schema';
 
 /**
@@ -233,7 +234,7 @@ export class ContactsService {
     first: number | null | undefined,
     afterCursor: string | null | undefined,
   ) {
-    const limit = Math.min(first ?? 20, 50);
+    const limit = clampFirst(first);
     const cursor = this.decodeCursor(afterCursor);
 
     const result = await this.contactsRepository.findByRequester({
@@ -269,7 +270,7 @@ export class ContactsService {
       throw new ForbiddenError('Only the post owner can view contact requests');
     }
 
-    const limit = Math.min(first ?? 20, 50);
+    const limit = clampFirst(first);
     const cursor = this.decodeCursor(afterCursor);
 
     const result = await this.contactsRepository.findByPost({

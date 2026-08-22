@@ -234,5 +234,11 @@ describe('ContactsService', () => {
         ForbiddenError,
       );
     });
+
+    it.each([-5, 0])('treats first=%i as limit 1 (no 500, no infinite empty loop)', async (bad) => {
+      mockContactsRepo.findByRequester = jest.fn().mockResolvedValue({ rows: [], hasNextPage: false });
+      await service.getMyContactRequests('user-1', null, null, bad, null);
+      expect(mockContactsRepo.findByRequester).toHaveBeenCalledWith(expect.objectContaining({ limit: 1 }));
+    });
   });
 });

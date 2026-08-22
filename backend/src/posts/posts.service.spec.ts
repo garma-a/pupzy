@@ -306,6 +306,7 @@ describe('PostsService', () => {
         isFree: false,
         priceAmount: 500,
         priceCurrency: 'EGP',
+        openToOffers: false,
       });
 
       expect(result).toBe(mockCreatedPost);
@@ -327,6 +328,8 @@ describe('PostsService', () => {
         category: 'FOOD',
         condition: 'NEW',
         isFree: true,
+        priceCurrency: 'EGP',
+        openToOffers: false,
       });
 
       expect(result).toBe(mockCreatedPost);
