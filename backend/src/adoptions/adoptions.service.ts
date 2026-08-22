@@ -52,6 +52,7 @@ export class AdoptionsService {
    */
   async submitApplication(applicantId: string, input: SubmitAdoptionApplicationInput): Promise<AdoptionApplication> {
     const { targetPostId, ...questionnaire } = input;
+    assertUuid(targetPostId, 'targetPostId');
 
     const post = await this.postsRepository.findById(targetPostId);
     if (!post || post.status === 'REMOVED') {
@@ -113,9 +114,14 @@ export class AdoptionsService {
     }
 
     const post = await this.postsRepository.findById(application.targetPostId);
-    if (!post) throw new NotFoundError('Post', application.targetPostId);
+    if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Post', application.targetPostId);
+    }
     if (post.creatorId !== ownerId) {
       throw new ForbiddenError('Only the post owner can approve applications');
+    }
+    if (post.status !== 'ACTIVE') {
+      throw new ValidationError('Cannot approve: this post is no longer active');
     }
     if (application.status !== 'PENDING') {
       throw new ValidationError(`Application is already ${application.status}`);
@@ -160,7 +166,9 @@ export class AdoptionsService {
     }
 
     const post = await this.postsRepository.findById(application.targetPostId);
-    if (!post) throw new NotFoundError('Post', application.targetPostId);
+    if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Post', application.targetPostId);
+    }
     if (post.creatorId !== ownerId) {
       throw new ForbiddenError('Only the post owner can reject applications');
     }

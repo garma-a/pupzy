@@ -154,6 +154,16 @@ describe('AdoptionsService', () => {
       await expect(service.approveApplication(validOwnerId, validApplicationId)).rejects.toThrow(ValidationError);
     });
 
+    it('approve throws NotFoundError if post is REMOVED', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({ ...mockPost, status: 'REMOVED' });
+      await expect(service.approveApplication(validOwnerId, validApplicationId)).rejects.toThrow(NotFoundError);
+    });
+
+    it('approve throws ValidationError if post is not ACTIVE', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({ ...mockPost, status: 'ADOPTED' });
+      await expect(service.approveApplication(validOwnerId, validApplicationId)).rejects.toThrow(ValidationError);
+    });
+
     it('approve throws ConflictError when application was concurrently transitioned (lost race)', async () => {
       mockAdoptionsRepo.updateStatus = jest.fn().mockResolvedValue(undefined);
       mockAdoptionsRepo.findById = jest.fn()
@@ -190,6 +200,11 @@ describe('AdoptionsService', () => {
         expect.objectContaining({ recipientId: validApplicantId, type: 'ADOPTION_APPLICATION_REJECTED' }),
         validOwnerId,
       );
+    });
+
+    it('reject throws NotFoundError if post is REMOVED', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({ ...mockPost, status: 'REMOVED' });
+      await expect(service.rejectApplication(validOwnerId, validApplicationId)).rejects.toThrow(NotFoundError);
     });
 
     it('reject throws ConflictError when application was concurrently transitioned (lost race)', async () => {
