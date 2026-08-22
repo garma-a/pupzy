@@ -266,5 +266,23 @@ describe('ContactsService', () => {
       await service.getMyContactRequests('user-1', null, null, bad, null);
       expect(mockContactsRepo.findByRequester).toHaveBeenCalledWith(expect.objectContaining({ limit: 1 }));
     });
+
+    it('getMyContactRequests throws ValidationError on invalid postId uuid', async () => {
+      await expect(service.getMyContactRequests(validRequesterId, 'bad-uuid', 'PENDING', 10, null)).rejects.toThrow(
+        ValidationError,
+      );
+    });
+
+    it('getMyContactRequests throws ValidationError on invalid status', async () => {
+      await expect(service.getMyContactRequests(validRequesterId, null, 'INVALID_STATUS', 10, null)).rejects.toThrow(
+        ValidationError,
+      );
+    });
+
+    it('getPostContactRequests throws ValidationError on invalid status', async () => {
+      await expect(
+        service.getPostContactRequests(validOwnerId, validPostId, 'INVALID_STATUS', 10, null),
+      ).rejects.toThrow(ValidationError);
+    });
   });
 });

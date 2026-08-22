@@ -8,6 +8,14 @@ import { assertUuid } from '../common/utils/validate-uuid';
 import { clampFirst } from '../common/utils/pagination.util';
 import type { ContactRequest } from '../database/schema';
 
+const CONTACT_REQUEST_STATUSES = ['PENDING', 'APPROVED', 'REJECTED'] as const;
+
+function assertStatusFilter(status: string | null | undefined): void {
+  if (status && !(CONTACT_REQUEST_STATUSES as readonly string[]).includes(status)) {
+    throw new ValidationError('status must be one of PENDING, APPROVED, REJECTED');
+  }
+}
+
 /**
  * ContactsService — business logic for contact request flows.
  *
@@ -244,6 +252,9 @@ export class ContactsService {
     first: number | null | undefined,
     afterCursor: string | null | undefined,
   ) {
+    if (postId) assertUuid(postId, 'postId');
+    assertStatusFilter(status);
+
     const limit = clampFirst(first);
     const cursor = this.decodeCursor(afterCursor);
 
@@ -279,6 +290,7 @@ export class ContactsService {
     if (post.creatorId !== userId) {
       throw new ForbiddenError('Only the post owner can view contact requests');
     }
+    assertStatusFilter(status);
 
     const limit = clampFirst(first);
     const cursor = this.decodeCursor(afterCursor);
