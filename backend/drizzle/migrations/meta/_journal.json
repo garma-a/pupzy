@@ -50,6 +50,13 @@
       "when": 1787429088292,
       "tag": "0006_add_mating_post_type",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787429744817,
+      "tag": "0007_create_mating_posts",
+      "breakpoints": true
     }
   ]
 }
