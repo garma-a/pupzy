@@ -1,4 +1,5 @@
 import { Resolver, Query, Mutation, Args, Context, ResolveField, Parent } from '@nestjs/graphql';
+import { Throttle } from '@nestjs/throttler';
 import { AdoptionsService } from './adoptions.service';
 import { validateSubmitAdoptionApplicationInput } from './dto/submit-adoption-application.input';
 import type { GqlContext } from '../common/types/gql-context.type';
@@ -42,6 +43,8 @@ export class AdoptionsResolver {
 
   // ─── Mutations ──────────────────────────────────────────────────────
 
+  /** Anti-spam: 10 applications per hour per IP (see AUD-15 re: true per-user limiting). */
+  @Throttle({ default: { limit: 10, ttl: 3_600_000 } })
   @Mutation('submitAdoptionApplication')
   async submitAdoptionApplication(
     @Args('input') input: unknown,

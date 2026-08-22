@@ -62,6 +62,8 @@ export class ContactsResolver {
 
   // ─── Mutations ──────────────────────────────────────────────────────
 
+  /** Anti-spam: 20 contact requests per hour per IP (see AUD-15 re: true per-user limiting). */
+  @Throttle({ default: { limit: 20, ttl: 3_600_000 } })
   @Mutation('requestContact')
   async requestContact(
     @Args('postId') postId: string,
