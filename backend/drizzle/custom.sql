@@ -28,7 +28,7 @@ ALTER TABLE posts ADD CONSTRAINT posts_urgency_matches_post_type_constraint
   CHECK (
     (post_type IN ('RESCUE', 'LOST') AND urgency IS NOT NULL)
     OR
-    (post_type IN ('ADOPTION', 'PRODUCT') AND urgency IS NULL)
+    (post_type IN ('ADOPTION', 'PRODUCT', 'MATING') AND urgency IS NULL)
   );
 
 -- PRODUCT: is_free=true requires price_amount=NULL; is_free=false requires price_amount IS NOT NULL.
@@ -115,6 +115,11 @@ CREATE INDEX IF NOT EXISTS idx_posts_adopt_gov
 CREATE INDEX IF NOT EXISTS idx_posts_market_gov
   ON posts (governorate, effective_score DESC, created_at DESC)
   WHERE status = 'ACTIVE' AND post_type = 'PRODUCT';
+
+-- Mating feed: active mating posts sorted by created_at DESC, id DESC.
+CREATE INDEX IF NOT EXISTS idx_posts_mating_active_created
+  ON posts (created_at DESC, id DESC)
+  WHERE post_type = 'MATING' AND status = 'ACTIVE';
 
 -- Home feed: all active posts sorted by UUIDv7 ID (newest first).
 -- Covers homeFeed query: WHERE status = 'ACTIVE' AND city_id IN (...) ORDER BY id DESC.
