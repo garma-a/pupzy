@@ -8,7 +8,13 @@ import { pgEnum } from 'drizzle-orm/pg-core';
  * Discriminates which vertical a post belongs to.
  * Drives the CTI join at the detail-screen level.
  */
-export const postTypeEnum = pgEnum('post_type', ['RESCUE', 'LOST', 'ADOPTION', 'PRODUCT']);
+export const postTypeEnum = pgEnum('post_type', [
+  'RESCUE',
+  'LOST',
+  'ADOPTION',
+  'PRODUCT',
+  'MATING', // Pet mating (تزاوج) — owner keeps the pet; same-species partner search
+]);
 
 /**
  * Discriminator within the LOST section.
