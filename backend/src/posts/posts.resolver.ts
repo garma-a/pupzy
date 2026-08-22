@@ -258,7 +258,7 @@ export class PostsResolver {
    */
   @ResolveField('coordinates')
   coordinates(@Root() post: Post): { latitude: number; longitude: number } | null {
-    if (post.postType === 'ADOPTION' || post.postType === 'PRODUCT') {
+    if (post.postType === 'ADOPTION' || post.postType === 'PRODUCT' || post.postType === 'MATING') {
       return null;
     }
 

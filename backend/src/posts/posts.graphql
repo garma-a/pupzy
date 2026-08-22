@@ -1,6 +1,6 @@
 """
 GPS coordinate pair returned for RESCUE and LOST posts only.
-Never returned for ADOPTION or PRODUCT — those show city name + distance only.
+Never returned for ADOPTION, PRODUCT, or MATING — those show city name + distance only.
 """
 type GeoLocation {
   latitude: Float!
@@ -48,7 +48,7 @@ type Post {
   status: PostStatus!
   moderationStatus: ModerationStatus!
   """
-  Required for RESCUE and LOST. Null for ADOPTION and PRODUCT.
+  Required for RESCUE and LOST. Null for ADOPTION, PRODUCT, and MATING.
   """
   urgency: UrgencyTier
   city: City!
@@ -58,7 +58,7 @@ type Post {
   areaName: String
   """
   GPS coordinates. Only returned for RESCUE and LOST posts.
-  Null for ADOPTION and PRODUCT (city name + distance only).
+  Null for ADOPTION, PRODUCT, and MATING (city name + distance only).
   """
   coordinates: GeoLocation
   """
