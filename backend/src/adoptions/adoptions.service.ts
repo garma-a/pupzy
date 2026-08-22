@@ -5,8 +5,17 @@ import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../common/errors/app.errors';
 import { assertUuid } from '../common/utils/validate-uuid';
+import { clampFirst } from '../common/utils/pagination.util';
 import type { AdoptionApplication } from '../database/schema';
 import type { SubmitAdoptionApplicationInput } from './dto/submit-adoption-application.input';
+
+const ADOPTION_APPLICATION_STATUSES = ['PENDING', 'APPROVED', 'REJECTED'] as const;
+
+function assertStatusFilter(status: string | null | undefined): void {
+  if (status && !(ADOPTION_APPLICATION_STATUSES as readonly string[]).includes(status)) {
+    throw new ValidationError('status must be one of PENDING, APPROVED, REJECTED');
+  }
+}
 
 /**
  * AdoptionsService — business logic for adoption application flows.
@@ -185,7 +194,7 @@ export class AdoptionsService {
    * Returns paginated applications submitted by the current user.
    */
   async getMyApplications(userId: string, first: number | null | undefined, afterCursor: string | null | undefined) {
-    const limit = Math.min(first ?? 20, 50);
+    const limit = clampFirst(first);
     const cursor = this.decodeCursor(afterCursor);
 
     const result = await this.adoptionsRepository.findByApplicant({
@@ -218,8 +227,9 @@ export class AdoptionsService {
     if (post.creatorId !== userId) {
       throw new ForbiddenError('Only the post owner can view applications');
     }
+    assertStatusFilter(status);
 
-    const limit = Math.min(first ?? 20, 50);
+    const limit = clampFirst(first);
     const cursor = this.decodeCursor(afterCursor);
 
     const result = await this.adoptionsRepository.findByPost({
@@ -237,7 +247,15 @@ export class AdoptionsService {
   private decodeCursor(cursorBase64: string | null | undefined): { createdAt: string; id: string } | null {
     if (!cursorBase64) return null;
     try {
-      return JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8')) as { createdAt: string; id: string };
+      const parsed = JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8')) as {
+        createdAt: string;
+        id: string;
+      };
+      const parsedDate = new Date(parsed.createdAt);
+      if (Number.isNaN(parsedDate.getTime()) || typeof parsed.id !== 'string') {
+        throw new ValidationError('Invalid cursor format');
+      }
+      return parsed;
     } catch {
       throw new ValidationError('Invalid cursor format');
     }
