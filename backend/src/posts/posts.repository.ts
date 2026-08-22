@@ -572,14 +572,50 @@ export class PostsRepository {
 
   /**
    * Creates a DataLoader that batch-checks "has this user upvoted each post?"
-   * Returns boolean per post ID.
+   * Accepts composite keys in the format `${userId}:${postId}` so that viewer
+   * identity is passed explicitly from the resolver rather than captured in an
+   * early context closure.
+   *
+   * Returns boolean per key.
    */
-  createUpvotedByMeLoader(userId: string | undefined): DataLoader<string, boolean> {
+  createUpvotedByMeLoader(): DataLoader<string, boolean> {
     return new DataLoader<string, boolean>(
-      async (postIds) => {
-        if (!userId) return postIds.map(() => false);
-        const upvotedSet = await this.findUpvotesByUserForPosts(userId, postIds);
-        return postIds.map((id) => upvotedSet.has(id));
+      async (keys: readonly string[]) => {
+        if (keys.length === 0) return [];
+
+        const pairs = keys.map((key) => {
+          const colonIndex = key.indexOf(':');
+          return {
+            key,
+            userId: key.substring(0, colonIndex),
+            postId: key.substring(colonIndex + 1),
+          };
+        });
+
+        const userToPostIds = new Map<string, string[]>();
+        for (const { userId, postId } of pairs) {
+          if (!userId || !postId) continue;
+          const list = userToPostIds.get(userId) ?? [];
+          list.push(postId);
+          userToPostIds.set(userId, list);
+        }
+
+        const upvotedSet = new Set<string>();
+
+        await Promise.all(
+          Array.from(userToPostIds.entries()).map(async ([userId, postIds]) => {
+            const rows = await this.db
+              .select({ postId: postUpvotes.postId })
+              .from(postUpvotes)
+              .where(and(eq(postUpvotes.userId, userId), inArray(postUpvotes.postId, postIds)));
+
+            for (const row of rows) {
+              upvotedSet.add(`${userId}:${row.postId}`);
+            }
+          }),
+        );
+
+        return keys.map((key) => upvotedSet.has(key));
       },
       { cache: true, maxBatchSize: 100 },
     );
@@ -587,14 +623,48 @@ export class PostsRepository {
 
   /**
    * Creates a DataLoader that batch-checks "has this user saved each post?"
-   * Returns boolean per post ID.
+   * Accepts composite keys in the format `${userId}:${postId}`.
+   *
+   * Returns boolean per key.
    */
-  createSavedByMeLoader(userId: string | undefined): DataLoader<string, boolean> {
+  createSavedByMeLoader(): DataLoader<string, boolean> {
     return new DataLoader<string, boolean>(
-      async (postIds) => {
-        if (!userId) return postIds.map(() => false);
-        const savedSet = await this.findSavesByUserForPosts(userId, postIds);
-        return postIds.map((id) => savedSet.has(id));
+      async (keys: readonly string[]) => {
+        if (keys.length === 0) return [];
+
+        const pairs = keys.map((key) => {
+          const colonIndex = key.indexOf(':');
+          return {
+            key,
+            userId: key.substring(0, colonIndex),
+            postId: key.substring(colonIndex + 1),
+          };
+        });
+
+        const userToPostIds = new Map<string, string[]>();
+        for (const { userId, postId } of pairs) {
+          if (!userId || !postId) continue;
+          const list = userToPostIds.get(userId) ?? [];
+          list.push(postId);
+          userToPostIds.set(userId, list);
+        }
+
+        const savedSet = new Set<string>();
+
+        await Promise.all(
+          Array.from(userToPostIds.entries()).map(async ([userId, postIds]) => {
+            const rows = await this.db
+              .select({ postId: postSaves.postId })
+              .from(postSaves)
+              .where(and(eq(postSaves.userId, userId), inArray(postSaves.postId, postIds)));
+
+            for (const row of rows) {
+              savedSet.add(`${userId}:${row.postId}`);
+            }
+          }),
+        );
+
+        return keys.map((key) => savedSet.has(key));
       },
       { cache: true, maxBatchSize: 100 },
     );

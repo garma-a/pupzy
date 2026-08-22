@@ -223,6 +223,22 @@ describe('Repository Layer with Testcontainers (Integration)', () => {
       });
       expect(mySaved.rows).toHaveLength(1);
       expect(mySaved.rows[0].post.id).toBe(postId);
+
+      // Test DataLoaders with composite keys
+      const savedLoader = postsRepo.createSavedByMeLoader();
+      const isSavedUser2 = await savedLoader.load(`${testUserId2}:${postId}`);
+      const isSavedUser1 = await savedLoader.load(`${testUserId1}:${postId}`);
+      expect(isSavedUser2).toBe(true);
+      expect(isSavedUser1).toBe(false);
+
+      const upvoteLoader = postsRepo.createUpvotedByMeLoader();
+      const isUpvotedBefore = await upvoteLoader.load(`${testUserId2}:${postId}`);
+      expect(isUpvotedBefore).toBe(false);
+
+      await postsRepo.toggleUpvote(postId, testUserId2);
+      const freshUpvoteLoader = postsRepo.createUpvotedByMeLoader();
+      const isUpvotedAfter = await freshUpvoteLoader.load(`${testUserId2}:${postId}`);
+      expect(isUpvotedAfter).toBe(true);
     });
   });
 

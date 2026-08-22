@@ -316,7 +316,9 @@ export class PostsResolver {
    */
   @ResolveField('isUpvotedByMe')
   isUpvotedByMe(@Root() post: Post, @Context() ctx: GqlContext): Promise<boolean> {
-    return ctx.loaders.upvotedByMe.load(post.id);
+    const userId = ctx.user?.id ?? (ctx.req as unknown as { user?: { id: string } })?.user?.id;
+    if (!userId) return Promise.resolve(false);
+    return ctx.loaders.upvotedByMe.load(`${userId}:${post.id}`);
   }
 
   /**
@@ -326,6 +328,8 @@ export class PostsResolver {
    */
   @ResolveField('isSavedByMe')
   isSavedByMe(@Root() post: Post, @Context() ctx: GqlContext): Promise<boolean> {
-    return ctx.loaders.savedByMe.load(post.id);
+    const userId = ctx.user?.id ?? (ctx.req as unknown as { user?: { id: string } })?.user?.id;
+    if (!userId) return Promise.resolve(false);
+    return ctx.loaders.savedByMe.load(`${userId}:${post.id}`);
   }
 }

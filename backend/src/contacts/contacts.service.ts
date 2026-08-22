@@ -112,7 +112,7 @@ export class ContactsService {
 
     // Decrypt owner phone → build wa.me link
     const owner = await this.usersService.findById(ownerId);
-    const whatsappLink = owner?.phoneNumber ? `https://wa.me/${owner.phoneNumber.replace(/\\D/g, '')}` : null;
+    const whatsappLink = owner?.phoneNumber ? `https://wa.me/${owner.phoneNumber.replace(/\D/g, '')}` : null;
 
     // Fire notification to requester (non-blocking)
     this.notificationsService.fireNotification(
@@ -191,7 +191,7 @@ export class ContactsService {
       throw new NotFoundError('Owner contact information is not available');
     }
 
-    return `https://wa.me/${owner.phoneNumber.replace(/\\D/g, '')}`;
+    return `https://wa.me/${owner.phoneNumber.replace(/\D/g, '')}`;
   }
 
   /**
@@ -220,7 +220,7 @@ export class ContactsService {
       throw new NotFoundError('Seller contact information is not available');
     }
 
-    return `https://wa.me/${seller.phoneNumber.replace(/\\D/g, '')}`;
+    return `https://wa.me/${seller.phoneNumber.replace(/\D/g, '')}`;
   }
 
   /**

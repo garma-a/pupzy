@@ -116,7 +116,7 @@ export class AdoptionsService {
 
     // Decrypt owner phone → build wa.me link
     const owner = await this.usersService.findById(ownerId);
-    const whatsappLink = owner?.phoneNumber ? `https://wa.me/${owner.phoneNumber.replace(/\\D/g, '')}` : null;
+    const whatsappLink = owner?.phoneNumber ? `https://wa.me/${owner.phoneNumber.replace(/\D/g, '')}` : null;
 
     // Fire notification to applicant (non-blocking)
     this.notificationsService.fireNotification(

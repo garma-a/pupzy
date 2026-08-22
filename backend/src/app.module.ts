@@ -12,7 +12,6 @@ import { join } from 'path';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const depthLimit = require('graphql-depth-limit') as (n: number) => unknown;
 import type { ValidationRule } from 'graphql';
-import DataLoader from 'dataloader';
 import { ScheduleModule } from '@nestjs/schedule';
 import { validateEnv } from './config/env.config';
 import { DatabaseModule } from './database/database.module';
@@ -103,33 +102,14 @@ import type { GqlContext } from './common/types/gql-context.type';
         context: ({ req }: { req: Express.Request }): GqlContext => {
           const gqlReq = req as GqlContext['req'];
 
-          /**
-           * Lazy-initialized viewer state loaders.
-           * The FirebaseAuthGuard populates `ctx.user` AFTER context creation
-           * but BEFORE any resolver runs. These getters defer DataLoader creation
-           * until first access, at which point `ctx.user` is available.
-           */
-          let upvotedByMeLoader: DataLoader<string, boolean> | undefined;
-          let savedByMeLoader: DataLoader<string, boolean> | undefined;
-
           const ctx: GqlContext = {
             req: gqlReq,
             loaders: {
               cityById: citiesService.createCityByIdLoader(),
               userById: usersService.createUserByIdLoader(),
               mediaByPostId: postsRepository.createMediaByPostIdLoader(),
-              get upvotedByMe() {
-                if (!upvotedByMeLoader) {
-                  upvotedByMeLoader = postsRepository.createUpvotedByMeLoader(ctx.user?.id);
-                }
-                return upvotedByMeLoader;
-              },
-              get savedByMe() {
-                if (!savedByMeLoader) {
-                  savedByMeLoader = postsRepository.createSavedByMeLoader(ctx.user?.id);
-                }
-                return savedByMeLoader;
-              },
+              upvotedByMe: postsRepository.createUpvotedByMeLoader(),
+              savedByMe: postsRepository.createSavedByMeLoader(),
             },
           };
           return ctx;
