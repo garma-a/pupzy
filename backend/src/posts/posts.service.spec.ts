@@ -586,6 +586,23 @@ describe('PostsService', () => {
       expect(result.edges).toHaveLength(1);
     });
 
+    it('getHomeFeed includes MATING posts in results without errors', async () => {
+      const matingPost = {
+        id: validPostId,
+        postType: 'MATING',
+        status: 'ACTIVE',
+        createdAt: new Date(),
+      } as unknown as Post;
+      mockPostsRepo.findHomeFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: matingPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+
+      const result = await service.getHomeFeed({});
+      expect(result.edges).toHaveLength(1);
+      expect(result.edges[0].node.postType).toBe('MATING');
+    });
+
     it('getPostsSavedByCurrentUser encodes savedAt from join', async () => {
       const savedDate = new Date('2026-08-10T15:00:00Z');
       const mockPost = {
