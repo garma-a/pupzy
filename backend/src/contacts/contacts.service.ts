@@ -313,7 +313,15 @@ export class ContactsService {
   private decodeCursor(cursorBase64: string | null | undefined): { createdAt: string; id: string } | null {
     if (!cursorBase64) return null;
     try {
-      return JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8')) as { createdAt: string; id: string };
+      const parsed = JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8')) as {
+        createdAt: string;
+        id: string;
+      };
+      const parsedDate = new Date(parsed.createdAt);
+      if (Number.isNaN(parsedDate.getTime()) || typeof parsed.id !== 'string') {
+        throw new ValidationError('Invalid cursor format');
+      }
+      return parsed;
     } catch {
       throw new ValidationError('Invalid cursor format');
     }

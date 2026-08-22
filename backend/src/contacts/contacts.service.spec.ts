@@ -299,5 +299,19 @@ describe('ContactsService', () => {
         service.getPostContactRequests(validOwnerId, validPostId, 'INVALID_STATUS', 10, null),
       ).rejects.toThrow(ValidationError);
     });
+
+    it('throws ValidationError on malformed cursor JSON', async () => {
+      const badCursor = Buffer.from('invalid json').toString('base64url');
+      await expect(service.getMyContactRequests(validRequesterId, null, null, 10, badCursor)).rejects.toThrow(
+        ValidationError,
+      );
+    });
+
+    it('throws ValidationError on invalid date in cursor', async () => {
+      const badCursor = Buffer.from(JSON.stringify({ createdAt: 'garbage-date', id: '123' })).toString('base64url');
+      await expect(service.getMyContactRequests(validRequesterId, null, null, 10, badCursor)).rejects.toThrow(
+        ValidationError,
+      );
+    });
   });
 });
