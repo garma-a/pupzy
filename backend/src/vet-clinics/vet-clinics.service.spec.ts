@@ -67,6 +67,23 @@ describe('VetClinicsService', () => {
     expect(result[0].whatsappPhoneUrl).toBe('https://wa.me/201001234567');
   });
 
+  it('routes MATING posts to findNearestForCity with city-level cache', async () => {
+    mockRepository.findNearestForCity = jest.fn().mockResolvedValue([mockClinicResult]);
+
+    const result = await service.nearestVetClinicsForPost({
+      id: 'post-mating-1',
+      postType: 'MATING',
+      cityId: 'city-giza',
+      latitude: null,
+      longitude: null,
+    });
+
+    expect(mockCacheManager.get).toHaveBeenCalledWith('vet:city:city-giza');
+    expect(mockRepository.findNearestForCity).toHaveBeenCalledWith('city-giza');
+    expect(mockCacheManager.set).toHaveBeenCalledWith('vet:city:city-giza', expect.any(Array), 86_400_000);
+    expect(result).toHaveLength(1);
+  });
+
   it('routes RESCUE posts to findNearest with post-level cache', async () => {
     mockRepository.findNearest = jest.fn().mockResolvedValue([mockClinicResult]);
 

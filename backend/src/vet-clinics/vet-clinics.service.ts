@@ -106,8 +106,8 @@ export class VetClinicsService {
       return [];
     }
 
-    // ADOPTION: exact coordinates are private — use city center instead.
-    if (post.postType === 'ADOPTION') {
+    // ADOPTION and MATING: exact coordinates are private — use city center instead.
+    if (post.postType === 'ADOPTION' || post.postType === 'MATING') {
       return this.findNearestForCityCached(post.cityId);
     }
 
