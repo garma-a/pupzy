@@ -3,6 +3,7 @@ import { sql, eq, and, or, lt, desc } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import { contactRequests, type ContactRequest, type NewContactRequest } from '../database/schema';
+import { ConflictError } from '../common/errors/app.errors';
 
 /**
  * ContactsRepository — data access for the contact_requests table.
@@ -17,12 +18,21 @@ export class ContactsRepository {
   ) {}
 
   /**
-   * Creates a new contact request.
-   * The DB unique constraint (uq_contact_request) prevents duplicates.
+   * Creates a new contact request. The DB unique constraint (uq_contact_request)
+   * is the real duplicate protection; the 23505 it raises on a double-tap race
+   * is mapped here to a clean ConflictError instead of a 500.
    */
   async create(data: NewContactRequest): Promise<ContactRequest> {
-    const [request] = await this.db.insert(contactRequests).values(data).returning();
-    return request;
+    try {
+      const [request] = await this.db.insert(contactRequests).values(data).returning();
+      return request;
+    } catch (error) {
+      const pgErr = error as { code?: string; constraint?: string };
+      if (pgErr.code === '23505' || pgErr.constraint === 'uq_contact_request') {
+        throw new ConflictError('You have already sent a contact request for this post');
+      }
+      throw error;
+    }
   }
 
   /**
