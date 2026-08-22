@@ -153,6 +153,26 @@ describe('AdoptionsService', () => {
       });
       await expect(service.approveApplication(validOwnerId, validApplicationId)).rejects.toThrow(ValidationError);
     });
+
+    it('approve throws ConflictError when application was concurrently transitioned (lost race)', async () => {
+      mockAdoptionsRepo.updateStatus = jest.fn().mockResolvedValue(undefined);
+      mockAdoptionsRepo.findById = jest.fn()
+        .mockResolvedValueOnce({
+          id: validApplicationId,
+          status: 'PENDING',
+          targetPostId: validPostId,
+          applicantId: validApplicantId,
+        })
+        .mockResolvedValueOnce({
+          id: validApplicationId,
+          status: 'REJECTED',
+          targetPostId: validPostId,
+          applicantId: validApplicantId,
+        });
+
+      await expect(service.approveApplication(validOwnerId, validApplicationId)).rejects.toThrow(ConflictError);
+      expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
+    });
   });
 
   describe('rejectApplication', () => {
@@ -170,6 +190,26 @@ describe('AdoptionsService', () => {
         expect.objectContaining({ recipientId: validApplicantId, type: 'ADOPTION_APPLICATION_REJECTED' }),
         validOwnerId,
       );
+    });
+
+    it('reject throws ConflictError when application was concurrently transitioned (lost race)', async () => {
+      mockAdoptionsRepo.updateStatus = jest.fn().mockResolvedValue(undefined);
+      mockAdoptionsRepo.findById = jest.fn()
+        .mockResolvedValueOnce({
+          id: validApplicationId,
+          status: 'PENDING',
+          targetPostId: validPostId,
+          applicantId: validApplicantId,
+        })
+        .mockResolvedValueOnce({
+          id: validApplicationId,
+          status: 'APPROVED',
+          targetPostId: validPostId,
+          applicantId: validApplicantId,
+        });
+
+      await expect(service.rejectApplication(validOwnerId, validApplicationId)).rejects.toThrow(ConflictError);
+      expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
     });
   });
 

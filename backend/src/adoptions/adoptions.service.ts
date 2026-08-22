@@ -113,12 +113,16 @@ export class AdoptionsService {
     }
 
     const updated = await this.adoptionsRepository.updateStatus(applicationId, 'APPROVED');
+    if (!updated) {
+      const current = await this.adoptionsRepository.findById(applicationId);
+      throw new ConflictError(`Application is already ${current?.status ?? 'processed'}`);
+    }
 
     // Decrypt owner phone → build wa.me link
     const owner = await this.usersService.findById(ownerId);
     const whatsappLink = owner?.phoneNumber ? `https://wa.me/${owner.phoneNumber.replace(/\D/g, '')}` : null;
 
-    // Fire notification to applicant (non-blocking)
+    // Fire notification to applicant (non-blocking) ONLY after transition succeeds
     this.notificationsService.fireNotification(
       {
         recipientId: application.applicantId,
@@ -131,7 +135,7 @@ export class AdoptionsService {
       ownerId,
     );
 
-    return { ...updated!, whatsappLink };
+    return { ...updated, whatsappLink };
   }
 
   /**
@@ -156,6 +160,10 @@ export class AdoptionsService {
     }
 
     const updated = await this.adoptionsRepository.updateStatus(applicationId, 'REJECTED');
+    if (!updated) {
+      const current = await this.adoptionsRepository.findById(applicationId);
+      throw new ConflictError(`Application is already ${current?.status ?? 'processed'}`);
+    }
 
     // Fire notification to applicant (non-blocking)
     this.notificationsService.fireNotification(
@@ -170,7 +178,7 @@ export class AdoptionsService {
       ownerId,
     );
 
-    return updated!;
+    return updated;
   }
 
   /**

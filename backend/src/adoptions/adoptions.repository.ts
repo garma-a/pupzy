@@ -61,6 +61,9 @@ export class AdoptionsRepository {
 
   /**
    * Updates an application status (PENDING → APPROVED or REJECTED).
+   * Atomic guard: only a row still in PENDING can transition. If the row was
+   * concurrently transitioned by another request, the UPDATE matches 0 rows and
+   * this returns undefined — the service converts that to a ConflictError.
    */
   async updateStatus(applicationId: string, status: 'APPROVED' | 'REJECTED'): Promise<AdoptionApplication | undefined> {
     const [updated] = await this.db
@@ -69,7 +72,12 @@ export class AdoptionsRepository {
         status,
         respondedAt: sql`now()`,
       })
-      .where(eq(adoptionApplications.id, applicationId))
+      .where(
+        and(
+          eq(adoptionApplications.id, applicationId),
+          eq(adoptionApplications.status, 'PENDING'),
+        ),
+      )
       .returning();
     return updated;
   }
