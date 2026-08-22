@@ -110,12 +110,17 @@ export class ContactsService {
     }
 
     const updated = await this.contactsRepository.updateStatus(requestId, 'APPROVED');
+    if (!updated) {
+      // Lost a concurrent approve/reject race — no state change, no notification.
+      const current = await this.contactsRepository.findById(requestId);
+      throw new ConflictError(`Request is already ${current?.status ?? 'processed'}`);
+    }
 
     // Decrypt owner phone → build wa.me link
     const owner = await this.usersService.findById(ownerId);
     const whatsappLink = owner?.phoneNumber ? `https://wa.me/${owner.phoneNumber.replace(/\D/g, '')}` : null;
 
-    // Fire notification to requester (non-blocking)
+    // Notification ONLY after the transition succeeded
     this.notificationsService.fireNotification(
       {
         recipientId: request.requesterId,
@@ -128,7 +133,7 @@ export class ContactsService {
       ownerId,
     );
 
-    return { ...updated!, whatsappLink };
+    return { ...updated, whatsappLink };
   }
 
   /**
@@ -151,6 +156,11 @@ export class ContactsService {
     }
 
     const updated = await this.contactsRepository.updateStatus(requestId, 'REJECTED');
+    if (!updated) {
+      // Lost a concurrent approve/reject race — no state change, no notification.
+      const current = await this.contactsRepository.findById(requestId);
+      throw new ConflictError(`Request is already ${current?.status ?? 'processed'}`);
+    }
 
     // Fire notification to requester (non-blocking)
     this.notificationsService.fireNotification(
@@ -165,7 +175,7 @@ export class ContactsService {
       ownerId,
     );
 
-    return updated!;
+    return updated;
   }
 
   /**

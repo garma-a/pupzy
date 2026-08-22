@@ -47,7 +47,9 @@ export class ContactsRepository {
 
   /**
    * Updates a contact request status (PENDING → APPROVED or REJECTED).
-   * Also sets respondedAt timestamp.
+   * Atomic guard: only a row still in PENDING can transition. If the row was
+   * concurrently transitioned by another request, the UPDATE matches 0 rows and
+   * this returns undefined — the service converts that to a ConflictError.
    */
   async updateStatus(requestId: string, status: 'APPROVED' | 'REJECTED'): Promise<ContactRequest | undefined> {
     const [updated] = await this.db
@@ -56,9 +58,14 @@ export class ContactsRepository {
         status,
         respondedAt: sql`now()`,
       })
-      .where(eq(contactRequests.id, requestId))
+      .where(
+        and(
+          eq(contactRequests.id, requestId),
+          eq(contactRequests.status, 'PENDING'), // ← the race guard
+        ),
+      )
       .returning();
-    return updated;
+    return updated; // undefined ⇔ lost the race
   }
 
   /**

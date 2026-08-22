@@ -138,6 +138,19 @@ describe('ContactsService', () => {
         .mockResolvedValue({ id: validRequestId, status: 'APPROVED', postId: validPostId });
       await expect(service.approveContactRequest(validOwnerId, validRequestId)).rejects.toThrow(ValidationError);
     });
+
+    it('approve throws ConflictError when the row was concurrently transitioned (lost race)', async () => {
+      const pendingReq = { id: validRequestId, postId: validPostId, requesterId: validRequesterId, status: 'PENDING' } as unknown as ContactRequest;
+      const ownedPost = { id: validPostId, creatorId: validOwnerId, title: 'Cat', status: 'ACTIVE', postType: 'ADOPTION' } as unknown as Post;
+      mockContactsRepo.findById = jest.fn()
+        .mockResolvedValueOnce(pendingReq)
+        .mockResolvedValueOnce({ ...pendingReq, status: 'REJECTED' });
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(ownedPost);
+      mockContactsRepo.updateStatus = jest.fn().mockResolvedValue(undefined);
+
+      await expect(service.approveContactRequest(validOwnerId, validRequestId)).rejects.toThrow(ConflictError);
+      expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
+    });
   });
 
   describe('rejectContactRequest', () => {
@@ -152,6 +165,19 @@ describe('ContactsService', () => {
         expect.objectContaining({ recipientId: validRequesterId, type: 'CONTACT_REQUEST_REJECTED' }),
         validOwnerId,
       );
+    });
+
+    it('reject throws ConflictError when the row was concurrently transitioned (lost race)', async () => {
+      const pendingReq = { id: validRequestId, postId: validPostId, requesterId: validRequesterId, status: 'PENDING' } as unknown as ContactRequest;
+      const ownedPost = { id: validPostId, creatorId: validOwnerId, title: 'Cat', status: 'ACTIVE', postType: 'ADOPTION' } as unknown as Post;
+      mockContactsRepo.findById = jest.fn()
+        .mockResolvedValueOnce(pendingReq)
+        .mockResolvedValueOnce({ ...pendingReq, status: 'APPROVED' });
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(ownedPost);
+      mockContactsRepo.updateStatus = jest.fn().mockResolvedValue(undefined);
+
+      await expect(service.rejectContactRequest(validOwnerId, validRequestId)).rejects.toThrow(ConflictError);
+      expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
     });
   });
 
