@@ -3,6 +3,7 @@ import { sql, eq, and, or, lt, desc } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import { adoptionApplications, type AdoptionApplication, type NewAdoptionApplication } from '../database/schema';
+import { ConflictError } from '../common/errors/app.errors';
 
 /**
  * AdoptionsRepository — data access for the adoption_applications table.
@@ -20,8 +21,16 @@ export class AdoptionsRepository {
    * Creates a new adoption application.
    */
   async create(data: NewAdoptionApplication): Promise<AdoptionApplication> {
-    const [application] = await this.db.insert(adoptionApplications).values(data).returning();
-    return application;
+    try {
+      const [application] = await this.db.insert(adoptionApplications).values(data).returning();
+      return application;
+    } catch (error) {
+      const pgErr = error as { code?: string; constraint?: string };
+      if (pgErr.code === '23505' || pgErr.constraint === 'uq_adoption_application') {
+        throw new ConflictError('You have already submitted an application for this post');
+      }
+      throw error;
+    }
   }
 
   /**
