@@ -55,6 +55,7 @@ extend type Mutation {
   Approve an adoption application. Post owner only.
   Fires ADOPTION_APPLICATION_APPROVED notification to applicant.
   Does NOT auto-close the listing — owner calls updatePostStatus(ADOPTED) separately.
+  Note: Multiple APPROVED applications per post are allowed in MVP (owner may shortlist multiple adopters).
   """
   approveAdoptionApplication(applicationId: ID!): AdoptionApplication!
 
