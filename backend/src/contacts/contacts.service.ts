@@ -109,9 +109,12 @@ export class ContactsService {
     if (!request) throw new NotFoundError('ContactRequest', requestId);
 
     const post = await this.postsRepository.findById(request.postId);
-    if (!post) throw new NotFoundError('Post', request.postId);
+    if (!post || post.status === 'REMOVED') throw new NotFoundError('Post', request.postId);
     if (post.creatorId !== ownerId) {
       throw new ForbiddenError('Only the post owner can approve requests');
+    }
+    if (post.status !== 'ACTIVE') {
+      throw new ValidationError('Cannot approve: this post is no longer active');
     }
     if (request.status !== 'PENDING') {
       throw new ValidationError(`Request is already ${request.status}`);
@@ -155,7 +158,7 @@ export class ContactsService {
     if (!request) throw new NotFoundError('ContactRequest', requestId);
 
     const post = await this.postsRepository.findById(request.postId);
-    if (!post) throw new NotFoundError('Post', request.postId);
+    if (!post || post.status === 'REMOVED') throw new NotFoundError('Post', request.postId);
     if (post.creatorId !== ownerId) {
       throw new ForbiddenError('Only the post owner can reject requests');
     }
