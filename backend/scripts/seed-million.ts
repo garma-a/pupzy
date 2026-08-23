@@ -84,7 +84,7 @@ async function seed() {
     for (let i = 0; i < CONFIG.NUM_POSTS; i += CONFIG.BATCH_SIZE) {
       const batchSize = Math.min(CONFIG.BATCH_SIZE, CONFIG.NUM_POSTS - i);
       const batch = Array.from({ length: batchSize }).map(() => {
-        const type = faker.helpers.arrayElement(['RESCUE', 'LOST', 'ADOPTION', 'PRODUCT']);
+        const type = faker.helpers.arrayElement(['RESCUE', 'LOST', 'ADOPTION', 'PRODUCT', 'MATING']);
         const city = faker.helpers.arrayElement(cityEntries);
         return {
           creatorId: faker.helpers.arrayElement(userIds),
@@ -110,6 +110,7 @@ async function seed() {
       const adoptionRows: any[] = [];
       const productRows: any[] = [];
       const lostRows: any[] = [];
+      const matingRows: any[] = [];
 
       for (const item of returned) {
         if (item.postType === 'RESCUE') {
@@ -147,6 +148,20 @@ async function seed() {
             species: faker.helpers.arrayElement(['DOG', 'CAT']),
             dateLastSeen: new Date().toISOString(),
           });
+        } else if (item.postType === 'MATING') {
+          matingRows.push({
+            postId: item.id,
+            petName: faker.person.firstName(),
+            species: faker.helpers.arrayElement(['DOG', 'CAT', 'BIRD', 'OTHER']),
+            breed: faker.animal.dog(),
+            gender: faker.helpers.arrayElement(['MALE', 'FEMALE']),
+            ageValue: faker.number.int({ min: 1, max: 10 }),
+            ageUnit: 'YEARS',
+            isPurebred: faker.datatype.boolean(),
+            hasPedigreeCertificate: faker.datatype.boolean(),
+            vaccinated: true,
+            dewormed: true,
+          });
         }
       }
 
@@ -154,13 +169,14 @@ async function seed() {
       if (adoptionRows.length) await db.insert(schema.adoptionPosts).values(adoptionRows);
       if (productRows.length) await db.insert(schema.productPosts).values(productRows);
       if (lostRows.length) await db.insert(schema.lostPosts).values(lostRows);
+      if (matingRows.length) await db.insert(schema.matingPosts).values(matingRows);
 
       process.stdout.write(`\rProgress: ${i + batchSize} / ${CONFIG.NUM_POSTS}`);
     }
     console.log('');
 
     console.log('⚡ Running PostgreSQL ANALYZE to update query planner statistics...');
-    await db.execute(sql`ANALYZE posts; ANALYZE rescue_posts; ANALYZE adoption_posts; ANALYZE product_posts; ANALYZE lost_posts;`);
+    await db.execute(sql`ANALYZE posts; ANALYZE rescue_posts; ANALYZE adoption_posts; ANALYZE product_posts; ANALYZE lost_posts; ANALYZE mating_posts;`);
 
     console.log('\n🎉 Massive Data seeding completed successfully!');
 
