@@ -17,8 +17,8 @@ import { requestStatusEnum, speciesTypeEnum, genderTypeEnum, livingSituationEnum
  * and the listing owner.
  *
  * ## One application per user per listing
- * The unique constraint `uq_adoption_application` prevents duplicate applications.
- * A rejected applicant cannot re-apply.
+ * The unique constraint `unique_adoption_application_per_post_and_applicant` prevents
+ * duplicate applications. A rejected applicant cannot re-apply.
  *
  * ## Preference fields
  * Species/breed/age/gender preference fields are informational — they describe

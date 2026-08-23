@@ -26,7 +26,7 @@ export class AdoptionsRepository {
       return application;
     } catch (error) {
       const pgErr = error as { code?: string; constraint?: string };
-      if (pgErr.code === '23505' || pgErr.constraint === 'uq_adoption_application') {
+      if (pgErr.code === '23505' || pgErr.constraint === 'unique_adoption_application_per_post_and_applicant') {
         throw new ConflictError('You have already submitted an application for this post');
       }
       throw error;
