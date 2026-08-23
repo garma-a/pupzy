@@ -74,6 +74,7 @@ export class TestDatabaseHelper {
         lost_posts,
         adoption_posts,
         product_posts,
+        mating_posts,
         post_upvotes,
         post_saves,
         contact_requests,
