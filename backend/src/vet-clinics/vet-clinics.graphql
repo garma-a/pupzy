@@ -106,3 +106,7 @@ extend type Post {
   """
   nearestVetClinics: [VetClinic!]!
 }
+
+extend type Query {
+  nearbyVetClinics(cityId: ID!): [VetClinic!]!
+}

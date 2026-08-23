@@ -1,4 +1,4 @@
-import { Resolver, ResolveField, Root, Context } from '@nestjs/graphql';
+import { Resolver, ResolveField, Root, Context, Query, Args } from '@nestjs/graphql';
 import { VetClinicsService, type VetClinicDto } from './vet-clinics.service';
 import type { Post } from '../database/schema';
 import type { GqlContext } from '../common/types/gql-context.type';
@@ -90,4 +90,10 @@ export class VetClinicsResolver {
       longitude,
     });
   }
+
+  @Query('nearbyVetClinics')
+  async nearbyVetClinics(@Args('cityId') cityId: string): Promise<VetClinicDto[]> {
+    return this.vetClinicsService.nearbyVetClinicsForCity(cityId);
+  }
 }
+

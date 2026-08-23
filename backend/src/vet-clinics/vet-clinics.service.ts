@@ -227,4 +227,47 @@ export class VetClinicsService {
       whatsappPhoneUrl: row.phoneNumber ? `https://wa.me/${row.phoneNumber.replace(/^\+/, '')}` : null,
     };
   };
+
+  /**
+   * nearbyVetClinicsForCity
+   *
+   * Returns up to 15 nearest active vet clinics to the given city's center_point.
+   * This backs the standalone Query.nearbyVetClinics endpoint for the browse screen.
+   *
+   * Cached per city for 24 hours. Uses a distinct cache key (`vet:city:list:{cityId}`)
+   * to avoid colliding with the 3-item limit cache (`vet:city:{cityId}`) used by post details.
+   */
+  async nearbyVetClinicsForCity(cityId: string): Promise<VetClinicDto[]> {
+    const key = `vet:city:list:${cityId}`;
+
+    // ── Cache get ───────────────────────────────────────────────────────────
+    try {
+      const cached = await this.cacheManager.get<VetClinicDto[]>(key);
+      if (cached) {
+        this.logger.debug({ cityId }, 'vet:city:list cache hit');
+        return cached;
+      }
+    } catch (error) {
+      this.logger.warn(
+        { key, err: error instanceof Error ? error.message : String(error) },
+        'Cache GET failed for vet:city:list key',
+      );
+    }
+
+    // ── DB query ────────────────────────────────────────────────────────────
+    const rows = await this.vetClinicsRepository.findNearestForCity(cityId, 15);
+    const dtos = rows.map(this.proximityResultToDto);
+
+    // ── Cache set ───────────────────────────────────────────────────────────
+    try {
+      await this.cacheManager.set(key, dtos, CITY_CACHE_TTL_MILLISECONDS);
+    } catch (error) {
+      this.logger.warn(
+        { key, err: error instanceof Error ? error.message : String(error) },
+        'Cache SET failed for vet:city:list key',
+      );
+    }
+
+    return dtos;
+  }
 }

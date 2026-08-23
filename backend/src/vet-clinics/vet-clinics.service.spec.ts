@@ -144,4 +144,61 @@ describe('VetClinicsService', () => {
     expect(result).toHaveLength(1);
     expect(mockRepository.findNearest).toHaveBeenCalledWith(30.0444, 31.2357);
   });
+
+  it('returns up to 15 clinics for nearbyVetClinicsForCity with its own cache key', async () => {
+    mockRepository.findNearestForCity = jest.fn().mockResolvedValue([mockClinicResult]);
+
+    const result = await service.nearbyVetClinicsForCity('city-cairo');
+
+    expect(mockCacheManager.get).toHaveBeenCalledWith('vet:city:list:city-cairo');
+    expect(mockRepository.findNearestForCity).toHaveBeenCalledWith('city-cairo', 15);
+    expect(mockCacheManager.set).toHaveBeenCalledWith('vet:city:list:city-cairo', expect.any(Array), 86_400_000);
+    expect(result).toHaveLength(1);
+  });
+
+  it('returns cached data for nearbyVetClinicsForCity without querying DB', async () => {
+    const cachedDto = {
+      id: 'clinic-1',
+      nameEnglish: 'Cached Clinic',
+      nameArabic: null,
+      phoneNumber: null,
+      address: null,
+      website: null,
+      latitude: 29.96,
+      longitude: 31.25,
+      distanceKm: 0.5,
+      googleMapsUrl: 'https://maps.google.com/?q=29.96,31.25',
+      whatsappPhoneUrl: null,
+    };
+    mockCacheManager.get = jest.fn().mockResolvedValue([cachedDto]);
+
+    const result = await service.nearbyVetClinicsForCity('city-cairo');
+
+    expect(result).toEqual([cachedDto]);
+    expect(mockRepository.findNearestForCity).not.toHaveBeenCalled();
+  });
+
+  it('falls back to DB when cache GET fails for nearbyVetClinicsForCity', async () => {
+    mockCacheManager.get = jest.fn().mockRejectedValue(new Error('Redis connection error'));
+    mockRepository.findNearestForCity = jest.fn().mockResolvedValue([mockClinicResult]);
+
+    const result = await service.nearbyVetClinicsForCity('city-cairo');
+
+    expect(result).toHaveLength(1);
+    expect(mockRepository.findNearestForCity).toHaveBeenCalledWith('city-cairo', 15);
+  });
+
+  it('uses a cache key distinct from the per-post ADOPTION/MATING city cache', async () => {
+    mockRepository.findNearestForCity = jest.fn().mockResolvedValue([mockClinicResult]);
+
+    await service.nearbyVetClinicsForCity('city-cairo');
+
+    // Guards against the two features accidentally sharing a Redis key —
+    // nearestVetClinicsForPost's ADOPTION/MATING path uses 'vet:city:{id}'
+    // (see the test above: 'routes ADOPTION posts to findNearestForCity...'),
+    // this standalone query must use a different key so a 3-result post-detail
+    // cache entry and a 15-result browse-screen cache entry never collide.
+    expect(mockCacheManager.get).toHaveBeenCalledWith('vet:city:list:city-cairo');
+    expect(mockCacheManager.get).not.toHaveBeenCalledWith('vet:city:city-cairo');
+  });
 });
