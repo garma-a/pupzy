@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
     "module": "nodenext",
+    /* Restricts ambient global type inclusion to node + jest only. Verified safe as of
+       this comment — every other @types package in this project (express, helmet, pg,
+       supertest) is consumed via explicit `import type` statements, not ambient globals. */
     "types": ["node", "jest"],
     "moduleResolution": "nodenext",
     "resolvePackageJsonExports": true,
