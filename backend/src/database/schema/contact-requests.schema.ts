@@ -21,8 +21,8 @@ import { requestStatusEnum } from './enums';
  * 6. Flutter opens WhatsApp via `url_launcher`.
  *
  * ## One request per user per post
- * The unique constraint `uq_contact_request` prevents a rejected requester from
- * re-applying by spamming new requests.
+ * The unique constraint `unique_contact_request_per_post_and_requester` prevents
+ * a rejected requester from re-applying by spamming new requests.
  */
 export const contactRequests = pgTable(
   'contact_requests',

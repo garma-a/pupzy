@@ -18,9 +18,10 @@ export class ContactsRepository {
   ) {}
 
   /**
-   * Creates a new contact request. The DB unique constraint (uq_contact_request)
-   * is the real duplicate protection; the 23505 it raises on a double-tap race
-   * is mapped here to a clean ConflictError instead of a 500.
+   * Creates a new contact request. The DB unique constraint
+   * (unique_contact_request_per_post_and_requester) is the real duplicate
+   * protection; the 23505 it raises on a double-tap race is mapped here to a
+   * clean ConflictError instead of a 500.
    */
   async create(data: NewContactRequest): Promise<ContactRequest> {
     try {
@@ -28,7 +29,7 @@ export class ContactsRepository {
       return request;
     } catch (error) {
       const pgErr = error as { code?: string; constraint?: string };
-      if (pgErr.code === '23505' || pgErr.constraint === 'uq_contact_request') {
+      if (pgErr.code === '23505' || pgErr.constraint === 'unique_contact_request_per_post_and_requester') {
         throw new ConflictError('You have already sent a contact request for this post');
       }
       throw error;
