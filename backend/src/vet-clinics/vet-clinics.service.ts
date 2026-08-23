@@ -77,6 +77,7 @@ export class VetClinicsService {
    * | RESCUE   | post GPS  | vet:post:{id}   | 1h   |
    * | LOST     | post GPS  | vet:post:{id}   | 1h   |
    * | ADOPTION | city CTR  | vet:city:{id}   | 24h  |
+   * | MATING   | city CTR  | vet:city:{id}   | 24h  |
    * | PRODUCT  | —         | (no cache/query)| N/A  |
    *
    * ## Cache failures
@@ -165,10 +166,10 @@ export class VetClinicsService {
   }
 
   /**
-   * Cache-aside for ADOPTION posts (city-level granularity).
+   * Cache-aside for ADOPTION and MATING posts (city-level granularity).
    * Key: vet:city:{cityId}  TTL: 24 hours
    *
-   * All adoption posts in the same city share the same cache entry.
+   * All adoption and mating posts in the same city share the same cache entry.
    * This is the primary cache optimization — adoption is the most common
    * post type likely to display this field.
    */
