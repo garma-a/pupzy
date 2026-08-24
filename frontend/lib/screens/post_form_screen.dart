@@ -45,13 +45,22 @@ class _PostFormScreenState extends State<PostFormScreen> {
   String? _selectedCategory;
 
   String? _species;
-  String? _urgency;
   String? _role;
   String? _condition;
   bool _isFree = false;
   bool _openToOffers = false;
   bool _hasCollarWithIdTag = false;
   DateTime? _dateLastSeen;
+  // RESCUE urgency signals — the server computes posts.urgency from these
+  // rather than trusting a client-picked severity tier.
+  bool _isLifeThreatening = false;
+  bool _hasVisibleSeriousInjury = false;
+  bool _isInDangerousLocation = false;
+  bool _canAnimalMoveOrEscape = true;
+  // LOST_PET urgency signals — same idea, different questions.
+  bool _hasMedicalNeeds = false;
+  bool _isElderlyOrVeryYoung = false;
+  bool _lastSeenNearHazard = false;
   String? _gender;
   bool _vaccinated = false;
   bool _neutered = false;
@@ -65,12 +74,6 @@ class _PostFormScreenState extends State<PostFormScreen> {
     ('DOG', 'Dog', 'كلب'),
     ('CAT', 'Cat', 'قطة'),
     ('OTHER', 'Other', 'أخرى'),
-  ];
-
-  static const List<Choice> _urgencyOptions = [
-    ('CRITICAL', 'Critical — needs help now', 'حرجة — تحتاج مساعدة فورية'),
-    ('URGENT', 'Urgent — needs help soon', 'عاجلة — تحتاج مساعدة قريبًا'),
-    ('MODERATE', 'Moderate — stable but needs care', 'متوسطة — مستقرة لكن تحتاج رعاية'),
   ];
 
   static const List<Choice> _roleOptions = [
@@ -189,7 +192,6 @@ class _PostFormScreenState extends State<PostFormScreen> {
     return _images.isNotEmpty &&
         _species != null &&
         _conditionController.text.trim().length >= 10 &&
-        _urgency != null &&
         _neighborhoodController.text.trim().isNotEmpty &&
         _role != null;
   }
@@ -359,7 +361,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       final landmark = _landmarkController.text.trim();
       final areaName = landmark.isEmpty ? neighborhood : '$neighborhood — near $landmark';
 
-      final result = await graphql.createProductPost(
+      final (result, errorMessage) = await graphql.createProductPost(
         title: _productTitleController.text.trim(),
         description: _captionController.text.trim(),
         latitude: position.latitude,
@@ -379,7 +381,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         if (mounted) Navigator.of(context).pop();
       } else {
         Fluttertoast.showToast(
-          msg: t(context, 'Failed to post listing', 'فشل نشر الإعلان'),
+          msg: errorMessage ?? t(context, 'Failed to post listing', 'فشل نشر الإعلان'),
           backgroundColor: AppColors.critical,
           textColor: Colors.white,
         );
@@ -427,19 +429,21 @@ class _PostFormScreenState extends State<PostFormScreen> {
       final landmark = _landmarkController.text.trim();
       final areaName = landmark.isEmpty ? neighborhood : '$neighborhood — near $landmark';
       final condition = _conditionController.text.trim();
-      final urgencyLabel = _labelFor(_urgencyOptions, _urgency!);
       final speciesLabel = _labelFor(_speciesOptions, _species!);
 
-      final result = await graphql.createRescuePost(
-        title: '$urgencyLabel ${t(context, 'rescue', 'إنقاذ')}: $speciesLabel',
+      final (result, errorMessage) = await graphql.createRescuePost(
+        title: '${t(context, 'Rescue', 'إنقاذ')}: $speciesLabel',
         description: condition,
         latitude: position.latitude,
         longitude: position.longitude,
         areaName: areaName.isEmpty ? null : areaName,
-        urgency: _urgency!,
         species: _species!,
         conditionSummary: condition,
         reporterRole: _role!,
+        isLifeThreatening: _isLifeThreatening,
+        hasVisibleSeriousInjury: _hasVisibleSeriousInjury,
+        isInDangerousLocation: _isInDangerousLocation,
+        canAnimalMoveOrEscape: _canAnimalMoveOrEscape,
         mediaIds: mediaIds,
       );
       if (!mounted) return;
@@ -449,7 +453,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         if (mounted) Navigator.of(context).pop();
       } else {
         Fluttertoast.showToast(
-          msg: t(context, 'Failed to post rescue alert', 'فشل نشر تنبيه الإنقاذ'),
+          msg: errorMessage ?? t(context, 'Failed to post rescue alert', 'فشل نشر تنبيه الإنقاذ'),
           backgroundColor: AppColors.critical,
           textColor: Colors.white,
         );
@@ -497,13 +501,12 @@ class _PostFormScreenState extends State<PostFormScreen> {
       final speciesLabel = _labelFor(_speciesOptions, _species!);
       final circumstances = _circumstancesController.text.trim();
 
-      final result = await graphql.createLostPost(
+      final (result, errorMessage) = await graphql.createLostPost(
         title: '${t(context, 'Lost', 'مفقود')} $speciesLabel: $petName',
         description: circumstances,
         latitude: position.latitude,
         longitude: position.longitude,
         areaName: _approximateAreaController.text.trim(),
-        urgency: 'URGENT',
         reportType: 'LOST_PET',
         species: _species!,
         breed: _breedController.text.trim(),
@@ -512,6 +515,9 @@ class _PostFormScreenState extends State<PostFormScreen> {
         circumstances: circumstances,
         petName: petName,
         dateLastSeen: _dateLastSeen != null ? _isoDate(_dateLastSeen!) : null,
+        hasMedicalNeeds: _hasMedicalNeeds,
+        isElderlyOrVeryYoung: _isElderlyOrVeryYoung,
+        lastSeenNearHazard: _lastSeenNearHazard,
         mediaIds: mediaIds,
       );
       if (!mounted) return;
@@ -521,7 +527,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         if (mounted) Navigator.of(context).pop();
       } else {
         Fluttertoast.showToast(
-          msg: t(context, 'Failed to post report', 'فشل نشر البلاغ'),
+          msg: errorMessage ?? t(context, 'Failed to post report', 'فشل نشر البلاغ'),
           backgroundColor: AppColors.critical,
           textColor: Colors.white,
         );
@@ -577,7 +583,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
           '$petName ${t(context, 'is a', 'هو')} $ageText$genderLabel $speciesLabel$breedText '
           '${t(context, 'looking for a loving home.', 'يبحث عن منزل محب.')}';
 
-      final result = await graphql.createAdoptionPost(
+      final (result, errorMessage) = await graphql.createAdoptionPost(
         title: '${t(context, 'Adoption', 'تبني')}: $petName',
         description: description,
         latitude: position.latitude,
@@ -606,7 +612,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         if (mounted) Navigator.of(context).pop();
       } else {
         Fluttertoast.showToast(
-          msg: t(context, 'Failed to post listing', 'فشل نشر الإعلان'),
+          msg: errorMessage ?? t(context, 'Failed to post listing', 'فشل نشر الإعلان'),
           backgroundColor: AppColors.critical,
           textColor: Colors.white,
         );
@@ -775,31 +781,34 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Urgency level', 'مستوى الخطورة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: [
-                      _UrgencyChoice(
-                        label: t(context, _urgencyOptions[0].$2, _urgencyOptions[0].$3),
-                        selected: _urgency == 'CRITICAL',
-                        color: AppColors.critical,
-                        onTap: () => setState(() => _urgency = 'CRITICAL'),
-                      ),
-                      _UrgencyChoice(
-                        label: t(context, _urgencyOptions[1].$2, _urgencyOptions[1].$3),
-                        selected: _urgency == 'URGENT',
-                        color: AppColors.primary,
-                        onTap: () => setState(() => _urgency = 'URGENT'),
-                      ),
-                      _UrgencyChoice(
-                        label: t(context, _urgencyOptions[2].$2, _urgencyOptions[2].$3),
-                        selected: _urgency == 'MODERATE',
-                        color: AppColors.textSecondary,
-                        onTap: () => setState(() => _urgency = 'MODERATE'),
-                      ),
-                    ],
+                  Text(t(context, 'Situation check', 'تقييم الحالة'), style: Theme.of(context).textTheme.labelLarge),
+                  Text(
+                    t(context, "We use these answers to set the rescue's urgency.", 'نستخدم هذه الإجابات لتحديد مدى إلحاح الإنقاذ.'),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(t(context, "Animal's life is in immediate danger", 'حياة الحيوان في خطر مباشر')),
+                    value: _isLifeThreatening,
+                    onChanged: (v) => setState(() => _isLifeThreatening = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(t(context, 'Visible serious injury (heavy bleeding, broken bone, can\'t stand)', 'إصابة خطيرة واضحة (نزيف شديد، كسر، لا يستطيع الوقوف)')),
+                    value: _hasVisibleSeriousInjury,
+                    onChanged: (v) => setState(() => _hasVisibleSeriousInjury = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(t(context, 'In a dangerous location right now (road, construction, trapped)', 'في موقع خطر الآن (طريق، موقع بناء، محاصر)')),
+                    value: _isInDangerousLocation,
+                    onChanged: (v) => setState(() => _isInDangerousLocation = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(t(context, 'Animal can move or escape on its own', 'يستطيع الحيوان الحركة أو الهرب بمفرده')),
+                    value: _canAnimalMoveOrEscape,
+                    onChanged: (v) => setState(() => _canAnimalMoveOrEscape = v),
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   _SectionLabel(t(context, 'LOCATION', 'الموقع')),
@@ -1083,6 +1092,30 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     decoration: _fieldDecoration(
                       t(context, 'Describe when and how your pet went missing...', 'صف متى وكيف فُقد حيوانك الأليف...'),
                     ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(t(context, 'Situation check', 'تقييم الحالة'), style: Theme.of(context).textTheme.labelLarge),
+                  Text(
+                    t(context, 'We use these answers to set how urgent this report is.', 'نستخدم هذه الإجابات لتحديد مدى إلحاح هذا البلاغ.'),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(t(context, 'Needs regular medication or has a medical condition', 'يحتاج دواء منتظم أو لديه حالة طبية')),
+                    value: _hasMedicalNeeds,
+                    onChanged: (v) => setState(() => _hasMedicalNeeds = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(t(context, 'Elderly or very young', 'كبير في السن أو صغير جدًا')),
+                    value: _isElderlyOrVeryYoung,
+                    onChanged: (v) => setState(() => _isElderlyOrVeryYoung = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(t(context, 'Last seen near a busy road, canal, or other hazard', 'شوهد آخر مرة قرب طريق مزدحم أو ترعة أو خطر آخر')),
+                    value: _lastSeenNearHazard,
+                    onChanged: (v) => setState(() => _lastSeenNearHazard = v),
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   Center(
@@ -1705,37 +1738,6 @@ class _PillChoice extends StatelessWidget {
   }
 }
 
-class _UrgencyChoice extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final Color color;
-  final VoidCallback onTap;
-  const _UrgencyChoice({required this.label, required this.selected, required this.color, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.15) : AppColors.surfaceWarm,
-          borderRadius: BorderRadius.circular(AppRadius.chip),
-          border: Border.all(color: selected ? color : Colors.transparent),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? color : AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _RoleChoice extends StatelessWidget {
   final String label;
   final bool selected;
@@ -1767,374 +1769,3 @@ class _RoleChoice extends StatelessWidget {
   }
 }
 
-/// Responsible Matching intake form.
-///
-/// There is no backend mutation for this yet — [AdoptionApplication] exists
-/// only as a read type and a DB table, with no resolver to create one, and
-/// its shape is per-listing (`targetPostId`) while this screen collects
-/// general preferences with no specific pet targeted. This screen is a
-/// working local-only mockup: submitting shows a confirmation and closes,
-/// nothing is sent to the server.
-class AdoptionMatchingScreen extends StatefulWidget {
-  const AdoptionMatchingScreen({super.key});
-
-  @override
-  State<AdoptionMatchingScreen> createState() => _AdoptionMatchingScreenState();
-}
-
-class _AdoptionMatchingScreenState extends State<AdoptionMatchingScreen> {
-  static const Color _matchingAccent = Color(0xFF8E7CC3);
-
-  static const List<Choice> _speciesPrefOptions = [
-    ('CAT', 'Cat', 'قطة'),
-    ('DOG', 'Dog', 'كلب'),
-    ('EITHER', 'Either', 'كلاهما'),
-  ];
-
-  static const List<Choice> _agePrefOptions = [
-    ('KITTEN_PUPPY', 'Kitten / Puppy', 'صغير'),
-    ('YOUNG_ADULT', 'Young adult', 'شاب'),
-    ('ADULT', 'Adult', 'بالغ'),
-    ('SENIOR', 'Senior', 'كبير السن'),
-    ('NO_PREFERENCE', 'No preference', 'لا تفضيل'),
-  ];
-
-  static const List<Choice> _genderPrefOptions = [
-    ('NO_PREFERENCE', 'No preference', 'لا تفضيل'),
-    ('FEMALE', 'Female', 'أنثى'),
-    ('MALE', 'Male', 'ذكر'),
-  ];
-
-  static const List<Choice> _livingSituationOptions = [
-    ('APARTMENT', 'Apartment', 'شقة'),
-    ('HOUSE_WITH_GARDEN', 'House with garden', 'منزل بحديقة'),
-    ('HOUSE_WITH_LARGE_GARDEN', 'House with large garden', 'منزل بحديقة كبيرة'),
-  ];
-
-  static const List<Choice> _experienceOptions = [
-    ('FIRST_TIME', 'First time owner', 'مالك لأول مرة'),
-    ('SOME', 'Some experience', 'بعض الخبرة'),
-    ('VERY', 'Very experienced', 'خبرة كبيرة'),
-  ];
-
-  final TextEditingController _breedPrefController = TextEditingController();
-  final TextEditingController _hoursAtHomeController = TextEditingController();
-  final TextEditingController _whyAdoptController = TextEditingController();
-
-  String? _speciesPref;
-  String? _agePref;
-  String? _genderPref;
-  String? _livingSituation;
-  bool _hasOutdoorAccess = false;
-  bool _hasOtherPets = false;
-  bool _hasChildren = false;
-  String? _experience;
-  bool _consentHomeVisit = false;
-  bool _canProvideVetReference = false;
-  bool _submitting = false;
-
-  @override
-  void dispose() {
-    _breedPrefController.dispose();
-    _hoursAtHomeController.dispose();
-    _whyAdoptController.dispose();
-    super.dispose();
-  }
-
-  bool get _formValid {
-    return _speciesPref != null &&
-        _livingSituation != null &&
-        _experience != null &&
-        _whyAdoptController.text.trim().isNotEmpty;
-  }
-
-  Future<void> _submit() async {
-    if (!_formValid || _submitting) return;
-    setState(() => _submitting = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
-    setState(() => _submitting = false);
-    Fluttertoast.showToast(
-      msg: t(
-        context,
-        "Application submitted! We'll review it within 2–5 business days.",
-        'تم إرسال الطلب! سنراجعه خلال 2-5 أيام عمل.',
-      ),
-      backgroundColor: _matchingAccent,
-      textColor: Colors.white,
-    );
-    Navigator.of(context).pop(true);
-  }
-
-  InputDecoration _fieldDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 14),
-      filled: true,
-      fillColor: AppColors.surfaceWarm,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        borderSide: BorderSide.none,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
-              child: Row(
-                children: [
-                  _BackCircle(onTap: () => Navigator.of(context).pop()),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(t(context, 'Responsible Matching', 'مطابقة مسؤولة'), style: Theme.of(context).textTheme.headlineMedium),
-                        Text(
-                          t(context, 'Apply to adopt — verified & screened', 'قدّم طلب تبني — عملية موثوقة وفرز دقيق'),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Divider(height: 1, color: AppColors.border),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    decoration: BoxDecoration(
-                      color: _matchingAccent.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(AppRadius.card),
-                      border: Border.all(color: _matchingAccent.withValues(alpha: 0.25)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          t(context, 'Responsible Matching', 'مطابقة مسؤولة'),
-                          style: TextStyle(color: _matchingAccent, fontWeight: FontWeight.w700, fontSize: 15),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          t(
-                            context,
-                            'This process verifies adopters through a home profile review, optional home visit, and vet reference check. Applications are reviewed within 2–5 business days.',
-                            'تتحقق هذه العملية من المتبنين عبر مراجعة الملف المنزلي، وزيارة منزلية اختيارية، وفحص مرجع بيطري. تتم مراجعة الطلبات خلال 2-5 أيام عمل.',
-                          ),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, "I'M LOOKING FOR", 'أبحث عن')),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(t(context, 'Species preference', 'تفضيل النوع'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    children: _speciesPrefOptions.map((s) {
-                      return _PillChoice(
-                        label: t(context, s.$2, s.$3),
-                        selected: _speciesPref == s.$1,
-                        onTap: () => setState(() => _speciesPref = s.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Breed preference', 'تفضيل السلالة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _breedPrefController,
-                    decoration: _fieldDecoration(t(context, 'Leave blank if flexible', 'اتركه فارغًا إذا كنت مرنًا')),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Age preference', 'تفضيل العمر'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: _agePrefOptions.map((a) {
-                      return _PillChoice(
-                        label: t(context, a.$2, a.$3),
-                        selected: _agePref == a.$1,
-                        onTap: () => setState(() => _agePref = a.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Gender preference', 'تفضيل الجنس'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    children: _genderPrefOptions.map((g) {
-                      return _PillChoice(
-                        label: t(context, g.$2, g.$3),
-                        selected: _genderPref == g.$1,
-                        onTap: () => setState(() => _genderPref = g.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'YOUR HOME & LIFESTYLE', 'منزلك وأسلوب حياتك')),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(t(context, 'Living situation', 'الوضع السكني'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: _livingSituationOptions.map((l) {
-                      return _PillChoice(
-                        label: t(context, l.$2, l.$3),
-                        selected: _livingSituation == l.$1,
-                        onTap: () => setState(() => _livingSituation = l.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Has outdoor access', 'لديه وصول لمساحة خارجية')),
-                    value: _hasOutdoorAccess,
-                    onChanged: (v) => setState(() => _hasOutdoorAccess = v),
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Other pets at home', 'حيوانات أخرى في المنزل')),
-                    subtitle: Text(t(context, 'You can describe them below', 'يمكنك وصفها أدناه')),
-                    value: _hasOtherPets,
-                    onChanged: (v) => setState(() => _hasOtherPets = v),
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Children at home', 'أطفال في المنزل')),
-                    subtitle: Text(t(context, 'Ages help us match appropriately', 'الأعمار تساعدنا في المطابقة المناسبة')),
-                    value: _hasChildren,
-                    onChanged: (v) => setState(() => _hasChildren = v),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    t(context, 'Hours at home per day (approx.)', 'ساعات التواجد بالمنزل يوميًا (تقريبًا)'),
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _hoursAtHomeController,
-                    keyboardType: TextInputType.number,
-                    decoration: _fieldDecoration(t(context, 'e.g. 8 hours', 'مثال: 8 ساعات')),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'YOUR EXPERIENCE', 'خبرتك')),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(t(context, 'Previous pet experience', 'خبرة سابقة مع الحيوانات'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: _experienceOptions.map((e) {
-                      return _PillChoice(
-                        label: t(context, e.$2, e.$3),
-                        selected: _experience == e.$1,
-                        onTap: () => setState(() => _experience = e.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Why do you want to adopt?', 'لماذا تريد التبني؟'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _whyAdoptController,
-                    maxLines: 3,
-                    onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration(
-                      t(context, 'Tell us about your motivation and what you can offer...', 'أخبرنا عن دافعك وما يمكنك تقديمه...'),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'SCREENING CONSENT', 'موافقة الفرز')),
-                  const SizedBox(height: AppSpacing.md),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'I consent to a home visit', 'أوافق على زيارة منزلية')),
-                    subtitle: Text(t(context, 'Optional but preferred by foster families', 'اختيارية لكنها مفضّلة لدى الأسر الحاضنة')),
-                    value: _consentHomeVisit,
-                    onChanged: (v) => setState(() => _consentHomeVisit = v),
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'I can provide a vet reference', 'يمكنني تقديم مرجع بيطري')),
-                    subtitle: Text(t(context, 'Or willingness to register with a local vet', 'أو الاستعداد للتسجيل لدى بيطري محلي')),
-                    value: _canProvideVetReference,
-                    onChanged: (v) => setState(() => _canProvideVetReference = v),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceWarm,
-                      borderRadius: BorderRadius.circular(AppRadius.card),
-                    ),
-                    child: Text(
-                      t(
-                        context,
-                        'Your information is reviewed by the Pupzy verification team only. It is never shared with third parties or displayed publicly.',
-                        'يتم مراجعة معلوماتك من قِبل فريق التحقق في Pupzy فقط. لا تتم مشاركتها أبدًا مع أطراف ثالثة أو عرضها للعامة.',
-                      ),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  Center(
-                    child: Text(
-                      t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر'),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: (_formValid && !_submitting) ? _submit : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _matchingAccent,
-                        disabledBackgroundColor: _matchingAccent.withValues(alpha: 0.35),
-                      ),
-                      child: _submitting
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                            )
-                          : Text(t(context, 'Submit Application', 'إرسال الطلب')),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

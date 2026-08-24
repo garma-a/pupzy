@@ -12,7 +12,6 @@ class NewPostSheet extends StatelessWidget {
 
   static const Color _lostPetAccent = Color(0xFFE08A2E);
   static const Color _adoptionAccent = Color(0xFFB08C3A);
-  static const Color _matchingAccent = Color(0xFF8E7CC3);
   static const Color _productAccent = Color(0xFF5B8DEF);
 
   @override
@@ -105,15 +104,6 @@ class NewPostSheet extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             _TypeOption(
               index: 3,
-              icon: Icons.shield_outlined,
-              accent: _matchingAccent,
-              title: t(context, 'Responsible Matching', 'مطابقة مسؤولة'),
-              subtitle: t(context, 'Apply to adopt — verified process', 'قدّم طلب تبني — عملية موثوقة'),
-              onTap: () => _openMatchingForm(context),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            _TypeOption(
-              index: 4,
               icon: Icons.shopping_bag_outlined,
               accent: _productAccent,
               title: t(context, 'List a Product', 'إضافة منتج'),
@@ -136,15 +126,6 @@ class NewPostSheet extends StatelessWidget {
         builder: (_) => PostFormScreen(type: type, initialCategory: initialCategory),
       ),
     );
-  }
-
-  Future<void> _openMatchingForm(BuildContext context) async {
-    final submitted = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const AdoptionMatchingScreen()),
-    );
-    if (submitted == true && context.mounted) {
-      Navigator.of(context).pop('adopt');
-    }
   }
 }
 

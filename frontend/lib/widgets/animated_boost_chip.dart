@@ -95,12 +95,13 @@ class _AnimatedBoostChipState extends State<AnimatedBoostChip> with SingleTicker
         onTap: _handleTap,
         child: ScaleTransition(
           scale: _scale,
-          child: Container(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
             padding: widget.padding,
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: _boosted ? widget.activeColor.withValues(alpha: 0.12) : AppColors.background,
               borderRadius: BorderRadius.circular(AppRadius.chip),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: _boosted ? widget.activeColor : AppColors.border),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

@@ -35,20 +35,27 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _controller.forward();
 
-    Future.delayed(const Duration(milliseconds: 2200), _navigate);
+    // Navigate as soon as both the auth chain AND a short minimum splash
+    // time are done — whichever finishes last — instead of always waiting
+    // out a fixed delay. An already-authenticated, fast-network user isn't
+    // taxed on every single cold start; a fresh sign-in still gets a brief,
+    // non-flashy splash instead of an abrupt cut.
+    Future.wait([
+      _resolveDestination(),
+      Future.delayed(const Duration(milliseconds: 500)),
+    ]).then((results) {
+      if (mounted) _goTo(results[0] as Widget);
+    });
   }
 
-  Future<void> _navigate() async {
-    if (!mounted) return;
-
+  Future<Widget> _resolveDestination() async {
     User? user;
     try {
       user = FirebaseAuth.instance.currentUser;
     } catch (_) {}
 
     if (user == null) {
-      _goTo(const LoginScreen());
-      return;
+      return const LoginScreen();
     }
 
     final authService = context.read<AuthService>();
@@ -64,38 +71,33 @@ class _SplashScreenState extends State<SplashScreen>
     } catch (_) {
       // Token invalid (user deleted from Firebase) — sign out and go to login
       await authService.signOut();
-      if (mounted) _goTo(const LoginScreen());
-      return;
+      return const LoginScreen();
     }
-    if (!mounted) return;
 
     if (user == null) {
-      _goTo(const LoginScreen());
-      return;
+      return const LoginScreen();
     }
 
     // An unverified email/password account can't call the backend at all
     // (it rejects with EMAIL_NOT_VERIFIED) — send them straight to the
     // "verify your email" screen instead of a doomed fetchMe() call.
     if (!user.emailVerified) {
-      _goTo(LoginScreen(pendingVerificationEmail: user.email));
-      return;
+      return LoginScreen(pendingVerificationEmail: user.email);
     }
 
     try {
+      if (!mounted) return const LoginScreen();
       final graphql = context.read<GraphQLService>();
       final me = await graphql.fetchMe();
-      if (!mounted) return;
 
       if (me == null) {
-        _goTo(const LoginScreen());
-        return;
+        return const LoginScreen();
       }
 
       final profileComplete = me['profileComplete'] == true;
-      _goTo(profileComplete ? const AppShell() : const CompleteProfileScreen());
+      return profileComplete ? const AppShell() : const CompleteProfileScreen();
     } catch (_) {
-      if (mounted) _goTo(const LoginScreen());
+      return const LoginScreen();
     }
   }
 

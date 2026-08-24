@@ -11,6 +11,7 @@ import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import 'contact_requests_screen.dart';
 import 'login_screen.dart';
+import 'my_posts_screen.dart';
 
 class ProfileSheet extends StatefulWidget {
   const ProfileSheet({super.key});
@@ -357,6 +358,14 @@ class _ProfileSheetState extends State<ProfileSheet> {
                     icon: Icons.person_outline,
                     label: t(context, 'Edit profile', 'تعديل الملف الشخصي'),
                     onTap: () => _showEditProfile(),
+                  ),
+                  const Divider(height: 1, indent: 48),
+                  _SettingsRow(
+                    icon: Icons.grid_view_outlined,
+                    label: t(context, 'My Posts', 'منشوراتي'),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const MyPostsScreen()),
+                    ),
                   ),
                   const Divider(height: 1, indent: 48),
                   _SettingsRow(

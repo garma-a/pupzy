@@ -6,7 +6,9 @@ import '../models/adoption_application.dart';
 import '../models/app_notification.dart';
 import '../models/contact_request.dart';
 import '../models/feed_post.dart';
+import '../models/mating_detail.dart';
 import '../models/post_detail.dart';
+import '../models/vet_clinic.dart';
 import 'auth_service.dart';
 
 class GraphQLService {
@@ -72,6 +74,24 @@ class GraphQLService {
         nameEnglish
         nameArabic
         governorate
+      }
+    }
+  ''';
+
+  static const String nearbyVetClinicsQuery = r'''
+    query NearbyVetClinics($cityId: ID!) {
+      nearbyVetClinics(cityId: $cityId) {
+        id
+        nameEnglish
+        nameArabic
+        phoneNumber
+        address
+        website
+        latitude
+        longitude
+        distanceKm
+        googleMapsUrl
+        whatsappPhoneUrl
       }
     }
   ''';
@@ -226,6 +246,96 @@ class GraphQLService {
   static final String marketFeedQuery = '''
     query MarketFeed(\$governorate: String!, \$cityId: ID, \$viewerLocation: ViewerLocationInput, \$radiusKm: Float, \$category: ProductCategory, \$sort: MarketFeedSort, \$first: Int, \$after: String) {
       marketFeed(governorate: \$governorate, cityId: \$cityId, viewerLocation: \$viewerLocation, radiusKm: \$radiusKm, category: \$category, sort: \$sort, first: \$first, after: \$after) {
+        $_feedConnectionFields
+      }
+    }
+  ''';
+
+  /// Field selection for MatingPostConnection edges — same node shape as
+  /// _feedConnectionFields, minus `distanceKm` (MatingPostEdge has no
+  /// distance field; mating listings aren't filtered by radius).
+  static const String _matingConnectionFields = r'''
+    edges {
+      cursor
+      node {
+        id
+        postType
+        title
+        description
+        status
+        areaName
+        marketCategory
+        upvoteCount
+        saveCount
+        viewCount
+        isUpvotedByMe
+        isSavedByMe
+        createdAt
+        city {
+          id
+          nameEnglish
+          nameArabic
+          governorate
+        }
+        media {
+          publicUrl
+          displayOrder
+        }
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  ''';
+
+  static final String matingFeedQuery = '''
+    query MatingFeed(\$filter: MatingFeedFilter, \$first: Int, \$after: String) {
+      matingFeed(filter: \$filter, first: \$first, after: \$after) {
+        $_matingConnectionFields
+      }
+    }
+  ''';
+
+  static const String matingPostDetailQuery = r'''
+    query MatingPostDetail($postId: ID!) {
+      matingPostDetail(postId: $postId) {
+        petName
+        species
+        breed
+        gender
+        ageValue
+        ageUnit
+        isPurebred
+        hasPedigreeCertificate
+        vaccinated
+        dewormed
+        termsSummary
+        matingConditions
+      }
+    }
+  ''';
+
+  static const String createMatingPostMutation = r'''
+    mutation CreateMatingPost($input: CreateMatingPostInput!) {
+      createMatingPost(input: $input) {
+        id
+        title
+      }
+    }
+  ''';
+
+  static final String mySavedPostsQuery = '''
+    query MySavedPosts(\$first: Int, \$after: String) {
+      mySavedPosts(first: \$first, after: \$after) {
+        $_feedConnectionFields
+      }
+    }
+  ''';
+
+  static final String myPostsQuery = '''
+    query MyPosts(\$postType: PostType!, \$first: Int, \$after: String) {
+      myPosts(postType: \$postType, first: \$first, after: \$after) {
         $_feedConnectionFields
       }
     }
@@ -615,6 +725,26 @@ class GraphQLService {
     return list?.cast<Map<String, dynamic>>() ?? [];
   }
 
+  /// Fetches up to 15 vet clinics nearest to a city's center, sorted by
+  /// distance — used by the Home "Vets near you" sheet and its "View all
+  /// vets" screen.
+  Future<(List<VetClinic> clinics, String? errorMessage)> fetchNearbyVetClinics({required String cityId}) async {
+    final result = await client.value.query(
+      QueryOptions(
+        document: gql(nearbyVetClinicsQuery),
+        variables: {'cityId': cityId},
+        fetchPolicy: FetchPolicy.networkOnly,
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (<VetClinic>[], _serverErrorMessage(result.exception));
+    }
+    final list = result.data?['nearbyVetClinics'] as List<dynamic>? ?? [];
+    final clinics = list.map((c) => VetClinic.fromJson(c as Map<String, dynamic>)).toList();
+    return (clinics, null);
+  }
+
   /// Extracts a human-readable message from a failed GraphQL result.
   /// Prefers the server's own error message (e.g. a specific validation
   /// reason like "phoneNumber: must be in E.164 format") over a generic
@@ -730,26 +860,32 @@ class GraphQLService {
     return result.data?['requestMediaUploadUrl'];
   }
 
-  Future<Map<String, dynamic>?> createRescuePost({
+  Future<(Map<String, dynamic>? data, String? errorMessage)> createRescuePost({
     required String title,
     required String description,
     required double latitude,
     required double longitude,
     String? areaName,
-    required String urgency,
     required String species,
     required String conditionSummary,
     required String reporterRole,
+    required bool isLifeThreatening,
+    required bool hasVisibleSeriousInjury,
+    required bool isInDangerousLocation,
+    required bool canAnimalMoveOrEscape,
     List<String>? mediaIds,
   }) async {
     final input = <String, dynamic>{
       'title': title,
       'description': description,
       'coordinates': {'latitude': latitude, 'longitude': longitude},
-      'urgency': urgency,
       'species': species,
       'conditionSummary': conditionSummary,
       'reporterRole': reporterRole,
+      'isLifeThreatening': isLifeThreatening,
+      'hasVisibleSeriousInjury': hasVisibleSeriousInjury,
+      'isInDangerousLocation': isInDangerousLocation,
+      'canAnimalMoveOrEscape': canAnimalMoveOrEscape,
     };
     if (areaName != null && areaName.isNotEmpty) {
       input['areaName'] = areaName;
@@ -765,18 +901,17 @@ class GraphQLService {
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return null;
+      return (null, _serverErrorMessage(result.exception));
     }
-    return result.data?['createRescuePost'];
+    return (result.data?['createRescuePost'] as Map<String, dynamic>?, null);
   }
 
-  Future<Map<String, dynamic>?> createLostPost({
+  Future<(Map<String, dynamic>? data, String? errorMessage)> createLostPost({
     required String title,
     required String description,
     required double latitude,
     required double longitude,
     String? areaName,
-    required String urgency,
     required String reportType,
     required String species,
     String? breed,
@@ -785,13 +920,17 @@ class GraphQLService {
     String? circumstances,
     String? petName,
     String? dateLastSeen,
+    // Required for LOST_PET reports — used by the backend to compute
+    // posts.urgency server-side. Must be omitted for FOUND_STRAY.
+    bool? hasMedicalNeeds,
+    bool? isElderlyOrVeryYoung,
+    bool? lastSeenNearHazard,
     List<String>? mediaIds,
   }) async {
     final input = <String, dynamic>{
       'title': title,
       'description': description,
       'coordinates': {'latitude': latitude, 'longitude': longitude},
-      'urgency': urgency,
       'reportType': reportType,
       'species': species,
     };
@@ -804,6 +943,9 @@ class GraphQLService {
     if (circumstances != null && circumstances.isNotEmpty) input['circumstances'] = circumstances;
     if (petName != null && petName.isNotEmpty) input['petName'] = petName;
     if (dateLastSeen != null && dateLastSeen.isNotEmpty) input['dateLastSeen'] = dateLastSeen;
+    if (hasMedicalNeeds != null) input['hasMedicalNeeds'] = hasMedicalNeeds;
+    if (isElderlyOrVeryYoung != null) input['isElderlyOrVeryYoung'] = isElderlyOrVeryYoung;
+    if (lastSeenNearHazard != null) input['lastSeenNearHazard'] = lastSeenNearHazard;
     if (mediaIds != null && mediaIds.isNotEmpty) input['mediaIds'] = mediaIds;
 
     final result = await client.value.mutate(
@@ -814,12 +956,12 @@ class GraphQLService {
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return null;
+      return (null, _serverErrorMessage(result.exception));
     }
-    return result.data?['createLostPost'];
+    return (result.data?['createLostPost'] as Map<String, dynamic>?, null);
   }
 
-  Future<Map<String, dynamic>?> createAdoptionPost({
+  Future<(Map<String, dynamic>? data, String? errorMessage)> createAdoptionPost({
     required String title,
     required String description,
     required double latitude,
@@ -875,12 +1017,12 @@ class GraphQLService {
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return null;
+      return (null, _serverErrorMessage(result.exception));
     }
-    return result.data?['createAdoptionPost'];
+    return (result.data?['createAdoptionPost'] as Map<String, dynamic>?, null);
   }
 
-  Future<Map<String, dynamic>?> createProductPost({
+  Future<(Map<String, dynamic>? data, String? errorMessage)> createProductPost({
     required String title,
     required String description,
     required double latitude,
@@ -921,9 +1063,9 @@ class GraphQLService {
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return null;
+      return (null, _serverErrorMessage(result.exception));
     }
-    return result.data?['createProductPost'];
+    return (result.data?['createProductPost'] as Map<String, dynamic>?, null);
   }
 
   /// Runs a feed query and parses its PostConnection into a (posts,
@@ -1060,6 +1202,49 @@ class GraphQLService {
     return _runFeedQuery(marketFeedQuery, 'marketFeed', variables);
   }
 
+  /// Fetches the Mating feed — MATING posts only, newest first. Unlike the
+  /// other feeds this isn't governorate/radius-scoped; pass [cityId] to
+  /// narrow to one city, or omit it to browse mating listings everywhere.
+  Future<(List<FeedPost> posts, String? endCursor, bool hasNextPage, String? errorMessage)> fetchMatingFeed({
+    String? cityId,
+    String? species,
+    String? gender,
+    String? breed,
+    int first = 20,
+    String? after,
+  }) {
+    final filter = <String, dynamic>{};
+    if (cityId != null) filter['cityId'] = cityId;
+    if (species != null) filter['species'] = species;
+    if (gender != null) filter['gender'] = gender;
+    if (breed != null) filter['breed'] = breed;
+    final variables = <String, dynamic>{
+      'filter': filter.isEmpty ? null : filter,
+      'first': first,
+      'after': after,
+    };
+    return _runFeedQuery(matingFeedQuery, 'matingFeed', variables);
+  }
+
+  /// Fetches posts the current viewer has saved/bookmarked, newest save first.
+  Future<(List<FeedPost> posts, String? endCursor, bool hasNextPage, String? errorMessage)> fetchMySavedPosts({
+    int first = 20,
+    String? after,
+  }) {
+    return _runFeedQuery(mySavedPostsQuery, 'mySavedPosts', {'first': first, 'after': after});
+  }
+
+  /// Fetches posts the current viewer created, scoped to one section
+  /// (postType), newest first. [postType] must be one of RESCUE, LOST,
+  /// ADOPTION, PRODUCT.
+  Future<(List<FeedPost> posts, String? endCursor, bool hasNextPage, String? errorMessage)> fetchMyPosts({
+    required String postType,
+    int first = 20,
+    String? after,
+  }) {
+    return _runFeedQuery(myPostsQuery, 'myPosts', {'postType': postType, 'first': first, 'after': after});
+  }
+
   /// Toggles upvote on a post. Returns the updated (count, isUpvotedByMe)
   /// on success, or (null, null, message) on failure.
   Future<(int? upvoteCount, bool? isUpvotedByMe, String? errorMessage)> toggleUpvote(String postId) async {
@@ -1188,6 +1373,61 @@ class GraphQLService {
     }
     final node = result.data?['productPostDetail'] as Map<String, dynamic>?;
     return (node != null ? ProductPostExtension.fromJson(node) : null, null);
+  }
+
+  Future<(MatingDetails? ext, String? errorMessage)> fetchMatingPostDetail(String postId) async {
+    final result = await client.value.query(
+      QueryOptions(document: gql(matingPostDetailQuery), variables: {'postId': postId}, fetchPolicy: FetchPolicy.networkOnly),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _serverErrorMessage(result.exception));
+    }
+    final node = result.data?['matingPostDetail'] as Map<String, dynamic>?;
+    return (node != null ? MatingDetails.fromJson(node) : null, null);
+  }
+
+  Future<(Map<String, dynamic>? data, String? errorMessage)> createMatingPost({
+    required String cityId,
+    required String petName,
+    required String species,
+    required String breed,
+    required String gender,
+    required int ageValue,
+    required String ageUnit,
+    required bool isPurebred,
+    bool? hasPedigreeCertificate,
+    bool? vaccinated,
+    bool? dewormed,
+    String? termsSummary,
+    String? matingConditions,
+    List<String>? mediaIds,
+  }) async {
+    final input = <String, dynamic>{
+      'petName': petName,
+      'species': species,
+      'breed': breed,
+      'gender': gender,
+      'ageValue': ageValue,
+      'ageUnit': ageUnit,
+      'isPurebred': isPurebred,
+      'cityId': cityId,
+      'mediaIds': mediaIds ?? [],
+    };
+    if (hasPedigreeCertificate != null) input['hasPedigreeCertificate'] = hasPedigreeCertificate;
+    if (vaccinated != null) input['vaccinated'] = vaccinated;
+    if (dewormed != null) input['dewormed'] = dewormed;
+    if (termsSummary != null && termsSummary.isNotEmpty) input['termsSummary'] = termsSummary;
+    if (matingConditions != null && matingConditions.isNotEmpty) input['matingConditions'] = matingConditions;
+
+    final result = await client.value.mutate(
+      MutationOptions(document: gql(createMatingPostMutation), variables: {'input': input}),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _serverErrorMessage(result.exception));
+    }
+    return (result.data?['createMatingPost'] as Map<String, dynamic>?, null);
   }
 
   // ─── Contact requests ─────────────────────────────────────────────────

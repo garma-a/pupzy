@@ -227,9 +227,9 @@ class _NotifButtonState extends State<_NotifButton> {
                 color: AppColors.textSecondary,
               ),
               if (hasUnread)
-                Positioned(
+                PositionedDirectional(
                   top: 8,
-                  right: 8,
+                  end: 8,
                   child: Container(
                     width: 7,
                     height: 7,

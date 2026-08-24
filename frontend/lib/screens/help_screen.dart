@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
+import '../main.dart';
 import '../models/feed_post.dart';
 import '../services/browse_location_service.dart';
 import '../services/feed_location_resolver.dart';
@@ -14,6 +15,7 @@ import '../utils/time_format.dart';
 import '../widgets/adaptive_search_bar.dart';
 import '../widgets/animated_boost_chip.dart';
 import '../widgets/animated_favorite_icon.dart';
+import '../widgets/blurred_thumbnail.dart';
 import '../widgets/distance_filter.dart';
 import '../widgets/image_with_fallback.dart';
 import '../widgets/skeleton_loader.dart';
@@ -21,13 +23,17 @@ import '../widgets/top_bar.dart';
 import 'rescue_detail_screen.dart';
 
 class HelpScreen extends StatefulWidget {
-  const HelpScreen({super.key});
+  // Whether this tab is the one currently shown by the bottom nav — see
+  // HomeScreen.active for why this matters (a save/boost made on another
+  // tab needs a way to reach this screen's own post list).
+  final bool active;
+  const HelpScreen({super.key, this.active = true});
 
   @override
   State<HelpScreen> createState() => _HelpScreenState();
 }
 
-class _HelpScreenState extends State<HelpScreen> {
+class _HelpScreenState extends State<HelpScreen> with RouteAware {
   String _query = '';
 
   bool _loading = true;
@@ -45,8 +51,17 @@ class _HelpScreenState extends State<HelpScreen> {
   bool _loadingMore = false;
 
   @override
+  void didUpdateWidget(covariant HelpScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !oldWidget.active) {
+      _refreshFeedQuietly();
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
     final maxDist = DistanceProvider.of(context).maxDistance;
     final browseCityId = context.watch<BrowseLocationService>().selectedCity?['id'];
     if (!_initialized) {
@@ -59,6 +74,38 @@ class _HelpScreenState extends State<HelpScreen> {
       _lastBrowseCityId = browseCityId;
       _loadFeed();
     }
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  /// Fires when a route pushed on top of Help (a rescue/lost detail screen)
+  /// is popped — quietly re-sync so a save/boost made there shows up on its
+  /// feed card immediately.
+  @override
+  void didPopNext() => _refreshFeedQuietly();
+
+  /// Re-fetches just the first page and patches matching posts already in
+  /// [_posts] with fresh data, without touching loading/pagination state.
+  Future<void> _refreshFeedQuietly() async {
+    if (_governorate == null) return;
+    final graphql = context.read<GraphQLService>();
+    final maxDist = DistanceProvider.of(context).maxDistance;
+    final (posts, _, _, error) = await graphql.fetchHelpFeed(
+      governorate: _governorate!,
+      cityId: _cityId,
+      latitude: _position?.latitude,
+      longitude: _position?.longitude,
+      radiusKm: maxDist.isFinite ? maxDist : null,
+    );
+    if (!mounted || error != null) return;
+    final byId = {for (final p in posts) p.id: p};
+    setState(() {
+      _posts = _posts.map((p) => byId[p.id] ?? p).toList();
+    });
   }
 
   Future<void> _loadFeed() async {
@@ -174,7 +221,7 @@ class _HelpScreenState extends State<HelpScreen> {
     });
     Fluttertoast.showToast(
       msg: nowHelping
-          ? t(context, "You're marked as helping — the reporter can see you responded", 'تم تسجيلك كمساعد — يمكن للمُبلّغ رؤية أنك استجبت')
+          ? t(context, "Marked as helping — visible only to you for now", 'تم التسجيل كمساعد — مرئي لك فقط حاليًا')
           : t(context, "You're no longer marked as helping", 'لم تعد مُسجّلًا كمساعد'),
     );
   }
@@ -182,7 +229,8 @@ class _HelpScreenState extends State<HelpScreen> {
   @override
   Widget build(BuildContext context) {
     final maxDist = DistanceProvider.of(context).maxDistance;
-    final distLabel = maxDist.isFinite ? '${maxDist.toInt()}km' : '50+km';
+    final kmLabel = t(context, 'km', 'كم');
+    final distLabel = maxDist.isFinite ? '${maxDist.toInt()}$kmLabel' : '50+$kmLabel';
 
     return DefaultTabController(
       length: 2,
@@ -362,6 +410,7 @@ class _HelpFeedList extends StatelessWidget {
             );
           }
           return _HelpFeedCard(
+            key: ValueKey(items[i].id),
             post: items[i],
             helping: helpingIds.contains(items[i].id),
             onBoost: () => onBoost(items[i]),
@@ -385,6 +434,7 @@ class _HelpFeedCard extends StatelessWidget {
   final VoidCallback onToggleHelping;
   final VoidCallback onTap;
   const _HelpFeedCard({
+    super.key,
     required this.post,
     required this.helping,
     required this.onBoost,
@@ -412,7 +462,9 @@ class _HelpFeedCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
-                child: ImageWithFallback(url: post.primaryImageUrl ?? '', width: double.infinity, height: 180),
+                child: post.postType == 'RESCUE'
+                    ? BlurredThumbnail(imageUrl: post.primaryImageUrl ?? '', width: double.infinity, height: 180)
+                    : ImageWithFallback(url: post.primaryImageUrl ?? '', width: double.infinity, height: 180),
               ),
               if (post.isUrgent)
                 PositionedDirectional(
@@ -438,7 +490,7 @@ class _HelpFeedCard extends StatelessWidget {
                       semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
                       semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
                       activeColor: AppColors.critical,
-                      inactiveColor: AppColors.critical,
+                      inactiveColor: AppColors.textMuted,
                       size: 16,
                     ),
                   ),

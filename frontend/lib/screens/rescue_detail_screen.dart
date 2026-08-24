@@ -304,15 +304,39 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                       const SizedBox(height: AppSpacing.lg),
                       Row(
                         children: [
-                          AnimatedBoostChip(
-                            count: post.upvoteCount,
-                            boosted: post.isUpvotedByMe,
-                            onToggle: _toggleBoost,
-                            boostedLabel: t(context, 'Boosted', 'مُعزَّز'),
-                            unboostedLabel: t(context, 'Boost', 'تعزيز'),
-                            activeColor: AppColors.primary,
-                            inactiveColor: AppColors.textMuted,
-                          ),
+                          if (_isOwner)
+                            Tooltip(
+                              message: t(context, "You can't boost your own post", 'لا يمكنك تعزيز منشورك الخاص'),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: AppColors.background,
+                                  borderRadius: BorderRadius.circular(AppRadius.chip),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.arrow_upward, size: 15, color: AppColors.textMuted),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      '${post.upvoteCount}  ${t(context, 'Boost', 'تعزيز')}',
+                                      style: const TextStyle(fontSize: 13, color: AppColors.textMuted, fontWeight: FontWeight.w500),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          else
+                            AnimatedBoostChip(
+                              count: post.upvoteCount,
+                              boosted: post.isUpvotedByMe,
+                              onToggle: _toggleBoost,
+                              boostedLabel: t(context, 'Boosted', 'مُعزَّز'),
+                              unboostedLabel: t(context, 'Boost', 'تعزيز'),
+                              activeColor: AppColors.primary,
+                              inactiveColor: AppColors.textMuted,
+                            ),
                           if (post.latitude != null && post.longitude != null) ...[
                             const SizedBox(width: AppSpacing.sm),
                             Material(

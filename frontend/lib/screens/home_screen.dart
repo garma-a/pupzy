@@ -5,9 +5,10 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
-import '../data/mock_data.dart';
 import '../localization/lang_provider.dart';
+import '../main.dart';
 import '../models/feed_post.dart';
+import '../models/vet_clinic.dart';
 import '../services/browse_location_service.dart';
 import '../services/feed_location_resolver.dart';
 import '../services/graphql_service.dart';
@@ -15,26 +16,34 @@ import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/adaptive_search_bar.dart';
 import '../widgets/adoption_application_sheet.dart';
-import '../widgets/adoption_card.dart';
 import '../widgets/animated_boost_chip.dart';
 import '../widgets/animated_favorite_icon.dart';
+import '../widgets/blurred_thumbnail.dart';
 import '../widgets/distance_filter.dart';
 import '../widgets/image_with_fallback.dart';
+import '../widgets/saved_post_card.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/top_bar.dart';
 import 'adoption_detail_screen.dart';
 import 'product_detail_screen.dart';
 import 'rescue_detail_screen.dart';
+import 'saved_posts_screen.dart';
+import 'vets_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onNavigateToMarket;
-  const HomeScreen({super.key, this.onNavigateToMarket});
+  // Whether this tab is the one currently shown by the bottom nav — Home
+  // stays mounted in the background (IndexedStack) even when another tab is
+  // active, so this is how it knows to refresh FAVORITES when the user
+  // switches back after saving a post from a different tab or detail screen.
+  final bool active;
+  const HomeScreen({super.key, this.onNavigateToMarket, this.active = true});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with RouteAware {
   String _query = '';
   bool _loading = true;
   String? _errorMessage;
@@ -49,15 +58,59 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _hasNextPage = false;
   bool _loadingMore = false;
   final _scrollController = ScrollController();
+  List<FeedPost> _savedPosts = [];
+  bool _savedLoading = true;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _loadSavedPosts();
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Just switched back to this tab — pick up any saves/boosts made
+    // elsewhere (another tab, a detail screen) while Home was backgrounded.
+    if (widget.active && !oldWidget.active) {
+      _loadSavedPosts();
+      _refreshFeedQuietly();
+    }
+  }
+
+  Future<void> _loadSavedPosts() async {
+    final graphql = context.read<GraphQLService>();
+    final (posts, _, _, error) = await graphql.fetchMySavedPosts(first: 10);
+    if (!mounted) return;
+    setState(() {
+      _savedLoading = false;
+      if (error == null) _savedPosts = posts;
+    });
+  }
+
+  Future<bool> _toggleSavedPost(FeedPost post) async {
+    final graphql = context.read<GraphQLService>();
+    final (count, saved, error) = await graphql.toggleSave(post.id);
+    if (!mounted) return false;
+    if (error != null || count == null || saved == null) {
+      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update. Try again.', 'تعذر التحديث. حاول مرة أخرى.'));
+      return false;
+    }
+    if (!saved) {
+      setState(() => _savedPosts = _savedPosts.where((p) => p.id != post.id).toList());
+    }
+    // Keep the main feed's isSavedByMe/saveCount in sync if the same post is
+    // also showing there (e.g. a rescue post saved from its feed card).
+    setState(() {
+      _posts = _posts.map((p) => p.id == post.id ? p.copyWith(saveCount: count, isSavedByMe: saved) : p).toList();
+    });
+    return true;
   }
 
   @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
@@ -70,9 +123,20 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Fires when a route pushed on top of Home (any post detail screen) is
+  /// popped — refresh FAVORITES, and quietly re-sync the main feed too, so a
+  /// save/boost made on the detail screen is reflected on its feed card
+  /// immediately instead of only after a manual pull-to-refresh.
+  @override
+  void didPopNext() {
+    _loadSavedPosts();
+    _refreshFeedQuietly();
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
     final maxDist = DistanceProvider.of(context).maxDistance;
     final browseCityId = context.watch<BrowseLocationService>().selectedCity?['id'];
     if (!_initialized) {
@@ -137,6 +201,29 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  /// Re-fetches just the first page and patches matching posts already in
+  /// [_posts] with fresh data (save/boost state, counts, status) — used on
+  /// return from a detail screen. Unlike [_loadFeed], this never touches
+  /// [_loading]/pagination state, so it's invisible unless something the
+  /// viewer already sees actually changed.
+  Future<void> _refreshFeedQuietly() async {
+    if (_governorate == null) return;
+    final graphql = context.read<GraphQLService>();
+    final maxDist = DistanceProvider.of(context).maxDistance;
+    final (posts, _, _, error) = await graphql.fetchHomeFeed(
+      governorate: _governorate!,
+      cityId: _cityId,
+      latitude: _position?.latitude,
+      longitude: _position?.longitude,
+      radiusKm: maxDist.isFinite ? maxDist : null,
+    );
+    if (!mounted || error != null) return;
+    final byId = {for (final p in posts) p.id: p};
+    setState(() {
+      _posts = _posts.map((p) => byId[p.id] ?? p).toList();
+    });
+  }
+
   Future<void> _loadMore() async {
     if (_loadingMore || !_hasNextPage || _governorate == null) return;
     setState(() => _loadingMore = true);
@@ -183,17 +270,27 @@ class _HomeScreenState extends State<HomeScreen> {
       Fluttertoast.showToast(msg: error ?? t(context, 'Could not update. Try again.', 'تعذر التحديث. حاول مرة أخرى.'));
       return false;
     }
+    final updated = post.copyWith(saveCount: count, isSavedByMe: saved);
     setState(() {
-      _posts = _posts.map((p) => p.id == post.id ? p.copyWith(saveCount: count, isSavedByMe: saved) : p).toList();
+      _posts = _posts.map((p) => p.id == post.id ? updated : p).toList();
+      // Keep the FAVORITES row in sync too — saving from a feed card should
+      // show up there immediately, not just after the next full reload.
+      if (saved) {
+        _savedPosts = _savedPosts.any((p) => p.id == post.id)
+            ? _savedPosts.map((p) => p.id == post.id ? updated : p).toList()
+            : [updated, ..._savedPosts];
+      } else {
+        _savedPosts = _savedPosts.where((p) => p.id != post.id).toList();
+      }
     });
     return true;
   }
 
   @override
   Widget build(BuildContext context) {
-    final favorites = MockData.favorites;
-    final rescueLike = _posts.where((p) => p.postType == 'RESCUE' || p.postType == 'LOST').toList();
-    final urgent = rescueLike.where((p) => p.isUrgent).toList();
+    final helpPosts = _posts.where((p) => p.postType == 'RESCUE').toList();
+    final urgent = helpPosts.where((p) => p.isUrgent).toList();
+    final findPosts = _posts.where((p) => p.postType == 'LOST').toList();
     final adoption = _posts.where((p) => p.postType == 'ADOPTION').toList();
     final products = _posts.where((p) => p.postType == 'PRODUCT').take(2).toList();
 
@@ -280,24 +377,41 @@ class _HomeScreenState extends State<HomeScreen> {
                               const DistanceFilter(),
                               const SizedBox(height: AppSpacing.md),
                               // FAVORITES
-                              _SectionHeader(
-                                leading: const Icon(Icons.favorite, size: 16, color: AppColors.critical),
-                                title: t(context, 'FAVORITES', 'المفضلة'),
-                                trailing: GestureDetector(
-                                  onTap: () => Fluttertoast.showToast(msg: t(context, 'See all favorites', 'عرض كل المفضلة')),
-                                  child: Text(t(context, 'See more →', 'المزيد ←'), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                              if (_savedLoading || _savedPosts.isNotEmpty) ...[
+                                _SectionHeader(
+                                  leading: const Icon(Icons.favorite, size: 16, color: AppColors.critical),
+                                  title: t(context, 'FAVORITES', 'المفضلة'),
+                                  trailing: GestureDetector(
+                                    onTap: () => Navigator.of(context).push(
+                                      MaterialPageRoute(builder: (_) => const SavedPostsScreen()),
+                                    ),
+                                    child: Text(t(context, 'See more →', 'المزيد ←'), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
-                              SizedBox(
-                                height: 190,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                                  itemCount: favorites.length,
-                                  itemBuilder: (_, i) => FavoritePetCard(pet: favorites[i]),
+                                const SizedBox(height: AppSpacing.sm),
+                                SizedBox(
+                                  height: 190,
+                                  child: _savedLoading
+                                      ? ListView(
+                                          scrollDirection: Axis.horizontal,
+                                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                                          children: const [
+                                            HorizontalCardSkeleton(width: 150, height: 190),
+                                            HorizontalCardSkeleton(width: 150, height: 190),
+                                          ],
+                                        )
+                                      : ListView.builder(
+                                          scrollDirection: Axis.horizontal,
+                                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                                          itemCount: _savedPosts.length,
+                                          itemBuilder: (_, i) => SavedPostCard(
+                                            key: ValueKey(_savedPosts[i].id),
+                                            post: _savedPosts[i],
+                                            onToggleSave: () => _toggleSavedPost(_savedPosts[i]),
+                                          ),
+                                        ),
                                 ),
-                              ),
+                              ],
 
                               // HELP A PET
                               const SizedBox(height: AppSpacing.lg),
@@ -320,7 +434,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                               const SizedBox(height: AppSpacing.sm),
-                              if (rescueLike.isEmpty)
+                              if (helpPosts.isEmpty)
                                 _EmptySection(
                                   icon: Icons.volunteer_activism_outlined,
                                   message: t(context, 'No rescue animals within this distance', 'لا توجد حيوانات إنقاذ ضمن هذه المسافة'),
@@ -331,19 +445,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: ListView.builder(
                                     scrollDirection: Axis.horizontal,
                                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                                    itemCount: rescueLike.length,
+                                    itemCount: helpPosts.length,
                                     itemBuilder: (_, i) => _HomeRescueCard(
-                                      post: rescueLike[i],
-                                      onBoost: () => _toggleUpvote(rescueLike[i]),
-                                      onSave: () => _toggleSave(rescueLike[i]),
+                                      key: ValueKey(helpPosts[i].id),
+                                      post: helpPosts[i],
+                                      onBoost: () => _toggleUpvote(helpPosts[i]),
+                                      onSave: () => _toggleSave(helpPosts[i]),
                                       onTap: () => Navigator.of(context).push(
-                                        MaterialPageRoute(builder: (_) => RescueDetailScreen(postId: rescueLike[i].id)),
+                                        MaterialPageRoute(builder: (_) => RescueDetailScreen(postId: helpPosts[i].id)),
                                       ),
                                     ),
                                   ),
                                 ),
 
-                              // FIND A PET
+                              // FIND A PET (Lost & Found)
                               const SizedBox(height: AppSpacing.lg),
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -352,6 +467,43 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Text(t(context, 'Find a Pet', 'ابحث عن حيوان'), style: Theme.of(context).textTheme.headlineMedium),
                                     const SizedBox(width: AppSpacing.md),
                                     Container(width: 4, height: 32, color: AppColors.sectionLine),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              if (findPosts.isEmpty)
+                                _EmptySection(
+                                  icon: Icons.search_outlined,
+                                  message: t(context, 'No lost or found pets within this distance', 'لا توجد حيوانات مفقودة أو موجودة ضمن هذه المسافة'),
+                                )
+                              else
+                                SizedBox(
+                                  height: 270,
+                                  child: ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                                    itemCount: findPosts.length,
+                                    itemBuilder: (_, i) => _HomeRescueCard(
+                                      key: ValueKey(findPosts[i].id),
+                                      post: findPosts[i],
+                                      onBoost: () => _toggleUpvote(findPosts[i]),
+                                      onSave: () => _toggleSave(findPosts[i]),
+                                      onTap: () => Navigator.of(context).push(
+                                        MaterialPageRoute(builder: (_) => RescueDetailScreen(postId: findPosts[i].id)),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                              // ADOPT A PET
+                              const SizedBox(height: AppSpacing.lg),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                                child: Row(
+                                  children: [
+                                    Text(t(context, 'Adopt a Pet', 'تبنَّ حيوانًا'), style: Theme.of(context).textTheme.headlineMedium),
+                                    const SizedBox(width: AppSpacing.md),
+                                    Container(width: 4, height: 32, color: AppColors.primary),
                                   ],
                                 ),
                               ),
@@ -403,6 +555,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   itemBuilder: (context, i) {
                                     final p = products[i];
                                     return GestureDetector(
+                                      key: ValueKey(p.id),
                                       onTap: () => Navigator.of(context).push(
                                         MaterialPageRoute(builder: (_) => ProductDetailScreen(postId: p.id)),
                                       ),
@@ -438,7 +591,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                           filledIcon: Icons.bookmark,
                                                           outlineIcon: Icons.bookmark_border,
                                                           activeColor: AppColors.primary,
-                                                          inactiveColor: AppColors.primary,
+                                                          inactiveColor: AppColors.textMuted,
                                                           size: 14,
                                                         ),
                                                       ),
@@ -532,14 +685,14 @@ class _HomeSearchResults extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: 100),
       itemCount: results.length,
-      itemBuilder: (context, i) => _HomeSearchResultTile(post: results[i]),
+      itemBuilder: (context, i) => _HomeSearchResultTile(key: ValueKey(results[i].id), post: results[i]),
     );
   }
 }
 
 class _HomeSearchResultTile extends StatelessWidget {
   final FeedPost post;
-  const _HomeSearchResultTile({required this.post});
+  const _HomeSearchResultTile({super.key, required this.post});
 
   String _typeLabel(BuildContext context) {
     switch (post.postType) {
@@ -597,7 +750,9 @@ class _HomeSearchResultTile extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.chip),
-              child: ImageWithFallback(url: post.primaryImageUrl ?? '', width: 64, height: 64),
+              child: post.postType == 'RESCUE'
+                  ? BlurredThumbnail(imageUrl: post.primaryImageUrl ?? '', width: 64, height: 64)
+                  : ImageWithFallback(url: post.primaryImageUrl ?? '', width: 64, height: 64),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -698,16 +853,49 @@ class _VetsButton extends StatelessWidget {
   }
 }
 
-/// Static "coming soon" preview of nearby vets — there's no vet directory
-/// feature or backend for this yet, so this runs on hardcoded mock data.
-class _VetsNearYouSheet extends StatelessWidget {
+/// Preview of the nearest real vet clinics (via `nearbyVetClinics`), with a
+/// "View all vets" link to the full list screen.
+class _VetsNearYouSheet extends StatefulWidget {
   const _VetsNearYouSheet();
 
-  static const List<(String name, String distance, String area)> _vets = [
-    ('Cairo Emergency Vet', '0.6 km', 'Maadi'),
-    ('Amman Night Clinic', '0.9 km', 'Sweifieh'),
-    ('Petcare Centre', '2.1 km', 'Abdoun'),
-  ];
+  @override
+  State<_VetsNearYouSheet> createState() => _VetsNearYouSheetState();
+}
+
+class _VetsNearYouSheetState extends State<_VetsNearYouSheet> {
+  bool _loading = true;
+  String? _errorMessage;
+  List<VetClinic> _clinics = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final graphql = context.read<GraphQLService>();
+    final me = await graphql.fetchMe();
+    final cityId = me?['homeCityId'] as String?;
+    if (!mounted) return;
+    if (cityId == null) {
+      setState(() {
+        _loading = false;
+        _errorMessage = t(context, 'Set your city in your profile to see nearby vets.', 'حدد مدينتك في ملفك الشخصي لرؤية الأطباء البيطريين القريبين.');
+      });
+      return;
+    }
+    final (clinics, error) = await graphql.fetchNearbyVetClinics(cityId: cityId);
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      if (error != null) {
+        _errorMessage = error;
+      } else {
+        _clinics = clinics;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -763,11 +951,37 @@ class _VetsNearYouSheet extends StatelessWidget {
                   Text(t(context, 'Vets near you', 'الأطباء البيطريون القريبون'), style: Theme.of(context).textTheme.headlineLarge),
                   const SizedBox(height: 4),
                   Text(
-                    t(context, 'Cairo area · approximate distances only', 'منطقة القاهرة · مسافات تقريبية فقط'),
+                    t(context, 'Nearest clinics to your city', 'أقرب العيادات إلى مدينتك'),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  ..._vets.map((v) => Padding(
+                  if (_loading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                      child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                    )
+                  else if (_errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                      child: Text(_errorMessage!, style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.center),
+                    )
+                  else if (_clinics.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                      child: Text(
+                        t(context, 'No vet clinics found near you', 'لا توجد عيادات بيطرية بالقرب منك'),
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  else
+                    ..._clinics.take(3).map((clinic) {
+                      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                      final name = (isArabic ? clinic.nameArabic : clinic.nameEnglish) ??
+                          clinic.nameEnglish ??
+                          clinic.nameArabic ??
+                          t(context, 'Vet clinic', 'عيادة بيطرية');
+                      return Padding(
                         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                         child: Container(
                           padding: const EdgeInsets.all(AppSpacing.md),
@@ -782,40 +996,33 @@ class _VetsNearYouSheet extends StatelessWidget {
                                 width: 40,
                                 height: 40,
                                 decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.6), shape: BoxShape.circle),
-                                child: const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 18),
+                                child: const Icon(Icons.local_hospital_outlined, color: AppColors.primary, size: 18),
                               ),
                               const SizedBox(width: AppSpacing.sm),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(v.$1, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
-                                    Text('${v.$2}  ·  ${v.$3}', style: Theme.of(context).textTheme.bodySmall),
+                                    Text(name, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                    Text(
+                                      '${clinic.distanceKm.toStringAsFixed(1)} ${t(context, 'km away', 'كم')}',
+                                      style: Theme.of(context).textTheme.bodySmall,
+                                    ),
                                   ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: AppColors.sectionLineGreen.withValues(alpha: 0.16),
-                                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                                ),
-                                child: Text(
-                                  t(context, 'Open', 'مفتوح'),
-                                  style: const TextStyle(color: AppColors.sectionLineGreen, fontWeight: FontWeight.w700, fontSize: 12),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      )),
+                      );
+                    }),
                   const SizedBox(height: AppSpacing.sm),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
                         Navigator.of(context).pop();
-                        Fluttertoast.showToast(msg: t(context, 'Full vet directory coming soon', 'دليل الأطباء البيطريين الكامل قريبًا'));
+                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const VetsScreen()));
                       },
                       style: OutlinedButton.styleFrom(
                         backgroundColor: Colors.white.withValues(alpha: 0.55),
@@ -940,7 +1147,7 @@ class _HomeRescueCard extends StatelessWidget {
   final Future<bool> Function() onBoost;
   final Future<bool> Function() onSave;
   final VoidCallback onTap;
-  const _HomeRescueCard({required this.post, required this.onBoost, required this.onSave, required this.onTap});
+  const _HomeRescueCard({super.key, required this.post, required this.onBoost, required this.onSave, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -961,7 +1168,9 @@ class _HomeRescueCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
-                child: ImageWithFallback(url: post.primaryImageUrl ?? '', width: 280, height: 180),
+                child: post.postType == 'RESCUE'
+                    ? BlurredThumbnail(imageUrl: post.primaryImageUrl ?? '', width: 280, height: 180)
+                    : ImageWithFallback(url: post.primaryImageUrl ?? '', width: 280, height: 180),
               ),
               if (post.isUrgent)
                 PositionedDirectional(
@@ -987,7 +1196,7 @@ class _HomeRescueCard extends StatelessWidget {
                       semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
                       semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
                       activeColor: AppColors.critical,
-                      inactiveColor: AppColors.critical,
+                      inactiveColor: AppColors.textMuted,
                       size: 16,
                     ),
                   ),
@@ -1118,7 +1327,7 @@ class _HomeAdoptionPreviewCard extends StatelessWidget {
                       semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
                       semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
                       activeColor: AppColors.critical,
-                      inactiveColor: AppColors.critical,
+                      inactiveColor: AppColors.textMuted,
                       size: 18,
                     ),
                   ),

@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
+import '../main.dart';
 import '../models/feed_post.dart';
 import '../models/post.dart';
 import '../services/browse_location_service.dart';
@@ -26,13 +27,16 @@ enum _SortOption { hot, newest }
 typedef _CategoryChoice = (String value, String en, String ar);
 
 class MarketScreen extends StatefulWidget {
-  const MarketScreen({super.key});
+  // Whether this tab is the one currently shown by the bottom nav — see
+  // HomeScreen.active for why this matters.
+  final bool active;
+  const MarketScreen({super.key, this.active = true});
 
   @override
   State<MarketScreen> createState() => _MarketScreenState();
 }
 
-class _MarketScreenState extends State<MarketScreen> {
+class _MarketScreenState extends State<MarketScreen> with RouteAware {
   static const List<_CategoryChoice> _categories = [
     ('ALL', 'All', 'الكل'),
     ('CARE', 'Care', 'رعاية'),
@@ -70,6 +74,7 @@ class _MarketScreenState extends State<MarketScreen> {
 
   @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
@@ -82,9 +87,45 @@ class _MarketScreenState extends State<MarketScreen> {
     }
   }
 
+  /// Fires when a route pushed on top of Market (a product detail screen)
+  /// is popped — quietly re-sync so a save made there shows up immediately.
+  @override
+  void didPopNext() => _refreshFeedQuietly();
+
+  /// Re-fetches just the first page and patches matching posts already in
+  /// [_posts] with fresh data, without touching loading/pagination state.
+  Future<void> _refreshFeedQuietly() async {
+    if (_governorate == null) return;
+    final graphql = context.read<GraphQLService>();
+    final maxDist = DistanceProvider.of(context).maxDistance;
+    final (posts, _, _, error) = await graphql.fetchMarketFeed(
+      governorate: _governorate!,
+      cityId: _cityId,
+      latitude: _position?.latitude,
+      longitude: _position?.longitude,
+      radiusKm: maxDist.isFinite ? maxDist : null,
+      category: _category == 'ALL' ? null : _category,
+      sort: _sort == _SortOption.hot ? 'HOT' : 'NEWEST',
+    );
+    if (!mounted || error != null) return;
+    final byId = {for (final p in posts) p.id: p};
+    setState(() {
+      _posts = _posts.map((p) => byId[p.id] ?? p).toList();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant MarketScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !oldWidget.active) {
+      _refreshFeedQuietly();
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
     final maxDist = DistanceProvider.of(context).maxDistance;
     final browseCityId = context.watch<BrowseLocationService>().selectedCity?['id'];
     if (!_initialized) {
@@ -438,6 +479,7 @@ class _MarketScreenState extends State<MarketScreen> {
                             final p = filtered[i];
                             final sold = p.status == 'SOLD';
                             return GestureDetector(
+                              key: ValueKey(p.id),
                               onTap: () => Navigator.of(context).push(
                                 MaterialPageRoute(builder: (_) => ProductDetailScreen(postId: p.id)),
                               ),
@@ -488,7 +530,7 @@ class _MarketScreenState extends State<MarketScreen> {
                                                   filledIcon: Icons.bookmark,
                                                   outlineIcon: Icons.bookmark_border,
                                                   activeColor: AppColors.primary,
-                                                  inactiveColor: AppColors.primary,
+                                                  inactiveColor: AppColors.textMuted,
                                                   size: 15,
                                                 ),
                                               ),
