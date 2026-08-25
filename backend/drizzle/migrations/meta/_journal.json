@@ -57,6 +57,13 @@
       "when": 1787429744817,
       "tag": "0007_create_mating_posts",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787603916812,
+      "tag": "0008_brave_lester",
+      "breakpoints": true
     }
   ]
 }

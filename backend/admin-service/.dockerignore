@@ -1,0 +1,7 @@
+node_modules
+.adminjs
+.env
+npm-debug.log
+test
+coverage
+.git

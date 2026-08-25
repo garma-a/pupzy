@@ -121,6 +121,13 @@ export const users = pgTable(
     /** Whether push notifications are enabled. */
     notificationsEnabled: boolean('notifications_enabled').notNull().default(true),
 
+    // ── Moderation (admin panel) ─────────────────────────────────────────────
+    /** Set by an admin. Banned users are rejected by FirebaseAuthGuard. */
+    isBanned: boolean('is_banned').notNull().default(false),
+    bannedAt: timestamp('banned_at', { withTimezone: true }),
+    banReason: text('ban_reason'),
+    bannedByAdminId: uuid('banned_by_admin_id'),
+
     /**
      * Timestamp of the user's most recent authenticated request.
      * Updated by the auth guard on every request.
@@ -139,6 +146,10 @@ export const users = pgTable(
   (table) => ({
     /** Prevents full-table scans when listing users in a city. */
     homeCityIdx: index('idx_users_home_city').on(table.homeCityId),
+
+    bannedIdx: index('idx_users_banned')
+      .on(table.bannedAt)
+      .where(sql`is_banned = true`),
 
     lastKnownLocationGistIdx: index('idx_users_last_known_location').using('gist', table.lastKnownLocation),
   }),

@@ -1,0 +1,41 @@
+{
+  "name": "pupzy-admin-service",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/main.js",
+    "dev": "node --watch src/main.js",
+    "test": "node --test src/adminjs/*.test.js src/adminjs/*/*.test.js src/auth/*.test.js src/config/*.test.js src/middleware/*.test.js",
+    "test:integration": "node --test --test-concurrency=1 test/*.test.js",
+    "seed:first-admin": "node scripts/seed-first-admin.js"
+  },
+  "dependencies": {
+    "@adminjs/express": "^6",
+    "@adminjs/sql": "^2.2.6",
+    "adminjs": "^7",
+    "bcryptjs": "^2",
+    "connect-pg-simple": "^10",
+    "dotenv": "^16",
+    "express": "^4",
+    "express-rate-limit": "^7",
+    "express-session": "^1.18",
+    "helmet": "^8",
+    "pg": "^8.23.0",
+    "pino": "^9",
+    "pino-http": "^11",
+    "zod": "^4"
+  },
+  "devDependencies": {
+    "@testcontainers/postgresql": "^12.1.0"
+  },
+  "overrides": {
+    "tinymce": "7.9.3",
+    "@tiptap/extension-link": "2.10.4",
+    "i18next-http-backend": "3.0.5",
+    "uuid": "11.1.1"
+  }
+}

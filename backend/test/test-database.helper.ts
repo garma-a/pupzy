@@ -27,29 +27,13 @@ export class TestDatabaseHelper {
     await this.pool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto;');
     await this.pool.query(`
       CREATE OR REPLACE FUNCTION uuidv7() RETURNS uuid AS $$
-      DECLARE
-        v_time timestamp with time zone:= clock_timestamp();
-        v_secs bigint := floor(extract(epoch from v_time));
-        v_usec bigint := extract(microsecond from v_time);
-        v_msec bigint := (v_secs * 1000) + floor(v_usec / 1000);
-        v_rand bytea := gen_random_bytes(10);
-      BEGIN
-        RETURN encode(
-          set_byte(
-            set_byte(
-              overlay(
-                v_rand
-                placing substring(int8send(v_msec) from 3 for 6)
-                from 1 for 6
-              ),
-              6, (b'0111' || substring(get_byte(v_rand, 0)::bit(8) from 5 for 4))::bit(8)::int
-            ),
-            8, (b'10' || substring(get_byte(v_rand, 2)::bit(8) from 3 for 6))::bit(8)::int
-          ),
-          'hex'
+        SELECT (
+          lpad(to_hex(floor(extract(epoch FROM clock_timestamp()) * 1000)::bigint), 12, '0') ||
+          '7' || substr(encode(gen_random_bytes(2), 'hex'), 2, 3) ||
+          '8' || substr(encode(gen_random_bytes(2), 'hex'), 2, 3) ||
+          encode(gen_random_bytes(6), 'hex')
         )::uuid;
-      END;
-      $$ LANGUAGE plpgsql;
+      $$ LANGUAGE sql VOLATILE;
     `);
 
     // Run migrations
@@ -82,7 +66,9 @@ export class TestDatabaseHelper {
         post_reports,
         notifications,
         saved_searches,
+        moderation_actions,
         posts,
+        admin_users,
         users,
         cities,
         vet_clinics

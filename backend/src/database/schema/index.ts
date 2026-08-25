@@ -11,6 +11,10 @@
 // Shared enum definitions (pgEnums + TypeScript unions)
 export * from './enums';
 
+// Internal admin identity and append-only moderation audit log
+export * from './admin-users.schema';
+export * from './moderation-actions.schema';
+
 // Lookup tables
 export * from './cities.schema';
 

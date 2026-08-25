@@ -141,6 +141,13 @@ export const posts = pgTable(
      */
     reportCount: integer('report_count').notNull().default(0),
 
+    /** Reason set by a human admin or by automated moderation. */
+    moderationReason: text('moderation_reason'),
+    /** When moderationStatus was last changed by a human admin. */
+    moderatedAt: timestamp('moderated_at', { withTimezone: true }),
+    /** Admin who last changed moderationStatus; FK is declared in custom.sql. */
+    moderatedByAdminId: uuid('moderated_by_admin_id'),
+
     // ── Feed ranking ──────────────────────────────────────────────────────────
 
     /**
@@ -197,7 +204,7 @@ export const posts = pgTable(
      *   idx_posts_adopt_score     — (city_id, effective_score, created_at) WHERE status='ACTIVE' AND post_type='ADOPTION'
      *   idx_posts_market_score    — (city_id, effective_score, created_at) WHERE status='ACTIVE' AND post_type='PRODUCT'
      *   idx_posts_market_category — (city_id, market_category, effective_score) WHERE status='ACTIVE' AND post_type='PRODUCT'
-     *   idx_posts_moderation      — (report_count, created_at) WHERE moderation_status='FLAGGED'
+     *   idx_posts_needs_review    — (report_count, created_at) WHERE moderation_status IN ('PENDING_AUTO_REVIEW','FLAGGED') AND status='ACTIVE'
      *   idx_posts_last_engaged    — (post_type, last_engaged_at) WHERE status='ACTIVE' AND post_type IN ('ADOPTION','PRODUCT')
      */
   }),

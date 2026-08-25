@@ -18,6 +18,7 @@ import { UsersService } from '../users/users.service';
 import type { GqlContext } from '../common/types/gql-context.type';
 import type { User } from '../database/schema';
 
+import { ForbiddenError } from '../common/errors/app.errors';
 // ─── Public decorator ─────────────────────────────────────────────────────────
 
 /** Marks a resolver as public, bypassing Firebase auth entirely. */
@@ -111,6 +112,10 @@ export class FirebaseAuthGuard implements CanActivate {
 
     // ── 4. Resolve user (with cache) ────────────────────────────────────────
     const user = await this.resolveUser(decoded);
+
+    if (user.isBanned) {
+      throw new ForbiddenError('Your account has been suspended.');
+    }
 
     // ── 5. Attach user to context ───────────────────────────────────────────
     if (context.getType() === 'http') {

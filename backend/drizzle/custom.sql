@@ -126,10 +126,12 @@ CREATE INDEX IF NOT EXISTS idx_posts_mating_active_created
 CREATE INDEX IF NOT EXISTS idx_posts_home_feed
   ON posts (city_id, id DESC) WHERE status = 'ACTIVE';
 
--- AdminJS moderation queue: most-reported FLAGGED posts first.
-CREATE INDEX IF NOT EXISTS idx_posts_moderation
+-- AdminJS review queue: most-reported pending/flagged active posts first.
+DROP INDEX IF EXISTS idx_posts_moderation;
+
+CREATE INDEX IF NOT EXISTS idx_posts_needs_review
   ON posts (report_count DESC, created_at DESC)
-  WHERE moderation_status = 'FLAGGED';
+  WHERE moderation_status IN ('PENDING_AUTO_REVIEW', 'FLAGGED') AND status = 'ACTIVE';
 
 -- Auto-removal cron: find stale ADOPTION and PRODUCT posts.
 CREATE INDEX IF NOT EXISTS idx_posts_last_engaged
@@ -165,6 +167,25 @@ CREATE INDEX IF NOT EXISTS idx_post_saves_user_saved_at
 -- Personality tag filter: WHERE personality_tags @> ARRAY['GOOD_WITH_KIDS'].
 CREATE INDEX IF NOT EXISTS idx_adoption_personality_tags
   ON adoption_posts USING GIN (personality_tags);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 4b. ADMIN-PANEL FOREIGN KEYS
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Kept here so public-app schema files do not import the internal admin schema.
+-- DROP + ADD makes this custom SQL safe to re-run after migrations.
+
+ALTER TABLE users
+  DROP CONSTRAINT IF EXISTS fk_users_banned_by_admin;
+ALTER TABLE users
+  ADD CONSTRAINT fk_users_banned_by_admin
+  FOREIGN KEY (banned_by_admin_id) REFERENCES admin_users(id) ON DELETE SET NULL;
+
+ALTER TABLE posts
+  DROP CONSTRAINT IF EXISTS fk_posts_moderated_by_admin;
+ALTER TABLE posts
+  ADD CONSTRAINT fk_posts_moderated_by_admin
+  FOREIGN KEY (moderated_by_admin_id) REFERENCES admin_users(id) ON DELETE SET NULL;
+
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 5. DB TRIGGERS
