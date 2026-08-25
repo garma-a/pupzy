@@ -1,9 +1,8 @@
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { Pool } from 'pg';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { runMigrations } from '../src/database/migrate';
 import * as schema from '../src/database/schema';
-import * as fs from 'fs';
 import * as path from 'path';
 
 export class TestDatabaseHelper {
@@ -22,29 +21,11 @@ export class TestDatabaseHelper {
     this.pool = new Pool({ connectionString });
     this.db = drizzle(this.pool, { schema });
 
-    // Enable postgis, pgcrypto, and uuidv7 before running migrations
-    await this.pool.query('CREATE EXTENSION IF NOT EXISTS postgis;');
-    await this.pool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto;');
-    await this.pool.query(`
-      CREATE OR REPLACE FUNCTION uuidv7() RETURNS uuid AS $$
-        SELECT (
-          lpad(to_hex(floor(extract(epoch FROM clock_timestamp()) * 1000)::bigint), 12, '0') ||
-          '7' || substr(encode(gen_random_bytes(2), 'hex'), 2, 3) ||
-          '8' || substr(encode(gen_random_bytes(2), 'hex'), 2, 3) ||
-          encode(gen_random_bytes(6), 'hex')
-        )::uuid;
-      $$ LANGUAGE sql VOLATILE;
-    `);
-
-    // Run migrations
-    await migrate(this.db, { migrationsFolder: path.join(__dirname, '../drizzle/migrations') });
-
-    // Run custom.sql
-    const customSqlPath = path.join(__dirname, '../drizzle/custom.sql');
-    if (fs.existsSync(customSqlPath)) {
-      const customSql = fs.readFileSync(customSqlPath, 'utf8');
-      await this.pool.query(customSql);
-    }
+    await runMigrations({
+      pool: this.pool,
+      migrationsFolder: path.join(__dirname, '../drizzle/migrations'),
+      customSqlPath: path.join(__dirname, '../drizzle/custom.sql'),
+    });
 
     return connectionString;
   }

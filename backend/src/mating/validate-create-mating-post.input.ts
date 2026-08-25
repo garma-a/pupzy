@@ -3,11 +3,11 @@ import { assertUuid } from '../common/utils/validate-uuid';
 
 export interface ValidatedMatingPostInput {
   petName: string;
-  species: string;
+  species: 'DOG' | 'CAT' | 'BIRD' | 'RABBIT' | 'OTHER';
   breed: string;
   gender: 'MALE' | 'FEMALE';
   ageValue: number;
-  ageUnit: string;
+  ageUnit: 'DAYS' | 'WEEKS' | 'MONTHS' | 'YEARS';
   isPurebred: boolean;
   hasPedigreeCertificate: boolean;
   vaccinated: boolean;
@@ -32,8 +32,8 @@ export function validateCreateMatingPostInput(raw: Record<string, unknown>): Val
 
   // species/ageUnit are already GraphQL-enum-validated by the time this runs;
   // typeof guards here are defense-in-depth for direct unit-test calls only.
-  const species = String(raw.species);
-  const ageUnit = String(raw.ageUnit);
+  const species = String(raw.species) as 'DOG' | 'CAT' | 'BIRD' | 'RABBIT' | 'OTHER';
+  const ageUnit = String(raw.ageUnit) as 'DAYS' | 'WEEKS' | 'MONTHS' | 'YEARS';
 
   // gender: GraphQL's GenderType allows MALE | FEMALE | UNKNOWN (shared with ADOPTION).
   // MATING rejects UNKNOWN specifically — see plan §0.3 decision 3.

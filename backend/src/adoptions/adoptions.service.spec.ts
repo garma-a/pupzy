@@ -166,7 +166,8 @@ describe('AdoptionsService', () => {
 
     it('approve throws ConflictError when application was concurrently transitioned (lost race)', async () => {
       mockAdoptionsRepo.updateStatus = jest.fn().mockResolvedValue(undefined);
-      mockAdoptionsRepo.findById = jest.fn()
+      mockAdoptionsRepo.findById = jest
+        .fn()
         .mockResolvedValueOnce({
           id: validApplicationId,
           status: 'PENDING',
@@ -209,7 +210,8 @@ describe('AdoptionsService', () => {
 
     it('reject throws ConflictError when application was concurrently transitioned (lost race)', async () => {
       mockAdoptionsRepo.updateStatus = jest.fn().mockResolvedValue(undefined);
-      mockAdoptionsRepo.findById = jest.fn()
+      mockAdoptionsRepo.findById = jest
+        .fn()
         .mockResolvedValueOnce({
           id: validApplicationId,
           status: 'PENDING',
@@ -252,15 +254,15 @@ describe('AdoptionsService', () => {
     });
 
     it('getPostApplications throws ValidationError on invalid status', async () => {
-      await expect(
-        service.getPostApplications(validOwnerId, validPostId, 'INVALID_STATUS', 10, null),
-      ).rejects.toThrow(ValidationError);
+      await expect(service.getPostApplications(validOwnerId, validPostId, 'INVALID_STATUS', 10, null)).rejects.toThrow(
+        ValidationError,
+      );
     });
 
     it('getPostApplications throws ValidationError on invalid postId uuid', async () => {
-      await expect(
-        service.getPostApplications(validOwnerId, 'bad-uuid', 'PENDING', 10, null),
-      ).rejects.toThrow(ValidationError);
+      await expect(service.getPostApplications(validOwnerId, 'bad-uuid', 'PENDING', 10, null)).rejects.toThrow(
+        ValidationError,
+      );
     });
 
     it('throws ValidationError on malformed cursor JSON', async () => {

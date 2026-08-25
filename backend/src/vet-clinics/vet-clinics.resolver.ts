@@ -96,4 +96,3 @@ export class VetClinicsResolver {
     return this.vetClinicsService.nearbyVetClinicsForCity(cityId);
   }
 }
-

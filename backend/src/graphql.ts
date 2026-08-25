@@ -1,3 +1,4 @@
+
 /*
  * -------------------------------------------------------
  * THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
@@ -11,7 +12,8 @@ export enum PostType {
     RESCUE = "RESCUE",
     LOST = "LOST",
     ADOPTION = "ADOPTION",
-    PRODUCT = "PRODUCT"
+    PRODUCT = "PRODUCT",
+    MATING = "MATING"
 }
 
 export enum LostFoundType {
@@ -171,6 +173,30 @@ export interface SubmitAdoptionApplicationInput {
     canProvideVetReference: boolean;
 }
 
+export interface MatingFeedFilter {
+    species?: Nullable<SpeciesType>;
+    gender?: Nullable<GenderType>;
+    breed?: Nullable<string>;
+    cityId?: Nullable<string>;
+}
+
+export interface CreateMatingPostInput {
+    petName: string;
+    species: SpeciesType;
+    breed: string;
+    gender: GenderType;
+    ageValue: number;
+    ageUnit: AgeUnit;
+    isPurebred: boolean;
+    hasPedigreeCertificate?: Nullable<boolean>;
+    vaccinated?: Nullable<boolean>;
+    dewormed?: Nullable<boolean>;
+    termsSummary?: Nullable<string>;
+    matingConditions?: Nullable<string>;
+    cityId: string;
+    mediaIds: string[];
+}
+
 export interface CreateRescuePostInput {
     title: string;
     description: string;
@@ -293,6 +319,8 @@ export interface IQuery {
     postContactRequests(postId: string, status?: Nullable<RequestStatus>, first?: Nullable<number>, after?: Nullable<string>): ContactRequestConnection | Promise<ContactRequestConnection>;
     getWhatsAppLink(requestId: string): string | Promise<string>;
     getProductSellerContact(postId: string): string | Promise<string>;
+    matingFeed(filter?: Nullable<MatingFeedFilter>, first?: Nullable<number>, after?: Nullable<string>): MatingPostConnection | Promise<MatingPostConnection>;
+    matingPostDetail(postId: string): Nullable<MatingDetails> | Promise<Nullable<MatingDetails>>;
     myNotifications(first?: Nullable<number>, after?: Nullable<string>): NotificationConnection | Promise<NotificationConnection>;
     myUnreadNotificationCount(): number | Promise<number>;
     post(id: string): Nullable<Post> | Promise<Nullable<Post>>;
@@ -307,6 +335,7 @@ export interface IQuery {
     mySavedPosts(first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
     myPosts(postType: PostType, first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
     me(): User | Promise<User>;
+    nearbyVetClinics(cityId: string): VetClinic[] | Promise<VetClinic[]>;
 }
 
 export interface IMutation {
@@ -316,6 +345,7 @@ export interface IMutation {
     requestContact(postId: string, message: string): ContactRequest | Promise<ContactRequest>;
     approveContactRequest(requestId: string): ContactRequest | Promise<ContactRequest>;
     rejectContactRequest(requestId: string): ContactRequest | Promise<ContactRequest>;
+    createMatingPost(input: CreateMatingPostInput): Post | Promise<Post>;
     markNotificationRead(notificationId: string): Notification | Promise<Notification>;
     markAllNotificationsRead(): number | Promise<number>;
     createRescuePost(input: CreateRescuePostInput): Post | Promise<Post>;
@@ -348,6 +378,31 @@ export interface ContactRequestConnection {
 export interface ContactRequestEdge {
     node: ContactRequest;
     cursor: string;
+}
+
+export interface MatingDetails {
+    petName: string;
+    species: SpeciesType;
+    breed: string;
+    gender: GenderType;
+    ageValue: number;
+    ageUnit: AgeUnit;
+    isPurebred: boolean;
+    hasPedigreeCertificate: boolean;
+    vaccinated: boolean;
+    dewormed: boolean;
+    termsSummary?: Nullable<string>;
+    matingConditions?: Nullable<string>;
+}
+
+export interface MatingPostEdge {
+    node: Post;
+    cursor: string;
+}
+
+export interface MatingPostConnection {
+    edges: MatingPostEdge[];
+    pageInfo: PageInfo;
 }
 
 export interface NotificationConnection {

@@ -6,6 +6,7 @@ pupzy-app-5f707-firebase-adminsdk-fbsvc-44ac11fd5b.json
 /dist
 /node_modules
 /build
+.adminjs/
 
 # Logs
 logs

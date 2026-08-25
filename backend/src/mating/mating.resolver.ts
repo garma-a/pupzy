@@ -29,10 +29,7 @@ export class MatingResolver {
    */
   @Throttle({ default: { limit: 5, ttl: 3_600_000 } })
   @Mutation('createMatingPost')
-  async createMatingPost(
-    @Args('input') input: Record<string, unknown>,
-    @Context() ctx: GqlContext,
-  ): Promise<Post> {
+  async createMatingPost(@Args('input') input: Record<string, unknown>, @Context() ctx: GqlContext): Promise<Post> {
     return this.matingService.createMatingPost(ctx.user!.id, input);
   }
 }

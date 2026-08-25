@@ -186,6 +186,17 @@ ALTER TABLE posts
   ADD CONSTRAINT fk_posts_moderated_by_admin
   FOREIGN KEY (moderated_by_admin_id) REFERENCES admin_users(id) ON DELETE SET NULL;
 
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 4c. ADMIN SESSION STORAGE (connect-pg-simple)
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Created during migration so AdminJS startup/wake-up never runs DDL.
+CREATE TABLE IF NOT EXISTS "admin_sessions" (
+  "sid" varchar NOT NULL COLLATE "default",
+  "sess" json NOT NULL,
+  "expire" timestamp(6) NOT NULL,
+  CONSTRAINT "admin_sessions_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE
+);
+CREATE INDEX IF NOT EXISTS "IDX_admin_sessions_expire" ON "admin_sessions" ("expire");
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 5. DB TRIGGERS

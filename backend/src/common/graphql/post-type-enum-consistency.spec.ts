@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { parse } from 'graphql';
+import { parse, Kind } from 'graphql';
 import type { EnumTypeDefinitionNode } from 'graphql';
 
 /**
@@ -18,7 +18,7 @@ function extractEnumValues(filePath: string, enumName: string): string[] {
   const source = fs.readFileSync(filePath, 'utf8');
   const doc = parse(source);
   const enumNode = doc.definitions.find(
-    (d): d is EnumTypeDefinitionNode => d.kind === 'EnumTypeDefinition' && d.name.value === enumName,
+    (d): d is EnumTypeDefinitionNode => d.kind === Kind.ENUM_TYPE_DEFINITION && d.name.value === enumName,
   );
   if (!enumNode) {
     throw new Error(`enum ${enumName} not found in ${filePath}`);

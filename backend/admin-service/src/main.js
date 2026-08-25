@@ -79,7 +79,7 @@ const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
   {
     store: new PgSession({
       pool,
-      createTableIfMissing: true,
+      createTableIfMissing: false,
       tableName: "admin_sessions",
     }),
     resave: false,

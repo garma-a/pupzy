@@ -125,8 +125,7 @@ export class MatingService {
       edges: result.rows.map((post) => ({ node: post, cursor: this.encodeCursor(post) })),
       pageInfo: {
         hasNextPage: result.hasNextPage,
-        endCursor:
-          result.rows.length > 0 ? this.encodeCursor(result.rows[result.rows.length - 1]) : null,
+        endCursor: result.rows.length > 0 ? this.encodeCursor(result.rows[result.rows.length - 1]) : null,
       },
     };
   }
@@ -187,9 +186,8 @@ export class MatingService {
   }
 
   private encodeCursor(post: Post): string {
-    return Buffer.from(
-      JSON.stringify({ createdAt: post.createdAt.toISOString(), id: post.id }),
-      'utf8',
-    ).toString('base64url');
+    return Buffer.from(JSON.stringify({ createdAt: post.createdAt.toISOString(), id: post.id }), 'utf8').toString(
+      'base64url',
+    );
   }
 }

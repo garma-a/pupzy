@@ -11,8 +11,8 @@ const envSchema = z.object({
   /** Full PostgreSQL connection string. */
   DATABASE_URL: z.string().url({ message: 'DATABASE_URL must be a valid URL' }),
 
-  /** Maximum connections in the pg pool. Defaults to 20. */
-  DB_POOL_MAX: z.coerce.number().positive().default(20),
+  /** Maximum connections in the pg pool. Defaults to 10. */
+  DB_POOL_MAX: z.coerce.number().positive().default(10),
   /** Milliseconds before idle connections are released. Defaults to 30s. */
   DB_IDLE_TIMEOUT_MS: z.coerce.number().positive().default(30_000),
   /** Milliseconds to wait for a connection. Defaults to 2s. */

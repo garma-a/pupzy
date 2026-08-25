@@ -1,0 +1,157 @@
+import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { Pool } from 'pg';
+import * as path from 'path';
+import * as fs from 'fs';
+import { runMigrations } from './migrate';
+
+describe('Database Migration Runner Integration', () => {
+  let container: StartedPostgreSqlContainer;
+  let connectionString: string;
+  let pool: Pool;
+
+  beforeAll(async () => {
+    container = await new PostgreSqlContainer('postgis/postgis:16-3.4-alpine')
+      .withDatabase('pupzy_migration_test')
+      .withUsername('test')
+      .withPassword('test')
+      .start();
+
+    connectionString = container.getConnectionUri();
+    pool = new Pool({ connectionString });
+  }, 60_000);
+
+  afterAll(async () => {
+    if (pool) {
+      await pool.end();
+    }
+    if (container) {
+      await container.stop();
+    }
+  });
+
+  it('proves clean-database migration successfully creates all schema and custom objects', async () => {
+    // Run migrations on clean database
+    await expect(
+      runMigrations({
+        pool,
+        migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+        customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
+      }),
+    ).resolves.not.toThrow();
+
+    // Verify key tables exist
+    const tablesRes = await pool.query<{ table_name: string }>(`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+    `);
+    const tableNames = tablesRes.rows.map((r) => r.table_name);
+
+    expect(tableNames).toContain('users');
+    expect(tableNames).toContain('posts');
+    expect(tableNames).toContain('admin_users');
+    expect(tableNames).toContain('moderation_actions');
+    expect(tableNames).toContain('cities');
+    expect(tableNames).toContain('rescue_posts');
+    expect(tableNames).toContain('lost_posts');
+    expect(tableNames).toContain('adoption_posts');
+    expect(tableNames).toContain('product_posts');
+    expect(tableNames).toContain('mating_posts');
+    expect(tableNames).toContain('notifications');
+  });
+
+  it('proves repeatable custom SQL is applied and triggers/constraints are active', async () => {
+    // 1. Verify foreign key from custom.sql
+    const fkRes = await pool.query(`
+      SELECT constraint_name
+      FROM information_schema.table_constraints
+      WHERE constraint_name = 'fk_users_banned_by_admin'
+    `);
+    expect(fkRes.rowCount).toBeGreaterThan(0);
+
+    // 2. Insert prerequisite rows to test triggers and constraints
+    const cityRes = await pool.query<{ id: string }>(`
+      INSERT INTO cities (name_english, name_arabic, governorate, center_point)
+      VALUES ('Cairo', 'القاهرة', 'Cairo', ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326))
+      RETURNING id
+    `);
+    const cityId = cityRes.rows[0].id;
+
+    const userRes = await pool.query<{ id: string; post_count: number; rescue_post_count: number }>(`
+      INSERT INTO users (firebase_user_id, email, full_name)
+      VALUES ('test-fb-1', 'user1@example.com', 'User One')
+      RETURNING id, post_count, rescue_post_count
+    `);
+    const userId = userRes.rows[0].id;
+    expect(userRes.rows[0].post_count).toBe(0);
+
+    // 3. Test check constraint from custom.sql:
+    // RESCUE post without urgency tier should violate posts_urgency_matches_post_type_constraint
+    await expect(
+      pool.query(
+        `INSERT INTO posts (creator_id, post_type, title, description, status, moderation_status, city_id, coordinates, urgency)
+         VALUES ($1, 'RESCUE', 'Rescue dog', 'Needs help', 'ACTIVE', 'CLEAN', $2, ST_SetSRID(ST_MakePoint(31.2, 30.0), 4326), NULL)`,
+        [userId, cityId],
+      ),
+    ).rejects.toThrow();
+
+    // Valid RESCUE post with urgency should succeed and trigger sync_user_post_counts
+    await pool.query(
+      `INSERT INTO posts (creator_id, post_type, title, description, status, moderation_status, city_id, coordinates, urgency)
+       VALUES ($1, 'RESCUE', 'Rescue dog', 'Needs help', 'ACTIVE', 'CLEAN', $2, ST_SetSRID(ST_MakePoint(31.2, 30.0), 4326), 'CRITICAL')`,
+      [userId, cityId],
+    );
+
+    const userAfterPost = await pool.query<{ post_count: number; rescue_post_count: number }>(
+      `SELECT post_count, rescue_post_count FROM users WHERE id = $1`,
+      [userId],
+    );
+    expect(userAfterPost.rows[0].post_count).toBe(1);
+    expect(userAfterPost.rows[0].rescue_post_count).toBe(1);
+  });
+
+  it('proves re-running the migration operation against an already-migrated database succeeds without error or schema corruption', async () => {
+    // Re-run the full migration operation
+    await expect(
+      runMigrations({
+        pool,
+        migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+        customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
+      }),
+    ).resolves.not.toThrow();
+
+    // Verify existing data remains intact
+    const usersCount = await pool.query<{ count: string }>(`SELECT count(*) FROM users`);
+    expect(parseInt(usersCount.rows[0].count, 10)).toBeGreaterThan(0);
+
+    const postsCount = await pool.query<{ count: string }>(`SELECT count(*) FROM posts`);
+    expect(parseInt(postsCount.rows[0].count, 10)).toBeGreaterThan(0);
+  });
+
+  it('proves nonzero failure behavior when migration or custom SQL fails', async () => {
+    // Nonexistent migrations folder fails
+    await expect(
+      runMigrations({
+        pool,
+        migrationsFolder: path.resolve(__dirname, 'nonexistent-migrations-dir'),
+      }),
+    ).rejects.toThrow();
+
+    // Broken custom SQL file fails
+    const tempCustomSql = path.resolve(__dirname, 'temp_broken.sql');
+    fs.writeFileSync(tempCustomSql, 'THIS IS INVALID SQL STATEMENT;');
+    try {
+      await expect(
+        runMigrations({
+          pool,
+          migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+          customSqlPath: tempCustomSql,
+        }),
+      ).rejects.toThrow();
+    } finally {
+      if (fs.existsSync(tempCustomSql)) {
+        fs.unlinkSync(tempCustomSql);
+      }
+    }
+  });
+});

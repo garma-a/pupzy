@@ -138,7 +138,15 @@ describe('Admin schema (integration)', () => {
     try {
       await client.query('ANALYZE posts');
       await client.query('SET enable_seqscan = off');
-      const { rows } = await client.query(`
+      interface ExplainPlanRow {
+        'QUERY PLAN': Array<{
+          Plan: {
+            'Node Type': string;
+            'Index Name'?: string;
+          };
+        }>;
+      }
+      const { rows } = await client.query<ExplainPlanRow>(`
         EXPLAIN (FORMAT JSON)
         SELECT id, report_count, created_at
         FROM posts

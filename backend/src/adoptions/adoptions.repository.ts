@@ -72,12 +72,7 @@ export class AdoptionsRepository {
         status,
         respondedAt: sql`now()`,
       })
-      .where(
-        and(
-          eq(adoptionApplications.id, applicationId),
-          eq(adoptionApplications.status, 'PENDING'),
-        ),
-      )
+      .where(and(eq(adoptionApplications.id, applicationId), eq(adoptionApplications.status, 'PENDING')))
       .returning();
     return updated;
   }

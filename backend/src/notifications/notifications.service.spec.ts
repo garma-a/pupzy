@@ -92,7 +92,9 @@ describe('NotificationsService', () => {
     });
 
     it('throws ValidationError for a cursor with a non-string id', async () => {
-      const badCursor = Buffer.from(JSON.stringify({ createdAt: new Date().toISOString(), id: 12345 })).toString('base64url');
+      const badCursor = Buffer.from(JSON.stringify({ createdAt: new Date().toISOString(), id: 12345 })).toString(
+        'base64url',
+      );
       await expect(service.getMyNotifications(validUserId, 10, badCursor)).rejects.toThrow(ValidationError);
     });
   });

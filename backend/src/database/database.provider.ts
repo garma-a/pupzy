@@ -14,7 +14,7 @@ export const DATABASE_TOKEN = 'DATABASE';
  *
  * | Env variable             | Default | Description                               |
  * |--------------------------|---------|-------------------------------------------|
- * | DB_POOL_MAX              | 20      | Max simultaneous connections              |
+ * | DB_POOL_MAX              | 10      | Max simultaneous connections              |
  * | DB_IDLE_TIMEOUT_MS       | 30000   | Release idle connections after N ms       |
  * | DB_CONNECTION_TIMEOUT_MS | 2000    | Fail if a connection takes longer than Nms|
  *

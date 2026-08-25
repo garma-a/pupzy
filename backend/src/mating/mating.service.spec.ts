@@ -157,15 +157,15 @@ describe('MatingService', () => {
     });
 
     it('throws ValidationError if gender is UNKNOWN', async () => {
-      await expect(
-        service.createMatingPost(validUserId, { ...validRawInput, gender: 'UNKNOWN' }),
-      ).rejects.toThrow(ValidationError);
+      await expect(service.createMatingPost(validUserId, { ...validRawInput, gender: 'UNKNOWN' })).rejects.toThrow(
+        ValidationError,
+      );
     });
 
     it('throws ValidationError if mediaIds is empty', async () => {
-      await expect(
-        service.createMatingPost(validUserId, { ...validRawInput, mediaIds: [] }),
-      ).rejects.toThrow(ValidationError);
+      await expect(service.createMatingPost(validUserId, { ...validRawInput, mediaIds: [] })).rejects.toThrow(
+        ValidationError,
+      );
     });
 
     it('throws ValidationError if mediaIds has more than 4 items', async () => {
@@ -176,9 +176,9 @@ describe('MatingService', () => {
         '01916327-0000-7000-8000-000000000004',
         '01916327-0000-7000-8000-000000000005',
       ];
-      await expect(
-        service.createMatingPost(validUserId, { ...validRawInput, mediaIds: fiveMediaIds }),
-      ).rejects.toThrow(ValidationError);
+      await expect(service.createMatingPost(validUserId, { ...validRawInput, mediaIds: fiveMediaIds })).rejects.toThrow(
+        ValidationError,
+      );
     });
   });
 
@@ -189,7 +189,7 @@ describe('MatingService', () => {
       expect(feed.edges[0].node.id).toBe(validPostId);
       expect(mockMatingRepo.findFeed).toHaveBeenCalledWith(
         expect.objectContaining({
-          filter: expect.objectContaining({ species: 'DOG', gender: 'FEMALE' }),
+          filter: { species: 'DOG', gender: 'FEMALE' },
           limit: 10,
         }),
       );

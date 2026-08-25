@@ -89,10 +89,10 @@ Edit `.env` and fill in:
 ### 3. Run database migrations
 
 ```bash
-npx drizzle-kit migrate
+npm run db:migrate
 ```
 
-This applies all SQL migrations from `drizzle/migrations/` to your PostgreSQL database.
+This applies all SQL migrations from `drizzle/migrations/` and repeatable custom SQL from `drizzle/custom.sql` to your PostgreSQL database.
 
 ### 4. Start the development server
 
@@ -244,15 +244,18 @@ npm run lint
 # Format code
 npm run format
 
-# Generate new migration from schema changes
-npx drizzle-kit generate
-
-# Apply pending migrations
-npx drizzle-kit migrate
+# Apply pending migrations and repeatable custom SQL
+npm run db:migrate
 
 # Open Drizzle Studio (DB GUI)
 npx drizzle-kit studio
 ```
+
+---
+
+## Deployment
+
+See [Three-Service Railway Release & Deployment Guide](docs/deployment/three-service-railway-release.md) for full topology, private networking, pre-deploy migration operations, and expand/contract schema guidelines.
 
 ---
 

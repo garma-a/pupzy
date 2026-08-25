@@ -30,7 +30,7 @@ import { databaseProvider, DATABASE_TOKEN } from './database.provider';
     },
     {
       provide: 'DB_POOL_MAX',
-      useFactory: (config: ConfigService) => config.get<number>('DB_POOL_MAX') ?? 20,
+      useFactory: (config: ConfigService) => config.get<number>('DB_POOL_MAX') ?? 10,
       inject: [ConfigService],
     },
     {

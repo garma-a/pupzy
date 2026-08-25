@@ -157,9 +157,21 @@ describe('ContactsService', () => {
     });
 
     it('approve throws ConflictError when the row was concurrently transitioned (lost race)', async () => {
-      const pendingReq = { id: validRequestId, postId: validPostId, requesterId: validRequesterId, status: 'PENDING' } as unknown as ContactRequest;
-      const ownedPost = { id: validPostId, creatorId: validOwnerId, title: 'Cat', status: 'ACTIVE', postType: 'ADOPTION' } as unknown as Post;
-      mockContactsRepo.findById = jest.fn()
+      const pendingReq = {
+        id: validRequestId,
+        postId: validPostId,
+        requesterId: validRequesterId,
+        status: 'PENDING',
+      } as unknown as ContactRequest;
+      const ownedPost = {
+        id: validPostId,
+        creatorId: validOwnerId,
+        title: 'Cat',
+        status: 'ACTIVE',
+        postType: 'ADOPTION',
+      } as unknown as Post;
+      mockContactsRepo.findById = jest
+        .fn()
         .mockResolvedValueOnce(pendingReq)
         .mockResolvedValueOnce({ ...pendingReq, status: 'REJECTED' });
       mockPostsRepo.findById = jest.fn().mockResolvedValue(ownedPost);
@@ -190,9 +202,21 @@ describe('ContactsService', () => {
     });
 
     it('reject throws ConflictError when the row was concurrently transitioned (lost race)', async () => {
-      const pendingReq = { id: validRequestId, postId: validPostId, requesterId: validRequesterId, status: 'PENDING' } as unknown as ContactRequest;
-      const ownedPost = { id: validPostId, creatorId: validOwnerId, title: 'Cat', status: 'ACTIVE', postType: 'ADOPTION' } as unknown as Post;
-      mockContactsRepo.findById = jest.fn()
+      const pendingReq = {
+        id: validRequestId,
+        postId: validPostId,
+        requesterId: validRequesterId,
+        status: 'PENDING',
+      } as unknown as ContactRequest;
+      const ownedPost = {
+        id: validPostId,
+        creatorId: validOwnerId,
+        title: 'Cat',
+        status: 'ACTIVE',
+        postType: 'ADOPTION',
+      } as unknown as Post;
+      mockContactsRepo.findById = jest
+        .fn()
         .mockResolvedValueOnce(pendingReq)
         .mockResolvedValueOnce({ ...pendingReq, status: 'APPROVED' });
       mockPostsRepo.findById = jest.fn().mockResolvedValue(ownedPost);

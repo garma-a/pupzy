@@ -2,23 +2,19 @@ import { Injectable, Inject } from '@nestjs/common';
 import { and, desc, eq, lt, or, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
-import { posts, matingPosts, postMedia, type Post, type NewPost, type NewPostMedia, type MatingPostRow } from '../database/schema';
+import {
+  posts,
+  matingPosts,
+  postMedia,
+  type Post,
+  type NewPost,
+  type NewPostMedia,
+  type MatingPostRow,
+  type NewMatingPostRow,
+} from '../database/schema';
 import type * as schema from '../database/schema';
 
-export interface NewMatingDetailsInput {
-  petName: string;
-  species: string;
-  breed: string;
-  gender: string;
-  ageValue: number;
-  ageUnit: string;
-  isPurebred: boolean;
-  hasPedigreeCertificate: boolean;
-  vaccinated: boolean;
-  dewormed: boolean;
-  termsSummary: string | null;
-  matingConditions: string | null;
-}
+export type NewMatingDetailsInput = Omit<NewMatingPostRow, 'postId'>;
 
 @Injectable()
 export class MatingRepository {
@@ -38,25 +34,14 @@ export class MatingRepository {
   async createMatingPost(
     baseData: NewPost,
     matingData: NewMatingDetailsInput,
-    mediaRows: Omit<NewPostMedia, 'postId'>[],
+    mediaRows: Array<Omit<NewPostMedia, 'postId' | 'displayOrder'>>,
   ): Promise<Post> {
     return this.db.transaction(async (tx) => {
       const [post] = await tx.insert(posts).values(baseData).returning();
 
       await tx.insert(matingPosts).values({
         postId: post.id,
-        petName: matingData.petName,
-        species: matingData.species as any,
-        breed: matingData.breed,
-        gender: matingData.gender as any,
-        ageValue: matingData.ageValue,
-        ageUnit: matingData.ageUnit as any,
-        isPurebred: matingData.isPurebred,
-        hasPedigreeCertificate: matingData.hasPedigreeCertificate,
-        vaccinated: matingData.vaccinated,
-        dewormed: matingData.dewormed,
-        termsSummary: matingData.termsSummary,
-        matingConditions: matingData.matingConditions,
+        ...matingData,
       });
 
       if (mediaRows.length > 0) {
@@ -104,9 +89,7 @@ export class MatingRepository {
           filter.species ? eq(matingPosts.species, filter.species as never) : undefined,
           filter.gender ? eq(matingPosts.gender, filter.gender as never) : undefined,
           filter.cityId ? eq(posts.cityId, filter.cityId) : undefined,
-          filter.breed
-            ? sql`${matingPosts.breed} ILIKE ${'%' + escapeLike(filter.breed) + '%'}`
-            : undefined,
+          filter.breed ? sql`${matingPosts.breed} ILIKE ${'%' + escapeLike(filter.breed) + '%'}` : undefined,
           cursor
             ? or(
                 lt(posts.createdAt, new Date(cursor.createdAt)),
