@@ -14,7 +14,6 @@ const database = new TestDatabaseHelper();
 let server;
 let baseUrl;
 let sqlAdapterPool;
-let closeDashboard;
 let principals;
 let superCookie;
 let staffCookie;
@@ -106,7 +105,6 @@ before(async () => {
 
 after(async () => {
   if (server) await new Promise((resolve) => server.close(resolve));
-  closeDashboard?.();
   await sqlAdapterPool?.destroy();
   await database.stop();
 });

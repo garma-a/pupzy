@@ -110,6 +110,5 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     admin,
     sqlAdapterPool: knex,
     cache,
-    closeDashboard: () => {},
   };
 }

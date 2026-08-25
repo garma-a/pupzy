@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { ApiClient } from "adminjs";
+import React, { useCallback, useEffect, useState } from 'react';
+import { ApiClient } from 'adminjs';
 import {
   Badge,
   Box,
@@ -14,76 +14,57 @@ import {
   TableHead,
   TableRow,
   Text,
-} from "@adminjs/design-system";
+} from '@adminjs/design-system';
 
 const api = new ApiClient();
 
 const statLabels = [
-  ["total_users", "Total Users"],
-  ["banned_users", "Banned Users"],
-  ["total_posts", "Total Posts"],
-  ["active_posts", "Active Posts"],
-  ["needs_review_posts", "Needs Review"],
-  ["flagged_posts", "Flagged"],
+  ['total_users', 'Total Users'],
+  ['banned_users', 'Banned Users'],
+  ['total_posts', 'Total Posts'],
+  ['active_posts', 'Active Posts'],
+  ['needs_review_posts', 'Needs Review'],
+  ['flagged_posts', 'Flagged'],
 ];
 
 export default function Dashboard() {
   const [data, setData] = useState();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   const load = useCallback(async (fresh = false) => {
     setLoading(true);
-    setError("");
+    setError('');
     try {
-      const response = await api.getDashboard(
-        fresh ? { params: { fresh: "true" } } : undefined,
-      );
+      const response = await api.getDashboard(fresh ? { params: { fresh: 'true' } } : undefined);
       setData(response.data);
     } catch {
-      setError("Dashboard data could not be loaded.");
+      setError('Dashboard data could not be loaded.');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void load();
+    load();
   }, [load]);
 
   if (loading && !data) return <Loader />;
 
   return (
     <Box p="xl">
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb="xl"
-      >
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb="xl">
         <H2>Pupzy moderation overview</H2>
         <Button disabled={loading} onClick={() => void load(true)}>
-          {loading ? "Refreshing…" : "Refresh now"}
+          {loading ? 'Refreshing…' : 'Refresh now'}
         </Button>
       </Box>
       {error ? <Text color="error">{error}</Text> : null}
-      <Box
-        display="grid"
-        gridTemplateColumns="repeat(auto-fit, minmax(150px, 1fr))"
-        gridGap="lg"
-        mb="xl"
-      >
+      <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(150px, 1fr))" gridGap="lg" mb="xl">
         {statLabels.map(([key, label]) => {
-          const alert =
-            ["needs_review_posts", "flagged_posts"].includes(key) &&
-            Number(data?.stats?.[key]) > 0;
+          const alert = ['needs_review_posts', 'flagged_posts'].includes(key) && Number(data?.stats?.[key]) > 0;
           return (
-            <Box
-              key={key}
-              variant="white"
-              p="lg"
-              borderLeft={alert ? "4px solid #c00" : undefined}
-            >
+            <Box key={key} variant="white" p="lg" borderLeft={alert ? '4px solid #c00' : undefined}>
               <Text variant="sm">{label}</Text>
               <H2>{Number(data?.stats?.[key] ?? 0).toLocaleString()}</H2>
             </Box>
@@ -91,10 +72,7 @@ export default function Dashboard() {
         })}
       </Box>
       <Text mb="xl" variant="sm">
-        Statistics computed{" "}
-        {data?.stats?.computedAt
-          ? new Date(data.stats.computedAt).toLocaleString()
-          : "—"}
+        Statistics computed {data?.stats?.computedAt ? new Date(data.stats.computedAt).toLocaleString() : '—'}
       </Text>
 
       <Box variant="white" p="lg">
@@ -113,35 +91,21 @@ export default function Dashboard() {
             {(data?.needsReview ?? []).map((post) => (
               <TableRow key={post.id}>
                 <TableCell>
-                  <Link
-                    href={`/admin/resources/posts/records/${encodeURIComponent(post.id)}/show`}
-                  >
-                    {post.title}
-                  </Link>
+                  <Link href={`/admin/resources/posts/records/${encodeURIComponent(post.id)}/show`}>{post.title}</Link>
                 </TableCell>
                 <TableCell>{post.post_type}</TableCell>
                 <TableCell>
-                  <Badge
-                    variant={
-                      post.moderation_status === "FLAGGED"
-                        ? "danger"
-                        : "warning"
-                    }
-                  >
-                    {post.moderation_status.replaceAll("_", " ")}
+                  <Badge variant={post.moderation_status === 'FLAGGED' ? 'danger' : 'warning'}>
+                    {post.moderation_status.replaceAll('_', ' ')}
                   </Badge>
                 </TableCell>
                 <TableCell>{post.report_count}</TableCell>
-                <TableCell>
-                  {new Date(post.created_at).toLocaleString()}
-                </TableCell>
+                <TableCell>{new Date(post.created_at).toLocaleString()}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-        {!data?.needsReview?.length ? (
-          <Text mt="lg">No active posts need review.</Text>
-        ) : null}
+        {!data?.needsReview?.length ? <Text mt="lg">No active posts need review.</Text> : null}
       </Box>
     </Box>
   );
