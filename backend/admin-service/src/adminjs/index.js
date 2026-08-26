@@ -29,6 +29,28 @@ import { buildVetClinicsResource } from './resources/vet-clinics.resource.js';
 
 AdminJS.registerAdapter({ Database, Resource });
 
+export const ADMIN_RESOURCE_TABLES = Object.freeze([
+  'users',
+  'posts',
+  'rescue_posts',
+  'lost_posts',
+  'adoption_posts',
+  'product_posts',
+  'mating_posts',
+  'post_media',
+  'post_upvotes',
+  'post_saves',
+  'post_reports',
+  'contact_requests',
+  'adoption_applications',
+  'saved_searches',
+  'notifications',
+  'cities',
+  'vet_clinics',
+  'admin_users',
+  'moderation_actions',
+]);
+
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}) {
@@ -48,12 +70,17 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     ),
   };
 
-  const { db, sqlAdapterPool } = await buildAdminSqlDatabase({
-    connectionString: databaseUrl,
-    database: databaseName,
-    statement_timeout: 8_000,
-    application_name: 'pupzy-adminjs-sql',
-  });
+  const { db, sqlAdapterPool } = await buildAdminSqlDatabase(
+    {
+      connectionString: databaseUrl,
+      database: databaseName,
+      statement_timeout: 8_000,
+      application_name: 'pupzy-adminjs-sql',
+    },
+    {
+      tables: options.tables ?? ADMIN_RESOURCE_TABLES,
+    },
+  );
 
   const rawResources = [
     buildUsersResource(db, pool, components, cache),

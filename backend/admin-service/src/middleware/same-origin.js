@@ -10,8 +10,17 @@ export function requireSameOrigin(req, res, next) {
   }
 
   const origin = req.get('origin');
-  if (!origin) {
+  if (!origin || origin === 'null') {
     if (fetchSite === 'same-origin') return next();
+    const referer = req.get('referer');
+    if (referer) {
+      try {
+        const refererUrl = new URL(referer);
+        if (refererUrl.host === req.get('host') && refererUrl.protocol === `${req.protocol}:`) return next();
+      } catch {
+        // Invalid referer is rejected below.
+      }
+    }
     return res.status(403).send('Forbidden');
   }
 

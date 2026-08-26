@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
+import { ADMIN_RESOURCE_TABLES } from './index.js';
 import { createAdminSqlClient } from './sql-adapter.js';
 
 describe('AdminJS SQL adapter compatibility', () => {
@@ -18,4 +19,32 @@ describe('AdminJS SQL adapter compatibility', () => {
       await sql.destroy();
     }
   });
+
+  it('exports ADMIN_RESOURCE_TABLES with exactly the 19 domain tables', () => {
+    const expectedTables = [
+      'users',
+      'posts',
+      'rescue_posts',
+      'lost_posts',
+      'adoption_posts',
+      'product_posts',
+      'mating_posts',
+      'post_media',
+      'post_upvotes',
+      'post_saves',
+      'post_reports',
+      'contact_requests',
+      'adoption_applications',
+      'saved_searches',
+      'notifications',
+      'cities',
+      'vet_clinics',
+      'admin_users',
+      'moderation_actions',
+    ];
+    assert.deepEqual([...ADMIN_RESOURCE_TABLES], expectedTables);
+    assert.equal(ADMIN_RESOURCE_TABLES.includes('spatial_ref_sys'), false);
+    assert.equal(ADMIN_RESOURCE_TABLES.includes('admin_sessions'), false);
+  });
 });
+

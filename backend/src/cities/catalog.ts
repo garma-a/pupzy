@@ -1,0 +1,321 @@
+import * as fs from 'fs';
+import * as path from 'path';
+
+export interface RawCitySnapshotRecord {
+  adm2_name: string;
+  adm2_name1: string;
+  adm2_name2?: string | null;
+  adm2_name3?: string | null;
+  adm2_pcode: string;
+  adm1_name: string;
+  adm1_name1: string;
+  adm1_name2?: string | null;
+  adm1_name3?: string | null;
+  adm1_pcode: string;
+  adm0_name: string;
+  adm0_name1: string;
+  adm0_name2?: string | null;
+  adm0_name3?: string | null;
+  adm0_pcode: string;
+  valid_on?: string | null;
+  valid_to?: string | null;
+  area_sqkm?: number | null;
+  version?: string | null;
+  lang?: string | null;
+  lang1?: string | null;
+  lang2?: string | null;
+  lang3?: string | null;
+  adm2_ref_name?: string | null;
+  center_lat: number | string;
+  center_lon: number | string;
+}
+
+export interface CitySnapshotMetadata {
+  source: string;
+  sourceUrl: string;
+  resourceUrl: string;
+  upstreamVersion: string;
+  upstreamDates: {
+    validOn: string;
+    reviewedDate: string;
+    lastModified: string;
+  };
+  retrievalDate: string;
+  license: string;
+  licenseUrl: string;
+  attribution: string;
+  totalRows: number;
+  outsideZemamCount: number;
+  selectableCount: number;
+  governorateCount: number;
+}
+
+export interface CitySnapshot {
+  metadata: CitySnapshotMetadata;
+  records: RawCitySnapshotRecord[];
+}
+
+export type CityLifecycleStatusValue = 'OFFICIAL' | 'LEGACY' | 'RETIRED';
+
+export interface CityCatalogRecord {
+  sourceCode: string;
+  nameEnglish: string;
+  nameArabic: string;
+  governorate: string;
+  governorateArabic?: string;
+  governorateCode: string;
+  sourceNameEnglish: string;
+  sourceNameArabic: string;
+  latitude: number;
+  longitude: number;
+  status: CityLifecycleStatusValue;
+}
+
+export interface CityCatalog {
+  metadata?: Partial<CitySnapshotMetadata> & {
+    totalCities?: number;
+    governoratesCount?: number;
+  };
+  records: CityCatalogRecord[];
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+  stats: {
+    totalCities: number;
+    governorateCount: number;
+  };
+}
+
+function resolveDataPath(filename: string): string {
+  const primaryPath = path.resolve(__dirname, 'data', filename);
+  if (fs.existsSync(primaryPath)) {
+    return primaryPath;
+  }
+  const fallbackSrc = path.resolve(__dirname, '../cities/data', filename);
+  if (fs.existsSync(fallbackSrc)) {
+    return fallbackSrc;
+  }
+  const fallbackRoot = path.resolve(process.cwd(), 'src/cities/data', filename);
+  if (fs.existsSync(fallbackRoot)) {
+    return fallbackRoot;
+  }
+  return primaryPath;
+}
+
+/**
+ * Loads the untouched OCHA COD-AB Egyptian ADM2 source snapshot.
+ * Runs completely offline without any network access.
+ */
+export function loadRawSnapshot(): CitySnapshot {
+  const filePath = resolveDataPath('ocha-adm2-egypt-snapshot.json');
+  const content = fs.readFileSync(filePath, 'utf8');
+  return JSON.parse(content) as CitySnapshot;
+}
+
+function toCatalogRecord(item: RawCitySnapshotRecord, nameEnglish: string): CityCatalogRecord {
+  return {
+    sourceCode: item.adm2_pcode.trim(),
+    nameEnglish,
+    nameArabic: item.adm2_name1.trim(),
+    governorate: item.adm1_name.trim(),
+    governorateArabic: item.adm1_name1?.trim() ?? '',
+    governorateCode: item.adm1_pcode.trim(),
+    sourceNameEnglish: item.adm2_name.trim(),
+    sourceNameArabic: item.adm2_name1.trim(),
+    latitude: Number(item.center_lat),
+    longitude: Number(item.center_lon),
+    status: 'OFFICIAL',
+  };
+}
+
+/**
+ * Deterministically transforms a raw 365-row ADM2 snapshot into 351 selectable Cities:
+ * 1. Excludes all 14 outside-zemam units ('Zemam Out' / ending in '00').
+ * 2. Applies Kism / Markaz English-name disambiguation for duplicate names within the same governorate.
+ * 3. Preserves upstream Arabic and source names.
+ */
+export function transformCatalog(snapshot: CitySnapshot): CityCatalog {
+  const rawRecords = snapshot.records;
+  // Exclude outside zemam units
+  const selectable = rawRecords.filter(
+    (record) => record.adm2_name !== 'Zemam Out' && !record.adm2_pcode.endsWith('00'),
+  );
+
+  // Group by (governorate, adm2_name) to find duplicates for disambiguation
+  const grouped = new Map<string, RawCitySnapshotRecord[]>();
+  for (const record of selectable) {
+    const key = `${record.adm1_name}:${record.adm2_name}`;
+    const list = grouped.get(key) ?? [];
+    list.push(record);
+    grouped.set(key, list);
+  }
+
+  const records: CityCatalogRecord[] = [];
+
+  for (const [, items] of grouped.entries()) {
+    if (items.length === 1) {
+      records.push(toCatalogRecord(items[0], items[0].adm2_name.trim()));
+    } else {
+      // Disambiguate with Kism/Markaz suffix
+      for (const item of items) {
+        const arabic = item.adm2_name1.trim();
+        let suffix = '';
+        if (arabic.includes('قسم')) {
+          suffix = ' (Kism)';
+        } else if (arabic.includes('مركز')) {
+          suffix = ' (Markaz)';
+        } else if (arabic.includes('مدينة')) {
+          suffix = ' (City)';
+        } else {
+          suffix = ` (${arabic})`;
+        }
+
+        const disambiguatedName = `${item.adm2_name.trim()}${suffix}`;
+        records.push(toCatalogRecord(item, disambiguatedName));
+      }
+    }
+  }
+
+  records.sort((a, b) => {
+    const govCmp = a.governorate.localeCompare(b.governorate);
+    if (govCmp !== 0) return govCmp;
+    return a.nameEnglish.localeCompare(b.nameEnglish);
+  });
+
+  return {
+    metadata: {
+      ...snapshot.metadata,
+      totalCities: records.length,
+      governoratesCount: new Set(records.map((r) => r.governorate)).size,
+    },
+    records,
+  };
+}
+
+/**
+ * Validates integrity constraints for a City catalog:
+ * - 351 selectable cities
+ * - 27 distinct governorates
+ * - Unique source codes
+ * - Unique (nameEnglish, governorate) pairs
+ * - Non-blank names
+ * - Schema length limits (<= 100 chars)
+ * - Finite WGS84 coordinates in bounds
+ */
+export function validateCatalog(catalog: { records: CityCatalogRecord[] }): ValidationResult {
+  const errors: string[] = [];
+  const records = catalog.records;
+
+  if (records.length !== 351) {
+    errors.push(`Expected exactly 351 selectable cities, found ${records.length}`);
+  }
+
+  const governorates = new Set(records.map((r) => r.governorate));
+  if (governorates.size !== 27) {
+    errors.push(`Expected exactly 27 governorates, found ${governorates.size}`);
+  }
+
+  const seenSourceCodes = new Set<string>();
+  const seenGovNamePairs = new Set<string>();
+
+  for (let i = 0; i < records.length; i++) {
+    const city = records[i];
+    const prefix = `City[${i}] (${city.sourceCode || 'unknown'})`;
+
+    // Unique source code
+    if (!city.sourceCode || city.sourceCode.trim() === '') {
+      errors.push(`${prefix}: Missing or blank sourceCode`);
+    } else if (seenSourceCodes.has(city.sourceCode)) {
+      errors.push(`${prefix}: Duplicate sourceCode '${city.sourceCode}'`);
+    } else {
+      seenSourceCodes.add(city.sourceCode);
+    }
+
+    // Unique (nameEnglish, governorate)
+    const govNameKey = `${city.governorate}:${city.nameEnglish}`;
+    if (seenGovNamePairs.has(govNameKey)) {
+      errors.push(`${prefix}: Duplicate nameEnglish '${city.nameEnglish}' in governorate '${city.governorate}'`);
+    } else {
+      seenGovNamePairs.add(govNameKey);
+    }
+
+    // Nonblank checks
+    if (!city.nameEnglish || city.nameEnglish.trim() === '') {
+      errors.push(`${prefix}: Blank nameEnglish`);
+    }
+    if (!city.nameArabic || city.nameArabic.trim() === '') {
+      errors.push(`${prefix}: Blank nameArabic`);
+    }
+    if (!city.governorate || city.governorate.trim() === '') {
+      errors.push(`${prefix}: Blank governorate`);
+    }
+
+    // Length limits (<= 100)
+    if (city.nameEnglish && city.nameEnglish.length > 100) {
+      errors.push(`${prefix}: nameEnglish exceeds 100 characters (${city.nameEnglish.length})`);
+    }
+    if (city.nameArabic && city.nameArabic.length > 100) {
+      errors.push(`${prefix}: nameArabic exceeds 100 characters (${city.nameArabic.length})`);
+    }
+    if (city.governorate && city.governorate.length > 100) {
+      errors.push(`${prefix}: governorate exceeds 100 characters (${city.governorate.length})`);
+    }
+    if (city.sourceCode && city.sourceCode.length > 100) {
+      errors.push(`${prefix}: sourceCode exceeds 100 characters (${city.sourceCode.length})`);
+    }
+    if (city.sourceNameEnglish && city.sourceNameEnglish.length > 100) {
+      errors.push(`${prefix}: sourceNameEnglish exceeds 100 characters (${city.sourceNameEnglish.length})`);
+    }
+    if (city.sourceNameArabic && city.sourceNameArabic.length > 100) {
+      errors.push(`${prefix}: sourceNameArabic exceeds 100 characters (${city.sourceNameArabic.length})`);
+    }
+
+    // Finite coordinates
+    if (!Number.isFinite(city.latitude) || !Number.isFinite(city.longitude)) {
+      errors.push(`${prefix}: Non-finite coordinates (${city.latitude}, ${city.longitude})`);
+    } else {
+      if (city.latitude < -90 || city.latitude > 90) {
+        errors.push(`${prefix}: Latitude out of bounds (${city.latitude})`);
+      }
+      if (city.longitude < -180 || city.longitude > 180) {
+        errors.push(`${prefix}: Longitude out of bounds (${city.longitude})`);
+      }
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    stats: {
+      totalCities: records.length,
+      governorateCount: governorates.size,
+    },
+  };
+}
+
+let cachedOfficialCatalog: CityCatalogRecord[] | null = null;
+
+/**
+ * Returns the compiled 351-city official reference catalog.
+ * Cached in memory after first load.
+ */
+export function getOfficialCatalog(): CityCatalogRecord[] {
+  if (cachedOfficialCatalog) {
+    return cachedOfficialCatalog;
+  }
+  const filePath = resolveDataPath('egypt-cities-catalog.json');
+  if (fs.existsSync(filePath)) {
+    const content = fs.readFileSync(filePath, 'utf8');
+    const catalog = JSON.parse(content) as CityCatalog;
+    cachedOfficialCatalog = catalog.records;
+    return cachedOfficialCatalog;
+  }
+
+  // Fallback to on-the-fly transformation if compiled JSON is absent
+  const snapshot = loadRawSnapshot();
+  const transformed = transformCatalog(snapshot);
+  cachedOfficialCatalog = transformed.records;
+  return cachedOfficialCatalog;
+}

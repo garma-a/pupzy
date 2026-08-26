@@ -49,6 +49,8 @@ describe('security middleware', () => {
     for (const headers of [
       { origin: 'https://admin.example.com', host: 'admin.example.com' },
       { 'sec-fetch-site': 'same-origin', host: 'admin.example.com' },
+      { origin: 'null', 'sec-fetch-site': 'same-origin', host: 'admin.example.com' },
+      { referer: 'https://admin.example.com/admin/login', host: 'admin.example.com' },
     ]) {
       let nextCalled = false;
       requireSameOrigin(request('POST', headers), responseRecorder(), () => {
@@ -60,6 +62,7 @@ describe('security middleware', () => {
     for (const headers of [
       { origin: 'https://attacker.example', host: 'admin.example.com' },
       { origin: 'http://admin.example.com', host: 'admin.example.com' },
+      { origin: 'null', host: 'admin.example.com' },
       { 'sec-fetch-site': 'same-site', host: 'admin.example.com' },
       {},
     ]) {

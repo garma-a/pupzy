@@ -91,6 +91,7 @@ describe("AdminJS resource configuration", () => {
       ["saved_searches", "species", ENUMS.speciesType],
       ["saved_searches", "market_category", ENUMS.productCategory],
       ["notifications", "type", ENUMS.notificationType],
+      ["cities", "status", ENUMS.cityLifecycleStatus],
       ["vet_clinics", "source", ENUMS.vetClinicSource],
       ["admin_users", "role", ENUMS.adminRole],
       ["moderation_actions", "action_type", ENUMS.moderationActionType],

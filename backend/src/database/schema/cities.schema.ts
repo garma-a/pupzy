@@ -1,44 +1,64 @@
 import { sql } from 'drizzle-orm';
 import { pgTable, uuid, varchar, timestamp, geometry, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { cityLifecycleStatusEnum } from './enums';
 
 /**
- * `cities` table — seeded lookup table for Egyptian cities and districts.
+ * `cities` table — authoritative reference catalog for Egyptian ADM2 areas (cities/districts).
  *
  * ## Usage
- * - City picker on onboarding — `findAll()` returns the full list sorted A-Z
+ * - City picker on onboarding — `findAll()` returns official cities sorted A-Z
  * - Nearest-city resolution — `center_point` GIST index powers ST_Distance queries
  * - Feed scoping — `city_id` FK on posts scopes feed results to a city
  *
- * ## Indexes
- * - `uq_cities_name_english_governorate` — prevents duplicate rows on repeated seed runs
- * - `idx_cities_governorate` — filters/groups by governorate
- * - `idx_cities_center_point` — GIST, added in custom migration SQL (Drizzle cannot express USING GIST)
+ * ## Lifecycle semantics
+ * - `OFFICIAL`: Authoritative selectable cities in active local catalog (351 ADM2 areas).
+ * - `LEGACY`: Historical cities retained for backward-compatible references.
+ * - `RETIRED`: Former official cities removed or superseded in upstream releases.
  *
- * ## Caching
- * Redis-cached — city lookups never hit this table on the hot path.
+ * ## Indexes
+ * - `unique_city_name_english_per_governorate` — ensures unique English display name within each governorate
+ * - `unique_city_source_code` — ensures unique internal upstream source identity (OCHA P-code)
+ * - `idx_cities_governorate` — filters/groups by governorate
+ * - `idx_cities_status` — filters by lifecycle state (e.g. active official cities)
+ * - `idx_cities_center_point` — GIST spatial index for distance-based discovery
+ *
+ * ## Coordinates
+ * - `center_point`: PostGIS POINT(longitude latitude) with SRID 4326.
+ *   Represents an approximate WGS84 representative point (centroid / locality center)
+ *   used for distance calculations and discovery, not administrative boundary polygon membership.
  */
 export const cities = pgTable(
   'cities',
   {
-    /** Internal city ID. Primary key, UUIDv7. */
+    /** Internal city ID. Primary key, UUIDv7. Preserved as application-facing identity. */
     id: uuid('id')
       .primaryKey()
       .default(sql`uuidv7()`),
 
-    /** English display name, e.g. 'Cairo'. */
+    /** English display name, e.g. 'Aswan (Kism)' or 'Cairo'. */
     nameEnglish: varchar('name_english', { length: 100 }).notNull(),
 
-    /** Arabic display name, e.g. 'القاهرة'. */
+    /** Arabic display name, e.g. 'قسم أسوان' or 'القاهرة'. */
     nameArabic: varchar('name_arabic', { length: 100 }).notNull(),
 
-    /** Governorate/Province this city belongs to, e.g. 'Cairo'. */
+    /** Governorate this city belongs to, e.g. 'Aswan' or 'Cairo'. */
     governorate: varchar('governorate', { length: 100 }).notNull(),
 
+    /** Internal upstream source code (e.g. OCHA P-code 'EG2801'). Unique when set. */
+    sourceCode: varchar('source_code', { length: 100 }),
+
+    /** Untouched upstream English source name (e.g. 'Aswan'). */
+    sourceNameEnglish: varchar('source_name_english', { length: 100 }),
+
+    /** Untouched upstream Arabic source name (e.g. 'قسم أسوان'). */
+    sourceNameArabic: varchar('source_name_arabic', { length: 100 }),
+
+    /** Explicit lifecycle status: OFFICIAL, LEGACY, or RETIRED. */
+    status: cityLifecycleStatusEnum('status').notNull().default('OFFICIAL'),
+
     /**
-     * Center coordinates of the city.
+     * Approximate WGS84 representative point for distance-based discovery.
      * PostGIS POINT(longitude latitude). SRID=4326.
-     * Powers the "nearest city to my GPS" suggestion during onboarding.
-     * GIST index added in custom migration SQL — see drizzle/migrations/custom.sql.
      */
     centerPoint: geometry('center_point', { type: 'point', srid: 4326 }).notNull(),
 
@@ -48,16 +68,22 @@ export const cities = pgTable(
   (table) => ({
     /**
      * Prevents duplicate city rows on repeated seed runs.
-     * gen_random_uuid() never collides on PK so without this a re-seed inserts duplicates.
      */
     uniqueCityNameEnglishPerGovernorate: uniqueIndex('unique_city_name_english_per_governorate').on(
       table.nameEnglish,
       table.governorate,
     ),
 
+    /** Internal source code unique index. */
+    uniqueCitySourceCode: uniqueIndex('unique_city_source_code').on(table.sourceCode),
+
     /** Enables filtering and grouping by governorate. */
     governorateIdx: index('idx_cities_governorate').on(table.governorate),
 
+    /** Enables fast filtering by lifecycle status (official only). */
+    statusIdx: index('idx_cities_status').on(table.status),
+
+    /** PostGIS GIST spatial index on representative point. */
     centerPointGistIdx: index('idx_cities_center_point').using('gist', table.centerPoint),
   }),
 );

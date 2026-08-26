@@ -12,14 +12,15 @@ export class CitiesRepository {
     private readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
-  /** Returns all cities ordered A-Z by English name. */
+  /** Returns all official cities ordered A-Z by English name. */
   async findAll(): Promise<City[]> {
-    return this.db.select().from(cities).orderBy(asc(cities.nameEnglish));
+    return this.db.select().from(cities).where(eq(cities.status, 'OFFICIAL')).orderBy(asc(cities.nameEnglish));
   }
 
   /**
    * Returns a single city by ID, or undefined if not found.
-   * Used to validate that a cityId supplied by the client actually exists.
+   * Direct lookup by UUID remains accessible for all lifecycle states (OFFICIAL, LEGACY, RETIRED)
+   * to preserve backward-compatible resolution for historical references.
    */
   async findById(id: string): Promise<City | undefined> {
     const [city] = await this.db.select().from(cities).where(eq(cities.id, id)).limit(1);
@@ -28,7 +29,7 @@ export class CitiesRepository {
 
   /**
    * Batch-loads cities by an array of IDs.
-   * Used exclusively by the DataLoader to resolve N city IDs in one query.
+   * Resolves cities across all lifecycle states so historical entities continue to render.
    *
    * Returns results in the same order as the input IDs array,
    * with `null` for any ID that was not found — required by the DataLoader contract.
@@ -47,7 +48,7 @@ export class CitiesRepository {
   }
 
   /**
-   * Finds the nearest city to the given GPS coordinates using PostGIS ST_Distance.
+   * Finds the nearest official city to the given GPS coordinates using PostGIS ST_Distance.
    * Used during profile completion and location updates.
    */
   async findNearest(latitude: number, longitude: number): Promise<City | undefined> {
@@ -55,6 +56,7 @@ export class CitiesRepository {
     const [city] = await this.db
       .select()
       .from(cities)
+      .where(eq(cities.status, 'OFFICIAL'))
       .orderBy(sql`ST_Distance(${cities.centerPoint}, ST_GeomFromEWKT(${point}))`)
       .limit(1);
     return city;

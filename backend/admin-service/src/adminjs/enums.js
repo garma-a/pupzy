@@ -44,6 +44,7 @@ export const ENUMS = {
     "SYSTEM_ANNOUNCEMENT",
   ],
   vetClinicSource: ["OSM", "GOOGLE_PLACES", "MANUAL"],
+  cityLifecycleStatus: ["OFFICIAL", "LEGACY", "RETIRED"],
   adminRole: ["ADMIN", "SUPER_ADMIN"],
   moderationActionType: [
     "POST_APPROVED",

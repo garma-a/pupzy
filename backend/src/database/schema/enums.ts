@@ -125,6 +125,20 @@ export const notificationTypeEnum = pgEnum('notification_type', [
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CITY ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lifecycle status of a City reference record.
+ * - OFFICIAL: Authoritative selectable city in active catalog
+ * - LEGACY: Historical city retained for data integrity
+ * - RETIRED: Former official city removed/replaced
+ */
+export const cityLifecycleStatusEnum = pgEnum('city_lifecycle_status', ['OFFICIAL', 'LEGACY', 'RETIRED']);
+
+export type CityLifecycleStatus = (typeof cityLifecycleStatusEnum.enumValues)[number];
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PERSONALITY TAGS — TypeScript union only, NOT a Postgres enum
 // ─────────────────────────────────────────────────────────────────────────────
 

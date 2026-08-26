@@ -13,6 +13,10 @@ describe('CitiesService', () => {
     nameEnglish: 'Cairo',
     nameArabic: 'القاهرة',
     governorate: 'Cairo',
+    sourceCode: 'EG0101',
+    sourceNameEnglish: 'Cairo',
+    sourceNameArabic: 'القاهرة',
+    status: 'OFFICIAL',
     centerPoint: [31.2357, 30.0444] as [number, number],
     createdAt: new Date(),
   };
