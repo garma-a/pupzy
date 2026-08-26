@@ -27,6 +27,7 @@ export const adminUsers = pgTable(
   },
   (table) => ({
     emailIdx: uniqueIndex('unique_admin_users_email').on(table.email),
+    emailCaseInsensitiveIdx: uniqueIndex('unique_admin_users_email_ci').on(sql`lower(${table.email})`),
   }),
 );
 

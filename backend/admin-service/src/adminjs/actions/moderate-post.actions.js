@@ -1,46 +1,40 @@
-import { actionResponse, runModerationAction } from "./helpers.js";
-import { isAnyAdmin } from "../rbac.js";
+import { actionResponse, readModerationReason, runModerationAction } from './helpers.js';
+import { isAnyAdmin } from '../rbac.js';
 
 function buildPostAction(pool, component, definition, cache) {
   return {
-    actionType: "record",
+    actionType: 'record',
     icon: definition.icon,
     guard: definition.guard,
     component: definition.requiresForm ? component : false,
     isAccessible: isAnyAdmin,
     handler: async (request, _response, context) => {
       const { record, currentAdmin } = context;
-      if (request.method !== "post")
-        return { record: record.toJSON(currentAdmin) };
+      if (request.method !== 'post') return { record: record.toJSON(currentAdmin) };
 
-      const reason = String(request.payload?.reason ?? "").trim();
-      if (definition.reasonRequired && !reason) {
+      const reasonResult = readModerationReason(request.payload?.reason);
+      const reason = reasonResult.reason ?? '';
+      if (reasonResult.error || (definition.reasonRequired && !reason)) {
         return actionResponse(
           record,
           currentAdmin,
-          { ok: false, error: "A reason is required." },
-          "",
+          { ok: false, error: reasonResult.error ?? 'A reason is required.' },
+          '',
         );
       }
 
       const result = await runModerationAction(pool, {
-        table: "posts",
+        table: 'posts',
         id: record.id(),
         adminUserId: currentAdmin.id,
         actionType: definition.actionType,
-        targetType: "POST",
+        targetType: 'POST',
         reason: reason || undefined,
         onSuccess: () => cache?.invalidate(),
         validate: definition.validate,
-        mutate: (client, row) =>
-          definition.mutate(client, row, currentAdmin.id, reason),
+        mutate: (client, row) => definition.mutate(client, row, currentAdmin.id, reason),
       });
-      return actionResponse(
-        record,
-        currentAdmin,
-        result,
-        definition.successMessage,
-      );
+      return actionResponse(record, currentAdmin, result, definition.successMessage);
     },
   };
 }
@@ -51,14 +45,14 @@ export function buildPostActions(pool, component, cache) {
       pool,
       component,
       {
-        actionType: "POST_APPROVED",
-        icon: "Check",
-        guard: "Approve this post as clean?",
-        successMessage: "Post approved.",
+        actionType: 'POST_APPROVED',
+        icon: 'Check',
+        guard: 'Approve this post as clean?',
+        successMessage: 'Post approved.',
         validate: (row) =>
-          ["PENDING_AUTO_REVIEW", "FLAGGED"].includes(row.moderation_status)
+          ['PENDING_AUTO_REVIEW', 'FLAGGED'].includes(row.moderation_status)
             ? null
-            : "Only pending or flagged posts can be approved.",
+            : 'Only pending or flagged posts can be approved.',
         mutate: (client, row, adminId) =>
           client.query(
             `UPDATE posts
@@ -74,15 +68,13 @@ export function buildPostActions(pool, component, cache) {
       pool,
       component,
       {
-        actionType: "POST_FLAGGED",
-        icon: "Flag",
+        actionType: 'POST_FLAGGED',
+        icon: 'Flag',
         requiresForm: true,
         reasonRequired: true,
-        successMessage: "Post flagged.",
+        successMessage: 'Post flagged.',
         validate: (row) =>
-          ["PENDING_AUTO_REVIEW", "CLEAN"].includes(row.moderation_status)
-            ? null
-            : "This post is already flagged.",
+          ['PENDING_AUTO_REVIEW', 'CLEAN'].includes(row.moderation_status) ? null : 'This post is already flagged.',
         mutate: (client, row, adminId, reason) =>
           client.query(
             `UPDATE posts
@@ -98,13 +90,12 @@ export function buildPostActions(pool, component, cache) {
       pool,
       component,
       {
-        actionType: "POST_REMOVED",
-        icon: "Trash2",
+        actionType: 'POST_REMOVED',
+        icon: 'Trash2',
         requiresForm: true,
         reasonRequired: true,
-        successMessage: "Post removed.",
-        validate: (row) =>
-          row.status === "ACTIVE" ? null : "Only active posts can be removed.",
+        successMessage: 'Post removed.',
+        validate: (row) => (row.status === 'ACTIVE' ? null : 'Only active posts can be removed.'),
         mutate: async (client, row, adminId, reason) => {
           await client.query(
             `UPDATE posts
@@ -127,12 +118,11 @@ export function buildPostActions(pool, component, cache) {
       pool,
       component,
       {
-        actionType: "POST_RESTORED",
-        icon: "RotateCcw",
-        guard: "Restore this post to active?",
-        successMessage: "Post restored.",
-        validate: (row) =>
-          row.status === "REMOVED" ? null : "Only removed posts can be restored.",
+        actionType: 'POST_RESTORED',
+        icon: 'RotateCcw',
+        guard: 'Restore this post to active?',
+        successMessage: 'Post restored.',
+        validate: (row) => (row.status === 'REMOVED' ? null : 'Only removed posts can be restored.'),
         mutate: (client, row, adminId) =>
           client.query(
             `UPDATE posts

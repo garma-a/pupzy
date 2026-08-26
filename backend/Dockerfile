@@ -32,10 +32,12 @@ RUN npm ci --only=production && npm cache clean --force
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/drizzle ./drizzle
 
-# Restrict V8 heap limit to 150MB so memory usage stays tightly below 200MB limit
+# Restrict V8 old-space to 150 MB while leaving headroom inside the 512 MB container ceiling.
 ENV NODE_OPTIONS="--max-old-space-size=150"
 
 EXPOSE 3000
 
+USER node
+
 # Start NestJS production server
-CMD ["node", "dist/src/main"]
+CMD ["node", "dist/main.js"]

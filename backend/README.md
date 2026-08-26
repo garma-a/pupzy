@@ -92,7 +92,7 @@ Edit `.env` and fill in:
 npm run db:migrate
 ```
 
-This applies all SQL migrations from `drizzle/migrations/` and repeatable custom SQL from `drizzle/custom.sql` to your PostgreSQL database.
+This applies all ordered SQL migrations from `drizzle/migrations/` and then validates the required repeatable hook at `drizzle/custom.sql`. Structural DDL belongs in ordered migrations.
 
 ### 4. Start the development server
 
@@ -328,7 +328,7 @@ src/
 
 | Concern | Solution |
 |---|---|
-| **Connection pooling** | pg pool (max 20 connections, configurable) |
+| **Connection pooling** | pg pool (max 10 connections, configurable) |
 | **Auth guard caching** | Firebase token cached until expiry; user row cached 60s |
 | **Database indexes** | `firebase_uid` (unique), `email` (unique), `city_id`, `created_at` |
 | **Graceful shutdown** | Pool closed cleanly on SIGTERM / SIGINT |

@@ -1,0 +1,333 @@
+-- =============================================================================
+-- Pupzy — Ordered one-time migration for previously repeatable structural DDL
+-- =============================================================================
+-- This migration versions SQL that Drizzle ORM cannot generate automatically:
+--   1. CHECK constraints
+--   2. Partial indexes (WHERE clauses)
+--   3. GIST / GIN spatial and array indexes
+--   4. DB triggers for counter maintenance
+--
+-- It is applied exactly once by the Drizzle migration journal.
+-- =============================================================================
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 0. POSTGIS EXTENSION
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 1. CHECK CONSTRAINTS
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- RESCUE and LOST posts must have urgency.
+-- ADOPTION and PRODUCT posts must NOT have urgency.
+ALTER TABLE posts DROP CONSTRAINT IF EXISTS chk_posts_urgency_by_type;
+ALTER TABLE posts DROP CONSTRAINT IF EXISTS posts_urgency_matches_post_type_constraint;
+ALTER TABLE posts ADD CONSTRAINT posts_urgency_matches_post_type_constraint
+  CHECK (
+    (post_type IN ('RESCUE', 'LOST') AND urgency IS NOT NULL)
+    OR
+    (post_type NOT IN ('RESCUE', 'LOST') AND urgency IS NULL)
+  );
+
+-- PRODUCT: is_free=true requires price_amount=NULL; is_free=false requires price_amount IS NOT NULL.
+ALTER TABLE product_posts DROP CONSTRAINT IF EXISTS chk_product_price_by_free;
+ALTER TABLE product_posts DROP CONSTRAINT IF EXISTS product_price_matches_is_free_flag_constraint;
+ALTER TABLE product_posts ADD CONSTRAINT product_price_matches_is_free_flag_constraint
+  CHECK (
+    (is_free = TRUE AND price_amount IS NULL)
+    OR
+    (is_free = FALSE AND price_amount IS NOT NULL)
+  );
+
+-- ADOPTION: age_value and age_unit must both be set or both be NULL.
+ALTER TABLE adoption_posts DROP CONSTRAINT IF EXISTS chk_adoption_age_pairing;
+ALTER TABLE adoption_posts DROP CONSTRAINT IF EXISTS adoption_age_value_and_unit_pairing_constraint;
+ALTER TABLE adoption_posts ADD CONSTRAINT adoption_age_value_and_unit_pairing_constraint
+  CHECK (
+    (age_value IS NULL AND age_unit IS NULL)
+    OR
+    (age_value IS NOT NULL AND age_unit IS NOT NULL)
+  );
+
+-- LOST: field-set integrity between LOST_PET and FOUND_STRAY.
+-- LOST_PET  → date_last_seen required; current_condition, is_currently_safe_with_reporter, date_found must be NULL
+-- FOUND_STRAY → current_condition, is_currently_safe_with_reporter, date_found required; pet_name, date_last_seen, has_medical_needs, is_elderly_or_very_young, last_seen_near_hazard must be NULL
+ALTER TABLE lost_posts DROP CONSTRAINT IF EXISTS chk_lost_posts_report_fields;
+ALTER TABLE lost_posts DROP CONSTRAINT IF EXISTS lost_posts_report_type_field_consistency_constraint;
+ALTER TABLE lost_posts ADD CONSTRAINT lost_posts_report_type_field_consistency_constraint
+  CHECK (
+    (
+      report_type = 'LOST_PET'
+      AND date_last_seen IS NOT NULL
+      AND current_condition IS NULL
+      AND is_currently_safe_with_reporter IS NULL
+      AND date_found IS NULL
+    )
+    OR
+    (
+      report_type = 'FOUND_STRAY'
+      AND current_condition IS NOT NULL
+      AND is_currently_safe_with_reporter IS NOT NULL
+      AND date_found IS NOT NULL
+      AND pet_name IS NULL
+      AND date_last_seen IS NULL
+      AND has_medical_needs IS NULL
+      AND is_elderly_or_very_young IS NULL
+      AND last_seen_near_hazard IS NULL
+    )
+  );
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 2. PARTIAL INDEXES
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- Help feed: sorted by (urgency ASC, created_at DESC) — RESCUE and LOST only.
+CREATE INDEX IF NOT EXISTS idx_posts_help_feed
+  ON posts (city_id, post_type, urgency ASC, created_at DESC)
+  WHERE status = 'ACTIVE' AND post_type IN ('RESCUE', 'LOST');
+
+-- Adoption feed: sorted by effective_score DESC.
+CREATE INDEX IF NOT EXISTS idx_posts_adopt_score
+  ON posts (city_id, effective_score DESC, created_at DESC)
+  WHERE status = 'ACTIVE' AND post_type = 'ADOPTION';
+
+-- Market feed: sorted by effective_score DESC.
+CREATE INDEX IF NOT EXISTS idx_posts_market_score
+  ON posts (city_id, effective_score DESC, created_at DESC)
+  WHERE status = 'ACTIVE' AND post_type = 'PRODUCT';
+
+-- Market feed — category filter without joining product_posts.
+CREATE INDEX IF NOT EXISTS idx_posts_market_category
+  ON posts (city_id, market_category, effective_score DESC, created_at DESC)
+  WHERE status = 'ACTIVE' AND post_type = 'PRODUCT';
+
+-- Governorate-wide feed indexes (denormalized governorate column for sub-15ms queries)
+CREATE INDEX IF NOT EXISTS idx_posts_help_gov
+  ON posts (governorate, urgency ASC, created_at DESC)
+  WHERE status = 'ACTIVE' AND post_type IN ('RESCUE', 'LOST');
+
+CREATE INDEX IF NOT EXISTS idx_posts_adopt_gov
+  ON posts (governorate, effective_score DESC, created_at DESC)
+  WHERE status = 'ACTIVE' AND post_type = 'ADOPTION';
+
+CREATE INDEX IF NOT EXISTS idx_posts_market_gov
+  ON posts (governorate, effective_score DESC, created_at DESC)
+  WHERE status = 'ACTIVE' AND post_type = 'PRODUCT';
+
+-- Mating feed: active mating posts sorted by created_at DESC, id DESC.
+CREATE INDEX IF NOT EXISTS idx_posts_mating_active_created
+  ON posts (created_at DESC, id DESC)
+  WHERE post_type NOT IN ('RESCUE', 'LOST', 'ADOPTION', 'PRODUCT') AND status = 'ACTIVE';
+
+-- Home feed: all active posts sorted by UUIDv7 ID (newest first).
+-- Covers homeFeed query: WHERE status = 'ACTIVE' AND city_id IN (...) ORDER BY id DESC.
+CREATE INDEX IF NOT EXISTS idx_posts_home_feed
+  ON posts (city_id, id DESC) WHERE status = 'ACTIVE';
+
+-- AdminJS review queue: most-reported pending/flagged active posts first.
+DROP INDEX IF EXISTS idx_posts_moderation;
+
+CREATE INDEX IF NOT EXISTS idx_posts_needs_review
+  ON posts (report_count DESC, created_at DESC)
+  WHERE moderation_status IN ('PENDING_AUTO_REVIEW', 'FLAGGED') AND status = 'ACTIVE';
+
+-- Auto-removal cron: find stale ADOPTION and PRODUCT posts.
+CREATE INDEX IF NOT EXISTS idx_posts_last_engaged
+  ON posts (post_type, last_engaged_at)
+  WHERE status = 'ACTIVE' AND post_type IN ('ADOPTION', 'PRODUCT');
+
+-- Unread notification badge count (partial index avoids scanning all read rows).
+CREATE INDEX IF NOT EXISTS idx_notifications_unread
+  ON notifications (recipient_id, created_at DESC)
+  WHERE is_read = FALSE;
+
+-- Saved posts feed: user's bookmarks sorted by save timestamp (newest first).
+-- Covers the mySavedPosts keyset pagination query: WHERE user_id = $1 ORDER BY created_at DESC, post_id DESC.
+CREATE INDEX IF NOT EXISTS idx_post_saves_user_saved_at
+  ON post_saves (user_id, created_at DESC, post_id DESC);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 3. GIST INDEXES (spatial — PostGIS)
+-- ─────────────────────────────────────────────────────────────────────────────
+
+
+
+-- User proximity sort: last_known_location stored as text EWKT.
+-- Requires a functional GIST index. Uncomment once there is data to index.
+-- CREATE INDEX IF NOT EXISTS idx_users_last_known_location
+--   ON users USING GIST (ST_GeomFromEWKT(last_known_location))
+--   WHERE last_known_location IS NOT NULL;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 4. GIN INDEX (array containment — personality tags)
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- Personality tag filter: WHERE personality_tags @> ARRAY['GOOD_WITH_KIDS'].
+CREATE INDEX IF NOT EXISTS idx_adoption_personality_tags
+  ON adoption_posts USING GIN (personality_tags);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 4b. ADMIN-PANEL FOREIGN KEYS
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Kept here so public-app schema files do not import the internal admin schema.
+-- DROP + ADD makes this custom SQL safe to re-run after migrations.
+
+ALTER TABLE users
+  DROP CONSTRAINT IF EXISTS fk_users_banned_by_admin;
+ALTER TABLE users
+  ADD CONSTRAINT fk_users_banned_by_admin
+  FOREIGN KEY (banned_by_admin_id) REFERENCES admin_users(id) ON DELETE SET NULL;
+
+ALTER TABLE posts
+  DROP CONSTRAINT IF EXISTS fk_posts_moderated_by_admin;
+ALTER TABLE posts
+  ADD CONSTRAINT fk_posts_moderated_by_admin
+  FOREIGN KEY (moderated_by_admin_id) REFERENCES admin_users(id) ON DELETE SET NULL;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 4c. ADMIN SESSION STORAGE (connect-pg-simple)
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Created during migration so AdminJS startup/wake-up never runs DDL.
+CREATE TABLE IF NOT EXISTS "admin_sessions" (
+  "sid" varchar NOT NULL COLLATE "default",
+  "sess" json NOT NULL,
+  "expire" timestamp(6) NOT NULL,
+  CONSTRAINT "admin_sessions_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE
+);
+CREATE INDEX IF NOT EXISTS "IDX_admin_sessions_expire" ON "admin_sessions" ("expire");
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 5. DB TRIGGERS
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- ── 5a. updated_at auto-update ────────────────────────────────────────────────
+
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_users_updated_at ON users;
+CREATE TRIGGER trg_users_updated_at
+  BEFORE UPDATE ON users
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+DROP TRIGGER IF EXISTS trg_posts_updated_at ON posts;
+CREATE TRIGGER trg_posts_updated_at
+  BEFORE UPDATE ON posts
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ── 5b. User post counters ────────────────────────────────────────────────────
+-- Maintained by trigger so they stay correct even when posts are mutated
+-- directly via AdminJS (which bypasses NestJS service layer).
+
+CREATE OR REPLACE FUNCTION sync_user_post_counts()
+RETURNS TRIGGER AS $$
+DECLARE
+  delta_total INTEGER;
+  delta_rescue INTEGER;
+  delta_lost INTEGER;
+  delta_adoption INTEGER;
+  delta_product INTEGER;
+  target_user_id UUID;
+BEGIN
+  IF TG_OP = 'INSERT' AND NEW.status != 'REMOVED' THEN
+    delta_total := 1; target_user_id := NEW.creator_id;
+    delta_rescue   := CASE WHEN NEW.post_type = 'RESCUE'   THEN 1 ELSE 0 END;
+    delta_lost     := CASE WHEN NEW.post_type = 'LOST'     THEN 1 ELSE 0 END;
+    delta_adoption := CASE WHEN NEW.post_type = 'ADOPTION' THEN 1 ELSE 0 END;
+    delta_product  := CASE WHEN NEW.post_type = 'PRODUCT'  THEN 1 ELSE 0 END;
+  ELSIF TG_OP = 'DELETE' AND OLD.status != 'REMOVED' THEN
+    delta_total := -1; target_user_id := OLD.creator_id;
+    delta_rescue   := CASE WHEN OLD.post_type = 'RESCUE'   THEN -1 ELSE 0 END;
+    delta_lost     := CASE WHEN OLD.post_type = 'LOST'     THEN -1 ELSE 0 END;
+    delta_adoption := CASE WHEN OLD.post_type = 'ADOPTION' THEN -1 ELSE 0 END;
+    delta_product  := CASE WHEN OLD.post_type = 'PRODUCT'  THEN -1 ELSE 0 END;
+  ELSIF TG_OP = 'UPDATE' THEN
+    IF NEW.status = 'REMOVED' AND OLD.status != 'REMOVED' THEN
+      delta_total := -1; target_user_id := OLD.creator_id;
+      delta_rescue   := CASE WHEN OLD.post_type = 'RESCUE'   THEN -1 ELSE 0 END;
+      delta_lost     := CASE WHEN OLD.post_type = 'LOST'     THEN -1 ELSE 0 END;
+      delta_adoption := CASE WHEN OLD.post_type = 'ADOPTION' THEN -1 ELSE 0 END;
+      delta_product  := CASE WHEN OLD.post_type = 'PRODUCT'  THEN -1 ELSE 0 END;
+    ELSIF NEW.status != 'REMOVED' AND OLD.status = 'REMOVED' THEN
+      delta_total := 1; target_user_id := NEW.creator_id;
+      delta_rescue   := CASE WHEN NEW.post_type = 'RESCUE'   THEN 1 ELSE 0 END;
+      delta_lost     := CASE WHEN NEW.post_type = 'LOST'     THEN 1 ELSE 0 END;
+      delta_adoption := CASE WHEN NEW.post_type = 'ADOPTION' THEN 1 ELSE 0 END;
+      delta_product  := CASE WHEN NEW.post_type = 'PRODUCT'  THEN 1 ELSE 0 END;
+    ELSE
+      RETURN NEW;
+    END IF;
+  ELSE
+    RETURN NEW;
+  END IF;
+
+  UPDATE users
+  SET
+    post_count         = post_count         + delta_total,
+    rescue_post_count  = rescue_post_count  + delta_rescue,
+    lost_post_count    = lost_post_count    + delta_lost,
+    adoption_post_count = adoption_post_count + delta_adoption,
+    product_post_count = product_post_count + delta_product
+  WHERE id = target_user_id;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_sync_user_post_counts ON posts;
+CREATE TRIGGER trg_sync_user_post_counts
+  AFTER INSERT OR DELETE OR UPDATE OF status ON posts
+  FOR EACH ROW EXECUTE FUNCTION sync_user_post_counts();
+
+-- ── 5c. Post report_count denormalization ────────────────────────────────────
+-- Increments posts.report_count when a new report row is inserted,
+-- and decrements when deleted.
+
+CREATE OR REPLACE FUNCTION sync_post_report_count()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE posts SET report_count = report_count + 1 WHERE id = NEW.post_id;
+    RETURN NEW;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE posts SET report_count = report_count - 1 WHERE id = OLD.post_id;
+    RETURN OLD;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_post_report_count ON post_reports;
+CREATE TRIGGER trg_post_report_count
+  AFTER INSERT OR DELETE ON post_reports
+  FOR EACH ROW EXECUTE FUNCTION sync_post_report_count();
+
+-- Canonicalize staff identities before enforcing case-insensitive uniqueness.
+UPDATE admin_users SET email = lower(btrim(email));
+CREATE UNIQUE INDEX IF NOT EXISTS unique_admin_users_email_ci
+  ON admin_users (lower(email));
+
+-- Revoke every active session immediately when an administrator loses or changes authority.
+CREATE OR REPLACE FUNCTION revoke_admin_sessions_on_security_change()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF OLD.password_hash IS DISTINCT FROM NEW.password_hash
+    OR OLD.role IS DISTINCT FROM NEW.role
+    OR OLD.is_active IS DISTINCT FROM NEW.is_active THEN
+    DELETE FROM admin_sessions
+    WHERE sess -> 'adminUser' ->> 'id' = NEW.id::text;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_revoke_admin_sessions ON admin_users;
+CREATE TRIGGER trg_revoke_admin_sessions
+  AFTER UPDATE OF password_hash, role, is_active ON admin_users
+  FOR EACH ROW EXECUTE FUNCTION revoke_admin_sessions_on_security_change();

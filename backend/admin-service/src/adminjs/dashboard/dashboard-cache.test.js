@@ -1,18 +1,18 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 
-import { DashboardStatsCache, computeStats } from "./dashboard-cache.js";
+import { DashboardStatsCache, computeStats } from './dashboard-cache.js';
 
 function createMockPool(rows = {}) {
   let queryCount = 0;
-  let lastSql = "";
+  let lastSql = '';
   const defaultRow = {
-    total_users: "10",
-    banned_users: "1",
-    total_posts: "20",
-    active_posts: "18",
-    needs_review_posts: "3",
-    flagged_posts: "1",
+    total_users: '10',
+    banned_users: '1',
+    total_posts: '20',
+    active_posts: '18',
+    needs_review_posts: '3',
+    flagged_posts: '1',
   };
   return {
     get queryCount() {
@@ -29,23 +29,23 @@ function createMockPool(rows = {}) {
   };
 }
 
-describe("DashboardStatsCache", () => {
-  it("computes all six counters in one query and caches on first call", async () => {
+describe('DashboardStatsCache', () => {
+  it('computes all six counters in one query and caches on first call', async () => {
     let currentTime = 1_000_000;
     const cache = new DashboardStatsCache({
       ttlMs: 120_000,
       clock: () => currentTime,
     });
-    const pool = createMockPool({ total_users: "42" });
+    const pool = createMockPool({ total_users: '42' });
 
     const stats = await cache.getStats(pool);
     assert.equal(pool.queryCount, 1);
-    assert.equal(stats.total_users, "42");
+    assert.equal(stats.total_users, '42');
     assert.equal(stats.computedAt, new Date(currentTime).toISOString());
     for (const fragment of [
-      "count(*) FROM users",
-      "is_banned = true",
-      "count(*) FROM posts",
+      'count(*) FROM users',
+      'is_banned = true',
+      'count(*) FROM posts',
       "status = 'ACTIVE'",
       "IN ('PENDING_AUTO_REVIEW','FLAGGED')",
       "moderation_status = 'FLAGGED'",
@@ -54,13 +54,13 @@ describe("DashboardStatsCache", () => {
     }
   });
 
-  it("reuses cached stats within 120 seconds without querying PostgreSQL", async () => {
+  it('reuses cached stats within 120 seconds without querying PostgreSQL', async () => {
     let currentTime = 1_000_000;
     const cache = new DashboardStatsCache({
       ttlMs: 120_000,
       clock: () => currentTime,
     });
-    const pool = createMockPool({ total_users: "50" });
+    const pool = createMockPool({ total_users: '50' });
 
     const first = await cache.getStats(pool);
     assert.equal(pool.queryCount, 1);
@@ -72,7 +72,7 @@ describe("DashboardStatsCache", () => {
     assert.deepEqual(second, first);
   });
 
-  it("recomputes from PostgreSQL and replaces cache when TTL expires", async () => {
+  it('recomputes from PostgreSQL and replaces cache when TTL expires', async () => {
     let currentTime = 1_000_000;
     const cache = new DashboardStatsCache({
       ttlMs: 120_000,
@@ -87,11 +87,11 @@ describe("DashboardStatsCache", () => {
           rows: [
             {
               total_users: String(counter++),
-              banned_users: "0",
-              total_posts: "0",
-              active_posts: "0",
-              needs_review_posts: "0",
-              flagged_posts: "0",
+              banned_users: '0',
+              total_posts: '0',
+              active_posts: '0',
+              needs_review_posts: '0',
+              flagged_posts: '0',
             },
           ],
         };
@@ -100,17 +100,17 @@ describe("DashboardStatsCache", () => {
 
     const first = await cache.getStats(pool);
     assert.equal(pool.queryCount, 1);
-    assert.equal(first.total_users, "10");
+    assert.equal(first.total_users, '10');
 
     // Advance clock past 120 seconds TTL
     currentTime += 120_001;
     const second = await cache.getStats(pool);
     assert.equal(pool.queryCount, 2);
-    assert.equal(second.total_users, "11");
+    assert.equal(second.total_users, '11');
     assert.equal(second.computedAt, new Date(currentTime).toISOString());
   });
 
-  it("bypasses unexpired cache and replaces cached result when fresh=true", async () => {
+  it('bypasses unexpired cache and replaces cached result when fresh=true', async () => {
     let currentTime = 1_000_000;
     const cache = new DashboardStatsCache({
       ttlMs: 120_000,
@@ -125,11 +125,11 @@ describe("DashboardStatsCache", () => {
           rows: [
             {
               total_users: String(counter++),
-              banned_users: "0",
-              total_posts: "0",
-              active_posts: "0",
-              needs_review_posts: "0",
-              flagged_posts: "0",
+              banned_users: '0',
+              total_posts: '0',
+              active_posts: '0',
+              needs_review_posts: '0',
+              flagged_posts: '0',
             },
           ],
         };
@@ -137,22 +137,22 @@ describe("DashboardStatsCache", () => {
     };
 
     const first = await cache.getStats(pool);
-    assert.equal(first.total_users, "100");
+    assert.equal(first.total_users, '100');
     assert.equal(pool.queryCount, 1);
 
     // Refresh now: fresh=true bypasses cache even within TTL
     currentTime += 10_000;
     const refreshed = await cache.getStats(pool, { fresh: true });
-    assert.equal(refreshed.total_users, "101");
+    assert.equal(refreshed.total_users, '101');
     assert.equal(pool.queryCount, 2);
 
     // Subsequent normal read reuses the newly cached refreshed result
     const third = await cache.getStats(pool);
-    assert.equal(third.total_users, "101");
+    assert.equal(third.total_users, '101');
     assert.equal(pool.queryCount, 2);
   });
 
-  it("invalidates cache immediately and recomputes on next getStats call", async () => {
+  it('invalidates cache immediately and recomputes on next getStats call', async () => {
     let currentTime = 1_000_000;
     const cache = new DashboardStatsCache({
       ttlMs: 120_000,
@@ -167,11 +167,11 @@ describe("DashboardStatsCache", () => {
           rows: [
             {
               total_users: String(counter++),
-              banned_users: "0",
-              total_posts: "0",
-              active_posts: "0",
-              needs_review_posts: "0",
-              flagged_posts: "0",
+              banned_users: '0',
+              total_posts: '0',
+              active_posts: '0',
+              needs_review_posts: '0',
+              flagged_posts: '0',
             },
           ],
         };
@@ -185,10 +185,10 @@ describe("DashboardStatsCache", () => {
 
     const afterInvalidate = await cache.getStats(pool);
     assert.equal(pool.queryCount, 2);
-    assert.equal(afterInvalidate.total_users, "201");
+    assert.equal(afterInvalidate.total_users, '201');
   });
 
-  it("prevents a computation started before invalidation from caching stale pre-mutation data", async () => {
+  it('recomputes before responding when invalidated during a statistics query', async () => {
     let currentTime = 1_000_000;
     const cache = new DashboardStatsCache({
       ttlMs: 120_000,
@@ -211,12 +211,12 @@ describe("DashboardStatsCache", () => {
           return {
             rows: [
               {
-                total_users: "STALE_DATA",
-                banned_users: "0",
-                total_posts: "0",
-                active_posts: "0",
-                needs_review_posts: "0",
-                flagged_posts: "0",
+                total_users: 'STALE_DATA',
+                banned_users: '0',
+                total_posts: '0',
+                active_posts: '0',
+                needs_review_posts: '0',
+                flagged_posts: '0',
               },
             ],
           };
@@ -224,12 +224,12 @@ describe("DashboardStatsCache", () => {
         return {
           rows: [
             {
-              total_users: "FRESH_DATA",
-              banned_users: "1",
-              total_posts: "0",
-              active_posts: "0",
-              needs_review_posts: "0",
-              flagged_posts: "0",
+              total_users: 'FRESH_DATA',
+              banned_users: '1',
+              total_posts: '0',
+              active_posts: '0',
+              needs_review_posts: '0',
+              flagged_posts: '0',
             },
           ],
         };
@@ -245,16 +245,70 @@ describe("DashboardStatsCache", () => {
     // Now computation 1 completes
     resolveStaleQuery();
     const result1 = await computePromise1;
-    assert.equal(result1.total_users, "STALE_DATA");
-
-    // The cache must NOT contain STALE_DATA! Next getStats must recompute fresh data
-    const result2 = await cache.getStats(pool);
-    assert.equal(result2.total_users, "FRESH_DATA");
+    assert.equal(result1.total_users, 'FRESH_DATA');
     assert.equal(pool.queryCount, 2);
 
     // Subsequent call reuses the FRESH_DATA cache
-    const result3 = await cache.getStats(pool);
-    assert.equal(result3.total_users, "FRESH_DATA");
+    const result2 = await cache.getStats(pool);
+    assert.equal(result2.total_users, 'FRESH_DATA');
     assert.equal(pool.queryCount, 2);
+  });
+
+  it('coalesces concurrent cold reads into one PostgreSQL query', async () => {
+    const cache = new DashboardStatsCache();
+    let releaseQuery;
+    const queryStarted = Promise.withResolvers();
+    const pool = {
+      queryCount: 0,
+      async query() {
+        this.queryCount += 1;
+        queryStarted.resolve();
+        await new Promise((resolve) => {
+          releaseQuery = resolve;
+        });
+        return {
+          rows: [
+            {
+              total_users: '12',
+              banned_users: '0',
+              total_posts: '0',
+              active_posts: '0',
+              needs_review_posts: '0',
+              flagged_posts: '0',
+            },
+          ],
+        };
+      },
+    };
+
+    const first = cache.getStats(pool);
+    const second = cache.getStats(pool);
+    await queryStarted.promise;
+    assert.equal(pool.queryCount, 1);
+
+    releaseQuery();
+    assert.deepEqual(await second, await first);
+    assert.equal(pool.queryCount, 1);
+  });
+
+  it('starts the TTL when computation completes', async () => {
+    let currentTime = 1_000;
+    const cache = new DashboardStatsCache({
+      ttlMs: 120_000,
+      clock: () => currentTime,
+    });
+    const pool = createMockPool();
+
+    const computation = cache.getStats({
+      async query(sql) {
+        currentTime = 61_000;
+        return pool.query(sql);
+      },
+    });
+    await computation;
+
+    currentTime = 180_999;
+    await cache.getStats(pool);
+    assert.equal(pool.queryCount, 1);
   });
 });

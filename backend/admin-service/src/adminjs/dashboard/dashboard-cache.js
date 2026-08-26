@@ -24,6 +24,8 @@ export class DashboardStatsCache {
     this.clock = options.clock ?? (() => Date.now());
     this.cached = null;
     this.invalidationVersion = 0;
+    this.normalRefresh = null;
+    this.forcedRefresh = null;
   }
 
   /**
@@ -35,27 +37,53 @@ export class DashboardStatsCache {
    * @returns {Promise<Object>}
    */
   async getStats(pool, options = {}) {
-    const fresh = options.fresh === true || options.fresh === "true";
+    const fresh = options.fresh === true || options.fresh === 'true';
     const now = this.clock();
 
     if (!fresh && this.cached && now < this.cached.expiresAt) {
       return this.cached.stats;
     }
 
-    const startVersion = this.invalidationVersion;
-    const stats = await computeStats(pool, this.clock);
-
-    // If an invalidation or mutation occurred while computing, do NOT populate the cache.
-    if (this.invalidationVersion === startVersion) {
-      this.cached = {
-        stats,
-        computedAt: now,
-        expiresAt: now + this.ttlMs,
-        version: startVersion,
-      };
+    if (fresh) {
+      if (!this.forcedRefresh) {
+        const precedingRefresh = this.normalRefresh;
+        this.forcedRefresh = (async () => {
+          if (precedingRefresh) await precedingRefresh;
+          return this.#computeCurrentStats(pool);
+        })().finally(() => {
+          this.forcedRefresh = null;
+        });
+      }
+      return this.forcedRefresh;
     }
 
-    return stats;
+    if (this.forcedRefresh) return this.forcedRefresh;
+    if (!this.normalRefresh) {
+      this.normalRefresh = this.#computeCurrentStats(pool).finally(() => {
+        this.normalRefresh = null;
+      });
+    }
+    return this.normalRefresh;
+  }
+
+  async #computeCurrentStats(pool) {
+    const maximumAttempts = 3;
+    for (let attempt = 0; attempt < maximumAttempts; attempt += 1) {
+      const startVersion = this.invalidationVersion;
+      const stats = await computeStats(pool, this.clock);
+      const completedAt = this.clock();
+
+      if (this.invalidationVersion === startVersion) {
+        this.cached = {
+          stats,
+          expiresAt: completedAt + this.ttlMs,
+          version: startVersion,
+        };
+        return stats;
+      }
+    }
+
+    throw new Error('Dashboard statistics changed repeatedly while being computed; retry the request.');
   }
 
   /**

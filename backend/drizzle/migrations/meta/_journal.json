@@ -64,6 +64,13 @@
       "when": 1787603916812,
       "tag": "0008_brave_lester",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787752800000,
+      "tag": "0009_version_custom_ddl",
+      "breakpoints": true
     }
   ]
 }

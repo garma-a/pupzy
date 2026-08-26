@@ -110,6 +110,35 @@ describe('Database Migration Runner Integration', () => {
     expect(userAfterPost.rows[0].rescue_post_count).toBe(1);
   });
 
+  it('revokes admin sessions on security changes and enforces canonical email uniqueness', async () => {
+    const admin = await pool.query<{ id: string }>(`
+      INSERT INTO admin_users (email, password_hash, full_name, role)
+      VALUES ('security@example.com', 'hash-one', 'Security Admin', 'SUPER_ADMIN')
+      RETURNING id
+    `);
+    const adminId = admin.rows[0].id;
+
+    await expect(
+      pool.query(
+        `INSERT INTO admin_users (email, password_hash, full_name)
+         VALUES ('SECURITY@example.com', 'hash-two', 'Duplicate Admin')`,
+      ),
+    ).rejects.toThrow();
+
+    for (const update of [`password_hash = 'hash-changed'`, `role = 'ADMIN'`, `is_active = FALSE`]) {
+      await pool.query(
+        `INSERT INTO admin_sessions (sid, sess, expire)
+         VALUES ($1, $2::json, now() + interval '1 hour')`,
+        [`session-${update}`, JSON.stringify({ adminUser: { id: adminId } })],
+      );
+      await pool.query(`UPDATE admin_users SET ${update} WHERE id = $1`, [adminId]);
+      const sessions = await pool.query(`SELECT sid FROM admin_sessions WHERE sess -> 'adminUser' ->> 'id' = $1`, [
+        adminId,
+      ]);
+      expect(sessions.rowCount).toBe(0);
+    }
+  });
+
   it('proves re-running the migration operation against an already-migrated database succeeds without error or schema corruption', async () => {
     // Re-run the full migration operation
     await expect(
@@ -136,6 +165,14 @@ describe('Database Migration Runner Integration', () => {
         migrationsFolder: path.resolve(__dirname, 'nonexistent-migrations-dir'),
       }),
     ).rejects.toThrow();
+
+    await expect(
+      runMigrations({
+        pool,
+        migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+        customSqlPath: path.resolve(__dirname, 'missing-custom.sql'),
+      }),
+    ).rejects.toThrow(/Custom SQL file not found/);
 
     // Broken custom SQL file fails
     const tempCustomSql = path.resolve(__dirname, 'temp_broken.sql');

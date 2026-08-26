@@ -90,9 +90,12 @@ import type { GqlContext } from './common/types/gql-context.type';
          * Drizzle-inferred TypeScript types are generated to src/graphql.ts.
          */
         typePaths: ['./**/*.graphql'],
-        definitions: {
-          path: join(process.cwd(), 'src/graphql.ts'),
-        },
+        definitions:
+          config.get<string>('NODE_ENV') === 'production'
+            ? undefined
+            : {
+                path: join(process.cwd(), 'src/graphql.ts'),
+              },
 
         /**
          * Passes the Express Request into the GQL context so guards and

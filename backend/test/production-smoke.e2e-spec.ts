@@ -1,38 +1,108 @@
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { fork, ChildProcess } from 'child_process';
-import { Pool } from 'pg';
-import * as path from 'path';
+import { ChildProcess, spawn } from 'child_process';
 import * as crypto from 'crypto';
-import { runMigrations } from '../src/database/migrate';
+import * as net from 'net';
+import { Pool } from 'pg';
 
-jest.setTimeout(60_000);
+jest.setTimeout(600_000);
 
-async function pollHealthCheck(port: number, timeoutMs = 20_000): Promise<Record<string, unknown>> {
+interface CommandResult {
+  stdout: string;
+  stderr: string;
+}
+
+interface RunningImage {
+  process: ChildProcess;
+  output: () => string;
+}
+
+function runCommand(command: string, args: string[], cwd: string): Promise<CommandResult> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk: Buffer) => (stdout += chunk.toString()));
+    child.stderr.on('data', (chunk: Buffer) => (stderr += chunk.toString()));
+    child.once('error', reject);
+    child.once('exit', (code) => {
+      if (code === 0) resolve({ stdout, stderr });
+      else reject(new Error(`${command} exited ${code}\n${stdout}\n${stderr}`));
+    });
+  });
+}
+
+async function freePort(): Promise<number> {
+  const server = net.createServer();
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  const address = server.address();
+  if (!address || typeof address === 'string') throw new Error('Could not allocate a port');
+  await new Promise<void>((resolve) => server.close(() => resolve()));
+  return address.port;
+}
+
+async function pollHealthCheck(
+  port: number,
+  running: RunningImage,
+  timeoutMs = 30_000,
+): Promise<Record<string, unknown>> {
   const startTime = Date.now();
   while (Date.now() - startTime < timeoutMs) {
     try {
-      const res = await fetch(`http://127.0.0.1:${port}/health`);
-      if (res.ok) {
-        return (await res.json()) as Record<string, unknown>;
-      }
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
+      if (response.ok) return (await response.json()) as Record<string, unknown>;
     } catch {
-      await new Promise((r) => setTimeout(r, 400));
+      if (running.process.exitCode !== null) {
+        throw new Error(`Container exited ${running.process.exitCode}\n${running.output()}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 400));
     }
   }
   throw new Error(`Service on port ${port} did not report healthy within ${timeoutMs}ms`);
 }
 
-async function terminateProcess(proc: ChildProcess): Promise<void> {
-  proc.kill('SIGTERM');
-  await new Promise((resolve) => {
-    proc.on('exit', resolve);
-    setTimeout(resolve, 3000);
-  });
+function startImage(
+  rootDir: string,
+  image: string,
+  name: string,
+  hostPort: number,
+  containerPort: number,
+  environment: Record<string, string>,
+): RunningImage {
+  const envArgs = Object.entries(environment).flatMap(([key, value]) => ['-e', `${key}=${value}`]);
+  const process = spawn(
+    'docker',
+    [
+      'run',
+      '--rm',
+      '--name',
+      name,
+      '--add-host',
+      'host.docker.internal:host-gateway',
+      '-p',
+      `${hostPort}:${containerPort}`,
+      ...envArgs,
+      image,
+    ],
+    { cwd: rootDir, stdio: ['ignore', 'pipe', 'pipe'] },
+  );
+  let output = '';
+  process.stdout?.on('data', (chunk: Buffer) => (output += chunk.toString()));
+  process.stderr?.on('data', (chunk: Buffer) => (output += chunk.toString()));
+  return { process, output: () => output };
 }
 
-describe('Three-Service Production Artifact Smoke Tests', () => {
+describe('Three-Service Production Container Smoke Tests', () => {
+  const rootDir = process.cwd();
+  const apiImage = `pupzy-api-smoke:${process.pid}`;
+  const adminImage = `pupzy-admin-smoke:${process.pid}`;
+  const apiName = `pupzy-api-smoke-${process.pid}`;
+  const adminName = `pupzy-admin-smoke-${process.pid}`;
   let container: StartedPostgreSqlContainer;
   let connectionString: string;
+  let containerDatabaseUrl: string;
   let pool: Pool;
   let validTestPrivateKey: string;
 
@@ -49,49 +119,64 @@ describe('Three-Service Production Artifact Smoke Tests', () => {
       .withUsername('test')
       .withPassword('test')
       .start();
-
     connectionString = container.getConnectionUri();
+    const dockerUrl = new URL(connectionString);
+    dockerUrl.hostname = 'host.docker.internal';
+    containerDatabaseUrl = dockerUrl.toString();
     pool = new Pool({ connectionString });
-  }, 60_000);
+
+    await Promise.all([
+      runCommand('docker', ['build', '--pull=false', '-t', apiImage, '.'], rootDir),
+      runCommand('docker', ['build', '--pull=false', '-t', adminImage, '.'], `${rootDir}/admin-service`),
+    ]);
+  }, 600_000);
 
   afterAll(async () => {
-    if (pool) {
-      await pool.end();
-    }
-    if (container) {
-      await container.stop();
-    }
+    await Promise.allSettled([
+      runCommand('docker', ['stop', '-t', '3', apiName], rootDir),
+      runCommand('docker', ['stop', '-t', '3', adminName], rootDir),
+    ]);
+    if (pool) await pool.end();
+    if (container) await container.stop();
+    await Promise.allSettled([
+      runCommand('docker', ['image', 'rm', apiImage], rootDir),
+      runCommand('docker', ['image', 'rm', adminImage], rootDir),
+    ]);
   });
 
-  it('proves the main API pre-deploy migration succeeds on clean database', async () => {
+  it('executes the exact packaged pre-deploy CLI successfully on a clean database', async () => {
     await expect(
-      runMigrations({
-        pool,
-        migrationsFolder: path.resolve(__dirname, '../drizzle/migrations'),
-        customSqlPath: path.resolve(__dirname, '../drizzle/custom.sql'),
-      }),
-    ).resolves.not.toThrow();
+      runCommand(
+        'docker',
+        [
+          'run',
+          '--rm',
+          '--add-host',
+          'host.docker.internal:host-gateway',
+          '-e',
+          `DATABASE_URL=${containerDatabaseUrl}`,
+          apiImage,
+          'node',
+          'dist/database/migrate.js',
+        ],
+        rootDir,
+      ),
+    ).resolves.toMatchObject({ stderr: '' });
 
-    const res = await pool.query<{ table_name: string }>(`
-      SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = 'public'
+    const tables = await pool.query<{ table_name: string }>(`
+      SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'
     `);
-    const tables = res.rows.map((r) => r.table_name);
-    expect(tables).toContain('posts');
-    expect(tables).toContain('users');
-    expect(tables).toContain('admin_users');
-    expect(tables).toContain('moderation_actions');
-    expect(tables).toContain('admin_sessions');
-  }, 30_000);
+    expect(tables.rows.map(({ table_name }) => table_name)).toEqual(
+      expect.arrayContaining(['posts', 'users', 'admin_users', 'moderation_actions', 'admin_sessions']),
+    );
+  });
 
-  it('proves the main API production artifact starts with documented contract and reports healthy without Redis', async () => {
-    const apiPort = 3101;
-    const apiEnv = {
-      ...process.env,
+  it('starts the real main API image and reports healthy without Redis', async () => {
+    const apiPort = await freePort();
+    const apiProcess = startImage(rootDir, apiImage, apiName, apiPort, 3000, {
       NODE_ENV: 'production',
-      PORT: String(apiPort),
-      DATABASE_URL: connectionString,
+      PORT: '3000',
+      DATABASE_URL: containerDatabaseUrl,
       DB_POOL_MAX: '10',
       PHONE_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
       FIREBASE_PROJECT_ID: 'dummy-smoke-project',
@@ -102,70 +187,47 @@ describe('Three-Service Production Artifact Smoke Tests', () => {
       R2_SECRET_ACCESS_KEY: 'dummy-secret',
       R2_BUCKET_NAME: 'dummy-bucket',
       R2_PUBLIC_URL: 'https://pub-smoke.r2.dev',
-    };
-    delete (apiEnv as Record<string, string | undefined>).REDIS_URL;
-
-    const apiProcess: ChildProcess = fork(path.resolve(__dirname, '../dist/src/main.js'), [], {
-      cwd: path.resolve(__dirname, '..'),
-      env: apiEnv,
-      stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
     });
 
     try {
-      const healthResponse = await pollHealthCheck(apiPort, 20_000);
-      expect(healthResponse).toMatchObject({
+      await expect(pollHealthCheck(apiPort, apiProcess)).resolves.toMatchObject({
         status: 'ok',
-        info: {
-          app: {
-            status: 'up',
-          },
-        },
+        info: { app: { status: 'up' } },
       });
     } finally {
-      await terminateProcess(apiProcess);
+      await Promise.allSettled([runCommand('docker', ['stop', '-t', '3', apiName], rootDir)]);
+      if (apiProcess.process.exitCode === null) apiProcess.process.kill('SIGTERM');
     }
-  }, 30_000);
+  });
 
-  it('proves the AdminJS production artifact starts without REDIS_URL, reports healthy, and performs zero schema alterations', async () => {
-    const adminPort = 4101;
-    const adminEnv = {
-      ...process.env,
+  it('starts the real AdminJS image without Redis and performs zero startup DDL', async () => {
+    const schemaBefore = await pool.query<{ identity: string }>(`
+      SELECT n.nspname || ':' || c.relkind::text || ':' || c.relname AS identity
+      FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'public'
+      ORDER BY identity
+    `);
+    const adminPort = await freePort();
+    const adminProcess = startImage(rootDir, adminImage, adminName, adminPort, 4000, {
       NODE_ENV: 'production',
-      PORT: String(adminPort),
-      DATABASE_URL: connectionString,
+      PORT: '4000',
+      DATABASE_URL: containerDatabaseUrl,
       ADMIN_COOKIE_PASSWORD: 'test-smoke-cookie-password-must-be-32-characters-minimum!',
       ADMIN_SESSION_SECRET: 'test-smoke-session-secret-must-be-32-characters-minimum!',
-    };
-    delete (adminEnv as Record<string, string | undefined>).REDIS_URL;
-
-    const tablesBeforeRes = await pool.query<{ table_name: string }>(`
-      SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = 'public'
-      ORDER BY table_name
-    `);
-    const tablesBefore = tablesBeforeRes.rows.map((r) => r.table_name);
-
-    const adminProcess: ChildProcess = fork(path.resolve(__dirname, '../admin-service/src/main.js'), [], {
-      cwd: path.resolve(__dirname, '../admin-service'),
-      env: adminEnv,
-      stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
     });
 
     try {
-      const healthResponse = await pollHealthCheck(adminPort, 20_000);
-      expect(healthResponse).toEqual({ ok: true });
-
-      const tablesAfterRes = await pool.query<{ table_name: string }>(`
-        SELECT table_name
-        FROM information_schema.tables
-        WHERE table_schema = 'public'
-        ORDER BY table_name
+      await expect(pollHealthCheck(adminPort, adminProcess)).resolves.toEqual({ ok: true });
+      const schemaAfter = await pool.query<{ identity: string }>(`
+        SELECT n.nspname || ':' || c.relkind::text || ':' || c.relname AS identity
+        FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public'
+        ORDER BY identity
       `);
-      const tablesAfter = tablesAfterRes.rows.map((r) => r.table_name);
-      expect(tablesAfter).toEqual(tablesBefore);
+      expect(schemaAfter.rows).toEqual(schemaBefore.rows);
     } finally {
-      await terminateProcess(adminProcess);
+      await Promise.allSettled([runCommand('docker', ['stop', '-t', '3', adminName], rootDir)]);
+      if (adminProcess.process.exitCode === null) adminProcess.process.kill('SIGTERM');
     }
-  }, 30_000);
+  });
 });

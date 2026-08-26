@@ -51,6 +51,9 @@ export async function runMigrations(options: MigrationOptions = {}): Promise<voi
   if (!fs.existsSync(migrationsFolder)) {
     throw new Error(`[Migration] Migrations folder not found at: ${migrationsFolder}`);
   }
+  if (!fs.existsSync(customSqlPath)) {
+    throw new Error(`[Migration] Custom SQL file not found at: ${customSqlPath}`);
+  }
 
   const shouldClosePool = !options.pool;
   const pool = options.pool ?? new Pool({ connectionString: databaseUrl });
@@ -75,14 +78,10 @@ export async function runMigrations(options: MigrationOptions = {}): Promise<voi
     await migrate(db, { migrationsFolder });
     logger.log('[Migration] Drizzle schema migrations applied successfully.');
 
-    if (fs.existsSync(customSqlPath)) {
-      logger.log(`[Migration] Applying repeatable custom SQL from: ${customSqlPath}`);
-      const customSql = fs.readFileSync(customSqlPath, 'utf8');
-      await pool.query(customSql);
-      logger.log('[Migration] Repeatable custom SQL applied successfully.');
-    } else {
-      logger.log(`[Migration] No custom SQL file found at ${customSqlPath}, skipping custom SQL.`);
-    }
+    logger.log(`[Migration] Applying repeatable custom SQL from: ${customSqlPath}`);
+    const customSql = fs.readFileSync(customSqlPath, 'utf8');
+    await pool.query(customSql);
+    logger.log('[Migration] Repeatable custom SQL applied successfully.');
 
     logger.log('[Migration] Complete migration operation succeeded.');
   } catch (error) {

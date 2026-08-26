@@ -24,6 +24,7 @@
     "express-rate-limit": "^7",
     "express-session": "^1.18",
     "helmet": "^8",
+    "knex": "2.5.1",
     "pg": "^8.23.0",
     "pino": "^9",
     "pino-http": "^11",

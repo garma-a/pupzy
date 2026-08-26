@@ -2,11 +2,23 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 describe('Hobby Launch Controls & Codification Verification', () => {
+  interface RailwayConfig {
+    build?: {
+      builder?: string;
+      dockerfilePath?: string;
+    };
+    deploy?: {
+      preDeployCommand?: string;
+      healthcheckPath?: string;
+    };
+  }
+
   const rootDir = path.resolve(__dirname, '../..');
   const rootRailwayJsonPath = path.join(rootDir, 'railway.json');
   const adminRailwayJsonPath = path.join(rootDir, 'admin-service/railway.json');
   const rootDockerfile = path.join(rootDir, 'Dockerfile');
   const adminDockerfile = path.join(rootDir, 'admin-service/Dockerfile');
+  const adminEntrypoint = path.join(rootDir, 'admin-service/src/main.js');
   const adr0001Path = path.join(rootDir, 'docs/adr/0001-three-service-railway-hobby-launch.md');
   const runbookPath = path.join(rootDir, 'docs/deployment/hobby-launch-runbook.md');
   const deploymentGuidePath = path.join(rootDir, 'docs/deployment/three-service-railway-release.md');
@@ -16,18 +28,22 @@ describe('Hobby Launch Controls & Codification Verification', () => {
     return fs.readFileSync(filePath, 'utf8');
   }
 
+  function readRailwayConfig(filePath: string): RailwayConfig {
+    return JSON.parse(readUtf8(filePath)) as RailwayConfig;
+  }
+
   describe('Railway Deployment Descriptors', () => {
     it('configures the main API railway.json with Dockerfile build, pre-deploy migration, and /health check', () => {
-      const config = JSON.parse(readUtf8(rootRailwayJsonPath));
+      const config = readRailwayConfig(rootRailwayJsonPath);
 
       expect(config.build?.builder).toBe('DOCKERFILE');
       expect(config.build?.dockerfilePath).toBe('Dockerfile');
-      expect(config.deploy?.preDeployCommand).toBe('node dist/src/database/migrate.js');
+      expect(config.deploy?.preDeployCommand).toBe('node dist/database/migrate.js');
       expect(config.deploy?.healthcheckPath).toBe('/health');
     });
 
     it('configures the AdminJS railway.json with Dockerfile build, /health check, and zero preDeployCommand', () => {
-      const config = JSON.parse(readUtf8(adminRailwayJsonPath));
+      const config = readRailwayConfig(adminRailwayJsonPath);
 
       expect(config.build?.builder).toBe('DOCKERFILE');
       expect(config.build?.dockerfilePath).toBe('Dockerfile');
@@ -37,11 +53,18 @@ describe('Hobby Launch Controls & Codification Verification', () => {
   });
 
   describe('Dockerfiles & Runtime Memory Ceilings', () => {
+    it('starts the main API from the deterministic production build path', () => {
+      const content = readUtf8(rootDockerfile);
+
+      expect(content).toContain('CMD ["node", "dist/main.js"]');
+    });
+
     it('maintains the 150MB V8 heap ceiling in the main API Dockerfile', () => {
       const content = readUtf8(rootDockerfile);
 
       expect(content).toContain('ENV NODE_OPTIONS="--max-old-space-size=150"');
       expect(content).toContain('EXPOSE 3000');
+      expect(content).toContain('USER node');
     });
 
     it('ensures admin-service Dockerfile operates without REDIS_URL contract', () => {
@@ -49,6 +72,17 @@ describe('Hobby Launch Controls & Codification Verification', () => {
 
       expect(content).not.toContain('REDIS_URL');
       expect(content).toContain('EXPOSE 4000');
+      expect(content).toContain('ENV NODE_OPTIONS="--max-old-space-size=256"');
+      expect(content).toContain('ENV ADMIN_JS_TMP_DIR=/tmp/adminjs');
+      expect(content).toContain('USER node');
+    });
+  });
+
+  describe('AdminJS Serverless inactivity controls', () => {
+    it('disables connect-pg-simple background pruning', () => {
+      const content = readUtf8(adminEntrypoint);
+
+      expect(content).toContain('pruneSessionInterval: false');
     });
   });
 
