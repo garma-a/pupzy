@@ -1,0 +1,3 @@
+# k6 test results
+# This directory is git-ignored. k6 writes JSON output here.
+# Example: k6 run --out json=results/load.json k6/load.js
