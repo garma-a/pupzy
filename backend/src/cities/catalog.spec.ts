@@ -134,6 +134,14 @@ describe('Offline Egyptian City Catalog and Transformation', () => {
       }
     });
 
+    it('validates parent relationships between cities and governorate codes', () => {
+      const catalog = getOfficialCatalog();
+      for (const city of catalog) {
+        expect(city.governorateCode).toMatch(/^EG\d{2}$/);
+        expect(city.sourceCode.startsWith(city.governorateCode)).toBe(true);
+      }
+    });
+
     it('flags validation errors when constraints are violated', () => {
       const invalidCatalog = {
         records: [
@@ -142,7 +150,7 @@ describe('Offline Egyptian City Catalog and Transformation', () => {
             nameEnglish: 'Cairo',
             nameArabic: 'القاهرة',
             governorate: 'Cairo',
-            governorateCode: 'EG01',
+            governorateCode: 'INVALID_CODE',
             sourceNameEnglish: 'Cairo',
             sourceNameArabic: 'القاهرة',
             latitude: 999, // invalid lat
@@ -154,7 +162,7 @@ describe('Offline Egyptian City Catalog and Transformation', () => {
             nameEnglish: 'Cairo', // duplicate name in Cairo
             nameArabic: '', // blank arabic name
             governorate: 'Cairo',
-            governorateCode: 'EG01',
+            governorateCode: 'EG02', // mismatch with EG0101
             sourceNameEnglish: 'Cairo',
             sourceNameArabic: 'القاهرة',
             latitude: 30.0,
@@ -166,7 +174,7 @@ describe('Offline Egyptian City Catalog and Transformation', () => {
 
       const result = validateCatalog(invalidCatalog);
       expect(result.isValid).toBe(false);
-      expect(result.errors.length).toBeGreaterThanOrEqual(3);
+      expect(result.errors.length).toBeGreaterThanOrEqual(4);
     });
   });
 });

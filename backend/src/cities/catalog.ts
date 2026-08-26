@@ -217,6 +217,36 @@ export function validateCatalog(catalog: { records: CityCatalogRecord[] }): Vali
     errors.push(`Expected exactly 27 governorates, found ${governorates.size}`);
   }
 
+  const VALID_GOVERNORATE_CODES = new Set([
+    'EG01',
+    'EG02',
+    'EG03',
+    'EG04',
+    'EG11',
+    'EG12',
+    'EG13',
+    'EG14',
+    'EG15',
+    'EG16',
+    'EG17',
+    'EG18',
+    'EG19',
+    'EG21',
+    'EG22',
+    'EG23',
+    'EG24',
+    'EG25',
+    'EG26',
+    'EG27',
+    'EG28',
+    'EG29',
+    'EG31',
+    'EG32',
+    'EG33',
+    'EG34',
+    'EG35',
+  ]);
+
   const seenSourceCodes = new Set<string>();
   const seenGovNamePairs = new Set<string>();
 
@@ -233,6 +263,15 @@ export function validateCatalog(catalog: { records: CityCatalogRecord[] }): Vali
       seenSourceCodes.add(city.sourceCode);
     }
 
+    // Parent relationship validation
+    if (!city.governorateCode || !VALID_GOVERNORATE_CODES.has(city.governorateCode)) {
+      errors.push(`${prefix}: Invalid parent governorateCode '${city.governorateCode}'`);
+    } else if (city.sourceCode && !city.sourceCode.startsWith(city.governorateCode)) {
+      errors.push(
+        `${prefix}: sourceCode '${city.sourceCode}' does not match parent governorateCode '${city.governorateCode}'`,
+      );
+    }
+
     // Unique (nameEnglish, governorate)
     const govNameKey = `${city.governorate}:${city.nameEnglish}`;
     if (seenGovNamePairs.has(govNameKey)) {
@@ -241,35 +280,28 @@ export function validateCatalog(catalog: { records: CityCatalogRecord[] }): Vali
       seenGovNamePairs.add(govNameKey);
     }
 
-    // Nonblank checks
-    if (!city.nameEnglish || city.nameEnglish.trim() === '') {
-      errors.push(`${prefix}: Blank nameEnglish`);
-    }
-    if (!city.nameArabic || city.nameArabic.trim() === '') {
-      errors.push(`${prefix}: Blank nameArabic`);
-    }
-    if (!city.governorate || city.governorate.trim() === '') {
-      errors.push(`${prefix}: Blank governorate`);
-    }
+    // Nonblank checks & length limits (<= 100)
+    const stringFields: Array<{ key: keyof CityCatalogRecord; label: string; required: boolean }> = [
+      { key: 'nameEnglish', label: 'nameEnglish', required: true },
+      { key: 'nameArabic', label: 'nameArabic', required: true },
+      { key: 'governorate', label: 'governorate', required: true },
+      { key: 'sourceCode', label: 'sourceCode', required: true },
+      { key: 'sourceNameEnglish', label: 'sourceNameEnglish', required: true },
+      { key: 'sourceNameArabic', label: 'sourceNameArabic', required: true },
+    ];
 
-    // Length limits (<= 100)
-    if (city.nameEnglish && city.nameEnglish.length > 100) {
-      errors.push(`${prefix}: nameEnglish exceeds 100 characters (${city.nameEnglish.length})`);
-    }
-    if (city.nameArabic && city.nameArabic.length > 100) {
-      errors.push(`${prefix}: nameArabic exceeds 100 characters (${city.nameArabic.length})`);
-    }
-    if (city.governorate && city.governorate.length > 100) {
-      errors.push(`${prefix}: governorate exceeds 100 characters (${city.governorate.length})`);
-    }
-    if (city.sourceCode && city.sourceCode.length > 100) {
-      errors.push(`${prefix}: sourceCode exceeds 100 characters (${city.sourceCode.length})`);
-    }
-    if (city.sourceNameEnglish && city.sourceNameEnglish.length > 100) {
-      errors.push(`${prefix}: sourceNameEnglish exceeds 100 characters (${city.sourceNameEnglish.length})`);
-    }
-    if (city.sourceNameArabic && city.sourceNameArabic.length > 100) {
-      errors.push(`${prefix}: sourceNameArabic exceeds 100 characters (${city.sourceNameArabic.length})`);
+    for (const field of stringFields) {
+      const val = city[field.key];
+      if (typeof val === 'string') {
+        if (field.required && val.trim() === '') {
+          errors.push(`${prefix}: Blank ${field.label}`);
+        }
+        if (val.length > 100) {
+          errors.push(`${prefix}: ${field.label} exceeds 100 characters (${val.length})`);
+        }
+      } else if (field.required) {
+        errors.push(`${prefix}: Missing required ${field.label}`);
+      }
     }
 
     // Finite coordinates

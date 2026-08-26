@@ -1,6 +1,5 @@
 import { ENUMS, toAvailableValues } from "../enums.js";
-import { isSuperAdmin } from "../rbac.js";
-import { noDeleteActions } from "./resource-helpers.js";
+import { readOnlyActions } from "./resource-helpers.js";
 
 export function buildCitiesResource(db) {
   return {
@@ -16,8 +15,7 @@ export function buildCitiesResource(db) {
         },
       },
       actions: {
-        ...noDeleteActions,
-        edit: { isAccessible: isSuperAdmin },
+        ...readOnlyActions,
       },
     },
   };
