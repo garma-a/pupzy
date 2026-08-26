@@ -3,6 +3,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
 import { faker } from '@faker-js/faker';
 import * as schema from '../src/database/schema';
+import { ensureOfficialCities } from '../src/cities/seed';
 
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -11,7 +12,6 @@ dotenv.config();
 // ADJUST THE NUMBER OF ROWS HERE
 // ==========================================
 const CONFIG = {
-  NUM_CITIES: 1000,      // 1k cities
   NUM_USERS: 1000000,    // 1 Million users
   NUM_POSTS: 1000000,    // 1 Million posts
   BATCH_SIZE: 3000,      // Kept to 3000 to avoid Postgres parameter limits
@@ -25,9 +25,9 @@ const pool = new Pool({
 const db = drizzle(pool, { schema });
 
 async function clearDatabase() {
-  console.log('🗑️  Wiping existing database records to start fresh...');
-  await db.execute(sql`TRUNCATE TABLE posts, users, cities RESTART IDENTITY CASCADE`);
-  console.log('✨ Database wiped successfully!');
+  console.log('🗑️  Wiping existing posts and users to start fresh...');
+  await db.execute(sql`TRUNCATE TABLE posts, users RESTART IDENTITY CASCADE`);
+  console.log('✨ Posts and users wiped successfully!');
 }
 
 async function seed() {
@@ -35,27 +35,13 @@ async function seed() {
     await clearDatabase();
     console.log(`🏗️  Starting MEMORY-EFFICIENT fake data generation...`);
 
-    const cityIds: string[] = [];
-    const cityEntries: { id: string; governorate: string }[] = [];
-    const userIds: string[] = [];
+    // 1. Fetch official Cities (reuses official catalog, zero fake cities)
+    console.log('Loading official Cities catalog...');
+    const cityEntries = await ensureOfficialCities(db);
+    const cityIds = cityEntries.map((c) => c.id);
+    console.log(`Reusing ${cityEntries.length} official Cities for benchmark generation.`);
 
-    // 1. Create Cities
-    console.log(`Inserting ${CONFIG.NUM_CITIES} Cities in batches...`);
-    for (let i = 0; i < CONFIG.NUM_CITIES; i += CONFIG.BATCH_SIZE) {
-      const batchSize = Math.min(CONFIG.BATCH_SIZE, CONFIG.NUM_CITIES - i);
-      const batch = Array.from({ length: batchSize }).map((_, idx) => ({
-        nameEnglish: `City ${i + idx} ${faker.location.city()}`,
-        nameArabic: `مدينة ${i + idx}`,
-        governorate: faker.helpers.arrayElement(['Cairo', 'Alexandria', 'Giza', 'Luxor', 'Aswan']),
-        // Stored as EWKT text for PostGIS
-        centerPoint: sql`ST_GeomFromEWKT(${`SRID=4326;POINT(${faker.location.longitude()} ${faker.location.latitude()})`})`,
-      }));
-      const returned = await db.insert(schema.cities).values(batch as any).returning({ id: schema.cities.id, governorate: schema.cities.governorate });
-      cityEntries.push(...returned.map((r: any) => ({ id: r.id, governorate: r.governorate })));
-      cityIds.push(...returned.map((r: any) => r.id));
-      process.stdout.write(`\rProgress: ${i + batchSize} / ${CONFIG.NUM_CITIES}`);
-    }
-    console.log('');
+    const userIds: string[] = [];
 
     // 2. Create Users
     console.log(`Inserting ${CONFIG.NUM_USERS} Users in batches...`);
@@ -183,8 +169,10 @@ async function seed() {
   } catch (error) {
     console.error('❌ Seeding failed:', error);
   } finally {
-    pool.end();
+    await pool.end();
   }
 }
 
-seed();
+if (require.main === module) {
+  void seed();
+}
