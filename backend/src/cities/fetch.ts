@@ -5,6 +5,7 @@ export const DEFAULT_RESOURCE_URL =
   'https://data.humdata.org/dataset/b90d81ba-7c7a-4283-9899-827480d80a79/resource/81126a96-2991-48e1-93cb-24c164a4de88/download/egy_admin_boundaries.xlsx';
 
 export const DEFAULT_DATASET_URL = 'https://data.humdata.org/dataset/cod-ab-egy';
+export const DEFAULT_METADATA_URL = 'https://data.humdata.org/api/3/action/package_show?id=cod-ab-egy';
 
 export interface ParseSnapshotOptions {
   url?: string;
@@ -13,6 +14,28 @@ export interface ParseSnapshotOptions {
 
 export interface FetchUpstreamSnapshotOptions extends ParseSnapshotOptions {
   fetchFn?: typeof fetch;
+  metadataUrl?: string;
+}
+
+interface HdxResourceMetadata {
+  id?: unknown;
+  name?: unknown;
+  url?: unknown;
+  format?: unknown;
+  last_modified?: unknown;
+}
+
+interface HdxDatasetMetadata {
+  success?: unknown;
+  result?: {
+    name?: unknown;
+    title?: unknown;
+    notes?: unknown;
+    license_title?: unknown;
+    license_url?: unknown;
+    organization?: { title?: unknown };
+    resources?: HdxResourceMetadata[];
+  };
 }
 
 function toCleanString(val: unknown): string {
@@ -49,31 +72,166 @@ export function buildDefaultSnapshotMetadata(
   ).length;
   const selectableCount = totalRows - outsideZemamCount;
   const governorateCount = new Set(records.map((r) => r.adm1_name).filter(Boolean)).size;
-  const today = new Date().toISOString().slice(0, 10);
+  const metadata = options?.metadata;
+  if (!metadata) {
+    throw new Error('Authoritative upstream metadata is required to build a candidate snapshot');
+  }
+
+  assertProvidedCount('totalRows', metadata.totalRows, totalRows);
+  assertProvidedCount('outsideZemamCount', metadata.outsideZemamCount, outsideZemamCount);
+  assertProvidedCount('selectableCount', metadata.selectableCount, selectableCount);
+  assertProvidedCount('governorateCount', metadata.governorateCount, governorateCount);
 
   return {
-    source:
-      options?.metadata?.source || 'OCHA COD-AB (Common Operational Datasets - Subnational Administrative Boundaries)',
-    sourceUrl: options?.metadata?.sourceUrl || DEFAULT_DATASET_URL,
-    resourceUrl: options?.metadata?.resourceUrl || options?.url || DEFAULT_RESOURCE_URL,
-    upstreamVersion: options?.metadata?.upstreamVersion || '01',
-    upstreamDates: options?.metadata?.upstreamDates || {
-      validOn: '2017-04-21',
-      reviewedDate: '2024-12-19',
-      lastModified: new Date().toISOString(),
+    ...metadata,
+    totalRows,
+    outsideZemamCount,
+    selectableCount,
+    governorateCount,
+  } as CitySnapshotMetadata;
+}
+
+function assertProvidedCount(name: string, evidenceValue: number | undefined, artifactValue: number): void {
+  if (evidenceValue !== undefined && evidenceValue !== artifactValue) {
+    throw new Error(
+      `Authoritative provenance ${name} (${evidenceValue}) conflicts with downloaded artifact (${artifactValue})`,
+    );
+  }
+}
+
+function parseHdxDate(notes: string, description: string): string {
+  const match = notes.match(
+    new RegExp(`(?:^|\\n)\\s*(?:-\\s*)?(\\d{1,2}\\s+[A-Za-z]+\\s+\\d{4}):\\s*${description}`, 'i'),
+  );
+  if (!match) {
+    throw new Error(`Authoritative upstream metadata is missing the ${description} date`);
+  }
+  const parsed = new Date(`${match[1]} UTC`);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error(`Authoritative upstream metadata has an invalid ${description} date '${match[1]}'`);
+  }
+  return parsed.toISOString().slice(0, 10);
+}
+
+function markdownToText(value: string): string {
+  return value
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizedUrl(value: string): string {
+  const parsed = new URL(value);
+  parsed.search = '';
+  parsed.hash = '';
+  return parsed.toString().replace(/\/$/, '');
+}
+
+function deriveAuthoritativeMetadata(payload: unknown, requestedResourceUrl: string): Partial<CitySnapshotMetadata> {
+  const document = payload as HdxDatasetMetadata;
+  const dataset = document?.result;
+  if (document?.success !== true || !dataset) {
+    throw new Error('Authoritative upstream metadata response is not a successful HDX package response');
+  }
+
+  const datasetName = toCleanString(dataset.name);
+  const source = toCleanString(dataset.title);
+  const notes = toCleanString(dataset.notes);
+  const license = toCleanString(dataset.license_title);
+  const licenseUrl = toCleanString(dataset.license_url);
+  const organization = toCleanString(dataset.organization?.title);
+  const resource = dataset.resources?.find((candidate) => {
+    const candidateUrl = toCleanString(candidate.url);
+    return candidateUrl !== '' && normalizedUrl(candidateUrl) === normalizedUrl(requestedResourceUrl);
+  });
+
+  if (datasetName !== 'cod-ab-egy') {
+    throw new Error(`Authoritative upstream metadata identifies unexpected dataset '${datasetName || 'missing'}'`);
+  }
+  if (!source || !notes || !license || !licenseUrl || !organization) {
+    throw new Error(
+      'Authoritative upstream metadata is missing required source, notes, license, license URL, or organization',
+    );
+  }
+  if (!resource) {
+    throw new Error(`Authoritative upstream metadata does not verify requested resource URL '${requestedResourceUrl}'`);
+  }
+
+  const resourceUrl = toCleanString(resource.url);
+  const resourceName = toCleanString(resource.name);
+  const resourceFormat = toCleanString(resource.format);
+  const lastModified = toCleanString(resource.last_modified);
+  const expectedFormat = requestedResourceUrl.toLowerCase().endsWith('.xlsx') ? 'xlsx' : 'json';
+  if (!resourceUrl || !resourceName || resourceFormat.toLowerCase() !== expectedFormat || !lastModified) {
+    throw new Error(
+      `Authoritative upstream resource metadata is missing required URL, name, ${expectedFormat.toUpperCase()} format, or last-modified time`,
+    );
+  }
+  if (Number.isNaN(new Date(lastModified).getTime())) {
+    throw new Error(`Authoritative upstream resource metadata has invalid last-modified time '${lastModified}'`);
+  }
+
+  const versionMatch = notes.match(/dataset\s+version\s+v?([A-Za-z0-9][A-Za-z0-9_-]*(?:\.[A-Za-z0-9_-]+)*)/i);
+  if (!versionMatch) {
+    throw new Error('Authoritative upstream metadata is missing the dataset version');
+  }
+  const totalRowsMatch = notes.match(/admin\s*2\s*:\s*(\d+)\s+region/i);
+  const governorateCountMatch = notes.match(/admin\s*1\s*:\s*(\d+)\s+governorate/i);
+  if (!totalRowsMatch || !governorateCountMatch) {
+    throw new Error('Authoritative upstream metadata is missing ADM1 or ADM2 record counts');
+  }
+
+  const contribution = markdownToText(notes.match(/Contributed by\s+([\s\S]*?)(?:Part of the dataset:|$)/i)?.[1] ?? '');
+  if (!contribution) {
+    throw new Error('Authoritative upstream metadata is missing attribution');
+  }
+
+  const validOn = parseHdxDate(notes, 'valid for use by the humanitarian community');
+  const reviewedDate = parseHdxDate(notes, 'dataset reviewed for accuracy and completeness');
+  if (new Date(lastModified).getTime() < new Date(validOn).getTime()) {
+    throw new Error(
+      `Authoritative upstream resource metadata is stale: last-modified time '${lastModified}' predates valid-on date '${validOn}'`,
+    );
+  }
+
+  return {
+    source,
+    sourceUrl: `https://data.humdata.org/dataset/${datasetName}`,
+    resourceUrl,
+    upstreamVersion: versionMatch[1],
+    upstreamDates: {
+      validOn,
+      reviewedDate,
+      lastModified,
     },
-    retrievalDate: options?.metadata?.retrievalDate || today,
-    license:
-      options?.metadata?.license || 'Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)',
-    licenseUrl: options?.metadata?.licenseUrl || 'http://creativecommons.org/licenses/by/3.0/igo/legalcode',
-    attribution:
-      options?.metadata?.attribution ||
-      'Central Agency for Public Mobilization and Statistics (CAPMAS), Government of Egypt; United Nations Office for the Coordination of Humanitarian Affairs (OCHA) Field Information Services Section (FISS) and OCHA ROMENA',
-    totalRows: options?.metadata?.totalRows ?? totalRows,
-    outsideZemamCount: options?.metadata?.outsideZemamCount ?? outsideZemamCount,
-    selectableCount: options?.metadata?.selectableCount ?? selectableCount,
-    governorateCount: options?.metadata?.governorateCount ?? governorateCount,
+    retrievalDate: new Date().toISOString().slice(0, 10),
+    license,
+    licenseUrl,
+    attribution: `${organization}; ${contribution}`,
+    totalRows: Number(totalRowsMatch[1]),
+    governorateCount: Number(governorateCountMatch[1]),
   };
+}
+
+function assertArtifactFieldsMatchAuthoritativeMetadata(
+  records: RawCitySnapshotRecord[],
+  metadata: Pick<CitySnapshotMetadata, 'upstreamVersion' | 'upstreamDates'>,
+): void {
+  const versions = new Set(
+    records.map((record) => toOptionalString(record.version)?.replace(/^v/i, '')).filter(Boolean),
+  );
+  if (versions.size !== 1 || !versions.has(metadata.upstreamVersion)) {
+    throw new Error(
+      `Downloaded artifact upstream version '${[...versions].join(', ') || 'missing'}' conflicts with authoritative metadata '${metadata.upstreamVersion}'`,
+    );
+  }
+
+  const validOnDates = new Set(records.map((record) => toOptionalString(record.valid_on)).filter(Boolean));
+  if (validOnDates.size !== 1 || !validOnDates.has(metadata.upstreamDates.validOn)) {
+    throw new Error(
+      `Downloaded artifact valid-on date '${[...validOnDates].join(', ') || 'missing'}' conflicts with authoritative metadata '${metadata.upstreamDates.validOn}'`,
+    );
+  }
 }
 
 /**
@@ -226,7 +384,7 @@ export function parseJsonSnapshot(text: string, options?: ParseSnapshotOptions):
   } else if (data && typeof data === 'object') {
     const obj = data as Partial<CitySnapshot>;
     const records = Array.isArray(obj.records) ? obj.records : [];
-    const metadata = obj.metadata ? obj.metadata : buildDefaultSnapshotMetadata(records, options);
+    const metadata = buildDefaultSnapshotMetadata(records, { ...options, metadata: options?.metadata ?? obj.metadata });
     snapshot = { metadata, records };
   } else {
     throw new Error('Failed to parse upstream snapshot JSON: expected JSON object or array');
@@ -253,6 +411,7 @@ export async function fetchUpstreamSnapshot(
 
   const url = options.url || DEFAULT_RESOURCE_URL;
   const fetchFn = options.fetchFn || global.fetch;
+  const metadataUrl = options.metadataUrl || DEFAULT_METADATA_URL;
 
   const res = await fetchFn(url, {
     redirect: 'follow',
@@ -300,6 +459,30 @@ export async function fetchUpstreamSnapshot(
     );
   }
 
+  const metadataResponse = await fetchFn(metadataUrl, {
+    headers: {
+      'User-Agent': 'Pupzy-Refresher/1.0',
+      Accept: 'application/json',
+    },
+  });
+  if (!metadataResponse.ok) {
+    throw new Error(
+      `Failed to fetch authoritative upstream metadata: ${metadataResponse.status} ${metadataResponse.statusText} from ${metadataUrl}`,
+    );
+  }
+  if (typeof metadataResponse.text !== 'function') {
+    throw new Error('Failed to fetch authoritative upstream metadata: response body is unavailable');
+  }
+
+  let metadataPayload: unknown;
+  try {
+    metadataPayload = JSON.parse(await metadataResponse.text());
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`Failed to parse authoritative upstream metadata: ${message}`);
+  }
+  const authoritativeMetadata = deriveAuthoritativeMetadata(metadataPayload, url);
+
   // Detect XLSX format (via magic bytes PK\x03\x04, content type, or URL extension)
   const isXlsx =
     url.toLowerCase().endsWith('.xlsx') ||
@@ -309,9 +492,13 @@ export async function fetchUpstreamSnapshot(
     (buffer.length >= 4 && buffer[0] === 0x50 && buffer[1] === 0x4b && buffer[2] === 0x03 && buffer[3] === 0x04);
 
   if (isXlsx) {
-    return await parseXlsxSnapshot(buffer, { url, metadata: options.metadata });
+    const snapshot = await parseXlsxSnapshot(buffer, { url, metadata: authoritativeMetadata });
+    assertArtifactFieldsMatchAuthoritativeMetadata(snapshot.records, snapshot.metadata);
+    return snapshot;
   }
 
   const text = buffer.toString('utf8');
-  return parseJsonSnapshot(text, { url, metadata: options.metadata });
+  const snapshot = parseJsonSnapshot(text, { url, metadata: authoritativeMetadata });
+  assertArtifactFieldsMatchAuthoritativeMetadata(snapshot.records, snapshot.metadata);
+  return snapshot;
 }

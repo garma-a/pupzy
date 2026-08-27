@@ -8,6 +8,7 @@ import {
   parseJsonSnapshot,
   DEFAULT_RESOURCE_URL,
   DEFAULT_DATASET_URL,
+  DEFAULT_METADATA_URL,
 } from './fetch';
 import { type RawCitySnapshotRecord } from './catalog';
 
@@ -136,6 +137,80 @@ describe('Upstream City Snapshot Fetch and Ingestion Module', () => {
     },
   ];
 
+  function authoritativeDatasetMetadata(
+    resourceUrl: string,
+    overrides: {
+      license?: string;
+      notes?: string;
+      lastModified?: string;
+    } = {},
+  ) {
+    return {
+      success: true,
+      result: {
+        name: 'cod-ab-egy',
+        title: 'Egypt - Subnational Administrative Boundaries',
+        notes:
+          overrides.notes ??
+          'Egypt administrative level 0-2 boundaries (COD-AB) dataset version 01.\n' +
+            '- Admin 1: 1 Governorate\n' +
+            '- Admin 2: 2 Region\n' +
+            '- 19 December 2024: dataset reviewed for accuracy and completeness\n' +
+            '- 21 April 2017: valid for use by the humanitarian community\n' +
+            'Contributed by OCHA ROMENA. Quality assured and published by OCHA FISS and HDX.',
+        license_title:
+          overrides.license ?? 'Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)',
+        license_url: 'https://creativecommons.org/licenses/by/3.0/igo/',
+        organization: { title: 'OCHA Field Information Services Section (FISS)' },
+        resources: [
+          {
+            id: '81126a96-2991-48e1-93cb-24c164a4de88',
+            url: resourceUrl,
+            name: 'egy_admin_boundaries.xlsx',
+            format: 'XLSX',
+            last_modified: overrides.lastModified ?? '2026-01-26T15:32:45.946546',
+          },
+        ],
+      },
+    };
+  }
+
+  function jsonResponse(payload: unknown, contentType = 'application/json') {
+    return {
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      headers: { get: (header: string) => (header.toLowerCase() === 'content-type' ? contentType : null) },
+      text: () => Promise.resolve(JSON.stringify(payload)),
+      arrayBuffer: () => Promise.resolve(Buffer.from(JSON.stringify(payload))),
+    } as any;
+  }
+
+  function parsedArtifactMetadata(records: RawCitySnapshotRecord[], resourceUrl = DEFAULT_RESOURCE_URL) {
+    const outsideZemamCount = records.filter(
+      (record) => record.adm2_name === 'Zemam Out' || record.adm2_pcode.endsWith('00'),
+    ).length;
+    return {
+      source: 'Egypt - Subnational Administrative Boundaries',
+      sourceUrl: DEFAULT_DATASET_URL,
+      resourceUrl,
+      upstreamVersion: '01',
+      upstreamDates: {
+        validOn: '2017-04-21',
+        reviewedDate: '2024-12-19',
+        lastModified: '2026-01-26T15:32:45.946546',
+      },
+      retrievalDate: '2026-08-27',
+      license: 'Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)',
+      licenseUrl: 'https://creativecommons.org/licenses/by/3.0/igo/',
+      attribution: 'CAPMAS; OCHA ROMENA; OCHA FISS and HDX',
+      totalRows: records.length,
+      outsideZemamCount,
+      selectableCount: records.length - outsideZemamCount,
+      governorateCount: new Set(records.map((record) => record.adm1_name)).size,
+    };
+  }
+
   describe('Default Configured Resource URLs', () => {
     it('configures a direct, downloadable XLSX resource URL rather than a landing page or placeholder', () => {
       expect(DEFAULT_RESOURCE_URL).toBe(
@@ -149,6 +224,142 @@ describe('Upstream City Snapshot Fetch and Ingestion Module', () => {
     it('configures the authoritative OCHA COD-AB Egypt dataset landing page URL', () => {
       expect(DEFAULT_DATASET_URL).toBe('https://data.humdata.org/dataset/cod-ab-egy');
     });
+
+    it('uses HDX’s package metadata endpoint as the authoritative provenance source', () => {
+      expect(DEFAULT_METADATA_URL).toBe('https://data.humdata.org/api/3/action/package_show?id=cod-ab-egy');
+    });
+  });
+
+  describe('Authoritative provenance verification (fetchUpstreamSnapshot)', () => {
+    it('derives candidate provenance from HDX metadata and cross-validates metadata counts and XLSX fields', async () => {
+      const resourceUrl = 'https://example.com/egy_admin_boundaries.xlsx';
+      const xlsxBuffer = await createMockXlsxBuffer(sampleValidRecords);
+      const fetchFn = jest.fn((url: string) => {
+        if (url === DEFAULT_METADATA_URL) return jsonResponse(authoritativeDatasetMetadata(resourceUrl));
+        if (url === resourceUrl) {
+          return {
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            headers: { get: () => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+            arrayBuffer: () =>
+              Promise.resolve(
+                xlsxBuffer.buffer.slice(xlsxBuffer.byteOffset, xlsxBuffer.byteOffset + xlsxBuffer.byteLength),
+              ),
+          } as any;
+        }
+        throw new Error(`Unexpected URL: ${url}`);
+      });
+
+      const snapshot = await fetchUpstreamSnapshot({ url: resourceUrl, fetchFn: fetchFn as typeof fetch });
+
+      expect(snapshot.metadata).toMatchObject({
+        source: 'Egypt - Subnational Administrative Boundaries',
+        sourceUrl: DEFAULT_DATASET_URL,
+        resourceUrl,
+        upstreamVersion: '01',
+        upstreamDates: {
+          validOn: '2017-04-21',
+          reviewedDate: '2024-12-19',
+          lastModified: '2026-01-26T15:32:45.946546',
+        },
+        license: 'Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)',
+        licenseUrl: 'https://creativecommons.org/licenses/by/3.0/igo/',
+        totalRows: 2,
+        governorateCount: 1,
+      });
+      expect(snapshot.metadata.attribution).toContain('OCHA ROMENA');
+      expect(fetchFn).toHaveBeenNthCalledWith(2, DEFAULT_METADATA_URL, expect.anything());
+    });
+
+    it('fails closed when authoritative metadata conflicts with the downloaded artifact', async () => {
+      const resourceUrl = 'https://example.com/egy_admin_boundaries.xlsx';
+      const xlsxBuffer = await createMockXlsxBuffer(sampleValidRecords);
+      const fetchFn = jest.fn((url: string) => {
+        if (url === DEFAULT_METADATA_URL) {
+          return jsonResponse(
+            authoritativeDatasetMetadata(resourceUrl, {
+              notes:
+                'dataset version 02.\n- Admin 1: 1 Governorate\n- Admin 2: 2 Region\n- 19 December 2024: dataset reviewed for accuracy and completeness\n- 21 April 2017: valid for use by the humanitarian community\nContributed by OCHA ROMENA.',
+            }),
+          );
+        }
+        return {
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: { get: () => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+          arrayBuffer: () => Promise.resolve(xlsxBuffer),
+        } as any;
+      });
+
+      await expect(fetchUpstreamSnapshot({ url: resourceUrl, fetchFn: fetchFn as typeof fetch })).rejects.toThrow(
+        /upstream version/i,
+      );
+    });
+
+    it('fails closed when HDX does not provide required provenance metadata', async () => {
+      const resourceUrl = 'https://example.com/egy_admin_boundaries.xlsx';
+      const xlsxBuffer = await createMockXlsxBuffer(sampleValidRecords);
+      const fetchFn = jest.fn((url: string) => {
+        if (url === resourceUrl) {
+          return {
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            headers: { get: () => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+            arrayBuffer: () => Promise.resolve(xlsxBuffer),
+          } as any;
+        }
+        return jsonResponse(authoritativeDatasetMetadata(resourceUrl, { license: '' }));
+      });
+
+      await expect(fetchUpstreamSnapshot({ url: resourceUrl, fetchFn: fetchFn as typeof fetch })).rejects.toThrow(
+        /license/i,
+      );
+    });
+
+    it('fails closed when the authoritative resource metadata is stale', async () => {
+      const resourceUrl = 'https://example.com/egy_admin_boundaries.xlsx';
+      const xlsxBuffer = await createMockXlsxBuffer(sampleValidRecords);
+      const fetchFn = jest.fn((url: string) => {
+        if (url === resourceUrl) {
+          return {
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            headers: { get: () => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+            arrayBuffer: () => Promise.resolve(xlsxBuffer),
+          } as any;
+        }
+        return jsonResponse(authoritativeDatasetMetadata(resourceUrl, { lastModified: '2010-01-01T00:00:00Z' }));
+      });
+
+      await expect(fetchUpstreamSnapshot({ url: resourceUrl, fetchFn: fetchFn as typeof fetch })).rejects.toThrow(
+        /metadata is stale/i,
+      );
+    });
+
+    it('fails closed when HDX cannot verify the requested resource URL', async () => {
+      const resourceUrl = 'https://example.com/egy_admin_boundaries.xlsx';
+      const xlsxBuffer = await createMockXlsxBuffer(sampleValidRecords);
+      const fetchFn = jest.fn((url: string) => {
+        if (url === resourceUrl) {
+          return {
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            headers: { get: () => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+            arrayBuffer: () => Promise.resolve(xlsxBuffer),
+          } as any;
+        }
+        return jsonResponse(authoritativeDatasetMetadata('https://example.com/other.xlsx'));
+      });
+
+      await expect(fetchUpstreamSnapshot({ url: resourceUrl, fetchFn: fetchFn as typeof fetch })).rejects.toThrow(
+        /does not verify requested resource URL/i,
+      );
+    });
   });
 
   describe('XLSX Upstream Artifact Parsing (parseXlsxSnapshot)', () => {
@@ -156,6 +367,10 @@ describe('Upstream City Snapshot Fetch and Ingestion Module', () => {
       const buffer = await createMockXlsxBuffer(sampleValidRecords);
       const snapshot = await parseXlsxSnapshot(buffer, {
         url: 'https://data.humdata.org/dataset/egy_admin_boundaries.xlsx',
+        metadata: parsedArtifactMetadata(
+          sampleValidRecords,
+          'https://data.humdata.org/dataset/egy_admin_boundaries.xlsx',
+        ),
       });
 
       expect(snapshot.records).toHaveLength(2);
@@ -187,7 +402,7 @@ describe('Upstream City Snapshot Fetch and Ingestion Module', () => {
       ];
 
       const buffer = await createMockXlsxBuffer(recordsWithDate);
-      const snapshot = await parseXlsxSnapshot(buffer);
+      const snapshot = await parseXlsxSnapshot(buffer, { metadata: parsedArtifactMetadata(recordsWithDate) });
 
       expect(snapshot.records[0].valid_on).toBe('2017-04-21');
       expect(typeof snapshot.records[0].center_lat).toBe('number');
@@ -242,7 +457,10 @@ describe('Upstream City Snapshot Fetch and Ingestion Module', () => {
 
     it('wraps a raw records JSON array with computed provenance metadata', () => {
       const jsonArray = JSON.stringify(sampleValidRecords);
-      const snapshot = parseJsonSnapshot(jsonArray, { url: 'https://example.com/records.json' });
+      const snapshot = parseJsonSnapshot(jsonArray, {
+        url: 'https://example.com/records.json',
+        metadata: parsedArtifactMetadata(sampleValidRecords, 'https://example.com/records.json'),
+      });
 
       expect(snapshot.records).toHaveLength(2);
       expect(snapshot.metadata.totalRows).toBe(2);
@@ -265,23 +483,27 @@ describe('Upstream City Snapshot Fetch and Ingestion Module', () => {
     it('fetches and parses XLSX binary stream over HTTP with redirect support', async () => {
       const xlsxBuffer = await createMockXlsxBuffer(sampleValidRecords);
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        headers: {
-          get: (header: string) => {
-            if (header.toLowerCase() === 'content-type') {
-              return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-            }
-            return null;
+      global.fetch = jest.fn().mockImplementation((url: string) => {
+        if (url === DEFAULT_METADATA_URL) return jsonResponse(authoritativeDatasetMetadata(DEFAULT_RESOURCE_URL));
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: {
+            get: (header: string) => {
+              if (header.toLowerCase() === 'content-type') {
+                return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+              }
+              return null;
+            },
           },
-        },
-        arrayBuffer: () =>
-          Promise.resolve(
-            xlsxBuffer.buffer.slice(xlsxBuffer.byteOffset, xlsxBuffer.byteOffset + xlsxBuffer.byteLength),
-          ),
-        text: () => Promise.resolve(''),
-      } as any);
+          arrayBuffer: () =>
+            Promise.resolve(
+              xlsxBuffer.buffer.slice(xlsxBuffer.byteOffset, xlsxBuffer.byteOffset + xlsxBuffer.byteLength),
+            ),
+          text: () => Promise.resolve(''),
+        } as any);
+      });
 
       const snapshot = await fetchUpstreamSnapshot(DEFAULT_RESOURCE_URL);
       expect(snapshot.records).toHaveLength(2);
@@ -369,21 +591,37 @@ describe('Upstream City Snapshot Fetch and Ingestion Module', () => {
 
       const xlsxBuffer = await createMockXlsxBuffer(invalidRecords);
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        headers: {
-          get: (h: string) =>
-            h.toLowerCase() === 'content-type'
-              ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-              : null,
-        },
-        arrayBuffer: () =>
-          Promise.resolve(
-            xlsxBuffer.buffer.slice(xlsxBuffer.byteOffset, xlsxBuffer.byteOffset + xlsxBuffer.byteLength),
-          ),
-        text: () => Promise.resolve(''),
-      } as any);
+      global.fetch = jest.fn().mockImplementation((url: string) => {
+        if (url === DEFAULT_METADATA_URL) {
+          return jsonResponse(
+            authoritativeDatasetMetadata('https://example.com/bad-coords.xlsx', {
+              notes:
+                'Egypt administrative level 0-2 boundaries (COD-AB) dataset version 01.\n' +
+                '- Admin 1: 1 Governorate\n' +
+                '- Admin 2: 1 Region\n' +
+                '- 19 December 2024: dataset reviewed for accuracy and completeness\n' +
+                '- 21 April 2017: valid for use by the humanitarian community\n' +
+                'Contributed by OCHA ROMENA. Quality assured and published by OCHA FISS and HDX.',
+            }),
+          );
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: {
+            get: (h: string) =>
+              h.toLowerCase() === 'content-type'
+                ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                : null,
+          },
+          arrayBuffer: () =>
+            Promise.resolve(
+              xlsxBuffer.buffer.slice(xlsxBuffer.byteOffset, xlsxBuffer.byteOffset + xlsxBuffer.byteLength),
+            ),
+          text: () => Promise.resolve(''),
+        } as any);
+      });
 
       await expect(fetchUpstreamSnapshot('https://example.com/bad-coords.xlsx')).rejects.toThrow(
         /fetched upstream snapshot failed schema\/provenance validation/i,

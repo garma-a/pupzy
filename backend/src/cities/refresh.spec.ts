@@ -17,6 +17,7 @@ import {
   type CitySnapshot,
   type CityCatalogRecord,
 } from './catalog';
+import { DEFAULT_METADATA_URL } from './fetch';
 
 describe('Upstream Refresh and Future Release Diff Tooling', () => {
   const currentCatalog = getOfficialCatalog();
@@ -150,22 +151,62 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
           adm1_pcode: 'EG01',
           center_lat: 30.0,
           center_lon: 31.0,
+          version: 'v2026.1.0',
+          valid_on: '2026-01-01',
         },
       ]);
 
       const originalFetch = global.fetch;
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        headers: {
-          get: (name: string) => (name.toLowerCase() === 'content-type' ? 'application/json' : null),
-        },
-        text: () => Promise.resolve(JSON.stringify(validSnapshot)),
-      } as any);
+      global.fetch = jest.fn().mockImplementation((url: string) => {
+        if (url === DEFAULT_METADATA_URL) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            headers: { get: () => 'application/json' },
+            text: () =>
+              Promise.resolve(
+                JSON.stringify({
+                  success: true,
+                  result: {
+                    name: 'cod-ab-egy',
+                    title: 'Egypt - Subnational Administrative Boundaries',
+                    notes:
+                      'Egypt administrative level 0-2 boundaries (COD-AB) dataset version 2026.1.0.\n' +
+                      '- Admin 1: 1 Governorate\n' +
+                      '- Admin 2: 1 Region\n' +
+                      '- 2 January 2026: dataset reviewed for accuracy and completeness\n' +
+                      '- 1 January 2026: valid for use by the humanitarian community\n' +
+                      'Contributed by OCHA ROMENA.',
+                    license_title: 'CC-BY-IGO',
+                    license_url: 'https://creativecommons.org/licenses/by/3.0/igo/',
+                    organization: { title: 'OCHA FISS' },
+                    resources: [
+                      {
+                        name: 'snapshot.json',
+                        format: 'JSON',
+                        url: 'https://example.com/snapshot.json',
+                        last_modified: '2026-01-03',
+                      },
+                    ],
+                  },
+                }),
+              ),
+          } as any);
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          headers: {
+            get: (name: string) => (name.toLowerCase() === 'content-type' ? 'application/json' : null),
+          },
+          text: () => Promise.resolve(JSON.stringify(validSnapshot)),
+        } as any);
+      });
 
       try {
         const fetched = await fetchUpstreamSnapshot('https://example.com/snapshot.json');
-        expect(fetched.metadata.source).toBe(validSnapshot.metadata.source);
+        expect(fetched.metadata.source).toBe('Egypt - Subnational Administrative Boundaries');
         expect(fetched.records).toHaveLength(1);
       } finally {
         global.fetch = originalFetch;
