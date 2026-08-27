@@ -81,7 +81,7 @@ describe('CitiesService', () => {
 
   describe('clearCache', () => {
     it('invalidates cities cache entries so fresh taxonomy is returned', async () => {
-      mockCache.del = jest.fn().mockResolvedValue(undefined as never);
+      mockCache.del = jest.fn().mockResolvedValue(undefined);
 
       await service.clearCache();
 

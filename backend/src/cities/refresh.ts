@@ -1,11 +1,4 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import {
-  transformCatalog,
-  type CitySnapshot,
-  type CityCatalogRecord,
-  type CityCatalogMetadata,
-} from './catalog';
+import { transformCatalog, type CitySnapshot, type CityCatalogRecord, type CityCatalogMetadata } from './catalog';
 
 export interface RenamedAreaDiff {
   sourceCode: string;
@@ -75,10 +68,7 @@ function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: num
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return Math.round(R * c * 100) / 100;
 }
@@ -95,12 +85,8 @@ export function compareSnapshots(
   const candidateTransformed = transformCatalog(candidateSnapshot);
   const candidateRecords = candidateTransformed.records;
 
-  const currentByCode = new Map<string, CityCatalogRecord>(
-    currentCatalog.map((c) => [c.sourceCode, c]),
-  );
-  const candidateByCode = new Map<string, CityCatalogRecord>(
-    candidateRecords.map((c) => [c.sourceCode, c]),
-  );
+  const currentByCode = new Map<string, CityCatalogRecord>(currentCatalog.map((c) => [c.sourceCode, c]));
+  const candidateByCode = new Map<string, CityCatalogRecord>(candidateRecords.map((c) => [c.sourceCode, c]));
 
   const added: CityCatalogRecord[] = [];
   const removed: CityCatalogRecord[] = [];
@@ -157,12 +143,7 @@ export function compareSnapshots(
           governorate: cand.governorate,
           oldCoordinates: [curr.latitude, curr.longitude],
           newCoordinates: [cand.latitude, cand.longitude],
-          distanceKm: calculateDistanceKm(
-            curr.latitude,
-            curr.longitude,
-            cand.latitude,
-            cand.longitude,
-          ),
+          distanceKm: calculateDistanceKm(curr.latitude, curr.longitude, cand.latitude, cand.longitude),
         });
       }
     }
@@ -269,9 +250,8 @@ export function applyReviewedRelease(
     }
   }
 
-  const distinctGovCount = new Set(
-    updatedCatalog.filter((c) => c.status === 'OFFICIAL').map((c) => c.governorate),
-  ).size;
+  const distinctGovCount = new Set(updatedCatalog.filter((c) => c.status === 'OFFICIAL').map((c) => c.governorate))
+    .size;
 
   if (options.reviewedMetadata?.governorateCount !== undefined) {
     if (distinctGovCount !== options.reviewedMetadata.governorateCount) {
@@ -283,23 +263,15 @@ export function applyReviewedRelease(
 
   // Validate replacement mappings if provided
   if (options.replacementMappings && options.replacementMappings.length > 0) {
-    const activeCodes = new Set(
-      updatedCatalog.filter((c) => c.status === 'OFFICIAL').map((c) => c.sourceCode),
-    );
-    const retiredCodes = new Set(
-      updatedCatalog.filter((c) => c.status === 'RETIRED').map((c) => c.sourceCode),
-    );
+    const activeCodes = new Set(updatedCatalog.filter((c) => c.status === 'OFFICIAL').map((c) => c.sourceCode));
+    const retiredCodes = new Set(updatedCatalog.filter((c) => c.status === 'RETIRED').map((c) => c.sourceCode));
 
     for (const mapping of options.replacementMappings) {
       if (!retiredCodes.has(mapping.retiredSourceCode)) {
-        throw new Error(
-          `Replacement mapping error: '${mapping.retiredSourceCode}' is not a retired city`,
-        );
+        throw new Error(`Replacement mapping error: '${mapping.retiredSourceCode}' is not a retired city`);
       }
       if (!activeCodes.has(mapping.replacementSourceCode)) {
-        throw new Error(
-          `Replacement mapping error: '${mapping.replacementSourceCode}' is not an active official city`,
-        );
+        throw new Error(`Replacement mapping error: '${mapping.replacementSourceCode}' is not an active official city`);
       }
     }
   }

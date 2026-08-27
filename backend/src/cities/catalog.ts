@@ -258,7 +258,9 @@ export function transformCatalog(snapshot: CitySnapshot): CityCatalog {
 /**
  * Normalizes an input catalog (records array or catalog object) and extracts records by lifecycle status.
  */
-export function unpackCatalog(catalog: CityCatalogRecord[] | CityCatalog | { metadata?: CityCatalogMetadata; records: CityCatalogRecord[] }): {
+export function unpackCatalog(
+  catalog: CityCatalogRecord[] | CityCatalog | { metadata?: CityCatalogMetadata; records: CityCatalogRecord[] },
+): {
   records: CityCatalogRecord[];
   metadata?: CityCatalogMetadata;
   officialRecords: CityCatalogRecord[];
@@ -298,16 +300,10 @@ export function validateCatalog(
       ? meta.totalCities
       : 351);
 
-  const expectedGovCount =
-    options.expectedGovernorateCount ??
-    meta?.governorateCount ??
-    meta?.governoratesCount ??
-    27;
+  const expectedGovCount = options.expectedGovernorateCount ?? meta?.governorateCount ?? meta?.governoratesCount ?? 27;
 
   if (officialRecords.length !== expectedOfficial) {
-    errors.push(
-      `Expected exactly ${expectedOfficial} selectable official cities, found ${officialRecords.length}`,
-    );
+    errors.push(`Expected exactly ${expectedOfficial} selectable official cities, found ${officialRecords.length}`);
   }
 
   const officialGovernorates = new Set(officialRecords.map((r) => r.governorate));

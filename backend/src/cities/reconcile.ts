@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
 import * as fs from 'fs';
 import {
   getOfficialCatalog,
@@ -30,7 +31,7 @@ export interface ExistingCityRow {
   nameArabic?: string | null;
   governorate: string;
   sourceCode?: string | null;
-  status?: 'OFFICIAL' | 'LEGACY' | 'RETIRED' | string;
+  status?: 'OFFICIAL' | 'LEGACY' | 'RETIRED';
 }
 
 export interface ReconcileOptions {
@@ -86,9 +87,7 @@ export function validateLegacyMappings(
     const legacyKey = `${item.legacyGovernorate.trim().toLowerCase()}:${item.legacyNameEnglish.trim().toLowerCase()}`;
 
     if (seenLegacyKeys.has(legacyKey)) {
-      errors.push(
-        `Duplicate legacy entry at index ${i}: '${item.legacyNameEnglish}' in '${item.legacyGovernorate}'`,
-      );
+      errors.push(`Duplicate legacy entry at index ${i}: '${item.legacyNameEnglish}' in '${item.legacyGovernorate}'`);
     } else {
       seenLegacyKeys.add(legacyKey);
     }
@@ -124,13 +123,12 @@ export function validateLegacyMappings(
  * 2. Matched legacy cities retain their primary key UUIDs while gaining official source codes and canonical names.
  * 3. Unmatched legacy cities transition to 'LEGACY' status, preserving historical references without automatic nearest-neighbor remapping.
  * 4. Missing official cities are inserted to achieve complete official coverage across all governorates.
- * 5. Denormalized governorate values in posts are updated for matched official cities.
- * 6. Cache invalidation is triggered post-commit.
+ * 5. Existing official cities receive reviewed canonical corrections (names, governorate, status, coordinates) rather than being skipped.
+ * 6. Denormalized governorate values in posts are updated only for confidently identified official cities.
+ * 7. Fails closed on duplicate legacy identities, zero-row or multi-row matches for reviewed non-null mappings, or verification mismatch.
+ * 8. Cache invalidation is triggered post-commit.
  */
-export async function reconcileCities(
-  db: any,
-  options: ReconcileOptions = {},
-): Promise<ReconcileResult> {
+export async function reconcileCities(db: any, options: ReconcileOptions = {}): Promise<ReconcileResult> {
   const rawCatalog = options.catalog ?? getOfficialCatalog();
   const { records: catalogRecords, officialRecords } = unpackCatalog(rawCatalog);
   const mappings = options.mappings ?? loadLegacyMappings();
@@ -147,15 +145,7 @@ export async function reconcileCities(
     }
   }
 
-  const catalogByCode = new Map<string, CityCatalogRecord>(
-    catalogRecords.map((c) => [c.sourceCode, c]),
-  );
-
-  const mappingLookup = new Map<string, string | null>();
-  for (const m of mappings) {
-    const key = `${m.legacyGovernorate.trim().toLowerCase()}:${m.legacyNameEnglish.trim().toLowerCase()}`;
-    mappingLookup.set(key, m.targetSourceCode);
-  }
+  const catalogByCode = new Map<string, CityCatalogRecord>(catalogRecords.map((c) => [c.sourceCode, c]));
 
   let matchedLegacyCount = 0;
   let unmatchedLegacyCount = 0;
@@ -178,38 +168,121 @@ export async function reconcileCities(
       status: r.status ?? 'OFFICIAL',
     }));
 
+    const legacyRows = existingRows.filter((r) => !r.sourceCode);
+    const officialOrRetiredRows = existingRows.filter((r) => !!r.sourceCode);
     const claimedSourceCodes = new Set<string>();
 
-    for (const row of existingRows) {
-      if (row.sourceCode && catalogByCode.has(row.sourceCode) && row.status === 'OFFICIAL') {
-        claimedSourceCodes.add(row.sourceCode);
-        continue;
+    if (legacyRows.length > 0) {
+      // Check for duplicate legacy identities in the database
+      const seenLegacyKeys = new Set<string>();
+      for (const row of legacyRows) {
+        const key = `${row.governorate.trim().toLowerCase()}:${row.nameEnglish.trim().toLowerCase()}`;
+        if (seenLegacyKeys.has(key)) {
+          throw new Error(
+            `City reconciliation aborted: duplicate legacy city identities found in database for '${row.nameEnglish}' in '${row.governorate}'`,
+          );
+        }
+        seenLegacyKeys.add(key);
       }
 
-      const govStr = (row.governorate || '').trim().toLowerCase();
-      const nameStr = (row.nameEnglish || '').trim().toLowerCase();
-      const key = `${govStr}:${nameStr}`;
-      const targetCode = mappingLookup.get(key);
+      // Group legacy rows by key
+      const legacyByKey = new Map<string, ExistingCityRow[]>();
+      for (const row of legacyRows) {
+        const key = `${row.governorate.trim().toLowerCase()}:${row.nameEnglish.trim().toLowerCase()}`;
+        const list = legacyByKey.get(key) ?? [];
+        list.push(row);
+        legacyByKey.set(key, list);
+      }
 
-      if (targetCode && catalogByCode.has(targetCode)) {
-        const official = catalogByCode.get(targetCode)!;
+      const matchedLegacyRowIds = new Set<string>();
+
+      // Apply non-null mappings
+      for (const m of mappings) {
+        if (m.targetSourceCode !== null && m.targetSourceCode !== undefined) {
+          const key = `${m.legacyGovernorate.trim().toLowerCase()}:${m.legacyNameEnglish.trim().toLowerCase()}`;
+          const matches = legacyByKey.get(key) ?? [];
+
+          if (matches.length === 0) {
+            throw new Error(
+              `City reconciliation aborted: reviewed mapping for '${m.legacyNameEnglish}' in '${m.legacyGovernorate}' matched 0 legacy rows`,
+            );
+          }
+          if (matches.length > 1) {
+            throw new Error(
+              `City reconciliation aborted: reviewed mapping for '${m.legacyNameEnglish}' in '${m.legacyGovernorate}' matched ${matches.length} legacy rows (expected 1)`,
+            );
+          }
+
+          const row = matches[0];
+          const official = catalogByCode.get(m.targetSourceCode.trim());
+          if (!official) {
+            throw new Error(`City reconciliation aborted: unknown target sourceCode '${m.targetSourceCode}'`);
+          }
+
+          const dbValues = mapCatalogRecordToDbValues(official);
+          await tx.query(
+            `UPDATE cities SET
+              name_english = $1,
+              name_arabic = $2,
+              governorate = $3,
+              source_code = $4,
+              source_name_english = $5,
+              source_name_arabic = $6,
+              status = $7,
+              center_point = ST_SetSRID(ST_MakePoint($8, $9), 4326)
+             WHERE id = $10`,
+            [
+              dbValues.nameEnglish,
+              dbValues.nameArabic,
+              dbValues.governorate,
+              dbValues.sourceCode,
+              dbValues.sourceNameEnglish,
+              dbValues.sourceNameArabic,
+              dbValues.status,
+              dbValues.longitude,
+              dbValues.latitude,
+              row.id,
+            ],
+          );
+
+          if (dbValues.status === 'OFFICIAL') {
+            await tx.query(`UPDATE posts SET governorate = $1 WHERE city_id = $2`, [dbValues.governorate, row.id]);
+          }
+
+          claimedSourceCodes.add(dbValues.sourceCode);
+          matchedLegacyRowIds.add(row.id);
+          matchedLegacyCount++;
+        }
+      }
+
+      // Mark unmapped legacy records as LEGACY
+      for (const row of legacyRows) {
+        if (!matchedLegacyRowIds.has(row.id)) {
+          await tx.query(`UPDATE cities SET status = $1 WHERE id = $2`, ['LEGACY', row.id]);
+          unmatchedLegacyCount++;
+        }
+      }
+    }
+
+    // 2. Existing official or retired rows: apply canonical corrections rather than skipping
+    for (const row of officialOrRetiredRows) {
+      if (row.sourceCode && catalogByCode.has(row.sourceCode)) {
+        const official = catalogByCode.get(row.sourceCode)!;
         const dbValues = mapCatalogRecordToDbValues(official);
         await tx.query(
           `UPDATE cities SET
             name_english = $1,
             name_arabic = $2,
             governorate = $3,
-            source_code = $4,
-            source_name_english = $5,
-            source_name_arabic = $6,
-            status = $7,
-            center_point = ST_SetSRID(ST_MakePoint($8, $9), 4326)
-           WHERE id = $10`,
+            source_name_english = $4,
+            source_name_arabic = $5,
+            status = $6,
+            center_point = ST_SetSRID(ST_MakePoint($7, $8), 4326)
+           WHERE id = $9`,
           [
             dbValues.nameEnglish,
             dbValues.nameArabic,
             dbValues.governorate,
-            dbValues.sourceCode,
             dbValues.sourceNameEnglish,
             dbValues.sourceNameArabic,
             dbValues.status,
@@ -219,25 +292,15 @@ export async function reconcileCities(
           ],
         );
 
-        // Update denormalized governorate in posts
-        await tx.query(
-          `UPDATE posts SET governorate = $1 WHERE city_id = $2`,
-          [dbValues.governorate, row.id],
-        );
+        if (dbValues.status === 'OFFICIAL') {
+          await tx.query(`UPDATE posts SET governorate = $1 WHERE city_id = $2`, [dbValues.governorate, row.id]);
+        }
 
         claimedSourceCodes.add(dbValues.sourceCode);
-        matchedLegacyCount++;
-      } else {
-        // Unmatched legacy record
-        await tx.query(
-          `UPDATE cities SET status = $1 WHERE id = $2`,
-          ['LEGACY', row.id],
-        );
-        unmatchedLegacyCount++;
       }
     }
 
-    // 2. Insert missing official cities
+    // 3. Insert missing official cities
     const missingOfficial = catalogRecords.filter((c) => !claimedSourceCodes.has(c.sourceCode));
     for (const off of missingOfficial) {
       const dbValues = mapCatalogRecordToDbValues(off);
@@ -277,17 +340,19 @@ export async function reconcileCities(
       insertedOfficialCount++;
     }
 
-    // 3. Post-verification inside transaction
+    // 4. Post-verification inside transaction
     const verifyRes = await tx.query(
       `SELECT
         count(*) FILTER (WHERE status = 'OFFICIAL')::int as official_count,
-        count(DISTINCT governorate) FILTER (WHERE status = 'OFFICIAL')::int as governorate_count
+        count(DISTINCT governorate) FILTER (WHERE status = 'OFFICIAL')::int as governorate_count,
+        count(*) FILTER (WHERE status = 'OFFICIAL' AND source_code IS NULL)::int as invalid_official_count
        FROM cities`,
     );
 
-    const stats = verifyRes.rows[0] ?? { official_count: 0, governorate_count: 0 };
+    const stats = verifyRes.rows[0] ?? { official_count: 0, governorate_count: 0, invalid_official_count: 0 };
     const officialCount = Number(stats.official_count);
     const govCount = Number(stats.governorate_count);
+    const invalidOfficialCount = Number(stats.invalid_official_count ?? 0);
 
     if (officialCount !== expectedOfficialCount) {
       throw new Error(
@@ -297,6 +362,11 @@ export async function reconcileCities(
     if (govCount !== expectedGovCount) {
       throw new Error(
         `Reconciliation verification failed: expected ${expectedGovCount} governorates, found ${govCount}`,
+      );
+    }
+    if (invalidOfficialCount !== 0) {
+      throw new Error(
+        `Reconciliation verification failed: found ${invalidOfficialCount} official cities without source_code`,
       );
     }
   };
@@ -332,9 +402,18 @@ export function generateReconcileMigrationSql(
   catalog: CityCatalogRecord[] | CityCatalog = getOfficialCatalog(),
 ): string {
   const { records: catalogRecords, officialRecords } = unpackCatalog(catalog);
-  const catalogByCode = new Map<string, CityCatalogRecord>(
-    catalogRecords.map((c) => [c.sourceCode, c]),
-  );
+
+  // Validate before generating SQL
+  const catalogVal = validateCatalog(catalog);
+  if (!catalogVal.isValid) {
+    throw new Error(`Catalog validation failed: ${catalogVal.errors.join('; ')}`);
+  }
+  const mappingVal = validateLegacyMappings(mappings, catalogRecords);
+  if (!mappingVal.isValid) {
+    throw new Error(`Legacy mapping validation failed: ${mappingVal.errors.join('; ')}`);
+  }
+
+  const catalogByCode = new Map<string, CityCatalogRecord>(catalogRecords.map((c) => [c.sourceCode, c]));
 
   const expectedOfficialCount = officialRecords.length;
   const expectedGovCount = new Set(officialRecords.map((c) => c.governorate)).size;
@@ -345,8 +424,32 @@ export function generateReconcileMigrationSql(
     `-- Offline data migration reconciling legacy cities with the authoritative ${expectedOfficialCount}-city ADM2 catalog.`,
     '--',
     'DO $$',
+    'DECLARE',
+    '  legacy_count int;',
+    '  matched_count int;',
+    '  duplicate_count int;',
+    '  official_count int;',
+    '  gov_count int;',
+    '  invalid_official_count int;',
     'BEGIN',
-    '  -- 1. Apply reviewed legacy mappings to preserve existing primary key UUIDs',
+    '  -- 0. Check for legacy rows needing reconciliation',
+    '  SELECT count(*) INTO legacy_count FROM cities WHERE source_code IS NULL;',
+    '',
+    '  IF legacy_count > 0 THEN',
+    '    -- Check for duplicate legacy identities in the database before modifying data',
+    '    SELECT count(*) INTO duplicate_count FROM (',
+    '      SELECT lower(trim(governorate)), lower(trim(name_english))',
+    '      FROM cities',
+    '      WHERE source_code IS NULL',
+    '      GROUP BY lower(trim(governorate)), lower(trim(name_english))',
+    '      HAVING count(*) > 1',
+    '    ) sub;',
+    '',
+    '    IF duplicate_count > 0 THEN',
+    `      RAISE EXCEPTION 'City reconciliation aborted: duplicate legacy city identities found in database';`,
+    '    END IF;',
+    '',
+    '    -- 1. Apply reviewed legacy mappings to preserve existing primary key UUIDs',
   ];
 
   for (const m of mappings) {
@@ -354,7 +457,7 @@ export function generateReconcileMigrationSql(
       const off = catalogByCode.get(m.targetSourceCode)!;
       const dbValues = mapCatalogRecordToDbValues(off);
       lines.push(
-        `  UPDATE cities SET ` +
+        `    UPDATE cities SET ` +
           `source_code = '${escapeSqlString(dbValues.sourceCode)}', ` +
           `name_english = '${escapeSqlString(dbValues.nameEnglish)}', ` +
           `name_arabic = '${escapeSqlString(dbValues.nameArabic)}', ` +
@@ -367,19 +470,30 @@ export function generateReconcileMigrationSql(
           `AND lower(trim(name_english)) = lower('${escapeSqlString(m.legacyNameEnglish.trim())}') ` +
           `AND source_code IS NULL;`,
       );
+      lines.push('    GET DIAGNOSTICS matched_count = ROW_COUNT;');
+      lines.push('    IF matched_count = 0 THEN');
+      lines.push(
+        `      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', '${escapeSqlString(m.legacyNameEnglish)}', '${escapeSqlString(m.legacyGovernorate)}';`,
+      );
+      lines.push('    ELSIF matched_count > 1 THEN');
+      lines.push(
+        `      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', '${escapeSqlString(m.legacyNameEnglish)}', '${escapeSqlString(m.legacyGovernorate)}', matched_count;`,
+      );
+      lines.push('    END IF;');
     }
   }
 
   lines.push('');
-  lines.push('  -- 2. Mark any unmapped legacy cities as LEGACY (preserving UUIDs and foreign keys)');
-  lines.push(`  UPDATE cities SET status = 'LEGACY' WHERE source_code IS NULL;`);
+  lines.push('    -- 2. Mark any unmapped legacy cities as LEGACY (preserving UUIDs and foreign keys)');
+  lines.push(`    UPDATE cities SET status = 'LEGACY' WHERE source_code IS NULL;`);
+  lines.push('  END IF;');
   lines.push('');
   lines.push('  -- 3. Update denormalized governorate values in posts for matched official cities');
   lines.push(
     `  UPDATE posts SET governorate = cities.governorate FROM cities WHERE posts.city_id = cities.id AND cities.status = 'OFFICIAL';`,
   );
   lines.push('');
-  lines.push(`  -- 4. Insert missing official cities from the ${expectedOfficialCount} catalog`);
+  lines.push(`  -- 4. Insert missing official cities and apply canonical updates to existing official cities`);
 
   for (const off of catalogRecords) {
     const dbValues = mapCatalogRecordToDbValues(off);
@@ -410,24 +524,28 @@ export function generateReconcileMigrationSql(
   lines.push(
     `  -- 5. Verification checks: assert exactly ${expectedOfficialCount} official cities and ${expectedGovCount} governorates`,
   );
-  lines.push('  DECLARE');
-  lines.push('    official_count int;');
-  lines.push('    gov_count int;');
-  lines.push('  BEGIN');
+  lines.push('  SELECT');
+  lines.push(`    count(*) FILTER (WHERE status = 'OFFICIAL'),`);
+  lines.push(`    count(DISTINCT governorate) FILTER (WHERE status = 'OFFICIAL'),`);
+  lines.push(`    count(*) FILTER (WHERE status = 'OFFICIAL' AND source_code IS NULL)`);
+  lines.push('  INTO official_count, gov_count, invalid_official_count');
+  lines.push('  FROM cities;');
+  lines.push('');
+  lines.push(`  IF official_count != ${expectedOfficialCount} THEN`);
   lines.push(
-    `    SELECT count(*), count(DISTINCT governorate) INTO official_count, gov_count FROM cities WHERE status = 'OFFICIAL';`,
+    `    RAISE EXCEPTION 'City reconciliation verification failed: expected ${expectedOfficialCount} official cities, found %', official_count;`,
   );
-  lines.push(`    IF official_count != ${expectedOfficialCount} THEN`);
+  lines.push('  END IF;');
+  lines.push(`  IF gov_count != ${expectedGovCount} THEN`);
   lines.push(
-    `      RAISE EXCEPTION 'City reconciliation verification failed: expected ${expectedOfficialCount} official cities, found %', official_count;`,
+    `    RAISE EXCEPTION 'City reconciliation verification failed: expected ${expectedGovCount} governorates, found %', gov_count;`,
   );
-  lines.push('    END IF;');
-  lines.push(`    IF gov_count != ${expectedGovCount} THEN`);
+  lines.push('  END IF;');
+  lines.push('  IF invalid_official_count != 0 THEN');
   lines.push(
-    `      RAISE EXCEPTION 'City reconciliation verification failed: expected ${expectedGovCount} governorates, found %', gov_count;`,
+    `    RAISE EXCEPTION 'City reconciliation verification failed: found % official cities without source_code', invalid_official_count;`,
   );
-  lines.push('    END IF;');
-  lines.push('  END;');
+  lines.push('  END IF;');
   lines.push('END $$;');
   lines.push('');
 

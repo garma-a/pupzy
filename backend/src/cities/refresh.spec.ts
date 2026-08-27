@@ -1,15 +1,6 @@
-import {
-  compareSnapshots,
-  applyReviewedRelease,
-  type SnapshotDiffReport,
-} from './refresh';
-import {
-  getOfficialCatalog,
-  transformCatalog,
-  validateCatalog,
-  type CitySnapshot,
-  type CityCatalogRecord,
-} from './catalog';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
+import { compareSnapshots, applyReviewedRelease } from './refresh';
+import { getOfficialCatalog, validateCatalog, type CitySnapshot, type CityCatalogRecord } from './catalog';
 
 describe('Upstream Refresh and Future Release Diff Tooling', () => {
   const currentCatalog = getOfficialCatalog();

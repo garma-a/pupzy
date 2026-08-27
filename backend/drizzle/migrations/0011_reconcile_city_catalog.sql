@@ -3,90 +3,559 @@
 -- Offline data migration reconciling legacy cities with the authoritative 351-city ADM2 catalog.
 --
 DO $$
+DECLARE
+  legacy_count int;
+  matched_count int;
+  duplicate_count int;
+  official_count int;
+  gov_count int;
+  invalid_official_count int;
 BEGIN
-  -- 1. Apply reviewed legacy mappings to preserve existing primary key UUIDs
-  UPDATE cities SET source_code = 'EG2801', name_english = 'Aswan (Kism)', name_arabic = 'قسم أسوان', governorate = 'Aswan', source_name_english = 'Aswan', source_name_arabic = 'قسم أسوان', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.9014693, 24.06280468), 4326) WHERE lower(trim(governorate)) = lower('Aswan') AND lower(trim(name_english)) = lower('Aswan') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2806', name_english = 'Daraw', name_arabic = 'مركز دراو', governorate = 'Aswan', source_name_english = 'Daraw', source_name_arabic = 'مركز دراو', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(33.00058453, 24.32555242), 4326) WHERE lower(trim(governorate)) = lower('Aswan') AND lower(trim(name_english)) = lower('Daraw') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2807', name_english = 'Abu Simbel', name_arabic = 'مركز أبوسنبل', governorate = 'Aswan', source_name_english = 'Abu Simbel', source_name_arabic = 'مركز أبوسنبل', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.59908679, 22.62431489), 4326) WHERE lower(trim(governorate)) = lower('Aswan') AND lower(trim(name_english)) = lower('Abu Simbel') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2901', name_english = 'Luxor (Kism)', name_arabic = 'قسم الأقصر', governorate = 'Luxor', source_name_english = 'Luxor', source_name_arabic = 'قسم الأقصر', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.66983615, 25.70712487), 4326) WHERE lower(trim(governorate)) = lower('Luxor') AND lower(trim(name_english)) = lower('Luxor') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2701', name_english = 'Qina (Kism)', name_arabic = 'قسم قنا', governorate = 'Qena', source_name_english = 'Qina', source_name_arabic = 'قسم قنا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.71237614, 26.16511094), 4326) WHERE lower(trim(governorate)) = lower('Qena') AND lower(trim(name_english)) = lower('Qena') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2707', name_english = 'Qus', name_arabic = 'مركز قوص', governorate = 'Qena', source_name_english = 'Qus', source_name_arabic = 'مركز قوص', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.78881056, 25.85692151), 4326) WHERE lower(trim(governorate)) = lower('Qena') AND lower(trim(name_english)) = lower('Qus') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2706', name_english = 'Dishna', name_arabic = 'مركز دشنا', governorate = 'Qena', source_name_english = 'Dishna', source_name_arabic = 'مركز دشنا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.44377681, 26.1418727), 4326) WHERE lower(trim(governorate)) = lower('Qena') AND lower(trim(name_english)) = lower('Dishna') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2603', name_english = 'Suhag (Markaz)', name_arabic = 'مركز سوهاج', governorate = 'Suhag', source_name_english = 'Suhag', source_name_arabic = 'مركز سوهاج', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.65484961, 26.54703415), 4326) WHERE lower(trim(governorate)) = lower('Sohag') AND lower(trim(name_english)) = lower('Sohag') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2604', name_english = 'Akhmim', name_arabic = 'مركز أخميم', governorate = 'Suhag', source_name_english = 'Akhmim', source_name_arabic = 'مركز أخميم', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.71479748, 26.55082882), 4326) WHERE lower(trim(governorate)) = lower('Sohag') AND lower(trim(name_english)) = lower('Akhmim') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2609', name_english = 'Girga (Kism)', name_arabic = 'قسم جرجا', governorate = 'Suhag', source_name_english = 'Girga', source_name_arabic = 'قسم جرجا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.88824813, 26.34816214), 4326) WHERE lower(trim(governorate)) = lower('Sohag') AND lower(trim(name_english)) = lower('Girga') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2615', name_english = 'Kesm Tahta', name_arabic = 'قسم طهطا', governorate = 'Suhag', source_name_english = 'Kesm Tahta', source_name_arabic = 'قسم طهطا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.49206358, 26.76651598), 4326) WHERE lower(trim(governorate)) = lower('Sohag') AND lower(trim(name_english)) = lower('Tahta') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2503', name_english = 'Assuit', name_arabic = 'مركز أسيوط', governorate = 'Assiut', source_name_english = 'Assuit', source_name_arabic = 'مركز أسيوط', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.23215375, 27.11677928), 4326) WHERE lower(trim(governorate)) = lower('Asyut') AND lower(trim(name_english)) = lower('Asyut') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2512', name_english = 'Manfalut', name_arabic = 'مركز منفلوط', governorate = 'Assiut', source_name_english = 'Manfalut', source_name_arabic = 'مركز منفلوط', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.95120144, 27.29423756), 4326) WHERE lower(trim(governorate)) = lower('Asyut') AND lower(trim(name_english)) = lower('Manfalut') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2505', name_english = 'Abu Tig', name_arabic = 'مركز أبوتيج', governorate = 'Assiut', source_name_english = 'Abu Tig', source_name_arabic = 'مركز أبوتيج', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.28889656, 27.03655018), 4326) WHERE lower(trim(governorate)) = lower('Asyut') AND lower(trim(name_english)) = lower('Abu Tig') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2510', name_english = 'Dayrut', name_arabic = 'مركز ديروط', governorate = 'Assiut', source_name_english = 'Dayrut', source_name_arabic = 'مركز ديروط', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.78222411, 27.53711682), 4326) WHERE lower(trim(governorate)) = lower('Asyut') AND lower(trim(name_english)) = lower('Dairut') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2401', name_english = 'Kesm Al-minya', name_arabic = 'قسم المنيا', governorate = 'Menia', source_name_english = 'Kesm Al-minya', source_name_arabic = 'قسم المنيا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.74419416, 28.09527375), 4326) WHERE lower(trim(governorate)) = lower('Minya') AND lower(trim(name_english)) = lower('Minya') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2410', name_english = 'Markz Maghagha', name_arabic = 'مركز مغاغة', governorate = 'Menia', source_name_english = 'Markz Maghagha', source_name_arabic = 'مركز مغاغة', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.79439037, 28.64055663), 4326) WHERE lower(trim(governorate)) = lower('Minya') AND lower(trim(name_english)) = lower('Maghagha') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2207', name_english = 'Biba', name_arabic = 'مركز ببا', governorate = 'Beni Suef', source_name_english = 'Biba', source_name_arabic = 'مركز ببا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.96710958, 28.95138917), 4326) WHERE lower(trim(governorate)) = lower('Beni Suef') AND lower(trim(name_english)) = lower('Biba') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2205', name_english = 'Al Wasta', name_arabic = 'مركز الواسطى', governorate = 'Beni Suef', source_name_english = 'Al Wasta', source_name_arabic = 'مركز الواسطى', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.17024322, 29.32399806), 4326) WHERE lower(trim(governorate)) = lower('Beni Suef') AND lower(trim(name_english)) = lower('Al Wasta') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2301', name_english = 'Fayyum (Kism)', name_arabic = 'قسم الفيوم', governorate = 'Fayoum', source_name_english = 'Fayyum', source_name_arabic = 'قسم الفيوم', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.83938662, 29.31401376), 4326) WHERE lower(trim(governorate)) = lower('Fayoum') AND lower(trim(name_english)) = lower('Fayoum') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2306', name_english = 'Tamya', name_arabic = 'مركز طامية', governorate = 'Fayoum', source_name_english = 'Tamya', source_name_arabic = 'مركز طامية', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.98155921, 29.46747524), 4326) WHERE lower(trim(governorate)) = lower('Fayoum') AND lower(trim(name_english)) = lower('Tamiya') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG0126', name_english = 'Nasr City', name_arabic = 'قسم أول مدينة نصر', governorate = 'Cairo', source_name_english = 'Nasr City', source_name_arabic = 'قسم أول مدينة نصر', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.3694274, 30.0320702), 4326) WHERE lower(trim(governorate)) = lower('Cairo') AND lower(trim(name_english)) = lower('Nasr City') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG0104', name_english = 'Maadi', name_arabic = 'قسم المعادي', governorate = 'Cairo', source_name_english = 'Maadi', source_name_arabic = 'قسم المعادي', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.36791677, 29.96342541), 4326) WHERE lower(trim(governorate)) = lower('Cairo') AND lower(trim(name_english)) = lower('Maadi') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG0119', name_english = 'Shubra', name_arabic = 'قسم شبرا', governorate = 'Cairo', source_name_english = 'Shubra', source_name_arabic = 'قسم شبرا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.25032001, 30.07175894), 4326) WHERE lower(trim(governorate)) = lower('Cairo') AND lower(trim(name_english)) = lower('Shoubra') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG0136', name_english = 'Marg', name_arabic = 'قسم المرج', governorate = 'Cairo', source_name_english = 'Marg', source_name_arabic = 'قسم المرج', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.34620156, 30.15581506), 4326) WHERE lower(trim(governorate)) = lower('Cairo') AND lower(trim(name_english)) = lower('El Marg') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG0102', name_english = 'Hilwan', name_arabic = 'قسم حلوان', governorate = 'Cairo', source_name_english = 'Hilwan', source_name_arabic = 'قسم حلوان', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.32893498, 29.85378844), 4326) WHERE lower(trim(governorate)) = lower('Cairo') AND lower(trim(name_english)) = lower('Helwan') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2104', name_english = 'Giza (Kism)', name_arabic = 'قسم الجيزة', governorate = 'Giza', source_name_english = 'Giza', source_name_arabic = 'قسم الجيزة', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.21578804, 29.99947746), 4326) WHERE lower(trim(governorate)) = lower('Giza') AND lower(trim(name_english)) = lower('Giza') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2119', name_english = 'Shaykh Zayed', name_arabic = 'قسم الشيخ زايد', governorate = 'Giza', source_name_english = 'Shaykh Zayed', source_name_arabic = 'قسم الشيخ زايد', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.97796329, 30.04898325), 4326) WHERE lower(trim(governorate)) = lower('Giza') AND lower(trim(name_english)) = lower('Sheikh Zayed') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2108', name_english = 'Hwamdeia', name_arabic = 'قسم الحوامدية', governorate = 'Giza', source_name_english = 'Hwamdeia', source_name_arabic = 'قسم الحوامدية', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.25279833, 29.90225318), 4326) WHERE lower(trim(governorate)) = lower('Giza') AND lower(trim(name_english)) = lower('Hawamdiya') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2110', name_english = 'Badrashain', name_arabic = 'مركز البدرشين', governorate = 'Giza', source_name_english = 'Badrashain', source_name_arabic = 'مركز البدرشين', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.25831466, 29.82365402), 4326) WHERE lower(trim(governorate)) = lower('Giza') AND lower(trim(name_english)) = lower('Badrashein') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2112', name_english = 'Ayat', name_arabic = 'مركز العياط', governorate = 'Giza', source_name_english = 'Ayat', source_name_arabic = 'مركز العياط', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.24981162, 29.56420986), 4326) WHERE lower(trim(governorate)) = lower('Giza') AND lower(trim(name_english)) = lower('Al Ayat') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG2103', name_english = 'DuqqI', name_arabic = 'قسم الدقي', governorate = 'Giza', source_name_english = 'DuqqI', source_name_arabic = 'قسم الدقي', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.20822266, 30.04242001), 4326) WHERE lower(trim(governorate)) = lower('Giza') AND lower(trim(name_english)) = lower('Dokki') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG0214', name_english = 'Burg al-Arab', name_arabic = 'قسم برج العرب', governorate = 'Alexandria', source_name_english = 'Burg al-Arab', source_name_arabic = 'قسم برج العرب', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(29.49397559, 30.90121245), 4326) WHERE lower(trim(governorate)) = lower('Alexandria') AND lower(trim(name_english)) = lower('Borg El Arab') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1401', name_english = 'Banha (Kism)', name_arabic = 'قسم بنها', governorate = 'Kalyoubia', source_name_english = 'Banha', source_name_arabic = 'قسم بنها', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.19022124, 30.46596668), 4326) WHERE lower(trim(governorate)) = lower('Qalyubia') AND lower(trim(name_english)) = lower('Banha') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1409', name_english = 'Qalyub (Kism)', name_arabic = 'قسم قليوب', governorate = 'Kalyoubia', source_name_english = 'Qalyub', source_name_arabic = 'قسم قليوب', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.21582683, 30.17996823), 4326) WHERE lower(trim(governorate)) = lower('Qalyubia') AND lower(trim(name_english)) = lower('Qalyub') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1403', name_english = 'Al Khanka', name_arabic = 'مركز الخانكة', governorate = 'Kalyoubia', source_name_english = 'Al Khanka', source_name_arabic = 'مركز الخانكة', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.35785285, 30.2305157), 4326) WHERE lower(trim(governorate)) = lower('Qalyubia') AND lower(trim(name_english)) = lower('Khanka') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1701', name_english = 'Shibin al-Kum (Kism)', name_arabic = 'قسم شبين الكوم', governorate = 'Menoufia', source_name_english = 'Shibin al-Kum', source_name_arabic = 'قسم شبين الكوم', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.9998989, 30.5558006), 4326) WHERE lower(trim(governorate)) = lower('Monufia') AND lower(trim(name_english)) = lower('Shibin El Kom') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1711', name_english = 'Sadat City', name_arabic = 'مركز السادات', governorate = 'Menoufia', source_name_english = 'Sadat City', source_name_arabic = 'مركز السادات', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.66134829, 30.35845668), 4326) WHERE lower(trim(governorate)) = lower('Monufia') AND lower(trim(name_english)) = lower('Sadat City') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1703', name_english = 'Ashmun', name_arabic = 'مركز أشمون', governorate = 'Menoufia', source_name_english = 'Ashmun', source_name_arabic = 'مركز أشمون', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.00832635, 30.29921495), 4326) WHERE lower(trim(governorate)) = lower('Monufia') AND lower(trim(name_english)) = lower('Ashmoun') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1709', name_english = 'Minuf', name_arabic = 'مركز منوف', governorate = 'Menoufia', source_name_english = 'Minuf', source_name_arabic = 'مركز منوف', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.88098696, 30.45966842), 4326) WHERE lower(trim(governorate)) = lower('Monufia') AND lower(trim(name_english)) = lower('Menouf') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1603', name_english = 'Tanta', name_arabic = 'مركز طنطا', governorate = 'Gharbia', source_name_english = 'Tanta', source_name_arabic = 'مركز طنطا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.93199476, 30.80933518), 4326) WHERE lower(trim(governorate)) = lower('Gharbia') AND lower(trim(name_english)) = lower('Tanta') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1609', name_english = 'Zifta', name_arabic = 'مركز زفتى', governorate = 'Gharbia', source_name_english = 'Zifta', source_name_arabic = 'مركز زفتى', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.21530251, 30.72821639), 4326) WHERE lower(trim(governorate)) = lower('Gharbia') AND lower(trim(name_english)) = lower('Zifta') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1612', name_english = 'Kafr Al-Zayyat', name_arabic = 'مركز كفر الزيات', governorate = 'Gharbia', source_name_english = 'Kafr Al-Zayyat', source_name_arabic = 'مركز كفر الزيات', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.83528992, 30.80717488), 4326) WHERE lower(trim(governorate)) = lower('Gharbia') AND lower(trim(name_english)) = lower('Kafr El Zayat') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1203', name_english = 'El Mansora', name_arabic = 'مركز المنصورة', governorate = 'Dakahlia', source_name_english = 'El Mansora', source_name_arabic = 'مركز المنصورة', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.46727616, 31.05279543), 4326) WHERE lower(trim(governorate)) = lower('Dakahlia') AND lower(trim(name_english)) = lower('Mansoura') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1211', name_english = 'Talkha', name_arabic = 'مركز طلخا', governorate = 'Dakahlia', source_name_english = 'Talkha', source_name_arabic = 'مركز طلخا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.38263025, 31.10922123), 4326) WHERE lower(trim(governorate)) = lower('Dakahlia') AND lower(trim(name_english)) = lower('Talkha') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1212', name_english = 'Mit Ghamr (Kism)', name_arabic = 'قسم ميت غمر', governorate = 'Dakahlia', source_name_english = 'Mit Ghamr', source_name_arabic = 'قسم ميت غمر', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.27569267, 30.71307835), 4326) WHERE lower(trim(governorate)) = lower('Dakahlia') AND lower(trim(name_english)) = lower('Mit Ghamr') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1209', name_english = 'Dikirnis', name_arabic = 'مركز دكرنس', governorate = 'Dakahlia', source_name_english = 'Dikirnis', source_name_arabic = 'مركز دكرنس', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.7801441, 31.09314136), 4326) WHERE lower(trim(governorate)) = lower('Dakahlia') AND lower(trim(name_english)) = lower('Dikirnis') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1303', name_english = 'Zaqaziq', name_arabic = 'مركز الزقازيق', governorate = 'Sharkia', source_name_english = 'Zaqaziq', source_name_arabic = 'مركز الزقازيق', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.58133673, 30.58709729), 4326) WHERE lower(trim(governorate)) = lower('Sharqia') AND lower(trim(name_english)) = lower('Zagazig') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1308', name_english = 'Bilbis', name_arabic = 'مركز بلبيس', governorate = 'Sharkia', source_name_english = 'Bilbis', source_name_arabic = 'مركز بلبيس', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.53105184, 30.40752612), 4326) WHERE lower(trim(governorate)) = lower('Sharqia') AND lower(trim(name_english)) = lower('Bilbeis') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1314', name_english = 'Minya al-Qamh', name_arabic = 'مركز منيا القمح', governorate = 'Sharkia', source_name_english = 'Minya al-Qamh', source_name_arabic = 'مركز منيا القمح', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.36907011, 30.5073467), 4326) WHERE lower(trim(governorate)) = lower('Sharqia') AND lower(trim(name_english)) = lower('Minya El Qamh') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1801', name_english = 'Damanhur (Kism)', name_arabic = 'قسم دمنهور', governorate = 'Behera', source_name_english = 'Damanhur', source_name_arabic = 'قسم دمنهور', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.46250878, 31.04898058), 4326) WHERE lower(trim(governorate)) = lower('Beheira') AND lower(trim(name_english)) = lower('Damanhur') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1812', name_english = 'Kafr Al-Dawwar (Markaz)', name_arabic = 'مركز كفر الدوار', governorate = 'Behera', source_name_english = 'Kafr Al-Dawwar', source_name_arabic = 'مركز كفر الدوار', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.03757396, 31.12882124), 4326) WHERE lower(trim(governorate)) = lower('Beheira') AND lower(trim(name_english)) = lower('Kafr El Dawwar') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1809', name_english = 'Rashid', name_arabic = 'مركز رشيد', governorate = 'Behera', source_name_english = 'Rashid', source_name_arabic = 'مركز رشيد', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.37496527, 31.37875874), 4326) WHERE lower(trim(governorate)) = lower('Beheira') AND lower(trim(name_english)) = lower('Rashid') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1816', name_english = 'Idku', name_arabic = 'مركز إدكو', governorate = 'Behera', source_name_english = 'Idku', source_name_arabic = 'مركز إدكو', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.32493349, 31.29825944), 4326) WHERE lower(trim(governorate)) = lower('Beheira') AND lower(trim(name_english)) = lower('Edku') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1501', name_english = 'Kafr Al-Shaykh (Kism)', name_arabic = 'قسم كفر الشيخ', governorate = 'Kafr El-Shikh', source_name_english = 'Kafr Al-Shaykh', source_name_arabic = 'قسم كفر الشيخ', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.94145981, 31.11904642), 4326) WHERE lower(trim(governorate)) = lower('Kafr El Sheikh') AND lower(trim(name_english)) = lower('Kafr El Sheikh') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1505', name_english = 'Disuq (Kism)', name_arabic = 'قسم دسوق', governorate = 'Kafr El-Shikh', source_name_english = 'Disuq', source_name_arabic = 'قسم دسوق', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.6488964, 31.14512059), 4326) WHERE lower(trim(governorate)) = lower('Kafr El Sheikh') AND lower(trim(name_english)) = lower('Desouk') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1102', name_english = 'Dumyat', name_arabic = 'مركز دمياط', governorate = 'Damietta', source_name_english = 'Dumyat', source_name_arabic = 'مركز دمياط', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.84205813, 31.44026861), 4326) WHERE lower(trim(governorate)) = lower('Damietta') AND lower(trim(name_english)) = lower('Damietta') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1103', name_english = 'Fariskur', name_arabic = 'مركز فارسكور', governorate = 'Damietta', source_name_english = 'Fariskur', source_name_arabic = 'مركز فارسكور', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.73266394, 31.31001882), 4326) WHERE lower(trim(governorate)) = lower('Damietta') AND lower(trim(name_english)) = lower('Faraskur') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1907', name_english = 'Fayid', name_arabic = 'مركز فايد', governorate = 'Ismailia', source_name_english = 'Fayid', source_name_arabic = 'مركز فايد', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.29183219, 30.3662741), 4326) WHERE lower(trim(governorate)) = lower('Ismailia') AND lower(trim(name_english)) = lower('Fayed') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG1906', name_english = 'Qantara Gharb, al-', name_arabic = 'مركز القنطرة', governorate = 'Ismailia', source_name_english = 'Qantara Gharb, al-', source_name_arabic = 'مركز القنطرة', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.24461716, 30.74175591), 4326) WHERE lower(trim(governorate)) = lower('Ismailia') AND lower(trim(name_english)) = lower('El Qantara') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG0401', name_english = 'Suez', name_arabic = 'قسم السويس', governorate = 'Suez', source_name_english = 'Suez', source_name_arabic = 'قسم السويس', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.56934356, 29.96128978), 4326) WHERE lower(trim(governorate)) = lower('Suez') AND lower(trim(name_english)) = lower('Suez') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG3103', name_english = 'Safaga', name_arabic = 'قسم سفاجا', governorate = 'Red Sea', source_name_english = 'Safaga', source_name_arabic = 'قسم سفاجا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(33.46049466, 26.73173007), 4326) WHERE lower(trim(governorate)) = lower('Red Sea') AND lower(trim(name_english)) = lower('Safaga') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG3104', name_english = 'Marsa Alam', name_arabic = 'قسم مرسى علم', governorate = 'Red Sea', source_name_english = 'Marsa Alam', source_name_arabic = 'قسم مرسى علم', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(34.28558673, 24.70693152), 4326) WHERE lower(trim(governorate)) = lower('Red Sea') AND lower(trim(name_english)) = lower('Marsa Alam') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG3102', name_english = 'Qusir', name_arabic = 'قسم القصير', governorate = 'Red Sea', source_name_english = 'Qusir', source_name_arabic = 'قسم القصير', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(33.95052207, 25.95669031), 4326) WHERE lower(trim(governorate)) = lower('Red Sea') AND lower(trim(name_english)) = lower('El Quseir') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG3105', name_english = 'Ras Gharib', name_arabic = 'قسم رأس غارب', governorate = 'Red Sea', source_name_english = 'Ras Gharib', source_name_arabic = 'قسم رأس غارب', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.37696766, 28.50629722), 4326) WHERE lower(trim(governorate)) = lower('Red Sea') AND lower(trim(name_english)) = lower('Ras Gharib') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG3505', name_english = 'Sharm el-Sheikh', name_arabic = 'قسم شرم الشيخ', governorate = 'South Sinai', source_name_english = 'Sharm el-Sheikh', source_name_arabic = 'قسم شرم الشيخ', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(34.20279752, 28.07987961), 4326) WHERE lower(trim(governorate)) = lower('South Sinai') AND lower(trim(name_english)) = lower('Sharm El-Sheikh') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG3506', name_english = 'Dahab', name_arabic = 'قسم دهب', governorate = 'South Sinai', source_name_english = 'Dahab', source_name_arabic = 'قسم دهب', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(34.45078662, 28.73029145), 4326) WHERE lower(trim(governorate)) = lower('South Sinai') AND lower(trim(name_english)) = lower('Dahab') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG3507', name_english = 'Nuweiba', name_arabic = 'قسم نويبع', governorate = 'South Sinai', source_name_english = 'Nuweiba', source_name_arabic = 'قسم نويبع', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(34.311738, 29.3137184), 4326) WHERE lower(trim(governorate)) = lower('South Sinai') AND lower(trim(name_english)) = lower('Nuweiba') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG3501', name_english = 'Al-Tur', name_arabic = 'قسم الطور', governorate = 'South Sinai', source_name_english = 'Al-Tur', source_name_arabic = 'قسم الطور', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(33.75327612, 28.36472811), 4326) WHERE lower(trim(governorate)) = lower('South Sinai') AND lower(trim(name_english)) = lower('El Tor') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG3504', name_english = 'Sant Katrin', name_arabic = 'قسم سانت كاترين', governorate = 'South Sinai', source_name_english = 'Sant Katrin', source_name_arabic = 'قسم سانت كاترين', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(34.05176215, 28.65972175), 4326) WHERE lower(trim(governorate)) = lower('South Sinai') AND lower(trim(name_english)) = lower('Saint Catherine') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG3409', name_english = 'Rafah', name_arabic = 'قسم رفح', governorate = 'North Sinai', source_name_english = 'Rafah', source_name_arabic = 'قسم رفح', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(34.22684661, 31.08660233), 4326) WHERE lower(trim(governorate)) = lower('North Sinai') AND lower(trim(name_english)) = lower('Rafah') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG3301', name_english = 'Marsa Matruh', name_arabic = 'قسم مرسى مطروح', governorate = 'Matrouh', source_name_english = 'Marsa Matruh', source_name_arabic = 'قسم مرسى مطروح', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(26.9968074, 30.02195299), 4326) WHERE lower(trim(governorate)) = lower('Matrouh') AND lower(trim(name_english)) = lower('Marsa Matrouh') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG3306', name_english = 'Siwa', name_arabic = 'مركز سيوة', governorate = 'Matrouh', source_name_english = 'Siwa', source_name_arabic = 'مركز سيوة', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(25.58938909, 28.70317815), 4326) WHERE lower(trim(governorate)) = lower('Matrouh') AND lower(trim(name_english)) = lower('Siwa') AND source_code IS NULL;
-  UPDATE cities SET source_code = 'EG3203', name_english = 'Al Farafra Oasis', name_arabic = 'مركز الفرافرة', governorate = 'New Valley', source_name_english = 'Al Farafra Oasis', source_name_arabic = 'مركز الفرافرة', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(26.760442, 27.20514434), 4326) WHERE lower(trim(governorate)) = lower('New Valley') AND lower(trim(name_english)) = lower('Farafra') AND source_code IS NULL;
+  -- 0. Check for legacy rows needing reconciliation
+  SELECT count(*) INTO legacy_count FROM cities WHERE source_code IS NULL;
 
-  -- 2. Mark any unmapped legacy cities as LEGACY (preserving UUIDs and foreign keys)
-  UPDATE cities SET status = 'LEGACY' WHERE source_code IS NULL;
+  IF legacy_count > 0 THEN
+    -- Check for duplicate legacy identities in the database before modifying data
+    SELECT count(*) INTO duplicate_count FROM (
+      SELECT lower(trim(governorate)), lower(trim(name_english))
+      FROM cities
+      WHERE source_code IS NULL
+      GROUP BY lower(trim(governorate)), lower(trim(name_english))
+      HAVING count(*) > 1
+    ) sub;
+
+    IF duplicate_count > 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: duplicate legacy city identities found in database';
+    END IF;
+
+    -- 1. Apply reviewed legacy mappings to preserve existing primary key UUIDs
+    UPDATE cities SET source_code = 'EG2801', name_english = 'Aswan (Kism)', name_arabic = 'قسم أسوان', governorate = 'Aswan', source_name_english = 'Aswan', source_name_arabic = 'قسم أسوان', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.9014693, 24.06280468), 4326) WHERE lower(trim(governorate)) = lower('Aswan') AND lower(trim(name_english)) = lower('Aswan') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Aswan', 'Aswan';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Aswan', 'Aswan', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2806', name_english = 'Daraw', name_arabic = 'مركز دراو', governorate = 'Aswan', source_name_english = 'Daraw', source_name_arabic = 'مركز دراو', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(33.00058453, 24.32555242), 4326) WHERE lower(trim(governorate)) = lower('Aswan') AND lower(trim(name_english)) = lower('Daraw') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Daraw', 'Aswan';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Daraw', 'Aswan', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2807', name_english = 'Abu Simbel', name_arabic = 'مركز أبوسنبل', governorate = 'Aswan', source_name_english = 'Abu Simbel', source_name_arabic = 'مركز أبوسنبل', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.59908679, 22.62431489), 4326) WHERE lower(trim(governorate)) = lower('Aswan') AND lower(trim(name_english)) = lower('Abu Simbel') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Abu Simbel', 'Aswan';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Abu Simbel', 'Aswan', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2901', name_english = 'Luxor (Kism)', name_arabic = 'قسم الأقصر', governorate = 'Luxor', source_name_english = 'Luxor', source_name_arabic = 'قسم الأقصر', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.66983615, 25.70712487), 4326) WHERE lower(trim(governorate)) = lower('Luxor') AND lower(trim(name_english)) = lower('Luxor') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Luxor', 'Luxor';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Luxor', 'Luxor', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2701', name_english = 'Qina (Kism)', name_arabic = 'قسم قنا', governorate = 'Qena', source_name_english = 'Qina', source_name_arabic = 'قسم قنا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.71237614, 26.16511094), 4326) WHERE lower(trim(governorate)) = lower('Qena') AND lower(trim(name_english)) = lower('Qena') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Qena', 'Qena';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Qena', 'Qena', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2707', name_english = 'Qus', name_arabic = 'مركز قوص', governorate = 'Qena', source_name_english = 'Qus', source_name_arabic = 'مركز قوص', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.78881056, 25.85692151), 4326) WHERE lower(trim(governorate)) = lower('Qena') AND lower(trim(name_english)) = lower('Qus') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Qus', 'Qena';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Qus', 'Qena', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2706', name_english = 'Dishna', name_arabic = 'مركز دشنا', governorate = 'Qena', source_name_english = 'Dishna', source_name_arabic = 'مركز دشنا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.44377681, 26.1418727), 4326) WHERE lower(trim(governorate)) = lower('Qena') AND lower(trim(name_english)) = lower('Dishna') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Dishna', 'Qena';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Dishna', 'Qena', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2603', name_english = 'Suhag (Markaz)', name_arabic = 'مركز سوهاج', governorate = 'Suhag', source_name_english = 'Suhag', source_name_arabic = 'مركز سوهاج', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.65484961, 26.54703415), 4326) WHERE lower(trim(governorate)) = lower('Sohag') AND lower(trim(name_english)) = lower('Sohag') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Sohag', 'Sohag';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Sohag', 'Sohag', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2604', name_english = 'Akhmim', name_arabic = 'مركز أخميم', governorate = 'Suhag', source_name_english = 'Akhmim', source_name_arabic = 'مركز أخميم', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.71479748, 26.55082882), 4326) WHERE lower(trim(governorate)) = lower('Sohag') AND lower(trim(name_english)) = lower('Akhmim') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Akhmim', 'Sohag';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Akhmim', 'Sohag', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2609', name_english = 'Girga (Kism)', name_arabic = 'قسم جرجا', governorate = 'Suhag', source_name_english = 'Girga', source_name_arabic = 'قسم جرجا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.88824813, 26.34816214), 4326) WHERE lower(trim(governorate)) = lower('Sohag') AND lower(trim(name_english)) = lower('Girga') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Girga', 'Sohag';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Girga', 'Sohag', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2615', name_english = 'Kesm Tahta', name_arabic = 'قسم طهطا', governorate = 'Suhag', source_name_english = 'Kesm Tahta', source_name_arabic = 'قسم طهطا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.49206358, 26.76651598), 4326) WHERE lower(trim(governorate)) = lower('Sohag') AND lower(trim(name_english)) = lower('Tahta') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Tahta', 'Sohag';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Tahta', 'Sohag', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2503', name_english = 'Assuit', name_arabic = 'مركز أسيوط', governorate = 'Assiut', source_name_english = 'Assuit', source_name_arabic = 'مركز أسيوط', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.23215375, 27.11677928), 4326) WHERE lower(trim(governorate)) = lower('Asyut') AND lower(trim(name_english)) = lower('Asyut') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Asyut', 'Asyut';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Asyut', 'Asyut', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2512', name_english = 'Manfalut', name_arabic = 'مركز منفلوط', governorate = 'Assiut', source_name_english = 'Manfalut', source_name_arabic = 'مركز منفلوط', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.95120144, 27.29423756), 4326) WHERE lower(trim(governorate)) = lower('Asyut') AND lower(trim(name_english)) = lower('Manfalut') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Manfalut', 'Asyut';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Manfalut', 'Asyut', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2505', name_english = 'Abu Tig', name_arabic = 'مركز أبوتيج', governorate = 'Assiut', source_name_english = 'Abu Tig', source_name_arabic = 'مركز أبوتيج', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.28889656, 27.03655018), 4326) WHERE lower(trim(governorate)) = lower('Asyut') AND lower(trim(name_english)) = lower('Abu Tig') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Abu Tig', 'Asyut';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Abu Tig', 'Asyut', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2510', name_english = 'Dayrut', name_arabic = 'مركز ديروط', governorate = 'Assiut', source_name_english = 'Dayrut', source_name_arabic = 'مركز ديروط', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.78222411, 27.53711682), 4326) WHERE lower(trim(governorate)) = lower('Asyut') AND lower(trim(name_english)) = lower('Dairut') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Dairut', 'Asyut';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Dairut', 'Asyut', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2401', name_english = 'Kesm Al-minya', name_arabic = 'قسم المنيا', governorate = 'Menia', source_name_english = 'Kesm Al-minya', source_name_arabic = 'قسم المنيا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.74419416, 28.09527375), 4326) WHERE lower(trim(governorate)) = lower('Minya') AND lower(trim(name_english)) = lower('Minya') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Minya', 'Minya';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Minya', 'Minya', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2410', name_english = 'Markz Maghagha', name_arabic = 'مركز مغاغة', governorate = 'Menia', source_name_english = 'Markz Maghagha', source_name_arabic = 'مركز مغاغة', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.79439037, 28.64055663), 4326) WHERE lower(trim(governorate)) = lower('Minya') AND lower(trim(name_english)) = lower('Maghagha') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Maghagha', 'Minya';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Maghagha', 'Minya', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2207', name_english = 'Biba', name_arabic = 'مركز ببا', governorate = 'Beni Suef', source_name_english = 'Biba', source_name_arabic = 'مركز ببا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.96710958, 28.95138917), 4326) WHERE lower(trim(governorate)) = lower('Beni Suef') AND lower(trim(name_english)) = lower('Biba') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Biba', 'Beni Suef';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Biba', 'Beni Suef', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2205', name_english = 'Al Wasta', name_arabic = 'مركز الواسطى', governorate = 'Beni Suef', source_name_english = 'Al Wasta', source_name_arabic = 'مركز الواسطى', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.17024322, 29.32399806), 4326) WHERE lower(trim(governorate)) = lower('Beni Suef') AND lower(trim(name_english)) = lower('Al Wasta') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Al Wasta', 'Beni Suef';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Al Wasta', 'Beni Suef', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2301', name_english = 'Fayyum (Kism)', name_arabic = 'قسم الفيوم', governorate = 'Fayoum', source_name_english = 'Fayyum', source_name_arabic = 'قسم الفيوم', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.83938662, 29.31401376), 4326) WHERE lower(trim(governorate)) = lower('Fayoum') AND lower(trim(name_english)) = lower('Fayoum') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Fayoum', 'Fayoum';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Fayoum', 'Fayoum', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2306', name_english = 'Tamya', name_arabic = 'مركز طامية', governorate = 'Fayoum', source_name_english = 'Tamya', source_name_arabic = 'مركز طامية', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.98155921, 29.46747524), 4326) WHERE lower(trim(governorate)) = lower('Fayoum') AND lower(trim(name_english)) = lower('Tamiya') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Tamiya', 'Fayoum';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Tamiya', 'Fayoum', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG0126', name_english = 'Nasr City', name_arabic = 'قسم أول مدينة نصر', governorate = 'Cairo', source_name_english = 'Nasr City', source_name_arabic = 'قسم أول مدينة نصر', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.3694274, 30.0320702), 4326) WHERE lower(trim(governorate)) = lower('Cairo') AND lower(trim(name_english)) = lower('Nasr City') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Nasr City', 'Cairo';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Nasr City', 'Cairo', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG0104', name_english = 'Maadi', name_arabic = 'قسم المعادي', governorate = 'Cairo', source_name_english = 'Maadi', source_name_arabic = 'قسم المعادي', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.36791677, 29.96342541), 4326) WHERE lower(trim(governorate)) = lower('Cairo') AND lower(trim(name_english)) = lower('Maadi') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Maadi', 'Cairo';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Maadi', 'Cairo', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG0119', name_english = 'Shubra', name_arabic = 'قسم شبرا', governorate = 'Cairo', source_name_english = 'Shubra', source_name_arabic = 'قسم شبرا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.25032001, 30.07175894), 4326) WHERE lower(trim(governorate)) = lower('Cairo') AND lower(trim(name_english)) = lower('Shoubra') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Shoubra', 'Cairo';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Shoubra', 'Cairo', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG0136', name_english = 'Marg', name_arabic = 'قسم المرج', governorate = 'Cairo', source_name_english = 'Marg', source_name_arabic = 'قسم المرج', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.34620156, 30.15581506), 4326) WHERE lower(trim(governorate)) = lower('Cairo') AND lower(trim(name_english)) = lower('El Marg') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'El Marg', 'Cairo';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'El Marg', 'Cairo', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG0102', name_english = 'Hilwan', name_arabic = 'قسم حلوان', governorate = 'Cairo', source_name_english = 'Hilwan', source_name_arabic = 'قسم حلوان', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.32893498, 29.85378844), 4326) WHERE lower(trim(governorate)) = lower('Cairo') AND lower(trim(name_english)) = lower('Helwan') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Helwan', 'Cairo';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Helwan', 'Cairo', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2104', name_english = 'Giza (Kism)', name_arabic = 'قسم الجيزة', governorate = 'Giza', source_name_english = 'Giza', source_name_arabic = 'قسم الجيزة', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.21578804, 29.99947746), 4326) WHERE lower(trim(governorate)) = lower('Giza') AND lower(trim(name_english)) = lower('Giza') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Giza', 'Giza';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Giza', 'Giza', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2119', name_english = 'Shaykh Zayed', name_arabic = 'قسم الشيخ زايد', governorate = 'Giza', source_name_english = 'Shaykh Zayed', source_name_arabic = 'قسم الشيخ زايد', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.97796329, 30.04898325), 4326) WHERE lower(trim(governorate)) = lower('Giza') AND lower(trim(name_english)) = lower('Sheikh Zayed') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Sheikh Zayed', 'Giza';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Sheikh Zayed', 'Giza', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2108', name_english = 'Hwamdeia', name_arabic = 'قسم الحوامدية', governorate = 'Giza', source_name_english = 'Hwamdeia', source_name_arabic = 'قسم الحوامدية', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.25279833, 29.90225318), 4326) WHERE lower(trim(governorate)) = lower('Giza') AND lower(trim(name_english)) = lower('Hawamdiya') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Hawamdiya', 'Giza';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Hawamdiya', 'Giza', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2110', name_english = 'Badrashain', name_arabic = 'مركز البدرشين', governorate = 'Giza', source_name_english = 'Badrashain', source_name_arabic = 'مركز البدرشين', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.25831466, 29.82365402), 4326) WHERE lower(trim(governorate)) = lower('Giza') AND lower(trim(name_english)) = lower('Badrashein') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Badrashein', 'Giza';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Badrashein', 'Giza', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2112', name_english = 'Ayat', name_arabic = 'مركز العياط', governorate = 'Giza', source_name_english = 'Ayat', source_name_arabic = 'مركز العياط', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.24981162, 29.56420986), 4326) WHERE lower(trim(governorate)) = lower('Giza') AND lower(trim(name_english)) = lower('Al Ayat') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Al Ayat', 'Giza';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Al Ayat', 'Giza', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG2103', name_english = 'DuqqI', name_arabic = 'قسم الدقي', governorate = 'Giza', source_name_english = 'DuqqI', source_name_arabic = 'قسم الدقي', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.20822266, 30.04242001), 4326) WHERE lower(trim(governorate)) = lower('Giza') AND lower(trim(name_english)) = lower('Dokki') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Dokki', 'Giza';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Dokki', 'Giza', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG0214', name_english = 'Burg al-Arab', name_arabic = 'قسم برج العرب', governorate = 'Alexandria', source_name_english = 'Burg al-Arab', source_name_arabic = 'قسم برج العرب', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(29.49397559, 30.90121245), 4326) WHERE lower(trim(governorate)) = lower('Alexandria') AND lower(trim(name_english)) = lower('Borg El Arab') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Borg El Arab', 'Alexandria';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Borg El Arab', 'Alexandria', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1401', name_english = 'Banha (Kism)', name_arabic = 'قسم بنها', governorate = 'Kalyoubia', source_name_english = 'Banha', source_name_arabic = 'قسم بنها', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.19022124, 30.46596668), 4326) WHERE lower(trim(governorate)) = lower('Qalyubia') AND lower(trim(name_english)) = lower('Banha') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Banha', 'Qalyubia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Banha', 'Qalyubia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1409', name_english = 'Qalyub (Kism)', name_arabic = 'قسم قليوب', governorate = 'Kalyoubia', source_name_english = 'Qalyub', source_name_arabic = 'قسم قليوب', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.21582683, 30.17996823), 4326) WHERE lower(trim(governorate)) = lower('Qalyubia') AND lower(trim(name_english)) = lower('Qalyub') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Qalyub', 'Qalyubia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Qalyub', 'Qalyubia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1403', name_english = 'Al Khanka', name_arabic = 'مركز الخانكة', governorate = 'Kalyoubia', source_name_english = 'Al Khanka', source_name_arabic = 'مركز الخانكة', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.35785285, 30.2305157), 4326) WHERE lower(trim(governorate)) = lower('Qalyubia') AND lower(trim(name_english)) = lower('Khanka') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Khanka', 'Qalyubia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Khanka', 'Qalyubia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1701', name_english = 'Shibin al-Kum (Kism)', name_arabic = 'قسم شبين الكوم', governorate = 'Menoufia', source_name_english = 'Shibin al-Kum', source_name_arabic = 'قسم شبين الكوم', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.9998989, 30.5558006), 4326) WHERE lower(trim(governorate)) = lower('Monufia') AND lower(trim(name_english)) = lower('Shibin El Kom') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Shibin El Kom', 'Monufia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Shibin El Kom', 'Monufia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1711', name_english = 'Sadat City', name_arabic = 'مركز السادات', governorate = 'Menoufia', source_name_english = 'Sadat City', source_name_arabic = 'مركز السادات', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.66134829, 30.35845668), 4326) WHERE lower(trim(governorate)) = lower('Monufia') AND lower(trim(name_english)) = lower('Sadat City') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Sadat City', 'Monufia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Sadat City', 'Monufia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1703', name_english = 'Ashmun', name_arabic = 'مركز أشمون', governorate = 'Menoufia', source_name_english = 'Ashmun', source_name_arabic = 'مركز أشمون', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.00832635, 30.29921495), 4326) WHERE lower(trim(governorate)) = lower('Monufia') AND lower(trim(name_english)) = lower('Ashmoun') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Ashmoun', 'Monufia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Ashmoun', 'Monufia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1709', name_english = 'Minuf', name_arabic = 'مركز منوف', governorate = 'Menoufia', source_name_english = 'Minuf', source_name_arabic = 'مركز منوف', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.88098696, 30.45966842), 4326) WHERE lower(trim(governorate)) = lower('Monufia') AND lower(trim(name_english)) = lower('Menouf') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Menouf', 'Monufia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Menouf', 'Monufia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1603', name_english = 'Tanta', name_arabic = 'مركز طنطا', governorate = 'Gharbia', source_name_english = 'Tanta', source_name_arabic = 'مركز طنطا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.93199476, 30.80933518), 4326) WHERE lower(trim(governorate)) = lower('Gharbia') AND lower(trim(name_english)) = lower('Tanta') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Tanta', 'Gharbia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Tanta', 'Gharbia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1609', name_english = 'Zifta', name_arabic = 'مركز زفتى', governorate = 'Gharbia', source_name_english = 'Zifta', source_name_arabic = 'مركز زفتى', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.21530251, 30.72821639), 4326) WHERE lower(trim(governorate)) = lower('Gharbia') AND lower(trim(name_english)) = lower('Zifta') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Zifta', 'Gharbia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Zifta', 'Gharbia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1612', name_english = 'Kafr Al-Zayyat', name_arabic = 'مركز كفر الزيات', governorate = 'Gharbia', source_name_english = 'Kafr Al-Zayyat', source_name_arabic = 'مركز كفر الزيات', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.83528992, 30.80717488), 4326) WHERE lower(trim(governorate)) = lower('Gharbia') AND lower(trim(name_english)) = lower('Kafr El Zayat') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Kafr El Zayat', 'Gharbia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Kafr El Zayat', 'Gharbia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1203', name_english = 'El Mansora', name_arabic = 'مركز المنصورة', governorate = 'Dakahlia', source_name_english = 'El Mansora', source_name_arabic = 'مركز المنصورة', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.46727616, 31.05279543), 4326) WHERE lower(trim(governorate)) = lower('Dakahlia') AND lower(trim(name_english)) = lower('Mansoura') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Mansoura', 'Dakahlia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Mansoura', 'Dakahlia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1211', name_english = 'Talkha', name_arabic = 'مركز طلخا', governorate = 'Dakahlia', source_name_english = 'Talkha', source_name_arabic = 'مركز طلخا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.38263025, 31.10922123), 4326) WHERE lower(trim(governorate)) = lower('Dakahlia') AND lower(trim(name_english)) = lower('Talkha') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Talkha', 'Dakahlia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Talkha', 'Dakahlia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1212', name_english = 'Mit Ghamr (Kism)', name_arabic = 'قسم ميت غمر', governorate = 'Dakahlia', source_name_english = 'Mit Ghamr', source_name_arabic = 'قسم ميت غمر', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.27569267, 30.71307835), 4326) WHERE lower(trim(governorate)) = lower('Dakahlia') AND lower(trim(name_english)) = lower('Mit Ghamr') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Mit Ghamr', 'Dakahlia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Mit Ghamr', 'Dakahlia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1209', name_english = 'Dikirnis', name_arabic = 'مركز دكرنس', governorate = 'Dakahlia', source_name_english = 'Dikirnis', source_name_arabic = 'مركز دكرنس', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.7801441, 31.09314136), 4326) WHERE lower(trim(governorate)) = lower('Dakahlia') AND lower(trim(name_english)) = lower('Dikirnis') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Dikirnis', 'Dakahlia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Dikirnis', 'Dakahlia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1303', name_english = 'Zaqaziq', name_arabic = 'مركز الزقازيق', governorate = 'Sharkia', source_name_english = 'Zaqaziq', source_name_arabic = 'مركز الزقازيق', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.58133673, 30.58709729), 4326) WHERE lower(trim(governorate)) = lower('Sharqia') AND lower(trim(name_english)) = lower('Zagazig') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Zagazig', 'Sharqia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Zagazig', 'Sharqia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1308', name_english = 'Bilbis', name_arabic = 'مركز بلبيس', governorate = 'Sharkia', source_name_english = 'Bilbis', source_name_arabic = 'مركز بلبيس', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.53105184, 30.40752612), 4326) WHERE lower(trim(governorate)) = lower('Sharqia') AND lower(trim(name_english)) = lower('Bilbeis') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Bilbeis', 'Sharqia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Bilbeis', 'Sharqia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1314', name_english = 'Minya al-Qamh', name_arabic = 'مركز منيا القمح', governorate = 'Sharkia', source_name_english = 'Minya al-Qamh', source_name_arabic = 'مركز منيا القمح', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.36907011, 30.5073467), 4326) WHERE lower(trim(governorate)) = lower('Sharqia') AND lower(trim(name_english)) = lower('Minya El Qamh') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Minya El Qamh', 'Sharqia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Minya El Qamh', 'Sharqia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1801', name_english = 'Damanhur (Kism)', name_arabic = 'قسم دمنهور', governorate = 'Behera', source_name_english = 'Damanhur', source_name_arabic = 'قسم دمنهور', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.46250878, 31.04898058), 4326) WHERE lower(trim(governorate)) = lower('Beheira') AND lower(trim(name_english)) = lower('Damanhur') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Damanhur', 'Beheira';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Damanhur', 'Beheira', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1812', name_english = 'Kafr Al-Dawwar (Markaz)', name_arabic = 'مركز كفر الدوار', governorate = 'Behera', source_name_english = 'Kafr Al-Dawwar', source_name_arabic = 'مركز كفر الدوار', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.03757396, 31.12882124), 4326) WHERE lower(trim(governorate)) = lower('Beheira') AND lower(trim(name_english)) = lower('Kafr El Dawwar') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Kafr El Dawwar', 'Beheira';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Kafr El Dawwar', 'Beheira', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1809', name_english = 'Rashid', name_arabic = 'مركز رشيد', governorate = 'Behera', source_name_english = 'Rashid', source_name_arabic = 'مركز رشيد', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.37496527, 31.37875874), 4326) WHERE lower(trim(governorate)) = lower('Beheira') AND lower(trim(name_english)) = lower('Rashid') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Rashid', 'Beheira';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Rashid', 'Beheira', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1816', name_english = 'Idku', name_arabic = 'مركز إدكو', governorate = 'Behera', source_name_english = 'Idku', source_name_arabic = 'مركز إدكو', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.32493349, 31.29825944), 4326) WHERE lower(trim(governorate)) = lower('Beheira') AND lower(trim(name_english)) = lower('Edku') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Edku', 'Beheira';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Edku', 'Beheira', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1501', name_english = 'Kafr Al-Shaykh (Kism)', name_arabic = 'قسم كفر الشيخ', governorate = 'Kafr El-Shikh', source_name_english = 'Kafr Al-Shaykh', source_name_arabic = 'قسم كفر الشيخ', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.94145981, 31.11904642), 4326) WHERE lower(trim(governorate)) = lower('Kafr El Sheikh') AND lower(trim(name_english)) = lower('Kafr El Sheikh') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Kafr El Sheikh', 'Kafr El Sheikh';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Kafr El Sheikh', 'Kafr El Sheikh', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1505', name_english = 'Disuq (Kism)', name_arabic = 'قسم دسوق', governorate = 'Kafr El-Shikh', source_name_english = 'Disuq', source_name_arabic = 'قسم دسوق', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(30.6488964, 31.14512059), 4326) WHERE lower(trim(governorate)) = lower('Kafr El Sheikh') AND lower(trim(name_english)) = lower('Desouk') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Desouk', 'Kafr El Sheikh';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Desouk', 'Kafr El Sheikh', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1102', name_english = 'Dumyat', name_arabic = 'مركز دمياط', governorate = 'Damietta', source_name_english = 'Dumyat', source_name_arabic = 'مركز دمياط', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.84205813, 31.44026861), 4326) WHERE lower(trim(governorate)) = lower('Damietta') AND lower(trim(name_english)) = lower('Damietta') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Damietta', 'Damietta';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Damietta', 'Damietta', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1103', name_english = 'Fariskur', name_arabic = 'مركز فارسكور', governorate = 'Damietta', source_name_english = 'Fariskur', source_name_arabic = 'مركز فارسكور', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(31.73266394, 31.31001882), 4326) WHERE lower(trim(governorate)) = lower('Damietta') AND lower(trim(name_english)) = lower('Faraskur') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Faraskur', 'Damietta';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Faraskur', 'Damietta', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1907', name_english = 'Fayid', name_arabic = 'مركز فايد', governorate = 'Ismailia', source_name_english = 'Fayid', source_name_arabic = 'مركز فايد', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.29183219, 30.3662741), 4326) WHERE lower(trim(governorate)) = lower('Ismailia') AND lower(trim(name_english)) = lower('Fayed') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Fayed', 'Ismailia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Fayed', 'Ismailia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG1906', name_english = 'Qantara Gharb, al-', name_arabic = 'مركز القنطرة', governorate = 'Ismailia', source_name_english = 'Qantara Gharb, al-', source_name_arabic = 'مركز القنطرة', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.24461716, 30.74175591), 4326) WHERE lower(trim(governorate)) = lower('Ismailia') AND lower(trim(name_english)) = lower('El Qantara') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'El Qantara', 'Ismailia';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'El Qantara', 'Ismailia', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG0401', name_english = 'Suez', name_arabic = 'قسم السويس', governorate = 'Suez', source_name_english = 'Suez', source_name_arabic = 'قسم السويس', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.56934356, 29.96128978), 4326) WHERE lower(trim(governorate)) = lower('Suez') AND lower(trim(name_english)) = lower('Suez') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Suez', 'Suez';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Suez', 'Suez', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG3103', name_english = 'Safaga', name_arabic = 'قسم سفاجا', governorate = 'Red Sea', source_name_english = 'Safaga', source_name_arabic = 'قسم سفاجا', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(33.46049466, 26.73173007), 4326) WHERE lower(trim(governorate)) = lower('Red Sea') AND lower(trim(name_english)) = lower('Safaga') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Safaga', 'Red Sea';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Safaga', 'Red Sea', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG3104', name_english = 'Marsa Alam', name_arabic = 'قسم مرسى علم', governorate = 'Red Sea', source_name_english = 'Marsa Alam', source_name_arabic = 'قسم مرسى علم', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(34.28558673, 24.70693152), 4326) WHERE lower(trim(governorate)) = lower('Red Sea') AND lower(trim(name_english)) = lower('Marsa Alam') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Marsa Alam', 'Red Sea';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Marsa Alam', 'Red Sea', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG3102', name_english = 'Qusir', name_arabic = 'قسم القصير', governorate = 'Red Sea', source_name_english = 'Qusir', source_name_arabic = 'قسم القصير', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(33.95052207, 25.95669031), 4326) WHERE lower(trim(governorate)) = lower('Red Sea') AND lower(trim(name_english)) = lower('El Quseir') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'El Quseir', 'Red Sea';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'El Quseir', 'Red Sea', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG3105', name_english = 'Ras Gharib', name_arabic = 'قسم رأس غارب', governorate = 'Red Sea', source_name_english = 'Ras Gharib', source_name_arabic = 'قسم رأس غارب', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(32.37696766, 28.50629722), 4326) WHERE lower(trim(governorate)) = lower('Red Sea') AND lower(trim(name_english)) = lower('Ras Gharib') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Ras Gharib', 'Red Sea';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Ras Gharib', 'Red Sea', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG3505', name_english = 'Sharm el-Sheikh', name_arabic = 'قسم شرم الشيخ', governorate = 'South Sinai', source_name_english = 'Sharm el-Sheikh', source_name_arabic = 'قسم شرم الشيخ', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(34.20279752, 28.07987961), 4326) WHERE lower(trim(governorate)) = lower('South Sinai') AND lower(trim(name_english)) = lower('Sharm El-Sheikh') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Sharm El-Sheikh', 'South Sinai';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Sharm El-Sheikh', 'South Sinai', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG3506', name_english = 'Dahab', name_arabic = 'قسم دهب', governorate = 'South Sinai', source_name_english = 'Dahab', source_name_arabic = 'قسم دهب', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(34.45078662, 28.73029145), 4326) WHERE lower(trim(governorate)) = lower('South Sinai') AND lower(trim(name_english)) = lower('Dahab') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Dahab', 'South Sinai';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Dahab', 'South Sinai', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG3507', name_english = 'Nuweiba', name_arabic = 'قسم نويبع', governorate = 'South Sinai', source_name_english = 'Nuweiba', source_name_arabic = 'قسم نويبع', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(34.311738, 29.3137184), 4326) WHERE lower(trim(governorate)) = lower('South Sinai') AND lower(trim(name_english)) = lower('Nuweiba') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Nuweiba', 'South Sinai';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Nuweiba', 'South Sinai', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG3501', name_english = 'Al-Tur', name_arabic = 'قسم الطور', governorate = 'South Sinai', source_name_english = 'Al-Tur', source_name_arabic = 'قسم الطور', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(33.75327612, 28.36472811), 4326) WHERE lower(trim(governorate)) = lower('South Sinai') AND lower(trim(name_english)) = lower('El Tor') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'El Tor', 'South Sinai';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'El Tor', 'South Sinai', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG3504', name_english = 'Sant Katrin', name_arabic = 'قسم سانت كاترين', governorate = 'South Sinai', source_name_english = 'Sant Katrin', source_name_arabic = 'قسم سانت كاترين', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(34.05176215, 28.65972175), 4326) WHERE lower(trim(governorate)) = lower('South Sinai') AND lower(trim(name_english)) = lower('Saint Catherine') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Saint Catherine', 'South Sinai';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Saint Catherine', 'South Sinai', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG3409', name_english = 'Rafah', name_arabic = 'قسم رفح', governorate = 'North Sinai', source_name_english = 'Rafah', source_name_arabic = 'قسم رفح', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(34.22684661, 31.08660233), 4326) WHERE lower(trim(governorate)) = lower('North Sinai') AND lower(trim(name_english)) = lower('Rafah') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Rafah', 'North Sinai';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Rafah', 'North Sinai', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG3301', name_english = 'Marsa Matruh', name_arabic = 'قسم مرسى مطروح', governorate = 'Matrouh', source_name_english = 'Marsa Matruh', source_name_arabic = 'قسم مرسى مطروح', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(26.9968074, 30.02195299), 4326) WHERE lower(trim(governorate)) = lower('Matrouh') AND lower(trim(name_english)) = lower('Marsa Matrouh') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Marsa Matrouh', 'Matrouh';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Marsa Matrouh', 'Matrouh', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG3306', name_english = 'Siwa', name_arabic = 'مركز سيوة', governorate = 'Matrouh', source_name_english = 'Siwa', source_name_arabic = 'مركز سيوة', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(25.58938909, 28.70317815), 4326) WHERE lower(trim(governorate)) = lower('Matrouh') AND lower(trim(name_english)) = lower('Siwa') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Siwa', 'Matrouh';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Siwa', 'Matrouh', matched_count;
+    END IF;
+    UPDATE cities SET source_code = 'EG3203', name_english = 'Al Farafra Oasis', name_arabic = 'مركز الفرافرة', governorate = 'New Valley', source_name_english = 'Al Farafra Oasis', source_name_arabic = 'مركز الفرافرة', status = 'OFFICIAL', center_point = ST_SetSRID(ST_MakePoint(26.760442, 27.20514434), 4326) WHERE lower(trim(governorate)) = lower('New Valley') AND lower(trim(name_english)) = lower('Farafra') AND source_code IS NULL;
+    GET DIAGNOSTICS matched_count = ROW_COUNT;
+    IF matched_count = 0 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched 0 legacy rows', 'Farafra', 'New Valley';
+    ELSIF matched_count > 1 THEN
+      RAISE EXCEPTION 'City reconciliation aborted: reviewed mapping for % in % matched % legacy rows (expected 1)', 'Farafra', 'New Valley', matched_count;
+    END IF;
+
+    -- 2. Mark any unmapped legacy cities as LEGACY (preserving UUIDs and foreign keys)
+    UPDATE cities SET status = 'LEGACY' WHERE source_code IS NULL;
+  END IF;
 
   -- 3. Update denormalized governorate values in posts for matched official cities
   UPDATE posts SET governorate = cities.governorate FROM cities WHERE posts.city_id = cities.id AND cities.status = 'OFFICIAL';
 
-  -- 4. Insert missing official cities from the 351 catalog
+  -- 4. Insert missing official cities and apply canonical updates to existing official cities
   INSERT INTO cities (source_code, name_english, name_arabic, governorate, source_name_english, source_name_arabic, status, center_point) VALUES ('EG0209', 'A L Labban', 'قسم اللبان', 'Alexandria', 'A L Labban', 'قسم اللبان', 'OFFICIAL', ST_SetSRID(ST_MakePoint(29.89239598, 31.19072847), 4326)) ON CONFLICT (source_code) DO UPDATE SET name_english = EXCLUDED.name_english, name_arabic = EXCLUDED.name_arabic, governorate = EXCLUDED.governorate, source_name_english = EXCLUDED.source_name_english, source_name_arabic = EXCLUDED.source_name_arabic, status = EXCLUDED.status, center_point = EXCLUDED.center_point;
   INSERT INTO cities (source_code, name_english, name_arabic, governorate, source_name_english, source_name_arabic, status, center_point) VALUES ('EG0213', 'Al Amreia', 'قسم العامرية', 'Alexandria', 'Al Amreia', 'قسم العامرية', 'OFFICIAL', ST_SetSRID(ST_MakePoint(29.82759488, 30.95892416), 4326)) ON CONFLICT (source_code) DO UPDATE SET name_english = EXCLUDED.name_english, name_arabic = EXCLUDED.name_arabic, governorate = EXCLUDED.governorate, source_name_english = EXCLUDED.source_name_english, source_name_arabic = EXCLUDED.source_name_arabic, status = EXCLUDED.status, center_point = EXCLUDED.center_point;
   INSERT INTO cities (source_code, name_english, name_arabic, governorate, source_name_english, source_name_arabic, status, center_point) VALUES ('EG0206', 'Al Attarin', 'قسم العطارين', 'Alexandria', 'Al Attarin', 'قسم العطارين', 'OFFICIAL', ST_SetSRID(ST_MakePoint(29.90400845, 31.19811328), 4326)) ON CONFLICT (source_code) DO UPDATE SET name_english = EXCLUDED.name_english, name_arabic = EXCLUDED.name_arabic, governorate = EXCLUDED.governorate, source_name_english = EXCLUDED.source_name_english, source_name_arabic = EXCLUDED.source_name_arabic, status = EXCLUDED.status, center_point = EXCLUDED.center_point;
@@ -440,16 +909,20 @@ BEGIN
   INSERT INTO cities (source_code, name_english, name_arabic, governorate, source_name_english, source_name_arabic, status, center_point) VALUES ('EG2613', 'Tama', 'مركز طما', 'Suhag', 'Tama', 'مركز طما', 'OFFICIAL', ST_SetSRID(ST_MakePoint(31.42171759, 26.87352625), 4326)) ON CONFLICT (source_code) DO UPDATE SET name_english = EXCLUDED.name_english, name_arabic = EXCLUDED.name_arabic, governorate = EXCLUDED.governorate, source_name_english = EXCLUDED.source_name_english, source_name_arabic = EXCLUDED.source_name_arabic, status = EXCLUDED.status, center_point = EXCLUDED.center_point;
 
   -- 5. Verification checks: assert exactly 351 official cities and 27 governorates
-  DECLARE
-    official_count int;
-    gov_count int;
-  BEGIN
-    SELECT count(*), count(DISTINCT governorate) INTO official_count, gov_count FROM cities WHERE status = 'OFFICIAL';
-    IF official_count != 351 THEN
-      RAISE EXCEPTION 'City reconciliation verification failed: expected 351 official cities, found %', official_count;
-    END IF;
-    IF gov_count != 27 THEN
-      RAISE EXCEPTION 'City reconciliation verification failed: expected 27 governorates, found %', gov_count;
-    END IF;
-  END;
+  SELECT
+    count(*) FILTER (WHERE status = 'OFFICIAL'),
+    count(DISTINCT governorate) FILTER (WHERE status = 'OFFICIAL'),
+    count(*) FILTER (WHERE status = 'OFFICIAL' AND source_code IS NULL)
+  INTO official_count, gov_count, invalid_official_count
+  FROM cities;
+
+  IF official_count != 351 THEN
+    RAISE EXCEPTION 'City reconciliation verification failed: expected 351 official cities, found %', official_count;
+  END IF;
+  IF gov_count != 27 THEN
+    RAISE EXCEPTION 'City reconciliation verification failed: expected 27 governorates, found %', gov_count;
+  END IF;
+  IF invalid_official_count != 0 THEN
+    RAISE EXCEPTION 'City reconciliation verification failed: found % official cities without source_code', invalid_official_count;
+  END IF;
 END $$;

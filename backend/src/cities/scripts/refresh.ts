@@ -1,11 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  compareSnapshots,
-  applyReviewedRelease,
-  fetchUpstreamSnapshot,
-  type SnapshotDiffReport,
-} from '../refresh';
+import { compareSnapshots, applyReviewedRelease, fetchUpstreamSnapshot, type SnapshotDiffReport } from '../refresh';
 import { getOfficialCatalog, loadRawSnapshot, type CitySnapshot } from '../catalog';
 import { generateReconcileMigrationSql, loadLegacyMappings } from '../reconcile';
 
@@ -60,9 +55,7 @@ function printDiffReport(diff: SnapshotDiffReport): void {
   if (diff.coordinateChanged.length > 0) {
     console.log('📍 Coordinate Changes:');
     for (const cc of diff.coordinateChanged) {
-      console.log(
-        `  [${cc.sourceCode}] ${cc.governorate}: ${cc.nameEnglish} shifted by ~${cc.distanceKm} km`,
-      );
+      console.log(`  [${cc.sourceCode}] ${cc.governorate}: ${cc.nameEnglish} shifted by ~${cc.distanceKm} km`);
     }
     console.log('');
   }
