@@ -433,6 +433,160 @@ export function validateCatalog(
   };
 }
 
+/**
+ * Validates schema and required provenance metadata for an upstream raw snapshot.
+ * Guarantees that candidate snapshots have complete attribution, valid source/resource URLs,
+ * valid dates, non-empty records, unique P-codes, non-blank names, and valid coordinates.
+ */
+export function validateSnapshot(snapshot: unknown): ValidationResult {
+  const errors: string[] = [];
+
+  if (!snapshot || typeof snapshot !== 'object') {
+    return {
+      isValid: false,
+      errors: ['Snapshot must be a non-null object'],
+      stats: { totalCities: 0, officialCount: 0, retiredCount: 0, governorateCount: 0 },
+    };
+  }
+
+  const snap = snapshot as { metadata?: Partial<CitySnapshotMetadata>; records?: unknown[] };
+
+  if (!snap.metadata || typeof snap.metadata !== 'object') {
+    errors.push('Snapshot missing required metadata object');
+  } else {
+    const meta = snap.metadata;
+    const requiredStringFields: Array<keyof CitySnapshotMetadata> = [
+      'source',
+      'sourceUrl',
+      'resourceUrl',
+      'upstreamVersion',
+      'retrievalDate',
+      'license',
+      'licenseUrl',
+      'attribution',
+    ];
+
+    for (const field of requiredStringFields) {
+      const val = meta[field];
+      if (typeof val !== 'string' || val.trim() === '') {
+        errors.push(`Snapshot metadata missing or blank required field '${String(field)}'`);
+      }
+    }
+
+    if (typeof meta.sourceUrl === 'string') {
+      if (!meta.sourceUrl.startsWith('http://') && !meta.sourceUrl.startsWith('https://')) {
+        errors.push(`Snapshot metadata sourceUrl '${meta.sourceUrl}' is not a valid URL`);
+      }
+    }
+
+    if (typeof meta.resourceUrl === 'string') {
+      if (!meta.resourceUrl.startsWith('http://') && !meta.resourceUrl.startsWith('https://')) {
+        errors.push(`Snapshot metadata resourceUrl '${meta.resourceUrl}' is not a valid URL`);
+      }
+    }
+
+    if (!meta.upstreamDates || typeof meta.upstreamDates !== 'object') {
+      errors.push('Snapshot metadata missing required upstreamDates object');
+    } else {
+      const { validOn, reviewedDate, lastModified } = meta.upstreamDates;
+      if (typeof validOn !== 'string' || validOn.trim() === '') {
+        errors.push("Snapshot metadata upstreamDates missing required 'validOn'");
+      }
+      if (typeof reviewedDate !== 'string' || reviewedDate.trim() === '') {
+        errors.push("Snapshot metadata upstreamDates missing required 'reviewedDate'");
+      }
+      if (typeof lastModified !== 'string' || lastModified.trim() === '') {
+        errors.push("Snapshot metadata upstreamDates missing required 'lastModified'");
+      }
+    }
+
+    if (typeof meta.totalRows !== 'number' || meta.totalRows <= 0) {
+      errors.push('Snapshot metadata totalRows must be a positive number');
+    }
+  }
+
+  if (!Array.isArray(snap.records)) {
+    errors.push('Snapshot records must be an array');
+  } else {
+    if (snap.records.length === 0) {
+      errors.push('Snapshot records array cannot be empty');
+    }
+    if (snap.metadata && typeof snap.metadata.totalRows === 'number') {
+      if (snap.records.length !== snap.metadata.totalRows) {
+        errors.push(
+          `Snapshot records count (${snap.records.length}) does not match metadata totalRows (${snap.metadata.totalRows})`,
+        );
+      }
+    }
+
+    const seenPcodes = new Set<string>();
+    const governorates = new Set<string>();
+
+    for (let i = 0; i < snap.records.length; i++) {
+      const r = snap.records[i] as Partial<RawCitySnapshotRecord> | undefined;
+      const prefix = `Snapshot record[${i}] (${r?.adm2_pcode || 'unknown'})`;
+      if (!r || typeof r !== 'object') {
+        errors.push(`${prefix}: Record must be a non-null object`);
+        continue;
+      }
+
+      if (typeof r.adm2_pcode !== 'string' || r.adm2_pcode.trim() === '') {
+        errors.push(`${prefix}: Missing or blank adm2_pcode`);
+      } else if (seenPcodes.has(r.adm2_pcode)) {
+        errors.push(`${prefix}: Duplicate adm2_pcode '${r.adm2_pcode}'`);
+      } else {
+        seenPcodes.add(r.adm2_pcode);
+      }
+
+      if (typeof r.adm2_name !== 'string' || r.adm2_name.trim() === '') {
+        errors.push(`${prefix}: Missing or blank adm2_name`);
+      }
+      if (typeof r.adm2_name1 !== 'string' || r.adm2_name1.trim() === '') {
+        errors.push(`${prefix}: Missing or blank adm2_name1 (Arabic name)`);
+      }
+      if (typeof r.adm1_name !== 'string' || r.adm1_name.trim() === '') {
+        errors.push(`${prefix}: Missing or blank adm1_name`);
+      } else {
+        governorates.add(r.adm1_name.trim());
+      }
+      if (typeof r.adm1_pcode !== 'string' || r.adm1_pcode.trim() === '') {
+        errors.push(`${prefix}: Missing or blank adm1_pcode`);
+      }
+
+      const lat = Number(r.center_lat);
+      const lon = Number(r.center_lon);
+      if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+        errors.push(`${prefix}: Invalid center_lat '${String(r.center_lat)}'`);
+      }
+      if (!Number.isFinite(lon) || lon < -180 || lon > 180) {
+        errors.push(`${prefix}: Invalid center_lon '${String(r.center_lon)}'`);
+      }
+    }
+  }
+
+  const recordsArray = Array.isArray(snap.records) ? snap.records : [];
+  const govCount = new Set(
+    recordsArray
+      .map((r) =>
+        r && typeof r === 'object' && 'adm1_name' in r && typeof r.adm1_name === 'string'
+          ? (r as { adm1_name: string }).adm1_name
+          : '',
+      )
+      .filter(Boolean),
+  ).size;
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    stats: {
+      totalCities: recordsArray.length,
+      officialCount: recordsArray.length,
+      retiredCount: 0,
+      governorateCount: govCount,
+    },
+  };
+}
+
 let cachedOfficialCatalog: CityCatalogRecord[] | null = null;
 
 /**

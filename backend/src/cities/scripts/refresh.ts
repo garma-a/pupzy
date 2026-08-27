@@ -1,8 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { compareSnapshots, applyReviewedRelease, fetchUpstreamSnapshot, type SnapshotDiffReport } from '../refresh';
+import {
+  compareSnapshots,
+  publishReviewedRelease,
+  fetchUpstreamSnapshot,
+  type SnapshotDiffReport,
+  type ReviewedReleaseOptions,
+} from '../refresh';
 import { getOfficialCatalog, loadRawSnapshot, type CitySnapshot } from '../catalog';
-import { generateReconcileMigrationSql, loadLegacyMappings } from '../reconcile';
 
 function printDiffReport(diff: SnapshotDiffReport): void {
   console.log('\n═══════════════════════════════════════════════════════════════');
@@ -64,19 +69,26 @@ function printDiffReport(diff: SnapshotDiffReport): void {
 export async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const candidateIndex = args.indexOf('--candidate');
-  const fetchFlag = args.includes('--fetch');
+  const fetchIndex = args.indexOf('--fetch');
+  const officialCountIndex = args.indexOf('--official-count');
+  const govCountIndex = args.indexOf('--gov-count');
+  const mappingsIndex = args.indexOf('--mappings');
   const applyFlag = args.includes('--apply');
 
   const currentCatalog = getOfficialCatalog();
   let candidateSnapshot: CitySnapshot;
+  let hasExplicitCandidate = false;
 
   if (candidateIndex !== -1 && args[candidateIndex + 1]) {
     const candidatePath = path.resolve(process.cwd(), args[candidateIndex + 1]);
     console.log(`Loading candidate snapshot from: ${candidatePath}`);
     candidateSnapshot = JSON.parse(fs.readFileSync(candidatePath, 'utf8')) as CitySnapshot;
-  } else if (fetchFlag) {
-    console.log('Fetching candidate upstream snapshot from OCHA HDX...');
-    candidateSnapshot = await fetchUpstreamSnapshot();
+    hasExplicitCandidate = true;
+  } else if (fetchIndex !== -1) {
+    const fetchUrl = args[fetchIndex + 1] && !args[fetchIndex + 1].startsWith('--') ? args[fetchIndex + 1] : undefined;
+    console.log(`Fetching candidate upstream snapshot from OCHA HDX resource (${fetchUrl || 'default'})...`);
+    candidateSnapshot = await fetchUpstreamSnapshot(fetchUrl);
+    hasExplicitCandidate = true;
   } else {
     console.log('No candidate specified; comparing raw local snapshot with compiled catalog...');
     candidateSnapshot = loadRawSnapshot();
@@ -86,29 +98,40 @@ export async function main(): Promise<void> {
   printDiffReport(diff);
 
   if (applyFlag) {
-    console.log('Applying reviewed release and regenerating artifacts...');
-    const release = applyReviewedRelease(currentCatalog, candidateSnapshot);
+    console.log('Applying reviewed release and generating append-only migration...');
 
-    const catalogPath = path.resolve(__dirname, '../data/egypt-cities-catalog.json');
-    fs.writeFileSync(
-      catalogPath,
-      JSON.stringify(
-        {
-          metadata: release.metadata,
-          records: release.updatedCatalog,
-        },
-        null,
-        2,
-      ),
-      'utf8',
+    const options: ReviewedReleaseOptions & { writeSnapshot?: boolean } = {
+      writeSnapshot: hasExplicitCandidate,
+    };
+
+    if (officialCountIndex !== -1 && args[officialCountIndex + 1]) {
+      options.reviewedMetadata = options.reviewedMetadata || {};
+      options.reviewedMetadata.declaredOfficialCount = parseInt(args[officialCountIndex + 1], 10);
+    }
+    if (govCountIndex !== -1 && args[govCountIndex + 1]) {
+      options.reviewedMetadata = options.reviewedMetadata || {};
+      options.reviewedMetadata.governorateCount = parseInt(args[govCountIndex + 1], 10);
+    }
+
+    if (mappingsIndex !== -1 && args[mappingsIndex + 1]) {
+      const mappingsPath = path.resolve(process.cwd(), args[mappingsIndex + 1]);
+      const mappingsContent = fs.readFileSync(mappingsPath, 'utf8');
+      options.replacementMappings = JSON.parse(mappingsContent) as ReviewedReleaseOptions['replacementMappings'];
+    }
+
+    const result = publishReviewedRelease(currentCatalog, candidateSnapshot, options);
+
+    console.log(`✓ Updated catalog written to: ${result.catalogPath}`);
+    if (result.snapshotPath) {
+      console.log(`✓ Updated raw snapshot written to: ${result.snapshotPath}`);
+    }
+    console.log(`✓ Monotonically ordered migration written to: ${result.migrationPath} (${result.migrationTag})`);
+    if (result.journalUpdated) {
+      console.log('✓ Drizzle migrations journal updated.');
+    }
+    console.log(
+      `✓ Release summary: ${result.release.officialCount} official cities, ${result.release.retiredCount} retired cities.`,
     );
-    console.log(`✓ Updated catalog written to ${catalogPath}`);
-
-    const mappings = loadLegacyMappings();
-    const migrationSql = generateReconcileMigrationSql(mappings, release.updatedCatalog);
-    const migrationPath = path.resolve(__dirname, '../../../drizzle/migrations/0011_reconcile_city_catalog.sql');
-    fs.writeFileSync(migrationPath, migrationSql, 'utf8');
-    console.log(`✓ Updated reconciliation migration written to ${migrationPath}`);
   }
 }
 
