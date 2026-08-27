@@ -6,7 +6,7 @@ import {
   generateRetiredCitiesSql,
   generatePostGovernorateSyncSql,
   generateCityVerificationSql,
-  generateIdentityTransfersSql,
+  generateCityIdentityTransfersSql,
 } from './release-sql';
 
 export interface MigrationMeta {
@@ -290,8 +290,8 @@ export function generateReleaseMigrationSql(
     '  gov_count int;',
     '  invalid_official_count int;',
     'BEGIN',
-    '  -- 1. Apply reviewed identity transfers / recodes onto existing application UUIDs',
-    ...generateIdentityTransfersSql(release.replacementMappings ?? [], '  '),
+    '  -- 1. Apply reviewed City identity transfers onto existing application UUIDs',
+    ...generateCityIdentityTransfersSql(release.identityTransfers ?? [], '  '),
     '',
     '  -- 2. Mark newly retired cities as RETIRED',
     ...generateRetiredCitiesSql(updatedCatalog, '  '),

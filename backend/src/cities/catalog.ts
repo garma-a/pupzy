@@ -79,6 +79,7 @@ export interface CityCatalogMetadata extends Partial<CitySnapshotMetadata> {
   officialCitiesCount?: number;
   selectableCount?: number;
   retiredCount?: number;
+  legacyCount?: number;
 }
 
 export interface CityCatalog {
@@ -92,6 +93,7 @@ export interface ValidationResult {
   stats: {
     totalCities: number;
     officialCount: number;
+    legacyCount: number;
     retiredCount: number;
     governorateCount: number;
   };
@@ -427,6 +429,7 @@ export function validateCatalog(
     stats: {
       totalCities: records.length,
       officialCount: officialRecords.length,
+      legacyCount: legacyRecords.length,
       retiredCount: retiredRecords.length,
       governorateCount: officialGovernorates.size,
     },
@@ -445,7 +448,7 @@ export function validateSnapshot(snapshot: unknown): ValidationResult {
     return {
       isValid: false,
       errors: ['Snapshot must be a non-null object'],
-      stats: { totalCities: 0, officialCount: 0, retiredCount: 0, governorateCount: 0 },
+      stats: { totalCities: 0, officialCount: 0, legacyCount: 0, retiredCount: 0, governorateCount: 0 },
     };
   }
 
@@ -581,6 +584,7 @@ export function validateSnapshot(snapshot: unknown): ValidationResult {
     stats: {
       totalCities: recordsArray.length,
       officialCount: recordsArray.length,
+      legacyCount: 0,
       retiredCount: 0,
       governorateCount: govCount,
     },

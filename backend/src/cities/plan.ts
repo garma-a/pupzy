@@ -7,10 +7,16 @@ import {
 } from './catalog';
 import { compareSnapshots, type SnapshotDiffReport } from './diff';
 
-export interface ReplacementMapping {
-  retiredSourceCode: string;
-  replacementSourceCode: string;
+export interface CityIdentityTransfer {
+  retiredCitySourceCode: string;
+  replacementCitySourceCode: string;
   notes?: string;
+}
+
+export interface LegacyCityLifecycleDecision {
+  legacyCitySourceCode: string;
+  nextCityLifecycleStatus: 'OFFICIAL' | 'RETIRED';
+  notes: string;
 }
 
 export interface ReviewedReleaseOptions {
@@ -18,7 +24,8 @@ export interface ReviewedReleaseOptions {
     declaredOfficialCount?: number;
     governorateCount?: number;
   };
-  replacementMappings?: ReplacementMapping[];
+  identityTransfers?: CityIdentityTransfer[];
+  legacyLifecycleDecisions?: LegacyCityLifecycleDecision[];
 }
 
 export interface ReviewedReleaseResult {
@@ -26,8 +33,10 @@ export interface ReviewedReleaseResult {
   diffReport: SnapshotDiffReport;
   retiredCount: number;
   officialCount: number;
+  legacyCount: number;
   metadata?: CityCatalogMetadata;
-  replacementMappings: ReplacementMapping[];
+  identityTransfers: CityIdentityTransfer[];
+  legacyLifecycleDecisions: LegacyCityLifecycleDecision[];
 }
 
 function validateCountMetadata(
@@ -50,10 +59,11 @@ function validateCountMetadata(
 
 /**
  * Applies a reviewed upstream release to the catalog:
- * - Validates that every detected recode has an explicit reviewed replacement mapping.
- * - Enforces bijective (1:1) mappings between retired and active official candidate identities.
- * - Transfers one-to-one recoded source identities onto existing application UUIDs in release plans.
+ * - Validates that every detected recode has an explicit reviewed City identity transfer.
+ * - Enforces bijective (1:1) identity transfers from retired Cities to replacement candidate identities.
+ * - Transfers one-to-one recoded City source identities onto existing application UUIDs in release plans.
  * - Removed official cities without identity transfer transition to 'RETIRED' (never deleted, preserving UUIDs and references).
+ * - Preserves LEGACY Cities unless an explicit reviewed lifecycle decision applies.
  * - Added official cities are included with 'OFFICIAL' status.
  * - Updated official cities have names/coordinates updated.
  * - Enforces metadata confirmation for count changes.
@@ -78,75 +88,119 @@ export function applyReviewedRelease(
   const currentAllByCode = new Map<string, CityCatalogRecord>(currentCatalog.map((c) => [c.sourceCode, c]));
   const candidateByCode = new Map<string, CityCatalogRecord>(candidateRecords.map((c) => [c.sourceCode, c]));
 
-  const rawMappings = options.replacementMappings ?? [];
-  const normalizedMappings: ReplacementMapping[] = [];
-  const replacementMap = new Map<string, string>(); // retiredCode -> replacementCode
+  const rawIdentityTransfers = options.identityTransfers ?? [];
+  const normalizedIdentityTransfers: CityIdentityTransfer[] = [];
+  const replacementByRetiredCityCode = new Map<string, string>();
   const seenRetired = new Set<string>();
   const seenReplacement = new Set<string>();
 
-  // 1. Validate explicit replacement mappings
-  for (let i = 0; i < rawMappings.length; i++) {
-    const mapping = rawMappings[i];
-    if (!mapping || typeof mapping.retiredSourceCode !== 'string' || !mapping.retiredSourceCode.trim()) {
-      throw new Error(`Replacement mapping at index ${i} missing or invalid retiredSourceCode`);
+  // 1. Validate explicit City identity transfers
+  for (let i = 0; i < rawIdentityTransfers.length; i++) {
+    const transfer = rawIdentityTransfers[i];
+    if (!transfer || typeof transfer.retiredCitySourceCode !== 'string' || !transfer.retiredCitySourceCode.trim()) {
+      throw new Error(`City identity transfer at index ${i} missing or invalid retiredCitySourceCode`);
     }
-    if (typeof mapping.replacementSourceCode !== 'string' || !mapping.replacementSourceCode.trim()) {
-      throw new Error(`Replacement mapping at index ${i} missing or invalid replacementSourceCode`);
-    }
-
-    const retCode = mapping.retiredSourceCode.trim();
-    const repCode = mapping.replacementSourceCode.trim();
-
-    if (retCode === repCode) {
-      throw new Error(`Replacement mapping error: cannot map city '${retCode}' to itself`);
+    if (typeof transfer.replacementCitySourceCode !== 'string' || !transfer.replacementCitySourceCode.trim()) {
+      throw new Error(`City identity transfer at index ${i} missing or invalid replacementCitySourceCode`);
     }
 
-    if (seenRetired.has(retCode)) {
-      throw new Error(`Duplicate replacement mapping for retired city '${retCode}' at index ${i}`);
-    }
-    seenRetired.add(retCode);
+    const retiredCityCode = transfer.retiredCitySourceCode.trim();
+    const replacementCityCode = transfer.replacementCitySourceCode.trim();
 
-    if (seenReplacement.has(repCode)) {
-      throw new Error(`Duplicate replacement mapping for replacement city '${repCode}' at index ${i}`);
-    }
-    seenReplacement.add(repCode);
-
-    if (!currentOfficialByCode.has(retCode)) {
-      throw new Error(`Replacement mapping error: '${retCode}' is not an active official city in the current catalog`);
+    if (retiredCityCode === replacementCityCode) {
+      throw new Error(`City identity transfer error: cannot transfer City '${retiredCityCode}' to itself`);
     }
 
-    if (candidateByCode.has(retCode)) {
+    if (seenRetired.has(retiredCityCode)) {
+      throw new Error(`Duplicate City identity transfer for retired City '${retiredCityCode}' at index ${i}`);
+    }
+    seenRetired.add(retiredCityCode);
+
+    if (seenReplacement.has(replacementCityCode)) {
+      throw new Error(`Duplicate City identity transfer for replacement City '${replacementCityCode}' at index ${i}`);
+    }
+    seenReplacement.add(replacementCityCode);
+
+    if (!currentOfficialByCode.has(retiredCityCode)) {
       throw new Error(
-        `Replacement mapping error: '${retCode}' is still an active official city in the candidate release`,
+        `City identity transfer error: retired City '${retiredCityCode}' is not an active official City in the current catalog`,
       );
     }
 
-    if (!candidateByCode.has(repCode)) {
+    if (candidateByCode.has(retiredCityCode)) {
       throw new Error(
-        `Replacement mapping error: '${repCode}' is not an active official city in the candidate release`,
+        `City identity transfer error: retired City '${retiredCityCode}' is still an active official City in the candidate release`,
       );
     }
 
-    if (currentAllByCode.has(repCode)) {
+    if (!candidateByCode.has(replacementCityCode)) {
       throw new Error(
-        `Replacement mapping error: target '${repCode}' already exists in the current catalog; identity transfer must target a new upstream source code`,
+        `City identity transfer error: replacement City '${replacementCityCode}' is not an active official City in the candidate release`,
       );
     }
 
-    normalizedMappings.push({
-      retiredSourceCode: retCode,
-      replacementSourceCode: repCode,
-      notes: mapping.notes,
+    if (currentAllByCode.has(replacementCityCode)) {
+      throw new Error(
+        `City identity transfer error: replacement City '${replacementCityCode}' already exists in the current catalog; an identity transfer must target a new upstream source code`,
+      );
+    }
+
+    normalizedIdentityTransfers.push({
+      retiredCitySourceCode: retiredCityCode,
+      replacementCitySourceCode: replacementCityCode,
+      notes: transfer.notes,
     });
-    replacementMap.set(retCode, repCode);
+    replacementByRetiredCityCode.set(retiredCityCode, replacementCityCode);
   }
 
-  // 2. Enforce that every detected recode has an explicit reviewed mapping
+  const legacyCityByCode = new Map<string, CityCatalogRecord>(
+    currentCatalog.filter((city) => city.status === 'LEGACY').map((city) => [city.sourceCode, city]),
+  );
+  const rawLegacyLifecycleDecisions = options.legacyLifecycleDecisions ?? [];
+  const normalizedLegacyLifecycleDecisions: LegacyCityLifecycleDecision[] = [];
+  const lifecycleDecisionByLegacyCityCode = new Map<string, LegacyCityLifecycleDecision>();
+
+  // 2. Validate explicit reviewed lifecycle decisions for legacy Cities.
+  for (let i = 0; i < rawLegacyLifecycleDecisions.length; i++) {
+    const decision = rawLegacyLifecycleDecisions[i];
+    if (!decision || typeof decision.legacyCitySourceCode !== 'string' || !decision.legacyCitySourceCode.trim()) {
+      throw new Error(`Legacy City lifecycle decision at index ${i} missing or invalid legacyCitySourceCode`);
+    }
+    if (decision.nextCityLifecycleStatus !== 'OFFICIAL' && decision.nextCityLifecycleStatus !== 'RETIRED') {
+      throw new Error(`Legacy City lifecycle decision at index ${i} must transition to OFFICIAL or RETIRED`);
+    }
+    if (typeof decision.notes !== 'string' || !decision.notes.trim()) {
+      throw new Error(`Legacy City lifecycle decision at index ${i} requires non-blank review notes`);
+    }
+
+    const legacyCityCode = decision.legacyCitySourceCode.trim();
+    if (lifecycleDecisionByLegacyCityCode.has(legacyCityCode)) {
+      throw new Error(`Duplicate lifecycle decision for legacy City '${legacyCityCode}' at index ${i}`);
+    }
+    if (!legacyCityByCode.has(legacyCityCode)) {
+      throw new Error(`Lifecycle decision error: '${legacyCityCode}' is not a legacy City in the current catalog`);
+    }
+    if (decision.nextCityLifecycleStatus === 'OFFICIAL' && !candidateByCode.has(legacyCityCode)) {
+      throw new Error(
+        `Lifecycle decision error: legacy City '${legacyCityCode}' can become OFFICIAL only when the candidate contains its source identity`,
+      );
+    }
+
+    const normalizedDecision: LegacyCityLifecycleDecision = {
+      legacyCitySourceCode: legacyCityCode,
+      nextCityLifecycleStatus: decision.nextCityLifecycleStatus,
+      notes: decision.notes.trim(),
+    };
+    normalizedLegacyLifecycleDecisions.push(normalizedDecision);
+    lifecycleDecisionByLegacyCityCode.set(legacyCityCode, normalizedDecision);
+  }
+
+  // 3. Enforce that every detected recode has an explicit reviewed City identity transfer
   for (const recode of diffReport.recoded) {
-    const mappedTarget = replacementMap.get(recode.oldSourceCode);
+    const mappedTarget = replacementByRetiredCityCode.get(recode.oldSourceCode);
     if (!mappedTarget || mappedTarget !== recode.newSourceCode) {
       throw new Error(
-        `Unreviewed recode detected for '${recode.nameEnglish}' in governorate '${recode.governorate}' (${recode.oldSourceCode} -> ${recode.newSourceCode}). An explicit reviewed replacement mapping is required before release generation succeeds.`,
+        `Unreviewed City recode detected for '${recode.nameEnglish}' in governorate '${recode.governorate}' (${recode.oldSourceCode} -> ${recode.newSourceCode}). An explicit reviewed City identity transfer is required before release generation succeeds.`,
       );
     }
   }
@@ -157,6 +211,7 @@ export function applyReviewedRelease(
   const updatedCatalog: CityCatalogRecord[] = [];
   let retiredCount = 0;
   let officialCount = 0;
+  let legacyCount = 0;
   const remainingCandidate = new Map(candidateByCode);
 
   const addOfficialRecord = (cand: CityCatalogRecord, codeToRemove: string) => {
@@ -168,22 +223,40 @@ export function applyReviewedRelease(
     remainingCandidate.delete(codeToRemove);
   };
 
-  // 3. Process existing catalog records
+  const addNonOfficialRecord = (city: CityCatalogRecord, status: 'LEGACY' | 'RETIRED') => {
+    updatedCatalog.push({
+      ...city,
+      status,
+    });
+    if (status === 'LEGACY') {
+      legacyCount++;
+    } else {
+      retiredCount++;
+    }
+    remainingCandidate.delete(city.sourceCode);
+  };
+
+  // 4. Process existing catalog records
   for (const curr of currentCatalog) {
+    if (curr.status === 'LEGACY') {
+      const lifecycleDecision = lifecycleDecisionByLegacyCityCode.get(curr.sourceCode);
+      if (lifecycleDecision?.nextCityLifecycleStatus === 'OFFICIAL') {
+        addOfficialRecord(remainingCandidate.get(curr.sourceCode)!, curr.sourceCode);
+      } else {
+        addNonOfficialRecord(curr, lifecycleDecision?.nextCityLifecycleStatus ?? 'LEGACY');
+      }
+      continue;
+    }
+
     if (curr.status === 'RETIRED') {
       // Previously retired city remains retired and cannot be automatically reactivated
-      updatedCatalog.push({
-        ...curr,
-        status: 'RETIRED',
-      });
-      retiredCount++;
-      remainingCandidate.delete(curr.sourceCode);
+      addNonOfficialRecord(curr, 'RETIRED');
       continue;
     }
 
     // If city has an approved identity transfer, the new candidate record replaces it as OFFICIAL
-    if (replacementMap.has(curr.sourceCode)) {
-      const repCode = replacementMap.get(curr.sourceCode)!;
+    if (replacementByRetiredCityCode.has(curr.sourceCode)) {
+      const repCode = replacementByRetiredCityCode.get(curr.sourceCode)!;
       const cand = remainingCandidate.get(repCode);
       if (cand) {
         addOfficialRecord(cand, repCode);
@@ -197,15 +270,11 @@ export function applyReviewedRelease(
       addOfficialRecord(cand, curr.sourceCode);
     } else {
       // Removed from upstream without approved identity transfer -> mark as RETIRED
-      updatedCatalog.push({
-        ...curr,
-        status: 'RETIRED',
-      });
-      retiredCount++;
+      addNonOfficialRecord(curr, 'RETIRED');
     }
   }
 
-  // 4. Add remaining candidate records (new additions)
+  // 5. Add remaining candidate records (new additions)
   for (const [, cand] of remainingCandidate.entries()) {
     updatedCatalog.push({
       ...cand,
@@ -217,7 +286,7 @@ export function applyReviewedRelease(
   const distinctGovCount = new Set(updatedCatalog.filter((c) => c.status === 'OFFICIAL').map((c) => c.governorate))
     .size;
 
-  // 5. Enforce explicit reviewed metadata when official or governorate count changes
+  // 6. Enforce explicit reviewed metadata when official or governorate count changes
   validateCountMetadata(
     'Official',
     currentOfficialCount,
@@ -231,7 +300,9 @@ export function applyReviewedRelease(
     diffReport,
     retiredCount,
     officialCount,
-    replacementMappings: normalizedMappings,
+    legacyCount,
+    identityTransfers: normalizedIdentityTransfers,
+    legacyLifecycleDecisions: normalizedLegacyLifecycleDecisions,
     metadata: {
       ...candidateSnapshot.metadata,
       totalCities: updatedCatalog.length,
@@ -241,6 +312,7 @@ export function applyReviewedRelease(
       governorateCount: distinctGovCount,
       governoratesCount: distinctGovCount,
       retiredCount,
+      legacyCount,
     },
   };
 }

@@ -10,7 +10,7 @@ import {
   generatePostGovernorateSyncSql,
   generateCityVerificationSql,
   generateRetiredCitiesSql,
-  generateIdentityTransfersSql,
+  generateCityIdentityTransfersSql,
   escapeSqlString,
 } from './release-sql';
 import { generateReconcileMigrationSql } from './reconcile';
@@ -36,7 +36,7 @@ describe('Deepened City Release Workflow Architecture', () => {
       expect(typeof generatePostGovernorateSyncSql).toBe('function');
       expect(typeof generateCityVerificationSql).toBe('function');
       expect(typeof generateRetiredCitiesSql).toBe('function');
-      expect(typeof generateIdentityTransfersSql).toBe('function');
+      expect(typeof generateCityIdentityTransfersSql).toBe('function');
       expect(typeof escapeSqlString).toBe('function');
     });
 
@@ -49,7 +49,7 @@ describe('Deepened City Release Workflow Architecture', () => {
       expect(refreshFacade.publishReviewedRelease).toBe(publishReviewedRelease);
       expect(refreshFacade.recoverInterruptedPublication).toBe(recoverInterruptedPublication);
       expect(refreshFacade.generateCityUpsertSql).toBe(generateCityUpsertSql);
-      expect(refreshFacade.generateIdentityTransfersSql).toBe(generateIdentityTransfersSql);
+      expect(refreshFacade.generateCityIdentityTransfersSql).toBe(generateCityIdentityTransfersSql);
       expect(refreshFacade.DEFAULT_RESOURCE_URL).toBe(DEFAULT_RESOURCE_URL);
     });
   });
@@ -116,7 +116,9 @@ describe('Deepened City Release Workflow Architecture', () => {
         },
         retiredCount: 0,
         officialCount: 351,
-        replacementMappings: [],
+        legacyCount: 0,
+        identityTransfers: [],
+        legacyLifecycleDecisions: [],
         metadata: {
           governorateCount: 27,
         },
@@ -150,18 +152,18 @@ describe('Deepened City Release Workflow Architecture', () => {
       expect(joinedSql).toContain('IF invalid_official_count != 0 THEN');
     });
 
-    it('generates deterministic identity transfer SQL for reviewed recode and replacement mappings', () => {
-      const mappings = [
-        { retiredSourceCode: 'EG0101', replacementSourceCode: 'EG0198' },
-        { retiredSourceCode: "EG0201'OLD", replacementSourceCode: "EG0299'NEW" },
+    it('generates deterministic City identity transfer SQL for reviewed City recodes', () => {
+      const identityTransfers = [
+        { retiredCitySourceCode: 'EG0101', replacementCitySourceCode: 'EG0198' },
+        { retiredCitySourceCode: "EG0201'OLD", replacementCitySourceCode: "EG0299'NEW" },
       ];
 
-      const lines = generateIdentityTransfersSql(mappings, '  ');
+      const lines = generateCityIdentityTransfersSql(identityTransfers, '  ');
       expect(lines).toHaveLength(2);
       expect(lines[0]).toBe("  UPDATE cities SET source_code = 'EG0198' WHERE source_code = 'EG0101';");
       expect(lines[1]).toBe("  UPDATE cities SET source_code = 'EG0299''NEW' WHERE source_code = 'EG0201''OLD';");
 
-      const emptyLines = generateIdentityTransfersSql([], '  ');
+      const emptyLines = generateCityIdentityTransfersSql([], '  ');
       expect(emptyLines).toEqual(['  -- (No identity transfers in this release)']);
     });
   });

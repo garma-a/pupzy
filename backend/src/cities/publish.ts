@@ -173,7 +173,7 @@ export function publishReviewedRelease(
     }
   }
 
-  // 3. Apply reviewed release (validates count changes, metadata, replacement mappings)
+  // 3. Apply reviewed release (validates count changes, metadata, and City identity transfers)
   const release = applyReviewedRelease(currentCatalog, candidateSnapshot, options);
 
   // 4. Validate updated catalog in memory

@@ -402,7 +402,187 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
     });
   });
 
-  describe('Replacement Mapping Validation and Recode Enforcement', () => {
+  describe('Legacy City Lifecycle Preservation', () => {
+    it('keeps matching and missing legacy Cities legacy alongside approved identity transfers and ordinary retirements', () => {
+      const currentCatalog: CityCatalogRecord[] = [
+        {
+          sourceCode: 'EG0101',
+          nameEnglish: 'Recoded City',
+          nameArabic: 'مدينة معاد ترميزها',
+          governorate: 'Cairo',
+          governorateCode: 'EG01',
+          sourceNameEnglish: 'Recoded City',
+          sourceNameArabic: 'مدينة معاد ترميزها',
+          latitude: 30,
+          longitude: 31,
+          status: 'OFFICIAL',
+        },
+        {
+          sourceCode: 'EG0102',
+          nameEnglish: 'Retired City',
+          nameArabic: 'مدينة متقاعدة',
+          governorate: 'Cairo',
+          governorateCode: 'EG01',
+          sourceNameEnglish: 'Retired City',
+          sourceNameArabic: 'مدينة متقاعدة',
+          latitude: 30.1,
+          longitude: 31.1,
+          status: 'OFFICIAL',
+        },
+        {
+          sourceCode: 'EG0103',
+          nameEnglish: 'Stable City',
+          nameArabic: 'مدينة مستقرة',
+          governorate: 'Cairo',
+          governorateCode: 'EG01',
+          sourceNameEnglish: 'Stable City',
+          sourceNameArabic: 'مدينة مستقرة',
+          latitude: 30.2,
+          longitude: 31.2,
+          status: 'OFFICIAL',
+        },
+        {
+          sourceCode: 'EG0104',
+          nameEnglish: 'Matching Legacy City',
+          nameArabic: 'مدينة قديمة مطابقة',
+          governorate: 'Cairo',
+          governorateCode: 'EG01',
+          sourceNameEnglish: 'Matching Legacy City',
+          sourceNameArabic: 'مدينة قديمة مطابقة',
+          latitude: 30.3,
+          longitude: 31.3,
+          status: 'LEGACY',
+        },
+        {
+          sourceCode: 'EG0105',
+          nameEnglish: 'Missing Legacy City',
+          nameArabic: 'مدينة قديمة مفقودة',
+          governorate: 'Cairo',
+          governorateCode: 'EG01',
+          sourceNameEnglish: 'Missing Legacy City',
+          sourceNameArabic: 'مدينة قديمة مفقودة',
+          latitude: 30.4,
+          longitude: 31.4,
+          status: 'LEGACY',
+        },
+      ];
+
+      const candidateSnapshot = createMockSnapshot([
+        {
+          adm2_name: 'Recoded City',
+          adm2_name1: 'مدينة معاد ترميزها',
+          adm2_pcode: 'EG0198',
+          adm1_name: 'Cairo',
+          adm1_pcode: 'EG01',
+          center_lat: 30,
+          center_lon: 31,
+        },
+        {
+          adm2_name: 'Stable City',
+          adm2_name1: 'مدينة مستقرة',
+          adm2_pcode: 'EG0103',
+          adm1_name: 'Cairo',
+          adm1_pcode: 'EG01',
+          center_lat: 30.2,
+          center_lon: 31.2,
+        },
+        {
+          adm2_name: 'Matching Legacy City',
+          adm2_name1: 'مدينة قديمة مطابقة',
+          adm2_pcode: 'EG0104',
+          adm1_name: 'Cairo',
+          adm1_pcode: 'EG01',
+          center_lat: 30.3,
+          center_lon: 31.3,
+        },
+      ]);
+
+      const release = applyReviewedRelease(currentCatalog, candidateSnapshot, {
+        reviewedMetadata: { declaredOfficialCount: 2, governorateCount: 1 },
+        identityTransfers: [
+          {
+            retiredCitySourceCode: 'EG0101',
+            replacementCitySourceCode: 'EG0198',
+          },
+        ],
+      });
+
+      expect(release.officialCount).toBe(2);
+      expect(release.legacyCount).toBe(2);
+      expect(release.retiredCount).toBe(1);
+      expect(release.updatedCatalog.find((city) => city.sourceCode === 'EG0104')?.status).toBe('LEGACY');
+      expect(release.updatedCatalog.find((city) => city.sourceCode === 'EG0105')?.status).toBe('LEGACY');
+      expect(release.updatedCatalog.find((city) => city.sourceCode === 'EG0102')?.status).toBe('RETIRED');
+      expect(release.identityTransfers).toEqual([
+        {
+          retiredCitySourceCode: 'EG0101',
+          replacementCitySourceCode: 'EG0198',
+        },
+      ]);
+
+      const migrationSql = generateReleaseMigrationSql(release, { migrationTag: 'legacy_lifecycle_release' });
+      expect(migrationSql).toContain("UPDATE cities SET source_code = 'EG0198' WHERE source_code = 'EG0101';");
+      expect(migrationSql).toContain("UPDATE cities SET status = 'RETIRED' WHERE source_code IN ('EG0102');");
+      expect(migrationSql).toContain("'EG0104', 'Matching Legacy City', 'مدينة قديمة مطابقة', 'Cairo'");
+      expect(migrationSql).toContain("'LEGACY'");
+    });
+
+    it('applies an explicit reviewed lifecycle decision before promoting a matching legacy City', () => {
+      const legacyCity: CityCatalogRecord = {
+        sourceCode: 'EG0104',
+        nameEnglish: 'Matching Legacy City',
+        nameArabic: 'مدينة قديمة مطابقة',
+        governorate: 'Cairo',
+        governorateCode: 'EG01',
+        sourceNameEnglish: 'Matching Legacy City',
+        sourceNameArabic: 'مدينة قديمة مطابقة',
+        latitude: 30.3,
+        longitude: 31.3,
+        status: 'LEGACY',
+      };
+      const candidateSnapshot = createMockSnapshot([
+        {
+          adm2_name: 'Canonical Matching City',
+          adm2_name1: 'مدينة مطابقة قياسية',
+          adm2_pcode: legacyCity.sourceCode,
+          adm1_name: legacyCity.governorate,
+          adm1_pcode: legacyCity.governorateCode,
+          center_lat: legacyCity.latitude,
+          center_lon: legacyCity.longitude,
+        },
+      ]);
+
+      const release = applyReviewedRelease([legacyCity], candidateSnapshot, {
+        reviewedMetadata: { declaredOfficialCount: 1, governorateCount: 1 },
+        legacyLifecycleDecisions: [
+          {
+            legacyCitySourceCode: legacyCity.sourceCode,
+            nextCityLifecycleStatus: 'OFFICIAL',
+            notes: 'Reviewed promotion after identity confirmation.',
+          },
+        ],
+      });
+
+      expect(release.officialCount).toBe(1);
+      expect(release.legacyCount).toBe(0);
+      expect(release.updatedCatalog).toEqual([
+        expect.objectContaining({
+          sourceCode: legacyCity.sourceCode,
+          nameEnglish: 'Canonical Matching City',
+          status: 'OFFICIAL',
+        }),
+      ]);
+      expect(release.legacyLifecycleDecisions).toEqual([
+        {
+          legacyCitySourceCode: legacyCity.sourceCode,
+          nextCityLifecycleStatus: 'OFFICIAL',
+          notes: 'Reviewed promotion after identity confirmation.',
+        },
+      ]);
+    });
+  });
+
+  describe('City Identity Transfer Validation and Recode Enforcement', () => {
     const baseCatalog: CityCatalogRecord[] = [
       {
         sourceCode: 'EG0101',
@@ -442,7 +622,7 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
       },
     ];
 
-    it('requires an explicit reviewed replacement mapping when an upstream recode is detected', () => {
+    it('requires an explicit reviewed City identity transfer when an upstream recode is detected', () => {
       // Candidate changes EG0101's sourceCode to EG0198 (same name & governorate -> detected recode)
       const candidateRaw = [
         {
@@ -467,20 +647,20 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
 
       const candidateSnapshot = createMockSnapshot(candidateRaw);
 
-      // 1. Attempting without replacement mapping fails closed
+      // 1. Attempting without a City identity transfer fails closed
       expect(() =>
         applyReviewedRelease(baseCatalog, candidateSnapshot, {
           reviewedMetadata: { declaredOfficialCount: 2, governorateCount: 1 },
         }),
-      ).toThrow(/Unreviewed recode detected for 'Recoded City' in governorate 'Cairo' \(EG0101 -> EG0198\)/);
+      ).toThrow(/Unreviewed City recode detected for 'Recoded City' in governorate 'Cairo' \(EG0101 -> EG0198\)/);
 
-      // 2. Providing explicit matching replacement mapping succeeds
+      // 2. Providing an explicit matching City identity transfer succeeds
       const release = applyReviewedRelease(baseCatalog, candidateSnapshot, {
         reviewedMetadata: { declaredOfficialCount: 2, governorateCount: 1 },
-        replacementMappings: [
+        identityTransfers: [
           {
-            retiredSourceCode: 'EG0101',
-            replacementSourceCode: 'EG0198',
+            retiredCitySourceCode: 'EG0101',
+            replacementCitySourceCode: 'EG0198',
             notes: 'Recoded from EG0101 to EG0198',
           },
         ],
@@ -488,16 +668,16 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
 
       expect(release.officialCount).toBe(2);
       expect(release.retiredCount).toBe(1); // EG0102 became RETIRED
-      expect(release.replacementMappings).toEqual([
+      expect(release.identityTransfers).toEqual([
         {
-          retiredSourceCode: 'EG0101',
-          replacementSourceCode: 'EG0198',
+          retiredCitySourceCode: 'EG0101',
+          replacementCitySourceCode: 'EG0198',
           notes: 'Recoded from EG0101 to EG0198',
         },
       ]);
     });
 
-    it('validates 1:1 bijective replacement mappings and rejects invalid, incomplete, or duplicate configurations', () => {
+    it('validates 1:1 bijective City identity transfers and rejects invalid, incomplete, or duplicate configurations', () => {
       const candidateRaw = [
         {
           adm2_name: 'New City 1',
@@ -533,46 +713,48 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
       expect(() =>
         applyReviewedRelease(baseCatalog, candidateSnapshot, {
           reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
-          replacementMappings: [{ retiredSourceCode: '', replacementSourceCode: 'EG0198' }],
+          identityTransfers: [{ retiredCitySourceCode: '', replacementCitySourceCode: 'EG0198' }],
         }),
-      ).toThrow(/missing or invalid retiredSourceCode/);
+      ).toThrow(/missing or invalid retiredCitySourceCode/);
 
       expect(() =>
         applyReviewedRelease(baseCatalog, candidateSnapshot, {
           reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
-          replacementMappings: [{ retiredSourceCode: 'EG0101', replacementSourceCode: '   ' }],
+          identityTransfers: [{ retiredCitySourceCode: 'EG0101', replacementCitySourceCode: '   ' }],
         }),
-      ).toThrow(/missing or invalid replacementSourceCode/);
+      ).toThrow(/missing or invalid replacementCitySourceCode/);
 
-      // 2. Unknown retiredSourceCode
+      // 2. Unknown retired City source code
       expect(() =>
         applyReviewedRelease(baseCatalog, candidateSnapshot, {
           reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
-          replacementMappings: [{ retiredSourceCode: 'EG9999_UNKNOWN', replacementSourceCode: 'EG0198' }],
+          identityTransfers: [{ retiredCitySourceCode: 'EG9999_UNKNOWN', replacementCitySourceCode: 'EG0198' }],
         }),
-      ).toThrow(/is not an active official city in the current catalog/);
+      ).toThrow(/is not an active official City in the current catalog/);
 
       // 3. Active-as-source (EG0103 is still active in candidate release)
       expect(() =>
         applyReviewedRelease(baseCatalog, candidateSnapshot, {
           reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
-          replacementMappings: [{ retiredSourceCode: 'EG0103', replacementSourceCode: 'EG0198' }],
+          identityTransfers: [{ retiredCitySourceCode: 'EG0103', replacementCitySourceCode: 'EG0198' }],
         }),
-      ).toThrow(/is still an active official city in the candidate release/);
+      ).toThrow(/is still an active official City in the candidate release/);
 
-      // 4. Unknown/retired replacementSourceCode target
+      // 4. Unknown/retired replacement City source code target
       expect(() =>
         applyReviewedRelease(baseCatalog, candidateSnapshot, {
           reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
-          replacementMappings: [{ retiredSourceCode: 'EG0101', replacementSourceCode: 'EG9999_NOT_IN_CANDIDATE' }],
+          identityTransfers: [
+            { retiredCitySourceCode: 'EG0101', replacementCitySourceCode: 'EG9999_NOT_IN_CANDIDATE' },
+          ],
         }),
-      ).toThrow(/is not an active official city in the candidate release/);
+      ).toThrow(/is not an active official City in the candidate release/);
 
       // 5. Target already active in current catalog (not a new source identity)
       expect(() =>
         applyReviewedRelease(baseCatalog, candidateSnapshot, {
           reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
-          replacementMappings: [{ retiredSourceCode: 'EG0101', replacementSourceCode: 'EG0103' }],
+          identityTransfers: [{ retiredCitySourceCode: 'EG0101', replacementCitySourceCode: 'EG0103' }],
         }),
       ).toThrow(/already exists in the current catalog/);
 
@@ -580,31 +762,31 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
       expect(() =>
         applyReviewedRelease(baseCatalog, candidateSnapshot, {
           reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
-          replacementMappings: [{ retiredSourceCode: 'EG0101', replacementSourceCode: 'EG0101' }],
+          identityTransfers: [{ retiredCitySourceCode: 'EG0101', replacementCitySourceCode: 'EG0101' }],
         }),
-      ).toThrow(/cannot map city 'EG0101' to itself/);
+      ).toThrow(/cannot transfer City 'EG0101' to itself/);
 
       // 7. Duplicate retired source (many-to-one from)
       expect(() =>
         applyReviewedRelease(baseCatalog, candidateSnapshot, {
           reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
-          replacementMappings: [
-            { retiredSourceCode: 'EG0101', replacementSourceCode: 'EG0198' },
-            { retiredSourceCode: 'EG0101', replacementSourceCode: 'EG0199' },
+          identityTransfers: [
+            { retiredCitySourceCode: 'EG0101', replacementCitySourceCode: 'EG0198' },
+            { retiredCitySourceCode: 'EG0101', replacementCitySourceCode: 'EG0199' },
           ],
         }),
-      ).toThrow(/Duplicate replacement mapping for retired city 'EG0101'/);
+      ).toThrow(/Duplicate City identity transfer for retired City 'EG0101'/);
 
-      // 8. Duplicate replacement target (many-to-one to)
+      // 8. Duplicate replacement City target (many-to-one)
       expect(() =>
         applyReviewedRelease(baseCatalog, candidateSnapshot, {
           reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
-          replacementMappings: [
-            { retiredSourceCode: 'EG0101', replacementSourceCode: 'EG0198' },
-            { retiredSourceCode: 'EG0102', replacementSourceCode: 'EG0198' },
+          identityTransfers: [
+            { retiredCitySourceCode: 'EG0101', replacementCitySourceCode: 'EG0198' },
+            { retiredCitySourceCode: 'EG0102', replacementCitySourceCode: 'EG0198' },
           ],
         }),
-      ).toThrow(/Duplicate replacement mapping for replacement city 'EG0198'/);
+      ).toThrow(/Duplicate City identity transfer for replacement City 'EG0198'/);
     });
 
     it('correctly compiles catalog records and generates identity transfer SQL in release migrations', () => {
@@ -632,10 +814,10 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
 
       const release = applyReviewedRelease(baseCatalog, candidateSnapshot, {
         reviewedMetadata: { declaredOfficialCount: 2, governorateCount: 1 },
-        replacementMappings: [
+        identityTransfers: [
           {
-            retiredSourceCode: 'EG0101',
-            replacementSourceCode: 'EG0198',
+            retiredCitySourceCode: 'EG0101',
+            replacementCitySourceCode: 'EG0198',
             notes: 'Recode EG0101 -> EG0198',
           },
         ],

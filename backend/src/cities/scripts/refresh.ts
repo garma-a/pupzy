@@ -16,15 +16,15 @@ function printDiffReport(diff: SnapshotDiffReport): void {
   console.log(`Current catalog total:   ${diff.summary.totalCurrent}`);
   console.log(`Candidate snapshot total: ${diff.summary.totalCandidate}`);
   console.log('───────────────────────────────────────────────────────────────');
-  console.log(`  Added areas:              ${diff.summary.addedCount}`);
-  console.log(`  Removed areas:            ${diff.summary.removedCount}`);
-  console.log(`  Renamed areas:            ${diff.summary.renamedCount}`);
-  console.log(`  Recoded areas:            ${diff.summary.recodedCount}`);
+  console.log(`  Added Cities:             ${diff.summary.addedCount}`);
+  console.log(`  Removed Cities:           ${diff.summary.removedCount}`);
+  console.log(`  Renamed Cities:           ${diff.summary.renamedCount}`);
+  console.log(`  Recoded Cities:           ${diff.summary.recodedCount}`);
   console.log(`  Coordinate changes:       ${diff.summary.coordinateChangedCount}`);
   console.log('───────────────────────────────────────────────────────────────\n');
 
   if (diff.added.length > 0) {
-    console.log('➕ Added Areas:');
+    console.log('➕ Added Cities:');
     for (const a of diff.added) {
       console.log(`  [${a.sourceCode}] ${a.governorate}: ${a.nameEnglish} (${a.nameArabic})`);
     }
@@ -32,7 +32,7 @@ function printDiffReport(diff: SnapshotDiffReport): void {
   }
 
   if (diff.removed.length > 0) {
-    console.log('➖ Removed Areas (will become RETIRED):');
+    console.log('➖ Removed Cities (will become RETIRED):');
     for (const r of diff.removed) {
       console.log(`  [${r.sourceCode}] ${r.governorate}: ${r.nameEnglish} (${r.nameArabic})`);
     }
@@ -40,7 +40,7 @@ function printDiffReport(diff: SnapshotDiffReport): void {
   }
 
   if (diff.renamed.length > 0) {
-    console.log('✏️  Renamed Areas:');
+    console.log('✏️  Renamed Cities:');
     for (const rn of diff.renamed) {
       console.log(
         `  [${rn.sourceCode}] ${rn.governorate}: "${rn.oldNameEnglish}" -> "${rn.newNameEnglish}" | "${rn.oldNameArabic}" -> "${rn.newNameArabic}"`,
@@ -50,7 +50,7 @@ function printDiffReport(diff: SnapshotDiffReport): void {
   }
 
   if (diff.recoded.length > 0) {
-    console.log('🔄 Recoded Areas:');
+    console.log('🔄 Recoded Cities:');
     for (const rc of diff.recoded) {
       console.log(`  ${rc.governorate}: ${rc.nameEnglish} code changed: ${rc.oldSourceCode} -> ${rc.newSourceCode}`);
     }
@@ -72,7 +72,8 @@ export async function main(): Promise<void> {
   const fetchIndex = args.indexOf('--fetch');
   const officialCountIndex = args.indexOf('--official-count');
   const govCountIndex = args.indexOf('--gov-count');
-  const mappingsIndex = args.indexOf('--mappings');
+  const identityTransfersIndex = args.indexOf('--identity-transfers');
+  const legacyLifecycleDecisionsIndex = args.indexOf('--legacy-lifecycle-decisions');
   const applyFlag = args.includes('--apply');
 
   const currentCatalog = getOfficialCatalog();
@@ -113,10 +114,17 @@ export async function main(): Promise<void> {
       options.reviewedMetadata.governorateCount = parseInt(args[govCountIndex + 1], 10);
     }
 
-    if (mappingsIndex !== -1 && args[mappingsIndex + 1]) {
-      const mappingsPath = path.resolve(process.cwd(), args[mappingsIndex + 1]);
-      const mappingsContent = fs.readFileSync(mappingsPath, 'utf8');
-      options.replacementMappings = JSON.parse(mappingsContent) as ReviewedReleaseOptions['replacementMappings'];
+    if (identityTransfersIndex !== -1 && args[identityTransfersIndex + 1]) {
+      const identityTransfersPath = path.resolve(process.cwd(), args[identityTransfersIndex + 1]);
+      const identityTransfersContent = fs.readFileSync(identityTransfersPath, 'utf8');
+      options.identityTransfers = JSON.parse(identityTransfersContent) as ReviewedReleaseOptions['identityTransfers'];
+    }
+    if (legacyLifecycleDecisionsIndex !== -1 && args[legacyLifecycleDecisionsIndex + 1]) {
+      const legacyLifecycleDecisionsPath = path.resolve(process.cwd(), args[legacyLifecycleDecisionsIndex + 1]);
+      const legacyLifecycleDecisionsContent = fs.readFileSync(legacyLifecycleDecisionsPath, 'utf8');
+      options.legacyLifecycleDecisions = JSON.parse(
+        legacyLifecycleDecisionsContent,
+      ) as ReviewedReleaseOptions['legacyLifecycleDecisions'];
     }
 
     const result = publishReviewedRelease(currentCatalog, candidateSnapshot, options);
@@ -130,7 +138,7 @@ export async function main(): Promise<void> {
       console.log('✓ Drizzle migrations journal updated.');
     }
     console.log(
-      `✓ Release summary: ${result.release.officialCount} official cities, ${result.release.retiredCount} retired cities.`,
+      `✓ Release summary: ${result.release.officialCount} official Cities, ${result.release.legacyCount} legacy Cities, ${result.release.retiredCount} retired Cities.`,
     );
   }
 }

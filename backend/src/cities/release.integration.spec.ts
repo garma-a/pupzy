@@ -174,10 +174,10 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
         declaredOfficialCount: 350,
         governorateCount: 27,
       },
-      replacementMappings: [
+      identityTransfers: [
         {
-          retiredSourceCode: 'EG0101',
-          replacementSourceCode: 'EG0198',
+          retiredCitySourceCode: 'EG0101',
+          replacementCitySourceCode: 'EG0198',
           notes: 'Recoded EG0101 to EG0198',
         },
       ],
@@ -673,18 +673,18 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
       applyReviewedRelease(baseCatalog, recodeSnapshot, {
         reviewedMetadata: { declaredOfficialCount: 351, governorateCount: 27 },
       }),
-    ).toThrow(/Unreviewed recode detected for 'Al Tibbin'/);
+    ).toThrow(/Unreviewed City recode detected for 'Al Tibbin'/);
 
     // 2. Many-to-one mapping (two retired cities mapped to the same replacement target)
     expect(() =>
       applyReviewedRelease(baseCatalog, recodeSnapshot, {
         reviewedMetadata: { declaredOfficialCount: 351, governorateCount: 27 },
-        replacementMappings: [
-          { retiredSourceCode: 'EG0101', replacementSourceCode: 'EG0198' },
-          { retiredSourceCode: 'EG0102', replacementSourceCode: 'EG0198' },
+        identityTransfers: [
+          { retiredCitySourceCode: 'EG0101', replacementCitySourceCode: 'EG0198' },
+          { retiredCitySourceCode: 'EG0102', replacementCitySourceCode: 'EG0198' },
         ],
       }),
-    ).toThrow(/Duplicate replacement mapping for replacement city 'EG0198'/);
+    ).toThrow(/Duplicate City identity transfer for replacement City 'EG0198'/);
   });
 
   describe('End-to-End Published Release Migration with Drizzle Runner', () => {
@@ -774,10 +774,10 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
           declaredOfficialCount: 350,
           governorateCount: 27,
         },
-        replacementMappings: [
+        identityTransfers: [
           {
-            retiredSourceCode: 'EG0101',
-            replacementSourceCode: 'EG0198',
+            retiredCitySourceCode: 'EG0101',
+            replacementCitySourceCode: 'EG0198',
             notes: 'Recoded EG0101 to EG0198',
           },
         ],
@@ -912,10 +912,10 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
           declaredOfficialCount: 350,
           governorateCount: 27,
         },
-        replacementMappings: [
+        identityTransfers: [
           {
-            retiredSourceCode: 'EG0101',
-            replacementSourceCode: 'EG0198',
+            retiredCitySourceCode: 'EG0101',
+            replacementCitySourceCode: 'EG0198',
             notes: 'Recoded EG0101 to EG0198',
           },
         ],

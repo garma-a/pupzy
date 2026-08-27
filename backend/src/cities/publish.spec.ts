@@ -366,10 +366,10 @@ describe('Atomic Append-Only City Release Publication & History Reconciliation',
             declaredOfficialCount: 350,
             governorateCount: 27,
           },
-          replacementMappings: [
+          identityTransfers: [
             {
-              retiredSourceCode: 'EG0101',
-              replacementSourceCode: 'EG0198',
+              retiredCitySourceCode: 'EG0101',
+              replacementCitySourceCode: 'EG0198',
               notes: 'Recoded EG0101 to EG0198',
             },
           ],
@@ -533,10 +533,10 @@ describe('Atomic Append-Only City Release Publication & History Reconciliation',
           declaredOfficialCount: 350,
           governorateCount: 27,
         },
-        replacementMappings: [
+        identityTransfers: [
           {
-            retiredSourceCode: 'EG0101',
-            replacementSourceCode: 'EG0198',
+            retiredCitySourceCode: 'EG0101',
+            replacementCitySourceCode: 'EG0198',
             notes: 'Recoded EG0101 to EG0198',
           },
         ],
