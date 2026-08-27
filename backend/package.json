@@ -21,7 +21,8 @@
     "db:migrate": "ts-node -r tsconfig-paths/register src/database/migrate.ts",
     "db:migrate:prod": "node dist/database/migrate.js",
     "db:seed": "ts-node -r tsconfig-paths/register src/database/seed.ts",
-    "db:custom": "ts-node -r tsconfig-paths/register src/database/migrate.ts"
+    "db:custom": "ts-node -r tsconfig-paths/register src/database/migrate.ts",
+    "cities:refresh": "ts-node -r tsconfig-paths/register src/cities/scripts/refresh.ts"
   },
   "dependencies": {
     "@apollo/server": "^5.5.1",

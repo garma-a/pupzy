@@ -70,6 +70,15 @@ export class CitiesService {
   }
 
   /**
+   * Clears the in-memory cached city listings.
+   * Called during migrations and reconciliation to prevent serving stale reference data.
+   */
+  async clearCache(): Promise<void> {
+    await this.cacheManager.del('cities:all');
+    this.logger.log('Cities cache invalidated successfully.');
+  }
+
+  /**
    * Creates a fresh DataLoader instance for batch-loading cities by ID.
    *
    * ## Why a factory method?
