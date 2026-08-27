@@ -9,6 +9,12 @@ import {
   type CityCatalogRecord,
   type CityCatalog,
 } from './catalog';
+import {
+  escapeSqlString,
+  generateCitiesUpsertSql,
+  generatePostGovernorateSyncSql,
+  generateCityVerificationSql,
+} from './release-sql';
 
 export interface LegacyCityMapping {
   legacyGovernorate: string;
@@ -391,10 +397,6 @@ export async function reconcileCities(db: any, options: ReconcileOptions = {}): 
   };
 }
 
-function escapeSqlString(str: string): string {
-  return str.replace(/'/g, "''");
-}
-
 /**
  * Generates deterministic, fully offline Drizzle SQL migration statements for database reconciliation.
  */
@@ -490,63 +492,15 @@ export function generateReconcileMigrationSql(
   lines.push('  END IF;');
   lines.push('');
   lines.push('  -- 3. Update denormalized governorate values in posts for matched official cities');
-  lines.push(
-    `  UPDATE posts SET governorate = cities.governorate FROM cities WHERE posts.city_id = cities.id AND cities.status = 'OFFICIAL';`,
-  );
+  lines.push(generatePostGovernorateSyncSql('  '));
   lines.push('');
   lines.push(`  -- 4. Insert missing official cities and apply canonical updates to existing official cities`);
-
-  for (const off of catalogRecords) {
-    const dbValues = mapCatalogRecordToDbValues(off);
-    lines.push(
-      `  INSERT INTO cities (` +
-        `source_code, name_english, name_arabic, governorate, source_name_english, source_name_arabic, status, center_point` +
-        `) VALUES (` +
-        `'${escapeSqlString(dbValues.sourceCode)}', ` +
-        `'${escapeSqlString(dbValues.nameEnglish)}', ` +
-        `'${escapeSqlString(dbValues.nameArabic)}', ` +
-        `'${escapeSqlString(dbValues.governorate)}', ` +
-        `'${escapeSqlString(dbValues.sourceNameEnglish)}', ` +
-        `'${escapeSqlString(dbValues.sourceNameArabic)}', ` +
-        `'${escapeSqlString(dbValues.status)}', ` +
-        `ST_SetSRID(ST_MakePoint(${dbValues.longitude}, ${dbValues.latitude}), 4326)` +
-        `) ON CONFLICT (source_code) DO UPDATE SET ` +
-        `name_english = EXCLUDED.name_english, ` +
-        `name_arabic = EXCLUDED.name_arabic, ` +
-        `governorate = EXCLUDED.governorate, ` +
-        `source_name_english = EXCLUDED.source_name_english, ` +
-        `source_name_arabic = EXCLUDED.source_name_arabic, ` +
-        `status = EXCLUDED.status, ` +
-        `center_point = EXCLUDED.center_point;`,
-    );
-  }
-
+  lines.push(...generateCitiesUpsertSql(catalogRecords, '  '));
   lines.push('');
   lines.push(
     `  -- 5. Verification checks: assert exactly ${expectedOfficialCount} official cities and ${expectedGovCount} governorates`,
   );
-  lines.push('  SELECT');
-  lines.push(`    count(*) FILTER (WHERE status = 'OFFICIAL'),`);
-  lines.push(`    count(DISTINCT governorate) FILTER (WHERE status = 'OFFICIAL'),`);
-  lines.push(`    count(*) FILTER (WHERE status = 'OFFICIAL' AND source_code IS NULL)`);
-  lines.push('  INTO official_count, gov_count, invalid_official_count');
-  lines.push('  FROM cities;');
-  lines.push('');
-  lines.push(`  IF official_count != ${expectedOfficialCount} THEN`);
-  lines.push(
-    `    RAISE EXCEPTION 'City reconciliation verification failed: expected ${expectedOfficialCount} official cities, found %', official_count;`,
-  );
-  lines.push('  END IF;');
-  lines.push(`  IF gov_count != ${expectedGovCount} THEN`);
-  lines.push(
-    `    RAISE EXCEPTION 'City reconciliation verification failed: expected ${expectedGovCount} governorates, found %', gov_count;`,
-  );
-  lines.push('  END IF;');
-  lines.push('  IF invalid_official_count != 0 THEN');
-  lines.push(
-    `    RAISE EXCEPTION 'City reconciliation verification failed: found % official cities without source_code', invalid_official_count;`,
-  );
-  lines.push('  END IF;');
+  lines.push(...generateCityVerificationSql(expectedOfficialCount, expectedGovCount, '  ', 'City reconciliation'));
   lines.push('END $$;');
   lines.push('');
 
