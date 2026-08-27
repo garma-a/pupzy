@@ -190,4 +190,41 @@ describe('seedOfficialCities', () => {
       : JSON.stringify(queryCall);
     expect(queryString).toContain('OFFICIAL');
   });
+
+  describe('Cache invalidation on seed', () => {
+    it('executes clearCache or citiesService.clearCache post-commit', async () => {
+      let cacheCleared = false;
+      const mockCitiesService = {
+        clearCache: jest.fn().mockImplementation(() => {
+          cacheCleared = true;
+          return Promise.resolve();
+        }),
+      };
+
+      await seedOfficialCities(mockDb, {
+        citiesService: mockCitiesService,
+      });
+
+      expect(mockCitiesService.clearCache).toHaveBeenCalledTimes(1);
+      expect(cacheCleared).toBe(true);
+    });
+
+    it('does not invoke cache invalidation if seed transaction fails', async () => {
+      const failingDb = {
+        transaction: jest.fn().mockRejectedValue(new Error('Seed DB connection error')),
+      };
+
+      const mockCitiesService = {
+        clearCache: jest.fn(),
+      };
+
+      await expect(
+        seedOfficialCities(failingDb, {
+          citiesService: mockCitiesService,
+        }),
+      ).rejects.toThrow('Seed DB connection error');
+
+      expect(mockCitiesService.clearCache).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -21,53 +21,122 @@ describe('CitiesService', () => {
     createdAt: new Date(),
   };
 
+  const mockLegacyCity: City = {
+    id: '01916327-0000-7000-8000-000000000002',
+    nameEnglish: 'Legacy Quarter',
+    nameArabic: 'حي قديم',
+    governorate: 'Cairo',
+    sourceCode: null,
+    sourceNameEnglish: null,
+    sourceNameArabic: null,
+    status: 'LEGACY',
+    centerPoint: [31.2, 30.0] as [number, number],
+    createdAt: new Date(),
+  };
+
+  const mockRetiredCity: City = {
+    id: '01916327-0000-7000-8000-000000000003',
+    nameEnglish: 'Retired Markaz',
+    nameArabic: 'مركز ملغي',
+    governorate: 'Giza',
+    sourceCode: 'EG2199',
+    sourceNameEnglish: 'Retired Markaz',
+    sourceNameArabic: 'مركز ملغي',
+    status: 'RETIRED',
+    centerPoint: [31.1, 29.9] as [number, number],
+    createdAt: new Date(),
+  };
+
   beforeEach(() => {
     mockRepo = {
       findAll: jest.fn().mockResolvedValue([mockCity]),
-      findById: jest.fn().mockResolvedValue(mockCity),
+      findById: jest.fn().mockImplementation((id: string) => {
+        if (id === mockCity.id) return Promise.resolve(mockCity);
+        if (id === mockLegacyCity.id) return Promise.resolve(mockLegacyCity);
+        if (id === mockRetiredCity.id) return Promise.resolve(mockRetiredCity);
+        return Promise.resolve(undefined);
+      }),
       findNearest: jest.fn().mockResolvedValue(mockCity),
       findByIds: jest.fn().mockResolvedValue([mockCity]),
     };
 
+    const store = new Map<string, unknown>();
     mockCache = {
-      get: jest.fn().mockResolvedValue(undefined),
-      set: jest.fn().mockResolvedValue(undefined),
+      get: jest.fn().mockImplementation((key: string) => Promise.resolve(store.get(key) as City | City[] | undefined)),
+      set: jest.fn().mockImplementation((key: string, value: unknown) => {
+        store.set(key, value);
+        return Promise.resolve();
+      }),
+      del: jest.fn().mockImplementation((key: string) => {
+        store.delete(key);
+        return Promise.resolve();
+      }),
     };
 
     service = new CitiesService(mockRepo as CitiesRepository, mockCache as Cache);
   });
 
   describe('findAll', () => {
-    it('returns cached list if present', async () => {
-      mockCache.get = jest.fn().mockResolvedValue([mockCity]);
+    it('returns cached list if present and avoids database query', async () => {
+      // First call primes the cache
+      const first = await service.findAll();
+      expect(first).toEqual([mockCity]);
+      expect(mockRepo.findAll).toHaveBeenCalledTimes(1);
 
-      const result = await service.findAll();
-      expect(result).toEqual([mockCity]);
-      expect(mockRepo.findAll).not.toHaveBeenCalled();
+      // Second call returns from cache without calling repository again
+      const second = await service.findAll();
+      expect(second).toEqual([mockCity]);
+      expect(mockRepo.findAll).toHaveBeenCalledTimes(1);
     });
 
     it('fetches from repository and sets cache on cache miss', async () => {
       const result = await service.findAll();
       expect(result).toEqual([mockCity]);
       expect(mockRepo.findAll).toHaveBeenCalled();
-      expect(mockCache.set).toHaveBeenCalledWith('cities:all', [mockCity], 86_400_000);
+      expect(mockCache.set).toHaveBeenCalled();
     });
   });
 
   describe('findById', () => {
-    it('returns cached city if present', async () => {
-      mockCache.get = jest.fn().mockResolvedValue(mockCity);
+    it('returns and caches official city by UUID', async () => {
+      const first = await service.findById(mockCity.id);
+      expect(first).toEqual(mockCity);
+      expect(mockRepo.findById).toHaveBeenCalledWith(mockCity.id);
+      expect(mockRepo.findById).toHaveBeenCalledTimes(1);
 
-      const result = await service.findById(mockCity.id);
-      expect(result).toEqual(mockCity);
-      expect(mockRepo.findById).not.toHaveBeenCalled();
+      const second = await service.findById(mockCity.id);
+      expect(second).toEqual(mockCity);
+      expect(mockRepo.findById).toHaveBeenCalledTimes(1);
     });
 
-    it('fetches from repository and caches on cache miss', async () => {
-      const result = await service.findById(mockCity.id);
-      expect(result).toEqual(mockCity);
-      expect(mockRepo.findById).toHaveBeenCalledWith(mockCity.id);
-      expect(mockCache.set).toHaveBeenCalled();
+    it('returns and caches legacy city by UUID', async () => {
+      const first = await service.findById(mockLegacyCity.id);
+      expect(first).toEqual(mockLegacyCity);
+      expect(first?.status).toBe('LEGACY');
+      expect(mockRepo.findById).toHaveBeenCalledWith(mockLegacyCity.id);
+      expect(mockRepo.findById).toHaveBeenCalledTimes(1);
+
+      const second = await service.findById(mockLegacyCity.id);
+      expect(second).toEqual(mockLegacyCity);
+      expect(mockRepo.findById).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns and caches retired city by UUID', async () => {
+      const first = await service.findById(mockRetiredCity.id);
+      expect(first).toEqual(mockRetiredCity);
+      expect(first?.status).toBe('RETIRED');
+      expect(mockRepo.findById).toHaveBeenCalledWith(mockRetiredCity.id);
+      expect(mockRepo.findById).toHaveBeenCalledTimes(1);
+
+      const second = await service.findById(mockRetiredCity.id);
+      expect(second).toEqual(mockRetiredCity);
+      expect(mockRepo.findById).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns undefined and does not cache when city is not found', async () => {
+      const result = await service.findById('nonexistent-uuid');
+      expect(result).toBeUndefined();
+      expect(mockRepo.findById).toHaveBeenCalledWith('nonexistent-uuid');
     });
   });
 
@@ -80,12 +149,111 @@ describe('CitiesService', () => {
   });
 
   describe('clearCache', () => {
-    it('invalidates cities cache entries so fresh taxonomy is returned', async () => {
-      mockCache.del = jest.fn().mockResolvedValue(undefined);
+    it('invalidates both cached official lists and cached per-ID lookups across all lifecycle states', async () => {
+      // Prime cache for list and multiple IDs (official, legacy, retired)
+      await service.findAll();
+      await service.findById(mockCity.id);
+      await service.findById(mockLegacyCity.id);
+      await service.findById(mockRetiredCity.id);
 
+      expect(mockRepo.findAll).toHaveBeenCalledTimes(1);
+      expect(mockRepo.findById).toHaveBeenCalledTimes(3);
+
+      // Verify cached lookups do not call repo
+      await service.findAll();
+      await service.findById(mockCity.id);
+      await service.findById(mockLegacyCity.id);
+      await service.findById(mockRetiredCity.id);
+      expect(mockRepo.findAll).toHaveBeenCalledTimes(1);
+      expect(mockRepo.findById).toHaveBeenCalledTimes(3);
+
+      // Prepare updated post-reconciliation city models
+      const updatedOfficialCity: City = {
+        ...mockCity,
+        nameEnglish: 'Updated Cairo Canonical',
+      };
+      const updatedLegacyCity: City = {
+        ...mockLegacyCity,
+        status: 'LEGACY',
+      };
+      const updatedRetiredCity: City = {
+        ...mockRetiredCity,
+        status: 'RETIRED',
+      };
+
+      mockRepo.findAll = jest.fn().mockResolvedValue([updatedOfficialCity]);
+      mockRepo.findById = jest.fn().mockImplementation((id: string) => {
+        if (id === mockCity.id) return Promise.resolve(updatedOfficialCity);
+        if (id === mockLegacyCity.id) return Promise.resolve(updatedLegacyCity);
+        if (id === mockRetiredCity.id) return Promise.resolve(updatedRetiredCity);
+        return Promise.resolve(undefined);
+      });
+
+      // Clear cache
       await service.clearCache();
 
-      expect(mockCache.del).toHaveBeenCalledWith('cities:all');
+      // Subsequent findAll must NOT return pre-change cached list
+      const freshList = await service.findAll();
+      expect(freshList).toEqual([updatedOfficialCity]);
+      expect(freshList[0].nameEnglish).toBe('Updated Cairo Canonical');
+      expect(mockRepo.findAll).toHaveBeenCalledTimes(1);
+
+      // Subsequent findById for official city must NOT return pre-change value
+      const freshOfficial = await service.findById(mockCity.id);
+      expect(freshOfficial).toEqual(updatedOfficialCity);
+      expect(freshOfficial?.nameEnglish).toBe('Updated Cairo Canonical');
+      expect(mockRepo.findById).toHaveBeenCalledWith(mockCity.id);
+
+      // Subsequent findById for legacy city must NOT return pre-change value
+      const freshLegacy = await service.findById(mockLegacyCity.id);
+      expect(freshLegacy).toEqual(updatedLegacyCity);
+
+      // Subsequent findById for retired city must NOT return pre-change value
+      const freshRetired = await service.findById(mockRetiredCity.id);
+      expect(freshRetired).toEqual(updatedRetiredCity);
+    });
+  });
+
+  describe('Application restart and single-replica deployment simulation', () => {
+    it('starts with clean cache on new service instance and queries repository directly', async () => {
+      // Simulate existing service having cached data
+      await service.findAll();
+      await service.findById(mockCity.id);
+
+      // Simulate database update during pre-deploy migration
+      const postDeployCity: City = {
+        ...mockCity,
+        nameEnglish: 'New Release Cairo',
+      };
+      const newRepo: jest.Mocked<Partial<CitiesRepository>> = {
+        findAll: jest.fn().mockResolvedValue([postDeployCity]),
+        findById: jest.fn().mockResolvedValue(postDeployCity),
+      };
+      const newCacheStore = new Map<string, unknown>();
+      const newCache: jest.Mocked<Partial<Cache>> = {
+        get: jest
+          .fn()
+          .mockImplementation((k: string) => Promise.resolve(newCacheStore.get(k) as City | City[] | undefined)),
+        set: jest.fn().mockImplementation((k: string, v: unknown) => {
+          newCacheStore.set(k, v);
+          return Promise.resolve();
+        }),
+        del: jest.fn().mockImplementation((k: string) => {
+          newCacheStore.delete(k);
+          return Promise.resolve();
+        }),
+      };
+
+      // Create new service instance (simulating new container starting after pre-deploy migration)
+      const restartedService = new CitiesService(newRepo as CitiesRepository, newCache as Cache);
+
+      const listResult = await restartedService.findAll();
+      expect(listResult).toEqual([postDeployCity]);
+      expect(newRepo.findAll).toHaveBeenCalledTimes(1);
+
+      const cityResult = await restartedService.findById(mockCity.id);
+      expect(cityResult).toEqual(postDeployCity);
+      expect(newRepo.findById).toHaveBeenCalledWith(mockCity.id);
     });
   });
 

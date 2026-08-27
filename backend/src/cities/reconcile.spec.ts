@@ -8,6 +8,9 @@ import {
   type ExistingCityRow,
 } from './reconcile';
 import { getOfficialCatalog } from './catalog';
+import { CitiesService } from './cities.service';
+import { CitiesRepository } from './cities.repository';
+import type { Cache } from 'cache-manager';
 
 describe('Legacy City Mappings Validation', () => {
   const officialCatalog = getOfficialCatalog();
@@ -427,5 +430,256 @@ describe('reconcileCities', () => {
         mappings: [],
       }),
     ).rejects.toThrow(/Reconciliation verification failed: expected 351 official cities, found 300/);
+  });
+
+  describe('Cache Coherence and Lifecycle Invalidation', () => {
+    it('invalidates CitiesService cache post-commit so list and per-ID lookups return reconciled data', async () => {
+      const legacyId = '01916327-0000-7000-8000-000000000001';
+      const existingLegacy: ExistingCityRow = {
+        id: legacyId,
+        nameEnglish: 'Maadi',
+        nameArabic: 'المعادي',
+        governorate: 'Cairo',
+        sourceCode: null,
+        status: 'OFFICIAL',
+      };
+
+      // Set up in-memory cache and CitiesService
+      const cacheStore = new Map<string, any>();
+      const mockCache: jest.Mocked<Partial<Cache>> = {
+        get: jest.fn().mockImplementation((k: string) => Promise.resolve(cacheStore.get(k))),
+        set: jest.fn().mockImplementation((k: string, v: any) => {
+          cacheStore.set(k, v);
+          return Promise.resolve();
+        }),
+        del: jest.fn().mockImplementation((k: string) => {
+          cacheStore.delete(k);
+          return Promise.resolve();
+        }),
+      };
+
+      const preReconcileCity = {
+        ...existingLegacy,
+        sourceNameEnglish: null,
+        sourceNameArabic: null,
+        centerPoint: [31.2, 30.0] as [number, number],
+        createdAt: new Date(),
+      };
+
+      let currentDbCity: any = preReconcileCity;
+
+      const mockRepo: jest.Mocked<Partial<CitiesRepository>> = {
+        findAll: jest.fn().mockImplementation(() => Promise.resolve([currentDbCity])),
+        findById: jest
+          .fn()
+          .mockImplementation((id: string) =>
+            id === legacyId ? Promise.resolve(currentDbCity) : Promise.resolve(undefined),
+          ),
+      };
+
+      const citiesService = new CitiesService(mockRepo as CitiesRepository, mockCache as Cache);
+
+      // 1. Prime cache with pre-reconciliation values
+      const preList = await citiesService.findAll();
+      expect(preList[0].nameEnglish).toBe('Maadi');
+      const preLookup = await citiesService.findById(legacyId);
+      expect(preLookup?.nameEnglish).toBe('Maadi');
+      expect(preLookup?.sourceCode).toBeNull();
+
+      // 2. Perform reconciliation
+      const mockTx: any = {
+        query: jest.fn().mockImplementation(async (sqlText: string) => {
+          if (sqlText.includes('SELECT id, name_english')) {
+            return { rows: [existingLegacy] };
+          }
+          if (sqlText.includes('UPDATE cities SET')) {
+            // Update db representation
+            currentDbCity = {
+              ...currentDbCity,
+              sourceCode: 'EG0126',
+              nameEnglish: 'Nasr City',
+              sourceNameEnglish: 'Nasr City',
+              sourceNameArabic: 'قسم أول مدينة نصر',
+              status: 'OFFICIAL',
+            };
+            return { rowCount: 1 };
+          }
+          if (sqlText.includes('UPDATE posts SET governorate')) {
+            return { rowCount: 1 };
+          }
+          if (sqlText.includes('INSERT INTO cities')) {
+            return { rowCount: 1 };
+          }
+          if (sqlText.includes('official_count') || sqlText.includes('count(*) FILTER')) {
+            return { rows: [{ official_count: 351, governorate_count: 27, invalid_official_count: 0 }] };
+          }
+          return { rows: [] };
+        }),
+      };
+
+      const mockDb: any = {
+        transaction: jest.fn().mockImplementation(async (cb) => cb(mockTx)),
+      };
+
+      await reconcileCities(mockDb, {
+        catalog: officialCatalog,
+        mappings: [
+          {
+            legacyGovernorate: 'Cairo',
+            legacyNameEnglish: 'Maadi',
+            targetSourceCode: 'EG0126',
+          },
+        ],
+        citiesService,
+      });
+
+      // 3. Post-reconciliation lookups must return fresh updated data from database
+      const postList = await citiesService.findAll();
+      expect(postList[0].nameEnglish).toBe('Nasr City');
+
+      const postLookup = await citiesService.findById(legacyId);
+      expect(postLookup?.nameEnglish).toBe('Nasr City');
+      expect(postLookup?.sourceCode).toBe('EG0126');
+    });
+
+    it('leaves cache intact and safe to reuse when reconciliation fails', async () => {
+      const cityId = '01916327-0000-7000-8000-000000000001';
+      const existingCity = {
+        id: cityId,
+        nameEnglish: 'Pre-Failure Valid City',
+        nameArabic: 'مدينة صحيحة',
+        governorate: 'Cairo',
+        sourceCode: 'EG0101',
+        status: 'OFFICIAL' as const,
+        sourceNameEnglish: 'Pre-Failure Valid City',
+        sourceNameArabic: 'مدينة صحيحة',
+        centerPoint: [31.2, 30.0] as [number, number],
+        createdAt: new Date(),
+      };
+
+      const cacheStore = new Map<string, any>();
+      const mockCache: jest.Mocked<Partial<Cache>> = {
+        get: jest.fn().mockImplementation((k: string) => Promise.resolve(cacheStore.get(k))),
+        set: jest.fn().mockImplementation((k: string, v: any) => {
+          cacheStore.set(k, v);
+          return Promise.resolve();
+        }),
+        del: jest.fn().mockImplementation((k: string) => {
+          cacheStore.delete(k);
+          return Promise.resolve();
+        }),
+      };
+
+      const mockRepo: jest.Mocked<Partial<CitiesRepository>> = {
+        findAll: jest.fn().mockResolvedValue([existingCity]),
+        findById: jest.fn().mockResolvedValue(existingCity),
+      };
+
+      const citiesService = new CitiesService(mockRepo as CitiesRepository, mockCache as Cache);
+
+      // Prime cache
+      await citiesService.findAll();
+      await citiesService.findById(cityId);
+      expect(mockRepo.findAll).toHaveBeenCalledTimes(1);
+      expect(mockRepo.findById).toHaveBeenCalledTimes(1);
+
+      // Reconciliation that fails
+      const mockTx: any = {
+        query: jest.fn().mockImplementation(async (sqlText: string) => {
+          if (sqlText.includes('SELECT id, name_english')) {
+            // Duplicate identities to trigger rollback
+            return {
+              rows: [
+                { id: '1', name_english: 'Maadi', governorate: 'Cairo', source_code: null },
+                { id: '2', name_english: 'Maadi', governorate: 'Cairo', source_code: null },
+              ],
+            };
+          }
+          return { rows: [] };
+        }),
+      };
+
+      const mockDb: any = {
+        transaction: jest.fn().mockImplementation(async (cb) => cb(mockTx)),
+      };
+
+      let clearCacheCalled = false;
+      const clearCacheTracker = jest.fn().mockImplementation(async () => {
+        clearCacheCalled = true;
+        await citiesService.clearCache();
+      });
+
+      await expect(
+        reconcileCities(mockDb, {
+          catalog: officialCatalog,
+          mappings: [
+            {
+              legacyGovernorate: 'Cairo',
+              legacyNameEnglish: 'Maadi',
+              targetSourceCode: 'EG0126',
+            },
+          ],
+          clearCache: clearCacheTracker,
+        }),
+      ).rejects.toThrow(/duplicate legacy city identities found in database/);
+
+      // Verify clearCache was NEVER called
+      expect(clearCacheCalled).toBe(false);
+      expect(clearCacheTracker).not.toHaveBeenCalled();
+
+      // Verify cached data remains unchanged and continues being served safely without db calls
+      const cachedList = await citiesService.findAll();
+      expect(cachedList).toEqual([existingCity]);
+      expect(mockRepo.findAll).toHaveBeenCalledTimes(1); // No new db call!
+
+      const cachedCity = await citiesService.findById(cityId);
+      expect(cachedCity).toEqual(existingCity);
+      expect(mockRepo.findById).toHaveBeenCalledTimes(1); // No new db call!
+    });
+
+    it('simulates process restart after reconciliation to verify immediate cache coherence', async () => {
+      const cityId = '01916327-0000-7000-8000-000000000001';
+      const reconciledCity = {
+        id: cityId,
+        nameEnglish: 'Reconciled Cairo',
+        nameArabic: 'القاهرة المحدثة',
+        governorate: 'Cairo',
+        sourceCode: 'EG0101',
+        status: 'OFFICIAL' as const,
+        sourceNameEnglish: 'Reconciled Cairo',
+        sourceNameArabic: 'القاهرة المحدثة',
+        centerPoint: [31.2, 30.0] as [number, number],
+        createdAt: new Date(),
+      };
+
+      const newRepo: jest.Mocked<Partial<CitiesRepository>> = {
+        findAll: jest.fn().mockResolvedValue([reconciledCity]),
+        findById: jest.fn().mockResolvedValue(reconciledCity),
+      };
+
+      const freshCacheStore = new Map<string, any>();
+      const freshCache: jest.Mocked<Partial<Cache>> = {
+        get: jest.fn().mockImplementation((k: string) => Promise.resolve(freshCacheStore.get(k))),
+        set: jest.fn().mockImplementation((k: string, v: any) => {
+          freshCacheStore.set(k, v);
+          return Promise.resolve();
+        }),
+        del: jest.fn().mockImplementation((k: string) => {
+          freshCacheStore.delete(k);
+          return Promise.resolve();
+        }),
+      };
+
+      // Create new service instance simulating application restart
+      const restartedService = new CitiesService(newRepo as CitiesRepository, freshCache as Cache);
+
+      const list = await restartedService.findAll();
+      expect(list).toEqual([reconciledCity]);
+      expect(newRepo.findAll).toHaveBeenCalledTimes(1);
+
+      const item = await restartedService.findById(cityId);
+      expect(item).toEqual(reconciledCity);
+      expect(newRepo.findById).toHaveBeenCalledWith(cityId);
+    });
   });
 });

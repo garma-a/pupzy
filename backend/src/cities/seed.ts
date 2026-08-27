@@ -14,6 +14,8 @@ export interface SeedCitiesOptions {
   validateBeforeSeed?: boolean;
   batchSize?: number;
   catalog?: CityCatalogRecord[] | CityCatalog;
+  clearCache?: () => Promise<void> | void;
+  citiesService?: { clearCache: () => Promise<void> | void };
 }
 
 export interface SeedCitiesResult {
@@ -78,6 +80,13 @@ export async function seedOfficialCities(db: any, options: SeedCitiesOptions = {
     await db.transaction(runSeed);
   } else {
     await runSeed(db);
+  }
+
+  // Cache invalidation executes strictly post-commit
+  if (options.citiesService?.clearCache) {
+    await options.citiesService.clearCache();
+  } else if (options.clearCache) {
+    await options.clearCache();
   }
 
   return {

@@ -39,6 +39,7 @@ export interface ReconcileOptions {
   mappings?: LegacyCityMapping[];
   validateBeforeReconcile?: boolean;
   clearCache?: () => Promise<void> | void;
+  citiesService?: { clearCache: () => Promise<void> | void };
 }
 
 export interface ReconcileResult {
@@ -377,7 +378,10 @@ export async function reconcileCities(db: any, options: ReconcileOptions = {}): 
     await runReconcile(db);
   }
 
-  if (options.clearCache) {
+  // Cache invalidation executes strictly post-commit
+  if (options.citiesService?.clearCache) {
+    await options.citiesService.clearCache();
+  } else if (options.clearCache) {
     await options.clearCache();
   }
 

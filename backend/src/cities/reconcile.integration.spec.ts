@@ -2,8 +2,13 @@ import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers
 import { Pool } from 'pg';
 import * as path from 'path';
 import * as fs from 'fs';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import * as schema from '../database/schema';
 import { runMigrations } from '../database/migrate';
 import { loadLegacyMappings } from './reconcile';
+import { CitiesRepository } from './cities.repository';
+import { CitiesService } from './cities.service';
+import type { Cache } from 'cache-manager';
 
 describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
   jest.setTimeout(60_000);
@@ -408,5 +413,116 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
     expect(updatedRes.rows[0].name_english).toBe('Maadi');
     expect(updatedRes.rows[0].name_arabic).toBe('قسم المعادي');
     expect(updatedRes.rows[0].governorate).toBe('Cairo');
+  });
+
+  it('proves end-to-end cache coherence across migration and application restart with PostgreSQL', async () => {
+    await applyMigrationsUpTo0010();
+
+    const mappings = loadLegacyMappings();
+    const legacyCityIds = new Map<string, string>();
+    for (const m of mappings) {
+      const key = `${m.legacyGovernorate}:${m.legacyNameEnglish}`;
+      const res = await pool.query<{ id: string }>(
+        `INSERT INTO cities (
+          name_english,
+          name_arabic,
+          governorate,
+          source_code,
+          status,
+          center_point
+        ) VALUES (
+          $1, $2, $3, NULL, 'OFFICIAL', ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)
+        ) RETURNING id`,
+        [m.legacyNameEnglish, m.legacyNameArabic ?? m.legacyNameEnglish, m.legacyGovernorate],
+      );
+      legacyCityIds.set(key, res.rows[0].id);
+    }
+
+    const maadiId = legacyCityIds.get('Cairo:Maadi')!;
+    const unmappedLegacyId = legacyCityIds.get('Cairo:Cairo')!;
+
+    // Set up Drizzle repository and CitiesService with cache
+    const db = drizzle(pool, { schema });
+    const repo = new CitiesRepository(db);
+
+    const cacheStore = new Map<string, unknown>();
+    const mockCache: jest.Mocked<Partial<Cache>> = {
+      get: jest
+        .fn()
+        .mockImplementation((k: string) =>
+          Promise.resolve(cacheStore.get(k) as schema.City | schema.City[] | undefined),
+        ),
+      set: jest.fn().mockImplementation((k: string, v: unknown) => {
+        cacheStore.set(k, v);
+        return Promise.resolve();
+      }),
+      del: jest.fn().mockImplementation((k: string) => {
+        cacheStore.delete(k);
+        return Promise.resolve();
+      }),
+    };
+
+    const service = new CitiesService(repo, mockCache as Cache);
+
+    // 1. Prime cache before migration
+    const preMigrationList = await service.findAll();
+    expect(preMigrationList.length).toBe(109);
+
+    const preMaadiLookup = await service.findById(maadiId);
+    expect(preMaadiLookup?.nameEnglish).toBe('Maadi');
+    expect(preMaadiLookup?.sourceCode).toBeNull();
+
+    const preUnmappedLookup = await service.findById(unmappedLegacyId);
+    expect(preUnmappedLookup?.status).toBe('OFFICIAL');
+
+    // 2. Execute migration 0011 (as preDeployCommand would)
+    const migration0011Path = path.resolve(__dirname, '../../drizzle/migrations/0011_reconcile_city_catalog.sql');
+    await runSqlFile(migration0011Path);
+
+    // 3. Invalidate cache on running service
+    await service.clearCache();
+
+    // 4. Assert service returns freshly reconciled catalog and per-ID data
+    const postMigrationList = await service.findAll();
+    expect(postMigrationList.length).toBe(351);
+
+    const postMaadiLookup = await service.findById(maadiId);
+    expect(postMaadiLookup?.id).toBe(maadiId);
+    expect(postMaadiLookup?.sourceCode).toBe('EG0104');
+    expect(postMaadiLookup?.status).toBe('OFFICIAL');
+
+    const postUnmappedLookup = await service.findById(unmappedLegacyId);
+    expect(postUnmappedLookup?.id).toBe(unmappedLegacyId);
+    expect(postUnmappedLookup?.status).toBe('LEGACY');
+    expect(postUnmappedLookup?.sourceCode).toBeNull();
+
+    // 5. Simulate application restart (new service instance with fresh cache)
+    const restartStore = new Map<string, unknown>();
+    const restartCache: jest.Mocked<Partial<Cache>> = {
+      get: jest
+        .fn()
+        .mockImplementation((k: string) =>
+          Promise.resolve(restartStore.get(k) as schema.City | schema.City[] | undefined),
+        ),
+      set: jest.fn().mockImplementation((k: string, v: unknown) => {
+        restartStore.set(k, v);
+        return Promise.resolve();
+      }),
+      del: jest.fn().mockImplementation((k: string) => {
+        restartStore.delete(k);
+        return Promise.resolve();
+      }),
+    };
+    const restartedService = new CitiesService(repo, restartCache as Cache);
+
+    const restartedList = await restartedService.findAll();
+    expect(restartedList.length).toBe(351);
+
+    const restartedMaadi = await restartedService.findById(maadiId);
+    expect(restartedMaadi?.sourceCode).toBe('EG0104');
+    expect(restartedMaadi?.status).toBe('OFFICIAL');
+
+    const restartedUnmapped = await restartedService.findById(unmappedLegacyId);
+    expect(restartedUnmapped?.status).toBe('LEGACY');
   });
 });

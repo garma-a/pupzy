@@ -22,23 +22,30 @@ const CITIES_TTL_MS = 86_400_000; // 24 hours
 @Injectable()
 export class CitiesService {
   private readonly logger = new Logger(CitiesService.name);
+  private cacheGeneration = 0;
+  private readonly cachedKeys = new Set<string>();
 
   constructor(
     private readonly citiesRepository: CitiesRepository,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
+  private getCacheKey(suffix: string): string {
+    return `cities:g${this.cacheGeneration}:${suffix}`;
+  }
+
   /**
    * Returns all cities sorted A-Z by English name.
    * Cached for 24 hours — city list never changes during normal operation.
    */
   async findAll(): Promise<City[]> {
-    const cacheKey = 'cities:all';
+    const cacheKey = this.getCacheKey('all');
     const cached = await this.cacheManager.get<City[]>(cacheKey);
     if (cached) return cached;
 
     const cities = await this.citiesRepository.findAll();
     await this.cacheManager.set(cacheKey, cities, CITIES_TTL_MS);
+    this.cachedKeys.add(cacheKey);
     return cities;
   }
 
@@ -49,13 +56,14 @@ export class CitiesService {
    * @returns the City row if found, undefined otherwise
    */
   async findById(id: string): Promise<City | undefined> {
-    const cacheKey = `cities:id:${id}`;
+    const cacheKey = this.getCacheKey(`id:${id}`);
     const cached = await this.cacheManager.get<City | undefined>(cacheKey);
     if (cached !== undefined && cached !== null) return cached;
 
     const city = await this.citiesRepository.findById(id);
     if (city) {
       await this.cacheManager.set(cacheKey, city, CITIES_TTL_MS);
+      this.cachedKeys.add(cacheKey);
     }
     return city;
   }
@@ -70,12 +78,26 @@ export class CitiesService {
   }
 
   /**
-   * Clears the in-memory cached city listings.
-   * Called during migrations and reconciliation to prevent serving stale reference data.
+   * Clears the in-memory cached city listings and per-ID lookups.
+   * Called during migrations, seeding, and reconciliation to prevent serving stale reference data.
    */
   async clearCache(): Promise<void> {
-    await this.cacheManager.del('cities:all');
-    this.logger.log('Cities cache invalidated successfully.');
+    const keysToDelete = Array.from(this.cachedKeys);
+    keysToDelete.push('cities:all');
+    this.cachedKeys.clear();
+
+    await Promise.all(
+      keysToDelete.map(async (key) => {
+        try {
+          await this.cacheManager.del(key);
+        } catch {
+          // ignore individual deletion errors
+        }
+      }),
+    );
+
+    this.cacheGeneration++;
+    this.logger.log(`Cities cache invalidated successfully (generation ${this.cacheGeneration}).`);
   }
 
   /**
