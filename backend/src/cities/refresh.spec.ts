@@ -3,7 +3,13 @@ import {
   applyReviewedRelease,
   type SnapshotDiffReport,
 } from './refresh';
-import { getOfficialCatalog, transformCatalog, type CitySnapshot, type CityCatalogRecord } from './catalog';
+import {
+  getOfficialCatalog,
+  transformCatalog,
+  validateCatalog,
+  type CitySnapshot,
+  type CityCatalogRecord,
+} from './catalog';
 
 describe('Upstream Refresh and Future Release Diff Tooling', () => {
   const currentCatalog = getOfficialCatalog();
@@ -303,5 +309,78 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
         ],
       }),
     ).toThrow(/is not an active official city/);
+  });
+
+  it('handles a full release with additions, removals, retained retired Cities, and a reviewed count different from the first release', () => {
+    // Start with the full 351 catalog
+    const baseCatalog = getOfficialCatalog();
+    expect(baseCatalog.length).toBe(351);
+
+    // Create candidate where:
+    // - 2 Cairo cities (e.g. EG0101, EG0102) are removed from upstream -> will become RETIRED
+    // - 1 new Cairo city (EG0198) is added in upstream -> will become OFFICIAL
+    // -> candidate has 351 - 2 + 1 = 350 official cities across 27 governorates
+    const rawRecords = baseCatalog
+      .filter((c) => c.sourceCode !== 'EG0101' && c.sourceCode !== 'EG0102')
+      .map((c) => ({
+        adm2_name: c.sourceNameEnglish,
+        adm2_name1: c.sourceNameArabic,
+        adm2_pcode: c.sourceCode,
+        adm1_name: c.governorate,
+        adm1_name1: c.governorateArabic || '',
+        adm1_pcode: c.governorateCode,
+        adm0_name: 'Egypt',
+        adm0_name1: 'مصر',
+        adm0_pcode: 'EG',
+        center_lat: c.latitude,
+        center_lon: c.longitude,
+      }));
+
+    // Add new candidate city
+    rawRecords.push({
+      adm2_name: 'New Administrative District',
+      adm2_name1: 'حي إداري جديد',
+      adm2_pcode: 'EG0198',
+      adm1_name: 'Cairo',
+      adm1_name1: 'القاهرة',
+      adm1_pcode: 'EG01',
+      adm0_name: 'Egypt',
+      adm0_name1: 'مصر',
+      adm0_pcode: 'EG',
+      center_lat: 30.1,
+      center_lon: 31.3,
+    });
+
+    const candidateSnapshot = createMockSnapshot(rawRecords);
+    const release = applyReviewedRelease(baseCatalog, candidateSnapshot, {
+      reviewedMetadata: {
+        declaredOfficialCount: 350,
+        governorateCount: 27,
+      },
+    });
+
+    // 350 official + 2 retired = 352 total retained catalog entries
+    expect(release.officialCount).toBe(350);
+    expect(release.retiredCount).toBe(2);
+    expect(release.updatedCatalog.length).toBe(352);
+
+    const retired1 = release.updatedCatalog.find((c) => c.sourceCode === 'EG0101');
+    const retired2 = release.updatedCatalog.find((c) => c.sourceCode === 'EG0102');
+    const addedCity = release.updatedCatalog.find((c) => c.sourceCode === 'EG0198');
+
+    expect(retired1?.status).toBe('RETIRED');
+    expect(retired2?.status).toBe('RETIRED');
+    expect(addedCity?.status).toBe('OFFICIAL');
+
+    // Validation passes for the new release catalog
+    const validation = validateCatalog({
+      metadata: release.metadata,
+      records: release.updatedCatalog,
+    });
+    expect(validation.isValid).toBe(true);
+    expect(validation.stats.officialCount).toBe(350);
+    expect(validation.stats.retiredCount).toBe(2);
+    expect(validation.stats.totalCities).toBe(352);
+    expect(validation.stats.governorateCount).toBe(27);
   });
 });

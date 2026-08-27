@@ -4,6 +4,7 @@ import {
   transformCatalog,
   type CitySnapshot,
   type CityCatalogRecord,
+  type CityCatalogMetadata,
 } from './catalog';
 
 export interface RenamedAreaDiff {
@@ -65,6 +66,7 @@ export interface ReviewedReleaseResult {
   diffReport: SnapshotDiffReport;
   retiredCount: number;
   officialCount: number;
+  metadata?: CityCatalogMetadata;
 }
 
 function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -296,6 +298,16 @@ export function applyReviewedRelease(
     diffReport,
     retiredCount,
     officialCount,
+    metadata: {
+      ...candidateSnapshot.metadata,
+      totalCities: updatedCatalog.length,
+      declaredOfficialCount: officialCount,
+      selectableCount: officialCount,
+      officialCitiesCount: officialCount,
+      governorateCount: distinctGovCount,
+      governoratesCount: distinctGovCount,
+      retiredCount,
+    },
   };
 }
 

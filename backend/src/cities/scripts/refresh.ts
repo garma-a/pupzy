@@ -99,7 +99,14 @@ export async function main(): Promise<void> {
     const catalogPath = path.resolve(__dirname, '../data/egypt-cities-catalog.json');
     fs.writeFileSync(
       catalogPath,
-      JSON.stringify({ records: release.updatedCatalog }, null, 2),
+      JSON.stringify(
+        {
+          metadata: release.metadata,
+          records: release.updatedCatalog,
+        },
+        null,
+        2,
+      ),
       'utf8',
     );
     console.log(`✓ Updated catalog written to ${catalogPath}`);

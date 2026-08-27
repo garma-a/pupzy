@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { sql } from 'drizzle-orm';
 
 export interface RawCitySnapshotRecord {
   adm2_name: string;
@@ -71,11 +72,17 @@ export interface CityCatalogRecord {
   status: CityLifecycleStatusValue;
 }
 
+export interface CityCatalogMetadata extends Partial<CitySnapshotMetadata> {
+  totalCities?: number;
+  governoratesCount?: number;
+  declaredOfficialCount?: number;
+  officialCitiesCount?: number;
+  selectableCount?: number;
+  retiredCount?: number;
+}
+
 export interface CityCatalog {
-  metadata?: Partial<CitySnapshotMetadata> & {
-    totalCities?: number;
-    governoratesCount?: number;
-  };
+  metadata?: CityCatalogMetadata;
   records: CityCatalogRecord[];
 }
 
@@ -84,7 +91,61 @@ export interface ValidationResult {
   errors: string[];
   stats: {
     totalCities: number;
+    officialCount: number;
+    retiredCount: number;
     governorateCount: number;
+  };
+}
+
+export interface ValidateCatalogOptions {
+  expectedOfficialCount?: number;
+  expectedGovernorateCount?: number;
+}
+
+export interface CityDatabaseValues {
+  sourceCode: string;
+  nameEnglish: string;
+  nameArabic: string;
+  governorate: string;
+  sourceNameEnglish: string;
+  sourceNameArabic: string;
+  status: CityLifecycleStatusValue;
+  longitude: number;
+  latitude: number;
+}
+
+/**
+ * Maps a catalog record to normalized database values.
+ * Serves as the single shared source of truth for seed, reconciliation, and migrations.
+ */
+export function mapCatalogRecordToDbValues(record: CityCatalogRecord): CityDatabaseValues {
+  return {
+    sourceCode: record.sourceCode.trim(),
+    nameEnglish: record.nameEnglish.trim(),
+    nameArabic: record.nameArabic.trim(),
+    governorate: record.governorate.trim(),
+    sourceNameEnglish: record.sourceNameEnglish.trim(),
+    sourceNameArabic: record.sourceNameArabic.trim(),
+    status: record.status ?? 'OFFICIAL',
+    longitude: Number(record.longitude),
+    latitude: Number(record.latitude),
+  };
+}
+
+/**
+ * Maps a catalog record to a Drizzle insert row with PostGIS geometry.
+ */
+export function mapCatalogRecordToInsertRow(record: CityCatalogRecord) {
+  const values = mapCatalogRecordToDbValues(record);
+  return {
+    sourceCode: values.sourceCode,
+    nameEnglish: values.nameEnglish,
+    nameArabic: values.nameArabic,
+    governorate: values.governorate,
+    sourceNameEnglish: values.sourceNameEnglish,
+    sourceNameArabic: values.sourceNameArabic,
+    status: values.status,
+    centerPoint: sql`ST_SetSRID(ST_MakePoint(${values.longitude}, ${values.latitude}), 4326)`,
   };
 }
 
@@ -196,25 +257,55 @@ export function transformCatalog(snapshot: CitySnapshot): CityCatalog {
 
 /**
  * Validates integrity constraints for a City catalog:
- * - 351 selectable cities
- * - 27 distinct governorates
- * - Unique source codes
- * - Unique (nameEnglish, governorate) pairs
- * - Non-blank names
- * - Schema length limits (<= 100 chars)
+ * - Selectable official cities match expected count (default 351 or metadata declared count)
+ * - Distinct governorates match expected count (default 27 or metadata declared count)
+ * - Unique source codes across all catalog entries (including retired)
+ * - Unique (nameEnglish, governorate) pairs for official cities
+ * - Non-blank names and valid schema length limits (<= 100 chars)
  * - Finite WGS84 coordinates in bounds
+ * - Valid parent governorate codes
  */
-export function validateCatalog(catalog: { records: CityCatalogRecord[] }): ValidationResult {
+export function validateCatalog(
+  catalog: {
+    metadata?: CityCatalogMetadata;
+    records: CityCatalogRecord[];
+  },
+  options: ValidateCatalogOptions = {},
+): ValidationResult {
   const errors: string[] = [];
   const records = catalog.records;
 
-  if (records.length !== 351) {
-    errors.push(`Expected exactly 351 selectable cities, found ${records.length}`);
+  const officialRecords = records.filter((r) => r.status === 'OFFICIAL' || !r.status);
+  const retiredRecords = records.filter((r) => r.status === 'RETIRED');
+  const legacyRecords = records.filter((r) => r.status === 'LEGACY');
+
+  const meta = catalog.metadata;
+  const expectedOfficial =
+    options.expectedOfficialCount ??
+    meta?.declaredOfficialCount ??
+    meta?.officialCitiesCount ??
+    meta?.selectableCount ??
+    (meta?.totalCities !== undefined && retiredRecords.length === 0 && legacyRecords.length === 0
+      ? meta.totalCities
+      : 351);
+
+  const expectedGovCount =
+    options.expectedGovernorateCount ??
+    meta?.governorateCount ??
+    meta?.governoratesCount ??
+    27;
+
+  if (officialRecords.length !== expectedOfficial) {
+    errors.push(
+      `Expected exactly ${expectedOfficial} selectable official cities, found ${officialRecords.length}`,
+    );
   }
 
-  const governorates = new Set(records.map((r) => r.governorate));
-  if (governorates.size !== 27) {
-    errors.push(`Expected exactly 27 governorates, found ${governorates.size}`);
+  const officialGovernorates = new Set(officialRecords.map((r) => r.governorate));
+  if (officialGovernorates.size !== expectedGovCount) {
+    errors.push(
+      `Expected exactly ${expectedGovCount} governorates for official cities, found ${officialGovernorates.size}`,
+    );
   }
 
   const VALID_GOVERNORATE_CODES = new Set([
@@ -248,19 +339,25 @@ export function validateCatalog(catalog: { records: CityCatalogRecord[] }): Vali
   ]);
 
   const seenSourceCodes = new Set<string>();
-  const seenGovNamePairs = new Set<string>();
+  const seenOfficialGovNamePairs = new Set<string>();
 
   for (let i = 0; i < records.length; i++) {
     const city = records[i];
     const prefix = `City[${i}] (${city.sourceCode || 'unknown'})`;
 
-    // Unique source code
+    // Unique source code across all records
     if (!city.sourceCode || city.sourceCode.trim() === '') {
       errors.push(`${prefix}: Missing or blank sourceCode`);
     } else if (seenSourceCodes.has(city.sourceCode)) {
       errors.push(`${prefix}: Duplicate sourceCode '${city.sourceCode}'`);
     } else {
       seenSourceCodes.add(city.sourceCode);
+    }
+
+    // Lifecycle status validation
+    const validStatuses = new Set(['OFFICIAL', 'LEGACY', 'RETIRED']);
+    if (city.status && !validStatuses.has(city.status)) {
+      errors.push(`${prefix}: Invalid status '${city.status}'`);
     }
 
     // Parent relationship validation
@@ -272,12 +369,14 @@ export function validateCatalog(catalog: { records: CityCatalogRecord[] }): Vali
       );
     }
 
-    // Unique (nameEnglish, governorate)
-    const govNameKey = `${city.governorate}:${city.nameEnglish}`;
-    if (seenGovNamePairs.has(govNameKey)) {
-      errors.push(`${prefix}: Duplicate nameEnglish '${city.nameEnglish}' in governorate '${city.governorate}'`);
-    } else {
-      seenGovNamePairs.add(govNameKey);
+    // Unique (nameEnglish, governorate) for official cities
+    if (city.status === 'OFFICIAL' || !city.status) {
+      const govNameKey = `${city.governorate}:${city.nameEnglish}`;
+      if (seenOfficialGovNamePairs.has(govNameKey)) {
+        errors.push(`${prefix}: Duplicate nameEnglish '${city.nameEnglish}' in governorate '${city.governorate}'`);
+      } else {
+        seenOfficialGovNamePairs.add(govNameKey);
+      }
     }
 
     // Nonblank checks & length limits (<= 100)
@@ -322,7 +421,9 @@ export function validateCatalog(catalog: { records: CityCatalogRecord[] }): Vali
     errors,
     stats: {
       totalCities: records.length,
-      governorateCount: governorates.size,
+      officialCount: officialRecords.length,
+      retiredCount: retiredRecords.length,
+      governorateCount: officialGovernorates.size,
     },
   };
 }
@@ -330,24 +431,27 @@ export function validateCatalog(catalog: { records: CityCatalogRecord[] }): Vali
 let cachedOfficialCatalog: CityCatalogRecord[] | null = null;
 
 /**
- * Returns the compiled 351-city official reference catalog.
+ * Loads the complete compiled City catalog from disk.
+ */
+export function loadOfficialCatalog(): CityCatalog {
+  const filePath = resolveDataPath('egypt-cities-catalog.json');
+  if (fs.existsSync(filePath)) {
+    const content = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(content) as CityCatalog;
+  }
+  const snapshot = loadRawSnapshot();
+  return transformCatalog(snapshot);
+}
+
+/**
+ * Returns the compiled 351-city official reference catalog records.
  * Cached in memory after first load.
  */
 export function getOfficialCatalog(): CityCatalogRecord[] {
   if (cachedOfficialCatalog) {
     return cachedOfficialCatalog;
   }
-  const filePath = resolveDataPath('egypt-cities-catalog.json');
-  if (fs.existsSync(filePath)) {
-    const content = fs.readFileSync(filePath, 'utf8');
-    const catalog = JSON.parse(content) as CityCatalog;
-    cachedOfficialCatalog = catalog.records;
-    return cachedOfficialCatalog;
-  }
-
-  // Fallback to on-the-fly transformation if compiled JSON is absent
-  const snapshot = loadRawSnapshot();
-  const transformed = transformCatalog(snapshot);
-  cachedOfficialCatalog = transformed.records;
+  const catalog = loadOfficialCatalog();
+  cachedOfficialCatalog = catalog.records;
   return cachedOfficialCatalog;
 }

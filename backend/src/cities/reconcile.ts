@@ -3,7 +3,9 @@ import {
   getOfficialCatalog,
   validateCatalog,
   resolveDataPath,
+  mapCatalogRecordToDbValues,
   type CityCatalogRecord,
+  type CityCatalog,
 } from './catalog';
 
 export interface LegacyCityMapping {
@@ -31,7 +33,7 @@ export interface ExistingCityRow {
 }
 
 export interface ReconcileOptions {
-  catalog?: CityCatalogRecord[];
+  catalog?: CityCatalogRecord[] | CityCatalog;
   mappings?: LegacyCityMapping[];
   validateBeforeReconcile?: boolean;
   clearCache?: () => Promise<void> | void;
@@ -114,13 +116,13 @@ export function validateLegacyMappings(
 }
 
 /**
- * Reconciles an existing database's cities table against the official 351-city catalog.
+ * Reconciles an existing database's cities table against the official City catalog.
  *
  * Guarantees:
  * 1. Executes within a database transaction (all or nothing).
  * 2. Matched legacy cities retain their primary key UUIDs while gaining official source codes and canonical names.
  * 3. Unmatched legacy cities transition to 'LEGACY' status, preserving historical references without automatic nearest-neighbor remapping.
- * 4. Missing official cities are inserted to achieve exactly 351 official cities across 27 governorates.
+ * 4. Missing official cities are inserted to achieve complete official coverage across all governorates.
  * 5. Denormalized governorate values in posts are updated for matched official cities.
  * 6. Cache invalidation is triggered post-commit.
  */
@@ -128,23 +130,28 @@ export async function reconcileCities(
   db: any,
   options: ReconcileOptions = {},
 ): Promise<ReconcileResult> {
-  const catalog = options.catalog ?? getOfficialCatalog();
+  const rawCatalog = options.catalog ?? getOfficialCatalog();
+  const catalogRecords = Array.isArray(rawCatalog) ? rawCatalog : rawCatalog.records;
+  const catalogMetadata = Array.isArray(rawCatalog) ? undefined : rawCatalog.metadata;
   const mappings = options.mappings ?? loadLegacyMappings();
 
   if (options.validateBeforeReconcile !== false) {
-    const catalogVal = validateCatalog({ records: catalog });
+    const catalogVal = validateCatalog({
+      records: catalogRecords,
+      metadata: catalogMetadata,
+    });
     if (!catalogVal.isValid) {
       throw new Error(`Catalog validation failed: ${catalogVal.errors.join('; ')}`);
     }
 
-    const mappingVal = validateLegacyMappings(mappings, catalog);
+    const mappingVal = validateLegacyMappings(mappings, catalogRecords);
     if (!mappingVal.isValid) {
       throw new Error(`Legacy mapping validation failed: ${mappingVal.errors.join('; ')}`);
     }
   }
 
   const catalogByCode = new Map<string, CityCatalogRecord>(
-    catalog.map((c) => [c.sourceCode, c]),
+    catalogRecords.map((c) => [c.sourceCode, c]),
   );
 
   const mappingLookup = new Map<string, string | null>();
@@ -156,6 +163,10 @@ export async function reconcileCities(
   let matchedLegacyCount = 0;
   let unmatchedLegacyCount = 0;
   let insertedOfficialCount = 0;
+
+  const officialRecords = catalogRecords.filter((c) => c.status === 'OFFICIAL' || !c.status);
+  const expectedOfficialCount = officialRecords.length;
+  const expectedGovCount = new Set(officialRecords.map((c) => c.governorate)).size;
 
   const runReconcile = async (tx: any) => {
     // 1. Fetch existing cities
@@ -186,6 +197,7 @@ export async function reconcileCities(
 
       if (targetCode && catalogByCode.has(targetCode)) {
         const official = catalogByCode.get(targetCode)!;
+        const dbValues = mapCatalogRecordToDbValues(official);
         await tx.query(
           `UPDATE cities SET
             name_english = $1,
@@ -198,15 +210,15 @@ export async function reconcileCities(
             center_point = ST_SetSRID(ST_MakePoint($8, $9), 4326)
            WHERE id = $10`,
           [
-            official.nameEnglish,
-            official.nameArabic,
-            official.governorate,
-            official.sourceCode,
-            official.sourceNameEnglish,
-            official.sourceNameArabic,
-            'OFFICIAL',
-            official.longitude,
-            official.latitude,
+            dbValues.nameEnglish,
+            dbValues.nameArabic,
+            dbValues.governorate,
+            dbValues.sourceCode,
+            dbValues.sourceNameEnglish,
+            dbValues.sourceNameArabic,
+            dbValues.status,
+            dbValues.longitude,
+            dbValues.latitude,
             row.id,
           ],
         );
@@ -214,10 +226,10 @@ export async function reconcileCities(
         // Update denormalized governorate in posts
         await tx.query(
           `UPDATE posts SET governorate = $1 WHERE city_id = $2`,
-          [official.governorate, row.id],
+          [dbValues.governorate, row.id],
         );
 
-        claimedSourceCodes.add(official.sourceCode);
+        claimedSourceCodes.add(dbValues.sourceCode);
         matchedLegacyCount++;
       } else {
         // Unmatched legacy record
@@ -230,8 +242,9 @@ export async function reconcileCities(
     }
 
     // 2. Insert missing official cities
-    const missingOfficial = catalog.filter((c) => !claimedSourceCodes.has(c.sourceCode));
+    const missingOfficial = catalogRecords.filter((c) => !claimedSourceCodes.has(c.sourceCode));
     for (const off of missingOfficial) {
+      const dbValues = mapCatalogRecordToDbValues(off);
       await tx.query(
         `INSERT INTO cities (
           source_code,
@@ -254,15 +267,15 @@ export async function reconcileCities(
           status = EXCLUDED.status,
           center_point = EXCLUDED.center_point`,
         [
-          off.sourceCode,
-          off.nameEnglish,
-          off.nameArabic,
-          off.governorate,
-          off.sourceNameEnglish,
-          off.sourceNameArabic,
-          'OFFICIAL',
-          off.longitude,
-          off.latitude,
+          dbValues.sourceCode,
+          dbValues.nameEnglish,
+          dbValues.nameArabic,
+          dbValues.governorate,
+          dbValues.sourceNameEnglish,
+          dbValues.sourceNameArabic,
+          dbValues.status,
+          dbValues.longitude,
+          dbValues.latitude,
         ],
       );
       insertedOfficialCount++;
@@ -280,14 +293,14 @@ export async function reconcileCities(
     const officialCount = Number(stats.official_count);
     const govCount = Number(stats.governorate_count);
 
-    if (officialCount !== 351) {
+    if (officialCount !== expectedOfficialCount) {
       throw new Error(
-        `Reconciliation verification failed: expected 351 official cities, found ${officialCount}`,
+        `Reconciliation verification failed: expected ${expectedOfficialCount} official cities, found ${officialCount}`,
       );
     }
-    if (govCount !== 27) {
+    if (govCount !== expectedGovCount) {
       throw new Error(
-        `Reconciliation verification failed: expected 27 governorates, found ${govCount}`,
+        `Reconciliation verification failed: expected ${expectedGovCount} governorates, found ${govCount}`,
       );
     }
   };
@@ -306,8 +319,8 @@ export async function reconcileCities(
     matchedLegacyCount,
     unmatchedLegacyCount,
     insertedOfficialCount,
-    totalOfficialCities: 351,
-    governorateCount: 27,
+    totalOfficialCities: expectedOfficialCount,
+    governorateCount: expectedGovCount,
   };
 }
 
@@ -320,16 +333,21 @@ function escapeSqlString(str: string): string {
  */
 export function generateReconcileMigrationSql(
   mappings: LegacyCityMapping[] = loadLegacyMappings(),
-  catalog: CityCatalogRecord[] = getOfficialCatalog(),
+  catalog: CityCatalogRecord[] | CityCatalog = getOfficialCatalog(),
 ): string {
+  const catalogRecords = Array.isArray(catalog) ? catalog : catalog.records;
   const catalogByCode = new Map<string, CityCatalogRecord>(
-    catalog.map((c) => [c.sourceCode, c]),
+    catalogRecords.map((c) => [c.sourceCode, c]),
   );
+
+  const officialRecords = catalogRecords.filter((c) => c.status === 'OFFICIAL' || !c.status);
+  const expectedOfficialCount = officialRecords.length;
+  const expectedGovCount = new Set(officialRecords.map((c) => c.governorate)).size;
 
   const lines: string[] = [
     '--',
     '-- Migration: 0011_reconcile_city_catalog.sql',
-    '-- Offline data migration reconciling legacy cities with the authoritative 351-city ADM2 catalog.',
+    `-- Offline data migration reconciling legacy cities with the authoritative ${expectedOfficialCount}-city ADM2 catalog.`,
     '--',
     'DO $$',
     'BEGIN',
@@ -339,16 +357,17 @@ export function generateReconcileMigrationSql(
   for (const m of mappings) {
     if (m.targetSourceCode && catalogByCode.has(m.targetSourceCode)) {
       const off = catalogByCode.get(m.targetSourceCode)!;
+      const dbValues = mapCatalogRecordToDbValues(off);
       lines.push(
         `  UPDATE cities SET ` +
-          `source_code = '${escapeSqlString(off.sourceCode)}', ` +
-          `name_english = '${escapeSqlString(off.nameEnglish)}', ` +
-          `name_arabic = '${escapeSqlString(off.nameArabic)}', ` +
-          `governorate = '${escapeSqlString(off.governorate)}', ` +
-          `source_name_english = '${escapeSqlString(off.sourceNameEnglish)}', ` +
-          `source_name_arabic = '${escapeSqlString(off.sourceNameArabic)}', ` +
-          `status = 'OFFICIAL', ` +
-          `center_point = ST_SetSRID(ST_MakePoint(${off.longitude}, ${off.latitude}), 4326) ` +
+          `source_code = '${escapeSqlString(dbValues.sourceCode)}', ` +
+          `name_english = '${escapeSqlString(dbValues.nameEnglish)}', ` +
+          `name_arabic = '${escapeSqlString(dbValues.nameArabic)}', ` +
+          `governorate = '${escapeSqlString(dbValues.governorate)}', ` +
+          `source_name_english = '${escapeSqlString(dbValues.sourceNameEnglish)}', ` +
+          `source_name_arabic = '${escapeSqlString(dbValues.sourceNameArabic)}', ` +
+          `status = '${escapeSqlString(dbValues.status)}', ` +
+          `center_point = ST_SetSRID(ST_MakePoint(${dbValues.longitude}, ${dbValues.latitude}), 4326) ` +
           `WHERE lower(trim(governorate)) = lower('${escapeSqlString(m.legacyGovernorate.trim())}') ` +
           `AND lower(trim(name_english)) = lower('${escapeSqlString(m.legacyNameEnglish.trim())}') ` +
           `AND source_code IS NULL;`,
@@ -365,21 +384,22 @@ export function generateReconcileMigrationSql(
     `  UPDATE posts SET governorate = cities.governorate FROM cities WHERE posts.city_id = cities.id AND cities.status = 'OFFICIAL';`,
   );
   lines.push('');
-  lines.push('  -- 4. Insert missing official cities from the 351 catalog');
+  lines.push(`  -- 4. Insert missing official cities from the ${expectedOfficialCount} catalog`);
 
-  for (const off of catalog) {
+  for (const off of catalogRecords) {
+    const dbValues = mapCatalogRecordToDbValues(off);
     lines.push(
       `  INSERT INTO cities (` +
         `source_code, name_english, name_arabic, governorate, source_name_english, source_name_arabic, status, center_point` +
         `) VALUES (` +
-        `'${escapeSqlString(off.sourceCode)}', ` +
-        `'${escapeSqlString(off.nameEnglish)}', ` +
-        `'${escapeSqlString(off.nameArabic)}', ` +
-        `'${escapeSqlString(off.governorate)}', ` +
-        `'${escapeSqlString(off.sourceNameEnglish)}', ` +
-        `'${escapeSqlString(off.sourceNameArabic)}', ` +
-        `'OFFICIAL', ` +
-        `ST_SetSRID(ST_MakePoint(${off.longitude}, ${off.latitude}), 4326)` +
+        `'${escapeSqlString(dbValues.sourceCode)}', ` +
+        `'${escapeSqlString(dbValues.nameEnglish)}', ` +
+        `'${escapeSqlString(dbValues.nameArabic)}', ` +
+        `'${escapeSqlString(dbValues.governorate)}', ` +
+        `'${escapeSqlString(dbValues.sourceNameEnglish)}', ` +
+        `'${escapeSqlString(dbValues.sourceNameArabic)}', ` +
+        `'${escapeSqlString(dbValues.status)}', ` +
+        `ST_SetSRID(ST_MakePoint(${dbValues.longitude}, ${dbValues.latitude}), 4326)` +
         `) ON CONFLICT (source_code) DO UPDATE SET ` +
         `name_english = EXCLUDED.name_english, ` +
         `name_arabic = EXCLUDED.name_arabic, ` +
@@ -392,7 +412,9 @@ export function generateReconcileMigrationSql(
   }
 
   lines.push('');
-  lines.push('  -- 5. Verification checks: assert exactly 351 official cities and 27 governorates');
+  lines.push(
+    `  -- 5. Verification checks: assert exactly ${expectedOfficialCount} official cities and ${expectedGovCount} governorates`,
+  );
   lines.push('  DECLARE');
   lines.push('    official_count int;');
   lines.push('    gov_count int;');
@@ -400,14 +422,14 @@ export function generateReconcileMigrationSql(
   lines.push(
     `    SELECT count(*), count(DISTINCT governorate) INTO official_count, gov_count FROM cities WHERE status = 'OFFICIAL';`,
   );
-  lines.push(`    IF official_count != 351 THEN`);
+  lines.push(`    IF official_count != ${expectedOfficialCount} THEN`);
   lines.push(
-    `      RAISE EXCEPTION 'City reconciliation verification failed: expected 351 official cities, found %', official_count;`,
+    `      RAISE EXCEPTION 'City reconciliation verification failed: expected ${expectedOfficialCount} official cities, found %', official_count;`,
   );
   lines.push('    END IF;');
-  lines.push(`    IF gov_count != 27 THEN`);
+  lines.push(`    IF gov_count != ${expectedGovCount} THEN`);
   lines.push(
-    `      RAISE EXCEPTION 'City reconciliation verification failed: expected 27 governorates, found %', gov_count;`,
+    `      RAISE EXCEPTION 'City reconciliation verification failed: expected ${expectedGovCount} governorates, found %', gov_count;`,
   );
   lines.push('    END IF;');
   lines.push('  END;');

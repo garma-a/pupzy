@@ -142,6 +142,81 @@ describe('Offline Egyptian City Catalog and Transformation', () => {
       }
     });
 
+    it('distinguishes selectable official cities from total retained catalog entries in validation stats', () => {
+      const officialCatalog = getOfficialCatalog();
+      const retiredEntry: (typeof officialCatalog)[0] = {
+        sourceCode: 'EG0199',
+        nameEnglish: 'Old Obsolete District',
+        nameArabic: 'حي ملغي',
+        governorate: 'Cairo',
+        governorateCode: 'EG01',
+        sourceNameEnglish: 'Old Obsolete District',
+        sourceNameArabic: 'حي ملغي',
+        latitude: 30.05,
+        longitude: 31.25,
+        status: 'RETIRED',
+      };
+
+      const catalogWithRetired = {
+        metadata: {
+          declaredOfficialCount: 351,
+          governorateCount: 27,
+          totalCities: 352,
+        },
+        records: [...officialCatalog, retiredEntry],
+      };
+
+      const validation = validateCatalog(catalogWithRetired);
+      expect(validation.isValid).toBe(true);
+      expect(validation.errors).toHaveLength(0);
+      expect(validation.stats.totalCities).toBe(352);
+      expect(validation.stats.officialCount).toBe(351);
+      expect(validation.stats.retiredCount).toBe(1);
+      expect(validation.stats.governorateCount).toBe(27);
+    });
+
+    it('validates a reviewed release when declared official and governorate counts match the generated catalog', () => {
+      const officialCatalog = getOfficialCatalog();
+      // Remove 1 city from Cairo, mark it as retired
+      const [removed, ...remaining] = officialCatalog;
+      const retired: (typeof officialCatalog)[0] = {
+        ...removed,
+        status: 'RETIRED',
+      };
+
+      const catalogRelease = {
+        metadata: {
+          declaredOfficialCount: 350,
+          governorateCount: 27,
+        },
+        records: [...remaining, retired],
+      };
+
+      const validation = validateCatalog(catalogRelease);
+      expect(validation.isValid).toBe(true);
+      expect(validation.stats.officialCount).toBe(350);
+      expect(validation.stats.retiredCount).toBe(1);
+      expect(validation.stats.totalCities).toBe(351);
+      expect(validation.stats.governorateCount).toBe(27);
+    });
+
+    it('rejects catalog when declared official count does not match the actual number of official records', () => {
+      const officialCatalog = getOfficialCatalog();
+      const catalogMismatch = {
+        metadata: {
+          declaredOfficialCount: 350, // actual is 351
+          governorateCount: 27,
+        },
+        records: officialCatalog,
+      };
+
+      const validation = validateCatalog(catalogMismatch);
+      expect(validation.isValid).toBe(false);
+      expect(validation.errors).toContainEqual(
+        expect.stringContaining('Expected exactly 350 selectable official cities, found 351'),
+      );
+    });
+
     it('flags validation errors when constraints are violated', () => {
       const invalidCatalog = {
         records: [

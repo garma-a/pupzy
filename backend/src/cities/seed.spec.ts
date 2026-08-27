@@ -113,6 +113,57 @@ describe('seedOfficialCities', () => {
     expect(mockDb.delete).not.toHaveBeenCalled();
   });
 
+  it('preserves each catalog entry lifecycle status and never reactivates a retired city during seed', async () => {
+    const mixedCatalog: CityCatalogRecord[] = [
+      {
+        sourceCode: 'EG0101',
+        nameEnglish: 'Cairo',
+        nameArabic: 'القاهرة',
+        governorate: 'Cairo',
+        governorateCode: 'EG01',
+        sourceNameEnglish: 'Cairo',
+        sourceNameArabic: 'القاهرة',
+        latitude: 30.0,
+        longitude: 31.0,
+        status: 'OFFICIAL',
+      },
+      {
+        sourceCode: 'EG0199',
+        nameEnglish: 'Retired Quarter',
+        nameArabic: 'حي ملغي',
+        governorate: 'Cairo',
+        governorateCode: 'EG01',
+        sourceNameEnglish: 'Retired Quarter',
+        sourceNameArabic: 'حي ملغي',
+        latitude: 30.05,
+        longitude: 31.25,
+        status: 'RETIRED',
+      },
+    ];
+
+    const result = await seedOfficialCities(mockDb, {
+      catalog: {
+        metadata: {
+          declaredOfficialCount: 1,
+          governorateCount: 1,
+        },
+        records: mixedCatalog,
+      },
+      batchSize: 10,
+    });
+
+    expect(result.totalSeeded).toBe(2);
+    expect(result.governorateCount).toBe(1);
+
+    expect(insertedBatches.length).toBe(1);
+    const batch = insertedBatches[0];
+    const officialRow = batch.find((r: any) => r.sourceCode === 'EG0101');
+    const retiredRow = batch.find((r: any) => r.sourceCode === 'EG0199');
+
+    expect(officialRow.status).toBe('OFFICIAL');
+    expect(retiredRow.status).toBe('RETIRED');
+  });
+
   it('runs database seed and resolves vet clinic city assignments against official cities only', async () => {
     const mockDbSeed: any = {
       transaction: jest.fn().mockImplementation(async (cb) => cb(mockTx)),

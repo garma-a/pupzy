@@ -220,4 +220,53 @@ describe('reconcileCities', () => {
     expect(sqlScript).not.toContain('http://');
     expect(sqlScript).not.toContain('https://');
   });
+
+  it('reconciles and generates SQL correctly for a catalog with retired cities and custom official count', async () => {
+    // 350 official + 1 retired
+    const [retiredCity, ...remainingOfficial] = officialCatalog;
+    const modifiedCatalog = [
+      {
+        ...retiredCity,
+        status: 'RETIRED' as const,
+      },
+      ...remainingOfficial,
+    ];
+
+    const catalogObj = {
+      metadata: {
+        declaredOfficialCount: 350,
+        governorateCount: 27,
+      },
+      records: modifiedCatalog,
+    };
+
+    const mockTx: any = {
+      query: jest.fn().mockImplementation(async (sqlText: string) => {
+        if (sqlText.includes('SELECT id, name_english')) {
+          return { rows: [] };
+        }
+        if (sqlText.includes('official_count')) {
+          return { rows: [{ official_count: 350, governorate_count: 27 }] };
+        }
+        return { rows: [] };
+      }),
+    };
+
+    const mockDb: any = {
+      transaction: jest.fn().mockImplementation(async (cb) => cb(mockTx)),
+    };
+
+    const result = await reconcileCities(mockDb, {
+      catalog: catalogObj,
+      mappings: [],
+    });
+
+    expect(result.totalOfficialCities).toBe(350);
+    expect(result.governorateCount).toBe(27);
+    expect(result.insertedOfficialCount).toBe(351);
+
+    const sqlScript = generateReconcileMigrationSql([], catalogObj);
+    expect(sqlScript).toContain("'RETIRED'");
+    expect(sqlScript).toContain('350 official cities');
+  });
 });
