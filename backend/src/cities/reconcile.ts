@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import {
   getOfficialCatalog,
   validateCatalog,
+  unpackCatalog,
   resolveDataPath,
   mapCatalogRecordToDbValues,
   type CityCatalogRecord,
@@ -131,15 +132,11 @@ export async function reconcileCities(
   options: ReconcileOptions = {},
 ): Promise<ReconcileResult> {
   const rawCatalog = options.catalog ?? getOfficialCatalog();
-  const catalogRecords = Array.isArray(rawCatalog) ? rawCatalog : rawCatalog.records;
-  const catalogMetadata = Array.isArray(rawCatalog) ? undefined : rawCatalog.metadata;
+  const { records: catalogRecords, officialRecords } = unpackCatalog(rawCatalog);
   const mappings = options.mappings ?? loadLegacyMappings();
 
   if (options.validateBeforeReconcile !== false) {
-    const catalogVal = validateCatalog({
-      records: catalogRecords,
-      metadata: catalogMetadata,
-    });
+    const catalogVal = validateCatalog(rawCatalog);
     if (!catalogVal.isValid) {
       throw new Error(`Catalog validation failed: ${catalogVal.errors.join('; ')}`);
     }
@@ -164,7 +161,6 @@ export async function reconcileCities(
   let unmatchedLegacyCount = 0;
   let insertedOfficialCount = 0;
 
-  const officialRecords = catalogRecords.filter((c) => c.status === 'OFFICIAL' || !c.status);
   const expectedOfficialCount = officialRecords.length;
   const expectedGovCount = new Set(officialRecords.map((c) => c.governorate)).size;
 
@@ -335,12 +331,11 @@ export function generateReconcileMigrationSql(
   mappings: LegacyCityMapping[] = loadLegacyMappings(),
   catalog: CityCatalogRecord[] | CityCatalog = getOfficialCatalog(),
 ): string {
-  const catalogRecords = Array.isArray(catalog) ? catalog : catalog.records;
+  const { records: catalogRecords, officialRecords } = unpackCatalog(catalog);
   const catalogByCode = new Map<string, CityCatalogRecord>(
     catalogRecords.map((c) => [c.sourceCode, c]),
   );
 
-  const officialRecords = catalogRecords.filter((c) => c.status === 'OFFICIAL' || !c.status);
   const expectedOfficialCount = officialRecords.length;
   const expectedGovCount = new Set(officialRecords.map((c) => c.governorate)).size;
 

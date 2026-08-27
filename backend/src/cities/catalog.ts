@@ -256,6 +256,24 @@ export function transformCatalog(snapshot: CitySnapshot): CityCatalog {
 }
 
 /**
+ * Normalizes an input catalog (records array or catalog object) and extracts records by lifecycle status.
+ */
+export function unpackCatalog(catalog: CityCatalogRecord[] | CityCatalog | { metadata?: CityCatalogMetadata; records: CityCatalogRecord[] }): {
+  records: CityCatalogRecord[];
+  metadata?: CityCatalogMetadata;
+  officialRecords: CityCatalogRecord[];
+  retiredRecords: CityCatalogRecord[];
+  legacyRecords: CityCatalogRecord[];
+} {
+  const records = Array.isArray(catalog) ? catalog : catalog.records;
+  const metadata = Array.isArray(catalog) ? undefined : catalog.metadata;
+  const officialRecords = records.filter((c) => c.status === 'OFFICIAL' || !c.status);
+  const retiredRecords = records.filter((c) => c.status === 'RETIRED');
+  const legacyRecords = records.filter((c) => c.status === 'LEGACY');
+  return { records, metadata, officialRecords, retiredRecords, legacyRecords };
+}
+
+/**
  * Validates integrity constraints for a City catalog:
  * - Selectable official cities match expected count (default 351 or metadata declared count)
  * - Distinct governorates match expected count (default 27 or metadata declared count)
@@ -266,20 +284,11 @@ export function transformCatalog(snapshot: CitySnapshot): CityCatalog {
  * - Valid parent governorate codes
  */
 export function validateCatalog(
-  catalog: {
-    metadata?: CityCatalogMetadata;
-    records: CityCatalogRecord[];
-  },
+  catalog: CityCatalogRecord[] | CityCatalog | { metadata?: CityCatalogMetadata; records: CityCatalogRecord[] },
   options: ValidateCatalogOptions = {},
 ): ValidationResult {
   const errors: string[] = [];
-  const records = catalog.records;
-
-  const officialRecords = records.filter((r) => r.status === 'OFFICIAL' || !r.status);
-  const retiredRecords = records.filter((r) => r.status === 'RETIRED');
-  const legacyRecords = records.filter((r) => r.status === 'LEGACY');
-
-  const meta = catalog.metadata;
+  const { records, metadata: meta, officialRecords, retiredRecords, legacyRecords } = unpackCatalog(catalog);
   const expectedOfficial =
     options.expectedOfficialCount ??
     meta?.declaredOfficialCount ??

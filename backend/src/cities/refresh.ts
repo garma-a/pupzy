@@ -221,6 +221,17 @@ export function applyReviewedRelease(
 
   // Process existing catalog items
   for (const curr of currentCatalog) {
+    if (curr.status === 'RETIRED') {
+      // Previously retired city remains retired and cannot be automatically reactivated
+      updatedCatalog.push({
+        ...curr,
+        status: 'RETIRED',
+      });
+      retiredCount++;
+      candidateByCode.delete(curr.sourceCode);
+      continue;
+    }
+
     const cand = candidateByCode.get(curr.sourceCode);
     if (cand) {
       // Retain or update official record

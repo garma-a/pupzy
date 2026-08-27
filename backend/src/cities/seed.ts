@@ -3,6 +3,7 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   getOfficialCatalog,
   validateCatalog,
+  unpackCatalog,
   mapCatalogRecordToInsertRow,
   type CityCatalogRecord,
   type CityCatalog,
@@ -42,21 +43,16 @@ export async function seedOfficialCities(
   options: SeedCitiesOptions = {},
 ): Promise<SeedCitiesResult> {
   const rawCatalog = options.catalog ?? getOfficialCatalog();
-  const catalogRecords = Array.isArray(rawCatalog) ? rawCatalog : rawCatalog.records;
-  const catalogMetadata = Array.isArray(rawCatalog) ? undefined : rawCatalog.metadata;
+  const { records: catalogRecords, officialRecords } = unpackCatalog(rawCatalog);
 
   if (options.validateBeforeSeed !== false) {
-    const validation = validateCatalog({
-      records: catalogRecords,
-      metadata: catalogMetadata,
-    });
+    const validation = validateCatalog(rawCatalog);
     if (!validation.isValid) {
       throw new Error(`City catalog validation failed before seeding: ${validation.errors.join('; ')}`);
     }
   }
 
   const batchSize = options.batchSize ?? 100;
-  const officialRecords = catalogRecords.filter((c) => c.status === 'OFFICIAL' || !c.status);
   const governorates = new Set(officialRecords.map((c) => c.governorate));
 
   const runSeed = async (tx: any) => {
@@ -112,10 +108,9 @@ export async function ensureOfficialCities(
   catalog: CityCatalogRecord[] | CityCatalog = getOfficialCatalog(),
 ): Promise<OfficialCityReference[]> {
   const existing = await queryOfficialCityReferences(db);
-  const catalogRecords = Array.isArray(catalog) ? catalog : catalog.records;
-  const expectedOfficialCount = catalogRecords.filter((c) => c.status === 'OFFICIAL' || !c.status).length;
+  const { officialRecords } = unpackCatalog(catalog);
 
-  if (existing && existing.length >= expectedOfficialCount) {
+  if (existing && existing.length >= officialRecords.length) {
     return existing;
   }
 

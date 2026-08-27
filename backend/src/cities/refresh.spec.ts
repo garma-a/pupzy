@@ -383,4 +383,76 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
     expect(validation.stats.totalCities).toBe(352);
     expect(validation.stats.governorateCount).toBe(27);
   });
+
+  it('never reactivates an already retired city in subsequent upstream release applications', () => {
+    const baseCatalog: CityCatalogRecord[] = [
+      {
+        sourceCode: 'EG0101',
+        nameEnglish: 'Active City',
+        nameArabic: 'مدينة نشطة',
+        governorate: 'Cairo',
+        governorateCode: 'EG01',
+        sourceNameEnglish: 'Active City',
+        sourceNameArabic: 'مدينة نشطة',
+        latitude: 30.0,
+        longitude: 31.0,
+        status: 'OFFICIAL',
+      },
+      {
+        sourceCode: 'EG0102',
+        nameEnglish: 'Retired City',
+        nameArabic: 'مدينة ملغاة',
+        governorate: 'Cairo',
+        governorateCode: 'EG01',
+        sourceNameEnglish: 'Retired City',
+        sourceNameArabic: 'مدينة ملغاة',
+        latitude: 30.1,
+        longitude: 31.1,
+        status: 'RETIRED', // already retired in current catalog
+      },
+    ];
+
+    // Upstream snapshot re-includes EG0102
+    const candidateRaw = [
+      {
+        adm2_name: 'Active City',
+        adm2_name1: 'مدينة نشطة',
+        adm2_pcode: 'EG0101',
+        adm1_name: 'Cairo',
+        adm1_name1: 'القاهرة',
+        adm1_pcode: 'EG01',
+        adm0_name: 'Egypt',
+        adm0_name1: 'مصر',
+        adm0_pcode: 'EG',
+        center_lat: 30.0,
+        center_lon: 31.0,
+      },
+      {
+        adm2_name: 'Retired City',
+        adm2_name1: 'مدينة ملغاة',
+        adm2_pcode: 'EG0102',
+        adm1_name: 'Cairo',
+        adm1_name1: 'القاهرة',
+        adm1_pcode: 'EG01',
+        adm0_name: 'Egypt',
+        adm0_name1: 'مصر',
+        adm0_pcode: 'EG',
+        center_lat: 30.1,
+        center_lon: 31.1,
+      },
+    ];
+
+    const candidateSnapshot = createMockSnapshot(candidateRaw);
+    const release = applyReviewedRelease(baseCatalog, candidateSnapshot, {
+      reviewedMetadata: {
+        declaredOfficialCount: 1,
+        governorateCount: 1,
+      },
+    });
+
+    const retiredEntry = release.updatedCatalog.find((c) => c.sourceCode === 'EG0102');
+    expect(retiredEntry?.status).toBe('RETIRED');
+    expect(release.officialCount).toBe(1);
+    expect(release.retiredCount).toBe(1);
+  });
 });
