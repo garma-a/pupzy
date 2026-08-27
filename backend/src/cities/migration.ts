@@ -132,6 +132,13 @@ export function reconcileMigrationHistory(migrationsFolder: string): MigrationHi
       return { isValid: false, errors, nextIdx: 0, entriesCount: 0 };
     }
 
+    if (typeof journal.version !== 'string' || !journal.version.trim()) {
+      errors.push(`Invalid journal schema at "${journalPath}": missing or invalid "version"`);
+    }
+    if (journal.dialect !== 'postgresql') {
+      errors.push(`Invalid journal schema at "${journalPath}": missing or invalid "dialect"`);
+    }
+
     const seenIndices = new Set<number>();
     const seenTags = new Set<string>();
     const entries = journal.entries;
@@ -203,21 +210,15 @@ export function reconcileMigrationHistory(migrationsFolder: string): MigrationHi
       }
     }
   } else {
-    // Journal does not exist: scan directory for numeric prefix continuity
+    // An absent journal is valid only for genuinely empty history. Once any migration
+    // exists, its journal is the other half of the release history and must be restored.
     const scanResult = scanMigrationDirectory(migrationsFolder);
     errors.push(...scanResult.errors);
 
-    const indexedFiles = scanResult.scannedFiles.filter((f) => f.idx !== undefined);
-    if (indexedFiles.length > 0) {
-      const seenIndices = new Set(indexedFiles.map((f) => f.idx!));
-      const maxIdx = Math.max(...Array.from(seenIndices));
-      for (let i = 0; i <= maxIdx; i++) {
-        if (!seenIndices.has(i)) {
-          errors.push(`Missing migration file with prefix "${String(i).padStart(4, '0')}" in directory sequence`);
-        }
-      }
-      nextIdx = maxIdx + 1;
-      entriesCount = indexedFiles.length;
+    if (scanResult.scannedFiles.length > 0) {
+      errors.push(
+        `Migration journal is missing at "${journalPath}" while migration files exist in "${migrationsFolder}". Restore the journal before publishing.`,
+      );
     }
   }
 

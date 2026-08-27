@@ -52,6 +52,7 @@ export interface PublishReleaseResult {
 interface RecoveryBackupEntry {
   path: string;
   backupPath: string;
+  hadOriginal?: boolean;
 }
 
 interface PublicationRecoveryManifest {
@@ -61,8 +62,26 @@ interface PublicationRecoveryManifest {
   backups: RecoveryBackupEntry[];
 }
 
+interface ReleaseArtifact {
+  destinationPath: string;
+  stagedPath: string;
+  content: string;
+  stageFault: FaultInjectionStage;
+  replaceFault: FaultInjectionStage;
+  validate(content: string): void;
+}
+
 function restoreBackups(backups: RecoveryBackupEntry[]): void {
   for (const backup of backups) {
+    if (backup.hadOriginal === false) {
+      try {
+        fs.rmSync(backup.path, { force: true });
+      } catch {
+        // ignore rollback cleanup errors
+      }
+      continue;
+    }
+
     if (fs.existsSync(backup.backupPath)) {
       try {
         fs.copyFileSync(backup.backupPath, backup.path);
@@ -72,6 +91,30 @@ function restoreBackups(backups: RecoveryBackupEntry[]): void {
       }
     }
   }
+}
+
+function stageArtifact(artifact: ReleaseArtifact, faultInjectionHook?: FaultInjectionHook): void {
+  fs.writeFileSync(artifact.stagedPath, artifact.content, 'utf8');
+  faultInjectionHook?.(artifact.stageFault);
+  artifact.validate(fs.readFileSync(artifact.stagedPath, 'utf8'));
+}
+
+function backupReleaseArtifacts(artifacts: ReleaseArtifact[]): RecoveryBackupEntry[] {
+  return artifacts.map((artifact) => {
+    const backupPath = `${artifact.destinationPath}.recovery.bak`;
+    const hadOriginal = fs.existsSync(artifact.destinationPath);
+
+    if (hadOriginal) {
+      fs.copyFileSync(artifact.destinationPath, backupPath);
+    }
+
+    return { path: artifact.destinationPath, backupPath, hadOriginal };
+  });
+}
+
+function replaceArtifact(artifact: ReleaseArtifact, faultInjectionHook?: FaultInjectionHook): void {
+  fs.copyFileSync(artifact.stagedPath, artifact.destinationPath);
+  faultInjectionHook?.(artifact.replaceFault);
 }
 
 /**
@@ -127,6 +170,10 @@ export function publishReviewedRelease(
   const migrationsFolder = resolveMigrationsFolder(options.migrationsFolder);
   const catalogPath = options.catalogPath ?? resolveDataPath('egypt-cities-catalog.json');
   const snapshotPath = options.snapshotPath ?? resolveDataPath('ocha-adm2-egypt-snapshot.json');
+
+  if (options.writeSnapshot === false) {
+    throw new Error('Publication refused: the source snapshot is mandatory in every City release artifact set.');
+  }
 
   // 0. Automatic recovery from prior interrupted publication
   recoverInterruptedPublication(migrationsFolder);
@@ -190,21 +237,23 @@ export function publishReviewedRelease(
   const migrationSql = generateReleaseMigrationSql(release, { migrationTag: migrationMeta.tag });
   const migrationFilePath = path.join(migrationsFolder, migrationMeta.filename);
 
-  // Prepare updated journal in memory
-  let updatedJournalContent: string | null = null;
+  // Prepare the required journal artifact in memory. An empty migration history is initialized
+  // by the first publication; a non-empty history without a journal has already failed closed.
+  let journal: MigrationJournal;
   if (fs.existsSync(migrationMeta.journalPath)) {
     const journalContent = fs.readFileSync(migrationMeta.journalPath, 'utf8');
-    const journal = JSON.parse(journalContent) as MigrationJournal;
-    journal.entries = journal.entries || [];
-    journal.entries.push({
-      idx: migrationMeta.nextIdx,
-      version: journal.version || '7',
-      when: Date.now(),
-      tag: migrationMeta.tag,
-      breakpoints: true,
-    });
-    updatedJournalContent = JSON.stringify(journal, null, 2);
+    journal = JSON.parse(journalContent) as MigrationJournal;
+  } else {
+    journal = { version: '7', dialect: 'postgresql', entries: [] };
   }
+  journal.entries.push({
+    idx: migrationMeta.nextIdx,
+    version: journal.version || '7',
+    when: Date.now(),
+    tag: migrationMeta.tag,
+    breakpoints: true,
+  });
+  const updatedJournalContent = JSON.stringify(journal, null, 2);
 
   // 6. Stage all artifacts in an isolated temporary directory
   const stagingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'city-release-staging-'));
@@ -214,81 +263,77 @@ export function publishReviewedRelease(
   const stagedJournalFile = path.join(stagingDir, '_journal.json');
 
   const recoveryManifestPath = path.join(migrationsFolder, '.publication-recovery-manifest.json');
-  const backups: RecoveryBackupEntry[] = [];
+  let backups: RecoveryBackupEntry[] = [];
 
   try {
-    // 6a. Stage Catalog
-    fs.writeFileSync(
-      stagedCatalogFile,
-      JSON.stringify(
-        {
-          metadata: release.metadata,
-          records: release.updatedCatalog,
+    const artifacts: ReleaseArtifact[] = [
+      {
+        destinationPath: catalogPath,
+        stagedPath: stagedCatalogFile,
+        content: JSON.stringify({ metadata: release.metadata, records: release.updatedCatalog }, null, 2),
+        stageFault: 'stage_catalog',
+        replaceFault: 'replace_catalog',
+        validate(content) {
+          const validation = validateCatalog(JSON.parse(content) as CityCatalog);
+          if (!validation.isValid) {
+            throw new Error(`Staged catalog validation failed:\n- ${validation.errors.join('\n- ')}`);
+          }
         },
-        null,
-        2,
-      ),
-      'utf8',
-    );
-    if (options._faultInjectionHook) {
-      options._faultInjectionHook('stage_catalog');
-    }
-    const stagedCatVal = validateCatalog(JSON.parse(fs.readFileSync(stagedCatalogFile, 'utf8')) as CityCatalog);
-    if (!stagedCatVal.isValid) {
-      throw new Error(`Staged catalog validation failed:\n- ${stagedCatVal.errors.join('\n- ')}`);
+      },
+      {
+        destinationPath: snapshotPath,
+        stagedPath: stagedSnapshotFile,
+        content: JSON.stringify(candidateSnapshot, null, 2),
+        stageFault: 'stage_snapshot',
+        replaceFault: 'replace_snapshot',
+        validate(content) {
+          const validation = validateSnapshot(JSON.parse(content));
+          if (!validation.isValid) {
+            throw new Error(`Staged snapshot validation failed:\n- ${validation.errors.join('\n- ')}`);
+          }
+        },
+      },
+      {
+        destinationPath: migrationFilePath,
+        stagedPath: stagedMigrationFile,
+        content: migrationSql,
+        stageFault: 'stage_migration',
+        replaceFault: 'replace_migration',
+        validate(content) {
+          if (!content.trim() || !content.includes('DO $$') || !content.includes('END $$;')) {
+            throw new Error('Staged migration SQL validation failed: incomplete or empty SQL statements');
+          }
+        },
+      },
+      {
+        destinationPath: migrationMeta.journalPath,
+        stagedPath: stagedJournalFile,
+        content: updatedJournalContent,
+        stageFault: 'stage_journal',
+        replaceFault: 'replace_journal',
+        validate(content) {
+          const parsed = JSON.parse(content) as MigrationJournal;
+          const lastEntry = parsed.entries?.at(-1);
+          if (
+            !Array.isArray(parsed.entries) ||
+            lastEntry?.idx !== migrationMeta.nextIdx ||
+            lastEntry?.tag !== migrationMeta.tag
+          ) {
+            throw new Error('Staged journal validation failed: missing migration entry for the staged migration');
+          }
+        },
+      },
+    ];
+
+    for (const artifact of artifacts) {
+      stageArtifact(artifact, options._faultInjectionHook);
     }
 
-    // 6b. Stage Snapshot
-    if (options.writeSnapshot !== false) {
-      fs.writeFileSync(stagedSnapshotFile, JSON.stringify(candidateSnapshot, null, 2), 'utf8');
-      if (options._faultInjectionHook) {
-        options._faultInjectionHook('stage_snapshot');
-      }
-      const stagedSnapVal = validateSnapshot(JSON.parse(fs.readFileSync(stagedSnapshotFile, 'utf8')));
-      if (!stagedSnapVal.isValid) {
-        throw new Error(`Staged snapshot validation failed:\n- ${stagedSnapVal.errors.join('\n- ')}`);
-      }
+    // Every artifact follows the same backup, replacement, and cleanup protocol.
+    for (const artifact of artifacts) {
+      fs.mkdirSync(path.dirname(artifact.destinationPath), { recursive: true });
     }
-
-    // 6c. Stage Migration SQL
-    fs.writeFileSync(stagedMigrationFile, migrationSql, 'utf8');
-    if (options._faultInjectionHook) {
-      options._faultInjectionHook('stage_migration');
-    }
-    const stagedSqlContent = fs.readFileSync(stagedMigrationFile, 'utf8');
-    if (!stagedSqlContent.trim() || !stagedSqlContent.includes('DO $$') || !stagedSqlContent.includes('END $$;')) {
-      throw new Error('Staged migration SQL validation failed: incomplete or empty SQL statements');
-    }
-
-    // 6d. Stage Journal
-    if (updatedJournalContent) {
-      fs.writeFileSync(stagedJournalFile, updatedJournalContent, 'utf8');
-      if (options._faultInjectionHook) {
-        options._faultInjectionHook('stage_journal');
-      }
-      const stagedJournalParsed = JSON.parse(fs.readFileSync(stagedJournalFile, 'utf8')) as MigrationJournal;
-      if (!Array.isArray(stagedJournalParsed.entries)) {
-        throw new Error('Staged journal validation failed: entries must be an array');
-      }
-    }
-
-    // 7. Atomic replacement with boundary rollback protection
-    // 7a. Prepare backups
-    if (fs.existsSync(catalogPath)) {
-      const backupPath = `${catalogPath}.recovery.bak`;
-      fs.copyFileSync(catalogPath, backupPath);
-      backups.push({ path: catalogPath, backupPath });
-    }
-    if (options.writeSnapshot !== false && fs.existsSync(snapshotPath)) {
-      const backupPath = `${snapshotPath}.recovery.bak`;
-      fs.copyFileSync(snapshotPath, backupPath);
-      backups.push({ path: snapshotPath, backupPath });
-    }
-    if (fs.existsSync(migrationMeta.journalPath)) {
-      const backupPath = `${migrationMeta.journalPath}.recovery.bak`;
-      fs.copyFileSync(migrationMeta.journalPath, backupPath);
-      backups.push({ path: migrationMeta.journalPath, backupPath });
-    }
+    backups = backupReleaseArtifacts(artifacts);
 
     // Write recovery manifest
     const manifest: PublicationRecoveryManifest = {
@@ -299,29 +344,8 @@ export function publishReviewedRelease(
     };
     fs.writeFileSync(recoveryManifestPath, JSON.stringify(manifest, null, 2), 'utf8');
 
-    // 7b. Execute Replacements
-    fs.copyFileSync(stagedCatalogFile, catalogPath);
-    if (options._faultInjectionHook) {
-      options._faultInjectionHook('replace_catalog');
-    }
-
-    if (options.writeSnapshot !== false) {
-      fs.copyFileSync(stagedSnapshotFile, snapshotPath);
-      if (options._faultInjectionHook) {
-        options._faultInjectionHook('replace_snapshot');
-      }
-    }
-
-    fs.copyFileSync(stagedMigrationFile, migrationFilePath);
-    if (options._faultInjectionHook) {
-      options._faultInjectionHook('replace_migration');
-    }
-
-    if (updatedJournalContent) {
-      fs.copyFileSync(stagedJournalFile, migrationMeta.journalPath);
-      if (options._faultInjectionHook) {
-        options._faultInjectionHook('replace_journal');
-      }
+    for (const artifact of artifacts) {
+      replaceArtifact(artifact, options._faultInjectionHook);
     }
 
     // 8. Publication succeeded cleanly: clean up manifest and backups
@@ -340,20 +364,12 @@ export function publishReviewedRelease(
       migrationPath: migrationFilePath,
       migrationSql,
       catalogPath,
-      snapshotPath: options.writeSnapshot !== false ? snapshotPath : undefined,
-      journalUpdated: !!updatedJournalContent,
+      snapshotPath,
+      journalUpdated: true,
     };
   } catch (err) {
-    // 9. Boundary Rollback: restore all files from backups
+    // 9. Boundary Rollback: restore every artifact that replacement touched.
     restoreBackups(backups);
-
-    if (fs.existsSync(migrationFilePath)) {
-      try {
-        fs.rmSync(migrationFilePath, { force: true });
-      } catch {
-        // ignore
-      }
-    }
 
     if (fs.existsSync(recoveryManifestPath)) {
       try {

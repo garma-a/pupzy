@@ -43,6 +43,23 @@ describe('Atomic Append-Only City Release Publication & History Reconciliation',
     records,
   });
 
+  const createAdvancedSnapshot = () =>
+    createMockSnapshot(
+      baseCatalog.map((city) => ({
+        adm2_name: city.sourceCode === 'EG0104' ? 'Maadi Updated' : city.sourceNameEnglish,
+        adm2_name1: city.sourceCode === 'EG0104' ? 'المعادي المحدثة' : city.sourceNameArabic,
+        adm2_pcode: city.sourceCode,
+        adm1_name: city.governorate,
+        adm1_name1: city.governorateArabic || '',
+        adm1_pcode: city.governorateCode,
+        adm0_name: 'Egypt',
+        adm0_name1: 'مصر',
+        adm0_pcode: 'EG',
+        center_lat: city.latitude,
+        center_lon: city.longitude,
+      })),
+    );
+
   const setupMockMigrationHistory = (entries: Array<{ idx: number; tag: string; version?: string }>) => {
     const journal: MigrationJournal = {
       version: '7',
@@ -165,6 +182,17 @@ describe('Atomic Append-Only City Release Publication & History Reconciliation',
       expect(() => getNextMigrationMeta(migrationsDir)).toThrow(/Migration history reconciliation failed closed/);
     });
 
+    it('fails closed when a journal omits required Drizzle metadata', () => {
+      fs.writeFileSync(journalPath, JSON.stringify({ entries: [] }), 'utf8');
+
+      const result = reconcileMigrationHistory(migrationsDir);
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContainEqual(expect.stringContaining('missing or invalid "version"'));
+      expect(result.errors).toContainEqual(expect.stringContaining('missing or invalid "dialect"'));
+      expect(() => getNextMigrationMeta(migrationsDir)).toThrow(/Migration history reconciliation failed closed/);
+    });
+
     it('fails closed on duplicate journal indices', () => {
       const duplicateIndexEntries = [
         { idx: 0, tag: '0000_first' },
@@ -261,6 +289,16 @@ describe('Atomic Append-Only City Release Publication & History Reconciliation',
       expect(() => getNextMigrationMeta(migrationsDir)).toThrow(
         /Unjournaled migration file "0012_release_city_catalog.sql"|already exists on disk/,
       );
+    });
+
+    it('fails closed when migration files exist without their journal', () => {
+      fs.rmSync(journalPath);
+
+      const result = reconcileMigrationHistory(migrationsDir);
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContainEqual(expect.stringContaining('Migration journal is missing'));
+      expect(() => getNextMigrationMeta(migrationsDir)).toThrow(/Migration history reconciliation failed closed/);
     });
   });
 
@@ -568,6 +606,54 @@ describe('Atomic Append-Only City Release Publication & History Reconciliation',
       expect(publishedJournal.entries).toHaveLength(13);
       expect(publishedJournal.entries[12].idx).toBe(12);
       expect(publishedJournal.entries[12].tag).toBe('0012_release_city_catalog');
+    });
+
+    it('initializes an empty migration history as a complete four-artifact release', () => {
+      fs.rmSync(journalPath);
+      for (const file of fs.readdirSync(migrationsDir)) {
+        if (file.endsWith('.sql')) {
+          fs.rmSync(path.join(migrationsDir, file));
+        }
+      }
+
+      const candidateSnapshot = createAdvancedSnapshot();
+
+      const result = publishReviewedRelease(baseCatalog, candidateSnapshot, {
+        migrationsFolder: migrationsDir,
+        catalogPath,
+        snapshotPath,
+      });
+
+      expect(result.snapshotPath).toBe(snapshotPath);
+      expect(result.journalUpdated).toBe(true);
+      expect(fs.existsSync(catalogPath)).toBe(true);
+      expect(fs.existsSync(snapshotPath)).toBe(true);
+      expect(fs.existsSync(result.migrationPath)).toBe(true);
+      expect(fs.existsSync(journalPath)).toBe(true);
+
+      const journal = JSON.parse(fs.readFileSync(journalPath, 'utf8')) as MigrationJournal;
+      expect(journal.entries).toEqual([expect.objectContaining({ idx: 0, tag: '0000_release_city_catalog' })]);
+    });
+
+    it('refuses to omit the source snapshot from a release artifact set', () => {
+      const candidateSnapshot = createAdvancedSnapshot();
+      const catalogBefore = fs.readFileSync(catalogPath, 'utf8');
+      const snapshotBefore = fs.readFileSync(snapshotPath, 'utf8');
+      const journalBefore = fs.readFileSync(journalPath, 'utf8');
+
+      expect(() =>
+        publishReviewedRelease(baseCatalog, candidateSnapshot, {
+          migrationsFolder: migrationsDir,
+          catalogPath,
+          snapshotPath,
+          writeSnapshot: false,
+        }),
+      ).toThrow(/source snapshot is mandatory/);
+
+      expect(fs.readFileSync(catalogPath, 'utf8')).toBe(catalogBefore);
+      expect(fs.readFileSync(snapshotPath, 'utf8')).toBe(snapshotBefore);
+      expect(fs.readFileSync(journalPath, 'utf8')).toBe(journalBefore);
+      expect(fs.existsSync(path.join(migrationsDir, '0012_release_city_catalog.sql'))).toBe(false);
     });
   });
 });

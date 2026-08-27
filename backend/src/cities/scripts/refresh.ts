@@ -78,18 +78,14 @@ export async function main(): Promise<void> {
 
   const currentCatalog = getOfficialCatalog();
   let candidateSnapshot: CitySnapshot;
-  let hasExplicitCandidate = false;
-
   if (candidateIndex !== -1 && args[candidateIndex + 1]) {
     const candidatePath = path.resolve(process.cwd(), args[candidateIndex + 1]);
     console.log(`Loading candidate snapshot from: ${candidatePath}`);
     candidateSnapshot = JSON.parse(fs.readFileSync(candidatePath, 'utf8')) as CitySnapshot;
-    hasExplicitCandidate = true;
   } else if (fetchIndex !== -1) {
     const fetchUrl = args[fetchIndex + 1] && !args[fetchIndex + 1].startsWith('--') ? args[fetchIndex + 1] : undefined;
     console.log(`Fetching candidate upstream snapshot from OCHA HDX resource (${fetchUrl || 'default'})...`);
     candidateSnapshot = await fetchUpstreamSnapshot(fetchUrl);
-    hasExplicitCandidate = true;
   } else {
     console.log('No candidate specified; comparing raw local snapshot with compiled catalog...');
     candidateSnapshot = loadRawSnapshot();
@@ -101,9 +97,7 @@ export async function main(): Promise<void> {
   if (applyFlag) {
     console.log('Applying reviewed release and generating append-only migration...');
 
-    const options: ReviewedReleaseOptions & { writeSnapshot?: boolean } = {
-      writeSnapshot: hasExplicitCandidate,
-    };
+    const options: ReviewedReleaseOptions = {};
 
     if (officialCountIndex !== -1 && args[officialCountIndex + 1]) {
       options.reviewedMetadata = options.reviewedMetadata || {};
