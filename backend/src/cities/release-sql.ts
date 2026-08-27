@@ -66,6 +66,23 @@ export function generateRetiredCitiesSql(records: CityCatalogRecord[], indent = 
 }
 
 /**
+ * Generates SQL statements for transferring source identity (P-code) onto existing application UUIDs
+ * for approved 1:1 recode and replacement mappings.
+ */
+export function generateIdentityTransfersSql(
+  mappings: Array<{ retiredSourceCode: string; replacementSourceCode: string }>,
+  indent = '  ',
+): string[] {
+  if (!mappings || mappings.length === 0) {
+    return [`${indent}-- (No identity transfers in this release)`];
+  }
+  return mappings.map(
+    (m) =>
+      `${indent}UPDATE cities SET source_code = '${escapeSqlString(m.replacementSourceCode.trim())}' WHERE source_code = '${escapeSqlString(m.retiredSourceCode.trim())}';`,
+  );
+}
+
+/**
  * Generates verification check SQL lines asserting expected official counts, governorate counts,
  * and absence of null source codes.
  */

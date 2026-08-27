@@ -175,8 +175,8 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
       replacementMappings: [
         {
           retiredSourceCode: 'EG0101',
-          replacementSourceCode: 'EG0104',
-          notes: 'Merged into Maadi',
+          replacementSourceCode: 'EG0198',
+          notes: 'Recoded EG0101 to EG0198',
         },
       ],
     });
@@ -215,11 +215,11 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     `);
 
     expect(Number(statsRes.rows[0].official_count)).toBe(350);
-    expect(Number(statsRes.rows[0].retired_count)).toBe(2);
+    expect(Number(statsRes.rows[0].retired_count)).toBe(1);
     expect(Number(statsRes.rows[0].gov_count)).toBe(27);
-    expect(Number(statsRes.rows[0].total_count)).toBe(352);
+    expect(Number(statsRes.rows[0].total_count)).toBe(351);
 
-    // Verify added city exists with status OFFICIAL
+    // Verify recoded/added city exists with status OFFICIAL
     const addedCity = await pool.query<{ source_code: string; status: string; name_english: string }>(
       `SELECT source_code, status, name_english FROM cities WHERE source_code = 'EG0198'`,
     );
@@ -227,16 +227,21 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     expect(addedCity.rows[0].status).toBe('OFFICIAL');
     expect(addedCity.rows[0].name_english).toContain('New Administrative Capital');
 
-    // Verify retired cities exist with status RETIRED
+    // Verify retired city without mapping exists with status RETIRED
     const retiredCities = await pool.query<{ source_code: string; status: string }>(
-      `SELECT source_code, status FROM cities WHERE source_code IN ('EG0101', 'EG0102') ORDER BY source_code`,
+      `SELECT source_code, status FROM cities WHERE source_code = 'EG0102'`,
     );
-    expect(retiredCities.rows).toHaveLength(2);
+    expect(retiredCities.rows).toHaveLength(1);
     expect(retiredCities.rows[0].status).toBe('RETIRED');
-    expect(retiredCities.rows[1].status).toBe('RETIRED');
+
+    // Verify transferred source code no longer exists as a separate row
+    const oldTransferredCity = await pool.query<{ source_code: string }>(
+      `SELECT source_code FROM cities WHERE source_code = 'EG0101'`,
+    );
+    expect(oldTransferredCity.rows).toHaveLength(0);
   });
 
-  it('proves populated database upgrades seamlessly to the new release without breaking UUIDs, posts, or vet clinic references', async () => {
+  it('proves populated database upgrades seamlessly to the new release transferring recoded identity and preserving UUIDs and foreign keys', async () => {
     await cleanDatabase();
 
     // 1. Run baseline migrations up to 0011
@@ -246,9 +251,14 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
       customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
     });
 
-    // 2. Fetch IDs of cities that will be retired, updated, and kept active
-    const retiringCityRes = await pool.query<{ id: string; source_code: string }>(
+    // 2. Fetch IDs of cities that will be recoded, retired without mapping, and updated
+    const recodedCityRes = await pool.query<{ id: string; source_code: string }>(
       `SELECT id, source_code FROM cities WHERE source_code = 'EG0101'`,
+    );
+    const recodedCityId = recodedCityRes.rows[0].id;
+
+    const retiringCityRes = await pool.query<{ id: string; source_code: string }>(
+      `SELECT id, source_code FROM cities WHERE source_code = 'EG0102'`,
     );
     const retiringCityId = retiringCityRes.rows[0].id;
 
@@ -257,14 +267,26 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     );
     const maadiCityId = maadiCityRes.rows[0].id;
 
-    // 3. Create user and posts referencing these cities before release migration
+    // 3. Create users, posts, saved searches, and vet clinics referencing these cities before release migration
     const userRes = await pool.query<{ id: string }>(`
-      INSERT INTO users (firebase_user_id, email, full_name)
-      VALUES ('fb-user-rel-1', 'release-user@example.com', 'Release User')
+      INSERT INTO users (firebase_user_id, email, full_name, home_city_id)
+      VALUES ('fb-user-rel-1', 'release-user@example.com', 'Release User', '${recodedCityId}')
       RETURNING id
     `);
     const userId = userRes.rows[0].id;
 
+    // Post referencing city to be recoded (EG0101 -> EG0198)
+    const postRecodedRes = await pool.query<{ id: string }>(
+      `INSERT INTO posts (
+        creator_id, post_type, title, description, status, moderation_status, city_id, coordinates, urgency, governorate
+      ) VALUES (
+        $1, 'RESCUE', 'Dog in Recoded District', 'Needs help', 'ACTIVE', 'CLEAN', $2, ST_SetSRID(ST_MakePoint(31.2, 30.0), 4326), 'URGENT', 'Cairo'
+      ) RETURNING id`,
+      [userId, recodedCityId],
+    );
+    const postRecodedId = postRecodedRes.rows[0].id;
+
+    // Post referencing city to be retired without mapping (EG0102)
     const postRetiringRes = await pool.query<{ id: string }>(
       `INSERT INTO posts (
         creator_id, post_type, title, description, status, moderation_status, city_id, coordinates, urgency, governorate
@@ -275,6 +297,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     );
     const postRetiringId = postRetiringRes.rows[0].id;
 
+    // Post referencing active city to be updated (EG0104 Maadi)
     const postMaadiRes = await pool.query<{ id: string }>(
       `INSERT INTO posts (
         creator_id, post_type, title, description, status, moderation_status, city_id, coordinates, urgency, governorate
@@ -285,14 +308,31 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     );
     const postMaadiId = postMaadiRes.rows[0].id;
 
-    // Create vet clinic referencing retiring city
-    const clinicRes = await pool.query<{ id: string }>(
+    // Saved search referencing recoded city
+    const savedSearchRes = await pool.query<{ id: string }>(
+      `INSERT INTO saved_searches (user_id, post_type, city_id, label)
+       VALUES ($1, 'ADOPTION', $2, 'Alert in Recoded City')
+       RETURNING id`,
+      [userId, recodedCityId],
+    );
+    const savedSearchId = savedSearchRes.rows[0].id;
+
+    // Vet clinics referencing recoded and retiring cities
+    const clinicRecodedRes = await pool.query<{ id: string }>(
       `INSERT INTO vet_clinics (name_english, city_id, coordinates, phone_number)
-       VALUES ('Old District Vet', $1, ST_SetSRID(ST_MakePoint(31.25, 30.01), 4326), '01000000001')
+       VALUES ('Recoded District Vet', $1, ST_SetSRID(ST_MakePoint(31.25, 30.01), 4326), '01000000001')
+       RETURNING id`,
+      [recodedCityId],
+    );
+    const clinicRecodedId = clinicRecodedRes.rows[0].id;
+
+    const clinicRetiringRes = await pool.query<{ id: string }>(
+      `INSERT INTO vet_clinics (name_english, city_id, coordinates, phone_number)
+       VALUES ('Old Retiring District Vet', $1, ST_SetSRID(ST_MakePoint(31.25, 30.01), 4326), '01000000002')
        RETURNING id`,
       [retiringCityId],
     );
-    const clinicId = clinicRes.rows[0].id;
+    const clinicRetiringId = clinicRetiringRes.rows[0].id;
 
     // 4. Set up CitiesService with mock cache
     const db = drizzle(pool, { schema });
@@ -329,18 +369,55 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     const postList = await service.findAll();
     expect(postList.length).toBe(350);
 
-    // Verify retiring city transitioned to RETIRED and retained UUID
+    // 7. Verify recoded city (EG0101 -> EG0198) preserved UUID and was updated to new official definition
+    const recodedCityAfter = await pool.query<{ id: string; status: string; source_code: string; name_english: string }>(
+      `SELECT id, status, source_code, name_english FROM cities WHERE id = $1`,
+      [recodedCityId],
+    );
+    expect(recodedCityAfter.rows[0].id).toBe(recodedCityId);
+    expect(recodedCityAfter.rows[0].source_code).toBe('EG0198');
+    expect(recodedCityAfter.rows[0].name_english).toBe('New Administrative Capital Sector 1');
+    expect(recodedCityAfter.rows[0].status).toBe('OFFICIAL');
+
+    // User referencing recoded city remains valid with same UUID
+    const userAfter = await pool.query<{ home_city_id: string }>(`SELECT home_city_id FROM users WHERE id = $1`, [userId]);
+    expect(userAfter.rows[0].home_city_id).toBe(recodedCityId);
+
+    // Post referencing recoded city remains valid with same UUID
+    const postRecodedAfter = await pool.query<{ city_id: string; governorate: string }>(
+      `SELECT city_id, governorate FROM posts WHERE id = $1`,
+      [postRecodedId],
+    );
+    expect(postRecodedAfter.rows[0].city_id).toBe(recodedCityId);
+    expect(postRecodedAfter.rows[0].governorate).toBe('Cairo');
+
+    // Saved search referencing recoded city remains valid with same UUID
+    const savedSearchAfter = await pool.query<{ city_id: string }>(`SELECT city_id FROM saved_searches WHERE id = $1`, [
+      savedSearchId,
+    ]);
+    expect(savedSearchAfter.rows[0].city_id).toBe(recodedCityId);
+
+    // Vet clinic referencing recoded city remains valid with same UUID
+    const clinicRecodedAfter = await pool.query<{ city_id: string }>(`SELECT city_id FROM vet_clinics WHERE id = $1`, [
+      clinicRecodedId,
+    ]);
+    expect(clinicRecodedAfter.rows[0].city_id).toBe(recodedCityId);
+
+    // Direct lookup for recoded city returns new official details via service
+    const recodedLookup = await service.findById(recodedCityId);
+    expect(recodedLookup?.id).toBe(recodedCityId);
+    expect(recodedLookup?.sourceCode).toBe('EG0198');
+    expect(recodedLookup?.status).toBe('OFFICIAL');
+    expect(recodedLookup?.nameEnglish).toBe('New Administrative Capital Sector 1');
+
+    // 8. Verify retiring city without mapping (EG0102) transitioned to RETIRED and retained UUID
     const retiringCityAfter = await pool.query<{ id: string; status: string; source_code: string }>(
       `SELECT id, status, source_code FROM cities WHERE id = $1`,
       [retiringCityId],
     );
     expect(retiringCityAfter.rows[0].id).toBe(retiringCityId);
+    expect(retiringCityAfter.rows[0].source_code).toBe('EG0102');
     expect(retiringCityAfter.rows[0].status).toBe('RETIRED');
-
-    // Direct lookup for retired city still resolves via service
-    const retiredLookup = await service.findById(retiringCityId);
-    expect(retiredLookup?.id).toBe(retiringCityId);
-    expect(retiredLookup?.status).toBe('RETIRED');
 
     // Post referencing retired city remains valid
     const postRetiringAfter = await pool.query<{ city_id: string }>(`SELECT city_id FROM posts WHERE id = $1`, [
@@ -348,21 +425,18 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     ]);
     expect(postRetiringAfter.rows[0].city_id).toBe(retiringCityId);
 
-    // Post referencing updated official city remains valid and synchronized
-    const postMaadiAfter = await pool.query<{ city_id: string; governorate: string }>(
-      `SELECT city_id, governorate FROM posts WHERE id = $1`,
-      [postMaadiId],
-    );
-    expect(postMaadiAfter.rows[0].city_id).toBe(maadiCityId);
-    expect(postMaadiAfter.rows[0].governorate).toBe('Cairo');
-
     // Vet clinic referencing retired city remains valid
-    const clinicAfter = await pool.query<{ city_id: string }>(`SELECT city_id FROM vet_clinics WHERE id = $1`, [
-      clinicId,
+    const clinicRetiringAfter = await pool.query<{ city_id: string }>(`SELECT city_id FROM vet_clinics WHERE id = $1`, [
+      clinicRetiringId,
     ]);
-    expect(clinicAfter.rows[0].city_id).toBe(retiringCityId);
+    expect(clinicRetiringAfter.rows[0].city_id).toBe(retiringCityId);
 
-    // Active Maadi city received canonical updates while retaining UUID
+    // Direct lookup for retired city still resolves via service
+    const retiredLookup = await service.findById(retiringCityId);
+    expect(retiredLookup?.id).toBe(retiringCityId);
+    expect(retiredLookup?.status).toBe('RETIRED');
+
+    // 9. Active Maadi city received canonical updates while retaining UUID
     const maadiAfter = await pool.query<{ id: string; name_english: string; status: string }>(
       `SELECT id, name_english, status FROM cities WHERE id = $1`,
       [maadiCityId],
@@ -370,6 +444,13 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     expect(maadiAfter.rows[0].id).toBe(maadiCityId);
     expect(maadiAfter.rows[0].name_english).toBe('Maadi Updated');
     expect(maadiAfter.rows[0].status).toBe('OFFICIAL');
+
+    const postMaadiAfter = await pool.query<{ city_id: string; governorate: string }>(
+      `SELECT city_id, governorate FROM posts WHERE id = $1`,
+      [postMaadiId],
+    );
+    expect(postMaadiAfter.rows[0].city_id).toBe(maadiCityId);
+    expect(postMaadiAfter.rows[0].governorate).toBe('Cairo');
   });
 
   it('proves re-running the release migration on an already-upgraded database is idempotent', async () => {
@@ -433,6 +514,9 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     const eg0101Res = await pool.query<{ id: string }>(`SELECT id FROM cities WHERE source_code = 'EG0101'`);
     const eg0101Id = eg0101Res.rows[0].id;
 
+    const eg0102Res = await pool.query<{ id: string }>(`SELECT id FROM cities WHERE source_code = 'EG0102'`);
+    const eg0102Id = eg0102Res.rows[0].id;
+
     const maadiRes = await pool.query<{ id: string }>(`SELECT id FROM cities WHERE source_code = 'EG0104'`);
     const maadiId = maadiRes.rows[0].id;
 
@@ -443,6 +527,9 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     const initial0101 = await runningInstance.findById(eg0101Id);
     expect(initial0101?.status).toBe('OFFICIAL');
 
+    const initial0102 = await runningInstance.findById(eg0102Id);
+    expect(initial0102?.status).toBe('OFFICIAL');
+
     const initialMaadi = await runningInstance.findById(maadiId);
     expect(initialMaadi?.nameEnglish).toBe('Maadi');
 
@@ -450,7 +537,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     const failedReleaseSql = `
       DO $$
       BEGIN
-        UPDATE cities SET status = 'RETIRED' WHERE source_code = 'EG0101';
+        UPDATE cities SET status = 'RETIRED' WHERE source_code = 'EG0102';
         RAISE EXCEPTION 'Simulated verification mismatch during preDeployCommand';
       END $$;
     `;
@@ -495,8 +582,14 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     const newOfficialList = await newContainerInstance.findAll();
     expect(newOfficialList.length).toBe(350);
 
+    // Recoded city returns OFFICIAL with new identity and preserved UUID
+    const recodedLookup = await newContainerInstance.findById(eg0101Id);
+    expect(recodedLookup?.status).toBe('OFFICIAL');
+    expect(recodedLookup?.sourceCode).toBe('EG0198');
+    expect(recodedLookup?.nameEnglish).toContain('New Administrative Capital');
+
     // Retired city returns RETIRED
-    const retiredLookup = await newContainerInstance.findById(eg0101Id);
+    const retiredLookup = await newContainerInstance.findById(eg0102Id);
     expect(retiredLookup?.status).toBe('RETIRED');
 
     // Updated city returns new canonical name
@@ -504,17 +597,87 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     expect(updatedMaadi?.nameEnglish).toBe('Maadi Updated');
     expect(updatedMaadi?.status).toBe('OFFICIAL');
 
-    // Newly added official city resolves
-    const newCityRes = await pool.query<{ id: string }>(`SELECT id FROM cities WHERE source_code = 'EG0198'`);
-    const newCityId = newCityRes.rows[0].id;
-    const newCityLookup = await newContainerInstance.findById(newCityId);
-    expect(newCityLookup?.status).toBe('OFFICIAL');
-    expect(newCityLookup?.nameEnglish).toContain('New Administrative Capital');
-
     // Instance 1 invalidates in O(1) time if clearCache is invoked
     await runningInstance.clearCache();
     expect(runningInstance.getCacheGeneration()).toBe(1);
     const instance1RefreshedList = await runningInstance.findAll();
     expect(instance1RefreshedList.length).toBe(350);
+  });
+
+  it('fails closed when attempting to generate releases with invalid many-to-one mappings or unmapped detected recodes', () => {
+    const baseCatalog = getOfficialCatalog();
+
+    // 1. Unmapped detected recode (EG0101 name & governorate matched with new P-code EG0198)
+    const recodedRaw = baseCatalog
+      .filter((c) => c.sourceCode !== 'EG0101')
+      .map((c) => ({
+        adm2_name: c.sourceNameEnglish,
+        adm2_name1: c.sourceNameArabic,
+        adm2_pcode: c.sourceCode,
+        adm1_name: c.governorate,
+        adm1_name1: c.governorateArabic || '',
+        adm1_pcode: c.governorateCode,
+        adm0_name: 'Egypt',
+        adm0_name1: 'مصر',
+        adm0_pcode: 'EG',
+        center_lat: c.latitude,
+        center_lon: c.longitude,
+      }));
+
+    recodedRaw.push({
+      adm2_name: 'Al Tibbin',
+      adm2_name1: 'قسم التبين',
+      adm2_pcode: 'EG0198', // new P-code for Al Tibbin
+      adm1_name: 'Cairo',
+      adm1_name1: 'القاهرة',
+      adm1_pcode: 'EG01',
+      adm0_name: 'Egypt',
+      adm0_name1: 'مصر',
+      adm0_pcode: 'EG',
+      center_lat: 29.78,
+      center_lon: 31.33,
+    });
+
+    const recodeSnapshot: CitySnapshot = {
+      metadata: {
+        source: 'OCHA COD-AB Egypt 2026.2',
+        sourceUrl: 'https://data.humdata.org/dataset/cod-ab-egy',
+        resourceUrl:
+          'https://data.humdata.org/dataset/b90d81ba-7c7a-4283-9899-827480d80a79/resource/81126a96-2991-48e1-93cb-24c164a4de88/download/ocha-adm2-egypt-snapshot.json',
+        upstreamVersion: '2026.2.0',
+        upstreamDates: {
+          validOn: '2026-06-01',
+          reviewedDate: '2026-06-15',
+          lastModified: '2026-06-20',
+        },
+        retrievalDate: '2026-08-27',
+        license: 'CC-BY-IGO',
+        licenseUrl: 'https://creativecommons.org/licenses/by/3.0/igo/',
+        attribution: 'UN OCHA Egypt Office',
+        totalRows: recodedRaw.length,
+        outsideZemamCount: 0,
+        selectableCount: recodedRaw.length,
+        governorateCount: 27,
+      },
+      records: recodedRaw,
+    };
+
+    // Fails closed on unmapped detected recode
+    expect(() =>
+      applyReviewedRelease(baseCatalog, recodeSnapshot, {
+        reviewedMetadata: { declaredOfficialCount: 351, governorateCount: 27 },
+      }),
+    ).toThrow(/Unreviewed recode detected for 'Al Tibbin'/);
+
+    // 2. Many-to-one mapping (two retired cities mapped to the same replacement target)
+    expect(() =>
+      applyReviewedRelease(baseCatalog, recodeSnapshot, {
+        reviewedMetadata: { declaredOfficialCount: 351, governorateCount: 27 },
+        replacementMappings: [
+          { retiredSourceCode: 'EG0101', replacementSourceCode: 'EG0198' },
+          { retiredSourceCode: 'EG0102', replacementSourceCode: 'EG0198' },
+        ],
+      }),
+    ).toThrow(/Duplicate replacement mapping for replacement city 'EG0198'/);
   });
 });

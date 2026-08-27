@@ -87,7 +87,7 @@ export async function parseXlsxSnapshot(
   const workbook = new ExcelJS.Workbook();
   try {
     const rawBuffer = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer as ArrayBuffer);
-    await workbook.xlsx.load(rawBuffer);
+    await workbook.xlsx.load(rawBuffer as any);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     throw new Error(`Failed to parse upstream XLSX: ${msg}`);

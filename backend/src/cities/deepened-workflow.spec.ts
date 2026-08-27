@@ -10,6 +10,7 @@ import {
   generatePostGovernorateSyncSql,
   generateCityVerificationSql,
   generateRetiredCitiesSql,
+  generateIdentityTransfersSql,
   escapeSqlString,
 } from './release-sql';
 import { generateReconcileMigrationSql } from './reconcile';
@@ -33,6 +34,7 @@ describe('Deepened City Release Workflow Architecture', () => {
       expect(typeof generatePostGovernorateSyncSql).toBe('function');
       expect(typeof generateCityVerificationSql).toBe('function');
       expect(typeof generateRetiredCitiesSql).toBe('function');
+      expect(typeof generateIdentityTransfersSql).toBe('function');
       expect(typeof escapeSqlString).toBe('function');
     });
 
@@ -43,6 +45,7 @@ describe('Deepened City Release Workflow Architecture', () => {
       expect(refreshFacade.generateReleaseMigrationSql).toBe(generateReleaseMigrationSql);
       expect(refreshFacade.publishReviewedRelease).toBe(publishReviewedRelease);
       expect(refreshFacade.generateCityUpsertSql).toBe(generateCityUpsertSql);
+      expect(refreshFacade.generateIdentityTransfersSql).toBe(generateIdentityTransfersSql);
       expect(refreshFacade.DEFAULT_RESOURCE_URL).toBe(DEFAULT_RESOURCE_URL);
     });
   });
@@ -109,6 +112,7 @@ describe('Deepened City Release Workflow Architecture', () => {
         },
         retiredCount: 0,
         officialCount: 351,
+        replacementMappings: [],
         metadata: {
           governorateCount: 27,
         },
@@ -140,6 +144,21 @@ describe('Deepened City Release Workflow Architecture', () => {
       expect(joinedSql).toContain('IF official_count != 351 THEN');
       expect(joinedSql).toContain('IF gov_count != 27 THEN');
       expect(joinedSql).toContain('IF invalid_official_count != 0 THEN');
+    });
+
+    it('generates deterministic identity transfer SQL for reviewed recode and replacement mappings', () => {
+      const mappings = [
+        { retiredSourceCode: 'EG0101', replacementSourceCode: 'EG0198' },
+        { retiredSourceCode: "EG0201'OLD", replacementSourceCode: "EG0299'NEW" },
+      ];
+
+      const lines = generateIdentityTransfersSql(mappings, '  ');
+      expect(lines).toHaveLength(2);
+      expect(lines[0]).toBe("  UPDATE cities SET source_code = 'EG0198' WHERE source_code = 'EG0101';");
+      expect(lines[1]).toBe("  UPDATE cities SET source_code = 'EG0299''NEW' WHERE source_code = 'EG0201''OLD';");
+
+      const emptyLines = generateIdentityTransfersSql([], '  ');
+      expect(emptyLines).toEqual(['  -- (No identity transfers in this release)']);
     });
   });
 });

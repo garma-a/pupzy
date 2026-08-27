@@ -399,71 +399,268 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
     });
   });
 
-  describe('Replacement Mapping Validation', () => {
-    it('validates 1:1 replacement mappings and rejects duplicate retired mappings or active source targets', () => {
-      const baseCatalog: CityCatalogRecord[] = [
-        {
-          sourceCode: 'EG0101',
-          nameEnglish: 'Active City',
-          nameArabic: 'مدينة نشطة',
-          governorate: 'Cairo',
-          governorateCode: 'EG01',
-          sourceNameEnglish: 'Active City',
-          sourceNameArabic: 'مدينة نشطة',
-          latitude: 30.0,
-          longitude: 31.0,
-          status: 'OFFICIAL',
-        },
-        {
-          sourceCode: 'EG0102',
-          nameEnglish: 'Retired City 1',
-          nameArabic: 'مدينة ملغاة 1',
-          governorate: 'Cairo',
-          governorateCode: 'EG01',
-          sourceNameEnglish: 'Retired City 1',
-          sourceNameArabic: 'مدينة ملغاة 1',
-          latitude: 30.1,
-          longitude: 31.1,
-          status: 'OFFICIAL',
-        },
-      ];
+  describe('Replacement Mapping Validation and Recode Enforcement', () => {
+    const baseCatalog: CityCatalogRecord[] = [
+      {
+        sourceCode: 'EG0101',
+        nameEnglish: 'Recoded City',
+        nameArabic: 'مدينة معاد ترميزها',
+        governorate: 'Cairo',
+        governorateCode: 'EG01',
+        sourceNameEnglish: 'Recoded City',
+        sourceNameArabic: 'مدينة معاد ترميزها',
+        latitude: 30.0,
+        longitude: 31.0,
+        status: 'OFFICIAL',
+      },
+      {
+        sourceCode: 'EG0102',
+        nameEnglish: 'Retired City 1',
+        nameArabic: 'مدينة ملغاة 1',
+        governorate: 'Cairo',
+        governorateCode: 'EG01',
+        sourceNameEnglish: 'Retired City 1',
+        sourceNameArabic: 'مدينة ملغاة 1',
+        latitude: 30.1,
+        longitude: 31.1,
+        status: 'OFFICIAL',
+      },
+      {
+        sourceCode: 'EG0103',
+        nameEnglish: 'Active Constant City',
+        nameArabic: 'مدينة نشطة',
+        governorate: 'Cairo',
+        governorateCode: 'EG01',
+        sourceNameEnglish: 'Active Constant City',
+        sourceNameArabic: 'مدينة نشطة',
+        latitude: 30.2,
+        longitude: 31.2,
+        status: 'OFFICIAL',
+      },
+    ];
 
+    it('requires an explicit reviewed replacement mapping when an upstream recode is detected', () => {
+      // Candidate changes EG0101's sourceCode to EG0198 (same name & governorate -> detected recode)
       const candidateRaw = [
         {
-          adm2_name: 'Active City',
-          adm2_name1: 'مدينة نشطة',
-          adm2_pcode: 'EG0101',
+          adm2_name: 'Recoded City',
+          adm2_name1: 'مدينة معاد ترميزها',
+          adm2_pcode: 'EG0198',
           adm1_name: 'Cairo',
-          adm1_name1: 'القاهرة',
           adm1_pcode: 'EG01',
-          adm0_name: 'Egypt',
-          adm0_name1: 'مصر',
-          adm0_pcode: 'EG',
           center_lat: 30.0,
           center_lon: 31.0,
+        },
+        {
+          adm2_name: 'Active Constant City',
+          adm2_name1: 'مدينة نشطة',
+          adm2_pcode: 'EG0103',
+          adm1_name: 'Cairo',
+          adm1_pcode: 'EG01',
+          center_lat: 30.2,
+          center_lon: 31.2,
         },
       ];
 
       const candidateSnapshot = createMockSnapshot(candidateRaw);
 
-      // Duplicate replacement mapping for same retired city
+      // 1. Attempting without replacement mapping fails closed
       expect(() =>
         applyReviewedRelease(baseCatalog, candidateSnapshot, {
-          reviewedMetadata: { declaredOfficialCount: 1, governorateCount: 1 },
+          reviewedMetadata: { declaredOfficialCount: 2, governorateCount: 1 },
+        }),
+      ).toThrow(/Unreviewed recode detected for 'Recoded City' in governorate 'Cairo' \(EG0101 -> EG0198\)/);
+
+      // 2. Providing explicit matching replacement mapping succeeds
+      const release = applyReviewedRelease(baseCatalog, candidateSnapshot, {
+        reviewedMetadata: { declaredOfficialCount: 2, governorateCount: 1 },
+        replacementMappings: [
+          {
+            retiredSourceCode: 'EG0101',
+            replacementSourceCode: 'EG0198',
+            notes: 'Recoded from EG0101 to EG0198',
+          },
+        ],
+      });
+
+      expect(release.officialCount).toBe(2);
+      expect(release.retiredCount).toBe(1); // EG0102 became RETIRED
+      expect(release.replacementMappings).toEqual([
+        {
+          retiredSourceCode: 'EG0101',
+          replacementSourceCode: 'EG0198',
+          notes: 'Recoded from EG0101 to EG0198',
+        },
+      ]);
+    });
+
+    it('validates 1:1 bijective replacement mappings and rejects invalid, incomplete, or duplicate configurations', () => {
+      const candidateRaw = [
+        {
+          adm2_name: 'New City 1',
+          adm2_name1: 'مدينة جديدة 1',
+          adm2_pcode: 'EG0198',
+          adm1_name: 'Cairo',
+          adm1_pcode: 'EG01',
+          center_lat: 30.0,
+          center_lon: 31.0,
+        },
+        {
+          adm2_name: 'New City 2',
+          adm2_name1: 'مدينة جديدة 2',
+          adm2_pcode: 'EG0199',
+          adm1_name: 'Cairo',
+          adm1_pcode: 'EG01',
+          center_lat: 30.1,
+          center_lon: 31.1,
+        },
+        {
+          adm2_name: 'Active Constant City',
+          adm2_name1: 'مدينة نشطة',
+          adm2_pcode: 'EG0103',
+          adm1_name: 'Cairo',
+          adm1_pcode: 'EG01',
+          center_lat: 30.2,
+          center_lon: 31.2,
+        },
+      ];
+      const candidateSnapshot = createMockSnapshot(candidateRaw);
+
+      // 1. Incomplete mapping
+      expect(() =>
+        applyReviewedRelease(baseCatalog, candidateSnapshot, {
+          reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
+          replacementMappings: [{ retiredSourceCode: '', replacementSourceCode: 'EG0198' }],
+        }),
+      ).toThrow(/missing or invalid retiredSourceCode/);
+
+      expect(() =>
+        applyReviewedRelease(baseCatalog, candidateSnapshot, {
+          reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
+          replacementMappings: [{ retiredSourceCode: 'EG0101', replacementSourceCode: '   ' }],
+        }),
+      ).toThrow(/missing or invalid replacementSourceCode/);
+
+      // 2. Unknown retiredSourceCode
+      expect(() =>
+        applyReviewedRelease(baseCatalog, candidateSnapshot, {
+          reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
+          replacementMappings: [{ retiredSourceCode: 'EG9999_UNKNOWN', replacementSourceCode: 'EG0198' }],
+        }),
+      ).toThrow(/is not an active official city in the current catalog/);
+
+      // 3. Active-as-source (EG0103 is still active in candidate release)
+      expect(() =>
+        applyReviewedRelease(baseCatalog, candidateSnapshot, {
+          reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
+          replacementMappings: [{ retiredSourceCode: 'EG0103', replacementSourceCode: 'EG0198' }],
+        }),
+      ).toThrow(/is still an active official city in the candidate release/);
+
+      // 4. Unknown/retired replacementSourceCode target
+      expect(() =>
+        applyReviewedRelease(baseCatalog, candidateSnapshot, {
+          reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
+          replacementMappings: [{ retiredSourceCode: 'EG0101', replacementSourceCode: 'EG9999_NOT_IN_CANDIDATE' }],
+        }),
+      ).toThrow(/is not an active official city in the candidate release/);
+
+      // 5. Target already active in current catalog (not a new source identity)
+      expect(() =>
+        applyReviewedRelease(baseCatalog, candidateSnapshot, {
+          reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
+          replacementMappings: [{ retiredSourceCode: 'EG0101', replacementSourceCode: 'EG0103' }],
+        }),
+      ).toThrow(/already exists in the current catalog/);
+
+      // 6. Ambiguous / Self-mapping
+      expect(() =>
+        applyReviewedRelease(baseCatalog, candidateSnapshot, {
+          reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
+          replacementMappings: [{ retiredSourceCode: 'EG0101', replacementSourceCode: 'EG0101' }],
+        }),
+      ).toThrow(/cannot map city 'EG0101' to itself/);
+
+      // 7. Duplicate retired source (many-to-one from)
+      expect(() =>
+        applyReviewedRelease(baseCatalog, candidateSnapshot, {
+          reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
           replacementMappings: [
-            { retiredSourceCode: 'EG0102', replacementSourceCode: 'EG0101' },
-            { retiredSourceCode: 'EG0102', replacementSourceCode: 'EG0101' },
+            { retiredSourceCode: 'EG0101', replacementSourceCode: 'EG0198' },
+            { retiredSourceCode: 'EG0101', replacementSourceCode: 'EG0199' },
           ],
         }),
-      ).toThrow(/Duplicate replacement mapping for retired city 'EG0102'/);
+      ).toThrow(/Duplicate replacement mapping for retired city 'EG0101'/);
 
-      // Mapping target not active
+      // 8. Duplicate replacement target (many-to-one to)
       expect(() =>
         applyReviewedRelease(baseCatalog, candidateSnapshot, {
-          reviewedMetadata: { declaredOfficialCount: 1, governorateCount: 1 },
-          replacementMappings: [{ retiredSourceCode: 'EG0102', replacementSourceCode: 'EG9999_UNKNOWN' }],
+          reviewedMetadata: { declaredOfficialCount: 3, governorateCount: 1 },
+          replacementMappings: [
+            { retiredSourceCode: 'EG0101', replacementSourceCode: 'EG0198' },
+            { retiredSourceCode: 'EG0102', replacementSourceCode: 'EG0198' },
+          ],
         }),
-      ).toThrow(/is not an active official city in the updated release/);
+      ).toThrow(/Duplicate replacement mapping for replacement city 'EG0198'/);
+    });
+
+    it('correctly compiles catalog records and generates identity transfer SQL in release migrations', () => {
+      const candidateRaw = [
+        {
+          adm2_name: 'Recoded City New',
+          adm2_name1: 'مدينة معاد ترميزها جديدة',
+          adm2_pcode: 'EG0198',
+          adm1_name: 'Cairo',
+          adm1_pcode: 'EG01',
+          center_lat: 30.05,
+          center_lon: 31.05,
+        },
+        {
+          adm2_name: 'Active Constant City',
+          adm2_name1: 'مدينة نشطة',
+          adm2_pcode: 'EG0103',
+          adm1_name: 'Cairo',
+          adm1_pcode: 'EG01',
+          center_lat: 30.2,
+          center_lon: 31.2,
+        },
+      ];
+      const candidateSnapshot = createMockSnapshot(candidateRaw);
+
+      const release = applyReviewedRelease(baseCatalog, candidateSnapshot, {
+        reviewedMetadata: { declaredOfficialCount: 2, governorateCount: 1 },
+        replacementMappings: [
+          {
+            retiredSourceCode: 'EG0101',
+            replacementSourceCode: 'EG0198',
+            notes: 'Recode EG0101 -> EG0198',
+          },
+        ],
+      });
+
+      // Updated catalog checks
+      // EG0198 is OFFICIAL
+      const recodedRecord = release.updatedCatalog.find((c) => c.sourceCode === 'EG0198');
+      expect(recodedRecord).toBeDefined();
+      expect(recodedRecord?.status).toBe('OFFICIAL');
+      expect(recodedRecord?.nameEnglish).toBe('Recoded City New');
+
+      // EG0101 was transferred, so it should NOT be present as RETIRED
+      const oldRecodedRecord = release.updatedCatalog.find((c) => c.sourceCode === 'EG0101');
+      expect(oldRecodedRecord).toBeUndefined();
+
+      // EG0102 was removed without mapping, so it MUST be RETIRED
+      const retiredRecord = release.updatedCatalog.find((c) => c.sourceCode === 'EG0102');
+      expect(retiredRecord).toBeDefined();
+      expect(retiredRecord?.status).toBe('RETIRED');
+
+      // Check migration SQL
+      const migrationSql = generateReleaseMigrationSql(release, { migrationTag: '0012_release_city_catalog' });
+      expect(migrationSql).toContain("UPDATE cities SET source_code = 'EG0198' WHERE source_code = 'EG0101';");
+      expect(migrationSql).toContain("UPDATE cities SET status = 'RETIRED' WHERE source_code IN ('EG0102');");
+      expect(migrationSql).not.toContain("SET status = 'RETIRED' WHERE source_code IN ('EG0101'");
+      expect(migrationSql).toContain("INSERT INTO cities (source_code, name_english, name_arabic, governorate");
+      expect(migrationSql).toContain("'EG0198'");
     });
   });
 
