@@ -88,7 +88,7 @@ export interface ValidationResult {
   };
 }
 
-function resolveDataPath(filename: string): string {
+export function resolveDataPath(filename: string): string {
   const primaryPath = path.resolve(__dirname, 'data', filename);
   if (fs.existsSync(primaryPath)) {
     return primaryPath;

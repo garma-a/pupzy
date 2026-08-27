@@ -2,776 +2,764 @@
   {
     "legacyGovernorate": "Aswan",
     "legacyNameEnglish": "Aswan",
+    "legacyNameArabic": "أسوان",
     "targetSourceCode": "EG2801",
-    "notes": "Kism Aswan 1"
+    "notes": "Matched Aswan (Kism) (disambiguated from 2 matches)"
   },
   {
     "legacyGovernorate": "Aswan",
     "legacyNameEnglish": "Kom Ombo",
-    "targetSourceCode": "EG2802"
+    "legacyNameArabic": "كوم أمبو",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Aswan",
     "legacyNameEnglish": "Edfu",
-    "targetSourceCode": "EG2803"
+    "legacyNameArabic": "إدفو",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Aswan",
     "legacyNameEnglish": "Daraw",
-    "targetSourceCode": "EG2804"
+    "legacyNameArabic": "دراو",
+    "targetSourceCode": "EG2806",
+    "notes": "Matched Daraw"
   },
   {
     "legacyGovernorate": "Aswan",
     "legacyNameEnglish": "Nasr Al Nuba",
-    "targetSourceCode": "EG2805"
+    "legacyNameArabic": "نصر النوبة",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Aswan",
     "legacyNameEnglish": "Abu Simbel",
-    "targetSourceCode": "EG2806"
+    "legacyNameArabic": "أبو سمبل",
+    "targetSourceCode": "EG2807",
+    "notes": "Matched Abu Simbel"
   },
   {
     "legacyGovernorate": "Luxor",
     "legacyNameEnglish": "Luxor",
-    "targetSourceCode": "EG2901"
+    "legacyNameArabic": "الأقصر",
+    "targetSourceCode": "EG2901",
+    "notes": "Matched Luxor (Kism) (disambiguated from 2 matches)"
   },
   {
     "legacyGovernorate": "Luxor",
     "legacyNameEnglish": "Esna",
-    "targetSourceCode": "EG2705",
-    "notes": "Isna in OCHA snapshot (under EG27)"
+    "legacyNameArabic": "إسنا",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Luxor",
     "legacyNameEnglish": "Armant",
-    "targetSourceCode": "EG2704",
-    "notes": "Armant in OCHA snapshot (under EG27)"
+    "legacyNameArabic": "أرمنت",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Qena",
     "legacyNameEnglish": "Qena",
-    "targetSourceCode": "EG2701"
+    "legacyNameArabic": "قنا",
+    "targetSourceCode": "EG2701",
+    "notes": "Matched Qina (Kism) (disambiguated from 2 matches)"
   },
   {
     "legacyGovernorate": "Qena",
     "legacyNameEnglish": "Nagaa Hammadi",
-    "targetSourceCode": "EG2708"
+    "legacyNameArabic": "نجع حمادي",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Qena",
     "legacyNameEnglish": "Qus",
-    "targetSourceCode": "EG2707"
+    "legacyNameArabic": "قوص",
+    "targetSourceCode": "EG2707",
+    "notes": "Matched Qus"
   },
   {
     "legacyGovernorate": "Qena",
     "legacyNameEnglish": "Dishna",
-    "targetSourceCode": "EG2706"
+    "legacyNameArabic": "دشنا",
+    "targetSourceCode": "EG2706",
+    "notes": "Matched Dishna"
   },
   {
     "legacyGovernorate": "Sohag",
     "legacyNameEnglish": "Sohag",
-    "targetSourceCode": "EG2601"
+    "legacyNameArabic": "سوهاج",
+    "targetSourceCode": "EG2603",
+    "notes": "Matched Suhag (Markaz)"
   },
   {
     "legacyGovernorate": "Sohag",
     "legacyNameEnglish": "Akhmim",
-    "targetSourceCode": "EG2603"
+    "legacyNameArabic": "أخميم",
+    "targetSourceCode": "EG2604",
+    "notes": "Matched Akhmim"
   },
   {
     "legacyGovernorate": "Sohag",
     "legacyNameEnglish": "Girga",
-    "targetSourceCode": "EG2607"
+    "legacyNameArabic": "جرجا",
+    "targetSourceCode": "EG2609",
+    "notes": "Matched Girga (Kism) (disambiguated from 2 matches)"
   },
   {
     "legacyGovernorate": "Sohag",
     "legacyNameEnglish": "Tahta",
-    "targetSourceCode": "EG2609"
-  },
-  {
-    "legacyGovernorate": "Sohag",
-    "legacyNameEnglish": "Tama",
-    "targetSourceCode": "EG2610"
+    "legacyNameArabic": "طهطا",
+    "targetSourceCode": "EG2615",
+    "notes": "Matched Kesm Tahta (disambiguated from 2 matches)"
   },
   {
     "legacyGovernorate": "Asyut",
     "legacyNameEnglish": "Asyut",
-    "targetSourceCode": "EG2501"
-  },
-  {
-    "legacyGovernorate": "Asyut",
-    "legacyNameEnglish": "Dayrout",
-    "targetSourceCode": "EG2503"
+    "legacyNameArabic": "أسيوط",
+    "targetSourceCode": "EG2503",
+    "notes": "Matched Assuit"
   },
   {
     "legacyGovernorate": "Asyut",
     "legacyNameEnglish": "Manfalut",
-    "targetSourceCode": "EG2505"
+    "legacyNameArabic": "منفلوط",
+    "targetSourceCode": "EG2512",
+    "notes": "Matched Manfalut"
   },
   {
     "legacyGovernorate": "Asyut",
-    "legacyNameEnglish": "Abnoub",
-    "targetSourceCode": "EG2509"
+    "legacyNameEnglish": "Abu Tig",
+    "legacyNameArabic": "أبو تيج",
+    "targetSourceCode": "EG2505",
+    "notes": "Matched Abu Tig"
   },
   {
     "legacyGovernorate": "Asyut",
-    "legacyNameEnglish": "El Qusiya",
-    "targetSourceCode": "EG2504"
+    "legacyNameEnglish": "Dairut",
+    "legacyNameArabic": "ديروط",
+    "targetSourceCode": "EG2510",
+    "notes": "Matched Dayrut"
   },
   {
     "legacyGovernorate": "Minya",
     "legacyNameEnglish": "Minya",
-    "targetSourceCode": "EG2401"
-  },
-  {
-    "legacyGovernorate": "Minya",
-    "legacyNameEnglish": "Mallawi",
-    "targetSourceCode": "EG2408"
-  },
-  {
-    "legacyGovernorate": "Minya",
-    "legacyNameEnglish": "Samalut",
-    "targetSourceCode": "EG2404"
-  },
-  {
-    "legacyGovernorate": "Minya",
-    "legacyNameEnglish": "Beni Mazar",
-    "targetSourceCode": "EG2405"
+    "legacyNameArabic": "المنيا",
+    "targetSourceCode": "EG2401",
+    "notes": "Matched Kesm Al-minya (disambiguated from 2 matches)"
   },
   {
     "legacyGovernorate": "Minya",
     "legacyNameEnglish": "Maghagha",
-    "targetSourceCode": "EG2402"
+    "legacyNameArabic": "مغاغة",
+    "targetSourceCode": "EG2410",
+    "notes": "Matched Markz Maghagha"
+  },
+  {
+    "legacyGovernorate": "Minya",
+    "legacyNameEnglish": "Bani Mazar",
+    "legacyNameArabic": "بني مزار",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
+  },
+  {
+    "legacyGovernorate": "Minya",
+    "legacyNameEnglish": "Mallawi",
+    "legacyNameArabic": "ملوي",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Beni Suef",
     "legacyNameEnglish": "Beni Suef",
-    "targetSourceCode": "EG2201"
-  },
-  {
-    "legacyGovernorate": "Beni Suef",
-    "legacyNameEnglish": "Nasser",
-    "targetSourceCode": "EG2203"
-  },
-  {
-    "legacyGovernorate": "Beni Suef",
-    "legacyNameEnglish": "El Wasta",
-    "targetSourceCode": "EG2202"
+    "legacyNameArabic": "بني سويف",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Beni Suef",
     "legacyNameEnglish": "Biba",
-    "targetSourceCode": "EG2205"
+    "legacyNameArabic": "ببا",
+    "targetSourceCode": "EG2207",
+    "notes": "Matched Biba"
   },
   {
     "legacyGovernorate": "Beni Suef",
-    "legacyNameEnglish": "El Fashn",
-    "targetSourceCode": "EG2206"
+    "legacyNameEnglish": "Al Wasta",
+    "legacyNameArabic": "الواسطى",
+    "targetSourceCode": "EG2205",
+    "notes": "Matched Al Wasta"
   },
   {
     "legacyGovernorate": "Fayoum",
     "legacyNameEnglish": "Fayoum",
-    "targetSourceCode": "EG2301"
-  },
-  {
-    "legacyGovernorate": "Fayoum",
-    "legacyNameEnglish": "Sinnuris",
-    "targetSourceCode": "EG2303"
-  },
-  {
-    "legacyGovernorate": "Fayoum",
-    "legacyNameEnglish": "Ibshaway",
-    "targetSourceCode": "EG2305"
+    "legacyNameArabic": "الفيوم",
+    "targetSourceCode": "EG2301",
+    "notes": "Matched Fayyum (Kism) (disambiguated from 2 matches)"
   },
   {
     "legacyGovernorate": "Fayoum",
     "legacyNameEnglish": "Tamiya",
-    "targetSourceCode": "EG2302"
+    "legacyNameArabic": "طامية",
+    "targetSourceCode": "EG2306",
+    "notes": "Matched Tamya"
   },
   {
     "legacyGovernorate": "Fayoum",
-    "legacyNameEnglish": "Youssef El Seddik",
-    "targetSourceCode": "EG2306"
+    "legacyNameEnglish": "Ibsheway",
+    "legacyNameArabic": "إبشواي",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Cairo",
-    "legacyNameEnglish": "Nasr City",
-    "targetSourceCode": "EG0117",
-    "notes": "Madinet Nasr 1"
-  },
-  {
-    "legacyGovernorate": "Cairo",
-    "legacyNameEnglish": "Maadi",
-    "targetSourceCode": "EG0126",
-    "notes": "El Maadi"
+    "legacyNameEnglish": "Cairo",
+    "legacyNameArabic": "القاهرة",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Cairo",
     "legacyNameEnglish": "New Cairo",
-    "targetSourceCode": "EG0120",
-    "notes": "New Cairo 1"
+    "legacyNameArabic": "القاهرة الجديدة",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
+  },
+  {
+    "legacyGovernorate": "Cairo",
+    "legacyNameEnglish": "Nasr City",
+    "legacyNameArabic": "مدينة نصر",
+    "targetSourceCode": "EG0126",
+    "notes": "Matched Nasr City"
   },
   {
     "legacyGovernorate": "Cairo",
     "legacyNameEnglish": "Heliopolis",
-    "targetSourceCode": "EG0116",
-    "notes": "Masr El-Gedida"
-  },
-  {
-    "legacyGovernorate": "Cairo",
-    "legacyNameEnglish": "Zamalek",
-    "targetSourceCode": "EG0131",
-    "notes": "Qasr El Nil"
-  },
-  {
-    "legacyGovernorate": "Cairo",
-    "legacyNameEnglish": "Downtown Cairo",
-    "targetSourceCode": "EG0132",
-    "notes": "Abdeen"
-  },
-  {
-    "legacyGovernorate": "Cairo",
-    "legacyNameEnglish": "Shubra",
-    "targetSourceCode": "EG0108"
-  },
-  {
-    "legacyGovernorate": "Cairo",
-    "legacyNameEnglish": "Helwan",
-    "targetSourceCode": "EG0128"
-  },
-  {
-    "legacyGovernorate": "Cairo",
-    "legacyNameEnglish": "El Rehab",
+    "legacyNameArabic": "مصر الجديدة",
     "targetSourceCode": null,
-    "notes": "Sub-district / compound in New Cairo - remains LEGACY"
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Cairo",
-    "legacyNameEnglish": "Madinaty",
-    "targetSourceCode": null,
-    "notes": "Sub-district / compound in New Cairo - remains LEGACY"
+    "legacyNameEnglish": "Maadi",
+    "legacyNameArabic": "المعادي",
+    "targetSourceCode": "EG0104",
+    "notes": "Matched Maadi"
   },
   {
     "legacyGovernorate": "Cairo",
-    "legacyNameEnglish": "Mokattam",
-    "targetSourceCode": "EG0124"
-  },
-  {
-    "legacyGovernorate": "Cairo",
-    "legacyNameEnglish": "Ain Shams",
-    "targetSourceCode": "EG0115"
+    "legacyNameEnglish": "Shoubra",
+    "legacyNameArabic": "شبرا",
+    "targetSourceCode": "EG0119",
+    "notes": "Matched Shubra"
   },
   {
     "legacyGovernorate": "Cairo",
     "legacyNameEnglish": "El Marg",
-    "targetSourceCode": "EG0113"
+    "legacyNameArabic": "المرج",
+    "targetSourceCode": "EG0136",
+    "notes": "Matched Marg"
   },
   {
     "legacyGovernorate": "Cairo",
-    "legacyNameEnglish": "El Matareya",
-    "targetSourceCode": "EG0114"
+    "legacyNameEnglish": "Helwan",
+    "legacyNameArabic": "حلوان",
+    "targetSourceCode": "EG0102",
+    "notes": "Matched Hilwan"
   },
   {
     "legacyGovernorate": "Cairo",
-    "legacyNameEnglish": "Sayeda Zeinab",
-    "targetSourceCode": "EG0134",
-    "notes": "El Sayeda Zeinab"
-  },
-  {
-    "legacyGovernorate": "Cairo",
-    "legacyNameEnglish": "El Shorouk",
-    "targetSourceCode": "EG0122",
-    "notes": "El Shorouk"
-  },
-  {
-    "legacyGovernorate": "Cairo",
-    "legacyNameEnglish": "Badr City",
-    "targetSourceCode": "EG0121"
-  },
-  {
-    "legacyGovernorate": "Cairo",
-    "legacyNameEnglish": "15th of May",
-    "targetSourceCode": "EG0127",
-    "notes": "15 May"
+    "legacyNameEnglish": "New Administrative Capital",
+    "legacyNameArabic": "العاصمة الإدارية الجديدة",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Giza",
-    "legacyNameEnglish": "Dokki",
-    "targetSourceCode": "EG2103",
-    "notes": "El Dokki"
-  },
-  {
-    "legacyGovernorate": "Giza",
-    "legacyNameEnglish": "Mohandessin",
+    "legacyNameEnglish": "Giza",
+    "legacyNameArabic": "الجيزة",
     "targetSourceCode": "EG2104",
-    "notes": "El Agouza"
-  },
-  {
-    "legacyGovernorate": "Giza",
-    "legacyNameEnglish": "Haram",
-    "targetSourceCode": "EG2105",
-    "notes": "El Ahram"
+    "notes": "Matched Giza (Kism) (disambiguated from 2 matches)"
   },
   {
     "legacyGovernorate": "Giza",
     "legacyNameEnglish": "6th of October",
-    "targetSourceCode": "EG2101",
-    "notes": "Madinet El Sadis Men October 1"
+    "legacyNameArabic": "السادس من أكتوبر",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Giza",
     "legacyNameEnglish": "Sheikh Zayed",
-    "targetSourceCode": "EG2118",
-    "notes": "Madinet El Sheikh Zayed 1"
+    "legacyNameArabic": "الشيخ زايد",
+    "targetSourceCode": "EG2119",
+    "notes": "Matched Shaykh Zayed"
   },
   {
     "legacyGovernorate": "Giza",
-    "legacyNameEnglish": "Faisal",
-    "targetSourceCode": "EG2106",
-    "notes": "Bulaq El Dakrour"
-  },
-  {
-    "legacyGovernorate": "Giza",
-    "legacyNameEnglish": "Imbaba",
-    "targetSourceCode": "EG2111",
-    "notes": "Imbaba (Markaz)"
-  },
-  {
-    "legacyGovernorate": "Giza",
-    "legacyNameEnglish": "Agouza",
-    "targetSourceCode": null,
-    "notes": "Agouza already mapped to Mohandessin or vice versa - unmapped to prevent duplicate targetSourceCode"
-  },
-  {
-    "legacyGovernorate": "Giza",
-    "legacyNameEnglish": "Omraneya",
-    "targetSourceCode": "EG2107",
-    "notes": "El Omraniya"
-  },
-  {
-    "legacyGovernorate": "Giza",
-    "legacyNameEnglish": "Warraq",
-    "targetSourceCode": "EG2114",
-    "notes": "El Warraq"
-  },
-  {
-    "legacyGovernorate": "Giza",
-    "legacyNameEnglish": "Hawamdia",
-    "targetSourceCode": "EG2115",
-    "notes": "El Hawamdiya"
-  },
-  {
-    "legacyGovernorate": "Giza",
-    "legacyNameEnglish": "Badrasheen",
-    "targetSourceCode": "EG2110",
-    "notes": "El Badrashein"
-  },
-  {
-    "legacyGovernorate": "Giza",
-    "legacyNameEnglish": "Ayat",
-    "targetSourceCode": "EG2109",
-    "notes": "El Ayat"
-  },
-  {
-    "legacyGovernorate": "Giza",
-    "legacyNameEnglish": "Atfeeh",
+    "legacyNameEnglish": "Hawamdiya",
+    "legacyNameArabic": "الحوامدية",
     "targetSourceCode": "EG2108",
-    "notes": "Atfih"
+    "notes": "Matched Hwamdeia"
   },
   {
     "legacyGovernorate": "Giza",
-    "legacyNameEnglish": "Oseem",
-    "targetSourceCode": "EG2113"
+    "legacyNameEnglish": "Badrashein",
+    "legacyNameArabic": "البدرشين",
+    "targetSourceCode": "EG2110",
+    "notes": "Matched Badrashain"
   },
   {
     "legacyGovernorate": "Giza",
-    "legacyNameEnglish": "Kerdasa",
-    "targetSourceCode": "EG2112"
+    "legacyNameEnglish": "Al Ayat",
+    "legacyNameArabic": "العياط",
+    "targetSourceCode": "EG2112",
+    "notes": "Matched Ayat"
   },
   {
-    "legacyGovernorate": "Alexandria",
-    "legacyNameEnglish": "Montaza",
-    "targetSourceCode": "EG0201",
-    "notes": "El Montaza 1"
+    "legacyGovernorate": "Giza",
+    "legacyNameEnglish": "Dokki",
+    "legacyNameArabic": "الدقي",
+    "targetSourceCode": "EG2103",
+    "notes": "Matched DuqqI"
   },
   {
-    "legacyGovernorate": "Alexandria",
-    "legacyNameEnglish": "Sidi Gaber",
-    "targetSourceCode": "EG0205"
-  },
-  {
-    "legacyGovernorate": "Alexandria",
-    "legacyNameEnglish": "Smouha",
+    "legacyGovernorate": "Giza",
+    "legacyNameEnglish": "Mohandiseen",
+    "legacyNameArabic": "المهندسين",
     "targetSourceCode": null,
-    "notes": "Neighborhood in Sidi Gaber - remains LEGACY"
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Alexandria",
-    "legacyNameEnglish": "Gleem",
+    "legacyNameEnglish": "Alexandria",
+    "legacyNameArabic": "الإسكندرية",
     "targetSourceCode": null,
-    "notes": "Neighborhood in El Raml - remains LEGACY"
-  },
-  {
-    "legacyGovernorate": "Alexandria",
-    "legacyNameEnglish": "Raml",
-    "targetSourceCode": "EG0203",
-    "notes": "El Raml 1"
-  },
-  {
-    "legacyGovernorate": "Alexandria",
-    "legacyNameEnglish": "Mansheya",
-    "targetSourceCode": "EG0208",
-    "notes": "El Manshiya"
-  },
-  {
-    "legacyGovernorate": "Alexandria",
-    "legacyNameEnglish": "Attarin",
-    "targetSourceCode": "EG0207",
-    "notes": "El Attarin"
-  },
-  {
-    "legacyGovernorate": "Alexandria",
-    "legacyNameEnglish": "Gomrok",
-    "targetSourceCode": "EG0209",
-    "notes": "El Gomrok"
-  },
-  {
-    "legacyGovernorate": "Alexandria",
-    "legacyNameEnglish": "Karmous",
-    "targetSourceCode": "EG0210",
-    "notes": "Karmouz"
-  },
-  {
-    "legacyGovernorate": "Alexandria",
-    "legacyNameEnglish": "Moharam Bek",
-    "targetSourceCode": "EG0206",
-    "notes": "Moharram Bek"
-  },
-  {
-    "legacyGovernorate": "Alexandria",
-    "legacyNameEnglish": "Amreya",
-    "targetSourceCode": "EG0212",
-    "notes": "El Amriya 1"
-  },
-  {
-    "legacyGovernorate": "Alexandria",
-    "legacyNameEnglish": "Dekheila",
-    "targetSourceCode": "EG0211",
-    "notes": "El Dekheila"
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Alexandria",
     "legacyNameEnglish": "Borg El Arab",
+    "legacyNameArabic": "برج العرب",
     "targetSourceCode": "EG0214",
-    "notes": "Burg El Arab (Kism)"
+    "notes": "Matched Burg al-Arab"
   },
   {
     "legacyGovernorate": "Alexandria",
     "legacyNameEnglish": "Agami",
+    "legacyNameArabic": "العجمي",
     "targetSourceCode": null,
-    "notes": "Neighborhood in El Dekheila - remains LEGACY"
+    "notes": "Unmatched or already claimed - marked LEGACY"
+  },
+  {
+    "legacyGovernorate": "Alexandria",
+    "legacyNameEnglish": "Sidi Bishr",
+    "legacyNameArabic": "سيدي بشر",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
+  },
+  {
+    "legacyGovernorate": "Alexandria",
+    "legacyNameEnglish": "Al Muntazah",
+    "legacyNameArabic": "المنتزه",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Qalyubia",
     "legacyNameEnglish": "Banha",
+    "legacyNameArabic": "بنها",
     "targetSourceCode": "EG1401",
-    "notes": "Banha (Kism)"
+    "notes": "Matched Banha (Kism) (disambiguated from 2 matches)"
   },
   {
     "legacyGovernorate": "Qalyubia",
     "legacyNameEnglish": "Shubra El-Kheima",
-    "targetSourceCode": "EG1407",
-    "notes": "Shubra Al-Khayma 1"
+    "legacyNameArabic": "شبرا الخيمة",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Qalyubia",
     "legacyNameEnglish": "Qalyub",
+    "legacyNameArabic": "قليوب",
     "targetSourceCode": "EG1409",
-    "notes": "Qalyub (Kism)"
+    "notes": "Matched Qalyub (Kism) (disambiguated from 2 matches)"
   },
   {
     "legacyGovernorate": "Qalyubia",
     "legacyNameEnglish": "Khanka",
+    "legacyNameArabic": "الخانكة",
     "targetSourceCode": "EG1403",
-    "notes": "Al-Khankah (Kism)"
+    "notes": "Matched Al Khanka"
   },
   {
     "legacyGovernorate": "Monufia",
     "legacyNameEnglish": "Shibin El Kom",
+    "legacyNameArabic": "شبين الكوم",
     "targetSourceCode": "EG1701",
-    "notes": "Shibin al-Kum (Kism)"
+    "notes": "Matched Shibin al-Kum (Kism) (disambiguated from 2 matches)"
   },
   {
     "legacyGovernorate": "Monufia",
     "legacyNameEnglish": "Sadat City",
-    "targetSourceCode": "EG1711"
+    "legacyNameArabic": "مدينة السادات",
+    "targetSourceCode": "EG1711",
+    "notes": "Matched Sadat City"
   },
   {
     "legacyGovernorate": "Monufia",
     "legacyNameEnglish": "Ashmoun",
-    "targetSourceCode": "EG1704",
-    "notes": "Ashmun"
+    "legacyNameArabic": "أشمون",
+    "targetSourceCode": "EG1703",
+    "notes": "Matched Ashmun"
   },
   {
     "legacyGovernorate": "Monufia",
     "legacyNameEnglish": "Menouf",
-    "targetSourceCode": "EG1703",
-    "notes": "Manuf (Kism)"
+    "legacyNameArabic": "منوف",
+    "targetSourceCode": "EG1709",
+    "notes": "Matched Minuf"
+  },
+  {
+    "legacyGovernorate": "Gharbia",
+    "legacyNameEnglish": "Tanta",
+    "legacyNameArabic": "طنطا",
+    "targetSourceCode": "EG1603",
+    "notes": "Matched Tanta"
   },
   {
     "legacyGovernorate": "Gharbia",
     "legacyNameEnglish": "El Mahalla El Kubra",
-    "targetSourceCode": "EG1605",
-    "notes": "El Mahalla El Kobra 1"
+    "legacyNameArabic": "المحلة الكبرى",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
+  },
+  {
+    "legacyGovernorate": "Gharbia",
+    "legacyNameEnglish": "Zifta",
+    "legacyNameArabic": "زفتى",
+    "targetSourceCode": "EG1609",
+    "notes": "Matched Zifta"
   },
   {
     "legacyGovernorate": "Gharbia",
     "legacyNameEnglish": "Kafr El Zayat",
+    "legacyNameArabic": "كفر الزيات",
     "targetSourceCode": "EG1612",
-    "notes": "Kafr Al-Zayyat"
+    "notes": "Matched Kafr Al-Zayyat"
   },
   {
     "legacyGovernorate": "Dakahlia",
     "legacyNameEnglish": "Mansoura",
-    "targetSourceCode": "EG1201",
-    "notes": "Al-Mansura 1"
+    "legacyNameArabic": "المنصورة",
+    "targetSourceCode": "EG1203",
+    "notes": "Matched El Mansora"
+  },
+  {
+    "legacyGovernorate": "Dakahlia",
+    "legacyNameEnglish": "Talkha",
+    "legacyNameArabic": "طلخا",
+    "targetSourceCode": "EG1211",
+    "notes": "Matched Talkha"
   },
   {
     "legacyGovernorate": "Dakahlia",
     "legacyNameEnglish": "Mit Ghamr",
+    "legacyNameArabic": "ميت غمر",
     "targetSourceCode": "EG1212",
-    "notes": "Mit Ghamr (Kism)"
+    "notes": "Matched Mit Ghamr (Kism) (disambiguated from 2 matches)"
+  },
+  {
+    "legacyGovernorate": "Dakahlia",
+    "legacyNameEnglish": "Dikirnis",
+    "legacyNameArabic": "دكرنس",
+    "targetSourceCode": "EG1209",
+    "notes": "Matched Dikirnis"
   },
   {
     "legacyGovernorate": "Sharqia",
     "legacyNameEnglish": "Zagazig",
-    "targetSourceCode": "EG1301",
-    "notes": "Zaqaziq 1"
+    "legacyNameArabic": "الزقازيق",
+    "targetSourceCode": "EG1303",
+    "notes": "Matched Zaqaziq"
   },
   {
     "legacyGovernorate": "Sharqia",
     "legacyNameEnglish": "10th of Ramadan",
-    "targetSourceCode": "EG1309",
-    "notes": "10 Ramadan 1"
+    "legacyNameArabic": "العاشر من رمضان",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Sharqia",
     "legacyNameEnglish": "Bilbeis",
+    "legacyNameArabic": "بلبيس",
     "targetSourceCode": "EG1308",
-    "notes": "Bilbis"
+    "notes": "Matched Bilbis"
   },
   {
     "legacyGovernorate": "Sharqia",
     "legacyNameEnglish": "Minya El Qamh",
+    "legacyNameArabic": "منيا القمح",
     "targetSourceCode": "EG1314",
-    "notes": "Minya al-Qamh"
+    "notes": "Matched Minya al-Qamh"
   },
   {
     "legacyGovernorate": "Beheira",
     "legacyNameEnglish": "Damanhur",
+    "legacyNameArabic": "دمنهور",
     "targetSourceCode": "EG1801",
-    "notes": "Damanhur (Kism)"
+    "notes": "Matched Damanhur (Kism) (disambiguated from 2 matches)"
   },
   {
     "legacyGovernorate": "Beheira",
     "legacyNameEnglish": "Kafr El Dawwar",
-    "targetSourceCode": "EG1811",
-    "notes": "Kafr Al-Dawwar (Kism)"
+    "legacyNameArabic": "كفر الدوار",
+    "targetSourceCode": "EG1812",
+    "notes": "Matched Kafr Al-Dawwar (Markaz)"
   },
   {
     "legacyGovernorate": "Beheira",
     "legacyNameEnglish": "Rashid",
-    "targetSourceCode": "EG1809"
+    "legacyNameArabic": "رشيد",
+    "targetSourceCode": "EG1809",
+    "notes": "Matched Rashid"
   },
   {
     "legacyGovernorate": "Beheira",
     "legacyNameEnglish": "Edku",
+    "legacyNameArabic": "إدكو",
     "targetSourceCode": "EG1816",
-    "notes": "Idku"
+    "notes": "Matched Idku"
   },
   {
     "legacyGovernorate": "Kafr El Sheikh",
     "legacyNameEnglish": "Kafr El Sheikh",
+    "legacyNameArabic": "كفر الشيخ",
     "targetSourceCode": "EG1501",
-    "notes": "Kafr Al-Sheikh 1"
+    "notes": "Matched Kafr Al-Shaykh (Kism) (disambiguated from 2 matches)"
   },
   {
     "legacyGovernorate": "Kafr El Sheikh",
     "legacyNameEnglish": "Desouk",
-    "targetSourceCode": "EG1503",
-    "notes": "Desuq (Kism)"
+    "legacyNameArabic": "دسوق",
+    "targetSourceCode": "EG1505",
+    "notes": "Matched Disuq (Kism) (disambiguated from 2 matches)"
   },
   {
     "legacyGovernorate": "Kafr El Sheikh",
     "legacyNameEnglish": "Baltim",
-    "targetSourceCode": "EG1507"
+    "legacyNameArabic": "بلطيم",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Damietta",
     "legacyNameEnglish": "Damietta",
-    "targetSourceCode": "EG1101",
-    "notes": "Dumyat 1"
+    "legacyNameArabic": "دمياط",
+    "targetSourceCode": "EG1102",
+    "notes": "Matched Dumyat"
   },
   {
     "legacyGovernorate": "Damietta",
     "legacyNameEnglish": "New Damietta",
-    "targetSourceCode": "EG1105",
-    "notes": "Dumyat Al-Gadida"
+    "legacyNameArabic": "دمياط الجديدة",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Damietta",
     "legacyNameEnglish": "Faraskur",
+    "legacyNameArabic": "فارسكور",
     "targetSourceCode": "EG1103",
-    "notes": "Fariskur"
+    "notes": "Matched Fariskur"
   },
   {
     "legacyGovernorate": "Port Said",
     "legacyNameEnglish": "Port Said",
-    "targetSourceCode": "EG0301",
-    "notes": "Al-Sharq"
+    "legacyNameArabic": "بورسعيد",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Port Said",
     "legacyNameEnglish": "Port Fouad",
-    "targetSourceCode": "EG0304",
-    "notes": "Port Fuad"
+    "legacyNameArabic": "بورفؤاد",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Ismailia",
     "legacyNameEnglish": "Ismailia",
-    "targetSourceCode": "EG1901",
-    "notes": "Ismailia 1"
+    "legacyNameArabic": "الإسماعيلية",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Ismailia",
     "legacyNameEnglish": "Fayed",
-    "targetSourceCode": "EG1904"
+    "legacyNameArabic": "فايد",
+    "targetSourceCode": "EG1907",
+    "notes": "Matched Fayid"
   },
   {
     "legacyGovernorate": "Ismailia",
     "legacyNameEnglish": "El Qantara",
-    "targetSourceCode": "EG1907",
-    "notes": "Al-Qantara Sharq"
+    "legacyNameArabic": "القنطرة",
+    "targetSourceCode": "EG1906",
+    "notes": "Matched Qantara Gharb, al-"
   },
   {
     "legacyGovernorate": "Suez",
     "legacyNameEnglish": "Suez",
+    "legacyNameArabic": "السويس",
     "targetSourceCode": "EG0401",
-    "notes": "El Suez"
+    "notes": "Matched Suez"
   },
   {
     "legacyGovernorate": "Suez",
     "legacyNameEnglish": "Ain Sokhna",
+    "legacyNameArabic": "العين السخنة",
     "targetSourceCode": null,
-    "notes": "Resort area in Ataqah - remains LEGACY"
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Red Sea",
     "legacyNameEnglish": "Hurghada",
-    "targetSourceCode": "EG3101",
-    "notes": "Hurghada 1"
+    "legacyNameArabic": "الغردقة",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Red Sea",
     "legacyNameEnglish": "Safaga",
+    "legacyNameArabic": "سفاجا",
     "targetSourceCode": "EG3103",
-    "notes": "Kism Safaga"
+    "notes": "Matched Safaga"
   },
   {
     "legacyGovernorate": "Red Sea",
     "legacyNameEnglish": "Marsa Alam",
-    "targetSourceCode": "EG3105",
-    "notes": "Kism Marsa Alam"
+    "legacyNameArabic": "مرسى علم",
+    "targetSourceCode": "EG3104",
+    "notes": "Matched Marsa Alam"
   },
   {
     "legacyGovernorate": "Red Sea",
     "legacyNameEnglish": "El Quseir",
-    "targetSourceCode": "EG3104",
-    "notes": "Kism El Qusier"
+    "legacyNameArabic": "القصير",
+    "targetSourceCode": "EG3102",
+    "notes": "Matched Qusir"
   },
   {
     "legacyGovernorate": "Red Sea",
     "legacyNameEnglish": "Ras Gharib",
-    "targetSourceCode": "EG3102",
-    "notes": "Kism Ras Gharib"
+    "legacyNameArabic": "رأس غارب",
+    "targetSourceCode": "EG3105",
+    "notes": "Matched Ras Gharib"
   },
   {
     "legacyGovernorate": "South Sinai",
     "legacyNameEnglish": "Sharm El-Sheikh",
-    "targetSourceCode": "EG3502",
-    "notes": "Sharm El-Sheik 1"
+    "legacyNameArabic": "شرم الشيخ",
+    "targetSourceCode": "EG3505",
+    "notes": "Matched Sharm el-Sheikh"
   },
   {
     "legacyGovernorate": "South Sinai",
     "legacyNameEnglish": "Dahab",
-    "targetSourceCode": "EG3505"
+    "legacyNameArabic": "دهب",
+    "targetSourceCode": "EG3506",
+    "notes": "Matched Dahab"
   },
   {
     "legacyGovernorate": "South Sinai",
     "legacyNameEnglish": "Nuweiba",
-    "targetSourceCode": "EG3506"
+    "legacyNameArabic": "نويبع",
+    "targetSourceCode": "EG3507",
+    "notes": "Matched Nuweiba"
   },
   {
     "legacyGovernorate": "South Sinai",
     "legacyNameEnglish": "El Tor",
+    "legacyNameArabic": "الطور",
     "targetSourceCode": "EG3501",
-    "notes": "Tor Sina"
+    "notes": "Matched Al-Tur"
   },
   {
     "legacyGovernorate": "South Sinai",
     "legacyNameEnglish": "Saint Catherine",
+    "legacyNameArabic": "سانت كاترين",
     "targetSourceCode": "EG3504",
-    "notes": "Sant Katrin"
+    "notes": "Matched Sant Katrin"
   },
   {
     "legacyGovernorate": "North Sinai",
     "legacyNameEnglish": "Arish",
-    "targetSourceCode": "EG3401",
-    "notes": "El Arish 1"
+    "legacyNameArabic": "العريش",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "North Sinai",
     "legacyNameEnglish": "Rafah",
-    "targetSourceCode": "EG3406"
+    "legacyNameArabic": "رفح",
+    "targetSourceCode": "EG3409",
+    "notes": "Matched Rafah"
   },
   {
     "legacyGovernorate": "Matrouh",
     "legacyNameEnglish": "Marsa Matrouh",
+    "legacyNameArabic": "مرسى مطروح",
     "targetSourceCode": "EG3301",
-    "notes": "Marsa Matruh"
+    "notes": "Matched Marsa Matruh"
   },
   {
     "legacyGovernorate": "Matrouh",
     "legacyNameEnglish": "El Alamein",
-    "targetSourceCode": "EG3307",
-    "notes": "Alamn"
+    "legacyNameArabic": "العلمين",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Matrouh",
     "legacyNameEnglish": "Sidi Abdel Rahman",
+    "legacyNameArabic": "سيدي عبدالرحمن",
     "targetSourceCode": null,
-    "notes": "Village/Resort area in Daba - remains LEGACY"
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "Matrouh",
     "legacyNameEnglish": "Siwa",
-    "targetSourceCode": "EG3306"
+    "legacyNameArabic": "سيوة",
+    "targetSourceCode": "EG3306",
+    "notes": "Matched Siwa"
   },
   {
     "legacyGovernorate": "New Valley",
     "legacyNameEnglish": "Kharga",
-    "targetSourceCode": "EG3201",
-    "notes": "Al-Kharga Oasis"
+    "legacyNameArabic": "الخارجة",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "New Valley",
     "legacyNameEnglish": "Dakhla",
-    "targetSourceCode": "EG3202",
-    "notes": "A-Dakhla Oasis"
+    "legacyNameArabic": "الداخلة",
+    "targetSourceCode": null,
+    "notes": "Unmatched or already claimed - marked LEGACY"
   },
   {
     "legacyGovernorate": "New Valley",
     "legacyNameEnglish": "Farafra",
+    "legacyNameArabic": "الفرافرة",
     "targetSourceCode": "EG3203",
-    "notes": "Al Farafra Oasis"
+    "notes": "Matched Al Farafra Oasis"
   }
 ]

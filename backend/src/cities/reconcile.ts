@@ -1,6 +1,10 @@
 import * as fs from 'fs';
-import * as path from 'path';
-import { getOfficialCatalog, validateCatalog, type CityCatalogRecord } from './catalog';
+import {
+  getOfficialCatalog,
+  validateCatalog,
+  resolveDataPath,
+  type CityCatalogRecord,
+} from './catalog';
 
 export interface LegacyCityMapping {
   legacyGovernorate: string;
@@ -41,28 +45,12 @@ export interface ReconcileResult {
   governorateCount: number;
 }
 
-function resolveMappingsPath(filename = 'legacy-city-mappings.json'): string {
-  const primaryPath = path.resolve(__dirname, 'data', filename);
-  if (fs.existsSync(primaryPath)) {
-    return primaryPath;
-  }
-  const fallbackSrc = path.resolve(__dirname, '../cities/data', filename);
-  if (fs.existsSync(fallbackSrc)) {
-    return fallbackSrc;
-  }
-  const fallbackRoot = path.resolve(process.cwd(), 'src/cities/data', filename);
-  if (fs.existsSync(fallbackRoot)) {
-    return fallbackRoot;
-  }
-  return primaryPath;
-}
-
 /**
  * Loads the reviewed legacy city mapping table.
  * Runs completely offline.
  */
 export function loadLegacyMappings(): LegacyCityMapping[] {
-  const filePath = resolveMappingsPath();
+  const filePath = resolveDataPath('legacy-city-mappings.json');
   if (!fs.existsSync(filePath)) {
     return [];
   }

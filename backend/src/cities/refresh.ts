@@ -256,6 +256,41 @@ export function applyReviewedRelease(
     }
   }
 
+  const distinctGovCount = new Set(
+    updatedCatalog.filter((c) => c.status === 'OFFICIAL').map((c) => c.governorate),
+  ).size;
+
+  if (options.reviewedMetadata?.governorateCount !== undefined) {
+    if (distinctGovCount !== options.reviewedMetadata.governorateCount) {
+      throw new Error(
+        `Declared governorate count mismatch: expected ${options.reviewedMetadata.governorateCount}, got ${distinctGovCount}`,
+      );
+    }
+  }
+
+  // Validate replacement mappings if provided
+  if (options.replacementMappings && options.replacementMappings.length > 0) {
+    const activeCodes = new Set(
+      updatedCatalog.filter((c) => c.status === 'OFFICIAL').map((c) => c.sourceCode),
+    );
+    const retiredCodes = new Set(
+      updatedCatalog.filter((c) => c.status === 'RETIRED').map((c) => c.sourceCode),
+    );
+
+    for (const mapping of options.replacementMappings) {
+      if (!retiredCodes.has(mapping.retiredSourceCode)) {
+        throw new Error(
+          `Replacement mapping error: '${mapping.retiredSourceCode}' is not a retired city`,
+        );
+      }
+      if (!activeCodes.has(mapping.replacementSourceCode)) {
+        throw new Error(
+          `Replacement mapping error: '${mapping.replacementSourceCode}' is not an active official city`,
+        );
+      }
+    }
+  }
+
   return {
     updatedCatalog,
     diffReport,
