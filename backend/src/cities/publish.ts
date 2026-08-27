@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
+import { createHash, randomUUID } from 'crypto';
 import {
   validateCatalog,
   validateSnapshot,
@@ -27,9 +27,24 @@ export type FaultInjectionStage =
   | 'replace_catalog'
   | 'replace_snapshot'
   | 'replace_migration'
-  | 'replace_journal';
+  | 'replace_journal'
+  | 'sync_catalog'
+  | 'sync_snapshot'
+  | 'sync_migration'
+  | 'sync_journal'
+  | 'sync_recovery_manifest'
+  | 'cleanup_backup_catalog'
+  | 'cleanup_backup_snapshot'
+  | 'cleanup_backup_migration'
+  | 'cleanup_backup_journal';
 
 export type FaultInjectionHook = (stage: FaultInjectionStage) => void;
+
+/**
+ * Test-only signal that models abrupt process termination. The publisher intentionally
+ * leaves the durable recovery state in place instead of executing its normal rollback.
+ */
+export class SimulatedProcessInterruption extends Error {}
 
 export interface PublishReleaseOptions extends ReviewedReleaseOptions {
   migrationsFolder?: string;
@@ -49,72 +64,267 @@ export interface PublishReleaseResult {
   journalUpdated: boolean;
 }
 
-interface RecoveryBackupEntry {
+type ReleaseArtifactKind = 'catalog' | 'snapshot' | 'migration' | 'journal';
+
+interface RecoveryArtifact {
+  kind: ReleaseArtifactKind;
   path: string;
   backupPath: string;
-  hadOriginal?: boolean;
+  hadOriginal: boolean;
+  originalDigest?: string;
+  publishedDigest: string;
 }
 
 interface PublicationRecoveryManifest {
-  stage: string;
+  version: 1;
+  state: 'replacing' | 'published' | 'restored';
   timestamp: number;
-  migrationPath: string;
-  backups: RecoveryBackupEntry[];
+  artifacts: RecoveryArtifact[];
 }
 
 interface ReleaseArtifact {
+  kind: ReleaseArtifactKind;
   destinationPath: string;
   stagedPath: string;
   content: string;
   stageFault: FaultInjectionStage;
+  syncFault: FaultInjectionStage;
   replaceFault: FaultInjectionStage;
   validate(content: string): void;
 }
 
-function restoreBackups(backups: RecoveryBackupEntry[]): void {
-  for (const backup of backups) {
-    if (backup.hadOriginal === false) {
-      try {
-        fs.rmSync(backup.path, { force: true });
-      } catch {
-        // ignore rollback cleanup errors
-      }
-      continue;
-    }
+function contentDigest(content: string | Buffer): string {
+  return createHash('sha256').update(content).digest('hex');
+}
 
-    if (fs.existsSync(backup.backupPath)) {
-      try {
-        fs.copyFileSync(backup.backupPath, backup.path);
-        fs.rmSync(backup.backupPath, { force: true });
-      } catch {
-        // ignore rollback cleanup errors
-      }
-    }
+function syncFile(filePath: string): void {
+  const descriptor = fs.openSync(filePath, 'r');
+  try {
+    fs.fsyncSync(descriptor);
+  } finally {
+    fs.closeSync(descriptor);
+  }
+}
+
+function syncDirectory(directoryPath: string): void {
+  const descriptor = fs.openSync(directoryPath, 'r');
+  try {
+    fs.fsyncSync(descriptor);
+  } finally {
+    fs.closeSync(descriptor);
+  }
+}
+
+function writeDurably(filePath: string, content: string | Buffer): void {
+  const descriptor = fs.openSync(filePath, 'w');
+  try {
+    fs.writeFileSync(descriptor, content);
+    fs.fsyncSync(descriptor);
+  } finally {
+    fs.closeSync(descriptor);
+  }
+}
+
+function replaceAtomically(destinationPath: string, stagedPath: string): void {
+  fs.renameSync(stagedPath, destinationPath);
+  syncFile(destinationPath);
+  syncDirectory(path.dirname(destinationPath));
+}
+
+function removeDurably(filePath: string): void {
+  fs.rmSync(filePath, { force: true });
+  syncDirectory(path.dirname(filePath));
+}
+
+function ensureArtifactDirectories(artifacts: ReleaseArtifact[]): void {
+  for (const artifact of artifacts) {
+    fs.mkdirSync(path.dirname(artifact.destinationPath), { recursive: true });
   }
 }
 
 function stageArtifact(artifact: ReleaseArtifact, faultInjectionHook?: FaultInjectionHook): void {
-  fs.writeFileSync(artifact.stagedPath, artifact.content, 'utf8');
+  writeDurably(artifact.stagedPath, artifact.content);
   faultInjectionHook?.(artifact.stageFault);
   artifact.validate(fs.readFileSync(artifact.stagedPath, 'utf8'));
 }
 
-function backupReleaseArtifacts(artifacts: ReleaseArtifact[]): RecoveryBackupEntry[] {
+function backupReleaseArtifacts(artifacts: ReleaseArtifact[]): RecoveryArtifact[] {
   return artifacts.map((artifact) => {
     const backupPath = `${artifact.destinationPath}.recovery.bak`;
     const hadOriginal = fs.existsSync(artifact.destinationPath);
+    const originalContent = hadOriginal ? fs.readFileSync(artifact.destinationPath) : undefined;
 
-    if (hadOriginal) {
-      fs.copyFileSync(artifact.destinationPath, backupPath);
+    if (originalContent) {
+      writeDurably(backupPath, originalContent);
+      syncDirectory(path.dirname(backupPath));
     }
 
-    return { path: artifact.destinationPath, backupPath, hadOriginal };
+    return {
+      kind: artifact.kind,
+      path: artifact.destinationPath,
+      backupPath,
+      hadOriginal,
+      originalDigest: originalContent ? contentDigest(originalContent) : undefined,
+      publishedDigest: contentDigest(artifact.content),
+    };
   });
 }
 
 function replaceArtifact(artifact: ReleaseArtifact, faultInjectionHook?: FaultInjectionHook): void {
-  fs.copyFileSync(artifact.stagedPath, artifact.destinationPath);
+  fs.renameSync(artifact.stagedPath, artifact.destinationPath);
+  faultInjectionHook?.(artifact.syncFault);
+  syncFile(artifact.destinationPath);
+  syncDirectory(path.dirname(artifact.destinationPath));
   faultInjectionHook?.(artifact.replaceFault);
+}
+
+function recoveryManifestPath(migrationsFolder: string): string {
+  return path.join(migrationsFolder, '.publication-recovery-manifest.json');
+}
+
+function writeRecoveryManifest(
+  manifestPath: string,
+  manifest: PublicationRecoveryManifest,
+  faultInjectionHook?: FaultInjectionHook,
+): void {
+  const stagedPath = `${manifestPath}.${randomUUID()}.tmp`;
+  try {
+    writeDurably(stagedPath, JSON.stringify(manifest, null, 2));
+    faultInjectionHook?.('sync_recovery_manifest');
+    replaceAtomically(manifestPath, stagedPath);
+  } finally {
+    if (fs.existsSync(stagedPath)) {
+      fs.rmSync(stagedPath, { force: true });
+    }
+  }
+}
+
+function parseRecoveryManifest(manifestPath: string): PublicationRecoveryManifest {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Publication recovery manifest is corrupt at "${manifestPath}": ${detail}`);
+  }
+
+  const manifest = parsed as Partial<PublicationRecoveryManifest>;
+  const validState = manifest.state === 'replacing' || manifest.state === 'published' || manifest.state === 'restored';
+  if (manifest.version !== 1 || !validState || !Array.isArray(manifest.artifacts) || manifest.artifacts.length !== 4) {
+    throw new Error(`Publication recovery manifest is corrupt at "${manifestPath}": invalid schema`);
+  }
+
+  const kinds = new Set<ReleaseArtifactKind>();
+  const paths = new Set<string>();
+  for (const artifact of manifest.artifacts) {
+    if (
+      !artifact ||
+      !['catalog', 'snapshot', 'migration', 'journal'].includes(artifact.kind) ||
+      kinds.has(artifact.kind) ||
+      typeof artifact.path !== 'string' ||
+      !path.isAbsolute(artifact.path) ||
+      paths.has(artifact.path) ||
+      artifact.backupPath !== `${artifact.path}.recovery.bak` ||
+      typeof artifact.hadOriginal !== 'boolean' ||
+      typeof artifact.publishedDigest !== 'string' ||
+      (artifact.hadOriginal && typeof artifact.originalDigest !== 'string')
+    ) {
+      throw new Error(`Publication recovery manifest is corrupt at "${manifestPath}": invalid artifact entry`);
+    }
+    kinds.add(artifact.kind);
+    paths.add(artifact.path);
+  }
+
+  return manifest as PublicationRecoveryManifest;
+}
+
+function validateRecoveredArtifact(artifact: RecoveryArtifact): void {
+  if (!fs.existsSync(artifact.path)) {
+    throw new Error(`Recovered ${artifact.kind} artifact is missing at "${artifact.path}"`);
+  }
+  const content = fs.readFileSync(artifact.path, 'utf8');
+  if (artifact.kind === 'catalog') {
+    const validation = validateCatalog(JSON.parse(content) as CityCatalog);
+    if (!validation.isValid) throw new Error(`Recovered catalog validation failed: ${validation.errors.join('; ')}`);
+  } else if (artifact.kind === 'snapshot') {
+    const validation = validateSnapshot(JSON.parse(content));
+    if (!validation.isValid) throw new Error(`Recovered snapshot validation failed: ${validation.errors.join('; ')}`);
+  } else if (artifact.kind === 'journal') {
+    JSON.parse(content);
+  } else if (!content.trim()) {
+    throw new Error('Recovered migration validation failed: migration is empty');
+  }
+}
+
+function verifyArtifactSet(
+  artifacts: RecoveryArtifact[],
+  migrationsFolder: string,
+  expectedDigest: 'originalDigest' | 'publishedDigest',
+): void {
+  for (const artifact of artifacts) {
+    const digest = artifact[expectedDigest];
+    if (!digest) {
+      if (fs.existsSync(artifact.path)) {
+        throw new Error(`Recovered ${artifact.kind} artifact should be absent but remains at "${artifact.path}"`);
+      }
+      // Retrying recovery after a failed directory fsync must durably confirm the deletion.
+      syncDirectory(path.dirname(artifact.path));
+      continue;
+    }
+    if (!fs.existsSync(artifact.path) || contentDigest(fs.readFileSync(artifact.path)) !== digest) {
+      throw new Error(`Recovered ${artifact.kind} artifact does not match its durable ${expectedDigest}`);
+    }
+    validateRecoveredArtifact(artifact);
+  }
+
+  try {
+    // getNextMigrationMeta also proves the journal and migration directory are a reconciled pair.
+    getNextMigrationMeta(migrationsFolder);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Recovered release artifact set is inconsistent: ${detail}`);
+  }
+}
+
+function restoreArtifact(artifact: RecoveryArtifact): void {
+  if (!artifact.hadOriginal) {
+    if (fs.existsSync(artifact.path)) removeDurably(artifact.path);
+    return;
+  }
+
+  if (!fs.existsSync(artifact.backupPath)) {
+    throw new Error(`Required recovery backup is missing at "${artifact.backupPath}"`);
+  }
+  const backup = fs.readFileSync(artifact.backupPath);
+  if (contentDigest(backup) !== artifact.originalDigest) {
+    throw new Error(`Recovery backup checksum does not match at "${artifact.backupPath}"`);
+  }
+
+  const restoreStagedPath = `${artifact.path}.${randomUUID()}.restore`;
+  try {
+    writeDurably(restoreStagedPath, backup);
+    replaceAtomically(artifact.path, restoreStagedPath);
+  } finally {
+    if (fs.existsSync(restoreStagedPath)) fs.rmSync(restoreStagedPath, { force: true });
+  }
+}
+
+function cleanupRecoveryEvidence(
+  manifestPath: string,
+  artifacts: RecoveryArtifact[],
+  faultInjectionHook?: FaultInjectionHook,
+): void {
+  const cleanupFaults: Record<ReleaseArtifactKind, FaultInjectionStage> = {
+    catalog: 'cleanup_backup_catalog',
+    snapshot: 'cleanup_backup_snapshot',
+    migration: 'cleanup_backup_migration',
+    journal: 'cleanup_backup_journal',
+  };
+  for (const artifact of artifacts) {
+    faultInjectionHook?.(cleanupFaults[artifact.kind]);
+    if (fs.existsSync(artifact.backupPath)) removeDurably(artifact.backupPath);
+  }
+  removeDurably(manifestPath);
 }
 
 /**
@@ -122,34 +332,30 @@ function replaceArtifact(artifact: ReleaseArtifact, faultInjectionHook?: FaultIn
  * backed-up release artifacts and removing dangling uncommitted migration files.
  */
 export function recoverInterruptedPublication(migrationsFolder: string): boolean {
-  const manifestPath = path.join(migrationsFolder, '.publication-recovery-manifest.json');
+  const manifestPath = recoveryManifestPath(migrationsFolder);
   if (!fs.existsSync(manifestPath)) {
     return false;
   }
 
+  const manifest = parseRecoveryManifest(manifestPath);
   try {
-    const manifestContent = fs.readFileSync(manifestPath, 'utf8');
-    const manifest = JSON.parse(manifestContent) as PublicationRecoveryManifest;
-
-    if (manifest && Array.isArray(manifest.backups)) {
-      restoreBackups(manifest.backups);
+    if (manifest.state === 'replacing') {
+      for (const artifact of manifest.artifacts) restoreArtifact(artifact);
+      verifyArtifactSet(manifest.artifacts, migrationsFolder, 'originalDigest');
+      manifest.state = 'restored';
+      writeRecoveryManifest(manifestPath, manifest);
+    } else if (manifest.state === 'published') {
+      verifyArtifactSet(manifest.artifacts, migrationsFolder, 'publishedDigest');
+    } else {
+      verifyArtifactSet(manifest.artifacts, migrationsFolder, 'originalDigest');
     }
-
-    if (manifest && typeof manifest.migrationPath === 'string') {
-      if (fs.existsSync(manifest.migrationPath)) {
-        fs.rmSync(manifest.migrationPath, { force: true });
-      }
-    }
-
-    fs.rmSync(manifestPath, { force: true });
-    return true;
-  } catch {
-    // If manifest itself is corrupt, remove it
-    if (fs.existsSync(manifestPath)) {
-      fs.rmSync(manifestPath, { force: true });
-    }
-    return false;
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Publication restoration failed; recovery evidence was preserved: ${detail}`);
   }
+
+  cleanupRecoveryEvidence(manifestPath, manifest.artifacts);
+  return true;
 }
 
 /**
@@ -158,9 +364,9 @@ export function recoverInterruptedPublication(migrationsFolder: string): boolean
  * Guarantees:
  * 1. Monotonically reconciles migration history and fails closed on inconsistencies.
  * 2. Refuses to overwrite existing migrations, identical candidate releases, or incompatible journal entries.
- * 3. Fully generates and validates every artifact in an isolated staging area before touching production artifacts.
- * 4. Boundary fault-safety: any failure during staging or replacement immediately rolls back all touched files to their previous state.
- * 5. Crash-safety: supports deterministic automatic recovery before subsequent publication starts.
+ * 3. Fully generates, syncs, and validates every artifact beside its destination before any live artifact changes.
+ * 4. Boundary fault-safety: normal failures restore the previous artifact set; process interruption leaves durable recovery evidence.
+ * 5. Crash-safety: deterministically verifies and completes recovery before subsequent publication starts.
  */
 export function publishReviewedRelease(
   currentCatalog: CityCatalogRecord[],
@@ -255,23 +461,22 @@ export function publishReviewedRelease(
   });
   const updatedJournalContent = JSON.stringify(journal, null, 2);
 
-  // 6. Stage all artifacts in an isolated temporary directory
-  const stagingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'city-release-staging-'));
-  const stagedCatalogFile = path.join(stagingDir, 'egypt-cities-catalog.json');
-  const stagedSnapshotFile = path.join(stagingDir, 'ocha-adm2-egypt-snapshot.json');
-  const stagedMigrationFile = path.join(stagingDir, migrationMeta.filename);
-  const stagedJournalFile = path.join(stagingDir, '_journal.json');
-
-  const recoveryManifestPath = path.join(migrationsFolder, '.publication-recovery-manifest.json');
-  let backups: RecoveryBackupEntry[] = [];
+  // Staging occurs beside each destination so the final rename is atomic on that filesystem.
+  const publicationId = randomUUID();
+  const stagedPathFor = (destinationPath: string) => `${destinationPath}.publication-${publicationId}.staged`;
+  const manifestPath = recoveryManifestPath(migrationsFolder);
+  let manifest: PublicationRecoveryManifest | undefined;
+  let artifacts: ReleaseArtifact[] = [];
 
   try {
-    const artifacts: ReleaseArtifact[] = [
+    artifacts = [
       {
+        kind: 'catalog',
         destinationPath: catalogPath,
-        stagedPath: stagedCatalogFile,
+        stagedPath: stagedPathFor(catalogPath),
         content: JSON.stringify({ metadata: release.metadata, records: release.updatedCatalog }, null, 2),
         stageFault: 'stage_catalog',
+        syncFault: 'sync_catalog',
         replaceFault: 'replace_catalog',
         validate(content) {
           const validation = validateCatalog(JSON.parse(content) as CityCatalog);
@@ -281,10 +486,12 @@ export function publishReviewedRelease(
         },
       },
       {
+        kind: 'snapshot',
         destinationPath: snapshotPath,
-        stagedPath: stagedSnapshotFile,
+        stagedPath: stagedPathFor(snapshotPath),
         content: JSON.stringify(candidateSnapshot, null, 2),
         stageFault: 'stage_snapshot',
+        syncFault: 'sync_snapshot',
         replaceFault: 'replace_snapshot',
         validate(content) {
           const validation = validateSnapshot(JSON.parse(content));
@@ -294,10 +501,12 @@ export function publishReviewedRelease(
         },
       },
       {
+        kind: 'migration',
         destinationPath: migrationFilePath,
-        stagedPath: stagedMigrationFile,
+        stagedPath: stagedPathFor(migrationFilePath),
         content: migrationSql,
         stageFault: 'stage_migration',
+        syncFault: 'sync_migration',
         replaceFault: 'replace_migration',
         validate(content) {
           if (!content.trim() || !content.includes('DO $$') || !content.includes('END $$;')) {
@@ -306,10 +515,12 @@ export function publishReviewedRelease(
         },
       },
       {
+        kind: 'journal',
         destinationPath: migrationMeta.journalPath,
-        stagedPath: stagedJournalFile,
+        stagedPath: stagedPathFor(migrationMeta.journalPath),
         content: updatedJournalContent,
         stageFault: 'stage_journal',
+        syncFault: 'sync_journal',
         replaceFault: 'replace_journal',
         validate(content) {
           const parsed = JSON.parse(content) as MigrationJournal;
@@ -325,38 +536,29 @@ export function publishReviewedRelease(
       },
     ];
 
-    for (const artifact of artifacts) {
-      stageArtifact(artifact, options._faultInjectionHook);
-    }
+    ensureArtifactDirectories(artifacts);
+    for (const artifact of artifacts) stageArtifact(artifact, options._faultInjectionHook);
 
-    // Every artifact follows the same backup, replacement, and cleanup protocol.
-    for (const artifact of artifacts) {
-      fs.mkdirSync(path.dirname(artifact.destinationPath), { recursive: true });
-    }
-    backups = backupReleaseArtifacts(artifacts);
-
-    // Write recovery manifest
-    const manifest: PublicationRecoveryManifest = {
-      stage: 'replacing',
+    // The complete, synced backup set is recorded and synced before any live artifact changes.
+    manifest = {
+      version: 1,
+      state: 'replacing',
       timestamp: Date.now(),
-      migrationPath: migrationFilePath,
-      backups,
+      artifacts: backupReleaseArtifacts(artifacts),
     };
-    fs.writeFileSync(recoveryManifestPath, JSON.stringify(manifest, null, 2), 'utf8');
+    writeRecoveryManifest(manifestPath, manifest, options._faultInjectionHook);
 
-    for (const artifact of artifacts) {
-      replaceArtifact(artifact, options._faultInjectionHook);
-    }
+    for (const artifact of artifacts) replaceArtifact(artifact, options._faultInjectionHook);
 
-    // 8. Publication succeeded cleanly: clean up manifest and backups
-    for (const b of backups) {
-      if (fs.existsSync(b.backupPath)) {
-        fs.rmSync(b.backupPath, { force: true });
-      }
+    // The new release is only committed after every artifact has been verified and synced.
+    verifyArtifactSet(manifest.artifacts, migrationsFolder, 'publishedDigest');
+    for (const artifact of manifest.artifacts) {
+      syncFile(artifact.path);
+      syncDirectory(path.dirname(artifact.path));
     }
-    if (fs.existsSync(recoveryManifestPath)) {
-      fs.rmSync(recoveryManifestPath, { force: true });
-    }
+    manifest.state = 'published';
+    writeRecoveryManifest(manifestPath, manifest, options._faultInjectionHook);
+    cleanupRecoveryEvidence(manifestPath, manifest.artifacts, options._faultInjectionHook);
 
     return {
       release,
@@ -367,26 +569,30 @@ export function publishReviewedRelease(
       snapshotPath,
       journalUpdated: true,
     };
-  } catch (err) {
-    // 9. Boundary Rollback: restore every artifact that replacement touched.
-    restoreBackups(backups);
+  } catch (error) {
+    if (error instanceof SimulatedProcessInterruption) {
+      throw error;
+    }
 
-    if (fs.existsSync(recoveryManifestPath)) {
-      try {
-        fs.rmSync(recoveryManifestPath, { force: true });
-      } catch {
-        // ignore
+    // Before the durable published marker, a normal error restores the previous complete release.
+    // A recovery error is deliberately surfaced without deleting the manifest or backups.
+    if (manifest?.state === 'replacing') {
+      if (fs.existsSync(manifestPath)) {
+        recoverInterruptedPublication(migrationsFolder);
+      } else {
+        // Manifest establishment failed before any live artifact changed, so no recovery state
+        // is needed. Remove only the unused, durable backups created for this aborted attempt.
+        for (const artifact of manifest.artifacts) {
+          if (fs.existsSync(artifact.backupPath)) removeDurably(artifact.backupPath);
+        }
       }
     }
 
-    throw err;
+    throw error;
   } finally {
-    // Clean up staging directory
-    if (fs.existsSync(stagingDir)) {
-      try {
-        fs.rmSync(stagingDir, { recursive: true, force: true });
-      } catch {
-        // ignore
+    for (const artifact of artifacts) {
+      if (fs.existsSync(artifact.stagedPath)) {
+        fs.rmSync(artifact.stagedPath, { force: true });
       }
     }
   }

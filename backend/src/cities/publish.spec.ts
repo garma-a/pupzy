@@ -3,7 +3,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { reconcileMigrationHistory, getNextMigrationMeta, type MigrationJournal } from './migration';
-import { publishReviewedRelease, recoverInterruptedPublication, type FaultInjectionHook } from './publish';
+import {
+  publishReviewedRelease,
+  recoverInterruptedPublication,
+  SimulatedProcessInterruption,
+  type FaultInjectionHook,
+} from './publish';
 import { getOfficialCatalog, type CitySnapshot, type CityCatalog } from './catalog';
 
 describe('Atomic Append-Only City Release Publication & History Reconciliation', () => {
@@ -420,6 +425,10 @@ describe('Atomic Append-Only City Release Publication & History Reconciliation',
       'stage_snapshot',
       'stage_migration',
       'stage_journal',
+      'sync_catalog',
+      'sync_snapshot',
+      'sync_migration',
+      'sync_journal',
       'replace_catalog',
       'replace_snapshot',
       'replace_migration',
@@ -476,53 +485,136 @@ describe('Atomic Append-Only City Release Publication & History Reconciliation',
     });
   });
 
-  describe('Deterministic Crash Recovery Manifest Handling', () => {
-    it('automatically recovers from an interrupted publication before proceeding', () => {
+  describe('Crash-durable publication recovery', () => {
+    const createInterruptibleRelease = () => ({
+      snapshot: createAdvancedSnapshot(),
+      options: { migrationsFolder: migrationsDir, catalogPath, snapshotPath },
+    });
+
+    it('fails closed without deleting recovery evidence torn by process interruption', () => {
+      const manifestPath = path.join(migrationsDir, '.publication-recovery-manifest.json');
+      // A killed process can leave the recovery-state write torn; model the on-disk state
+      // directly because the test process must remain alive to observe the next publication.
+      fs.writeFileSync(manifestPath, '{"state":"replacing"', 'utf8');
+
+      expect(() => recoverInterruptedPublication(migrationsDir)).toThrow(/recovery manifest is corrupt/i);
+      expect(fs.readFileSync(manifestPath, 'utf8')).toBe('{"state":"replacing"');
+    });
+
+    it('does not replace an artifact when durable recovery-state synchronization fails', () => {
       const catalogBefore = fs.readFileSync(catalogPath, 'utf8');
+      const { snapshot, options } = createInterruptibleRelease();
 
-      // Simulate a process crash mid-publication that left backup files and an uncommitted migration
-      const backupCatalogPath = `${catalogPath}.recovery.bak`;
-      fs.writeFileSync(backupCatalogPath, catalogBefore, 'utf8');
+      expect(() =>
+        publishReviewedRelease(baseCatalog, snapshot, {
+          ...options,
+          _faultInjectionHook: (stage) => {
+            if (stage === 'sync_recovery_manifest') {
+              throw new Error('simulated manifest synchronization failure');
+            }
+          },
+        }),
+      ).toThrow(/manifest synchronization failure/);
 
-      const danglingMigrationPath = path.join(migrationsDir, '0012_release_city_catalog.sql');
-      fs.writeFileSync(danglingMigrationPath, '-- Unfinished migration SQL\n', 'utf8');
+      expect(fs.readFileSync(catalogPath, 'utf8')).toBe(catalogBefore);
+      expect(fs.existsSync(path.join(migrationsDir, '.publication-recovery-manifest.json'))).toBe(false);
+      expect(fs.existsSync(`${catalogPath}.recovery.bak`)).toBe(false);
+    });
+
+    it('recovers deterministically when process interruption prevents the published-state manifest update', () => {
+      const catalogBefore = fs.readFileSync(catalogPath, 'utf8');
+      const { snapshot, options } = createInterruptibleRelease();
+      let manifestSynchronizationCount = 0;
+
+      expect(() =>
+        publishReviewedRelease(baseCatalog, snapshot, {
+          ...options,
+          _faultInjectionHook: (stage) => {
+            if (stage === 'sync_recovery_manifest') {
+              manifestSynchronizationCount += 1;
+              if (manifestSynchronizationCount === 2) {
+                throw new SimulatedProcessInterruption('simulated manifest-update interruption');
+              }
+            }
+          },
+        }),
+      ).toThrow(/manifest-update interruption/);
+
+      expect(fs.existsSync(path.join(migrationsDir, '.publication-recovery-manifest.json'))).toBe(true);
+      expect(recoverInterruptedPublication(migrationsDir)).toBe(true);
+      expect(fs.readFileSync(catalogPath, 'utf8')).toBe(catalogBefore);
+    });
+
+    it('restores the previous complete release after process interruption between artifacts, then permits retry', () => {
+      const catalogBefore = fs.readFileSync(catalogPath, 'utf8');
+      const snapshotBefore = fs.readFileSync(snapshotPath, 'utf8');
+      const journalBefore = fs.readFileSync(journalPath, 'utf8');
+      const { snapshot, options } = createInterruptibleRelease();
+
+      expect(() =>
+        publishReviewedRelease(baseCatalog, snapshot, {
+          ...options,
+          _faultInjectionHook: (stage) => {
+            if (stage === 'replace_snapshot') {
+              throw new SimulatedProcessInterruption('simulated process termination');
+            }
+          },
+        }),
+      ).toThrow(/simulated process termination/);
 
       const manifestPath = path.join(migrationsDir, '.publication-recovery-manifest.json');
-      fs.writeFileSync(
-        manifestPath,
-        JSON.stringify(
-          {
-            stage: 'interrupted',
-            timestamp: Date.now(),
-            migrationPath: danglingMigrationPath,
-            backups: [{ path: catalogPath, backupPath: backupCatalogPath }],
-          },
-          null,
-          2,
-        ),
-        'utf8',
-      );
+      expect(fs.existsSync(manifestPath)).toBe(true);
+      expect(fs.readFileSync(catalogPath, 'utf8')).not.toBe(catalogBefore);
 
-      // Overwrite catalog with corrupted content to simulate partial write
-      fs.writeFileSync(catalogPath, 'CORRUPTED PARTIAL WRITE', 'utf8');
-
-      // Calling recoverInterruptedPublication directly or via getNextMigrationMeta/publishReviewedRelease
-      const recovered = recoverInterruptedPublication(migrationsDir);
-      expect(recovered).toBe(true);
-
-      // Verify catalog was restored from backup
+      expect(recoverInterruptedPublication(migrationsDir)).toBe(true);
       expect(fs.readFileSync(catalogPath, 'utf8')).toBe(catalogBefore);
+      expect(fs.readFileSync(snapshotPath, 'utf8')).toBe(snapshotBefore);
+      expect(fs.readFileSync(journalPath, 'utf8')).toBe(journalBefore);
+      expect(fs.existsSync(path.join(migrationsDir, '0012_release_city_catalog.sql'))).toBe(false);
 
-      // Verify dangling migration was removed
-      expect(fs.existsSync(danglingMigrationPath)).toBe(false);
+      expect(publishReviewedRelease(baseCatalog, snapshot, options).migrationTag).toBe('0012_release_city_catalog');
+    });
 
-      // Verify recovery files were cleaned up
-      expect(fs.existsSync(backupCatalogPath)).toBe(false);
+    it('preserves recovery evidence when restoration cannot use a required backup', () => {
+      const { snapshot, options } = createInterruptibleRelease();
+
+      expect(() =>
+        publishReviewedRelease(baseCatalog, snapshot, {
+          ...options,
+          _faultInjectionHook: (stage) => {
+            if (stage === 'replace_snapshot') {
+              throw new SimulatedProcessInterruption('simulated process termination');
+            }
+          },
+        }),
+      ).toThrow(SimulatedProcessInterruption);
+
+      const manifestPath = path.join(migrationsDir, '.publication-recovery-manifest.json');
+      fs.rmSync(`${catalogPath}.recovery.bak`);
+
+      expect(() => recoverInterruptedPublication(migrationsDir)).toThrow(/restoration failed/i);
+      expect(fs.existsSync(manifestPath)).toBe(true);
+    });
+
+    it('retains published recovery state when cleanup fails and completes cleanup on retry', () => {
+      const { snapshot, options } = createInterruptibleRelease();
+
+      expect(() =>
+        publishReviewedRelease(baseCatalog, snapshot, {
+          ...options,
+          _faultInjectionHook: (stage) => {
+            if (stage === 'cleanup_backup_catalog') {
+              throw new Error('simulated cleanup failure');
+            }
+          },
+        }),
+      ).toThrow(/simulated cleanup failure/);
+
+      const manifestPath = path.join(migrationsDir, '.publication-recovery-manifest.json');
+      expect(fs.existsSync(manifestPath)).toBe(true);
+      expect(recoverInterruptedPublication(migrationsDir)).toBe(true);
       expect(fs.existsSync(manifestPath)).toBe(false);
-
-      // Verify migration history is clean and ready for publication
-      const meta = getNextMigrationMeta(migrationsDir);
-      expect(meta.nextIdx).toBe(12);
+      expect(reconcileMigrationHistory(migrationsDir).isValid).toBe(true);
     });
   });
 
