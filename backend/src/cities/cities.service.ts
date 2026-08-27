@@ -79,14 +79,24 @@ export class CitiesService {
 
   /**
    * Clears the in-memory cached city listings and per-ID lookups.
+   *
+   * ## Logical O(1) Invalidation
+   * Advances the internal cache generation immediately, rendering all previously cached
+   * entries unreachable and invalid in O(1) time without blocking on cache-manager I/O.
+   * Physical cleanup of previously tracked keys is dispatched asynchronously on a best-effort basis
+   * and cannot delay or fail generation advancement.
+   *
    * Called during migrations, seeding, and reconciliation to prevent serving stale reference data.
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async clearCache(): Promise<void> {
-    const keysToDelete = Array.from(this.cachedKeys);
-    keysToDelete.push('cities:all');
+    const prevGeneration = this.cacheGeneration;
+    this.cacheGeneration++;
+    const keysToDelete = Array.from(new Set([...this.cachedKeys, `cities:g${prevGeneration}:all`, 'cities:all']));
     this.cachedKeys.clear();
 
-    await Promise.all(
+    // Physical cleanup is best-effort and asynchronous, not delaying generation advancement
+    void Promise.all(
       keysToDelete.map(async (key) => {
         try {
           await this.cacheManager.del(key);
@@ -94,10 +104,25 @@ export class CitiesService {
           // ignore individual deletion errors
         }
       }),
-    );
+    ).catch(() => {
+      // ignore background deletion errors
+    });
 
-    this.cacheGeneration++;
     this.logger.log(`Cities cache invalidated successfully (generation ${this.cacheGeneration}).`);
+  }
+
+  /**
+   * Returns the current active cache generation index.
+   */
+  getCacheGeneration(): number {
+    return this.cacheGeneration;
+  }
+
+  /**
+   * Returns the number of tracked active cache keys in the current generation.
+   */
+  getTrackedKeyCount(): number {
+    return this.cachedKeys.size;
   }
 
   /**

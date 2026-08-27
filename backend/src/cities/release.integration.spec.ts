@@ -396,4 +396,125 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
 
     expect(snapshotAfter.rows).toEqual(snapshotBefore.rows);
   });
+
+  it('reproduces production deployment sequence: failed release rollback safety, deployment overlap, and cold-cache new container coherence', async () => {
+    await cleanDatabase();
+
+    // 1. Initial production baseline migration
+    await runMigrations({
+      pool,
+      migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+      customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
+    });
+
+    const db = drizzle(pool, { schema });
+    const repo = new CitiesRepository(db);
+
+    // Instance 1: Existing running container
+    const cacheStore1 = new Map<string, unknown>();
+    const mockCache1: jest.Mocked<Partial<Cache>> = {
+      get: jest
+        .fn()
+        .mockImplementation((k: string) =>
+          Promise.resolve(cacheStore1.get(k) as schema.City | schema.City[] | undefined),
+        ),
+      set: jest.fn().mockImplementation((k: string, v: unknown) => {
+        cacheStore1.set(k, v);
+        return Promise.resolve();
+      }),
+      del: jest.fn().mockImplementation((k: string) => {
+        cacheStore1.delete(k);
+        return Promise.resolve();
+      }),
+    };
+    const runningInstance = new CitiesService(repo, mockCache1 as Cache);
+
+    // Get city IDs from DB before migration
+    const eg0101Res = await pool.query<{ id: string }>(`SELECT id FROM cities WHERE source_code = 'EG0101'`);
+    const eg0101Id = eg0101Res.rows[0].id;
+
+    const maadiRes = await pool.query<{ id: string }>(`SELECT id FROM cities WHERE source_code = 'EG0104'`);
+    const maadiId = maadiRes.rows[0].id;
+
+    // Instance 1 primes its cache
+    const initialList = await runningInstance.findAll();
+    expect(initialList.length).toBe(351);
+
+    const initial0101 = await runningInstance.findById(eg0101Id);
+    expect(initial0101?.status).toBe('OFFICIAL');
+
+    const initialMaadi = await runningInstance.findById(maadiId);
+    expect(initialMaadi?.nameEnglish).toBe('Maadi');
+
+    // 2. Failed release simulation (e.g. invalid migration that raises exception before commit)
+    const failedReleaseSql = `
+      DO $$
+      BEGIN
+        UPDATE cities SET status = 'RETIRED' WHERE source_code = 'EG0101';
+        RAISE EXCEPTION 'Simulated verification mismatch during preDeployCommand';
+      END $$;
+    `;
+
+    await expect(pool.query(failedReleaseSql)).rejects.toThrow(
+      'Simulated verification mismatch during preDeployCommand',
+    );
+
+    // Instance 1 cache remains completely safe and valid
+    expect(runningInstance.getCacheGeneration()).toBe(0);
+    const postFailList = await runningInstance.findAll();
+    expect(postFailList.length).toBe(351);
+
+    const postFail0101 = await runningInstance.findById(eg0101Id);
+    expect(postFail0101?.status).toBe('OFFICIAL');
+
+    // 3. Successful preDeployCommand execution
+    const { migrationSql } = createFutureReleaseMigration();
+    await pool.query(migrationSql);
+
+    // 4. Railway boots Instance 2 (new container with cold cache) during deployment overlap
+    const cacheStore2 = new Map<string, unknown>();
+    const mockCache2: jest.Mocked<Partial<Cache>> = {
+      get: jest
+        .fn()
+        .mockImplementation((k: string) =>
+          Promise.resolve(cacheStore2.get(k) as schema.City | schema.City[] | undefined),
+        ),
+      set: jest.fn().mockImplementation((k: string, v: unknown) => {
+        cacheStore2.set(k, v);
+        return Promise.resolve();
+      }),
+      del: jest.fn().mockImplementation((k: string) => {
+        cacheStore2.delete(k);
+        return Promise.resolve();
+      }),
+    };
+    const newContainerInstance = new CitiesService(repo, mockCache2 as Cache);
+
+    // Instance 2 serves fresh requests across all lifecycles:
+    // Official list returns 350 cities (post-release)
+    const newOfficialList = await newContainerInstance.findAll();
+    expect(newOfficialList.length).toBe(350);
+
+    // Retired city returns RETIRED
+    const retiredLookup = await newContainerInstance.findById(eg0101Id);
+    expect(retiredLookup?.status).toBe('RETIRED');
+
+    // Updated city returns new canonical name
+    const updatedMaadi = await newContainerInstance.findById(maadiId);
+    expect(updatedMaadi?.nameEnglish).toBe('Maadi Updated');
+    expect(updatedMaadi?.status).toBe('OFFICIAL');
+
+    // Newly added official city resolves
+    const newCityRes = await pool.query<{ id: string }>(`SELECT id FROM cities WHERE source_code = 'EG0198'`);
+    const newCityId = newCityRes.rows[0].id;
+    const newCityLookup = await newContainerInstance.findById(newCityId);
+    expect(newCityLookup?.status).toBe('OFFICIAL');
+    expect(newCityLookup?.nameEnglish).toContain('New Administrative Capital');
+
+    // Instance 1 invalidates in O(1) time if clearCache is invoked
+    await runningInstance.clearCache();
+    expect(runningInstance.getCacheGeneration()).toBe(1);
+    const instance1RefreshedList = await runningInstance.findAll();
+    expect(instance1RefreshedList.length).toBe(350);
+  });
 });

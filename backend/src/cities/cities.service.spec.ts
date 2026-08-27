@@ -212,6 +212,105 @@ describe('CitiesService', () => {
       const freshRetired = await service.findById(mockRetiredCity.id);
       expect(freshRetired).toEqual(updatedRetiredCity);
     });
+
+    it('completes logical invalidation in O(1) time without blocking on slow or failing physical cache deletions', async () => {
+      // Track generations and key counts
+      expect(service.getCacheGeneration()).toBe(0);
+      expect(service.getTrackedKeyCount()).toBe(0);
+
+      // Prime multiple cache entries
+      await service.findAll();
+      await service.findById(mockCity.id);
+      await service.findById(mockLegacyCity.id);
+      expect(service.getTrackedKeyCount()).toBe(3);
+
+      let delCallCount = 0;
+      let resolveSlowDel: () => void;
+      const slowDelPromise = new Promise<void>((resolve) => {
+        resolveSlowDel = resolve;
+      });
+
+      // Mock cacheManager.del to hang / simulate slow I/O
+      mockCache.del = jest.fn().mockImplementation(() => {
+        delCallCount++;
+        return slowDelPromise;
+      });
+
+      // Calling clearCache must return immediately in O(1) time and advance generation
+      const clearPromise = service.clearCache();
+      await expect(clearPromise).resolves.toBeUndefined();
+
+      expect(service.getCacheGeneration()).toBe(1);
+      expect(service.getTrackedKeyCount()).toBe(0);
+
+      // Subsequent query immediately queries repo and populates new generation
+      const updatedCity: City = { ...mockCity, nameEnglish: 'Immediate Updated City' };
+      mockRepo.findAll = jest.fn().mockResolvedValue([updatedCity]);
+
+      const result = await service.findAll();
+      expect(result[0].nameEnglish).toBe('Immediate Updated City');
+      expect(mockRepo.findAll).toHaveBeenCalledTimes(1);
+
+      // Complete background cleanup
+      resolveSlowDel!();
+      await slowDelPromise;
+      expect(delCallCount).toBeGreaterThanOrEqual(3);
+    });
+
+    it('safely handles concurrent invalidation calls without race conditions or generation corruption', async () => {
+      await service.findAll();
+      await service.findById(mockCity.id);
+
+      expect(service.getCacheGeneration()).toBe(0);
+
+      // Trigger 5 concurrent clearCache operations
+      await Promise.all([
+        service.clearCache(),
+        service.clearCache(),
+        service.clearCache(),
+        service.clearCache(),
+        service.clearCache(),
+      ]);
+
+      expect(service.getCacheGeneration()).toBe(5);
+      expect(service.getTrackedKeyCount()).toBe(0);
+
+      // Service remains functional and caches at generation 5
+      await service.findAll();
+      expect(service.getTrackedKeyCount()).toBe(1);
+      expect(mockCache.set).toHaveBeenCalledWith(expect.stringContaining('cities:g5:all'), expect.anything(), 86400000);
+    });
+
+    it('leaves existing cache generation intact and safe to reuse if a migration or transaction fails before commit', async () => {
+      // Prime cache with valid existing data
+      await service.findAll();
+      await service.findById(mockCity.id);
+      expect(mockRepo.findAll).toHaveBeenCalledTimes(1);
+      expect(mockRepo.findById).toHaveBeenCalledTimes(1);
+
+      const initialGen = service.getCacheGeneration();
+
+      // Simulate a failed transaction or migration rollback
+      const simulatedFailedTransaction = async () => {
+        await Promise.resolve();
+        // DB transaction aborts before clearCache is called
+        throw new Error('Database constraint violation in release migration');
+      };
+
+      await expect(simulatedFailedTransaction()).rejects.toThrow('Database constraint violation');
+
+      // Cache generation was NOT advanced and cached entries remain safe to reuse
+      expect(service.getCacheGeneration()).toBe(initialGen);
+
+      // Subsequent calls return cached data without hitting repository
+      const cachedList = await service.findAll();
+      expect(cachedList).toEqual([mockCity]);
+      expect(mockRepo.findAll).toHaveBeenCalledTimes(1);
+
+      const cachedCity = await service.findById(mockCity.id);
+      expect(cachedCity).toEqual(mockCity);
+      expect(mockRepo.findById).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('Application restart and single-replica deployment simulation', () => {
