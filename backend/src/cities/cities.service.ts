@@ -9,13 +9,13 @@ import type { City } from '../database/schema';
  * CitiesService — city lookup with in-memory caching.
  *
  * ## Caching strategy
- * Cities are static reference data (rarely change). We cache:
- * - `findAll()`: 24h TTL — city list for onboarding dropdown
- * - `findById()`: 24h TTL — city resolution during post creation
+ * Cities are authoritative reference data. We cache:
+ * - `findAll()`: 24h TTL — official city list for onboarding dropdown
+ * - `findById()`: 24h TTL — city resolution by UUID across all lifecycles
  * - `findNearest()`: NOT cached — GPS-dependent, always different
  *
- * Cache invalidation is not needed for cities unless an admin adds a new city,
- * in which case a server restart clears the cache.
+ * Cache invalidation is triggered post-commit during migrations, dataset reconciliation,
+ * and seeding routines via `clearCache()`, invalidating both list and per-ID entries in O(1) time.
  */
 const CITIES_TTL_MS = 86_400_000; // 24 hours
 

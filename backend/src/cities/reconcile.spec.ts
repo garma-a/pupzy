@@ -530,7 +530,7 @@ describe('reconcileCities', () => {
             targetSourceCode: 'EG0126',
           },
         ],
-        citiesService,
+        clearCache: () => citiesService.clearCache(),
       });
 
       // 3. Post-reconciliation lookups must return fresh updated data from database

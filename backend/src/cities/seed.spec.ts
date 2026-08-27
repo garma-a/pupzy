@@ -192,20 +192,18 @@ describe('seedOfficialCities', () => {
   });
 
   describe('Cache invalidation on seed', () => {
-    it('executes clearCache or citiesService.clearCache post-commit', async () => {
+    it('executes clearCache post-commit', async () => {
       let cacheCleared = false;
-      const mockCitiesService = {
-        clearCache: jest.fn().mockImplementation(() => {
-          cacheCleared = true;
-          return Promise.resolve();
-        }),
-      };
-
-      await seedOfficialCities(mockDb, {
-        citiesService: mockCitiesService,
+      const clearCacheMock = jest.fn().mockImplementation(() => {
+        cacheCleared = true;
+        return Promise.resolve();
       });
 
-      expect(mockCitiesService.clearCache).toHaveBeenCalledTimes(1);
+      await seedOfficialCities(mockDb, {
+        clearCache: clearCacheMock,
+      });
+
+      expect(clearCacheMock).toHaveBeenCalledTimes(1);
       expect(cacheCleared).toBe(true);
     });
 
@@ -214,17 +212,15 @@ describe('seedOfficialCities', () => {
         transaction: jest.fn().mockRejectedValue(new Error('Seed DB connection error')),
       };
 
-      const mockCitiesService = {
-        clearCache: jest.fn(),
-      };
+      const clearCacheMock = jest.fn();
 
       await expect(
         seedOfficialCities(failingDb, {
-          citiesService: mockCitiesService,
+          clearCache: clearCacheMock,
         }),
       ).rejects.toThrow('Seed DB connection error');
 
-      expect(mockCitiesService.clearCache).not.toHaveBeenCalled();
+      expect(clearCacheMock).not.toHaveBeenCalled();
     });
   });
 });
