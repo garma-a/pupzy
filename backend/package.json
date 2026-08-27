@@ -22,7 +22,8 @@
     "db:migrate:prod": "node dist/database/migrate.js",
     "db:seed": "ts-node -r tsconfig-paths/register src/database/seed.ts",
     "db:custom": "ts-node -r tsconfig-paths/register src/database/migrate.ts",
-    "cities:refresh": "ts-node -r tsconfig-paths/register src/cities/scripts/refresh.ts"
+    "cities:refresh": "ts-node -r tsconfig-paths/register src/cities/scripts/refresh.ts",
+    "cities:verify-upstream": "ts-node -r tsconfig-paths/register src/cities/scripts/verify-upstream.ts"
   },
   "dependencies": {
     "@apollo/server": "^5.5.1",
@@ -42,6 +43,7 @@
     "cache-manager": "^7.2.9",
     "dataloader": "^2.2.3",
     "drizzle-orm": "^0.45.2",
+    "exceljs": "^4.4.0",
     "firebase-admin": "^14.3.0",
     "graphql": "^16.14.2",
     "graphql-depth-limit": "^1.1.0",

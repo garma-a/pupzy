@@ -130,7 +130,7 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
 
       try {
         await expect(fetchUpstreamSnapshot('https://data.humdata.org/dataset/cod-ab-egy')).rejects.toThrow(
-          /received HTML landing page instead of a JSON snapshot resource/,
+          /received HTML landing page instead of a snapshot resource/,
         );
       } finally {
         global.fetch = originalFetch;
