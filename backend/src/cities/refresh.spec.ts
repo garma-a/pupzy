@@ -21,17 +21,20 @@ import {
 describe('Upstream Refresh and Future Release Diff Tooling', () => {
   const currentCatalog = getOfficialCatalog();
 
-  const createMockSnapshot = (records: any[]): CitySnapshot => ({
+  const createMockSnapshot = (
+    records: any[],
+    options: { upstreamVersion?: string; lastModified?: string } = {},
+  ): CitySnapshot => ({
     metadata: {
       source: 'OCHA HDX COD-AB Egypt',
       sourceUrl: 'https://data.humdata.org/dataset/cod-ab-egy',
       resourceUrl:
         'https://data.humdata.org/dataset/b90d81ba-7c7a-4283-9899-827480d80a79/resource/81126a96-2991-48e1-93cb-24c164a4de88/download/ocha-adm2-egypt-snapshot.json',
-      upstreamVersion: '2026.1.0',
+      upstreamVersion: options.upstreamVersion ?? '2026.1.0',
       upstreamDates: {
         validOn: '2026-01-01',
         reviewedDate: '2026-01-02',
-        lastModified: '2026-01-03',
+        lastModified: options.lastModified ?? '2026-01-03',
       },
       retrievalDate: '2026-08-27',
       license: 'CC-BY-IGO',
@@ -659,7 +662,7 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
       expect(migrationSql).toContain("UPDATE cities SET source_code = 'EG0198' WHERE source_code = 'EG0101';");
       expect(migrationSql).toContain("UPDATE cities SET status = 'RETIRED' WHERE source_code IN ('EG0102');");
       expect(migrationSql).not.toContain("SET status = 'RETIRED' WHERE source_code IN ('EG0101'");
-      expect(migrationSql).toContain("INSERT INTO cities (source_code, name_english, name_arabic, governorate");
+      expect(migrationSql).toContain('INSERT INTO cities (source_code, name_english, name_arabic, governorate');
       expect(migrationSql).toContain("'EG0198'");
     });
   });
@@ -675,15 +678,19 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
       if (!fs.existsSync(metaDir)) {
         fs.mkdirSync(metaDir, { recursive: true });
       }
+      const entries = Array.from({ length: 12 }, (_, i) => {
+        const prefix = String(i).padStart(4, '0');
+        const tag = i === 11 ? '0011_reconcile_city_catalog' : `${prefix}_migration_${i}`;
+        const sqlPath = path.join(tempDir, `${tag}.sql`);
+        fs.writeFileSync(sqlPath, `-- Migration: ${tag}.sql\nSELECT 1;\n`, 'utf8');
+        return { idx: i, version: '7', when: 1000 + i * 100, tag, breakpoints: true };
+      });
       fs.writeFileSync(
         path.join(metaDir, '_journal.json'),
         JSON.stringify({
           version: '7',
           dialect: 'postgresql',
-          entries: [
-            { idx: 0, version: '7', when: 1000, tag: '0000_first', breakpoints: true },
-            { idx: 11, version: '7', when: 2000, tag: '0011_reconcile_city_catalog', breakpoints: true },
-          ],
+          entries,
         }),
         'utf8',
       );
@@ -747,21 +754,41 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
 
     it('publishes reviewed release atomically without modifying earlier migrations and updating journal', () => {
       const baseCatalog = getOfficialCatalog();
-      const candidateRaw = baseCatalog.map((c) => ({
-        adm2_name: c.sourceNameEnglish,
-        adm2_name1: c.sourceNameArabic,
-        adm2_pcode: c.sourceCode,
-        adm1_name: c.governorate,
-        adm1_name1: c.governorateArabic || '',
-        adm1_pcode: c.governorateCode,
-        adm0_name: 'Egypt',
-        adm0_name1: 'مصر',
-        adm0_pcode: 'EG',
-        center_lat: c.latitude,
-        center_lon: c.longitude,
-      }));
+      const candidateRaw = baseCatalog.map((c) => {
+        if (c.sourceCode === 'EG0104') {
+          return {
+            adm2_name: 'Maadi Updated',
+            adm2_name1: 'المعادي المحدثة',
+            adm2_pcode: c.sourceCode,
+            adm1_name: c.governorate,
+            adm1_name1: c.governorateArabic || '',
+            adm1_pcode: c.governorateCode,
+            adm0_name: 'Egypt',
+            adm0_name1: 'مصر',
+            adm0_pcode: 'EG',
+            center_lat: 29.96,
+            center_lon: 31.26,
+          };
+        }
+        return {
+          adm2_name: c.sourceNameEnglish,
+          adm2_name1: c.sourceNameArabic,
+          adm2_pcode: c.sourceCode,
+          adm1_name: c.governorate,
+          adm1_name1: c.governorateArabic || '',
+          adm1_pcode: c.governorateCode,
+          adm0_name: 'Egypt',
+          adm0_name1: 'مصر',
+          adm0_pcode: 'EG',
+          center_lat: c.latitude,
+          center_lon: c.longitude,
+        };
+      });
 
-      const candidateSnapshot = createMockSnapshot(candidateRaw);
+      const candidateSnapshot = createMockSnapshot(candidateRaw, {
+        upstreamVersion: '2026.2.0',
+        lastModified: '2026-06-20',
+      });
       const tempCatalogPath = path.join(tempDir, 'catalog.json');
       const tempSnapshotPath = path.join(tempDir, 'snapshot.json');
 
@@ -779,9 +806,9 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
       // Check journal was updated with entry 12
       const journalContent = fs.readFileSync(path.join(tempDir, 'meta', '_journal.json'), 'utf8');
       const journal = JSON.parse(journalContent) as { entries: Array<{ idx: number; tag: string }> };
-      expect(journal.entries).toHaveLength(3);
-      expect(journal.entries[2].idx).toBe(12);
-      expect(journal.entries[2].tag).toBe('0012_release_city_catalog');
+      expect(journal.entries).toHaveLength(13);
+      expect(journal.entries[12].idx).toBe(12);
+      expect(journal.entries[12].tag).toBe('0012_release_city_catalog');
     });
 
     it('fails closed without writing any files if candidate validation or count checks fail', () => {

@@ -122,7 +122,9 @@ export function applyReviewedRelease(
     }
 
     if (!candidateByCode.has(repCode)) {
-      throw new Error(`Replacement mapping error: '${repCode}' is not an active official city in the candidate release`);
+      throw new Error(
+        `Replacement mapping error: '${repCode}' is not an active official city in the candidate release`,
+      );
     }
 
     if (currentAllByCode.has(repCode)) {
@@ -216,7 +218,12 @@ export function applyReviewedRelease(
     .size;
 
   // 5. Enforce explicit reviewed metadata when official or governorate count changes
-  validateCountMetadata('Official', currentOfficialCount, officialCount, options.reviewedMetadata?.declaredOfficialCount);
+  validateCountMetadata(
+    'Official',
+    currentOfficialCount,
+    officialCount,
+    options.reviewedMetadata?.declaredOfficialCount,
+  );
   validateCountMetadata('Governorate', currentGovCount, distinctGovCount, options.reviewedMetadata?.governorateCount);
 
   return {

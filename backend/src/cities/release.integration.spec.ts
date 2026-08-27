@@ -1,11 +1,13 @@
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { Pool } from 'pg';
 import * as path from 'path';
+import * as fs from 'fs';
+import * as os from 'os';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { runMigrations } from '../database/migrate';
 import { getOfficialCatalog, type CitySnapshot } from './catalog';
-import { applyReviewedRelease, generateReleaseMigrationSql } from './refresh';
+import { applyReviewedRelease, generateReleaseMigrationSql, publishReviewedRelease } from './refresh';
 import { CitiesRepository } from './cities.repository';
 import { CitiesService } from './cities.service';
 import type { Cache } from 'cache-manager';
@@ -370,17 +372,21 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     expect(postList.length).toBe(350);
 
     // 7. Verify recoded city (EG0101 -> EG0198) preserved UUID and was updated to new official definition
-    const recodedCityAfter = await pool.query<{ id: string; status: string; source_code: string; name_english: string }>(
-      `SELECT id, status, source_code, name_english FROM cities WHERE id = $1`,
-      [recodedCityId],
-    );
+    const recodedCityAfter = await pool.query<{
+      id: string;
+      status: string;
+      source_code: string;
+      name_english: string;
+    }>(`SELECT id, status, source_code, name_english FROM cities WHERE id = $1`, [recodedCityId]);
     expect(recodedCityAfter.rows[0].id).toBe(recodedCityId);
     expect(recodedCityAfter.rows[0].source_code).toBe('EG0198');
     expect(recodedCityAfter.rows[0].name_english).toBe('New Administrative Capital Sector 1');
     expect(recodedCityAfter.rows[0].status).toBe('OFFICIAL');
 
     // User referencing recoded city remains valid with same UUID
-    const userAfter = await pool.query<{ home_city_id: string }>(`SELECT home_city_id FROM users WHERE id = $1`, [userId]);
+    const userAfter = await pool.query<{ home_city_id: string }>(`SELECT home_city_id FROM users WHERE id = $1`, [
+      userId,
+    ]);
     expect(userAfter.rows[0].home_city_id).toBe(recodedCityId);
 
     // Post referencing recoded city remains valid with same UUID
@@ -679,5 +685,270 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
         ],
       }),
     ).toThrow(/Duplicate replacement mapping for replacement city 'EG0198'/);
+  });
+
+  describe('End-to-End Published Release Migration with Drizzle Runner', () => {
+    const copyBaselineMigrationsToTemp = (tempMigrationsDir: string) => {
+      const srcMigrationsDir = path.resolve(__dirname, '../../drizzle/migrations');
+      const tempMetaDir = path.join(tempMigrationsDir, 'meta');
+      fs.mkdirSync(tempMetaDir, { recursive: true });
+
+      const files = fs.readdirSync(srcMigrationsDir);
+      for (const file of files) {
+        const fullSrc = path.join(srcMigrationsDir, file);
+        if (fs.statSync(fullSrc).isFile() && file.endsWith('.sql')) {
+          fs.copyFileSync(fullSrc, path.join(tempMigrationsDir, file));
+        }
+      }
+
+      fs.copyFileSync(path.join(srcMigrationsDir, 'meta', '_journal.json'), path.join(tempMetaDir, '_journal.json'));
+    };
+
+    it('proves published release via publishReviewedRelease executes end-to-end through Drizzle runMigrations on fresh database', async () => {
+      await cleanDatabase();
+
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rel-fresh-e2e-'));
+      const tempMigrationsDir = path.join(tempDir, 'migrations');
+      copyBaselineMigrationsToTemp(tempMigrationsDir);
+
+      const baseCatalog = getOfficialCatalog();
+      const rawRecords = baseCatalog
+        .filter((c) => c.sourceCode !== 'EG0101' && c.sourceCode !== 'EG0102')
+        .map((c) => ({
+          adm2_name: c.sourceNameEnglish,
+          adm2_name1: c.sourceNameArabic,
+          adm2_pcode: c.sourceCode,
+          adm1_name: c.governorate,
+          adm1_name1: c.governorateArabic || '',
+          adm1_pcode: c.governorateCode,
+          adm0_name: 'Egypt',
+          adm0_name1: 'مصر',
+          adm0_pcode: 'EG',
+          center_lat: c.latitude,
+          center_lon: c.longitude,
+        }));
+
+      rawRecords.push({
+        adm2_name: 'New Administrative Capital Sector 1',
+        adm2_name1: 'العاصمة الإدارية الجديدة قطاع 1',
+        adm2_pcode: 'EG0198',
+        adm1_name: 'Cairo',
+        adm1_name1: 'القاهرة',
+        adm1_pcode: 'EG01',
+        adm0_name: 'Egypt',
+        adm0_name1: 'مصر',
+        adm0_pcode: 'EG',
+        center_lat: 30.015,
+        center_lon: 31.75,
+      });
+
+      const candidateSnapshot: CitySnapshot = {
+        metadata: {
+          source: 'OCHA COD-AB Egypt 2026.2',
+          sourceUrl: 'https://data.humdata.org/dataset/cod-ab-egy',
+          resourceUrl:
+            'https://data.humdata.org/dataset/b90d81ba-7c7a-4283-9899-827480d80a79/resource/81126a96-2991-48e1-93cb-24c164a4de88/download/ocha-adm2-egypt-snapshot.json',
+          upstreamVersion: '2026.2.0',
+          upstreamDates: {
+            validOn: '2026-06-01',
+            reviewedDate: '2026-06-15',
+            lastModified: '2026-06-20',
+          },
+          retrievalDate: '2026-08-27',
+          license: 'CC-BY-IGO',
+          licenseUrl: 'https://creativecommons.org/licenses/by/3.0/igo/',
+          attribution: 'UN OCHA Egypt Office',
+          totalRows: rawRecords.length,
+          outsideZemamCount: 0,
+          selectableCount: rawRecords.length,
+          governorateCount: 27,
+        },
+        records: rawRecords,
+      };
+
+      const pubResult = publishReviewedRelease(baseCatalog, candidateSnapshot, {
+        migrationsFolder: tempMigrationsDir,
+        catalogPath: path.join(tempDir, 'catalog.json'),
+        snapshotPath: path.join(tempDir, 'snapshot.json'),
+        reviewedMetadata: {
+          declaredOfficialCount: 350,
+          governorateCount: 27,
+        },
+        replacementMappings: [
+          {
+            retiredSourceCode: 'EG0101',
+            replacementSourceCode: 'EG0198',
+            notes: 'Recoded EG0101 to EG0198',
+          },
+        ],
+      });
+
+      expect(pubResult.migrationTag).toBe('0012_release_city_catalog');
+      expect(fs.existsSync(pubResult.migrationPath)).toBe(true);
+
+      // Run Drizzle migration runner with published migration
+      await runMigrations({
+        pool,
+        migrationsFolder: tempMigrationsDir,
+        customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
+      });
+
+      const statsRes = await pool.query<{
+        official_count: string;
+        retired_count: string;
+        gov_count: string;
+      }>(`
+        SELECT
+          count(*) FILTER (WHERE status = 'OFFICIAL') as official_count,
+          count(*) FILTER (WHERE status = 'RETIRED') as retired_count,
+          count(DISTINCT governorate) FILTER (WHERE status = 'OFFICIAL') as gov_count
+        FROM cities
+      `);
+
+      expect(Number(statsRes.rows[0].official_count)).toBe(350);
+      expect(Number(statsRes.rows[0].retired_count)).toBe(1);
+      expect(Number(statsRes.rows[0].gov_count)).toBe(27);
+
+      if (fs.existsSync(tempDir)) {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it('proves published release via publishReviewedRelease executes end-to-end through Drizzle runMigrations on populated database with preserved UUIDs', async () => {
+      await cleanDatabase();
+
+      // 1. Apply baseline migrations up to 0011
+      await runMigrations({
+        pool,
+        migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+        customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
+      });
+
+      // 2. Insert records referencing cities
+      const eg0101Res = await pool.query<{ id: string }>(`SELECT id FROM cities WHERE source_code = 'EG0101'`);
+      const eg0101Id = eg0101Res.rows[0].id;
+
+      const userRes = await pool.query<{ id: string }>(`
+        INSERT INTO users (firebase_user_id, email, full_name, home_city_id)
+        VALUES ('fb-user-e2e-pub', 'e2e-pub@example.com', 'E2E Pub User', '${eg0101Id}')
+        RETURNING id
+      `);
+      const userId = userRes.rows[0].id;
+
+      const postRes = await pool.query<{ id: string }>(`
+        INSERT INTO posts (
+          creator_id, post_type, title, description, status, moderation_status, city_id, coordinates, urgency, governorate
+        ) VALUES (
+          '${userId}', 'RESCUE', 'E2E Dog', 'Help', 'ACTIVE', 'CLEAN', '${eg0101Id}', ST_SetSRID(ST_MakePoint(31.2, 30.0), 4326), 'URGENT', 'Cairo'
+        ) RETURNING id
+      `);
+      const postId = postRes.rows[0].id;
+
+      // 3. Stage and publish 0012
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rel-pop-e2e-'));
+      const tempMigrationsDir = path.join(tempDir, 'migrations');
+      copyBaselineMigrationsToTemp(tempMigrationsDir);
+
+      const baseCatalog = getOfficialCatalog();
+      const rawRecords = baseCatalog
+        .filter((c) => c.sourceCode !== 'EG0101' && c.sourceCode !== 'EG0102')
+        .map((c) => ({
+          adm2_name: c.sourceNameEnglish,
+          adm2_name1: c.sourceNameArabic,
+          adm2_pcode: c.sourceCode,
+          adm1_name: c.governorate,
+          adm1_name1: c.governorateArabic || '',
+          adm1_pcode: c.governorateCode,
+          adm0_name: 'Egypt',
+          adm0_name1: 'مصر',
+          adm0_pcode: 'EG',
+          center_lat: c.latitude,
+          center_lon: c.longitude,
+        }));
+
+      rawRecords.push({
+        adm2_name: 'New Administrative Capital Sector 1',
+        adm2_name1: 'العاصمة الإدارية الجديدة قطاع 1',
+        adm2_pcode: 'EG0198',
+        adm1_name: 'Cairo',
+        adm1_name1: 'القاهرة',
+        adm1_pcode: 'EG01',
+        adm0_name: 'Egypt',
+        adm0_name1: 'مصر',
+        adm0_pcode: 'EG',
+        center_lat: 30.015,
+        center_lon: 31.75,
+      });
+
+      const candidateSnapshot: CitySnapshot = {
+        metadata: {
+          source: 'OCHA COD-AB Egypt 2026.2',
+          sourceUrl: 'https://data.humdata.org/dataset/cod-ab-egy',
+          resourceUrl:
+            'https://data.humdata.org/dataset/b90d81ba-7c7a-4283-9899-827480d80a79/resource/81126a96-2991-48e1-93cb-24c164a4de88/download/ocha-adm2-egypt-snapshot.json',
+          upstreamVersion: '2026.2.0',
+          upstreamDates: {
+            validOn: '2026-06-01',
+            reviewedDate: '2026-06-15',
+            lastModified: '2026-06-20',
+          },
+          retrievalDate: '2026-08-27',
+          license: 'CC-BY-IGO',
+          licenseUrl: 'https://creativecommons.org/licenses/by/3.0/igo/',
+          attribution: 'UN OCHA Egypt Office',
+          totalRows: rawRecords.length,
+          outsideZemamCount: 0,
+          selectableCount: rawRecords.length,
+          governorateCount: 27,
+        },
+        records: rawRecords,
+      };
+
+      publishReviewedRelease(baseCatalog, candidateSnapshot, {
+        migrationsFolder: tempMigrationsDir,
+        catalogPath: path.join(tempDir, 'catalog.json'),
+        snapshotPath: path.join(tempDir, 'snapshot.json'),
+        reviewedMetadata: {
+          declaredOfficialCount: 350,
+          governorateCount: 27,
+        },
+        replacementMappings: [
+          {
+            retiredSourceCode: 'EG0101',
+            replacementSourceCode: 'EG0198',
+            notes: 'Recoded EG0101 to EG0198',
+          },
+        ],
+      });
+
+      // 4. Run migration upgrade with Drizzle runner
+      await runMigrations({
+        pool,
+        migrationsFolder: tempMigrationsDir,
+        customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
+      });
+
+      // 5. Verify recoded city preserved UUID and user/post references are intact
+      const cityAfter = await pool.query<{ id: string; source_code: string; name_english: string; status: string }>(
+        `SELECT id, source_code, name_english, status FROM cities WHERE id = $1`,
+        [eg0101Id],
+      );
+      expect(cityAfter.rows[0].id).toBe(eg0101Id);
+      expect(cityAfter.rows[0].source_code).toBe('EG0198');
+      expect(cityAfter.rows[0].status).toBe('OFFICIAL');
+      expect(cityAfter.rows[0].name_english).toContain('New Administrative Capital');
+
+      const userAfter = await pool.query<{ home_city_id: string }>(`SELECT home_city_id FROM users WHERE id = $1`, [
+        userId,
+      ]);
+      expect(userAfter.rows[0].home_city_id).toBe(eg0101Id);
+
+      const postAfter = await pool.query<{ city_id: string }>(`SELECT city_id FROM posts WHERE id = $1`, [postId]);
+      expect(postAfter.rows[0].city_id).toBe(eg0101Id);
+
+      if (fs.existsSync(tempDir)) {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
   });
 });

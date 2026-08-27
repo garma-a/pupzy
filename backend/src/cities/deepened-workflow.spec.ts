@@ -2,8 +2,8 @@ import { getOfficialCatalog, type CityCatalogRecord } from './catalog';
 import { compareSnapshots, calculateDistanceKm } from './diff';
 import { fetchUpstreamSnapshot, DEFAULT_RESOURCE_URL } from './fetch';
 import { applyReviewedRelease, type ReviewedReleaseResult } from './plan';
-import { getNextMigrationMeta, generateReleaseMigrationSql } from './migration';
-import { publishReviewedRelease } from './publish';
+import { getNextMigrationMeta, generateReleaseMigrationSql, reconcileMigrationHistory } from './migration';
+import { publishReviewedRelease, recoverInterruptedPublication } from './publish';
 import {
   generateCityUpsertSql,
   generateCitiesUpsertSql,
@@ -27,8 +27,10 @@ describe('Deepened City Release Workflow Architecture', () => {
       expect(typeof DEFAULT_RESOURCE_URL).toBe('string');
       expect(typeof applyReviewedRelease).toBe('function');
       expect(typeof getNextMigrationMeta).toBe('function');
+      expect(typeof reconcileMigrationHistory).toBe('function');
       expect(typeof generateReleaseMigrationSql).toBe('function');
       expect(typeof publishReviewedRelease).toBe('function');
+      expect(typeof recoverInterruptedPublication).toBe('function');
       expect(typeof generateCityUpsertSql).toBe('function');
       expect(typeof generateCitiesUpsertSql).toBe('function');
       expect(typeof generatePostGovernorateSyncSql).toBe('function');
@@ -43,7 +45,9 @@ describe('Deepened City Release Workflow Architecture', () => {
       expect(refreshFacade.fetchUpstreamSnapshot).toBe(fetchUpstreamSnapshot);
       expect(refreshFacade.applyReviewedRelease).toBe(applyReviewedRelease);
       expect(refreshFacade.generateReleaseMigrationSql).toBe(generateReleaseMigrationSql);
+      expect(refreshFacade.reconcileMigrationHistory).toBe(reconcileMigrationHistory);
       expect(refreshFacade.publishReviewedRelease).toBe(publishReviewedRelease);
+      expect(refreshFacade.recoverInterruptedPublication).toBe(recoverInterruptedPublication);
       expect(refreshFacade.generateCityUpsertSql).toBe(generateCityUpsertSql);
       expect(refreshFacade.generateIdentityTransfersSql).toBe(generateIdentityTransfersSql);
       expect(refreshFacade.DEFAULT_RESOURCE_URL).toBe(DEFAULT_RESOURCE_URL);
