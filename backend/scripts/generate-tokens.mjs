@@ -1,38 +1,26 @@
 #!/usr/bin/env node
 // scripts/generate-tokens.mjs
-// Usage: node scripts/generate-tokens.mjs --count=50 --out=../k6/tokens.json
+// Usage: node --env-file=.env scripts/generate-tokens.mjs --count=50
 //
-// Requires: npm install firebase-admin node-fetch dotenv
+// Requires: Node.js 22+ and the backend dependencies installed
 // Requires env vars (in .env or exported):
 //   FIREBASE_PROJECT_ID
 //   FIREBASE_CLIENT_EMAIL
 //   FIREBASE_PRIVATE_KEY
 //   FIREBASE_WEB_API_KEY  ← from Firebase Console → Project settings → General → Web API Key
 
-import { createRequire } from 'module';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import fetch from 'node-fetch';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Load .env from the backend root
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const require = createRequire(import.meta.url);
-
-try {
-  const { config } = await import('dotenv');
-  config({ path: path.join(__dirname, '..', '.env') });
-} catch {
-  // dotenv not installed — expect env vars to be set externally
-}
 
 // ── CLI args ──────────────────────────────────────────────────────────────────
 const COUNT = parseInt(process.argv.find((a) => a.startsWith('--count='))?.split('=')[1] ?? '50');
 const OUT =
-  process.argv.find((a) => a.startsWith('--out='))?.split('=')[1] ??
-  path.join(__dirname, '..', '..', 'k6', 'tokens.json');
+  process.argv.find((a) => a.startsWith('--out='))?.split('=')[1] ?? path.join(__dirname, '..', 'k6', 'tokens.json');
 
 // ── Validate required env vars ────────────────────────────────────────────────
 const REQUIRED = ['FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_PRIVATE_KEY', 'FIREBASE_WEB_API_KEY'];

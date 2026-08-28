@@ -1,5 +1,13 @@
 name: pupzy_envs
-color: "#CE4F3B"
+color: '#CE4F3B'
 variables:
   - name: BaseUrl
-    value: http://localhost:8080/graphql
+    value: http://localhost:3000/graphql
+  - name: auth
+    value: ''
+  - name: FirebaseWebApiKey
+    value: ''
+  - name: TestEmail
+    value: ''
+  - name: TestPassword
+    value: ''

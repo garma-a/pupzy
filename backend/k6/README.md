@@ -6,27 +6,28 @@ Performance tests for the Pupzy NestJS/GraphQL backend using [k6](https://k6.io/
 
 ## Prerequisites
 
-| Tool | Version | Install |
-|---|---|---|
-| k6 | ≥ 0.50 | `brew install k6` / `snap install k6` |
-| Node.js | ≥ 22 | (same as backend) |
-| Docker | any | For monitoring stack |
-| psql | any | For fixture export |
+| Tool    | Version | Install                               |
+| ------- | ------- | ------------------------------------- |
+| k6      | ≥ 0.50  | `brew install k6` / `snap install k6` |
+| Node.js | ≥ 22    | (same as backend)                     |
+| Docker  | any     | For monitoring stack                  |
+| psql    | any     | For fixture export                    |
 
 ---
 
 ## Quick Start
 
-### 1. Install token-generation dependencies
+Run all commands below from the backend repository root.
+
+### 1. Install backend dependencies
 
 ```bash
-cd ../backend
-npm install firebase-admin node-fetch dotenv
+npm ci
 ```
 
 ### 2. Set environment variables
 
-Copy `backend/.env-example` and ensure these are set:
+Copy `.env.example` to `.env` and ensure these are set:
 
 ```
 FIREBASE_PROJECT_ID=your-project-id
@@ -38,8 +39,7 @@ FIREBASE_WEB_API_KEY=AIzaSy...   # from Firebase Console → Project settings �
 ### 3. Generate Firebase tokens
 
 ```bash
-# From the repo root
-node backend/scripts/generate-tokens.mjs --count=50 --out=k6/tokens.json
+node --env-file=.env scripts/generate-tokens.mjs --count=50
 ```
 
 Tokens expire in **1 hour**. Re-run before any test that exceeds 45 minutes.
@@ -99,16 +99,44 @@ k6 run --env BASE_URL=$BASE_URL k6/pagination.js
 
 ---
 
+## Targeted Diagnostics
+
+Use the fixed-rate probes to verify lightweight health and city-query throughput:
+
+```bash
+# Exactly 100 requests/second for one minute
+k6 run --env BASE_URL=$BASE_URL k6/benchmark-pure-100rps.js
+
+# Step through 100, 150, and 200 requests/second
+k6 run --env BASE_URL=$BASE_URL k6/benchmark-100rps.js
+```
+
+Validate that AdminJS traffic does not degrade the public API. When admin credentials
+are omitted, the admin scenario uses its health endpoint instead of the dashboard:
+
+```bash
+k6 run --env API_URL=$BASE_URL --env ADMIN_URL=$ADMIN_URL --env ADMIN_EMAIL=$ADMIN_EMAIL --env ADMIN_PASSWORD=$ADMIN_PASSWORD k6/admin-isolation.js
+```
+
+For local process memory diagnostics, pass the backend PID to the monitor. It writes
+the ignored `memory-log.csv` file in the current directory:
+
+```bash
+node scripts/memory-monitor.mjs <PID>
+```
+
+---
+
 ## Test Environment Requirements
 
 Deploy a **dedicated Railway instance** (never test against production) with:
 
-| Env Var | Value | Reason |
-|---|---|---|
-| `THROTTLE_LIMIT` | `999999` | Disable effective rate limiting |
-| `THROTTLE_TTL_MS` | `60000` | |
-| `DB_POOL_MAX` | `20` | Keep realistic (same as production) |
-| `NODE_ENV` | `production` | Disable playground, enable error masking |
+| Env Var           | Value        | Reason                                   |
+| ----------------- | ------------ | ---------------------------------------- |
+| `THROTTLE_LIMIT`  | `999999`     | Disable effective rate limiting          |
+| `THROTTLE_TTL_MS` | `60000`      |                                          |
+| `DB_POOL_MAX`     | `20`         | Keep realistic (same as production)      |
+| `NODE_ENV`        | `production` | Disable playground, enable error masking |
 
 ---
 
@@ -136,6 +164,9 @@ k6/
 ├── soak.js              ← 30 VUs, 30 min
 ├── feeds-deep.js        ← PostGIS isolation (geo vs no-geo)
 ├── pagination.js        ← Cursor chain p1→p2→p3
+├── admin-isolation.js   ← Public API behavior under concurrent AdminJS traffic
+├── benchmark-pure-100rps.js ← Fixed 100 RPS health/cities probe
+├── benchmark-100rps.js  ← Stepped 100→150→200 RPS health/cities probe
 ├── docker-compose.yml   ← InfluxDB + Grafana monitoring
 ├── fixtures.json        ← GENERATED (gitignored)
 ├── tokens.json          ← GENERATED (gitignored)
@@ -146,20 +177,20 @@ k6/
 
 ## SLA Thresholds (Pass/Fail)
 
-| Endpoint | p50 | p95 | p99 |
-|---|---|---|---|
-| `GET /health` | — | — | < 50 ms |
-| `cities` | — | — | < 200 ms |
-| `me` | — | < 150 ms | < 300 ms |
-| `helpFeed` (no geo) | < 400 ms | < 800 ms | < 1500 ms |
-| `helpFeed` (geo) | < 600 ms | < 1200 ms | < 2000 ms |
-| `adoptFeed` / `marketFeed` | < 350 ms | < 700 ms | < 1200 ms |
-| `homeFeed` | < 400 ms | < 800 ms | < 1500 ms |
-| `post(id)` | — | < 200 ms | < 400 ms |
-| `postDetail` | — | < 150 ms | < 300 ms |
-| `recordView` | — | < 100 ms | — |
-| `toggleUpvote` / `toggleSave` | — | < 400 ms | < 800 ms |
-| `createPost` | — | < 800 ms | < 1500 ms |
+| Endpoint                      | p50      | p95       | p99       |
+| ----------------------------- | -------- | --------- | --------- |
+| `GET /health`                 | —        | —         | < 50 ms   |
+| `cities`                      | —        | —         | < 200 ms  |
+| `me`                          | —        | < 150 ms  | < 300 ms  |
+| `helpFeed` (no geo)           | < 400 ms | < 800 ms  | < 1500 ms |
+| `helpFeed` (geo)              | < 600 ms | < 1200 ms | < 2000 ms |
+| `adoptFeed` / `marketFeed`    | < 350 ms | < 700 ms  | < 1200 ms |
+| `homeFeed`                    | < 400 ms | < 800 ms  | < 1500 ms |
+| `post(id)`                    | —        | < 200 ms  | < 400 ms  |
+| `postDetail`                  | —        | < 150 ms  | < 300 ms  |
+| `recordView`                  | —        | < 100 ms  | —         |
+| `toggleUpvote` / `toggleSave` | —        | < 400 ms  | < 800 ms  |
+| `createPost`                  | —        | < 800 ms  | < 1500 ms |
 
 Overall error rate must stay below **1 %** during load tests.
 
@@ -178,9 +209,9 @@ Overall error rate must stay below **1 %** during load tests.
 
 ## Known Bottlenecks
 
-| Bottleneck | Expected Threshold | Symptom |
-|---|---|---|
-| DB pool (`DB_POOL_MAX=20`) | Saturates at ~80–100 concurrent VUs | p99 jumps 10× |
-| PostGIS `ST_DWithin` | 2–3× slower than no-geo | `feed_geo_latency p95 > 1200 ms` → check GIST index |
-| `toggleUpvote` (5-query txn) | Degrades at ~30–50 concurrent writers | p99 > 800 ms |
-| `ViewFlushCron` (3 min) | Periodic p99 spikes of 100–500 ms | Visible in Grafana at t+3m, t+6m, ... |
+| Bottleneck                   | Expected Threshold                    | Symptom                                             |
+| ---------------------------- | ------------------------------------- | --------------------------------------------------- |
+| DB pool (`DB_POOL_MAX=20`)   | Saturates at ~80–100 concurrent VUs   | p99 jumps 10×                                       |
+| PostGIS `ST_DWithin`         | 2–3× slower than no-geo               | `feed_geo_latency p95 > 1200 ms` → check GIST index |
+| `toggleUpvote` (5-query txn) | Degrades at ~30–50 concurrent writers | p99 > 800 ms                                        |
+| `ViewFlushCron` (3 min)      | Periodic p99 spikes of 100–500 ms     | Visible in Grafana at t+3m, t+6m, ...               |

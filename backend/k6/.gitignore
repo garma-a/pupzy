@@ -2,6 +2,7 @@
 
 # Generated at runtime — contain secrets and DB-specific UUIDs
 tokens.json
+fixtures.json
 results/
 
 # Grafana + InfluxDB persistent volumes (docker compose)
