@@ -4,8 +4,9 @@ import type { City, User, PostMedia } from '../../database/schema';
 /**
  * DataLoaders bag — one instance per GraphQL request.
  *
- * Created fresh per request in the GraphQLModule context factory so each
- * request gets its own cache, preventing cross-request data leaks.
+ * Created fresh per request in the GraphQLModule context factory, preventing
+ * cross-request data leaks. The City loader deliberately disables its own
+ * value cache so every relationship batch observes the catalog revision fence.
  *
  * ## Why DataLoader?
  * Without DataLoaders, fetching `city` on a list of users would fire one

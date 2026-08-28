@@ -538,6 +538,10 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
 
     const initialMaadi = await runningInstance.findById(maadiId);
     expect(initialMaadi?.nameEnglish).toBe('Maadi');
+    const primedRelationshipLoader = runningInstance.createCityByIdLoader();
+    await expect(primedRelationshipLoader.load(eg0101Id)).resolves.toMatchObject({ sourceCode: 'EG0101' });
+    await expect(primedRelationshipLoader.load(eg0102Id)).resolves.toMatchObject({ status: 'OFFICIAL' });
+    await expect(primedRelationshipLoader.load(maadiId)).resolves.toMatchObject({ nameEnglish: 'Maadi' });
     await expect(repo.getCatalogRevision()).resolves.toBe(1);
 
     // 2. Failed release simulation (e.g. invalid migration that raises exception before commit)
@@ -657,6 +661,17 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
 
     const runningUpdatedMaadi = await runningInstance.findById(maadiId);
     expect(runningUpdatedMaadi?.nameEnglish).toBe('Maadi Updated');
+
+    // This old Railway instance's already-primed relationship loader observes
+    // the committed revision and returns only released City values.
+    const [relationshipRecoded, relationshipRetired, relationshipUpdated] = await Promise.all([
+      primedRelationshipLoader.load(eg0101Id),
+      primedRelationshipLoader.load(eg0102Id),
+      primedRelationshipLoader.load(maadiId),
+    ]);
+    expect(relationshipRecoded).toMatchObject({ sourceCode: 'EG0198', status: 'OFFICIAL' });
+    expect(relationshipRetired).toMatchObject({ status: 'RETIRED' });
+    expect(relationshipUpdated).toMatchObject({ nameEnglish: 'Maadi Updated', status: 'OFFICIAL' });
   });
 
   it('fails closed when attempting to generate releases with invalid many-to-one mappings or unmapped detected recodes', () => {

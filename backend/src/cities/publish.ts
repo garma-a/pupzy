@@ -6,6 +6,7 @@ import {
   validateSnapshot,
   resolveDataPath,
   loadOfficialCatalog,
+  transformCatalog,
   type CitySnapshot,
   type CityCatalogRecord,
   type CityCatalog,
@@ -50,7 +51,6 @@ export interface PublishReleaseOptions extends ReviewedReleaseOptions {
   migrationsFolder?: string;
   catalogPath?: string;
   snapshotPath?: string;
-  writeSnapshot?: boolean;
   _faultInjectionHook?: FaultInjectionHook;
 }
 
@@ -60,7 +60,7 @@ export interface PublishReleaseResult {
   migrationPath: string;
   migrationSql: string;
   catalogPath: string;
-  snapshotPath?: string;
+  snapshotPath: string;
   journalUpdated: boolean;
 }
 
@@ -90,7 +90,13 @@ interface ReleaseArtifact {
   stageFault: FaultInjectionStage;
   syncFault: FaultInjectionStage;
   replaceFault: FaultInjectionStage;
-  validate(content: string): void;
+}
+
+export interface CityReleaseArtifactContent {
+  kind: ReleaseArtifactKind;
+  path: string;
+  releasePath?: string;
+  content: string;
 }
 
 function contentDigest(content: string | Buffer): string {
@@ -145,7 +151,181 @@ function ensureArtifactDirectories(artifacts: ReleaseArtifact[]): void {
 function stageArtifact(artifact: ReleaseArtifact, faultInjectionHook?: FaultInjectionHook): void {
   writeDurably(artifact.stagedPath, artifact.content);
   faultInjectionHook?.(artifact.stageFault);
-  artifact.validate(fs.readFileSync(artifact.stagedPath, 'utf8'));
+}
+
+function parseArtifactJson<T>(artifact: CityReleaseArtifactContent): T {
+  try {
+    return JSON.parse(artifact.content) as T;
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `City release artifact validation failed: ${artifact.kind} is not valid JSON at "${artifact.path}": ${detail}`,
+    );
+  }
+}
+
+/**
+ * Validates the complete City release artifact set from file content.
+ *
+ * Both staging and crash recovery call this protocol, so catalog, source
+ * snapshot, migration, and journal rules cannot diverge between publication
+ * and recovery.
+ */
+export function validateCityReleaseArtifactSet(artifacts: readonly CityReleaseArtifactContent[]): void {
+  const expectedKinds: ReleaseArtifactKind[] = ['catalog', 'snapshot', 'migration', 'journal'];
+  const byKind = new Map<ReleaseArtifactKind, CityReleaseArtifactContent>();
+
+  for (const artifact of artifacts) {
+    if (byKind.has(artifact.kind)) {
+      throw new Error(`City release artifact validation failed: duplicate ${artifact.kind} artifact`);
+    }
+    byKind.set(artifact.kind, artifact);
+  }
+  for (const kind of expectedKinds) {
+    if (!byKind.has(kind)) {
+      throw new Error(`City release artifact validation failed: missing required ${kind} artifact`);
+    }
+  }
+  if (artifacts.length !== expectedKinds.length) {
+    throw new Error(
+      'City release artifact validation failed: artifact set must contain exactly catalog, snapshot, migration, and journal',
+    );
+  }
+
+  const catalogArtifact = byKind.get('catalog')!;
+  const snapshotArtifact = byKind.get('snapshot')!;
+  const migrationArtifact = byKind.get('migration')!;
+  const journalArtifact = byKind.get('journal')!;
+  const catalog = parseArtifactJson<CityCatalog>(catalogArtifact);
+  const snapshot = parseArtifactJson<CitySnapshot>(snapshotArtifact);
+  const journal = parseArtifactJson<MigrationJournal>(journalArtifact);
+
+  const catalogValidation = validateCatalog(catalog);
+  if (!catalogValidation.isValid) {
+    throw new Error(
+      `City release artifact validation failed: catalog is invalid:\n- ${catalogValidation.errors.join('\n- ')}`,
+    );
+  }
+  const snapshotValidation = validateSnapshot(snapshot);
+  if (!snapshotValidation.isValid) {
+    throw new Error(
+      `City release artifact validation failed: source snapshot is invalid:\n- ${snapshotValidation.errors.join('\n- ')}`,
+    );
+  }
+
+  if (catalog.metadata?.upstreamVersion !== snapshot.metadata.upstreamVersion) {
+    throw new Error('City release artifact validation failed: catalog and source snapshot upstreamVersion differ');
+  }
+
+  const sourceCities = transformCatalog(snapshot).records;
+  const officialCatalogCities = catalog.records.filter(
+    (city) => city.status === 'OFFICIAL' || city.status === undefined,
+  );
+  const officialBySourceCode = new Map(officialCatalogCities.map((city) => [city.sourceCode, city]));
+  if (officialBySourceCode.size !== sourceCities.length) {
+    throw new Error(
+      'City release artifact validation failed: official catalog City count does not match the source snapshot',
+    );
+  }
+  for (const sourceCity of sourceCities) {
+    const catalogCity = officialBySourceCode.get(sourceCity.sourceCode);
+    if (!catalogCity) {
+      throw new Error(
+        `City release artifact validation failed: source snapshot City '${sourceCity.sourceCode}' is missing from the official catalog`,
+      );
+    }
+    const coherentFields: Array<keyof CityCatalogRecord> = [
+      'nameEnglish',
+      'nameArabic',
+      'governorate',
+      'governorateCode',
+      'sourceNameEnglish',
+      'sourceNameArabic',
+      'latitude',
+      'longitude',
+    ];
+    for (const field of coherentFields) {
+      if (catalogCity[field] !== sourceCity[field]) {
+        throw new Error(
+          `City release artifact validation failed: official City '${sourceCity.sourceCode}' ${field} differs from the source snapshot`,
+        );
+      }
+    }
+  }
+
+  const migrationTag = path.basename(migrationArtifact.releasePath ?? migrationArtifact.path, '.sql');
+  if (!migrationArtifact.content.trim() || !migrationArtifact.content.includes(`-- Migration: ${migrationTag}.sql`)) {
+    throw new Error(
+      'City release artifact validation failed: migration SQL is incomplete or does not match its artifact path',
+    );
+  }
+  if (
+    typeof journal.version !== 'string' ||
+    journal.version.trim() === '' ||
+    journal.dialect !== 'postgresql' ||
+    !Array.isArray(journal.entries) ||
+    !journal.entries.some((entry) => entry?.tag === migrationTag)
+  ) {
+    throw new Error(
+      'City release artifact validation failed: migration journal does not contain the release migration',
+    );
+  }
+}
+
+function stagedArtifactContents(artifacts: ReleaseArtifact[]): CityReleaseArtifactContent[] {
+  return artifacts.map((artifact) => ({
+    kind: artifact.kind,
+    path: artifact.stagedPath,
+    releasePath: artifact.destinationPath,
+    content: fs.readFileSync(artifact.stagedPath, 'utf8'),
+  }));
+}
+
+function recoveredArtifactContents(artifacts: RecoveryArtifact[]): CityReleaseArtifactContent[] {
+  return artifacts
+    .filter((artifact) => fs.existsSync(artifact.path))
+    .map((artifact) => ({
+      kind: artifact.kind,
+      path: artifact.path,
+      content: fs.readFileSync(artifact.path, 'utf8'),
+    }));
+}
+
+function completeRecoveredArtifactSet(
+  artifacts: RecoveryArtifact[],
+  migrationsFolder: string,
+): CityReleaseArtifactContent[] {
+  const recovered = recoveredArtifactContents(artifacts);
+  const byKind = new Map(recovered.map((artifact) => [artifact.kind, artifact]));
+  const journalArtifact = byKind.get('journal');
+  if (!journalArtifact) {
+    throw new Error('Recovered release artifact set is missing the migration journal');
+  }
+
+  if (!byKind.has('migration')) {
+    const journal = parseArtifactJson<MigrationJournal>(journalArtifact);
+    const migrationTag = journal.entries?.at(-1)?.tag;
+    if (!migrationTag) {
+      throw new Error('Recovered release artifact set has no migration available to validate');
+    }
+    const migrationPath = path.join(migrationsFolder, `${migrationTag}.sql`);
+    if (!fs.existsSync(migrationPath)) {
+      throw new Error(`Recovered release artifact set is missing migration "${migrationTag}.sql"`);
+    }
+    byKind.set('migration', {
+      kind: 'migration',
+      path: migrationPath,
+      content: fs.readFileSync(migrationPath, 'utf8'),
+    });
+  }
+
+  return ['catalog', 'snapshot', 'migration', 'journal'].map((kind) => {
+    const artifact = byKind.get(kind as ReleaseArtifactKind);
+    if (!artifact) {
+      throw new Error(`Recovered release artifact set is missing ${kind}`);
+    }
+    return artifact;
+  });
 }
 
 function backupReleaseArtifacts(artifacts: ReleaseArtifact[]): RecoveryArtifact[] {
@@ -238,24 +418,6 @@ function parseRecoveryManifest(manifestPath: string): PublicationRecoveryManifes
   return manifest as PublicationRecoveryManifest;
 }
 
-function validateRecoveredArtifact(artifact: RecoveryArtifact): void {
-  if (!fs.existsSync(artifact.path)) {
-    throw new Error(`Recovered ${artifact.kind} artifact is missing at "${artifact.path}"`);
-  }
-  const content = fs.readFileSync(artifact.path, 'utf8');
-  if (artifact.kind === 'catalog') {
-    const validation = validateCatalog(JSON.parse(content) as CityCatalog);
-    if (!validation.isValid) throw new Error(`Recovered catalog validation failed: ${validation.errors.join('; ')}`);
-  } else if (artifact.kind === 'snapshot') {
-    const validation = validateSnapshot(JSON.parse(content));
-    if (!validation.isValid) throw new Error(`Recovered snapshot validation failed: ${validation.errors.join('; ')}`);
-  } else if (artifact.kind === 'journal') {
-    JSON.parse(content);
-  } else if (!content.trim()) {
-    throw new Error('Recovered migration validation failed: migration is empty');
-  }
-}
-
 function verifyArtifactSet(
   artifacts: RecoveryArtifact[],
   migrationsFolder: string,
@@ -274,8 +436,9 @@ function verifyArtifactSet(
     if (!fs.existsSync(artifact.path) || contentDigest(fs.readFileSync(artifact.path)) !== digest) {
       throw new Error(`Recovered ${artifact.kind} artifact does not match its durable ${expectedDigest}`);
     }
-    validateRecoveredArtifact(artifact);
   }
+
+  validateCityReleaseArtifactSet(completeRecoveredArtifactSet(artifacts, migrationsFolder));
 
   try {
     // getNextMigrationMeta also proves the journal and migration directory are a reconciled pair.
@@ -377,10 +540,6 @@ export function publishReviewedRelease(
   const catalogPath = options.catalogPath ?? resolveDataPath('egypt-cities-catalog.json');
   const snapshotPath = options.snapshotPath ?? resolveDataPath('ocha-adm2-egypt-snapshot.json');
 
-  if (options.writeSnapshot === false) {
-    throw new Error('Publication refused: the source snapshot is mandatory in every City release artifact set.');
-  }
-
   // 0. Automatic recovery from prior interrupted publication
   recoverInterruptedPublication(migrationsFolder);
 
@@ -478,12 +637,6 @@ export function publishReviewedRelease(
         stageFault: 'stage_catalog',
         syncFault: 'sync_catalog',
         replaceFault: 'replace_catalog',
-        validate(content) {
-          const validation = validateCatalog(JSON.parse(content) as CityCatalog);
-          if (!validation.isValid) {
-            throw new Error(`Staged catalog validation failed:\n- ${validation.errors.join('\n- ')}`);
-          }
-        },
       },
       {
         kind: 'snapshot',
@@ -493,12 +646,6 @@ export function publishReviewedRelease(
         stageFault: 'stage_snapshot',
         syncFault: 'sync_snapshot',
         replaceFault: 'replace_snapshot',
-        validate(content) {
-          const validation = validateSnapshot(JSON.parse(content));
-          if (!validation.isValid) {
-            throw new Error(`Staged snapshot validation failed:\n- ${validation.errors.join('\n- ')}`);
-          }
-        },
       },
       {
         kind: 'migration',
@@ -508,11 +655,6 @@ export function publishReviewedRelease(
         stageFault: 'stage_migration',
         syncFault: 'sync_migration',
         replaceFault: 'replace_migration',
-        validate(content) {
-          if (!content.trim() || !content.includes('DO $$') || !content.includes('END $$;')) {
-            throw new Error('Staged migration SQL validation failed: incomplete or empty SQL statements');
-          }
-        },
       },
       {
         kind: 'journal',
@@ -522,22 +664,12 @@ export function publishReviewedRelease(
         stageFault: 'stage_journal',
         syncFault: 'sync_journal',
         replaceFault: 'replace_journal',
-        validate(content) {
-          const parsed = JSON.parse(content) as MigrationJournal;
-          const lastEntry = parsed.entries?.at(-1);
-          if (
-            !Array.isArray(parsed.entries) ||
-            lastEntry?.idx !== migrationMeta.nextIdx ||
-            lastEntry?.tag !== migrationMeta.tag
-          ) {
-            throw new Error('Staged journal validation failed: missing migration entry for the staged migration');
-          }
-        },
       },
     ];
 
     ensureArtifactDirectories(artifacts);
     for (const artifact of artifacts) stageArtifact(artifact, options._faultInjectionHook);
+    validateCityReleaseArtifactSet(stagedArtifactContents(artifacts));
 
     // The complete, synced backup set is recorded and synced before any live artifact changes.
     manifest = {

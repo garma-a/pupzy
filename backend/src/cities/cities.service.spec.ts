@@ -401,10 +401,21 @@ describe('CitiesService', () => {
   });
 
   describe('createCityByIdLoader', () => {
-    it('creates DataLoader instance', () => {
+    it('fences repeated GraphQL City relationship lookups after the catalog revision advances', async () => {
       const loader = service.createCityByIdLoader();
+
+      await expect(loader.load(mockLegacyCity.id)).resolves.toEqual(mockCity);
+
+      const releasedCity: City = { ...mockCity, nameEnglish: 'Released Cairo' };
+      mockRepo.findByIds = jest.fn().mockResolvedValue([releasedCity]);
+      catalogRevision = 2;
+
+      await expect(loader.load(mockLegacyCity.id)).resolves.toEqual(releasedCity);
+
       expect(loader).toBeDefined();
       expect(typeof loader.load).toBe('function');
+      expect(mockRepo.withCatalogRevision).toHaveBeenCalledTimes(2);
+      expect(mockRepo.findByIds).toHaveBeenCalledWith([mockLegacyCity.id]);
     });
   });
 });

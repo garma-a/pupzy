@@ -172,13 +172,20 @@ export class CitiesService {
    * DataLoader collects all `cityById.load(id)` calls that happen within
    * the same event-loop tick and resolves them with a single
    * `WHERE id = ANY($1)` query instead of N separate SELECTs.
+   * Its batch read shares the transactional catalog-revision fence used by
+   * public City lists and direct UUID lookups. Per-request value caching is
+   * disabled because its synchronous cache cannot re-check a newly committed
+   * catalog revision before serving a relationship value.
    */
   createCityByIdLoader(): DataLoader<string, City | null> {
-    return new DataLoader<string, City | null>((ids) => this.citiesRepository.findByIds(ids), {
-      // Cache is scoped to this request instance — safe to enable.
-      cache: true,
-      // Max keys batched per DB call — protects against pathological queries.
-      maxBatchSize: 100,
-    });
+    return new DataLoader<string, City | null>(
+      (ids) => this.citiesRepository.withCatalogRevision((_revision, reader) => reader.findByIds(ids)),
+      {
+        // Every relationship lookup must observe the revision fence.
+        cache: false,
+        // Max keys batched per DB call — protects against pathological queries.
+        maxBatchSize: 100,
+      },
+    );
   }
 }

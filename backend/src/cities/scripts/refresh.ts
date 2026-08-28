@@ -124,9 +124,7 @@ export async function main(): Promise<void> {
     const result = publishReviewedRelease(currentCatalog, candidateSnapshot, options);
 
     console.log(`✓ Updated catalog written to: ${result.catalogPath}`);
-    if (result.snapshotPath) {
-      console.log(`✓ Updated raw snapshot written to: ${result.snapshotPath}`);
-    }
+    console.log(`✓ Updated raw snapshot written to: ${result.snapshotPath}`);
     console.log(`✓ Monotonically ordered migration written to: ${result.migrationPath} (${result.migrationTag})`);
     if (result.journalUpdated) {
       console.log('✓ Drizzle migrations journal updated.');

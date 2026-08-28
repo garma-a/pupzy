@@ -6,6 +6,7 @@ import { reconcileMigrationHistory, getNextMigrationMeta, type MigrationJournal 
 import {
   publishReviewedRelease,
   recoverInterruptedPublication,
+  validateCityReleaseArtifactSet,
   SimulatedProcessInterruption,
   type FaultInjectionHook,
 } from './publish';
@@ -698,6 +699,26 @@ describe('Atomic Append-Only City Release Publication & History Reconciliation',
       expect(publishedJournal.entries).toHaveLength(13);
       expect(publishedJournal.entries[12].idx).toBe(12);
       expect(publishedJournal.entries[12].tag).toBe('0012_release_city_catalog');
+
+      expect(() =>
+        validateCityReleaseArtifactSet([
+          { kind: 'catalog', path: catalogPath, content: fs.readFileSync(catalogPath, 'utf8') },
+          { kind: 'snapshot', path: snapshotPath, content: fs.readFileSync(snapshotPath, 'utf8') },
+          { kind: 'migration', path: result.migrationPath, content: publishedSql },
+          { kind: 'journal', path: journalPath, content: fs.readFileSync(journalPath, 'utf8') },
+        ]),
+      ).not.toThrow();
+
+      const incompatibleSnapshot = JSON.parse(fs.readFileSync(snapshotPath, 'utf8')) as CitySnapshot;
+      incompatibleSnapshot.metadata.upstreamVersion = 'incompatible-release-version';
+      expect(() =>
+        validateCityReleaseArtifactSet([
+          { kind: 'catalog', path: catalogPath, content: fs.readFileSync(catalogPath, 'utf8') },
+          { kind: 'snapshot', path: snapshotPath, content: JSON.stringify(incompatibleSnapshot) },
+          { kind: 'migration', path: result.migrationPath, content: publishedSql },
+          { kind: 'journal', path: journalPath, content: fs.readFileSync(journalPath, 'utf8') },
+        ]),
+      ).toThrow(/catalog and source snapshot upstreamVersion differ/);
     });
 
     it('initializes an empty migration history as a complete four-artifact release', () => {
@@ -727,25 +748,18 @@ describe('Atomic Append-Only City Release Publication & History Reconciliation',
       expect(journal.entries).toEqual([expect.objectContaining({ idx: 0, tag: '0000_release_city_catalog' })]);
     });
 
-    it('refuses to omit the source snapshot from a release artifact set', () => {
+    it('returns the source snapshot as a mandatory release artifact', () => {
       const candidateSnapshot = createAdvancedSnapshot();
-      const catalogBefore = fs.readFileSync(catalogPath, 'utf8');
-      const snapshotBefore = fs.readFileSync(snapshotPath, 'utf8');
-      const journalBefore = fs.readFileSync(journalPath, 'utf8');
 
-      expect(() =>
-        publishReviewedRelease(baseCatalog, candidateSnapshot, {
-          migrationsFolder: migrationsDir,
-          catalogPath,
-          snapshotPath,
-          writeSnapshot: false,
-        }),
-      ).toThrow(/source snapshot is mandatory/);
+      const result = publishReviewedRelease(baseCatalog, candidateSnapshot, {
+        migrationsFolder: migrationsDir,
+        catalogPath,
+        snapshotPath,
+      });
 
-      expect(fs.readFileSync(catalogPath, 'utf8')).toBe(catalogBefore);
-      expect(fs.readFileSync(snapshotPath, 'utf8')).toBe(snapshotBefore);
-      expect(fs.readFileSync(journalPath, 'utf8')).toBe(journalBefore);
-      expect(fs.existsSync(path.join(migrationsDir, '0012_release_city_catalog.sql'))).toBe(false);
+      const publishedSnapshotPath: string = result.snapshotPath;
+      expect(publishedSnapshotPath).toBe(snapshotPath);
+      expect(fs.existsSync(publishedSnapshotPath)).toBe(true);
     });
   });
 });

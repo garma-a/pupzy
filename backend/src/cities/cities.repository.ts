@@ -8,6 +8,7 @@ import type * as schema from '../database/schema';
 export interface CatalogRevisionReader {
   findAll(): Promise<City[]>;
   findById(id: string): Promise<City | undefined>;
+  findByIds(ids: readonly string[]): Promise<(City | null)[]>;
 }
 
 type CityQueryExecutor = Pick<NodePgDatabase<typeof schema>, 'select'>;
@@ -71,6 +72,7 @@ export class CitiesRepository {
       return callback(state.revision, {
         findAll: () => this.findAllFrom(tx),
         findById: (id) => this.findByIdFrom(tx, id),
+        findByIds: (ids) => this.findByIdsFrom(tx, ids),
       });
     });
   }
@@ -97,9 +99,13 @@ export class CitiesRepository {
    * with `null` for any ID that was not found — required by the DataLoader contract.
    */
   async findByIds(ids: readonly string[]): Promise<(City | null)[]> {
+    return this.findByIdsFrom(this.db, ids);
+  }
+
+  private async findByIdsFrom(db: CityQueryExecutor, ids: readonly string[]): Promise<(City | null)[]> {
     if (ids.length === 0) return [];
 
-    const rows = await this.db
+    const rows = await db
       .select()
       .from(cities)
       .where(inArray(cities.id, ids as string[]));
