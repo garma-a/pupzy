@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, timestamp, geometry, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp, geometry, uniqueIndex, index, integer, check } from 'drizzle-orm/pg-core';
 import { cityLifecycleStatusEnum } from './enums';
 
 /**
@@ -85,6 +85,25 @@ export const cities = pgTable(
 
     /** PostGIS GIST spatial index on representative point. */
     centerPointGistIdx: index('idx_cities_center_point').using('gist', table.centerPoint),
+  }),
+);
+
+/**
+ * Singleton revision shared by City release migrations and API instances.
+ *
+ * A successful City release increments this value in the same transaction as
+ * its data changes. Each API instance compares it before serving process-local
+ * cached lists or UUID lookups, so a deployment overlap cannot retain an old
+ * cache generation after the database has advanced.
+ */
+export const cityCatalogRevisions = pgTable(
+  'city_catalog_revisions',
+  {
+    id: integer('id').primaryKey().default(1),
+    revision: integer('revision').notNull().default(1),
+  },
+  (table) => ({
+    singletonId: check('city_catalog_revisions_singleton_id', sql`${table.id} = 1`),
   }),
 );
 

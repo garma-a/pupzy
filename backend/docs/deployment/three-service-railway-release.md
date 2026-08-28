@@ -92,6 +92,16 @@ node dist/database/migrate.js
 3. Railway detects the non-zero exit code, aborts the release, and keeps the current running deployment active.
 4. The migration runner is completely idempotent: running against an already-migrated database succeeds with code 0 without duplicate errors or schema corruption.
 
+### City Release Cache Fence During Deployment Overlap
+Railway's pre-deploy command runs before the new container is activated, so an existing container can remain live while PostgreSQL advances. City releases therefore use a transactional cache fence rather than relying on cold startup alone:
+
+1. Migration `0012_add_city_catalog_revision` creates the singleton `city_catalog_revisions` row.
+2. Every generated reviewed City release first takes the revision's conflicting PostgreSQL row lock and increments it in the same transaction as its City updates and verification checks.
+3. Before `CitiesService.findAll()` or cached `findById()` returns a process-local value, it holds a shared lock on that revision. An old read therefore finishes before the release can commit, or waits until it sees the new revision; a changed revision advances that instance's local cache generation, making every old official-list and UUID cache key unreachable before the value is served.
+4. A migration that fails or rolls back leaves the revision unchanged, so the existing instance's previously valid cache generation remains safe to serve.
+
+This is intentionally not Redis, a distributed cache-invalidation service, background polling, or another running service. City payloads and their physical cache cleanup remain process-local; PostgreSQL is the transactional source of truth used only to fence release generations.
+
 The current `railway.json` format is scheduled for replacement by Railway Infrastructure as Code. Complete that migration before **2026-12-01**, with a staging verification target of **2026-11-01**.
 
 ---

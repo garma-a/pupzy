@@ -7,6 +7,7 @@ describe('CitiesService', () => {
   let service: CitiesService;
   let mockRepo: jest.Mocked<Partial<CitiesRepository>>;
   let mockCache: jest.Mocked<Partial<Cache>>;
+  let catalogRevision: number;
 
   const mockCity: City = {
     id: '01916327-0000-7000-8000-000000000001',
@@ -48,6 +49,7 @@ describe('CitiesService', () => {
   };
 
   beforeEach(() => {
+    catalogRevision = 1;
     mockRepo = {
       findAll: jest.fn().mockResolvedValue([mockCity]),
       findById: jest.fn().mockImplementation((id: string) => {
@@ -58,6 +60,12 @@ describe('CitiesService', () => {
       }),
       findNearest: jest.fn().mockResolvedValue(mockCity),
       findByIds: jest.fn().mockResolvedValue([mockCity]),
+      getCatalogRevision: jest.fn().mockImplementation(() => Promise.resolve(catalogRevision)),
+      withCatalogRevision: jest
+        .fn()
+        .mockImplementation((callback: (revision: number, reader: CitiesRepository) => Promise<unknown>) =>
+          callback(catalogRevision, mockRepo as CitiesRepository),
+        ),
     };
 
     const store = new Map<string, unknown>();
@@ -149,6 +157,36 @@ describe('CitiesService', () => {
   });
 
   describe('clearCache', () => {
+    it('refreshes a primed instance after a committed City release advances the catalog revision', async () => {
+      await service.findAll();
+      await service.findById(mockCity.id);
+      await service.findById(mockLegacyCity.id);
+      await service.findById(mockRetiredCity.id);
+
+      const releasedOfficialCity: City = { ...mockCity, nameEnglish: 'Released Cairo' };
+      const releasedLegacyCity: City = { ...mockLegacyCity, nameEnglish: 'Released Legacy Quarter' };
+      const releasedRetiredCity: City = { ...mockRetiredCity, nameEnglish: 'Released Retired Markaz' };
+      mockRepo.findAll = jest.fn().mockResolvedValue([releasedOfficialCity]);
+      mockRepo.findById = jest.fn().mockImplementation((id: string) => {
+        if (id === mockCity.id) return Promise.resolve(releasedOfficialCity);
+        if (id === mockLegacyCity.id) return Promise.resolve(releasedLegacyCity);
+        if (id === mockRetiredCity.id) return Promise.resolve(releasedRetiredCity);
+        return Promise.resolve(undefined);
+      });
+
+      // A successful release commits its City changes and revision together.
+      catalogRevision = 2;
+
+      await expect(service.findAll()).resolves.toEqual([releasedOfficialCity]);
+      await expect(service.findById(mockCity.id)).resolves.toEqual(releasedOfficialCity);
+      await expect(service.findById(mockLegacyCity.id)).resolves.toEqual(releasedLegacyCity);
+      await expect(service.findById(mockRetiredCity.id)).resolves.toEqual(releasedRetiredCity);
+
+      expect(mockRepo.withCatalogRevision).toHaveBeenCalledTimes(8);
+      expect(mockRepo.findAll).toHaveBeenCalledTimes(1);
+      expect(mockRepo.findById).toHaveBeenCalledTimes(3);
+    });
+
     it('invalidates both cached official lists and cached per-ID lookups across all lifecycle states', async () => {
       // Prime cache for list and multiple IDs (official, legacy, retired)
       await service.findAll();
@@ -327,6 +365,12 @@ describe('CitiesService', () => {
       const newRepo: jest.Mocked<Partial<CitiesRepository>> = {
         findAll: jest.fn().mockResolvedValue([postDeployCity]),
         findById: jest.fn().mockResolvedValue(postDeployCity),
+        getCatalogRevision: jest.fn().mockResolvedValue(1),
+        withCatalogRevision: jest
+          .fn()
+          .mockImplementation((callback: (revision: number, reader: CitiesRepository) => Promise<unknown>) =>
+            callback(1, newRepo as CitiesRepository),
+          ),
       };
       const newCacheStore = new Map<string, unknown>();
       const newCache: jest.Mocked<Partial<Cache>> = {

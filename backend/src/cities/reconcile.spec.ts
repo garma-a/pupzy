@@ -475,6 +475,12 @@ describe('reconcileCities', () => {
           .mockImplementation((id: string) =>
             id === legacyId ? Promise.resolve(currentDbCity) : Promise.resolve(undefined),
           ),
+        getCatalogRevision: jest.fn().mockResolvedValue(1),
+        withCatalogRevision: jest
+          .fn()
+          .mockImplementation((callback: (revision: number, reader: CitiesRepository) => Promise<unknown>) =>
+            callback(1, mockRepo as CitiesRepository),
+          ),
       };
 
       const citiesService = new CitiesService(mockRepo as CitiesRepository, mockCache as Cache);
@@ -573,6 +579,12 @@ describe('reconcileCities', () => {
       const mockRepo: jest.Mocked<Partial<CitiesRepository>> = {
         findAll: jest.fn().mockResolvedValue([existingCity]),
         findById: jest.fn().mockResolvedValue(existingCity),
+        getCatalogRevision: jest.fn().mockResolvedValue(1),
+        withCatalogRevision: jest
+          .fn()
+          .mockImplementation((callback: (revision: number, reader: CitiesRepository) => Promise<unknown>) =>
+            callback(1, mockRepo as CitiesRepository),
+          ),
       };
 
       const citiesService = new CitiesService(mockRepo as CitiesRepository, mockCache as Cache);
@@ -655,6 +667,12 @@ describe('reconcileCities', () => {
       const newRepo: jest.Mocked<Partial<CitiesRepository>> = {
         findAll: jest.fn().mockResolvedValue([reconciledCity]),
         findById: jest.fn().mockResolvedValue(reconciledCity),
+        getCatalogRevision: jest.fn().mockResolvedValue(1),
+        withCatalogRevision: jest
+          .fn()
+          .mockImplementation((callback: (revision: number, reader: CitiesRepository) => Promise<unknown>) =>
+            callback(1, newRepo as CitiesRepository),
+          ),
       };
 
       const freshCacheStore = new Map<string, any>();

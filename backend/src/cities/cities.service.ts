@@ -2,7 +2,7 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import DataLoader from 'dataloader';
-import { CitiesRepository } from './cities.repository';
+import { CitiesRepository, type CatalogRevisionReader } from './cities.repository';
 import type { City } from '../database/schema';
 
 /**
@@ -14,8 +14,10 @@ import type { City } from '../database/schema';
  * - `findById()`: 24h TTL — city resolution by UUID across all lifecycles
  * - `findNearest()`: NOT cached — GPS-dependent, always different
  *
- * Cache invalidation is triggered post-commit during migrations, dataset reconciliation,
- * and seeding routines via `clearCache()`, invalidating both list and per-ID entries in O(1) time.
+ * A transactional catalog revision is checked before cached reads. A release advances
+ * that revision in the same PostgreSQL transaction as its City data, so every
+ * overlapping instance rejects its pre-release process-local cache generation.
+ * Runtime reconciliation and seeding also call `clearCache()` post-commit.
  */
 const CITIES_TTL_MS = 86_400_000; // 24 hours
 
@@ -24,6 +26,7 @@ export class CitiesService {
   private readonly logger = new Logger(CitiesService.name);
   private cacheGeneration = 0;
   private readonly cachedKeys = new Set<string>();
+  private catalogRevision: number | undefined;
 
   constructor(
     private readonly citiesRepository: CitiesRepository,
@@ -35,15 +38,36 @@ export class CitiesService {
   }
 
   /**
+   * Rejects this process's cache generation when PostgreSQL has committed a
+   * newer City catalog. This is intentionally a source-of-truth read, not a
+   * background poll or distributed cache: the City payload cache stays local.
+   */
+  private async synchronizeCatalogRevision(currentRevision: number): Promise<void> {
+    if (this.catalogRevision === undefined) {
+      this.catalogRevision = currentRevision;
+      return;
+    }
+    if (this.catalogRevision === currentRevision) return;
+
+    this.catalogRevision = currentRevision;
+    await this.clearCache();
+  }
+
+  /**
    * Returns all cities sorted A-Z by English name.
    * Cached for 24 hours — city list never changes during normal operation.
    */
   async findAll(): Promise<City[]> {
+    return this.citiesRepository.withCatalogRevision((revision, reader) => this.findAllAtRevision(revision, reader));
+  }
+
+  private async findAllAtRevision(revision: number, reader: CatalogRevisionReader): Promise<City[]> {
+    await this.synchronizeCatalogRevision(revision);
     const cacheKey = this.getCacheKey('all');
     const cached = await this.cacheManager.get<City[]>(cacheKey);
     if (cached) return cached;
 
-    const cities = await this.citiesRepository.findAll();
+    const cities = await reader.findAll();
     await this.cacheManager.set(cacheKey, cities, CITIES_TTL_MS);
     this.cachedKeys.add(cacheKey);
     return cities;
@@ -56,11 +80,22 @@ export class CitiesService {
    * @returns the City row if found, undefined otherwise
    */
   async findById(id: string): Promise<City | undefined> {
+    return this.citiesRepository.withCatalogRevision((revision, reader) =>
+      this.findByIdAtRevision(id, revision, reader),
+    );
+  }
+
+  private async findByIdAtRevision(
+    id: string,
+    revision: number,
+    reader: CatalogRevisionReader,
+  ): Promise<City | undefined> {
+    await this.synchronizeCatalogRevision(revision);
     const cacheKey = this.getCacheKey(`id:${id}`);
     const cached = await this.cacheManager.get<City | undefined>(cacheKey);
     if (cached !== undefined && cached !== null) return cached;
 
-    const city = await this.citiesRepository.findById(id);
+    const city = await reader.findById(id);
     if (city) {
       await this.cacheManager.set(cacheKey, city, CITIES_TTL_MS);
       this.cachedKeys.add(cacheKey);

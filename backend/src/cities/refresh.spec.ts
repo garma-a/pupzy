@@ -887,6 +887,11 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
       expect(migrationSql).not.toContain("SET status = 'RETIRED' WHERE source_code IN ('EG0101'");
       expect(migrationSql).toContain('INSERT INTO cities (source_code, name_english, name_arabic, governorate');
       expect(migrationSql).toContain("'EG0198'");
+      expect(migrationSql).toContain('UPDATE city_catalog_revisions SET revision = revision + 1 WHERE id = 1;');
+      expect(migrationSql).toContain("RAISE EXCEPTION 'City catalog revision state is missing';");
+      expect(migrationSql.indexOf('UPDATE city_catalog_revisions')).toBeLessThan(
+        migrationSql.indexOf("UPDATE cities SET source_code = 'EG0198'"),
+      );
     });
   });
 

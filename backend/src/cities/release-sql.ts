@@ -111,3 +111,17 @@ export function generateCityVerificationSql(
     `${indent}END IF;`,
   ];
 }
+
+/**
+ * Acquires the singleton City catalog fence before a reviewed release changes
+ * City data. It is emitted inside the release's DO block, therefore a failed
+ * migration cannot advance the revision or invalidate live caches.
+ */
+export function generateCityCatalogRevisionSql(indent = ''): string[] {
+  return [
+    `${indent}UPDATE city_catalog_revisions SET revision = revision + 1 WHERE id = 1;`,
+    `${indent}IF NOT FOUND THEN`,
+    `${indent}  RAISE EXCEPTION 'City catalog revision state is missing';`,
+    `${indent}END IF;`,
+  ];
+}

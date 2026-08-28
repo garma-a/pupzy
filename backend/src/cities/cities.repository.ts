@@ -2,8 +2,15 @@ import { Inject, Injectable } from '@nestjs/common';
 import { asc, inArray, eq, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
-import { cities, type City } from '../database/schema';
+import { cities, cityCatalogRevisions, type City } from '../database/schema';
 import type * as schema from '../database/schema';
+
+export interface CatalogRevisionReader {
+  findAll(): Promise<City[]>;
+  findById(id: string): Promise<City | undefined>;
+}
+
+type CityQueryExecutor = Pick<NodePgDatabase<typeof schema>, 'select'>;
 
 @Injectable()
 export class CitiesRepository {
@@ -14,7 +21,58 @@ export class CitiesRepository {
 
   /** Returns all official cities ordered A-Z by English name. */
   async findAll(): Promise<City[]> {
-    return this.db.select().from(cities).where(eq(cities.status, 'OFFICIAL')).orderBy(asc(cities.nameEnglish));
+    return this.findAllFrom(this.db);
+  }
+
+  private findAllFrom(db: CityQueryExecutor): Promise<City[]> {
+    return db.select().from(cities).where(eq(cities.status, 'OFFICIAL')).orderBy(asc(cities.nameEnglish));
+  }
+
+  /**
+   * Returns the revision committed with the current City catalog.
+   *
+   * Cached City payloads remain process-local; this small source-of-truth read
+   * is the deployment-overlap fence that tells an already-running instance
+   * when its local cache generation must no longer be served.
+   */
+  async getCatalogRevision(): Promise<number> {
+    const [state] = await this.db
+      .select({ revision: cityCatalogRevisions.revision })
+      .from(cityCatalogRevisions)
+      .where(eq(cityCatalogRevisions.id, 1))
+      .limit(1);
+
+    if (!state) {
+      throw new Error('City catalog revision state is missing. Refusing to serve cached City data.');
+    }
+
+    return state.revision;
+  }
+
+  /**
+   * Holds a shared PostgreSQL lock on the catalog revision while a cached City
+   * read is selected. A release takes the conflicting row lock before changing
+   * City data, so this read completes before that release commits or waits and
+   * observes its new revision.
+   */
+  async withCatalogRevision<T>(callback: (revision: number, reader: CatalogRevisionReader) => Promise<T>): Promise<T> {
+    return this.db.transaction(async (tx) => {
+      const [state] = await tx
+        .select({ revision: cityCatalogRevisions.revision })
+        .from(cityCatalogRevisions)
+        .where(eq(cityCatalogRevisions.id, 1))
+        .for('share')
+        .limit(1);
+
+      if (!state) {
+        throw new Error('City catalog revision state is missing. Refusing to serve cached City data.');
+      }
+
+      return callback(state.revision, {
+        findAll: () => this.findAllFrom(tx),
+        findById: (id) => this.findByIdFrom(tx, id),
+      });
+    });
   }
 
   /**
@@ -23,7 +81,11 @@ export class CitiesRepository {
    * to preserve backward-compatible resolution for historical references.
    */
   async findById(id: string): Promise<City | undefined> {
-    const [city] = await this.db.select().from(cities).where(eq(cities.id, id)).limit(1);
+    return this.findByIdFrom(this.db, id);
+  }
+
+  private async findByIdFrom(db: CityQueryExecutor, id: string): Promise<City | undefined> {
+    const [city] = await db.select().from(cities).where(eq(cities.id, id)).limit(1);
     return city;
   }
 

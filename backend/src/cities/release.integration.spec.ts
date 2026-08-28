@@ -538,12 +538,14 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
 
     const initialMaadi = await runningInstance.findById(maadiId);
     expect(initialMaadi?.nameEnglish).toBe('Maadi');
+    await expect(repo.getCatalogRevision()).resolves.toBe(1);
 
     // 2. Failed release simulation (e.g. invalid migration that raises exception before commit)
     const failedReleaseSql = `
       DO $$
       BEGIN
         UPDATE cities SET status = 'RETIRED' WHERE source_code = 'EG0102';
+        UPDATE city_catalog_revisions SET revision = revision + 1 WHERE id = 1;
         RAISE EXCEPTION 'Simulated verification mismatch during preDeployCommand';
       END $$;
     `;
@@ -559,12 +561,48 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
 
     const postFail0101 = await runningInstance.findById(eg0101Id);
     expect(postFail0101?.status).toBe('OFFICIAL');
+    await expect(repo.getCatalogRevision()).resolves.toBe(1);
 
-    // 3. Successful preDeployCommand execution
+    // 3. A request already using the old cache holds a shared revision lock.
+    // The release must not commit while that request is still selecting its
+    // pre-release value.
+    let releaseOldCacheRead: () => void;
+    const oldCacheReadStarted = new Promise<void>((resolve) => {
+      releaseOldCacheRead = resolve;
+    });
+    let releaseOldCacheReadObserved: () => void;
+    const oldCacheReadObserved = new Promise<void>((resolve) => {
+      releaseOldCacheReadObserved = resolve;
+    });
+    let holdOldListCacheRead = true;
+    mockCache1.get = jest.fn().mockImplementation((key: string) => {
+      if (holdOldListCacheRead && key.endsWith(':all')) {
+        holdOldListCacheRead = false;
+        releaseOldCacheReadObserved!();
+        return oldCacheReadStarted.then(() => cacheStore1.get(key) as schema.City[] | undefined);
+      }
+      return Promise.resolve(cacheStore1.get(key) as schema.City | schema.City[] | undefined);
+    });
+
+    const inFlightOldRead = runningInstance.findAll();
+    await oldCacheReadObserved;
+
+    // 4. Successful preDeployCommand execution waits for the in-flight old
+    // read rather than committing City data underneath it.
     const { migrationSql } = createFutureReleaseMigration();
-    await pool.query(migrationSql);
+    let releaseCommitted = false;
+    const releaseMigration = pool.query(migrationSql).then(() => {
+      releaseCommitted = true;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    expect(releaseCommitted).toBe(false);
 
-    // 4. Railway boots Instance 2 (new container with cold cache) during deployment overlap
+    releaseOldCacheRead!();
+    await expect(inFlightOldRead).resolves.toHaveLength(351);
+    await releaseMigration;
+    await expect(repo.getCatalogRevision()).resolves.toBe(2);
+
+    // 5. Railway boots Instance 2 (new container with cold cache) during deployment overlap
     const cacheStore2 = new Map<string, unknown>();
     const mockCache2: jest.Mocked<Partial<Cache>> = {
       get: jest
@@ -603,11 +641,22 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     expect(updatedMaadi?.nameEnglish).toBe('Maadi Updated');
     expect(updatedMaadi?.status).toBe('OFFICIAL');
 
-    // Instance 1 invalidates in O(1) time if clearCache is invoked
-    await runningInstance.clearCache();
-    expect(runningInstance.getCacheGeneration()).toBe(1);
+    // Instance 1 was primed before the migration. Its next public City read
+    // observes the committed catalog revision and invalidates itself without
+    // a deployment hook or manually invoked cache invalidation.
     const instance1RefreshedList = await runningInstance.findAll();
+    expect(runningInstance.getCacheGeneration()).toBe(1);
     expect(instance1RefreshedList.length).toBe(350);
+
+    const runningRecodedLookup = await runningInstance.findById(eg0101Id);
+    expect(runningRecodedLookup?.sourceCode).toBe('EG0198');
+    expect(runningRecodedLookup?.status).toBe('OFFICIAL');
+
+    const runningRetiredLookup = await runningInstance.findById(eg0102Id);
+    expect(runningRetiredLookup?.status).toBe('RETIRED');
+
+    const runningUpdatedMaadi = await runningInstance.findById(maadiId);
+    expect(runningUpdatedMaadi?.nameEnglish).toBe('Maadi Updated');
   });
 
   it('fails closed when attempting to generate releases with invalid many-to-one mappings or unmapped detected recodes', () => {

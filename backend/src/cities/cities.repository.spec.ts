@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call */
 import { CitiesRepository } from './cities.repository';
-import { cities, type City } from '../database/schema';
+import { cities, cityCatalogRevisions, type City } from '../database/schema';
 import { eq, inArray, asc } from 'drizzle-orm';
 
 describe('CitiesRepository', () => {
@@ -69,6 +69,49 @@ describe('CitiesRepository', () => {
       expect(mockQueryBuilder.where).toHaveBeenCalledWith(eq(cities.status, 'OFFICIAL'));
       expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(asc(cities.nameEnglish));
       expect(result).toEqual([officialCity]);
+    });
+  });
+
+  describe('getCatalogRevision', () => {
+    it('reads the singleton revision used to fence process-local City caches', async () => {
+      const mockQueryBuilder = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue([{ revision: 2 }]),
+      };
+      mockDb.select.mockReturnValue(mockQueryBuilder);
+
+      await expect(repository.getCatalogRevision()).resolves.toBe(2);
+      expect(mockQueryBuilder.from).toHaveBeenCalledWith(cityCatalogRevisions);
+      expect(mockQueryBuilder.limit).toHaveBeenCalledWith(1);
+    });
+
+    it('fails closed when the singleton revision state is absent', async () => {
+      const mockQueryBuilder = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue([]),
+      };
+      mockDb.select.mockReturnValue(mockQueryBuilder);
+
+      await expect(repository.getCatalogRevision()).rejects.toThrow('City catalog revision state is missing');
+    });
+
+    it('holds a shared revision lock while a cached City read is selected', async () => {
+      const mockQueryBuilder = {
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        for: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue([{ revision: 2 }]),
+      };
+      const transactionDb = { select: jest.fn().mockReturnValue(mockQueryBuilder) };
+      const runTransaction = (callback: (db: typeof transactionDb) => Promise<number>): Promise<number> =>
+        callback(transactionDb);
+      mockDb.transaction = jest.fn().mockImplementation(runTransaction);
+
+      await expect(repository.withCatalogRevision((revision) => Promise.resolve(revision))).resolves.toBe(2);
+      expect(mockDb.transaction).toHaveBeenCalledTimes(1);
+      expect(mockQueryBuilder.for).toHaveBeenCalledWith('share');
     });
   });
 
