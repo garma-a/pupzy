@@ -132,7 +132,11 @@ describe('MatingService', () => {
 
       expect(result).toBe(mockPost);
       expect(mockCitiesService.findById).toHaveBeenCalledWith(validCityId);
-      expect(mockUploadService.getExpectedMediaUrls).toHaveBeenCalledWith(validMediaId, expect.any(String));
+      expect(mockUploadService.getExpectedMediaUrls).toHaveBeenCalledWith(
+        validMediaId,
+        validUserId,
+        expect.any(String),
+      );
       expect(mockMatingRepo.createMatingPost).toHaveBeenCalledWith(
         expect.objectContaining({
           postType: 'MATING',

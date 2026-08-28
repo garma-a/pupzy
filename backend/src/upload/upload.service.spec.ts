@@ -33,7 +33,7 @@ describe('UploadService', () => {
     };
 
     mockCache = {
-      get: jest.fn().mockResolvedValue('image/jpeg'),
+      get: jest.fn((key: string) => Promise.resolve(key.startsWith('media_owner:') ? 'user-1' : 'image/jpeg')),
       set: jest.fn().mockResolvedValue(undefined),
       del: jest.fn().mockResolvedValue(undefined),
     };
@@ -53,10 +53,15 @@ describe('UploadService', () => {
 
   describe('getExpectedMediaUrls', () => {
     it('returns predicted publicUrl and storageKey', async () => {
-      const result = await service.getExpectedMediaUrls('media-1', 'post-1');
+      (service as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = jest.fn().mockResolvedValue({});
+      const result = await service.getExpectedMediaUrls('media-1', 'user-1', 'post-1');
       expect(result.publicUrl).toBe('https://cdn.pupzy.com/posts/post-1/media-1.jpg');
       expect(result.cloudflareStorageKey).toBe('posts/post-1/media-1.jpg');
       expect(result.fileContentType).toBe('image/jpeg');
+    });
+
+    it('rejects staged media that belongs to another user', async () => {
+      await expect(service.getExpectedMediaUrls('media-1', 'another-user', 'post-1')).rejects.toThrow(NotFoundError);
     });
   });
 

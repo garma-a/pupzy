@@ -27,6 +27,7 @@ import {
   type ProductPost,
 } from '../database/schema';
 import type * as schema from '../database/schema';
+import { NotFoundError } from '../common/errors/app.errors';
 
 /**
  * PostsRepository — data-access layer for post creation.
@@ -283,7 +284,12 @@ export class PostsRepository {
    * Returns undefined if the post ID doesn't have a rescue extension.
    */
   async findRescueDetail(postId: string): Promise<RescuePost | undefined> {
-    const [row] = await this.db.select().from(rescuePosts).where(eq(rescuePosts.postId, postId)).limit(1);
+    const [row] = await this.db
+      .select(getTableColumns(rescuePosts))
+      .from(rescuePosts)
+      .innerJoin(posts, eq(rescuePosts.postId, posts.id))
+      .where(and(eq(rescuePosts.postId, postId), eq(posts.postType, 'RESCUE'), ne(posts.status, 'REMOVED')))
+      .limit(1);
     return row;
   }
 
@@ -291,7 +297,12 @@ export class PostsRepository {
    * Finds a single LOST extension row by post ID.
    */
   async findLostDetail(postId: string): Promise<LostPost | undefined> {
-    const [row] = await this.db.select().from(lostPosts).where(eq(lostPosts.postId, postId)).limit(1);
+    const [row] = await this.db
+      .select(getTableColumns(lostPosts))
+      .from(lostPosts)
+      .innerJoin(posts, eq(lostPosts.postId, posts.id))
+      .where(and(eq(lostPosts.postId, postId), eq(posts.postType, 'LOST'), ne(posts.status, 'REMOVED')))
+      .limit(1);
     return row;
   }
 
@@ -299,7 +310,12 @@ export class PostsRepository {
    * Finds a single ADOPTION extension row by post ID.
    */
   async findAdoptionDetail(postId: string): Promise<AdoptionPost | undefined> {
-    const [row] = await this.db.select().from(adoptionPosts).where(eq(adoptionPosts.postId, postId)).limit(1);
+    const [row] = await this.db
+      .select(getTableColumns(adoptionPosts))
+      .from(adoptionPosts)
+      .innerJoin(posts, eq(adoptionPosts.postId, posts.id))
+      .where(and(eq(adoptionPosts.postId, postId), eq(posts.postType, 'ADOPTION'), ne(posts.status, 'REMOVED')))
+      .limit(1);
     return row;
   }
 
@@ -307,7 +323,12 @@ export class PostsRepository {
    * Finds a single PRODUCT extension row by post ID.
    */
   async findProductDetail(postId: string): Promise<ProductPost | undefined> {
-    const [row] = await this.db.select().from(productPosts).where(eq(productPosts.postId, postId)).limit(1);
+    const [row] = await this.db
+      .select(getTableColumns(productPosts))
+      .from(productPosts)
+      .innerJoin(posts, eq(productPosts.postId, posts.id))
+      .where(and(eq(productPosts.postId, postId), eq(posts.postType, 'PRODUCT'), ne(posts.status, 'REMOVED')))
+      .limit(1);
     return row;
   }
 
@@ -318,24 +339,28 @@ export class PostsRepository {
    * The DB trigger `trg_sync_user_post_counts` handles counter adjustments.
    * The DB trigger `trg_posts_updated_at` handles updated_at automatically.
    *
-   * @returns The updated post row.
-   * @throws If the post does not exist (no rows affected).
+   * @returns The updated post row, or undefined when it is no longer ACTIVE
+   *          or no longer belongs to the caller.
    */
-  async updateStatus(postId: string, status: string): Promise<Post> {
+  async updateStatus(postId: string, creatorId: string, status: string): Promise<Post | undefined> {
     const [post] = await this.db
       .update(posts)
       .set({ status: status as Post['status'] })
-      .where(eq(posts.id, postId))
+      .where(and(eq(posts.id, postId), eq(posts.creatorId, creatorId), eq(posts.status, 'ACTIVE')))
       .returning();
     return post;
   }
 
   /**
-   * Soft-deletes a post by setting status to 'REMOVED'.
+   * Soft-deletes a non-removed post by setting status to 'REMOVED'.
    * The DB trigger `trg_sync_user_post_counts` decrements user counters.
    */
-  async softDelete(postId: string): Promise<Post> {
-    const [post] = await this.db.update(posts).set({ status: 'REMOVED' }).where(eq(posts.id, postId)).returning();
+  async softDelete(postId: string, creatorId: string): Promise<Post | undefined> {
+    const [post] = await this.db
+      .update(posts)
+      .set({ status: 'REMOVED' })
+      .where(and(eq(posts.id, postId), eq(posts.creatorId, creatorId), ne(posts.status, 'REMOVED')))
+      .returning();
     return post;
   }
 
@@ -357,6 +382,13 @@ export class PostsRepository {
    */
   async toggleUpvote(postId: string, userId: string): Promise<{ added: boolean; updatedPost: Post }> {
     return this.db.transaction(async (tx) => {
+      const [availablePost] = await tx
+        .select({ id: posts.id })
+        .from(posts)
+        .where(and(eq(posts.id, postId), ne(posts.status, 'REMOVED')))
+        .for('update');
+      if (!availablePost) throw new NotFoundError('Post', postId);
+
       // 1. Check if upvote already exists
       const [existing] = await tx
         .select()
@@ -448,6 +480,13 @@ export class PostsRepository {
    */
   async toggleSave(postId: string, userId: string): Promise<{ added: boolean; updatedPost: Post }> {
     return this.db.transaction(async (tx) => {
+      const [availablePost] = await tx
+        .select({ id: posts.id })
+        .from(posts)
+        .where(and(eq(posts.id, postId), ne(posts.status, 'REMOVED')))
+        .for('update');
+      if (!availablePost) throw new NotFoundError('Post', postId);
+
       // 1. Check if save already exists
       const [existing] = await tx
         .select()

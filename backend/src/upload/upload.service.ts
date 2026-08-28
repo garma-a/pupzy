@@ -114,8 +114,12 @@ export class UploadService {
     /** 10-minute expiry — long enough for mobile uploads on slow connections. */
     const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 600 });
 
-    // Cache the content type for retrieval during post creation (15 min TTL).
-    await this.cacheManager.set(`media_ct:${mediaId}`, contentType, 900_000);
+    // Bind the short-lived staging capability to both its owner and MIME type.
+    // Post creation verifies these values before it creates a media row.
+    await Promise.all([
+      this.cacheManager.set(`media_ct:${mediaId}`, contentType, 900_000),
+      this.cacheManager.set(`media_owner:${mediaId}`, userId, 900_000),
+    ]);
 
     return {
       mediaId,
@@ -199,19 +203,39 @@ export class UploadService {
   }
 
   /**
-   * Predicts the final URLs for a staged media file.
+   * Verifies a user-owned staged upload and predicts its final URLs.
    * Useful for DB insertion before moving the actual bytes.
    */
   async getExpectedMediaUrls(
     mediaId: string,
+    userId: string,
     postId: string,
   ): Promise<{
     publicUrl: string;
     cloudflareStorageKey: string;
     fileContentType: string;
   }> {
-    const contentType = (await this.cacheManager.get<string>(`media_ct:${mediaId}`)) ?? 'image/webp';
+    const [contentType, ownerId] = await Promise.all([
+      this.cacheManager.get<string>(`media_ct:${mediaId}`),
+      this.cacheManager.get<string>(`media_owner:${mediaId}`),
+    ]);
+    if (!contentType || ownerId !== userId) {
+      throw new NotFoundError('Staged media', mediaId);
+    }
+
     const ext = UploadService.mimeToExtension(contentType);
+    const stagingKey = `staging/${userId}/${mediaId}${ext}`;
+    try {
+      await this.s3Client.send(
+        new HeadObjectCommand({
+          Bucket: this.bucketName,
+          Key: stagingKey,
+        }),
+      );
+    } catch {
+      throw new NotFoundError('Staged media', mediaId);
+    }
+
     const finalKey = `posts/${postId}/${mediaId}${ext}`;
     return {
       publicUrl: `${this.publicUrl}/${finalKey}`,

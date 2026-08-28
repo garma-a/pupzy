@@ -63,7 +63,7 @@ export class MatingService {
     // (exact pattern from PostsService — see plan §2.1. Do not insert first and
     // attach media after; every other post type predicts URLs up front.)
     const postId = generateUuidV7();
-    const mediaRows = await this.prepareMedia(input.mediaIds, postId);
+    const mediaRows = await this.prepareMedia(input.mediaIds, userId, postId);
 
     const baseData: NewPost = {
       id: postId,
@@ -146,12 +146,16 @@ export class MatingService {
 
   // ── Media (duplicated from PostsService — see plan §0.3 decision 8) ────────
 
-  private async prepareMedia(mediaIds: string[] | undefined, postId: string): Promise<Omit<NewPostMedia, 'postId'>[]> {
+  private async prepareMedia(
+    mediaIds: string[] | undefined,
+    userId: string,
+    postId: string,
+  ): Promise<Omit<NewPostMedia, 'postId'>[]> {
     if (!mediaIds || mediaIds.length === 0) return [];
     if (mediaIds.length > 4) {
       throw new ValidationError('Maximum 4 images allowed per post');
     }
-    return Promise.all(mediaIds.map((mediaId) => this.uploadService.getExpectedMediaUrls(mediaId, postId)));
+    return Promise.all(mediaIds.map((mediaId) => this.uploadService.getExpectedMediaUrls(mediaId, userId, postId)));
   }
 
   private runFinalizeMediaAsync(mediaIds: string[] | undefined, userId: string, postId: string): void {

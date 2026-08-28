@@ -40,6 +40,50 @@ import type {
 } from './dto/feed-query.input';
 import { ViewFlushCron } from './view-flush.cron';
 
+type IdCursor = { id: string };
+type HelpFeedCursor = { urgency: NonNullable<Post['urgency']>; createdAt: string; id: string };
+type ScoredFeedCursor = { score?: number; createdAt?: string; id: string };
+type SavedPostsCursor = { savedAt: string; postId: string };
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const URGENCY_TIERS = new Set<NonNullable<Post['urgency']>>(['CRITICAL', 'URGENT', 'MODERATE']);
+
+function isCursorRecord(cursor: unknown): cursor is Record<string, unknown> {
+  return typeof cursor === 'object' && cursor !== null && !Array.isArray(cursor);
+}
+
+function isUuidCursorValue(value: unknown): value is string {
+  return typeof value === 'string' && UUID_REGEX.test(value);
+}
+
+function isValidCursorDate(value: unknown): value is string {
+  return typeof value === 'string' && !Number.isNaN(Date.parse(value));
+}
+
+function isIdCursor(cursor: unknown): cursor is IdCursor {
+  return isCursorRecord(cursor) && isUuidCursorValue(cursor.id);
+}
+
+function isHelpFeedCursor(cursor: unknown): cursor is HelpFeedCursor {
+  return (
+    isCursorRecord(cursor) &&
+    typeof cursor.urgency === 'string' &&
+    URGENCY_TIERS.has(cursor.urgency as NonNullable<Post['urgency']>) &&
+    isValidCursorDate(cursor.createdAt) &&
+    isUuidCursorValue(cursor.id)
+  );
+}
+
+function isScoredFeedCursor(cursor: unknown, sort: 'HOT' | 'NEWEST'): cursor is ScoredFeedCursor {
+  if (!isCursorRecord(cursor) || !isUuidCursorValue(cursor.id)) return false;
+  if (sort === 'NEWEST') return true;
+  return typeof cursor.score === 'number' && Number.isFinite(cursor.score) && isValidCursorDate(cursor.createdAt);
+}
+
+function isSavedPostsCursor(cursor: unknown): cursor is SavedPostsCursor {
+  return isCursorRecord(cursor) && isValidCursorDate(cursor.savedAt) && isUuidCursorValue(cursor.postId);
+}
+
 /**
  * PostsService — business logic layer for post creation.
  *
@@ -53,6 +97,7 @@ import { ViewFlushCron } from './view-flush.cron';
 @Injectable()
 export class PostsService {
   private readonly logger = new Logger(PostsService.name);
+  private readonly viewDedupInFlight = new Set<string>();
 
   constructor(
     private readonly postsRepository: PostsRepository,
@@ -70,7 +115,7 @@ export class PostsService {
     const postId = generateUuidV7();
     const city = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
-    const mediaRows = await this.prepareMedia(input.mediaIds, postId);
+    const mediaRows = await this.prepareMedia(input.mediaIds, creatorId, postId);
 
     const urgency = computeRescueUrgency({
       isLifeThreatening: input.isLifeThreatening,
@@ -122,7 +167,7 @@ export class PostsService {
     const postId = generateUuidV7();
     const city = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
-    const mediaRows = await this.prepareMedia(input.mediaIds, postId);
+    const mediaRows = await this.prepareMedia(input.mediaIds, creatorId, postId);
 
     const urgency =
       input.reportType === 'LOST_PET'
@@ -185,7 +230,7 @@ export class PostsService {
     const postId = generateUuidV7();
     const city = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
-    const mediaRows = await this.prepareMedia(input.mediaIds, postId);
+    const mediaRows = await this.prepareMedia(input.mediaIds, creatorId, postId);
 
     const baseData: NewPost = {
       id: postId,
@@ -236,7 +281,7 @@ export class PostsService {
     const postId = generateUuidV7();
     const city = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
-    const mediaRows = await this.prepareMedia(input.mediaIds, postId);
+    const mediaRows = await this.prepareMedia(input.mediaIds, creatorId, postId);
 
     const baseData: NewPost = {
       id: postId,
@@ -353,7 +398,8 @@ export class PostsService {
     if (post.creatorId !== userId) {
       throw new ForbiddenError('You can only delete your own posts');
     }
-    await this.postsRepository.softDelete(postId);
+    const deletedPost = await this.postsRepository.softDelete(postId, userId);
+    if (!deletedPost) throw new NotFoundError('Post', postId);
     await this.usersService.invalidateUserCacheById(userId).catch(() => {});
   }
 
@@ -403,7 +449,8 @@ export class PostsService {
       );
     }
 
-    const updatedPost = await this.postsRepository.updateStatus(postId, status);
+    const updatedPost = await this.postsRepository.updateStatus(postId, userId, status);
+    if (!updatedPost) throw new NotFoundError('Post', postId);
     await this.usersService.invalidateUserCacheById(post.creatorId).catch(() => {});
     return updatedPost;
   }
@@ -494,10 +541,19 @@ export class PostsService {
 
   // ─── Feeds ──────────────────────────────────────────────────────────────
 
-  private decodeCursor<T = Record<string, unknown>>(cursorBase64: string | null | undefined): T | null {
+  private decodeCursor<T>(
+    cursorBase64: string | null | undefined,
+    isValidCursor: (cursor: unknown) => cursor is T,
+  ): T | null {
     if (!cursorBase64) return null;
+    if (cursorBase64.length > 1024) {
+      throw new ValidationError('Invalid cursor format');
+    }
+
     try {
-      return JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8')) as T;
+      const cursor = JSON.parse(Buffer.from(cursorBase64, 'base64url').toString('utf8')) as unknown;
+      if (!isValidCursor(cursor)) throw new ValidationError('Invalid cursor format');
+      return cursor;
     } catch {
       throw new ValidationError('Invalid cursor format');
     }
@@ -529,7 +585,7 @@ export class PostsService {
       viewerLocation: input.viewerLocation,
       radiusKm: input.radiusKm ?? 25,
       limit: Math.min(input.first ?? 20, 50),
-      cursor: this.decodeCursor<{ urgency: NonNullable<Post['urgency']>; createdAt: string; id: string }>(input.after),
+      cursor: this.decodeCursor(input.after, isHelpFeedCursor),
     });
     return this.mapFeedResultToConnection(result, (post) => ({
       urgency: post.urgency,
@@ -547,7 +603,7 @@ export class PostsService {
       radiusKm: input.radiusKm ?? 25,
       sort,
       limit: Math.min(input.first ?? 20, 50),
-      cursor: this.decodeCursor<{ score?: number; createdAt?: string; id: string }>(input.after),
+      cursor: this.decodeCursor(input.after, (cursor): cursor is ScoredFeedCursor => isScoredFeedCursor(cursor, sort)),
     });
     return this.mapFeedResultToConnection(result, (post) =>
       sort === 'HOT'
@@ -566,7 +622,7 @@ export class PostsService {
       sort,
       category: input.category,
       limit: Math.min(input.first ?? 20, 50),
-      cursor: this.decodeCursor<{ score?: number; createdAt?: string; id: string }>(input.after),
+      cursor: this.decodeCursor(input.after, (cursor): cursor is ScoredFeedCursor => isScoredFeedCursor(cursor, sort)),
     });
     return this.mapFeedResultToConnection(result, (post) =>
       sort === 'HOT'
@@ -582,7 +638,7 @@ export class PostsService {
       viewerLocation: input.viewerLocation,
       radiusKm: input.radiusKm ?? 25,
       limit: Math.min(input.first ?? 20, 50),
-      cursor: this.decodeCursor<{ id: string }>(input.after),
+      cursor: this.decodeCursor(input.after, isIdCursor),
     });
     return this.mapFeedResultToConnection(result, (post) => ({ id: post.id }));
   }
@@ -591,7 +647,7 @@ export class PostsService {
     const result = await this.postsRepository.findPostsSavedByCurrentUser({
       userId,
       limit: Math.min(input.first ?? 20, 50),
-      cursor: this.decodeCursor<{ savedAt: string; postId: string }>(input.after),
+      cursor: this.decodeCursor(input.after, isSavedPostsCursor),
     });
 
     // Custom mapping instead of mapFeedResultToConnection because we need
@@ -620,7 +676,7 @@ export class PostsService {
       creatorId,
       postType: input.postType,
       limit: Math.min(input.first ?? 20, 50),
-      cursor: this.decodeCursor<{ id: string }>(input.after),
+      cursor: this.decodeCursor(input.after, isIdCursor),
     });
 
     return this.mapFeedResultToConnection(result, (post) => ({ id: post.id }));
@@ -634,12 +690,20 @@ export class PostsService {
    */
   async recordView(postId: string, userId: string): Promise<boolean> {
     assertUuid(postId, 'postId');
+    const post = await this.postsRepository.findById(postId);
+    if (!post || post.status !== 'ACTIVE') return true;
+
     const lockKey = `view_dedup:${postId}:${userId}`;
     const alreadyViewed = await this.cacheManager.get(lockKey);
 
-    if (!alreadyViewed) {
-      await this.cacheManager.set(lockKey, true, 3600_000); // 1 hour TTL
-      this.viewFlushCron.bufferView(postId);
+    if (!alreadyViewed && !this.viewDedupInFlight.has(lockKey)) {
+      this.viewDedupInFlight.add(lockKey);
+      try {
+        await this.cacheManager.set(lockKey, true, 3600_000); // 1 hour TTL
+        this.viewFlushCron.bufferView(postId);
+      } finally {
+        this.viewDedupInFlight.delete(lockKey);
+      }
     }
 
     return true; // Always return true (fire and forget)
@@ -674,12 +738,16 @@ export class PostsService {
     return flagged ? 'FLAGGED' : 'PENDING_AUTO_REVIEW';
   }
 
-  private async prepareMedia(mediaIds: string[] | undefined, postId: string): Promise<Omit<NewPostMedia, 'postId'>[]> {
+  private async prepareMedia(
+    mediaIds: string[] | undefined,
+    userId: string,
+    postId: string,
+  ): Promise<Omit<NewPostMedia, 'postId'>[]> {
     if (!mediaIds || mediaIds.length === 0) return [];
     if (mediaIds.length > 4) {
       throw new ValidationError('Maximum 4 images allowed per post');
     }
-    return Promise.all(mediaIds.map((mediaId) => this.uploadService.getExpectedMediaUrls(mediaId, postId)));
+    return Promise.all(mediaIds.map((mediaId) => this.uploadService.getExpectedMediaUrls(mediaId, userId, postId)));
   }
 
   /**

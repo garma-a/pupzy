@@ -392,7 +392,7 @@ describe('PostsService', () => {
       mockPostsRepo.softDelete = jest.fn().mockResolvedValue({ ...mockPost, status: 'REMOVED' });
 
       await service.deletePost(validPostId, validUserId);
-      expect(mockPostsRepo.softDelete).toHaveBeenCalledWith(validPostId);
+      expect(mockPostsRepo.softDelete).toHaveBeenCalledWith(validPostId, validUserId);
       expect(mockUsersService.invalidateUserCacheById).toHaveBeenCalledWith(validUserId);
     });
 
@@ -425,7 +425,7 @@ describe('PostsService', () => {
 
       const result = await service.updatePostStatus(validPostId, validUserId, 'RESOLVED');
       expect(result.status).toBe('RESOLVED');
-      expect(mockPostsRepo.updateStatus).toHaveBeenCalledWith(validPostId, 'RESOLVED');
+      expect(mockPostsRepo.updateStatus).toHaveBeenCalledWith(validPostId, validUserId, 'RESOLVED');
     });
 
     it('throws ForbiddenError if caller is not owner', async () => {
@@ -440,6 +440,19 @@ describe('PostsService', () => {
         .fn()
         .mockResolvedValue({ id: validPostId, creatorId: validUserId, status: 'RESOLVED', postType: 'RESCUE' });
       await expect(service.updatePostStatus(validPostId, validUserId, 'RESOLVED')).rejects.toThrow(ValidationError);
+    });
+
+    it('does not revive a post removed after the initial authorization check', async () => {
+      const mockPost = {
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'RESCUE',
+        status: 'ACTIVE',
+      } as unknown as Post;
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(mockPost);
+      mockPostsRepo.updateStatus = jest.fn().mockResolvedValue(undefined);
+
+      await expect(service.updatePostStatus(validPostId, validUserId, 'RESOLVED')).rejects.toThrow(NotFoundError);
     });
 
     it('throws ValidationError on invalid transition for post type', async () => {
@@ -638,6 +651,7 @@ describe('PostsService', () => {
 
   describe('recordView', () => {
     it('buffers view if not seen in the last hour', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({ id: validPostId, status: 'ACTIVE' });
       mockCacheManager.get = jest.fn().mockResolvedValue(null);
 
       const result = await service.recordView(validPostId, validUserId);
@@ -647,10 +661,20 @@ describe('PostsService', () => {
     });
 
     it('does not buffer view if already viewed recently', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({ id: validPostId, status: 'ACTIVE' });
       mockCacheManager.get = jest.fn().mockResolvedValue(true);
 
       const result = await service.recordView(validPostId, validUserId);
       expect(result).toBe(true);
+      expect(mockViewFlushCron.bufferView).not.toHaveBeenCalled();
+    });
+
+    it('ignores missing or inactive posts without allocating a deduplication key', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(undefined);
+
+      await expect(service.recordView(validPostId, validUserId)).resolves.toBe(true);
+      expect(mockCacheManager.get).not.toHaveBeenCalled();
+      expect(mockCacheManager.set).not.toHaveBeenCalled();
       expect(mockViewFlushCron.bufferView).not.toHaveBeenCalled();
     });
   });

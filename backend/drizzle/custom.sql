@@ -1,6 +1,37 @@
--- Repeatable post-migration SQL is intentionally minimal.
---
--- Structural DDL, constraints, indexes, functions, and triggers belong in
--- ordered files under drizzle/migrations so a deploy never drops and recreates
--- production objects on every start.
-SELECT 1;
+-- Repeatable post-migration SQL is limited to idempotent performance indexes.
+-- Structural DDL, constraints, functions, and triggers belong in ordered files
+-- under drizzle/migrations so a deploy never drops and recreates them on every
+-- start.
+
+-- Match active feed predicates and keyset ordering without changing returned rows.
+CREATE INDEX IF NOT EXISTS idx_posts_help_city_ordered
+  ON posts (city_id, urgency ASC, created_at DESC, id DESC)
+  WHERE status = 'ACTIVE' AND post_type IN ('RESCUE', 'LOST');
+
+CREATE INDEX IF NOT EXISTS idx_posts_help_governorate_ordered
+  ON posts (governorate, urgency ASC, created_at DESC, id DESC)
+  WHERE status = 'ACTIVE' AND post_type IN ('RESCUE', 'LOST');
+
+CREATE INDEX IF NOT EXISTS idx_posts_adopt_city_newest
+  ON posts (city_id, id DESC)
+  WHERE status = 'ACTIVE' AND post_type = 'ADOPTION';
+
+CREATE INDEX IF NOT EXISTS idx_posts_adopt_governorate_newest
+  ON posts (governorate, id DESC)
+  WHERE status = 'ACTIVE' AND post_type = 'ADOPTION';
+
+CREATE INDEX IF NOT EXISTS idx_posts_market_city_newest
+  ON posts (city_id, id DESC)
+  WHERE status = 'ACTIVE' AND post_type = 'PRODUCT';
+
+CREATE INDEX IF NOT EXISTS idx_posts_market_governorate_newest
+  ON posts (governorate, id DESC)
+  WHERE status = 'ACTIVE' AND post_type = 'PRODUCT';
+
+CREATE INDEX IF NOT EXISTS idx_posts_market_city_category_newest
+  ON posts (city_id, market_category, id DESC)
+  WHERE status = 'ACTIVE' AND post_type = 'PRODUCT';
+
+CREATE INDEX IF NOT EXISTS idx_posts_home_governorate_newest
+  ON posts (governorate, id DESC)
+  WHERE status = 'ACTIVE';
