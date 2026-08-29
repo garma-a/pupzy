@@ -11,6 +11,9 @@
     "dev": "node --watch src/main.js",
     "test": "node --test src/adminjs/*.test.js src/adminjs/*/*.test.js src/auth/*.test.js src/config/*.test.js src/middleware/*.test.js src/logging/*.test.js",
     "test:integration": "node --test --test-concurrency=1 test/*.test.js",
+    "format": "prettier --write \"src/**/*.{js,jsx,json,css,md}\" \"test/**/*.{js,json}\" \"scripts/**/*.js\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,json,css,md}\" \"test/**/*.{js,json}\" \"scripts/**/*.js\"",
+    "check:glossary": "node --test src/adminjs/glossary-conformance.test.js",
     "seed:first-admin": "node scripts/seed-first-admin.js"
   },
   "dependencies": {

@@ -62,10 +62,26 @@ describe('State-Aware Action Visibility Matrix', () => {
         const record = createPostRecord('REMOVED', moderationStatus);
         const context = { record };
 
-        assert.equal(postActions.approvePost.isVisible(context), false, `approvePost should be hidden for REMOVED / ${moderationStatus}`);
-        assert.equal(postActions.flagPost.isVisible(context), false, `flagPost should be hidden for REMOVED / ${moderationStatus}`);
-        assert.equal(postActions.removePost.isVisible(context), false, `removePost should be hidden for REMOVED / ${moderationStatus}`);
-        assert.equal(postActions.restorePost.isVisible(context), true, `restorePost should be visible for REMOVED / ${moderationStatus}`);
+        assert.equal(
+          postActions.approvePost.isVisible(context),
+          false,
+          `approvePost should be hidden for REMOVED / ${moderationStatus}`,
+        );
+        assert.equal(
+          postActions.flagPost.isVisible(context),
+          false,
+          `flagPost should be hidden for REMOVED / ${moderationStatus}`,
+        );
+        assert.equal(
+          postActions.removePost.isVisible(context),
+          false,
+          `removePost should be hidden for REMOVED / ${moderationStatus}`,
+        );
+        assert.equal(
+          postActions.restorePost.isVisible(context),
+          true,
+          `restorePost should be visible for REMOVED / ${moderationStatus}`,
+        );
       }
     });
 

@@ -7,7 +7,9 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.{ts,js,json}\" \"test/**/*.{ts,js}\" \"admin-service/**/*.{js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,js,json}\" \"test/**/*.{ts,js}\" \"admin-service/**/*.{js,jsx,json,css,md}\"",
+    "check:glossary": "node --test admin-service/src/adminjs/glossary-conformance.test.js && jest src/common/glossary-conformance.spec.ts",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",

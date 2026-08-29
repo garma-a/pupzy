@@ -1,10 +1,5 @@
-import { ENUMS } from "../enums.js";
-import {
-  attachShortUuid,
-  enumProperty,
-  noDeleteActions,
-  stripPopulatedPasswordHashes,
-} from "./resource-helpers.js";
+import { ENUMS } from '../enums.js';
+import { attachShortUuid, enumProperty, noDeleteActions, stripPopulatedPasswordHashes } from './resource-helpers.js';
 
 export function buildMatingPostsResource(db, components = {}) {
   const properties = {
@@ -23,12 +18,12 @@ export function buildMatingPostsResource(db, components = {}) {
     mating_conditions: {},
   };
 
-  attachShortUuid(properties, ["post_id"], components, ["list", "show"]);
+  attachShortUuid(properties, ['post_id'], components, ['list', 'show']);
 
   return {
-    resource: db.table("mating_posts"),
+    resource: db.table('mating_posts'),
     options: {
-      navigation: { name: "Post Details", icon: "Layers" },
+      navigation: { name: 'Post Details', icon: 'Layers' },
       properties,
       actions: {
         ...noDeleteActions,
@@ -37,39 +32,31 @@ export function buildMatingPostsResource(db, components = {}) {
         show: { after: stripPopulatedPasswordHashes },
         edit: { after: stripPopulatedPasswordHashes },
       },
-      listProperties: [
-        "post_id",
-        "pet_name",
-        "species",
-        "gender",
-        "breed",
-        "is_purebred",
-        "has_pedigree_certificate",
-      ],
+      listProperties: ['post_id', 'pet_name', 'species', 'gender', 'breed', 'is_purebred', 'has_pedigree_certificate'],
       showProperties: [
-        "post_id",
-        "pet_name",
-        "species",
-        "gender",
-        "breed",
-        "age_value",
-        "age_unit",
-        "is_purebred",
-        "has_pedigree_certificate",
-        "vaccinated",
-        "dewormed",
-        "terms_summary",
-        "mating_conditions",
+        'post_id',
+        'pet_name',
+        'species',
+        'gender',
+        'breed',
+        'age_value',
+        'age_unit',
+        'is_purebred',
+        'has_pedigree_certificate',
+        'vaccinated',
+        'dewormed',
+        'terms_summary',
+        'mating_conditions',
       ],
       filterProperties: [
-        "post_id",
-        "species",
-        "gender",
-        "breed",
-        "is_purebred",
-        "has_pedigree_certificate",
-        "vaccinated",
-        "dewormed",
+        'post_id',
+        'species',
+        'gender',
+        'breed',
+        'is_purebred',
+        'has_pedigree_certificate',
+        'vaccinated',
+        'dewormed',
       ],
     },
   };

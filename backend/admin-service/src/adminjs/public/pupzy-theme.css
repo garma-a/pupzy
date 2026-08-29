@@ -2,28 +2,28 @@
 
 :root {
   /* Approved Pupzy Brand Palette */
-  --pupzy-primary: #C4622D;
-  --pupzy-primary-light: #D4784A;
-  --pupzy-primary-hover: #A84E1F;
-  --pupzy-primary-subtle: #F7D1C0;
-  --pupzy-bg: #FAF6F1;
-  --pupzy-surface: #FFFFFF;
-  --pupzy-surface-warm: #F5EDE3;
-  --pupzy-text: #2D1506;
-  --pupzy-text-secondary: #8B6355;
-  --pupzy-text-muted: #B8A499;
-  --pupzy-border: #E8DED5;
+  --pupzy-primary: #c4622d;
+  --pupzy-primary-light: #d4784a;
+  --pupzy-primary-hover: #a84e1f;
+  --pupzy-primary-subtle: #f7d1c0;
+  --pupzy-bg: #faf6f1;
+  --pupzy-surface: #ffffff;
+  --pupzy-surface-warm: #f5ede3;
+  --pupzy-text: #2d1506;
+  --pupzy-text-secondary: #8b6355;
+  --pupzy-text-muted: #b8a499;
+  --pupzy-border: #e8ded5;
 
   /* Status Colors */
-  --pupzy-error: #D94040;
-  --pupzy-error-dark: #9D0616;
-  --pupzy-error-light: #F9E5E7;
-  --pupzy-success: #2D8B6F;
-  --pupzy-success-dark: #246F59;
-  --pupzy-success-light: #E7F3EF;
-  --pupzy-warning: #C4622D;
-  --pupzy-warning-dark: #A14F17;
-  --pupzy-warning-light: #F6EDE8;
+  --pupzy-error: #d94040;
+  --pupzy-error-dark: #9d0616;
+  --pupzy-error-light: #f9e5e7;
+  --pupzy-success: #2d8b6f;
+  --pupzy-success-dark: #246f59;
+  --pupzy-success-light: #e7f3ef;
+  --pupzy-warning: #c4622d;
+  --pupzy-warning-dark: #a14f17;
+  --pupzy-warning-light: #f6ede8;
 
   /* Layout, Geometry & Elevation */
   --pupzy-radius-card: 16px;
@@ -45,7 +45,9 @@
 }
 
 /* Base resets & global styles */
-html, body, #app {
+html,
+body,
+#app {
   background-color: var(--pupzy-bg) !important;
   color: var(--pupzy-text) !important;
   font-family: var(--pupzy-font-body) !important;
@@ -56,9 +58,18 @@ html, body, #app {
 }
 
 /* Headings across all viewports */
-h1, h2, h3, h4,
-.adminjs_H1, .adminjs_H2, .adminjs_H3, .adminjs_H4,
-[data-css*="H1"], [data-css*="H2"], [data-css*="H3"], [data-css*="H4"] {
+h1,
+h2,
+h3,
+h4,
+.adminjs_H1,
+.adminjs_H2,
+.adminjs_H3,
+.adminjs_H4,
+[data-css*='H1'],
+[data-css*='H2'],
+[data-css*='H3'],
+[data-css*='H4'] {
   font-family: var(--pupzy-font-heading) !important;
   color: var(--pupzy-text) !important;
   letter-spacing: -0.01em;
@@ -66,8 +77,8 @@ h1, h2, h3, h4,
 }
 
 /* Arabic text elements */
-[dir="rtl"],
-[data-property-name*="arabic"],
+[dir='rtl'],
+[data-property-name*='arabic'],
 .pupzy-arabic {
   font-family: var(--pupzy-font-arabic) !important;
   direction: rtl;
@@ -78,18 +89,18 @@ h1, h2, h3, h4,
 /* ==========================================================================
    Login Page Styling
    ========================================================================== */
-section[data-css*="Login"],
+section[data-css*='Login'],
 .adminjs_Login,
-[data-css*="login"],
-div:has(> form[action*="login"]) {
+[data-css*='login'],
+div:has(> form[action*='login']) {
   background-color: var(--pupzy-bg) !important;
 }
 
 /* Login Card Container */
-section[data-css*="Login"] > div,
+section[data-css*='Login'] > div,
 .adminjs_Login > div,
-[data-css*="Login"] .adminjs_Box,
-div:has(> form[action*="login"]) .adminjs_Box {
+[data-css*='Login'] .adminjs_Box,
+div:has(> form[action*='login']) .adminjs_Box {
   background-color: var(--pupzy-surface) !important;
   border: 1px solid var(--pupzy-border) !important;
   border-radius: var(--pupzy-radius-card) !important;
@@ -98,18 +109,18 @@ div:has(> form[action*="login"]) .adminjs_Box {
 }
 
 /* Login Title & Subtitle */
-section[data-css*="Login"] h1,
-section[data-css*="Login"] h2,
-[data-css*="Login"] h1,
-[data-css*="Login"] h2 {
+section[data-css*='Login'] h1,
+section[data-css*='Login'] h2,
+[data-css*='Login'] h1,
+[data-css*='Login'] h2 {
   font-family: var(--pupzy-font-heading) !important;
   color: var(--pupzy-text) !important;
 }
 
 /* Login Error Box */
-section[data-css*="Login"] [data-css*="MessageBox"],
-[data-css*="Login"] [data-css*="MessageBox"],
-.adminjs_Login [data-css*="MessageBox"] {
+section[data-css*='Login'] [data-css*='MessageBox'],
+[data-css*='Login'] [data-css*='MessageBox'],
+.adminjs_Login [data-css*='MessageBox'] {
   background-color: var(--pupzy-error-light) !important;
   border: 1px solid var(--pupzy-error) !important;
   border-radius: var(--pupzy-radius-input) !important;
@@ -121,16 +132,19 @@ section[data-css*="Login"] [data-css*="MessageBox"],
    Navigation, Sidebar & App Shell
    ========================================================================== */
 /* Sidebar & Navigation Drawer */
-section[data-css*="Sidebar"], nav, aside,
-.adminjs_Sidebar, [data-css*="sidebar"] {
+section[data-css*='Sidebar'],
+nav,
+aside,
+.adminjs_Sidebar,
+[data-css*='sidebar'] {
   background-color: var(--pupzy-surface) !important;
   border-right: 1px solid var(--pupzy-border) !important;
 }
 
 /* Navigation Group Headers */
-section[data-css*="Sidebar"] [data-css*="Label"],
-section[data-css*="Sidebar"] [data-css*="group"],
-nav [data-css*="Label"] {
+section[data-css*='Sidebar'] [data-css*='Label'],
+section[data-css*='Sidebar'] [data-css*='group'],
+nav [data-css*='Label'] {
   color: var(--pupzy-text-secondary) !important;
   font-size: 11px !important;
   font-weight: 700 !important;
@@ -140,7 +154,7 @@ nav [data-css*="Label"] {
 }
 
 /* Navigation Links */
-section[data-css*="Sidebar"] a,
+section[data-css*='Sidebar'] a,
 nav a {
   border-radius: 8px !important;
   color: var(--pupzy-text) !important;
@@ -148,20 +162,22 @@ nav a {
   font-weight: 500 !important;
   padding: 8px 12px !important;
   margin: 2px 8px !important;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
 }
 
-section[data-css*="Sidebar"] a:hover,
+section[data-css*='Sidebar'] a:hover,
 nav a:hover {
   background-color: var(--pupzy-bg) !important;
   color: var(--pupzy-primary) !important;
 }
 
-section[data-css*="Sidebar"] a.active,
-section[data-css*="Sidebar"] a[data-css*="active"],
+section[data-css*='Sidebar'] a.active,
+section[data-css*='Sidebar'] a[data-css*='active'],
 nav a.active {
   background-color: var(--pupzy-surface-warm) !important;
   color: var(--pupzy-primary) !important;
@@ -169,7 +185,9 @@ nav a.active {
 }
 
 /* Top Navbar / Header */
-header, [data-css*="NavBar"], .adminjs_NavBar {
+header,
+[data-css*='NavBar'],
+.adminjs_NavBar {
   background-color: var(--pupzy-surface) !important;
   border-bottom: 1px solid var(--pupzy-border) !important;
   box-shadow: 0 1px 4px rgba(45, 21, 6, 0.02) !important;
@@ -177,17 +195,17 @@ header, [data-css*="NavBar"], .adminjs_NavBar {
 
 /* Main Content Area: Resilient sizing near desktop breakpoints (e.g. 1024px) */
 main,
-section[data-css*="Main"],
-div[data-css*="Main"],
+section[data-css*='Main'],
+div[data-css*='Main'],
 .adminjs_Main,
-[data-css*="Content"] {
+[data-css*='Content'] {
   min-width: 0 !important;
   max-width: 100% !important;
   overflow-x: hidden;
 }
 
 /* Drawer Backdrop for Mobile/Tablet Navigation and Filters */
-[data-css*="Overlay"],
+[data-css*='Overlay'],
 .adminjs_Overlay {
   background-color: rgba(45, 21, 6, 0.45) !important;
   backdrop-filter: blur(2px);
@@ -195,9 +213,9 @@ div[data-css*="Main"],
 }
 
 /* Drawer Panels (Navigation & Filter) */
-[data-css*="Drawer"],
+[data-css*='Drawer'],
 .adminjs_Drawer,
-[data-css*="FilterDrawer"],
+[data-css*='FilterDrawer'],
 .adminjs_FilterDrawer {
   background-color: var(--pupzy-surface) !important;
   border-left: 1px solid var(--pupzy-border) !important;
@@ -207,8 +225,8 @@ div[data-css*="Main"],
 /* ==========================================================================
    Cards, Boxes & Layout Containers
    ========================================================================== */
-.adminjs_Box[variant="white"],
-[data-css*="Box"][variant="white"],
+.adminjs_Box[variant='white'],
+[data-css*='Box'][variant='white'],
 .pupzy-card {
   background-color: var(--pupzy-surface) !important;
   border: 1px solid var(--pupzy-border) !important;
@@ -221,7 +239,7 @@ div[data-css*="Main"],
    ========================================================================== */
 div:has(> table),
 .table-responsive,
-[data-css*="TableWrapper"],
+[data-css*='TableWrapper'],
 .adminjs_TableWrapper {
   overflow-x: auto !important;
   -webkit-overflow-scrolling: touch !important;
@@ -231,14 +249,18 @@ div:has(> table),
   background-color: var(--pupzy-surface) !important;
 }
 
-table, .adminjs_Table, [data-css*="Table"] {
+table,
+.adminjs_Table,
+[data-css*='Table'] {
   width: 100% !important;
   min-width: 600px;
   border-collapse: separate !important;
   border-spacing: 0 !important;
 }
 
-th, .adminjs_TableHeadCell, [data-css*="TableHead"] th {
+th,
+.adminjs_TableHeadCell,
+[data-css*='TableHead'] th {
   background-color: var(--pupzy-bg) !important;
   color: var(--pupzy-text-secondary) !important;
   font-size: 12px !important;
@@ -250,7 +272,9 @@ th, .adminjs_TableHeadCell, [data-css*="TableHead"] th {
   padding: 12px 16px !important;
 }
 
-td, .adminjs_TableCell, [data-css*="TableBody"] td {
+td,
+.adminjs_TableCell,
+[data-css*='TableBody'] td {
   border-bottom: 1px solid var(--pupzy-border) !important;
   padding: 12px 16px !important;
   color: var(--pupzy-text) !important;
@@ -260,70 +284,71 @@ td, .adminjs_TableCell, [data-css*="TableBody"] td {
   overflow-wrap: normal !important;
 }
 
-tbody tr:hover, [data-css*="TableRow"]:hover {
+tbody tr:hover,
+[data-css*='TableRow']:hover {
   background-color: var(--pupzy-bg) !important;
 }
 
 /* Last row border removal inside cards */
 tbody tr:last-child td,
-[data-css*="TableBody"] tr:last-child td {
+[data-css*='TableBody'] tr:last-child td {
   border-bottom: none !important;
 }
 
 /* No-wrap cells for IDs, timestamps, enums, counts, booleans, and action buttons */
 .pupzy-nowrap,
-td:has([data-css*="Badge"]),
-td:has([data-css*="ShortUuid"]),
+td:has([data-css*='Badge']),
+td:has([data-css*='ShortUuid']),
 td:has(button),
-td[data-property-name*="id"],
-td[data-property-name*="_id"],
-td[data-property-name*="created"],
-td[data-property-name*="updated"],
-td[data-property-name*="_at"],
-td[data-property-name*="status"],
-td[data-property-name*="type"],
-td[data-property-name*="is_"],
-td[data-property-name*="has_"],
-td[data-property-name*="count"],
-td[data-property-name*="score"],
-td[data-property-name*="price"],
-td[data-property-name="reason"],
-td[data-property-name="living_situation"],
-td[data-property-name="urgency"],
-td[data-property-name="species"],
-td[data-property-name="gender"],
-td[data-property-name="source_code"],
+td[data-property-name*='id'],
+td[data-property-name*='_id'],
+td[data-property-name*='created'],
+td[data-property-name*='updated'],
+td[data-property-name*='_at'],
+td[data-property-name*='status'],
+td[data-property-name*='type'],
+td[data-property-name*='is_'],
+td[data-property-name*='has_'],
+td[data-property-name*='count'],
+td[data-property-name*='score'],
+td[data-property-name*='price'],
+td[data-property-name='reason'],
+td[data-property-name='living_situation'],
+td[data-property-name='urgency'],
+td[data-property-name='species'],
+td[data-property-name='gender'],
+td[data-property-name='source_code'],
 td.adminjs_TableActionCell,
-td[data-css*="TableAction"],
+td[data-css*='TableAction'],
 td:last-child {
   white-space: nowrap !important;
 }
 
 /* Practical text truncation and clamping for long text in list cells */
-td[data-property-name="title"],
-td[data-property-name="email"],
-td[data-property-name="full_name"],
-td[data-property-name="full_name_arabic"],
-td[data-property-name="label"],
-td[data-property-name="details"],
-td[data-property-name="message"],
-td[data-property-name="body"],
-td[data-property-name="description"],
-td[data-property-name="condition_summary"],
-td[data-property-name="circumstances"],
-td[data-property-name="color_and_markings"],
-td[data-property-name="pet_name"],
-td[data-property-name="breed"],
-td[data-property-name="address"],
-td[data-property-name="address_english"],
-td[data-property-name="address_arabic"],
-td[data-property-name="public_url"],
-td[data-property-name="cloudflare_storage_key"],
-td[data-property-name="terms_summary"],
-td[data-property-name="mating_conditions"],
-td[data-property-name="additional_requirements"],
-td[data-property-name="health_notes"],
-td[data-property-name="currently_with"] {
+td[data-property-name='title'],
+td[data-property-name='email'],
+td[data-property-name='full_name'],
+td[data-property-name='full_name_arabic'],
+td[data-property-name='label'],
+td[data-property-name='details'],
+td[data-property-name='message'],
+td[data-property-name='body'],
+td[data-property-name='description'],
+td[data-property-name='condition_summary'],
+td[data-property-name='circumstances'],
+td[data-property-name='color_and_markings'],
+td[data-property-name='pet_name'],
+td[data-property-name='breed'],
+td[data-property-name='address'],
+td[data-property-name='address_english'],
+td[data-property-name='address_arabic'],
+td[data-property-name='public_url'],
+td[data-property-name='cloudflare_storage_key'],
+td[data-property-name='terms_summary'],
+td[data-property-name='mating_conditions'],
+td[data-property-name='additional_requirements'],
+td[data-property-name='health_notes'],
+td[data-property-name='currently_with'] {
   max-width: 280px !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -331,12 +356,12 @@ td[data-property-name="currently_with"] {
 }
 
 /* Ensure record show views display full, complete multiline text */
-[data-css*="property-show"] div,
-[data-css*="property-show"] span,
-[data-css*="property-show"] p,
-[data-css*="ValueGroup"] span,
-[data-css*="ValueGroup"] div,
-[data-css*="ValueGroup"] p,
+[data-css*='property-show'] div,
+[data-css*='property-show'] span,
+[data-css*='property-show'] p,
+[data-css*='ValueGroup'] span,
+[data-css*='ValueGroup'] div,
+[data-css*='ValueGroup'] p,
 .adminjs_Text {
   max-width: none !important;
   white-space: normal !important;
@@ -357,7 +382,8 @@ td[data-property-name="currently_with"] {
 /* ==========================================================================
    Badges & Statuses
    ========================================================================== */
-.adminjs_Badge, [data-css*="Badge"] {
+.adminjs_Badge,
+[data-css*='Badge'] {
   font-family: var(--pupzy-font-body) !important;
   font-weight: 600 !important;
   border-radius: 6px !important;
@@ -368,36 +394,36 @@ td[data-property-name="currently_with"] {
 }
 
 /* Success / Active / Approved badges */
-.adminjs_Badge[variant="success"],
-[data-css*="Badge"][variant="success"],
-.adminjs_Badge[variant="primary"],
-[data-css*="Badge"][variant="primary"] {
+.adminjs_Badge[variant='success'],
+[data-css*='Badge'][variant='success'],
+.adminjs_Badge[variant='primary'],
+[data-css*='Badge'][variant='primary'] {
   background-color: var(--pupzy-success-light) !important;
   color: var(--pupzy-success-dark) !important;
   border: 1px solid var(--pupzy-success) !important;
 }
 
 /* Warning / Pending / Flagged badges */
-.adminjs_Badge[variant="warning"],
-[data-css*="Badge"][variant="warning"] {
+.adminjs_Badge[variant='warning'],
+[data-css*='Badge'][variant='warning'] {
   background-color: var(--pupzy-warning-light) !important;
   color: var(--pupzy-warning-dark) !important;
   border: 1px solid var(--pupzy-primary) !important;
 }
 
 /* Danger / Removed / Banned / Rejected badges */
-.adminjs_Badge[variant="danger"],
-[data-css*="Badge"][variant="danger"] {
+.adminjs_Badge[variant='danger'],
+[data-css*='Badge'][variant='danger'] {
   background-color: var(--pupzy-error-light) !important;
   color: var(--pupzy-error-dark) !important;
   border: 1px solid var(--pupzy-error) !important;
 }
 
 /* Neutral / Default badges */
-.adminjs_Badge[variant="default"],
-[data-css*="Badge"][variant="default"],
-.adminjs_Badge[variant="secondary"],
-[data-css*="Badge"][variant="secondary"] {
+.adminjs_Badge[variant='default'],
+[data-css*='Badge'][variant='default'],
+.adminjs_Badge[variant='secondary'],
+[data-css*='Badge'][variant='secondary'] {
   background-color: var(--pupzy-surface-warm) !important;
   color: var(--pupzy-text-secondary) !important;
   border: 1px solid var(--pupzy-border) !important;
@@ -407,57 +433,60 @@ td[data-property-name="currently_with"] {
    Buttons
    ========================================================================== */
 .adminjs_Button,
-[data-css*="Button"],
+[data-css*='Button'],
 button {
   font-family: var(--pupzy-font-body) !important;
   font-weight: 600 !important;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
-.adminjs_Button[variant="primary"],
-.adminjs_Button[variant="contained"],
-button[variant="primary"],
-button[variant="contained"] {
+.adminjs_Button[variant='primary'],
+.adminjs_Button[variant='contained'],
+button[variant='primary'],
+button[variant='contained'] {
   background-color: var(--pupzy-primary) !important;
   border-color: var(--pupzy-primary) !important;
-  color: #FFFFFF !important;
+  color: #ffffff !important;
   border-radius: var(--pupzy-radius-pill) !important;
 }
 
-.adminjs_Button[variant="primary"]:hover,
-button[variant="primary"]:hover {
+.adminjs_Button[variant='primary']:hover,
+button[variant='primary']:hover {
   background-color: var(--pupzy-primary-hover) !important;
   border-color: var(--pupzy-primary-hover) !important;
 }
 
-.adminjs_Button[variant="danger"],
-button[variant="danger"] {
+.adminjs_Button[variant='danger'],
+button[variant='danger'] {
   background-color: var(--pupzy-error) !important;
   border-color: var(--pupzy-error) !important;
-  color: #FFFFFF !important;
+  color: #ffffff !important;
   border-radius: var(--pupzy-radius-pill) !important;
 }
 
-.adminjs_Button[variant="danger"]:hover,
-button[variant="danger"]:hover {
+.adminjs_Button[variant='danger']:hover,
+button[variant='danger']:hover {
   background-color: var(--pupzy-error-dark) !important;
   border-color: var(--pupzy-error-dark) !important;
 }
 
-.adminjs_Button[variant="light"],
-.adminjs_Button[variant="secondary"],
-button[variant="light"],
-button[variant="secondary"] {
+.adminjs_Button[variant='light'],
+.adminjs_Button[variant='secondary'],
+button[variant='light'],
+button[variant='secondary'] {
   background-color: var(--pupzy-surface) !important;
   border: 1px solid var(--pupzy-border) !important;
   color: var(--pupzy-text-secondary) !important;
   border-radius: var(--pupzy-radius-pill) !important;
 }
 
-.adminjs_Button[variant="light"]:hover,
-.adminjs_Button[variant="secondary"]:hover,
-button[variant="light"]:hover,
-button[variant="secondary"]:hover {
+.adminjs_Button[variant='light']:hover,
+.adminjs_Button[variant='secondary']:hover,
+button[variant='light']:hover,
+button[variant='secondary']:hover {
   background-color: var(--pupzy-bg) !important;
   color: var(--pupzy-primary) !important;
   border-color: var(--pupzy-primary-subtle) !important;
@@ -466,11 +495,11 @@ button[variant="secondary"]:hover {
 /* ==========================================================================
    Inputs & Form Controls
    ========================================================================== */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-input[type="date"],
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+input[type='date'],
 textarea,
 select,
 .adminjs_Input,
@@ -483,7 +512,9 @@ select,
   background-color: var(--pupzy-surface) !important;
   font-size: 14px !important;
   padding: 8px 12px !important;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 input:focus,
@@ -495,16 +526,18 @@ select:focus {
 }
 
 /* Invalid / Validation Error Form Inputs */
-input[aria-invalid="true"],
-textarea[aria-invalid="true"],
-.adminjs_Input[variant="danger"],
+input[aria-invalid='true'],
+textarea[aria-invalid='true'],
+.adminjs_Input[variant='danger'],
 .adminjs_FormGroup.has-error input {
   border-color: var(--pupzy-error) !important;
   box-shadow: 0 0 0 2px rgba(217, 64, 64, 0.25) !important;
 }
 
 /* Labels */
-label, .adminjs_Label, [data-css*="Label"] {
+label,
+.adminjs_Label,
+[data-css*='Label'] {
   font-family: var(--pupzy-font-body) !important;
   color: var(--pupzy-text) !important;
   font-weight: 600 !important;
@@ -512,7 +545,7 @@ label, .adminjs_Label, [data-css*="Label"] {
 }
 
 /* Checkbox */
-input[type="checkbox"],
+input[type='checkbox'],
 .adminjs_CheckBox {
   accent-color: var(--pupzy-primary) !important;
   cursor: pointer;
@@ -522,9 +555,9 @@ input[type="checkbox"],
    Confirmation Dialogs & Modals
    ========================================================================== */
 .adminjs_Modal,
-[data-css*="Modal"],
+[data-css*='Modal'],
 .adminjs_Dialog,
-[data-css*="Dialog"] {
+[data-css*='Dialog'] {
   background-color: var(--pupzy-surface) !important;
   border: 1px solid var(--pupzy-border) !important;
   border-radius: var(--pupzy-radius-modal) !important;
@@ -536,9 +569,9 @@ input[type="checkbox"],
    Notices, Alerts & Toasts
    ========================================================================== */
 .adminjs_Notice,
-[data-css*="Notice"],
-[data-css*="notice"],
-div[class*="Notice"] {
+[data-css*='Notice'],
+[data-css*='notice'],
+div[class*='Notice'] {
   font-family: var(--pupzy-font-body) !important;
   border-radius: var(--pupzy-radius-notice) !important;
   box-shadow: 0 4px 16px rgba(45, 21, 6, 0.08) !important;
@@ -548,31 +581,31 @@ div[class*="Notice"] {
 }
 
 /* Notice Types */
-.adminjs_Notice[type="success"],
-[data-css*="Notice"][type="success"] {
+.adminjs_Notice[type='success'],
+[data-css*='Notice'][type='success'] {
   background-color: var(--pupzy-success-light) !important;
   border: 1px solid var(--pupzy-success) !important;
   color: var(--pupzy-success-dark) !important;
 }
 
-.adminjs_Notice[type="error"],
-.adminjs_Notice[type="danger"],
-[data-css*="Notice"][type="error"],
-[data-css*="Notice"][type="danger"] {
+.adminjs_Notice[type='error'],
+.adminjs_Notice[type='danger'],
+[data-css*='Notice'][type='error'],
+[data-css*='Notice'][type='danger'] {
   background-color: var(--pupzy-error-light) !important;
   border: 1px solid var(--pupzy-error) !important;
   color: var(--pupzy-error-dark) !important;
 }
 
-.adminjs_Notice[type="warning"],
-[data-css*="Notice"][type="warning"] {
+.adminjs_Notice[type='warning'],
+[data-css*='Notice'][type='warning'] {
   background-color: var(--pupzy-warning-light) !important;
   border: 1px solid var(--pupzy-warning) !important;
   color: var(--pupzy-warning-dark) !important;
 }
 
-.adminjs_Notice[type="info"],
-[data-css*="Notice"][type="info"] {
+.adminjs_Notice[type='info'],
+[data-css*='Notice'][type='info'] {
   background-color: var(--pupzy-primary-subtle) !important;
   border: 1px solid var(--pupzy-primary) !important;
   color: var(--pupzy-primary-hover) !important;
@@ -582,8 +615,8 @@ div[class*="Notice"] {
    Loaders & Spinners
    ========================================================================== */
 .adminjs_Loader,
-[data-css*="Loader"],
-svg[data-css*="Loader"] {
+[data-css*='Loader'],
+svg[data-css*='Loader'] {
   border-top-color: var(--pupzy-primary) !important;
   color: var(--pupzy-primary) !important;
 }
@@ -592,12 +625,12 @@ svg[data-css*="Loader"] {
    Pagination & Action Dropdowns
    ========================================================================== */
 .adminjs_Pagination,
-[data-css*="Pagination"] {
+[data-css*='Pagination'] {
   margin-top: 16px !important;
 }
 
 .adminjs_Pagination a,
-[data-css*="Pagination"] a {
+[data-css*='Pagination'] a {
   border-radius: 8px !important;
   border: 1px solid var(--pupzy-border) !important;
   background-color: var(--pupzy-surface) !important;
@@ -606,16 +639,16 @@ svg[data-css*="Loader"] {
 }
 
 .adminjs_Pagination a.active,
-[data-css*="Pagination"] a[data-css*="active"] {
+[data-css*='Pagination'] a[data-css*='active'] {
   background-color: var(--pupzy-primary) !important;
   border-color: var(--pupzy-primary) !important;
-  color: #FFFFFF !important;
+  color: #ffffff !important;
 }
 
 /* Action Dropdown Menus */
 .adminjs_DropDown,
-[data-css*="DropDown"],
-[data-css*="Dropdown"] {
+[data-css*='DropDown'],
+[data-css*='Dropdown'] {
   background-color: var(--pupzy-surface) !important;
   border: 1px solid var(--pupzy-border) !important;
   border-radius: 8px !important;
@@ -664,7 +697,7 @@ svg[data-css*="Loader"] {
 @media (pointer: coarse) {
   .adminjs_Button,
   button,
-  input[type="checkbox"],
+  input[type='checkbox'],
   a {
     min-height: 38px;
     display: inline-flex;

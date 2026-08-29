@@ -71,10 +71,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       'ModerationAction',
       path.join(currentDirectory, 'components', 'moderation-action-component.jsx'),
     ),
-    ShortUuid: componentLoader.add(
-      'ShortUuid',
-      path.join(currentDirectory, 'components', 'short-uuid-component.jsx'),
-    ),
+    ShortUuid: componentLoader.add('ShortUuid', path.join(currentDirectory, 'components', 'short-uuid-component.jsx')),
     MappedLocationEdit: componentLoader.add(
       'MappedLocationEdit',
       path.join(currentDirectory, 'components', 'mapped-location-edit-component.jsx'),
@@ -138,9 +135,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
         'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
         '/admin/assets/pupzy-theme.css',
       ],
-      scripts: [
-        'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-      ],
+      scripts: ['https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'],
     },
     componentLoader,
     resources,

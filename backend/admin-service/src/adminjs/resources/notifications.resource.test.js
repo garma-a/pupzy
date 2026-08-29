@@ -11,14 +11,7 @@ const mockDb = {
 describe('Notifications Resource Configuration', () => {
   it('declares concise intentional list properties excluding large body text and secondary foreign keys', () => {
     const resource = buildNotificationsResource(mockDb);
-    assert.deepEqual(resource.options.listProperties, [
-      'id',
-      'recipient_id',
-      'type',
-      'title',
-      'is_read',
-      'created_at',
-    ]);
+    assert.deepEqual(resource.options.listProperties, ['id', 'recipient_id', 'type', 'title', 'is_read', 'created_at']);
     assert.equal(
       resource.options.listProperties.includes('body'),
       false,

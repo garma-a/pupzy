@@ -19,10 +19,7 @@ export function normalizeQuery(query) {
   if (typeof query !== 'string') return '';
   const trimmed = query.trim();
   if (!trimmed) return '';
-  return trimmed
-    .toLowerCase()
-    .normalize('NFC')
-    .replace(/\s+/g, ' ');
+  return trimmed.toLowerCase().normalize('NFC').replace(/\s+/g, ' ');
 }
 
 /**
@@ -75,12 +72,7 @@ export function sanitizeNominatimResults(rawList, bounds = DEFAULT_EGYPT_BOUNDS)
     const lng = parseFloat(item.lon);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
     if (lat < -90 || lat > 90 || lng < -180 || lng > 180) continue;
-    if (
-      lat < bounds.minLat ||
-      lat > bounds.maxLat ||
-      lng < bounds.minLng ||
-      lng > bounds.maxLng
-    ) {
+    if (lat < bounds.minLat || lat > bounds.maxLat || lng < bounds.minLng || lng > bounds.maxLng) {
       continue;
     }
 
@@ -90,11 +82,7 @@ export function sanitizeNominatimResults(rawList, bounds = DEFAULT_EGYPT_BOUNDS)
     const osmId = item.osm_id != null ? String(item.osm_id) : null;
     const osmType = typeof item.osm_type === 'string' ? item.osm_type : null;
     const category =
-      typeof item.category === 'string'
-        ? item.category
-        : typeof item.class === 'string'
-          ? item.class
-          : null;
+      typeof item.category === 'string' ? item.category : typeof item.class === 'string' ? item.class : null;
     const type = typeof item.type === 'string' ? item.type : null;
 
     const addr = item.address && typeof item.address === 'object' ? item.address : {};
@@ -263,10 +251,7 @@ export async function searchVetClinicAddress({
     url: config.url || DEFAULT_NOMINATIM_CONFIG.url,
     userAgent: config.userAgent || DEFAULT_NOMINATIM_CONFIG.userAgent,
     attribution: config.attribution || DEFAULT_NOMINATIM_CONFIG.attribution,
-    enabled:
-      config.enabled !== undefined
-        ? config.enabled
-        : DEFAULT_NOMINATIM_CONFIG.enabled,
+    enabled: config.enabled !== undefined ? config.enabled : DEFAULT_NOMINATIM_CONFIG.enabled,
     timeoutMs: config.timeoutMs || DEFAULT_NOMINATIM_CONFIG.timeoutMs,
     rateLimitMs: config.rateLimitMs || DEFAULT_NOMINATIM_CONFIG.rateLimitMs,
   };
@@ -344,8 +329,7 @@ export async function searchVetClinicAddress({
       error: err.message || 'Geocoding upstream failed',
       query: normalized,
       attribution: mergedConfig.attribution,
-      message:
-        'Address search is currently unavailable. You can click on the map to pin the clinic location manually.',
+      message: 'Address search is currently unavailable. You can click on the map to pin the clinic location manually.',
     };
   }
 }

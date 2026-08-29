@@ -1,31 +1,26 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { PostgreSqlContainer } from "@testcontainers/postgresql";
-import pg from "pg";
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { PostgreSqlContainer } from '@testcontainers/postgresql';
+import pg from 'pg';
 
 const { Pool } = pg;
 const here = path.dirname(fileURLToPath(import.meta.url));
-const migrationsDirectory = path.resolve(
-  here,
-  "../../drizzle/migrations",
-);
-const customSqlPath = path.resolve(here, "../../drizzle/custom.sql");
+const migrationsDirectory = path.resolve(here, '../../drizzle/migrations');
+const customSqlPath = path.resolve(here, '../../drizzle/custom.sql');
 
 export class TestDatabaseHelper {
   async start() {
-    this.container = await new PostgreSqlContainer(
-      "postgis/postgis:16-3.4-alpine",
-    )
-      .withDatabase("pupzy_admin_test")
-      .withUsername("test")
-      .withPassword("test")
+    this.container = await new PostgreSqlContainer('postgis/postgis:16-3.4-alpine')
+      .withDatabase('pupzy_admin_test')
+      .withUsername('test')
+      .withPassword('test')
       .start();
     this.connectionString = this.container.getConnectionUri();
     this.pool = new Pool({ connectionString: this.connectionString, max: 8 });
 
-    await this.pool.query("CREATE EXTENSION IF NOT EXISTS postgis");
-    await this.pool.query("CREATE EXTENSION IF NOT EXISTS pgcrypto");
+    await this.pool.query('CREATE EXTENSION IF NOT EXISTS postgis');
+    await this.pool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
     await this.pool.query(`
       CREATE OR REPLACE FUNCTION uuidv7() RETURNS uuid AS $$
         SELECT (
@@ -37,20 +32,12 @@ export class TestDatabaseHelper {
       $$ LANGUAGE sql VOLATILE;
     `);
 
-    const journal = JSON.parse(
-      await fs.readFile(
-        path.join(migrationsDirectory, "meta/_journal.json"),
-        "utf8",
-      ),
-    );
+    const journal = JSON.parse(await fs.readFile(path.join(migrationsDirectory, 'meta/_journal.json'), 'utf8'));
     for (const entry of journal.entries) {
-      const sql = await fs.readFile(
-        path.join(migrationsDirectory, `${entry.tag}.sql`),
-        "utf8",
-      );
+      const sql = await fs.readFile(path.join(migrationsDirectory, `${entry.tag}.sql`), 'utf8');
       await this.pool.query(sql);
     }
-    await this.pool.query(await fs.readFile(customSqlPath, "utf8"));
+    await this.pool.query(await fs.readFile(customSqlPath, 'utf8'));
     return this.connectionString;
   }
 
@@ -104,9 +91,9 @@ export async function insertPost(pool, values) {
      RETURNING id`,
     [
       values.userId,
-      values.title ?? "Post",
-      values.status ?? "ACTIVE",
-      values.moderationStatus ?? "PENDING_AUTO_REVIEW",
+      values.title ?? 'Post',
+      values.status ?? 'ACTIVE',
+      values.moderationStatus ?? 'PENDING_AUTO_REVIEW',
       values.cityId,
       values.reportCount ?? 0,
       values.createdAt ?? null,

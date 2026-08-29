@@ -30,17 +30,14 @@ const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 app.use(createHttpLoggingMiddleware(logger, { rootPath: admin.options.rootPath }));
-app.use(
-  `${admin.options.rootPath}/assets`,
-  express.static(path.join(currentDirectory, 'adminjs', 'public')),
-);
+app.use(`${admin.options.rootPath}/assets`, express.static(path.join(currentDirectory, 'adminjs', 'public')));
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        scriptSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://unpkg.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
         imgSrc: ["'self'", 'data:', 'https:'],
         connectSrc: ["'self'"],

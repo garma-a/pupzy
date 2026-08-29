@@ -235,10 +235,10 @@ describe('VetClinicsService', () => {
     expect(result[0].cityId).toBe('city-cairo');
   });
 
-  it('preserves legacy unlocalized address when localized fields are null', async () => {
-    const legacyClinic: VetClinicProximityResult = {
-      id: 'clinic-legacy',
-      nameEnglish: 'Legacy Clinic',
+  it('preserves imported clinic unlocalized address when localized fields are null', async () => {
+    const importedClinic: VetClinicProximityResult = {
+      id: 'clinic-imported',
+      nameEnglish: 'Imported Clinic',
       nameArabic: null,
       cityId: 'city-alex',
       phoneNumber: null,
@@ -251,7 +251,7 @@ describe('VetClinicsService', () => {
       distanceKm: 2.1,
     };
 
-    mockRepository.findNearest = jest.fn().mockResolvedValue([legacyClinic]);
+    mockRepository.findNearest = jest.fn().mockResolvedValue([importedClinic]);
 
     const result = await service.nearestVetClinicsForPost({
       id: 'post-rescue-legacy',

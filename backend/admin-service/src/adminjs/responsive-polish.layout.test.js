@@ -34,14 +34,14 @@ describe('Task 12: Finish Responsive Pupzy States & Browser Polish', () => {
     });
 
     it('styles login page container, card, headings, and error message', () => {
-      assert.match(cssContent, /section\[data-css\*="Login"\]/);
+      assert.match(cssContent, /section\[data-css\*=['"]Login['"]\]/);
       assert.match(cssContent, /var\(--pupzy-shadow-login\)/);
       assert.match(cssContent, /var\(--pupzy-error-light\)/);
       assert.match(cssContent, /var\(--pupzy-error-dark\)/);
     });
 
     it('styles navigation sidebar, drawer, and active items', () => {
-      assert.match(cssContent, /section\[data-css\*="Sidebar"\]/);
+      assert.match(cssContent, /section\[data-css\*=['"]Sidebar['"]\]/);
       assert.match(cssContent, /var\(--pupzy-surface-warm\)/);
       assert.match(cssContent, /var\(--pupzy-primary\)/);
     });
@@ -55,10 +55,10 @@ describe('Task 12: Finish Responsive Pupzy States & Browser Polish', () => {
     it('styles notices (toasts) for success, error, warning, and info states', () => {
       assert.match(cssContent, /\.adminjs_Notice/);
       assert.match(cssContent, /var\(--pupzy-radius-notice\)/);
-      assert.match(cssContent, /\[type="success"\]/);
-      assert.match(cssContent, /\[type="error"\]/);
-      assert.match(cssContent, /\[type="warning"\]/);
-      assert.match(cssContent, /\[type="info"\]/);
+      assert.match(cssContent, /\[type=['"]success['"]\]/);
+      assert.match(cssContent, /\[type=['"]error['"]\]/);
+      assert.match(cssContent, /\[type=['"]warning['"]\]/);
+      assert.match(cssContent, /\[type=['"]info['"]\]/);
     });
   });
 
@@ -77,8 +77,8 @@ describe('Task 12: Finish Responsive Pupzy States & Browser Polish', () => {
     });
 
     it('provides Arabic RTL typography rules with proper line-height', () => {
-      assert.match(cssContent, /\[dir="rtl"\]/);
-      assert.match(cssContent, /\[data-property-name\*="arabic"\]/);
+      assert.match(cssContent, /\[dir=['"]rtl['"]\]/);
+      assert.match(cssContent, /\[data-property-name\*=['"]arabic['"]\]/);
       assert.match(cssContent, /direction:\s*rtl/);
       assert.match(cssContent, /line-height:\s*1\.6/);
     });
@@ -108,21 +108,21 @@ describe('Task 12: Finish Responsive Pupzy States & Browser Polish', () => {
     });
 
     it('configures validation error states for form inputs and textareas', () => {
-      assert.match(cssContent, /aria-invalid="true"/);
+      assert.match(cssContent, /aria-invalid=['"]true['"]|aria-invalid/);
       assert.match(cssContent, /border-color:\s*var\(--pupzy-error\)/);
     });
 
     it('configures pill buttons for primary and danger actions', () => {
-      assert.match(cssContent, /button\[variant="primary"\]/);
+      assert.match(cssContent, /button\[variant=['"]primary['"]\]/);
       assert.match(cssContent, /var\(--pupzy-radius-pill\)/);
-      assert.match(cssContent, /button\[variant="danger"\]/);
+      assert.match(cssContent, /button\[variant=['"]danger['"]\]/);
     });
 
     it('configures badges for active, warning, danger, and neutral states', () => {
-      assert.match(cssContent, /\[variant="success"\]/);
-      assert.match(cssContent, /\[variant="warning"\]/);
-      assert.match(cssContent, /\[variant="danger"\]/);
-      assert.match(cssContent, /\[variant="default"\]/);
+      assert.match(cssContent, /\[variant=['"]success['"]\]/);
+      assert.match(cssContent, /\[variant=['"]warning['"]\]/);
+      assert.match(cssContent, /\[variant=['"]danger['"]\]/);
+      assert.match(cssContent, /\[variant=['"]default['"]\]/);
     });
   });
 
@@ -135,7 +135,7 @@ describe('Task 12: Finish Responsive Pupzy States & Browser Polish', () => {
     });
 
     it('prevents main content blowout near desktop breakpoint when persistent sidebar is active', () => {
-      assert.match(cssContent, /section\[data-css\*="Main"\]/);
+      assert.match(cssContent, /section\[data-css\*=['"]Main['"]\]/);
       assert.match(cssContent, /min-width:\s*0\s*!important/);
       assert.match(cssContent, /max-width:\s*100%\s*!important/);
     });
@@ -153,32 +153,32 @@ describe('Task 12: Finish Responsive Pupzy States & Browser Polish', () => {
     });
 
     it('enforces no-wrap on all structural table data types (IDs, timestamps, statuses, enums, counts, actions)', () => {
-      assert.match(cssContent, /td\[data-property-name\*="id"\]/);
-      assert.match(cssContent, /td\[data-property-name\*="_id"\]/);
-      assert.match(cssContent, /td\[data-property-name\*="created"\]/);
-      assert.match(cssContent, /td\[data-property-name\*="updated"\]/);
-      assert.match(cssContent, /td\[data-property-name\*="_at"\]/);
-      assert.match(cssContent, /td\[data-property-name\*="status"\]/);
-      assert.match(cssContent, /td\[data-property-name\*="type"\]/);
-      assert.match(cssContent, /td\[data-property-name\*="is_"\]/);
-      assert.match(cssContent, /td\[data-property-name\*="has_"\]/);
-      assert.match(cssContent, /td\[data-property-name\*="count"\]/);
-      assert.match(cssContent, /td\[data-property-name\*="score"\]/);
-      assert.match(cssContent, /td\[data-property-name\*="price"\]/);
-      assert.match(cssContent, /td\[data-property-name="species"\]/);
-      assert.match(cssContent, /td\[data-property-name="gender"\]/);
+      assert.match(cssContent, /td\[data-property-name\*=['"]id['"]\]/);
+      assert.match(cssContent, /td\[data-property-name\*=['"]_id['"]\]/);
+      assert.match(cssContent, /td\[data-property-name\*=['"]created['"]\]/);
+      assert.match(cssContent, /td\[data-property-name\*=['"]updated['"]\]/);
+      assert.match(cssContent, /td\[data-property-name\*=['"]_at['"]\]/);
+      assert.match(cssContent, /td\[data-property-name\*=['"]status['"]\]/);
+      assert.match(cssContent, /td\[data-property-name\*=['"]type['"]\]/);
+      assert.match(cssContent, /td\[data-property-name\*=['"]is_['"]\]/);
+      assert.match(cssContent, /td\[data-property-name\*=['"]has_['"]\]/);
+      assert.match(cssContent, /td\[data-property-name\*=['"]count['"]\]/);
+      assert.match(cssContent, /td\[data-property-name\*=['"]score['"]\]/);
+      assert.match(cssContent, /td\[data-property-name\*=['"]price['"]\]/);
+      assert.match(cssContent, /td\[data-property-name=['"]species['"]\]/);
+      assert.match(cssContent, /td\[data-property-name=['"]gender['"]\]/);
       assert.match(cssContent, /td\.adminjs_TableActionCell/);
       assert.match(cssContent, /td:last-child/);
       assert.match(cssContent, /\.pupzy-nowrap/);
     });
 
     it('enforces text truncation for list titles, bodies, and addresses without breaking show view wrapping', () => {
-      assert.match(cssContent, /td\[data-property-name="title"\]/);
-      assert.match(cssContent, /td\[data-property-name="body"\]/);
-      assert.match(cssContent, /td\[data-property-name="address_english"\]/);
-      assert.match(cssContent, /td\[data-property-name="address_arabic"\]/);
+      assert.match(cssContent, /td\[data-property-name=['"]title['"]\]/);
+      assert.match(cssContent, /td\[data-property-name=['"]body['"]\]/);
+      assert.match(cssContent, /td\[data-property-name=['"]address_english['"]\]/);
+      assert.match(cssContent, /td\[data-property-name=['"]address_arabic['"]\]/);
       assert.match(cssContent, /text-overflow:\s*ellipsis/);
-      assert.match(cssContent, /\[data-css\*="property-show"\]/);
+      assert.match(cssContent, /\[data-css\*=['"]property-show['"]\]/);
       assert.match(cssContent, /word-break:\s*break-word/);
       assert.match(cssContent, /overflow-wrap:\s*anywhere/);
     });

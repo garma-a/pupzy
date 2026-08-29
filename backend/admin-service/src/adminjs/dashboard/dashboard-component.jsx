@@ -63,7 +63,14 @@ export default function Dashboard() {
   return (
     <Box p="xl" style={{ backgroundColor: '#FAF6F1', minHeight: '100%' }}>
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb="xl" flexWrap="wrap" style={{ gap: '16px' }}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb="xl"
+        flexWrap="wrap"
+        style={{ gap: '16px' }}
+      >
         <H2 style={{ fontFamily: "'Playfair Display', 'Cairo', serif", color: '#2D1506', margin: 0 }}>
           Pupzy moderation overview
         </H2>
@@ -96,13 +103,10 @@ export default function Dashboard() {
             color: '#9D0616',
           }}
         >
-          <Text color="error" style={{ fontWeight: 600 }}>{error}</Text>
-          <Button
-            mt="md"
-            variant="danger"
-            onClick={() => void load(true)}
-            style={{ borderRadius: '999px' }}
-          >
+          <Text color="error" style={{ fontWeight: 600 }}>
+            {error}
+          </Text>
+          <Button mt="md" variant="danger" onClick={() => void load(true)} style={{ borderRadius: '999px' }}>
             Retry
           </Button>
         </Box>
@@ -214,9 +218,7 @@ export default function Dashboard() {
                       </Link>
                     </div>
                   </TableCell>
-                  <TableCell style={{ whiteSpace: 'nowrap' }}>
-                    {post.post_type?.replaceAll('_', ' ')}
-                  </TableCell>
+                  <TableCell style={{ whiteSpace: 'nowrap' }}>{post.post_type?.replaceAll('_', ' ')}</TableCell>
                   <TableCell style={{ whiteSpace: 'nowrap' }}>
                     <Badge
                       variant={post.moderation_status === 'FLAGGED' ? 'danger' : 'warning'}
@@ -231,9 +233,7 @@ export default function Dashboard() {
                       {post.moderation_status.replaceAll('_', ' ')}
                     </Badge>
                   </TableCell>
-                  <TableCell style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
-                    {post.report_count}
-                  </TableCell>
+                  <TableCell style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>{post.report_count}</TableCell>
                   <TableCell style={{ whiteSpace: 'nowrap', color: '#8B6355' }}>
                     {new Date(post.created_at).toLocaleString()}
                   </TableCell>

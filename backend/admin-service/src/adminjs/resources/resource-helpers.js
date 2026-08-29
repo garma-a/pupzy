@@ -1,4 +1,4 @@
-import { toAvailableValues } from "../enums.js";
+import { toAvailableValues } from '../enums.js';
 
 export const noDeleteActions = {
   delete: { isAccessible: false },
@@ -19,8 +19,7 @@ export function enumProperty(values, extra = {}) {
 export function stripRecordParams(response, propertyNames) {
   const strip = (record) => {
     if (!record?.params) return;
-    for (const propertyName of propertyNames)
-      delete record.params[propertyName];
+    for (const propertyName of propertyNames) delete record.params[propertyName];
     for (const populatedRecord of Object.values(record.populated ?? {})) {
       strip(populatedRecord);
     }
@@ -30,22 +29,16 @@ export function stripRecordParams(response, propertyNames) {
   return response;
 }
 
-export const stripPopulatedPasswordHashes = (response) =>
-  stripRecordParams(response, ["password_hash"]);
+export const stripPopulatedPasswordHashes = (response) => stripRecordParams(response, ['password_hash']);
 
-export function attachShortUuid(
-  properties,
-  fieldNames,
-  components,
-  locations = ["list", "show"],
-) {
+export function attachShortUuid(properties, fieldNames, components, locations = ['list', 'show']) {
   if (!components?.ShortUuid) return;
   for (const field of fieldNames) {
     const existing = properties[field] || {};
     const existingComponents = existing.components || {};
     const newComponents = { ...existingComponents };
-    if (locations.includes("list")) newComponents.list = components.ShortUuid;
-    if (locations.includes("show")) newComponents.show = components.ShortUuid;
+    if (locations.includes('list')) newComponents.list = components.ShortUuid;
+    if (locations.includes('show')) newComponents.show = components.ShortUuid;
     properties[field] = {
       ...existing,
       components: newComponents,
@@ -53,13 +46,7 @@ export function attachShortUuid(
   }
 }
 
-export function buildReadOnlyResource(
-  db,
-  table,
-  navigation,
-  properties = {},
-  extra = {},
-) {
+export function buildReadOnlyResource(db, table, navigation, properties = {}, extra = {}) {
   const { actions = {}, ...otherOptions } = extra;
 
   return {
@@ -73,7 +60,7 @@ export function buildReadOnlyResource(
   };
 }
 
-const MUTATING_ACTIONS = ["new", "edit", "delete", "bulkDelete"];
+const MUTATING_ACTIONS = ['new', 'edit', 'delete', 'bulkDelete'];
 
 export function attachCacheInvalidation(resourceDef, cache) {
   if (!cache) return resourceDef;
@@ -81,7 +68,7 @@ export function attachCacheInvalidation(resourceDef, cache) {
   const actions = { ...(options.actions ?? {}) };
 
   const invalidatorHook = async (response) => {
-    if (response?.notice?.type === "success") {
+    if (response?.notice?.type === 'success') {
       cache.invalidate();
     }
     return response;
@@ -117,4 +104,3 @@ export function attachCacheInvalidation(resourceDef, cache) {
     },
   };
 }
-

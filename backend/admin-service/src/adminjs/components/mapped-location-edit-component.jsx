@@ -1,16 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ApiClient } from 'adminjs';
-import {
-  Badge,
-  Box,
-  Button,
-  CheckBox,
-  FormGroup,
-  H4,
-  Input,
-  Label,
-  Text,
-} from '@adminjs/design-system';
+import { Badge, Box, Button, CheckBox, FormGroup, H4, Input, Label, Text } from '@adminjs/design-system';
+
+import { parseCoordinatesValue } from './mapped-location.js';
 
 const api = new ApiClient();
 
@@ -22,8 +14,7 @@ export default function MappedLocationEdit({ property, record, onChange }) {
   const custom = property?.custom || {};
   const tileUrl = custom.tileUrl || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   const attribution =
-    custom.attribution ||
-    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    custom.attribution || '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
   const searchAttribution =
     custom.searchAttribution ||
     'Data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ODbL 1.0';
@@ -41,17 +32,11 @@ export default function MappedLocationEdit({ property, record, onChange }) {
       initLat = parsedLat;
       initLng = parsedLng;
     }
-  } else if (typeof initialCoordinates === 'string') {
-    const match = initialCoordinates.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
-    if (match) {
-      initLng = parseFloat(match[1]);
-      initLat = parseFloat(match[2]);
-    } else {
-      const commaMatch = initialCoordinates.match(/^\s*([-\d.]+)\s*,\s*([-\d.]+)\s*$/);
-      if (commaMatch) {
-        initLat = parseFloat(commaMatch[1]);
-        initLng = parseFloat(commaMatch[2]);
-      }
+  } else if (initialCoordinates) {
+    const parsed = parseCoordinatesValue(initialCoordinates);
+    if (parsed) {
+      initLat = parsed.lat;
+      initLng = parsed.lng;
     }
   }
 
@@ -62,9 +47,10 @@ export default function MappedLocationEdit({ property, record, onChange }) {
   const [confirmed, setConfirmed] = useState(
     record?.params?.location_confirmed === true || record?.params?.location_confirmed === 'true',
   );
-  const [overrideReason, setOverrideReason] = useState(
-    record?.params?.override_reason || record?.params?.reason || '',
-  );
+  const [overrideReason, setOverrideReason] = useState(record?.params?.override_reason || record?.params?.reason || '');
+
+  const currentCityId = record?.params?.city_id;
+  const prevCityIdRef = useRef(initialCoordinates ? currentCityId : null);
 
   // Address Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,6 +74,63 @@ export default function MappedLocationEdit({ property, record, onChange }) {
       markerRef.current.setLatLng([formattedLat, formattedLng]);
     }
   };
+
+  // Center on city representative point when city selection changes
+  useEffect(() => {
+    const cityId = record?.params?.city_id;
+    if (!cityId) return;
+    if (prevCityIdRef.current === cityId) return;
+    prevCityIdRef.current = cityId;
+
+    let isMounted = true;
+
+    async function applyCityCenter() {
+      try {
+        let cityParams = null;
+        if (record?.populated?.city_id?.params) {
+          cityParams = record.populated.city_id.params;
+        } else if (record?.populated?.['city_id']?.params) {
+          cityParams = record.populated['city_id'].params;
+        } else {
+          const response = await api.recordAction({
+            resourceId: 'cities',
+            recordId: cityId,
+            actionName: 'show',
+          });
+          cityParams = response?.data?.record?.params;
+        }
+
+        if (!isMounted || !cityParams) return;
+        const coords = parseCoordinatesValue(cityParams.center_point || cityParams);
+        if (coords && Number.isFinite(coords.lat) && Number.isFinite(coords.lng)) {
+          const cityLat = parseFloat(coords.lat.toFixed(6));
+          const cityLng = parseFloat(coords.lng.toFixed(6));
+          setLat(cityLat);
+          setLng(cityLng);
+
+          onChange('latitude', cityLat);
+          onChange('longitude', cityLng);
+          onChange('coordinates', `SRID=4326;POINT(${cityLng} ${cityLat})`);
+          onChange('location_provenance', 'MANUAL');
+
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.setView([cityLat, cityLng], 13);
+          }
+          if (markerRef.current) {
+            markerRef.current.setLatLng([cityLat, cityLng]);
+          }
+        }
+      } catch (err) {
+        // Non-blocking city lookup fallback
+      }
+    }
+
+    void applyCityCenter();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [record?.params?.city_id]);
 
   const handleLatChange = (e) => {
     const val = parseFloat(e.target.value);
@@ -153,18 +196,19 @@ export default function MappedLocationEdit({ property, record, onChange }) {
         );
       } else if (data.error) {
         setSearchError(
-          data.message || 'Address search is currently unavailable. You can click on the map to pin the clinic location manually.',
+          data.message ||
+            'Address search is currently unavailable. You can click on the map to pin the clinic location manually.',
         );
       } else if (Array.isArray(data.results)) {
         setSearchResults(data.results);
         if (data.results.length === 0) {
-          setSearchMessage('No matching locations found in Egypt. You can click on the map to pin the clinic location manually.');
+          setSearchMessage(
+            'No matching locations found in Egypt. You can click on the map to pin the clinic location manually.',
+          );
         }
       }
     } catch (err) {
-      setSearchError(
-        'Address search failed. Please pin the clinic location manually on the map.',
-      );
+      setSearchError('Address search failed. Please pin the clinic location manually on the map.');
     } finally {
       setIsSearching(false);
     }
@@ -212,9 +256,14 @@ export default function MappedLocationEdit({ property, record, onChange }) {
   useEffect(() => {
     if (typeof window === 'undefined' || !mapContainerRef.current) return;
 
-    let map = mapInstanceRef.current;
-    if (!map && window.L) {
-      map = window.L.map(mapContainerRef.current).setView([lat, lng], 13);
+    let isMounted = true;
+    let pollTimer = null;
+
+    const initMap = () => {
+      if (!isMounted || !mapContainerRef.current || mapInstanceRef.current) return;
+      if (!window.L) return;
+
+      const map = window.L.map(mapContainerRef.current).setView([lat, lng], 13);
       window.L.tileLayer(tileUrl, {
         attribution,
         maxZoom: 19,
@@ -233,9 +282,25 @@ export default function MappedLocationEdit({ property, record, onChange }) {
 
       mapInstanceRef.current = map;
       markerRef.current = marker;
+      if (pollTimer) clearInterval(pollTimer);
+    };
+
+    if (window.L) {
+      initMap();
+    } else {
+      pollTimer = setInterval(() => {
+        if (window.L) {
+          initMap();
+        }
+      }, 50);
+      setTimeout(() => {
+        if (pollTimer) clearInterval(pollTimer);
+      }, 10000);
     }
 
     return () => {
+      isMounted = false;
+      if (pollTimer) clearInterval(pollTimer);
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -277,8 +342,9 @@ export default function MappedLocationEdit({ property, record, onChange }) {
           Search Public Clinic Address (Optional)
         </H4>
         <Text mb="sm" style={{ color: '#8B6355', fontSize: '12px' }}>
-          Search for a public business or clinic location in Egypt using OpenStreetMap Nominatim. Typing does not search; click{' '}
-          <strong>Search address</strong> to look up. Selecting a result prefills coordinates and address for your review.
+          Search for a public business or clinic location in Egypt using OpenStreetMap Nominatim. Typing does not
+          search; click <strong>Search address</strong> to look up. Selecting a result prefills coordinates and address
+          for your review.
         </Text>
 
         {!searchEnabled ? (
@@ -455,8 +521,9 @@ export default function MappedLocationEdit({ property, record, onChange }) {
           City Disagreement Override
         </H4>
         <Text mb="sm" style={{ color: '#8B6355', fontSize: '12px' }}>
-          If the selected point is closer to a different official City than the chosen City, an active administrator must
-          provide an override reason (up to 500 characters). Note that City representative points are approximate centroids.
+          If the selected point is closer to a different official City than the chosen City, an active administrator
+          must provide an override reason (up to 500 characters). Note that City representative points are approximate
+          centroids.
         </Text>
         <FormGroup style={{ marginBottom: 0 }}>
           <Label htmlFor="override-reason">Override Reason</Label>

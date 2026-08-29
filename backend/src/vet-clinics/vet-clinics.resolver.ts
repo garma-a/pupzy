@@ -62,7 +62,7 @@ export class VetClinicsResolver {
     // We handle both here, matching the exact logic in PostsResolver.coordinates.
     //
     // ADOPTION and PRODUCT: the service handles these cases (adoption → city
-    // center, product → empty list) without needing the raw coordinates, so
+    // center, product → empty list) without needing coordinates, so
     // we pass null and let the service decide.
 
     let latitude: number | null = null;

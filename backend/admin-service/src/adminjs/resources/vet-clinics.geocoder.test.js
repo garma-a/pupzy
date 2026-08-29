@@ -129,14 +129,23 @@ describe('Vet Clinics Geocoder & Address Search', () => {
       assert.equal(r2, 'second');
       assert.equal(r3, 'third');
       assert.equal(timestamps.length, 3);
-      assert.ok(timestamps[1] - timestamps[0] >= 40, `Expected >=40ms elapsed between 1 and 2, got ${timestamps[1] - timestamps[0]}`);
-      assert.ok(timestamps[2] - timestamps[1] >= 40, `Expected >=40ms elapsed between 2 and 3, got ${timestamps[2] - timestamps[1]}`);
+      assert.ok(
+        timestamps[1] - timestamps[0] >= 40,
+        `Expected >=40ms elapsed between 1 and 2, got ${timestamps[1] - timestamps[0]}`,
+      );
+      assert.ok(
+        timestamps[2] - timestamps[1] >= 40,
+        `Expected >=40ms elapsed between 2 and 3, got ${timestamps[2] - timestamps[1]}`,
+      );
     });
 
     it('continues processing subsequent requests if a scheduled call throws', async () => {
       const limiter = new UpstreamRateLimiter({ minIntervalMs: 10 });
       await assert.rejects(
-        () => limiter.schedule(async () => { throw new Error('Boom'); }),
+        () =>
+          limiter.schedule(async () => {
+            throw new Error('Boom');
+          }),
         /Boom/,
       );
 
@@ -229,7 +238,9 @@ describe('Vet Clinics Geocoder & Address Search', () => {
     it('returns empty result for queries shorter than 2 characters without network or DB call', async () => {
       const result = await searchVetClinicAddress({
         query: 'a',
-        fetchFn: async () => { throw new Error('Should not be called'); },
+        fetchFn: async () => {
+          throw new Error('Should not be called');
+        },
       });
       assert.equal(result.source, 'EMPTY');
       assert.deepEqual(result.results, []);
@@ -239,7 +250,9 @@ describe('Vet Clinics Geocoder & Address Search', () => {
       const result = await searchVetClinicAddress({
         query: 'maadi clinic',
         config: { enabled: false },
-        fetchFn: async () => { throw new Error('Should not be called'); },
+        fetchFn: async () => {
+          throw new Error('Should not be called');
+        },
       });
       assert.equal(result.source, 'DISABLED');
       assert.equal(result.disabled, true);
@@ -272,7 +285,9 @@ describe('Vet Clinics Geocoder & Address Search', () => {
       const result = await searchVetClinicAddress({
         query: '  Maadi   Vet  ',
         pool: fakeClient,
-        fetchFn: async () => { throw new Error('Upstream must not be called on cache hit'); },
+        fetchFn: async () => {
+          throw new Error('Upstream must not be called on cache hit');
+        },
       });
 
       assert.equal(result.source, 'CACHE');

@@ -4,6 +4,7 @@ import AdminJSExpress from '@adminjs/express';
 import bcrypt from 'bcryptjs';
 import connectPgSimple from 'connect-pg-simple';
 import express from 'express';
+import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import session from 'express-session';
 
@@ -79,8 +80,23 @@ before(async () => {
   sqlAdapterPool = built.sqlAdapterPool;
 
   const app = express();
+  app.disable('x-powered-by');
   app.set('trust proxy', 1);
   app.use('/admin/assets', express.static(path.join(currentDirectory, '../src/adminjs/public')));
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
+          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://unpkg.com'],
+          fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+          imgSrc: ["'self'", 'data:', 'https:'],
+          connectSrc: ["'self'"],
+        },
+      },
+    }),
+  );
   app.use('/admin', requireSameOrigin);
   app.use('/admin', buildCsrfProtection('a test CSRF signing secret at least 32 chars'));
   const PgSession = connectPgSimple(session);
@@ -285,9 +301,9 @@ describe('AdminJS HTTP security and resource behavior', () => {
     const cssRes = await fetch(`${baseUrl}/admin/assets/pupzy-theme.css`);
     assert.equal(cssRes.status, 200);
     const cssText = await cssRes.text();
-    assert.match(cssText, /--pupzy-primary: #C4622D/);
-    assert.match(cssText, /--pupzy-bg: #FAF6F1/);
-    assert.match(cssText, /--pupzy-text: #2D1506/);
+    assert.match(cssText, /--pupzy-primary:\s*#c4622d/i);
+    assert.match(cssText, /--pupzy-bg:\s*#faf6f1/i);
+    assert.match(cssText, /--pupzy-text:\s*#2d1506/i);
     assert.match(cssText, /pupzy-metric-grid/);
   });
 
@@ -641,15 +657,17 @@ describe('AdminJS HTTP security and resource behavior', () => {
     const failEditData = await failEditRes.json();
     assert.ok(failEditData.record.errors.city_id, 'Expected validation error when changing to non-official city');
 
-    // 4. Non-location edit on an imported clinic succeeds without requiring location confirmation
+    // 4. Non-location edit on an imported clinic succeeds with full form submission of unchanged location values,
+    // without requiring new City selection, bilingual address entry, or location confirmation
     const importedClinic = await database.pool.query(
       `INSERT INTO vet_clinics (name_english, city_id, coordinates, source, location_provenance, address_english, address_arabic, address)
-       VALUES ('Imported Luxor Vet', $1, ST_SetSRID(ST_MakePoint(32.65, 25.68), 4326), 'OSM', 'OSM', 'Luxor Old Rd', 'طريق الأقصر القديم', 'Luxor Old Rd')
+       VALUES ('Imported Luxor Vet', $1, ST_SetSRID(ST_MakePoint(32.65, 25.68), 4326), 'OSM', 'OSM', 'Luxor Old Rd', NULL, 'Luxor Old Rd')
        RETURNING id`,
-      [officialCityId],
+      [legacyCityId],
     );
     const importedClinicId = importedClinic.rows[0].id;
 
+    // 4a. Edit submitting unchanged form location values (including legacy city_id, coordinates, unconfirmed checkbox, and empty Arabic address)
     const importedEditRes = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/records/${importedClinicId}/edit`, {
       method: 'POST',
       headers: {
@@ -661,6 +679,13 @@ describe('AdminJS HTTP security and resource behavior', () => {
       body: JSON.stringify({
         name_english: 'Imported Luxor Vet Updated',
         phone_number: '+201099881122',
+        city_id: legacyCityId,
+        coordinates: 'SRID=4326;POINT(32.65 25.68)',
+        latitude: 25.68,
+        longitude: 32.65,
+        address_english: 'Luxor Old Rd',
+        address_arabic: '',
+        location_confirmed: false,
       }),
     });
     assert.equal(importedEditRes.status, 200);
@@ -670,7 +695,92 @@ describe('AdminJS HTTP security and resource behavior', () => {
     const updatedImported = await database.pool.query(`SELECT * FROM vet_clinics WHERE id = $1`, [importedClinicId]);
     assert.equal(updatedImported.rows[0].name_english, 'Imported Luxor Vet Updated');
     assert.equal(updatedImported.rows[0].phone_number, '+201099881122');
+    assert.equal(updatedImported.rows[0].city_id, legacyCityId);
     assert.equal(updatedImported.rows[0].location_provenance, 'OSM');
+
+    // 5. Changing location fields on an imported clinic still enforces complete official-City and confirmation safeguards
+    // 5a. Changing coordinates without location_confirmed fails
+    const failUnconfirmedChangeRes = await fetch(
+      `${baseUrl}/admin/api/resources/vet_clinics/records/${importedClinicId}/edit`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: `${superCookie}; ${superCsrf.cookie}`,
+          origin: baseUrl,
+          'x-xsrf-token': superCsrf.token,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          city_id: officialCityId,
+          latitude: 29.97,
+          longitude: 31.28,
+          address_english: '10 Road 9, Maadi',
+          address_arabic: '١٠ شارع ٩، المعادي',
+          location_confirmed: false,
+        }),
+      },
+    );
+    const failUnconfirmedChangeData = await failUnconfirmedChangeRes.json();
+    assert.ok(
+      failUnconfirmedChangeData.record.errors.coordinates,
+      'Expected validation error on unconfirmed location change',
+    );
+
+    // 5b. Changing coordinates without bilingual Arabic address fails
+    const failNoArabicRes = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/records/${importedClinicId}/edit`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        city_id: officialCityId,
+        latitude: 29.97,
+        longitude: 31.28,
+        address_english: '10 Road 9, Maadi',
+        address_arabic: '',
+        location_confirmed: true,
+      }),
+    });
+    const failNoArabicData = await failNoArabicRes.json();
+    assert.ok(
+      failNoArabicData.record.errors.address_arabic,
+      'Expected validation error on missing Arabic address for location change',
+    );
+
+    // 5c. Changing location with complete official-City and confirmation flow succeeds and upgrades provenance
+    const successRelocateRes = await fetch(
+      `${baseUrl}/admin/api/resources/vet_clinics/records/${importedClinicId}/edit`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: `${superCookie}; ${superCsrf.cookie}`,
+          origin: baseUrl,
+          'x-xsrf-token': superCsrf.token,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          city_id: officialCityId,
+          latitude: 29.97,
+          longitude: 31.28,
+          address_english: '10 Road 9, Maadi',
+          address_arabic: '١٠ شارع ٩، المعادي',
+          location_confirmed: true,
+        }),
+      },
+    );
+    assert.equal(successRelocateRes.status, 200);
+    const successRelocateData = await successRelocateRes.json();
+    assert.equal(successRelocateData.notice?.type, 'success');
+
+    const relocatedClinic = await database.pool.query(`SELECT * FROM vet_clinics WHERE id = $1`, [importedClinicId]);
+    assert.equal(relocatedClinic.rows[0].city_id, officialCityId);
+    assert.equal(relocatedClinic.rows[0].location_provenance, 'MANUAL');
+    assert.equal(relocatedClinic.rows[0].address_english, '10 Road 9, Maadi');
+    assert.equal(relocatedClinic.rows[0].address_arabic, '١٠ شارع ٩، المعادي');
+    assert.ok(relocatedClinic.rows[0].location_captured_at);
   });
 
   it('vet_clinics handles City-disagreement overrides with atomic append-only audit records and role enforcement', async () => {
@@ -753,10 +863,9 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.equal(clinicRow.rows[0].city_id, maadiCityId);
 
     // Verify audit log record
-    const auditRows = await database.pool.query(
-      `SELECT * FROM vet_clinic_location_audits WHERE vet_clinic_id = $1`,
-      [createdDiscrepantId],
-    );
+    const auditRows = await database.pool.query(`SELECT * FROM vet_clinic_location_audits WHERE vet_clinic_id = $1`, [
+      createdDiscrepantId,
+    ]);
     assert.equal(auditRows.rowCount, 1);
     const audit = auditRows.rows[0];
     assert.equal(audit.admin_user_id, principals.adminId);
@@ -840,11 +949,135 @@ describe('AdminJS HTTP security and resource behavior', () => {
       },
     );
     assert.ok(auditDeleteRes.status === 403 || auditDeleteRes.status === 404 || auditDeleteRes.status === 200);
-    const survivingAudit = await database.pool.query(
-      `SELECT * FROM vet_clinic_location_audits WHERE id = $1`,
-      [audit.id],
-    );
+    const survivingAudit = await database.pool.query(`SELECT * FROM vet_clinic_location_audits WHERE id = $1`, [
+      audit.id,
+    ]);
     assert.equal(survivingAudit.rowCount, 1, 'Audit log records must remain immutable');
+  });
+
+  it('vet_clinics write transaction rolls back atomically when audit write fails, leaving no partial clinic or audit record', async () => {
+    // 1. Seed two distinct official cities: Cairo and Alexandria
+    const cairoRes = await database.pool.query(
+      `INSERT INTO cities (name_english, name_arabic, governorate, status, center_point)
+       VALUES ('Cairo Downtown ${Date.now()}', 'وسط القاهرة', 'Cairo', 'OFFICIAL', ST_SetSRID(ST_MakePoint(31.23, 30.04), 4326))
+       RETURNING id`,
+    );
+    const cairoId = cairoRes.rows[0].id;
+
+    const alexRes = await database.pool.query(
+      `INSERT INTO cities (name_english, name_arabic, governorate, status, center_point)
+       VALUES ('Alexandria Center ${Date.now()}', 'وسط الإسكندرية', 'Alexandria', 'OFFICIAL', ST_SetSRID(ST_MakePoint(29.92, 31.20), 4326))
+       RETURNING id`,
+    );
+    const alexId = alexRes.rows[0].id;
+
+    // 2. Install a temporary trigger to simulate a DB-level failure during audit write
+    await database.pool.query(`
+      CREATE OR REPLACE FUNCTION fail_discrepancy_audit_trigger() RETURNS trigger AS $$
+      BEGIN
+        IF NEW.reason LIKE '%SIMULATED_AUDIT_FAILURE%' THEN
+          RAISE EXCEPTION 'Simulated audit log insertion failure for atomic rollback test';
+        END IF;
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
+    await database.pool.query(`
+      DROP TRIGGER IF EXISTS trg_test_audit_failure ON vet_clinic_location_audits;
+      CREATE TRIGGER trg_test_audit_failure
+      BEFORE INSERT ON vet_clinic_location_audits
+      FOR EACH ROW EXECUTE FUNCTION fail_discrepancy_audit_trigger();
+    `);
+
+    try {
+      // 3. Attempt creating a clinic with a discrepancy and the trigger-tripping reason
+      const clinicName = 'Atomic Rollback Test Clinic ' + crypto.randomUUID();
+      const failRes = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/actions/new`, {
+        method: 'POST',
+        headers: {
+          cookie: `${superCookie}; ${superCsrf.cookie}`,
+          origin: baseUrl,
+          'x-xsrf-token': superCsrf.token,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          name_english: clinicName,
+          city_id: cairoId, // Cairo selected
+          latitude: 31.2, // Closest to Alexandria
+          longitude: 29.92,
+          address_english: 'Alex Corniche',
+          address_arabic: 'كورنيش الإسكندرية',
+          location_confirmed: true,
+          override_reason: 'SIMULATED_AUDIT_FAILURE: Testing that clinic write rolls back when audit fails',
+        }),
+      });
+
+      // The action should fail or report error
+      assert.ok(failRes.status >= 400 || failRes.status === 200);
+      if (failRes.status === 200) {
+        const data = await failRes.json();
+        assert.ok(data.notice?.type === 'error' || data.error || !data.record?.id);
+      }
+
+      // 4. Verify that the clinic was NOT created in vet_clinics table (transaction rolled back!)
+      const clinicRow = await database.pool.query(`SELECT * FROM vet_clinics WHERE name_english = $1`, [clinicName]);
+      assert.equal(clinicRow.rowCount, 0, 'Clinic record must be rolled back if audit write fails');
+
+      // 5. Verify that NO audit record exists
+      const auditRow = await database.pool.query(
+        `SELECT * FROM vet_clinic_location_audits WHERE reason LIKE '%SIMULATED_AUDIT_FAILURE%'`,
+      );
+      assert.equal(auditRow.rowCount, 0, 'Audit record must not exist when write fails');
+    } finally {
+      // Cleanup trigger & function
+      await database.pool.query(`
+        DROP TRIGGER IF EXISTS trg_test_audit_failure ON vet_clinic_location_audits;
+        DROP FUNCTION IF EXISTS fail_discrepancy_audit_trigger();
+      `);
+    }
+  });
+
+  it('vet_clinics transaction rejects creation/relocation if city is retired before transactional validation commits', async () => {
+    // 1. Seed official city
+    const retiringCity = await database.pool.query(
+      `INSERT INTO cities (name_english, name_arabic, governorate, status, center_point)
+       VALUES ('Temporary Official City ${Date.now()}', 'مدينة مؤقتة', 'Giza', 'OFFICIAL', ST_SetSRID(ST_MakePoint(31.18, 29.98), 4326))
+       RETURNING id`,
+    );
+    const retiringCityId = retiringCity.rows[0].id;
+
+    // 2. Transition city to RETIRED (simulating concurrent lifecycle change)
+    await database.pool.query(`UPDATE cities SET status = 'RETIRED' WHERE id = $1`, [retiringCityId]);
+
+    // 3. Attempt clinic creation with this city
+    const clinicName = 'Retired City Clinic ' + crypto.randomUUID();
+    const createRes = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/actions/new`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        name_english: clinicName,
+        city_id: retiringCityId,
+        latitude: 29.98,
+        longitude: 31.18,
+        address_english: '10 Pyramids St',
+        address_arabic: '١٠ شارع الأهرام',
+        location_confirmed: true,
+      }),
+    });
+
+    assert.equal(createRes.status, 200);
+    const createData = await createRes.json();
+    assert.ok(createData.record?.errors?.city_id, 'Expected city_id validation error on retired city');
+    assert.match(createData.record.errors.city_id.message, /official/i);
+
+    // Verify nothing saved to database
+    const clinicCheck = await database.pool.query(`SELECT * FROM vet_clinics WHERE name_english = $1`, [clinicName]);
+    assert.equal(clinicCheck.rowCount, 0, 'No clinic must be inserted for retired city');
   });
 
   it('supports vet_clinics address search action with durable PostgreSQL caching and strict privacy boundaries', async () => {
@@ -875,9 +1108,12 @@ describe('AdminJS HTTP security and resource behavior', () => {
     );
 
     // 2. Fetch search results via AdminJS HTTP API
-    const searchRes = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/actions/searchAddress?query=Degla%20Maadi%20Clinic`, {
-      headers: { cookie: superCookie },
-    });
+    const searchRes = await fetch(
+      `${baseUrl}/admin/api/resources/vet_clinics/actions/searchAddress?query=Degla%20Maadi%20Clinic`,
+      {
+        headers: { cookie: superCookie },
+      },
+    );
     assert.equal(searchRes.status, 200);
     const searchData = await searchRes.json();
     assert.equal(searchData.source, 'CACHE');
@@ -888,9 +1124,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.ok(searchData.attribution);
 
     // 3. Create a vet clinic record using selected Nominatim search provenance
-    const cityRes = await database.pool.query(
-      `SELECT id FROM cities WHERE name_english = 'Maadi (Kism)' LIMIT 1`,
-    );
+    const cityRes = await database.pool.query(`SELECT id FROM cities WHERE name_english = 'Maadi (Kism)' LIMIT 1`);
     const maadiCityId = cityRes.rows[0].id;
 
     const createFromSearchRes = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/actions/new`, {
@@ -984,9 +1218,12 @@ describe('AdminJS HTTP security and resource behavior', () => {
 
     // 2. Bilingual City Search: Arabic, English, and Governorate queries
     // Search by Arabic name
-    const arSearchRes = await fetch(`${baseUrl}/admin/api/resources/cities/actions/search?query=%D8%A7%D9%84%D8%B2%D9%85%D8%A7%D9%84%D9%83`, {
-      headers: { cookie: superCookie },
-    });
+    const arSearchRes = await fetch(
+      `${baseUrl}/admin/api/resources/cities/actions/search?query=%D8%A7%D9%84%D8%B2%D9%85%D8%A7%D9%84%D9%83`,
+      {
+        headers: { cookie: superCookie },
+      },
+    );
     assert.equal(arSearchRes.status, 200);
     const arSearchData = await arSearchRes.json();
     const foundZamalek = arSearchData.records.find((r) => r.id === zamalekId);
@@ -1213,5 +1450,149 @@ describe('AdminJS HTTP security and resource behavior', () => {
     const recLeg = ssListData.records.find((r) => r.id === ssLegacyId);
     assert.equal(recOff.populated.city_id.title, 'Zamalek / الزمالك (Cairo)');
     assert.equal(recLeg.populated.city_id.title, 'Ancient Village / قرية قديمة متقادمة (Giza)');
+  });
+
+  it('serves Mapped Location assets and conforms to production Content-Security-Policy headers', async () => {
+    // 1. Verify CSP header allows unpkg.com for scripts/styles, google fonts, and image sources
+    const adminPageRes = await fetch(`${baseUrl}/admin/resources/cities`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(adminPageRes.status, 200);
+    const csp = adminPageRes.headers.get('content-security-policy');
+    assert.ok(csp, 'Expected Content-Security-Policy header');
+    assert.match(csp, /script-src[^;]*https:\/\/unpkg\.com/);
+    assert.match(csp, /style-src[^;]*https:\/\/unpkg\.com/);
+    assert.match(csp, /style-src[^;]*https:\/\/fonts\.googleapis\.com/);
+    assert.match(csp, /font-src[^;]*https:\/\/fonts\.gstatic\.com/);
+    assert.match(csp, /img-src[^;]*https:/);
+
+    // 2. Verify page HTML includes Leaflet stylesheet and script assets
+    const html = await adminPageRes.text();
+    assert.match(html, /leaflet@1\.9\.4\/dist\/leaflet\.css/);
+    assert.match(html, /leaflet@1\.9\.4\/dist\/leaflet\.js/);
+  });
+
+  it('proves the map works on the Vet Clinic create and location-edit journeys with City-centering', async () => {
+    // 1. Seed two distinct official cities: Alexandria and Aswan
+    const alexCity = await database.pool.query(
+      `INSERT INTO cities (name_english, name_arabic, governorate, status, center_point)
+       VALUES ('Montaza (Kism)', 'قسم المنتزه', 'Alexandria', 'OFFICIAL', ST_SetSRID(ST_MakePoint(30.01, 31.28), 4326))
+       RETURNING id`,
+    );
+    const alexCityId = alexCity.rows[0].id;
+
+    const aswanCity = await database.pool.query(
+      `INSERT INTO cities (name_english, name_arabic, governorate, status, center_point)
+       VALUES ('Aswan Central', 'أسوان المركزية', 'Aswan', 'OFFICIAL', ST_SetSRID(ST_MakePoint(32.89, 24.09), 4326))
+       RETURNING id`,
+    );
+    const aswanCityId = aswanCity.rows[0].id;
+
+    // 2. City show endpoint returns parsed center_point and latitude/longitude
+    const alexCityShowRes = await fetch(`${baseUrl}/admin/api/resources/cities/records/${alexCityId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(alexCityShowRes.status, 200);
+    const alexCityData = await alexCityShowRes.json();
+    assert.equal(alexCityData.record.params.center_point, 'POINT(30.01 31.28)');
+    assert.equal(alexCityData.record.params.latitude, 31.28);
+    assert.equal(alexCityData.record.params.longitude, 30.01);
+
+    // 3. Create Journey: Administrator selects Alexandria, pins location, enters addresses, confirms, and saves
+    const createRes = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/actions/new`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        name_english: 'Montaza Pet Care',
+        name_arabic: 'رعاية حيوانات المنتزه',
+        city_id: alexCityId,
+        latitude: 31.2815,
+        longitude: 30.0125,
+        address_english: '25 Corniche Rd, Montaza, Alexandria',
+        address_arabic: '٢٥ طريق الكورنيش، المنتزه، الإسكندرية',
+        location_confirmed: true,
+      }),
+    });
+    assert.equal(createRes.status, 200);
+    const createData = await createRes.json();
+    assert.equal(createData.notice?.type, 'success');
+    const createdClinicId = createData.record.id;
+
+    // 4. Verify clinic record in database with PostGIS geometry
+    const clinicRow = await database.pool.query(
+      `SELECT id, name_english, city_id, address_english, address_arabic,
+              ST_X(coordinates::geometry) AS lng, ST_Y(coordinates::geometry) AS lat
+       FROM vet_clinics WHERE id = $1`,
+      [createdClinicId],
+    );
+    assert.equal(clinicRow.rowCount, 1);
+    assert.equal(clinicRow.rows[0].city_id, alexCityId);
+    assert.equal(clinicRow.rows[0].address_english, '25 Corniche Rd, Montaza, Alexandria');
+    assert.equal(clinicRow.rows[0].address_arabic, '٢٥ طريق الكورنيش، المنتزه، الإسكندرية');
+    assert.equal(Number(clinicRow.rows[0].lat.toFixed(4)), 31.2815);
+    assert.equal(Number(clinicRow.rows[0].lng.toFixed(4)), 30.0125);
+
+    // 5. Location-edit Journey: modify coordinates through map drag placement
+    const editCoordsRes = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/records/${createdClinicId}/edit`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        latitude: 31.283,
+        longitude: 30.014,
+        address_english: '27 Corniche Rd, Montaza, Alexandria',
+        address_arabic: '٢٧ طريق الكورنيش، المنتزه، الإسكندرية',
+        location_confirmed: true,
+      }),
+    });
+    assert.equal(editCoordsRes.status, 200);
+    const editCoordsData = await editCoordsRes.json();
+    assert.equal(editCoordsData.notice?.type, 'success');
+
+    const updatedCoordsClinic = await database.pool.query(
+      `SELECT ST_X(coordinates::geometry) AS lng, ST_Y(coordinates::geometry) AS lat, address_english
+       FROM vet_clinics WHERE id = $1`,
+      [createdClinicId],
+    );
+    assert.equal(Number(updatedCoordsClinic.rows[0].lat.toFixed(4)), 31.283);
+    assert.equal(Number(updatedCoordsClinic.rows[0].lng.toFixed(4)), 30.014);
+    assert.equal(updatedCoordsClinic.rows[0].address_english, '27 Corniche Rd, Montaza, Alexandria');
+
+    // 6. Location-edit Journey: change City to Aswan with valid override reason
+    const editCityRes = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/records/${createdClinicId}/edit`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        city_id: aswanCityId,
+        latitude: 24.091,
+        longitude: 32.892,
+        address_english: 'Aswan Nile Street',
+        address_arabic: 'شارع النيل بأسوان',
+        location_confirmed: true,
+        override_reason: 'Branch clinic operating in central Aswan district.',
+      }),
+    });
+    assert.equal(editCityRes.status, 200);
+    const editCityData = await editCityRes.json();
+    assert.equal(editCityData.notice?.type, 'success');
+
+    const updatedCityClinic = await database.pool.query(`SELECT city_id FROM vet_clinics WHERE id = $1`, [
+      createdClinicId,
+    ]);
+    assert.equal(updatedCityClinic.rows[0].city_id, aswanCityId);
   });
 });

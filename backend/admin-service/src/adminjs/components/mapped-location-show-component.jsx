@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Box, Button, FormGroup, H4, Label, Text } from '@adminjs/design-system';
+import { parseCoordinatesValue } from './mapped-location.js';
 
 export default function MappedLocationShow({ property, record }) {
   const mapContainerRef = useRef(null);
@@ -10,27 +11,29 @@ export default function MappedLocationShow({ property, record }) {
   const attribution =
     custom.attribution || '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-  const rawCoordinates = record?.params?.coordinates || '';
-  let lat = null;
-  let lng = null;
+  const coordinatesValue = record?.params?.coordinates || '';
+  const parsed =
+    parseCoordinatesValue(coordinatesValue) ||
+    (record?.params?.latitude !== undefined && record?.params?.longitude !== undefined
+      ? { lat: parseFloat(record.params.latitude), lng: parseFloat(record.params.longitude) }
+      : null);
 
-  if (typeof rawCoordinates === 'string') {
-    const match = rawCoordinates.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
-    if (match) {
-      lng = parseFloat(match[1]);
-      lat = parseFloat(match[2]);
-    }
-  }
+  const lat = parsed?.lat ?? null;
+  const lng = parsed?.lng ?? null;
 
   const hasValidCoords = lat !== null && lng !== null && !Number.isNaN(lat) && !Number.isNaN(lng);
-  const googleMapsUrl = hasValidCoords
-    ? `https://www.google.com/maps/search/?api=1&query=${lat}%2C${lng}`
-    : null;
+  const googleMapsUrl = hasValidCoords ? `https://www.google.com/maps/search/?api=1&query=${lat}%2C${lng}` : null;
 
   useEffect(() => {
     if (typeof window === 'undefined' || !mapContainerRef.current || !hasValidCoords) return;
 
-    if (!mapInstanceRef.current && window.L) {
+    let isMounted = true;
+    let pollTimer = null;
+
+    const initMap = () => {
+      if (!isMounted || !mapContainerRef.current || mapInstanceRef.current) return;
+      if (!window.L) return;
+
       const map = window.L.map(mapContainerRef.current).setView([lat, lng], 14);
       window.L.tileLayer(tileUrl, {
         attribution,
@@ -39,9 +42,25 @@ export default function MappedLocationShow({ property, record }) {
 
       window.L.marker([lat, lng]).addTo(map);
       mapInstanceRef.current = map;
+      if (pollTimer) clearInterval(pollTimer);
+    };
+
+    if (window.L) {
+      initMap();
+    } else {
+      pollTimer = setInterval(() => {
+        if (window.L) {
+          initMap();
+        }
+      }, 50);
+      setTimeout(() => {
+        if (pollTimer) clearInterval(pollTimer);
+      }, 10000);
     }
 
     return () => {
+      isMounted = false;
+      if (pollTimer) clearInterval(pollTimer);
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;

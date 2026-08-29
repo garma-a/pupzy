@@ -58,6 +58,80 @@ describe('Database Migration Runner Integration', () => {
     expect(tableNames).toContain('product_posts');
     expect(tableNames).toContain('mating_posts');
     expect(tableNames).toContain('notifications');
+
+    // Verify city_lifecycle_status operators and functions exist from migration 0017
+    const operatorRes = await pool.query<{ oprname: string }>(`
+      SELECT oprname
+      FROM pg_operator
+      WHERE oprleft = 'city_lifecycle_status'::regtype
+        AND oprright = 'text'::regtype
+    `);
+    const operatorNames = operatorRes.rows.map((r) => r.oprname);
+    expect(operatorNames).toContain('~~*');
+    expect(operatorNames).toContain('~~');
+
+    const functionRes = await pool.query<{ proname: string }>(`
+      SELECT proname
+      FROM pg_proc
+      WHERE proname IN ('city_lifecycle_status_ilike', 'city_lifecycle_status_like')
+    `);
+    const functionNames = functionRes.rows.map((r) => r.proname);
+    expect(functionNames).toContain('city_lifecycle_status_ilike');
+    expect(functionNames).toContain('city_lifecycle_status_like');
+  });
+
+  it('proves city lifecycle status filtering via ~~* and ~~ operators functions properly', async () => {
+    // Insert cities with different lifecycle statuses
+    const officialRes = await pool.query<{ id: string }>(`
+      INSERT INTO cities (name_english, name_arabic, governorate, center_point, status)
+      VALUES ('Alexandria', 'الإسكندرية', 'Alexandria', ST_SetSRID(ST_MakePoint(29.9187, 31.2001), 4326), 'OFFICIAL')
+      RETURNING id
+    `);
+    const officialId = officialRes.rows[0].id;
+
+    const legacyRes = await pool.query<{ id: string }>(`
+      INSERT INTO cities (name_english, name_arabic, governorate, center_point, status)
+      VALUES ('Legacy City', 'مدينة قديمة', 'Giza', ST_SetSRID(ST_MakePoint(31.2, 30.0), 4326), 'LEGACY')
+      RETURNING id
+    `);
+    const legacyId = legacyRes.rows[0].id;
+
+    const retiredRes = await pool.query<{ id: string }>(`
+      INSERT INTO cities (name_english, name_arabic, governorate, center_point, status)
+      VALUES ('Retired District', 'حي ملغى', 'Cairo', ST_SetSRID(ST_MakePoint(31.3, 30.1), 4326), 'RETIRED')
+      RETURNING id
+    `);
+    const retiredId = retiredRes.rows[0].id;
+
+    // Test case-insensitive ~~* operator filtering (used by AdminJS list filter)
+    const ilikeOfficial = await pool.query<{ id: string }>(`
+      SELECT id FROM cities WHERE status ~~* '%official%'
+    `);
+    const ilikeOfficialIds = ilikeOfficial.rows.map((r) => r.id);
+    expect(ilikeOfficialIds).toContain(officialId);
+    expect(ilikeOfficialIds).not.toContain(legacyId);
+    expect(ilikeOfficialIds).not.toContain(retiredId);
+
+    const ilikeLegacy = await pool.query<{ id: string }>(`
+      SELECT id FROM cities WHERE status ~~* '%legacy%'
+    `);
+    expect(ilikeLegacy.rows.map((r) => r.id)).toEqual([legacyId]);
+
+    const ilikeRetired = await pool.query<{ id: string }>(`
+      SELECT id FROM cities WHERE status ~~* '%retired%'
+    `);
+    expect(ilikeRetired.rows.map((r) => r.id)).toEqual([retiredId]);
+
+    // Test case-sensitive ~~ operator filtering
+    const likeExact = await pool.query<{ id: string }>(`
+      SELECT id FROM cities WHERE status ~~ 'OFFICIAL'
+    `);
+    expect(likeExact.rows.map((r) => r.id)).toContain(officialId);
+
+    const likeWrongCase = await pool.query<{ id: string }>(`
+      SELECT id FROM cities WHERE status ~~ 'official'
+    `);
+    expect(likeWrongCase.rowCount).toBe(0);
   });
 
   it('proves repeatable custom SQL is applied and triggers/constraints are active', async () => {
@@ -155,6 +229,17 @@ describe('Database Migration Runner Integration', () => {
 
     const postsCount = await pool.query<{ count: string }>(`SELECT count(*) FROM posts`);
     expect(parseInt(postsCount.rows[0].count, 10)).toBeGreaterThan(0);
+
+    // Verify operators still function seamlessly after rerun
+    const postRerunIlike = await pool.query<{ count: string }>(`
+      SELECT count(*)::text AS count FROM cities WHERE status ~~* '%official%'
+    `);
+    expect(parseInt(postRerunIlike.rows[0].count, 10)).toBeGreaterThan(0);
+
+    const postRerunLike = await pool.query<{ count: string }>(`
+      SELECT count(*)::text AS count FROM cities WHERE status ~~ 'OFFICIAL'
+    `);
+    expect(parseInt(postRerunLike.rows[0].count, 10)).toBeGreaterThan(0);
   });
 
   it('proves nonzero failure behavior when migration or custom SQL fails', async () => {

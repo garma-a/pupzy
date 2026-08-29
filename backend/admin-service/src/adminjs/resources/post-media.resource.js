@@ -1,8 +1,4 @@
-import {
-  attachShortUuid,
-  noDeleteActions,
-  stripPopulatedPasswordHashes,
-} from "./resource-helpers.js";
+import { attachShortUuid, noDeleteActions, stripPopulatedPasswordHashes } from './resource-helpers.js';
 
 export function buildPostMediaResource(db, components = {}) {
   const properties = {
@@ -18,12 +14,12 @@ export function buildPostMediaResource(db, components = {}) {
     created_at: { isDisabled: true },
   };
 
-  attachShortUuid(properties, ["id", "post_id"], components, ["list", "show"]);
+  attachShortUuid(properties, ['id', 'post_id'], components, ['list', 'show']);
 
   return {
-    resource: db.table("post_media"),
+    resource: db.table('post_media'),
     options: {
-      navigation: { name: "Post Details", icon: "Image" },
+      navigation: { name: 'Post Details', icon: 'Image' },
       properties,
       actions: {
         ...noDeleteActions,
@@ -32,33 +28,21 @@ export function buildPostMediaResource(db, components = {}) {
         show: { after: stripPopulatedPasswordHashes },
         edit: { after: stripPopulatedPasswordHashes },
       },
-      sort: { sortBy: "created_at", direction: "desc" },
-      listProperties: [
-        "id",
-        "post_id",
-        "display_order",
-        "file_content_type",
-        "file_size_bytes",
-        "created_at",
-      ],
+      sort: { sortBy: 'created_at', direction: 'desc' },
+      listProperties: ['id', 'post_id', 'display_order', 'file_content_type', 'file_size_bytes', 'created_at'],
       showProperties: [
-        "id",
-        "post_id",
-        "public_url",
-        "cloudflare_storage_key",
-        "display_order",
-        "file_content_type",
-        "file_size_bytes",
-        "width",
-        "height",
-        "created_at",
+        'id',
+        'post_id',
+        'public_url',
+        'cloudflare_storage_key',
+        'display_order',
+        'file_content_type',
+        'file_size_bytes',
+        'width',
+        'height',
+        'created_at',
       ],
-      filterProperties: [
-        "id",
-        "post_id",
-        "file_content_type",
-        "created_at",
-      ],
+      filterProperties: ['id', 'post_id', 'file_content_type', 'created_at'],
     },
   };
 }

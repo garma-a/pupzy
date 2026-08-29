@@ -1,10 +1,10 @@
-import { ENUMS } from "../enums.js";
+import { ENUMS } from '../enums.js';
 import {
   attachShortUuid,
   buildReadOnlyResource,
   enumProperty,
   stripPopulatedPasswordHashes,
-} from "./resource-helpers.js";
+} from './resource-helpers.js';
 
 export function buildModerationActionsResource(db, components = {}) {
   const properties = {
@@ -20,51 +20,25 @@ export function buildModerationActionsResource(db, components = {}) {
     created_at: { isDisabled: true },
   };
 
-  attachShortUuid(
-    properties,
-    ["id", "admin_user_id", "target_id"],
-    components,
-    ["list", "show"],
-  );
+  attachShortUuid(properties, ['id', 'admin_user_id', 'target_id'], components, ['list', 'show']);
 
-  return buildReadOnlyResource(
-    db,
-    "moderation_actions",
-    { name: "Admin Management", icon: "Lock" },
-    properties,
-    {
-      sort: { sortBy: "created_at", direction: "desc" },
-      listProperties: [
-        "id",
-        "action_type",
-        "target_type",
-        "target_id",
-        "admin_user_id",
-        "reason",
-        "created_at",
-      ],
-      showProperties: [
-        "id",
-        "action_type",
-        "target_type",
-        "target_id",
-        "admin_user_id",
-        "reason",
-        "metadata",
-        "created_at",
-      ],
-      filterProperties: [
-        "id",
-        "action_type",
-        "target_type",
-        "target_id",
-        "admin_user_id",
-        "created_at",
-      ],
-      actions: {
-        list: { after: stripPopulatedPasswordHashes },
-        show: { after: stripPopulatedPasswordHashes },
-      },
+  return buildReadOnlyResource(db, 'moderation_actions', { name: 'Admin Management', icon: 'Lock' }, properties, {
+    sort: { sortBy: 'created_at', direction: 'desc' },
+    listProperties: ['id', 'action_type', 'target_type', 'target_id', 'admin_user_id', 'reason', 'created_at'],
+    showProperties: [
+      'id',
+      'action_type',
+      'target_type',
+      'target_id',
+      'admin_user_id',
+      'reason',
+      'metadata',
+      'created_at',
+    ],
+    filterProperties: ['id', 'action_type', 'target_type', 'target_id', 'admin_user_id', 'created_at'],
+    actions: {
+      list: { after: stripPopulatedPasswordHashes },
+      show: { after: stripPopulatedPasswordHashes },
     },
-  );
+  });
 }

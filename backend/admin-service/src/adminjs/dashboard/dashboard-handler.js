@@ -1,8 +1,8 @@
-import { DashboardStatsCache } from "./dashboard-cache.js";
+import { DashboardStatsCache } from './dashboard-cache.js';
 
 export function buildDashboardHandler(pool, cache = new DashboardStatsCache()) {
   return async function dashboardHandler(request) {
-    const fresh = request.query?.fresh === "true";
+    const fresh = request.query?.fresh === 'true';
     const stats = await cache.getStats(pool, { fresh });
 
     const { rows: needsReview } = await pool.query(`

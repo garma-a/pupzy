@@ -1,68 +1,57 @@
-import crypto from "node:crypto";
-import { ValidationError } from "adminjs";
-import { ENUMS } from "../enums.js";
-import {
-  attachShortUuid,
-  enumProperty,
-  noDeleteActions,
-  stripPopulatedPasswordHashes,
-} from "./resource-helpers.js";
+import crypto from 'node:crypto';
+import { ValidationError } from 'adminjs';
+import { ENUMS } from '../enums.js';
+import { attachShortUuid, enumProperty, noDeleteActions, stripPopulatedPasswordHashes } from './resource-helpers.js';
 import {
   validateMappedLocation,
   isLocationModified,
   findNearestOfficialCity,
   checkCityDiscrepancy,
   readOverrideReason,
-} from "./vet-clinics.location.js";
-import { searchVetClinicAddress } from "./vet-clinics.geocoder.js";
+} from './vet-clinics.location.js';
+import { searchVetClinicAddress } from './vet-clinics.geocoder.js';
 
 const VET_CLINIC_COLUMNS = new Set([
-  "id",
-  "name_english",
-  "name_arabic",
-  "city_id",
-  "area_name",
-  "coordinates",
-  "phone_number",
-  "address",
-  "address_english",
-  "address_arabic",
-  "website",
-  "location_provenance",
-  "location_captured_at",
-  "source",
-  "osm_id",
-  "osm_type",
-  "is_active",
-  "created_at",
-  "updated_at",
+  'id',
+  'name_english',
+  'name_arabic',
+  'city_id',
+  'area_name',
+  'coordinates',
+  'phone_number',
+  'address',
+  'address_english',
+  'address_arabic',
+  'website',
+  'location_provenance',
+  'location_captured_at',
+  'source',
+  'osm_id',
+  'osm_type',
+  'is_active',
+  'created_at',
+  'updated_at',
 ]);
 
 function isAuthorizedToOverride(currentAdmin) {
   if (!currentAdmin) return false;
   const role = currentAdmin.role;
   const isActive = currentAdmin.is_active !== false;
-  return (role === "ADMIN" || role === "SUPER_ADMIN") && isActive;
+  return (role === 'ADMIN' || role === 'SUPER_ADMIN') && isActive;
 }
 
-export function buildVetClinicsResource(
-  db,
-  poolOrComponents = {},
-  componentsOrCache = {},
-  cache = null,
-) {
+export function buildVetClinicsResource(db, poolOrComponents = {}, componentsOrCache = {}, cache = null) {
   let pool = null;
   let components = {};
   let statsCache = null;
 
   if (
     poolOrComponents &&
-    (typeof poolOrComponents.connect === "function" ||
-      typeof poolOrComponents.query === "function")
+    (typeof poolOrComponents.connect === 'function' || typeof poolOrComponents.query === 'function')
   ) {
     pool = poolOrComponents;
     components = componentsOrCache || {};
-    statsCache = cache;
+    statsCache = typeof cache?.invalidate === 'function' ? cache : null;
   } else if (
     poolOrComponents &&
     (poolOrComponents.ShortUuid ||
@@ -71,107 +60,134 @@ export function buildVetClinicsResource(
       poolOrComponents.Dashboard)
   ) {
     components = poolOrComponents || {};
-    statsCache = componentsOrCache;
+    statsCache = typeof componentsOrCache?.invalidate === 'function' ? componentsOrCache : null;
   } else if (
     componentsOrCache &&
-    (componentsOrCache.ShortUuid ||
-      componentsOrCache.MappedLocationEdit ||
-      componentsOrCache.MappedLocationShow)
+    (componentsOrCache.ShortUuid || componentsOrCache.MappedLocationEdit || componentsOrCache.MappedLocationShow)
   ) {
     pool = poolOrComponents;
     components = componentsOrCache;
-    statsCache = cache;
+    statsCache = typeof cache?.invalidate === 'function' ? cache : null;
   } else {
     components = poolOrComponents || {};
     statsCache =
-      componentsOrCache && typeof componentsOrCache.invalidate === "function"
+      typeof componentsOrCache?.invalidate === 'function'
         ? componentsOrCache
-        : cache;
+        : typeof cache?.invalidate === 'function'
+          ? cache
+          : null;
   }
 
-  const knex = db.table("cities")?.knex ?? db.table("vet_clinics")?.knex;
+  const knex = db.table('cities')?.knex ?? db.table('vet_clinics')?.knex;
 
-  async function getCityById(cityId) {
-    if (!cityId) return null;
-    if (pool) {
-      const { rows } = await pool.query(
+  async function getCityById(trxOrClient, cityId) {
+    if (!cityId || !trxOrClient) return null;
+    if (typeof trxOrClient.query === 'function') {
+      const { rows } = await trxOrClient.query(
         `SELECT id, name_english, name_arabic, governorate, status FROM cities WHERE id = $1`,
         [cityId],
       );
       return rows[0] ?? null;
     }
-    if (knex) {
-      const rows = await knex("cities")
-        .select("id", "name_english", "name_arabic", "governorate", "status")
-        .where("id", cityId);
+    const queryBuilder =
+      typeof trxOrClient === 'function'
+        ? trxOrClient('cities')
+        : trxOrClient.knex
+          ? trxOrClient.knex('cities')
+          : trxOrClient;
+    const rows = await queryBuilder
+      .select('id', 'name_english', 'name_arabic', 'governorate', 'status')
+      .where('id', cityId);
+    return rows?.[0] ?? null;
+  }
+
+  async function getClinicById(trxOrClient, recordId, forUpdate = false) {
+    if (!recordId || !trxOrClient) return null;
+    if (typeof trxOrClient.query === 'function') {
+      const sql = forUpdate
+        ? `SELECT * FROM vet_clinics WHERE id = $1 FOR UPDATE`
+        : `SELECT * FROM vet_clinics WHERE id = $1`;
+      const { rows } = await trxOrClient.query(sql, [recordId]);
       return rows[0] ?? null;
     }
-    return null;
+    const queryBuilder =
+      typeof trxOrClient === 'function'
+        ? trxOrClient('vet_clinics')
+        : trxOrClient.knex
+          ? trxOrClient.knex('vet_clinics')
+          : trxOrClient;
+    let qb = queryBuilder.where('id', recordId);
+    if (forUpdate && typeof qb.forUpdate === 'function') {
+      qb = qb.forUpdate();
+    }
+    const rows = await qb;
+    return rows?.[0] ?? null;
   }
 
-  async function getNearestCity(lat, lng) {
-    return findNearestOfficialCity(pool || knex, lat, lng);
-  }
-
-  async function prepareNewPayload(request, context = {}) {
-    if (request.method !== "post") return request;
-    const payload = { ...(request.payload || {}) };
-    const currentAdmin = context.currentAdmin;
-    payload.id = payload.id || crypto.randomUUID();
-    payload.source = payload.source || "MANUAL";
-
-    // 1. Validate official City selection
-    if (!payload.city_id) {
-      throw new ValidationError({
-        city_id: { message: "Must select an existing official City" },
-      });
-    }
-
-    const city = await getCityById(payload.city_id);
-    if (!city || city.status !== "OFFICIAL") {
-      throw new ValidationError({
-        city_id: { message: "Must select an existing official City" },
-      });
-    }
-
-    // 2. Full Mapped Location validation on create
-    const location = validateMappedLocation(payload);
-    payload.coordinates = location.coordinatesStr;
-    payload.address_english = location.address_english;
-    payload.address_arabic = location.address_arabic;
-    payload.address = location.address;
-    payload.location_provenance =
-      payload.location_provenance === "NOMINATIM" ? "NOMINATIM" : "MANUAL";
-    payload.location_captured_at = new Date().toISOString();
-    if (payload.osm_id !== undefined && payload.osm_id !== null && payload.osm_id !== "") {
-      const rawOsm = String(payload.osm_id).trim();
-      if (/^\d+$/.test(rawOsm)) {
-        payload.osm_id = rawOsm;
+  async function executeInTransaction(fn) {
+    if (pool) {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const result = await fn(client, 'pg');
+        await client.query('COMMIT');
+        return result;
+      } catch (err) {
+        await client.query('ROLLBACK').catch(() => {});
+        throw err;
+      } finally {
+        client.release();
       }
     }
-    if (payload.osm_type !== undefined && payload.osm_type !== null) {
-      payload.osm_type = String(payload.osm_type).trim();
+
+    if (knex) {
+      if (typeof knex.transaction === 'function') {
+        return await knex.transaction(async (trx) => {
+          return await fn(trx, 'knex');
+        });
+      }
+      return await fn(knex, 'knex');
     }
 
-    // 3. Nearest official City & Discrepancy check
-    const nearestCity = await getNearestCity(
-      location.latitude,
-      location.longitude,
-    );
-    const discrepancy = checkCityDiscrepancy(city, nearestCity);
+    throw new Error('No database pool or knex connection available');
+  }
 
+  async function createClinicInTransaction(trxOrClient, clientType, rawPayload, currentAdmin) {
+    // 1. Validate required city selection
+    if (!rawPayload.city_id) {
+      throw new ValidationError({
+        city_id: { message: 'Must select an existing official City' },
+      });
+    }
+
+    // 2. Query official City inside transaction
+    const city = await getCityById(trxOrClient, rawPayload.city_id);
+    if (!city || city.status !== 'OFFICIAL') {
+      throw new ValidationError({
+        city_id: { message: 'Must select an existing official City' },
+      });
+    }
+
+    // 3. Full Mapped Location validation on create
+    const location = validateMappedLocation(rawPayload);
+
+    // 4. Query nearest official City inside transaction
+    const nearestCity = await findNearestOfficialCity(trxOrClient, location.latitude, location.longitude);
+
+    // 5. Check discrepancy inside transaction
+    const discrepancy = checkCityDiscrepancy(city, nearestCity);
     let overrideReason = null;
+
     if (discrepancy.isDiscrepant) {
       if (!isAuthorizedToOverride(currentAdmin)) {
         throw new ValidationError({
           override_reason: {
-            message:
-              "Only active administrators may override City disagreements.",
+            message: 'Only active administrators may override City disagreements.',
           },
         });
       }
 
-      const reasonValue = payload.override_reason ?? payload.reason;
+      const reasonValue = rawPayload.override_reason ?? rawPayload.reason;
       const reasonResult = readOverrideReason(reasonValue);
       if (reasonResult.error) {
         throw new ValidationError({
@@ -183,78 +199,336 @@ export function buildVetClinicsResource(
       overrideReason = reasonResult.reason;
     }
 
-    request._discrepancyMeta = {
-      selectedCity: city,
-      nearestCity,
-      discrepancy,
-      overrideReason,
-      location,
+    // 6. Build clinic insert payload
+    const clinicData = {
+      ...rawPayload,
+      id: rawPayload.id || crypto.randomUUID(),
+      source: rawPayload.source || 'MANUAL',
+      coordinates: location.coordinatesStr,
+      address_english: location.address_english,
+      address_arabic: location.address_arabic,
+      address: location.address,
+      location_provenance: rawPayload.location_provenance === 'NOMINATIM' ? 'NOMINATIM' : 'MANUAL',
+      location_captured_at: new Date().toISOString(),
     };
 
-    // Clean up transient fields not in the vet_clinics table schema
-    delete payload.location_confirmed;
-    delete payload.latitude;
-    delete payload.longitude;
-    delete payload["coordinates.latitude"];
-    delete payload["coordinates.longitude"];
-    delete payload.override_reason;
-    delete payload.reason;
+    if (clinicData.is_active !== undefined && typeof clinicData.is_active === 'string') {
+      clinicData.is_active =
+        clinicData.is_active === 'true' || clinicData.is_active === '1' || clinicData.is_active === 'on';
+    }
 
-    request.payload = payload;
-    return request;
-  }
+    if (rawPayload.osm_id !== undefined && rawPayload.osm_id !== null && rawPayload.osm_id !== '') {
+      const rawOsm = String(rawPayload.osm_id).trim();
+      if (/^\d+$/.test(rawOsm)) {
+        clinicData.osm_id = rawOsm;
+      }
+    }
+    if (rawPayload.osm_type !== undefined && rawPayload.osm_type !== null) {
+      clinicData.osm_type = String(rawPayload.osm_type).trim();
+    }
 
-  async function prepareEditPayload(request, context = {}) {
-    if (request.method !== "post") return request;
-    const payload = { ...(request.payload || {}) };
-    const recordId = request.params?.recordId;
-    const currentAdmin = context.currentAdmin;
+    let insertedClinic;
+    if (clientType === 'pg') {
+      const insertKeys = Object.keys(clinicData).filter((k) => VET_CLINIC_COLUMNS.has(k));
+      const insertCols = insertKeys.map((k) => `"${k}"`).join(', ');
+      const insertPlaceholders = insertKeys
+        .map((k, i) => {
+          if (k === 'coordinates') {
+            return `ST_GeomFromEWKT($${i + 1})`;
+          }
+          return `$${i + 1}`;
+        })
+        .join(', ');
+      const insertValues = insertKeys.map((k) => clinicData[k]);
 
-    let existing = null;
-    if (recordId) {
-      if (pool) {
-        const { rows } = await pool.query(
-          `SELECT * FROM vet_clinics WHERE id = $1`,
-          [recordId],
+      const { rows } = await trxOrClient.query(
+        `INSERT INTO vet_clinics (${insertCols}) VALUES (${insertPlaceholders}) RETURNING *`,
+        insertValues,
+      );
+      insertedClinic = rows[0];
+    } else {
+      const insertKeys = Object.keys(clinicData).filter((k) => VET_CLINIC_COLUMNS.has(k));
+      const insertObj = {};
+      for (const k of insertKeys) {
+        if (k === 'coordinates') {
+          insertObj[k] = trxOrClient.raw ? trxOrClient.raw('ST_GeomFromEWKT(?)', [clinicData[k]]) : clinicData[k];
+        } else {
+          insertObj[k] = clinicData[k];
+        }
+      }
+      const result = await trxOrClient('vet_clinics').insert(insertObj).returning('*');
+      insertedClinic = Array.isArray(result) ? result[0] : result;
+    }
+
+    // 7. Write audit log atomically inside the same transaction if discrepant
+    if (discrepancy.isDiscrepant) {
+      const auditId = crypto.randomUUID();
+      const detailsJson = JSON.stringify({
+        selected_city: discrepancy.selectedCity,
+        nearest_city: discrepancy.nearestCity,
+      });
+
+      if (clientType === 'pg') {
+        await trxOrClient.query(
+          `INSERT INTO vet_clinic_location_audits
+             (id, vet_clinic_id, admin_user_id, selected_city_id, nearest_city_id, coordinates, discrepancy_details, reason, created_at)
+           VALUES
+             ($1, $2, $3, $4, $5, ST_SetSRID(ST_MakePoint($6, $7), 4326), $8, $9, now())`,
+          [
+            auditId,
+            insertedClinic.id,
+            currentAdmin?.id ?? null,
+            city.id,
+            nearestCity.id,
+            location.longitude,
+            location.latitude,
+            detailsJson,
+            overrideReason,
+          ],
         );
-        existing = rows[0] ?? null;
-      } else if (knex) {
-        const rows = await knex("vet_clinics").where("id", recordId);
-        existing = rows[0] ?? null;
+      } else {
+        await trxOrClient('vet_clinic_location_audits').insert({
+          id: auditId,
+          vet_clinic_id: insertedClinic.id,
+          admin_user_id: currentAdmin?.id ?? null,
+          selected_city_id: city.id,
+          nearest_city_id: nearestCity.id,
+          coordinates: trxOrClient.raw
+            ? trxOrClient.raw('ST_SetSRID(ST_MakePoint(?, ?), 4326)', [location.longitude, location.latitude])
+            : `SRID=4326;POINT(${location.longitude} ${location.latitude})`,
+          discrepancy_details: detailsJson,
+          reason: overrideReason,
+        });
       }
     }
 
-    const locationChanged = isLocationModified(payload, existing);
+    return insertedClinic;
+  }
+
+  async function updateClinicInTransaction(trxOrClient, clientType, recordId, rawPayload, currentAdmin) {
+    const existing = await getClinicById(trxOrClient, recordId, true);
+    if (!existing) {
+      throw new ValidationError({
+        id: { message: 'Vet clinic record not found' },
+      });
+    }
+
+    const locationChanged = isLocationModified(rawPayload, existing);
     let selectedCity = null;
     let nearestCity = null;
     let discrepancy = { isDiscrepant: false };
     let overrideReason = null;
     let location = null;
+    const updateData = { ...rawPayload };
 
     if (locationChanged) {
-      const targetCityId = payload.city_id || existing?.city_id;
+      const targetCityId = rawPayload.city_id || existing?.city_id;
       if (!targetCityId) {
         throw new ValidationError({
-          city_id: { message: "Must select an existing official City" },
+          city_id: { message: 'Must select an existing official City' },
         });
       }
 
-      selectedCity = await getCityById(targetCityId);
-      if (!selectedCity || selectedCity.status !== "OFFICIAL") {
+      selectedCity = await getCityById(trxOrClient, targetCityId);
+      if (!selectedCity || selectedCity.status !== 'OFFICIAL') {
         throw new ValidationError({
-          city_id: { message: "Must select an existing official City" },
+          city_id: { message: 'Must select an existing official City' },
         });
       }
 
-      location = validateMappedLocation(payload);
+      location = validateMappedLocation(rawPayload);
+      updateData.coordinates = location.coordinatesStr;
+      updateData.address_english = location.address_english;
+      updateData.address_arabic = location.address_arabic;
+      updateData.address = location.address;
+      updateData.location_provenance = rawPayload.location_provenance === 'NOMINATIM' ? 'NOMINATIM' : 'MANUAL';
+      updateData.location_captured_at = new Date().toISOString();
+
+      if (rawPayload.osm_id !== undefined && rawPayload.osm_id !== null && rawPayload.osm_id !== '') {
+        const rawOsm = String(rawPayload.osm_id).trim();
+        if (/^\d+$/.test(rawOsm)) {
+          updateData.osm_id = rawOsm;
+        }
+      }
+      if (rawPayload.osm_type !== undefined && rawPayload.osm_type !== null) {
+        updateData.osm_type = String(rawPayload.osm_type).trim();
+      }
+
+      // Nearest official City & Discrepancy check inside transaction
+      nearestCity = await findNearestOfficialCity(trxOrClient, location.latitude, location.longitude);
+      discrepancy = checkCityDiscrepancy(selectedCity, nearestCity);
+
+      if (discrepancy.isDiscrepant) {
+        if (!isAuthorizedToOverride(currentAdmin)) {
+          throw new ValidationError({
+            override_reason: {
+              message: 'Only active administrators may override City disagreements.',
+            },
+          });
+        }
+
+        const reasonValue = rawPayload.override_reason ?? rawPayload.reason;
+        const reasonResult = readOverrideReason(reasonValue);
+        if (reasonResult.error) {
+          throw new ValidationError({
+            override_reason: {
+              message: `${discrepancy.explanation} ${reasonResult.error}`,
+            },
+          });
+        }
+        overrideReason = reasonResult.reason;
+      }
+    } else {
+      // Non-location edit (preserve existing location data)
+      delete updateData.coordinates;
+      delete updateData.location_provenance;
+      delete updateData.location_captured_at;
+      delete updateData.osm_id;
+      delete updateData.osm_type;
+
+      if (updateData.city_id !== undefined && existing?.city_id !== undefined) {
+        if (String(updateData.city_id ?? '').trim() === String(existing.city_id ?? '').trim()) {
+          delete updateData.city_id;
+        }
+      }
+      if (updateData.address_english !== undefined && existing?.address_english !== undefined) {
+        if (String(updateData.address_english ?? '').trim() === String(existing.address_english ?? '').trim()) {
+          delete updateData.address_english;
+        }
+      }
+      if (updateData.address_arabic !== undefined && existing?.address_arabic !== undefined) {
+        if (String(updateData.address_arabic ?? '').trim() === String(existing.address_arabic ?? '').trim()) {
+          delete updateData.address_arabic;
+        }
+      }
+      if (updateData.address !== undefined && existing?.address !== undefined) {
+        if (String(updateData.address ?? '').trim() === String(existing.address ?? '').trim()) {
+          delete updateData.address;
+        }
+      }
+    }
+
+    if (updateData.is_active !== undefined && typeof updateData.is_active === 'string') {
+      updateData.is_active =
+        updateData.is_active === 'true' || updateData.is_active === '1' || updateData.is_active === 'on';
+    }
+
+    // Filter columns to update
+    const updateKeys = Object.keys(updateData).filter((k) => k !== 'id' && VET_CLINIC_COLUMNS.has(k));
+    let updatedClinic = existing;
+
+    if (updateKeys.length > 0) {
+      if (clientType === 'pg') {
+        const setClauses = updateKeys
+          .map((k, i) => {
+            if (k === 'coordinates') {
+              return `"${k}" = ST_GeomFromEWKT($${i + 2})`;
+            }
+            return `"${k}" = $${i + 2}`;
+          })
+          .join(', ');
+        const updateValues = [recordId, ...updateKeys.map((k) => updateData[k])];
+
+        const { rows } = await trxOrClient.query(
+          `UPDATE vet_clinics SET ${setClauses}, updated_at = now() WHERE id = $1 RETURNING *`,
+          updateValues,
+        );
+        updatedClinic = rows[0] ?? existing;
+      } else {
+        const updatePayload = {};
+        for (const k of updateKeys) {
+          if (k === 'coordinates') {
+            updatePayload[k] = trxOrClient.raw ? trxOrClient.raw('ST_GeomFromEWKT(?)', [updateData[k]]) : updateData[k];
+          } else {
+            updatePayload[k] = updateData[k];
+          }
+        }
+        if (trxOrClient.raw) {
+          updatePayload.updated_at = trxOrClient.raw('now()');
+        }
+        const result = await trxOrClient('vet_clinics').where('id', recordId).update(updatePayload).returning('*');
+        updatedClinic = (Array.isArray(result) ? result[0] : result) || existing;
+      }
+    }
+
+    // Write audit record atomically inside the same transaction if location changed and discrepant
+    if (locationChanged && discrepancy.isDiscrepant) {
+      const auditId = crypto.randomUUID();
+      const detailsJson = JSON.stringify({
+        selected_city: discrepancy.selectedCity,
+        nearest_city: discrepancy.nearestCity,
+      });
+
+      if (clientType === 'pg') {
+        await trxOrClient.query(
+          `INSERT INTO vet_clinic_location_audits
+             (id, vet_clinic_id, admin_user_id, selected_city_id, nearest_city_id, coordinates, discrepancy_details, reason, created_at)
+           VALUES
+             ($1, $2, $3, $4, $5, ST_SetSRID(ST_MakePoint($6, $7), 4326), $8, $9, now())`,
+          [
+            auditId,
+            recordId,
+            currentAdmin?.id ?? null,
+            selectedCity.id,
+            nearestCity.id,
+            location.longitude,
+            location.latitude,
+            detailsJson,
+            overrideReason,
+          ],
+        );
+      } else {
+        await trxOrClient('vet_clinic_location_audits').insert({
+          id: auditId,
+          vet_clinic_id: recordId,
+          admin_user_id: currentAdmin?.id ?? null,
+          selected_city_id: selectedCity.id,
+          nearest_city_id: nearestCity.id,
+          coordinates: trxOrClient.raw
+            ? trxOrClient.raw('ST_SetSRID(ST_MakePoint(?, ?), 4326)', [location.longitude, location.latitude])
+            : `SRID=4326;POINT(${location.longitude} ${location.latitude})`,
+          discrepancy_details: detailsJson,
+          reason: overrideReason,
+        });
+      }
+    }
+
+    return updatedClinic;
+  }
+
+  async function prepareNewPayload(request, context = {}) {
+    if (request.method !== 'post') return request;
+    request._rawPayload = { ...(request.payload || {}) };
+    const payload = { ...(request.payload || {}) };
+    const currentAdmin = context.currentAdmin;
+    payload.id = payload.id || crypto.randomUUID();
+    payload.source = payload.source || 'MANUAL';
+
+    // 1. Validate official City selection
+    if (!payload.city_id) {
+      throw new ValidationError({
+        city_id: { message: 'Must select an existing official City' },
+      });
+    }
+
+    const clientOrKnex = pool || knex;
+    if (clientOrKnex) {
+      const city = await getCityById(clientOrKnex, payload.city_id);
+      if (!city || city.status !== 'OFFICIAL') {
+        throw new ValidationError({
+          city_id: { message: 'Must select an existing official City' },
+        });
+      }
+
+      // 2. Full Mapped Location validation on create
+      const location = validateMappedLocation(payload);
       payload.coordinates = location.coordinatesStr;
       payload.address_english = location.address_english;
       payload.address_arabic = location.address_arabic;
       payload.address = location.address;
-      payload.location_provenance =
-        payload.location_provenance === "NOMINATIM" ? "NOMINATIM" : "MANUAL";
+      payload.location_provenance = payload.location_provenance === 'NOMINATIM' ? 'NOMINATIM' : 'MANUAL';
       payload.location_captured_at = new Date().toISOString();
-      if (payload.osm_id !== undefined && payload.osm_id !== null && payload.osm_id !== "") {
+      if (payload.osm_id !== undefined && payload.osm_id !== null && payload.osm_id !== '') {
         const rawOsm = String(payload.osm_id).trim();
         if (/^\d+$/.test(rawOsm)) {
           payload.osm_id = rawOsm;
@@ -264,19 +538,16 @@ export function buildVetClinicsResource(
         payload.osm_type = String(payload.osm_type).trim();
       }
 
-      // Nearest official City & Discrepancy check
-      nearestCity = await getNearestCity(
-        location.latitude,
-        location.longitude,
-      );
-      discrepancy = checkCityDiscrepancy(selectedCity, nearestCity);
+      // 3. Nearest official City & Discrepancy check
+      const nearestCity = await findNearestOfficialCity(clientOrKnex, location.latitude, location.longitude);
+      const discrepancy = checkCityDiscrepancy(city, nearestCity);
 
+      let overrideReason = null;
       if (discrepancy.isDiscrepant) {
         if (!isAuthorizedToOverride(currentAdmin)) {
           throw new ValidationError({
             override_reason: {
-              message:
-                "Only active administrators may override City disagreements.",
+              message: 'Only active administrators may override City disagreements.',
             },
           });
         }
@@ -292,22 +563,143 @@ export function buildVetClinicsResource(
         }
         overrideReason = reasonResult.reason;
       }
+
+      request._discrepancyMeta = {
+        selectedCity: city,
+        nearestCity,
+        discrepancy,
+        overrideReason,
+        location,
+      };
     } else {
-      // Non-location edit (e.g. imported clinic name/status edit)
-      if (payload.city_id) {
-        selectedCity = await getCityById(payload.city_id);
-        if (!selectedCity || selectedCity.status !== "OFFICIAL") {
+      const location = validateMappedLocation(payload);
+      payload.coordinates = location.coordinatesStr;
+      payload.address_english = location.address_english;
+      payload.address_arabic = location.address_arabic;
+      payload.address = location.address;
+    }
+
+    // Clean up transient fields not in the vet_clinics table schema
+    delete payload.location_confirmed;
+    delete payload.latitude;
+    delete payload.longitude;
+    delete payload['coordinates.latitude'];
+    delete payload['coordinates.longitude'];
+    delete payload.override_reason;
+    delete payload.reason;
+
+    request.payload = payload;
+    return request;
+  }
+
+  async function prepareEditPayload(request, context = {}) {
+    if (request.method !== 'post') return request;
+    request._rawPayload = { ...(request.payload || {}) };
+    const payload = { ...(request.payload || {}) };
+    const recordId = request.params?.recordId;
+    const currentAdmin = context.currentAdmin;
+    const clientOrKnex = pool || knex;
+
+    let existing = null;
+    if (recordId && clientOrKnex) {
+      existing = await getClinicById(clientOrKnex, recordId);
+    }
+
+    const locationChanged = isLocationModified(payload, existing);
+    let selectedCity = null;
+    let nearestCity = null;
+    let discrepancy = { isDiscrepant: false };
+    let overrideReason = null;
+    let location = null;
+
+    if (locationChanged) {
+      const targetCityId = payload.city_id || existing?.city_id;
+      if (!targetCityId) {
+        throw new ValidationError({
+          city_id: { message: 'Must select an existing official City' },
+        });
+      }
+
+      if (clientOrKnex) {
+        selectedCity = await getCityById(clientOrKnex, targetCityId);
+        if (!selectedCity || selectedCity.status !== 'OFFICIAL') {
           throw new ValidationError({
-            city_id: { message: "Must select an existing official City" },
+            city_id: { message: 'Must select an existing official City' },
           });
         }
       }
 
-      if (
-        !payload.address &&
-        (payload.address_english || payload.address_arabic)
-      ) {
-        payload.address = payload.address_english || payload.address_arabic;
+      location = validateMappedLocation(payload);
+      payload.coordinates = location.coordinatesStr;
+      payload.address_english = location.address_english;
+      payload.address_arabic = location.address_arabic;
+      payload.address = location.address;
+      payload.location_provenance = payload.location_provenance === 'NOMINATIM' ? 'NOMINATIM' : 'MANUAL';
+      payload.location_captured_at = new Date().toISOString();
+      if (payload.osm_id !== undefined && payload.osm_id !== null && payload.osm_id !== '') {
+        const rawOsm = String(payload.osm_id).trim();
+        if (/^\d+$/.test(rawOsm)) {
+          payload.osm_id = rawOsm;
+        }
+      }
+      if (payload.osm_type !== undefined && payload.osm_type !== null) {
+        payload.osm_type = String(payload.osm_type).trim();
+      }
+
+      // Nearest official City & Discrepancy check
+      if (clientOrKnex && selectedCity) {
+        nearestCity = await findNearestOfficialCity(clientOrKnex, location.latitude, location.longitude);
+        discrepancy = checkCityDiscrepancy(selectedCity, nearestCity);
+
+        if (discrepancy.isDiscrepant) {
+          if (!isAuthorizedToOverride(currentAdmin)) {
+            throw new ValidationError({
+              override_reason: {
+                message: 'Only active administrators may override City disagreements.',
+              },
+            });
+          }
+
+          const reasonValue = payload.override_reason ?? payload.reason;
+          const reasonResult = readOverrideReason(reasonValue);
+          if (reasonResult.error) {
+            throw new ValidationError({
+              override_reason: {
+                message: `${discrepancy.explanation} ${reasonResult.error}`,
+              },
+            });
+          }
+          overrideReason = reasonResult.reason;
+        }
+      }
+    } else {
+      // Non-location edit (e.g. imported clinic name/status edit)
+      // When location is not modified, preserve the existing location data as-is.
+      delete payload.coordinates;
+      delete payload.location_provenance;
+      delete payload.location_captured_at;
+      delete payload.osm_id;
+      delete payload.osm_type;
+
+      if (payload.city_id !== undefined && existing?.city_id !== undefined) {
+        if (String(payload.city_id ?? '').trim() === String(existing.city_id ?? '').trim()) {
+          delete payload.city_id;
+        }
+      }
+      if (payload.address_english !== undefined && existing?.address_english !== undefined) {
+        if (String(payload.address_english ?? '').trim() === String(existing.address_english ?? '').trim()) {
+          delete payload.address_english;
+        }
+      }
+      if (payload.address_arabic !== undefined && existing?.address_arabic !== undefined) {
+        if (String(payload.address_arabic ?? '').trim() === String(existing.address_arabic ?? '').trim()) {
+          delete payload.address_arabic;
+        }
+      }
+      if (payload.address !== undefined && existing?.address !== undefined) {
+        if (String(payload.address ?? '').trim() === String(existing.address ?? '').trim()) {
+          delete payload.address;
+        }
       }
     }
 
@@ -325,8 +717,8 @@ export function buildVetClinicsResource(
     delete payload.location_confirmed;
     delete payload.latitude;
     delete payload.longitude;
-    delete payload["coordinates.latitude"];
-    delete payload["coordinates.longitude"];
+    delete payload['coordinates.latitude'];
+    delete payload['coordinates.longitude'];
     delete payload.override_reason;
     delete payload.reason;
 
@@ -334,207 +726,105 @@ export function buildVetClinicsResource(
     return request;
   }
 
-    const properties = {
-      id: { isTitle: false, isDisabled: true },
-      name_english: { isTitle: true },
-      name_arabic: {},
-      city_id: {},
-      source: enumProperty(ENUMS.vetClinicSource),
-      coordinates: {
-        components: {
-          edit: components.MappedLocationEdit,
-          show: components.MappedLocationShow,
-        },
-        custom: {
-          tileUrl:
-            process.env.MAP_TILE_URL ||
-            "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-          attribution:
-            process.env.MAP_ATTRIBUTION ||
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-          searchAttribution:
-            process.env.NOMINATIM_ATTRIBUTION ||
-            'Data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ODbL 1.0',
-          searchEnabled:
-            process.env.NOMINATIM_ENABLED !== "false" &&
-            process.env.NOMINATIM_ENABLED !== false,
-          minLat: parseFloat(process.env.EGYPT_MIN_LAT || "21.0"),
-          maxLat: parseFloat(process.env.EGYPT_MAX_LAT || "32.0"),
-          minLng: parseFloat(process.env.EGYPT_MIN_LNG || "24.0"),
-          maxLng: parseFloat(process.env.EGYPT_MAX_LNG || "37.5"),
-        },
-        isVisible: { list: false, show: true, edit: true, filter: false },
+  const properties = {
+    id: { isTitle: false, isDisabled: true },
+    name_english: { isTitle: true },
+    name_arabic: {},
+    city_id: {},
+    source: enumProperty(ENUMS.vetClinicSource),
+    coordinates: {
+      components: {
+        edit: components.MappedLocationEdit,
+        show: components.MappedLocationShow,
       },
-      address: {
-        isVisible: { list: false, show: true, edit: false, filter: false },
+      custom: {
+        tileUrl: process.env.MAP_TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution:
+          process.env.MAP_ATTRIBUTION ||
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        searchAttribution:
+          process.env.NOMINATIM_ATTRIBUTION ||
+          'Data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ODbL 1.0',
+        searchEnabled: process.env.NOMINATIM_ENABLED !== 'false' && process.env.NOMINATIM_ENABLED !== false,
+        minLat: parseFloat(process.env.EGYPT_MIN_LAT || '21.0'),
+        maxLat: parseFloat(process.env.EGYPT_MAX_LAT || '32.0'),
+        minLng: parseFloat(process.env.EGYPT_MIN_LNG || '24.0'),
+        maxLng: parseFloat(process.env.EGYPT_MAX_LNG || '37.5'),
       },
-      address_english: {
-        isVisible: { list: true, show: true, edit: true, filter: false },
-      },
-      address_arabic: {
-        isVisible: { list: true, show: true, edit: true, filter: false },
-      },
-      location_provenance: {
-        isVisible: { list: false, show: true, edit: false, filter: true },
-      },
-      location_captured_at: {
-        isVisible: { list: false, show: true, edit: false, filter: false },
-        isDisabled: true,
-      },
-      osm_type: {
-        isVisible: { list: false, show: true, edit: false, filter: false },
-        isDisabled: true,
-      },
-      osm_id: { isDisabled: true },
-      created_at: { isDisabled: true },
-      updated_at: { isDisabled: true },
-    };
+      isVisible: { list: false, show: true, edit: true, filter: false },
+    },
+    address: {
+      isVisible: { list: false, show: true, edit: false, filter: false },
+    },
+    address_english: {
+      isVisible: { list: true, show: true, edit: true, filter: false },
+    },
+    address_arabic: {
+      isVisible: { list: true, show: true, edit: true, filter: false },
+    },
+    location_provenance: {
+      isVisible: { list: false, show: true, edit: false, filter: true },
+    },
+    location_captured_at: {
+      isVisible: { list: false, show: true, edit: false, filter: false },
+      isDisabled: true,
+    },
+    osm_type: {
+      isVisible: { list: false, show: true, edit: false, filter: false },
+      isDisabled: true,
+    },
+    osm_id: { isDisabled: true },
+    created_at: { isDisabled: true },
+    updated_at: { isDisabled: true },
+  };
 
-    attachShortUuid(properties, ["id"], components, ["show"]);
+  attachShortUuid(properties, ['id'], components, ['show']);
 
-    return {
-      resource: db.table("vet_clinics"),
-      options: {
-        navigation: { name: "Reference Data", icon: "Map" },
-        properties,
-        actions: {
-          ...noDeleteActions,
-          list: { after: stripPopulatedPasswordHashes },
-          show: { after: stripPopulatedPasswordHashes },
-          new: {
+  return {
+    resource: db.table('vet_clinics'),
+    options: {
+      navigation: { name: 'Reference Data', icon: 'Map' },
+      properties,
+      actions: {
+        ...noDeleteActions,
+        list: { after: stripPopulatedPasswordHashes },
+        show: { after: stripPopulatedPasswordHashes },
+        new: {
           before: prepareNewPayload,
           handler: async (request, response, context) => {
             const { resource, currentAdmin, h } = context;
-            if (request.method !== "post") {
+            if (request.method !== 'post') {
               const record = resource.build(request.payload || {});
               return { record: record.toJSON(currentAdmin) };
             }
 
-            // If request._discrepancyMeta is already set by before hook, use it; otherwise run prepareNewPayload
-            let payload = request.payload;
-            let meta = request._discrepancyMeta;
-            if (!meta) {
-              const preparedReq = await prepareNewPayload(request, context);
-              payload = preparedReq.payload;
-              meta = preparedReq._discrepancyMeta || {};
-            }
-
-            if (pool) {
-              const client = await pool.connect();
-              try {
-                await client.query("BEGIN");
-
-                const insertKeys = Object.keys(payload).filter((k) =>
-                  VET_CLINIC_COLUMNS.has(k),
-                );
-                const insertCols = insertKeys.map((k) => `"${k}"`).join(", ");
-                const insertPlaceholders = insertKeys
-                  .map((k, i) => {
-                    if (k === "coordinates") {
-                      return `ST_GeomFromEWKT($${i + 1})`;
-                    }
-                    return `$${i + 1}`;
-                  })
-                  .join(", ");
-                const insertValues = insertKeys.map((k) => payload[k]);
-
-                const { rows } = await client.query(
-                  `INSERT INTO vet_clinics (${insertCols}) VALUES (${insertPlaceholders}) RETURNING *`,
-                  insertValues,
-                );
-                const insertedClinic = rows[0];
-
-                if (meta.discrepancy?.isDiscrepant) {
-                  const auditId = crypto.randomUUID();
-                  const detailsJson = JSON.stringify({
-                    selected_city: meta.discrepancy.selectedCity,
-                    nearest_city: meta.discrepancy.nearestCity,
-                  });
-
-                  await client.query(
-                    `INSERT INTO vet_clinic_location_audits
-                       (id, vet_clinic_id, admin_user_id, selected_city_id, nearest_city_id, coordinates, discrepancy_details, reason, created_at)
-                     VALUES
-                       ($1, $2, $3, $4, $5, ST_SetSRID(ST_MakePoint($6, $7), 4326), $8, $9, now())`,
-                    [
-                      auditId,
-                      insertedClinic.id,
-                      currentAdmin?.id ?? null,
-                      meta.selectedCity.id,
-                      meta.nearestCity.id,
-                      meta.location.longitude,
-                      meta.location.latitude,
-                      detailsJson,
-                      meta.overrideReason,
-                    ],
-                  );
+            const rawPayload = {
+              ...(request._rawPayload || {}),
+              ...(request.payload || {}),
+            };
+            if (request._rawPayload) {
+              for (const [key, val] of Object.entries(request._rawPayload)) {
+                if (rawPayload[key] === undefined) {
+                  rawPayload[key] = val;
                 }
-
-                await client.query("COMMIT");
-                statsCache?.invalidate();
-
-                const record = resource.build(insertedClinic);
-                return {
-                  record: record.toJSON(currentAdmin),
-                  redirectUrl: h?.resourceUrl
-                    ? h.resourceUrl({ resourceId: resource.id() })
-                    : undefined,
-                  notice: {
-                    message: "Successfully created record",
-                    type: "success",
-                  },
-                };
-              } catch (err) {
-                await client.query("ROLLBACK").catch(() => {});
-                throw err;
-              } finally {
-                client.release();
               }
             }
 
-            // Fallback for knex
-            if (knex) {
-              const [inserted] = await knex("vet_clinics")
-                .insert(payload)
-                .returning("*");
-              if (meta.discrepancy?.isDiscrepant) {
-                await knex("vet_clinic_location_audits").insert({
-                  id: crypto.randomUUID(),
-                  vet_clinic_id: inserted.id,
-                  admin_user_id: currentAdmin?.id ?? null,
-                  selected_city_id: meta.selectedCity.id,
-                  nearest_city_id: meta.nearestCity.id,
-                  coordinates: knex.raw(
-                    "ST_SetSRID(ST_MakePoint(?, ?), 4326)",
-                    [meta.location.longitude, meta.location.latitude],
-                  ),
-                  discrepancy_details: JSON.stringify({
-                    selected_city: meta.discrepancy.selectedCity,
-                    nearest_city: meta.discrepancy.nearestCity,
-                  }),
-                  reason: meta.overrideReason,
-                });
-              }
-              statsCache?.invalidate();
-              const record = resource.build(inserted);
-              return {
-                record: record.toJSON(currentAdmin),
-                redirectUrl: h?.resourceUrl
-                  ? h.resourceUrl({ resourceId: resource.id() })
-                  : undefined,
-                notice: {
-                  message: "Successfully created record",
-                  type: "success",
-                },
-              };
+            const insertedClinic = await executeInTransaction(async (trxOrClient, clientType) => {
+              return await createClinicInTransaction(trxOrClient, clientType, rawPayload, currentAdmin);
+            });
+
+            if (typeof statsCache?.invalidate === 'function') {
+              statsCache.invalidate();
             }
 
-            const record = resource.build(payload);
+            const record = resource.build(insertedClinic);
             return {
               record: record.toJSON(currentAdmin),
+              redirectUrl: h?.resourceUrl ? h.resourceUrl({ resourceId: resource.id() }) : undefined,
               notice: {
-                message: "Successfully created record",
-                type: "success",
+                message: 'Successfully created record',
+                type: 'success',
               },
             };
           },
@@ -545,148 +835,44 @@ export function buildVetClinicsResource(
             const { resource, currentAdmin, h } = context;
             const recordId = request.params?.recordId;
 
-            if (request.method !== "post") {
+            if (request.method !== 'post') {
               const record = await resource.findOne(recordId);
               return { record: record?.toJSON(currentAdmin) };
             }
 
-            let payload = request.payload;
-            let meta = request._discrepancyMeta;
-            if (!meta) {
-              const preparedReq = await prepareEditPayload(request, context);
-              payload = preparedReq.payload;
-              meta = preparedReq._discrepancyMeta || {};
-            }
-
-            if (pool) {
-              const client = await pool.connect();
-              try {
-                await client.query("BEGIN");
-
-                const updateKeys = Object.keys(payload).filter(
-                  (k) => k !== "id" && VET_CLINIC_COLUMNS.has(k),
-                );
-                let updatedClinic = meta.existing;
-
-                if (updateKeys.length > 0) {
-                  const setClauses = updateKeys
-                    .map((k, i) => {
-                      if (k === "coordinates") {
-                        return `"${k}" = ST_GeomFromEWKT($${i + 2})`;
-                      }
-                      return `"${k}" = $${i + 2}`;
-                    })
-                    .join(", ");
-                  const updateValues = [
-                    recordId,
-                    ...updateKeys.map((k) => payload[k]),
-                  ];
-
-                  const { rows } = await client.query(
-                    `UPDATE vet_clinics SET ${setClauses}, updated_at = now() WHERE id = $1 RETURNING *`,
-                    updateValues,
-                  );
-                  updatedClinic = rows[0] ?? meta.existing;
+            const rawPayload = {
+              ...(request._rawPayload || {}),
+              ...(request.payload || {}),
+            };
+            if (request._rawPayload) {
+              for (const [key, val] of Object.entries(request._rawPayload)) {
+                if (rawPayload[key] === undefined) {
+                  rawPayload[key] = val;
                 }
-
-                if (meta.locationChanged && meta.discrepancy?.isDiscrepant) {
-                  const auditId = crypto.randomUUID();
-                  const detailsJson = JSON.stringify({
-                    selected_city: meta.discrepancy.selectedCity,
-                    nearest_city: meta.discrepancy.nearestCity,
-                  });
-
-                  await client.query(
-                    `INSERT INTO vet_clinic_location_audits
-                       (id, vet_clinic_id, admin_user_id, selected_city_id, nearest_city_id, coordinates, discrepancy_details, reason, created_at)
-                     VALUES
-                       ($1, $2, $3, $4, $5, ST_SetSRID(ST_MakePoint($6, $7), 4326), $8, $9, now())`,
-                    [
-                      auditId,
-                      recordId,
-                      currentAdmin?.id ?? null,
-                      meta.selectedCity.id,
-                      meta.nearestCity.id,
-                      meta.location.longitude,
-                      meta.location.latitude,
-                      detailsJson,
-                      meta.overrideReason,
-                    ],
-                  );
-                }
-
-                await client.query("COMMIT");
-                statsCache?.invalidate();
-
-                const record = resource.build(updatedClinic);
-                return {
-                  record: record.toJSON(currentAdmin),
-                  redirectUrl: h?.resourceUrl
-                    ? h.resourceUrl({ resourceId: resource.id() })
-                    : undefined,
-                  notice: {
-                    message: "Successfully updated record",
-                    type: "success",
-                  },
-                };
-              } catch (err) {
-                await client.query("ROLLBACK").catch(() => {});
-                throw err;
-              } finally {
-                client.release();
               }
             }
 
-            // Fallback for knex
-            if (knex) {
-              const [updated] = await knex("vet_clinics")
-                .where("id", recordId)
-                .update(payload)
-                .returning("*");
-              if (meta.locationChanged && meta.discrepancy?.isDiscrepant) {
-                await knex("vet_clinic_location_audits").insert({
-                  id: crypto.randomUUID(),
-                  vet_clinic_id: recordId,
-                  admin_user_id: currentAdmin?.id ?? null,
-                  selected_city_id: meta.selectedCity.id,
-                  nearest_city_id: meta.nearestCity.id,
-                  coordinates: knex.raw(
-                    "ST_SetSRID(ST_MakePoint(?, ?), 4326)",
-                    [meta.location.longitude, meta.location.latitude],
-                  ),
-                  discrepancy_details: JSON.stringify({
-                    selected_city: meta.discrepancy.selectedCity,
-                    nearest_city: meta.discrepancy.nearestCity,
-                  }),
-                  reason: meta.overrideReason,
-                });
-              }
-              statsCache?.invalidate();
-              const record = resource.build(updated || meta.existing);
-              return {
-                record: record.toJSON(currentAdmin),
-                redirectUrl: h?.resourceUrl
-                  ? h.resourceUrl({ resourceId: resource.id() })
-                  : undefined,
-                notice: {
-                  message: "Successfully updated record",
-                  type: "success",
-                },
-              };
+            const updatedClinic = await executeInTransaction(async (trxOrClient, clientType) => {
+              return await updateClinicInTransaction(trxOrClient, clientType, recordId, rawPayload, currentAdmin);
+            });
+
+            if (typeof statsCache?.invalidate === 'function') {
+              statsCache.invalidate();
             }
 
-            const record = resource.build(payload);
+            const record = resource.build(updatedClinic);
             return {
               record: record.toJSON(currentAdmin),
+              redirectUrl: h?.resourceUrl ? h.resourceUrl({ resourceId: resource.id() }) : undefined,
               notice: {
-                message: "Successfully updated record",
-                type: "success",
+                message: 'Successfully updated record',
+                type: 'success',
               },
             };
           },
         },
         searchAddress: {
-          actionType: "resource",
+          actionType: 'resource',
           isVisible: false,
           isAccessible: ({ currentAdmin }) => {
             return !!currentAdmin && currentAdmin.is_active !== false;
@@ -698,7 +884,7 @@ export function buildVetClinicsResource(
               request.query?.q ??
               request.payload?.query ??
               request.payload?.q ??
-              "";
+              '';
 
             const result = await searchVetClinicAddress({
               query: String(query),
@@ -708,17 +894,9 @@ export function buildVetClinicsResource(
                 url: process.env.NOMINATIM_URL,
                 userAgent: process.env.NOMINATIM_USER_AGENT,
                 attribution: process.env.NOMINATIM_ATTRIBUTION,
-                enabled:
-                  process.env.NOMINATIM_ENABLED !== "false" &&
-                  process.env.NOMINATIM_ENABLED !== false,
-                timeoutMs: parseInt(
-                  process.env.NOMINATIM_TIMEOUT_MS || "5000",
-                  10,
-                ),
-                rateLimitMs: parseInt(
-                  process.env.NOMINATIM_RATE_LIMIT_MS || "1000",
-                  10,
-                ),
+                enabled: process.env.NOMINATIM_ENABLED !== 'false' && process.env.NOMINATIM_ENABLED !== false,
+                timeoutMs: parseInt(process.env.NOMINATIM_TIMEOUT_MS || '5000', 10),
+                rateLimitMs: parseInt(process.env.NOMINATIM_RATE_LIMIT_MS || '1000', 10),
               },
             });
 
@@ -735,43 +913,37 @@ export function buildVetClinicsResource(
         },
       },
       listProperties: [
-        "name_english",
-        "name_arabic",
-        "city_id",
-        "phone_number",
-        "address_english",
-        "address_arabic",
-        "source",
-        "is_active",
+        'name_english',
+        'name_arabic',
+        'city_id',
+        'phone_number',
+        'address_english',
+        'address_arabic',
+        'source',
+        'is_active',
       ],
       showProperties: [
-        "id",
-        "name_english",
-        "name_arabic",
-        "city_id",
-        "area_name",
-        "address",
-        "address_english",
-        "address_arabic",
-        "phone_number",
-        "website",
-        "coordinates",
-        "source",
-        "osm_id",
-        "osm_type",
-        "location_provenance",
-        "location_captured_at",
-        "is_active",
-        "created_at",
-        "updated_at",
+        'id',
+        'name_english',
+        'name_arabic',
+        'city_id',
+        'area_name',
+        'address',
+        'address_english',
+        'address_arabic',
+        'phone_number',
+        'website',
+        'coordinates',
+        'source',
+        'osm_id',
+        'osm_type',
+        'location_provenance',
+        'location_captured_at',
+        'is_active',
+        'created_at',
+        'updated_at',
       ],
-      filterProperties: [
-        "name_english",
-        "city_id",
-        "source",
-        "location_provenance",
-        "is_active",
-      ],
+      filterProperties: ['name_english', 'city_id', 'source', 'location_provenance', 'is_active'],
     },
   };
 }

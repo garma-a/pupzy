@@ -1,10 +1,5 @@
-import { ENUMS } from "../enums.js";
-import {
-  attachShortUuid,
-  enumProperty,
-  noDeleteActions,
-  stripPopulatedPasswordHashes,
-} from "./resource-helpers.js";
+import { ENUMS } from '../enums.js';
+import { attachShortUuid, enumProperty, noDeleteActions, stripPopulatedPasswordHashes } from './resource-helpers.js';
 
 export function buildAdoptionPostsResource(db, components = {}) {
   const properties = {
@@ -25,12 +20,12 @@ export function buildAdoptionPostsResource(db, components = {}) {
     currently_with: {},
   };
 
-  attachShortUuid(properties, ["post_id"], components, ["list", "show"]);
+  attachShortUuid(properties, ['post_id'], components, ['list', 'show']);
 
   return {
-    resource: db.table("adoption_posts"),
+    resource: db.table('adoption_posts'),
     options: {
-      navigation: { name: "Post Details", icon: "Layers" },
+      navigation: { name: 'Post Details', icon: 'Layers' },
       properties,
       actions: {
         ...noDeleteActions,
@@ -40,41 +35,33 @@ export function buildAdoptionPostsResource(db, components = {}) {
         edit: { after: stripPopulatedPasswordHashes },
       },
       listProperties: [
-        "post_id",
-        "pet_name",
-        "species",
-        "gender",
-        "breed",
-        "vaccinated",
-        "neutered",
-        "space_requirement",
+        'post_id',
+        'pet_name',
+        'species',
+        'gender',
+        'breed',
+        'vaccinated',
+        'neutered',
+        'space_requirement',
       ],
       showProperties: [
-        "post_id",
-        "pet_name",
-        "species",
-        "gender",
-        "breed",
-        "age_value",
-        "age_unit",
-        "vaccinated",
-        "neutered",
-        "space_requirement",
-        "prior_pet_experience_required",
-        "personality_tags",
-        "health_notes",
-        "additional_requirements",
-        "currently_with",
+        'post_id',
+        'pet_name',
+        'species',
+        'gender',
+        'breed',
+        'age_value',
+        'age_unit',
+        'vaccinated',
+        'neutered',
+        'space_requirement',
+        'prior_pet_experience_required',
+        'personality_tags',
+        'health_notes',
+        'additional_requirements',
+        'currently_with',
       ],
-      filterProperties: [
-        "post_id",
-        "species",
-        "gender",
-        "breed",
-        "vaccinated",
-        "neutered",
-        "space_requirement",
-      ],
+      filterProperties: ['post_id', 'species', 'gender', 'breed', 'vaccinated', 'neutered', 'space_requirement'],
     },
   };
 }

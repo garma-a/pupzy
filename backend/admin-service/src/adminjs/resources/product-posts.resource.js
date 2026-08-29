@@ -1,10 +1,5 @@
-import { ENUMS } from "../enums.js";
-import {
-  attachShortUuid,
-  enumProperty,
-  noDeleteActions,
-  stripPopulatedPasswordHashes,
-} from "./resource-helpers.js";
+import { ENUMS } from '../enums.js';
+import { attachShortUuid, enumProperty, noDeleteActions, stripPopulatedPasswordHashes } from './resource-helpers.js';
 
 export function buildProductPostsResource(db, components = {}) {
   const properties = {
@@ -17,12 +12,12 @@ export function buildProductPostsResource(db, components = {}) {
     open_to_offers: {},
   };
 
-  attachShortUuid(properties, ["post_id"], components, ["list", "show"]);
+  attachShortUuid(properties, ['post_id'], components, ['list', 'show']);
 
   return {
-    resource: db.table("product_posts"),
+    resource: db.table('product_posts'),
     options: {
-      navigation: { name: "Post Details", icon: "Layers" },
+      navigation: { name: 'Post Details', icon: 'Layers' },
       properties,
       actions: {
         ...noDeleteActions,
@@ -32,30 +27,24 @@ export function buildProductPostsResource(db, components = {}) {
         edit: { after: stripPopulatedPasswordHashes },
       },
       listProperties: [
-        "post_id",
-        "category",
-        "condition",
-        "is_free",
-        "price_amount",
-        "price_currency",
-        "open_to_offers",
+        'post_id',
+        'category',
+        'condition',
+        'is_free',
+        'price_amount',
+        'price_currency',
+        'open_to_offers',
       ],
       showProperties: [
-        "post_id",
-        "category",
-        "condition",
-        "is_free",
-        "price_amount",
-        "price_currency",
-        "open_to_offers",
+        'post_id',
+        'category',
+        'condition',
+        'is_free',
+        'price_amount',
+        'price_currency',
+        'open_to_offers',
       ],
-      filterProperties: [
-        "post_id",
-        "category",
-        "condition",
-        "is_free",
-        "open_to_offers",
-      ],
+      filterProperties: ['post_id', 'category', 'condition', 'is_free', 'open_to_offers'],
     },
   };
 }

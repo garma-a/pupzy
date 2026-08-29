@@ -48,4 +48,3 @@ describe('AdminJS SQL adapter compatibility', () => {
     assert.equal(ADMIN_RESOURCE_TABLES.includes('admin_sessions'), false);
   });
 });
-

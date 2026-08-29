@@ -507,11 +507,7 @@ describe('admin-service logging', () => {
           'Plaintext password must not appear in log output',
         );
 
-        assert.equal(
-          combinedOutput.includes('+201011112222'),
-          false,
-          'Phone number must not appear in log output',
-        );
+        assert.equal(combinedOutput.includes('+201011112222'), false, 'Phone number must not appear in log output');
       } finally {
         await new Promise((resolve) => server.close(resolve));
       }

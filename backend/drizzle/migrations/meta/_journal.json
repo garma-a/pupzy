@@ -120,6 +120,13 @@
       "when": 1788459200000,
       "tag": "0016_add_address_search_cache",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788545600000,
+      "tag": "0017_add_city_lifecycle_status_operators",
+      "breakpoints": true
     }
   ]
 }

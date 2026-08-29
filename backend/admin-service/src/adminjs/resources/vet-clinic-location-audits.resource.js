@@ -1,8 +1,4 @@
-import {
-  attachShortUuid,
-  buildReadOnlyResource,
-  stripPopulatedPasswordHashes,
-} from "./resource-helpers.js";
+import { attachShortUuid, buildReadOnlyResource, stripPopulatedPasswordHashes } from './resource-helpers.js';
 
 export function buildVetClinicLocationAuditsResource(db, components = {}) {
   const properties = {
@@ -21,47 +17,36 @@ export function buildVetClinicLocationAuditsResource(db, components = {}) {
     created_at: { isDisabled: true },
   };
 
-  attachShortUuid(
-    properties,
-    ["id", "vet_clinic_id", "admin_user_id"],
-    components,
-    ["list", "show"],
-  );
+  attachShortUuid(properties, ['id', 'vet_clinic_id', 'admin_user_id'], components, ['list', 'show']);
 
   return buildReadOnlyResource(
     db,
-    "vet_clinic_location_audits",
-    { name: "Admin Management", icon: "Lock" },
+    'vet_clinic_location_audits',
+    { name: 'Admin Management', icon: 'Lock' },
     properties,
     {
-      sort: { sortBy: "created_at", direction: "desc" },
+      sort: { sortBy: 'created_at', direction: 'desc' },
       listProperties: [
-        "id",
-        "vet_clinic_id",
-        "admin_user_id",
-        "selected_city_id",
-        "nearest_city_id",
-        "reason",
-        "created_at",
+        'id',
+        'vet_clinic_id',
+        'admin_user_id',
+        'selected_city_id',
+        'nearest_city_id',
+        'reason',
+        'created_at',
       ],
       showProperties: [
-        "id",
-        "vet_clinic_id",
-        "admin_user_id",
-        "selected_city_id",
-        "nearest_city_id",
-        "coordinates",
-        "discrepancy_details",
-        "reason",
-        "created_at",
+        'id',
+        'vet_clinic_id',
+        'admin_user_id',
+        'selected_city_id',
+        'nearest_city_id',
+        'coordinates',
+        'discrepancy_details',
+        'reason',
+        'created_at',
       ],
-      filterProperties: [
-        "vet_clinic_id",
-        "admin_user_id",
-        "selected_city_id",
-        "nearest_city_id",
-        "created_at",
-      ],
+      filterProperties: ['vet_clinic_id', 'admin_user_id', 'selected_city_id', 'nearest_city_id', 'created_at'],
       actions: {
         list: { after: stripPopulatedPasswordHashes },
         show: { after: stripPopulatedPasswordHashes },
