@@ -1,4 +1,5 @@
 import { ValidationError } from 'adminjs';
+import { parseCoordinatesValue } from '../components/mapped-location.js';
 
 export const DEFAULT_EGYPT_BOUNDS = Object.freeze({
   minLat: parseFloat(process.env.EGYPT_MIN_LAT || '21.0'),
@@ -16,91 +17,9 @@ export function parseCoordinates(payload) {
     return { lat: NaN, lng: NaN };
   }
 
-  // 0. Direct string parsing (WKT, EWKT, comma-separated, JSON, or EWKB hex)
-  if (typeof payload === 'string') {
-    const raw = payload.trim();
-
-    // Check for JSON string
-    if (raw.startsWith('{') && raw.endsWith('}')) {
-      try {
-        const parsed = JSON.parse(raw);
-        const lat = Number(parsed.latitude ?? parsed.lat);
-        const lng = Number(parsed.longitude ?? parsed.lng);
-        return { lat, lng };
-      } catch {
-        // Fall through to regex
-      }
-    }
-
-    // PostGIS EWKT / WKT: POINT(longitude latitude) or SRID=4326;POINT(lng lat)
-    const pointMatch = raw.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
-    if (pointMatch) {
-      const lng = Number(pointMatch[1]);
-      const lat = Number(pointMatch[2]);
-      return { lat, lng };
-    }
-
-    // Comma-separated: "lat, lng" or "lat,lng"
-    const commaMatch = raw.match(/^\s*([-\d.]+)\s*,\s*([-\d.]+)\s*$/);
-    if (commaMatch) {
-      const lat = Number(commaMatch[1]);
-      const lng = Number(commaMatch[2]);
-      return { lat, lng };
-    }
-
-    // PostGIS EWKB hex string (e.g. 0101000020E6100000...)
-    if (/^[0-9a-fA-F]{42,}$/.test(raw)) {
-      try {
-        const bytes = new Uint8Array(raw.match(/.{1,2}/g).map((b) => parseInt(b, 16)));
-        const view = new DataView(bytes.buffer);
-        const isLE = bytes[0] === 1;
-        const type = view.getUint32(1, isLE);
-        const hasSrid = (type & 0x20000000) !== 0;
-        const offset = hasSrid ? 9 : 5;
-        const lng = view.getFloat64(offset, isLE);
-        const lat = view.getFloat64(offset + 8, isLE);
-        if (Number.isFinite(lat) && Number.isFinite(lng)) {
-          return {
-            lat: Number(lat.toFixed(6)),
-            lng: Number(lng.toFixed(6)),
-          };
-        }
-      } catch {
-        // Fall through
-      }
-    }
-
-    return { lat: NaN, lng: NaN };
-  }
-
-  if (typeof payload !== 'object') {
-    return { lat: NaN, lng: NaN };
-  }
-
-  // 1. Discrete latitude & longitude fields
-  if (payload.latitude !== undefined && payload.longitude !== undefined) {
-    const lat = Number(payload.latitude);
-    const lng = Number(payload.longitude);
-    return { lat, lng };
-  }
-
-  // 2. Nested coordinates properties (e.g. coordinates.latitude / coordinates.longitude)
-  if (payload['coordinates.latitude'] !== undefined && payload['coordinates.longitude'] !== undefined) {
-    const lat = Number(payload['coordinates.latitude']);
-    const lng = Number(payload['coordinates.longitude']);
-    return { lat, lng };
-  }
-
-  // 3. coordinates object
-  if (typeof payload.coordinates === 'object' && payload.coordinates !== null) {
-    const lat = Number(payload.coordinates.latitude ?? payload.coordinates.lat);
-    const lng = Number(payload.coordinates.longitude ?? payload.coordinates.lng);
-    return { lat, lng };
-  }
-
-  // 4. coordinates string
-  if (typeof payload.coordinates === 'string') {
-    return parseCoordinates(payload.coordinates);
+  const parsed = parseCoordinatesValue(payload);
+  if (parsed && Number.isFinite(parsed.lat) && Number.isFinite(parsed.lng)) {
+    return parsed;
   }
 
   return { lat: NaN, lng: NaN };
@@ -110,6 +29,18 @@ export function parseCoordinates(payload) {
  * Builds the canonical zero-key Google Maps search URL from stored coordinates.
  */
 export function buildGoogleMapsUrl(latitude, longitude) {
+  if (
+    latitude === null ||
+    latitude === undefined ||
+    longitude === null ||
+    longitude === undefined ||
+    typeof latitude === 'boolean' ||
+    typeof longitude === 'boolean' ||
+    String(latitude).trim() === '' ||
+    String(longitude).trim() === ''
+  ) {
+    throw new Error(`Invalid WGS84 coordinates: latitude=${latitude}, longitude=${longitude}`);
+  }
   const lat = Number(latitude);
   const lng = Number(longitude);
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
@@ -242,13 +173,14 @@ export function isLocationModified(payload, existingRecord) {
  * Resolves the nearest official City to a given (latitude, longitude) coordinate point.
  * Uses PostGIS KNN indexing on center_point for high performance.
  */
-export async function findNearestOfficialCity(clientOrKnex, lat, lng) {
+export async function findNearestOfficialCity(clientOrKnex, lat, lng, { forShare = true } = {}) {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return null;
   }
 
   // If using pg Client / Pool directly:
   if (typeof clientOrKnex?.query === 'function') {
+    const lockClause = forShare ? ' FOR SHARE' : '';
     const { rows } = await clientOrKnex.query(
       `SELECT
          id,
@@ -260,7 +192,7 @@ export async function findNearestOfficialCity(clientOrKnex, lat, lng) {
        FROM cities
        WHERE status = 'OFFICIAL'
        ORDER BY center_point <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)
-       LIMIT 1`,
+       LIMIT 1${lockClause}`,
       [lng, lat],
     );
     if (!rows[0]) return null;
@@ -297,6 +229,9 @@ export async function findNearestOfficialCity(clientOrKnex, lat, lng) {
     }
     if (typeof qb.limit === 'function') {
       qb = qb.limit(1);
+    }
+    if (forShare && typeof qb.forShare === 'function') {
+      qb = qb.forShare();
     }
 
     const rows = await qb;

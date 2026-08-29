@@ -15,6 +15,10 @@ type City {
   The governorate this city belongs to.
   """
   governorate: String!
+  """
+  Explicit lifecycle status of this City (OFFICIAL, LEGACY, or RETIRED).
+  """
+  status: CityLifecycleStatus!
 }
 
 extend type Query {

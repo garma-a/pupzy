@@ -94,9 +94,30 @@ describe('Vet Clinics Location Helpers & Validation', () => {
       assert.equal(parsed2.lng, 31.2357);
     });
 
+    it('parses City objects with center_point property and record params wrappers', () => {
+      const cityObject = {
+        id: 'city-cairo',
+        name_english: 'Cairo',
+        center_point: 'SRID=4326;POINT(31.2357 30.0444)',
+      };
+      const parsedCity = parseCoordinates(cityObject);
+      assert.equal(parsedCity.lat, 30.0444);
+      assert.equal(parsedCity.lng, 31.2357);
+
+      const recordWrapper = {
+        params: {
+          coordinates: 'SRID=4326;POINT(31.2569 29.9602)',
+        },
+      };
+      const parsedRecord = parseCoordinates(recordWrapper);
+      assert.equal(parsedRecord.lat, 29.9602);
+      assert.equal(parsedRecord.lng, 31.2569);
+    });
+
     it('returns NaN for invalid or empty inputs', () => {
       assert.equal(Number.isNaN(parseCoordinates(null).lat), true);
       assert.equal(Number.isNaN(parseCoordinates({}).lat), true);
+      assert.equal(Number.isNaN(parseCoordinates('   ').lat), true);
       assert.equal(Number.isNaN(parseCoordinates({ coordinates: 'gibberish' }).lat), true);
     });
   });
@@ -112,6 +133,16 @@ describe('Vet Clinics Location Helpers & Validation', () => {
     it('rejects non-finite coordinates', () => {
       assert.throws(() => buildGoogleMapsUrl(NaN, 31.2357), /Invalid WGS84/);
       assert.throws(() => buildGoogleMapsUrl(30.0444, Infinity), /Invalid WGS84/);
+    });
+
+    it('rejects null, undefined, empty, or boolean coordinates', () => {
+      assert.throws(() => buildGoogleMapsUrl(null, 31.2357), /Invalid WGS84/);
+      assert.throws(() => buildGoogleMapsUrl(30.0444, null), /Invalid WGS84/);
+      assert.throws(() => buildGoogleMapsUrl(undefined, 31.2357), /Invalid WGS84/);
+      assert.throws(() => buildGoogleMapsUrl(30.0444, undefined), /Invalid WGS84/);
+      assert.throws(() => buildGoogleMapsUrl('', 31.2357), /Invalid WGS84/);
+      assert.throws(() => buildGoogleMapsUrl(30.0444, '   '), /Invalid WGS84/);
+      assert.throws(() => buildGoogleMapsUrl(false, 31.2357), /Invalid WGS84/);
     });
 
     it('rejects coordinates outside WGS84 ranges', () => {

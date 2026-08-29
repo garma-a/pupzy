@@ -22,26 +22,36 @@ export default function MappedLocationEdit({ property, record, onChange }) {
 
   // Extract initial coordinates
   const initialCoordinates = record?.params?.coordinates || '';
-  let initLat = 30.0444; // Default to Cairo
-  let initLng = 31.2357;
+  let initLat = null;
+  let initLng = null;
+  let hasInitialLocation = false;
 
-  if (record?.params?.latitude !== undefined && record?.params?.longitude !== undefined) {
+  if (
+    record?.params?.latitude !== undefined &&
+    record?.params?.longitude !== undefined &&
+    record.params.latitude !== '' &&
+    record.params.longitude !== ''
+  ) {
     const parsedLat = parseFloat(record.params.latitude);
     const parsedLng = parseFloat(record.params.longitude);
     if (!Number.isNaN(parsedLat) && !Number.isNaN(parsedLng)) {
       initLat = parsedLat;
       initLng = parsedLng;
+      hasInitialLocation = true;
     }
   } else if (initialCoordinates) {
     const parsed = parseCoordinatesValue(initialCoordinates);
     if (parsed) {
       initLat = parsed.lat;
       initLng = parsed.lng;
+      hasInitialLocation = true;
     }
   }
 
-  const [lat, setLat] = useState(initLat);
-  const [lng, setLng] = useState(initLng);
+  const [lat, setLat] = useState(hasInitialLocation ? initLat : '');
+  const [lng, setLng] = useState(hasInitialLocation ? initLng : '');
+  const [hasLocation, setHasLocation] = useState(hasInitialLocation);
+  const [viewportCityName, setViewportCityName] = useState('');
   const [addressEnglish, setAddressEnglish] = useState(record?.params?.address_english || '');
   const [addressArabic, setAddressArabic] = useState(record?.params?.address_arabic || '');
   const [confirmed, setConfirmed] = useState(
@@ -59,19 +69,33 @@ export default function MappedLocationEdit({ property, record, onChange }) {
   const [searchMessage, setSearchMessage] = useState('');
   const [searchError, setSearchError] = useState('');
 
-  const updateLocation = (newLat, newLng, provenance = 'MANUAL') => {
+  const placeOrMoveMarker = (newLat, newLng, provenance = 'MANUAL') => {
     const formattedLat = parseFloat(Number(newLat).toFixed(6));
     const formattedLng = parseFloat(Number(newLng).toFixed(6));
     setLat(formattedLat);
     setLng(formattedLng);
+    setHasLocation(true);
 
     onChange('latitude', formattedLat);
     onChange('longitude', formattedLng);
     onChange('coordinates', `SRID=4326;POINT(${formattedLng} ${formattedLat})`);
     onChange('location_provenance', provenance);
 
-    if (markerRef.current) {
-      markerRef.current.setLatLng([formattedLat, formattedLng]);
+    // Any coordinate change clears confirmation
+    setConfirmed(false);
+    onChange('location_confirmed', false);
+
+    if (mapInstanceRef.current) {
+      if (markerRef.current) {
+        markerRef.current.setLatLng([formattedLat, formattedLng]);
+      } else if (typeof window !== 'undefined' && window.L) {
+        const marker = window.L.marker([formattedLat, formattedLng], { draggable: true }).addTo(mapInstanceRef.current);
+        marker.on('dragend', () => {
+          const position = marker.getLatLng();
+          placeOrMoveMarker(position.lat, position.lng, 'MANUAL');
+        });
+        markerRef.current = marker;
+      }
     }
   };
 
@@ -80,6 +104,7 @@ export default function MappedLocationEdit({ property, record, onChange }) {
     const cityId = record?.params?.city_id;
     if (!cityId) return;
     if (prevCityIdRef.current === cityId) return;
+    const isFirstRun = prevCityIdRef.current === null;
     prevCityIdRef.current = cityId;
 
     let isMounted = true;
@@ -105,19 +130,21 @@ export default function MappedLocationEdit({ property, record, onChange }) {
         if (coords && Number.isFinite(coords.lat) && Number.isFinite(coords.lng)) {
           const cityLat = parseFloat(coords.lat.toFixed(6));
           const cityLng = parseFloat(coords.lng.toFixed(6));
-          setLat(cityLat);
-          setLng(cityLng);
+          const cityName = cityParams.name_english || cityParams.name_arabic || '';
+          if (cityName) {
+            setViewportCityName(cityName);
+          }
 
-          onChange('latitude', cityLat);
-          onChange('longitude', cityLng);
-          onChange('coordinates', `SRID=4326;POINT(${cityLng} ${cityLat})`);
-          onChange('location_provenance', 'MANUAL');
-
+          // Center map viewport on the selected city
           if (mapInstanceRef.current) {
             mapInstanceRef.current.setView([cityLat, cityLng], 13);
           }
-          if (markerRef.current) {
-            markerRef.current.setLatLng([cityLat, cityLng]);
+
+          // Selecting a City changes viewport but does NOT create/overwrite marker or coordinates!
+          // Changing City clears stale confirmation
+          if (!isFirstRun || confirmed) {
+            setConfirmed(false);
+            onChange('location_confirmed', false);
           }
         }
       } catch (err) {
@@ -133,18 +160,42 @@ export default function MappedLocationEdit({ property, record, onChange }) {
   }, [record?.params?.city_id]);
 
   const handleLatChange = (e) => {
-    const val = parseFloat(e.target.value);
-    setLat(e.target.value);
-    if (!Number.isNaN(val) && val >= -90 && val <= 90) {
-      updateLocation(val, lng, 'MANUAL');
+    const rawVal = e.target.value;
+    setLat(rawVal);
+    const val = parseFloat(rawVal);
+    const currentLng = parseFloat(lng);
+    if (
+      !Number.isNaN(val) &&
+      val >= -90 &&
+      val <= 90 &&
+      !Number.isNaN(currentLng) &&
+      currentLng >= -180 &&
+      currentLng <= 180
+    ) {
+      placeOrMoveMarker(val, currentLng, 'MANUAL');
+    } else {
+      setConfirmed(false);
+      onChange('location_confirmed', false);
     }
   };
 
   const handleLngChange = (e) => {
-    const val = parseFloat(e.target.value);
-    setLng(e.target.value);
-    if (!Number.isNaN(val) && val >= -180 && val <= 180) {
-      updateLocation(lat, val, 'MANUAL');
+    const rawVal = e.target.value;
+    setLng(rawVal);
+    const val = parseFloat(rawVal);
+    const currentLat = parseFloat(lat);
+    if (
+      !Number.isNaN(val) &&
+      val >= -180 &&
+      val <= 180 &&
+      !Number.isNaN(currentLat) &&
+      currentLat >= -90 &&
+      currentLat <= 90
+    ) {
+      placeOrMoveMarker(currentLat, val, 'MANUAL');
+    } else {
+      setConfirmed(false);
+      onChange('location_confirmed', false);
     }
   };
 
@@ -152,12 +203,20 @@ export default function MappedLocationEdit({ property, record, onChange }) {
     const val = e.target.value;
     setAddressEnglish(val);
     onChange('address_english', val);
+    if (confirmed) {
+      setConfirmed(false);
+      onChange('location_confirmed', false);
+    }
   };
 
   const handleAddressArabicChange = (e) => {
     const val = e.target.value;
     setAddressArabic(val);
     onChange('address_arabic', val);
+    if (confirmed) {
+      setConfirmed(false);
+      onChange('location_confirmed', false);
+    }
   };
 
   const handleConfirmedChange = (e) => {
@@ -223,9 +282,9 @@ export default function MappedLocationEdit({ property, record, onChange }) {
 
   const handleSelectResult = (result) => {
     if (!result) return;
-    const { latitude, longitude, displayName, osmId, osmType, address } = result;
+    const { latitude, longitude, displayName, osmId, osmType } = result;
 
-    updateLocation(latitude, longitude, 'NOMINATIM');
+    placeOrMoveMarker(latitude, longitude, 'NOMINATIM');
 
     if (mapInstanceRef.current) {
       mapInstanceRef.current.setView([latitude, longitude], 15);
@@ -247,7 +306,7 @@ export default function MappedLocationEdit({ property, record, onChange }) {
     // Do NOT automatically set location_confirmed = true!
     // The administrator must review and confirm.
     setSearchMessage(
-      `Selected: "${displayName}". The marker has been moved and address prefilled. Please review the coordinates and addresses, adjust if needed, and confirm below.`,
+      `Selected: "${displayName}". The marker has been placed and address prefilled. Please review the coordinates and addresses, adjust if needed, and confirm below.`,
     );
     setSearchResults(null);
   };
@@ -263,25 +322,28 @@ export default function MappedLocationEdit({ property, record, onChange }) {
       if (!isMounted || !mapContainerRef.current || mapInstanceRef.current) return;
       if (!window.L) return;
 
-      const map = window.L.map(mapContainerRef.current).setView([lat, lng], 13);
+      const initialCenter = hasInitialLocation ? [initLat, initLng] : [30.0444, 31.2357];
+      const initialZoom = hasInitialLocation ? 13 : 11;
+      const map = window.L.map(mapContainerRef.current).setView(initialCenter, initialZoom);
       window.L.tileLayer(tileUrl, {
         attribution,
         maxZoom: 19,
       }).addTo(map);
 
-      const marker = window.L.marker([lat, lng], { draggable: true }).addTo(map);
-      marker.on('dragend', () => {
-        const position = marker.getLatLng();
-        updateLocation(position.lat, position.lng, 'MANUAL');
+      map.on('click', (e) => {
+        placeOrMoveMarker(e.latlng.lat, e.latlng.lng, 'MANUAL');
       });
 
-      map.on('click', (e) => {
-        marker.setLatLng(e.latlng);
-        updateLocation(e.latlng.lat, e.latlng.lng, 'MANUAL');
-      });
+      if (hasInitialLocation) {
+        const marker = window.L.marker([initLat, initLng], { draggable: true }).addTo(map);
+        marker.on('dragend', () => {
+          const position = marker.getLatLng();
+          placeOrMoveMarker(position.lat, position.lng, 'MANUAL');
+        });
+        markerRef.current = marker;
+      }
 
       mapInstanceRef.current = map;
-      markerRef.current = marker;
       if (pollTimer) clearInterval(pollTimer);
     };
 
@@ -318,6 +380,40 @@ export default function MappedLocationEdit({ property, record, onChange }) {
         Select a point on the map by clicking or dragging the marker. Confirm the latitude, longitude, and bilingual
         addresses before saving.
       </Text>
+
+      {/* Location Review Status Banner */}
+      <Box
+        mb="md"
+        p="sm"
+        style={{
+          background: confirmed ? '#EBF5EB' : hasLocation ? '#FEF3C7' : '#EFF6FF',
+          borderRadius: '6px',
+          border: `1px solid ${confirmed ? '#82C982' : hasLocation ? '#F59E0B' : '#93C5FD'}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px',
+        }}
+      >
+        <Text
+          style={{
+            fontSize: '13px',
+            fontWeight: '500',
+            color: confirmed ? '#1B6A1B' : hasLocation ? '#92400E' : '#1E40AF',
+          }}
+        >
+          {confirmed
+            ? `✓ Location Confirmed: (${lat}, ${lng})`
+            : hasLocation
+              ? `⚠ Location Placed: (${lat}, ${lng}) — Review and confirmation required`
+              : viewportCityName
+                ? `ℹ Map viewport centered on ${viewportCityName}. Click on the map or search an address to place the clinic pin.`
+                : `ℹ No location placed. Click on the map or search an address to place the clinic pin.`}
+        </Text>
+        <Badge variant={confirmed ? 'success' : hasLocation ? 'warning' : 'info'}>
+          {confirmed ? 'CONFIRMED' : hasLocation ? 'UNCONFIRMED' : 'NO PIN'}
+        </Badge>
+      </Box>
 
       {/* Discrepancy Error Alert if returned from validation */}
       {record?.errors?.override_reason && (

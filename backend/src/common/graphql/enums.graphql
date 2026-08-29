@@ -168,3 +168,13 @@ enum PersonalityTag {
   ENERGETIC
   CALM
 }
+
+"Lifecycle status of a City reference record."
+enum CityLifecycleStatus {
+  "Authoritative selectable city in active catalog."
+  OFFICIAL
+  "Historical city retained for data integrity."
+  LEGACY
+  "Former official city removed/replaced."
+  RETIRED
+}

@@ -1,4 +1,6 @@
-"""Cursor-paginated list of contact requests."""
+"""
+Cursor-paginated list of contact requests.
+"""
 type ContactRequestConnection {
   edges: [ContactRequestEdge!]!
   pageInfo: PageInfo!
@@ -13,23 +15,13 @@ extend type Query {
   """
   Returns contact requests I have SENT. Optionally filter by postId or status.
   """
-  myContactRequests(
-    postId: ID
-    status: RequestStatus
-    first: Int
-    after: String
-  ): ContactRequestConnection!
+  myContactRequests(postId: ID, status: RequestStatus, first: Int, after: String): ContactRequestConnection!
 
   """
   Returns contact requests on MY POST. Owner-only.
   Optionally filter by status (default: all).
   """
-  postContactRequests(
-    postId: ID!
-    status: RequestStatus
-    first: Int
-    after: String
-  ): ContactRequestConnection!
+  postContactRequests(postId: ID!, status: RequestStatus, first: Int, after: String): ContactRequestConnection!
 
   """
   Re-fetches the WhatsApp link for an already-approved contact request.

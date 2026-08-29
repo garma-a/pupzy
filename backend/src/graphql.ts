@@ -145,6 +145,12 @@ export enum PersonalityTag {
   CALM = 'CALM',
 }
 
+export enum CityLifecycleStatus {
+  OFFICIAL = 'OFFICIAL',
+  LEGACY = 'LEGACY',
+  RETIRED = 'RETIRED',
+}
+
 export enum AdoptFeedSort {
   HOT = 'HOT',
   NEWEST = 'NEWEST',
@@ -427,6 +433,7 @@ export interface City {
   nameEnglish: string;
   nameArabic: string;
   governorate: string;
+  status: CityLifecycleStatus;
 }
 
 export interface ContactRequestConnection {
@@ -684,7 +691,11 @@ export interface VetClinic {
   nameEnglish?: Nullable<string>;
   nameArabic?: Nullable<string>;
   phoneNumber?: Nullable<string>;
+  addressEnglish?: Nullable<string>;
+  addressArabic?: Nullable<string>;
   address?: Nullable<string>;
+  city?: Nullable<City>;
+  cityId?: Nullable<string>;
   website?: Nullable<string>;
   latitude: number;
   longitude: number;

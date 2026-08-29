@@ -4,7 +4,9 @@ Paginated list of notifications for the current user.
 type NotificationConnection {
   edges: [NotificationEdge!]!
   pageInfo: PageInfo!
-  """Total unread count for the badge indicator."""
+  """
+  Total unread count for the badge indicator.
+  """
   unreadCount: Int!
 }
 
@@ -20,14 +22,20 @@ extend type Query {
   """
   myNotifications(first: Int, after: String): NotificationConnection!
 
-  """Unread notification count for the badge indicator."""
+  """
+  Unread notification count for the badge indicator.
+  """
   myUnreadNotificationCount: Int!
 }
 
 extend type Mutation {
-  """Marks a single notification as read. Returns the updated notification."""
+  """
+  Marks a single notification as read. Returns the updated notification.
+  """
   markNotificationRead(notificationId: ID!): Notification!
 
-  """Marks ALL notifications for the current user as read. Returns count updated."""
+  """
+  Marks ALL notifications for the current user as read. Returns count updated.
+  """
   markAllNotificationsRead: Int!
 }

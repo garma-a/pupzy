@@ -2,7 +2,14 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { ValidationError } from 'adminjs';
 
-import { buildVetClinicsResource } from './vet-clinics.resource.js';
+import {
+  buildVetClinicsResource,
+  createClinicInTransaction,
+  updateClinicInTransaction,
+  getCityById,
+  getClinicById,
+  isAuthorizedToOverride,
+} from './vet-clinics.resource.js';
 
 describe('AdminJS Vet Clinics Resource', () => {
   const citiesMap = new Map([
@@ -68,6 +75,8 @@ describe('AdminJS Vet Clinics Resource', () => {
   const fakeKnex = (tableName) => {
     let whereCol = null;
     let whereVal = null;
+    let forShareFlag = false;
+    let forUpdateFlag = false;
     const queryBuilder = {
       select: () => queryBuilder,
       where: (col, val) => {
@@ -75,8 +84,48 @@ describe('AdminJS Vet Clinics Resource', () => {
         whereVal = val;
         return queryBuilder;
       },
+      forShare: () => {
+        forShareFlag = true;
+        return queryBuilder;
+      },
+      forUpdate: () => {
+        forUpdateFlag = true;
+        return queryBuilder;
+      },
       orderByRaw: () => queryBuilder,
       limit: () => queryBuilder,
+      insert: (data) => {
+        const cleaned = { ...data };
+        for (const [k, v] of Object.entries(cleaned)) {
+          if (v && v.rawSql && Array.isArray(v.bindings)) {
+            cleaned[k] = v.bindings[0];
+          }
+        }
+        const inserted = { ...cleaned, id: cleaned.id || 'knex-clinic-1' };
+        if (tableName === 'vet_clinics') {
+          clinicsMap.set(inserted.id, inserted);
+        }
+        return {
+          returning: async () => [inserted],
+          then: (res, rej) => Promise.resolve([inserted]).then(res, rej),
+        };
+      },
+      update: (data) => {
+        const cleaned = { ...data };
+        for (const [k, v] of Object.entries(cleaned)) {
+          if (v && v.rawSql && Array.isArray(v.bindings)) {
+            cleaned[k] = v.bindings[0];
+          }
+        }
+        const updated = { ...(clinicsMap.get(whereVal) || { id: whereVal }), ...cleaned };
+        if (tableName === 'vet_clinics') {
+          clinicsMap.set(whereVal, updated);
+        }
+        return {
+          returning: async () => [updated],
+          then: (res, rej) => Promise.resolve([updated]).then(res, rej),
+        };
+      },
       then: (resolve, reject) => {
         if (tableName === 'cities') {
           if (whereCol === 'id' && whereVal) {
@@ -99,6 +148,11 @@ describe('AdminJS Vet Clinics Resource', () => {
     return queryBuilder;
   };
 
+  fakeKnex.raw = (sql, bindings) => ({ rawSql: sql, bindings });
+  fakeKnex.transaction = async (callback) => {
+    return await callback(fakeKnex);
+  };
+
   const db = {
     table: (name) => ({
       name,
@@ -113,6 +167,23 @@ describe('AdminJS Vet Clinics Resource', () => {
 
   const adminContext = {
     currentAdmin: { id: 'admin-1', role: 'ADMIN', is_active: true },
+    resource: {
+      id: () => 'vet_clinics',
+      build: (data) => ({
+        ...data,
+        params: { ...data },
+        toJSON: () => ({ ...data, params: { ...data } }),
+      }),
+      findOne: async (id) => {
+        const found = clinicsMap.get(id);
+        if (!found) return null;
+        return {
+          ...found,
+          params: { ...found },
+          toJSON: () => ({ ...found, params: { ...found } }),
+        };
+      },
+    },
   };
 
   const resource = buildVetClinicsResource(db, mockComponents);
@@ -153,10 +224,10 @@ describe('AdminJS Vet Clinics Resource', () => {
     assert.ok(resource.options.showProperties.includes('osm_type'));
   });
 
-  it('new hook sets defaults for MANUAL source, provenance, capture time, and PostGIS coordinates', async () => {
+  it('new handler sets defaults for MANUAL source, provenance, capture time, and PostGIS coordinates inside transaction', async () => {
     nearestCityToReturn = citiesMap.get('city-official-1');
-    const newBeforeHook = resource.options.actions.new.before;
-    assert.equal(typeof newBeforeHook, 'function');
+    const newHandler = resource.options.actions.new.handler;
+    assert.equal(typeof newHandler, 'function');
 
     const request = {
       method: 'post',
@@ -172,22 +243,19 @@ describe('AdminJS Vet Clinics Resource', () => {
       },
     };
 
-    const modified = await newBeforeHook(request, adminContext);
-    assert.equal(modified.payload.source, 'MANUAL');
-    assert.equal(modified.payload.location_provenance, 'MANUAL');
-    assert.ok(modified.payload.location_captured_at);
-    assert.equal(modified.payload.address_english, '123 Nile Rd');
-    assert.equal(modified.payload.address_arabic, '١٢٣ طريق النيل');
-    assert.equal(modified.payload.address, '123 Nile Rd');
-    assert.equal(modified.payload.coordinates, 'SRID=4326;POINT(31.2357 30.0444)');
-    // Ensure transient form keys are removed
-    assert.equal('location_confirmed' in modified.payload, false);
-    assert.equal('latitude' in modified.payload, false);
-    assert.equal('longitude' in modified.payload, false);
+    const result = await newHandler(request, {}, adminContext);
+    assert.equal(result.record.params.source, 'MANUAL');
+    assert.equal(result.record.params.location_provenance, 'MANUAL');
+    assert.ok(result.record.params.location_captured_at);
+    assert.equal(result.record.params.address_english, '123 Nile Rd');
+    assert.equal(result.record.params.address_arabic, '١٢٣ طريق النيل');
+    assert.equal(result.record.params.address, '123 Nile Rd');
+    assert.equal(result.record.params.coordinates, 'SRID=4326;POINT(31.2357 30.0444)');
+    assert.equal(result.notice.type, 'success');
   });
 
-  it('new hook rejects missing or empty city_id with ValidationError', async () => {
-    const newBeforeHook = resource.options.actions.new.before;
+  it('new handler rejects missing or empty city_id with ValidationError', async () => {
+    const newHandler = resource.options.actions.new.handler;
 
     const request = {
       method: 'post',
@@ -203,7 +271,7 @@ describe('AdminJS Vet Clinics Resource', () => {
     };
 
     await assert.rejects(
-      async () => newBeforeHook(request, adminContext),
+      async () => newHandler(request, {}, adminContext),
       (err) => {
         assert.ok(err instanceof ValidationError);
         assert.ok(err.propertyErrors.city_id);
@@ -212,8 +280,8 @@ describe('AdminJS Vet Clinics Resource', () => {
     );
   });
 
-  it('new hook rejects non-official (LEGACY / RETIRED / nonexistent) city_id', async () => {
-    const newBeforeHook = resource.options.actions.new.before;
+  it('new handler rejects non-official (LEGACY / RETIRED / nonexistent) city_id inside transaction', async () => {
+    const newHandler = resource.options.actions.new.handler;
 
     const basePayload = {
       address_english: '123 Nile Rd',
@@ -226,11 +294,12 @@ describe('AdminJS Vet Clinics Resource', () => {
     // 1. LEGACY city
     await assert.rejects(
       async () =>
-        newBeforeHook(
+        newHandler(
           {
             method: 'post',
             payload: { ...basePayload, city_id: 'city-legacy-1' },
           },
+          {},
           adminContext,
         ),
       (err) => {
@@ -243,11 +312,12 @@ describe('AdminJS Vet Clinics Resource', () => {
     // 2. RETIRED city
     await assert.rejects(
       async () =>
-        newBeforeHook(
+        newHandler(
           {
             method: 'post',
             payload: { ...basePayload, city_id: 'city-retired-1' },
           },
+          {},
           adminContext,
         ),
       (err) => {
@@ -260,11 +330,12 @@ describe('AdminJS Vet Clinics Resource', () => {
     // 3. Nonexistent city
     await assert.rejects(
       async () =>
-        newBeforeHook(
+        newHandler(
           {
             method: 'post',
             payload: { ...basePayload, city_id: 'nonexistent-city-uuid' },
           },
+          {},
           adminContext,
         ),
       (err) => {
@@ -274,12 +345,12 @@ describe('AdminJS Vet Clinics Resource', () => {
     );
   });
 
-  it('new hook rejects missing confirmation', async () => {
-    const newBeforeHook = resource.options.actions.new.before;
+  it('new handler rejects missing confirmation', async () => {
+    const newHandler = resource.options.actions.new.handler;
 
     await assert.rejects(
       async () =>
-        newBeforeHook(
+        newHandler(
           {
             method: 'post',
             payload: {
@@ -291,6 +362,7 @@ describe('AdminJS Vet Clinics Resource', () => {
               location_confirmed: false,
             },
           },
+          {},
           adminContext,
         ),
       (err) => {
@@ -301,13 +373,13 @@ describe('AdminJS Vet Clinics Resource', () => {
     );
   });
 
-  it('new hook rejects blank bilingual addresses', async () => {
-    const newBeforeHook = resource.options.actions.new.before;
+  it('new handler rejects blank bilingual addresses', async () => {
+    const newHandler = resource.options.actions.new.handler;
 
     // Blank English
     await assert.rejects(
       async () =>
-        newBeforeHook(
+        newHandler(
           {
             method: 'post',
             payload: {
@@ -319,6 +391,7 @@ describe('AdminJS Vet Clinics Resource', () => {
               location_confirmed: true,
             },
           },
+          {},
           adminContext,
         ),
       (err) => {
@@ -331,7 +404,7 @@ describe('AdminJS Vet Clinics Resource', () => {
     // Blank Arabic
     await assert.rejects(
       async () =>
-        newBeforeHook(
+        newHandler(
           {
             method: 'post',
             payload: {
@@ -343,6 +416,7 @@ describe('AdminJS Vet Clinics Resource', () => {
               location_confirmed: true,
             },
           },
+          {},
           adminContext,
         ),
       (err) => {
@@ -353,13 +427,13 @@ describe('AdminJS Vet Clinics Resource', () => {
     );
   });
 
-  it('new hook rejects out-of-bounds coordinates', async () => {
-    const newBeforeHook = resource.options.actions.new.before;
+  it('new handler rejects out-of-bounds coordinates', async () => {
+    const newHandler = resource.options.actions.new.handler;
 
     // Outside Egypt
     await assert.rejects(
       async () =>
-        newBeforeHook(
+        newHandler(
           {
             method: 'post',
             payload: {
@@ -371,6 +445,7 @@ describe('AdminJS Vet Clinics Resource', () => {
               location_confirmed: true,
             },
           },
+          {},
           adminContext,
         ),
       (err) => {
@@ -381,13 +456,40 @@ describe('AdminJS Vet Clinics Resource', () => {
     );
   });
 
-  it('discrepancy without override reason is rejected with informative ValidationError', async () => {
+  it('new handler rejects saving when coordinates have not been placed on the map (missing coordinates)', async () => {
+    const newHandler = resource.options.actions.new.handler;
+
+    // Admin selected city and filled address, but never placed marker on the map
+    await assert.rejects(
+      async () =>
+        newHandler(
+          {
+            method: 'post',
+            payload: {
+              city_id: 'city-official-1',
+              address_english: '123 Nile Rd',
+              address_arabic: '١٢٣ طريق النيل',
+              location_confirmed: true,
+            },
+          },
+          {},
+          adminContext,
+        ),
+      (err) => {
+        assert.ok(err instanceof ValidationError);
+        assert.match(err.propertyErrors.coordinates.message, /Valid coordinates/i);
+        return true;
+      },
+    );
+  });
+
+  it('discrepancy without override reason is rejected with informative ValidationError inside transaction', async () => {
     nearestCityToReturn = citiesMap.get('city-official-2'); // Giza, while selected is Cairo
-    const newBeforeHook = resource.options.actions.new.before;
+    const newHandler = resource.options.actions.new.handler;
 
     await assert.rejects(
       async () =>
-        newBeforeHook(
+        newHandler(
           {
             method: 'post',
             payload: {
@@ -399,6 +501,7 @@ describe('AdminJS Vet Clinics Resource', () => {
               location_confirmed: true,
             },
           },
+          {},
           adminContext,
         ),
       (err) => {
@@ -412,11 +515,11 @@ describe('AdminJS Vet Clinics Resource', () => {
     );
   });
 
-  it('discrepancy with valid reason and active Admin succeeds', async () => {
+  it('discrepancy with valid reason and active Admin succeeds in transaction', async () => {
     nearestCityToReturn = citiesMap.get('city-official-2'); // Giza
-    const newBeforeHook = resource.options.actions.new.before;
+    const newHandler = resource.options.actions.new.handler;
 
-    const modified = await newBeforeHook(
+    const result = await newHandler(
       {
         method: 'post',
         payload: {
@@ -429,22 +532,22 @@ describe('AdminJS Vet Clinics Resource', () => {
           override_reason: 'Clinic is right on the border between Cairo and Giza.',
         },
       },
+      {},
       adminContext,
     );
 
-    assert.equal(modified.payload.city_id, 'city-official-1');
-    assert.equal(modified._discrepancyMeta.discrepancy.isDiscrepant, true);
-    assert.equal(modified._discrepancyMeta.overrideReason, 'Clinic is right on the border between Cairo and Giza.');
+    assert.equal(result.record.params.city_id, 'city-official-1');
+    assert.equal(result.notice.type, 'success');
   });
 
-  it('discrepancy rejects inactive user or non-admin with permission error', async () => {
+  it('discrepancy rejects inactive user or non-admin with permission error inside transaction', async () => {
     nearestCityToReturn = citiesMap.get('city-official-2');
-    const newBeforeHook = resource.options.actions.new.before;
+    const newHandler = resource.options.actions.new.handler;
 
     // Inactive user
     await assert.rejects(
       async () =>
-        newBeforeHook(
+        newHandler(
           {
             method: 'post',
             payload: {
@@ -457,7 +560,8 @@ describe('AdminJS Vet Clinics Resource', () => {
               override_reason: 'Border case reason',
             },
           },
-          { currentAdmin: { id: 'admin-inactive', role: 'ADMIN', is_active: false } },
+          {},
+          { ...adminContext, currentAdmin: { id: 'admin-inactive', role: 'ADMIN', is_active: false } },
         ),
       (err) => {
         assert.ok(err instanceof ValidationError);
@@ -467,9 +571,9 @@ describe('AdminJS Vet Clinics Resource', () => {
     );
   });
 
-  it('edit hook allows non-location edits of imported clinics without requiring location confirmation', async () => {
-    const editBeforeHook = resource.options.actions.edit.before;
-    assert.equal(typeof editBeforeHook, 'function');
+  it('edit handler allows non-location edits of imported clinics without requiring location confirmation', async () => {
+    const editHandler = resource.options.actions.edit.handler;
+    assert.equal(typeof editHandler, 'function');
 
     const request = {
       method: 'post',
@@ -481,15 +585,15 @@ describe('AdminJS Vet Clinics Resource', () => {
       },
     };
 
-    const modified = await editBeforeHook(request, adminContext);
-    assert.equal(modified.payload.name_english, 'Updated Imported Clinic Name');
-    assert.equal(modified.payload.phone_number, '+201099887766');
-    assert.equal(modified.payload.is_active, false);
-    assert.equal('coordinates' in modified.payload, false);
+    const result = await editHandler(request, {}, adminContext);
+    assert.equal(result.record.params.name_english, 'Updated Imported Clinic Name');
+    assert.equal(result.record.params.phone_number, '+201099887766');
+    assert.equal(result.record.params.is_active, false);
+    assert.equal(result.notice.type, 'success');
   });
 
-  it('edit hook allows non-location edits when form resubmits unchanged location fields (coordinates, city, addresses, unconfirmed checkbox)', async () => {
-    const editBeforeHook = resource.options.actions.edit.before;
+  it('edit handler allows non-location edits when form resubmits unchanged location fields (coordinates, city, addresses, unconfirmed checkbox)', async () => {
+    const editHandler = resource.options.actions.edit.handler;
 
     const request = {
       method: 'post',
@@ -507,19 +611,15 @@ describe('AdminJS Vet Clinics Resource', () => {
       },
     };
 
-    const modified = await editBeforeHook(request, adminContext);
-    assert.equal(modified.payload.name_english, 'Updated Imported Clinic Full Form');
-    assert.equal(modified.payload.phone_number, '+201011223344');
-    assert.equal('coordinates' in modified.payload, false);
-    assert.equal('city_id' in modified.payload, false);
-    assert.equal('address_english' in modified.payload, false);
-    assert.equal('address_arabic' in modified.payload, false);
-    assert.equal('location_confirmed' in modified.payload, false);
-    assert.equal(modified._discrepancyMeta.locationChanged, false);
+    const result = await editHandler(request, {}, adminContext);
+    assert.equal(result.record.params.name_english, 'Updated Imported Clinic Full Form');
+    assert.equal(result.record.params.phone_number, '+201011223344');
+    assert.equal(result.record.params.coordinates, 'SRID=4326;POINT(32.6537 25.6792)');
+    assert.equal(result.notice.type, 'success');
   });
 
-  it('edit hook allows non-location edits on an imported clinic with a legacy city and missing Arabic address without requiring official city or address entry', async () => {
-    const editBeforeHook = resource.options.actions.edit.before;
+  it('edit handler allows non-location edits on an imported clinic with a legacy city and missing Arabic address without requiring official city or address entry', async () => {
+    const editHandler = resource.options.actions.edit.handler;
 
     const request = {
       method: 'post',
@@ -534,21 +634,20 @@ describe('AdminJS Vet Clinics Resource', () => {
       },
     };
 
-    const modified = await editBeforeHook(request, adminContext);
-    assert.equal(modified.payload.name_english, 'Updated Legacy City Clinic Name');
-    assert.equal('coordinates' in modified.payload, false);
-    assert.equal('city_id' in modified.payload, false);
-    assert.equal(modified._discrepancyMeta.locationChanged, false);
+    const result = await editHandler(request, {}, adminContext);
+    assert.equal(result.record.params.name_english, 'Updated Legacy City Clinic Name');
+    assert.equal(result.record.params.city_id, 'city-legacy-1');
+    assert.equal(result.notice.type, 'success');
   });
 
-  it('edit hook enforces full Mapped Location confirmation and validation when location is modified', async () => {
+  it('edit handler enforces full Mapped Location confirmation and validation when location is modified', async () => {
     nearestCityToReturn = citiesMap.get('city-official-1');
-    const editBeforeHook = resource.options.actions.edit.before;
+    const editHandler = resource.options.actions.edit.handler;
 
     // Relocating without confirmation -> throws
     await assert.rejects(
       async () =>
-        editBeforeHook(
+        editHandler(
           {
             method: 'post',
             params: { recordId: 'clinic-imported-1' },
@@ -560,6 +659,7 @@ describe('AdminJS Vet Clinics Resource', () => {
               location_confirmed: false,
             },
           },
+          {},
           adminContext,
         ),
       (err) => {
@@ -570,7 +670,7 @@ describe('AdminJS Vet Clinics Resource', () => {
     );
 
     // Relocating with confirmation and matching city -> succeeds
-    const validRelocate = await editBeforeHook(
+    const result = await editHandler(
       {
         method: 'post',
         params: { recordId: 'clinic-imported-1' },
@@ -582,13 +682,15 @@ describe('AdminJS Vet Clinics Resource', () => {
           location_confirmed: true,
         },
       },
+      {},
       adminContext,
     );
 
-    assert.equal(validRelocate.payload.coordinates, 'SRID=4326;POINT(31.2569 29.9602)');
-    assert.equal(validRelocate.payload.location_provenance, 'MANUAL');
-    assert.ok(validRelocate.payload.location_captured_at);
-    assert.equal(validRelocate.payload.address_english, 'New Maadi Location');
+    assert.equal(result.record.params.coordinates, 'SRID=4326;POINT(31.2569 29.9602)');
+    assert.equal(result.record.params.location_provenance, 'MANUAL');
+    assert.ok(result.record.params.location_captured_at);
+    assert.equal(result.record.params.address_english, 'New Maadi Location');
+    assert.equal(result.notice.type, 'success');
   });
 
   it('exposes searchAddress resource action accessible only to active admins', async () => {
@@ -605,9 +707,9 @@ describe('AdminJS Vet Clinics Resource', () => {
     assert.equal(searchAction.isAccessible({ currentAdmin: null }), false);
   });
 
-  it('new hook preserves location_provenance = NOMINATIM, osm_id, and osm_type from search selection', async () => {
+  it('new handler preserves location_provenance = NOMINATIM, osm_id, and osm_type from search selection', async () => {
     nearestCityToReturn = citiesMap.get('city-official-1');
-    const newBeforeHook = resource.options.actions.new.before;
+    const newHandler = resource.options.actions.new.handler;
 
     const request = {
       method: 'post',
@@ -626,10 +728,11 @@ describe('AdminJS Vet Clinics Resource', () => {
       },
     };
 
-    const modified = await newBeforeHook(request, adminContext);
-    assert.equal(modified.payload.location_provenance, 'NOMINATIM');
-    assert.equal(modified.payload.osm_id, '123456789');
-    assert.equal(modified.payload.osm_type, 'node');
+    const result = await newHandler(request, {}, adminContext);
+    assert.equal(result.record.params.location_provenance, 'NOMINATIM');
+    assert.equal(result.record.params.osm_id, '123456789');
+    assert.equal(result.record.params.osm_type, 'node');
+    assert.equal(result.notice.type, 'success');
   });
 
   it('enforces privacy boundary: users and posts resources do not expose searchAddress action', async () => {
@@ -797,7 +900,14 @@ describe('AdminJS Vet Clinics Resource', () => {
               whereVal = val;
               return qb;
             },
-            forUpdate: () => qb,
+            forShare: () => {
+              operations.push({ op: 'FOR_SHARE', table: tableName });
+              return qb;
+            },
+            forUpdate: () => {
+              operations.push({ op: 'FOR_UPDATE', table: tableName });
+              return qb;
+            },
             orderByRaw: () => qb,
             limit: () => qb,
             insert: (data) => {
@@ -917,11 +1027,13 @@ describe('AdminJS Vet Clinics Resource', () => {
       const result = await res.options.actions.new.handler(request, {}, context);
       assert.equal(result.notice.type, 'success');
 
-      // Verify transaction boundary
+      // Verify transaction boundary and row locks
       const sqlList = mockPool.operations.map((o) => o.sql);
       assert.ok(sqlList.includes('BEGIN'));
       assert.ok(sqlList.includes('COMMIT'));
       assert.equal(sqlList.includes('ROLLBACK'), false);
+      assert.ok(sqlList.some((sql) => sql.includes('FROM cities WHERE id =') && sql.includes('FOR SHARE')));
+      assert.ok(sqlList.some((sql) => sql.includes('FROM cities') && sql.includes('FOR SHARE')));
 
       // Verify audit written
       assert.equal(mockPool.audits.length, 1);
@@ -1042,6 +1154,7 @@ describe('AdminJS Vet Clinics Resource', () => {
       const ops = operations.map((o) => o.op);
       assert.ok(ops.includes('BEGIN_TRANSACTION'));
       assert.ok(ops.includes('COMMIT_TRANSACTION'));
+      assert.ok(ops.includes('FOR_SHARE'));
       assert.equal(ops.includes('ROLLBACK_TRANSACTION'), false);
 
       assert.equal(audits.length, 1);
@@ -1133,6 +1246,8 @@ describe('AdminJS Vet Clinics Resource', () => {
       const sqlList = mockPool.operations.map((o) => o.sql);
       assert.ok(sqlList.includes('BEGIN'));
       assert.ok(sqlList.includes('COMMIT'));
+      assert.ok(sqlList.some((sql) => sql.includes('FROM vet_clinics WHERE id =') && sql.includes('FOR UPDATE')));
+      assert.ok(sqlList.some((sql) => sql.includes('FROM cities WHERE id =') && sql.includes('FOR SHARE')));
       assert.equal(mockPool.audits.length, 1);
       assert.equal(mockPool.audits[0].vet_clinic_id, 'clinic-to-relocate');
       assert.equal(mockPool.audits[0].reason, 'Relocated near border with Giza');
@@ -1237,6 +1352,8 @@ describe('AdminJS Vet Clinics Resource', () => {
       const ops = operations.map((o) => o.op);
       assert.ok(ops.includes('BEGIN_TRANSACTION'));
       assert.ok(ops.includes('COMMIT_TRANSACTION'));
+      assert.ok(ops.includes('FOR_UPDATE'));
+      assert.ok(ops.includes('FOR_SHARE'));
       assert.equal(audits.length, 1);
       assert.equal(audits[0].vet_clinic_id, 'knex-clinic-relocate');
       assert.equal(audits[0].reason, 'Knex relocation override reason');

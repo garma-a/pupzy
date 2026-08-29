@@ -55,17 +55,28 @@ type VetClinic {
   address: String
 
   """
-  City ID to which this clinic belongs.
+  The City to which this clinic belongs, resolved via DataLoader.
+  """
+  city: City
+
+  """
+  City ID to which this clinic belongs. Preserved for backward compatibility.
   """
   cityId: ID
 
-  """Clinic website URL. Null when OSM had no website tag."""
+  """
+  Clinic website URL. Null when OSM had no website tag.
+  """
   website: String
 
-  """WGS-84 latitude of the clinic (DD format). Used for the Google Maps deep-link."""
+  """
+  WGS-84 latitude of the clinic (DD format). Used for the Google Maps deep-link.
+  """
   latitude: Float!
 
-  """WGS-84 longitude of the clinic (DD format). Used for the Google Maps deep-link."""
+  """
+  WGS-84 longitude of the clinic (DD format). Used for the Google Maps deep-link.
+  """
   longitude: Float!
 
   """

@@ -126,13 +126,16 @@ describe('AdminJS Cities Resource', () => {
     assert.equal(modifiedRequest.query['filters.governorate'], 'Cairo');
   });
 
-  it('restricts show action to OFFICIAL cities only', () => {
+  it('allows show detail action for official, legacy, and retired cities', () => {
     const showIsAccessible = resource.options.actions.show.isAccessible;
-    assert.equal(typeof showIsAccessible, 'function');
-
-    assert.equal(showIsAccessible({ record: { params: { status: 'OFFICIAL' } } }), true);
-    assert.equal(showIsAccessible({ record: { params: { status: 'LEGACY' } } }), false);
-    assert.equal(showIsAccessible({ record: { params: { status: 'RETIRED' } } }), false);
+    // show.isAccessible is undefined or accessible to all authenticated administrators
+    if (typeof showIsAccessible === 'function') {
+      assert.equal(showIsAccessible({ record: { params: { status: 'OFFICIAL' } } }), true);
+      assert.equal(showIsAccessible({ record: { params: { status: 'LEGACY' } } }), true);
+      assert.equal(showIsAccessible({ record: { params: { status: 'RETIRED' } } }), true);
+    } else {
+      assert.equal(showIsAccessible, undefined);
+    }
   });
 
   it('exposes internal source information in properties and show views', () => {

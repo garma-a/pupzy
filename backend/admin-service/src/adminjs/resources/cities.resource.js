@@ -187,11 +187,6 @@ export function buildCitiesResource(db, components = {}) {
             }
             return res;
           },
-          isAccessible: (context) => {
-            const record = context.record;
-            if (!record) return true;
-            return record.params?.status === 'OFFICIAL';
-          },
         },
       },
       listProperties: ['name_english', 'name_arabic', 'governorate', 'source_code', 'status'],

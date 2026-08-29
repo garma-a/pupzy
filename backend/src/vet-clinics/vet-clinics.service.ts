@@ -63,20 +63,27 @@ const toCityKey = (cityId: string) => `vet:city:${cityId}`;
  * Coordinates are validated WGS84 and formatted in latitude,longitude order
  * with encoded comma (%2C). Uses api=1 search action without requiring an API key.
  */
-export function buildGoogleMapsUrl(latitude: number, longitude: number): string {
+export function buildGoogleMapsUrl(latitude: number | string, longitude: number | string): string {
   if (
-    !Number.isFinite(latitude) ||
-    !Number.isFinite(longitude) ||
-    latitude < -90 ||
-    latitude > 90 ||
-    longitude < -180 ||
-    longitude > 180
+    latitude === null ||
+    latitude === undefined ||
+    longitude === null ||
+    longitude === undefined ||
+    typeof latitude === 'boolean' ||
+    typeof longitude === 'boolean' ||
+    String(latitude).trim() === '' ||
+    String(longitude).trim() === ''
   ) {
+    throw new Error(`Invalid WGS84 coordinates: latitude=${latitude}, longitude=${longitude}`);
+  }
+  const lat = Number(latitude);
+  const lng = Number(longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     throw new Error(`Invalid WGS84 coordinates: latitude=${latitude}, longitude=${longitude}`);
   }
   const url = new URL('https://www.google.com/maps/search/');
   url.searchParams.set('api', '1');
-  url.searchParams.set('query', `${latitude},${longitude}`);
+  url.searchParams.set('query', `${lat},${lng}`);
   return url.toString();
 }
 

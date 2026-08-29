@@ -1,17 +1,52 @@
-import { Resolver, ResolveField, Root, Context, Query, Args } from '@nestjs/graphql';
+import { Resolver, ResolveField, Root, Parent, Context, Query, Args } from '@nestjs/graphql';
 import { VetClinicsService, type VetClinicDto } from './vet-clinics.service';
-import type { Post } from '../database/schema';
+import type { Post, City } from '../database/schema';
 import type { GqlContext } from '../common/types/gql-context.type';
 
 /**
- * VetClinicsResolver — GraphQL field resolver for Post.nearestVetClinics.
+ * VetClinicsResolver — GraphQL resolver for VetClinic type fields and root queries.
+ *
+ * ## Responsibility
+ * - Owns root query `Query.nearbyVetClinics`
+ * - Owns field resolver `VetClinic.city`
+ *
+ * ## Performance & DataLoader batching
+ * Field `VetClinic.city` resolves via the per-request `cityById` DataLoader,
+ * batching all City lookups within the same event-loop tick into a single query
+ * across all returned clinics in lists or details.
+ */
+@Resolver('VetClinic')
+export class VetClinicsResolver {
+  constructor(private readonly vetClinicsService: VetClinicsService) {}
+
+  @Query('nearbyVetClinics')
+  async nearbyVetClinics(@Args('cityId') cityId: string): Promise<VetClinicDto[]> {
+    return this.vetClinicsService.nearbyVetClinicsForCity(cityId);
+  }
+
+  /**
+   * Resolves the full City object for a VetClinic via the per-request DataLoader.
+   *
+   * Batches all city-ID lookups within the same event-loop tick into
+   * a single `WHERE id = ANY($1)` query across all returned clinics.
+   * Returns null if the clinic has no associated city (cityId = null).
+   */
+  @ResolveField('city')
+  async city(@Parent() clinic: VetClinicDto, @Context() ctx: GqlContext): Promise<City | null> {
+    if (!clinic.cityId) return null;
+    return ctx.loaders.cityById.load(clinic.cityId);
+  }
+}
+
+/**
+ * VetClinicsPostResolver — GraphQL field resolver for Post.nearestVetClinics.
  *
  * ## Why @Resolver('Post') here and not in PostsResolver?
  *
  * NestJS + Apollo support multiple resolvers per type. Splitting the vet clinic
  * field into its own module keeps the posts module clean and follows the
- * Single Responsibility Principle. PostsResolver owns the 20 post-centric
- * fields; VetClinicsResolver owns exactly one field: nearestVetClinics.
+ * Single Responsibility Principle. PostsResolver owns the post-centric
+ * fields; VetClinicsPostResolver owns `nearestVetClinics`.
  *
  * ## Authentication
  * The global `FirebaseAuthGuard` protects all GraphQL operations. This resolver
@@ -37,7 +72,7 @@ import type { GqlContext } from '../common/types/gql-context.type';
  * in this codebase.
  */
 @Resolver('Post')
-export class VetClinicsResolver {
+export class VetClinicsPostResolver {
   constructor(private readonly vetClinicsService: VetClinicsService) {}
 
   /**
@@ -89,10 +124,5 @@ export class VetClinicsResolver {
       latitude,
       longitude,
     });
-  }
-
-  @Query('nearbyVetClinics')
-  async nearbyVetClinics(@Args('cityId') cityId: string): Promise<VetClinicDto[]> {
-    return this.vetClinicsService.nearbyVetClinicsForCity(cityId);
   }
 }

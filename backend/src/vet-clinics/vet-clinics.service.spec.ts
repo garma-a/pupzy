@@ -281,6 +281,16 @@ describe('VetClinicsService', () => {
       expect(() => buildGoogleMapsUrl(30.0444, Infinity)).toThrow(/Invalid WGS84 coordinates/);
     });
 
+    it('rejects null, undefined, empty, or boolean coordinates', () => {
+      expect(() => buildGoogleMapsUrl(null as any, 31.2357)).toThrow(/Invalid WGS84 coordinates/);
+      expect(() => buildGoogleMapsUrl(30.0444, null as any)).toThrow(/Invalid WGS84 coordinates/);
+      expect(() => buildGoogleMapsUrl(undefined as any, 31.2357)).toThrow(/Invalid WGS84 coordinates/);
+      expect(() => buildGoogleMapsUrl(30.0444, undefined as any)).toThrow(/Invalid WGS84 coordinates/);
+      expect(() => buildGoogleMapsUrl('', 31.2357)).toThrow(/Invalid WGS84 coordinates/);
+      expect(() => buildGoogleMapsUrl(30.0444, '   ')).toThrow(/Invalid WGS84 coordinates/);
+      expect(() => buildGoogleMapsUrl(false as any, 31.2357)).toThrow(/Invalid WGS84 coordinates/);
+    });
+
     it('rejects coordinates outside WGS84 latitude/longitude bounds', () => {
       expect(() => buildGoogleMapsUrl(91.0, 31.2357)).toThrow(/Invalid WGS84 coordinates/);
       expect(() => buildGoogleMapsUrl(-90.1, 31.2357)).toThrow(/Invalid WGS84 coordinates/);
