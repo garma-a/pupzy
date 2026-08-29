@@ -1,0 +1,685 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Playfair+Display:ital,wght@0,700;0,800;1,700;1,800&display=swap');
+
+:root {
+  /* Approved Pupzy Brand Palette */
+  --pupzy-primary: #C4622D;
+  --pupzy-primary-light: #D4784A;
+  --pupzy-primary-hover: #A84E1F;
+  --pupzy-primary-subtle: #F7D1C0;
+  --pupzy-bg: #FAF6F1;
+  --pupzy-surface: #FFFFFF;
+  --pupzy-surface-warm: #F5EDE3;
+  --pupzy-text: #2D1506;
+  --pupzy-text-secondary: #8B6355;
+  --pupzy-text-muted: #B8A499;
+  --pupzy-border: #E8DED5;
+
+  /* Status Colors */
+  --pupzy-error: #D94040;
+  --pupzy-error-dark: #9D0616;
+  --pupzy-error-light: #F9E5E7;
+  --pupzy-success: #2D8B6F;
+  --pupzy-success-dark: #246F59;
+  --pupzy-success-light: #E7F3EF;
+  --pupzy-warning: #C4622D;
+  --pupzy-warning-dark: #A14F17;
+  --pupzy-warning-light: #F6EDE8;
+
+  /* Layout, Geometry & Elevation */
+  --pupzy-radius-card: 16px;
+  --pupzy-radius-modal: 16px;
+  --pupzy-radius-notice: 12px;
+  --pupzy-radius-input: 8px;
+  --pupzy-radius-pill: 999px;
+  --pupzy-shadow-card: 0 2px 8px rgba(45, 21, 6, 0.04);
+  --pupzy-shadow-card-hover: 0 4px 16px rgba(45, 21, 6, 0.08);
+  --pupzy-shadow-modal: 0 12px 40px rgba(45, 21, 6, 0.15);
+  --pupzy-shadow-drawer: -2px 0 16px rgba(45, 21, 6, 0.1);
+  --pupzy-shadow-login: 0 8px 30px rgba(45, 21, 6, 0.08);
+
+  /* Typography */
+  --pupzy-font-body: 'DM Sans', 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --pupzy-font-heading: 'Playfair Display', 'Cairo', Georgia, serif;
+  --pupzy-font-arabic: 'Cairo', 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --pupzy-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Base resets & global styles */
+html, body, #app {
+  background-color: var(--pupzy-bg) !important;
+  color: var(--pupzy-text) !important;
+  font-family: var(--pupzy-font-body) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+}
+
+/* Headings across all viewports */
+h1, h2, h3, h4,
+.adminjs_H1, .adminjs_H2, .adminjs_H3, .adminjs_H4,
+[data-css*="H1"], [data-css*="H2"], [data-css*="H3"], [data-css*="H4"] {
+  font-family: var(--pupzy-font-heading) !important;
+  color: var(--pupzy-text) !important;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+}
+
+/* Arabic text elements */
+[dir="rtl"],
+[data-property-name*="arabic"],
+.pupzy-arabic {
+  font-family: var(--pupzy-font-arabic) !important;
+  direction: rtl;
+  text-align: right;
+  line-height: 1.6 !important;
+}
+
+/* ==========================================================================
+   Login Page Styling
+   ========================================================================== */
+section[data-css*="Login"],
+.adminjs_Login,
+[data-css*="login"],
+div:has(> form[action*="login"]) {
+  background-color: var(--pupzy-bg) !important;
+}
+
+/* Login Card Container */
+section[data-css*="Login"] > div,
+.adminjs_Login > div,
+[data-css*="Login"] .adminjs_Box,
+div:has(> form[action*="login"]) .adminjs_Box {
+  background-color: var(--pupzy-surface) !important;
+  border: 1px solid var(--pupzy-border) !important;
+  border-radius: var(--pupzy-radius-card) !important;
+  box-shadow: var(--pupzy-shadow-login) !important;
+  padding: 32px !important;
+}
+
+/* Login Title & Subtitle */
+section[data-css*="Login"] h1,
+section[data-css*="Login"] h2,
+[data-css*="Login"] h1,
+[data-css*="Login"] h2 {
+  font-family: var(--pupzy-font-heading) !important;
+  color: var(--pupzy-text) !important;
+}
+
+/* Login Error Box */
+section[data-css*="Login"] [data-css*="MessageBox"],
+[data-css*="Login"] [data-css*="MessageBox"],
+.adminjs_Login [data-css*="MessageBox"] {
+  background-color: var(--pupzy-error-light) !important;
+  border: 1px solid var(--pupzy-error) !important;
+  border-radius: var(--pupzy-radius-input) !important;
+  color: var(--pupzy-error-dark) !important;
+  font-weight: 600 !important;
+}
+
+/* ==========================================================================
+   Navigation, Sidebar & App Shell
+   ========================================================================== */
+/* Sidebar & Navigation Drawer */
+section[data-css*="Sidebar"], nav, aside,
+.adminjs_Sidebar, [data-css*="sidebar"] {
+  background-color: var(--pupzy-surface) !important;
+  border-right: 1px solid var(--pupzy-border) !important;
+}
+
+/* Navigation Group Headers */
+section[data-css*="Sidebar"] [data-css*="Label"],
+section[data-css*="Sidebar"] [data-css*="group"],
+nav [data-css*="Label"] {
+  color: var(--pupzy-text-secondary) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  padding: 12px 16px 4px 16px !important;
+}
+
+/* Navigation Links */
+section[data-css*="Sidebar"] a,
+nav a {
+  border-radius: 8px !important;
+  color: var(--pupzy-text) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  padding: 8px 12px !important;
+  margin: 2px 8px !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+section[data-css*="Sidebar"] a:hover,
+nav a:hover {
+  background-color: var(--pupzy-bg) !important;
+  color: var(--pupzy-primary) !important;
+}
+
+section[data-css*="Sidebar"] a.active,
+section[data-css*="Sidebar"] a[data-css*="active"],
+nav a.active {
+  background-color: var(--pupzy-surface-warm) !important;
+  color: var(--pupzy-primary) !important;
+  font-weight: 600 !important;
+}
+
+/* Top Navbar / Header */
+header, [data-css*="NavBar"], .adminjs_NavBar {
+  background-color: var(--pupzy-surface) !important;
+  border-bottom: 1px solid var(--pupzy-border) !important;
+  box-shadow: 0 1px 4px rgba(45, 21, 6, 0.02) !important;
+}
+
+/* Main Content Area: Resilient sizing near desktop breakpoints (e.g. 1024px) */
+main,
+section[data-css*="Main"],
+div[data-css*="Main"],
+.adminjs_Main,
+[data-css*="Content"] {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-x: hidden;
+}
+
+/* Drawer Backdrop for Mobile/Tablet Navigation and Filters */
+[data-css*="Overlay"],
+.adminjs_Overlay {
+  background-color: rgba(45, 21, 6, 0.45) !important;
+  backdrop-filter: blur(2px);
+  transition: opacity 0.2s ease;
+}
+
+/* Drawer Panels (Navigation & Filter) */
+[data-css*="Drawer"],
+.adminjs_Drawer,
+[data-css*="FilterDrawer"],
+.adminjs_FilterDrawer {
+  background-color: var(--pupzy-surface) !important;
+  border-left: 1px solid var(--pupzy-border) !important;
+  box-shadow: var(--pupzy-shadow-drawer) !important;
+}
+
+/* ==========================================================================
+   Cards, Boxes & Layout Containers
+   ========================================================================== */
+.adminjs_Box[variant="white"],
+[data-css*="Box"][variant="white"],
+.pupzy-card {
+  background-color: var(--pupzy-surface) !important;
+  border: 1px solid var(--pupzy-border) !important;
+  border-radius: var(--pupzy-radius-card) !important;
+  box-shadow: var(--pupzy-shadow-card) !important;
+}
+
+/* ==========================================================================
+   Table and List Primitives (Anti-Collapse & Responsiveness)
+   ========================================================================== */
+div:has(> table),
+.table-responsive,
+[data-css*="TableWrapper"],
+.adminjs_TableWrapper {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  max-width: 100% !important;
+  border-radius: var(--pupzy-radius-card) !important;
+  border: 1px solid var(--pupzy-border) !important;
+  background-color: var(--pupzy-surface) !important;
+}
+
+table, .adminjs_Table, [data-css*="Table"] {
+  width: 100% !important;
+  min-width: 600px;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+th, .adminjs_TableHeadCell, [data-css*="TableHead"] th {
+  background-color: var(--pupzy-bg) !important;
+  color: var(--pupzy-text-secondary) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  white-space: nowrap !important;
+  border-bottom: 1px solid var(--pupzy-border) !important;
+  padding: 12px 16px !important;
+}
+
+td, .adminjs_TableCell, [data-css*="TableBody"] td {
+  border-bottom: 1px solid var(--pupzy-border) !important;
+  padding: 12px 16px !important;
+  color: var(--pupzy-text) !important;
+  font-size: 14px !important;
+  vertical-align: middle !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+tbody tr:hover, [data-css*="TableRow"]:hover {
+  background-color: var(--pupzy-bg) !important;
+}
+
+/* Last row border removal inside cards */
+tbody tr:last-child td,
+[data-css*="TableBody"] tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* No-wrap cells for IDs, timestamps, enums, counts, booleans, and action buttons */
+.pupzy-nowrap,
+td:has([data-css*="Badge"]),
+td:has([data-css*="ShortUuid"]),
+td:has(button),
+td[data-property-name*="id"],
+td[data-property-name*="_id"],
+td[data-property-name*="created"],
+td[data-property-name*="updated"],
+td[data-property-name*="_at"],
+td[data-property-name*="status"],
+td[data-property-name*="type"],
+td[data-property-name*="is_"],
+td[data-property-name*="has_"],
+td[data-property-name*="count"],
+td[data-property-name*="score"],
+td[data-property-name*="price"],
+td[data-property-name="reason"],
+td[data-property-name="living_situation"],
+td[data-property-name="urgency"],
+td[data-property-name="species"],
+td[data-property-name="gender"],
+td[data-property-name="source_code"],
+td.adminjs_TableActionCell,
+td[data-css*="TableAction"],
+td:last-child {
+  white-space: nowrap !important;
+}
+
+/* Practical text truncation and clamping for long text in list cells */
+td[data-property-name="title"],
+td[data-property-name="email"],
+td[data-property-name="full_name"],
+td[data-property-name="full_name_arabic"],
+td[data-property-name="label"],
+td[data-property-name="details"],
+td[data-property-name="message"],
+td[data-property-name="body"],
+td[data-property-name="description"],
+td[data-property-name="condition_summary"],
+td[data-property-name="circumstances"],
+td[data-property-name="color_and_markings"],
+td[data-property-name="pet_name"],
+td[data-property-name="breed"],
+td[data-property-name="address"],
+td[data-property-name="address_english"],
+td[data-property-name="address_arabic"],
+td[data-property-name="public_url"],
+td[data-property-name="cloudflare_storage_key"],
+td[data-property-name="terms_summary"],
+td[data-property-name="mating_conditions"],
+td[data-property-name="additional_requirements"],
+td[data-property-name="health_notes"],
+td[data-property-name="currently_with"] {
+  max-width: 280px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Ensure record show views display full, complete multiline text */
+[data-css*="property-show"] div,
+[data-css*="property-show"] span,
+[data-css*="property-show"] p,
+[data-css*="ValueGroup"] span,
+[data-css*="ValueGroup"] div,
+[data-css*="ValueGroup"] p,
+.adminjs_Text {
+  max-width: none !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* ==========================================================================
+   Identifiers & ShortUuid Primitives
+   ========================================================================== */
+.pupzy-uuid {
+  font-family: var(--pupzy-font-mono) !important;
+  font-size: 13px !important;
+  white-space: nowrap !important;
+  user-select: all !important;
+}
+
+/* ==========================================================================
+   Badges & Statuses
+   ========================================================================== */
+.adminjs_Badge, [data-css*="Badge"] {
+  font-family: var(--pupzy-font-body) !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  padding: 3px 8px !important;
+  white-space: nowrap !important;
+  display: inline-block !important;
+  font-size: 12px !important;
+}
+
+/* Success / Active / Approved badges */
+.adminjs_Badge[variant="success"],
+[data-css*="Badge"][variant="success"],
+.adminjs_Badge[variant="primary"],
+[data-css*="Badge"][variant="primary"] {
+  background-color: var(--pupzy-success-light) !important;
+  color: var(--pupzy-success-dark) !important;
+  border: 1px solid var(--pupzy-success) !important;
+}
+
+/* Warning / Pending / Flagged badges */
+.adminjs_Badge[variant="warning"],
+[data-css*="Badge"][variant="warning"] {
+  background-color: var(--pupzy-warning-light) !important;
+  color: var(--pupzy-warning-dark) !important;
+  border: 1px solid var(--pupzy-primary) !important;
+}
+
+/* Danger / Removed / Banned / Rejected badges */
+.adminjs_Badge[variant="danger"],
+[data-css*="Badge"][variant="danger"] {
+  background-color: var(--pupzy-error-light) !important;
+  color: var(--pupzy-error-dark) !important;
+  border: 1px solid var(--pupzy-error) !important;
+}
+
+/* Neutral / Default badges */
+.adminjs_Badge[variant="default"],
+[data-css*="Badge"][variant="default"],
+.adminjs_Badge[variant="secondary"],
+[data-css*="Badge"][variant="secondary"] {
+  background-color: var(--pupzy-surface-warm) !important;
+  color: var(--pupzy-text-secondary) !important;
+  border: 1px solid var(--pupzy-border) !important;
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+.adminjs_Button,
+[data-css*="Button"],
+button {
+  font-family: var(--pupzy-font-body) !important;
+  font-weight: 600 !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.adminjs_Button[variant="primary"],
+.adminjs_Button[variant="contained"],
+button[variant="primary"],
+button[variant="contained"] {
+  background-color: var(--pupzy-primary) !important;
+  border-color: var(--pupzy-primary) !important;
+  color: #FFFFFF !important;
+  border-radius: var(--pupzy-radius-pill) !important;
+}
+
+.adminjs_Button[variant="primary"]:hover,
+button[variant="primary"]:hover {
+  background-color: var(--pupzy-primary-hover) !important;
+  border-color: var(--pupzy-primary-hover) !important;
+}
+
+.adminjs_Button[variant="danger"],
+button[variant="danger"] {
+  background-color: var(--pupzy-error) !important;
+  border-color: var(--pupzy-error) !important;
+  color: #FFFFFF !important;
+  border-radius: var(--pupzy-radius-pill) !important;
+}
+
+.adminjs_Button[variant="danger"]:hover,
+button[variant="danger"]:hover {
+  background-color: var(--pupzy-error-dark) !important;
+  border-color: var(--pupzy-error-dark) !important;
+}
+
+.adminjs_Button[variant="light"],
+.adminjs_Button[variant="secondary"],
+button[variant="light"],
+button[variant="secondary"] {
+  background-color: var(--pupzy-surface) !important;
+  border: 1px solid var(--pupzy-border) !important;
+  color: var(--pupzy-text-secondary) !important;
+  border-radius: var(--pupzy-radius-pill) !important;
+}
+
+.adminjs_Button[variant="light"]:hover,
+.adminjs_Button[variant="secondary"]:hover,
+button[variant="light"]:hover,
+button[variant="secondary"]:hover {
+  background-color: var(--pupzy-bg) !important;
+  color: var(--pupzy-primary) !important;
+  border-color: var(--pupzy-primary-subtle) !important;
+}
+
+/* ==========================================================================
+   Inputs & Form Controls
+   ========================================================================== */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+textarea,
+select,
+.adminjs_Input,
+.adminjs_TextArea,
+.adminjs_Select {
+  border: 1px solid var(--pupzy-border) !important;
+  border-radius: var(--pupzy-radius-input) !important;
+  font-family: var(--pupzy-font-body) !important;
+  color: var(--pupzy-text) !important;
+  background-color: var(--pupzy-surface) !important;
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--pupzy-primary) !important;
+  box-shadow: 0 0 0 2px rgba(196, 98, 45, 0.25) !important;
+  outline: none !important;
+}
+
+/* Invalid / Validation Error Form Inputs */
+input[aria-invalid="true"],
+textarea[aria-invalid="true"],
+.adminjs_Input[variant="danger"],
+.adminjs_FormGroup.has-error input {
+  border-color: var(--pupzy-error) !important;
+  box-shadow: 0 0 0 2px rgba(217, 64, 64, 0.25) !important;
+}
+
+/* Labels */
+label, .adminjs_Label, [data-css*="Label"] {
+  font-family: var(--pupzy-font-body) !important;
+  color: var(--pupzy-text) !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+
+/* Checkbox */
+input[type="checkbox"],
+.adminjs_CheckBox {
+  accent-color: var(--pupzy-primary) !important;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   Confirmation Dialogs & Modals
+   ========================================================================== */
+.adminjs_Modal,
+[data-css*="Modal"],
+.adminjs_Dialog,
+[data-css*="Dialog"] {
+  background-color: var(--pupzy-surface) !important;
+  border: 1px solid var(--pupzy-border) !important;
+  border-radius: var(--pupzy-radius-modal) !important;
+  box-shadow: var(--pupzy-shadow-modal) !important;
+  padding: 24px !important;
+}
+
+/* ==========================================================================
+   Notices, Alerts & Toasts
+   ========================================================================== */
+.adminjs_Notice,
+[data-css*="Notice"],
+[data-css*="notice"],
+div[class*="Notice"] {
+  font-family: var(--pupzy-font-body) !important;
+  border-radius: var(--pupzy-radius-notice) !important;
+  box-shadow: 0 4px 16px rgba(45, 21, 6, 0.08) !important;
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+/* Notice Types */
+.adminjs_Notice[type="success"],
+[data-css*="Notice"][type="success"] {
+  background-color: var(--pupzy-success-light) !important;
+  border: 1px solid var(--pupzy-success) !important;
+  color: var(--pupzy-success-dark) !important;
+}
+
+.adminjs_Notice[type="error"],
+.adminjs_Notice[type="danger"],
+[data-css*="Notice"][type="error"],
+[data-css*="Notice"][type="danger"] {
+  background-color: var(--pupzy-error-light) !important;
+  border: 1px solid var(--pupzy-error) !important;
+  color: var(--pupzy-error-dark) !important;
+}
+
+.adminjs_Notice[type="warning"],
+[data-css*="Notice"][type="warning"] {
+  background-color: var(--pupzy-warning-light) !important;
+  border: 1px solid var(--pupzy-warning) !important;
+  color: var(--pupzy-warning-dark) !important;
+}
+
+.adminjs_Notice[type="info"],
+[data-css*="Notice"][type="info"] {
+  background-color: var(--pupzy-primary-subtle) !important;
+  border: 1px solid var(--pupzy-primary) !important;
+  color: var(--pupzy-primary-hover) !important;
+}
+
+/* ==========================================================================
+   Loaders & Spinners
+   ========================================================================== */
+.adminjs_Loader,
+[data-css*="Loader"],
+svg[data-css*="Loader"] {
+  border-top-color: var(--pupzy-primary) !important;
+  color: var(--pupzy-primary) !important;
+}
+
+/* ==========================================================================
+   Pagination & Action Dropdowns
+   ========================================================================== */
+.adminjs_Pagination,
+[data-css*="Pagination"] {
+  margin-top: 16px !important;
+}
+
+.adminjs_Pagination a,
+[data-css*="Pagination"] a {
+  border-radius: 8px !important;
+  border: 1px solid var(--pupzy-border) !important;
+  background-color: var(--pupzy-surface) !important;
+  color: var(--pupzy-text) !important;
+  font-weight: 500 !important;
+}
+
+.adminjs_Pagination a.active,
+[data-css*="Pagination"] a[data-css*="active"] {
+  background-color: var(--pupzy-primary) !important;
+  border-color: var(--pupzy-primary) !important;
+  color: #FFFFFF !important;
+}
+
+/* Action Dropdown Menus */
+.adminjs_DropDown,
+[data-css*="DropDown"],
+[data-css*="Dropdown"] {
+  background-color: var(--pupzy-surface) !important;
+  border: 1px solid var(--pupzy-border) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(45, 21, 6, 0.1) !important;
+  z-index: 1000 !important;
+}
+
+/* ==========================================================================
+   Responsive Metric Grid
+   ========================================================================== */
+.pupzy-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 576px) {
+  .pupzy-metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .pupzy-metric-grid {
+    grid-template-columns: repeat(3, 1fr); /* 3x2 grid on ordinary desktop */
+  }
+}
+
+@media (min-width: 1400px) {
+  .pupzy-metric-grid {
+    grid-template-columns: repeat(6, 1fr); /* 6 columns on wide desktop */
+  }
+}
+
+/* ==========================================================================
+   Accessibility: Focus, Motion & Touch Targets
+   ========================================================================== */
+/* High-contrast focus indicators */
+*:focus-visible {
+  outline: 2px solid var(--pupzy-primary) !important;
+  outline-offset: 2px !important;
+}
+
+/* Touch-friendly target sizing on mobile/tablet devices */
+@media (pointer: coarse) {
+  .adminjs_Button,
+  button,
+  input[type="checkbox"],
+  a {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -36,8 +36,28 @@ type VetClinic {
   """
   phoneNumber: String
 
-  """Full human-readable address. Null when OSM had no addr:* tags."""
+  """
+  Full human-readable address in English.
+  Null when only Arabic address or legacy unlocalized address was recorded.
+  """
+  addressEnglish: String
+
+  """
+  Full human-readable address in Arabic.
+  Null when only English address or legacy unlocalized address was recorded.
+  """
+  addressArabic: String
+
+  """
+  Full human-readable address. Preserved as a backward-compatible fallback
+  across all clients.
+  """
   address: String
+
+  """
+  City ID to which this clinic belongs.
+  """
+  cityId: ID
 
   """Clinic website URL. Null when OSM had no website tag."""
   website: String
@@ -59,7 +79,7 @@ type VetClinic {
   distanceKm: Float!
 
   """
-  Pre-built Google Maps deep-link: https://maps.google.com/?q=lat,lon
+  Pre-built Google Maps deep-link: https://www.google.com/maps/search/?api=1&query=lat%2Clon
   Open with Flutter's url_launcher package — no Google Maps SDK required.
   """
   googleMapsUrl: String!

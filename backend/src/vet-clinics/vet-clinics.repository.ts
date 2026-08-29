@@ -16,8 +16,11 @@ export interface VetClinicProximityResult {
   id: string;
   nameEnglish: string | null;
   nameArabic: string | null;
+  cityId: string | null;
   phoneNumber: string | null;
   address: string | null;
+  addressEnglish: string | null;
+  addressArabic: string | null;
   website: string | null;
   /** ST_Y(coordinates) — WGS-84 latitude */
   latitude: number;
@@ -84,8 +87,11 @@ export class VetClinicsRepository {
         id: vetClinics.id,
         nameEnglish: vetClinics.nameEnglish,
         nameArabic: vetClinics.nameArabic,
+        cityId: vetClinics.cityId,
         phoneNumber: vetClinics.phoneNumber,
         address: vetClinics.address,
+        addressEnglish: vetClinics.addressEnglish,
+        addressArabic: vetClinics.addressArabic,
         website: vetClinics.website,
         latitude: sql<number>`ST_Y(${vetClinics.coordinates}::geometry)`.mapWith(Number),
         longitude: sql<number>`ST_X(${vetClinics.coordinates}::geometry)`.mapWith(Number),
@@ -132,8 +138,11 @@ export class VetClinicsRepository {
         id: vetClinics.id,
         nameEnglish: vetClinics.nameEnglish,
         nameArabic: vetClinics.nameArabic,
+        cityId: vetClinics.cityId,
         phoneNumber: vetClinics.phoneNumber,
         address: vetClinics.address,
+        addressEnglish: vetClinics.addressEnglish,
+        addressArabic: vetClinics.addressArabic,
         website: vetClinics.website,
         latitude: sql<number>`ST_Y(${vetClinics.coordinates}::geometry)`.mapWith(Number),
         longitude: sql<number>`ST_X(${vetClinics.coordinates}::geometry)`.mapWith(Number),

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { ENUMS } from "../enums.js";
+import { ADMIN_RESOURCE_TABLES } from "../index.js";
 import { buildAdminUsersResource } from "./admin-users.resource.js";
 import { buildAdoptionApplicationsResource } from "./adoption-applications.resource.js";
 import { buildAdoptionPostsResource } from "./adoption-posts.resource.js";
@@ -21,10 +22,11 @@ import { buildRescuePostsResource } from "./rescue-posts.resource.js";
 import { buildSavedSearchesResource } from "./saved-searches.resource.js";
 import { buildUsersResource } from "./users.resource.js";
 import { buildVetClinicsResource } from "./vet-clinics.resource.js";
+import { buildVetClinicLocationAuditsResource } from "./vet-clinic-location-audits.resource.js";
 
 const db = { table: (name) => ({ name }) };
 const pool = {};
-const components = { ModerationAction: "ModerationAction" };
+const components = { ModerationAction: "ModerationAction", ShortUuid: "ShortUuid" };
 
 function values(resource, property) {
   return resource.options.properties[property].availableValues.map(
@@ -36,27 +38,35 @@ function resources() {
   return [
     buildUsersResource(db, pool, components),
     buildPostsResource(db, pool, components),
-    buildRescuePostsResource(db),
-    buildLostPostsResource(db),
-    buildAdoptionPostsResource(db),
-    buildProductPostsResource(db),
-    buildMatingPostsResource(db),
-    buildPostMediaResource(db),
-    buildPostUpvotesResource(db),
-    buildPostSavesResource(db),
-    buildPostReportsResource(db),
-    buildContactRequestsResource(db),
-    buildAdoptionApplicationsResource(db),
-    buildSavedSearchesResource(db),
-    buildNotificationsResource(db),
-    buildCitiesResource(db),
-    buildVetClinicsResource(db),
-    buildAdminUsersResource(db),
-    buildModerationActionsResource(db),
+    buildRescuePostsResource(db, components),
+    buildLostPostsResource(db, components),
+    buildAdoptionPostsResource(db, components),
+    buildProductPostsResource(db, components),
+    buildMatingPostsResource(db, components),
+    buildPostMediaResource(db, components),
+    buildPostUpvotesResource(db, components),
+    buildPostSavesResource(db, components),
+    buildPostReportsResource(db, components),
+    buildContactRequestsResource(db, components),
+    buildAdoptionApplicationsResource(db, components),
+    buildSavedSearchesResource(db, components),
+    buildNotificationsResource(db, components),
+    buildCitiesResource(db, components),
+    buildVetClinicsResource(db, pool, components),
+    buildAdminUsersResource(db, components),
+    buildModerationActionsResource(db, components),
+    buildVetClinicLocationAuditsResource(db, components),
   ];
 }
 
 describe("AdminJS resource configuration", () => {
+  it("includes all 20 registered domain tables", () => {
+    const list = resources();
+    assert.equal(list.length, 20);
+    const names = list.map((r) => r.resource.name);
+    assert.deepEqual(names, [...ADMIN_RESOURCE_TABLES]);
+  });
+
   it("transcribes every enum-backed property exactly", () => {
     const byTable = Object.fromEntries(
       resources().map((item) => [item.resource.name, item]),
@@ -117,6 +127,48 @@ describe("AdminJS resource configuration", () => {
         resource.options.actions.bulkDelete.isAccessible,
         false,
         `${resource.resource.name}.bulkDelete`,
+      );
+    }
+  });
+
+  it("enforces explicit listProperties on every registered resource to prevent automatic column fallback", () => {
+    for (const resource of resources()) {
+      const listProps = resource.options.listProperties;
+      assert.ok(
+        Array.isArray(listProps) && listProps.length >= 2 && listProps.length <= 10,
+        `${resource.resource.name} must declare explicit listProperties with 2-10 columns (got ${JSON.stringify(listProps)})`,
+      );
+      // Ensure no raw coordinates or password hashes in list properties
+      assert.ok(
+        !listProps.includes("coordinates"),
+        `${resource.resource.name} must not expose raw coordinates in listProperties`,
+      );
+      assert.ok(
+        !listProps.includes("password_hash"),
+        `${resource.resource.name} must not expose password_hash in listProperties`,
+      );
+    }
+  });
+
+  it("enforces explicit showProperties and filterProperties on every registered resource", () => {
+    for (const resource of resources()) {
+      const showProps = resource.options.showProperties;
+      const filterProps = resource.options.filterProperties;
+      assert.ok(
+        Array.isArray(showProps) && showProps.length >= 2,
+        `${resource.resource.name} must declare explicit showProperties`,
+      );
+      assert.ok(
+        Array.isArray(filterProps) && filterProps.length >= 1,
+        `${resource.resource.name} must declare explicit filterProperties`,
+      );
+      assert.ok(
+        !showProps.includes("password_hash"),
+        `${resource.resource.name} must not expose password_hash in showProperties`,
+      );
+      assert.ok(
+        !filterProps.includes("password_hash"),
+        `${resource.resource.name} must not expose password_hash in filterProperties`,
       );
     }
   });

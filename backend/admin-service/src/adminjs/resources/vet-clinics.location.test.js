@@ -1,0 +1,310 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import { ValidationError } from "adminjs";
+
+import {
+  parseCoordinates,
+  buildGoogleMapsUrl,
+  isLocationModified,
+  validateMappedLocation,
+  findNearestOfficialCity,
+  checkCityDiscrepancy,
+  readOverrideReason,
+  DEFAULT_EGYPT_BOUNDS,
+} from "./vet-clinics.location.js";
+
+describe("Vet Clinics Location Helpers & Validation", () => {
+  describe("parseCoordinates", () => {
+    it("parses discrete latitude and longitude numbers or strings", () => {
+      const parsed1 = parseCoordinates({ latitude: 30.0444, longitude: 31.2357 });
+      assert.equal(parsed1.lat, 30.0444);
+      assert.equal(parsed1.lng, 31.2357);
+
+      const parsed2 = parseCoordinates({ latitude: "29.9731", longitude: "31.2804" });
+      assert.equal(parsed2.lat, 29.9731);
+      assert.equal(parsed2.lng, 31.2804);
+    });
+
+    it("parses dotted property notation (coordinates.latitude / coordinates.longitude)", () => {
+      const parsed = parseCoordinates({
+        "coordinates.latitude": "30.05",
+        "coordinates.longitude": "31.30",
+      });
+      assert.equal(parsed.lat, 30.05);
+      assert.equal(parsed.lng, 31.30);
+    });
+
+    it("parses coordinates object", () => {
+      const parsed = parseCoordinates({
+        coordinates: { latitude: 30.05, longitude: 31.30 },
+      });
+      assert.equal(parsed.lat, 30.05);
+      assert.equal(parsed.lng, 31.30);
+    });
+
+    it("parses PostGIS WKT and EWKT POINT(longitude latitude) strings", () => {
+      const parsed1 = parseCoordinates({
+        coordinates: "SRID=4326;POINT(31.2357 30.0444)",
+      });
+      assert.equal(parsed1.lat, 30.0444);
+      assert.equal(parsed1.lng, 31.2357);
+
+      const parsed2 = parseCoordinates({
+        coordinates: "POINT(32.6537 25.6792)",
+      });
+      assert.equal(parsed2.lat, 25.6792);
+      assert.equal(parsed2.lng, 32.6537);
+    });
+
+    it("parses comma-separated lat, lng strings", () => {
+      const parsed = parseCoordinates({ coordinates: "30.0444, 31.2357" });
+      assert.equal(parsed.lat, 30.0444);
+      assert.equal(parsed.lng, 31.2357);
+    });
+
+    it("parses JSON coordinates strings", () => {
+      const parsed = parseCoordinates({
+        coordinates: JSON.stringify({ latitude: 30.0444, longitude: 31.2357 }),
+      });
+      assert.equal(parsed.lat, 30.0444);
+      assert.equal(parsed.lng, 31.2357);
+    });
+
+    it("returns NaN for invalid or empty inputs", () => {
+      assert.equal(Number.isNaN(parseCoordinates(null).lat), true);
+      assert.equal(Number.isNaN(parseCoordinates({}).lat), true);
+      assert.equal(Number.isNaN(parseCoordinates({ coordinates: "gibberish" }).lat), true);
+    });
+  });
+
+  describe("buildGoogleMapsUrl", () => {
+    it("generates canonical zero-key search URL with %2C encoded comma", () => {
+      const url = buildGoogleMapsUrl(30.0444, 31.2357);
+      assert.equal(
+        url,
+        "https://www.google.com/maps/search/?api=1&query=30.0444%2C31.2357",
+      );
+      assert.equal(url.includes("key="), false);
+      assert.equal(url.includes("api_key="), false);
+    });
+
+    it("rejects non-finite coordinates", () => {
+      assert.throws(() => buildGoogleMapsUrl(NaN, 31.2357), /Invalid WGS84/);
+      assert.throws(() => buildGoogleMapsUrl(30.0444, Infinity), /Invalid WGS84/);
+    });
+
+    it("rejects coordinates outside WGS84 ranges", () => {
+      assert.throws(() => buildGoogleMapsUrl(91.0, 31.2357), /Invalid WGS84/);
+      assert.throws(() => buildGoogleMapsUrl(-90.1, 31.2357), /Invalid WGS84/);
+      assert.throws(() => buildGoogleMapsUrl(30.0, 180.1), /Invalid WGS84/);
+      assert.throws(() => buildGoogleMapsUrl(30.0, -180.1), /Invalid WGS84/);
+    });
+  });
+
+  describe("isLocationModified", () => {
+    it("returns true when coordinates, address, or confirmation fields are present", () => {
+      assert.equal(isLocationModified({ coordinates: "POINT(31 30)" }), true);
+      assert.equal(isLocationModified({ latitude: 30, longitude: 31 }), true);
+      assert.equal(isLocationModified({ address_english: "123 Nile St" }), true);
+      assert.equal(isLocationModified({ address_arabic: "شارع النيل" }), true);
+      assert.equal(isLocationModified({ location_confirmed: "true" }), true);
+    });
+
+    it("returns true when city_id is changed from existing record", () => {
+      assert.equal(
+        isLocationModified({ city_id: "new-city" }, { city_id: "old-city" }),
+        true,
+      );
+    });
+
+    it("returns false for non-location edits (e.g. name, phone, is_active)", () => {
+      assert.equal(
+        isLocationModified(
+          { name_english: "Updated Clinic", phone_number: "+201012345678", is_active: false },
+          { city_id: "city-1" },
+        ),
+        false,
+      );
+    });
+  });
+
+  describe("validateMappedLocation", () => {
+    const validPayload = {
+      location_confirmed: true,
+      address_english: "10 Road 9, Maadi",
+      address_arabic: "١٠ شارع ٩، المعادي",
+      latitude: 29.9602,
+      longitude: 31.2569,
+    };
+
+    it("accepts valid Egyptian coordinates and confirmed bilingual address", () => {
+      const result = validateMappedLocation(validPayload);
+      assert.equal(result.latitude, 29.9602);
+      assert.equal(result.longitude, 31.2569);
+      assert.equal(result.address_english, "10 Road 9, Maadi");
+      assert.equal(result.address_arabic, "١٠ شارع ٩، المعادي");
+      assert.equal(result.address, "10 Road 9, Maadi");
+      assert.equal(result.coordinatesStr, "SRID=4326;POINT(31.2569 29.9602)");
+    });
+
+    it("rejects unconfirmed location", () => {
+      assert.throws(
+        () => validateMappedLocation({ ...validPayload, location_confirmed: false }),
+        (err) => {
+          assert.ok(err instanceof ValidationError);
+          assert.match(err.propertyErrors.coordinates.message, /confirmed/i);
+          return true;
+        },
+      );
+    });
+
+    it("rejects blank English address", () => {
+      assert.throws(
+        () => validateMappedLocation({ ...validPayload, address_english: "   " }),
+        (err) => {
+          assert.ok(err instanceof ValidationError);
+          assert.match(err.propertyErrors.address_english.message, /English address is required/i);
+          return true;
+        },
+      );
+    });
+
+    it("rejects blank Arabic address", () => {
+      assert.throws(
+        () => validateMappedLocation({ ...validPayload, address_arabic: "" }),
+        (err) => {
+          assert.ok(err instanceof ValidationError);
+          assert.match(err.propertyErrors.address_arabic.message, /Arabic address is required/i);
+          return true;
+        },
+      );
+    });
+
+    it("rejects non-finite coordinates", () => {
+      assert.throws(
+        () => validateMappedLocation({ ...validPayload, latitude: NaN }),
+        (err) => {
+          assert.ok(err instanceof ValidationError);
+          assert.match(err.propertyErrors.coordinates.message, /Valid coordinates/i);
+          return true;
+        },
+      );
+    });
+
+    it("rejects coordinates outside WGS84 range", () => {
+      assert.throws(
+        () => validateMappedLocation({ ...validPayload, latitude: 95.0 }),
+        (err) => {
+          assert.ok(err instanceof ValidationError);
+          assert.match(err.propertyErrors.coordinates.message, /between -90 and 90/i);
+          return true;
+        },
+      );
+    });
+
+    it("rejects coordinates outside configured Egypt bounding region", () => {
+      // Latitude 51.5 (London) is outside Egypt [21.0, 32.0]
+      assert.throws(
+        () => validateMappedLocation({ ...validPayload, latitude: 51.5074, longitude: -0.1278 }),
+        (err) => {
+          assert.ok(err instanceof ValidationError);
+          assert.match(err.propertyErrors.coordinates.message, /Egypt region/i);
+          return true;
+        },
+      );
+
+      // Longitude 45.0 (Saudi Arabia / Iraq) is outside Egypt [24.0, 37.5]
+      assert.throws(
+        () => validateMappedLocation({ ...validPayload, latitude: 30.0, longitude: 45.0 }),
+        (err) => {
+          assert.ok(err instanceof ValidationError);
+          assert.match(err.propertyErrors.coordinates.message, /Egypt region/i);
+          return true;
+        },
+      );
+    });
+  });
+
+  describe("checkCityDiscrepancy", () => {
+    it("returns isDiscrepant = false when selected city matches nearest city", () => {
+      const city = { id: "city-1", name_english: "Maadi", governorate: "Cairo" };
+      const nearest = { id: "city-1", name_english: "Maadi", governorate: "Cairo", distance_km: 0.5 };
+      const res = checkCityDiscrepancy(city, nearest);
+      assert.equal(res.isDiscrepant, false);
+    });
+
+    it("returns isDiscrepant = true with explanation when cities differ", () => {
+      const selected = { id: "city-1", name_english: "Maadi", name_arabic: "المعادي", governorate: "Cairo" };
+      const nearest = { id: "city-2", name_english: "El Basatin", name_arabic: "البساتين", governorate: "Cairo", distance_km: 1.5 };
+      const res = checkCityDiscrepancy(selected, nearest);
+      assert.equal(res.isDiscrepant, true);
+      assert.equal(res.selectedCity.id, "city-1");
+      assert.equal(res.nearestCity.id, "city-2");
+      assert.match(res.explanation, /closest to El Basatin/);
+      assert.match(res.explanation, /Maadi.*was selected/);
+      assert.match(res.explanation, /approximate centroids/);
+      assert.match(res.explanation, /override reason/);
+    });
+
+    it("handles null or undefined inputs gracefully", () => {
+      assert.equal(checkCityDiscrepancy(null, null).isDiscrepant, false);
+      assert.equal(checkCityDiscrepancy({ id: "1" }, null).isDiscrepant, false);
+    });
+  });
+
+  describe("readOverrideReason", () => {
+    it("accepts a nonblank reason within 500 characters", () => {
+      const res = readOverrideReason("  Clinic is on the border between Maadi and Basatin.  ");
+      assert.equal(res.error, undefined);
+      assert.equal(res.reason, "Clinic is on the border between Maadi and Basatin.");
+    });
+
+    it("rejects missing or empty reason", () => {
+      assert.equal(readOverrideReason("").error, "An override reason is required.");
+      assert.equal(readOverrideReason("   ").error, "An override reason is required.");
+      assert.equal(readOverrideReason(null).error, "An override reason is required.");
+      assert.equal(readOverrideReason(undefined).error, "An override reason is required.");
+    });
+
+    it("rejects reason exceeding 500 characters", () => {
+      const longReason = "a".repeat(501);
+      const res = readOverrideReason(longReason);
+      assert.equal(res.error, "Override reason must be at most 500 characters.");
+    });
+  });
+
+  describe("findNearestOfficialCity", () => {
+    it("returns null for non-finite coordinates", async () => {
+      const res = await findNearestOfficialCity(null, NaN, 31.2);
+      assert.equal(res, null);
+    });
+
+    it("queries pg pool/client directly with ST_Distance and KNN sort", async () => {
+      const fakeClient = {
+        query: async (sqlStr, params) => {
+          assert.match(sqlStr, /center_point <->/);
+          assert.match(sqlStr, /ST_Distance/);
+          assert.equal(params[0], 31.25);
+          assert.equal(params[1], 29.96);
+          return {
+            rows: [
+              {
+                id: "city-maadi",
+                name_english: "Maadi",
+                name_arabic: "المعادي",
+                governorate: "Cairo",
+                status: "OFFICIAL",
+                distance_km: "1.23",
+              },
+            ],
+          };
+        },
+      };
+
+      const result = await findNearestOfficialCity(fakeClient, 29.96, 31.25);
+      assert.ok(result);
+      assert.equal(result.id, "city-maadi");
+      assert.equal(result.distance_km, 1.23);
+    });
+  });
+});

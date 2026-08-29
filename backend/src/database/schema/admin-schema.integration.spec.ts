@@ -1,7 +1,16 @@
 import { eq, sql } from 'drizzle-orm';
 import { generateUuidV7 } from '../../common/utils/generate-uuidv7';
 import { TestDatabaseHelper } from '../../../test/test-database.helper';
-import { adminUsers, cities, moderationActions, posts, users } from './index';
+import {
+  adminUsers,
+  cities,
+  moderationActions,
+  posts,
+  users,
+  vetClinics,
+  vetClinicLocationAudits,
+  addressSearchCache,
+} from './index';
 
 describe('Admin schema (integration)', () => {
   let dbHelper: TestDatabaseHelper;
@@ -160,5 +169,100 @@ describe('Admin schema (integration)', () => {
       await client.query('RESET enable_seqscan');
       client.release();
     }
+  });
+
+  it('persists vet_clinic_location_audits with FK integrity and sets adminUserId to null on admin deletion', async () => {
+    const admin = await insertAdmin('auditor@example.com');
+    const { city } = await insertUserAndCity();
+
+    const [nearestCity] = await dbHelper.db
+      .insert(cities)
+      .values({
+        nameEnglish: 'Giza',
+        nameArabic: 'الجيزة',
+        governorate: 'Giza',
+        centerPoint: sql`ST_SetSRID(ST_MakePoint(31.20, 30.01), 4326)`,
+      })
+      .returning();
+
+    const [clinic] = await dbHelper.db
+      .insert(vetClinics)
+      .values({
+        nameEnglish: 'Audited Clinic',
+        nameArabic: 'عيادة موثقة',
+        cityId: city.id,
+        addressEnglish: 'Cairo-Giza Border',
+        addressArabic: 'حدود القاهرة والجيزة',
+        coordinates: { longitude: 31.2, latitude: 30.01 },
+        source: 'MANUAL',
+      })
+      .returning();
+
+    const [audit] = await dbHelper.db
+      .insert(vetClinicLocationAudits)
+      .values({
+        vetClinicId: clinic.id,
+        adminUserId: admin.id,
+        selectedCityId: city.id,
+        nearestCityId: nearestCity.id,
+        coordinates: { longitude: 31.2, latitude: 30.01 },
+        discrepancyDetails: { distance_km: 1.2 },
+        reason: 'Clinic located on boundary road between Cairo and Giza',
+      })
+      .returning();
+
+    expect(audit).toBeDefined();
+    expect(audit.vetClinicId).toBe(clinic.id);
+    expect(audit.adminUserId).toBe(admin.id);
+    expect(audit.reason).toBe('Clinic located on boundary road between Cairo and Giza');
+
+    // Admin deletion preserves audit log with null adminUserId
+    await dbHelper.db.delete(adminUsers).where(eq(adminUsers.id, admin.id));
+    const [survivingAudit] = await dbHelper.db
+      .select()
+      .from(vetClinicLocationAudits)
+      .where(eq(vetClinicLocationAudits.id, audit.id));
+    expect(survivingAudit).toBeDefined();
+    expect(survivingAudit.adminUserId).toBeNull();
+
+    // Check constraint rejects blank reason
+    await expect(
+      dbHelper.db.insert(vetClinicLocationAudits).values({
+        vetClinicId: clinic.id,
+        selectedCityId: city.id,
+        nearestCityId: nearestCity.id,
+        coordinates: { longitude: 31.2, latitude: 30.01 },
+        reason: '   ',
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('persists address_search_cache and enforces unique normalized query constraint', async () => {
+    const [entry] = await dbHelper.db
+      .insert(addressSearchCache)
+      .values({
+        normalizedQuery: 'maadi degla clinic',
+        results: [
+          {
+            displayName: 'Degla Clinic',
+            latitude: 29.96,
+            longitude: 31.28,
+            osmId: '12345',
+          },
+        ],
+      })
+      .returning();
+
+    expect(entry).toBeDefined();
+    expect(entry.normalizedQuery).toBe('maadi degla clinic');
+    expect(Array.isArray(entry.results)).toBe(true);
+
+    // Reject duplicate normalized_query
+    await expect(
+      dbHelper.db.insert(addressSearchCache).values({
+        normalizedQuery: 'maadi degla clinic',
+        results: [],
+      }),
+    ).rejects.toThrow();
   });
 });

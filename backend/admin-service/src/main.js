@@ -5,8 +5,10 @@ import session from 'express-session';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import AdminJSExpress from '@adminjs/express';
-import pino from 'pino';
-import pinoHttp from 'pino-http';
+import { createLogger, createHttpLoggingMiddleware } from './logging/logger.js';
+
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { buildAdminJs } from './adminjs/index.js';
 import { buildAuthenticate } from './auth/authenticate.js';
@@ -17,10 +19,9 @@ import { buildCsrfProtection } from './middleware/csrf.js';
 import { requireSameOrigin } from './middleware/same-origin.js';
 import { buildRequestTriggeredSessionPruning } from './middleware/session-pruning.js';
 
+const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const env = validateEnv(process.env);
-const logger = pino({
-  level: env.NODE_ENV === 'production' ? 'info' : 'debug',
-});
+const logger = createLogger(env);
 const pool = createPool(env.DATABASE_URL);
 const databaseName = new URL(env.DATABASE_URL).pathname.replace(/^\//, '');
 const { admin, sqlAdapterPool } = await buildAdminJs(env.DATABASE_URL, databaseName, pool);
@@ -28,7 +29,11 @@ const { admin, sqlAdapterPool } = await buildAdminJs(env.DATABASE_URL, databaseN
 const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
-app.use(pinoHttp({ logger }));
+app.use(createHttpLoggingMiddleware(logger, { rootPath: admin.options.rootPath }));
+app.use(
+  `${admin.options.rootPath}/assets`,
+  express.static(path.join(currentDirectory, 'adminjs', 'public')),
+);
 app.use(
   helmet({
     contentSecurityPolicy: {

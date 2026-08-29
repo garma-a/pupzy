@@ -13,6 +13,26 @@ const envSchema = z.object({
     .string()
     .min(32, "ADMIN_SESSION_SECRET must be at least 32 characters"),
   ADMIN_ALLOWED_IPS: z.string().default(""),
+  MAP_TILE_URL: z.string().default("https://tile.openstreetmap.org/{z}/{x}/{y}.png"),
+  MAP_ATTRIBUTION: z
+    .string()
+    .default(
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    ),
+  EGYPT_MIN_LAT: z.coerce.number().default(21.0),
+  EGYPT_MAX_LAT: z.coerce.number().default(32.0),
+  EGYPT_MIN_LNG: z.coerce.number().default(24.0),
+  EGYPT_MAX_LNG: z.coerce.number().default(37.5),
+  NOMINATIM_URL: z.string().url().default("https://nominatim.openstreetmap.org/search"),
+  NOMINATIM_USER_AGENT: z.string().default("PupzyAdmin/1.0 (contact@pupzy.app)"),
+  NOMINATIM_ATTRIBUTION: z
+    .string()
+    .default(
+      'Data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ODbL 1.0'
+    ),
+  NOMINATIM_ENABLED: z.coerce.boolean().default(true),
+  NOMINATIM_TIMEOUT_MS: z.coerce.number().default(5000),
+  NOMINATIM_RATE_LIMIT_MS: z.coerce.number().default(1000),
 });
 
 /** @returns {z.infer<typeof envSchema>} */

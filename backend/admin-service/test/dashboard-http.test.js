@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { after, before, describe, it } from 'node:test';
 import AdminJSExpress from '@adminjs/express';
 import bcrypt from 'bcryptjs';
@@ -104,6 +106,7 @@ before(async () => {
 
   const app = express();
   app.set('trust proxy', 1);
+  app.use('/admin/assets', express.static(path.join(import.meta.dirname, '../src/adminjs/public')));
   app.use('/admin', requireSameOrigin);
   app.use('/admin', buildCsrfProtection('a test CSRF signing secret at least 32 chars'));
   app.use(

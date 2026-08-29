@@ -1,11 +1,27 @@
 import { actionResponse, readModerationReason, runModerationAction } from './helpers.js';
 import { isAnyAdmin } from '../rbac.js';
 
+function isUserBanned(record) {
+  if (!record) return false;
+  let value;
+  if (typeof record.get === 'function') {
+    value = record.get('is_banned');
+  }
+  if (value === undefined) {
+    value = record.params?.is_banned;
+  }
+  return value === true || value === 'true' || value === 1 || value === '1';
+}
+
 export function buildBanUserAction(pool, component, cache) {
   return {
     actionType: 'record',
     icon: 'Slash',
     isAccessible: isAnyAdmin,
+    isVisible: (context) => {
+      if (!context?.record) return false;
+      return !isUserBanned(context.record);
+    },
     component,
     handler: async (request, _response, context) => {
       const { record, currentAdmin } = context;
@@ -73,6 +89,10 @@ export function buildUnbanUserAction(pool, cache) {
     icon: 'Check',
     guard: 'Are you sure you want to unban this user?',
     isAccessible: isAnyAdmin,
+    isVisible: (context) => {
+      if (!context?.record) return false;
+      return isUserBanned(context.record);
+    },
     component: false,
     handler: async (request, _response, context) => {
       const { record, currentAdmin } = context;

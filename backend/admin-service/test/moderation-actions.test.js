@@ -273,6 +273,135 @@ describe("moderation actions", () => {
     );
     assert.equal(result.rows[0].moderation_reason, reason);
   });
+
+  it("restoring a post preserves previous moderation status and exposes the correct actions", async () => {
+    const actions = buildPostActions(database.pool, "ModerationAction");
+
+    // Case 1: Clean post -> remove -> restore -> still clean
+    const cleanPostId = await insertPost(database.pool, {
+      ...principals,
+      moderationStatus: "CLEAN",
+    });
+    await call(actions.removePost, cleanPostId, { reason: "Temporary takedown" });
+    const removedCleanRow = (
+      await database.pool.query(`SELECT status, moderation_status FROM posts WHERE id = $1`, [cleanPostId])
+    ).rows[0];
+    assert.equal(removedCleanRow.status, "REMOVED");
+    assert.equal(removedCleanRow.moderation_status, "CLEAN");
+
+    // While removed: only restorePost is visible
+    const removedCleanRecord = { params: removedCleanRow };
+    assert.equal(actions.restorePost.isVisible({ record: removedCleanRecord }), true);
+    assert.equal(actions.approvePost.isVisible({ record: removedCleanRecord }), false);
+    assert.equal(actions.flagPost.isVisible({ record: removedCleanRecord }), false);
+    assert.equal(actions.removePost.isVisible({ record: removedCleanRecord }), false);
+
+    // Restore
+    const restoreCleanRes = await call(actions.restorePost, cleanPostId);
+    assert.equal(restoreCleanRes.notice.type, "success");
+    const restoredCleanRow = (
+      await database.pool.query(`SELECT status, moderation_status FROM posts WHERE id = $1`, [cleanPostId])
+    ).rows[0];
+    assert.equal(restoredCleanRow.status, "ACTIVE");
+    assert.equal(restoredCleanRow.moderation_status, "CLEAN");
+
+    // After restoring clean post: shows flagPost and removePost, not approvePost or restorePost
+    const restoredCleanRecord = { params: restoredCleanRow };
+    assert.equal(actions.flagPost.isVisible({ record: restoredCleanRecord }), true);
+    assert.equal(actions.removePost.isVisible({ record: restoredCleanRecord }), true);
+    assert.equal(actions.approvePost.isVisible({ record: restoredCleanRecord }), false);
+    assert.equal(actions.restorePost.isVisible({ record: restoredCleanRecord }), false);
+
+    // Case 2: Flagged post -> remove -> restore -> still flagged
+    const flaggedPostId = await insertPost(database.pool, {
+      ...principals,
+      moderationStatus: "FLAGGED",
+    });
+    await call(actions.removePost, flaggedPostId, { reason: "Policy takedown" });
+    await call(actions.restorePost, flaggedPostId);
+    const restoredFlaggedRow = (
+      await database.pool.query(`SELECT status, moderation_status FROM posts WHERE id = $1`, [flaggedPostId])
+    ).rows[0];
+    assert.equal(restoredFlaggedRow.status, "ACTIVE");
+    assert.equal(restoredFlaggedRow.moderation_status, "FLAGGED");
+
+    // After restoring flagged post: shows approvePost and removePost, not flagPost or restorePost
+    const restoredFlaggedRecord = { params: restoredFlaggedRow };
+    assert.equal(actions.approvePost.isVisible({ record: restoredFlaggedRecord }), true);
+    assert.equal(actions.removePost.isVisible({ record: restoredFlaggedRecord }), true);
+    assert.equal(actions.flagPost.isVisible({ record: restoredFlaggedRecord }), false);
+    assert.equal(actions.restorePost.isVisible({ record: restoredFlaggedRecord }), false);
+
+    // Case 3: Pending post -> remove -> restore -> still pending
+    const pendingPostId = await insertPost(database.pool, {
+      ...principals,
+      moderationStatus: "PENDING_AUTO_REVIEW",
+    });
+    await call(actions.removePost, pendingPostId, { reason: "Pending takedown" });
+    await call(actions.restorePost, pendingPostId);
+    const restoredPendingRow = (
+      await database.pool.query(`SELECT status, moderation_status FROM posts WHERE id = $1`, [pendingPostId])
+    ).rows[0];
+    assert.equal(restoredPendingRow.status, "ACTIVE");
+    assert.equal(restoredPendingRow.moderation_status, "PENDING_AUTO_REVIEW");
+
+    // After restoring pending post: shows approvePost, flagPost, and removePost, not restorePost
+    const restoredPendingRecord = { params: restoredPendingRow };
+    assert.equal(actions.approvePost.isVisible({ record: restoredPendingRecord }), true);
+    assert.equal(actions.flagPost.isVisible({ record: restoredPendingRecord }), true);
+    assert.equal(actions.removePost.isVisible({ record: restoredPendingRecord }), true);
+    assert.equal(actions.restorePost.isVisible({ record: restoredPendingRecord }), false);
+  });
+
+  it("rejects direct action attempts on removed or invalid post states under row lock", async () => {
+    const actions = buildPostActions(database.pool, "ModerationAction");
+    const postId = await insertPost(database.pool, {
+      ...principals,
+      moderationStatus: "FLAGGED",
+      status: "REMOVED",
+    });
+
+    // Attempting to approve a removed post fails
+    const approveRes = await call(actions.approvePost, postId);
+    assert.equal(approveRes.notice.type, "error");
+    assert.match(approveRes.notice.message, /only active/i);
+
+    // Attempting to flag a removed post fails
+    const flagRes = await call(actions.flagPost, postId, { reason: "Spam" });
+    assert.equal(flagRes.notice.type, "error");
+    assert.match(flagRes.notice.message, /only active/i);
+
+    // Attempting to remove an already removed post fails
+    const removeRes = await call(actions.removePost, postId, { reason: "Spam" });
+    assert.equal(removeRes.notice.type, "error");
+    assert.match(removeRes.notice.message, /only active/i);
+
+    // Zero audits written from these failed attempts
+    const audits = await database.pool.query(
+      `SELECT count(*)::int AS count FROM moderation_actions WHERE target_id = $1`,
+      [postId],
+    );
+    assert.equal(audits.rows[0].count, 0);
+  });
+
+  it("serializes concurrent competing transitions on posts under row lock", async () => {
+    const actions = buildPostActions(database.pool, "ModerationAction");
+    const postId = await insertPost(database.pool, principals);
+
+    // Concurrent remove requests
+    const responses = await Promise.all([
+      call(actions.removePost, postId, { reason: "Reason 1" }),
+      call(actions.removePost, postId, { reason: "Reason 2" }),
+    ]);
+    assert.deepEqual(responses.map((item) => item.notice.type).sort(), ["error", "success"]);
+
+    const audits = await database.pool.query(
+      `SELECT count(*)::int AS count FROM moderation_actions
+       WHERE target_id = $1 AND action_type = 'POST_REMOVED'`,
+      [postId],
+    );
+    assert.equal(audits.rows[0].count, 1);
+  });
 });
 
 describe("dashboard queries", () => {

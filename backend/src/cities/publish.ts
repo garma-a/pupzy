@@ -611,10 +611,13 @@ export function publishReviewedRelease(
   } else {
     journal = { version: '7', dialect: 'postgresql', entries: [] };
   }
+  const lastWhen =
+    journal.entries.length > 0 ? Math.max(...journal.entries.map((e) => (typeof e.when === 'number' ? e.when : 0))) : 0;
+  const entryWhen = Math.max(Date.now(), lastWhen + 1000);
   journal.entries.push({
     idx: migrationMeta.nextIdx,
     version: journal.version || '7',
-    when: Date.now(),
+    when: entryWhen,
     tag: migrationMeta.tag,
     breakpoints: true,
   });

@@ -60,7 +60,7 @@ export class TestDatabaseHelper {
         post_media, rescue_posts, lost_posts, adoption_posts, product_posts, mating_posts,
         post_upvotes, post_saves, contact_requests, adoption_applications, post_reports,
         notifications, saved_searches, moderation_actions, posts, admin_users, users,
-        cities, vet_clinics
+        cities, vet_clinics, vet_clinic_location_audits, address_search_cache
       CASCADE
     `);
   }

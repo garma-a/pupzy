@@ -1,4 +1,4 @@
-import { VetClinicsService } from './vet-clinics.service';
+import { VetClinicsService, buildGoogleMapsUrl } from './vet-clinics.service';
 import { VetClinicsRepository, VetClinicProximityResult } from './vet-clinics.repository';
 import { Cache } from 'cache-manager';
 
@@ -63,7 +63,7 @@ describe('VetClinicsService', () => {
     expect(mockRepository.findNearestForCity).toHaveBeenCalledWith('city-cairo');
     expect(mockCacheManager.set).toHaveBeenCalledWith('vet:city:city-cairo', expect.any(Array), 86_400_000);
     expect(result).toHaveLength(1);
-    expect(result[0].googleMapsUrl).toBe('https://maps.google.com/?q=29.9602,31.2569');
+    expect(result[0].googleMapsUrl).toBe('https://www.google.com/maps/search/?api=1&query=29.9602%2C31.2569');
     expect(result[0].whatsappPhoneUrl).toBe('https://wa.me/201001234567');
   });
 
@@ -200,5 +200,92 @@ describe('VetClinicsService', () => {
     // cache entry and a 15-result browse-screen cache entry never collide.
     expect(mockCacheManager.get).toHaveBeenCalledWith('vet:city:list:city-cairo');
     expect(mockCacheManager.get).not.toHaveBeenCalledWith('vet:city:city-cairo');
+  });
+
+  it('maps bilingual addresses with backward-compatible fallback', async () => {
+    const bilingualClinic: VetClinicProximityResult = {
+      id: 'clinic-bilingual',
+      nameEnglish: 'Bilingual Clinic',
+      nameArabic: 'عيادة ثنائية اللغة',
+      cityId: 'city-cairo',
+      phoneNumber: null,
+      address: null,
+      addressEnglish: '123 Nile St, Maadi',
+      addressArabic: '١٢٣ شارع النيل، المعادي',
+      website: null,
+      latitude: 29.96,
+      longitude: 31.25,
+      distanceKm: 0.8,
+    };
+
+    mockRepository.findNearest = jest.fn().mockResolvedValue([bilingualClinic]);
+
+    const result = await service.nearestVetClinicsForPost({
+      id: 'post-rescue-bilingual',
+      postType: 'RESCUE',
+      cityId: 'city-cairo',
+      latitude: 30.0,
+      longitude: 31.0,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].addressEnglish).toBe('123 Nile St, Maadi');
+    expect(result[0].addressArabic).toBe('١٢٣ شارع النيل، المعادي');
+    expect(result[0].address).toBe('123 Nile St, Maadi'); // Falls back to addressEnglish
+    expect(result[0].cityId).toBe('city-cairo');
+  });
+
+  it('preserves legacy unlocalized address when localized fields are null', async () => {
+    const legacyClinic: VetClinicProximityResult = {
+      id: 'clinic-legacy',
+      nameEnglish: 'Legacy Clinic',
+      nameArabic: null,
+      cityId: 'city-alex',
+      phoneNumber: null,
+      address: 'Old single address string',
+      addressEnglish: null,
+      addressArabic: null,
+      website: null,
+      latitude: 31.2,
+      longitude: 29.9,
+      distanceKm: 2.1,
+    };
+
+    mockRepository.findNearest = jest.fn().mockResolvedValue([legacyClinic]);
+
+    const result = await service.nearestVetClinicsForPost({
+      id: 'post-rescue-legacy',
+      postType: 'RESCUE',
+      cityId: 'city-alex',
+      latitude: 31.2,
+      longitude: 29.9,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].address).toBe('Old single address string');
+    expect(result[0].addressEnglish).toBeNull();
+    expect(result[0].addressArabic).toBeNull();
+    expect(result[0].cityId).toBe('city-alex');
+  });
+
+  describe('buildGoogleMapsUrl', () => {
+    it('generates canonical zero-key search URL with encoded comma in latitude,longitude order', () => {
+      const url = buildGoogleMapsUrl(30.0444, 31.2357);
+      expect(url).toBe('https://www.google.com/maps/search/?api=1&query=30.0444%2C31.2357');
+      expect(url).not.toContain('key=');
+      expect(url).not.toContain('api_key=');
+    });
+
+    it('rejects non-finite coordinates', () => {
+      expect(() => buildGoogleMapsUrl(NaN, 31.2357)).toThrow(/Invalid WGS84 coordinates/);
+      expect(() => buildGoogleMapsUrl(30.0444, Infinity)).toThrow(/Invalid WGS84 coordinates/);
+    });
+
+    it('rejects coordinates outside WGS84 latitude/longitude bounds', () => {
+      expect(() => buildGoogleMapsUrl(91.0, 31.2357)).toThrow(/Invalid WGS84 coordinates/);
+      expect(() => buildGoogleMapsUrl(-90.1, 31.2357)).toThrow(/Invalid WGS84 coordinates/);
+      expect(() => buildGoogleMapsUrl(30.0444, 180.5)).toThrow(/Invalid WGS84 coordinates/);
+      expect(() => buildGoogleMapsUrl(30.0444, -181.0)).toThrow(/Invalid WGS84 coordinates/);
+    });
   });
 });

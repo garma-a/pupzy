@@ -17,6 +17,8 @@ export interface VetClinicDto {
   nameArabic: string | null;
   phoneNumber: string | null;
   address: string | null;
+  addressEnglish: string | null;
+  addressArabic: string | null;
   website: string | null;
   latitude: number;
   longitude: number;
@@ -25,6 +27,7 @@ export interface VetClinicDto {
   googleMapsUrl: string;
   /** https://wa.me/PHONE (no leading '+') — null when phoneNumber is null */
   whatsappPhoneUrl: string | null;
+  cityId: string | null;
 }
 
 // ─── Cache TTLs ───────────────────────────────────────────────────────────────
@@ -53,6 +56,29 @@ const POST_CACHE_TTL_MILLISECONDS = 3_600_000; // 1 h
 
 const toPostKey = (postId: string) => `vet:post:${postId}`;
 const toCityKey = (cityId: string) => `vet:city:${cityId}`;
+
+// ─── Google Maps URL Builder ──────────────────────────────────────────────────
+/**
+ * Canonical zero-key Google Maps search URL builder.
+ * Coordinates are validated WGS84 and formatted in latitude,longitude order
+ * with encoded comma (%2C). Uses api=1 search action without requiring an API key.
+ */
+export function buildGoogleMapsUrl(latitude: number, longitude: number): string {
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    throw new Error(`Invalid WGS84 coordinates: latitude=${latitude}, longitude=${longitude}`);
+  }
+  const url = new URL('https://www.google.com/maps/search/');
+  url.searchParams.set('api', '1');
+  url.searchParams.set('query', `${latitude},${longitude}`);
+  return url.toString();
+}
 
 // ─── Service ─────────────────────────────────────────────────────────────────
 
@@ -218,13 +244,16 @@ export class VetClinicsService {
       nameEnglish: row.nameEnglish,
       nameArabic: row.nameArabic,
       phoneNumber: row.phoneNumber,
-      address: row.address,
+      address: row.address ?? row.addressEnglish ?? row.addressArabic ?? null,
+      addressEnglish: row.addressEnglish ?? null,
+      addressArabic: row.addressArabic ?? null,
       website: row.website,
       latitude: row.latitude,
       longitude: row.longitude,
       distanceKm: row.distanceKm,
-      googleMapsUrl: `https://maps.google.com/?q=${row.latitude},${row.longitude}`,
+      googleMapsUrl: buildGoogleMapsUrl(row.latitude, row.longitude),
       whatsappPhoneUrl: row.phoneNumber ? `https://wa.me/${row.phoneNumber.replace(/^\+/, '')}` : null,
+      cityId: row.cityId ?? null,
     };
   };
 

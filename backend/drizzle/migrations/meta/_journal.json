@@ -92,6 +92,34 @@
       "when": 1788141600000,
       "tag": "0012_add_city_catalog_revision",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1788200000000,
+      "tag": "0013_make_vet_city_and_address_safe",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1788286400000,
+      "tag": "0014_enforce_vet_location_constraints",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1788372800000,
+      "tag": "0015_add_vet_clinic_location_audits",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1788459200000,
+      "tag": "0016_add_address_search_cache",
+      "breakpoints": true
     }
   ]
 }

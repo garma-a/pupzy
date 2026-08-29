@@ -52,7 +52,9 @@ export class TestDatabaseHelper {
         admin_users,
         users,
         cities,
-        vet_clinics
+        vet_clinics,
+        vet_clinic_location_audits,
+        address_search_cache
       CASCADE;
     `);
   }
