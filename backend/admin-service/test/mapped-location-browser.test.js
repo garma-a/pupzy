@@ -101,6 +101,13 @@ async function selectCityDropdown(page, cityName) {
   await new Promise((r) => setTimeout(r, 400));
   await page.keyboard.press('Enter');
   await new Promise((r) => setTimeout(r, 600));
+  await page.waitForFunction(
+    () => {
+      const tiles = Array.from(document.querySelectorAll('#mapped-location-picker-map img.leaflet-tile'));
+      return tiles.length > 0 && tiles.every((tile) => tile.complete && tile.naturalWidth > 0);
+    },
+    { timeout: 10000 },
+  );
 }
 
 async function clearAndType(page, selector, text) {
