@@ -109,12 +109,12 @@ describe('Authoritative Release Gate & Verification Engine', () => {
         {
           verbose: false,
           dockerHostResolver: () => ({ ok: true, dockerHost: 'unix:///run/user/1000/docker.sock' }),
-          customRunner: async (_stage: unknown, environment: Record<string, string>) => {
+          customRunner: (_stage: unknown, environment: Record<string, string>) => {
             childEnvironment = environment;
-            return {
+            return Promise.resolve({
               code: 0,
               stdout: 'ℹ tests 1\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0',
-            };
+            });
           },
         },
       );
@@ -140,9 +140,9 @@ describe('Authoritative Release Gate & Verification Engine', () => {
         {
           verbose: false,
           dockerHostResolver: () => ({ ok: false, error: 'no active Docker context endpoint' }),
-          customRunner: async () => {
+          customRunner: () => {
             invoked = true;
-            return { code: 0, stdout: '' };
+            return Promise.resolve({ code: 0, stdout: '' });
           },
         },
       );
