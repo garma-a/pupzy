@@ -28,6 +28,12 @@ let principals;
 let browser;
 let cairoId;
 let gizaId;
+let originalMapTileUrl;
+
+const TEST_MAP_TILE = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL+XQAAAABJRU5ErkJggg==',
+  'base64',
+);
 
 function findChromePath() {
   if (process.env.CHROME_BIN && fs.existsSync(process.env.CHROME_BIN)) {
@@ -126,9 +132,6 @@ before(async () => {
 
   const databaseName = new URL(connectionString).pathname.replace(/^\//, '');
   process.env.NODE_ENV = 'production';
-  const built = await buildAdminJs(connectionString, databaseName, database.pool);
-  sqlAdapterPool = built.sqlAdapterPool;
-  await built.admin.initialize();
 
   const app = express();
   app.disable('x-powered-by');
@@ -148,6 +151,9 @@ before(async () => {
       },
     }),
   );
+  app.get('/admin/test-map-tiles/:z/:x/:y.png', (_req, res) => {
+    res.type('png').send(TEST_MAP_TILE);
+  });
   app.use('/admin', requireSameOrigin);
   app.use('/admin', buildCsrfProtection('a test CSRF signing secret at least 32 chars'));
   const PgSession = connectPgSimple(session);
@@ -160,6 +166,15 @@ before(async () => {
       legacyHeaders: false,
     }),
   );
+  server = app.listen(0);
+  await new Promise((resolve) => server.once('listening', resolve));
+  baseUrl = `http://127.0.0.1:${server.address().port}`;
+  originalMapTileUrl = process.env.MAP_TILE_URL;
+  process.env.MAP_TILE_URL = `${baseUrl}/admin/test-map-tiles/{z}/{x}/{y}.png`;
+
+  const built = await buildAdminJs(connectionString, databaseName, database.pool);
+  sqlAdapterPool = built.sqlAdapterPool;
+  await built.admin.initialize();
   app.use(
     '/admin',
     AdminJSExpress.buildAuthenticatedRouter(
@@ -184,10 +199,6 @@ before(async () => {
       },
     ),
   );
-
-  server = app.listen(0);
-  await new Promise((resolve) => server.once('listening', resolve));
-  baseUrl = `http://127.0.0.1:${server.address().port}`;
 
   // Warm up AdminJS bundling so the first test page navigation doesn't lag
   try {
@@ -239,6 +250,11 @@ after(async () => {
   if (server) await new Promise((resolve) => server.close(resolve));
   await sqlAdapterPool?.destroy();
   await database.stop();
+  if (originalMapTileUrl === undefined) {
+    delete process.env.MAP_TILE_URL;
+  } else {
+    process.env.MAP_TILE_URL = originalMapTileUrl;
+  }
 });
 
 describe('Mapped Location Real Browser End-to-End Suite', { timeout: 90000 }, () => {

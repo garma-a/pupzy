@@ -9,6 +9,7 @@ export const {
   adminServiceDir,
   repoRootDir,
   checkNodePrerequisite,
+  resolveDockerHost,
   checkDockerPrerequisite,
   checkChromiumPrerequisite,
   checkAllPrerequisites,

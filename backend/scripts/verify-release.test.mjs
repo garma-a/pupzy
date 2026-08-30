@@ -12,6 +12,7 @@ import {
   parseJestOutput,
   parseNodeTestOutput,
   parseTestOutput,
+  runStage,
   runReleaseGate,
 } from './release-stages.mjs';
 
@@ -52,6 +53,77 @@ describe('Authoritative Release Gate & Verification Engine (node --test)', () =>
     const fail = checkDockerPrerequisite(() => ({ ok: false, error: 'Daemon down' }));
     assert.strictEqual(fail.ok, false);
     assert.ok(fail.error.includes('Daemon down'));
+  });
+
+  it('marks every Testcontainers-dependent stage and injects its resolved Docker endpoint', async () => {
+    const dockerStageIds = STAGES.filter((stage) => stage.requiresDocker).map((stage) => stage.id);
+    assert.deepStrictEqual(dockerStageIds, [
+      'migration-verification',
+      'reset-verification',
+      'integration-root',
+      'integration-admin',
+      'browser-admin',
+      'e2e-root',
+    ]);
+
+    let childEnvironment;
+    const result = await runStage(
+      {
+        id: 'container-test',
+        name: 'Container test',
+        type: 'test',
+        cmd: 'node',
+        args: ['--test'],
+        cwd: '.',
+        requiresDocker: true,
+        expectedTestRunner: 'node-test',
+        minExpectedTests: 1,
+      },
+      {
+        verbose: false,
+        dockerHostResolver: () => ({ ok: true, dockerHost: 'unix:///run/user/1000/docker.sock' }),
+        customRunner: async (_stage, environment) => {
+          childEnvironment = environment;
+          return {
+            code: 0,
+            stdout: 'ℹ tests 1\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0',
+          };
+        },
+      },
+    );
+
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(childEnvironment.DOCKER_HOST, 'unix:///run/user/1000/docker.sock');
+  });
+
+  it('fails closed before a container stage starts when the Docker endpoint cannot be determined', async () => {
+    let invoked = false;
+    const result = await runStage(
+      {
+        id: 'container-test',
+        name: 'Container test',
+        type: 'test',
+        cmd: 'node',
+        args: ['--test'],
+        cwd: '.',
+        requiresDocker: true,
+        expectedTestRunner: 'node-test',
+        minExpectedTests: 1,
+      },
+      {
+        verbose: false,
+        dockerHostResolver: () => ({ ok: false, error: 'no active Docker context endpoint' }),
+        customRunner: async () => {
+          invoked = true;
+          return { code: 0, stdout: '' };
+        },
+      },
+    );
+
+    assert.strictEqual(invoked, false);
+    assert.strictEqual(result.success, false);
+    assert.strictEqual(result.classification, 'ENVIRONMENT');
+    assert.match(result.failureReason, /Docker endpoint required by this stage is unavailable/);
   });
 
   it('validates Chromium prerequisite correctly', () => {
@@ -96,16 +168,10 @@ describe('Authoritative Release Gate & Verification Engine (node --test)', () =>
 
   it('classifies failures into ENVIRONMENT vs PRODUCT correctly', () => {
     const prereqStage = STAGES.find((s) => s.id === 'env-prereqs');
-    assert.strictEqual(
-      classifyFailure(prereqStage, { success: false, error: 'Missing binary' }),
-      'ENVIRONMENT',
-    );
+    assert.strictEqual(classifyFailure(prereqStage, { success: false, error: 'Missing binary' }), 'ENVIRONMENT');
 
     const unitStage = STAGES.find((s) => s.id === 'unit-root');
-    assert.strictEqual(
-      classifyFailure(unitStage, { success: false, stderr: 'AssertionError: fail' }),
-      'PRODUCT',
-    );
+    assert.strictEqual(classifyFailure(unitStage, { success: false, stderr: 'AssertionError: fail' }), 'PRODUCT');
     assert.strictEqual(
       classifyFailure(unitStage, { success: false, stderr: 'Cannot connect to the Docker daemon' }),
       'ENVIRONMENT',

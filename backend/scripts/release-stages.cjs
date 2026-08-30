@@ -47,16 +47,74 @@ function checkNodePrerequisite(minMajor = 22) {
 /**
  * Check Docker container runtime availability.
  * @param {Function} [customExecutor]
- * @returns {{ ok: boolean; error?: string; details?: string }}
+ * @param {Function} [customInspector]
+ * @returns {{ ok: boolean; dockerHost?: string; error?: string }}
  */
-function checkDockerPrerequisite(customExecutor) {
+function resolveDockerHost(customInspector) {
+  try {
+    if (customInspector) {
+      return customInspector();
+    }
+
+    const explicitlyConfiguredHost = process.env.DOCKER_HOST?.trim();
+    if (explicitlyConfiguredHost) {
+      return { ok: true, dockerHost: explicitlyConfiguredHost };
+    }
+
+    const result = spawnSync('docker', ['context', 'inspect', '--format', '{{ .Endpoints.docker.Host }}'], {
+      encoding: 'utf8',
+      timeout: 10000,
+    });
+    if (result.error) {
+      return {
+        ok: false,
+        error: `Docker context inspection failed to start: ${result.error.message}`,
+      };
+    }
+    if (result.status !== 0) {
+      const message = (result.stderr || result.stdout || '').trim();
+      return {
+        ok: false,
+        error: `Docker context endpoint unavailable (exit code ${result.status}): ${message || 'unknown error'}`,
+      };
+    }
+
+    const dockerHost = result.stdout.trim();
+    if (!dockerHost) {
+      return { ok: false, error: 'Docker context has no endpoint for Testcontainers (DOCKER_HOST).' };
+    }
+
+    return { ok: true, dockerHost };
+  } catch (err) {
+    return {
+      ok: false,
+      error: `Docker context inspection exception: ${err.message}`,
+    };
+  }
+}
+
+/**
+ * Check Docker availability and obtain the endpoint injected into all
+ * Testcontainers-dependent release stages.
+ * @param {Function} [customExecutor]
+ * @param {Function} [customInspector]
+ * @returns {{ ok: boolean; dockerHost?: string; error?: string; details?: string }}
+ */
+function checkDockerPrerequisite(customExecutor, customInspector) {
   try {
     if (customExecutor) {
       return customExecutor();
     }
+
+    const endpoint = resolveDockerHost(customInspector);
+    if (!endpoint.ok) {
+      return endpoint;
+    }
+
     const result = spawnSync('docker', ['info'], {
       encoding: 'utf8',
       timeout: 10000,
+      env: { ...process.env, DOCKER_HOST: endpoint.dockerHost },
     });
     if (result.error) {
       return {
@@ -71,7 +129,11 @@ function checkDockerPrerequisite(customExecutor) {
         error: `Docker daemon unavailable (exit code ${result.status}): ${msg || 'unknown error'}`,
       };
     }
-    return { ok: true, details: 'Docker daemon reachable and responsive' };
+    return {
+      ok: true,
+      dockerHost: endpoint.dockerHost,
+      details: `Docker daemon reachable and responsive via ${endpoint.dockerHost}`,
+    };
   } catch (err) {
     return {
       ok: false,
@@ -139,7 +201,7 @@ function checkChromiumPrerequisite(customFinder) {
  */
 function checkAllPrerequisites(options = {}) {
   const node = checkNodePrerequisite(options.minNodeMajor ?? 22);
-  const docker = checkDockerPrerequisite(options.dockerExecutor);
+  const docker = checkDockerPrerequisite(options.dockerExecutor, options.dockerHostResolver);
   const chromium = checkChromiumPrerequisite(options.chromiumFinder);
 
   const errors = [];
@@ -379,10 +441,7 @@ function getRevisionIdentity(dir = rootDir) {
     }
   };
 
-  const candidateCommit =
-    process.env.GITHUB_SHA ||
-    runGit(['rev-parse', 'HEAD']) ||
-    'UNKNOWN_CANDIDATE_COMMIT';
+  const candidateCommit = process.env.GITHUB_SHA || runGit(['rev-parse', 'HEAD']) || 'UNKNOWN_CANDIDATE_COMMIT';
 
   const candidateBranch =
     process.env.GITHUB_HEAD_REF ||
@@ -397,11 +456,9 @@ function getRevisionIdentity(dir = rootDir) {
     runGit(['rev-parse', 'HEAD~1']) ||
     'UNKNOWN_BASELINE_COMMIT';
 
-  const commitTimestamp =
-    runGit(['log', '-1', '--format=%cI', 'HEAD']) || new Date().toISOString();
+  const commitTimestamp = runGit(['log', '-1', '--format=%cI', 'HEAD']) || new Date().toISOString();
 
-  const commitAuthor =
-    runGit(['log', '-1', '--format=%an <%ae>', 'HEAD']) || 'Unknown Author';
+  const commitAuthor = runGit(['log', '-1', '--format=%an <%ae>', 'HEAD']) || 'Unknown Author';
 
   return {
     candidateCommit,
@@ -516,6 +573,7 @@ const STAGES = [
     cwd: rootDir,
     expectedTestRunner: 'jest',
     minExpectedTests: 1,
+    requiresDocker: true,
   },
   {
     id: 'reset-verification',
@@ -526,6 +584,7 @@ const STAGES = [
     cwd: rootDir,
     expectedTestRunner: 'jest',
     minExpectedTests: 1,
+    requiresDocker: true,
   },
   {
     id: 'integration-root',
@@ -536,6 +595,7 @@ const STAGES = [
     cwd: rootDir,
     expectedTestRunner: 'jest',
     minExpectedTests: 10,
+    requiresDocker: true,
   },
   {
     id: 'integration-admin',
@@ -546,6 +606,7 @@ const STAGES = [
     cwd: adminServiceDir,
     expectedTestRunner: 'node-test',
     minExpectedTests: 10,
+    requiresDocker: true,
   },
   {
     id: 'browser-admin',
@@ -556,6 +617,7 @@ const STAGES = [
     cwd: adminServiceDir,
     expectedTestRunner: 'node-test',
     minExpectedTests: 5,
+    requiresDocker: true,
   },
   {
     id: 'e2e-root',
@@ -566,6 +628,7 @@ const STAGES = [
     cwd: rootDir,
     expectedTestRunner: 'jest',
     minExpectedTests: 1,
+    requiresDocker: true,
   },
 ];
 
@@ -598,7 +661,9 @@ function runStage(stage, options = {}) {
         if (isVerbose) {
           console.log(`✔ Node.js runtime:   ${prereqs.details.node.version} (>= 22 required)`);
           console.log(`✔ Container runtime: ${prereqs.details.docker.details}`);
-          console.log(`✔ Browser binary:    ${prereqs.details.chromium.path} (${prereqs.details.chromium.version || 'OK'})`);
+          console.log(
+            `✔ Browser binary:    ${prereqs.details.chromium.path} (${prereqs.details.chromium.version || 'OK'})`,
+          );
           console.log(`\n✔ [PASS] ${stage.name} (${durationSec}s)`);
         }
         return resolve({
@@ -634,9 +699,42 @@ function runStage(stage, options = {}) {
       }
     }
 
+    let dockerHost;
+    if (stage.requiresDocker) {
+      const endpoint = resolveDockerHost(options.dockerHostResolver);
+      if (!endpoint.ok) {
+        const durationSec = ((Date.now() - startTime) / 1000).toFixed(2);
+        const failureReason = `Docker endpoint required by this stage is unavailable: ${endpoint.error}`;
+        if (isVerbose) {
+          console.error(`\n✖ [FAIL] ${stage.name} (${durationSec}s)`);
+          console.error(`  Reason: ${failureReason}`);
+          console.error('  Classification: ENVIRONMENT');
+        }
+        return resolve({
+          ...stage,
+          commandStr,
+          success: false,
+          code: 1,
+          durationSec,
+          testResults: { total: null, passed: null, failed: 0, skipped: 0, cancelled: 0, todo: 0 },
+          classification: 'ENVIRONMENT',
+          failureReason,
+          stdout: '',
+          stderr: failureReason,
+        });
+      }
+      dockerHost = endpoint.dockerHost;
+    }
+
+    const stageEnvironment = {
+      ...process.env,
+      FORCE_COLOR: '1',
+      ...(dockerHost ? { DOCKER_HOST: dockerHost } : {}),
+    };
+
     // Execute stage via custom mock runner if supplied
     if (options.customRunner) {
-      return options.customRunner(stage).then((customRes) => {
+      return options.customRunner(stage, stageEnvironment).then((customRes) => {
         const durationSec = ((Date.now() - startTime) / 1000).toFixed(2);
         const parsed = parseTestOutput(stage, customRes.stdout || '', customRes.stderr || '');
         const evaluation = evaluateStageOutcome(stage, {
@@ -663,7 +761,7 @@ function runStage(stage, options = {}) {
     const child = spawn(stage.cmd, stage.args, {
       cwd: stage.cwd,
       shell: false,
-      env: { ...process.env, FORCE_COLOR: '1' },
+      env: stageEnvironment,
     });
 
     child.stdout?.on('data', (data) => {
@@ -934,7 +1032,9 @@ async function runReleaseGate(options = {}) {
     if (isReleaseReady) {
       console.log('\n================================================================================');
       console.log('RELEASE GATE RESULT: RELEASE READY');
-      console.log(`All ${stagesToRun.length} required stages succeeded cleanly with 0 failures, 0 skips, and verified runtime prerequisites.`);
+      console.log(
+        `All ${stagesToRun.length} required stages succeeded cleanly with 0 failures, 0 skips, and verified runtime prerequisites.`,
+      );
       console.log('================================================================================');
     } else {
       console.error('\n================================================================================');
@@ -969,6 +1069,7 @@ module.exports = {
   repoRootDir,
   stripAnsi,
   checkNodePrerequisite,
+  resolveDockerHost,
   checkDockerPrerequisite,
   checkChromiumPrerequisite,
   checkAllPrerequisites,

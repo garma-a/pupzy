@@ -11,6 +11,7 @@ const {
   parseJestOutput,
   parseNodeTestOutput,
   parseTestOutput,
+  runStage,
   runReleaseGate,
 } = require('../../scripts/release-stages.cjs');
 
@@ -80,6 +81,76 @@ describe('Authoritative Release Gate & Verification Engine', () => {
       const resFailure = checkDockerPrerequisite(mockFailure);
       expect(resFailure.ok).toBe(false);
       expect(resFailure.error).toContain('connect ENOENT');
+    });
+
+    it('marks every Testcontainers-dependent stage and injects the resolved Docker endpoint', async () => {
+      expect(STAGES.filter((stage: any) => stage.requiresDocker).map((stage: any) => stage.id)).toEqual([
+        'migration-verification',
+        'reset-verification',
+        'integration-root',
+        'integration-admin',
+        'browser-admin',
+        'e2e-root',
+      ]);
+
+      let childEnvironment: Record<string, string> | undefined;
+      const result = await runStage(
+        {
+          id: 'container-test',
+          name: 'Container test',
+          type: 'test',
+          cmd: 'node',
+          args: ['--test'],
+          cwd: '.',
+          requiresDocker: true,
+          expectedTestRunner: 'node-test',
+          minExpectedTests: 1,
+        },
+        {
+          verbose: false,
+          dockerHostResolver: () => ({ ok: true, dockerHost: 'unix:///run/user/1000/docker.sock' }),
+          customRunner: async (_stage: unknown, environment: Record<string, string>) => {
+            childEnvironment = environment;
+            return {
+              code: 0,
+              stdout: 'ℹ tests 1\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0',
+            };
+          },
+        },
+      );
+
+      expect(result.success).toBe(true);
+      expect(childEnvironment?.DOCKER_HOST).toBe('unix:///run/user/1000/docker.sock');
+    });
+
+    it('fails closed before a container stage starts when the Docker endpoint cannot be determined', async () => {
+      let invoked = false;
+      const result = await runStage(
+        {
+          id: 'container-test',
+          name: 'Container test',
+          type: 'test',
+          cmd: 'node',
+          args: ['--test'],
+          cwd: '.',
+          requiresDocker: true,
+          expectedTestRunner: 'node-test',
+          minExpectedTests: 1,
+        },
+        {
+          verbose: false,
+          dockerHostResolver: () => ({ ok: false, error: 'no active Docker context endpoint' }),
+          customRunner: async () => {
+            invoked = true;
+            return { code: 0, stdout: '' };
+          },
+        },
+      );
+
+      expect(invoked).toBe(false);
+      expect(result.success).toBe(false);
+      expect(result.classification).toBe('ENVIRONMENT');
+      expect(result.failureReason).toContain('Docker endpoint required by this stage is unavailable');
     });
 
     it('validates Chromium browser binary availability', () => {

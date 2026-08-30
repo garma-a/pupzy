@@ -968,7 +968,9 @@ describe('Mapped Location Transactional Authorization and City Catalog Revision 
       assert.ifError(errorB);
 
       // Verify Client A's clinic does NOT exist
-      const checkA = await database.pool.query(`SELECT * FROM vet_clinics WHERE name_english = $1`, [failingClinicName]);
+      const checkA = await database.pool.query(`SELECT * FROM vet_clinics WHERE name_english = $1`, [
+        failingClinicName,
+      ]);
       assert.equal(checkA.rowCount, 0, 'Failing transaction must leave no clinic row');
 
       // Verify Client B's clinic DOES exist
@@ -977,7 +979,11 @@ describe('Mapped Location Transactional Authorization and City Catalog Revision 
 
       // Verify revision advanced ONLY ONCE (from 1 to 2)
       const revCheck = await database.pool.query(`SELECT revision FROM city_catalog_revisions WHERE id = 1`);
-      assert.equal(revCheck.rows[0].revision, 2, 'Catalog revision must advance exactly once for the successful writer');
+      assert.equal(
+        revCheck.rows[0].revision,
+        2,
+        'Catalog revision must advance exactly once for the successful writer',
+      );
     } finally {
       await clientA.query('ROLLBACK').catch(() => {});
       await clientB.query('ROLLBACK').catch(() => {});
@@ -1271,7 +1277,9 @@ describe('Mapped Location Transactional Authorization and City Catalog Revision 
       assert.ifError(errorB);
 
       // Verify original clinic was NOT updated
-      const clinicCheck = await database.pool.query(`SELECT address_english FROM vet_clinics WHERE id = $1`, [clinicId]);
+      const clinicCheck = await database.pool.query(`SELECT address_english FROM vet_clinics WHERE id = $1`, [
+        clinicId,
+      ]);
       assert.equal(clinicCheck.rows[0].address_english, 'Original Address');
 
       // Verify revision advanced exactly once (from 1 to 2)
