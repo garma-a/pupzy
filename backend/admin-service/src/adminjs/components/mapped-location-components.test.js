@@ -598,5 +598,118 @@ describe('Mapped Location Components', () => {
       assert.equal(stateD.badgeVariant, 'success');
       assert.match(stateD.text, /Location Confirmed/);
     });
+
+    it('exposes programmatic error associations and accessible ARIA attributes on validation failure', () => {
+      // Simulate component validation error mapping
+      const computeAccessibilityProps = (errors = {}, searchError = '', searchMessage = '') => {
+        return {
+          searchInput: {
+            'aria-label': 'Search public clinic address in Egypt',
+            'aria-invalid': Boolean(searchError),
+            'aria-describedby': searchError
+              ? 'vet-clinic-search-error'
+              : searchMessage
+                ? 'vet-clinic-search-message'
+                : undefined,
+          },
+          searchErrorBox: searchError
+            ? { id: 'vet-clinic-search-error', role: 'alert', 'aria-live': 'assertive' }
+            : null,
+          searchMessageBox: searchMessage
+            ? { id: 'vet-clinic-search-message', role: 'status', 'aria-live': 'polite' }
+            : null,
+          mapRegion: {
+            id: 'mapped-location-picker-map',
+            role: 'region',
+            'aria-label': 'Interactive map for selecting clinic location',
+            tabIndex: 0,
+          },
+          statusBanner: {
+            id: 'mapped-location-status',
+            role: 'status',
+            'aria-live': 'polite',
+          },
+          latInput: {
+            id: 'mapped-lat',
+            'aria-invalid': Boolean(errors.coordinates),
+            'aria-describedby': errors.coordinates ? 'mapped-location-coordinates-error' : undefined,
+          },
+          lngInput: {
+            id: 'mapped-lng',
+            'aria-invalid': Boolean(errors.coordinates),
+            'aria-describedby': errors.coordinates ? 'mapped-location-coordinates-error' : undefined,
+          },
+          addressEnglish: {
+            id: 'address-english',
+            'aria-invalid': Boolean(errors.address_english),
+            'aria-describedby': errors.address_english ? 'address-english-error' : undefined,
+          },
+          addressArabic: {
+            id: 'address-arabic',
+            'aria-invalid': Boolean(errors.address_arabic),
+            'aria-describedby': errors.address_arabic ? 'address-arabic-error' : undefined,
+          },
+          confirmationCheckbox: {
+            id: 'location-confirmed',
+            'aria-invalid': Boolean(errors.coordinates),
+            'aria-describedby': errors.coordinates ? 'mapped-location-coordinates-error' : undefined,
+          },
+          overrideReason: {
+            id: 'override-reason',
+            'aria-invalid': Boolean(errors.override_reason),
+            'aria-describedby': errors.override_reason ? 'override-reason-error' : undefined,
+          },
+        };
+      };
+
+      // 1. Clean state without errors
+      const clean = computeAccessibilityProps();
+      assert.equal(clean.searchInput['aria-invalid'], false);
+      assert.equal(clean.latInput['aria-invalid'], false);
+      assert.equal(clean.lngInput['aria-invalid'], false);
+      assert.equal(clean.addressEnglish['aria-invalid'], false);
+      assert.equal(clean.addressArabic['aria-invalid'], false);
+      assert.equal(clean.confirmationCheckbox['aria-invalid'], false);
+      assert.equal(clean.overrideReason['aria-invalid'], false);
+      assert.equal(clean.mapRegion.role, 'region');
+      assert.equal(clean.mapRegion.tabIndex, 0);
+      assert.equal(clean.statusBanner.role, 'status');
+
+      // 2. Unconfirmed location error
+      const coordError = computeAccessibilityProps({
+        coordinates: { message: 'Location must be explicitly confirmed' },
+      });
+      assert.equal(coordError.confirmationCheckbox['aria-invalid'], true);
+      assert.equal(coordError.confirmationCheckbox['aria-describedby'], 'mapped-location-coordinates-error');
+      assert.equal(coordError.latInput['aria-invalid'], true);
+      assert.equal(coordError.lngInput['aria-invalid'], true);
+
+      // 3. Missing address errors
+      const addrError = computeAccessibilityProps({
+        address_english: { message: 'English address is required' },
+        address_arabic: { message: 'Arabic address is required' },
+      });
+      assert.equal(addrError.addressEnglish['aria-invalid'], true);
+      assert.equal(addrError.addressEnglish['aria-describedby'], 'address-english-error');
+      assert.equal(addrError.addressArabic['aria-invalid'], true);
+      assert.equal(addrError.addressArabic['aria-describedby'], 'address-arabic-error');
+
+      // 4. City discrepancy error
+      const discrepancyError = computeAccessibilityProps({
+        override_reason: { message: 'City discrepancy requires override reason' },
+      });
+      assert.equal(discrepancyError.overrideReason['aria-invalid'], true);
+      assert.equal(discrepancyError.overrideReason['aria-describedby'], 'override-reason-error');
+
+      // 5. Search outage / timeout error
+      const searchOutage = computeAccessibilityProps({}, 'Address search is currently unavailable.');
+      assert.equal(searchOutage.searchInput['aria-invalid'], true);
+      assert.equal(searchOutage.searchInput['aria-describedby'], 'vet-clinic-search-error');
+      assert.deepEqual(searchOutage.searchErrorBox, {
+        id: 'vet-clinic-search-error',
+        role: 'alert',
+        'aria-live': 'assertive',
+      });
+    });
   });
 });

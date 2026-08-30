@@ -159,6 +159,28 @@ export default function MappedLocationEdit({ property, record, onChange }) {
     };
   }, [record?.params?.city_id]);
 
+  // Accessible focus management: shift focus to first actionable error on validation failure
+  useEffect(() => {
+    const errors = record?.errors;
+    if (!errors || Object.keys(errors).length === 0) return;
+
+    if (errors.coordinates) {
+      const confirmInput = document.getElementById('location-confirmed');
+      if (confirmInput && !confirmed) {
+        confirmInput.focus();
+      } else {
+        const latInput = document.getElementById('mapped-lat');
+        latInput?.focus();
+      }
+    } else if (errors.address_english) {
+      document.getElementById('address-english')?.focus();
+    } else if (errors.address_arabic) {
+      document.getElementById('address-arabic')?.focus();
+    } else if (errors.override_reason) {
+      document.getElementById('override-reason')?.focus();
+    }
+  }, [record?.errors]);
+
   const handleLatChange = (e) => {
     const rawVal = e.target.value;
     setLat(rawVal);
@@ -429,9 +451,32 @@ export default function MappedLocationEdit({ property, record, onChange }) {
 
       {/* Discrepancy Error Alert if returned from validation */}
       {record?.errors?.override_reason && (
-        <Box p="md" mb="md" style={{ background: '#FDF0EE', borderRadius: '6px', border: '1px solid #E87A64' }}>
+        <Box
+          id="override-reason-error"
+          role="alert"
+          aria-live="assertive"
+          p="md"
+          mb="md"
+          style={{ background: '#FDF0EE', borderRadius: '6px', border: '1px solid #E87A64' }}
+        >
           <Text style={{ color: '#991B1B', fontSize: '13px', fontWeight: '500' }}>
             {record.errors.override_reason.message}
+          </Text>
+        </Box>
+      )}
+
+      {/* Coordinates Error Alert if returned from validation */}
+      {record?.errors?.coordinates && (
+        <Box
+          id="mapped-location-coordinates-error"
+          role="alert"
+          aria-live="assertive"
+          p="md"
+          mb="md"
+          style={{ background: '#FDF0EE', borderRadius: '6px', border: '1px solid #E87A64' }}
+        >
+          <Text style={{ color: '#991B1B', fontSize: '13px', fontWeight: '500' }}>
+            {record.errors.coordinates.message}
           </Text>
         </Box>
       )}
@@ -456,7 +501,10 @@ export default function MappedLocationEdit({ property, record, onChange }) {
         </Text>
 
         {!searchEnabled ? (
-          <Text style={{ color: '#8B6355', fontSize: '12px', fontStyle: 'italic' }}>
+          <Text
+            id="vet-clinic-search-disabled-notice"
+            style={{ color: '#8B6355', fontSize: '12px', fontStyle: 'italic' }}
+          >
             Address search is currently disabled by configuration. You can pin the clinic location manually on the map.
           </Text>
         ) : (
@@ -464,6 +512,11 @@ export default function MappedLocationEdit({ property, record, onChange }) {
             <Box flex flexDirection={['column', 'row']} style={{ gap: '8px', marginBottom: '8px' }}>
               <Input
                 id="vet-clinic-search-input"
+                aria-label="Search public clinic address in Egypt"
+                aria-invalid={searchError ? 'true' : 'false'}
+                aria-describedby={
+                  searchError ? 'vet-clinic-search-error' : searchMessage ? 'vet-clinic-search-message' : undefined
+                }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
@@ -472,6 +525,7 @@ export default function MappedLocationEdit({ property, record, onChange }) {
               />
               <Button
                 type="button"
+                aria-label="Search address"
                 variant="primary"
                 onClick={() => void handlePerformSearch()}
                 disabled={isSearching || !searchQuery.trim()}
@@ -496,21 +550,40 @@ export default function MappedLocationEdit({ property, record, onChange }) {
 
         {/* Search Error Notice */}
         {searchError ? (
-          <Box mt="sm" p="sm" style={{ background: '#FDF0EE', borderRadius: '4px', border: '1px solid #E87A64' }}>
-            <Text style={{ color: '#991B1B', fontSize: '12px' }}>{searchError}</Text>
+          <Box
+            id="vet-clinic-search-error"
+            role="alert"
+            aria-live="assertive"
+            mt="sm"
+            p="sm"
+            style={{ background: '#FDF0EE', borderRadius: '4px', border: '1px solid #E87A64' }}
+          >
+            <Text style={{ color: '#991B1B', fontSize: '12px', fontWeight: '500' }}>{searchError}</Text>
           </Box>
         ) : null}
 
         {/* Search Feedback Message */}
         {searchMessage ? (
-          <Box mt="sm" p="sm" style={{ background: '#EBF5EB', borderRadius: '4px', border: '1px solid #82C982' }}>
+          <Box
+            id="vet-clinic-search-message"
+            role="status"
+            aria-live="polite"
+            mt="sm"
+            p="sm"
+            style={{ background: '#EBF5EB', borderRadius: '4px', border: '1px solid #82C982' }}
+          >
             <Text style={{ color: '#1B6A1B', fontSize: '12px' }}>{searchMessage}</Text>
           </Box>
         ) : null}
 
         {/* Search Results Dropdown/List */}
         {searchResults && searchResults.length > 0 ? (
-          <Box mt="sm" style={{ background: '#FFFFFF', borderRadius: '6px', border: '1px solid #D8C7B8' }}>
+          <Box
+            role="region"
+            aria-label="Address search results"
+            mt="sm"
+            style={{ background: '#FFFFFF', borderRadius: '6px', border: '1px solid #D8C7B8' }}
+          >
             <Box p="xs" style={{ borderBottom: '1px solid #E8DED5', background: '#F5EFEA' }}>
               <Text style={{ fontSize: '12px', fontWeight: '600', color: '#2D1506' }}>
                 Found {searchResults.length} matching locations (click to select):
@@ -545,6 +618,7 @@ export default function MappedLocationEdit({ property, record, onChange }) {
                   type="button"
                   size="sm"
                   variant="secondary"
+                  aria-label={`Use location ${res.displayName}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleSelectResult(res);
@@ -563,6 +637,9 @@ export default function MappedLocationEdit({ property, record, onChange }) {
       <div
         ref={mapContainerRef}
         id="mapped-location-picker-map"
+        role="region"
+        aria-label="Interactive map for selecting clinic location"
+        tabIndex={0}
         style={{
           height: '320px',
           width: '100%',
@@ -577,11 +654,27 @@ export default function MappedLocationEdit({ property, record, onChange }) {
       <Box flex flexDirection={['column', 'row']} style={{ gap: '16px', marginBottom: '16px' }}>
         <FormGroup style={{ flex: 1, marginBottom: 0 }}>
           <Label htmlFor="mapped-lat">Latitude (WGS84)</Label>
-          <Input id="mapped-lat" type="number" step="any" value={lat} onChange={handleLatChange} />
+          <Input
+            id="mapped-lat"
+            type="number"
+            step="any"
+            aria-invalid={record?.errors?.coordinates ? 'true' : 'false'}
+            aria-describedby={record?.errors?.coordinates ? 'mapped-location-coordinates-error' : undefined}
+            value={lat}
+            onChange={handleLatChange}
+          />
         </FormGroup>
         <FormGroup style={{ flex: 1, marginBottom: 0 }}>
           <Label htmlFor="mapped-lng">Longitude (WGS84)</Label>
-          <Input id="mapped-lng" type="number" step="any" value={lng} onChange={handleLngChange} />
+          <Input
+            id="mapped-lng"
+            type="number"
+            step="any"
+            aria-invalid={record?.errors?.coordinates ? 'true' : 'false'}
+            aria-describedby={record?.errors?.coordinates ? 'mapped-location-coordinates-error' : undefined}
+            value={lng}
+            onChange={handleLngChange}
+          />
         </FormGroup>
       </Box>
 
@@ -593,10 +686,17 @@ export default function MappedLocationEdit({ property, record, onChange }) {
           </Label>
           <Input
             id="address-english"
+            aria-invalid={record?.errors?.address_english ? 'true' : 'false'}
+            aria-describedby={record?.errors?.address_english ? 'address-english-error' : undefined}
             value={addressEnglish}
             onChange={handleAddressEnglishChange}
             placeholder="e.g. 10 Road 9, Maadi, Cairo"
           />
+          {record?.errors?.address_english && (
+            <Box id="address-english-error" role="alert" aria-live="assertive" mt="xs">
+              <Text style={{ color: '#991B1B', fontSize: '12px' }}>{record.errors.address_english.message}</Text>
+            </Box>
+          )}
         </FormGroup>
         <FormGroup style={{ flex: 1, marginBottom: 0 }}>
           <Label htmlFor="address-arabic" required>
@@ -604,19 +704,32 @@ export default function MappedLocationEdit({ property, record, onChange }) {
           </Label>
           <Input
             id="address-arabic"
+            aria-invalid={record?.errors?.address_arabic ? 'true' : 'false'}
+            aria-describedby={record?.errors?.address_arabic ? 'address-arabic-error' : undefined}
             value={addressArabic}
             onChange={handleAddressArabicChange}
             placeholder="مثال: ١٠ شارع ٩، المعادي، القاهرة"
             dir="rtl"
             style={{ fontFamily: "'Cairo', 'DM Sans', sans-serif" }}
           />
+          {record?.errors?.address_arabic && (
+            <Box id="address-arabic-error" role="alert" aria-live="assertive" mt="xs">
+              <Text style={{ color: '#991B1B', fontSize: '12px' }}>{record.errors.address_arabic.message}</Text>
+            </Box>
+          )}
         </FormGroup>
       </Box>
 
       {/* Confirmation Checkbox */}
       <Box p="md" mb="md" style={{ background: '#FAF6F1', borderRadius: '6px', border: '1px solid #E8DED5' }}>
         <FormGroup style={{ marginBottom: 0 }}>
-          <CheckBox id="location-confirmed" checked={confirmed} onChange={handleConfirmedChange} />
+          <CheckBox
+            id="location-confirmed"
+            checked={confirmed}
+            onChange={handleConfirmedChange}
+            aria-invalid={record?.errors?.coordinates ? 'true' : 'false'}
+            aria-describedby={record?.errors?.coordinates ? 'mapped-location-coordinates-error' : undefined}
+          />
           <Label inline htmlFor="location-confirmed" style={{ fontWeight: '600', color: '#2D1506', cursor: 'pointer' }}>
             I confirm this mapped location and bilingual address are accurate for this clinic.
           </Label>
@@ -637,6 +750,8 @@ export default function MappedLocationEdit({ property, record, onChange }) {
           <Label htmlFor="override-reason">Override Reason</Label>
           <Input
             id="override-reason"
+            aria-invalid={record?.errors?.override_reason ? 'true' : 'false'}
+            aria-describedby={record?.errors?.override_reason ? 'override-reason-error' : undefined}
             value={overrideReason}
             onChange={handleOverrideReasonChange}
             placeholder="e.g. Clinic is located on the boundary between Maadi and Basatin..."

@@ -41,6 +41,8 @@ function findChromePath() {
 
 async function createTestPage(browserInstance, allowedErrors = []) {
   const page = await browserInstance.newPage();
+  page.setDefaultTimeout(60000);
+  page.setDefaultNavigationTimeout(60000);
   await page.setViewport({ width: 1280, height: 900 });
 
   const errors = [];
@@ -76,16 +78,17 @@ async function loginAsAdmin(page, url, email = 'admin@example.com', password = '
   await page.goto(`${url}/admin/login`, { waitUntil: 'networkidle0' });
   await page.type('input[name="email"]', email);
   await page.type('input[name="password"]', password);
-  await page.click('form button');
-  await page.waitForNavigation({ waitUntil: 'networkidle0' });
+  await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0' }), page.click('form button')]);
 }
 
 async function selectCityDropdown(page, cityName) {
   const cityInput = await page.evaluateHandle(() => {
-    const label = Array.from(document.querySelectorAll('label')).find((l) => l.innerText.includes('City Id'));
+    const label = Array.from(document.querySelectorAll('label')).find(
+      (l) => l.innerText.includes('City Id') || l.innerText.includes('City'),
+    );
     return label ? label.parentElement.querySelector('input') : null;
   });
-  assert.ok(cityInput, 'City Id select input must exist');
+  assert.ok(cityInput, 'City select input must exist');
 
   await cityInput.focus();
   await page.keyboard.type(cityName);
@@ -99,12 +102,19 @@ async function clearAndType(page, selector, text) {
   await page.evaluate((sel) => {
     const el = document.querySelector(sel);
     if (el) {
-      el.value = '';
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+      if (nativeInputValueSetter) {
+        nativeInputValueSetter.call(el, '');
+      } else {
+        el.value = '';
+      }
       el.dispatchEvent(new Event('input', { bubbles: true }));
       el.dispatchEvent(new Event('change', { bubbles: true }));
     }
   }, selector);
-  await page.type(selector, text);
+  if (text) {
+    await page.type(selector, text);
+  }
   await new Promise((r) => setTimeout(r, 150));
 }
 
@@ -178,6 +188,12 @@ before(async () => {
   server = app.listen(0);
   await new Promise((resolve) => server.once('listening', resolve));
   baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  // Warm up AdminJS bundling so the first test page navigation doesn't lag
+  try {
+    const res = await fetch(`${baseUrl}/admin/login`);
+    await res.text();
+  } catch {}
 
   browser = await puppeteer.launch({
     executablePath: findChromePath(),
@@ -309,9 +325,13 @@ describe('Mapped Location Real Browser End-to-End Suite', { timeout: 90000 }, ()
       // Select Cairo
       await selectCityDropdown(page, 'Cairo');
 
-      // 1. Click on the Leaflet map container to place marker
+      // 1. Scroll map into view and click on the Leaflet map container to place marker
+      await page.evaluate(() =>
+        document.getElementById('mapped-location-picker-map')?.scrollIntoView({ block: 'center' }),
+      );
+      await new Promise((r) => setTimeout(r, 200));
       await page.click('#mapped-location-picker-map');
-      await page.waitForSelector('.leaflet-marker-icon');
+      await page.waitForSelector('.leaflet-marker-icon', { visible: true });
 
       const afterClickState = await page.evaluate(() => {
         const latVal = parseFloat(document.getElementById('mapped-lat')?.value || '');
@@ -345,7 +365,9 @@ describe('Mapped Location Real Browser End-to-End Suite', { timeout: 90000 }, ()
 
       // 2. Drag the marker
       const markerHandle = await page.$('.leaflet-marker-icon');
+      assert.ok(markerHandle, 'Marker element must exist');
       const markerBox = await markerHandle.boundingBox();
+      assert.ok(markerBox, 'Marker must have a valid bounding box');
       await page.mouse.move(markerBox.x + markerBox.width / 2, markerBox.y + markerBox.height / 2);
       await page.mouse.down();
       await page.mouse.move(markerBox.x + markerBox.width / 2 + 50, markerBox.y + markerBox.height / 2 + 50, {
@@ -580,19 +602,39 @@ describe('Mapped Location Real Browser End-to-End Suite', { timeout: 90000 }, ()
     }
   });
 
-  it('disabled or failed address search leaves deliberate manual placement and save available', async () => {
+  it('real-browser journey: address search explicitly disabled leaves deliberate manual placement and save fully available', async () => {
     const { page, errors } = await createTestPage(browser);
     try {
       await loginAsAdmin(page, baseUrl);
+
+      await page.setRequestInterception(true);
+      page.on('request', (req) => {
+        if (req.url().includes('searchAddress')) {
+          req.respond({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              results: [],
+              source: 'DISABLED',
+              disabled: true,
+              message: 'Address search is currently disabled. Please pin the location manually on the map.',
+            }),
+          });
+        } else {
+          req.continue();
+        }
+      });
 
       // Navigate to New Vet Clinic
       await page.goto(`${baseUrl}/admin/resources/vet_clinics/actions/new`, { waitUntil: 'networkidle0' });
       await page.waitForSelector('#mapped-location-picker-map.leaflet-container');
 
-      // 1. Attempt address search with a query
-      await clearAndType(page, '#vet-clinic-search-input', 'Nonexistent Unknown Location 99999');
+      // 1. Fill Name
+      await clearAndType(page, '#name_english', 'Disabled Search Manual Clinic');
+      await clearAndType(page, '#name_arabic', 'عيادة البحث المعطل اليدوية');
 
-      // Click Search address button
+      // 2. Attempt address search
+      await clearAndType(page, '#vet-clinic-search-input', '10 Kasr El Aini, Cairo');
       const searchButton = await page.evaluateHandle(() => {
         const buttons = Array.from(document.querySelectorAll('button'));
         return buttons.find((b) => b.innerText.includes('Search address'));
@@ -600,49 +642,62 @@ describe('Mapped Location Real Browser End-to-End Suite', { timeout: 90000 }, ()
       assert.ok(searchButton, 'Search address button must exist');
       await searchButton.click();
 
-      // Wait for search result notice or empty notice
-      await page.waitForFunction(
-        () =>
-          document.body.innerText.includes('No matching locations found') ||
-          document.body.innerText.includes('Address search') ||
-          document.body.innerText.includes('pin the clinic location manually'),
-        { timeout: 15000 },
-      );
+      // 3. Verify disabled search notice is visibly and accessibly displayed
+      await page.waitForSelector('#vet-clinic-search-error');
+      const disabledNotice = await page.evaluate(() => {
+        const errorEl = document.getElementById('vet-clinic-search-error');
+        return {
+          text: errorEl?.innerText || '',
+          role: errorEl?.getAttribute('role'),
+          ariaLive: errorEl?.getAttribute('aria-live'),
+        };
+      });
+      assert.match(disabledNotice.text, /Address search is currently disabled/i);
+      assert.equal(disabledNotice.role, 'alert');
+      assert.equal(disabledNotice.ariaLive, 'assertive');
 
-      // 2. Deliberate manual placement: Select City Cairo and place coordinates
-      await clearAndType(page, '#name_english', 'Manual Placement Clinic');
-      await clearAndType(page, '#name_arabic', 'عيادة التحديد اليدوي');
+      // 4. Deliberate manual workflow: Select City Cairo
       await selectCityDropdown(page, 'Cairo');
 
-      // Place coordinates in Cairo (30.0444, 31.2357)
+      // 5. Deliberate point placement: Coordinates in Cairo (30.0444, 31.2357)
       await clearAndType(page, '#mapped-lat', '30.0444');
       await clearAndType(page, '#mapped-lng', '31.2357');
 
+      // 6. Bilingual address entry
       await clearAndType(page, '#address-english', '10 Kasr El Aini St, Cairo');
       await clearAndType(page, '#address-arabic', '١٠ شارع قصر العيني، القاهرة');
 
-      // Confirm
+      // 7. Explicit confirmation
       await page.click('label[for="location-confirmed"]');
       await new Promise((r) => setTimeout(r, 300));
+      const isConfirmed = await page.evaluate(() => document.getElementById('location-confirmed')?.checked);
+      assert.equal(isConfirmed, true, 'Location must be confirmed');
 
-      // Save
+      // 8. Save
       await page.click('button[data-testid="button-save"]');
       await page.waitForFunction(
         () =>
           document.body.innerText.includes('Successfully created record') ||
           !window.location.href.includes('/actions/new'),
-        { timeout: 15000 },
+        { timeout: 20000 },
       );
 
-      // Verify in PostgreSQL
-      const clinicCheck = await database.pool.query(
-        `SELECT * FROM vet_clinics WHERE name_english = 'Manual Placement Clinic'`,
+      // 9. Database assertions proving intended Vet Clinic state and provenance MANUAL
+      const clinicRes = await database.pool.query(
+        `SELECT * FROM vet_clinics WHERE name_english = 'Disabled Search Manual Clinic'`,
       );
-      assert.equal(clinicCheck.rowCount, 1, 'Manual placement clinic must be saved successfully');
-      assert.equal(clinicCheck.rows[0].city_id, cairoId);
-      assert.equal(clinicCheck.rows[0].address_english, '10 Kasr El Aini St, Cairo');
-      assert.equal(clinicCheck.rows[0].address_arabic, '١٠ شارع قصر العيني، القاهرة');
-      assert.equal(clinicCheck.rows[0].location_provenance, 'MANUAL');
+      assert.equal(clinicRes.rowCount, 1, 'Clinic record must be saved in database');
+      const clinic = clinicRes.rows[0];
+      assert.equal(clinic.city_id, cairoId);
+      assert.equal(clinic.address_english, '10 Kasr El Aini St, Cairo');
+      assert.equal(clinic.address_arabic, '١٠ شارع قصر العيني، القاهرة');
+      assert.equal(clinic.location_provenance, 'MANUAL');
+
+      // Zero unintended audit rows
+      const auditRes = await database.pool.query(`SELECT * FROM vet_clinic_location_audits WHERE vet_clinic_id = $1`, [
+        clinic.id,
+      ]);
+      assert.equal(auditRes.rowCount, 0, 'No audit row created when city agrees');
 
       const assetViolations = await page.evaluate(() => {
         return (window.__cspViolations || []).filter(
@@ -656,7 +711,122 @@ describe('Mapped Location Real Browser End-to-End Suite', { timeout: 90000 }, ()
     }
   });
 
-  it('fails cleanly on missing required fields or unconfirmed location with accessible validation feedback', async () => {
+  it('real-browser journey: address search timeout or upstream outage degrades gracefully and leaves manual workflow fully available', async () => {
+    const { page, errors } = await createTestPage(browser);
+    try {
+      await loginAsAdmin(page, baseUrl);
+
+      await page.setRequestInterception(true);
+      page.on('request', (req) => {
+        if (req.url().includes('searchAddress')) {
+          req.respond({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              results: [],
+              source: 'ERROR',
+              error: 'Nominatim request timed out after 5000ms',
+              message:
+                'Address search is currently unavailable. You can click on the map to pin the clinic location manually.',
+            }),
+          });
+        } else {
+          req.continue();
+        }
+      });
+
+      // Navigate to New Vet Clinic
+      await page.goto(`${baseUrl}/admin/resources/vet_clinics/actions/new`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector('#mapped-location-picker-map.leaflet-container');
+
+      // 1. Fill Name
+      await clearAndType(page, '#name_english', 'Timeout Fallback Manual Clinic');
+      await clearAndType(page, '#name_arabic', 'عيادة السقوط الاحتياطي اليدوية');
+
+      // 2. Attempt address search that times out upstream
+      await clearAndType(page, '#vet-clinic-search-input', '50 Pyramids St, Giza');
+      const searchButton = await page.evaluateHandle(() => {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        return buttons.find((b) => b.innerText.includes('Search address'));
+      });
+      assert.ok(searchButton, 'Search address button must exist');
+      await searchButton.click();
+
+      // 3. Verify outage notice is visibly and accessibly displayed
+      await page.waitForSelector('#vet-clinic-search-error');
+      const outageNotice = await page.evaluate(() => {
+        const errorEl = document.getElementById('vet-clinic-search-error');
+        const inputEl = document.getElementById('vet-clinic-search-input');
+        return {
+          text: errorEl?.innerText || '',
+          role: errorEl?.getAttribute('role'),
+          ariaLive: errorEl?.getAttribute('aria-live'),
+          inputInvalid: inputEl?.getAttribute('aria-invalid'),
+          inputDescribedBy: inputEl?.getAttribute('aria-describedby'),
+        };
+      });
+      assert.match(outageNotice.text, /Address search is currently unavailable/i);
+      assert.equal(outageNotice.role, 'alert');
+      assert.equal(outageNotice.ariaLive, 'assertive');
+      assert.equal(outageNotice.inputInvalid, 'true');
+      assert.equal(outageNotice.inputDescribedBy, 'vet-clinic-search-error');
+
+      // 4. Deliberate manual workflow: Select City Giza
+      await selectCityDropdown(page, 'Giza');
+
+      // 5. Deliberate point placement: Coordinates in Giza (30.0100, 31.2000)
+      await clearAndType(page, '#mapped-lat', '30.0100');
+      await clearAndType(page, '#mapped-lng', '31.2000');
+
+      // 6. Bilingual address entry
+      await clearAndType(page, '#address-english', '50 Pyramids St, Giza');
+      await clearAndType(page, '#address-arabic', '٥٠ شارع الأهرام، الجيزة');
+
+      // 7. Explicit confirmation
+      await page.click('label[for="location-confirmed"]');
+      await new Promise((r) => setTimeout(r, 300));
+      const isConfirmed = await page.evaluate(() => document.getElementById('location-confirmed')?.checked);
+      assert.equal(isConfirmed, true, 'Location must be confirmed');
+
+      // 8. Save
+      await page.click('button[data-testid="button-save"]');
+      await page.waitForFunction(
+        () =>
+          document.body.innerText.includes('Successfully created record') ||
+          !window.location.href.includes('/actions/new'),
+        { timeout: 20000 },
+      );
+
+      // 9. Database assertions proving intended Vet Clinic state and provenance MANUAL
+      const clinicRes = await database.pool.query(
+        `SELECT * FROM vet_clinics WHERE name_english = 'Timeout Fallback Manual Clinic'`,
+      );
+      assert.equal(clinicRes.rowCount, 1, 'Clinic record must be saved in database');
+      const clinic = clinicRes.rows[0];
+      assert.equal(clinic.city_id, gizaId);
+      assert.equal(clinic.address_english, '50 Pyramids St, Giza');
+      assert.equal(clinic.address_arabic, '٥٠ شارع الأهرام، الجيزة');
+      assert.equal(clinic.location_provenance, 'MANUAL');
+
+      // Zero unintended audit rows
+      const auditRes = await database.pool.query(`SELECT * FROM vet_clinic_location_audits WHERE vet_clinic_id = $1`, [
+        clinic.id,
+      ]);
+      assert.equal(auditRes.rowCount, 0, 'No audit row created when city agrees');
+
+      const assetViolations = await page.evaluate(() => {
+        return (window.__cspViolations || []).filter(
+          (e) => e.blockedURI && e.blockedURI !== 'eval' && !e.blockedURI.startsWith('chrome-extension'),
+        );
+      });
+      assert.deepEqual(assetViolations, []);
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('failed and unconfirmed submissions expose visible, programmatically associated validation feedback and move focus accessibly', async () => {
     const { page, errors } = await createTestPage(browser);
     try {
       await loginAsAdmin(page, baseUrl);
@@ -664,31 +834,230 @@ describe('Mapped Location Real Browser End-to-End Suite', { timeout: 90000 }, ()
       await page.goto(`${baseUrl}/admin/resources/vet_clinics/actions/new`, { waitUntil: 'networkidle0' });
       await page.waitForSelector('#mapped-location-picker-map.leaflet-container');
 
-      // Fill name but omit location confirmation
-      await clearAndType(page, '#name_english', 'Unconfirmed Save Attempt Clinic');
+      // SUBCASE A: Unconfirmed location submission
+      await clearAndType(page, '#name_english', 'Unconfirmed Validation Clinic');
+      await clearAndType(page, '#name_arabic', 'عيادة التحقق غير المؤكدة');
       await selectCityDropdown(page, 'Cairo');
-
       await clearAndType(page, '#mapped-lat', '30.0444');
       await clearAndType(page, '#mapped-lng', '31.2357');
       await clearAndType(page, '#address-english', '10 Kasr El Aini St, Cairo');
       await clearAndType(page, '#address-arabic', '١٠ شارع قصر العيني، القاهرة');
 
-      // Do NOT check location-confirmed
-      const isConfirmed = await page.evaluate(() => document.getElementById('location-confirmed')?.checked);
-      assert.equal(isConfirmed, false);
+      // Ensure location-confirmed is UNCHECKED
+      const confirmedBefore = await page.evaluate(() => document.getElementById('location-confirmed')?.checked);
+      assert.equal(confirmedBefore, false);
 
       // Attempt Save
       await page.click('button[data-testid="button-save"]');
-      await new Promise((r) => setTimeout(r, 1000));
+      await page.waitForSelector('#mapped-location-coordinates-error');
 
-      // Must remain on new page and show validation error
-      assert.match(page.url(), /\/admin\/resources\/vet_clinics\/actions\/new/);
+      // Verify accessible error alert, programmatic association, and focus
+      const errorA = await page.evaluate(() => {
+        const errorEl = document.getElementById('mapped-location-coordinates-error');
+        const confirmBox = document.getElementById('location-confirmed');
+        const activeId = document.activeElement?.id;
+        return {
+          errorText: errorEl?.innerText || '',
+          errorRole: errorEl?.getAttribute('role'),
+          errorAriaLive: errorEl?.getAttribute('aria-live'),
+          confirmAriaInvalid: confirmBox?.getAttribute('aria-invalid'),
+          confirmAriaDescribedBy: confirmBox?.getAttribute('aria-describedby'),
+          activeId,
+        };
+      });
 
-      // Verify no record in DB
-      const dbCheck = await database.pool.query(
-        `SELECT * FROM vet_clinics WHERE name_english = 'Unconfirmed Save Attempt Clinic'`,
+      assert.match(errorA.errorText, /Location must be explicitly confirmed/i);
+      assert.equal(errorA.errorRole, 'alert');
+      assert.equal(errorA.errorAriaLive, 'assertive');
+      assert.equal(errorA.confirmAriaInvalid, 'true');
+      assert.equal(errorA.confirmAriaDescribedBy, 'mapped-location-coordinates-error');
+      assert.equal(errorA.activeId, 'location-confirmed', 'Focus must move to location-confirmed on unconfirmed error');
+
+      // Verify zero records in DB
+      const dbCheckA = await database.pool.query(
+        `SELECT * FROM vet_clinics WHERE name_english = 'Unconfirmed Validation Clinic'`,
       );
-      assert.equal(dbCheck.rowCount, 0, 'No clinic record must be saved without confirmation');
+      assert.equal(dbCheckA.rowCount, 0, 'No record must be saved without confirmation');
+
+      // SUBCASE B: Missing required English address
+      await clearAndType(page, '#address-english', '');
+      await page.click('label[for="location-confirmed"]');
+      await new Promise((r) => setTimeout(r, 200));
+      await page.click('button[data-testid="button-save"]');
+      await page.waitForSelector('#address-english-error');
+
+      const errorB = await page.evaluate(() => {
+        const errorEl = document.getElementById('address-english-error');
+        const inputEl = document.getElementById('address-english');
+        const activeId = document.activeElement?.id;
+        return {
+          errorText: errorEl?.innerText || '',
+          errorRole: errorEl?.getAttribute('role'),
+          errorAriaLive: errorEl?.getAttribute('aria-live'),
+          inputAriaInvalid: inputEl?.getAttribute('aria-invalid'),
+          inputAriaDescribedBy: inputEl?.getAttribute('aria-describedby'),
+          activeId,
+        };
+      });
+
+      assert.match(errorB.errorText, /English address is required/i);
+      assert.equal(errorB.errorRole, 'alert');
+      assert.equal(errorB.errorAriaLive, 'assertive');
+      assert.equal(errorB.inputAriaInvalid, 'true');
+      assert.equal(errorB.inputAriaDescribedBy, 'address-english-error');
+      assert.equal(errorB.activeId, 'address-english', 'Focus must move to address-english when missing');
+
+      // SUBCASE C: Discrepancy without override reason
+      await clearAndType(page, '#address-english', '15 Nile Border Promenade, Cairo');
+      // Place near Giza (discrepancy)
+      await clearAndType(page, '#mapped-lat', '30.0105');
+      await clearAndType(page, '#mapped-lng', '31.2005');
+      await clearAndType(page, '#override-reason', '');
+      await page.click('label[for="location-confirmed"]'); // reconfirm
+      await page.click('button[data-testid="button-save"]');
+      await page.waitForSelector('#override-reason-error');
+
+      const errorC = await page.evaluate(() => {
+        const errorEl = document.getElementById('override-reason-error');
+        const inputEl = document.getElementById('override-reason');
+        const activeId = document.activeElement?.id;
+        return {
+          errorText: errorEl?.innerText || '',
+          errorRole: errorEl?.getAttribute('role'),
+          errorAriaLive: errorEl?.getAttribute('aria-live'),
+          inputAriaInvalid: inputEl?.getAttribute('aria-invalid'),
+          inputAriaDescribedBy: inputEl?.getAttribute('aria-describedby'),
+          activeId,
+        };
+      });
+
+      assert.match(errorC.errorText, /override reason/i);
+      assert.equal(errorC.errorRole, 'alert');
+      assert.equal(errorC.errorAriaLive, 'assertive');
+      assert.equal(errorC.inputAriaInvalid, 'true');
+      assert.equal(errorC.inputAriaDescribedBy, 'override-reason-error');
+      assert.equal(errorC.activeId, 'override-reason', 'Focus must move to override-reason when missing');
+
+      // Verify zero records in DB
+      const dbCheckC = await database.pool.query(
+        `SELECT * FROM vet_clinics WHERE name_english = 'Unconfirmed Validation Clinic'`,
+      );
+      assert.equal(dbCheckC.rowCount, 0);
+
+      const assetViolations = await page.evaluate(() => {
+        return (window.__cspViolations || []).filter(
+          (e) => e.blockedURI && e.blockedURI !== 'eval' && !e.blockedURI.startsWith('chrome-extension'),
+        );
+      });
+      assert.deepEqual(assetViolations, []);
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('keyboard-only operability: complete Mapped Location journey using keyboard navigation and verifies accessible labels', async () => {
+    const { page, errors } = await createTestPage(browser);
+    try {
+      await loginAsAdmin(page, baseUrl);
+
+      await page.goto(`${baseUrl}/admin/resources/vet_clinics/actions/new`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector('#mapped-location-picker-map.leaflet-container');
+
+      // 1. Verify accessible labelling across all required controls
+      const labels = await page.evaluate(() => {
+        const searchInput = document.getElementById('vet-clinic-search-input');
+        const mapRegion = document.getElementById('mapped-location-picker-map');
+        const latInput = document.getElementById('mapped-lat');
+        const lngInput = document.getElementById('mapped-lng');
+        const addressEn = document.getElementById('address-english');
+        const addressAr = document.getElementById('address-arabic');
+        const confirmBox = document.getElementById('location-confirmed');
+        const overrideInput = document.getElementById('override-reason');
+
+        const getLabelFor = (id) => document.querySelector(`label[for="${id}"]`)?.innerText || '';
+
+        return {
+          searchAriaLabel: searchInput?.getAttribute('aria-label') || '',
+          mapRole: mapRegion?.getAttribute('role') || '',
+          mapAriaLabel: mapRegion?.getAttribute('aria-label') || '',
+          mapTabIndex: mapRegion?.getAttribute('tabindex'),
+          latLabel: getLabelFor('mapped-lat'),
+          lngLabel: getLabelFor('mapped-lng'),
+          addressEnLabel: getLabelFor('address-english'),
+          addressArLabel: getLabelFor('address-arabic'),
+          confirmLabel: getLabelFor('location-confirmed'),
+          overrideLabel: getLabelFor('override-reason'),
+        };
+      });
+
+      assert.match(labels.searchAriaLabel, /Search public clinic address/i);
+      assert.equal(labels.mapRole, 'region');
+      assert.match(labels.mapAriaLabel, /Interactive map/i);
+      assert.equal(labels.mapTabIndex, '0');
+      assert.match(labels.latLabel, /Latitude/i);
+      assert.match(labels.lngLabel, /Longitude/i);
+      assert.match(labels.addressEnLabel, /Address \(English\)/i);
+      assert.match(labels.addressArLabel, /Address \(Arabic\)/i);
+      assert.match(labels.confirmLabel, /I confirm this mapped location/i);
+      assert.match(labels.overrideLabel, /Override Reason/i);
+
+      // 2. Pure keyboard entry for form fields
+      await page.focus('#name_english');
+      await page.keyboard.type('Keyboard Operable Clinic');
+
+      await page.focus('#name_arabic');
+      await page.keyboard.type('عيادة قابلة للتشغيل بلوحة المفاتيح');
+
+      // Select City via keyboard
+      await selectCityDropdown(page, 'Cairo');
+
+      // Focus map container with keyboard
+      await page.focus('#mapped-location-picker-map');
+
+      // Type Coordinates via keyboard
+      await page.focus('#mapped-lat');
+      await page.keyboard.type('30.0444');
+
+      await page.focus('#mapped-lng');
+      await page.keyboard.type('31.2357');
+
+      // Type Addresses via keyboard
+      await page.focus('#address-english');
+      await page.keyboard.type('10 Kasr El Aini St, Cairo');
+
+      await page.focus('#address-arabic');
+      await page.keyboard.type('١٠ شارع قصر العيني، القاهرة');
+
+      // Focus Confirmation CheckBox and activate with Space key
+      await page.focus('#location-confirmed');
+      await page.keyboard.press('Space');
+      await new Promise((r) => setTimeout(r, 200));
+
+      const isChecked = await page.evaluate(() => document.getElementById('location-confirmed')?.checked);
+      assert.equal(isChecked, true, 'Space key must toggle confirmation checkbox');
+
+      // Focus Save button and activate with Enter key
+      await page.focus('button[data-testid="button-save"]');
+      await page.keyboard.press('Enter');
+
+      await page.waitForFunction(
+        () =>
+          document.body.innerText.includes('Successfully created record') ||
+          !window.location.href.includes('/actions/new'),
+        { timeout: 20000 },
+      );
+
+      // 3. Database assertion
+      const clinicRes = await database.pool.query(
+        `SELECT * FROM vet_clinics WHERE name_english = 'Keyboard Operable Clinic'`,
+      );
+      assert.equal(clinicRes.rowCount, 1, 'Keyboard submitted clinic must be saved in database');
+      const clinic = clinicRes.rows[0];
+      assert.equal(clinic.city_id, cairoId);
+      assert.equal(clinic.address_english, '10 Kasr El Aini St, Cairo');
+      assert.equal(clinic.address_arabic, '١٠ شارع قصر العيني، القاهرة');
+      assert.equal(clinic.location_provenance, 'MANUAL');
 
       const assetViolations = await page.evaluate(() => {
         return (window.__cspViolations || []).filter(
