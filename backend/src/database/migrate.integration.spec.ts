@@ -314,7 +314,7 @@ describe('Database Migration Runner Integration', () => {
     }
   });
 
-  it('proves upgrade from the fixed main baseline (0000..0012) to the release candidate (0013..0019 + custom.sql) preserves data and establishes candidate schema', async () => {
+  it('proves upgrade from the immediately preceding nullable-audit schema (0000..0018) preserves existing attributed audits and establishes candidate schema', async () => {
     // 1. Create a dedicated database for testing baseline upgrade
     await pool.query('CREATE DATABASE pupzy_baseline_upgrade_test;');
     const upgradeConnStr = connectionString.replace('/pupzy_migration_test', '/pupzy_baseline_upgrade_test');
@@ -352,23 +352,24 @@ describe('Database Migration Runner Integration', () => {
         entries: JournalEntry[];
       }
 
-      // Read current _journal.json and filter only migrations 0000..0012 (main baseline)
+      // Reproduce the schema immediately before 0019, where the administrator
+      // attribution column was nullable and foreign keys used SET NULL.
       const fullJournalPath = path.resolve(__dirname, '../../drizzle/migrations/meta/_journal.json');
       const journalData = JSON.parse(fs.readFileSync(fullJournalPath, 'utf8')) as JournalData;
-      const baselineEntries = journalData.entries.filter((entry: JournalEntry) => entry.idx <= 12);
+      const baselineEntries = journalData.entries.filter((entry: JournalEntry) => entry.idx <= 18);
       fs.writeFileSync(
         path.join(tempMetaDir, '_journal.json'),
         JSON.stringify({ ...journalData, entries: baselineEntries }, null, 2),
       );
 
-      // Copy migration files 0000 through 0012 into temp folder
+      // Copy migration files 0000 through 0018 into temp folder
       for (const entry of baselineEntries) {
         const sqlFileName = `${entry.tag}.sql`;
         const srcPath = path.resolve(__dirname, '../../drizzle/migrations', sqlFileName);
         fs.copyFileSync(srcPath, path.join(tempBaselineDir, sqlFileName));
       }
 
-      // Apply main baseline migrations (0000..0012)
+      // Apply the immediately preceding migrations (0000..0018)
       const upgradeDb = drizzle(upgradePool);
       await migrate(upgradeDb, { migrationsFolder: tempBaselineDir });
 
@@ -393,7 +394,25 @@ describe('Database Migration Runner Integration', () => {
       );
       const clinicId = clinicRes.rows[0].id;
 
-      // 2. Now run candidate migrations (0013..0019 + custom.sql) on the existing baseline database
+      const adminRes = await upgradePool.query<{ id: string }>(`
+        INSERT INTO admin_users (email, password_hash, full_name, role)
+        VALUES ('upgrade-admin@pupzy.local', 'hash', 'Upgrade Admin', 'SUPER_ADMIN')
+        RETURNING id;
+      `);
+      const adminId = adminRes.rows[0].id;
+
+      const auditRes = await upgradePool.query<{ id: string }>(
+        `INSERT INTO vet_clinic_location_audits
+          (id, vet_clinic_id, admin_user_id, selected_city_id, nearest_city_id, reason, coordinates)
+        VALUES
+          (uuidv7(), $1, $2, $3, $3, 'Audited location coordinates',
+           ST_SetSRID(ST_MakePoint(31.2569, 29.9602), 4326))
+        RETURNING id;`,
+        [clinicId, adminId, cityId],
+      );
+      const auditId = auditRes.rows[0].id;
+
+      // 2. Now run candidate migration 0019 + custom.sql on the existing database.
       await runMigrations({
         pool: upgradePool,
         migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
@@ -420,29 +439,25 @@ describe('Database Migration Runner Integration', () => {
       expect(postUpgradeClinic.rows[0].name_english).toBe('Maadi Pets');
       expect(postUpgradeClinic.rows[0].source).toBe('OSM');
 
-      // 4. Verify candidate additions exist and operate correctly:
-      // Table: vet_clinic_location_audits
-      const adminRes = await upgradePool.query<{ id: string }>(`
-        INSERT INTO admin_users (email, password_hash, full_name, role)
-        VALUES ('upgrade-admin@pupzy.local', 'hash', 'Upgrade Admin', 'SUPER_ADMIN')
-        RETURNING id;
-      `);
-      const adminId = adminRes.rows[0].id;
-
-      await upgradePool.query(
-        `INSERT INTO vet_clinic_location_audits
-          (id, vet_clinic_id, admin_user_id, selected_city_id, nearest_city_id, reason, coordinates)
-        VALUES
-          (uuidv7(), $1, $2, $3, $3, 'Audited location coordinates',
-           ST_SetSRID(ST_MakePoint(31.2569, 29.9602), 4326));`,
-        [clinicId, adminId, cityId],
+      // 4. Verify the pre-existing audit attribution is preserved.
+      const preservedAudit = await upgradePool.query<{
+        vet_clinic_id: string;
+        admin_user_id: string;
+        selected_city_id: string;
+        nearest_city_id: string;
+      }>(
+        `SELECT vet_clinic_id, admin_user_id, selected_city_id, nearest_city_id
+         FROM vet_clinic_location_audits WHERE id = $1`,
+        [auditId],
       );
-
-      const auditCount = await upgradePool.query<{ count: string }>(
-        `SELECT count(*)::text AS count FROM vet_clinic_location_audits WHERE vet_clinic_id = $1`,
-        [clinicId],
-      );
-      expect(parseInt(auditCount.rows[0].count, 10)).toBe(1);
+      expect(preservedAudit.rows).toEqual([
+        {
+          vet_clinic_id: clinicId,
+          admin_user_id: adminId,
+          selected_city_id: cityId,
+          nearest_city_id: cityId,
+        },
+      ]);
 
       // Verify upgraded vet_clinic_location_audits schema properties:
       // 4a. Attribution columns NOT NULL

@@ -441,7 +441,7 @@ function getRevisionIdentity(dir = rootDir) {
     }
   };
 
-  const candidateCommit = process.env.GITHUB_SHA || runGit(['rev-parse', 'HEAD']) || 'UNKNOWN_CANDIDATE_COMMIT';
+  const candidateCommit = runGit(['rev-parse', 'HEAD']) || 'UNKNOWN_CANDIDATE_COMMIT';
 
   const candidateBranch =
     process.env.GITHUB_HEAD_REF ||
@@ -450,7 +450,7 @@ function getRevisionIdentity(dir = rootDir) {
     'UNKNOWN_BRANCH';
 
   const baselineCommit =
-    process.env.GITHUB_BASE_REF ||
+    (process.env.GITHUB_BASE_SHA && runGit(['rev-parse', '--verify', `${process.env.GITHUB_BASE_SHA}^{commit}`])) ||
     runGit(['merge-base', 'origin/main', 'HEAD']) ||
     runGit(['rev-parse', 'origin/main']) ||
     runGit(['rev-parse', 'HEAD~1']) ||
@@ -459,6 +459,7 @@ function getRevisionIdentity(dir = rootDir) {
   const commitTimestamp = runGit(['log', '-1', '--format=%cI', 'HEAD']) || new Date().toISOString();
 
   const commitAuthor = runGit(['log', '-1', '--format=%an <%ae>', 'HEAD']) || 'Unknown Author';
+  const worktreeStatus = runGit(['status', '--porcelain']);
 
   return {
     candidateCommit,
@@ -466,6 +467,7 @@ function getRevisionIdentity(dir = rootDir) {
     baselineCommit,
     commitTimestamp,
     commitAuthor,
+    cleanWorkingTree: worktreeStatus === '',
   };
 }
 
@@ -916,7 +918,12 @@ async function runReleaseGate(options = {}) {
   const overallStart = Date.now();
   const stagesToRun = options.stages || STAGES;
   const isVerbose = options.verbose ?? true;
-  const revisionIdentity = options.revisionIdentity || getRevisionIdentity(rootDir);
+  const detectedRevisionIdentity = getRevisionIdentity(rootDir);
+  const revisionIdentity =
+    options.revisionIdentity ||
+    (options.customRunner ? { ...detectedRevisionIdentity, cleanWorkingTree: true } : detectedRevisionIdentity);
+  const identityFailure =
+    revisionIdentity.cleanWorkingTree === false ? 'Certification refused: working tree is not clean.' : null;
 
   if (isVerbose) {
     console.log('################################################################################');
@@ -931,15 +938,22 @@ async function runReleaseGate(options = {}) {
   const results = [];
   let allPassed = true;
 
-  for (const stage of stagesToRun) {
-    const result = await runStage(stage, options);
-    results.push(result);
-    if (!result.success) {
-      allPassed = false;
-      if (isVerbose) {
-        console.error(`\n[ABORT] Release verification gate stopped due to failure in stage: ${stage.name}`);
+  if (identityFailure) {
+    allPassed = false;
+    if (isVerbose) console.error(`\n[ABORT] ${identityFailure}`);
+  }
+
+  if (!identityFailure) {
+    for (const stage of stagesToRun) {
+      const result = await runStage(stage, options);
+      results.push(result);
+      if (!result.success) {
+        allPassed = false;
+        if (isVerbose) {
+          console.error(`\n[ABORT] Release verification gate stopped due to failure in stage: ${stage.name}`);
+        }
+        break;
       }
-      break;
     }
   }
 

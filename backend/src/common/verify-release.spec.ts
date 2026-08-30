@@ -657,6 +657,14 @@ describe('Authoritative Release Gate & Verification Engine', () => {
           }),
           chromiumFinder: () => ({ ok: true, path: '/bin/chrome' }),
         },
+        revisionIdentity: {
+          candidateCommit: 'a'.repeat(40),
+          baselineCommit: 'b'.repeat(40),
+          candidateBranch: 'test',
+          commitTimestamp: '2026-01-01T00:00:00.000Z',
+          commitAuthor: 'Test',
+          cleanWorkingTree: true,
+        },
       });
 
       expect(result.success).toBe(false);
@@ -726,6 +734,42 @@ describe('Authoritative Release Gate & Verification Engine', () => {
       expect(rev.baselineCommit).toBeDefined();
       expect(rev.commitTimestamp).toBeDefined();
       expect(rev.commitAuthor).toBeDefined();
+      expect(typeof rev.cleanWorkingTree).toBe('boolean');
+    });
+
+    it('refuses certification before any stage runs when the supplied candidate is dirty', async () => {
+      let invoked = false;
+      const result = await runReleaseGate({
+        stages: [
+          {
+            id: 'unit-root',
+            name: 'Unit Tests',
+            type: 'test',
+            cmd: 'npm',
+            args: ['test'],
+            cwd: '.',
+            expectedTestRunner: 'jest',
+            minExpectedTests: 1,
+          },
+        ],
+        verbose: false,
+        revisionIdentity: {
+          candidateCommit: 'a'.repeat(40),
+          baselineCommit: 'b'.repeat(40),
+          candidateBranch: 'test',
+          commitTimestamp: '2026-01-01T00:00:00.000Z',
+          commitAuthor: 'Test',
+          cleanWorkingTree: false,
+        },
+        customRunner: () => {
+          invoked = true;
+          return Promise.resolve({ code: 0, stdout: 'Tests: 1 passed, 1 total\nRan all test suites.' });
+        },
+      });
+
+      expect(invoked).toBe(false);
+      expect(result.isReleaseReady).toBe(false);
+      expect(result.completedStagesCount).toBe(0);
     });
   });
 });
