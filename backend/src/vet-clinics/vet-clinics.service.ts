@@ -1,7 +1,11 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
-import { VetClinicsRepository, type VetClinicProximityResult } from './vet-clinics.repository';
+import {
+  VetClinicsRepository,
+  type VetClinicProximityResult,
+  type VetClinicCatalogRevisionReader,
+} from './vet-clinics.repository';
 
 // ─── DTO ─────────────────────────────────────────────────────────────────────
 /**
@@ -48,55 +52,95 @@ const CITY_CACHE_TTL_MILLISECONDS = 86_400_000; // 24 h
  */
 const POST_CACHE_TTL_MILLISECONDS = 3_600_000; // 1 h
 
-// ─── Cache key namespace ──────────────────────────────────────────────────────
-// Prefix 'vet:' avoids collisions with other cache namespaces:
-//   user_resolve:* — auth user caching
-//   view_dedup:*   — view deduplication
-//   idempotency:*  — idempotency interceptor
-
-const toPostKey = (postId: string) => `vet:post:${postId}`;
-const toCityKey = (cityId: string) => `vet:city:${cityId}`;
-
-// ─── Google Maps URL Builder ──────────────────────────────────────────────────
-/**
- * Canonical zero-key Google Maps search URL builder.
- * Coordinates are validated WGS84 and formatted in latitude,longitude order
- * with encoded comma (%2C). Uses api=1 search action without requiring an API key.
- */
-export function buildGoogleMapsUrl(latitude: number | string, longitude: number | string): string {
-  if (
-    latitude === null ||
-    latitude === undefined ||
-    longitude === null ||
-    longitude === undefined ||
-    typeof latitude === 'boolean' ||
-    typeof longitude === 'boolean' ||
-    String(latitude).trim() === '' ||
-    String(longitude).trim() === ''
-  ) {
-    throw new Error(`Invalid WGS84 coordinates: latitude=${latitude}, longitude=${longitude}`);
-  }
-  const lat = Number(latitude);
-  const lng = Number(longitude);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-    throw new Error(`Invalid WGS84 coordinates: latitude=${latitude}, longitude=${longitude}`);
-  }
-  const url = new URL('https://www.google.com/maps/search/');
-  url.searchParams.set('api', '1');
-  url.searchParams.set('query', `${lat},${lng}`);
-  return url.toString();
-}
+// ─── Google Maps Handoff Contract ────────────────────────────────────────────
+export {
+  GOOGLE_MAPS_SEARCH_BASE_URL,
+  WGS84_BOUNDS,
+  validateWgs84Coordinates,
+  isValidWgs84Coordinates,
+  buildGoogleMapsUrl,
+  tryBuildGoogleMapsUrl,
+} from '../common/contracts/google-maps-handoff.contract';
+import { buildGoogleMapsUrl } from '../common/contracts/google-maps-handoff.contract';
 
 // ─── Service ─────────────────────────────────────────────────────────────────
 
 @Injectable()
 export class VetClinicsService {
   private readonly logger = new Logger(VetClinicsService.name);
+  private cacheGeneration = 0;
+  private readonly cachedKeys = new Set<string>();
+  private catalogRevision: number | undefined;
 
   constructor(
     private readonly vetClinicsRepository: VetClinicsRepository,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
+
+  private getCacheKey(suffix: string): string {
+    return `vet:g${this.cacheGeneration}:${suffix}`;
+  }
+
+  /**
+   * Rejects this process's cache generation when PostgreSQL has committed a
+   * newer catalog revision. This is intentionally a source-of-truth read, not a
+   * background poll or distributed cache: the Vet Clinic payload cache stays local.
+   */
+  private async synchronizeCatalogRevision(currentRevision: number): Promise<void> {
+    if (this.catalogRevision === undefined) {
+      this.catalogRevision = currentRevision;
+      return;
+    }
+    if (this.catalogRevision === currentRevision) return;
+
+    this.catalogRevision = currentRevision;
+    await this.clearCache();
+  }
+
+  /**
+   * Clears the in-memory cached vet clinic proximity results and browse listings.
+   *
+   * ## Logical O(1) Invalidation
+   * Advances the internal cache generation immediately, rendering all previously cached
+   * entries unreachable and invalid in O(1) time without blocking on cache-manager I/O.
+   * Physical cleanup of previously tracked keys is dispatched asynchronously on a best-effort basis
+   * and cannot delay or fail generation advancement.
+   */
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async clearCache(): Promise<void> {
+    this.cacheGeneration++;
+    const keysToDelete = Array.from(new Set(this.cachedKeys));
+    this.cachedKeys.clear();
+
+    // Physical cleanup is best-effort and asynchronous, not delaying generation advancement
+    void Promise.all(
+      keysToDelete.map(async (key) => {
+        try {
+          await this.cacheManager.del(key);
+        } catch {
+          // ignore individual deletion errors
+        }
+      }),
+    ).catch(() => {
+      // ignore background deletion errors
+    });
+
+    this.logger.log(`Vet clinics cache invalidated successfully (generation ${this.cacheGeneration}).`);
+  }
+
+  /**
+   * Returns the current active cache generation index.
+   */
+  getCacheGeneration(): number {
+    return this.cacheGeneration;
+  }
+
+  /**
+   * Returns the number of tracked active cache keys in the current generation.
+   */
+  getTrackedKeyCount(): number {
+    return this.cachedKeys.size;
+  }
 
   /**
    * nearestVetClinicsForPost
@@ -105,13 +149,13 @@ export class VetClinicsService {
    *
    * ## Routing logic
    *
-   * | postType | Source    | Cache key       | TTL  |
-   * |----------|-----------|-----------------|------|
-   * | RESCUE   | post GPS  | vet:post:{id}   | 1h   |
-   * | LOST     | post GPS  | vet:post:{id}   | 1h   |
-   * | ADOPTION | city CTR  | vet:city:{id}   | 24h  |
-   * | MATING   | city CTR  | vet:city:{id}   | 24h  |
-   * | PRODUCT  | —         | (no cache/query)| N/A  |
+   * | postType | Source    | Cache key                | TTL  |
+   * |----------|-----------|--------------------------|------|
+   * | RESCUE   | post GPS  | vet:g{gen}:post:{id}     | 1h   |
+   * | LOST     | post GPS  | vet:g{gen}:post:{id}     | 1h   |
+   * | ADOPTION | city CTR  | vet:g{gen}:city:{id}     | 24h  |
+   * | MATING   | city CTR  | vet:g{gen}:city:{id}     | 24h  |
+   * | PRODUCT  | —         | (no cache/query)         | N/A  |
    *
    * ## Cache failures
    * Both get and set calls are wrapped in try-catch.
@@ -142,11 +186,14 @@ export class VetClinicsService {
 
     // ADOPTION and MATING: exact coordinates are private — use city center instead.
     if (post.postType === 'ADOPTION' || post.postType === 'MATING') {
-      return this.findNearestForCityCached(post.cityId);
+      return this.vetClinicsRepository.withCatalogRevision((revision, reader) =>
+        this.findNearestForCityCached(post.cityId, revision, reader),
+      );
     }
 
     // RESCUE and LOST: use exact post GPS coordinates (already public).
-    if (post.latitude === null || post.longitude === null) {
+    const { latitude, longitude } = post;
+    if (latitude === null || longitude === null) {
       this.logger.warn(
         { postId: post.id, postType: post.postType },
         'Post has null coordinates — skipping vet clinic lookup',
@@ -154,17 +201,26 @@ export class VetClinicsService {
       return [];
     }
 
-    return this.findNearestCached(post.id, post.latitude, post.longitude);
+    return this.vetClinicsRepository.withCatalogRevision((revision, reader) =>
+      this.findNearestCached(post.id, latitude, longitude, revision, reader),
+    );
   }
 
   // ─── Private cached query methods ──────────────────────────────────────────
 
   /**
    * Cache-aside for RESCUE/LOST posts (post-level granularity).
-   * Key: vet:post:{postId}  TTL: 1 hour
+   * Key: vet:g{gen}:post:{postId}  TTL: 1 hour
    */
-  private async findNearestCached(postId: string, latitude: number, longitude: number): Promise<VetClinicDto[]> {
-    const key = toPostKey(postId);
+  private async findNearestCached(
+    postId: string,
+    latitude: number,
+    longitude: number,
+    revision: number,
+    reader: VetClinicCatalogRevisionReader,
+  ): Promise<VetClinicDto[]> {
+    await this.synchronizeCatalogRevision(revision);
+    const key = this.getCacheKey(`post:${postId}`);
 
     // ── Cache get ───────────────────────────────────────────────────────────
     try {
@@ -182,12 +238,13 @@ export class VetClinicsService {
     }
 
     // ── DB query ────────────────────────────────────────────────────────────
-    const rows = await this.vetClinicsRepository.findNearest(latitude, longitude);
+    const rows = await reader.findNearest(latitude, longitude);
     const dtos = rows.map(this.proximityResultToDto);
 
     // ── Cache set ───────────────────────────────────────────────────────────
     try {
       await this.cacheManager.set(key, dtos, POST_CACHE_TTL_MILLISECONDS);
+      this.cachedKeys.add(key);
     } catch (error) {
       this.logger.warn(
         { key, err: error instanceof Error ? error.message : String(error) },
@@ -200,14 +257,19 @@ export class VetClinicsService {
 
   /**
    * Cache-aside for ADOPTION and MATING posts (city-level granularity).
-   * Key: vet:city:{cityId}  TTL: 24 hours
+   * Key: vet:g{gen}:city:{cityId}  TTL: 24 hours
    *
    * All adoption and mating posts in the same city share the same cache entry.
    * This is the primary cache optimization — adoption is the most common
    * post type likely to display this field.
    */
-  private async findNearestForCityCached(cityId: string): Promise<VetClinicDto[]> {
-    const key = toCityKey(cityId);
+  private async findNearestForCityCached(
+    cityId: string,
+    revision: number,
+    reader: VetClinicCatalogRevisionReader,
+  ): Promise<VetClinicDto[]> {
+    await this.synchronizeCatalogRevision(revision);
+    const key = this.getCacheKey(`city:${cityId}`);
 
     // ── Cache get ───────────────────────────────────────────────────────────
     try {
@@ -224,12 +286,13 @@ export class VetClinicsService {
     }
 
     // ── DB query ────────────────────────────────────────────────────────────
-    const rows = await this.vetClinicsRepository.findNearestForCity(cityId);
+    const rows = await reader.findNearestForCity(cityId);
     const dtos = rows.map(this.proximityResultToDto);
 
     // ── Cache set ───────────────────────────────────────────────────────────
     try {
       await this.cacheManager.set(key, dtos, CITY_CACHE_TTL_MILLISECONDS);
+      this.cachedKeys.add(key);
     } catch (error) {
       this.logger.warn(
         { key, err: error instanceof Error ? error.message : String(error) },
@@ -270,11 +333,22 @@ export class VetClinicsService {
    * Returns up to 15 nearest active vet clinics to the given city's center_point.
    * This backs the standalone Query.nearbyVetClinics endpoint for the browse screen.
    *
-   * Cached per city for 24 hours. Uses a distinct cache key (`vet:city:list:{cityId}`)
-   * to avoid colliding with the 3-item limit cache (`vet:city:{cityId}`) used by post details.
+   * Cached per city for 24 hours. Uses a distinct cache key (`vet:g{gen}:city:list:{cityId}`)
+   * to avoid colliding with the 3-item limit cache (`vet:g{gen}:city:{cityId}`) used by post details.
    */
   async nearbyVetClinicsForCity(cityId: string): Promise<VetClinicDto[]> {
-    const key = `vet:city:list:${cityId}`;
+    return this.vetClinicsRepository.withCatalogRevision((revision, reader) =>
+      this.nearbyVetClinicsForCityAtRevision(cityId, revision, reader),
+    );
+  }
+
+  private async nearbyVetClinicsForCityAtRevision(
+    cityId: string,
+    revision: number,
+    reader: VetClinicCatalogRevisionReader,
+  ): Promise<VetClinicDto[]> {
+    await this.synchronizeCatalogRevision(revision);
+    const key = this.getCacheKey(`city:list:${cityId}`);
 
     // ── Cache get ───────────────────────────────────────────────────────────
     try {
@@ -291,12 +365,13 @@ export class VetClinicsService {
     }
 
     // ── DB query ────────────────────────────────────────────────────────────
-    const rows = await this.vetClinicsRepository.findNearestForCity(cityId, 15);
+    const rows = await reader.findNearestForCity(cityId, 15);
     const dtos = rows.map(this.proximityResultToDto);
 
     // ── Cache set ───────────────────────────────────────────────────────────
     try {
       await this.cacheManager.set(key, dtos, CITY_CACHE_TTL_MILLISECONDS);
+      this.cachedKeys.add(key);
     } catch (error) {
       this.logger.warn(
         { key, err: error instanceof Error ? error.message : String(error) },

@@ -5,6 +5,11 @@ import { ValidationError } from 'adminjs';
 import {
   parseCoordinates,
   buildGoogleMapsUrl,
+  tryBuildGoogleMapsUrl,
+  validateWgs84Coordinates,
+  isValidWgs84Coordinates,
+  GOOGLE_MAPS_SEARCH_BASE_URL,
+  WGS84_BOUNDS,
   isLocationModified,
   validateMappedLocation,
   findNearestOfficialCity,
@@ -122,12 +127,13 @@ describe('Vet Clinics Location Helpers & Validation', () => {
     });
   });
 
-  describe('buildGoogleMapsUrl', () => {
+  describe('Google Maps Handoff Contract & buildGoogleMapsUrl', () => {
     it('generates canonical zero-key search URL with %2C encoded comma', () => {
       const url = buildGoogleMapsUrl(30.0444, 31.2357);
       assert.equal(url, 'https://www.google.com/maps/search/?api=1&query=30.0444%2C31.2357');
       assert.equal(url.includes('key='), false);
       assert.equal(url.includes('api_key='), false);
+      assert.equal(GOOGLE_MAPS_SEARCH_BASE_URL, 'https://www.google.com/maps/search/');
     });
 
     it('rejects non-finite coordinates', () => {
@@ -143,6 +149,7 @@ describe('Vet Clinics Location Helpers & Validation', () => {
       assert.throws(() => buildGoogleMapsUrl('', 31.2357), /Invalid WGS84/);
       assert.throws(() => buildGoogleMapsUrl(30.0444, '   '), /Invalid WGS84/);
       assert.throws(() => buildGoogleMapsUrl(false, 31.2357), /Invalid WGS84/);
+      assert.throws(() => buildGoogleMapsUrl(30.0444, true), /Invalid WGS84/);
     });
 
     it('rejects coordinates outside WGS84 ranges', () => {
@@ -150,6 +157,27 @@ describe('Vet Clinics Location Helpers & Validation', () => {
       assert.throws(() => buildGoogleMapsUrl(-90.1, 31.2357), /Invalid WGS84/);
       assert.throws(() => buildGoogleMapsUrl(30.0, 180.1), /Invalid WGS84/);
       assert.throws(() => buildGoogleMapsUrl(30.0, -180.1), /Invalid WGS84/);
+    });
+
+    it('validates WGS84 coordinates accurately', () => {
+      assert.deepEqual(validateWgs84Coordinates(30.0444, 31.2357), { latitude: 30.0444, longitude: 31.2357 });
+      assert.deepEqual(validateWgs84Coordinates('29.9602', '31.2569'), { latitude: 29.9602, longitude: 31.2569 });
+      assert.equal(isValidWgs84Coordinates(30.0444, 31.2357), true);
+      assert.equal(isValidWgs84Coordinates(null, 31.2357), false);
+      assert.equal(isValidWgs84Coordinates(95.0, 31.2357), false);
+      assert.equal(WGS84_BOUNDS.minLat, -90);
+      assert.equal(WGS84_BOUNDS.maxLat, 90);
+    });
+
+    it('tryBuildGoogleMapsUrl returns URL on valid coordinates and null on invalid coordinates without throwing', () => {
+      assert.equal(
+        tryBuildGoogleMapsUrl(30.0444, 31.2357),
+        'https://www.google.com/maps/search/?api=1&query=30.0444%2C31.2357',
+      );
+      assert.equal(tryBuildGoogleMapsUrl(null, 31.2357), null);
+      assert.equal(tryBuildGoogleMapsUrl(NaN, 31.2357), null);
+      assert.equal(tryBuildGoogleMapsUrl(95.0, 31.2357), null);
+      assert.equal(tryBuildGoogleMapsUrl('', ''), null);
     });
   });
 

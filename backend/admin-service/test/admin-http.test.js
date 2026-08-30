@@ -62,105 +62,111 @@ async function login(email, password) {
   };
 }
 
-before(async () => {
-  const connectionString = await database.start();
-  principals = await seedPrincipals(database.pool);
-  const superHash = await bcrypt.hash('super secure password', 4);
-  const staffHash = await bcrypt.hash('staff secure password', 4);
-  await database.pool.query(`UPDATE admin_users SET password_hash = $2 WHERE id = $1`, [principals.adminId, superHash]);
-  const staff = await database.pool.query(
-    `INSERT INTO admin_users (email, password_hash, full_name, role)
-     VALUES ('staff@example.com', $1, 'Staff Admin', 'ADMIN') RETURNING id`,
-    [staffHash],
-  );
-  staffId = staff.rows[0].id;
-  await database.pool.query(
-    `UPDATE users
-     SET is_banned = true, banned_by_admin_id = $2
-     WHERE id = $1`,
-    [principals.userId, principals.adminId],
-  );
-
-  const databaseName = new URL(connectionString).pathname.replace(/^\//, '');
-  const built = await buildAdminJs(connectionString, databaseName, database.pool);
-  sqlAdapterPool = built.sqlAdapterPool;
-
-  const app = express();
-  app.disable('x-powered-by');
-  app.set('trust proxy', 1);
-  app.use('/admin/assets', express.static(path.join(currentDirectory, '../src/adminjs/public')));
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
-          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://unpkg.com'],
-          fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
-          imgSrc: ["'self'", 'data:', 'https:'],
-          connectSrc: ["'self'"],
-        },
-      },
-    }),
-  );
-  app.use('/admin', requireSameOrigin);
-  app.use('/admin', buildCsrfProtection('a test CSRF signing secret at least 32 chars'));
-  const PgSession = connectPgSimple(session);
-  app.use(
-    '/admin/login',
-    rateLimit({
-      windowMs: 15 * 60 * 1000,
-      limit: 10,
-      standardHeaders: true,
-      legacyHeaders: false,
-    }),
-  );
-  app.use(
-    '/admin',
-    AdminJSExpress.buildAuthenticatedRouter(
-      built.admin,
-      {
-        authenticate: buildAuthenticate(database.pool),
-        cookiePassword: 'a test cookie password at least 32 chars',
-        cookieName: 'pupzy_admin_test',
-      },
-      null,
-      {
-        store: new PgSession({
-          pool: database.pool,
-          createTableIfMissing: false,
-          pruneSessionInterval: false,
-          tableName: 'admin_sessions',
-        }),
-        resave: false,
-        saveUninitialized: false,
-        secret: 'a test session secret at least 32 chars',
-        cookie: { httpOnly: true, sameSite: 'lax' },
-      },
-    ),
-  );
-  server = app.listen(0);
-  await new Promise((resolve) => server.once('listening', resolve));
-  baseUrl = `http://127.0.0.1:${server.address().port}`;
-
-  const superLogin = await login('admin@example.com', 'super secure password');
-  superCookie = superLogin.cookie;
-  superCsrf = superLogin.csrf;
-  const staffLogin = await login('staff@example.com', 'staff secure password');
-  staffCookie = staffLogin.cookie;
-  staffCsrf = staffLogin.csrf;
-  assert.ok(superCookie);
-  assert.ok(staffCookie);
-  assert.notEqual(superCookie, staffCookie);
-});
-
-after(async () => {
-  if (server) await new Promise((resolve) => server.close(resolve));
-  await sqlAdapterPool?.destroy();
-  await database.stop();
-});
-
 describe('AdminJS HTTP security and resource behavior', () => {
+  before(async () => {
+    const connectionString = await database.start();
+    principals = await seedPrincipals(database.pool);
+    const superHash = await bcrypt.hash('super secure password', 4);
+    const staffHash = await bcrypt.hash('staff secure password', 4);
+    await database.pool.query(`UPDATE admin_users SET password_hash = $2 WHERE id = $1`, [
+      principals.adminId,
+      superHash,
+    ]);
+    const staff = await database.pool.query(
+      `INSERT INTO admin_users (email, password_hash, full_name, role)
+       VALUES ('staff@example.com', $1, 'Staff Admin', 'ADMIN') RETURNING id`,
+      [staffHash],
+    );
+    staffId = staff.rows[0].id;
+    await database.pool.query(
+      `UPDATE users
+       SET is_banned = true, banned_by_admin_id = $2
+       WHERE id = $1`,
+      [principals.userId, principals.adminId],
+    );
+
+    const databaseName = new URL(connectionString).pathname.replace(/^\//, '');
+    const built = await buildAdminJs(connectionString, databaseName, database.pool);
+    sqlAdapterPool = built.sqlAdapterPool;
+
+    const app = express();
+    app.disable('x-powered-by');
+    app.set('trust proxy', 1);
+    app.use('/admin/assets', express.static(path.join(currentDirectory, '../src/adminjs/public')));
+    app.use(
+      helmet({
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
+            styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://unpkg.com'],
+            fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+            imgSrc: ["'self'", 'data:', 'https:'],
+            connectSrc: ["'self'"],
+          },
+        },
+      }),
+    );
+    app.use('/admin', requireSameOrigin);
+    app.use('/admin', buildCsrfProtection('a test CSRF signing secret at least 32 chars'));
+    const PgSession = connectPgSimple(session);
+    app.use(
+      '/admin/login',
+      rateLimit({
+        windowMs: 15 * 60 * 1000,
+        limit: 10,
+        standardHeaders: true,
+        legacyHeaders: false,
+      }),
+    );
+    app.use(
+      '/admin',
+      AdminJSExpress.buildAuthenticatedRouter(
+        built.admin,
+        {
+          authenticate: buildAuthenticate(database.pool),
+          cookiePassword: 'a test cookie password at least 32 chars',
+          cookieName: 'pupzy_admin_test',
+        },
+        null,
+        {
+          store: new PgSession({
+            pool: database.pool,
+            createTableIfMissing: false,
+            pruneSessionInterval: false,
+            tableName: 'admin_sessions',
+          }),
+          resave: false,
+          saveUninitialized: false,
+          secret: 'a test session secret at least 32 chars',
+          cookie: { httpOnly: true, sameSite: 'lax' },
+        },
+      ),
+    );
+    server = app.listen(0);
+    await new Promise((resolve) => server.once('listening', resolve));
+    baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+    const superLogin = await login('admin@example.com', 'super secure password');
+    superCookie = superLogin.cookie;
+    superCsrf = superLogin.csrf;
+    const staffLogin = await login('staff@example.com', 'staff secure password');
+    staffCookie = staffLogin.cookie;
+    staffCsrf = staffLogin.csrf;
+    assert.ok(superCookie);
+    assert.ok(staffCookie);
+    assert.notEqual(superCookie, staffCookie);
+  });
+
+  after(async () => {
+    if (server) {
+      server.closeIdleConnections?.();
+      server.closeAllConnections?.();
+      await new Promise((resolve) => server.close(resolve));
+    }
+    await sqlAdapterPool?.destroy();
+    await database.stop();
+  });
   it('renders the login page with Pupzy visual branding, logo, and theme stylesheet', async () => {
     const response = await fetch(`${baseUrl}/admin/login`);
     assert.equal(response.status, 200);
@@ -1181,7 +1187,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
     // 1. Seed official city
     const seed = await database.pool.query(
       `INSERT INTO cities (name_english, name_arabic, governorate, status, center_point)
-       VALUES ('Interleaved City B ${Date.now()}', 'مدينة ب', 'Cairo', 'OFFICIAL', ST_SetSRID(ST_MakePoint(31.23, 30.04), 4326))
+       VALUES ('Interleaved City B ${Date.now()}', 'مدينة ب', 'Cairo', 'OFFICIAL', ST_SetSRID(ST_MakePoint(31.45, 30.25), 4326))
        RETURNING id`,
     );
     const cityId = seed.rows[0].id;
@@ -1199,8 +1205,8 @@ describe('AdminJS HTTP security and resource behavior', () => {
         {
           name_english: clinicName,
           city_id: cityId,
-          latitude: 30.04,
-          longitude: 31.23,
+          latitude: 30.25,
+          longitude: 31.45,
           address_english: '10 Nile St',
           address_arabic: '١٠ شارع النيل',
           location_confirmed: true,
@@ -1874,6 +1880,67 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.ok(postShowData.record.populated.city_id, 'Expected populated city_id on post show');
     assert.equal(postShowData.record.populated.city_id.title, 'Sidi Gaber / سيدي جابر (Alexandria)');
 
+    // 6i. Crafted HTTP edit payload attempting to mutate protected structural, authorship, classification, moderation, and ranking fields is stripped and database columns remain untouched
+    const craftedPostId = await insertPost(database.pool, {
+      ...principals,
+      cityId: zamalekId,
+      title: 'Original Post Title',
+      postType: 'ADOPTION',
+      status: 'ACTIVE',
+      moderationStatus: 'PENDING_AUTO_REVIEW',
+    });
+
+    const craftedEditRes = await fetch(`${baseUrl}/admin/api/resources/posts/records/${craftedPostId}/edit`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: 'Legitimate Title Update',
+        area_name: 'Maadi Degla',
+        creator_id: '00000000-0000-0000-0000-000000000001',
+        post_type: 'PRODUCT',
+        urgency: 'LOW',
+        market_category: 'FOOD',
+        status: 'REMOVED',
+        moderation_status: 'APPROVED',
+        moderation_reason: 'Tampered reason',
+        moderated_by_admin_id: '00000000-0000-0000-0000-000000000002',
+        effective_score: 9999.9,
+        upvote_count: 500,
+        save_count: 500,
+        view_count: 5000,
+        report_count: 100,
+        coordinates: 'SRID=4326;POINT(0 0)',
+        latitude: 0,
+        longitude: 0,
+      }),
+    });
+    assert.equal(craftedEditRes.status, 200);
+    const craftedEditData = await craftedEditRes.json();
+    assert.equal(craftedEditData.notice?.type, 'success');
+
+    const checkCraftedPost = await database.pool.query(`SELECT * FROM posts WHERE id = $1`, [craftedPostId]);
+    const p = checkCraftedPost.rows[0];
+    assert.equal(p.title, 'Legitimate Title Update');
+    assert.equal(p.area_name, 'Maadi Degla');
+    assert.equal(p.creator_id, principals.userId);
+    assert.equal(p.post_type, 'ADOPTION');
+    assert.equal(p.urgency, null);
+    assert.equal(p.market_category, null);
+    assert.equal(p.status, 'ACTIVE');
+    assert.equal(p.moderation_status, 'PENDING_AUTO_REVIEW');
+    assert.equal(p.moderation_reason, null);
+    assert.equal(p.moderated_by_admin_id, null);
+    assert.equal(p.effective_score, 0);
+    assert.equal(p.upvote_count, 0);
+    assert.equal(p.save_count, 0);
+    assert.equal(p.view_count, 0);
+    assert.equal(p.report_count, 0);
+
     // 7. User Home-City historical references and privacy contracts
     // 7a. Seed User with historical legacy home_city_id
     const legacyUser = await database.pool.query(
@@ -2004,6 +2071,101 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.equal(userShowData.record.populated.home_city_id.title, 'Zamalek / الزمالك (Cairo)');
     assert.equal('phone_number' in userShowData.record.params, false);
     assert.equal('last_known_location' in userShowData.record.params, false);
+
+    // 7h. Tampered edit payload leaves protected authentication, trust, counters, and private fields untouched
+    const tamperedEditRes = await fetch(`${baseUrl}/admin/api/resources/users/records/${testUserId}/edit`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        // Approved profile edits
+        full_name: 'Sanctioned Updated User',
+        full_name_arabic: 'اسم معتمد محدث',
+        profile_picture_url: 'https://example.com/avatar.jpg',
+        language_preference: 'en',
+        notifications_enabled: false,
+        home_city_id: sidiGaberId,
+
+        // Tampered authentication identity
+        id: '00000000-0000-7000-8000-000000000000',
+        firebase_user_id: 'tampered-firebase-uid',
+        firebase_uid: 'tampered-firebase-uid',
+        email: 'tampered-email@example.com',
+
+        // Tampered trust / verification
+        is_verified: true,
+        is_phone_verified: true,
+        is_email_verified: true,
+
+        // Tampered ban / moderation state
+        is_banned: true,
+        ban_reason: 'Tampered Ban',
+        banned_at: new Date().toISOString(),
+        banned_by_admin_id: staffId,
+
+        // Tampered counters
+        post_count: 999,
+        rescue_post_count: 50,
+        lost_post_count: 60,
+        adoption_post_count: 70,
+        product_post_count: 80,
+        rescue_count: 50,
+        lost_count: 60,
+        adoption_count: 70,
+        product_count: 80,
+        mating_count: 90,
+
+        // Tampered timestamps & private data
+        last_seen_at: '2020-01-01T00:00:00Z',
+        created_at: '2020-01-01T00:00:00Z',
+        updated_at: '2020-01-01T00:00:00Z',
+        phone_number: '+201099999999',
+        last_known_location: 'POINT(30 31)',
+        password_hash: 'tampered_password_hash',
+      }),
+    });
+    assert.equal(tamperedEditRes.status, 200);
+    const tamperedEditData = await tamperedEditRes.json();
+    assert.equal(tamperedEditData.notice?.type, 'success');
+
+    const verifiedUser = await database.pool.query(`SELECT * FROM users WHERE id = $1`, [testUserId]);
+    const userRow = verifiedUser.rows[0];
+
+    // Approved fields were updated
+    assert.equal(userRow.full_name, 'Sanctioned Updated User');
+    assert.equal(userRow.full_name_arabic, 'اسم معتمد محدث');
+    assert.equal(userRow.profile_picture_url, 'https://example.com/avatar.jpg');
+    assert.equal(userRow.language_preference, 'en');
+    assert.equal(userRow.notifications_enabled, false);
+    assert.equal(userRow.home_city_id, sidiGaberId);
+
+    // Protected authentication identity remained unchanged
+    assert.equal(userRow.firebase_user_id, 'firebase-city-user');
+    assert.equal(userRow.email, 'cityuser@example.com');
+
+    // Protected trust / verification remained unchanged
+    assert.equal(userRow.is_verified, false);
+
+    // Protected ban / moderation state remained unchanged
+    assert.equal(userRow.is_banned, false);
+    assert.equal(userRow.banned_at, null);
+    assert.equal(userRow.ban_reason, null);
+    assert.equal(userRow.banned_by_admin_id, null);
+
+    // Protected post counters remained unchanged
+    assert.equal(userRow.post_count, 0);
+    assert.equal(userRow.rescue_post_count, 0);
+    assert.equal(userRow.lost_post_count, 0);
+    assert.equal(userRow.adoption_post_count, 0);
+    assert.equal(userRow.product_post_count, 0);
+
+    // Protected private data remained unchanged
+    assert.equal(userRow.phone_number, 'ENC_PHONE');
+    assert.equal(userRow.last_seen_at, null);
 
     // 8. Saved Searches Historical & Official City Labels
     // 8a. Saved search with official city
@@ -2646,5 +2808,464 @@ describe('AdminJS HTTP security and resource behavior', () => {
       audit.id,
     ]);
     assert.equal(survivingAudit.rowCount, 1, 'Audit records must remain immutable and undeletable');
+  });
+
+  // =========================================================================
+  // Ticket 03: Post details and media safely read-only HTTP boundary tests
+  // =========================================================================
+
+  it('enforces read-only boundary contracts on all Post detail tables (rescue, lost, adoption, product, mating) and post_media over authenticated HTTP API', async () => {
+    // 1. RESCUE POST DETAILS
+    const rescuePostId = await insertPost(database.pool, {
+      ...principals,
+      title: 'Emergency Rescue Post',
+      postType: 'RESCUE',
+      urgency: 'CRITICAL',
+    });
+    await database.pool.query(
+      `INSERT INTO rescue_posts (post_id, species, reporter_role, is_life_threatening, has_visible_serious_injury, is_in_dangerous_location, can_animal_move_or_escape, condition_summary)
+       VALUES ($1, 'DOG', 'ON_SITE', true, true, true, false, 'Severely injured dog by highway')`,
+      [rescuePostId],
+    );
+
+    // 1a. List view returns readable rescue details
+    const rescueListRes = await fetch(`${baseUrl}/admin/api/resources/rescue_posts/actions/list`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(rescueListRes.status, 200);
+    const rescueListData = await rescueListRes.json();
+    const foundRescue = rescueListData.records.find((r) => r.id === rescuePostId || r.params.post_id === rescuePostId);
+    assert.ok(foundRescue, 'Expected rescue post in list view');
+    assert.equal(foundRescue.params.species, 'DOG');
+    assert.equal(foundRescue.params.is_life_threatening, true);
+    assert.equal(foundRescue.params.condition_summary, 'Severely injured dog by highway');
+
+    // 1b. Show view returns complete rescue signals
+    const rescueShowRes = await fetch(`${baseUrl}/admin/api/resources/rescue_posts/records/${rescuePostId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(rescueShowRes.status, 200);
+    const rescueShowData = await rescueShowRes.json();
+    assert.equal(rescueShowData.record.params.species, 'DOG');
+    assert.equal(rescueShowData.record.params.is_life_threatening, true);
+    assert.equal(rescueShowData.record.params.has_visible_serious_injury, true);
+    assert.equal(rescueShowData.record.params.is_in_dangerous_location, true);
+    assert.equal(rescueShowData.record.params.can_animal_move_or_escape, false);
+
+    // 1c. Direct new action request is rejected
+    const rescueNewRes = await fetch(`${baseUrl}/admin/api/resources/rescue_posts/actions/new`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ post_id: rescuePostId, species: 'CAT' }),
+    });
+    assert.ok([403, 404, 200].includes(rescueNewRes.status));
+    if (rescueNewRes.status === 200) {
+      const data = await rescueNewRes.json();
+      assert.ok(data.notice?.type === 'error' || data.error || !data.record?.id);
+    }
+
+    // 1d. Direct edit action request attempting to mutate emergency signals is rejected
+    const rescueEditRes = await fetch(`${baseUrl}/admin/api/resources/rescue_posts/records/${rescuePostId}/edit`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        is_life_threatening: false,
+        has_visible_serious_injury: false,
+        is_in_dangerous_location: false,
+        condition_summary: 'Tampered summary',
+      }),
+    });
+    assert.ok([403, 404, 200].includes(rescueEditRes.status));
+    if (rescueEditRes.status === 200) {
+      const data = await rescueEditRes.json();
+      assert.ok(data.notice?.type === 'error' || data.error);
+    }
+    const checkRescue = await database.pool.query(`SELECT * FROM rescue_posts WHERE post_id = $1`, [rescuePostId]);
+    assert.equal(checkRescue.rows[0].is_life_threatening, true);
+    assert.equal(checkRescue.rows[0].has_visible_serious_injury, true);
+    assert.equal(checkRescue.rows[0].is_in_dangerous_location, true);
+    assert.equal(checkRescue.rows[0].condition_summary, 'Severely injured dog by highway');
+
+    // 1e. Direct delete action request is rejected
+    const rescueDeleteRes = await fetch(`${baseUrl}/admin/api/resources/rescue_posts/records/${rescuePostId}/delete`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+      },
+    });
+    assert.ok([403, 404, 200].includes(rescueDeleteRes.status));
+    const survivingRescue = await database.pool.query(`SELECT post_id FROM rescue_posts WHERE post_id = $1`, [
+      rescuePostId,
+    ]);
+    assert.equal(survivingRescue.rowCount, 1, 'Rescue detail record must survive attempted deletion');
+
+    // 2. LOST POST DETAILS
+    const lostPostId = await insertPost(database.pool, {
+      ...principals,
+      title: 'Lost Pet Post',
+      postType: 'LOST',
+      urgency: 'URGENT',
+    });
+    await database.pool.query(
+      `INSERT INTO lost_posts (post_id, report_type, species, pet_name, breed, color_and_markings, has_collar_with_identification_tag, circumstances, date_last_seen, has_medical_needs, is_elderly_or_very_young, last_seen_near_hazard)
+       VALUES ($1, 'LOST_PET', 'CAT', 'Whiskers', 'Persian', 'White and grey', true, 'Lost in garden', '2026-08-25', false, false, false)`,
+      [lostPostId],
+    );
+
+    // 2a. List and Show views return complete lost pet data
+    const lostShowRes = await fetch(`${baseUrl}/admin/api/resources/lost_posts/records/${lostPostId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(lostShowRes.status, 200);
+    const lostShowData = await lostShowRes.json();
+    assert.equal(lostShowData.record.params.pet_name, 'Whiskers');
+    assert.equal(lostShowData.record.params.breed, 'Persian');
+    assert.equal(lostShowData.record.params.report_type, 'LOST_PET');
+    assert.equal(lostShowData.record.params.has_collar_with_identification_tag, true);
+    assert.ok(lostShowData.record.params.date_last_seen);
+
+    // 2b. Direct edit request attempting to mutate lost pet details is rejected
+    const lostEditRes = await fetch(`${baseUrl}/admin/api/resources/lost_posts/records/${lostPostId}/edit`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        pet_name: 'Tampered Name',
+        current_condition: 'INJURED',
+        has_medical_needs: true,
+      }),
+    });
+    assert.ok([403, 404, 200].includes(lostEditRes.status));
+    const checkLost = await database.pool.query(`SELECT * FROM lost_posts WHERE post_id = $1`, [lostPostId]);
+    assert.equal(checkLost.rows[0].pet_name, 'Whiskers');
+    assert.equal(checkLost.rows[0].current_condition, null);
+    assert.equal(checkLost.rows[0].has_medical_needs, false);
+
+    // 2c. Direct delete request is rejected
+    const lostDeleteRes = await fetch(`${baseUrl}/admin/api/resources/lost_posts/records/${lostPostId}/delete`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+      },
+    });
+    assert.ok([403, 404, 200].includes(lostDeleteRes.status));
+    const survivingLost = await database.pool.query(`SELECT post_id FROM lost_posts WHERE post_id = $1`, [lostPostId]);
+    assert.equal(survivingLost.rowCount, 1);
+
+    // 3. ADOPTION POST DETAILS
+    const adoptPostId = await insertPost(database.pool, {
+      ...principals,
+      title: 'Adoption Pet Post',
+      postType: 'ADOPTION',
+    });
+    await database.pool.query(
+      `INSERT INTO adoption_posts (post_id, pet_name, species, gender, breed, age_value, age_unit, vaccinated, neutered, space_requirement, prior_pet_experience_required, personality_tags, health_notes, additional_requirements, currently_with)
+       VALUES ($1, 'Buddy', 'DOG', 'MALE', 'Golden Retriever', 2, 'YEARS', true, true, 'NEEDS_YARD', false, '{"playful","gentle"}', 'Up to date on vaccinations', 'Needs yard', 'FOSTER')`,
+      [adoptPostId],
+    );
+
+    // 3a. List and Show views return complete adoption details
+    const adoptShowRes = await fetch(`${baseUrl}/admin/api/resources/adoption_posts/records/${adoptPostId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(adoptShowRes.status, 200);
+    const adoptShowData = await adoptShowRes.json();
+    assert.equal(adoptShowData.record.params.pet_name, 'Buddy');
+    assert.equal(adoptShowData.record.params.species, 'DOG');
+    assert.equal(adoptShowData.record.params.space_requirement, 'NEEDS_YARD');
+    assert.equal(adoptShowData.record.params.vaccinated, true);
+
+    // 3b. Direct edit request attempting to mutate adoption requirements is rejected
+    const adoptEditRes = await fetch(`${baseUrl}/admin/api/resources/adoption_posts/records/${adoptPostId}/edit`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        pet_name: 'Tampered Buddy',
+        vaccinated: false,
+        space_requirement: 'APARTMENT_OK',
+      }),
+    });
+    assert.ok([403, 404, 200].includes(adoptEditRes.status));
+    const checkAdopt = await database.pool.query(`SELECT * FROM adoption_posts WHERE post_id = $1`, [adoptPostId]);
+    assert.equal(checkAdopt.rows[0].pet_name, 'Buddy');
+    assert.equal(checkAdopt.rows[0].vaccinated, true);
+    assert.equal(checkAdopt.rows[0].space_requirement, 'NEEDS_YARD');
+
+    // 3c. Direct delete request is rejected
+    const adoptDeleteRes = await fetch(`${baseUrl}/admin/api/resources/adoption_posts/records/${adoptPostId}/delete`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+      },
+    });
+    assert.ok([403, 404, 200].includes(adoptDeleteRes.status));
+    const survivingAdopt = await database.pool.query(`SELECT post_id FROM adoption_posts WHERE post_id = $1`, [
+      adoptPostId,
+    ]);
+    assert.equal(survivingAdopt.rowCount, 1);
+
+    // 4. PRODUCT POST DETAILS
+    const productPostId = await insertPost(database.pool, {
+      ...principals,
+      title: 'Marketplace Food Item',
+      postType: 'PRODUCT',
+    });
+    await database.pool.query(`UPDATE posts SET market_category = 'FOOD' WHERE id = $1`, [productPostId]);
+    await database.pool.query(
+      `INSERT INTO product_posts (post_id, category, condition, price_amount, price_currency, is_free, open_to_offers)
+       VALUES ($1, 'FOOD', 'NEW', 350.00, 'EGP', false, false)`,
+      [productPostId],
+    );
+
+    // 4a. Show view returns complete product information
+    const productShowRes = await fetch(`${baseUrl}/admin/api/resources/product_posts/records/${productPostId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(productShowRes.status, 200);
+    const productShowData = await productShowRes.json();
+    assert.equal(productShowData.record.params.category, 'FOOD');
+    assert.equal(productShowData.record.params.condition, 'NEW');
+    assert.equal(productShowData.record.params.price_amount, '350.00');
+
+    // 4b. Direct edit request attempting to diverge category from base Post or tamper with price is rejected
+    const productEditRes = await fetch(`${baseUrl}/admin/api/resources/product_posts/records/${productPostId}/edit`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        category: 'ACCESSORIES',
+        price_amount: 1.0,
+        is_free: true,
+      }),
+    });
+    assert.ok([403, 404, 200].includes(productEditRes.status));
+    const checkProduct = await database.pool.query(`SELECT * FROM product_posts WHERE post_id = $1`, [productPostId]);
+    assert.equal(
+      checkProduct.rows[0].category,
+      'FOOD',
+      'Product category must not diverge from base Post market category',
+    );
+    assert.equal(Number(checkProduct.rows[0].price_amount), 350.0);
+    assert.equal(checkProduct.rows[0].is_free, false);
+
+    // 4c. Direct delete request is rejected
+    const productDeleteRes = await fetch(
+      `${baseUrl}/admin/api/resources/product_posts/records/${productPostId}/delete`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: `${superCookie}; ${superCsrf.cookie}`,
+          origin: baseUrl,
+          'x-xsrf-token': superCsrf.token,
+        },
+      },
+    );
+    assert.ok([403, 404, 200].includes(productDeleteRes.status));
+    const survivingProduct = await database.pool.query(`SELECT post_id FROM product_posts WHERE post_id = $1`, [
+      productPostId,
+    ]);
+    assert.equal(survivingProduct.rowCount, 1);
+
+    // 5. MATING POST DETAILS
+    const matingPostId = await insertPost(database.pool, {
+      ...principals,
+      title: 'Mating Stud Post',
+      postType: 'MATING',
+    });
+    await database.pool.query(
+      `INSERT INTO mating_posts (post_id, pet_name, species, gender, breed, age_value, age_unit, is_purebred, has_pedigree_certificate, vaccinated, dewormed, terms_summary, mating_conditions)
+       VALUES ($1, 'Thor', 'DOG', 'MALE', 'Rottweiler', 3, 'YEARS', true, true, true, true, 'Registered purebred stud', 'Health clearances mandatory')`,
+      [matingPostId],
+    );
+
+    // 5a. Show view returns complete mating pet data and conditions
+    const matingShowRes = await fetch(`${baseUrl}/admin/api/resources/mating_posts/records/${matingPostId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(matingShowRes.status, 200);
+    const matingShowData = await matingShowRes.json();
+    assert.equal(matingShowData.record.params.pet_name, 'Thor');
+    assert.equal(matingShowData.record.params.is_purebred, true);
+    assert.equal(matingShowData.record.params.has_pedigree_certificate, true);
+
+    // 5b. Direct edit request attempting to mutate mating information is rejected
+    const matingEditRes = await fetch(`${baseUrl}/admin/api/resources/mating_posts/records/${matingPostId}/edit`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        pet_name: 'Tampered Thor',
+        is_purebred: false,
+        has_pedigree_certificate: false,
+      }),
+    });
+    assert.ok([403, 404, 200].includes(matingEditRes.status));
+    const checkMating = await database.pool.query(`SELECT * FROM mating_posts WHERE post_id = $1`, [matingPostId]);
+    assert.equal(checkMating.rows[0].pet_name, 'Thor');
+    assert.equal(checkMating.rows[0].is_purebred, true);
+    assert.equal(checkMating.rows[0].has_pedigree_certificate, true);
+
+    // 5c. Direct delete request is rejected
+    const matingDeleteRes = await fetch(`${baseUrl}/admin/api/resources/mating_posts/records/${matingPostId}/delete`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+      },
+    });
+    assert.ok([403, 404, 200].includes(matingDeleteRes.status));
+    const survivingMating = await database.pool.query(`SELECT post_id FROM mating_posts WHERE post_id = $1`, [
+      matingPostId,
+    ]);
+    assert.equal(survivingMating.rowCount, 1);
+
+    // 6. POST MEDIA
+    const targetPostId = await insertPost(database.pool, {
+      ...principals,
+      title: 'Target Post For Media Reassignment Attack',
+      postType: 'ADOPTION',
+    });
+    const mediaRes1 = await database.pool.query(
+      `INSERT INTO post_media (post_id, cloudflare_storage_key, public_url, display_order, file_content_type, file_size_bytes, width, height)
+       VALUES ($1, 'posts/media/dog-hero.jpg', 'https://cdn.pupzy.example.com/posts/media/dog-hero.jpg', 0, 'image/jpeg', 154200, 1200, 800)
+       RETURNING id`,
+      [rescuePostId],
+    );
+    const mediaId1 = mediaRes1.rows[0].id;
+    const mediaRes2 = await database.pool.query(
+      `INSERT INTO post_media (post_id, cloudflare_storage_key, public_url, display_order, file_content_type, file_size_bytes, width, height)
+       VALUES ($1, 'posts/media/dog-detail.jpg', 'https://cdn.pupzy.example.com/posts/media/dog-detail.jpg', 1, 'image/jpeg', 102400, 800, 600)
+       RETURNING id`,
+      [rescuePostId],
+    );
+    const mediaId2 = mediaRes2.rows[0].id;
+
+    // 6a. List and Show views return complete R2 keys, urls, and display order
+    const mediaListRes = await fetch(`${baseUrl}/admin/api/resources/post_media/actions/list`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(mediaListRes.status, 200);
+    const mediaListData = await mediaListRes.json();
+    const foundMedia = mediaListData.records.find((r) => r.id === mediaId1 || r.params.id === mediaId1);
+    assert.ok(foundMedia, 'Expected media record in list view');
+    assert.equal(foundMedia.params.display_order, 0);
+
+    const mediaShowRes = await fetch(`${baseUrl}/admin/api/resources/post_media/records/${mediaId1}/show`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(mediaShowRes.status, 200);
+    const mediaShowData = await mediaShowRes.json();
+    assert.equal(mediaShowData.record.params.cloudflare_storage_key, 'posts/media/dog-hero.jpg');
+    assert.equal(mediaShowData.record.params.public_url, 'https://cdn.pupzy.example.com/posts/media/dog-hero.jpg');
+    assert.equal(mediaShowData.record.params.display_order, 0);
+
+    // 6b. Direct new action request is rejected (preventing arbitrary media creation bypass)
+    const mediaNewRes = await fetch(`${baseUrl}/admin/api/resources/post_media/actions/new`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        post_id: rescuePostId,
+        cloudflare_storage_key: 'posts/media/unauthorized.jpg',
+        public_url: 'https://cdn.pupzy.example.com/posts/media/unauthorized.jpg',
+        display_order: 2,
+      }),
+    });
+    assert.ok([403, 404, 200].includes(mediaNewRes.status));
+    const unauthorizedMedia = await database.pool.query(
+      `SELECT id FROM post_media WHERE cloudflare_storage_key = 'posts/media/unauthorized.jpg'`,
+    );
+    assert.equal(unauthorizedMedia.rowCount, 0, 'Generic media creation must be blocked');
+
+    // 6c. Direct edit request attempting to reassign Post or alter display order is rejected
+    const mediaEditRes = await fetch(`${baseUrl}/admin/api/resources/post_media/records/${mediaId1}/edit`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        post_id: targetPostId,
+        display_order: 99,
+        cloudflare_storage_key: 'posts/media/hijacked.jpg',
+      }),
+    });
+    assert.ok([403, 404, 200].includes(mediaEditRes.status));
+    const checkMedia = await database.pool.query(`SELECT * FROM post_media WHERE id = $1`, [mediaId1]);
+    assert.equal(checkMedia.rows[0].post_id, rescuePostId, 'Media cannot be reassigned to another Post');
+    assert.equal(checkMedia.rows[0].display_order, 0, 'Media cannot be given arbitrary display order');
+    assert.equal(checkMedia.rows[0].cloudflare_storage_key, 'posts/media/dog-hero.jpg');
+
+    // 6d. Direct delete request is rejected (preventing orphaned R2 storage keys)
+    const mediaDeleteRes = await fetch(`${baseUrl}/admin/api/resources/post_media/records/${mediaId1}/delete`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+      },
+    });
+    assert.ok([403, 404, 200].includes(mediaDeleteRes.status));
+    const survivingMedia1 = await database.pool.query(`SELECT id FROM post_media WHERE id = $1`, [mediaId1]);
+    assert.equal(survivingMedia1.rowCount, 1, 'Media record must survive attempted deletion');
+
+    // 6e. Direct bulkDelete request is rejected
+    const mediaBulkDeleteRes = await fetch(
+      `${baseUrl}/admin/api/resources/post_media/bulkActions/bulkDelete?recordIds=${mediaId1},${mediaId2}`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: `${superCookie}; ${superCsrf.cookie}`,
+          origin: baseUrl,
+          'x-xsrf-token': superCsrf.token,
+        },
+      },
+    );
+    assert.ok([403, 404, 200].includes(mediaBulkDeleteRes.status));
+    const survivingMediaCount = await database.pool.query(`SELECT count(*) FROM post_media WHERE id IN ($1, $2)`, [
+      mediaId1,
+      mediaId2,
+    ]);
+    assert.equal(Number(survivingMediaCount.rows[0].count), 2, 'Media records must survive bulkDelete');
   });
 });

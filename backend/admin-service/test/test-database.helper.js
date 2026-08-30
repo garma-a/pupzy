@@ -18,6 +18,9 @@ export class TestDatabaseHelper {
       .start();
     this.connectionString = this.container.getConnectionUri();
     this.pool = new Pool({ connectionString: this.connectionString, max: 8 });
+    this.pool.on('error', () => {
+      // Ignore background connection errors during container teardown
+    });
 
     await this.pool.query('CREATE EXTENSION IF NOT EXISTS postgis');
     await this.pool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
@@ -82,21 +85,27 @@ export async function seedPrincipals(pool) {
 }
 
 export async function insertPost(pool, values) {
+  const postType = values.postType ?? 'ADOPTION';
+  const urgency = values.urgency ?? (['RESCUE', 'LOST'].includes(postType) ? 'CRITICAL' : null);
+  const marketCategory = values.marketCategory ?? (postType === 'PRODUCT' ? 'FOOD' : null);
   const result = await pool.query(
     `INSERT INTO posts
        (creator_id, post_type, title, description, status, moderation_status, city_id,
-        coordinates, report_count, created_at)
-     VALUES ($1, 'ADOPTION', $2, 'Description', $3, $4, $5,
-       ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326), $6, COALESCE($7, now()))
+        coordinates, report_count, created_at, urgency, market_category)
+     VALUES ($1, $2, $3, 'Description', $4, $5, $6,
+       ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326), $7, COALESCE($8, now()), $9, $10)
      RETURNING id`,
     [
       values.userId,
+      postType,
       values.title ?? 'Post',
       values.status ?? 'ACTIVE',
       values.moderationStatus ?? 'PENDING_AUTO_REVIEW',
       values.cityId,
       values.reportCount ?? 0,
       values.createdAt ?? null,
+      urgency,
+      marketCategory,
     ],
   );
   return result.rows[0].id;

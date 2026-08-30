@@ -25,7 +25,16 @@ export interface SeedOptions {
   };
 }
 
-export async function seedInitialAdmin(database = db, options: SeedOptions['admin'] = {}) {
+export interface SeededAdminResult {
+  id?: string;
+  email?: string;
+  created: boolean;
+}
+
+export async function seedInitialAdmin(
+  database = db,
+  options: SeedOptions['admin'] = {},
+): Promise<SeededAdminResult | null> {
   const email = (options?.email ?? process.env.ADMIN_SEED_EMAIL)?.trim().toLowerCase();
   const password = options?.password ?? process.env.ADMIN_SEED_PASSWORD;
   const fullName = (options?.fullName ?? process.env.ADMIN_SEED_FULL_NAME)?.trim() ?? 'Pupzy Administrator';
@@ -40,7 +49,7 @@ export async function seedInitialAdmin(database = db, options: SeedOptions['admi
 
   const passwordHash = await bcrypt.hash(password, 12);
 
-  const [admin] = await database
+  const inserted = await database
     .insert(schema.adminUsers)
     .values({
       email,
@@ -49,19 +58,17 @@ export async function seedInitialAdmin(database = db, options: SeedOptions['admi
       role: 'SUPER_ADMIN',
       isActive: true,
     })
-    .onConflictDoUpdate({
-      target: schema.adminUsers.email,
-      set: {
-        passwordHash,
-        fullName,
-        role: 'SUPER_ADMIN',
-        isActive: true,
-      },
-    })
+    .onConflictDoNothing()
     .returning({ id: schema.adminUsers.id, email: schema.adminUsers.email });
 
-  console.log(`✓ Seeded initial SUPER_ADMIN (${admin.email}).`);
-  return admin;
+  if (inserted.length > 0) {
+    const admin = inserted[0];
+    console.log(`✓ Seeded initial SUPER_ADMIN (${admin.email}).`);
+    return { id: admin.id, email: admin.email, created: true };
+  }
+
+  console.log(`ℹ Initial admin bootstrap skipped: administrator already exists (${email}).`);
+  return { email, created: false };
 }
 
 export async function runDatabaseSeed(database = db, options: SeedOptions = {}) {

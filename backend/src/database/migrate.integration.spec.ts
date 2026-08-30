@@ -2,9 +2,14 @@ import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers
 import { Pool } from 'pg';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { runMigrations } from './migrate';
 
 describe('Database Migration Runner Integration', () => {
+  jest.setTimeout(120_000);
+
   let container: StartedPostgreSqlContainer;
   let connectionString: string;
   let pool: Pool;
@@ -274,6 +279,161 @@ describe('Database Migration Runner Integration', () => {
       if (fs.existsSync(tempCustomSql)) {
         fs.unlinkSync(tempCustomSql);
       }
+    }
+  });
+
+  it('proves upgrade from the fixed main baseline (0000..0012) to the release candidate (0013..0019 + custom.sql) preserves data and establishes candidate schema', async () => {
+    // 1. Create a dedicated database for testing baseline upgrade
+    await pool.query('CREATE DATABASE pupzy_baseline_upgrade_test;');
+    const upgradeConnStr = connectionString.replace('/pupzy_migration_test', '/pupzy_baseline_upgrade_test');
+    const upgradePool = new Pool({ connectionString: upgradeConnStr });
+
+    const tempBaselineDir = fs.mkdtempSync(path.join(os.tmpdir(), 'drizzle-main-baseline-'));
+    const tempMetaDir = path.join(tempBaselineDir, 'meta');
+    fs.mkdirSync(tempMetaDir, { recursive: true });
+
+    try {
+      // Create extensions & uuidv7
+      await upgradePool.query('CREATE EXTENSION IF NOT EXISTS postgis;');
+      await upgradePool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto;');
+      await upgradePool.query(`
+        CREATE OR REPLACE FUNCTION uuidv7() RETURNS uuid AS $$
+          SELECT (
+            lpad(to_hex(floor(extract(epoch FROM clock_timestamp()) * 1000)::bigint), 12, '0') ||
+            '7' || substr(encode(gen_random_bytes(2), 'hex'), 2, 3) ||
+            '8' || substr(encode(gen_random_bytes(2), 'hex'), 2, 3) ||
+            encode(gen_random_bytes(6), 'hex')
+          )::uuid;
+        $$ LANGUAGE sql VOLATILE;
+      `);
+
+      interface JournalEntry {
+        idx: number;
+        version: string;
+        when: number;
+        tag: string;
+        breakpoints: boolean;
+      }
+      interface JournalData {
+        version: string;
+        dialect: string;
+        entries: JournalEntry[];
+      }
+
+      // Read current _journal.json and filter only migrations 0000..0012 (main baseline)
+      const fullJournalPath = path.resolve(__dirname, '../../drizzle/migrations/meta/_journal.json');
+      const journalData = JSON.parse(fs.readFileSync(fullJournalPath, 'utf8')) as JournalData;
+      const baselineEntries = journalData.entries.filter((entry: JournalEntry) => entry.idx <= 12);
+      fs.writeFileSync(
+        path.join(tempMetaDir, '_journal.json'),
+        JSON.stringify({ ...journalData, entries: baselineEntries }, null, 2),
+      );
+
+      // Copy migration files 0000 through 0012 into temp folder
+      for (const entry of baselineEntries) {
+        const sqlFileName = `${entry.tag}.sql`;
+        const srcPath = path.resolve(__dirname, '../../drizzle/migrations', sqlFileName);
+        fs.copyFileSync(srcPath, path.join(tempBaselineDir, sqlFileName));
+      }
+
+      // Apply main baseline migrations (0000..0012)
+      const upgradeDb = drizzle(upgradePool);
+      await migrate(upgradeDb, { migrationsFolder: tempBaselineDir });
+
+      // Retrieve baseline city seeded by 0011
+      const cityRes = await upgradePool.query<{ id: string }>(`
+        SELECT id FROM cities WHERE name_english = 'Maadi' LIMIT 1;
+      `);
+      const cityId = cityRes.rows[0].id;
+
+      const userRes = await upgradePool.query<{ id: string }>(`
+        INSERT INTO users (firebase_user_id, email, full_name)
+        VALUES ('fb-user-upgrade-1', 'upgrade-user@example.com', 'Upgrade User')
+        RETURNING id;
+      `);
+      const userId = userRes.rows[0].id;
+
+      const clinicRes = await upgradePool.query<{ id: string }>(
+        `INSERT INTO vet_clinics (name_english, name_arabic, city_id, coordinates, source, osm_id)
+         VALUES ('Maadi Pets', 'حيوانات المعادي', $1, ST_SetSRID(ST_MakePoint(31.25, 29.96), 4326), 'OSM', 12345)
+         RETURNING id;`,
+        [cityId],
+      );
+      const clinicId = clinicRes.rows[0].id;
+
+      // 2. Now run candidate migrations (0013..0019 + custom.sql) on the existing baseline database
+      await runMigrations({
+        pool: upgradePool,
+        migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+        customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
+      });
+
+      // 3. Verify data preservation
+      const postUpgradeCity = await upgradePool.query<{ id: string; name_english: string }>(
+        `SELECT id, name_english FROM cities WHERE id = $1`,
+        [cityId],
+      );
+      expect(postUpgradeCity.rows[0].name_english).toBe('Maadi');
+
+      const postUpgradeUser = await upgradePool.query<{ id: string; email: string }>(
+        `SELECT id, email FROM users WHERE id = $1`,
+        [userId],
+      );
+      expect(postUpgradeUser.rows[0].email).toBe('upgrade-user@example.com');
+
+      const postUpgradeClinic = await upgradePool.query<{ id: string; name_english: string; source: string }>(
+        `SELECT id, name_english, source FROM vet_clinics WHERE id = $1`,
+        [clinicId],
+      );
+      expect(postUpgradeClinic.rows[0].name_english).toBe('Maadi Pets');
+      expect(postUpgradeClinic.rows[0].source).toBe('OSM');
+
+      // 4. Verify candidate additions exist and operate correctly:
+      // Table: vet_clinic_location_audits
+      const adminRes = await upgradePool.query<{ id: string }>(`
+        INSERT INTO admin_users (email, password_hash, full_name, role)
+        VALUES ('upgrade-admin@pupzy.local', 'hash', 'Upgrade Admin', 'SUPER_ADMIN')
+        RETURNING id;
+      `);
+      const adminId = adminRes.rows[0].id;
+
+      await upgradePool.query(
+        `INSERT INTO vet_clinic_location_audits
+          (id, vet_clinic_id, admin_user_id, selected_city_id, nearest_city_id, reason, coordinates)
+        VALUES
+          (uuidv7(), $1, $2, $3, $3, 'Audited location coordinates',
+           ST_SetSRID(ST_MakePoint(31.2569, 29.9602), 4326));`,
+        [clinicId, adminId, cityId],
+      );
+
+      const auditCount = await upgradePool.query<{ count: string }>(
+        `SELECT count(*)::text AS count FROM vet_clinic_location_audits WHERE vet_clinic_id = $1`,
+        [clinicId],
+      );
+      expect(parseInt(auditCount.rows[0].count, 10)).toBe(1);
+
+      // Table: address_search_cache
+      await upgradePool.query(`
+        INSERT INTO address_search_cache (id, normalized_query, results)
+        VALUES (uuidv7(), 'maadi clinic query', '[{"displayName":"Maadi"}]'::jsonb);
+      `);
+      const cacheCount = await upgradePool.query<{ count: string }>(
+        `SELECT count(*)::text AS count FROM address_search_cache WHERE normalized_query = 'maadi clinic query'`,
+      );
+      expect(parseInt(cacheCount.rows[0].count, 10)).toBe(1);
+
+      // 5. Verify repeat application on upgraded database succeeds
+      await expect(
+        runMigrations({
+          pool: upgradePool,
+          migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+          customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
+        }),
+      ).resolves.not.toThrow();
+    } finally {
+      await upgradePool.end();
+      fs.rmSync(tempBaselineDir, { recursive: true, force: true });
+      await pool.query('DROP DATABASE IF EXISTS pupzy_baseline_upgrade_test;');
     }
   });
 });

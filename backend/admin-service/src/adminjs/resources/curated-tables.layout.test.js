@@ -61,7 +61,7 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
   });
 
   describe('Detail Resources Curation', () => {
-    it('rescue_posts exposes scan-oriented columns and ShortUuid without new/delete actions', () => {
+    it('rescue_posts exposes scan-oriented columns and ShortUuid without mutating actions', () => {
       const res = buildRescuePostsResource(db, components);
       assert.deepEqual(res.options.listProperties, [
         'post_id',
@@ -75,11 +75,12 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
       assert.equal(res.options.properties.post_id.components.list, 'ShortUuidMock');
       assert.equal(res.options.properties.post_id.components.show, 'ShortUuidMock');
       assert.equal(res.options.actions.new.isAccessible, false);
+      assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);
       assert.equal(res.options.actions.bulkDelete.isAccessible, false);
     });
 
-    it('lost_posts exposes scan-oriented columns and ShortUuid', () => {
+    it('lost_posts exposes scan-oriented columns and ShortUuid and is read-only', () => {
       const res = buildLostPostsResource(db, components);
       assert.deepEqual(res.options.listProperties, [
         'post_id',
@@ -95,10 +96,12 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
       assert.ok(res.options.showProperties.includes('has_collar_with_identification_tag'));
       assert.equal(res.options.properties.post_id.components.list, 'ShortUuidMock');
       assert.equal(res.options.actions.new.isAccessible, false);
+      assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);
+      assert.equal(res.options.actions.bulkDelete.isAccessible, false);
     });
 
-    it('adoption_posts exposes scan-oriented columns and ShortUuid', () => {
+    it('adoption_posts exposes scan-oriented columns and ShortUuid and is read-only', () => {
       const res = buildAdoptionPostsResource(db, components);
       assert.deepEqual(res.options.listProperties, [
         'post_id',
@@ -115,10 +118,12 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
       assert.ok(res.options.showProperties.includes('additional_requirements'));
       assert.equal(res.options.properties.post_id.components.list, 'ShortUuidMock');
       assert.equal(res.options.actions.new.isAccessible, false);
+      assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);
+      assert.equal(res.options.actions.bulkDelete.isAccessible, false);
     });
 
-    it('product_posts exposes scan-oriented columns and ShortUuid', () => {
+    it('product_posts exposes scan-oriented columns and ShortUuid and is read-only', () => {
       const res = buildProductPostsResource(db, components);
       assert.deepEqual(res.options.listProperties, [
         'post_id',
@@ -131,10 +136,12 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
       ]);
       assert.equal(res.options.properties.post_id.components.list, 'ShortUuidMock');
       assert.equal(res.options.actions.new.isAccessible, false);
+      assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);
+      assert.equal(res.options.actions.bulkDelete.isAccessible, false);
     });
 
-    it('mating_posts exposes scan-oriented columns and ShortUuid', () => {
+    it('mating_posts exposes scan-oriented columns and ShortUuid and is read-only', () => {
       const res = buildMatingPostsResource(db, components);
       assert.deepEqual(res.options.listProperties, [
         'post_id',
@@ -149,12 +156,14 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
       assert.ok(res.options.showProperties.includes('mating_conditions'));
       assert.equal(res.options.properties.post_id.components.list, 'ShortUuidMock');
       assert.equal(res.options.actions.new.isAccessible, false);
+      assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);
+      assert.equal(res.options.actions.bulkDelete.isAccessible, false);
     });
   });
 
   describe('Media & Engagement Resources Curation', () => {
-    it('post_media exposes compact columns and ShortUuid on id and post_id', () => {
+    it('post_media exposes compact columns and ShortUuid on id and post_id and is read-only', () => {
       const res = buildPostMediaResource(db, components);
       assert.deepEqual(res.options.listProperties, [
         'id',
@@ -169,7 +178,9 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
       assert.equal(res.options.properties.id.components.list, 'ShortUuidMock');
       assert.equal(res.options.properties.post_id.components.list, 'ShortUuidMock');
       assert.equal(res.options.actions.new.isAccessible, false);
+      assert.equal(res.options.actions.edit.isAccessible, false);
       assert.equal(res.options.actions.delete.isAccessible, false);
+      assert.equal(res.options.actions.bulkDelete.isAccessible, false);
     });
 
     it('post_upvotes is completely read-only and uses ShortUuid', () => {

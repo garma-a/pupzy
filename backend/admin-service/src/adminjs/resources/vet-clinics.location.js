@@ -25,32 +25,14 @@ export function parseCoordinates(payload) {
   return { lat: NaN, lng: NaN };
 }
 
-/**
- * Builds the canonical zero-key Google Maps search URL from stored coordinates.
- */
-export function buildGoogleMapsUrl(latitude, longitude) {
-  if (
-    latitude === null ||
-    latitude === undefined ||
-    longitude === null ||
-    longitude === undefined ||
-    typeof latitude === 'boolean' ||
-    typeof longitude === 'boolean' ||
-    String(latitude).trim() === '' ||
-    String(longitude).trim() === ''
-  ) {
-    throw new Error(`Invalid WGS84 coordinates: latitude=${latitude}, longitude=${longitude}`);
-  }
-  const lat = Number(latitude);
-  const lng = Number(longitude);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-    throw new Error(`Invalid WGS84 coordinates: latitude=${latitude}, longitude=${longitude}`);
-  }
-  const url = new URL('https://www.google.com/maps/search/');
-  url.searchParams.set('api', '1');
-  url.searchParams.set('query', `${lat},${lng}`);
-  return url.toString();
-}
+export {
+  GOOGLE_MAPS_SEARCH_BASE_URL,
+  WGS84_BOUNDS,
+  validateWgs84Coordinates,
+  isValidWgs84Coordinates,
+  buildGoogleMapsUrl,
+  tryBuildGoogleMapsUrl,
+} from '../../common/contracts/google-maps-handoff.contract.js';
 
 /**
  * Determines whether location-specific properties were modified in an edit payload

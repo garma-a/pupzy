@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { parseCoordinatesValue } from './mapped-location.js';
+import {
+  parseCoordinatesValue,
+  buildGoogleMapsUrl,
+  tryBuildGoogleMapsUrl,
+  isValidWgs84Coordinates,
+} from './mapped-location.js';
 
 describe('Mapped Location Components', () => {
   describe('parseCoordinatesValue', () => {
@@ -82,6 +87,31 @@ describe('Mapped Location Components', () => {
       assert.equal(parseCoordinatesValue('random text'), null);
       assert.equal(parseCoordinatesValue(undefined), null);
       assert.equal(parseCoordinatesValue({}), null);
+    });
+  });
+
+  describe('Google Maps Handoff Contract in UI components', () => {
+    it('produces byte-for-byte canonical search URL for valid mapped locations', () => {
+      const coords = { lat: 30.0444, lng: 31.2357 };
+      const url = tryBuildGoogleMapsUrl(coords.lat, coords.lng);
+      assert.equal(url, 'https://www.google.com/maps/search/?api=1&query=30.0444%2C31.2357');
+    });
+
+    it('returns null for missing, non-finite, or out-of-range coordinates without throwing in UI components', () => {
+      assert.equal(tryBuildGoogleMapsUrl(null, null), null);
+      assert.equal(tryBuildGoogleMapsUrl(NaN, 31.2357), null);
+      assert.equal(tryBuildGoogleMapsUrl(30.0444, Infinity), null);
+      assert.equal(tryBuildGoogleMapsUrl(95.0, 31.2357), null);
+      assert.equal(tryBuildGoogleMapsUrl(30.0, 195.0), null);
+      assert.equal(tryBuildGoogleMapsUrl(false, true), null);
+    });
+
+    it('validates coordinate boundaries cleanly with isValidWgs84Coordinates', () => {
+      assert.equal(isValidWgs84Coordinates(30.0444, 31.2357), true);
+      assert.equal(isValidWgs84Coordinates(-90, -180), true);
+      assert.equal(isValidWgs84Coordinates(90, 180), true);
+      assert.equal(isValidWgs84Coordinates(-90.1, 0), false);
+      assert.equal(isValidWgs84Coordinates(0, 180.1), false);
     });
   });
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Box, Button, FormGroup, H4, Label, Text } from '@adminjs/design-system';
-import { parseCoordinatesValue } from './mapped-location.js';
+import { parseCoordinatesValue, tryBuildGoogleMapsUrl } from './mapped-location.js';
 
 export default function MappedLocationShow({ property, record }) {
   const mapContainerRef = useRef(null);
@@ -21,8 +21,8 @@ export default function MappedLocationShow({ property, record }) {
   const lat = parsed?.lat ?? null;
   const lng = parsed?.lng ?? null;
 
-  const hasValidCoords = lat !== null && lng !== null && !Number.isNaN(lat) && !Number.isNaN(lng);
-  const googleMapsUrl = hasValidCoords ? `https://www.google.com/maps/search/?api=1&query=${lat}%2C${lng}` : null;
+  const googleMapsUrl = tryBuildGoogleMapsUrl(lat, lng);
+  const hasValidCoords = Boolean(googleMapsUrl);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !mapContainerRef.current || !hasValidCoords) return;

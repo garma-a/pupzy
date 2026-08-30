@@ -9,6 +9,7 @@ import * as schema from './schema';
 export interface ResetOptions extends PreflightOptions {
   skipSeed?: boolean;
   adminSeed?: SeedOptions['admin'];
+  checkOnly?: boolean;
 }
 
 export interface ResetResult {
@@ -20,11 +21,12 @@ export interface ResetResult {
   adminCreated: boolean;
   usersCount: number;
   postsCount: number;
+  checkOnly?: boolean;
 }
 
 export async function runDatabaseReset(options: ResetOptions = {}): Promise<ResetResult> {
   const logger = options.logger ?? console;
-  const databaseUrl = options.databaseUrl ?? process.env.DATABASE_URL;
+  const databaseUrl = options.databaseUrl ?? (options.pool ? undefined : process.env.DATABASE_URL);
 
   if (!databaseUrl && !options.pool) {
     throw new Error('[Reset] DATABASE_URL is not set and no pg Pool was provided.');
@@ -33,6 +35,21 @@ export async function runDatabaseReset(options: ResetOptions = {}): Promise<Rese
   // 1. Read-only preflight check
   logger.log('[Reset] Step 1/5: Running database preflight check...');
   const preflight = await runDatabasePreflight(options);
+
+  if (options.checkOnly) {
+    logger.log('[Reset] Check-only mode requested: preflight passed, database state unchanged.');
+    return {
+      preflight,
+      citiesCount: 0,
+      governoratesCount: 0,
+      vetClinicsCount: 0,
+      catalogRevision: 0,
+      adminCreated: false,
+      usersCount: 0,
+      postsCount: 0,
+      checkOnly: true,
+    };
+  }
 
   const shouldClosePool = !options.pool;
   const pool = options.pool ?? new Pool({ connectionString: databaseUrl });
@@ -174,6 +191,7 @@ export async function runDatabaseReset(options: ResetOptions = {}): Promise<Rese
       adminCreated,
       usersCount,
       postsCount,
+      checkOnly: false,
     };
   } finally {
     if (shouldClosePool) {
@@ -187,29 +205,45 @@ if (require.main === module) {
   const isCheckOnly = args.includes('--check');
   const allowProduction = args.includes('--force') || args.includes('--allow-production');
   const allowRemote = args.includes('--allow-remote');
+  const allowSystemDatabase = args.includes('--allow-system-db');
   const skipSeed = args.includes('--skip-seed');
 
-  if (isCheckOnly) {
-    runDatabasePreflight({ allowProduction, allowRemote })
-      .then((report) => {
-        console.log('[Reset CLI] Preflight check passed:\n', JSON.stringify(report, null, 2));
-        process.exit(0);
-      })
-      .catch((err: Error) => {
-        console.error('[Reset CLI] Preflight check failed:', err.message);
-        process.exit(1);
-      });
-  } else {
-    runDatabaseReset({ allowProduction, allowRemote, skipSeed })
-      .then((result) => {
+  let confirmDatabaseName: string | undefined;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--confirm-db' || args[i] === '--expected-db' || args[i] === '--db') {
+      confirmDatabaseName = args[i + 1];
+    } else if (args[i].startsWith('--confirm-db=')) {
+      confirmDatabaseName = args[i].split('=')[1];
+    } else if (args[i].startsWith('--expected-db=')) {
+      confirmDatabaseName = args[i].split('=')[1];
+    } else if (args[i].startsWith('--db=')) {
+      confirmDatabaseName = args[i].split('=')[1];
+    }
+  }
+
+  runDatabaseReset({
+    allowProduction,
+    allowRemote,
+    allowSystemDatabase,
+    confirmDatabaseName,
+    skipSeed,
+    checkOnly: isCheckOnly,
+  })
+    .then((result) => {
+      if (result.checkOnly) {
+        console.log(
+          '[Reset CLI] Preflight check passed (check-only mode):\n',
+          JSON.stringify(result.preflight, null, 2),
+        );
+      } else {
         console.log(
           `[Reset CLI] Finished successfully: ${result.citiesCount} Cities, ${result.vetClinicsCount} Vet Clinics.`,
         );
-        process.exit(0);
-      })
-      .catch((err: Error) => {
-        console.error('[Reset CLI] Reset operation failed:', err);
-        process.exit(1);
-      });
-  }
+      }
+      process.exit(0);
+    })
+    .catch((err: Error) => {
+      console.error('[Reset CLI] Reset operation failed:', err.message);
+      process.exit(1);
+    });
 }

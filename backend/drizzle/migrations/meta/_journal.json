@@ -127,6 +127,20 @@
       "when": 1788545600000,
       "tag": "0017_add_city_lifecycle_status_operators",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1788632000000,
+      "tag": "0018_remove_redundant_address_search_cache_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1788718400000,
+      "tag": "0019_fix_audit_fk_set_null",
+      "breakpoints": true
     }
   ]
 }

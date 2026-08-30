@@ -3,6 +3,32 @@ import { ENUMS } from '../enums.js';
 import { buildPostActions } from '../actions/moderate-post.actions.js';
 import { attachShortUuid, enumProperty, noDeleteActions, stripPopulatedPasswordHashes } from './resource-helpers.js';
 
+export const PROTECTED_POST_FIELDS = [
+  'id',
+  'creator_id',
+  'post_type',
+  'status',
+  'moderation_status',
+  'moderation_reason',
+  'moderated_at',
+  'moderated_by_admin_id',
+  'urgency',
+  'market_category',
+  'effective_score',
+  'upvote_count',
+  'save_count',
+  'view_count',
+  'report_count',
+  'coordinates',
+  'latitude',
+  'longitude',
+  'coordinates.latitude',
+  'coordinates.longitude',
+  'last_engaged_at',
+  'created_at',
+  'updated_at',
+];
+
 export function buildPostsResource(db, pool, components, cache) {
   const knex = db?.table ? (db.table('posts')?.knex ?? db.table('cities')?.knex) : null;
 
@@ -29,12 +55,11 @@ export function buildPostsResource(db, pool, components, cache) {
     const payload = { ...(request.payload || {}) };
     const recordId = request.params?.recordId;
 
-    // Exact coordinates remain view-only and cannot be modified via AdminJS
-    delete payload.coordinates;
-    delete payload.latitude;
-    delete payload.longitude;
-    delete payload['coordinates.latitude'];
-    delete payload['coordinates.longitude'];
+    // Service-owned structure, authorship, derived classification, exact coordinates,
+    // and moderation / ranking fields cannot be mutated via AdminJS edit requests.
+    for (const field of PROTECTED_POST_FIELDS) {
+      delete payload[field];
+    }
 
     let existing = null;
     if (recordId) {
@@ -47,7 +72,12 @@ export function buildPostsResource(db, pool, components, cache) {
       }
     }
 
-    if (payload.city_id) {
+    if (payload.city_id !== undefined) {
+      if (!payload.city_id) {
+        throw new ValidationError({
+          city_id: { message: 'Must select an existing official City' },
+        });
+      }
       const isChanged = !existing || payload.city_id !== existing.city_id;
       if (isChanged) {
         const city = await getCityById(payload.city_id);
@@ -59,9 +89,13 @@ export function buildPostsResource(db, pool, components, cache) {
         payload.governorate = city.governorate;
       } else if (existing?.governorate) {
         payload.governorate = existing.governorate;
+      } else {
+        delete payload.governorate;
       }
     } else if (payload.governorate && existing?.governorate) {
       payload.governorate = existing.governorate;
+    } else {
+      delete payload.governorate;
     }
 
     request.payload = payload;
@@ -69,14 +103,17 @@ export function buildPostsResource(db, pool, components, cache) {
   }
 
   const properties = {
+    id: { isDisabled: true },
+    creator_id: { isDisabled: true },
     title: { isTitle: true },
-    post_type: enumProperty(ENUMS.postType),
+    description: {},
+    post_type: enumProperty(ENUMS.postType, { isDisabled: true }),
     status: enumProperty(ENUMS.postStatus, { isDisabled: true }),
     moderation_status: enumProperty(ENUMS.moderationStatus, {
       isDisabled: true,
     }),
-    urgency: enumProperty(ENUMS.urgencyTier),
-    market_category: enumProperty(ENUMS.productCategory),
+    urgency: enumProperty(ENUMS.urgencyTier, { isDisabled: true }),
+    market_category: enumProperty(ENUMS.productCategory, { isDisabled: true }),
     effective_score: { isDisabled: true },
     upvote_count: { isDisabled: true },
     save_count: { isDisabled: true },
@@ -87,6 +124,7 @@ export function buildPostsResource(db, pool, components, cache) {
     moderated_by_admin_id: { isDisabled: true },
     city_id: {},
     governorate: { isDisabled: true },
+    area_name: {},
     coordinates: {
       isVisible: { list: false, show: true, edit: false, filter: false },
     },

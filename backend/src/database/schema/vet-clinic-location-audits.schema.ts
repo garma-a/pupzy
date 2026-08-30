@@ -17,16 +17,22 @@ export const vetClinicLocationAudits = pgTable(
     id: uuid('id')
       .primaryKey()
       .default(sql`uuidv7()`),
-    vetClinicId: uuid('vet_clinic_id')
-      .notNull()
-      .references(() => vetClinics.id, { onDelete: 'cascade' }),
-    adminUserId: uuid('admin_user_id').references(() => adminUsers.id, { onDelete: 'set null' }),
-    selectedCityId: uuid('selected_city_id')
-      .notNull()
-      .references(() => cities.id, { onDelete: 'set null' }),
-    nearestCityId: uuid('nearest_city_id')
-      .notNull()
-      .references(() => cities.id, { onDelete: 'set null' }),
+    vetClinicId: uuid('vet_clinic_id').references(() => vetClinics.id, {
+      onDelete: 'set null',
+      onUpdate: 'cascade',
+    }),
+    adminUserId: uuid('admin_user_id').references(() => adminUsers.id, {
+      onDelete: 'set null',
+      onUpdate: 'cascade',
+    }),
+    selectedCityId: uuid('selected_city_id').references(() => cities.id, {
+      onDelete: 'set null',
+      onUpdate: 'cascade',
+    }),
+    nearestCityId: uuid('nearest_city_id').references(() => cities.id, {
+      onDelete: 'set null',
+      onUpdate: 'cascade',
+    }),
     coordinates: geometryPoint('coordinates').notNull(),
     discrepancyDetails: jsonb('discrepancy_details'),
     reason: text('reason').notNull(),

@@ -126,7 +126,19 @@ describe('AdminJS Vet Clinics Resource', () => {
           then: (res, rej) => Promise.resolve([updated]).then(res, rej),
         };
       },
+      increment: (col, amount) => {
+        return {
+          returning: async () => [{ id: 1, revision: 2 }],
+          then: (res, rej) => Promise.resolve([{ id: 1, revision: 2 }]).then(res, rej),
+        };
+      },
       then: (resolve, reject) => {
+        if (tableName === 'city_catalog_revisions') {
+          return Promise.resolve([{ id: 1, revision: 1 }]).then(resolve, reject);
+        }
+        if (tableName === 'admin_users') {
+          return Promise.resolve([{ id: whereVal || 'admin-1', role: 'ADMIN', is_active: true }]).then(resolve, reject);
+        }
         if (tableName === 'cities') {
           if (whereCol === 'id' && whereVal) {
             const found = citiesMap.get(whereVal);
@@ -148,7 +160,12 @@ describe('AdminJS Vet Clinics Resource', () => {
     return queryBuilder;
   };
 
-  fakeKnex.raw = (sql, bindings) => ({ rawSql: sql, bindings });
+  fakeKnex.raw = (sql, bindings) => {
+    if (sql && sql.includes('UPDATE city_catalog_revisions')) {
+      return Promise.resolve({ rows: [{ id: 1, revision: 2 }] });
+    }
+    return { rawSql: sql, bindings };
+  };
   fakeKnex.transaction = async (callback) => {
     return await callback(fakeKnex);
   };
@@ -786,6 +803,18 @@ describe('AdminJS Vet Clinics Resource', () => {
             return { rows: [] };
           }
 
+          if (sql.includes('UPDATE city_catalog_revisions')) {
+            return { rows: [{ id: 1, revision: 2 }] };
+          }
+
+          if (sql.includes('FROM city_catalog_revisions')) {
+            return { rows: [{ id: 1, revision: 1 }] };
+          }
+
+          if (sql.includes('FROM admin_users WHERE id =')) {
+            return { rows: [{ id: params[0] || 'admin-1', role: 'ADMIN', is_active: true }] };
+          }
+
           if (sql.includes('FROM cities WHERE id =')) {
             const cityId = params[0];
             if (cityId === 'nonexistent') return { rows: [] };
@@ -842,14 +871,14 @@ describe('AdminJS Vet Clinics Resource', () => {
           if (sql.includes('INSERT INTO vet_clinic_location_audits')) {
             if (failOnAudit) throw new Error('DB Error: audit write constraint failure');
             const audit = {
-              id: params[0],
-              vet_clinic_id: params[1],
-              admin_user_id: params[2],
-              selected_city_id: params[3],
-              nearest_city_id: params[4],
-              coordinates: `SRID=4326;POINT(${params[5]} ${params[6]})`,
-              discrepancy_details: params[7],
-              reason: params[8],
+              id: `mock-uuidv7-audit-${Date.now()}`,
+              vet_clinic_id: params[0],
+              admin_user_id: params[1],
+              selected_city_id: params[2],
+              nearest_city_id: params[3],
+              coordinates: `SRID=4326;POINT(${params[4]} ${params[5]})`,
+              discrepancy_details: params[6],
+              reason: params[7],
             };
             audits.push(audit);
             return { rows: [audit] };
@@ -941,7 +970,23 @@ describe('AdminJS Vet Clinics Resource', () => {
               }
               return Promise.resolve([data]);
             },
+            increment: (col, amount) => {
+              operations.push({ table: tableName, op: 'increment', col, amount });
+              return {
+                returning: async () => [{ id: 1, revision: 2 }],
+                then: (res, rej) => Promise.resolve([{ id: 1, revision: 2 }]).then(res, rej),
+              };
+            },
             then: (resolve, reject) => {
+              if (tableName === 'city_catalog_revisions') {
+                return Promise.resolve([{ id: 1, revision: 1 }]).then(resolve, reject);
+              }
+              if (tableName === 'admin_users') {
+                return Promise.resolve([{ id: whereVal || 'admin-1', role: 'ADMIN', is_active: true }]).then(
+                  resolve,
+                  reject,
+                );
+              }
               if (tableName === 'cities') {
                 if (whereCol === 'id') {
                   if (whereVal === 'nonexistent') return Promise.resolve([]).then(resolve, reject);
@@ -969,7 +1014,12 @@ describe('AdminJS Vet Clinics Resource', () => {
           return qb;
         };
 
-        trx.raw = (sql, bindings) => ({ rawSql: sql, bindings });
+        trx.raw = (sql, bindings) => {
+          if (sql && sql.includes('UPDATE city_catalog_revisions')) {
+            return Promise.resolve({ rows: [{ id: 1, revision: 2 }] });
+          }
+          return { rawSql: sql, bindings };
+        };
         return trx;
       };
 

@@ -411,4 +411,249 @@ describe('Vet clinics schema & foreign key (integration)', () => {
       expect(spyWithCatalogRevision).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('Cache Coherence & Transactional Catalog Revision Enforcement (Integration)', () => {
+    function createMemoryCache(): Cache {
+      const store = new Map<string, unknown>();
+      return {
+        get: jest.fn().mockImplementation((key: string) => Promise.resolve(store.get(key))),
+        set: jest.fn().mockImplementation((key: string, val: unknown) => {
+          store.set(key, val);
+          return Promise.resolve();
+        }),
+        del: jest.fn().mockImplementation((key: string) => {
+          store.delete(key);
+          return Promise.resolve();
+        }),
+        reset: jest.fn().mockImplementation(() => {
+          store.clear();
+          return Promise.resolve();
+        }),
+        wrap: jest.fn(),
+      } as unknown as Cache;
+    }
+
+    it('primes process-local cache, advances revision from separate admin client boundary, and next read observes fresh catalog', async () => {
+      // 1. Initialize catalog revision singleton to 1
+      await dbHelper.pool.query(
+        `INSERT INTO city_catalog_revisions (id, revision) VALUES (1, 1) ON CONFLICT (id) DO UPDATE SET revision = 1`,
+      );
+
+      // 2. Seed official city
+      const city = await insertOfficialCity('Maadi District', 'حي المعادي');
+
+      // 3. Seed initial clinic (Maadi Pet Hospital)
+      await dbHelper.db
+        .insert(vetClinics)
+        .values({
+          nameEnglish: 'Maadi Pet Hospital',
+          nameArabic: 'مستشفى المعادي للحيوانات الأليفة',
+          cityId: city.id,
+          coordinates: { longitude: 31.2569, latitude: 29.9602 },
+          phoneNumber: '+201001112222',
+          addressEnglish: 'Road 9, Maadi',
+          source: 'MANUAL',
+          isActive: true,
+        })
+        .returning();
+
+      // 4. Create API instance with process-local cache
+      const cacheInstanceA = createMemoryCache();
+      const vetRepo = new VetClinicsRepository(dbHelper.db);
+      const vetService = new VetClinicsService(vetRepo, cacheInstanceA);
+
+      // 5. Prime cache for City-level, Post-level, and Browse-list lookups
+      const initialBrowse = await vetService.nearbyVetClinicsForCity(city.id);
+      expect(initialBrowse).toHaveLength(1);
+      expect(initialBrowse[0].nameEnglish).toBe('Maadi Pet Hospital');
+      expect(vetService.getCacheGeneration()).toBe(0);
+
+      const initialAdoptionPost = await vetService.nearestVetClinicsForPost({
+        id: 'post-adoption-1',
+        postType: 'ADOPTION',
+        cityId: city.id,
+        latitude: null,
+        longitude: null,
+      });
+      expect(initialAdoptionPost).toHaveLength(1);
+      expect(initialAdoptionPost[0].nameEnglish).toBe('Maadi Pet Hospital');
+
+      const initialRescuePost = await vetService.nearestVetClinicsForPost({
+        id: 'post-rescue-1',
+        postType: 'RESCUE',
+        cityId: city.id,
+        latitude: 29.9602,
+        longitude: 31.2569,
+      });
+      expect(initialRescuePost).toHaveLength(1);
+      expect(initialRescuePost[0].nameEnglish).toBe('Maadi Pet Hospital');
+
+      // Subsequent read hits cache in generation 0
+      const cachedBrowse = await vetService.nearbyVetClinicsForCity(city.id);
+      expect(cachedBrowse).toEqual(initialBrowse);
+      expect(vetService.getCacheGeneration()).toBe(0);
+
+      // 6. Perform administrative clinic creation from a separate process/client boundary in a single transaction
+      const separateClient = await dbHelper.pool.connect();
+      try {
+        await separateClient.query('BEGIN');
+        await separateClient.query(
+          `INSERT INTO vet_clinics (name_english, name_arabic, city_id, coordinates, source, is_active)
+           VALUES ($1, $2, $3, ST_SetSRID(ST_MakePoint($4, $5), 4326), 'MANUAL', true)`,
+          ['Zamalek Vet Care', 'رعاية الزمالك البيطرية', city.id, 31.257, 29.9605],
+        );
+        await separateClient.query(`UPDATE city_catalog_revisions SET revision = revision + 1 WHERE id = 1`);
+        await separateClient.query('COMMIT');
+      } finally {
+        separateClient.release();
+      }
+
+      // Verify DB revision has advanced to 2
+      const revCheck = await dbHelper.pool.query<{ revision: number }>(
+        `SELECT revision FROM city_catalog_revisions WHERE id = 1`,
+      );
+      expect(revCheck.rows[0].revision).toBe(2);
+
+      // 7. Next API read observes committed catalog revision 2, invalidates process-local cache, and returns fresh data
+      const updatedBrowse = await vetService.nearbyVetClinicsForCity(city.id);
+      expect(vetService.getCacheGeneration()).toBe(1);
+      expect(updatedBrowse).toHaveLength(2);
+      const names = updatedBrowse.map((c) => c.nameEnglish);
+      expect(names).toContain('Maadi Pet Hospital');
+      expect(names).toContain('Zamalek Vet Care');
+
+      // Post-level lookups also return fresh generation results
+      const updatedAdoptionPost = await vetService.nearestVetClinicsForPost({
+        id: 'post-adoption-1',
+        postType: 'ADOPTION',
+        cityId: city.id,
+        latitude: null,
+        longitude: null,
+      });
+      expect(updatedAdoptionPost).toHaveLength(2);
+    });
+
+    it('proves clinic deactivation and relocation immediately invalidate cache across separate API instances without Redis or polling', async () => {
+      await dbHelper.pool.query(
+        `INSERT INTO city_catalog_revisions (id, revision) VALUES (1, 1) ON CONFLICT (id) DO UPDATE SET revision = 1`,
+      );
+
+      const city = await insertOfficialCity('Heliopolis', 'مصر الجديدة');
+
+      const [clinic1] = await dbHelper.db
+        .insert(vetClinics)
+        .values({
+          nameEnglish: 'Heliopolis Pet Center',
+          nameArabic: 'مركز هليوبوليس للحيوانات',
+          cityId: city.id,
+          coordinates: { longitude: 31.33, latitude: 30.09 },
+          source: 'MANUAL',
+          isActive: true,
+        })
+        .returning();
+
+      const [clinic2] = await dbHelper.db
+        .insert(vetClinics)
+        .values({
+          nameEnglish: 'Korba Animal Hospital',
+          nameArabic: 'مستشفى الكوربة البيطري',
+          cityId: city.id,
+          coordinates: { longitude: 31.32, latitude: 30.08 },
+          source: 'MANUAL',
+          isActive: true,
+        })
+        .returning();
+
+      // Spawn two independent running API instances (Instance A & Instance B)
+      const vetRepo = new VetClinicsRepository(dbHelper.db);
+      const instanceA = new VetClinicsService(vetRepo, createMemoryCache());
+      const instanceB = new VetClinicsService(vetRepo, createMemoryCache());
+
+      // Both instances prime their separate process-local caches
+      const resA1 = await instanceA.nearbyVetClinicsForCity(city.id);
+      const resB1 = await instanceB.nearbyVetClinicsForCity(city.id);
+      expect(resA1).toHaveLength(2);
+      expect(resB1).toHaveLength(2);
+      expect(instanceA.getCacheGeneration()).toBe(0);
+      expect(instanceB.getCacheGeneration()).toBe(0);
+
+      // Perform administrative mutation from separate client:
+      // Deactivate clinic2 and rename clinic1
+      const separateClient = await dbHelper.pool.connect();
+      try {
+        await separateClient.query('BEGIN');
+        await separateClient.query(`UPDATE vet_clinics SET is_active = false WHERE id = $1`, [clinic2.id]);
+        await separateClient.query(`UPDATE vet_clinics SET name_english = $1 WHERE id = $2`, [
+          'Heliopolis Elite Pet Clinic',
+          clinic1.id,
+        ]);
+        await separateClient.query(`UPDATE city_catalog_revisions SET revision = revision + 1 WHERE id = 1`);
+        await separateClient.query('COMMIT');
+      } finally {
+        separateClient.release();
+      }
+
+      // Instance A serves next request -> observes new revision, invalidates generation 0 -> generation 1
+      const resA2 = await instanceA.nearbyVetClinicsForCity(city.id);
+      expect(instanceA.getCacheGeneration()).toBe(1);
+      expect(resA2).toHaveLength(1);
+      expect(resA2[0].nameEnglish).toBe('Heliopolis Elite Pet Clinic');
+
+      // Instance B serves next request -> also observes new revision and invalidates independently without polling
+      const resB2 = await instanceB.nearbyVetClinicsForCity(city.id);
+      expect(instanceB.getCacheGeneration()).toBe(1);
+      expect(resB2).toHaveLength(1);
+      expect(resB2[0].nameEnglish).toBe('Heliopolis Elite Pet Clinic');
+    });
+
+    it('proves a rolled back administrative transaction does not advance catalog revision or invalidate safe cache', async () => {
+      await dbHelper.pool.query(
+        `INSERT INTO city_catalog_revisions (id, revision) VALUES (1, 1) ON CONFLICT (id) DO UPDATE SET revision = 1`,
+      );
+
+      const city = await insertOfficialCity('Giza Center', 'مركز الجيزة');
+
+      await dbHelper.db
+        .insert(vetClinics)
+        .values({
+          nameEnglish: 'Pyramids Vet Clinic',
+          nameArabic: 'عيادة الأهرام البيطرية',
+          cityId: city.id,
+          coordinates: { longitude: 31.2, latitude: 30.01 },
+          source: 'MANUAL',
+          isActive: true,
+        })
+        .returning();
+
+      const vetRepo = new VetClinicsRepository(dbHelper.db);
+      const vetService = new VetClinicsService(vetRepo, createMemoryCache());
+
+      // Prime cache
+      const primed = await vetService.nearbyVetClinicsForCity(city.id);
+      expect(primed).toHaveLength(1);
+      expect(vetService.getCacheGeneration()).toBe(0);
+
+      // Failing administrative transaction (rolls back)
+      const separateClient = await dbHelper.pool.connect();
+      try {
+        await separateClient.query('BEGIN');
+        await separateClient.query(`UPDATE city_catalog_revisions SET revision = revision + 1 WHERE id = 1`);
+        // Simulate failure / rollback
+        await separateClient.query('ROLLBACK');
+      } finally {
+        separateClient.release();
+      }
+
+      // Verify DB revision is still 1
+      const revCheck = await dbHelper.pool.query<{ revision: number }>(
+        `SELECT revision FROM city_catalog_revisions WHERE id = 1`,
+      );
+      expect(revCheck.rows[0].revision).toBe(1);
+
+      // Next read continues safely in generation 0
+      const nextRead = await vetService.nearbyVetClinicsForCity(city.id);
+      expect(nextRead).toEqual(primed);
+      expect(vetService.getCacheGeneration()).toBe(0);
+    });
+  });
 });

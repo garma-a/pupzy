@@ -163,7 +163,13 @@ export default function MappedLocationEdit({ property, record, onChange }) {
     const rawVal = e.target.value;
     setLat(rawVal);
     const val = parseFloat(rawVal);
-    const currentLng = parseFloat(lng);
+    const currentLng = parseFloat(
+      lng !== '' && lng !== null
+        ? lng
+        : typeof document !== 'undefined'
+          ? document.getElementById('mapped-lng')?.value
+          : '',
+    );
     if (
       !Number.isNaN(val) &&
       val >= -90 &&
@@ -183,7 +189,13 @@ export default function MappedLocationEdit({ property, record, onChange }) {
     const rawVal = e.target.value;
     setLng(rawVal);
     const val = parseFloat(rawVal);
-    const currentLat = parseFloat(lat);
+    const currentLat = parseFloat(
+      lat !== '' && lat !== null
+        ? lat
+        : typeof document !== 'undefined'
+          ? document.getElementById('mapped-lat')?.value
+          : '',
+    );
     if (
       !Number.isNaN(val) &&
       val >= -180 &&

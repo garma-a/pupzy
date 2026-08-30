@@ -265,4 +265,276 @@ describe('Admin schema (integration)', () => {
       }),
     ).rejects.toThrow();
   });
+
+  it('verifies address_search_cache index state and proves unique index serves lookups via query plan', async () => {
+    const client = await dbHelper.pool.connect();
+    try {
+      // 1. Verify schema indexes: exactly pkey and unique constraint index, no duplicate or created_at index
+      const { rows: indexRows } = await client.query<{ indexname: string }>(`
+        SELECT indexname
+        FROM pg_indexes
+        WHERE tablename = 'address_search_cache'
+        ORDER BY indexname
+      `);
+      const indexNames = indexRows.map((r) => r.indexname);
+
+      expect(indexNames).toContain('address_search_cache_pkey');
+      expect(indexNames).toContain('address_search_cache_normalized_query_unique');
+      expect(indexNames).not.toContain('idx_address_search_cache_normalized_query');
+      expect(indexNames).not.toContain('idx_address_search_cache_created_at');
+      expect(indexNames).toHaveLength(2);
+
+      // 2. Pre-seed cache entries to test query plan
+      await client.query(`
+        INSERT INTO address_search_cache (id, normalized_query, results)
+        VALUES
+          (uuidv7(), 'heliopolis vet clinic', '[{"displayName": "Heliopolis Vet", "latitude": 30.08, "longitude": 31.32}]'::jsonb),
+          (uuidv7(), 'zamalek vet clinic', '[{"displayName": "Zamalek Vet", "latitude": 30.06, "longitude": 31.22}]'::jsonb),
+          (uuidv7(), 'nasr city vet clinic', '[{"displayName": "Nasr City Vet", "latitude": 30.05, "longitude": 31.34}]'::jsonb)
+      `);
+
+      await client.query('ANALYZE address_search_cache');
+      await client.query('SET enable_seqscan = off');
+
+      interface ExplainPlanNode {
+        'Node Type': string;
+        'Index Name'?: string;
+        Plans?: ExplainPlanNode[];
+      }
+
+      interface ExplainPlanRow {
+        'QUERY PLAN': Array<{
+          Plan: ExplainPlanNode;
+        }>;
+      }
+
+      const { rows: planRows } = await client.query<ExplainPlanRow>(`
+        EXPLAIN (FORMAT JSON)
+        SELECT results
+        FROM address_search_cache
+        WHERE normalized_query = 'heliopolis vet clinic'
+      `);
+      const plan = planRows[0]['QUERY PLAN'][0].Plan;
+      const indexName = plan['Index Name'] || plan.Plans?.[0]?.['Index Name'];
+      const nodeType = plan['Node Type'] === 'Limit' ? plan.Plans?.[0]?.['Node Type'] : plan['Node Type'];
+
+      expect(nodeType).not.toBe('Seq Scan');
+      expect(indexName).toBe('address_search_cache_normalized_query_unique');
+
+      // 3. Verify upsert behavior on unique constraint
+      const updatedResults = [
+        { displayName: 'Updated Heliopolis Clinic', latitude: 30.081, longitude: 31.321, osmId: '99999' },
+      ];
+      await client.query(
+        `INSERT INTO address_search_cache (id, normalized_query, results, created_at, updated_at)
+         VALUES (uuidv7(), 'heliopolis vet clinic', $1::jsonb, now(), now())
+         ON CONFLICT (normalized_query) DO UPDATE
+           SET results = EXCLUDED.results, updated_at = now()`,
+        [JSON.stringify(updatedResults)],
+      );
+
+      const { rows: readRows } = await client.query<{ results: typeof updatedResults }>(
+        `SELECT results FROM address_search_cache WHERE normalized_query = $1`,
+        ['heliopolis vet clinic'],
+      );
+      expect(readRows).toHaveLength(1);
+      expect(readRows[0].results).toEqual(updatedResults);
+    } finally {
+      await client.query('RESET enable_seqscan');
+      client.release();
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Ticket 06: UUIDv7 identity, FK SET NULL preservation, append-only trigger
+  // ---------------------------------------------------------------------------
+
+  async function insertAuditFixtures() {
+    const admin = await insertAdmin('audit-fixture@example.com');
+    const { city } = await insertUserAndCity();
+
+    const [nearestCity] = await dbHelper.db
+      .insert(cities)
+      .values({
+        nameEnglish: 'Giza',
+        nameArabic: 'الجيزة',
+        governorate: 'Giza',
+        centerPoint: sql`ST_SetSRID(ST_MakePoint(31.20, 30.01), 4326)`,
+      })
+      .returning();
+
+    const [clinic] = await dbHelper.db
+      .insert(vetClinics)
+      .values({
+        nameEnglish: 'Audit Fixture Clinic',
+        nameArabic: 'عيادة اختبار',
+        cityId: city.id,
+        addressEnglish: '1 Test Rd',
+        addressArabic: '١ شارع الاختبار',
+        coordinates: { longitude: 31.2, latitude: 30.01 },
+        source: 'MANUAL',
+      })
+      .returning();
+
+    return { admin, city, nearestCity, clinic };
+  }
+
+  it('audit id is assigned by the database as UUIDv7 (version nibble = 7)', async () => {
+    const { clinic, city, nearestCity } = await insertAuditFixtures();
+
+    const [audit] = await dbHelper.db
+      .insert(vetClinicLocationAudits)
+      .values({
+        vetClinicId: clinic.id,
+        selectedCityId: city.id,
+        nearestCityId: nearestCity.id,
+        coordinates: { longitude: 31.2, latitude: 30.01 },
+        reason: 'UUIDv7 version check test',
+      })
+      .returning();
+
+    expect(audit).toBeDefined();
+    expect(audit.id).toBeTruthy();
+
+    // Extract the version nibble from the UUID.
+    // UUIDv7 byte layout: xxxxxxxx-xxxx-7xxx-xxxx-xxxxxxxxxxxx
+    // The "7" appears at position 14 in the 32-hex-digit string (after removing dashes).
+    const hexDigits = audit.id.replace(/-/g, '');
+    const versionNibble = parseInt(hexDigits[12], 16); // byte 6, high nibble
+    expect(versionNibble).toBe(7);
+  });
+
+  it('deleting a clinic sets audit.vetClinicId to NULL (FK SET NULL), audit row survives', async () => {
+    const { clinic, city, nearestCity } = await insertAuditFixtures();
+
+    const [audit] = await dbHelper.db
+      .insert(vetClinicLocationAudits)
+      .values({
+        vetClinicId: clinic.id,
+        selectedCityId: city.id,
+        nearestCityId: nearestCity.id,
+        coordinates: { longitude: 31.2, latitude: 30.01 },
+        reason: 'FK set null test – clinic deletion',
+      })
+      .returning();
+
+    // Delete the clinic
+    await dbHelper.db.delete(vetClinics).where(eq(vetClinics.id, clinic.id));
+
+    // Audit row must still exist
+    const [surviving] = await dbHelper.db
+      .select()
+      .from(vetClinicLocationAudits)
+      .where(eq(vetClinicLocationAudits.id, audit.id));
+
+    expect(surviving).toBeDefined();
+    expect(surviving.vetClinicId).toBeNull();
+    // Other FKs untouched
+    expect(surviving.selectedCityId).toBe(city.id);
+    expect(surviving.nearestCityId).toBe(nearestCity.id);
+  });
+
+  it('deleting a city sets audit.selectedCityId and nearestCityId to NULL, audit row survives', async () => {
+    const { clinic, city, nearestCity } = await insertAuditFixtures();
+
+    const [audit] = await dbHelper.db
+      .insert(vetClinicLocationAudits)
+      .values({
+        vetClinicId: clinic.id,
+        selectedCityId: city.id,
+        nearestCityId: nearestCity.id,
+        coordinates: { longitude: 31.2, latitude: 30.01 },
+        reason: 'FK set null test – city deletion',
+      })
+      .returning();
+
+    // Delete the selected city (nearestCity is a different row and survives)
+    await dbHelper.db.delete(cities).where(eq(cities.id, city.id));
+
+    const [surviving] = await dbHelper.db
+      .select()
+      .from(vetClinicLocationAudits)
+      .where(eq(vetClinicLocationAudits.id, audit.id));
+
+    expect(surviving).toBeDefined();
+    expect(surviving.selectedCityId).toBeNull();
+    // vetClinicId and nearestCityId untouched
+    expect(surviving.vetClinicId).toBe(clinic.id);
+    expect(surviving.nearestCityId).toBe(nearestCity.id);
+  });
+
+  it('append-only trigger rejects direct UPDATE on a committed audit row', async () => {
+    const { clinic, city, nearestCity } = await insertAuditFixtures();
+
+    const [audit] = await dbHelper.db
+      .insert(vetClinicLocationAudits)
+      .values({
+        vetClinicId: clinic.id,
+        selectedCityId: city.id,
+        nearestCityId: nearestCity.id,
+        coordinates: { longitude: 31.2, latitude: 30.01 },
+        reason: 'Original reason before attempted mutation',
+      })
+      .returning();
+
+    await expect(
+      dbHelper.pool.query(`UPDATE vet_clinic_location_audits SET reason = 'tampered' WHERE id = $1`, [audit.id]),
+    ).rejects.toThrow(/append-only/i);
+  });
+
+  it('append-only trigger rejects direct DELETE on a committed audit row', async () => {
+    const { clinic, city, nearestCity } = await insertAuditFixtures();
+
+    const [audit] = await dbHelper.db
+      .insert(vetClinicLocationAudits)
+      .values({
+        vetClinicId: clinic.id,
+        selectedCityId: city.id,
+        nearestCityId: nearestCity.id,
+        coordinates: { longitude: 31.2, latitude: 30.01 },
+        reason: 'Row that must not be deletable',
+      })
+      .returning();
+
+    await expect(
+      dbHelper.pool.query(`DELETE FROM vet_clinic_location_audits WHERE id = $1`, [audit.id]),
+    ).rejects.toThrow(/append-only/i);
+
+    // Row still exists
+    const [still] = await dbHelper.db
+      .select()
+      .from(vetClinicLocationAudits)
+      .where(eq(vetClinicLocationAudits.id, audit.id));
+    expect(still).toBeDefined();
+  });
+
+  it('normal atomic audit creation succeeds and returns a row with a valid UUIDv7 id', async () => {
+    const { admin, clinic, city, nearestCity } = await insertAuditFixtures();
+
+    const [audit] = await dbHelper.db
+      .insert(vetClinicLocationAudits)
+      .values({
+        vetClinicId: clinic.id,
+        adminUserId: admin.id,
+        selectedCityId: city.id,
+        nearestCityId: nearestCity.id,
+        coordinates: { longitude: 31.2, latitude: 30.01 },
+        discrepancyDetails: { distance_km: 0.8 },
+        reason: 'Atomic audit creation – full happy path',
+      })
+      .returning();
+
+    expect(audit).toBeDefined();
+    expect(audit.id).toBeTruthy();
+    expect(audit.vetClinicId).toBe(clinic.id);
+    expect(audit.adminUserId).toBe(admin.id);
+    expect(audit.selectedCityId).toBe(city.id);
+    expect(audit.nearestCityId).toBe(nearestCity.id);
+    expect(audit.reason).toBe('Atomic audit creation – full happy path');
+    expect(audit.createdAt).toBeInstanceOf(Date);
+
+    // UUIDv7 version check
+    const hexDigits = audit.id.replace(/-/g, '');
+    expect(parseInt(hexDigits[12], 16)).toBe(7);
+  });
 });

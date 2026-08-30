@@ -5,6 +5,53 @@ import { attachShortUuid, noDeleteActions, stripRecordParams } from './resource-
 const stripPrivateFields = (response) =>
   stripRecordParams(response, ['phone_number', 'last_known_location', 'password_hash']);
 
+export const ALLOWED_USER_EDIT_FIELDS = Object.freeze([
+  'full_name',
+  'full_name_arabic',
+  'profile_picture_url',
+  'home_city_id',
+  'language_preference',
+  'notifications_enabled',
+]);
+
+const ALLOWED_SET = new Set(ALLOWED_USER_EDIT_FIELDS);
+
+export const PROTECTED_USER_FIELDS = Object.freeze([
+  'id',
+  'firebase_user_id',
+  'firebase_uid',
+  'email',
+  'phone_number',
+  'is_phone_verified',
+  'is_email_verified',
+  'is_verified',
+  'is_banned',
+  'ban_reason',
+  'banned_at',
+  'banned_by_admin_id',
+  'post_count',
+  'rescue_count',
+  'lost_count',
+  'adoption_count',
+  'product_count',
+  'mating_count',
+  'rescue_post_count',
+  'lost_post_count',
+  'adoption_post_count',
+  'product_post_count',
+  'last_seen_at',
+  'created_at',
+  'updated_at',
+  'location',
+  'last_known_location',
+  'latitude',
+  'longitude',
+  'coordinates',
+  'coordinates.latitude',
+  'coordinates.longitude',
+  'password_hash',
+]);
+
 export function buildUsersResource(db, pool, components, cache) {
   const knex = db?.table ? (db.table('users')?.knex ?? db.table('cities')?.knex) : null;
 
@@ -28,14 +75,17 @@ export function buildUsersResource(db, pool, components, cache) {
 
   async function prepareUserEditPayload(request, context = {}) {
     if (request.method !== 'post') return request;
-    const payload = { ...(request.payload || {}) };
+    const rawPayload = request.payload || {};
+    const payload = {};
+
+    // Allow-list only approved profile fields; drop all protected / security / system fields
+    for (const key of Object.keys(rawPayload)) {
+      if (ALLOWED_SET.has(key)) {
+        payload[key] = rawPayload[key];
+      }
+    }
+
     const recordId = request.params?.recordId;
-
-    // Private fields cannot be edited via AdminJS
-    delete payload.phone_number;
-    delete payload.last_known_location;
-    delete payload.password_hash;
-
     let existing = null;
     if (recordId) {
       if (pool && typeof pool.query === 'function') {
@@ -46,10 +96,13 @@ export function buildUsersResource(db, pool, components, cache) {
         existing = rows[0] ?? null;
       }
     }
+    if (!existing && context?.record?.params) {
+      existing = context.record.params;
+    }
 
     if (payload.home_city_id === '' || payload.home_city_id === null) {
       payload.home_city_id = null;
-    } else if (payload.home_city_id) {
+    } else if (payload.home_city_id !== undefined) {
       const isChanged = !existing || payload.home_city_id !== existing.home_city_id;
       if (isChanged) {
         const city = await getCityById(payload.home_city_id);
@@ -66,7 +119,13 @@ export function buildUsersResource(db, pool, components, cache) {
   }
 
   const properties = {
-    email: { isTitle: true },
+    id: { isDisabled: true },
+    firebase_user_id: { isDisabled: true },
+    email: { isTitle: true, isDisabled: true },
+    full_name: {},
+    full_name_arabic: {},
+    profile_picture_url: {},
+    is_verified: { isDisabled: true },
     home_city_id: {},
     phone_number: { isVisible: false },
     last_known_location: { isVisible: false },
@@ -75,6 +134,8 @@ export function buildUsersResource(db, pool, components, cache) {
     lost_post_count: { isDisabled: true },
     adoption_post_count: { isDisabled: true },
     product_post_count: { isDisabled: true },
+    language_preference: {},
+    notifications_enabled: {},
     is_banned: { isDisabled: true },
     banned_at: { isDisabled: true },
     ban_reason: { isDisabled: true },
@@ -105,6 +166,7 @@ export function buildUsersResource(db, pool, components, cache) {
         banUser: buildBanUserAction(pool, components?.ModerationAction, cache),
         unbanUser: buildUnbanUserAction(pool, cache),
       },
+      editProperties: [...ALLOWED_USER_EDIT_FIELDS],
       listProperties: ['id', 'email', 'full_name', 'is_verified', 'is_banned', 'post_count', 'created_at'],
       showProperties: [
         'id',

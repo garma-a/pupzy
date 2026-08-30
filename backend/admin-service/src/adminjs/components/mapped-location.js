@@ -1,3 +1,12 @@
+export {
+  GOOGLE_MAPS_SEARCH_BASE_URL,
+  WGS84_BOUNDS,
+  validateWgs84Coordinates,
+  isValidWgs84Coordinates,
+  buildGoogleMapsUrl,
+  tryBuildGoogleMapsUrl,
+} from '../../common/contracts/google-maps-handoff.contract.js';
+
 /**
  * Parses numeric latitude and longitude from various input formats
  * (discrete lat/lng fields, EWKT POINT(lng lat), comma-separated strings, objects, JSON strings, or PostGIS EWKB hex strings).
