@@ -63,6 +63,38 @@ describe('Database Migration Runner Integration', () => {
     expect(tableNames).toContain('product_posts');
     expect(tableNames).toContain('mating_posts');
     expect(tableNames).toContain('notifications');
+    expect(tableNames).toContain('vet_clinic_location_audits');
+
+    // Verify vet_clinic_location_audits attribution columns are all NOT NULL
+    const auditColsRes = await pool.query<{ column_name: string; is_nullable: string }>(`
+      SELECT column_name, is_nullable
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'vet_clinic_location_audits'
+    `);
+    const colNullMap = Object.fromEntries(auditColsRes.rows.map((r) => [r.column_name, r.is_nullable]));
+    expect(colNullMap['vet_clinic_id']).toBe('NO');
+    expect(colNullMap['admin_user_id']).toBe('NO');
+    expect(colNullMap['selected_city_id']).toBe('NO');
+    expect(colNullMap['nearest_city_id']).toBe('NO');
+
+    // Verify foreign keys use RESTRICT ('r') for on delete
+    const fkRes = await pool.query<{ conname: string; confdeltype: string }>(`
+      SELECT conname, confdeltype::text AS confdeltype
+      FROM pg_constraint
+      WHERE conrelid = 'vet_clinic_location_audits'::regclass AND contype = 'f'
+    `);
+    expect(fkRes.rows.length).toBe(4);
+    for (const fk of fkRes.rows) {
+      expect(fk.confdeltype).toBe('r'); // 'r' = RESTRICT
+    }
+
+    // Verify append-only trigger exists
+    const triggerRes = await pool.query<{ tgname: string }>(`
+      SELECT tgname
+      FROM pg_trigger
+      WHERE tgrelid = 'vet_clinic_location_audits'::regclass AND tgname = 'trg_audit_append_only'
+    `);
+    expect(triggerRes.rowCount).toBe(1);
 
     // Verify city_lifecycle_status operators and functions exist from migration 0017
     const operatorRes = await pool.query<{ oprname: string }>(`
@@ -411,6 +443,46 @@ describe('Database Migration Runner Integration', () => {
         [clinicId],
       );
       expect(parseInt(auditCount.rows[0].count, 10)).toBe(1);
+
+      // Verify upgraded vet_clinic_location_audits schema properties:
+      // 4a. Attribution columns NOT NULL
+      const upgradedCols = await upgradePool.query<{ column_name: string; is_nullable: string }>(`
+        SELECT column_name, is_nullable
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'vet_clinic_location_audits'
+      `);
+      const upgradedNullMap = Object.fromEntries(upgradedCols.rows.map((r) => [r.column_name, r.is_nullable]));
+      expect(upgradedNullMap['vet_clinic_id']).toBe('NO');
+      expect(upgradedNullMap['admin_user_id']).toBe('NO');
+      expect(upgradedNullMap['selected_city_id']).toBe('NO');
+      expect(upgradedNullMap['nearest_city_id']).toBe('NO');
+
+      // 4b. Foreign keys are ON DELETE RESTRICT
+      const upgradedFks = await upgradePool.query<{ conname: string; confdeltype: string }>(`
+        SELECT conname, confdeltype::text AS confdeltype
+        FROM pg_constraint
+        WHERE conrelid = 'vet_clinic_location_audits'::regclass AND contype = 'f'
+      `);
+      expect(upgradedFks.rows.length).toBe(4);
+      for (const fk of upgradedFks.rows) {
+        expect(fk.confdeltype).toBe('r');
+      }
+
+      // 4c. Deletion of referenced clinic, admin, or city is rejected
+      await expect(upgradePool.query(`DELETE FROM vet_clinics WHERE id = $1`, [clinicId])).rejects.toThrow();
+      await expect(upgradePool.query(`DELETE FROM admin_users WHERE id = $1`, [adminId])).rejects.toThrow();
+      await expect(upgradePool.query(`DELETE FROM cities WHERE id = $1`, [cityId])).rejects.toThrow();
+
+      // 4d. Direct UPDATE and DELETE on committed audit are rejected by append-only trigger
+      await expect(
+        upgradePool.query(`UPDATE vet_clinic_location_audits SET reason = 'tampered' WHERE vet_clinic_id = $1`, [
+          clinicId,
+        ]),
+      ).rejects.toThrow(/append-only/i);
+
+      await expect(
+        upgradePool.query(`DELETE FROM vet_clinic_location_audits WHERE vet_clinic_id = $1`, [clinicId]),
+      ).rejects.toThrow(/append-only/i);
 
       // Table: address_search_cache
       await upgradePool.query(`

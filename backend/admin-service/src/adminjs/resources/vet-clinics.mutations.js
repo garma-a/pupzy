@@ -171,7 +171,7 @@ export class PostgresVetClinicPersistenceAdapter {
        RETURNING *`,
       [
         auditData.vet_clinic_id,
-        auditData.admin_user_id ?? null,
+        auditData.admin_user_id,
         auditData.selected_city_id,
         auditData.nearest_city_id,
         auditData.longitude,
@@ -386,7 +386,7 @@ export class KnexVetClinicPersistenceAdapter {
 
     const auditPayload = {
       vet_clinic_id: auditData.vet_clinic_id,
-      admin_user_id: auditData.admin_user_id ?? null,
+      admin_user_id: auditData.admin_user_id,
       selected_city_id: auditData.selected_city_id,
       nearest_city_id: auditData.nearest_city_id,
       coordinates: rawCoord ?? `SRID=4326;POINT(${auditData.longitude} ${auditData.latitude})`,
@@ -586,7 +586,7 @@ export async function createVetClinicCommand(persistence, rawPayload, currentAdm
   if (discrepancy.isDiscrepant) {
     await adapter.insertLocationAudit({
       vet_clinic_id: insertedClinic.id,
-      admin_user_id: currentAdmin?.id ?? null,
+      admin_user_id: currentAdmin.id,
       selected_city_id: city.id,
       nearest_city_id: nearestCity.id,
       longitude: location.longitude,
@@ -742,7 +742,7 @@ export async function updateVetClinicCommand(persistence, recordId, rawPayload, 
   if (locationChanged && discrepancy.isDiscrepant) {
     await adapter.insertLocationAudit({
       vet_clinic_id: recordId,
-      admin_user_id: currentAdmin?.id ?? null,
+      admin_user_id: currentAdmin.id,
       selected_city_id: selectedCity.id,
       nearest_city_id: nearestCity.id,
       longitude: location.longitude,
