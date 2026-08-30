@@ -47,8 +47,13 @@ export class PostgresVetClinicPersistenceAdapter {
     this.type = 'pg';
   }
 
-  async acquireCityCatalogRevisionFence({ forShare = true } = {}) {
-    const lock = forShare ? ' FOR SHARE' : '';
+  async acquireCityCatalogRevisionFence({ forShare = false, forUpdate = true } = {}) {
+    let lock = '';
+    if (forShare) {
+      lock = ' FOR SHARE';
+    } else if (forUpdate || forShare === false) {
+      lock = ' FOR UPDATE';
+    }
     const { rows } = await this.client.query(`SELECT id, revision FROM city_catalog_revisions WHERE id = 1${lock}`);
     return rows[0] ?? { id: 1, revision: 1 };
   }
@@ -216,10 +221,16 @@ export class KnexVetClinicPersistenceAdapter {
     return null;
   }
 
-  async acquireCityCatalogRevisionFence({ forShare = true } = {}) {
+  async acquireCityCatalogRevisionFence({ forShare = false, forUpdate = true } = {}) {
     let qb = this._qb('city_catalog_revisions').select('id', 'revision').where('id', 1);
-    if (forShare && typeof qb.forShare === 'function') {
-      qb = qb.forShare();
+    if (forShare) {
+      if (typeof qb.forShare === 'function') {
+        qb = qb.forShare();
+      }
+    } else if (forUpdate || forShare === false) {
+      if (typeof qb.forUpdate === 'function') {
+        qb = qb.forUpdate();
+      }
     }
     const rows = await qb;
     return rows?.[0] ?? { id: 1, revision: 1 };
@@ -491,8 +502,8 @@ export async function createVetClinicCommand(persistence, rawPayload, currentAdm
     });
   }
 
-  // 2. Hold shared City catalog revision fence for the transaction
-  await adapter.acquireCityCatalogRevisionFence({ forShare: true });
+  // 2. Hold deterministic exclusive City catalog revision fence for the transaction
+  await adapter.acquireCityCatalogRevisionFence({ forUpdate: true });
 
   // 3. Query official City inside transaction with row lock
   const city = await adapter.findCityById(rawPayload.city_id, { forShare: true });
@@ -612,6 +623,9 @@ export async function createVetClinicCommand(persistence, rawPayload, currentAdm
 export async function updateVetClinicCommand(persistence, recordId, rawPayload, currentAdmin) {
   const adapter = createVetClinicPersistenceAdapter(persistence);
 
+  // 1. Hold deterministic exclusive City catalog revision fence for the transaction
+  await adapter.acquireCityCatalogRevisionFence({ forUpdate: true });
+
   const existing = await adapter.findClinicById(recordId, { forUpdate: true });
   if (!existing) {
     throw new ValidationError({
@@ -628,9 +642,6 @@ export async function updateVetClinicCommand(persistence, recordId, rawPayload, 
   const updateData = { ...rawPayload };
 
   if (locationChanged) {
-    // Hold shared City catalog revision fence for the transaction
-    await adapter.acquireCityCatalogRevisionFence({ forShare: true });
-
     const targetCityId = rawPayload.city_id || existing?.city_id;
     if (!targetCityId) {
       throw new ValidationError({
@@ -787,9 +798,15 @@ export async function findAdminUserById(trxOrClient, adminId, forShare = true) {
   return await adapter.findAdminUserById(adminId, { forShare });
 }
 
-export async function acquireCityCatalogRevisionFence(trxOrClient, forShare = true) {
+export async function acquireCityCatalogRevisionFence(trxOrClient, forShareOrOptions = { forUpdate: true }) {
   const adapter = createVetClinicPersistenceAdapter(trxOrClient);
-  return await adapter.acquireCityCatalogRevisionFence({ forShare });
+  if (typeof forShareOrOptions === 'boolean') {
+    return await adapter.acquireCityCatalogRevisionFence({
+      forShare: forShareOrOptions,
+      forUpdate: !forShareOrOptions,
+    });
+  }
+  return await adapter.acquireCityCatalogRevisionFence(forShareOrOptions);
 }
 
 export async function advanceCatalogRevision(trxOrClient) {

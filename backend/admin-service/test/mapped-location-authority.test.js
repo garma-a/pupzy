@@ -673,4 +673,615 @@ describe('Mapped Location Transactional Authorization and City Catalog Revision 
     assert.equal(auditRows.rows[0].admin_user_id, activeAdminId);
     assert.equal(auditRows.rows[0].reason, 'Knex valid border override');
   });
+
+  it('concurrent Vet Clinic create transactions on separate connections serialize deterministically without 40P01 deadlocks and advance catalog revision exactly twice', async () => {
+    // 1. Seed official Cairo
+    await database.pool.query('DELETE FROM cities CASCADE');
+    const cairoRes = await database.pool.query(
+      `INSERT INTO cities (source_code, name_english, name_arabic, governorate, status, center_point)
+       VALUES ('EGY-CAI-CONC-1', 'Cairo Concurrent ${Date.now()}', 'القاهرة', 'Cairo', 'OFFICIAL', ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326))
+       RETURNING id`,
+    );
+    const cairoId = cairoRes.rows[0].id;
+
+    // Reset revision to 1
+    await database.pool.query(`UPDATE city_catalog_revisions SET revision = 1 WHERE id = 1`);
+
+    const clientA = await database.pool.connect();
+    const clientB = await database.pool.connect();
+
+    try {
+      const clinicNameA = 'Concurrent Clinic A ' + crypto.randomUUID();
+      const clinicNameB = 'Concurrent Clinic B ' + crypto.randomUUID();
+
+      let resultA = null;
+      let resultB = null;
+      let errorA = null;
+      let errorB = null;
+
+      // Launch both transactions concurrently on separate PostgreSQL connections
+      await Promise.all([
+        (async () => {
+          try {
+            await clientA.query('BEGIN');
+            resultA = await createClinicInTransaction(
+              clientA,
+              'pg',
+              {
+                name_english: clinicNameA,
+                city_id: cairoId,
+                latitude: 30.0444,
+                longitude: 31.2357,
+                address_english: '10 Nile St',
+                address_arabic: '١٠ شارع النيل',
+                location_confirmed: true,
+              },
+              { id: principals.adminId, role: 'SUPER_ADMIN', is_active: true },
+            );
+            await clientA.query('COMMIT');
+          } catch (err) {
+            await clientA.query('ROLLBACK').catch(() => {});
+            errorA = err;
+          }
+        })(),
+        (async () => {
+          try {
+            await clientB.query('BEGIN');
+            resultB = await createClinicInTransaction(
+              clientB,
+              'pg',
+              {
+                name_english: clinicNameB,
+                city_id: cairoId,
+                latitude: 30.0444,
+                longitude: 31.2357,
+                address_english: '20 Nile St',
+                address_arabic: '٢٠ شارع النيل',
+                location_confirmed: true,
+              },
+              { id: principals.adminId, role: 'SUPER_ADMIN', is_active: true },
+            );
+            await clientB.query('COMMIT');
+          } catch (err) {
+            await clientB.query('ROLLBACK').catch(() => {});
+            errorB = err;
+          }
+        })(),
+      ]);
+
+      assert.ifError(errorA);
+      assert.ifError(errorB);
+      assert.ok(resultA);
+      assert.ok(resultB);
+
+      // Verify both clinics exist in the database
+      const checkA = await database.pool.query(`SELECT * FROM vet_clinics WHERE name_english = $1`, [clinicNameA]);
+      const checkB = await database.pool.query(`SELECT * FROM vet_clinics WHERE name_english = $1`, [clinicNameB]);
+      assert.equal(checkA.rowCount, 1);
+      assert.equal(checkB.rowCount, 1);
+
+      // Verify singleton revision advanced exactly twice: 1 -> 3
+      const revCheck = await database.pool.query(`SELECT revision FROM city_catalog_revisions WHERE id = 1`);
+      assert.equal(revCheck.rows[0].revision, 3);
+    } finally {
+      await clientA.query('ROLLBACK').catch(() => {});
+      await clientB.query('ROLLBACK').catch(() => {});
+      clientA.release();
+      clientB.release();
+    }
+  });
+
+  it('concurrent Vet Clinic update and create transactions on separate connections serialize deterministically and advance revision exactly twice', async () => {
+    // 1. Seed official Cairo and Giza
+    await database.pool.query('DELETE FROM cities CASCADE');
+    const cairoRes = await database.pool.query(
+      `INSERT INTO cities (source_code, name_english, name_arabic, governorate, status, center_point)
+       VALUES ('EGY-CAI-UPDATE-1', 'Cairo Update Test ${Date.now()}', 'القاهرة', 'Cairo', 'OFFICIAL', ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326))
+       RETURNING id`,
+    );
+    const cairoId = cairoRes.rows[0].id;
+
+    const gizaRes = await database.pool.query(
+      `INSERT INTO cities (source_code, name_english, name_arabic, governorate, status, center_point)
+       VALUES ('EGY-GIZ-UPDATE-1', 'Giza Update Test ${Date.now()}', 'الجيزة', 'Giza', 'OFFICIAL', ST_SetSRID(ST_MakePoint(31.2000, 30.0100), 4326))
+       RETURNING id`,
+    );
+    const gizaId = gizaRes.rows[0].id;
+
+    // Pre-insert an existing clinic in Cairo
+    const initialClinicRes = await database.pool.query(
+      `INSERT INTO vet_clinics (name_english, name_arabic, city_id, coordinates, address_english, address_arabic, source, location_provenance, is_active)
+       VALUES ('Existing Clinic Initial', 'عيادة أولية', $1, ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326), 'Old Address', 'عنوان قديم', 'MANUAL', 'MANUAL', true)
+       RETURNING id`,
+      [cairoId],
+    );
+    const existingClinicId = initialClinicRes.rows[0].id;
+
+    // Reset revision to 1
+    await database.pool.query(`UPDATE city_catalog_revisions SET revision = 1 WHERE id = 1`);
+
+    const clientA = await database.pool.connect(); // Relocates existing clinic with discrepancy override
+    const clientB = await database.pool.connect(); // Creates a new clinic in Giza
+
+    try {
+      const newClinicName = 'Concurrent Created Clinic ' + crypto.randomUUID();
+      let errorA = null;
+      let errorB = null;
+
+      await Promise.all([
+        (async () => {
+          try {
+            await clientA.query('BEGIN');
+            await updateClinicInTransaction(
+              clientA,
+              'pg',
+              existingClinicId,
+              {
+                city_id: cairoId, // selected Cairo, but located near Giza (discrepancy)
+                latitude: 30.01,
+                longitude: 31.2,
+                address_english: '10 Nile Border St',
+                address_arabic: '١٠ شارع الحدود النيلية',
+                location_confirmed: true,
+                override_reason: 'Operating on boundary between Cairo and Giza.',
+              },
+              { id: principals.adminId, role: 'SUPER_ADMIN', is_active: true },
+            );
+            await clientA.query('COMMIT');
+          } catch (err) {
+            await clientA.query('ROLLBACK').catch(() => {});
+            errorA = err;
+          }
+        })(),
+        (async () => {
+          try {
+            await clientB.query('BEGIN');
+            await createClinicInTransaction(
+              clientB,
+              'pg',
+              {
+                name_english: newClinicName,
+                city_id: gizaId,
+                latitude: 30.01,
+                longitude: 31.2,
+                address_english: '15 Pyramids Ave',
+                address_arabic: '١٥ شارع الأهرام',
+                location_confirmed: true,
+              },
+              { id: principals.adminId, role: 'SUPER_ADMIN', is_active: true },
+            );
+            await clientB.query('COMMIT');
+          } catch (err) {
+            await clientB.query('ROLLBACK').catch(() => {});
+            errorB = err;
+          }
+        })(),
+      ]);
+
+      assert.ifError(errorA);
+      assert.ifError(errorB);
+
+      // Verify existing clinic was updated and audit log written
+      const updatedClinic = await database.pool.query(`SELECT * FROM vet_clinics WHERE id = $1`, [existingClinicId]);
+      assert.equal(updatedClinic.rows[0].address_english, '10 Nile Border St');
+
+      const auditCheck = await database.pool.query(
+        `SELECT * FROM vet_clinic_location_audits WHERE vet_clinic_id = $1`,
+        [existingClinicId],
+      );
+      assert.equal(auditCheck.rowCount, 1);
+      assert.equal(auditCheck.rows[0].reason, 'Operating on boundary between Cairo and Giza.');
+
+      // Verify new clinic was created
+      const newClinicCheck = await database.pool.query(`SELECT * FROM vet_clinics WHERE name_english = $1`, [
+        newClinicName,
+      ]);
+      assert.equal(newClinicCheck.rowCount, 1);
+
+      // Verify revision advanced exactly twice: 1 -> 3
+      const revCheck = await database.pool.query(`SELECT revision FROM city_catalog_revisions WHERE id = 1`);
+      assert.equal(revCheck.rows[0].revision, 3);
+    } finally {
+      await clientA.query('ROLLBACK').catch(() => {});
+      await clientB.query('ROLLBACK').catch(() => {});
+      clientA.release();
+      clientB.release();
+    }
+  });
+
+  it('failed concurrent Vet Clinic mutation rolls back cleanly without partial clinic, partial audit, or advancing catalog revision', async () => {
+    // 1. Seed Cairo
+    await database.pool.query('DELETE FROM cities CASCADE');
+    const cairoRes = await database.pool.query(
+      `INSERT INTO cities (source_code, name_english, name_arabic, governorate, status, center_point)
+       VALUES ('EGY-CAI-FAIL-1', 'Cairo Rollback Test ${Date.now()}', 'القاهرة', 'Cairo', 'OFFICIAL', ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326))
+       RETURNING id`,
+    );
+    const cairoId = cairoRes.rows[0].id;
+
+    // Reset revision to 1
+    await database.pool.query(`UPDATE city_catalog_revisions SET revision = 1 WHERE id = 1`);
+
+    const clientA = await database.pool.connect(); // Failing writer (out-of-bounds coordinates)
+    const clientB = await database.pool.connect(); // Successful writer
+
+    try {
+      const failingClinicName = 'Failing Clinic ' + crypto.randomUUID();
+      const validClinicName = 'Valid Concurrent Clinic ' + crypto.randomUUID();
+      let errorA = null;
+      let errorB = null;
+
+      await Promise.all([
+        (async () => {
+          try {
+            await clientA.query('BEGIN');
+            await createClinicInTransaction(
+              clientA,
+              'pg',
+              {
+                name_english: failingClinicName,
+                city_id: cairoId,
+                latitude: 51.5074, // London (out-of-bounds)
+                longitude: -0.1278,
+                address_english: 'London St',
+                address_arabic: 'شارع لندن',
+                location_confirmed: true,
+              },
+              { id: principals.adminId, role: 'SUPER_ADMIN', is_active: true },
+            );
+            await clientA.query('COMMIT');
+          } catch (err) {
+            await clientA.query('ROLLBACK').catch(() => {});
+            errorA = err;
+          }
+        })(),
+        (async () => {
+          try {
+            await clientB.query('BEGIN');
+            await createClinicInTransaction(
+              clientB,
+              'pg',
+              {
+                name_english: validClinicName,
+                city_id: cairoId,
+                latitude: 30.0444,
+                longitude: 31.2357,
+                address_english: '10 Tahrir St',
+                address_arabic: '١٠ شارع التحرير',
+                location_confirmed: true,
+              },
+              { id: principals.adminId, role: 'SUPER_ADMIN', is_active: true },
+            );
+            await clientB.query('COMMIT');
+          } catch (err) {
+            await clientB.query('ROLLBACK').catch(() => {});
+            errorB = err;
+          }
+        })(),
+      ]);
+
+      // Client A must fail with validation error
+      assert.ok(errorA, 'Client A must reject with ValidationError');
+      assert.ok(errorA instanceof ValidationError);
+
+      // Client B must succeed
+      assert.ifError(errorB);
+
+      // Verify Client A's clinic does NOT exist
+      const checkA = await database.pool.query(`SELECT * FROM vet_clinics WHERE name_english = $1`, [failingClinicName]);
+      assert.equal(checkA.rowCount, 0, 'Failing transaction must leave no clinic row');
+
+      // Verify Client B's clinic DOES exist
+      const checkB = await database.pool.query(`SELECT * FROM vet_clinics WHERE name_english = $1`, [validClinicName]);
+      assert.equal(checkB.rowCount, 1, 'Successful transaction must commit its clinic row');
+
+      // Verify revision advanced ONLY ONCE (from 1 to 2)
+      const revCheck = await database.pool.query(`SELECT revision FROM city_catalog_revisions WHERE id = 1`);
+      assert.equal(revCheck.rows[0].revision, 2, 'Catalog revision must advance exactly once for the successful writer');
+    } finally {
+      await clientA.query('ROLLBACK').catch(() => {});
+      await clientB.query('ROLLBACK').catch(() => {});
+      clientA.release();
+      clientB.release();
+    }
+  });
+
+  it('concurrent API reader holding shared catalog revision fence and Vet Clinic writer serialize without lock-upgrade deadlocks', async () => {
+    // 1. Seed Cairo
+    await database.pool.query('DELETE FROM cities CASCADE');
+    const cairoRes = await database.pool.query(
+      `INSERT INTO cities (source_code, name_english, name_arabic, governorate, status, center_point)
+       VALUES ('EGY-CAI-READ-1', 'Cairo Reader Test ${Date.now()}', 'القاهرة', 'Cairo', 'OFFICIAL', ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326))
+       RETURNING id`,
+    );
+    const cairoId = cairoRes.rows[0].id;
+
+    // Reset revision to 1
+    await database.pool.query(`UPDATE city_catalog_revisions SET revision = 1 WHERE id = 1`);
+
+    const clientReader = await database.pool.connect(); // Reader holding FOR SHARE
+    const clientWriter = await database.pool.connect(); // Writer acquiring FOR UPDATE
+
+    try {
+      // Step 1: Reader begins transaction and acquires shared catalog revision fence
+      await clientReader.query('BEGIN');
+      const readerRevision = await acquireCityCatalogRevisionFence(clientReader, true); // FOR SHARE
+      assert.equal(readerRevision.revision, 1);
+
+      // Step 2: Writer begins transaction and attempts createVetClinicCommand (blocks on FOR UPDATE waiting for reader)
+      let writerFinished = false;
+      let writerError = null;
+      const clinicName = 'Reader Fence Clinic ' + crypto.randomUUID();
+
+      const writerPromise = (async () => {
+        try {
+          await clientWriter.query('BEGIN');
+          await createClinicInTransaction(
+            clientWriter,
+            'pg',
+            {
+              name_english: clinicName,
+              city_id: cairoId,
+              latitude: 30.0444,
+              longitude: 31.2357,
+              address_english: '10 Reader St',
+              address_arabic: '١٠ شارع القارئ',
+              location_confirmed: true,
+            },
+            { id: principals.adminId, role: 'SUPER_ADMIN', is_active: true },
+          );
+          await clientWriter.query('COMMIT');
+        } catch (err) {
+          await clientWriter.query('ROLLBACK').catch(() => {});
+          writerError = err;
+        } finally {
+          writerFinished = true;
+        }
+      })();
+
+      await new Promise((r) => setTimeout(r, 80));
+      assert.equal(writerFinished, false, 'Writer must block waiting for Reader shared fence to release');
+
+      // Step 3: Reader commits / releases shared lock
+      await clientReader.query('COMMIT');
+
+      // Step 4: Writer unblocks and commits successfully
+      await writerPromise;
+      assert.ifError(writerError);
+      assert.equal(writerFinished, true);
+
+      // Verify clinic was committed
+      const check = await database.pool.query(`SELECT * FROM vet_clinics WHERE name_english = $1`, [clinicName]);
+      assert.equal(check.rowCount, 1);
+
+      // Verify revision advanced to 2
+      const revCheck = await database.pool.query(`SELECT revision FROM city_catalog_revisions WHERE id = 1`);
+      assert.equal(revCheck.rows[0].revision, 2);
+    } finally {
+      await clientReader.query('ROLLBACK').catch(() => {});
+      await clientWriter.query('ROLLBACK').catch(() => {});
+      clientReader.release();
+      clientWriter.release();
+    }
+  });
+
+  it('concurrent Vet Clinic update transactions on separate connections serialize deterministically without 40P01 deadlocks and advance catalog revision exactly twice', async () => {
+    // 1. Seed official Cairo and Giza
+    await database.pool.query('DELETE FROM cities CASCADE');
+    const cairoRes = await database.pool.query(
+      `INSERT INTO cities (source_code, name_english, name_arabic, governorate, status, center_point)
+       VALUES ('EGY-CAI-UPDUPD-1', 'Cairo UpdUpd Test ${Date.now()}', 'القاهرة', 'Cairo', 'OFFICIAL', ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326))
+       RETURNING id`,
+    );
+    const cairoId = cairoRes.rows[0].id;
+
+    const gizaRes = await database.pool.query(
+      `INSERT INTO cities (source_code, name_english, name_arabic, governorate, status, center_point)
+       VALUES ('EGY-GIZ-UPDUPD-1', 'Giza UpdUpd Test ${Date.now()}', 'الجيزة', 'Giza', 'OFFICIAL', ST_SetSRID(ST_MakePoint(31.2000, 30.0100), 4326))
+       RETURNING id`,
+    );
+    const gizaId = gizaRes.rows[0].id;
+
+    // Pre-insert two existing clinics
+    const clinicRes1 = await database.pool.query(
+      `INSERT INTO vet_clinics (name_english, name_arabic, city_id, coordinates, address_english, address_arabic, source, location_provenance, is_active)
+       VALUES ('Clinic One Initial', 'عيادة أولى', $1, ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326), '1 Old Rd', '١ طريق قديم', 'MANUAL', 'MANUAL', true)
+       RETURNING id`,
+      [cairoId],
+    );
+    const clinicId1 = clinicRes1.rows[0].id;
+
+    const clinicRes2 = await database.pool.query(
+      `INSERT INTO vet_clinics (name_english, name_arabic, city_id, coordinates, address_english, address_arabic, source, location_provenance, is_active)
+       VALUES ('Clinic Two Initial', 'عيادة ثانية', $1, ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326), '2 Old Rd', '٢ طريق قديم', 'MANUAL', 'MANUAL', true)
+       RETURNING id`,
+      [cairoId],
+    );
+    const clinicId2 = clinicRes2.rows[0].id;
+
+    // Reset revision to 1
+    await database.pool.query(`UPDATE city_catalog_revisions SET revision = 1 WHERE id = 1`);
+
+    const clientA = await database.pool.connect();
+    const clientB = await database.pool.connect();
+
+    try {
+      let errorA = null;
+      let errorB = null;
+
+      await Promise.all([
+        (async () => {
+          try {
+            await clientA.query('BEGIN');
+            await updateClinicInTransaction(
+              clientA,
+              'pg',
+              clinicId1,
+              {
+                city_id: cairoId, // Discrepant override near Giza
+                latitude: 30.01,
+                longitude: 31.2,
+                address_english: '100 Nile West St',
+                address_arabic: '١٠٠ شارع غرب النيل',
+                location_confirmed: true,
+                override_reason: 'Operating on western border.',
+              },
+              { id: principals.adminId, role: 'SUPER_ADMIN', is_active: true },
+            );
+            await clientA.query('COMMIT');
+          } catch (err) {
+            await clientA.query('ROLLBACK').catch(() => {});
+            errorA = err;
+          }
+        })(),
+        (async () => {
+          try {
+            await clientB.query('BEGIN');
+            await updateClinicInTransaction(
+              clientB,
+              'pg',
+              clinicId2,
+              {
+                city_id: gizaId, // Relocate to Giza matching coords
+                latitude: 30.01,
+                longitude: 31.2,
+                address_english: '200 Pyramids West Ave',
+                address_arabic: '٢٠٠ شارع الأهرام غرب',
+                location_confirmed: true,
+              },
+              { id: principals.adminId, role: 'SUPER_ADMIN', is_active: true },
+            );
+            await clientB.query('COMMIT');
+          } catch (err) {
+            await clientB.query('ROLLBACK').catch(() => {});
+            errorB = err;
+          }
+        })(),
+      ]);
+
+      assert.ifError(errorA);
+      assert.ifError(errorB);
+
+      // Verify both clinics were updated
+      const updated1 = await database.pool.query(`SELECT * FROM vet_clinics WHERE id = $1`, [clinicId1]);
+      const updated2 = await database.pool.query(`SELECT * FROM vet_clinics WHERE id = $1`, [clinicId2]);
+      assert.equal(updated1.rows[0].address_english, '100 Nile West St');
+      assert.equal(updated2.rows[0].address_english, '200 Pyramids West Ave');
+
+      // Verify audit recorded for clinic 1
+      const auditCheck = await database.pool.query(
+        `SELECT * FROM vet_clinic_location_audits WHERE vet_clinic_id = $1`,
+        [clinicId1],
+      );
+      assert.equal(auditCheck.rowCount, 1);
+      assert.equal(auditCheck.rows[0].reason, 'Operating on western border.');
+
+      // Verify revision advanced exactly twice: 1 -> 3
+      const revCheck = await database.pool.query(`SELECT revision FROM city_catalog_revisions WHERE id = 1`);
+      assert.equal(revCheck.rows[0].revision, 3);
+    } finally {
+      await clientA.query('ROLLBACK').catch(() => {});
+      await clientB.query('ROLLBACK').catch(() => {});
+      clientA.release();
+      clientB.release();
+    }
+  });
+
+  it('failed concurrent Vet Clinic update rolls back cleanly without partial update or advancing catalog revision', async () => {
+    // 1. Seed Cairo
+    await database.pool.query('DELETE FROM cities CASCADE');
+    const cairoRes = await database.pool.query(
+      `INSERT INTO cities (source_code, name_english, name_arabic, governorate, status, center_point)
+       VALUES ('EGY-CAI-FAILUPD-1', 'Cairo Fail Upd Test ${Date.now()}', 'القاهرة', 'Cairo', 'OFFICIAL', ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326))
+       RETURNING id`,
+    );
+    const cairoId = cairoRes.rows[0].id;
+
+    // Pre-insert clinic
+    const clinicRes = await database.pool.query(
+      `INSERT INTO vet_clinics (name_english, name_arabic, city_id, coordinates, address_english, address_arabic, source, location_provenance, is_active)
+       VALUES ('Unchanged Clinic', 'عيادة ثابتة', $1, ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326), 'Original Address', 'عنوان أصلي', 'MANUAL', 'MANUAL', true)
+       RETURNING id`,
+      [cairoId],
+    );
+    const clinicId = clinicRes.rows[0].id;
+
+    // Reset revision to 1
+    await database.pool.query(`UPDATE city_catalog_revisions SET revision = 1 WHERE id = 1`);
+
+    const clientA = await database.pool.connect(); // Failing update (out-of-bounds coords)
+    const clientB = await database.pool.connect(); // Successful create
+
+    try {
+      const validClinicName = 'Valid Sibling Clinic ' + crypto.randomUUID();
+      let errorA = null;
+      let errorB = null;
+
+      await Promise.all([
+        (async () => {
+          try {
+            await clientA.query('BEGIN');
+            await updateClinicInTransaction(
+              clientA,
+              'pg',
+              clinicId,
+              {
+                city_id: cairoId,
+                latitude: 99.999, // Out of bounds
+                longitude: 31.2357,
+                address_english: 'Corrupted Address',
+                address_arabic: 'عنوان معطوب',
+                location_confirmed: true,
+              },
+              { id: principals.adminId, role: 'SUPER_ADMIN', is_active: true },
+            );
+            await clientA.query('COMMIT');
+          } catch (err) {
+            await clientA.query('ROLLBACK').catch(() => {});
+            errorA = err;
+          }
+        })(),
+        (async () => {
+          try {
+            await clientB.query('BEGIN');
+            await createClinicInTransaction(
+              clientB,
+              'pg',
+              {
+                name_english: validClinicName,
+                city_id: cairoId,
+                latitude: 30.0444,
+                longitude: 31.2357,
+                address_english: 'Valid Street',
+                address_arabic: 'شارع صالح',
+                location_confirmed: true,
+              },
+              { id: principals.adminId, role: 'SUPER_ADMIN', is_active: true },
+            );
+            await clientB.query('COMMIT');
+          } catch (err) {
+            await clientB.query('ROLLBACK').catch(() => {});
+            errorB = err;
+          }
+        })(),
+      ]);
+
+      assert.ok(errorA, 'Client A must fail validation');
+      assert.ok(errorA instanceof ValidationError);
+      assert.ifError(errorB);
+
+      // Verify original clinic was NOT updated
+      const clinicCheck = await database.pool.query(`SELECT address_english FROM vet_clinics WHERE id = $1`, [clinicId]);
+      assert.equal(clinicCheck.rows[0].address_english, 'Original Address');
+
+      // Verify revision advanced exactly once (from 1 to 2)
+      const revCheck = await database.pool.query(`SELECT revision FROM city_catalog_revisions WHERE id = 1`);
+      assert.equal(revCheck.rows[0].revision, 2);
+    } finally {
+      await clientA.query('ROLLBACK').catch(() => {});
+      await clientB.query('ROLLBACK').catch(() => {});
+      clientA.release();
+      clientB.release();
+    }
+  });
 });

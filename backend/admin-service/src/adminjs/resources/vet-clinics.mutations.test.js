@@ -740,13 +740,20 @@ describe('Vet Clinic Mutation Boundary & Persistence Adapters', () => {
     const pgAdapter = new PostgresVetClinicPersistenceAdapter(client);
     const knexAdapter = new KnexVetClinicPersistenceAdapter(trx);
 
-    // 1. acquireCityCatalogRevisionFence
+    // 1. acquireCityCatalogRevisionFence (shared and exclusive)
     const pgRevision = await pgAdapter.acquireCityCatalogRevisionFence({ forShare: true });
     const knexRevision = await knexAdapter.acquireCityCatalogRevisionFence({ forShare: true });
     assert.equal(pgRevision.id, 1);
     assert.equal(pgRevision.revision, 1);
     assert.equal(knexRevision.id, 1);
     assert.equal(knexRevision.revision, 1);
+
+    const pgRevisionUpdate = await pgAdapter.acquireCityCatalogRevisionFence({ forUpdate: true });
+    const knexRevisionUpdate = await knexAdapter.acquireCityCatalogRevisionFence({ forUpdate: true });
+    assert.equal(pgRevisionUpdate.id, 1);
+    assert.equal(pgRevisionUpdate.revision, 1);
+    assert.equal(knexRevisionUpdate.id, 1);
+    assert.equal(knexRevisionUpdate.revision, 1);
 
     // 2. findAdminUserById
     const pgAdmin = await pgAdapter.findAdminUserById('admin-test-id', { forShare: true });
@@ -758,11 +765,21 @@ describe('Vet Clinic Mutation Boundary & Persistence Adapters', () => {
     assert.equal(pgAdmin.role, 'ADMIN');
     assert.equal(knexAdmin.role, 'ADMIN');
 
-    // 3. backward-compatible helper functions
-    const helperPgRevision = await acquireCityCatalogRevisionFence(client, true);
-    const helperKnexRevision = await acquireCityCatalogRevisionFence(trx, true);
-    assert.equal(helperPgRevision.id, 1);
-    assert.equal(helperKnexRevision.id, 1);
+    // 3. backward-compatible helper functions (shared, exclusive, and default)
+    const helperPgRevisionShare = await acquireCityCatalogRevisionFence(client, true);
+    const helperKnexRevisionShare = await acquireCityCatalogRevisionFence(trx, true);
+    assert.equal(helperPgRevisionShare.id, 1);
+    assert.equal(helperKnexRevisionShare.id, 1);
+
+    const helperPgRevisionUpdate = await acquireCityCatalogRevisionFence(client, false);
+    const helperKnexRevisionUpdate = await acquireCityCatalogRevisionFence(trx, false);
+    assert.equal(helperPgRevisionUpdate.id, 1);
+    assert.equal(helperKnexRevisionUpdate.id, 1);
+
+    const helperPgRevisionDefault = await acquireCityCatalogRevisionFence(client);
+    const helperKnexRevisionDefault = await acquireCityCatalogRevisionFence(trx);
+    assert.equal(helperPgRevisionDefault.id, 1);
+    assert.equal(helperKnexRevisionDefault.id, 1);
 
     const helperPgAdmin = await findAdminUserById(client, 'admin-test-id', true);
     const helperKnexAdmin = await findAdminUserById(trx, 'admin-test-id', true);
