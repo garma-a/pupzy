@@ -15,12 +15,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  format-and-glossary:
-    name: Code Formatting & Glossary Conformance
+  release-verification-gate:
+    name: Authoritative Release Verification Gate
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout Code with Git History
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
@@ -29,103 +31,17 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
-      - name: Install Root Dependencies
-        working-directory: backend
-        run: npm ci
-
-      - name: Install AdminJS Dependencies
-        working-directory: backend/admin-service
-        run: npm ci
-
-      - name: Root Formatting Check
-        working-directory: backend
-        run: npm run format:check
-
-      - name: AdminJS Formatting Check
-        working-directory: backend/admin-service
-        run: npm run format:check
-
-      - name: Root Glossary Conformance
-        working-directory: backend
-        run: npm run check:glossary
-
-      - name: AdminJS Glossary Conformance
-        working-directory: backend/admin-service
-        run: npm run check:glossary
-
-  lint-and-build:
-    name: TypeScript Linting & Production Bundle Builds
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install Root Dependencies
-        working-directory: backend
-        run: npm ci
-
-      - name: Run ESLint
-        working-directory: backend
-        run: npm run lint
-
-      - name: Build NestJS Main API Bundle
-        working-directory: backend
-        run: npm run build
-
-  unit-tests:
-    name: Root & AdminJS Unit Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install Root Dependencies
-        working-directory: backend
-        run: npm ci
-
-      - name: Install AdminJS Dependencies
-        working-directory: backend/admin-service
-        run: npm ci
-
-      - name: Run Root Unit Tests
-        working-directory: backend
-        run: npm test
-
-      - name: Run AdminJS Unit Tests
-        working-directory: backend/admin-service
-        run: npm test
-
-  database-and-integration-tests:
-    name: Database Migrations, Reset Verification & Integration Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Set up Docker Buildx
+      - name: Setup Docker Buildx & Container Runtime
         uses: docker/setup-buildx-action@v3
 
+      - name: Install Chromium Runtime for Real-Browser Journeys
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+            libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+            libgbm1 libasound2 chromium-browser
+
       - name: Install Root Dependencies
         working-directory: backend
         run: npm ci
@@ -134,71 +50,14 @@ jobs:
         working-directory: backend/admin-service
         run: npm ci
 
-      - name: Verify Clean Database Migration, Repeat Run, and Baseline Upgrade
+      - name: Execute Authoritative Release Verification Gate
+        id: release-gate
         working-directory: backend
-        run: npx jest src/database/migrate.integration.spec.ts --runInBand
-
-      - name: Verify Reset Safety Gate, Host Protection, and Canonical Baseline
-        working-directory: backend
-        run: npx jest src/database/reset.integration.spec.ts --runInBand
-
-      - name: Run All Root Integration Tests
-        working-directory: backend
-        run: npm run test:integration
-
-      - name: Run AdminJS Service Integration Tests
-        working-directory: backend/admin-service
-        run: npm run test:integration
-
-      - name: Run Production Container Smoke & E2E Tests
-        working-directory: backend
-        run: npm run test:e2e
-
-  real-browser-journeys:
-    name: AdminJS Real-Browser Journeys (Puppeteer)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install AdminJS Dependencies
-        working-directory: backend/admin-service
-        run: npm ci
-
-      - name: Install Chromium for Puppeteer
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2 chromium-browser || true
-
-      - name: Run AdminJS Real-Browser Journey Suite
-        working-directory: backend/admin-service
-        run: npm run test:browser
-
-  release-gate:
-    name: Release Gate Certification
-    needs:
-      - format-and-glossary
-      - lint-and-build
-      - unit-tests
-      - database-and-integration-tests
-      - real-browser-journeys
-    runs-on: ubuntu-latest
-    steps:
-      - name: Certification Check
-        run: |
-          echo "=========================================================="
-          echo " RELEASE GATE PASSED: All 5 validation checks succeeded."
-          echo " - Formatting & Glossary Conformance: PASS"
-          echo " - TypeScript Linting & Bundle Build: PASS"
-          echo " - Root & AdminJS Unit Tests: PASS"
-          echo " - Database Migrations, Reset & Integration Tests: PASS"
-          echo " - Real-Browser Journeys (AdminJS): PASS"
-          echo "=========================================================="
-          echo "RESULT: RELEASE READY"
+        env:
+          FORCE_COLOR: '1'
+          CI: 'true'
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: npm run verify:release
