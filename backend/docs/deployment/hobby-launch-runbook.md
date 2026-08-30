@@ -28,9 +28,9 @@ The launch infrastructure consists of **exactly three services** in one Railway 
 |---|---|---|---|---|---|---|
 | **PostgreSQL** | N/A (Railway Plugin) | Managed Postgres | **Continuous** (Always On) | 1 | 1 GB RAM, 1 vCPU | Managed by Railway |
 | **Main NestJS API** | `/backend` | `/backend/railway.json` → `Dockerfile` | **Continuous** (Always On) | **1** | 512 MB RAM, 1 vCPU | Max 10 connections (`DB_POOL_MAX`) |
-| **AdminJS Service** | `/backend/admin-service` | `/backend/admin-service/railway.json` → `Dockerfile` | **Serverless Sleep** | **1** | 512 MB RAM, 0.5 vCPU | Max 3 (action/session) + Max 3 (SQL adapter) |
+| **AdminJS Service** | `/backend` | `/backend/admin-service/railway.json` → `admin-service/Dockerfile` | **Serverless Sleep** | **1** | 512 MB RAM, 0.5 vCPU | Max 3 (action/session) + Max 3 (SQL adapter) |
 
-Railway's **Root Directory** and **Config File** settings are independent. Configure both absolute repository paths exactly as shown; the config file does not automatically follow the selected root.
+Railway's **Root Directory** and **Config File** settings are independent. Configure both absolute repository paths exactly as shown; the config file does not automatically follow the selected root. AdminJS must use `/backend` as its build context so the image includes the one canonical Google Maps handoff contract shared with the main API.
 
 ### Continuous Availability vs. Sleep Policy
 - **PostgreSQL:** Remains continuously running to maintain durable data availability.
@@ -141,7 +141,7 @@ Complete this checklist prior to public release:
 - [ ] Exactly 3 services exist in the Railway project: PostgreSQL, Main API, AdminJS.
 - [ ] No Redis, PgBouncer, worker, or queue services are deployed.
 - [ ] Main API Root Directory is `/backend` and Config File is `/backend/railway.json`.
-- [ ] AdminJS Root Directory is `/backend/admin-service` and Config File is `/backend/admin-service/railway.json`.
+- [ ] AdminJS Root Directory is `/backend` and Config File is `/backend/admin-service/railway.json` (builds `admin-service/Dockerfile` with the shared contract available).
 - [ ] PostgreSQL is accessible only via Railway private networking (`DATABASE_PRIVATE_URL`).
 - [ ] Replicas configured: exactly 1 replica for Main API, 1 replica for AdminJS.
 - [ ] Resource Ceilings set in Railway:

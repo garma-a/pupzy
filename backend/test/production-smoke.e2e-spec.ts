@@ -133,7 +133,7 @@ describe('Three-Service Production Container Smoke Tests', () => {
 
     await Promise.all([
       runCommand('docker', ['build', '--pull=false', '-t', apiImage, '.'], rootDir),
-      runCommand('docker', ['build', '--pull=false', '-t', adminImage, '.'], `${rootDir}/admin-service`),
+      runCommand('docker', ['build', '--pull=false', '-f', 'admin-service/Dockerfile', '-t', adminImage, '.'], rootDir),
     ]);
   }, 600_000);
 

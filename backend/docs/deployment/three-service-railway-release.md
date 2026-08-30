@@ -26,9 +26,11 @@ The launch architecture consists of **exactly three services** within a single R
 |---|---|---|---|---|---|---|
 | **PostgreSQL** | N/A (Plugin) | Railway Postgres Template | Always On | 1 | 1 GB RAM, 1 vCPU | Managed |
 | **Main API** | `/backend` | Config `/backend/railway.json`; `Dockerfile` | Always On | 1 | 512 MB RAM, 1 vCPU | Max 10 |
-| **AdminJS** | `/backend/admin-service` | Config `/backend/admin-service/railway.json`; `Dockerfile` | Serverless Sleep | 1 | 512 MB RAM, 0.5 vCPU | Max 3 |
+| **AdminJS** | `/backend` | Config `/backend/admin-service/railway.json`; `admin-service/Dockerfile` | Serverless Sleep | 1 | 512 MB RAM, 0.5 vCPU | Max 3 |
 
 Set each Railway Root Directory and Config File independently; Config-as-Code does not automatically follow the root directory.
+
+The AdminJS service must build from `/backend`, not `/backend/admin-service`: its image copies the single canonical Google Maps handoff contract from the repository root, shared with the main API.
 
 ### Zero Fourth-Service Policy
 - **No Redis:** AdminJS statistics use an in-process lazy cache with immediate mutation invalidation; sessions are stored in PostgreSQL (`connect-pg-simple`). The Main API uses in-process caching (`@nestjs/cache-manager`).
