@@ -398,8 +398,8 @@ export class PostsService {
     if (post.creatorId !== userId) {
       throw new ForbiddenError('You can only delete your own posts');
     }
-    const deletedPost = await this.postsRepository.softDelete(postId, userId);
-    if (!deletedPost) throw new NotFoundError('Post', postId);
+    const removedPost = await this.postsRepository.softDelete(postId, userId);
+    if (!removedPost) throw new NotFoundError('Post', postId);
     await this.usersService.invalidateUserCacheById(userId).catch(() => {});
   }
 

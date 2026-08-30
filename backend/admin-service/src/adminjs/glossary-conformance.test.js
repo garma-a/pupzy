@@ -1,29 +1,16 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+const { findForbiddenGlossaryTerms } = require('../../../scripts/glossary-conformance.cjs');
 const adminServiceSrcDir = path.resolve(__dirname, '..');
 const adminServiceTestDir = path.resolve(__dirname, '../../test');
-
-const FORBIDDEN_PATTERNS = [
-  { term: 'City record', pattern: /\bcity\s+record\b/i },
-  { term: 'location entry', pattern: /\blocation\s+entry\b/i },
-  { term: 'custom city creation', pattern: /\bcustom\s+city\s+creation\b/i },
-  { term: 'operator-created city', pattern: /\boperator-created\s+city\b/i },
-  { term: 'Google GPS', pattern: /\bgoogle\s+gps\b/i },
-  { term: 'Verified Location', pattern: /\bverified\s+location\b/i },
-  { term: 'provider-validated address', pattern: /\bprovider-validated\b/i },
-  { term: 'raw coordinates', pattern: /\braw\s+coordinates?\b/i },
-  { term: 'Legacy clinic', pattern: /\blegacy\s+clinic\b/i },
-  { term: 'unverified clinic', pattern: /\bunverified\s+clinic\b/i },
-  { term: 'Hidden Post', pattern: /\bhidden\s+post\b/i },
-  { term: 'deleted Post', pattern: /\bdeleted\s+post\b/i },
-  { term: 'permanently removed Post', pattern: /\bpermanently\s+removed\s+post\b/i },
-];
 
 function getSourceFiles(dir, fileList = []) {
   if (!fs.existsSync(dir)) return fileList;
@@ -50,23 +37,11 @@ describe('Domain Glossary & Mapped Location Conformance', () => {
       const content = fs.readFileSync(file, 'utf8');
       const lines = content.split('\n');
 
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        // Skip self test pattern definitions
-        if (file.endsWith('glossary-conformance.test.js') && line.includes('pattern:')) {
-          continue;
-        }
-
-        for (const { term, pattern } of FORBIDDEN_PATTERNS) {
-          if (pattern.test(line)) {
-            violations.push({
-              file: path.relative(path.resolve(__dirname, '../../..'), file),
-              line: i + 1,
-              term,
-              content: line.trim(),
-            });
-          }
-        }
+      for (const violation of findForbiddenGlossaryTerms(lines)) {
+        violations.push({
+          file: path.relative(path.resolve(__dirname, '../../..'), file),
+          ...violation,
+        });
       }
     }
 
@@ -77,6 +52,23 @@ describe('Domain Glossary & Mapped Location Conformance', () => {
         .map((v) => `  ${v.file}:${v.line} -> forbidden "${v.term}": ${v.content}`)
         .join('\n')}`,
     );
+  });
+
+  it('detects glossary-forbidden City synonyms in identifier forms with actionable diagnostics', () => {
+    const forbiddenTerm = ['City', 'record'].join(' ');
+    const variants = [
+      'City' + ' record',
+      ['city', 'Record'].join(''),
+      ['City', 'Record'].join(''),
+      ['city', 'record'].join('_'),
+      ['city', 'record'].join('-'),
+    ];
+
+    for (const variant of variants) {
+      assert.deepEqual(findForbiddenGlossaryTerms([`const ${variant} = true;`]), [
+        { line: 1, term: forbiddenTerm, content: `const ${variant} = true;` },
+      ]);
+    }
   });
 
   it('ensures Mapped Location UI components and resources use canonical domain vocabulary', () => {

@@ -60,7 +60,7 @@ export function formatCityTitle(city) {
   return name_english || name_arabic || city.id || '';
 }
 
-export class CityRecord extends BaseRecord {
+export class CityPresentationWrapper extends BaseRecord {
   title() {
     return formatCityTitle(this.params);
   }
@@ -92,7 +92,7 @@ export function buildCitiesResource(db, components = {}) {
   const table = db?.table ? db.table('cities') : db;
   if (table && typeof table === 'object') {
     table.build = function (params) {
-      return new CityRecord(params, this);
+      return new CityPresentationWrapper(params, this);
     };
   }
 

@@ -1600,13 +1600,13 @@ describe('AdminJS HTTP security and resource behavior', () => {
 
     // 5. Vet Clinic historical references and official-only assignments
     // 5a. Seed Vet Clinics with Legacy and Retired Cities
-    const legacyClinicRes = await database.pool.query(
+    const historicalVetClinicRes = await database.pool.query(
       `INSERT INTO vet_clinics (name_english, name_arabic, city_id, phone_number, address_english, address_arabic, coordinates)
        VALUES ('Historical Heritage Clinic', 'عيادة تراثية قديمة', $1, '01000000001', '10 Heritage St', '١٠ شارع التراث', ST_SetSRID(ST_MakePoint(31.20, 29.98), 4326))
        RETURNING id`,
       [legacyCityId],
     );
-    const legacyClinicId = legacyClinicRes.rows[0].id;
+    const historicalVetClinicId = historicalVetClinicRes.rows[0].id;
 
     const retiredClinicRes = await database.pool.query(
       `INSERT INTO vet_clinics (name_english, name_arabic, city_id, phone_number, address_english, address_arabic, coordinates)
@@ -1617,14 +1617,20 @@ describe('AdminJS HTTP security and resource behavior', () => {
     const retiredClinicId = retiredClinicRes.rows[0].id;
 
     // 5b. Vet Clinic show views render populated historical city title and governorate
-    const vcLegacyShow = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/records/${legacyClinicId}/show`, {
-      headers: { cookie: superCookie },
-    });
-    assert.equal(vcLegacyShow.status, 200);
-    const vcLegData = await vcLegacyShow.json();
-    assert.ok(vcLegData.record.populated.city_id, 'Expected populated city_id on clinic with historical city show');
-    assert.equal(vcLegData.record.populated.city_id.title, 'Ancient Village / قرية قديمة متقادمة (Giza)');
-    assert.equal(vcLegData.record.populated.city_id.params.status, 'LEGACY');
+    const vcHistoricalVetClinicShow = await fetch(
+      `${baseUrl}/admin/api/resources/vet_clinics/records/${historicalVetClinicId}/show`,
+      {
+        headers: { cookie: superCookie },
+      },
+    );
+    assert.equal(vcHistoricalVetClinicShow.status, 200);
+    const vcHistoricalData = await vcHistoricalVetClinicShow.json();
+    assert.ok(
+      vcHistoricalData.record.populated.city_id,
+      'Expected populated city_id on clinic with historical city show',
+    );
+    assert.equal(vcHistoricalData.record.populated.city_id.title, 'Ancient Village / قرية قديمة متقادمة (Giza)');
+    assert.equal(vcHistoricalData.record.populated.city_id.params.status, 'LEGACY');
 
     const vcRetiredShow = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/records/${retiredClinicId}/show`, {
       headers: { cookie: superCookie },
@@ -1641,31 +1647,34 @@ describe('AdminJS HTTP security and resource behavior', () => {
     });
     assert.equal(vcListRes.status, 200);
     const vcListData = await vcListRes.json();
-    const foundLegClinic = vcListData.records.find((r) => r.id === legacyClinicId);
+    const foundHistoricalVetClinic = vcListData.records.find((r) => r.id === historicalVetClinicId);
     const foundRetClinic = vcListData.records.find((r) => r.id === retiredClinicId);
-    assert.ok(foundLegClinic);
-    assert.equal(foundLegClinic.populated.city_id.title, 'Ancient Village / قرية قديمة متقادمة (Giza)');
+    assert.ok(foundHistoricalVetClinic);
+    assert.equal(foundHistoricalVetClinic.populated.city_id.title, 'Ancient Village / قرية قديمة متقادمة (Giza)');
     assert.ok(foundRetClinic);
     assert.equal(foundRetClinic.populated.city_id.title, 'Retired District / حي ملغي (Suez)');
 
     // 5d. Non-location edits to historical clinic succeed and preserve historical City reference
-    const vcNonLocEditRes = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/records/${legacyClinicId}/edit`, {
-      method: 'POST',
-      headers: {
-        cookie: `${superCookie}; ${superCsrf.cookie}`,
-        origin: baseUrl,
-        'x-xsrf-token': superCsrf.token,
-        'content-type': 'application/json',
+    const vcNonLocationEditRes = await fetch(
+      `${baseUrl}/admin/api/resources/vet_clinics/records/${historicalVetClinicId}/edit`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: `${superCookie}; ${superCsrf.cookie}`,
+          origin: baseUrl,
+          'x-xsrf-token': superCsrf.token,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone_number: '01099998888',
+        }),
       },
-      body: JSON.stringify({
-        phone_number: '01099998888',
-      }),
-    });
-    assert.equal(vcNonLocEditRes.status, 200);
-    const vcNonLocEditData = await vcNonLocEditRes.json();
+    );
+    assert.equal(vcNonLocationEditRes.status, 200);
+    const vcNonLocEditData = await vcNonLocationEditRes.json();
     assert.equal(vcNonLocEditData.notice?.type, 'success');
     const checkClinic = await database.pool.query(`SELECT city_id, phone_number FROM vet_clinics WHERE id = $1`, [
-      legacyClinicId,
+      historicalVetClinicId,
     ]);
     assert.equal(checkClinic.rows[0].city_id, legacyCityId);
     assert.equal(checkClinic.rows[0].phone_number, '01099998888');
@@ -1717,7 +1726,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
 
     // 5f. Updating existing clinic to change city to Legacy or Retired city is rejected
     const vcFailEditLegacyRes = await fetch(
-      `${baseUrl}/admin/api/resources/vet_clinics/records/${legacyClinicId}/edit`,
+      `${baseUrl}/admin/api/resources/vet_clinics/records/${historicalVetClinicId}/edit`,
       {
         method: 'POST',
         headers: {
@@ -2240,7 +2249,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
       `INSERT INTO vet_clinic_location_audits (vet_clinic_id, admin_user_id, selected_city_id, nearest_city_id, coordinates, discrepancy_details, reason)
        VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint(31.20, 29.98), 4326), '{"discrepant":true}', 'Historical location audit check')
        RETURNING id`,
-      [legacyClinicId, principals.adminId, legacyCityId, retiredCityId],
+      [historicalVetClinicId, principals.adminId, legacyCityId, retiredCityId],
     );
     const auditId = auditRes.rows[0].id;
 

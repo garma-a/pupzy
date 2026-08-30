@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { buildCitiesResource, formatCityTitle, CityRecord } from './cities.resource.js';
+import { buildCitiesResource, formatCityTitle, CityPresentationWrapper } from './cities.resource.js';
 
 const db = { table: (name) => ({ name }) };
 
@@ -53,7 +53,7 @@ describe('AdminJS Cities Resource', () => {
     assert.equal(formatCityTitle(undefined), '');
   });
 
-  it('CityRecord produces bilingual formatted title in title() and toJSON()', () => {
+  it('CityPresentationWrapper produces bilingual formatted title in title() and toJSON()', () => {
     const mockResource = {
       properties: () => [{ isTitle: () => false, isId: () => true, name: () => 'id' }],
       decorate: () => ({
@@ -62,7 +62,7 @@ describe('AdminJS Cities Resource', () => {
         bulkActions: () => [],
       }),
     };
-    const record = new CityRecord(
+    const cityPresentationWrapper = new CityPresentationWrapper(
       {
         id: 'city-cairo-1',
         name_english: 'Al Maadi',
@@ -73,8 +73,8 @@ describe('AdminJS Cities Resource', () => {
       mockResource,
     );
 
-    assert.equal(record.title(), 'Al Maadi / المعادي (Cairo)');
-    const json = record.toJSON();
+    assert.equal(cityPresentationWrapper.title(), 'Al Maadi / المعادي (Cairo)');
+    const json = cityPresentationWrapper.toJSON();
     assert.equal(json.title, 'Al Maadi / المعادي (Cairo)');
     assert.equal(json.id, 'city-cairo-1');
   });
@@ -258,14 +258,14 @@ describe('AdminJS Cities Resource', () => {
     assert.equal(parseCenterPoint('invalid text'), null);
   });
 
-  it('CityRecord.toJSON formats center_point and populates latitude and longitude', () => {
+  it('CityPresentationWrapper.toJSON formats center_point and populates latitude and longitude', () => {
     const mockResource = {
       id: () => 'cities',
       properties: () => [{ isTitle: () => false, isId: () => true, name: () => 'id' }],
       decorate: () => ({ titleOf: () => 'Cairo', recordActions: () => [], bulkActions: () => [] }),
     };
 
-    const cityRecord = new CityRecord(
+    const cityPresentationWrapper = new CityPresentationWrapper(
       {
         id: 'cairo-1',
         name_english: 'Cairo',
@@ -277,7 +277,7 @@ describe('AdminJS Cities Resource', () => {
       mockResource,
     );
 
-    const json = cityRecord.toJSON();
+    const json = cityPresentationWrapper.toJSON();
     assert.equal(json.params.center_point, 'POINT(31.2357 30.0444)');
     assert.equal(json.params.latitude, 30.0444);
     assert.equal(json.params.longitude, 31.2357);

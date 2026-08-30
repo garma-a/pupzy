@@ -1,21 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-
-const FORBIDDEN_PATTERNS = [
-  { term: 'City record', pattern: /\bcity\s+record\b/i },
-  { term: 'location entry', pattern: /\blocation\s+entry\b/i },
-  { term: 'custom city creation', pattern: /\bcustom\s+city\s+creation\b/i },
-  { term: 'operator-created city', pattern: /\boperator-created\s+city\b/i },
-  { term: 'Google GPS', pattern: /\bgoogle\s+gps\b/i },
-  { term: 'Verified Location', pattern: /\bverified\s+location\b/i },
-  { term: 'provider-validated address', pattern: /\bprovider-validated\b/i },
-  { term: 'raw coordinates', pattern: /\braw\s+coordinates?\b/i },
-  { term: 'Legacy clinic', pattern: /\blegacy\s+clinic\b/i },
-  { term: 'unverified clinic', pattern: /\bunverified\s+clinic\b/i },
-  { term: 'Hidden Post', pattern: /\bhidden\s+post\b/i },
-  { term: 'deleted Post', pattern: /\bdeleted\s+post\b/i },
-  { term: 'permanently removed Post', pattern: /\bpermanently\s+removed\s+post\b/i },
-];
+import { findForbiddenGlossaryTerms } from '../../scripts/glossary-conformance.cjs';
 
 function getSourceFiles(dir: string, fileList: string[] = []): string[] {
   if (!fs.existsSync(dir)) return fileList;
@@ -44,26 +29,32 @@ describe('Domain Glossary & Vocabulary Conformance', () => {
       const content = fs.readFileSync(file, 'utf8');
       const lines = content.split('\n');
 
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        if (file.endsWith('glossary-conformance.spec.ts') && line.includes('pattern:')) {
-          continue;
-        }
-
-        for (const { term, pattern } of FORBIDDEN_PATTERNS) {
-          if (pattern.test(line)) {
-            violations.push({
-              file: path.relative(path.resolve(__dirname, '../..'), file),
-              line: i + 1,
-              term,
-              content: line.trim(),
-            });
-          }
-        }
+      for (const violation of findForbiddenGlossaryTerms(lines)) {
+        violations.push({
+          file: path.relative(path.resolve(__dirname, '../..'), file),
+          ...violation,
+        });
       }
     }
 
     expect(violations).toEqual([]);
+  });
+
+  it('detects glossary-forbidden City synonyms in identifier forms with actionable diagnostics', () => {
+    const forbiddenTerm = ['City', 'record'].join(' ');
+    const variants = [
+      'City' + ' record',
+      ['city', 'Record'].join(''),
+      ['City', 'Record'].join(''),
+      ['city', 'record'].join('_'),
+      ['city', 'record'].join('-'),
+    ];
+
+    for (const variant of variants) {
+      expect(findForbiddenGlossaryTerms([`const ${variant} = true;`])).toEqual([
+        { line: 1, term: forbiddenTerm, content: `const ${variant} = true;` },
+      ]);
+    }
   });
 
   it('validates CONTEXT.md definitions exist for core domain concepts', () => {
