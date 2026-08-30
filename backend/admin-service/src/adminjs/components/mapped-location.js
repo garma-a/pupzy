@@ -5,7 +5,7 @@ export {
   isValidWgs84Coordinates,
   buildGoogleMapsUrl,
   tryBuildGoogleMapsUrl,
-} from '../../common/contracts/google-maps-handoff.contract.js';
+} from '../../../../src/common/contracts/google-maps-handoff.contract.ts';
 
 /**
  * Parses numeric latitude and longitude from various input formats
