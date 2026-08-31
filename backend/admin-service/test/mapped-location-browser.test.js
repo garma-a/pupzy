@@ -265,6 +265,83 @@ after(async () => {
 });
 
 describe('Mapped Location Real Browser End-to-End Suite', { timeout: 90000 }, () => {
+  it('keeps horizontal overflow inside resource tables on desktop and mobile', async () => {
+    const { page, errors } = await createTestPage(browser);
+    try {
+      await database.pool.query(
+        `INSERT INTO admin_users (email, password_hash, full_name, role, is_active)
+         SELECT 'overflow-' || sequence || '@example.com', 'unused-password-hash',
+                'Overflow Test Admin ' || sequence, 'ADMIN', true
+         FROM generate_series(1, 11) AS sequence`,
+      );
+      await loginAsAdmin(page, baseUrl);
+
+      for (const viewport of [
+        { width: 1280, height: 900 },
+        { width: 390, height: 844 },
+      ]) {
+        await page.setViewport(viewport);
+        await page.goto(`${baseUrl}/admin/resources/admin_users`, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('table');
+
+        const layout = await page.evaluate(() => {
+          const table = document.querySelector('table');
+          const tableWrapper = table?.closest('[data-css$="-list-table-wrapper"]') ?? null;
+          const paginationButton = Array.from(document.querySelectorAll('button')).find(
+            (button) => button.textContent?.trim() === '1',
+          );
+          let tableScroller = table;
+
+          while (tableScroller && tableScroller !== document.body) {
+            const overflowX = getComputedStyle(tableScroller).overflowX;
+            if (['auto', 'scroll'].includes(overflowX)) break;
+            tableScroller = tableScroller.parentElement;
+          }
+
+          const paginationLeftBeforeScroll = paginationButton?.getBoundingClientRect().left ?? 0;
+          window.scrollTo({ left: document.documentElement.scrollWidth, behavior: 'instant' });
+          if (tableScroller) tableScroller.scrollLeft = tableScroller.scrollWidth;
+          const paginationLeftAfterScroll = paginationButton?.getBoundingClientRect().left ?? 0;
+
+          return {
+            documentClientWidth: document.documentElement.clientWidth,
+            documentScrollWidth: document.documentElement.scrollWidth,
+            pageScrollLeft: window.scrollX,
+            tableScrollerClassName: tableScroller?.className ?? null,
+            tableClientWidth: tableScroller?.clientWidth ?? 0,
+            tableScrollWidth: tableScroller?.scrollWidth ?? 0,
+            tableScrollLeft: tableScroller?.scrollLeft ?? 0,
+            tableWrapperScrollLeft: tableWrapper?.scrollLeft ?? 0,
+            paginationScrollDelta: paginationLeftAfterScroll - paginationLeftBeforeScroll,
+          };
+        });
+
+        assert.equal(
+          layout.documentScrollWidth,
+          layout.documentClientWidth,
+          `The ${viewport.width}px viewport must not have document-level horizontal overflow`,
+        );
+        assert.equal(layout.pageScrollLeft, 0, `The ${viewport.width}px viewport must not scroll horizontally`);
+        assert.match(
+          layout.tableScrollerClassName ?? '',
+          /pupzy-table-scroll/,
+          'Horizontal overflow must be owned by the table-only viewport',
+        );
+        assert.ok(
+          layout.tableScrollWidth > layout.tableClientWidth,
+          `The resource table must retain its own horizontal overflow at ${viewport.width}px`,
+        );
+        assert.ok(layout.tableScrollLeft > 0, `The resource table must scroll horizontally at ${viewport.width}px`);
+        assert.equal(layout.tableWrapperScrollLeft, 0, 'The wrapper containing pagination must remain fixed');
+        assert.equal(layout.paginationScrollDelta, 0, 'Pagination must not move when the table scrolls horizontally');
+      }
+
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
   it('authenticates through real login flow and loads Vet Clinic form under production CSP without errors', async () => {
     const { page, errors } = await createTestPage(browser);
     try {

@@ -55,6 +55,8 @@ body,
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Headings across all viewports */
@@ -198,10 +200,11 @@ main,
 section[data-css*='Main'],
 div[data-css*='Main'],
 .adminjs_Main,
-[data-css*='Content'] {
+[data-css*='Content'],
+[data-css='app-content'] {
   min-width: 0 !important;
   max-width: 100% !important;
-  overflow-x: hidden;
+  overflow-x: hidden !important;
 }
 
 /* Drawer Backdrop for Mobile/Tablet Navigation and Filters */
@@ -238,6 +241,8 @@ div[data-css*='Main'],
    Table and List Primitives (Anti-Collapse & Responsiveness)
    ========================================================================== */
 div:has(> table),
+section:has(> table),
+.pupzy-table-scroll,
 .table-responsive,
 [data-css*='TableWrapper'],
 .adminjs_TableWrapper {
@@ -247,6 +252,13 @@ div:has(> table),
   border-radius: var(--pupzy-radius-card) !important;
   border: 1px solid var(--pupzy-border) !important;
   background-color: var(--pupzy-surface) !important;
+}
+
+/* The AdminJS list wrapper also contains pagination, so only its nested table
+   viewport may scroll horizontally. */
+[data-css$='-list-table-wrapper'] {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
 }
 
 table,

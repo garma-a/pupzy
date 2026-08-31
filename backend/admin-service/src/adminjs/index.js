@@ -65,6 +65,10 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     });
 
   const componentLoader = new ComponentLoader();
+  componentLoader.override(
+    'RecordsTable',
+    path.join(currentDirectory, 'components', 'scrollable-records-table-component.jsx'),
+  );
   const components = {
     Dashboard: componentLoader.add('Dashboard', path.join(currentDirectory, 'dashboard', 'dashboard-component.jsx')),
     ModerationAction: componentLoader.add(

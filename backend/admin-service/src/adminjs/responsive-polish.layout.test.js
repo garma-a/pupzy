@@ -136,12 +136,17 @@ describe('Task 12: Finish Responsive Pupzy States & Browser Polish', () => {
 
     it('prevents main content blowout near desktop breakpoint when persistent sidebar is active', () => {
       assert.match(cssContent, /section\[data-css\*=['"]Main['"]\]/);
+      assert.match(cssContent, /\[data-css=['"]app-content['"]\]/);
       assert.match(cssContent, /min-width:\s*0\s*!important/);
       assert.match(cssContent, /max-width:\s*100%\s*!important/);
+      assert.match(cssContent, /overflow-x:\s*hidden\s*!important/);
     });
 
     it('configures table wrappers with explicit horizontal scrolling and min-width', () => {
+      assert.match(cssContent, /\[data-css\$=['"]-list-table-wrapper['"]\]/);
+      assert.match(cssContent, /\.pupzy-table-scroll/);
       assert.match(cssContent, /overflow-x:\s*auto\s*!important/);
+      assert.match(cssContent, /overflow-x:\s*hidden\s*!important/);
       assert.match(cssContent, /-webkit-overflow-scrolling:\s*touch\s*!important/);
       assert.match(cssContent, /min-width:\s*600px/);
     });
