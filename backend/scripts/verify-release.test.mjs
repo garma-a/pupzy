@@ -37,6 +37,16 @@ describe('Authoritative Release Gate & Verification Engine (node --test)', () =>
     assert.ok(ids.includes('e2e-root'));
   });
 
+  it('keeps database integration suites out of the parallel root unit stage', () => {
+    const unitStage = STAGES.find((stage) => stage.id === 'unit-root');
+    const integrationStage = STAGES.find((stage) => stage.id === 'integration-root');
+
+    assert.deepStrictEqual(unitStage.args, ['run', 'test:unit']);
+    assert.strictEqual(unitStage.requiresDocker, undefined);
+    assert.deepStrictEqual(integrationStage.args, ['run', 'test:integration']);
+    assert.strictEqual(integrationStage.requiresDocker, true);
+  });
+
   it('validates Node.js prerequisite correctly', () => {
     const valid = checkNodePrerequisite(22);
     assert.strictEqual(valid.ok, true);

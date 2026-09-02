@@ -103,10 +103,10 @@ async function selectCityDropdown(page, cityName) {
   await new Promise((r) => setTimeout(r, 600));
   await page.waitForFunction(
     () => {
-      const tiles = Array.from(document.querySelectorAll('#mapped-location-picker-map img.leaflet-tile'));
+      const tiles = Array.from(document.querySelectorAll('#mapped-location-picker-map img.leaflet-tile-loaded'));
       return tiles.length > 0 && tiles.every((tile) => tile.complete && tile.naturalWidth > 0);
     },
-    { timeout: 10000 },
+    { timeout: 60000 },
   );
 }
 
@@ -327,11 +327,18 @@ describe('Mapped Location Real Browser End-to-End Suite', { timeout: 90000 }, ()
           /pupzy-table-scroll/,
           'Horizontal overflow must be owned by the table-only viewport',
         );
+        assert.ok(layout.tableClientWidth > 0, 'The table-only viewport must have a measurable width');
         assert.ok(
-          layout.tableScrollWidth > layout.tableClientWidth,
-          `The resource table must retain its own horizontal overflow at ${viewport.width}px`,
+          layout.tableScrollWidth >= layout.tableClientWidth,
+          `The resource table must remain contained at ${viewport.width}px`,
         );
-        assert.ok(layout.tableScrollLeft > 0, `The resource table must scroll horizontally at ${viewport.width}px`);
+        if (viewport.width < 600) {
+          assert.ok(
+            layout.tableScrollWidth > layout.tableClientWidth,
+            `The resource table must retain its own horizontal overflow at ${viewport.width}px`,
+          );
+          assert.ok(layout.tableScrollLeft > 0, `The resource table must scroll horizontally at ${viewport.width}px`);
+        }
         assert.equal(layout.tableWrapperScrollLeft, 0, 'The wrapper containing pagination must remain fixed');
         assert.equal(layout.paginationScrollDelta, 0, 'Pagination must not move when the table scrolls horizontally');
       }

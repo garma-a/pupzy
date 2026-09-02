@@ -551,7 +551,7 @@ const STAGES = [
     name: 'Root Unit Tests',
     type: 'test',
     cmd: 'npm',
-    args: ['test'],
+    args: ['run', 'test:unit'],
     cwd: rootDir,
     expectedTestRunner: 'jest',
     minExpectedTests: 400,
