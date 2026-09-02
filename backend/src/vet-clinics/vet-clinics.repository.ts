@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { sql, eq } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../database/database.provider';
-import { vetClinics, cities } from '../database/schema';
+import { vetClinics, cities, cityCatalogRevisions } from '../database/schema';
 import type * as schema from '../database/schema';
 
 /**
@@ -16,8 +16,11 @@ export interface VetClinicProximityResult {
   id: string;
   nameEnglish: string | null;
   nameArabic: string | null;
+  cityId: string | null;
   phoneNumber: string | null;
   address: string | null;
+  addressEnglish: string | null;
+  addressArabic: string | null;
   website: string | null;
   /** ST_Y(coordinates) — WGS-84 latitude */
   latitude: number;
@@ -27,6 +30,13 @@ export interface VetClinicProximityResult {
   distanceKm: number;
 }
 
+export interface VetClinicCatalogRevisionReader {
+  findNearest(latitude: number, longitude: number, limit?: number): Promise<VetClinicProximityResult[]>;
+  findNearestForCity(cityId: string, limit?: number): Promise<VetClinicProximityResult[]>;
+}
+
+type VetClinicQueryExecutor = Pick<NodePgDatabase<typeof schema>, 'select'>;
+
 @Injectable()
 export class VetClinicsRepository {
   private readonly logger = new Logger(VetClinicsRepository.name);
@@ -35,6 +45,56 @@ export class VetClinicsRepository {
     @Inject(DATABASE_TOKEN)
     private readonly db: NodePgDatabase<typeof schema>,
   ) {}
+
+  /**
+   * Returns the revision committed with the current Vet Clinic / City catalog.
+   *
+   * Cached Vet Clinic payloads remain process-local; this small source-of-truth read
+   * is the deployment-overlap fence that tells an already-running instance
+   * when its local cache generation must no longer be served.
+   */
+  async getCatalogRevision(): Promise<number> {
+    const [state] = await this.db
+      .select({ revision: cityCatalogRevisions.revision })
+      .from(cityCatalogRevisions)
+      .where(eq(cityCatalogRevisions.id, 1))
+      .limit(1);
+
+    if (!state) {
+      throw new Error('Catalog revision state is missing. Refusing to serve cached Vet Clinic data.');
+    }
+
+    return state.revision;
+  }
+
+  /**
+   * Holds a shared PostgreSQL lock on the catalog revision while cached Vet Clinic
+   * reads are evaluated. An administrative mutation takes the conflicting row lock
+   * before changing clinic data, so this read completes before that mutation commits
+   * or waits and observes its new revision.
+   */
+  async withCatalogRevision<T>(
+    callback: (revision: number, reader: VetClinicCatalogRevisionReader) => Promise<T>,
+  ): Promise<T> {
+    return this.db.transaction(async (tx) => {
+      const [state] = await tx
+        .select({ revision: cityCatalogRevisions.revision })
+        .from(cityCatalogRevisions)
+        .where(eq(cityCatalogRevisions.id, 1))
+        .for('share')
+        .limit(1);
+
+      if (!state) {
+        throw new Error('Catalog revision state is missing. Refusing to serve cached Vet Clinic data.');
+      }
+
+      return callback(state.revision, {
+        findNearest: (latitude: number, longitude: number, limit = 3) =>
+          this.findNearestFrom(tx, latitude, longitude, limit),
+        findNearestForCity: (cityId: string, limit = 3) => this.findNearestForCityFrom(tx, cityId, limit),
+      });
+    });
+  }
 
   /**
    * findNearest
@@ -59,33 +119,31 @@ export class VetClinicsRepository {
    * Step 3 — Coordinate extraction:
    *   `ST_Y(coordinates::geometry)` → latitude
    *   `ST_X(coordinates::geometry)` → longitude
-   *
-   * `.mapWith(Number)` on the three computed columns guarantees real JS
-   * numbers at runtime — a raw sql fragment has no column-level type
-   * decoder the way a real column does, so without this, values coming
-   * back from PostgreSQL's ROUND()/ST_Y()/ST_X() (which the pg driver may
-   * return as strings) would need manual Number() conversion downstream
-   * instead of being handled once, here.
-   *
-   * EXPLAIN ANALYZE must show:
-   *   "Index Scan using idx_vet_clinics_coordinates on vet_clinics"
-   *
-   * @param latitude   Post's WGS-84 latitude
-   * @param longitude  Post's WGS-84 longitude
-   * @param limit      Maximum rows to return (default 3)
    */
   async findNearest(latitude: number, longitude: number, limit = 3): Promise<VetClinicProximityResult[]> {
+    return this.findNearestFrom(this.db, latitude, longitude, limit);
+  }
+
+  private async findNearestFrom(
+    db: VetClinicQueryExecutor,
+    latitude: number,
+    longitude: number,
+    limit = 3,
+  ): Promise<VetClinicProximityResult[]> {
     this.logger.debug(`findNearest lat=${latitude} lng=${longitude} limit=${limit}`);
 
     const targetPoint = sql`ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)`;
 
-    return this.db
+    return db
       .select({
         id: vetClinics.id,
         nameEnglish: vetClinics.nameEnglish,
         nameArabic: vetClinics.nameArabic,
+        cityId: vetClinics.cityId,
         phoneNumber: vetClinics.phoneNumber,
         address: vetClinics.address,
+        addressEnglish: vetClinics.addressEnglish,
+        addressArabic: vetClinics.addressArabic,
         website: vetClinics.website,
         latitude: sql<number>`ST_Y(${vetClinics.coordinates}::geometry)`.mapWith(Number),
         longitude: sql<number>`ST_X(${vetClinics.coordinates}::geometry)`.mapWith(Number),
@@ -105,35 +163,28 @@ export class VetClinicsRepository {
    * Returns the `limit` closest active vet clinics to a city's
    * center_point. Used for ADOPTION posts where exact GPS coordinates are
    * private. The city center_point is public data.
-   *
-   * ## Why innerJoin(cities, eq(cities.id, cityId)) instead of a filter on vetClinics
-   *
-   * The join condition compares `cities.id` to the `cityId` parameter —
-   * not to any column on `vetClinics` — so this attaches exactly one city
-   * row (whichever one matches `cityId`) to every `vetClinics` row. That is
-   * deliberately the same effect as the original raw
-   * `CROSS JOIN LATERAL (SELECT center_point FROM cities WHERE id = … LIMIT 1)`:
-   * it does NOT filter vet clinics by `city_id` at all — a clinic just
-   * across a city boundary can still be the closest one, so vet clinics are
-   * never restricted to "clinics whose city_id equals this city."
-   *
-   * All 3 nearest clinics to a given city are identical regardless of which
-   * adoption post triggered the query — this is why the service caches by
-   * `cityId` (not `postId`) for adoption posts.
-   *
-   * @param cityId  The post's city_id (UUID), used to resolve center_point
-   * @param limit   Maximum rows to return (default 3)
    */
   async findNearestForCity(cityId: string, limit = 3): Promise<VetClinicProximityResult[]> {
+    return this.findNearestForCityFrom(this.db, cityId, limit);
+  }
+
+  private async findNearestForCityFrom(
+    db: VetClinicQueryExecutor,
+    cityId: string,
+    limit = 3,
+  ): Promise<VetClinicProximityResult[]> {
     this.logger.debug(`findNearestForCity cityId=${cityId} limit=${limit}`);
 
-    return this.db
+    return db
       .select({
         id: vetClinics.id,
         nameEnglish: vetClinics.nameEnglish,
         nameArabic: vetClinics.nameArabic,
+        cityId: vetClinics.cityId,
         phoneNumber: vetClinics.phoneNumber,
         address: vetClinics.address,
+        addressEnglish: vetClinics.addressEnglish,
+        addressArabic: vetClinics.addressArabic,
         website: vetClinics.website,
         latitude: sql<number>`ST_Y(${vetClinics.coordinates}::geometry)`.mapWith(Number),
         longitude: sql<number>`ST_X(${vetClinics.coordinates}::geometry)`.mapWith(Number),

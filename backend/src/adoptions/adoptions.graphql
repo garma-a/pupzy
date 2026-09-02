@@ -1,4 +1,6 @@
-"""Cursor-paginated list of adoption applications."""
+"""
+Cursor-paginated list of adoption applications.
+"""
 type AdoptionApplicationConnection {
   edges: [AdoptionApplicationEdge!]!
   pageInfo: PageInfo!
@@ -9,7 +11,9 @@ type AdoptionApplicationEdge {
   cursor: String!
 }
 
-"""Input for submitting an adoption application questionnaire."""
+"""
+Input for submitting an adoption application questionnaire.
+"""
 input SubmitAdoptionApplicationInput {
   targetPostId: ID!
   speciesPreference: SpeciesType
@@ -28,7 +32,9 @@ input SubmitAdoptionApplicationInput {
 }
 
 extend type Query {
-  """My submitted adoption applications, newest first."""
+  """
+  My submitted adoption applications, newest first.
+  """
   myAdoptionApplications(first: Int, after: String): AdoptionApplicationConnection!
 
   """

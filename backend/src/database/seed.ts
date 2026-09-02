@@ -2,6 +2,7 @@
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
+import * as bcrypt from 'bcryptjs';
 import * as schema from './schema';
 import { seedOfficialCities } from '../cities/seed';
 import * as fs from 'fs';
@@ -16,7 +17,61 @@ const pool = new Pool({
 
 const db = drizzle(pool, { schema });
 
-export async function runDatabaseSeed(database = db) {
+export interface SeedOptions {
+  admin?: {
+    email?: string;
+    password?: string;
+    fullName?: string;
+  };
+}
+
+export interface SeededAdminResult {
+  id?: string;
+  email?: string;
+  created: boolean;
+}
+
+export async function seedInitialAdmin(
+  database = db,
+  options: SeedOptions['admin'] = {},
+): Promise<SeededAdminResult | null> {
+  const email = (options?.email ?? process.env.ADMIN_SEED_EMAIL)?.trim().toLowerCase();
+  const password = options?.password ?? process.env.ADMIN_SEED_PASSWORD;
+  const fullName = (options?.fullName ?? process.env.ADMIN_SEED_FULL_NAME)?.trim() ?? 'Pupzy Administrator';
+
+  if (!email || !password) {
+    return null;
+  }
+
+  if (password.length < 12) {
+    throw new Error('ADMIN_SEED_PASSWORD must be at least 12 characters.');
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  const inserted = await database
+    .insert(schema.adminUsers)
+    .values({
+      email,
+      passwordHash,
+      fullName,
+      role: 'SUPER_ADMIN',
+      isActive: true,
+    })
+    .onConflictDoNothing()
+    .returning({ id: schema.adminUsers.id, email: schema.adminUsers.email });
+
+  if (inserted.length > 0) {
+    const admin = inserted[0];
+    console.log(`✓ Seeded initial SUPER_ADMIN (${admin.email}).`);
+    return { id: admin.id, email: admin.email, created: true };
+  }
+
+  console.log(`ℹ Initial admin bootstrap skipped: administrator already exists (${email}).`);
+  return { email, created: false };
+}
+
+export async function runDatabaseSeed(database = db, options: SeedOptions = {}) {
   console.log('Seeding official Egyptian city catalog...');
   const result = await seedOfficialCities(database);
   console.log(`✓ Seeded ${result.totalSeeded} official cities across ${result.governorateCount} governorates.`);
@@ -108,6 +163,11 @@ export async function runDatabaseSeed(database = db) {
         cityCache.set(key, cityId);
       }
 
+      const address = clinic.address ?? null;
+      const isArabicAddress = address ? /[\u0600-\u06FF]/.test(address) : false;
+      const addressEnglish = clinic.address_english ?? (address && !isArabicAddress ? address : null);
+      const addressArabic = clinic.address_arabic ?? (address && isArabicAddress ? address : null);
+
       batch.push({
         nameEnglish: clinic.name_english,
         nameArabic: clinic.name_arabic,
@@ -118,10 +178,14 @@ export async function runDatabaseSeed(database = db) {
           latitude: clinic.latitude,
         },
         phoneNumber: clinic.phone_number,
-        address: clinic.address,
+        address,
+        addressEnglish,
+        addressArabic,
         website: clinic.website,
         source: 'OSM',
         osmId: BigInt(clinic.osm_id),
+        osmType: clinic.osm_type ?? 'node',
+        locationProvenance: 'OSM',
         isActive: true,
       });
     }
@@ -138,6 +202,9 @@ export async function runDatabaseSeed(database = db) {
       console.log(`Seeded ${count.length} vet clinics into vet_clinics table.`);
     }
   }
+
+  // ─── Initial Admin Account Seeding ─────────────────────────────────────────
+  await seedInitialAdmin(database, options.admin);
 
   console.log('✅ Seeding complete.');
 }

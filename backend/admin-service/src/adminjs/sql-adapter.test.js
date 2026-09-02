@@ -20,7 +20,7 @@ describe('AdminJS SQL adapter compatibility', () => {
     }
   });
 
-  it('exports ADMIN_RESOURCE_TABLES with exactly the 19 domain tables', () => {
+  it('exports ADMIN_RESOURCE_TABLES with exactly the 20 domain tables', () => {
     const expectedTables = [
       'users',
       'posts',
@@ -41,10 +41,10 @@ describe('AdminJS SQL adapter compatibility', () => {
       'vet_clinics',
       'admin_users',
       'moderation_actions',
+      'vet_clinic_location_audits',
     ];
     assert.deepEqual([...ADMIN_RESOURCE_TABLES], expectedTables);
     assert.equal(ADMIN_RESOURCE_TABLES.includes('spatial_ref_sys'), false);
     assert.equal(ADMIN_RESOURCE_TABLES.includes('admin_sessions'), false);
   });
 });
-

@@ -107,6 +107,7 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
       '0008_brave_lester.sql',
       '0009_version_custom_ddl.sql',
       '0010_peaceful_wind_dancer.sql',
+      '0012_add_city_catalog_revision.sql',
     ];
 
     for (const file of migrationFiles) {

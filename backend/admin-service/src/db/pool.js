@@ -1,4 +1,4 @@
-import pg from "pg";
+import pg from 'pg';
 
 const { Pool } = pg;
 
@@ -12,8 +12,8 @@ export function createPool(databaseUrl) {
     statement_timeout: 8_000,
   });
 
-  pool.on("error", (error) => {
-    console.error("[admin-service] Unexpected pool error:", error);
+  pool.on('error', (error) => {
+    console.error('[admin-service] Unexpected pool error:', error);
   });
 
   return pool;

@@ -1,6 +1,15 @@
 import { actionResponse, readModerationReason, runModerationAction } from './helpers.js';
 import { isAnyAdmin } from '../rbac.js';
 
+function getRecordProperty(record, property) {
+  if (!record) return undefined;
+  if (typeof record.get === 'function') {
+    const val = record.get(property);
+    if (val !== undefined) return val;
+  }
+  return record.params?.[property];
+}
+
 function buildPostAction(pool, component, definition, cache) {
   return {
     actionType: 'record',
@@ -8,6 +17,7 @@ function buildPostAction(pool, component, definition, cache) {
     guard: definition.guard,
     component: definition.requiresForm ? component : false,
     isAccessible: isAnyAdmin,
+    isVisible: definition.isVisible,
     handler: async (request, _response, context) => {
       const { record, currentAdmin } = context;
       if (request.method !== 'post') return { record: record.toJSON(currentAdmin) };
@@ -49,10 +59,22 @@ export function buildPostActions(pool, component, cache) {
         icon: 'Check',
         guard: 'Approve this post as clean?',
         successMessage: 'Post approved.',
-        validate: (row) =>
-          ['PENDING_AUTO_REVIEW', 'FLAGGED'].includes(row.moderation_status)
-            ? null
-            : 'Only pending or flagged posts can be approved.',
+        isVisible: (context) => {
+          const record = context?.record;
+          if (!record) return false;
+          const status = getRecordProperty(record, 'status');
+          const moderationStatus = getRecordProperty(record, 'moderation_status');
+          return status === 'ACTIVE' && ['PENDING_AUTO_REVIEW', 'FLAGGED'].includes(moderationStatus);
+        },
+        validate: (row) => {
+          if (row.status !== 'ACTIVE') {
+            return 'Only active posts can be approved.';
+          }
+          if (!['PENDING_AUTO_REVIEW', 'FLAGGED'].includes(row.moderation_status)) {
+            return 'Only pending or flagged posts can be approved.';
+          }
+          return null;
+        },
         mutate: (client, row, adminId) =>
           client.query(
             `UPDATE posts
@@ -73,8 +95,25 @@ export function buildPostActions(pool, component, cache) {
         requiresForm: true,
         reasonRequired: true,
         successMessage: 'Post flagged.',
-        validate: (row) =>
-          ['PENDING_AUTO_REVIEW', 'CLEAN'].includes(row.moderation_status) ? null : 'This post is already flagged.',
+        isVisible: (context) => {
+          const record = context?.record;
+          if (!record) return false;
+          const status = getRecordProperty(record, 'status');
+          const moderationStatus = getRecordProperty(record, 'moderation_status');
+          return status === 'ACTIVE' && ['PENDING_AUTO_REVIEW', 'CLEAN'].includes(moderationStatus);
+        },
+        validate: (row) => {
+          if (row.status !== 'ACTIVE') {
+            return 'Only active posts can be flagged.';
+          }
+          if (row.moderation_status === 'FLAGGED') {
+            return 'This post is already flagged.';
+          }
+          if (!['PENDING_AUTO_REVIEW', 'CLEAN'].includes(row.moderation_status)) {
+            return 'Only pending or clean posts can be flagged.';
+          }
+          return null;
+        },
         mutate: (client, row, adminId, reason) =>
           client.query(
             `UPDATE posts
@@ -95,6 +134,12 @@ export function buildPostActions(pool, component, cache) {
         requiresForm: true,
         reasonRequired: true,
         successMessage: 'Post removed.',
+        isVisible: (context) => {
+          const record = context?.record;
+          if (!record) return false;
+          const status = getRecordProperty(record, 'status');
+          return status === 'ACTIVE';
+        },
         validate: (row) => (row.status === 'ACTIVE' ? null : 'Only active posts can be removed.'),
         mutate: async (client, row, adminId, reason) => {
           await client.query(
@@ -122,6 +167,12 @@ export function buildPostActions(pool, component, cache) {
         icon: 'RotateCcw',
         guard: 'Restore this post to active?',
         successMessage: 'Post restored.',
+        isVisible: (context) => {
+          const record = context?.record;
+          if (!record) return false;
+          const status = getRecordProperty(record, 'status');
+          return status === 'REMOVED';
+        },
         validate: (row) => (row.status === 'REMOVED' ? null : 'Only removed posts can be restored.'),
         mutate: (client, row, adminId) =>
           client.query(

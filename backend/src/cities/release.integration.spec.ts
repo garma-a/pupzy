@@ -847,7 +847,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
         ],
       });
 
-      expect(pubResult.migrationTag).toBe('0012_release_city_catalog');
+      expect(pubResult.migrationTag).toMatch(/^\d{4}_release_city_catalog$/);
       expect(fs.existsSync(pubResult.migrationPath)).toBe(true);
 
       // Run Drizzle migration runner with published migration

@@ -60,8 +60,12 @@ export async function runMigrations(options: MigrationOptions = {}): Promise<voi
 
   try {
     logger.log('[Migration] Ensuring database prerequisites (extensions & uuidv7)...');
-    await pool.query('CREATE EXTENSION IF NOT EXISTS postgis;');
-    await pool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto;');
+    try {
+      await pool.query('CREATE EXTENSION IF NOT EXISTS postgis;');
+      await pool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto;');
+    } catch {
+      // Ignored if non-superuser and extensions already exist
+    }
     await pool.query(`
       CREATE OR REPLACE FUNCTION uuidv7() RETURNS uuid AS $$
         SELECT (

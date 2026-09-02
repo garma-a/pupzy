@@ -40,6 +40,7 @@ import {
   customType,
 } from 'drizzle-orm/pg-core';
 import { sql, isNotNull } from 'drizzle-orm';
+import { cities } from './cities.schema';
 
 // ─── PostGIS Geometry Custom Type ─────────────────────────────────────────────
 
@@ -81,20 +82,27 @@ export const vetClinics = pgTable(
     nameArabic: varchar('name_arabic', { length: 200 }),
 
     // ── Location ─────────────────────────────────────────────────────────────
-    cityId: uuid('city_id'),
+    cityId: uuid('city_id').references(() => cities.id, { onDelete: 'set null' }),
     areaName: varchar('area_name', { length: 200 }),
 
     /** PostGIS POINT(longitude, latitude), SRID=4326. */
     coordinates: geometryPoint('coordinates').notNull(),
 
-    // ── Contact ──────────────────────────────────────────────────────────────
+    // ── Contact & Address ─────────────────────────────────────────────────────
     phoneNumber: text('phone_number'),
     address: text('address'),
+    addressEnglish: text('address_english'),
+    addressArabic: text('address_arabic'),
     website: text('website'),
+
+    // ── Location Provenance ──────────────────────────────────────────────────
+    locationProvenance: varchar('location_provenance', { length: 50 }),
+    locationCapturedAt: timestamp('location_captured_at', { withTimezone: true }),
 
     // ── Metadata ─────────────────────────────────────────────────────────────
     source: vetClinicSourceEnum('source').notNull().default('OSM'),
     osmId: bigint('osm_id', { mode: 'bigint' }),
+    osmType: varchar('osm_type', { length: 50 }),
     isActive: boolean('is_active').notNull().default(true),
 
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

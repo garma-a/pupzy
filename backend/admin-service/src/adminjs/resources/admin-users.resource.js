@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import { ValidationError } from 'adminjs';
 import { ENUMS } from '../enums.js';
 import { isSuperAdmin } from '../rbac.js';
-import { enumProperty, stripRecordParams } from './resource-helpers.js';
+import { attachShortUuid, enumProperty, stripRecordParams } from './resource-helpers.js';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -43,23 +43,30 @@ export async function prepareAdminCredentials(request, context = {}) {
 const superAdminOnly = { isAccessible: isSuperAdmin };
 const stripPasswordHash = (response) => stripRecordParams(response, ['password_hash']);
 
-export function buildAdminUsersResource(db) {
+export function buildAdminUsersResource(db, components = {}) {
+  const properties = {
+    id: { isDisabled: true },
+    email: { isTitle: true },
+    full_name: {},
+    role: enumProperty(ENUMS.adminRole),
+    is_active: {},
+    password_hash: {
+      label: 'New Password',
+      type: 'password',
+      isVisible: { list: false, filter: false, show: false, edit: true },
+    },
+    last_login_at: { isDisabled: true },
+    created_at: { isDisabled: true },
+    updated_at: { isDisabled: true },
+  };
+
+  attachShortUuid(properties, ['id'], components, ['list', 'show']);
+
   return {
     resource: db.table('admin_users'),
     options: {
       navigation: { name: 'Admin Management', icon: 'Lock' },
-      properties: {
-        id: { isTitle: true, isDisabled: true },
-        role: enumProperty(ENUMS.adminRole),
-        password_hash: {
-          label: 'New Password',
-          type: 'password',
-          isVisible: { list: false, filter: false, show: false, edit: true },
-        },
-        last_login_at: { isDisabled: true },
-        created_at: { isDisabled: true },
-        updated_at: { isDisabled: true },
-      },
+      properties,
       actions: {
         list: { isAccessible: isSuperAdmin, after: stripPasswordHash },
         search: { isAccessible: isSuperAdmin, after: stripPasswordHash },
@@ -77,6 +84,10 @@ export function buildAdminUsersResource(db) {
         delete: { isAccessible: false },
         bulkDelete: { isAccessible: false },
       },
+      listProperties: ['id', 'email', 'full_name', 'role', 'is_active', 'last_login_at', 'created_at'],
+      showProperties: ['id', 'email', 'full_name', 'role', 'is_active', 'last_login_at', 'created_at', 'updated_at'],
+      filterProperties: ['id', 'email', 'full_name', 'role', 'is_active', 'created_at'],
+      sort: { sortBy: 'created_at', direction: 'desc' },
     },
   };
 }

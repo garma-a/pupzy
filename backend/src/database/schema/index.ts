@@ -51,3 +51,7 @@ export * from './saved-searches.schema';
 
 // Vet clinics — proximity lookup for RESCUE/LOST/ADOPTION post detail screens
 export * from './vet-clinics.schema';
+export * from './vet-clinic-location-audits.schema';
+
+// Durable address search cache for OSM Nominatim
+export * from './address-search-cache.schema';

@@ -1,7 +1,8 @@
 -- Repeatable post-migration SQL is limited to idempotent performance indexes.
--- Structural DDL, constraints, functions, and triggers belong in ordered files
--- under drizzle/migrations so a deploy never drops and recreates them on every
--- start.
+-- Structural DDL, constraints, functions, operators, and triggers belong in ordered
+-- files under drizzle/migrations (e.g. 0017_add_city_lifecycle_status_operators.sql)
+-- so a deploy never drops and recreates them on every start, keeping schema evolution
+-- strictly ordered and monotonic across environments.
 
 -- Match active feed predicates and keyset ordering without changing returned rows.
 CREATE INDEX IF NOT EXISTS idx_posts_help_city_ordered

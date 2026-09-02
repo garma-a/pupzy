@@ -1,0 +1,61 @@
+name: Release Evidence & Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+      - 'feat/**'
+      - 'fix/**'
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-verification-gate:
+    name: Authoritative Release Verification Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code with Git History
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Setup Docker Buildx & Container Runtime
+        uses: docker/setup-buildx-action@v3
+
+      - name: Verify Google Chrome for Real-Browser Journeys
+        run: |
+          command -v google-chrome
+          google-chrome --version
+
+      - name: Install Root Dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Install AdminJS Dependencies
+        working-directory: backend/admin-service
+        run: npm ci
+
+      - name: Execute Authoritative Release Verification Gate
+        id: release-gate
+        working-directory: backend
+        env:
+          FORCE_COLOR: '1'
+          CI: 'true'
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: npm run verify:release

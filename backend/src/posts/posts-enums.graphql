@@ -5,7 +5,9 @@
 # NestJS auto-generates TypeScript counterparts into src/graphql.ts.
 # ──────────────────────────────────────────────────────────────────────────────
 
-"""Which vertical a post belongs to. Drives CTI join on detail screen."""
+"""
+Which vertical a post belongs to. Drives CTI join on detail screen.
+"""
 enum PostType {
   "Animal needing immediate rescue."
   RESCUE
@@ -19,7 +21,9 @@ enum PostType {
   MATING
 }
 
-"""Lifecycle state of a post."""
+"""
+Lifecycle state of a post.
+"""
 enum PostStatus {
   ACTIVE
   RESOLVED
@@ -29,7 +33,9 @@ enum PostStatus {
   REMOVED
 }
 
-"""AI/admin moderation lifecycle."""
+"""
+AI/admin moderation lifecycle.
+"""
 enum ModerationStatus {
   PENDING_AUTO_REVIEW
   CLEAN
@@ -46,7 +52,9 @@ enum UrgencyTier {
   MODERATE
 }
 
-"""Animal species."""
+"""
+Animal species.
+"""
 enum SpeciesType {
   DOG
   CAT
@@ -55,14 +63,18 @@ enum SpeciesType {
   OTHER
 }
 
-"""Animal gender."""
+"""
+Animal gender.
+"""
 enum GenderType {
   MALE
   FEMALE
   UNKNOWN
 }
 
-"""Unit for age measurement, paired with ageValue."""
+"""
+Unit for age measurement, paired with ageValue.
+"""
 enum AgeUnit {
   DAYS
   WEEKS
@@ -74,37 +86,55 @@ enum AgeUnit {
 Coordination signal on a rescue post — tells responders what kind of help is needed.
 """
 enum ReporterRole {
-  """Spotted animal but no longer on site — responders must go find it."""
+  """
+  Spotted animal but no longer on site — responders must go find it.
+  """
   REPORTING
-  """Currently with animal — send help to this location."""
+  """
+  Currently with animal — send help to this location.
+  """
   ON_SITE
-  """On site and can move animal — provide a destination (vet/shelter)."""
+  """
+  On site and can move animal — provide a destination (vet/shelter).
+  """
   CAN_TRANSPORT
 }
 
-"""Physical condition of a found stray animal."""
+"""
+Physical condition of a found stray animal.
+"""
 enum FoundAnimalCondition {
   HEALTHY
   INJURED
   UNKNOWN
 }
 
-"""Space the pet needs in the adopter's home."""
+"""
+Space the pet needs in the adopter's home.
+"""
 enum SpaceRequirement {
   APARTMENT_OK
   NEEDS_YARD
   NEEDS_FARM_OR_LARGE_SPACE
 }
 
-"""Discriminator within the LOST section."""
+"""
+Discriminator within the LOST section.
+"""
 enum LostFoundType {
-  """Owner is looking for their own pet."""
+  """
+  Owner is looking for their own pet.
+  """
   LOST_PET
-  """Reporter has found a stray animal of unknown ownership."""
+  """
+  Reporter has found a stray animal of unknown ownership.
+  """
   FOUND_STRAY
 }
 
-"""Product category for marketplace listings."""
+"""
+Product category for marketplace listings.
+"""
 enum ProductCategory {
   CARE
   FOOD
@@ -115,21 +145,27 @@ enum ProductCategory {
   OTHER
 }
 
-"""Physical condition of a marketplace product."""
+"""
+Physical condition of a marketplace product.
+"""
 enum ProductCondition {
   NEW
   LIKE_NEW
   USED
 }
 
-"""Status of a contact request or adoption application."""
+"""
+Status of a contact request or adoption application.
+"""
 enum RequestStatus {
   PENDING
   APPROVED
   REJECTED
 }
 
-"""Reason for reporting a post."""
+"""
+Reason for reporting a post.
+"""
 enum ReportReason {
   UNRELATED_TO_ANIMALS
   SPAM
@@ -139,7 +175,9 @@ enum ReportReason {
   OTHER
 }
 
-"""Type of in-app notification."""
+"""
+Type of in-app notification.
+"""
 enum NotificationType {
   NEW_UPVOTE
   POST_SAVED
@@ -154,7 +192,9 @@ enum NotificationType {
   SYSTEM_ANNOUNCEMENT
 }
 
-"""Adopter's living situation."""
+"""
+Adopter's living situation.
+"""
 enum LivingSituation {
   APARTMENT
   HOUSE_WITH_YARD
@@ -162,7 +202,9 @@ enum LivingSituation {
   OTHER
 }
 
-"""Personality tag for adoption pets. Stored as text[] in Postgres."""
+"""
+Personality tag for adoption pets. Stored as text[] in Postgres.
+"""
 enum PersonalityTag {
   PLAYFUL
   GENTLE

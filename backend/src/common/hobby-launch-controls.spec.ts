@@ -42,11 +42,11 @@ describe('Hobby Launch Controls & Codification Verification', () => {
       expect(config.deploy?.healthcheckPath).toBe('/health');
     });
 
-    it('configures the AdminJS railway.json with Dockerfile build, /health check, and zero preDeployCommand', () => {
+    it('configures AdminJS to build its root-context Dockerfile, with /health check and zero preDeployCommand', () => {
       const config = readRailwayConfig(adminRailwayJsonPath);
 
       expect(config.build?.builder).toBe('DOCKERFILE');
-      expect(config.build?.dockerfilePath).toBe('Dockerfile');
+      expect(config.build?.dockerfilePath).toBe('admin-service/Dockerfile');
       expect(config.deploy?.healthcheckPath).toBe('/health');
       expect(config.deploy?.preDeployCommand).toBeUndefined();
     });
@@ -71,6 +71,10 @@ describe('Hobby Launch Controls & Codification Verification', () => {
       const content = readUtf8(adminDockerfile);
 
       expect(content).not.toContain('REDIS_URL');
+      expect(content).toContain('COPY admin-service/package*.json ./');
+      expect(content).toContain(
+        'COPY --chown=node:node src/common/contracts/google-maps-handoff.contract.ts /src/common/contracts/google-maps-handoff.contract.ts',
+      );
       expect(content).toContain('EXPOSE 4000');
       expect(content).toContain('ENV NODE_OPTIONS="--max-old-space-size=256"');
       expect(content).toContain('ENV ADMIN_JS_TMP_DIR=/tmp/adminjs');

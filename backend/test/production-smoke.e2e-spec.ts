@@ -120,14 +120,20 @@ describe('Three-Service Production Container Smoke Tests', () => {
       .withPassword('test')
       .start();
     connectionString = container.getConnectionUri();
-    const dockerUrl = new URL(connectionString);
-    dockerUrl.hostname = 'host.docker.internal';
-    containerDatabaseUrl = dockerUrl.toString();
+    const networkName = container.getNetworkNames()[0];
+    const internalIp = networkName ? container.getIpAddress(networkName) : undefined;
+    if (internalIp) {
+      containerDatabaseUrl = `postgresql://test:test@${internalIp}:5432/pupzy_prod_smoke`;
+    } else {
+      const dockerUrl = new URL(connectionString);
+      dockerUrl.hostname = 'host.docker.internal';
+      containerDatabaseUrl = dockerUrl.toString();
+    }
     pool = new Pool({ connectionString });
 
     await Promise.all([
       runCommand('docker', ['build', '--pull=false', '-t', apiImage, '.'], rootDir),
-      runCommand('docker', ['build', '--pull=false', '-t', adminImage, '.'], `${rootDir}/admin-service`),
+      runCommand('docker', ['build', '--pull=false', '-f', 'admin-service/Dockerfile', '-t', adminImage, '.'], rootDir),
     ]);
   }, 600_000);
 
