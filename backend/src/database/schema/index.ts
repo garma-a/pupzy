@@ -62,3 +62,4 @@ export * from './staged-uploads.schema';
 // Comments & Discussion
 export * from './comments.schema';
 export * from './comment-idempotency.schema';
+export * from './comment-boosts.schema';

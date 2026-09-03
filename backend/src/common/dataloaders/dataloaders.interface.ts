@@ -44,4 +44,11 @@ export interface DataLoaders {
    * Created per-request using the authenticated user's ID.
    */
   savedByMe: DataLoader<string, boolean>;
+
+  /**
+   * Batch-checks if the current viewer has boosted each comment or reply.
+   * Returns `false` for all comments if the viewer is not authenticated.
+   * Created per-request using the authenticated user's ID.
+   */
+  commentBoostedByMe?: DataLoader<string, boolean>;
 }

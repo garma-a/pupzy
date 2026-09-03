@@ -7,7 +7,12 @@ describe('CommentsResolver', () => {
   let resolver: CommentsResolver;
   let mockCommentsService: {
     createComment: jest.Mock;
+    createReply: jest.Mock;
+    deleteComment: jest.Mock;
     getComments: jest.Mock;
+    getReplies: jest.Mock;
+    toggleCommentBoost: jest.Mock;
+    isCommentBoostedByUser: jest.Mock;
   };
   let loadUserMock: jest.Mock;
   let mockContext: GqlContext;
@@ -22,6 +27,8 @@ describe('CommentsResolver', () => {
     parentId: null,
     text: 'Great post!',
     status: 'ACTIVE',
+    replyCount: 0,
+    boostCount: 3,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -29,10 +36,20 @@ describe('CommentsResolver', () => {
   beforeEach(() => {
     mockCommentsService = {
       createComment: jest.fn().mockResolvedValue(mockComment),
+      createReply: jest.fn(),
+      deleteComment: jest.fn(),
       getComments: jest.fn().mockResolvedValue({
         edges: [{ node: mockComment, cursor: 'cursor-1' }],
         pageInfo: { endCursor: 'cursor-1', hasNextPage: false },
       }),
+      getReplies: jest.fn(),
+      toggleCommentBoost: jest.fn().mockResolvedValue({
+        commentId: mockComment.id,
+        isBoostedByMe: true,
+        boostedByMe: true,
+        boostCount: 4,
+      }),
+      isCommentBoostedByUser: jest.fn().mockResolvedValue(false),
     };
 
     loadUserMock = jest.fn().mockResolvedValue({ id: userId, fullName: 'Test User' });
@@ -48,6 +65,9 @@ describe('CommentsResolver', () => {
         mediaByPostId: {} as GqlContext['loaders']['mediaByPostId'],
         upvotedByMe: {} as GqlContext['loaders']['upvotedByMe'],
         savedByMe: {} as GqlContext['loaders']['savedByMe'],
+        commentBoostedByMe: {
+          load: jest.fn().mockResolvedValue(true),
+        } as unknown as NonNullable<GqlContext['loaders']['commentBoostedByMe']>,
       },
     };
 
@@ -174,5 +194,35 @@ describe('CommentsResolver', () => {
     };
     const text = resolver.text(deletedComment);
     expect(text).toBe('[Deleted]');
+  });
+
+  it('delegates toggleCommentBoost to service with authenticated userId and commentId', async () => {
+    const result = await resolver.toggleCommentBoost(mockComment.id, mockContext);
+
+    expect(result).toEqual({
+      commentId: mockComment.id,
+      isBoostedByMe: true,
+      boostedByMe: true,
+      boostCount: 4,
+    });
+    expect(mockCommentsService.toggleCommentBoost).toHaveBeenCalledWith(userId, mockComment.id);
+  });
+
+  it('resolves isBoostedByMe via DataLoader when authenticated', async () => {
+    const isBoosted = await resolver.isBoostedByMe(mockComment, mockContext);
+    expect(isBoosted).toBe(true);
+    const loadSpy = jest.spyOn(mockContext.loaders.commentBoostedByMe!, 'load');
+    expect(loadSpy).toHaveBeenCalledWith(`${userId}:${mockComment.id}`);
+  });
+
+  it('resolves isBoostedByMe as false when unauthenticated', async () => {
+    const unauthContext: GqlContext = { ...mockContext, user: undefined, req: {} as GqlContext['req'] };
+    const isBoosted = await resolver.isBoostedByMe(mockComment, unauthContext);
+    expect(isBoosted).toBe(false);
+  });
+
+  it('resolves boostCount directly from comment entity', () => {
+    expect(resolver.boostCount(mockComment)).toBe(3);
+    expect(resolver.boostCount({ ...mockComment, boostCount: 0 })).toBe(0);
   });
 });

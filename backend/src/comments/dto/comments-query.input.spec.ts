@@ -18,10 +18,52 @@ describe('validateCommentsQueryInput & cursor utilities', () => {
       expect(new Date(decoded.createdAt).getTime()).toBe(now.getTime());
     });
 
+    it('encodes and decodes comment cursor round-trip with boostCount for TOP sort', () => {
+      const now = new Date();
+      const cursor = encodeCommentCursor(
+        {
+          createdAt: now,
+          id: validPostId,
+          boostCount: 42,
+        },
+        'TOP',
+      );
+
+      expect(typeof cursor).toBe('string');
+      const decoded = decodeCommentCursor(cursor);
+      expect(decoded.id).toBe(validPostId);
+      expect(new Date(decoded.createdAt).getTime()).toBe(now.getTime());
+      expect(decoded.boostCount).toBe(42);
+    });
+
+    it('encodes cursor without boostCount for NEWEST sort', () => {
+      const now = new Date();
+      const cursor = encodeCommentCursor(
+        {
+          createdAt: now,
+          id: validPostId,
+          boostCount: 42,
+        },
+        'NEWEST',
+      );
+
+      const decoded = decodeCommentCursor(cursor);
+      expect(decoded.id).toBe(validPostId);
+      expect(new Date(decoded.createdAt).getTime()).toBe(now.getTime());
+      expect(decoded.boostCount).toBeUndefined();
+    });
+
     it('rejects invalid or corrupted cursor', () => {
       expect(() => decodeCommentCursor('not-valid-base64-json!')).toThrow(ValidationError);
       expect(() => decodeCommentCursor('bm90LWpzb24=')).toThrow(ValidationError); // 'not-json' in base64
       expect(() => decodeCommentCursor(Buffer.from('{}').toString('base64url'))).toThrow(ValidationError);
+      expect(() =>
+        decodeCommentCursor(
+          Buffer.from(
+            JSON.stringify({ createdAt: new Date().toISOString(), id: 'id-1', boostCount: 'invalid' }),
+          ).toString('base64url'),
+        ),
+      ).toThrow(ValidationError);
     });
   });
 

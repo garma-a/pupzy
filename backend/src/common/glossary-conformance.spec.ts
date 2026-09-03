@@ -70,5 +70,6 @@ describe('Domain Glossary & Vocabulary Conformance', () => {
     expect(contextContent).toContain('**Staged Upload**:');
     expect(contextContent).toContain('**Comment**:');
     expect(contextContent).toContain('**Reply**:');
+    expect(contextContent).toContain('**Boost**:');
   });
 });

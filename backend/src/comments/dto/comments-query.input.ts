@@ -13,17 +13,26 @@ export interface CommentsQueryDto {
 export interface CommentCursorPayload {
   createdAt: string;
   id: string;
+  boostCount?: number;
 }
 
 /**
- * Encodes a comment's createdAt and id into an opaque base64 keyset cursor.
+ * Encodes a comment's active ordering tuple into an opaque base64url keyset cursor.
+ * For TOP sort: includes (boostCount, createdAt, id).
+ * For NEWEST sort: includes (createdAt, id).
  */
-export function encodeCommentCursor(comment: { createdAt: Date | string; id: string }): string {
+export function encodeCommentCursor(
+  comment: { createdAt: Date | string; id: string; boostCount?: number },
+  sort?: CommentSortOrder,
+): string {
   const createdAtStr = comment.createdAt instanceof Date ? comment.createdAt.toISOString() : comment.createdAt;
   const payload: CommentCursorPayload = {
     createdAt: createdAtStr,
     id: comment.id,
   };
+  if (sort === 'TOP' || (sort === undefined && comment.boostCount !== undefined)) {
+    payload.boostCount = comment.boostCount ?? 0;
+  }
   return Buffer.from(JSON.stringify(payload)).toString('base64url');
 }
 
@@ -44,10 +53,19 @@ export function decodeCommentCursor(cursor: string): CommentCursorPayload {
       throw new Error('Invalid cursor fields');
     }
 
-    return {
+    const payload: CommentCursorPayload = {
       createdAt: parsed.createdAt,
       id: parsed.id,
     };
+
+    if (parsed.boostCount !== undefined) {
+      if (typeof parsed.boostCount !== 'number' || !Number.isInteger(parsed.boostCount)) {
+        throw new Error('Invalid cursor fields');
+      }
+      payload.boostCount = parsed.boostCount;
+    }
+
+    return payload;
   } catch {
     throw new ValidationError('Invalid pagination cursor');
   }

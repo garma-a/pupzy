@@ -516,6 +516,8 @@ class GraphQLService {
             text
             status
             replyCount
+            boostCount
+            isBoostedByMe
             createdAt
             updatedAt
             author {
@@ -547,6 +549,8 @@ class GraphQLService {
             text
             status
             replyCount
+            boostCount
+            isBoostedByMe
             createdAt
             updatedAt
             author {
@@ -576,6 +580,8 @@ class GraphQLService {
         text
         status
         replyCount
+        boostCount
+        isBoostedByMe
         createdAt
         updatedAt
         author {
@@ -598,6 +604,8 @@ class GraphQLService {
         text
         status
         replyCount
+        boostCount
+        isBoostedByMe
         createdAt
         updatedAt
         author {
@@ -614,6 +622,16 @@ class GraphQLService {
   static const String deleteCommentMutation = r'''
     mutation DeleteComment($id: ID!) {
       deleteComment(id: $id)
+    }
+  ''';
+
+  static const String toggleCommentBoostMutation = r'''
+    mutation ToggleCommentBoost($commentId: ID!) {
+      toggleCommentBoost(commentId: $commentId) {
+        commentId
+        isBoostedByMe
+        boostCount
+      }
     }
   ''';
 
@@ -1922,4 +1940,22 @@ class GraphQLService {
     final success = result.data?['deleteComment'] as bool? ?? false;
     return (success, null);
   }
+
+  /// Toggles boost on a Comment or Reply. Returns the updated (boostCount,
+  /// isBoostedByMe) on success, or (null, null, message) on failure.
+  Future<(int? boostCount, bool? isBoostedByMe, String? errorMessage)> toggleCommentBoost(String commentId) async {
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(toggleCommentBoostMutation),
+        variables: {'commentId': commentId},
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, null, _serverErrorMessage(result.exception));
+    }
+    final data = result.data?['toggleCommentBoost'] as Map<String, dynamic>?;
+    return (data?['boostCount'] as int?, data?['isBoostedByMe'] as bool?, null);
+  }
 }
+

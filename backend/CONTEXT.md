@@ -36,3 +36,8 @@ A user-created contribution published beneath a Post to participate in its discu
 A user-created plain text contribution (1 to 500 Unicode characters) published directly beneath an active top-level Comment. Unlike a top-level Comment, a Reply cannot attach media, cannot receive further Replies (limiting discussion threads to one level of nesting), and belongs to the parent Comment's Post discussion thread. A Reply cannot be created beneath inaccessible, deleted, or administratively removed content. Deleting a Reply transactionally decrements both its parent Comment's reply count and the Post's comment count.
 _Avoid_: Nested reply, sub-comment, thread comment, comment reply
 
+**Boost**:
+A positive, reversible engagement signal that an authenticated user can give to a Post, top-level Comment, or Reply to increase its visibility in ranked views. A user can have at most one Boost relationship with a target and cannot Boost their own contribution. Adding or removing a Boost transactionally updates the target's denormalized counter. In discussion threads, visible top-level Comments can be ordered by TOP ranking based on Boost count.
+_Avoid_: Comment upvote, comment like, upvote comment, thread upvote
+
+

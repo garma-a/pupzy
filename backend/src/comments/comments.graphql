@@ -28,6 +28,8 @@ type Comment {
   text: String!
   status: CommentStatus!
   replyCount: Int!
+  boostCount: Int!
+  isBoostedByMe: Boolean!
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -113,4 +115,22 @@ extend type Mutation {
   Deletion is idempotent and irreversible.
   """
   deleteComment(id: ID!): Boolean!
+
+  """
+  Toggle boost on a Comment or Reply.
+  Requires authentication. Returns resulting isBoostedByMe state and canonical boostCount.
+  Reversible toggle: adds boost if not present, removes boost if already present.
+  """
+  toggleCommentBoost(commentId: ID!): ToggleCommentBoostPayload!
 }
+
+"""
+Payload returned by toggleCommentBoost mutation.
+"""
+type ToggleCommentBoostPayload {
+  commentId: ID!
+  isBoostedByMe: Boolean!
+  boostedByMe: Boolean!
+  boostCount: Int!
+}
+

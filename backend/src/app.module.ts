@@ -31,6 +31,7 @@ import { HealthModule } from './health/health.module';
 import { VetClinicsModule } from './vet-clinics/vet-clinics.module';
 import { MatingModule } from './mating/mating.module';
 import { CommentsModule } from './comments/comments.module';
+import { CommentsRepository } from './comments/comments.repository';
 import { GqlExceptionFilter } from './common/filters/gql-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
@@ -78,13 +79,14 @@ import type { GqlContext } from './common/types/gql-context.type';
     // ── GraphQL: schema-first, reads SDL .graphql files ──────────────────
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloDriver,
-      imports: [CitiesModule, UsersModule, PostsModule],
-      inject: [ConfigService, CitiesService, UsersService, PostsRepository],
+      imports: [CitiesModule, UsersModule, PostsModule, CommentsModule],
+      inject: [ConfigService, CitiesService, UsersService, PostsRepository, CommentsRepository],
       useFactory: (
         config: ConfigService,
         citiesService: CitiesService,
         usersService: UsersService,
         postsRepository: PostsRepository,
+        commentsRepository: CommentsRepository,
       ) => ({
         /**
          * Schema-first: all type definitions live in `.graphql` files.
@@ -115,6 +117,7 @@ import type { GqlContext } from './common/types/gql-context.type';
               mediaByPostId: postsRepository.createMediaByPostIdLoader(),
               upvotedByMe: postsRepository.createUpvotedByMeLoader(),
               savedByMe: postsRepository.createSavedByMeLoader(),
+              commentBoostedByMe: commentsRepository.createCommentBoostedByMeLoader(),
             },
           };
           return ctx;

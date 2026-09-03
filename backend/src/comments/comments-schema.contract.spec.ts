@@ -50,9 +50,35 @@ describe('Comments GraphQL Schema Contract (Additive & Backward Compatibility)',
     const authorField = commentType!.fields?.find((f) => f.name.value === 'author');
     expect(authorField).toBeDefined();
     expect(authorField!.type.kind).toBe(Kind.NAMED_TYPE);
+
+    // boostCount: Int!
+    const boostCountField = commentType!.fields?.find((f) => f.name.value === 'boostCount');
+    expect(boostCountField).toBeDefined();
+    expect(boostCountField!.type.kind).toBe(Kind.NON_NULL_TYPE);
+
+    // isBoostedByMe: Boolean!
+    const isBoostedByMeField = commentType!.fields?.find((f) => f.name.value === 'isBoostedByMe');
+    expect(isBoostedByMeField).toBeDefined();
+    expect(isBoostedByMeField!.type.kind).toBe(Kind.NON_NULL_TYPE);
   });
 
-  it('verifies Query extends replies and Mutation extends createReply and deleteComment', () => {
+  it('verifies ToggleCommentBoostPayload has commentId, isBoostedByMe, and boostCount', () => {
+    const source = fs.readFileSync(COMMENTS_GRAPHQL_FILE, 'utf8');
+    const doc = parse(source);
+
+    const payloadType = doc.definitions.find(
+      (d): d is ObjectTypeDefinitionNode =>
+        d.kind === Kind.OBJECT_TYPE_DEFINITION && d.name.value === 'ToggleCommentBoostPayload',
+    );
+
+    expect(payloadType).toBeDefined();
+    const fieldNames = payloadType!.fields?.map((f) => f.name.value) ?? [];
+    expect(fieldNames).toContain('commentId');
+    expect(fieldNames).toContain('isBoostedByMe');
+    expect(fieldNames).toContain('boostCount');
+  });
+
+  it('verifies Query extends replies and Mutation extends createReply, deleteComment, and toggleCommentBoost', () => {
     const source = fs.readFileSync(COMMENTS_GRAPHQL_FILE, 'utf8');
     const doc = parse(source);
 
@@ -71,6 +97,7 @@ describe('Comments GraphQL Schema Contract (Additive & Backward Compatibility)',
     expect(mutationFields).toContain('createComment');
     expect(mutationFields).toContain('createReply');
     expect(mutationFields).toContain('deleteComment');
+    expect(mutationFields).toContain('toggleCommentBoost');
   });
 
   it('ensures Post in posts.graphql includes additive commentCount: Int!', () => {

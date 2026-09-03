@@ -42,6 +42,16 @@ export class CommentsResolver {
   }
 
   /**
+   * Toggles boost on a Comment or Reply.
+   * Requires authenticated user. Returns resulting isBoostedByMe state and canonical boostCount.
+   */
+  @Mutation('toggleCommentBoost')
+  async toggleCommentBoost(@Args('commentId') commentId: string, @Context() ctx: GqlContext) {
+    assertUuid(commentId, 'commentId');
+    return this.commentsService.toggleCommentBoost(ctx.user!.id, commentId);
+  }
+
+  /**
    * Queries top-level Comments for a Post with keyset pagination.
    */
   @Query('comments')
@@ -90,5 +100,28 @@ export class CommentsResolver {
       return '[Deleted]';
     }
     return comment.text;
+  }
+
+  /**
+   * Resolves whether the current viewer has boosted this comment or reply.
+   * Uses per-request DataLoader when available.
+   * Returns `false` for unauthenticated viewers.
+   */
+  @ResolveField('isBoostedByMe')
+  async isBoostedByMe(@Root() comment: Comment, @Context() ctx: GqlContext): Promise<boolean> {
+    const userId = ctx.user?.id ?? (ctx.req as unknown as { user?: { id: string } })?.user?.id;
+    if (!userId) return false;
+    if (ctx.loaders?.commentBoostedByMe) {
+      return ctx.loaders.commentBoostedByMe.load(`${userId}:${comment.id}`);
+    }
+    return this.commentsService.isCommentBoostedByUser(comment.id, userId);
+  }
+
+  /**
+   * Resolves the boostCount for the comment or reply.
+   */
+  @ResolveField('boostCount')
+  boostCount(@Root() comment: Comment): number {
+    return comment.boostCount ?? 0;
   }
 }

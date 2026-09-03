@@ -6,6 +6,7 @@ import '../models/comment.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
+import 'animated_boost_chip.dart';
 
 /// Reusable discussion surface for viewing and publishing top-level Comments and Replies on a Post.
 /// Supports loading, empty, error, pagination, reply creation, thread expansion, and owner deletion.
@@ -321,6 +322,109 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     });
 
     widget.onCommentCreated?.call();
+  }
+
+  void _updateCommentBoostState(String commentId, bool isBoosted, int count) {
+    setState(() {
+      final idx = _comments.indexWhere((c) => c.id == commentId);
+      if (idx != -1) {
+        _comments[idx] = _comments[idx].copyWith(
+          isBoostedByMe: isBoosted,
+          boostCount: count.clamp(0, 999999),
+        );
+      }
+    });
+  }
+
+  void _updateReplyBoostState(String parentId, String replyId, bool isBoosted, int count) {
+    setState(() {
+      final list = _repliesMap[parentId];
+      if (list != null) {
+        final idx = list.indexWhere((r) => r.id == replyId);
+        if (idx != -1) {
+          list[idx] = list[idx].copyWith(
+            isBoostedByMe: isBoosted,
+            boostCount: count.clamp(0, 999999),
+          );
+        }
+      }
+    });
+  }
+
+  Future<bool> _toggleCommentBoost(Comment comment) async {
+    if (_currentUserId != null && comment.author?.id == _currentUserId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(t(context, "You can't boost your own comment", 'لا يمكنك تعزيز تعليقك الخاص')),
+          backgroundColor: AppColors.critical,
+        ),
+      );
+      return false;
+    }
+
+    final prevBoosted = comment.isBoostedByMe;
+    final prevCount = comment.boostCount;
+    final nextBoosted = !prevBoosted;
+    final nextCount = prevCount + (nextBoosted ? 1 : -1);
+
+    _updateCommentBoostState(comment.id, nextBoosted, nextCount);
+
+    final graphql = context.read<GraphQLService>();
+    final (newCount, isBoosted, error) = await graphql.toggleCommentBoost(comment.id);
+
+    if (!mounted) return false;
+
+    if (error != null || newCount == null || isBoosted == null) {
+      _updateCommentBoostState(comment.id, prevBoosted, prevCount);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error ?? t(context, 'Could not update boost. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.')),
+          backgroundColor: AppColors.critical,
+        ),
+      );
+      return false;
+    }
+
+    _updateCommentBoostState(comment.id, isBoosted, newCount);
+    return true;
+  }
+
+  Future<bool> _toggleReplyBoost(Comment reply, String parentCommentId) async {
+    if (_currentUserId != null && reply.author?.id == _currentUserId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(t(context, "You can't boost your own reply", 'لا يمكنك تعزيز ردك الخاص')),
+          backgroundColor: AppColors.critical,
+        ),
+      );
+      return false;
+    }
+
+    final prevBoosted = reply.isBoostedByMe;
+    final prevCount = reply.boostCount;
+    final nextBoosted = !prevBoosted;
+    final nextCount = prevCount + (nextBoosted ? 1 : -1);
+
+    _updateReplyBoostState(parentCommentId, reply.id, nextBoosted, nextCount);
+
+    final graphql = context.read<GraphQLService>();
+    final (newCount, isBoosted, error) = await graphql.toggleCommentBoost(reply.id);
+
+    if (!mounted) return false;
+
+    if (error != null || newCount == null || isBoosted == null) {
+      _updateReplyBoostState(parentCommentId, reply.id, prevBoosted, prevCount);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error ?? t(context, 'Could not update boost. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.')),
+          backgroundColor: AppColors.critical,
+        ),
+      );
+      return false;
+    }
+
+    _updateReplyBoostState(parentCommentId, reply.id, isBoosted, newCount);
+    return true;
   }
 
   Future<void> _submit() async {
@@ -711,7 +815,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
                   ),
                   const SizedBox(height: 6),
 
-                  // Action Row: Reply & View Replies buttons
+                  // Action Row: Reply, View Replies & Boost buttons
                   Row(
                     children: [
                       if (!isTombstone) ...[
@@ -728,7 +832,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
                         ),
                         const SizedBox(width: AppSpacing.md),
                       ],
-                      if (comment.replyCount > 0)
+                      if (comment.replyCount > 0) ...[
                         GestureDetector(
                           onTap: () => _toggleReplies(comment),
                           child: Text(
@@ -745,6 +849,22 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
                               color: AppColors.textSecondary,
                             ),
                           ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                      ],
+                      const Spacer(),
+                      if (!isTombstone)
+                        AnimatedBoostChip(
+                          count: comment.boostCount,
+                          boosted: comment.isBoostedByMe,
+                          onToggle: () => _toggleCommentBoost(comment),
+                          boostedLabel: t(context, 'Boosted', 'مُعزَّز'),
+                          unboostedLabel: t(context, 'Boost', 'تعزيز'),
+                          activeColor: AppColors.primary,
+                          inactiveColor: AppColors.textSecondary,
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          iconSize: 13,
+                          fontSize: 11,
                         ),
                     ],
                   ),
@@ -887,6 +1007,24 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
                       color: AppColors.textPrimary,
                       fontSize: 13,
                     ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Spacer(),
+                  AnimatedBoostChip(
+                    count: reply.boostCount,
+                    boosted: reply.isBoostedByMe,
+                    onToggle: () => _toggleReplyBoost(reply, parentCommentId),
+                    boostedLabel: t(context, 'Boosted', 'مُعزَّز'),
+                    unboostedLabel: t(context, 'Boost', 'تعزيز'),
+                    activeColor: AppColors.primary,
+                    inactiveColor: AppColors.textSecondary,
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    iconSize: 12,
+                    fontSize: 10,
+                  ),
+                ],
               ),
             ],
           ),

@@ -16,6 +16,8 @@ describe('CommentsService', () => {
     createReplyWithCounters: jest.Mock;
     findRepliesByCommentId: jest.Mock;
     deleteCommentWithCounters: jest.Mock;
+    toggleBoost: jest.Mock;
+    isCommentBoostedByUser: jest.Mock;
   };
   let mockPostsRepo: {
     findById: jest.Mock;
@@ -43,6 +45,7 @@ describe('CommentsService', () => {
     text: 'I can foster this dog!',
     status: 'ACTIVE',
     replyCount: 0,
+    boostCount: 0,
     createdAt: new Date('2026-09-04T00:00:00.000Z'),
     updatedAt: new Date('2026-09-04T00:00:00.000Z'),
   };
@@ -55,6 +58,7 @@ describe('CommentsService', () => {
     text: 'I can help with transport!',
     status: 'ACTIVE',
     replyCount: 0,
+    boostCount: 0,
     createdAt: new Date('2026-09-04T00:05:00.000Z'),
     updatedAt: new Date('2026-09-04T00:05:00.000Z'),
   };
@@ -69,6 +73,8 @@ describe('CommentsService', () => {
       createReplyWithCounters: jest.fn().mockResolvedValue(mockReply),
       findRepliesByCommentId: jest.fn(),
       deleteCommentWithCounters: jest.fn().mockResolvedValue(true),
+      toggleBoost: jest.fn().mockResolvedValue({ isBoostedByMe: true, boostCount: 1 }),
+      isCommentBoostedByUser: jest.fn().mockResolvedValue(false),
     };
 
     mockPostsRepo = {
@@ -639,6 +645,72 @@ describe('CommentsService', () => {
       const result = await service.deleteComment(userId, mockComment.id);
       expect(result).toBe(true);
       expect(mockCommentsRepo.deleteCommentWithCounters).toHaveBeenCalledWith(mockComment.id, userId);
+    });
+  });
+
+  describe('toggleCommentBoost', () => {
+    it('toggles boost and returns canonical payload', async () => {
+      mockCommentsRepo.toggleBoost.mockResolvedValueOnce({
+        isBoostedByMe: true,
+        boostCount: 5,
+      });
+
+      const result = await service.toggleCommentBoost(userId, mockComment.id);
+
+      expect(result).toEqual({
+        commentId: mockComment.id,
+        isBoostedByMe: true,
+        boostedByMe: true,
+        boostCount: 5,
+      });
+      expect(mockCommentsRepo.toggleBoost).toHaveBeenCalledWith(mockComment.id, userId);
+    });
+
+    it('enforces 60 toggles per minute per authenticated user', async () => {
+      const rateLimitedUserId = '01916327-0000-7000-8000-000000000099';
+      mockCommentsRepo.toggleBoost.mockResolvedValue({
+        isBoostedByMe: true,
+        boostCount: 1,
+      });
+
+      // 60 requests should succeed
+      for (let i = 0; i < 60; i++) {
+        await service.toggleCommentBoost(rateLimitedUserId, mockComment.id);
+      }
+
+      // 61st request should be rejected with RATE_LIMITED
+      await expect(service.toggleCommentBoost(rateLimitedUserId, mockComment.id)).rejects.toThrow(
+        /rate limit exceeded.*60 per minute/,
+      );
+    });
+
+    it('isolates boost rate limits between different users', async () => {
+      const userA = '01916327-0000-7000-8000-000000000088';
+      const userB = '01916327-0000-7000-8000-000000000089';
+      mockCommentsRepo.toggleBoost.mockResolvedValue({
+        isBoostedByMe: true,
+        boostCount: 1,
+      });
+
+      // Exhaust User A's limit
+      for (let i = 0; i < 60; i++) {
+        await service.toggleCommentBoost(userA, mockComment.id);
+      }
+
+      await expect(service.toggleCommentBoost(userA, mockComment.id)).rejects.toThrow(/rate limit exceeded/);
+
+      // User B is unaffected
+      const resultB = await service.toggleCommentBoost(userB, mockComment.id);
+      expect(resultB.commentId).toBe(mockComment.id);
+    });
+  });
+
+  describe('isCommentBoostedByUser', () => {
+    it('delegates to repository', async () => {
+      mockCommentsRepo.isCommentBoostedByUser.mockResolvedValueOnce(true);
+      const res = await service.isCommentBoostedByUser(mockComment.id, userId);
+      expect(res).toBe(true);
+      expect(mockCommentsRepo.isCommentBoostedByUser).toHaveBeenCalledWith(mockComment.id, userId);
     });
   });
 });

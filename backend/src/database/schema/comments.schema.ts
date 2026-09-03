@@ -42,6 +42,9 @@ export const comments = pgTable(
     /** Number of visible direct replies to this comment (0 for replies). */
     replyCount: integer('reply_count').notNull().default(0),
 
+    /** Number of boosts received by this comment or reply. */
+    boostCount: integer('boost_count').notNull().default(0),
+
     /** Lifecycle and moderation state. */
     status: commentStatusEnum('status').notNull().default('ACTIVE'),
 
@@ -55,6 +58,13 @@ export const comments = pgTable(
     postStatusCreatedIdx: index('idx_comments_post_status_created').on(
       table.postId,
       table.status,
+      table.createdAt,
+      table.id,
+    ),
+    postStatusBoostCreatedIdx: index('idx_comments_post_status_boost_created').on(
+      table.postId,
+      table.status,
+      table.boostCount,
       table.createdAt,
       table.id,
     ),

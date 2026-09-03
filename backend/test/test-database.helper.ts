@@ -56,6 +56,7 @@ export class TestDatabaseHelper {
         vet_clinic_location_audits,
         address_search_cache,
         staged_uploads,
+        comment_boosts,
         comment_idempotency,
         comments
       CASCADE;

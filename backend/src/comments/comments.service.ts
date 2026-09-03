@@ -109,7 +109,7 @@ export class CommentsService {
    * - Opaque cursor encoding and decoding.
    */
   async getComments(input: CommentsQueryDto): Promise<CommentConnection> {
-    const { postId, first, after } = input;
+    const { postId, sort, first, after } = input;
 
     // Check post eligibility
     const post = await this.postsRepository.findById(postId);
@@ -118,14 +118,14 @@ export class CommentsService {
     }
 
     const cursorPayload = after ? decodeCommentCursor(after) : undefined;
-    const rows = await this.commentsRepository.findTopLevelCommentsByPostId(postId, first, cursorPayload);
+    const rows = await this.commentsRepository.findTopLevelCommentsByPostId(postId, first, sort, cursorPayload);
 
     const hasNextPage = rows.length > first;
     const items = hasNextPage ? rows.slice(0, first) : rows;
 
     const edges: CommentEdge[] = items.map((comment) => ({
       node: comment,
-      cursor: encodeCommentCursor(comment),
+      cursor: encodeCommentCursor(comment, sort),
     }));
 
     const endCursor = edges.length > 0 ? edges[edges.length - 1].cursor : null;
@@ -271,5 +271,60 @@ export class CommentsService {
    */
   async deleteComment(userId: string, commentId: string): Promise<boolean> {
     return this.commentsRepository.deleteCommentWithCounters(commentId, userId);
+  }
+
+  private readonly boostToggleTimestamps = new Map<string, number[]>();
+
+  /**
+   * Enforces 60 Comment Boost toggles per minute per authenticated user.
+   */
+  private checkBoostRateLimit(userId: string): void {
+    const now = Date.now();
+    const windowStart = now - 60 * 1000;
+    const timestamps = this.boostToggleTimestamps.get(userId) ?? [];
+    const valid = timestamps.filter((t) => t > windowStart);
+    if (valid.length >= 60) {
+      throw new AppError('Comment boost rate limit exceeded (max 60 per minute)', 'RATE_LIMITED');
+    }
+    valid.push(now);
+    this.boostToggleTimestamps.set(userId, valid);
+  }
+
+  /**
+   * Resets the boost toggle rate limit window for a user (useful for testing).
+   */
+  resetBoostRateLimit(userId: string): void {
+    this.boostToggleTimestamps.delete(userId);
+  }
+
+  /**
+   * Toggles a boost on a Comment or Reply.
+   * - Rate limited to 60 per minute per authenticated user.
+   * - Reversible: adds boost if not present, removes if already present.
+   * - Transactional update of denormalized boostCount.
+   */
+  async toggleCommentBoost(
+    userId: string,
+    commentId: string,
+  ): Promise<{ commentId: string; isBoostedByMe: boolean; boostedByMe: boolean; boostCount: number }> {
+    // 1. Rate limiting (60 per minute)
+    this.checkBoostRateLimit(userId);
+
+    // 2. Transactional toggle in repository
+    const result = await this.commentsRepository.toggleBoost(commentId, userId);
+
+    return {
+      commentId,
+      isBoostedByMe: result.isBoostedByMe,
+      boostedByMe: result.isBoostedByMe,
+      boostCount: result.boostCount,
+    };
+  }
+
+  /**
+   * Checks if a user has boosted a specific comment or reply.
+   */
+  async isCommentBoostedByUser(commentId: string, userId: string): Promise<boolean> {
+    return this.commentsRepository.isCommentBoostedByUser(commentId, userId);
   }
 }

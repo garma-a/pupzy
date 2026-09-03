@@ -18,6 +18,8 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
     createReplyWithCounters: jest.Mock;
     findRepliesByCommentId: jest.Mock;
     deleteCommentWithCounters: jest.Mock;
+    toggleBoost: jest.Mock;
+    isCommentBoostedByUser: jest.Mock;
   };
   let mockPostsRepo: {
     findById: jest.Mock;
@@ -116,6 +118,13 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
         if (item.authorId !== callerId) throw new ForbiddenError('You can only delete your own comments or replies');
         return Promise.resolve(true);
       }),
+      toggleBoost: jest.fn().mockImplementation((targetId: string, callerId: string) => {
+        const item = targetId === commentId ? mockTopLevelComment : targetId === replyId ? mockReplyComment : null;
+        if (!item) throw new NotFoundError('Comment', targetId);
+        if (item.authorId === callerId) throw new ForbiddenError('You cannot boost your own comment or reply');
+        return Promise.resolve({ isBoostedByMe: true, boostCount: 1 });
+      }),
+      isCommentBoostedByUser: jest.fn().mockResolvedValue(false),
     };
 
     mockPostsRepo = {
@@ -366,6 +375,43 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
           ctx,
         ),
       ).rejects.toThrow(NotFoundError);
+    });
+  });
+
+  describe('8. Comment Boosts & TOP Sorting Acceptance (Ticket 04)', () => {
+    it('allows boosting top-level comments and replies by other users', async () => {
+      const ctx = createContext(thirdPartyUserId);
+      const res = await resolver.toggleCommentBoost(commentId, ctx);
+      expect(res.commentId).toBe(commentId);
+      expect(res.isBoostedByMe).toBe(true);
+      expect(res.boostCount).toBe(1);
+    });
+
+    it('rejects self-boosts on own top-level comment', async () => {
+      const ctx = createContext(authorId);
+      await expect(resolver.toggleCommentBoost(commentId, ctx)).rejects.toThrow(ForbiddenError);
+    });
+
+    it('rejects self-boosts on own reply', async () => {
+      const ctx = createContext(replyAuthorId);
+      await expect(resolver.toggleCommentBoost(replyId, ctx)).rejects.toThrow(ForbiddenError);
+    });
+
+    it('rejects boost toggles on nonexistent comment', async () => {
+      const ctx = createContext(thirdPartyUserId);
+      await expect(resolver.toggleCommentBoost('01916327-0000-7000-8000-000000000099', ctx)).rejects.toThrow(
+        NotFoundError,
+      );
+    });
+
+    it('passes TOP sort option to repository', async () => {
+      await resolver.comments(postId, 'TOP', 20);
+      expect(mockCommentsRepo.findTopLevelCommentsByPostId).toHaveBeenCalledWith(postId, 20, 'TOP', undefined);
+    });
+
+    it('passes NEWEST sort option to repository', async () => {
+      await resolver.comments(postId, 'NEWEST', 20);
+      expect(mockCommentsRepo.findTopLevelCommentsByPostId).toHaveBeenCalledWith(postId, 20, 'NEWEST', undefined);
     });
   });
 });
