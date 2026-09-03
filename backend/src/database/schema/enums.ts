@@ -161,3 +161,26 @@ export const PERSONALITY_TAGS = [
 ] as const;
 
 export type PersonalityTag = (typeof PERSONALITY_TAGS)[number];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STAGED UPLOAD ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Purpose of an upload ticket.
+ * Binds the media to a specific vertical/domain to prevent purpose confusion.
+ */
+export const stagedUploadPurposeEnum = pgEnum('staged_upload_purpose', ['POST_MEDIA', 'COMMENT_IMAGE']);
+
+export type StagedUploadPurpose = (typeof stagedUploadPurposeEnum.enumValues)[number];
+
+/**
+ * Lifecycle states of a staged upload ticket.
+ * - ISSUED: Ticket issued with presigned PUT URL, awaiting client upload.
+ * - CLAIMED: Atomically claimed during post or comment creation to prevent concurrent reuse.
+ * - FINALIZED: Verified and copied to permanent public storage.
+ * - FAILED: Expired, missing in R2, or failed during finalization.
+ */
+export const stagedUploadStatusEnum = pgEnum('staged_upload_status', ['ISSUED', 'CLAIMED', 'FINALIZED', 'FAILED']);
+
+export type StagedUploadStatus = (typeof stagedUploadStatusEnum.enumValues)[number];

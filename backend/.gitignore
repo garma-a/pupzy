@@ -1,6 +1,9 @@
 .scratch/
 .agents/
-docs/
+docs/*
+!docs/adr/
+docs/adr/*
+!docs/adr/0005-durable-staged-uploads.md
 pupzy-app-5f707-firebase-adminsdk-fbsvc-44ac11fd5b.json
 # compiled output
 /dist

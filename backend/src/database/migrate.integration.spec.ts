@@ -64,6 +64,33 @@ describe('Database Migration Runner Integration', () => {
     expect(tableNames).toContain('mating_posts');
     expect(tableNames).toContain('notifications');
     expect(tableNames).toContain('vet_clinic_location_audits');
+    expect(tableNames).toContain('staged_uploads');
+
+    // Verify staged_uploads schema and non-null constraints
+    const stagedColsRes = await pool.query<{ column_name: string; is_nullable: string }>(`
+      SELECT column_name, is_nullable
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'staged_uploads'
+    `);
+    const stagedColNullMap = Object.fromEntries(stagedColsRes.rows.map((r) => [r.column_name, r.is_nullable]));
+    expect(stagedColNullMap['user_id']).toBe('NO');
+    expect(stagedColNullMap['purpose']).toBe('NO');
+    expect(stagedColNullMap['staging_key']).toBe('NO');
+    expect(stagedColNullMap['declared_content_type']).toBe('NO');
+    expect(stagedColNullMap['declared_file_size_bytes']).toBe('NO');
+    expect(stagedColNullMap['status']).toBe('NO');
+    expect(stagedColNullMap['expires_at']).toBe('NO');
+
+    // Verify staged_uploads foreign keys (user_id cascade, post_id set null)
+    const stagedFkRes = await pool.query<{ conname: string; confdeltype: string }>(`
+      SELECT conname, confdeltype::text AS confdeltype
+      FROM pg_constraint
+      WHERE conrelid = 'staged_uploads'::regclass AND contype = 'f'
+    `);
+    expect(stagedFkRes.rows.length).toBe(2);
+    const stagedFkMap = Object.fromEntries(stagedFkRes.rows.map((r) => [r.conname, r.confdeltype]));
+    expect(stagedFkMap['staged_uploads_user_id_users_id_fk']).toBe('c'); // 'c' = CASCADE
+    expect(stagedFkMap['staged_uploads_post_id_posts_id_fk']).toBe('n'); // 'n' = SET NULL
 
     // Verify vet_clinic_location_audits attribution columns are all NOT NULL
     const auditColsRes = await pool.query<{ column_name: string; is_nullable: string }>(`
@@ -352,24 +379,24 @@ describe('Database Migration Runner Integration', () => {
         entries: JournalEntry[];
       }
 
-      // Reproduce the schema immediately before 0019, where the administrator
-      // attribution column was nullable and foreign keys used SET NULL.
+      // Reproduce the schema immediately before 0020 (0000..0019), where staged_uploads
+      // did not yet exist.
       const fullJournalPath = path.resolve(__dirname, '../../drizzle/migrations/meta/_journal.json');
       const journalData = JSON.parse(fs.readFileSync(fullJournalPath, 'utf8')) as JournalData;
-      const baselineEntries = journalData.entries.filter((entry: JournalEntry) => entry.idx <= 18);
+      const baselineEntries = journalData.entries.filter((entry: JournalEntry) => entry.idx <= 19);
       fs.writeFileSync(
         path.join(tempMetaDir, '_journal.json'),
         JSON.stringify({ ...journalData, entries: baselineEntries }, null, 2),
       );
 
-      // Copy migration files 0000 through 0018 into temp folder
+      // Copy migration files 0000 through 0019 into temp folder
       for (const entry of baselineEntries) {
         const sqlFileName = `${entry.tag}.sql`;
         const srcPath = path.resolve(__dirname, '../../drizzle/migrations', sqlFileName);
         fs.copyFileSync(srcPath, path.join(tempBaselineDir, sqlFileName));
       }
 
-      // Apply the immediately preceding migrations (0000..0018)
+      // Apply the immediately preceding migrations (0000..0019)
       const upgradeDb = drizzle(upgradePool);
       await migrate(upgradeDb, { migrationsFolder: tempBaselineDir });
 
@@ -412,7 +439,28 @@ describe('Database Migration Runner Integration', () => {
       );
       const auditId = auditRes.rows[0].id;
 
-      // 2. Now run candidate migration 0019 + custom.sql on the existing database.
+      // Seed a pre-existing Post and PostMedia row before 0020
+      const postRes = await upgradePool.query<{ id: string }>(
+        `
+        INSERT INTO posts (id, creator_id, post_type, title, description, status, moderation_status, urgency, city_id, governorate, coordinates, effective_score)
+        VALUES (uuidv7(), $1, 'RESCUE', 'Rescue dog pre-migration', 'Pre-existing post before 0020', 'ACTIVE', 'CLEAN', 'URGENT', $2, 'Cairo', ST_SetSRID(ST_MakePoint(31.25, 29.96), 4326), 0.0)
+        RETURNING id;
+      `,
+        [userId, cityId],
+      );
+      const postId = postRes.rows[0].id;
+
+      const mediaRes = await upgradePool.query<{ id: string }>(
+        `
+        INSERT INTO post_media (id, post_id, public_url, cloudflare_storage_key, display_order, file_content_type)
+        VALUES (uuidv7(), $1, 'https://cdn.pupzy.com/posts/existing-post/photo.webp', 'posts/existing-post/photo.webp', 0, 'image/webp')
+        RETURNING id;
+      `,
+        [postId],
+      );
+      const mediaId = mediaRes.rows[0].id;
+
+      // 2. Now run candidate migration 0020 + custom.sql on the existing database.
       await runMigrations({
         pool: upgradePool,
         migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
@@ -438,6 +486,29 @@ describe('Database Migration Runner Integration', () => {
       );
       expect(postUpgradeClinic.rows[0].name_english).toBe('Maadi Pets');
       expect(postUpgradeClinic.rows[0].source).toBe('OSM');
+
+      // Verify pre-existing post and post media remain readable and URLs are not rewritten
+      const preservedMedia = await upgradePool.query<{ public_url: string; cloudflare_storage_key: string }>(
+        `SELECT public_url, cloudflare_storage_key FROM post_media WHERE id = $1`,
+        [mediaId],
+      );
+      expect(preservedMedia.rows).toEqual([
+        {
+          public_url: 'https://cdn.pupzy.com/posts/existing-post/photo.webp',
+          cloudflare_storage_key: 'posts/existing-post/photo.webp',
+        },
+      ]);
+
+      // Verify staged_uploads table exists and works on upgraded database
+      const stagedRes = await upgradePool.query<{ id: string; status: string }>(
+        `
+        INSERT INTO staged_uploads (id, user_id, purpose, staging_key, declared_content_type, declared_file_size_bytes, status, expires_at)
+        VALUES (uuidv7(), $1, 'POST_MEDIA', 'staging/upgrade-user/test.jpg', 'image/jpeg', 2048, 'ISSUED', now() + interval '15 minutes')
+        RETURNING id, status;
+      `,
+        [userId],
+      );
+      expect(stagedRes.rows[0].status).toBe('ISSUED');
 
       // 4. Verify the pre-existing audit attribution is preserved.
       const preservedAudit = await upgradePool.query<{

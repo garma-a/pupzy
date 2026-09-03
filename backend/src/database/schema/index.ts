@@ -55,3 +55,6 @@ export * from './vet-clinic-location-audits.schema';
 
 // Durable address search cache for OSM Nominatim
 export * from './address-search-cache.schema';
+
+// Staged uploads — durable authority for media upload tickets
+export * from './staged-uploads.schema';

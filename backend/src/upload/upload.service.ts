@@ -10,6 +10,11 @@ import {
   HeadObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { eq, and, gt, inArray } from 'drizzle-orm';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { DATABASE_TOKEN } from '../database/database.provider';
+import { stagedUploads, type StagedUpload, type StagedUploadPurpose } from '../database/schema';
+import * as schema from '../database/schema';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { NotFoundError } from '../common/errors/app.errors';
 
@@ -22,18 +27,18 @@ import { NotFoundError } from '../common/errors/app.errors';
  * namespace and to decouple the upload from post creation:
  *
  * 1. **Staging** (`generatePresignedUrl`):
- *    The client requests a presigned PUT URL. The file is uploaded to a
- *    `staging/{userId}/{mediaId}.{ext}` key. This key is isolated per user
- *    so one user cannot overwrite another's staging files.
+ *    The client requests a presigned PUT URL. The durable ticket is committed
+ *    to PostgreSQL (`staged_uploads`) before returning the URL. The file is uploaded to
+ *    a `staging/{userId}/{mediaId}.{ext}` key.
  *
  * 2. **Finalization** (`finalizeMedia`):
  *    When the post is created, the server moves the staged file to its
  *    permanent location at `posts/{postId}/{mediaId}.{ext}` using a
- *    server-side copy + delete. This ensures only files attached to a valid
- *    post appear in the public namespace.
+ *    server-side copy + delete. Only files attached to a valid post appear
+ *    in the public namespace.
  *
- * If the user never creates a post, staged files can be garbage-collected
- * via an R2 lifecycle rule (e.g. delete objects in `staging/` older than 24h).
+ * PostgreSQL is the authority for owner-bound, purpose-bound, expiring,
+ * single-use tickets. Process-local cache is optional acceleration only.
  */
 @Injectable()
 export class UploadService {
@@ -62,6 +67,7 @@ export class UploadService {
   constructor(
     private readonly config: ConfigService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    @Inject(DATABASE_TOKEN) private readonly db: NodePgDatabase<typeof schema>,
   ) {
     this.s3Client = new S3Client({
       region: 'auto',
@@ -78,22 +84,20 @@ export class UploadService {
   /**
    * Generates a presigned PUT URL for the client to upload an image directly to R2.
    *
-   * The file lands in a staging namespace (`staging/{userId}/{mediaId}.{ext}`)
-   * and is NOT publicly accessible until {@link finalizeMedia} moves it to
-   * the permanent `posts/` namespace.
-   *
-   * The presigned URL embeds `ContentType` and `ContentLength` conditions,
-   * so R2 will reject uploads that don't match the declared MIME type and size.
+   * The upload ticket is durably committed to PostgreSQL before the presigned URL
+   * is returned to ensure uploads survive restarts and deployments.
    *
    * @param userId - Authenticated user's ID, used to namespace staging keys.
    * @param contentType - MIME type declared by the client (e.g. `image/webp`).
    * @param fileSizeBytes - Exact byte count the client will upload.
+   * @param purpose - Target domain for upload ticket (default: `POST_MEDIA`).
    * @returns Object containing the `mediaId`, `uploadUrl`, `expiresAt`, and `stagingKey`.
    */
   async generatePresignedUrl(
     userId: string,
     contentType: string,
     fileSizeBytes: number,
+    purpose: StagedUploadPurpose = 'POST_MEDIA',
   ): Promise<{
     mediaId: string;
     uploadUrl: string;
@@ -111,60 +115,189 @@ export class UploadService {
       ContentLength: fileSizeBytes,
     });
 
-    /** 10-minute expiry — long enough for mobile uploads on slow connections. */
+    /** 10-minute expiry for client upload URL */
     const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 600 });
+    const expiresAt = new Date(Date.now() + 600_000);
+    /** 15-minute expiry for durable ticket to allow slow client post creation */
+    const ticketExpiresAt = new Date(Date.now() + 900_000);
 
-    // Bind the short-lived staging capability to both its owner and MIME type.
-    // Post creation verifies these values before it creates a media row.
+    // Commit ticket durably in PostgreSQL BEFORE returning
+    await this.db.insert(stagedUploads).values({
+      id: mediaId,
+      userId,
+      purpose,
+      stagingKey,
+      declaredContentType: contentType,
+      declaredFileSizeBytes: fileSizeBytes,
+      status: 'ISSUED',
+      expiresAt: ticketExpiresAt,
+    });
+
+    // Optional cache acceleration — failure to populate cache never breaks the flow
     await Promise.all([
       this.cacheManager.set(`media_ct:${mediaId}`, contentType, 900_000),
       this.cacheManager.set(`media_owner:${mediaId}`, userId, 900_000),
-    ]);
+      this.cacheManager.set(`media_staging_key:${mediaId}`, stagingKey, 900_000),
+      this.cacheManager.set(`media_purpose:${mediaId}`, purpose, 900_000),
+    ]).catch((err) => {
+      this.logger.warn(`Failed to set staging cache for mediaId ${mediaId}: ${err}`);
+    });
 
     return {
       mediaId,
       uploadUrl,
-      expiresAt: new Date(Date.now() + 600_000),
+      expiresAt,
       stagingKey,
+    };
+  }
+
+  /**
+   * Atomically claims a staged upload ticket for a post.
+   * Ensures single-use under concurrent creation attempts without holding open transactions.
+   */
+  async claimMedia(
+    mediaId: string,
+    userId: string,
+    postId: string,
+    purpose: StagedUploadPurpose = 'POST_MEDIA',
+  ): Promise<StagedUpload> {
+    const now = new Date();
+    const [claimed] = await this.db
+      .update(stagedUploads)
+      .set({
+        status: 'CLAIMED',
+        postId,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(stagedUploads.id, mediaId),
+          eq(stagedUploads.userId, userId),
+          eq(stagedUploads.purpose, purpose),
+          eq(stagedUploads.status, 'ISSUED'),
+          gt(stagedUploads.expiresAt, now),
+        ),
+      )
+      .returning();
+
+    if (!claimed) {
+      throw new NotFoundError('Staged media', mediaId);
+    }
+
+    return claimed;
+  }
+
+  /**
+   * Verifies a user-owned staged upload and predicts its final URLs.
+   * Atomically claims the ticket if currently ISSUED.
+   */
+  async getExpectedMediaUrls(
+    mediaId: string,
+    userId: string,
+    postId: string,
+    purpose: StagedUploadPurpose = 'POST_MEDIA',
+  ): Promise<{
+    publicUrl: string;
+    cloudflareStorageKey: string;
+    fileContentType: string;
+  }> {
+    // Look up ticket in PostgreSQL — authority regardless of cache state
+    const [existing] = await this.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId)).limit(1);
+
+    // Reject without revealing existence or ownership facts
+    if (
+      !existing ||
+      existing.userId !== userId ||
+      existing.purpose !== purpose ||
+      existing.expiresAt.getTime() <= Date.now()
+    ) {
+      throw new NotFoundError('Staged media', mediaId);
+    }
+
+    let ticket: StagedUpload;
+    if (existing.status === 'ISSUED') {
+      ticket = await this.claimMedia(mediaId, userId, postId, purpose);
+    } else if (existing.status === 'CLAIMED' && existing.postId === postId) {
+      ticket = existing;
+    } else {
+      // Already claimed by another post, finalized, or failed
+      throw new NotFoundError('Staged media', mediaId);
+    }
+
+    const ext = UploadService.mimeToExtension(ticket.declaredContentType);
+    const stagingKey = ticket.stagingKey;
+
+    // Verify staged object exists in R2 without holding open DB transaction
+    try {
+      await this.s3Client.send(
+        new HeadObjectCommand({
+          Bucket: this.bucketName,
+          Key: stagingKey,
+        }),
+      );
+    } catch {
+      await this.db
+        .update(stagedUploads)
+        .set({
+          status: 'FAILED',
+          errorMessage: 'Staged object not found in R2',
+          updatedAt: new Date(),
+        })
+        .where(eq(stagedUploads.id, mediaId));
+      throw new NotFoundError('Staged media', mediaId);
+    }
+
+    const finalKey = `posts/${postId}/${mediaId}${ext}`;
+    return {
+      publicUrl: `${this.publicUrl}/${finalKey}`,
+      cloudflareStorageKey: finalKey,
+      fileContentType: ticket.declaredContentType,
     };
   }
 
   /**
    * Moves a staged upload to its permanent location under the post's namespace.
    *
-   * This is called server-side during post creation — the client never touches
-   * the final key directly. The method performs three steps:
-   *
-   * 1. **Verify** — `HeadObjectCommand` confirms the staging object exists.
-   *    If the client never completed the upload, we throw `NotFoundError`
-   *    rather than creating a post with a broken image.
-   *
-   * 2. **Copy** — `CopyObjectCommand` copies the object from staging to its
-   *    final key (`posts/{postId}/{mediaId}.{ext}`).
-   *
-   * 3. **Delete** — `DeleteObjectCommand` removes the original staging object.
-   *
-   * @param mediaId - UUID returned by {@link generatePresignedUrl}.
-   * @param userId - Authenticated user's ID (must match the staging namespace).
-   * @param postId - The newly created post's ID for the final key namespace.
-   * @returns Object with the `publicUrl` and `cloudflareStorageKey` for DB storage.
-   *
-   * @throws {NotFoundError} if the staging object does not exist in R2.
+   * 1. **Verify** — `HeadObjectCommand` confirms staging object exists in R2.
+   * 2. **Copy** — `CopyObjectCommand` copies object to permanent location.
+   * 3. **Delete** — `DeleteObjectCommand` removes original staging object.
+   * 4. **Update DB** — durably records finalization state.
    */
   async finalizeMedia(
     mediaId: string,
     userId: string,
     postId: string,
+    purpose: StagedUploadPurpose = 'POST_MEDIA',
   ): Promise<{
     publicUrl: string;
     cloudflareStorageKey: string;
   }> {
-    const contentType = (await this.cacheManager.get<string>(`media_ct:${mediaId}`)) ?? 'image/webp';
-    const ext = UploadService.mimeToExtension(contentType);
-    const stagingKey = `staging/${userId}/${mediaId}${ext}`;
+    const [ticket] = await this.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId)).limit(1);
+
+    if (!ticket || ticket.userId !== userId || ticket.purpose !== purpose) {
+      throw new NotFoundError('Staged media', mediaId);
+    }
+
+    // Idempotent retry: already finalized for this post
+    if (ticket.status === 'FINALIZED' && ticket.finalStorageKey && ticket.postId === postId) {
+      return {
+        publicUrl: `${this.publicUrl}/${ticket.finalStorageKey}`,
+        cloudflareStorageKey: ticket.finalStorageKey,
+      };
+    }
+
+    // If ticket was not claimed yet, claim it for this postId
+    if (ticket.status === 'ISSUED') {
+      await this.claimMedia(mediaId, userId, postId, purpose);
+    } else if (ticket.status !== 'CLAIMED' || ticket.postId !== postId) {
+      throw new NotFoundError('Staged media', mediaId);
+    }
+
+    const ext = UploadService.mimeToExtension(ticket.declaredContentType);
+    const stagingKey = ticket.stagingKey;
     const finalKey = `posts/${postId}/${mediaId}${ext}`;
 
-    // Step 1: Verify the staged upload actually exists
+    // Step 1: Verify staged upload actually exists
     try {
       await this.s3Client.send(
         new HeadObjectCommand({
@@ -173,28 +306,67 @@ export class UploadService {
         }),
       );
     } catch {
+      await this.db
+        .update(stagedUploads)
+        .set({
+          status: 'FAILED',
+          errorMessage: 'Staged object not found in R2 during finalization',
+          updatedAt: new Date(),
+        })
+        .where(eq(stagedUploads.id, mediaId));
       throw new NotFoundError(`Staged media "${mediaId}" — upload may have expired or was never completed`);
     }
 
     // Step 2: Copy to permanent location
-    await this.s3Client.send(
-      new CopyObjectCommand({
-        Bucket: this.bucketName,
-        CopySource: `${this.bucketName}/${stagingKey}`,
-        Key: finalKey,
-      }),
-    );
+    try {
+      await this.s3Client.send(
+        new CopyObjectCommand({
+          Bucket: this.bucketName,
+          CopySource: `${this.bucketName}/${stagingKey}`,
+          Key: finalKey,
+        }),
+      );
+    } catch (err) {
+      await this.db
+        .update(stagedUploads)
+        .set({
+          status: 'FAILED',
+          errorMessage: `CopyObject failed: ${err instanceof Error ? err.message : String(err)}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(stagedUploads.id, mediaId));
+      throw err;
+    }
 
-    // Step 3: Remove the staging object to avoid orphaned duplicates
-    await this.s3Client.send(
-      new DeleteObjectCommand({
-        Bucket: this.bucketName,
-        Key: stagingKey,
-      }),
-    );
+    // Step 3: Remove staging object to avoid orphaned duplicates
+    try {
+      await this.s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucketName,
+          Key: stagingKey,
+        }),
+      );
+    } catch (err) {
+      this.logger.warn(`Failed to delete staging object ${stagingKey} after copy: ${err}`);
+    }
 
-    // Step 4: Clean up cached content type
-    await this.cacheManager.del(`media_ct:${mediaId}`);
+    // Step 4: Durably record finalization state
+    await this.db
+      .update(stagedUploads)
+      .set({
+        status: 'FINALIZED',
+        finalStorageKey: finalKey,
+        updatedAt: new Date(),
+      })
+      .where(eq(stagedUploads.id, mediaId));
+
+    // Step 5: Clean up cached keys
+    await Promise.all([
+      this.cacheManager.del(`media_ct:${mediaId}`),
+      this.cacheManager.del(`media_owner:${mediaId}`),
+      this.cacheManager.del(`media_staging_key:${mediaId}`),
+      this.cacheManager.del(`media_purpose:${mediaId}`),
+    ]).catch(() => {});
 
     return {
       publicUrl: `${this.publicUrl}/${finalKey}`,
@@ -203,44 +375,17 @@ export class UploadService {
   }
 
   /**
-   * Verifies a user-owned staged upload and predicts its final URLs.
-   * Useful for DB insertion before moving the actual bytes.
+   * Marks media items as failed if post creation database transaction fails.
    */
-  async getExpectedMediaUrls(
-    mediaId: string,
-    userId: string,
-    postId: string,
-  ): Promise<{
-    publicUrl: string;
-    cloudflareStorageKey: string;
-    fileContentType: string;
-  }> {
-    const [contentType, ownerId] = await Promise.all([
-      this.cacheManager.get<string>(`media_ct:${mediaId}`),
-      this.cacheManager.get<string>(`media_owner:${mediaId}`),
-    ]);
-    if (!contentType || ownerId !== userId) {
-      throw new NotFoundError('Staged media', mediaId);
-    }
-
-    const ext = UploadService.mimeToExtension(contentType);
-    const stagingKey = `staging/${userId}/${mediaId}${ext}`;
-    try {
-      await this.s3Client.send(
-        new HeadObjectCommand({
-          Bucket: this.bucketName,
-          Key: stagingKey,
-        }),
-      );
-    } catch {
-      throw new NotFoundError('Staged media', mediaId);
-    }
-
-    const finalKey = `posts/${postId}/${mediaId}${ext}`;
-    return {
-      publicUrl: `${this.publicUrl}/${finalKey}`,
-      cloudflareStorageKey: finalKey,
-      fileContentType: contentType,
-    };
+  async markMediaFailed(mediaIds: string[], errorMessage: string): Promise<void> {
+    if (!mediaIds || mediaIds.length === 0) return;
+    await this.db
+      .update(stagedUploads)
+      .set({
+        status: 'FAILED',
+        errorMessage,
+        updatedAt: new Date(),
+      })
+      .where(inArray(stagedUploads.id, mediaIds));
   }
 }
