@@ -65,6 +65,17 @@ describe('Database Migration Runner Integration', () => {
     expect(tableNames).toContain('notifications');
     expect(tableNames).toContain('vet_clinic_location_audits');
     expect(tableNames).toContain('staged_uploads');
+    expect(tableNames).toContain('comments');
+    expect(tableNames).toContain('comment_idempotency');
+
+    // Verify comment_count column on posts table
+    const postColsRes = await pool.query<{ column_name: string; column_default: string }>(`
+      SELECT column_name, column_default
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'posts' AND column_name = 'comment_count'
+    `);
+    expect(postColsRes.rows.length).toBe(1);
+    expect(postColsRes.rows[0].column_default).toContain('0');
 
     // Verify staged_uploads schema and non-null constraints
     const stagedColsRes = await pool.query<{ column_name: string; is_nullable: string }>(`

@@ -17,6 +17,7 @@ import '../widgets/contact_requests_owner_section.dart';
 import '../widgets/image_with_fallback.dart';
 import '../widgets/nearby_vets_section.dart';
 import '../widgets/pet_carousel.dart';
+import '../widgets/post_comments_sheet.dart';
 import '../widgets/skeleton_loader.dart';
 
 class RescueDetailScreen extends StatefulWidget {
@@ -117,6 +118,23 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
     }
     setState(() => _post = _post!.copyWith(saveCount: count, isSavedByMe: saved));
     return true;
+  }
+
+  void _openComments() {
+    if (_post == null) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => PostCommentsSheet(
+        postId: _post!.id,
+        onCommentCreated: () {
+          setState(() {
+            _post = _post!.copyWith(commentCount: _post!.commentCount + 1);
+          });
+        },
+      ),
+    );
   }
 
   Future<void> _reportFound() async {
@@ -366,6 +384,33 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                               ),
                             ),
                           ],
+                          const SizedBox(width: AppSpacing.sm),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(AppRadius.chip),
+                              onTap: _openComments,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: AppColors.background,
+                                  borderRadius: BorderRadius.circular(AppRadius.chip),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.chat_bubble_outline, size: 15, color: AppColors.textSecondary),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      '${post.commentCount}  ${t(context, 'Comments', 'التعليقات')}',
+                                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                           const Spacer(),
                           Padding(
                             padding: const EdgeInsets.all(8),

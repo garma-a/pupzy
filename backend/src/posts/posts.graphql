@@ -69,6 +69,7 @@ type Post {
   upvoteCount: Int!
   saveCount: Int!
   viewCount: Int!
+  commentCount: Int!
   effectiveScore: Float!
   """
   Whether the current viewer has upvoted this post. False if not authenticated.

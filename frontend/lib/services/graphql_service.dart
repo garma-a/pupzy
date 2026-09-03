@@ -4,6 +4,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import '../config/api_config.dart';
 import '../models/adoption_application.dart';
 import '../models/app_notification.dart';
+import '../models/comment.dart';
 import '../models/contact_request.dart';
 import '../models/feed_post.dart';
 import '../models/mating_detail.dart';
@@ -355,6 +356,7 @@ class GraphQLService {
         upvoteCount
         saveCount
         viewCount
+        commentCount
         isUpvotedByMe
         isSavedByMe
         createdAt
@@ -498,6 +500,57 @@ class GraphQLService {
   static const String recordViewMutation = r'''
     mutation RecordView($postId: ID!) {
       recordView(postId: $postId)
+    }
+  ''';
+
+  // ─── Comments & Discussion ────────────────────────────────────────────
+
+  static const String commentsQuery = r'''
+    query Comments($postId: ID!, $sort: CommentSort, $first: Int, $after: String) {
+      comments(postId: $postId, sort: $sort, first: $first, after: $after) {
+        edges {
+          node {
+            id
+            postId
+            text
+            status
+            createdAt
+            updatedAt
+            author {
+              id
+              fullName
+              fullNameArabic
+              profilePictureUrl
+              isVerified
+            }
+          }
+          cursor
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+      }
+    }
+  ''';
+
+  static const String createCommentMutation = r'''
+    mutation CreateComment($input: CreateCommentInput!) {
+      createComment(input: $input) {
+        id
+        postId
+        text
+        status
+        createdAt
+        updatedAt
+        author {
+          id
+          fullName
+          fullNameArabic
+          profilePictureUrl
+          isVerified
+        }
+      }
     }
   ''';
 
@@ -1653,5 +1706,73 @@ class GraphQLService {
       return (null, _serverErrorMessage(result.exception));
     }
     return (result.data?['markAllNotificationsRead'] as int?, null);
+  }
+
+  // ─── Comments API ────────────────────────────────────────────────────
+
+  /// Fetches top-level comments for a post with keyset cursor pagination.
+  Future<(CommentConnection? connection, String? errorMessage)> fetchComments({
+    required String postId,
+    String? sort,
+    int? first,
+    String? after,
+  }) async {
+    final result = await client.value.query(
+      QueryOptions(
+        document: gql(commentsQuery),
+        variables: {
+          'postId': postId,
+          if (sort != null) 'sort': sort,
+          if (first != null) 'first': first,
+          if (after != null) 'after': after,
+        },
+        fetchPolicy: FetchPolicy.networkOnly,
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _serverErrorMessage(result.exception));
+    }
+    final data = result.data?['comments'] as Map<String, dynamic>?;
+    if (data == null) return (null, null);
+    final edges = (data['edges'] as List<dynamic>? ?? [])
+        .map((e) => Comment.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>))
+        .toList();
+    final pageInfo = data['pageInfo'] as Map<String, dynamic>?;
+    return (
+      CommentConnection(
+        comments: edges,
+        endCursor: pageInfo?['endCursor'] as String?,
+        hasNextPage: pageInfo?['hasNextPage'] as bool? ?? false,
+      ),
+      null,
+    );
+  }
+
+  /// Publishes a text comment on a post with author-scoped durable clientRequestId.
+  Future<(Comment? comment, String? errorMessage)> createComment({
+    required String clientRequestId,
+    required String postId,
+    required String text,
+  }) async {
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(createCommentMutation),
+        variables: {
+          'input': {
+            'clientRequestId': clientRequestId,
+            'postId': postId,
+            'text': text,
+          },
+        },
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _serverErrorMessage(result.exception));
+    }
+    final node = result.data?['createComment'] as Map<String, dynamic>?;
+    if (node == null) return (null, null);
+    return (Comment.fromJson(node), null);
   }
 }

@@ -55,7 +55,9 @@ export class TestDatabaseHelper {
         vet_clinics,
         vet_clinic_location_audits,
         address_search_cache,
-        staged_uploads
+        staged_uploads,
+        comment_idempotency,
+        comments
       CASCADE;
     `);
   }

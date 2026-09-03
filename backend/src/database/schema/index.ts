@@ -58,3 +58,7 @@ export * from './address-search-cache.schema';
 
 // Staged uploads — durable authority for media upload tickets
 export * from './staged-uploads.schema';
+
+// Comments & Discussion
+export * from './comments.schema';
+export * from './comment-idempotency.schema';

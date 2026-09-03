@@ -148,6 +148,13 @@
       "when": 1788804800000,
       "tag": "0020_add_staged_uploads",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1788891200000,
+      "tag": "0021_add_comments_and_post_comment_count",
+      "breakpoints": true
     }
   ]
 }

@@ -28,3 +28,6 @@ _Avoid_: Hidden Post, deleted Post, permanently removed Post
 
 **Staged Upload**:
 A media object that has been uploaded for later attachment to a Post but has not yet been finalized as that Post's media. A Staged Upload may be attached only by its owner.
+
+**Comment**:
+A user-created contribution published beneath a Post to participate in its discussion. A top-level Comment requires trimmed plain text (1 to 1,000 Unicode characters) and belongs to one Post and one User. A Comment may later support attached images, Replies, Boosts, and moderation actions. Comments are allowed on every non-Removed Post type, but a Removed Post exposes no discussion and rejects new Comment creation.

@@ -184,3 +184,19 @@ export type StagedUploadPurpose = (typeof stagedUploadPurposeEnum.enumValues)[nu
 export const stagedUploadStatusEnum = pgEnum('staged_upload_status', ['ISSUED', 'CLAIMED', 'FINALIZED', 'FAILED']);
 
 export type StagedUploadStatus = (typeof stagedUploadStatusEnum.enumValues)[number];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMMENT ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Moderation and lifecycle states of a comment.
+ * - ACTIVE: Visible in discussions.
+ * - IMAGE_HIDDEN: Text visible, images hidden by reports.
+ * - HIDDEN: Temporarily hidden by reports.
+ * - DELETED: Deleted by author (neutral structural tombstone if replies exist).
+ * - REMOVED: Permanently removed by administrator.
+ */
+export const commentStatusEnum = pgEnum('comment_status', ['ACTIVE', 'IMAGE_HIDDEN', 'HIDDEN', 'DELETED', 'REMOVED']);
+
+export type CommentStatus = (typeof commentStatusEnum.enumValues)[number];
