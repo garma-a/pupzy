@@ -60,6 +60,11 @@ describe('Comments GraphQL Schema Contract (Additive & Backward Compatibility)',
     const isBoostedByMeField = commentType!.fields?.find((f) => f.name.value === 'isBoostedByMe');
     expect(isBoostedByMeField).toBeDefined();
     expect(isBoostedByMeField!.type.kind).toBe(Kind.NON_NULL_TYPE);
+
+    // isPinned: Boolean!
+    const isPinnedField = commentType!.fields?.find((f) => f.name.value === 'isPinned');
+    expect(isPinnedField).toBeDefined();
+    expect(isPinnedField!.type.kind).toBe(Kind.NON_NULL_TYPE);
   });
 
   it('verifies ToggleCommentBoostPayload has commentId, isBoostedByMe, and boostCount', () => {
@@ -98,6 +103,8 @@ describe('Comments GraphQL Schema Contract (Additive & Backward Compatibility)',
     expect(mutationFields).toContain('createReply');
     expect(mutationFields).toContain('deleteComment');
     expect(mutationFields).toContain('toggleCommentBoost');
+    expect(mutationFields).toContain('pinComment');
+    expect(mutationFields).toContain('unpinComment');
   });
 
   it('ensures Post in posts.graphql includes additive commentCount: Int!', () => {

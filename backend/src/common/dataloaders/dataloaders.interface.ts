@@ -51,4 +51,10 @@ export interface DataLoaders {
    * Created per-request using the authenticated user's ID.
    */
   commentBoostedByMe?: DataLoader<string, boolean>;
+
+  /**
+   * Batch-loads the active pinned comment ID for each post.
+   * Returns `null` if the post has no active pinned comment.
+   */
+  pinnedCommentIdByPostId?: DataLoader<string, string | null>;
 }

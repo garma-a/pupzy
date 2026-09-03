@@ -518,6 +518,7 @@ class GraphQLService {
             replyCount
             boostCount
             isBoostedByMe
+            isPinned
             createdAt
             updatedAt
             author {
@@ -551,6 +552,7 @@ class GraphQLService {
             replyCount
             boostCount
             isBoostedByMe
+            isPinned
             createdAt
             updatedAt
             author {
@@ -582,6 +584,7 @@ class GraphQLService {
         replyCount
         boostCount
         isBoostedByMe
+        isPinned
         createdAt
         updatedAt
         author {
@@ -606,6 +609,7 @@ class GraphQLService {
         replyCount
         boostCount
         isBoostedByMe
+        isPinned
         createdAt
         updatedAt
         author {
@@ -632,6 +636,37 @@ class GraphQLService {
         isBoostedByMe
         boostCount
       }
+    }
+  ''';
+
+  static const String pinCommentMutation = r'''
+    mutation PinComment($commentId: ID!) {
+      pinComment(commentId: $commentId) {
+        id
+        postId
+        parentId
+        text
+        status
+        replyCount
+        boostCount
+        isBoostedByMe
+        isPinned
+        createdAt
+        updatedAt
+        author {
+          id
+          fullName
+          fullNameArabic
+          profilePictureUrl
+          isVerified
+        }
+      }
+    }
+  ''';
+
+  static const String unpinCommentMutation = r'''
+    mutation UnpinComment($postId: ID!) {
+      unpinComment(postId: $postId)
     }
   ''';
 
@@ -1957,5 +1992,40 @@ class GraphQLService {
     final data = result.data?['toggleCommentBoost'] as Map<String, dynamic>?;
     return (data?['boostCount'] as int?, data?['isBoostedByMe'] as bool?, null);
   }
+
+  /// Pins an eligible top-level Comment beneath a Post.
+  /// Replaces any existing pin for the post.
+  Future<(Comment? comment, String? errorMessage)> pinComment(String commentId) async {
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(pinCommentMutation),
+        variables: {'commentId': commentId},
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _serverErrorMessage(result.exception));
+    }
+    final node = result.data?['pinComment'] as Map<String, dynamic>?;
+    if (node == null) return (null, 'No comment returned.');
+    return (Comment.fromJson(node), null);
+  }
+
+  /// Unpins the currently pinned Comment beneath a Post.
+  Future<(bool success, String? errorMessage)> unpinComment(String postId) async {
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(unpinCommentMutation),
+        variables: {'postId': postId},
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (false, _serverErrorMessage(result.exception));
+    }
+    final success = result.data?['unpinComment'] as bool? ?? false;
+    return (success, null);
+  }
 }
+
 

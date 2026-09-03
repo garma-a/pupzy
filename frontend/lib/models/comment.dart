@@ -41,6 +41,7 @@ class Comment {
   final int replyCount;
   final int boostCount;
   final bool isBoostedByMe;
+  final bool isPinned;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -54,6 +55,7 @@ class Comment {
     this.replyCount = 0,
     this.boostCount = 0,
     this.isBoostedByMe = false,
+    this.isPinned = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -73,6 +75,7 @@ class Comment {
         replyCount: json['replyCount'] as int? ?? 0,
         boostCount: json['boostCount'] as int? ?? 0,
         isBoostedByMe: json['isBoostedByMe'] as bool? ?? false,
+        isPinned: json['isPinned'] as bool? ?? false,
         createdAt: DateTime.parse(json['createdAt'] as String),
         updatedAt: DateTime.parse(json['updatedAt'] as String),
       );
@@ -87,6 +90,7 @@ class Comment {
     int? replyCount,
     int? boostCount,
     bool? isBoostedByMe,
+    bool? isPinned,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -100,6 +104,7 @@ class Comment {
       replyCount: replyCount ?? this.replyCount,
       boostCount: boostCount ?? this.boostCount,
       isBoostedByMe: isBoostedByMe ?? this.isBoostedByMe,
+      isPinned: isPinned ?? this.isPinned,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

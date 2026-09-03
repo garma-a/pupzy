@@ -4,7 +4,15 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import DataLoader from 'dataloader';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import * as schema from '../database/schema';
-import { comments, commentIdempotency, commentBoosts, posts, Comment, CommentIdempotency } from '../database/schema';
+import {
+  comments,
+  commentIdempotency,
+  commentBoosts,
+  postPins,
+  posts,
+  Comment,
+  CommentIdempotency,
+} from '../database/schema';
 import { NotFoundError, ConflictError, ForbiddenError, ValidationError } from '../common/errors/app.errors';
 import { CommentCursorPayload, CommentSortOrder } from './dto/comments-query.input';
 
@@ -111,11 +119,34 @@ export class CommentsRepository {
   }
 
   /**
+   * Finds the currently active pinned top-level comment for a post, if one exists.
+   * Only returns the comment if its status is 'ACTIVE' or 'IMAGE_HIDDEN'.
+   */
+  async findPinnedCommentForPost(postId: string): Promise<Comment | null> {
+    const rows = await this.db
+      .select({ comment: comments })
+      .from(postPins)
+      .innerJoin(comments, eq(postPins.commentId, comments.id))
+      .where(
+        and(
+          eq(postPins.postId, postId),
+          eq(comments.postId, postId),
+          sql`${comments.parentId} IS NULL`,
+          inArray(comments.status, ['ACTIVE', 'IMAGE_HIDDEN']),
+        ),
+      )
+      .limit(1);
+
+    return rows[0]?.comment ?? null;
+  }
+
+  /**
    * Fetches visible top-level comments for a post ordered by:
-   * - TOP: boostCount DESC, createdAt DESC, id DESC.
-   * - NEWEST: createdAt DESC, id DESC.
+   * - TOP: valid pinned comment first, then boostCount DESC, createdAt DESC, id DESC.
+   * - NEWEST: valid pinned comment first, then createdAt DESC, id DESC.
    * Returns up to limit + 1 items for keyset continuation detection.
    * Includes deleted comments that have visible replies (replyCount > 0) as tombstones.
+   * Excludes the pinned comment from subsequent positions to prevent duplication.
    */
   async findTopLevelCommentsByPostId(
     postId: string,
@@ -123,25 +154,16 @@ export class CommentsRepository {
     sort: CommentSortOrder = 'TOP',
     cursor?: CommentCursorPayload,
   ): Promise<Comment[]> {
-    const conditions = [
+    const pinnedComment = await this.findPinnedCommentForPost(postId);
+
+    const baseConditions = [
       eq(comments.postId, postId),
       sql`${comments.parentId} IS NULL`,
       sql`(${comments.status} IN ('ACTIVE', 'IMAGE_HIDDEN') OR (${comments.status} = 'DELETED' AND ${comments.replyCount} > 0))`,
     ];
 
-    if (cursor) {
-      const cursorDate = new Date(cursor.createdAt);
-      if (sort === 'TOP' && cursor.boostCount !== undefined) {
-        const cursorBoost = cursor.boostCount;
-        const cursorId = cursor.id;
-        conditions.push(
-          sql`(${comments.boostCount} < ${cursorBoost} OR (${comments.boostCount} = ${cursorBoost} AND (${comments.createdAt} < ${cursorDate} OR (${comments.createdAt} = ${cursorDate} AND ${comments.id} < ${cursorId}))))`,
-        );
-      } else {
-        conditions.push(
-          or(lt(comments.createdAt, cursorDate), and(eq(comments.createdAt, cursorDate), lt(comments.id, cursor.id)))!,
-        );
-      }
+    if (pinnedComment) {
+      baseConditions.push(ne(comments.id, pinnedComment.id));
     }
 
     const orderBys =
@@ -149,18 +171,81 @@ export class CommentsRepository {
         ? [sql`${comments.boostCount} DESC`, sql`${comments.createdAt} DESC`, sql`${comments.id} DESC`]
         : [sql`${comments.createdAt} DESC`, sql`${comments.id} DESC`];
 
+    // Case 1: Cursor is after the pinned comment
+    // The client has received the pinned comment on page 1 and is requesting regular comments starting from the top.
+    if (cursor?.isPinned) {
+      const rows = await this.db
+        .select()
+        .from(comments)
+        .where(and(...baseConditions))
+        .orderBy(...orderBys)
+        .limit(limit + 1);
+
+      return rows.map((c) => {
+        const item = c.status === 'DELETED' ? { ...c, text: '[Deleted]' } : c;
+        return Object.assign(item, { isPinned: false });
+      });
+    }
+
+    // Case 2: Standard keyset cursor continuation
+    if (cursor) {
+      const cursorDate = new Date(cursor.createdAt);
+      const cursorConditions = [...baseConditions];
+      if (sort === 'TOP' && cursor.boostCount !== undefined) {
+        const cursorBoost = cursor.boostCount;
+        const cursorId = cursor.id;
+        cursorConditions.push(
+          sql`(${comments.boostCount} < ${cursorBoost} OR (${comments.boostCount} = ${cursorBoost} AND (${comments.createdAt} < ${cursorDate} OR (${comments.createdAt} = ${cursorDate} AND ${comments.id} < ${cursorId}))))`,
+        );
+      } else {
+        cursorConditions.push(
+          or(lt(comments.createdAt, cursorDate), and(eq(comments.createdAt, cursorDate), lt(comments.id, cursor.id)))!,
+        );
+      }
+
+      const rows = await this.db
+        .select()
+        .from(comments)
+        .where(and(...cursorConditions))
+        .orderBy(...orderBys)
+        .limit(limit + 1);
+
+      return rows.map((c) => {
+        const item = c.status === 'DELETED' ? { ...c, text: '[Deleted]' } : c;
+        return Object.assign(item, { isPinned: false });
+      });
+    }
+
+    // Case 3: Page 1 (no cursor)
+    if (pinnedComment) {
+      // Pinned comment takes slot 1. We query up to `limit` remaining items to evaluate hasNextPage.
+      const rows = await this.db
+        .select()
+        .from(comments)
+        .where(and(...baseConditions))
+        .orderBy(...orderBys)
+        .limit(limit);
+
+      const formattedPinned = Object.assign(pinnedComment, { isPinned: true });
+      const formattedRemaining = rows.map((c) => {
+        const item = c.status === 'DELETED' ? { ...c, text: '[Deleted]' } : c;
+        return Object.assign(item, { isPinned: false });
+      });
+
+      return [formattedPinned, ...formattedRemaining];
+    }
+
+    // No pinned comment on page 1
     const rows = await this.db
       .select()
       .from(comments)
-      .where(and(...conditions))
+      .where(and(...baseConditions))
       .orderBy(...orderBys)
       .limit(limit + 1);
 
     return rows.map((c) => {
-      if (c.status === 'DELETED') {
-        return { ...c, text: '[Deleted]' };
-      }
-      return c;
+      const item = c.status === 'DELETED' ? { ...c, text: '[Deleted]' } : c;
+      return Object.assign(item, { isPinned: false });
     });
   }
 
@@ -322,7 +407,10 @@ export class CommentsRepository {
         })
         .where(eq(comments.id, commentId));
 
-      // 5. Decrement counters if the item was visible
+      // 5. Delete pin record if this comment was pinned
+      await tx.delete(postPins).where(eq(postPins.commentId, commentId));
+
+      // 6. Decrement counters if the item was visible
       if (wasVisible) {
         if (comment.parentId) {
           // It is a Reply: decrement parent comment's reply_count and post's comment_count
@@ -505,6 +593,147 @@ export class CommentsRepository {
         );
 
         return keys.map((key) => boostedSet.has(key));
+      },
+      { cache: true, maxBatchSize: 100 },
+    );
+  }
+
+  /**
+   * Transactionally pins an active top-level comment beneath a post.
+   * - Checks post exists, status !== 'REMOVED', creatorId === userId.
+   * - Checks comment exists, parentId === null, status IN ('ACTIVE', 'IMAGE_HIDDEN').
+   * - Atomic upsert into post_pins (replaces any existing pin for this post without gap).
+   * - Returns comment with isPinned = true.
+   */
+  async pinComment(commentId: string, userId: string): Promise<Comment> {
+    return this.db.transaction(async (tx) => {
+      // 1. Lock and check the comment
+      const [comment] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('share');
+
+      if (!comment) {
+        throw new NotFoundError('Comment', commentId);
+      }
+
+      if (comment.parentId !== null) {
+        throw new ValidationError('Only top-level comments can be pinned');
+      }
+
+      if (comment.status !== 'ACTIVE' && comment.status !== 'IMAGE_HIDDEN') {
+        throw new NotFoundError('Comment', commentId);
+      }
+
+      // 2. Lock and check the post
+      const [post] = await tx.select().from(posts).where(eq(posts.id, comment.postId)).for('share');
+
+      if (!post || post.status === 'REMOVED') {
+        throw new NotFoundError('Post', comment.postId);
+      }
+
+      // 3. Authorization check: Only post creator can pin
+      if (post.creatorId !== userId) {
+        throw new ForbiddenError('Only the post author can pin comments');
+      }
+
+      // 4. Atomic upsert into post_pins on postId conflict
+      await tx
+        .insert(postPins)
+        .values({
+          postId: post.id,
+          commentId: comment.id,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: postPins.postId,
+          set: {
+            commentId: comment.id,
+            updatedAt: new Date(),
+          },
+        });
+
+      return Object.assign(comment, { isPinned: true });
+    });
+  }
+
+  /**
+   * Transactionally unpins the current pinned comment on a post.
+   * - Checks post exists, status !== 'REMOVED', creatorId === userId.
+   * - Idempotent: deletes from post_pins where postId = postId.
+   * - Returns true.
+   */
+  async unpinComment(postId: string, userId: string): Promise<boolean> {
+    return this.db.transaction(async (tx) => {
+      // 1. Lock and check the post
+      const [post] = await tx.select().from(posts).where(eq(posts.id, postId)).for('share');
+
+      if (!post || post.status === 'REMOVED') {
+        throw new NotFoundError('Post', postId);
+      }
+
+      // 2. Authorization check: Only post creator can unpin
+      if (post.creatorId !== userId) {
+        throw new ForbiddenError('Only the post author can unpin comments');
+      }
+
+      // 3. Delete from post_pins
+      await tx.delete(postPins).where(eq(postPins.postId, postId));
+
+      return true;
+    });
+  }
+
+  /**
+   * Checks if a specific comment is the currently active pinned comment for a post.
+   */
+  async isCommentPinned(postId: string, commentId: string): Promise<boolean> {
+    const rows = await this.db
+      .select({ id: postPins.id })
+      .from(postPins)
+      .innerJoin(comments, eq(postPins.commentId, comments.id))
+      .where(
+        and(
+          eq(postPins.postId, postId),
+          eq(postPins.commentId, commentId),
+          sql`${comments.parentId} IS NULL`,
+          inArray(comments.status, ['ACTIVE', 'IMAGE_HIDDEN']),
+        ),
+      )
+      .limit(1);
+
+    return rows.length > 0;
+  }
+
+  /**
+   * Creates a DataLoader that batch-loads the active pinned commentId for each postId.
+   * Returns `null` if the post has no active pinned comment.
+   */
+  createPinnedCommentIdByPostIdLoader(): DataLoader<string, string | null> {
+    return new DataLoader<string, string | null>(
+      async (postIds: readonly string[]) => {
+        if (postIds.length === 0) return [];
+
+        const uniquePostIds = Array.from(new Set(postIds));
+
+        const rows = await this.db
+          .select({
+            postId: postPins.postId,
+            commentId: postPins.commentId,
+          })
+          .from(postPins)
+          .innerJoin(comments, eq(postPins.commentId, comments.id))
+          .where(
+            and(
+              inArray(postPins.postId, uniquePostIds),
+              sql`${comments.parentId} IS NULL`,
+              inArray(comments.status, ['ACTIVE', 'IMAGE_HIDDEN']),
+            ),
+          );
+
+        const postToPinnedComment = new Map<string, string>();
+        for (const row of rows) {
+          postToPinnedComment.set(row.postId, row.commentId);
+        }
+
+        return postIds.map((id) => postToPinnedComment.get(id) ?? null);
       },
       { cache: true, maxBatchSize: 100 },
     );

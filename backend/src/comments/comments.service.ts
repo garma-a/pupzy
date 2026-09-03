@@ -327,4 +327,27 @@ export class CommentsService {
   async isCommentBoostedByUser(commentId: string, userId: string): Promise<boolean> {
     return this.commentsRepository.isCommentBoostedByUser(commentId, userId);
   }
+
+  /**
+   * Pins an eligible top-level Comment beneath a Post.
+   * Only the Post author can pin. Atomically replaces any existing pin.
+   */
+  async pinComment(userId: string, commentId: string): Promise<Comment> {
+    return this.commentsRepository.pinComment(commentId, userId);
+  }
+
+  /**
+   * Unpins the currently pinned Comment beneath a Post.
+   * Only the Post author can unpin.
+   */
+  async unpinComment(userId: string, postId: string): Promise<boolean> {
+    return this.commentsRepository.unpinComment(postId, userId);
+  }
+
+  /**
+   * Checks if a comment is currently pinned on a post.
+   */
+  async isCommentPinned(postId: string, commentId: string): Promise<boolean> {
+    return this.commentsRepository.isCommentPinned(postId, commentId);
+  }
 }

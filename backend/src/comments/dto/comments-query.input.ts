@@ -14,15 +14,17 @@ export interface CommentCursorPayload {
   createdAt: string;
   id: string;
   boostCount?: number;
+  isPinned?: boolean;
 }
 
 /**
  * Encodes a comment's active ordering tuple into an opaque base64url keyset cursor.
  * For TOP sort: includes (boostCount, createdAt, id).
  * For NEWEST sort: includes (createdAt, id).
+ * For pinned comments: flags isPinned so pagination around pin is continuous.
  */
 export function encodeCommentCursor(
-  comment: { createdAt: Date | string; id: string; boostCount?: number },
+  comment: { createdAt: Date | string; id: string; boostCount?: number; isPinned?: boolean },
   sort?: CommentSortOrder,
 ): string {
   const createdAtStr = comment.createdAt instanceof Date ? comment.createdAt.toISOString() : comment.createdAt;
@@ -32,6 +34,9 @@ export function encodeCommentCursor(
   };
   if (sort === 'TOP' || (sort === undefined && comment.boostCount !== undefined)) {
     payload.boostCount = comment.boostCount ?? 0;
+  }
+  if (comment.isPinned) {
+    payload.isPinned = true;
   }
   return Buffer.from(JSON.stringify(payload)).toString('base64url');
 }
@@ -63,6 +68,13 @@ export function decodeCommentCursor(cursor: string): CommentCursorPayload {
         throw new Error('Invalid cursor fields');
       }
       payload.boostCount = parsed.boostCount;
+    }
+
+    if (parsed.isPinned !== undefined) {
+      if (typeof parsed.isPinned !== 'boolean') {
+        throw new Error('Invalid cursor fields');
+      }
+      payload.isPinned = parsed.isPinned;
     }
 
     return payload;

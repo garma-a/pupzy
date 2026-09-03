@@ -30,6 +30,7 @@ type Comment {
   replyCount: Int!
   boostCount: Int!
   isBoostedByMe: Boolean!
+  isPinned: Boolean!
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -75,23 +76,14 @@ extend type Query {
   Defaults to 20 items, max 50 items.
   TOP falls back to newest creation order before Boosts exist.
   """
-  comments(
-    postId: ID!
-    sort: CommentSort
-    first: Int
-    after: String
-  ): CommentConnection!
+  comments(postId: ID!, sort: CommentSort, first: Int, after: String): CommentConnection!
 
   """
   Fetch visible Replies for a top-level Comment using keyset pagination.
   Oldest first (createdAt ASC, id ASC).
   Defaults to 20 items, max 50 items.
   """
-  replies(
-    commentId: ID!
-    first: Int
-    after: String
-  ): CommentConnection!
+  replies(commentId: ID!, first: Int, after: String): CommentConnection!
 }
 
 extend type Mutation {
@@ -122,6 +114,20 @@ extend type Mutation {
   Reversible toggle: adds boost if not present, removes boost if already present.
   """
   toggleCommentBoost(commentId: ID!): ToggleCommentBoostPayload!
+
+  """
+  Pin an eligible top-level Comment beneath a Post.
+  Only the Post author can pin. Atomically replaces any existing pin for the Post.
+  Idempotent.
+  """
+  pinComment(commentId: ID!): Comment!
+
+  """
+  Unpin the currently pinned Comment beneath a Post.
+  Only the Post author can unpin.
+  Idempotent.
+  """
+  unpinComment(postId: ID!): Boolean!
 }
 
 """
@@ -133,4 +139,3 @@ type ToggleCommentBoostPayload {
   boostedByMe: Boolean!
   boostCount: Int!
 }
-

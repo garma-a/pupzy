@@ -52,6 +52,26 @@ export class CommentsResolver {
   }
 
   /**
+   * Pins an eligible top-level Comment beneath a Post.
+   * Requires authenticated user and post ownership.
+   */
+  @Mutation('pinComment')
+  async pinComment(@Args('commentId') commentId: string, @Context() ctx: GqlContext): Promise<Comment> {
+    assertUuid(commentId, 'commentId');
+    return this.commentsService.pinComment(ctx.user!.id, commentId);
+  }
+
+  /**
+   * Unpins the currently pinned Comment beneath a Post.
+   * Requires authenticated user and post ownership.
+   */
+  @Mutation('unpinComment')
+  async unpinComment(@Args('postId') postId: string, @Context() ctx: GqlContext): Promise<boolean> {
+    assertUuid(postId, 'postId');
+    return this.commentsService.unpinComment(ctx.user!.id, postId);
+  }
+
+  /**
    * Queries top-level Comments for a Post with keyset pagination.
    */
   @Query('comments')
@@ -123,5 +143,22 @@ export class CommentsResolver {
   @ResolveField('boostCount')
   boostCount(@Root() comment: Comment): number {
     return comment.boostCount ?? 0;
+  }
+
+  /**
+   * Resolves whether this top-level comment is pinned.
+   * Replies can never be pinned (always returns false).
+   */
+  @ResolveField('isPinned')
+  async isPinned(@Root() comment: Comment, @Context() ctx: GqlContext): Promise<boolean> {
+    if (comment.parentId) return false;
+    if ((comment as unknown as { isPinned?: boolean }).isPinned !== undefined) {
+      return (comment as unknown as { isPinned: boolean }).isPinned;
+    }
+    if (ctx.loaders?.pinnedCommentIdByPostId) {
+      const pinnedId = await ctx.loaders.pinnedCommentIdByPostId.load(comment.postId);
+      return pinnedId === comment.id;
+    }
+    return this.commentsService.isCommentPinned(comment.postId, comment.id);
   }
 }

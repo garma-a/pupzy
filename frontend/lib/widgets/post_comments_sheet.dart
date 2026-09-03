@@ -14,11 +14,13 @@ import 'animated_boost_chip.dart';
 /// Renders deleted comments as neutral tombstones without leaking author identity or original text.
 class PostCommentsSheet extends StatefulWidget {
   final String postId;
+  final String? postCreatorId;
   final VoidCallback? onCommentCreated;
 
   const PostCommentsSheet({
     super.key,
     required this.postId,
+    this.postCreatorId,
     this.onCommentCreated,
   });
 
@@ -312,6 +314,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
               status: 'DELETED',
               text: '[Deleted]',
               author: null,
+              isPinned: false,
             );
           } else {
             // No visible replies; disappears immediately
@@ -322,6 +325,155 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     });
 
     widget.onCommentCreated?.call();
+  }
+
+  Future<void> _pinComment(Comment comment) async {
+    if (comment.isPinned) return; // Idempotent no-op
+
+    // Snapshot for rollback
+    final previousComments = List<Comment>.from(_comments);
+
+    // Optimistic update:
+    // Move comment to index 0, mark isPinned = true, and unpin any other comment
+    setState(() {
+      final index = _comments.indexWhere((c) => c.id == comment.id);
+      if (index != -1) {
+        final target = _comments.removeAt(index).copyWith(isPinned: true);
+        for (int i = 0; i < _comments.length; i++) {
+          if (_comments[i].isPinned) {
+            _comments[i] = _comments[i].copyWith(isPinned: false);
+          }
+        }
+        _comments.insert(0, target);
+      }
+    });
+
+    final graphql = context.read<GraphQLService>();
+    final (pinnedComment, error) = await graphql.pinComment(commentId: comment.id);
+
+    if (!mounted) return;
+
+    if (pinnedComment == null || error != null) {
+      // Rollback on failure
+      setState(() {
+        _comments
+          ..clear()
+          ..addAll(previousComments);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error ?? t(context, 'Failed to pin comment.', 'فشل تثبيت التعليق.')),
+          backgroundColor: AppColors.critical,
+        ),
+      );
+    } else {
+      // Reconcile server response
+      setState(() {
+        final idx = _comments.indexWhere((c) => c.id == pinnedComment.id);
+        if (idx != -1) {
+          _comments[idx] = pinnedComment;
+        }
+      });
+    }
+  }
+
+  Future<void> _unpinComment(Comment comment) async {
+    if (!comment.isPinned) return; // Idempotent no-op
+
+    // Snapshot for rollback
+    final previousComments = List<Comment>.from(_comments);
+
+    // Optimistic update: mark isPinned = false
+    setState(() {
+      final index = _comments.indexWhere((c) => c.id == comment.id);
+      if (index != -1) {
+        _comments[index] = _comments[index].copyWith(isPinned: false);
+      }
+    });
+
+    final graphql = context.read<GraphQLService>();
+    final (success, error) = await graphql.unpinComment(postId: widget.postId);
+
+    if (!mounted) return;
+
+    if (!success) {
+      // Rollback on failure
+      setState(() {
+        _comments
+          ..clear()
+          ..addAll(previousComments);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error ?? t(context, 'Failed to unpin comment.', 'فشل إلغاء تثبيت التعليق.')),
+          backgroundColor: AppColors.critical,
+        ),
+      );
+    }
+  }
+
+  void _showCommentOptions(
+    BuildContext context,
+    Comment comment, {
+    required bool isAuthor,
+    required bool isPostCreator,
+    required bool isAr,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            child: Wrap(
+              children: [
+                if (isPostCreator) ...[
+                  if (comment.isPinned)
+                    ListTile(
+                      leading: const Icon(Icons.push_pin_outlined, color: AppColors.textPrimary),
+                      title: Text(t(ctx, 'Unpin Comment', 'إلغاء تثبيت التعليق')),
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                        _unpinComment(comment);
+                      },
+                    )
+                  else
+                    ListTile(
+                      leading: const Icon(Icons.push_pin, color: AppColors.primary),
+                      title: Text(t(ctx, 'Pin Comment', 'تثبيت التعليق')),
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                        _pinComment(comment);
+                      },
+                    ),
+                ],
+                if (isAuthor)
+                  ListTile(
+                    leading: const Icon(Icons.delete_outline, color: AppColors.critical),
+                    title: Text(
+                      t(ctx, 'Delete Comment', 'حذف التعليق'),
+                      style: const TextStyle(color: AppColors.critical),
+                    ),
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _confirmDelete(comment);
+                    },
+                  ),
+                ListTile(
+                  leading: const Icon(Icons.close, color: AppColors.textMuted),
+                  title: Text(t(ctx, 'Cancel', 'إلغاء')),
+                  onTap: () => Navigator.of(ctx).pop(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _updateCommentBoostState(String commentId, bool isBoosted, int count) {
@@ -510,7 +662,8 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
       setState(() {
         _submitting = false;
         _createErrorMessage = null;
-        _comments.insert(0, createdComment);
+        final insertIndex = (_comments.isNotEmpty && _comments[0].isPinned) ? 1 : 0;
+        _comments.insert(insertIndex, createdComment);
         _textController.clear();
         _currentClientRequestId = _generateClientRequestId();
       });
@@ -706,6 +859,8 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
   Widget _buildTopLevelCommentItem(BuildContext context, Comment comment, bool isAr) {
     final isTombstone = comment.isDeleted;
     final isAuthor = !isTombstone && _currentUserId != null && comment.author?.id == _currentUserId;
+    final isPostCreator = !isTombstone && _currentUserId != null && widget.postCreatorId != null && widget.postCreatorId == _currentUserId;
+    final isPinned = comment.isPinned && !isTombstone;
     final authorName = isTombstone ? '' : (comment.author?.displayName(isAr ? 'ar' : 'en') ?? 'User');
     final timeStr = formatTimeAgo(context, comment.createdAt);
     final isExpanded = _expandedComments.contains(comment.id);
@@ -714,7 +869,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     final hasMoreReplies = _repliesHasNextPage[comment.id] ?? false;
     final isLoadingMoreReplies = _loadingMoreReplies.contains(comment.id);
 
-    return Column(
+    final itemWidget = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -754,6 +909,26 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Pinned badge
+                  if (isPinned) ...[
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.push_pin, size: 12, color: AppColors.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          t(context, 'Pinned comment', 'تعليق مثبّت'),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                  ],
+
                   // Author Name & Time
                   Row(
                     children: [
@@ -790,14 +965,20 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
                             ),
                       ),
                       const Spacer(),
-                      // Delete button for author (active only)
-                      if (isAuthor)
+                      // Options button (delete for author, pin/unpin for post creator)
+                      if (isAuthor || isPostCreator)
                         IconButton(
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                           icon: const Icon(Icons.more_horiz, size: 18, color: AppColors.textMuted),
-                          onPressed: () => _confirmDelete(comment),
-                          tooltip: t(context, 'Delete', 'حذف'),
+                          onPressed: () => _showCommentOptions(
+                            context,
+                            comment,
+                            isAuthor: isAuthor,
+                            isPostCreator: isPostCreator,
+                            isAr: isAr,
+                          ),
+                          tooltip: t(context, 'Options', 'خيارات'),
                         ),
                     ],
                   ),
@@ -927,6 +1108,20 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
         ],
       ],
     );
+
+    if (isPinned) {
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
+        ),
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: itemWidget,
+      );
+    }
+
+    return itemWidget;
   }
 
   Widget _buildReplyItem(BuildContext context, Comment reply, String parentCommentId, bool isAr) {

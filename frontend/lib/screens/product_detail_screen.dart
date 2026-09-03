@@ -117,6 +117,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => PostCommentsSheet(
         postId: _post!.id,
+        postCreatorId: _post!.creator.id,
         onCommentCreated: () {
           setState(() {
             _post = _post!.copyWith(commentCount: _post!.commentCount + 1);

@@ -18,6 +18,9 @@ describe('CommentsService', () => {
     deleteCommentWithCounters: jest.Mock;
     toggleBoost: jest.Mock;
     isCommentBoostedByUser: jest.Mock;
+    pinComment: jest.Mock;
+    unpinComment: jest.Mock;
+    isCommentPinned: jest.Mock;
   };
   let mockPostsRepo: {
     findById: jest.Mock;
@@ -75,6 +78,9 @@ describe('CommentsService', () => {
       deleteCommentWithCounters: jest.fn().mockResolvedValue(true),
       toggleBoost: jest.fn().mockResolvedValue({ isBoostedByMe: true, boostCount: 1 }),
       isCommentBoostedByUser: jest.fn().mockResolvedValue(false),
+      pinComment: jest.fn().mockResolvedValue({ ...mockComment, isPinned: true }),
+      unpinComment: jest.fn().mockResolvedValue(true),
+      isCommentPinned: jest.fn().mockResolvedValue(false),
     };
 
     mockPostsRepo = {
@@ -711,6 +717,31 @@ describe('CommentsService', () => {
       const res = await service.isCommentBoostedByUser(mockComment.id, userId);
       expect(res).toBe(true);
       expect(mockCommentsRepo.isCommentBoostedByUser).toHaveBeenCalledWith(mockComment.id, userId);
+    });
+  });
+
+  describe('pinComment', () => {
+    it('delegates to repository with userId and commentId', async () => {
+      const result = await service.pinComment(userId, mockComment.id);
+      expect(result).toEqual({ ...mockComment, isPinned: true });
+      expect(mockCommentsRepo.pinComment).toHaveBeenCalledWith(mockComment.id, userId);
+    });
+  });
+
+  describe('unpinComment', () => {
+    it('delegates to repository with userId and postId', async () => {
+      const result = await service.unpinComment(userId, postId);
+      expect(result).toBe(true);
+      expect(mockCommentsRepo.unpinComment).toHaveBeenCalledWith(postId, userId);
+    });
+  });
+
+  describe('isCommentPinned', () => {
+    it('delegates to repository with postId and commentId', async () => {
+      mockCommentsRepo.isCommentPinned.mockResolvedValueOnce(true);
+      const result = await service.isCommentPinned(postId, mockComment.id);
+      expect(result).toBe(true);
+      expect(mockCommentsRepo.isCommentPinned).toHaveBeenCalledWith(postId, mockComment.id);
     });
   });
 });

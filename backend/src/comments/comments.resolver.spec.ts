@@ -50,6 +50,9 @@ describe('CommentsResolver', () => {
         boostCount: 4,
       }),
       isCommentBoostedByUser: jest.fn().mockResolvedValue(false),
+      pinComment: jest.fn().mockResolvedValue({ ...mockComment, isPinned: true }),
+      unpinComment: jest.fn().mockResolvedValue(true),
+      isCommentPinned: jest.fn().mockResolvedValue(false),
     };
 
     loadUserMock = jest.fn().mockResolvedValue({ id: userId, fullName: 'Test User' });
@@ -68,6 +71,9 @@ describe('CommentsResolver', () => {
         commentBoostedByMe: {
           load: jest.fn().mockResolvedValue(true),
         } as unknown as NonNullable<GqlContext['loaders']['commentBoostedByMe']>,
+        pinnedCommentIdByPostId: {
+          load: jest.fn().mockResolvedValue(null),
+        } as unknown as NonNullable<GqlContext['loaders']['pinnedCommentIdByPostId']>,
       },
     };
 
@@ -224,5 +230,51 @@ describe('CommentsResolver', () => {
   it('resolves boostCount directly from comment entity', () => {
     expect(resolver.boostCount(mockComment)).toBe(3);
     expect(resolver.boostCount({ ...mockComment, boostCount: 0 })).toBe(0);
+  });
+
+  it('delegates pinComment to service with authenticated userId and commentId', async () => {
+    const result = await resolver.pinComment(mockComment.id, mockContext);
+    expect(result).toEqual({ ...mockComment, isPinned: true });
+    expect(mockCommentsService.pinComment).toHaveBeenCalledWith(userId, mockComment.id);
+  });
+
+  it('delegates unpinComment to service with authenticated userId and postId', async () => {
+    const result = await resolver.unpinComment(postId, mockContext);
+    expect(result).toBe(true);
+    expect(mockCommentsService.unpinComment).toHaveBeenCalledWith(userId, postId);
+  });
+
+  it('resolves isPinned as false for replies', async () => {
+    const reply: Comment = {
+      ...mockComment,
+      parentId: 'parent-1',
+    };
+    const isPinned = await resolver.isPinned(reply, mockContext);
+    expect(isPinned).toBe(false);
+  });
+
+  it('resolves isPinned from pre-populated comment property when present', async () => {
+    const commentWithPin = { ...mockComment, isPinned: true } as Comment;
+    const isPinned = await resolver.isPinned(commentWithPin, mockContext);
+    expect(isPinned).toBe(true);
+  });
+
+  it('resolves isPinned via DataLoader when present', async () => {
+    (mockContext.loaders.pinnedCommentIdByPostId!.load as jest.Mock).mockResolvedValueOnce(mockComment.id);
+    const loadPinnedSpy = jest.spyOn(mockContext.loaders.pinnedCommentIdByPostId!, 'load');
+    const isPinned = await resolver.isPinned(mockComment, mockContext);
+    expect(isPinned).toBe(true);
+    expect(loadPinnedSpy).toHaveBeenCalledWith(mockComment.postId);
+  });
+
+  it('resolves isPinned via service fallback when DataLoader is absent', async () => {
+    const noLoaderContext: GqlContext = {
+      ...mockContext,
+      loaders: { ...mockContext.loaders, pinnedCommentIdByPostId: undefined },
+    };
+    (mockCommentsService.isCommentPinned as jest.Mock).mockResolvedValueOnce(true);
+    const isPinned = await resolver.isPinned(mockComment, noLoaderContext);
+    expect(isPinned).toBe(true);
+    expect(mockCommentsService.isCommentPinned).toHaveBeenCalledWith(mockComment.postId, mockComment.id);
   });
 });

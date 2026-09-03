@@ -53,6 +53,19 @@ describe('validateCommentsQueryInput & cursor utilities', () => {
       expect(decoded.boostCount).toBeUndefined();
     });
 
+    it('encodes and decodes comment cursor round-trip with isPinned flag', () => {
+      const now = new Date();
+      const cursor = encodeCommentCursor({
+        createdAt: now,
+        id: validPostId,
+        isPinned: true,
+      });
+
+      const decoded = decodeCommentCursor(cursor);
+      expect(decoded.id).toBe(validPostId);
+      expect(decoded.isPinned).toBe(true);
+    });
+
     it('rejects invalid or corrupted cursor', () => {
       expect(() => decodeCommentCursor('not-valid-base64-json!')).toThrow(ValidationError);
       expect(() => decodeCommentCursor('bm90LWpzb24=')).toThrow(ValidationError); // 'not-json' in base64

@@ -118,6 +118,7 @@ import type { GqlContext } from './common/types/gql-context.type';
               upvotedByMe: postsRepository.createUpvotedByMeLoader(),
               savedByMe: postsRepository.createSavedByMeLoader(),
               commentBoostedByMe: commentsRepository.createCommentBoostedByMeLoader(),
+              pinnedCommentIdByPostId: commentsRepository.createPinnedCommentIdByPostIdLoader(),
             },
           };
           return ctx;
