@@ -73,6 +73,42 @@ describe('CommentsResolver', () => {
     });
   });
 
+  it('delegates createReply to service with authenticated userId', async () => {
+    const mockReply: Comment = {
+      ...mockComment,
+      id: '01916327-0000-7000-8000-000000000020',
+      parentId: mockComment.id,
+      text: 'I agree!',
+      replyCount: 0,
+    };
+    mockCommentsService.createReply = jest.fn().mockResolvedValue(mockReply);
+
+    const result = await resolver.createReply(
+      {
+        clientRequestId: 'req-reply-1',
+        commentId: mockComment.id,
+        text: 'I agree!',
+      },
+      mockContext,
+    );
+
+    expect(result).toEqual(mockReply);
+    expect(mockCommentsService.createReply).toHaveBeenCalledWith(userId, {
+      clientRequestId: 'req-reply-1',
+      commentId: mockComment.id,
+      text: 'I agree!',
+    });
+  });
+
+  it('delegates deleteComment to service with authenticated userId', async () => {
+    mockCommentsService.deleteComment = jest.fn().mockResolvedValue(true);
+
+    const result = await resolver.deleteComment(mockComment.id, mockContext);
+
+    expect(result).toBe(true);
+    expect(mockCommentsService.deleteComment).toHaveBeenCalledWith(userId, mockComment.id);
+  });
+
   it('delegates comments query to service', async () => {
     const validCursor = Buffer.from(
       JSON.stringify({ createdAt: new Date().toISOString(), id: '01916327-0000-7000-8000-000000000001' }),
@@ -89,9 +125,54 @@ describe('CommentsResolver', () => {
     });
   });
 
-  it('resolves author via DataLoader to prevent N+1 queries', async () => {
+  it('delegates replies query to service', async () => {
+    const validCursor = Buffer.from(
+      JSON.stringify({ createdAt: new Date().toISOString(), id: '01916327-0000-7000-8000-000000000001' }),
+    ).toString('base64url');
+
+    mockCommentsService.getReplies = jest.fn().mockResolvedValue({
+      edges: [{ node: mockComment, cursor: 'cursor-reply-1' }],
+      pageInfo: { endCursor: 'cursor-reply-1', hasNextPage: false },
+    });
+
+    const result = await resolver.replies(mockComment.id, 10, validCursor);
+
+    expect(result.edges.length).toBe(1);
+    expect(mockCommentsService.getReplies).toHaveBeenCalledWith({
+      commentId: mockComment.id,
+      first: 10,
+      after: validCursor,
+    });
+  });
+
+  it('resolves author via DataLoader to prevent N+1 queries when active', async () => {
     const author = await resolver.author(mockComment, mockContext);
     expect(author).toEqual({ id: userId, fullName: 'Test User' });
     expect(loadUserMock).toHaveBeenCalledWith(userId);
+  });
+
+  it('resolves author as null when comment is DELETED (tombstone)', async () => {
+    const deletedComment: Comment = {
+      ...mockComment,
+      status: 'DELETED',
+    };
+    const author = await resolver.author(deletedComment, mockContext);
+    expect(author).toBeNull();
+    expect(loadUserMock).not.toHaveBeenCalled();
+  });
+
+  it('resolves text normally when comment is ACTIVE', () => {
+    const text = resolver.text(mockComment);
+    expect(text).toBe('Great post!');
+  });
+
+  it('resolves text as [Deleted] when comment is DELETED (tombstone)', () => {
+    const deletedComment: Comment = {
+      ...mockComment,
+      status: 'DELETED',
+      text: 'Original private text',
+    };
+    const text = resolver.text(deletedComment);
+    expect(text).toBe('[Deleted]');
   });
 });

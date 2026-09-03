@@ -13,6 +13,9 @@ describe('CommentsService', () => {
     createCommentWithCounter: jest.Mock;
     findTopLevelCommentsByPostId: jest.Mock;
     findCommentById: jest.Mock;
+    createReplyWithCounters: jest.Mock;
+    findRepliesByCommentId: jest.Mock;
+    deleteCommentWithCounters: jest.Mock;
   };
   let mockPostsRepo: {
     findById: jest.Mock;
@@ -39,8 +42,21 @@ describe('CommentsService', () => {
     parentId: null,
     text: 'I can foster this dog!',
     status: 'ACTIVE',
+    replyCount: 0,
     createdAt: new Date('2026-09-04T00:00:00.000Z'),
     updatedAt: new Date('2026-09-04T00:00:00.000Z'),
+  };
+
+  const mockReply: Comment = {
+    id: '01916327-0000-7000-8000-000000000020',
+    postId,
+    authorId: otherUserId,
+    parentId: mockComment.id,
+    text: 'I can help with transport!',
+    status: 'ACTIVE',
+    replyCount: 0,
+    createdAt: new Date('2026-09-04T00:05:00.000Z'),
+    updatedAt: new Date('2026-09-04T00:05:00.000Z'),
   };
 
   beforeEach(() => {
@@ -49,7 +65,10 @@ describe('CommentsService', () => {
       countRecentCreationsByAuthor: jest.fn().mockResolvedValue(0),
       createCommentWithCounter: jest.fn().mockResolvedValue(mockComment),
       findTopLevelCommentsByPostId: jest.fn(),
-      findCommentById: jest.fn(),
+      findCommentById: jest.fn().mockResolvedValue(mockComment),
+      createReplyWithCounters: jest.fn().mockResolvedValue(mockReply),
+      findRepliesByCommentId: jest.fn(),
+      deleteCommentWithCounters: jest.fn().mockResolvedValue(true),
     };
 
     mockPostsRepo = {
@@ -338,6 +357,288 @@ describe('CommentsService', () => {
           first: 20,
         }),
       ).rejects.toThrow(NotFoundError);
+    });
+  });
+
+  describe('createReply', () => {
+    it('creates a reply beneath an active top-level comment', async () => {
+      const result = await service.createReply(otherUserId, {
+        clientRequestId: 'req-reply-1',
+        commentId: mockComment.id,
+        text: 'I can help with transport!',
+      });
+
+      expect(result).toEqual(mockReply);
+      expect(mockCommentsRepo.findCommentById).toHaveBeenCalledWith(mockComment.id);
+      expect(mockPostsRepo.findById).toHaveBeenCalledWith(postId);
+      expect(mockCommentsRepo.createReplyWithCounters).toHaveBeenCalledWith({
+        commentId: mockComment.id,
+        authorId: otherUserId,
+        text: 'I can help with transport!',
+        clientRequestId: 'req-reply-1',
+        requestHash: crypto
+          .createHash('sha256')
+          .update(JSON.stringify({ commentId: mockComment.id, text: 'I can help with transport!' }))
+          .digest('hex'),
+      });
+    });
+
+    it('rejects reply if parent comment does not exist', async () => {
+      mockCommentsRepo.findCommentById.mockResolvedValueOnce(null);
+
+      await expect(
+        service.createReply(otherUserId, {
+          clientRequestId: 'req-reply-notfound',
+          commentId: 'non-existent-comment',
+          text: 'Hello',
+        }),
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    it('rejects reply nesting (cannot reply to a reply)', async () => {
+      mockCommentsRepo.findCommentById.mockResolvedValueOnce({
+        ...mockComment,
+        parentId: 'parent-comment-id', // It is a reply!
+      });
+
+      await expect(
+        service.createReply(otherUserId, {
+          clientRequestId: 'req-reply-nest',
+          commentId: mockComment.id,
+          text: 'Nested reply attempt',
+        }),
+      ).rejects.toThrow(/Replies cannot receive replies/);
+    });
+
+    it('rejects reply to a DELETED comment', async () => {
+      mockCommentsRepo.findCommentById.mockResolvedValueOnce({
+        ...mockComment,
+        status: 'DELETED',
+      });
+
+      await expect(
+        service.createReply(otherUserId, {
+          clientRequestId: 'req-reply-del',
+          commentId: mockComment.id,
+          text: 'Reply to deleted',
+        }),
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    it('rejects reply to a REMOVED or HIDDEN comment', async () => {
+      mockCommentsRepo.findCommentById.mockResolvedValueOnce({
+        ...mockComment,
+        status: 'REMOVED',
+      });
+
+      await expect(
+        service.createReply(otherUserId, {
+          clientRequestId: 'req-reply-rem',
+          commentId: mockComment.id,
+          text: 'Reply to removed',
+        }),
+      ).rejects.toThrow(NotFoundError);
+
+      mockCommentsRepo.findCommentById.mockResolvedValueOnce({
+        ...mockComment,
+        status: 'HIDDEN',
+      });
+
+      await expect(
+        service.createReply(otherUserId, {
+          clientRequestId: 'req-reply-hid',
+          commentId: mockComment.id,
+          text: 'Reply to hidden',
+        }),
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    it('rejects reply if post is REMOVED', async () => {
+      mockPostsRepo.findById.mockResolvedValueOnce({
+        ...mockPost,
+        status: 'REMOVED',
+      });
+
+      await expect(
+        service.createReply(otherUserId, {
+          clientRequestId: 'req-reply-post-rem',
+          commentId: mockComment.id,
+          text: 'Reply under removed post',
+        }),
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    it('returns original result on identical idempotency retry', async () => {
+      const payload = { commentId: mockComment.id, text: 'I can help with transport!' };
+      const hash = crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+
+      mockCommentsRepo.findIdempotencyRecord.mockResolvedValueOnce({
+        id: 'idem-reply',
+        authorId: otherUserId,
+        clientRequestId: 'req-reply-retry',
+        requestHash: hash,
+        commentId: mockReply.id,
+        responsePayload: mockReply,
+        createdAt: new Date(),
+      });
+
+      const result = await service.createReply(otherUserId, {
+        clientRequestId: 'req-reply-retry',
+        commentId: mockComment.id,
+        text: 'I can help with transport!',
+      });
+
+      expect(result).toEqual(mockReply);
+      expect(mockCommentsRepo.createReplyWithCounters).not.toHaveBeenCalled();
+      expect(mockCommentsRepo.countRecentCreationsByAuthor).not.toHaveBeenCalled();
+    });
+
+    it('rejects with ConflictError on reused clientRequestId with different payload', async () => {
+      const payload = { commentId: mockComment.id, text: 'Original text' };
+      const hash = crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+
+      mockCommentsRepo.findIdempotencyRecord.mockResolvedValueOnce({
+        id: 'idem-conflict',
+        authorId: otherUserId,
+        clientRequestId: 'req-reply-conf',
+        requestHash: hash,
+        commentId: mockReply.id,
+        responsePayload: mockReply,
+        createdAt: new Date(),
+      });
+
+      await expect(
+        service.createReply(otherUserId, {
+          clientRequestId: 'req-reply-conf',
+          commentId: mockComment.id,
+          text: 'Different text',
+        }),
+      ).rejects.toThrow(ConflictError);
+    });
+
+    it('shares rate limits with comment creation (10/min, 100/day)', async () => {
+      mockCommentsRepo.countRecentCreationsByAuthor.mockResolvedValueOnce(10);
+
+      await expect(
+        service.createReply(otherUserId, {
+          clientRequestId: 'req-rate-limit',
+          commentId: mockComment.id,
+          text: 'Spamming replies',
+        }),
+      ).rejects.toThrow(/rate limit exceeded/);
+
+      expect(mockCommentsRepo.createReplyWithCounters).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getReplies', () => {
+    it('returns empty connection when parent comment has no replies', async () => {
+      mockCommentsRepo.findRepliesByCommentId.mockResolvedValueOnce([]);
+
+      const result = await service.getReplies({
+        commentId: mockComment.id,
+        first: 20,
+      });
+
+      expect(result).toEqual({
+        edges: [],
+        pageInfo: {
+          endCursor: null,
+          hasNextPage: false,
+        },
+      });
+    });
+
+    it('returns replies with oldest first keyset pagination', async () => {
+      mockCommentsRepo.findRepliesByCommentId.mockResolvedValueOnce([mockReply]);
+
+      const result = await service.getReplies({
+        commentId: mockComment.id,
+        first: 20,
+      });
+
+      expect(result.edges.length).toBe(1);
+      expect(result.edges[0].node).toEqual(mockReply);
+      expect(result.pageInfo.hasNextPage).toBe(false);
+      expect(result.pageInfo.endCursor).toBeTruthy();
+    });
+
+    it('rejects replies query if parent comment does not exist', async () => {
+      mockCommentsRepo.findCommentById.mockResolvedValueOnce(null);
+
+      await expect(
+        service.getReplies({
+          commentId: 'non-existent',
+          first: 20,
+        }),
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    it('rejects replies query if parent is a reply (cannot nest)', async () => {
+      mockCommentsRepo.findCommentById.mockResolvedValueOnce({
+        ...mockComment,
+        parentId: 'parent-id',
+      });
+
+      await expect(
+        service.getReplies({
+          commentId: mockComment.id,
+          first: 20,
+        }),
+      ).rejects.toThrow(/Replies cannot receive replies/);
+    });
+
+    it('rejects replies query if parent comment is DELETED and has replyCount === 0', async () => {
+      mockCommentsRepo.findCommentById.mockResolvedValueOnce({
+        ...mockComment,
+        status: 'DELETED',
+        replyCount: 0,
+      });
+
+      await expect(
+        service.getReplies({
+          commentId: mockComment.id,
+          first: 20,
+        }),
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    it('allows replies query if parent comment is DELETED and has visible replies (tombstone)', async () => {
+      mockCommentsRepo.findCommentById.mockResolvedValueOnce({
+        ...mockComment,
+        status: 'DELETED',
+        replyCount: 1,
+      });
+      mockCommentsRepo.findRepliesByCommentId.mockResolvedValueOnce([mockReply]);
+
+      const result = await service.getReplies({
+        commentId: mockComment.id,
+        first: 20,
+      });
+
+      expect(result.edges.length).toBe(1);
+    });
+
+    it('rejects replies query if parent post is REMOVED', async () => {
+      mockPostsRepo.findById.mockResolvedValueOnce({
+        ...mockPost,
+        status: 'REMOVED',
+      });
+
+      await expect(
+        service.getReplies({
+          commentId: mockComment.id,
+          first: 20,
+        }),
+      ).rejects.toThrow(NotFoundError);
+    });
+  });
+
+  describe('deleteComment', () => {
+    it('delegates deletion to repository', async () => {
+      const result = await service.deleteComment(userId, mockComment.id);
+      expect(result).toBe(true);
+      expect(mockCommentsRepo.deleteCommentWithCounters).toHaveBeenCalledWith(mockComment.id, userId);
     });
   });
 });

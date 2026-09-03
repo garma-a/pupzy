@@ -512,8 +512,41 @@ class GraphQLService {
           node {
             id
             postId
+            parentId
             text
             status
+            replyCount
+            createdAt
+            updatedAt
+            author {
+              id
+              fullName
+              fullNameArabic
+              profilePictureUrl
+              isVerified
+            }
+          }
+          cursor
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+      }
+    }
+  ''';
+
+  static const String repliesQuery = r'''
+    query Replies($commentId: ID!, $first: Int, $after: String) {
+      replies(commentId: $commentId, first: $first, after: $after) {
+        edges {
+          node {
+            id
+            postId
+            parentId
+            text
+            status
+            replyCount
             createdAt
             updatedAt
             author {
@@ -539,8 +572,10 @@ class GraphQLService {
       createComment(input: $input) {
         id
         postId
+        parentId
         text
         status
+        replyCount
         createdAt
         updatedAt
         author {
@@ -551,6 +586,34 @@ class GraphQLService {
           isVerified
         }
       }
+    }
+  ''';
+
+  static const String createReplyMutation = r'''
+    mutation CreateReply($input: CreateReplyInput!) {
+      createReply(input: $input) {
+        id
+        postId
+        parentId
+        text
+        status
+        replyCount
+        createdAt
+        updatedAt
+        author {
+          id
+          fullName
+          fullNameArabic
+          profilePictureUrl
+          isVerified
+        }
+      }
+    }
+  ''';
+
+  static const String deleteCommentMutation = r'''
+    mutation DeleteComment($id: ID!) {
+      deleteComment(id: $id)
     }
   ''';
 
@@ -1774,5 +1837,89 @@ class GraphQLService {
     final node = result.data?['createComment'] as Map<String, dynamic>?;
     if (node == null) return (null, null);
     return (Comment.fromJson(node), null);
+  }
+
+  /// Fetches visible replies for a top-level comment with keyset cursor pagination (oldest first).
+  Future<(CommentConnection? connection, String? errorMessage)> fetchReplies({
+    required String commentId,
+    int? first,
+    String? after,
+  }) async {
+    final result = await client.value.query(
+      QueryOptions(
+        document: gql(repliesQuery),
+        variables: {
+          'commentId': commentId,
+          if (first != null) 'first': first,
+          if (after != null) 'after': after,
+        },
+        fetchPolicy: FetchPolicy.networkOnly,
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _serverErrorMessage(result.exception));
+    }
+    final data = result.data?['replies'] as Map<String, dynamic>?;
+    if (data == null) return (null, null);
+    final edges = (data['edges'] as List<dynamic>? ?? [])
+        .map((e) => Comment.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>))
+        .toList();
+    final pageInfo = data['pageInfo'] as Map<String, dynamic>?;
+    return (
+      CommentConnection(
+        comments: edges,
+        endCursor: pageInfo?['endCursor'] as String?,
+        hasNextPage: pageInfo?['hasNextPage'] as bool? ?? false,
+      ),
+      null,
+    );
+  }
+
+  /// Publishes a text reply beneath a top-level comment.
+  Future<(Comment? comment, String? errorMessage)> createReply({
+    required String clientRequestId,
+    required String commentId,
+    required String text,
+  }) async {
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(createReplyMutation),
+        variables: {
+          'input': {
+            'clientRequestId': clientRequestId,
+            'commentId': commentId,
+            'text': text,
+          },
+        },
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _serverErrorMessage(result.exception));
+    }
+    final node = result.data?['createReply'] as Map<String, dynamic>?;
+    if (node == null) return (null, null);
+    return (Comment.fromJson(node), null);
+  }
+
+  /// Deletes an authored Comment or Reply. Idempotent and irreversible.
+  Future<(bool success, String? errorMessage)> deleteComment({
+    required String id,
+  }) async {
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(deleteCommentMutation),
+        variables: {
+          'id': id,
+        },
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (false, _serverErrorMessage(result.exception));
+    }
+    final success = result.data?['deleteComment'] as bool? ?? false;
+    return (success, null);
   }
 }

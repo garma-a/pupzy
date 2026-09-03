@@ -18,14 +18,16 @@ enum CommentSort {
 }
 
 """
-A user-created discussion contribution published beneath a Post.
+A user-created discussion contribution published beneath a Post or parent Comment.
 """
 type Comment {
   id: ID!
   postId: ID!
-  author: User!
+  parentId: ID
+  author: User
   text: String!
   status: CommentStatus!
+  replyCount: Int!
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -56,6 +58,15 @@ input CreateCommentInput {
   mediaIds: [ID!]
 }
 
+"""
+Input for publishing a text Reply beneath a top-level Comment.
+"""
+input CreateReplyInput {
+  clientRequestId: String!
+  commentId: ID!
+  text: String!
+}
+
 extend type Query {
   """
   Fetch visible top-level Comments for a Post using keyset pagination.
@@ -68,6 +79,17 @@ extend type Query {
     first: Int
     after: String
   ): CommentConnection!
+
+  """
+  Fetch visible Replies for a top-level Comment using keyset pagination.
+  Oldest first (createdAt ASC, id ASC).
+  Defaults to 20 items, max 50 items.
+  """
+  replies(
+    commentId: ID!
+    first: Int
+    after: String
+  ): CommentConnection!
 }
 
 extend type Mutation {
@@ -77,4 +99,18 @@ extend type Mutation {
   Returns the canonical Comment for immediate UI update.
   """
   createComment(input: CreateCommentInput!): Comment!
+
+  """
+  Publish a text Reply beneath a top-level Comment.
+  Requires authentication and a durable author-scoped clientRequestId for idempotency.
+  Returns the canonical Comment for immediate UI update.
+  """
+  createReply(input: CreateReplyInput!): Comment!
+
+  """
+  Delete an authored Comment or Reply.
+  Requires authentication and ownership (author only).
+  Deletion is idempotent and irreversible.
+  """
+  deleteComment(id: ID!): Boolean!
 }

@@ -1,10 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { eq, and, ne, sql, gte, lt, or, inArray } from 'drizzle-orm';
+import { eq, and, ne, sql, gte, gt, lt, or, inArray } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import * as schema from '../database/schema';
 import { comments, commentIdempotency, posts, Comment, CommentIdempotency } from '../database/schema';
-import { NotFoundError, ConflictError } from '../common/errors/app.errors';
+import { NotFoundError, ConflictError, ForbiddenError, ValidationError } from '../common/errors/app.errors';
 import { CommentCursorPayload } from './dto/comments-query.input';
 
 @Injectable()
@@ -112,12 +112,13 @@ export class CommentsRepository {
   /**
    * Fetches visible top-level comments for a post ordered by createdAt DESC, id DESC.
    * Returns up to limit + 1 items for keyset continuation detection.
+   * Includes deleted comments that have visible replies (replyCount > 0) as tombstones.
    */
   async findTopLevelCommentsByPostId(postId: string, limit: number, cursor?: CommentCursorPayload): Promise<Comment[]> {
     const conditions = [
       eq(comments.postId, postId),
       sql`${comments.parentId} IS NULL`,
-      inArray(comments.status, ['ACTIVE', 'IMAGE_HIDDEN']),
+      sql`(${comments.status} IN ('ACTIVE', 'IMAGE_HIDDEN') OR (${comments.status} = 'DELETED' AND ${comments.replyCount} > 0))`,
     ];
 
     if (cursor) {
@@ -127,12 +128,212 @@ export class CommentsRepository {
       );
     }
 
-    return this.db
+    const rows = await this.db
       .select()
       .from(comments)
       .where(and(...conditions))
       .orderBy(sql`${comments.createdAt} DESC`, sql`${comments.id} DESC`)
       .limit(limit + 1);
+
+    return rows.map((c) => {
+      if (c.status === 'DELETED') {
+        return { ...c, text: '[Deleted]' };
+      }
+      return c;
+    });
+  }
+
+  /**
+   * Fetches visible replies for a top-level comment ordered by createdAt ASC, id ASC.
+   * Returns up to limit + 1 items for keyset continuation detection.
+   */
+  async findRepliesByCommentId(commentId: string, limit: number, cursor?: CommentCursorPayload): Promise<Comment[]> {
+    const conditions = [eq(comments.parentId, commentId), inArray(comments.status, ['ACTIVE', 'IMAGE_HIDDEN'])];
+
+    if (cursor) {
+      const cursorDate = new Date(cursor.createdAt);
+      conditions.push(
+        or(gt(comments.createdAt, cursorDate), and(eq(comments.createdAt, cursorDate), gt(comments.id, cursor.id)))!,
+      );
+    }
+
+    return this.db
+      .select()
+      .from(comments)
+      .where(and(...conditions))
+      .orderBy(sql`${comments.createdAt} ASC`, sql`${comments.id} ASC`)
+      .limit(limit + 1);
+  }
+
+  /**
+   * Transactionally creates a Reply beneath a top-level Comment, increments the parent's
+   * replyCount and post's commentCount atomically, and records durable idempotency metadata.
+   */
+  async createReplyWithCounters(params: {
+    commentId: string;
+    authorId: string;
+    text: string;
+    clientRequestId: string;
+    requestHash: string;
+  }): Promise<Comment> {
+    const { commentId, authorId, text, clientRequestId, requestHash } = params;
+
+    try {
+      return await this.db.transaction(async (tx) => {
+        // 1. Lock parent comment with FOR UPDATE
+        const [parent] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('update');
+
+        if (!parent) {
+          throw new NotFoundError('Comment', commentId);
+        }
+
+        // Nesting check: Replies cannot receive replies
+        if (parent.parentId !== null) {
+          throw new ValidationError('Replies cannot receive replies');
+        }
+
+        // Status check: parent must be ACTIVE or IMAGE_HIDDEN (cannot reply to DELETED, HIDDEN, or REMOVED)
+        if (parent.status !== 'ACTIVE' && parent.status !== 'IMAGE_HIDDEN') {
+          throw new NotFoundError('Comment', commentId);
+        }
+
+        // 2. Lock parent post with FOR UPDATE to prevent race with post removal
+        const [post] = await tx.select().from(posts).where(eq(posts.id, parent.postId)).for('update');
+
+        if (!post || post.status === 'REMOVED') {
+          throw new NotFoundError('Post', parent.postId);
+        }
+
+        // 3. Insert reply
+        const [newReply] = await tx
+          .insert(comments)
+          .values({
+            postId: parent.postId,
+            authorId,
+            parentId: parent.id,
+            text,
+            status: 'ACTIVE',
+            replyCount: 0,
+          })
+          .returning();
+
+        // 4. Increment parent comment's reply_count
+        await tx
+          .update(comments)
+          .set({
+            replyCount: sql`${comments.replyCount} + 1`,
+            updatedAt: new Date(),
+          })
+          .where(eq(comments.id, parent.id));
+
+        // 5. Increment post's comment_count
+        await tx
+          .update(posts)
+          .set({
+            commentCount: sql`${posts.commentCount} + 1`,
+            updatedAt: new Date(),
+          })
+          .where(eq(posts.id, parent.postId));
+
+        // 6. Record durable idempotency
+        await tx.insert(commentIdempotency).values({
+          authorId,
+          clientRequestId,
+          requestHash,
+          commentId: newReply.id,
+          responsePayload: newReply,
+        });
+
+        return newReply;
+      });
+    } catch (error) {
+      const err = error as { code?: string; constraint?: string };
+      if (
+        err.code === '23505' &&
+        (err.constraint?.includes('comment_idempotency') || err.constraint?.includes('author_client_req'))
+      ) {
+        const existing = await this.findIdempotencyRecord(authorId, clientRequestId);
+        if (existing) {
+          if (existing.requestHash === requestHash) {
+            return existing.responsePayload as Comment;
+          }
+          throw new ConflictError('Client request ID was previously used with different parameters');
+        }
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Transactionally deletes a comment or reply.
+   * - Enforces author ownership (rejects other users and post authors).
+   * - Idempotent: returns true if already DELETED.
+   * - Irreversible: updates status to DELETED.
+   * - Decrements engagement counts transactionally.
+   */
+  async deleteCommentWithCounters(commentId: string, userId: string): Promise<boolean> {
+    return this.db.transaction(async (tx) => {
+      // 1. Lock target comment
+      const [comment] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('update');
+
+      if (!comment) {
+        throw new NotFoundError('Comment', commentId);
+      }
+
+      // 2. Ownership check: author only
+      if (comment.authorId !== userId) {
+        throw new ForbiddenError('You can only delete your own comments or replies');
+      }
+
+      // 3. Idempotent check
+      if (comment.status === 'DELETED') {
+        return true;
+      }
+
+      const wasVisible = comment.status === 'ACTIVE' || comment.status === 'IMAGE_HIDDEN';
+
+      // 4. Mark status DELETED
+      await tx
+        .update(comments)
+        .set({
+          status: 'DELETED',
+          updatedAt: new Date(),
+        })
+        .where(eq(comments.id, commentId));
+
+      // 5. Decrement counters if the item was visible
+      if (wasVisible) {
+        if (comment.parentId) {
+          // It is a Reply: decrement parent comment's reply_count and post's comment_count
+          await tx
+            .update(comments)
+            .set({
+              replyCount: sql`GREATEST(0, ${comments.replyCount} - 1)`,
+              updatedAt: new Date(),
+            })
+            .where(eq(comments.id, comment.parentId));
+
+          await tx
+            .update(posts)
+            .set({
+              commentCount: sql`GREATEST(0, ${posts.commentCount} - 1)`,
+              updatedAt: new Date(),
+            })
+            .where(eq(posts.id, comment.postId));
+        } else {
+          // It is a top-level Comment: decrement post's comment_count
+          await tx
+            .update(posts)
+            .set({
+              commentCount: sql`GREATEST(0, ${posts.commentCount} - 1)`,
+              updatedAt: new Date(),
+            })
+            .where(eq(posts.id, comment.postId));
+        }
+      }
+
+      return true;
+    });
   }
 
   /**

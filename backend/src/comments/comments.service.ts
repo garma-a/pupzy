@@ -3,9 +3,15 @@ import * as crypto from 'crypto';
 import { CommentsRepository } from './comments.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { CreateCommentDto } from './dto/create-comment.input';
-import { CommentsQueryDto, decodeCommentCursor, encodeCommentCursor } from './dto/comments-query.input';
+import { CreateReplyDto } from './dto/create-reply.input';
+import {
+  CommentsQueryDto,
+  RepliesQueryDto,
+  decodeCommentCursor,
+  encodeCommentCursor,
+} from './dto/comments-query.input';
 import { Comment } from '../database/schema';
-import { NotFoundError, ConflictError, AppError } from '../common/errors/app.errors';
+import { NotFoundError, ConflictError, AppError, ValidationError } from '../common/errors/app.errors';
 
 export interface CommentEdge {
   node: Comment;
@@ -131,5 +137,139 @@ export class CommentsService {
         hasNextPage,
       },
     };
+  }
+
+  /**
+   * Publishes a text-only Reply beneath an active top-level Comment.
+   *
+   * ## Rules
+   * - Cannot reply to a Reply (max 1 level of nesting).
+   * - Cannot reply to DELETED, HIDDEN, or REMOVED comments.
+   * - Cannot reply under a REMOVED post.
+   * - Shares rate limit budget with comment creation (10/min, 100/day).
+   * - Durable author-scoped idempotency.
+   */
+  async createReply(userId: string, input: CreateReplyDto): Promise<Comment> {
+    const { commentId, text, clientRequestId } = input;
+
+    // 1. Check parent comment eligibility
+    const parentComment = await this.commentsRepository.findCommentById(commentId);
+    if (!parentComment) {
+      throw new NotFoundError('Comment', commentId);
+    }
+    if (parentComment.parentId !== null) {
+      throw new ValidationError('Replies cannot receive replies');
+    }
+    if (parentComment.status !== 'ACTIVE' && parentComment.status !== 'IMAGE_HIDDEN') {
+      throw new NotFoundError('Comment', commentId);
+    }
+
+    // 2. Check parent post eligibility
+    const post = await this.postsRepository.findById(parentComment.postId);
+    if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Post', parentComment.postId);
+    }
+
+    // 3. Canonical payload fingerprinting
+    const canonicalPayload = JSON.stringify({ commentId, text });
+    const requestHash = crypto.createHash('sha256').update(canonicalPayload).digest('hex');
+
+    // 4. Durable author-scoped idempotency check
+    const existingIdempotency = await this.commentsRepository.findIdempotencyRecord(userId, clientRequestId);
+    if (existingIdempotency) {
+      if (existingIdempotency.requestHash === requestHash) {
+        this.logger.log(`Idempotent replay for reply clientRequestId=${clientRequestId} author=${userId}`);
+        return existingIdempotency.responsePayload as Comment;
+      }
+      throw new ConflictError('Client request ID was previously used with different parameters');
+    }
+
+    // 5. Shared per-user rate limiting (10/min, 100/day)
+    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+    const minuteCount = await this.commentsRepository.countRecentCreationsByAuthor(userId, oneMinuteAgo);
+    if (minuteCount >= 10) {
+      throw new AppError('Comment creation rate limit exceeded (max 10 per minute)', 'RATE_LIMITED');
+    }
+
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const dayCount = await this.commentsRepository.countRecentCreationsByAuthor(userId, oneDayAgo);
+    if (dayCount >= 100) {
+      throw new AppError('Comment creation rate limit exceeded (max 100 per day)', 'RATE_LIMITED');
+    }
+
+    // 6. Transactional reply creation with row-level locks and counter updates
+    return this.commentsRepository.createReplyWithCounters({
+      commentId,
+      authorId: userId,
+      text,
+      clientRequestId,
+      requestHash,
+    });
+  }
+
+  /**
+   * Queries visible Replies for a top-level Comment using keyset pagination.
+   *
+   * ## Eligibility & Visibility
+   * - Parent comment must exist, must be top-level (parentId is null), and must not be REMOVED or HIDDEN.
+   * - If parent comment is DELETED and has replyCount === 0, it disappears from public results (NotFoundError).
+   * - If the parent comment's post is REMOVED, throws NotFoundError (hides replies).
+   * - Keyset pagination oldest first (createdAt ASC, id ASC).
+   */
+  async getReplies(input: RepliesQueryDto): Promise<CommentConnection> {
+    const { commentId, first, after } = input;
+
+    // Check parent comment
+    const parentComment = await this.commentsRepository.findCommentById(commentId);
+    if (!parentComment) {
+      throw new NotFoundError('Comment', commentId);
+    }
+    if (parentComment.parentId !== null) {
+      throw new ValidationError('Replies cannot receive replies');
+    }
+    if (parentComment.status === 'REMOVED' || parentComment.status === 'HIDDEN') {
+      throw new NotFoundError('Comment', commentId);
+    }
+    if (parentComment.status === 'DELETED' && parentComment.replyCount === 0) {
+      throw new NotFoundError('Comment', commentId);
+    }
+
+    // Check parent post
+    const post = await this.postsRepository.findById(parentComment.postId);
+    if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Comment', commentId);
+    }
+
+    const cursorPayload = after ? decodeCommentCursor(after) : undefined;
+    const rows = await this.commentsRepository.findRepliesByCommentId(commentId, first, cursorPayload);
+
+    const hasNextPage = rows.length > first;
+    const items = hasNextPage ? rows.slice(0, first) : rows;
+
+    const edges: CommentEdge[] = items.map((reply) => ({
+      node: reply,
+      cursor: encodeCommentCursor(reply),
+    }));
+
+    const endCursor = edges.length > 0 ? edges[edges.length - 1].cursor : null;
+
+    return {
+      edges,
+      pageInfo: {
+        endCursor,
+        hasNextPage,
+      },
+    };
+  }
+
+  /**
+   * Deletes an authored Comment or Reply.
+   * - Enforces author ownership.
+   * - Idempotent: returns true if already DELETED.
+   * - Irreversible: updates status to DELETED.
+   * - Decrements engagement counters transactionally.
+   */
+  async deleteComment(userId: string, commentId: string): Promise<boolean> {
+    return this.commentsRepository.deleteCommentWithCounters(commentId, userId);
   }
 }

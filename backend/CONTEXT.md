@@ -31,3 +31,8 @@ A media object that has been uploaded for later attachment to a Post but has not
 
 **Comment**:
 A user-created contribution published beneath a Post to participate in its discussion. A top-level Comment requires trimmed plain text (1 to 1,000 Unicode characters) and belongs to one Post and one User. A Comment may later support attached images, Replies, Boosts, and moderation actions. Comments are allowed on every non-Removed Post type, but a Removed Post exposes no discussion and rejects new Comment creation.
+
+**Reply**:
+A user-created plain text contribution (1 to 500 Unicode characters) published directly beneath an active top-level Comment. Unlike a top-level Comment, a Reply cannot attach media, cannot receive further Replies (limiting discussion threads to one level of nesting), and belongs to the parent Comment's Post discussion thread. A Reply cannot be created beneath inaccessible, deleted, or administratively removed content. Deleting a Reply transactionally decrements both its parent Comment's reply count and the Post's comment count.
+_Avoid_: Nested reply, sub-comment, thread comment, comment reply
+

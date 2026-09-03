@@ -326,6 +326,12 @@ export interface CreateCommentInput {
   mediaIds?: Nullable<string[]>;
 }
 
+export interface CreateReplyInput {
+  clientRequestId: string;
+  commentId: string;
+  text: string;
+}
+
 export interface AdoptionApplicationConnection {
   edges: AdoptionApplicationEdge[];
   pageInfo: PageInfo;
@@ -427,10 +433,17 @@ export interface IQuery {
     first?: Nullable<number>,
     after?: Nullable<string>,
   ): CommentConnection | Promise<CommentConnection>;
+  replies(
+    commentId: string,
+    first?: Nullable<number>,
+    after?: Nullable<string>,
+  ): CommentConnection | Promise<CommentConnection>;
 }
 
 export interface IMutation {
   createComment(input: CreateCommentInput): Comment | Promise<Comment>;
+  createReply(input: CreateReplyInput): Comment | Promise<Comment>;
+  deleteComment(id: string): boolean | Promise<boolean>;
   submitAdoptionApplication(input: SubmitAdoptionApplicationInput): AdoptionApplication | Promise<AdoptionApplication>;
   approveAdoptionApplication(applicationId: string): AdoptionApplication | Promise<AdoptionApplication>;
   rejectAdoptionApplication(applicationId: string): AdoptionApplication | Promise<AdoptionApplication>;
@@ -552,9 +565,11 @@ export interface Post {
 export interface Comment {
   id: string;
   postId: string;
-  author: User;
+  parentId?: Nullable<string>;
+  author?: Nullable<User>;
   text: string;
   status: CommentStatus;
+  replyCount: number;
   createdAt: DateTime;
   updatedAt: DateTime;
 }

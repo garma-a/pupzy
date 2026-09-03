@@ -110,3 +110,54 @@ export function validateCommentsQueryInput(rawArgs: {
     after,
   };
 }
+
+export interface RepliesQueryDto {
+  commentId: string;
+  first: number;
+  after?: string;
+}
+
+/**
+ * Validates arguments for the `replies` query.
+ */
+export function validateRepliesQueryInput(rawArgs: {
+  commentId?: unknown;
+  first?: unknown;
+  after?: unknown;
+}): RepliesQueryDto {
+  if (typeof rawArgs.commentId !== 'string') {
+    throw new ValidationError('commentId is required');
+  }
+  assertUuid(rawArgs.commentId, 'commentId');
+  const commentId = rawArgs.commentId;
+
+  // Validate first: default 20, reject > 50 or < 1
+  let first = 20;
+  if (rawArgs.first !== undefined && rawArgs.first !== null) {
+    if (
+      typeof rawArgs.first !== 'number' ||
+      !Number.isInteger(rawArgs.first) ||
+      rawArgs.first < 1 ||
+      rawArgs.first > 50
+    ) {
+      throw new ValidationError('Page size must be an integer between 1 and 50');
+    }
+    first = rawArgs.first;
+  }
+
+  // Validate after cursor
+  let after: string | undefined;
+  if (rawArgs.after !== undefined && rawArgs.after !== null) {
+    if (typeof rawArgs.after !== 'string' || rawArgs.after.trim().length === 0) {
+      throw new ValidationError('after cursor must be a non-empty string');
+    }
+    decodeCommentCursor(rawArgs.after);
+    after = rawArgs.after;
+  }
+
+  return {
+    commentId,
+    first,
+    after,
+  };
+}

@@ -30,35 +30,70 @@ class CommentAuthor {
   }
 }
 
-/// A discussion Comment on a Post.
+/// A discussion Comment or Reply on a Post.
 class Comment {
   final String id;
   final String postId;
-  final CommentAuthor author;
+  final String? parentId;
+  final CommentAuthor? author;
   final String text;
   final String status;
+  final int replyCount;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   const Comment({
     required this.id,
     required this.postId,
-    required this.author,
+    this.parentId,
+    this.author,
     required this.text,
     required this.status,
+    this.replyCount = 0,
     required this.createdAt,
     required this.updatedAt,
   });
 
+  bool get isDeleted => status == 'DELETED';
+  bool get isReply => parentId != null;
+
   factory Comment.fromJson(Map<String, dynamic> json) => Comment(
         id: json['id'] as String,
         postId: json['postId'] as String,
-        author: CommentAuthor.fromJson(json['author'] as Map<String, dynamic>),
+        parentId: json['parentId'] as String?,
+        author: json['author'] != null
+            ? CommentAuthor.fromJson(json['author'] as Map<String, dynamic>)
+            : null,
         text: json['text'] as String,
         status: json['status'] as String? ?? 'ACTIVE',
+        replyCount: json['replyCount'] as int? ?? 0,
         createdAt: DateTime.parse(json['createdAt'] as String),
         updatedAt: DateTime.parse(json['updatedAt'] as String),
       );
+
+  Comment copyWith({
+    String? id,
+    String? postId,
+    String? parentId,
+    CommentAuthor? author,
+    String? text,
+    String? status,
+    int? replyCount,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return Comment(
+      id: id ?? this.id,
+      postId: postId ?? this.postId,
+      parentId: parentId ?? this.parentId,
+      author: author ?? this.author,
+      text: text ?? this.text,
+      status: status ?? this.status,
+      replyCount: replyCount ?? this.replyCount,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 }
 
 /// Keyset-paginated comments connection.

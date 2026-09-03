@@ -155,6 +155,13 @@
       "when": 1788891200000,
       "tag": "0021_add_comments_and_post_comment_count",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1788977600000,
+      "tag": "0022_add_reply_count_to_comments",
+      "breakpoints": true
     }
   ]
 }

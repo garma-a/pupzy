@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, text, timestamp, index, foreignKey } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, integer, timestamp, index, foreignKey } from 'drizzle-orm/pg-core';
 import { users } from './users.schema';
 import { posts } from './posts.schema';
 import { commentStatusEnum } from './enums';
@@ -36,8 +36,11 @@ export const comments = pgTable(
     /** Null for top-level comments; references parent comment for replies. */
     parentId: uuid('parent_id'),
 
-    /** Trimmed plain text content (1..1000 unicode characters for top-level). */
+    /** Trimmed plain text content (1..1000 unicode characters for top-level, 1..500 for reply). */
     text: text('text').notNull(),
+
+    /** Number of visible direct replies to this comment (0 for replies). */
+    replyCount: integer('reply_count').notNull().default(0),
 
     /** Lifecycle and moderation state. */
     status: commentStatusEnum('status').notNull().default('ACTIVE'),

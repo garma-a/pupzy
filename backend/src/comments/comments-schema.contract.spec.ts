@@ -23,6 +23,54 @@ describe('Comments GraphQL Schema Contract (Additive & Backward Compatibility)',
       .map((d) => d.name.value);
 
     expect(inputNames).toContain('CreateCommentInput');
+    expect(inputNames).toContain('CreateReplyInput');
+  });
+
+  it('verifies Comment type has replyCount, parentId, and nullable author for tombstones', () => {
+    const source = fs.readFileSync(COMMENTS_GRAPHQL_FILE, 'utf8');
+    const doc = parse(source);
+
+    const commentType = doc.definitions.find(
+      (d): d is ObjectTypeDefinitionNode => d.kind === Kind.OBJECT_TYPE_DEFINITION && d.name.value === 'Comment',
+    );
+
+    expect(commentType).toBeDefined();
+
+    // replyCount: Int!
+    const replyCountField = commentType!.fields?.find((f) => f.name.value === 'replyCount');
+    expect(replyCountField).toBeDefined();
+    expect(replyCountField!.type.kind).toBe(Kind.NON_NULL_TYPE);
+
+    // parentId: ID (nullable)
+    const parentIdField = commentType!.fields?.find((f) => f.name.value === 'parentId');
+    expect(parentIdField).toBeDefined();
+    expect(parentIdField!.type.kind).toBe(Kind.NAMED_TYPE);
+
+    // author: User (nullable for tombstones)
+    const authorField = commentType!.fields?.find((f) => f.name.value === 'author');
+    expect(authorField).toBeDefined();
+    expect(authorField!.type.kind).toBe(Kind.NAMED_TYPE);
+  });
+
+  it('verifies Query extends replies and Mutation extends createReply and deleteComment', () => {
+    const source = fs.readFileSync(COMMENTS_GRAPHQL_FILE, 'utf8');
+    const doc = parse(source);
+
+    const queryExt = doc.definitions.find((d) => d.kind === Kind.OBJECT_TYPE_EXTENSION && d.name.value === 'Query') as
+      ObjectTypeDefinitionNode | undefined;
+    expect(queryExt).toBeDefined();
+    const queryFields = queryExt!.fields?.map((f) => f.name.value) ?? [];
+    expect(queryFields).toContain('comments');
+    expect(queryFields).toContain('replies');
+
+    const mutationExt = doc.definitions.find(
+      (d) => d.kind === Kind.OBJECT_TYPE_EXTENSION && d.name.value === 'Mutation',
+    ) as ObjectTypeDefinitionNode | undefined;
+    expect(mutationExt).toBeDefined();
+    const mutationFields = mutationExt!.fields?.map((f) => f.name.value) ?? [];
+    expect(mutationFields).toContain('createComment');
+    expect(mutationFields).toContain('createReply');
+    expect(mutationFields).toContain('deleteComment');
   });
 
   it('ensures Post in posts.graphql includes additive commentCount: Int!', () => {
