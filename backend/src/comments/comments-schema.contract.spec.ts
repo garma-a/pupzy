@@ -106,6 +106,29 @@ describe('Comments GraphQL Schema Contract (Additive & Backward Compatibility)',
     expect(mutationFields).toContain('pinComment');
     expect(mutationFields).toContain('unpinComment');
     expect(mutationFields).toContain('requestCommentImageUploadUrl');
+    expect(mutationFields).toContain('reportComment');
+  });
+
+  it('verifies ReportCommentInput and reportComment mutation (Ticket 08)', () => {
+    const source = fs.readFileSync(COMMENTS_GRAPHQL_FILE, 'utf8');
+    const doc = parse(source);
+
+    const reportInput = doc.definitions.find(
+      (d): d is InputObjectTypeDefinitionNode =>
+        d.kind === Kind.INPUT_OBJECT_TYPE_DEFINITION && d.name.value === 'ReportCommentInput',
+    );
+    expect(reportInput).toBeDefined();
+    const fieldNames = reportInput!.fields?.map((f) => f.name.value) ?? [];
+    expect(fieldNames).toContain('commentId');
+    expect(fieldNames).toContain('reason');
+    expect(fieldNames).toContain('details');
+
+    const mutationExt = doc.definitions.find(
+      (d) => d.kind === Kind.OBJECT_TYPE_EXTENSION && d.name.value === 'Mutation',
+    ) as ObjectTypeDefinitionNode | undefined;
+    const reportField = mutationExt!.fields?.find((f) => f.name.value === 'reportComment');
+    expect(reportField).toBeDefined();
+    expect(reportField!.type.kind).toBe(Kind.NON_NULL_TYPE);
   });
 
   it('verifies CommentMedia, CommentImageUploadTicket, and Comment.media (Ticket 06)', () => {

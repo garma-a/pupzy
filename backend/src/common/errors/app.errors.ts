@@ -68,7 +68,7 @@ export class ValidationError extends AppError {
  * @example throw new ConflictError('A user with this email already exists')
  */
 export class ConflictError extends AppError {
-  constructor(message: string) {
-    super(message, 'CONFLICT');
+  constructor(message: string, code = 'CONFLICT') {
+    super(message, code);
   }
 }

@@ -719,6 +719,12 @@ class GraphQLService {
     }
   ''';
 
+  static const String reportCommentMutation = r'''
+    mutation ReportComment($input: ReportCommentInput!) {
+      reportComment(input: $input)
+    }
+  ''';
+
   // ─── Contact requests ─────────────────────────────────────────────────
 
   static const String _contactRequestFields = r'''
@@ -2123,6 +2129,40 @@ class GraphQLService {
     }
     final success = result.data?['unpinComment'] as bool? ?? false;
     return (success, null);
+  }
+
+  /// Reports a Comment or Reply with a given reason and optional details.
+  /// Returns (success, errorMessage, isDuplicate).
+  Future<(bool success, String? errorMessage, bool isDuplicate)> reportComment({
+    required String commentId,
+    required String reason,
+    String? details,
+  }) async {
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(reportCommentMutation),
+        variables: {
+          'input': {
+            'commentId': commentId,
+            'reason': reason,
+            if (details != null && details.trim().isNotEmpty) 'details': details.trim(),
+          },
+        },
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      final firstError = result.exception?.graphqlErrors.isNotEmpty == true
+          ? result.exception!.graphqlErrors.first
+          : null;
+      final code = firstError?.extensions?['code'] as String?;
+      final msg = firstError?.message;
+      final isDuplicate = code == 'COMMENT_ALREADY_REPORTED' ||
+          msg?.contains('already reported') == true;
+      return (false, msg ?? _serverErrorMessage(result.exception), isDuplicate);
+    }
+    final success = result.data?['reportComment'] as bool? ?? false;
+    return (success, null, false);
   }
 }
 

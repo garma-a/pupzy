@@ -3,8 +3,8 @@ import { CommentsResolver, CommentMediaResolver } from './comments.resolver';
 import { CommentsService } from './comments.service';
 import { CommentsRepository } from './comments.repository';
 import { PostsRepository } from '../posts/posts.repository';
-import { Comment, Post, CommentMedia } from '../database/schema';
-import { ValidationError, NotFoundError, ForbiddenError, AppError } from '../common/errors/app.errors';
+import { Comment, Post, CommentMedia, ReportReason } from '../database/schema';
+import { ValidationError, NotFoundError, ForbiddenError, AppError, ConflictError } from '../common/errors/app.errors';
 import { CommentCursorPayload } from './dto/comments-query.input';
 import { UploadService } from '../upload/upload.service';
 import { ConfigService } from '@nestjs/config';
@@ -29,6 +29,8 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
     unpinComment: jest.Mock;
     isCommentPinned: jest.Mock;
     findMediaByCommentId: jest.Mock;
+    countRecentReportsByReporter: jest.Mock;
+    reportComment: jest.Mock;
   };
   let mockPostsRepo: {
     findById: jest.Mock;
@@ -359,6 +361,8 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
         if (cId === commentWithMediaId) return Promise.resolve([mockCommentMedia]);
         return Promise.resolve([]);
       }),
+      countRecentReportsByReporter: jest.fn().mockResolvedValue(0),
+      reportComment: jest.fn().mockResolvedValue(true),
     };
 
     mockPostsRepo = {
@@ -1211,6 +1215,135 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
         expect(result.id).toBe(commentWithMediaId);
         // Does NOT re-finalize media on replay
         expect(mockUploadService.finalizeCommentImages).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('Scenario 8: Comment reporting and automatic hiding (Ticket 08)', () => {
+      it('successfully reports a visible comment with valid reason and optional details', async () => {
+        const ctx = createContext(thirdPartyUserId);
+        const result = await resolver.reportComment(
+          {
+            commentId,
+            reason: 'SPAM',
+            details: 'This looks like spam advertising.',
+          },
+          ctx,
+        );
+
+        expect(result).toBe(true);
+        expect(mockCommentsRepo.countRecentReportsByReporter).toHaveBeenCalledWith(thirdPartyUserId, expect.any(Date));
+        expect(mockCommentsRepo.reportComment).toHaveBeenCalledWith({
+          commentId,
+          reporterId: thirdPartyUserId,
+          reason: 'SPAM',
+          details: 'This looks like spam advertising.',
+        });
+      });
+
+      it('rejects self-reporting with ForbiddenError', async () => {
+        const ctx = createContext(authorId);
+        mockCommentsRepo.reportComment.mockRejectedValueOnce(new ForbiddenError('You cannot report your own comment'));
+
+        await expect(
+          resolver.reportComment(
+            {
+              commentId,
+              reason: 'INAPPROPRIATE_CONTENT',
+            },
+            ctx,
+          ),
+        ).rejects.toThrow(ForbiddenError);
+      });
+
+      it('rejects duplicate report from the same user on the same comment', async () => {
+        const ctx = createContext(thirdPartyUserId);
+        mockCommentsRepo.reportComment.mockRejectedValueOnce(
+          new ConflictError('You have already reported this comment', 'COMMENT_ALREADY_REPORTED'),
+        );
+
+        await expect(
+          resolver.reportComment(
+            {
+              commentId,
+              reason: 'SPAM',
+            },
+            ctx,
+          ),
+        ).rejects.toThrow(ConflictError);
+      });
+
+      it('enforces authenticated per-user daily limit of 10 reports per day', async () => {
+        const ctx = createContext(thirdPartyUserId);
+        mockCommentsRepo.countRecentReportsByReporter.mockResolvedValueOnce(10);
+
+        await expect(
+          resolver.reportComment(
+            {
+              commentId,
+              reason: 'SPAM',
+            },
+            ctx,
+          ),
+        ).rejects.toThrow(AppError);
+        expect(mockCommentsRepo.reportComment).not.toHaveBeenCalled();
+      });
+
+      it('hiding only images (IMAGE_HIDDEN): comment text and counts remain visible, but media resolves to empty array', async () => {
+        const imageHiddenComment: Comment = {
+          ...mockCommentWithMedia,
+          status: 'IMAGE_HIDDEN',
+        };
+
+        const ctx = createContext(thirdPartyUserId);
+        const textResult = resolver.text(imageHiddenComment);
+        expect(textResult).toBe('Check out this dog photo!');
+
+        const mediaResult = await resolver.media(imageHiddenComment, ctx);
+        expect(mediaResult).toEqual([]);
+      });
+
+      it('hiding whole comment (HIDDEN): parent with surviving replies resolves as neutral tombstone', async () => {
+        const hiddenCommentWithReplies: Comment = {
+          ...mockTopLevelComment,
+          status: 'HIDDEN',
+          replyCount: 2,
+        };
+
+        const ctx = createContext(thirdPartyUserId);
+        const textResult = resolver.text(hiddenCommentWithReplies);
+        expect(textResult).toBe('[Hidden]');
+
+        const authorResult = await resolver.author(hiddenCommentWithReplies, ctx);
+        expect(authorResult).toBeNull();
+
+        const mediaResult = await resolver.media(hiddenCommentWithReplies, ctx);
+        expect(mediaResult).toEqual([]);
+
+        const isPinnedResult = await resolver.isPinned(hiddenCommentWithReplies, ctx);
+        expect(isPinnedResult).toBe(false);
+      });
+
+      it('validates input and rejects invalid report reasons and malformed UUIDs', async () => {
+        const ctx = createContext(thirdPartyUserId);
+        await expect(
+          resolver.reportComment(
+            {
+              commentId: 'not-a-valid-uuid',
+              reason: 'SPAM',
+            },
+            ctx,
+          ),
+        ).rejects.toThrow();
+
+        await expect(
+          resolver.reportComment(
+            {
+              commentId,
+              reason: 'NON_EXISTENT_REASON' as unknown as ReportReason,
+            },
+            ctx,
+          ),
+        ).rejects.toThrow();
       });
     });
   });

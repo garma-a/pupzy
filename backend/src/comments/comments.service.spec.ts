@@ -24,6 +24,8 @@ describe('CommentsService', () => {
     unpinComment: jest.Mock;
     isCommentPinned: jest.Mock;
     queueMediaDeletionWork: jest.Mock;
+    countRecentReportsByReporter: jest.Mock;
+    reportComment: jest.Mock;
   };
   let mockPostsRepo: {
     findById: jest.Mock;
@@ -94,6 +96,8 @@ describe('CommentsService', () => {
       unpinComment: jest.fn().mockResolvedValue(true),
       isCommentPinned: jest.fn().mockResolvedValue(false),
       queueMediaDeletionWork: jest.fn().mockResolvedValue(undefined),
+      countRecentReportsByReporter: jest.fn().mockResolvedValue(0),
+      reportComment: jest.fn().mockResolvedValue(true),
     };
 
     mockPostsRepo = {
@@ -868,6 +872,37 @@ describe('CommentsService', () => {
       const result = await service.isCommentPinned(postId, mockComment.id);
       expect(result).toBe(true);
       expect(mockCommentsRepo.isCommentPinned).toHaveBeenCalledWith(postId, mockComment.id);
+    });
+  });
+
+  describe('reportComment', () => {
+    it('delegates to repository with reporterId, commentId, reason, and details', async () => {
+      const result = await service.reportComment(userId, {
+        commentId: mockComment.id,
+        reason: 'SPAM',
+        details: 'Spam advertising',
+      });
+
+      expect(result).toBe(true);
+      expect(mockCommentsRepo.countRecentReportsByReporter).toHaveBeenCalledWith(userId, expect.any(Date));
+      expect(mockCommentsRepo.reportComment).toHaveBeenCalledWith({
+        commentId: mockComment.id,
+        reporterId: userId,
+        reason: 'SPAM',
+        details: 'Spam advertising',
+      });
+    });
+
+    it('enforces 10 reports per day limit', async () => {
+      mockCommentsRepo.countRecentReportsByReporter.mockResolvedValueOnce(10);
+
+      await expect(
+        service.reportComment(userId, {
+          commentId: mockComment.id,
+          reason: 'SPAM',
+        }),
+      ).rejects.toThrow('Daily comment report limit reached (10 per day)');
+      expect(mockCommentsRepo.reportComment).not.toHaveBeenCalled();
     });
   });
 });

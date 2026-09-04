@@ -18,6 +18,7 @@ import { buildVetClinicsResource } from './vet-clinics.resource.js';
 import { buildAdminUsersResource } from './admin-users.resource.js';
 import { buildModerationActionsResource } from './moderation-actions.resource.js';
 import { buildVetClinicLocationAuditsResource } from './vet-clinic-location-audits.resource.js';
+import { buildCommentReportsResource } from './comment-reports.resource.js';
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const themeCssPath = path.join(currentDir, '..', 'public', 'pupzy-theme.css');
@@ -301,7 +302,7 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
     });
   });
 
-  describe('Global Table Quality Across ALL 20 Registered Resources', () => {
+  describe('Global Table Quality Across ALL 21 Registered Resources', () => {
     it('every registered resource in ADMIN_RESOURCE_TABLES defines explicit listProperties and no unsafe defaults', () => {
       const resourcesByTable = {
         rescue_posts: buildRescuePostsResource(db, components),
@@ -312,6 +313,7 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
         post_media: buildPostMediaResource(db, components),
         post_upvotes: buildPostUpvotesResource(db, components),
         post_saves: buildPostSavesResource(db, components),
+        comment_reports: buildCommentReportsResource(db, components),
         cities: buildCitiesResource(db, components),
         vet_clinics: buildVetClinicsResource(db, pool, components),
         admin_users: buildAdminUsersResource(db, components),

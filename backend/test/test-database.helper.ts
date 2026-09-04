@@ -61,6 +61,7 @@ export class TestDatabaseHelper {
         comment_idempotency,
         comment_media,
         media_deletion_work,
+        comment_reports,
         comments
       CASCADE;
     `);

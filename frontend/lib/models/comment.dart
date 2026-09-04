@@ -96,6 +96,8 @@ class Comment {
   });
 
   bool get isDeleted => status == 'DELETED';
+  bool get isHidden => status == 'HIDDEN';
+  bool get isTombstone => isDeleted || isHidden;
   bool get isReply => parentId != null;
 
   factory Comment.fromJson(Map<String, dynamic> json) => Comment(

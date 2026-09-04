@@ -66,3 +66,4 @@ export * from './comment-boosts.schema';
 export * from './post-pins.schema';
 export * from './comment-media.schema';
 export * from './media-deletion-work.schema';
+export * from './comment-reports.schema';

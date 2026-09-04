@@ -13,9 +13,11 @@ import {
   stagedUploads,
   commentMedia,
   mediaDeletionWork,
+  commentReports,
   Comment,
   CommentIdempotency,
   CommentMedia,
+  CommentReport,
 } from '../database/schema';
 import { NotFoundError, ConflictError, ForbiddenError, ValidationError } from '../common/errors/app.errors';
 import { CommentCursorPayload, CommentSortOrder } from './dto/comments-query.input';
@@ -243,7 +245,7 @@ export class CommentsRepository {
     const baseConditions = [
       eq(comments.postId, postId),
       sql`${comments.parentId} IS NULL`,
-      sql`(${comments.status} IN ('ACTIVE', 'IMAGE_HIDDEN') OR (${comments.status} = 'DELETED' AND ${comments.replyCount} > 0))`,
+      sql`(${comments.status} IN ('ACTIVE', 'IMAGE_HIDDEN') OR (${comments.status} IN ('DELETED', 'HIDDEN') AND ${comments.replyCount} > 0))`,
     ];
 
     if (pinnedComment) {
@@ -255,6 +257,16 @@ export class CommentsRepository {
         ? [sql`${comments.boostCount} DESC`, sql`${comments.createdAt} DESC`, sql`${comments.id} DESC`]
         : [sql`${comments.createdAt} DESC`, sql`${comments.id} DESC`];
 
+    const formatRow = (c: Comment): Comment => {
+      let item = c;
+      if (c.status === 'DELETED') {
+        item = { ...c, text: '[Deleted]' };
+      } else if (c.status === 'HIDDEN') {
+        item = { ...c, text: '[Hidden]' };
+      }
+      return Object.assign(item, { isPinned: false });
+    };
+
     // Case 1: Cursor is after the pinned comment
     // The client has received the pinned comment on page 1 and is requesting regular comments starting from the top.
     if (cursor?.isPinned) {
@@ -265,10 +277,7 @@ export class CommentsRepository {
         .orderBy(...orderBys)
         .limit(limit + 1);
 
-      return rows.map((c) => {
-        const item = c.status === 'DELETED' ? { ...c, text: '[Deleted]' } : c;
-        return Object.assign(item, { isPinned: false });
-      });
+      return rows.map(formatRow);
     }
 
     // Case 2: Standard keyset cursor continuation
@@ -294,10 +303,7 @@ export class CommentsRepository {
         .orderBy(...orderBys)
         .limit(limit + 1);
 
-      return rows.map((c) => {
-        const item = c.status === 'DELETED' ? { ...c, text: '[Deleted]' } : c;
-        return Object.assign(item, { isPinned: false });
-      });
+      return rows.map(formatRow);
     }
 
     // Case 3: Page 1 (no cursor)
@@ -311,10 +317,7 @@ export class CommentsRepository {
         .limit(limit);
 
       const formattedPinned = Object.assign(pinnedComment, { isPinned: true });
-      const formattedRemaining = rows.map((c) => {
-        const item = c.status === 'DELETED' ? { ...c, text: '[Deleted]' } : c;
-        return Object.assign(item, { isPinned: false });
-      });
+      const formattedRemaining = rows.map(formatRow);
 
       return [formattedPinned, ...formattedRemaining];
     }
@@ -327,10 +330,7 @@ export class CommentsRepository {
       .orderBy(...orderBys)
       .limit(limit + 1);
 
-    return rows.map((c) => {
-      const item = c.status === 'DELETED' ? { ...c, text: '[Deleted]' } : c;
-      return Object.assign(item, { isPinned: false });
-    });
+    return rows.map(formatRow);
   }
 
   /**
@@ -854,5 +854,199 @@ export class CommentsRepository {
       },
       { cache: true, maxBatchSize: 100 },
     );
+  }
+
+  /**
+   * Counts how many reports the user has submitted within a given time window.
+   */
+  async countRecentReportsByReporter(reporterId: string, since: Date): Promise<number> {
+    const result = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(commentReports)
+      .where(and(eq(commentReports.reporterId, reporterId), gte(commentReports.createdAt, since)));
+
+    return result[0]?.count ?? 0;
+  }
+
+  /**
+   * Finds a report for a specific comment and reporter.
+   */
+  async findReportByCommentAndReporter(commentId: string, reporterId: string): Promise<CommentReport | null> {
+    const rows = await this.db
+      .select()
+      .from(commentReports)
+      .where(and(eq(commentReports.commentId, commentId), eq(commentReports.reporterId, reporterId)))
+      .limit(1);
+
+    return rows[0] ?? null;
+  }
+
+  /**
+   * Fetches all reports submitted for a comment (for admin queue verification).
+   */
+  async findReportsByCommentId(commentId: string): Promise<CommentReport[]> {
+    return this.db
+      .select()
+      .from(commentReports)
+      .where(eq(commentReports.commentId, commentId))
+      .orderBy(sql`${commentReports.createdAt} DESC`);
+  }
+
+  /**
+   * Transactionally records a comment moderation report and evaluates automatic hiding thresholds.
+   * - Checks target comment exists and status NOT IN ('DELETED', 'REMOVED').
+   * - Checks target post exists and status !== 'REMOVED'.
+   * - Rejects self-reports (comment.authorId === reporterId).
+   * - Enforces one report per user per comment (returns conflict on duplicate).
+   * - Inserts report into comment_reports (all reports stored for AdminJS queue).
+   * - Counts qualifying reports:
+   *   * Joined user created <= report.created_at - interval '24 hours'
+   *   * Joined user full_name IS NOT NULL AND length(trim(full_name)) > 0
+   * - If qualifying reports >= 3 and status IN ('ACTIVE', 'IMAGE_HIDDEN'):
+   *   * Status -> 'HIDDEN'
+   *   * Invalidate pin (delete from post_pins)
+   *   * Decrement post comment_count (and parent reply_count if reply)
+   * - Else if qualifying reports has >= 1 'INAPPROPRIATE_CONTENT' and status === 'ACTIVE':
+   *   * Status -> 'IMAGE_HIDDEN'
+   *   * Counts and pin remain unchanged
+   */
+  async reportComment(params: {
+    commentId: string;
+    reporterId: string;
+    reason: schema.ReportReason;
+    details?: string;
+  }): Promise<boolean> {
+    const { commentId, reporterId, reason, details } = params;
+
+    try {
+      return await this.db.transaction(async (tx) => {
+        // 1. Lock the target comment
+        const [comment] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('update');
+
+        if (!comment) {
+          throw new NotFoundError('Comment', commentId);
+        }
+
+        if (comment.status === 'DELETED' || comment.status === 'REMOVED') {
+          throw new NotFoundError('Comment', commentId);
+        }
+
+        // 2. Check parent post status
+        const [post] = await tx.select().from(posts).where(eq(posts.id, comment.postId)).for('share');
+        if (!post || post.status === 'REMOVED') {
+          throw new NotFoundError('Comment', commentId);
+        }
+
+        // 3. Self-report rejection
+        if (comment.authorId === reporterId) {
+          throw new ForbiddenError('You cannot report your own comment');
+        }
+
+        // 4. Duplicate report check
+        const [existingReport] = await tx
+          .select()
+          .from(commentReports)
+          .where(and(eq(commentReports.commentId, commentId), eq(commentReports.reporterId, reporterId)))
+          .limit(1);
+
+        if (existingReport) {
+          throw new ConflictError('You have already reported this comment', 'COMMENT_ALREADY_REPORTED');
+        }
+
+        // 5. Insert report into comment_reports
+        await tx.insert(commentReports).values({
+          commentId,
+          reporterId,
+          reason,
+          details: details ?? null,
+        });
+
+        // 6. Check qualifying reports for this comment
+        // A report qualifies if the reporter's account was created > 24 hours before report submission
+        // and reporter has a completed profile (full_name IS NOT NULL and not empty).
+        const qualifyingStats = await tx.execute<{ total_qualifying: number; inappropriate_qualifying: number }>(sql`
+          SELECT
+            count(*)::int AS total_qualifying,
+            count(*) FILTER (WHERE cr.reason = 'INAPPROPRIATE_CONTENT')::int AS inappropriate_qualifying
+          FROM comment_reports cr
+          JOIN users u ON u.id = cr.reporter_id
+          WHERE cr.comment_id = ${commentId}
+            AND u.created_at <= cr.created_at - interval '24 hours'
+            AND u.full_name IS NOT NULL
+            AND length(trim(u.full_name)) > 0
+        `);
+
+        const totalQualifying = Number(qualifyingStats.rows[0]?.total_qualifying ?? 0);
+        const inappropriateQualifying = Number(qualifyingStats.rows[0]?.inappropriate_qualifying ?? 0);
+
+        // 7. Threshold evaluations
+        // Threshold 1: 3 qualifying reports of any reason temporarily hide whole comment
+        if (totalQualifying >= 3) {
+          if (comment.status === 'ACTIVE' || comment.status === 'IMAGE_HIDDEN') {
+            await tx
+              .update(comments)
+              .set({
+                status: 'HIDDEN',
+                updatedAt: new Date(),
+              })
+              .where(eq(comments.id, commentId));
+
+            // Invalidate pin if this comment was pinned
+            await tx.delete(postPins).where(eq(postPins.commentId, commentId));
+
+            // Decrement counts
+            if (comment.parentId) {
+              // Reply: decrement parent's reply_count and post's comment_count
+              await tx
+                .update(comments)
+                .set({
+                  replyCount: sql`GREATEST(0, ${comments.replyCount} - 1)`,
+                  updatedAt: new Date(),
+                })
+                .where(eq(comments.id, comment.parentId));
+
+              await tx
+                .update(posts)
+                .set({
+                  commentCount: sql`GREATEST(0, ${posts.commentCount} - 1)`,
+                  updatedAt: new Date(),
+                })
+                .where(eq(posts.id, comment.postId));
+            } else {
+              // Top-level comment: decrement post's comment_count
+              await tx
+                .update(posts)
+                .set({
+                  commentCount: sql`GREATEST(0, ${posts.commentCount} - 1)`,
+                  updatedAt: new Date(),
+                })
+                .where(eq(posts.id, comment.postId));
+            }
+          }
+        }
+        // Threshold 2: 1 qualifying INAPPROPRIATE_CONTENT report hides images
+        else if (inappropriateQualifying >= 1 && comment.status === 'ACTIVE') {
+          await tx
+            .update(comments)
+            .set({
+              status: 'IMAGE_HIDDEN',
+              updatedAt: new Date(),
+            })
+            .where(eq(comments.id, commentId));
+          // Counts and pin remain unchanged
+        }
+
+        return true;
+      });
+    } catch (error) {
+      const err = error as { code?: string; constraint?: string };
+      if (
+        err.code === '23505' &&
+        (err.constraint?.includes('comment_report') || err.constraint?.includes('unique_comment_report'))
+      ) {
+        throw new ConflictError('You have already reported this comment', 'COMMENT_ALREADY_REPORTED');
+      }
+      throw error;
+    }
   }
 }

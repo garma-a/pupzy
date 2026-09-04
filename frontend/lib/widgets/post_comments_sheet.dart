@@ -387,7 +387,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
         final pIdx = _comments.indexWhere((c) => c.id == parentId);
         if (pIdx != -1) {
           final newCount = (_comments[pIdx].replyCount - 1).clamp(0, 999999);
-          if (_comments[pIdx].isDeleted && newCount == 0) {
+          if (_comments[pIdx].isTombstone && newCount == 0) {
             // Tombstone with no remaining replies disappears from list
             _comments.removeAt(pIdx);
           } else {
@@ -508,6 +508,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     required bool isAuthor,
     required bool isPostCreator,
     required bool isAr,
+    String? parentCommentId,
   }) {
     showModalBottomSheet<void>(
       context: context,
@@ -521,7 +522,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
             child: Wrap(
               children: [
-                if (isPostCreator) ...[
+                if (isPostCreator && !comment.isReply) ...[
                   if (comment.isPinned)
                     ListTile(
                       leading: const Icon(Icons.push_pin_outlined, color: AppColors.textPrimary),
@@ -545,12 +546,43 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
                   ListTile(
                     leading: const Icon(Icons.delete_outline, color: AppColors.critical),
                     title: Text(
-                      t(ctx, 'Delete Comment', 'حذف التعليق'),
+                      comment.isReply
+                          ? t(ctx, 'Delete Reply', 'حذف الرد')
+                          : t(ctx, 'Delete Comment', 'حذف التعليق'),
                       style: const TextStyle(color: AppColors.critical),
                     ),
                     onTap: () {
                       Navigator.of(ctx).pop();
-                      _confirmDelete(comment);
+                      _confirmDelete(comment, parentCommentId: parentCommentId);
+                    },
+                  ),
+                if (!isAuthor)
+                  ListTile(
+                    leading: const Icon(Icons.flag_outlined, color: AppColors.critical),
+                    title: Text(
+                      comment.isReply
+                          ? t(ctx, 'Report Reply', 'الإبلاغ عن الرد')
+                          : t(ctx, 'Report Comment', 'الإبلاغ عن التعليق'),
+                      style: const TextStyle(color: AppColors.critical),
+                    ),
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      if (_currentUserId == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              t(
+                                context,
+                                'Please log in to report content.',
+                                'يرجى تسجيل الدخول للإبلاغ عن المحتوى.',
+                              ),
+                            ),
+                            backgroundColor: AppColors.critical,
+                          ),
+                        );
+                        return;
+                      }
+                      _showReportDialog(context, comment, parentCommentId: parentCommentId, isAr: isAr);
                     },
                   ),
                 ListTile(
@@ -564,6 +596,234 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
         );
       },
     );
+  }
+
+  void _showReportDialog(
+    BuildContext context,
+    Comment comment, {
+    String? parentCommentId,
+    required bool isAr,
+  }) {
+    String selectedReason = 'INAPPROPRIATE_CONTENT';
+    final detailsController = TextEditingController();
+
+    final reasons = [
+      (
+        'INAPPROPRIATE_CONTENT',
+        t(context, 'Inappropriate content', 'محتوى غير لائق'),
+        t(context, 'Offensive, harmful, or inappropriate imagery/text', 'محتوى مسيء أو ضار أو غير لائق'),
+      ),
+      (
+        'SPAM',
+        t(context, 'Spam', 'محتوى غير مرغوب فيه (سبام)'),
+        t(context, 'Advertising, promotional, or repetitive content', 'إعلانات أو ترويج أو تكرار'),
+      ),
+      (
+        'UNRELATED_TO_ANIMALS',
+        t(context, 'Unrelated to animals', 'لا علاقة له بالحيوانات'),
+        t(context, 'Off-topic or irrelevant to pet community', 'خارج عن سياق مجتمع الحيوانات الأليفة'),
+      ),
+      (
+        'SCAM',
+        t(context, 'Scam or fraud', 'احتيال أو خداع'),
+        t(context, 'Suspected financial fraud or deceptive behavior', 'اشتباه في احتيال مالي أو سلوك مخادع'),
+      ),
+      (
+        'DUPLICATE',
+        t(context, 'Duplicate', 'محتوى مكرر'),
+        t(context, 'Repeated or duplicate submission', 'مشاركة متكررة أو منسوخة'),
+      ),
+      (
+        'OTHER',
+        t(context, 'Other', 'سبب آخر'),
+        t(context, 'Any other concern', 'أي سبب أو ملاحظة أخرى'),
+      ),
+    ];
+
+    showDialog<void>(
+      context: context,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.card),
+              ),
+              title: Text(
+                comment.isReply
+                    ? t(ctx, 'Report Reply', 'الإبلاغ عن الرد')
+                    : t(ctx, 'Report Comment', 'الإبلاغ عن التعليق'),
+                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t(ctx, 'Why are you reporting this?', 'لماذا تبلغ عن هذا التعليق؟'),
+                        style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      ...reasons.map((r) {
+                        final (value, label, subtitle) = r;
+                        return RadioListTile<String>(
+                          value: value,
+                          groupValue: selectedReason,
+                          onChanged: (val) {
+                            if (val != null) {
+                              setDialogState(() => selectedReason = val);
+                            }
+                          },
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          activeColor: AppColors.primary,
+                          title: Text(
+                            label,
+                            style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                          ),
+                          subtitle: Text(
+                            subtitle,
+                            style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                                  color: AppColors.textMuted,
+                                  fontSize: 11,
+                                ),
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: AppSpacing.sm),
+                      TextField(
+                        controller: detailsController,
+                        maxLength: 500,
+                        maxLines: 2,
+                        decoration: InputDecoration(
+                          hintText: t(ctx, 'Additional details (optional)', 'تفاصيل إضافية (اختياري)'),
+                          hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.image),
+                            borderSide: const BorderSide(color: AppColors.border),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.image),
+                            borderSide: const BorderSide(color: AppColors.primary),
+                          ),
+                          contentPadding: const EdgeInsets.all(AppSpacing.sm),
+                        ),
+                        style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogCtx).pop(),
+                  child: Text(
+                    t(ctx, 'Cancel', 'إلغاء'),
+                    style: const TextStyle(color: AppColors.textMuted),
+                  ),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                  ),
+                  onPressed: () {
+                    Navigator.of(dialogCtx).pop();
+                    _submitReport(
+                      comment,
+                      selectedReason,
+                      detailsController.text,
+                      parentCommentId: parentCommentId,
+                    );
+                  },
+                  child: Text(t(ctx, 'Submit Report', 'إرسال البلاغ')),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _submitReport(
+    Comment comment,
+    String reason,
+    String? details, {
+    String? parentCommentId,
+  }) async {
+    final graphql = context.read<GraphQLService>();
+    final (success, errorMessage, isDuplicate) = await graphql.reportComment(
+      commentId: comment.id,
+      reason: reason,
+      details: details,
+    );
+
+    if (!mounted) return;
+
+    if (isDuplicate) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t(
+              context,
+              'You have already reported this comment.',
+              'لقد قمت بالإبلاغ عن هذا التعليق مسبقاً.',
+            ),
+          ),
+          backgroundColor: AppColors.textSecondary,
+        ),
+      );
+      return;
+    }
+
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            errorMessage ??
+                t(
+                  context,
+                  'Failed to submit report. Please try again.',
+                  'فشل إرسال البلاغ. يرجى المحاولة مرة أخرى.',
+                ),
+          ),
+          backgroundColor: AppColors.critical,
+        ),
+      );
+      return;
+    }
+
+    // Success state
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          t(
+            context,
+            'Thank you for reporting. Our moderation team will review this.',
+            'شكراً لإبلاغك. سيقوم فريق الإشراف بمراجعة المحتوى.',
+          ),
+        ),
+        backgroundColor: AppColors.sectionLineGreen,
+      ),
+    );
+
+    // Refresh discussion visibility
+    await _loadInitial();
+    if (parentCommentId != null) {
+      await _fetchRepliesForComment(parentCommentId);
+    }
   }
 
   void _updateCommentBoostState(String commentId, bool isBoosted, int count) {
@@ -1111,8 +1371,8 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
                             ),
                       ),
                       const Spacer(),
-                      // Options button (delete for author, pin/unpin for post creator)
-                      if (isAuthor || isPostCreator)
+                      // Options button (delete for author, pin/unpin for post creator, report for non-author)
+                      if (!isTombstone)
                         IconButton(
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
@@ -1414,15 +1674,21 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
                         ),
                   ),
                   const Spacer(),
-                  // Delete option for reply author
-                  if (isAuthor)
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      icon: const Icon(Icons.more_horiz, size: 16, color: AppColors.textMuted),
-                      onPressed: () => _confirmDelete(reply, parentCommentId: parentCommentId),
-                      tooltip: t(context, 'Delete', 'حذف'),
+                  // Options button (delete for author, report for non-author)
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    icon: const Icon(Icons.more_horiz, size: 16, color: AppColors.textMuted),
+                    onPressed: () => _showCommentOptions(
+                      context,
+                      reply,
+                      isAuthor: isAuthor,
+                      isPostCreator: false,
+                      isAr: isAr,
+                      parentCommentId: parentCommentId,
                     ),
+                    tooltip: t(context, 'Options', 'خيارات'),
+                  ),
                 ],
               ),
               const SizedBox(height: 2),

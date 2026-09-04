@@ -110,6 +110,8 @@ export const reportReasonEnum = pgEnum('report_reason', [
   'OTHER',
 ]);
 
+export type ReportReason = (typeof reportReasonEnum.enumValues)[number];
+
 export const notificationTypeEnum = pgEnum('notification_type', [
   'NEW_UPVOTE',
   'POST_SAVED',

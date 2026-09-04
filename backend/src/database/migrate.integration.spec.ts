@@ -69,6 +69,7 @@ describe('Database Migration Runner Integration', () => {
     expect(tableNames).toContain('comment_idempotency');
     expect(tableNames).toContain('comment_media');
     expect(tableNames).toContain('media_deletion_work');
+    expect(tableNames).toContain('comment_reports');
 
     // Verify comment_count column on posts table
     const postColsRes = await pool.query<{ column_name: string; column_default: string }>(`

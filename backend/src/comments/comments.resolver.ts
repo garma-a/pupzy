@@ -4,6 +4,7 @@ import { validateCreateCommentInput } from './dto/create-comment.input';
 import { validateCreateReplyInput } from './dto/create-reply.input';
 import { validateCommentsQueryInput, validateRepliesQueryInput } from './dto/comments-query.input';
 import { validateRequestCommentImageUploadInput } from './dto/request-comment-image-upload.input';
+import { validateReportCommentInput } from './dto/report-comment.input';
 import { assertUuid } from '../common/utils/validate-uuid';
 import type { Comment, CommentMedia } from '../database/schema';
 import type { GqlContext } from '../common/types/gql-context.type';
@@ -73,6 +74,16 @@ export class CommentsResolver {
   }
 
   /**
+   * Reports an abusive Comment or Reply.
+   * Requires authenticated user.
+   */
+  @Mutation('reportComment')
+  async reportComment(@Args('input') rawInput: unknown, @Context() ctx: GqlContext): Promise<boolean> {
+    const input = validateReportCommentInput(rawInput);
+    return this.commentsService.reportComment(ctx.user!.id, input);
+  }
+
+  /**
    * Queries top-level Comments for a Post with keyset pagination.
    */
   @Query('comments')
@@ -101,11 +112,11 @@ export class CommentsResolver {
 
   /**
    * Resolves the author User object via per-request DataLoader.
-   * For deleted comments (tombstones), author is null to hide author identity.
+   * For deleted and hidden comments (tombstones), author is null to hide author identity.
    */
   @ResolveField('author')
   async author(@Root() comment: Comment, @Context() ctx: GqlContext) {
-    if (comment.status === 'DELETED') {
+    if (comment.status === 'DELETED' || comment.status === 'HIDDEN') {
       return null;
     }
     return ctx.loaders.userById.load(comment.authorId);
@@ -113,12 +124,15 @@ export class CommentsResolver {
 
   /**
    * Resolves comment text.
-   * For deleted comments (tombstones), original text is masked with [Deleted].
+   * For deleted and hidden comments (tombstones), original text is masked.
    */
   @ResolveField('text')
   text(@Root() comment: Comment): string {
     if (comment.status === 'DELETED') {
       return '[Deleted]';
+    }
+    if (comment.status === 'HIDDEN') {
+      return '[Hidden]';
     }
     return comment.text;
   }
@@ -162,7 +176,7 @@ export class CommentsResolver {
    */
   @ResolveField('isPinned')
   async isPinned(@Root() comment: Comment, @Context() ctx: GqlContext): Promise<boolean> {
-    if (comment.parentId) return false;
+    if (comment.parentId || comment.status === 'DELETED' || comment.status === 'HIDDEN') return false;
     if ((comment as unknown as { isPinned?: boolean }).isPinned !== undefined) {
       return (comment as unknown as { isPinned: boolean }).isPinned;
     }

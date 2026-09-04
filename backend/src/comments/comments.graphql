@@ -82,6 +82,15 @@ input CreateReplyInput {
   text: String!
 }
 
+"""
+Input for reporting an abusive Comment or Reply.
+"""
+input ReportCommentInput {
+  commentId: ID!
+  reason: ReportReason!
+  details: String
+}
+
 extend type Query {
   """
   Fetch visible top-level Comments for a Post using keyset pagination.
@@ -167,6 +176,13 @@ extend type Mutation {
   Idempotent.
   """
   unpinComment(postId: ID!): Boolean!
+
+  """
+  Report an abusive Comment or Reply.
+  Requires authentication. Rate limited to 10 reports per user per day.
+  Cannot report own comment or report the same comment twice.
+  """
+  reportComment(input: ReportCommentInput!): Boolean!
 }
 
 """

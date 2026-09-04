@@ -17,6 +17,7 @@ import { MediaDeletionProcessor } from '../upload/media-deletion.processor';
 import { ConfigService } from '@nestjs/config';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { RequestCommentImageUploadDto } from './dto/request-comment-image-upload.input';
+import { ReportCommentInput } from './dto/report-comment.input';
 
 export interface CommentEdge {
   node: Comment;
@@ -340,10 +341,10 @@ export class CommentsService {
     if (parentComment.parentId !== null) {
       throw new ValidationError('Replies cannot receive replies');
     }
-    if (parentComment.status === 'REMOVED' || parentComment.status === 'HIDDEN') {
+    if (parentComment.status === 'REMOVED') {
       throw new NotFoundError('Comment', commentId);
     }
-    if (parentComment.status === 'DELETED' && parentComment.replyCount === 0) {
+    if ((parentComment.status === 'DELETED' || parentComment.status === 'HIDDEN') && parentComment.replyCount === 0) {
       throw new NotFoundError('Comment', commentId);
     }
 
@@ -467,5 +468,37 @@ export class CommentsService {
    */
   async isCommentPinned(postId: string, commentId: string): Promise<boolean> {
     return this.commentsRepository.isCommentPinned(postId, commentId);
+  }
+
+  /**
+   * Reports an abusive Comment or Reply.
+   * - Enforces 10 reports per authenticated user per day.
+   * - Validates target comment exists, not DELETED/REMOVED, and not beneath a REMOVED post.
+   * - Rejects self-reporting.
+   * - Enforces one report per user per comment (returns conflict on duplicate).
+   * - Saves all reports for read-only AdminJS moderation queue.
+   * - Automatically evaluates hiding thresholds for qualifying reports:
+   *   * Qualifying report: user created > 24 hours ago with completed profile (fullName !== null).
+   *   * 1 qualifying INAPPROPRIATE_CONTENT -> hides images (IMAGE_HIDDEN), text & counts remain.
+   *   * 3 qualifying reports of any reason -> hides whole comment (HIDDEN), decrements counts, invalidates pin.
+   *   * Newer/incomplete accounts enter queue but don't count toward auto-hiding.
+   */
+  async reportComment(userId: string, input: ReportCommentInput): Promise<boolean> {
+    const { commentId, reason, details } = input;
+
+    // 1. Rate limiting: max 10 comment reports per day per user
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const dailyCount = await this.commentsRepository.countRecentReportsByReporter(userId, oneDayAgo);
+    if (dailyCount >= 10) {
+      throw new AppError('Daily comment report limit reached (10 per day)', 'RATE_LIMITED');
+    }
+
+    // 2. Delegate transactional reporting & threshold checks to repository
+    return this.commentsRepository.reportComment({
+      commentId,
+      reporterId: userId,
+      reason,
+      details,
+    });
   }
 }
