@@ -661,7 +661,7 @@ export class UploadService {
             ? (errObj.$metadata as Record<string, unknown>)
             : null;
         if (errObj?.name === 'NoSuchKey' || errObj?.name === 'NotFound' || metadata?.httpStatusCode === 404) {
-          await this.markMediaFailed(mediaId, 'Staged file missing in storage');
+          await this.markMediaFailed([mediaId], 'Staged file missing in storage');
           throw new AppError('Media is not available in staging', 'COMMENT_MEDIA_NOT_AVAILABLE', {
             mediaPosition: position,
             retryable: false,
