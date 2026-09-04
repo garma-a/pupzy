@@ -876,6 +876,7 @@ class GraphQLService {
     title
     body
     relatedPostId
+    relatedCommentId
     isRead
     createdAt
   ''';

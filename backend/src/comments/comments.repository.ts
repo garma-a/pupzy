@@ -722,7 +722,10 @@ export class CommentsRepository {
    * - Atomic upsert into post_pins (replaces any existing pin for this post without gap).
    * - Returns comment with isPinned = true.
    */
-  async pinComment(commentId: string, userId: string): Promise<Comment> {
+  async pinComment(
+    commentId: string,
+    userId: string,
+  ): Promise<{ comment: Comment; isNewPin: boolean; postTitle: string }> {
     return this.db.transaction(async (tx) => {
       // 1. Lock and check the comment
       const [comment] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('share');
@@ -751,7 +754,11 @@ export class CommentsRepository {
         throw new ForbiddenError('Only the post author can pin comments');
       }
 
-      // 4. Atomic upsert into post_pins on postId conflict
+      // 4. Check if this exact comment is already pinned (idempotency check for notifications)
+      const [previousPin] = await tx.select().from(postPins).where(eq(postPins.postId, post.id));
+      const isNewPin = !previousPin || previousPin.commentId !== comment.id;
+
+      // 5. Atomic upsert into post_pins on postId conflict
       await tx
         .insert(postPins)
         .values({
@@ -767,7 +774,11 @@ export class CommentsRepository {
           },
         });
 
-      return Object.assign(comment, { isPinned: true });
+      return {
+        comment: Object.assign(comment, { isPinned: true }),
+        isNewPin,
+        postTitle: post.title,
+      };
     });
   }
 

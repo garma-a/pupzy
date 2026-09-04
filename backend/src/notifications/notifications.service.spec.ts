@@ -36,6 +36,92 @@ describe('NotificationsService', () => {
       expect(mockRepo.create).toHaveBeenCalled();
     });
 
+    it('creates discussion notifications with relatedPostId and relatedCommentId (Ticket 10)', () => {
+      const commentId = '01916327-0000-7000-8000-000000000030';
+      const postId = '01916327-0000-7000-8000-000000000010';
+      const otherUser = '01916327-0000-7000-8000-000000000009';
+
+      service.fireNotification(
+        {
+          recipientId: validUserId,
+          type: 'NEW_COMMENT',
+          title: 'New comment',
+          body: 'Someone commented on your post',
+          relatedPostId: postId,
+          relatedCommentId: commentId,
+        },
+        otherUser,
+      );
+
+      expect(mockRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'NEW_COMMENT',
+          relatedPostId: postId,
+          relatedCommentId: commentId,
+        }),
+      );
+
+      service.fireNotification(
+        {
+          recipientId: validUserId,
+          type: 'NEW_REPLY',
+          title: 'New reply',
+          body: 'Someone replied to your comment',
+          relatedPostId: postId,
+          relatedCommentId: commentId,
+        },
+        otherUser,
+      );
+
+      expect(mockRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'NEW_REPLY',
+          relatedPostId: postId,
+          relatedCommentId: commentId,
+        }),
+      );
+
+      service.fireNotification(
+        {
+          recipientId: validUserId,
+          type: 'COMMENT_BOOSTED',
+          title: 'Comment boosted',
+          body: 'Someone boosted your comment',
+          relatedPostId: postId,
+          relatedCommentId: commentId,
+        },
+        otherUser,
+      );
+
+      expect(mockRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'COMMENT_BOOSTED',
+          relatedPostId: postId,
+          relatedCommentId: commentId,
+        }),
+      );
+
+      service.fireNotification(
+        {
+          recipientId: validUserId,
+          type: 'COMMENT_PINNED',
+          title: 'Comment pinned',
+          body: 'Your comment was pinned',
+          relatedPostId: postId,
+          relatedCommentId: commentId,
+        },
+        otherUser,
+      );
+
+      expect(mockRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'COMMENT_PINNED',
+          relatedPostId: postId,
+          relatedCommentId: commentId,
+        }),
+      );
+    });
+
     it('suppresses notification if recipient is the actor (self-notification)', () => {
       service.fireNotification(
         {

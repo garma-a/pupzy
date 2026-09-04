@@ -92,7 +92,9 @@ describe('CommentsService', () => {
       deleteCommentWithCounters: jest.fn().mockResolvedValue(true),
       toggleBoost: jest.fn().mockResolvedValue({ isBoostedByMe: true, boostCount: 1 }),
       isCommentBoostedByUser: jest.fn().mockResolvedValue(false),
-      pinComment: jest.fn().mockResolvedValue({ ...mockComment, isPinned: true }),
+      pinComment: jest
+        .fn()
+        .mockResolvedValue({ comment: { ...mockComment, isPinned: true }, isNewPin: true, postTitle: 'Post Title' }),
       unpinComment: jest.fn().mockResolvedValue(true),
       isCommentPinned: jest.fn().mockResolvedValue(false),
       queueMediaDeletionWork: jest.fn().mockResolvedValue(undefined),

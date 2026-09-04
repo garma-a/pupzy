@@ -276,6 +276,10 @@ type Notification {
   Related post, if applicable. Null if the post was later deleted.
   """
   relatedPostId: ID
+  """
+  Related comment or reply, if applicable. Null if deleted or not applicable.
+  """
+  relatedCommentId: ID
   isRead: Boolean!
   createdAt: DateTime!
 }

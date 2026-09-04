@@ -8,6 +8,8 @@ import { ValidationError, NotFoundError, ForbiddenError, AppError, ConflictError
 import { CommentCursorPayload } from './dto/comments-query.input';
 import { UploadService } from '../upload/upload.service';
 import { ConfigService } from '@nestjs/config';
+import { NotificationsService } from '../notifications/notifications.service';
+import { UsersService } from '../users/users.service';
 import type { GqlContext } from '../common/types/gql-context.type';
 
 describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
@@ -44,6 +46,12 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
   };
   let mockConfigService: {
     get: jest.Mock;
+  };
+  let mockNotificationsService: {
+    fireNotification: jest.Mock;
+  };
+  let mockUsersService: {
+    findById: jest.Mock;
   };
   let loadUserMock: jest.Mock;
 
@@ -256,6 +264,14 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
       }),
     };
 
+    mockNotificationsService = {
+      fireNotification: jest.fn(),
+    };
+
+    mockUsersService = {
+      findById: jest.fn().mockImplementation((id: string) => Promise.resolve({ id, fullName: `User ${id.slice(-4)}` })),
+    };
+
     mockCommentsRepo = {
       findIdempotencyRecord: jest.fn().mockResolvedValue(null),
       countRecentCreationsByAuthor: jest.fn().mockResolvedValue(0),
@@ -343,8 +359,9 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
         if (!targetPost || targetPost.status === 'REMOVED') throw new NotFoundError('Post', item.postId);
         if (targetPost.creatorId !== callerId) throw new ForbiddenError('Only the post author can pin comments');
 
+        const isNewPin = currentPinnedCommentId !== targetCommentId;
         currentPinnedCommentId = targetCommentId;
-        return Promise.resolve({ ...item, isPinned: true });
+        return Promise.resolve({ comment: { ...item, isPinned: true }, isNewPin, postTitle: targetPost.title });
       }),
       unpinComment: jest.fn().mockImplementation(async (targetPostId: string, callerId: string) => {
         const targetPost = (await mockPostsRepo.findById(targetPostId)) as Post | null;
@@ -378,6 +395,9 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
       mockPostsRepo as unknown as PostsRepository,
       mockUploadService as unknown as UploadService,
       mockConfigService as unknown as ConfigService,
+      undefined,
+      mockNotificationsService as unknown as NotificationsService,
+      mockUsersService as unknown as UsersService,
     );
 
     resolver = new CommentsResolver(service);
@@ -1380,6 +1400,199 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
         expect(resolver.text(individuallyRemovedComment)).toBe('[Removed]');
         expect(await resolver.author(individuallyRemovedComment, ctx)).toBeNull();
         expect(await resolver.media(individuallyRemovedComment, ctx)).toEqual([]);
+      });
+    });
+
+    describe('Discussion Notifications Acceptance Tests (Ticket 10)', () => {
+      it('NEW_COMMENT: fires notification to post owner when third-party comments', async () => {
+        const ctx = createContext(thirdPartyUserId);
+        const res = await resolver.createComment(
+          {
+            clientRequestId: 'cr-notif-comment-1',
+            postId,
+            text: 'I love this post!',
+          },
+          ctx,
+        );
+
+        expect(res).toBeDefined();
+        expect(mockNotificationsService.fireNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            recipientId: postCreatorId,
+            type: 'NEW_COMMENT',
+            relatedPostId: postId,
+            relatedCommentId: mockTopLevelComment.id,
+          }),
+          thirdPartyUserId,
+        );
+      });
+
+      it('NEW_COMMENT: suppresses notification when post owner comments on own post', async () => {
+        const ctx = createContext(postCreatorId);
+        await resolver.createComment(
+          {
+            clientRequestId: 'cr-notif-comment-self',
+            postId,
+            text: 'Author update on post',
+          },
+          ctx,
+        );
+
+        expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
+      });
+
+      it('NEW_COMMENT: suppresses notification on idempotent replay', async () => {
+        const payloadHash = crypto
+          .createHash('sha256')
+          .update(JSON.stringify({ postId, text: 'Author update', mediaIds: [] }))
+          .digest('hex');
+        mockCommentsRepo.findIdempotencyRecord.mockResolvedValueOnce({
+          responsePayload: mockTopLevelComment,
+          requestHash: payloadHash,
+        });
+
+        const ctx = createContext(thirdPartyUserId);
+        await resolver.createComment(
+          {
+            clientRequestId: 'cr-notif-replay',
+            postId,
+            text: 'Author update',
+          },
+          ctx,
+        );
+
+        expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
+      });
+
+      it('NEW_REPLY: fires notification to parent author when third-party replies', async () => {
+        const ctx = createContext(thirdPartyUserId);
+        const res = await resolver.createReply(
+          {
+            clientRequestId: 'cr-notif-reply-1',
+            commentId,
+            text: 'Replying to you!',
+          },
+          ctx,
+        );
+
+        expect(res).toBeDefined();
+        expect(mockNotificationsService.fireNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            recipientId: authorId,
+            type: 'NEW_REPLY',
+            relatedPostId: postId,
+            relatedCommentId: mockReplyComment.id,
+          }),
+          thirdPartyUserId,
+        );
+      });
+
+      it('NEW_REPLY: suppresses notification when parent author replies to own comment', async () => {
+        const ctx = createContext(authorId);
+        await resolver.createReply(
+          {
+            clientRequestId: 'cr-notif-reply-self',
+            commentId,
+            text: 'Replying to myself',
+          },
+          ctx,
+        );
+
+        expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
+      });
+
+      it('NEW_REPLY: suppresses notification on idempotent replay', async () => {
+        const payloadHash = crypto
+          .createHash('sha256')
+          .update(JSON.stringify({ commentId, text: 'Replying' }))
+          .digest('hex');
+        mockCommentsRepo.findIdempotencyRecord.mockResolvedValueOnce({
+          responsePayload: mockReplyComment,
+          requestHash: payloadHash,
+        });
+
+        const ctx = createContext(thirdPartyUserId);
+        await resolver.createReply(
+          {
+            clientRequestId: 'cr-notif-reply-rep',
+            commentId,
+            text: 'Replying',
+          },
+          ctx,
+        );
+
+        expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
+      });
+
+      it('COMMENT_BOOSTED: fires notification to author when boost is added', async () => {
+        const ctx = createContext(thirdPartyUserId);
+        const res = await resolver.toggleCommentBoost(commentId, ctx);
+
+        expect(res.isBoostedByMe).toBe(true);
+        expect(mockNotificationsService.fireNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            recipientId: authorId,
+            type: 'COMMENT_BOOSTED',
+            relatedPostId: postId,
+            relatedCommentId: commentId,
+          }),
+          thirdPartyUserId,
+        );
+      });
+
+      it('COMMENT_BOOSTED: does NOT fire notification when removing a boost', async () => {
+        mockCommentsRepo.toggleBoost.mockResolvedValueOnce({
+          isBoostedByMe: false,
+          boostCount: 0,
+        });
+
+        const ctx = createContext(thirdPartyUserId);
+        const res = await resolver.toggleCommentBoost(commentId, ctx);
+
+        expect(res.isBoostedByMe).toBe(false);
+        expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
+      });
+
+      it('COMMENT_PINNED: fires notification to author when comment is pinned', async () => {
+        const ctx = createContext(postCreatorId);
+        const res = await resolver.pinComment(commentId, ctx);
+
+        expect(res.id).toBe(commentId);
+        expect(mockNotificationsService.fireNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            recipientId: authorId,
+            type: 'COMMENT_PINNED',
+            relatedPostId: postId,
+            relatedCommentId: commentId,
+          }),
+          postCreatorId,
+        );
+      });
+
+      it('COMMENT_PINNED: suppresses notification if pinned comment belongs to post author', async () => {
+        mockCommentsRepo.pinComment.mockResolvedValueOnce({
+          comment: { ...mockTopLevelComment, authorId: postCreatorId, isPinned: true },
+          isNewPin: true,
+          postTitle: mockPost.title,
+        });
+
+        const ctx = createContext(postCreatorId);
+        await resolver.pinComment(commentId, ctx);
+
+        expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
+      });
+
+      it('COMMENT_PINNED: suppresses notification on idempotent re-pin (isNewPin is false)', async () => {
+        mockCommentsRepo.pinComment.mockResolvedValueOnce({
+          comment: { ...mockTopLevelComment, isPinned: true },
+          isNewPin: false,
+          postTitle: mockPost.title,
+        });
+
+        const ctx = createContext(postCreatorId);
+        await resolver.pinComment(commentId, ctx);
+
+        expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
       });
     });
   });

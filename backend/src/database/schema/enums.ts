@@ -124,6 +124,10 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'POST_REMOVED_BY_ADMIN',
   'POST_INACTIVITY_NUDGE',
   'SYSTEM_ANNOUNCEMENT',
+  'NEW_COMMENT',
+  'NEW_REPLY',
+  'COMMENT_BOOSTED',
+  'COMMENT_PINNED',
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────

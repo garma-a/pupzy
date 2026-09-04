@@ -204,6 +204,13 @@
       "when": 1789496000000,
       "tag": "0028_add_comment_moderation_and_blocked_hashes",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1789582400000,
+      "tag": "0029_add_discussion_notifications",
+      "breakpoints": true
     }
   ]
 }

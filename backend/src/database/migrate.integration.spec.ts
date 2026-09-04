@@ -81,6 +81,15 @@ describe('Database Migration Runner Integration', () => {
     expect(postColsRes.rows.length).toBe(1);
     expect(postColsRes.rows[0].column_default).toContain('0');
 
+    // Verify related_comment_id column on notifications table (migration 0029)
+    const notifColsRes = await pool.query<{ column_name: string; is_nullable: string }>(`
+      SELECT column_name, is_nullable
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'notifications' AND column_name = 'related_comment_id'
+    `);
+    expect(notifColsRes.rows.length).toBe(1);
+    expect(notifColsRes.rows[0].is_nullable).toBe('YES');
+
     // Verify staged_uploads schema and non-null constraints
     const stagedColsRes = await pool.query<{ column_name: string; is_nullable: string }>(`
       SELECT column_name, is_nullable
