@@ -13,6 +13,7 @@ import {
 import { Comment, CommentMedia } from '../database/schema';
 import { NotFoundError, ConflictError, AppError, ValidationError } from '../common/errors/app.errors';
 import { UploadService } from '../upload/upload.service';
+import { MediaDeletionProcessor } from '../upload/media-deletion.processor';
 import { ConfigService } from '@nestjs/config';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { RequestCommentImageUploadDto } from './dto/request-comment-image-upload.input';
@@ -39,6 +40,7 @@ export class CommentsService {
     private readonly postsRepository: PostsRepository,
     private readonly uploadService: UploadService,
     private readonly config: ConfigService,
+    private readonly mediaDeletionProcessor?: MediaDeletionProcessor,
   ) {}
 
   /**
@@ -98,52 +100,62 @@ export class CommentsService {
       throw new AppError('Comment creation rate limit exceeded (max 100 per day)', 'RATE_LIMITED');
     }
 
-    // 5. Finalize staged comment image if attached
+    // 5. Finalize staged comment images if attached
     const commentId = generateUuidV7();
-    let mediaData:
-      | {
+    let mediaItems:
+      | Array<{
           id: string;
+          commentId: string;
           storageKey: string;
+          stagingKey: string;
           sha256: string;
           width: number;
           height: number;
           fileSizeBytes: number;
           fileContentType: string;
           displayOrder: number;
-        }
+        }>
       | undefined;
 
     if (input.mediaIds && input.mediaIds.length > 0) {
-      const mediaId = input.mediaIds[0];
-      const finalized = await this.uploadService.finalizeCommentImage(mediaId, userId, commentId);
-      mediaData = {
-        id: finalized.id,
-        storageKey: finalized.storageKey,
-        sha256: finalized.sha256,
-        width: finalized.width,
-        height: finalized.height,
-        fileSizeBytes: finalized.fileSizeBytes,
-        fileContentType: finalized.fileContentType,
-        displayOrder: finalized.displayOrder,
-      };
+      mediaItems = await this.uploadService.finalizeCommentImages(input.mediaIds, userId, commentId);
     }
 
     // 6. Transactional comment creation + counter update + media insert
     try {
-      return await this.commentsRepository.createCommentWithCounter({
+      const newComment = await this.commentsRepository.createCommentWithCounter({
         commentId,
         postId,
         authorId: userId,
         text,
         clientRequestId,
         requestHash,
-        mediaData,
+        mediaItems,
       });
+
+      // 7. Cleanup staging objects after successful DB commit
+      if (mediaItems && mediaItems.length > 0) {
+        for (const item of mediaItems) {
+          await this.uploadService.deleteObject(item.stagingKey).catch((delErr) => {
+            this.logger.warn(`Failed to delete staging object ${item.stagingKey} after copy: ${delErr}`);
+          });
+        }
+      }
+
+      return newComment;
     } catch (err) {
-      // Compensate R2 if DB transaction fails
-      if (mediaData) {
-        await this.uploadService.deleteObject(mediaData.storageKey).catch(() => {});
-        await this.uploadService.markMediaFailed([mediaData.id], 'Database transaction failed');
+      // Compensate R2 if DB transaction fails: delete final objects and queue for deletion outbox
+      if (mediaItems && mediaItems.length > 0) {
+        for (const item of mediaItems) {
+          await this.uploadService.deleteObject(item.storageKey).catch(() => {});
+          await this.commentsRepository
+            .queueMediaDeletionWork(item.storageKey, this.getCommentMediaPublicUrl(item.storageKey))
+            .catch(() => {});
+        }
+        await this.uploadService.markMediaFailed(
+          mediaItems.map((m) => m.id),
+          'Database transaction failed',
+        );
       }
       throw err;
     }
@@ -371,7 +383,12 @@ export class CommentsService {
    * - Decrements engagement counters transactionally.
    */
   async deleteComment(userId: string, commentId: string): Promise<boolean> {
-    return this.commentsRepository.deleteCommentWithCounters(commentId, userId);
+    const cdnBase = this.getMediaBaseUrl();
+    const result = await this.commentsRepository.deleteCommentWithCounters(commentId, userId, cdnBase);
+    if (this.mediaDeletionProcessor) {
+      this.mediaDeletionProcessor.processPendingWork().catch(() => {});
+    }
+    return result;
   }
 
   private readonly boostToggleTimestamps = new Map<string, number[]>();

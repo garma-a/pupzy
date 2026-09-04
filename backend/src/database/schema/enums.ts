@@ -181,7 +181,13 @@ export type StagedUploadPurpose = (typeof stagedUploadPurposeEnum.enumValues)[nu
  * - FINALIZED: Verified and copied to permanent public storage.
  * - FAILED: Expired, missing in R2, or failed during finalization.
  */
-export const stagedUploadStatusEnum = pgEnum('staged_upload_status', ['ISSUED', 'CLAIMED', 'FINALIZED', 'FAILED']);
+export const stagedUploadStatusEnum = pgEnum('staged_upload_status', [
+  'ISSUED',
+  'CLAIMED',
+  'FINALIZED',
+  'FAILED',
+  'EXPIRED',
+]);
 
 export type StagedUploadStatus = (typeof stagedUploadStatusEnum.enumValues)[number];
 
@@ -200,3 +206,23 @@ export type StagedUploadStatus = (typeof stagedUploadStatusEnum.enumValues)[numb
 export const commentStatusEnum = pgEnum('comment_status', ['ACTIVE', 'IMAGE_HIDDEN', 'HIDDEN', 'DELETED', 'REMOVED']);
 
 export type CommentStatus = (typeof commentStatusEnum.enumValues)[number];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MEDIA DELETION ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Status of background media deletion work items.
+ * - PENDING: Queued for deletion from R2 and CDN cache purge.
+ * - PROCESSING: Currently being executed by worker.
+ * - COMPLETED: Successfully deleted from R2 and purged from CDN.
+ * - FAILED: Reached maximum retry attempts; visible for operator intervention.
+ */
+export const mediaDeletionStatusEnum = pgEnum('media_deletion_status', [
+  'PENDING',
+  'PROCESSING',
+  'COMPLETED',
+  'FAILED',
+]);
+
+export type MediaDeletionStatus = (typeof mediaDeletionStatusEnum.enumValues)[number];

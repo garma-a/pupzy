@@ -4,6 +4,8 @@ import { CommentsRepository } from './comments.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { NotFoundError, ConflictError, AppError } from '../common/errors/app.errors';
 import { Comment, Post } from '../database/schema';
+import { UploadService } from '../upload/upload.service';
+import { MediaDeletionProcessor } from '../upload/media-deletion.processor';
 
 describe('CommentsService', () => {
   let service: CommentsService;
@@ -21,9 +23,19 @@ describe('CommentsService', () => {
     pinComment: jest.Mock;
     unpinComment: jest.Mock;
     isCommentPinned: jest.Mock;
+    queueMediaDeletionWork: jest.Mock;
   };
   let mockPostsRepo: {
     findById: jest.Mock;
+  };
+  let mockUploadService: {
+    finalizeCommentImages: jest.Mock;
+    deleteObject: jest.Mock;
+    markMediaFailed: jest.Mock;
+    getPublicCdnUrl: jest.Mock;
+  };
+  let mockMediaDeletionProcessor: {
+    processPendingWork: jest.Mock;
   };
 
   const userId = '01916327-0000-7000-8000-000000000001';
@@ -81,15 +93,30 @@ describe('CommentsService', () => {
       pinComment: jest.fn().mockResolvedValue({ ...mockComment, isPinned: true }),
       unpinComment: jest.fn().mockResolvedValue(true),
       isCommentPinned: jest.fn().mockResolvedValue(false),
+      queueMediaDeletionWork: jest.fn().mockResolvedValue(undefined),
     };
 
     mockPostsRepo = {
       findById: jest.fn().mockResolvedValue(mockPost),
     };
 
+    mockUploadService = {
+      finalizeCommentImages: jest.fn(),
+      deleteObject: jest.fn().mockResolvedValue(undefined),
+      markMediaFailed: jest.fn().mockResolvedValue(undefined),
+      getPublicCdnUrl: jest.fn().mockImplementation((k: string) => `https://cdn.pupzy.net/${k}`),
+    };
+
+    mockMediaDeletionProcessor = {
+      processPendingWork: jest.fn().mockResolvedValue({ processed: 0, failed: 0 }),
+    };
+
     service = new CommentsService(
       mockCommentsRepo as unknown as CommentsRepository,
       mockPostsRepo as unknown as PostsRepository,
+      mockUploadService as unknown as UploadService,
+      undefined,
+      mockMediaDeletionProcessor as unknown as MediaDeletionProcessor,
     );
   });
 
@@ -113,7 +140,7 @@ describe('CommentsService', () => {
             .createHash('sha256')
             .update(JSON.stringify({ postId, text: 'I can foster this dog!', mediaIds: [] }))
             .digest('hex'),
-          mediaData: undefined,
+          mediaItems: undefined,
         }),
       );
     });
@@ -288,6 +315,98 @@ describe('CommentsService', () => {
         text: 'User 2 comment',
       });
       expect(result).toBeDefined();
+    });
+
+    it('creates comment with two images, finalizes images, and cleans up staging objects', async () => {
+      const mediaId1 = '01916327-0000-7000-8000-000000000051';
+      const mediaId2 = '01916327-0000-7000-8000-000000000052';
+      const finalizedItems = [
+        {
+          id: mediaId1,
+          commentId: 'comment-1',
+          storageKey: `comments/comment-1/${mediaId1}.webp`,
+          stagingKey: `staging/${userId}/${mediaId1}`,
+          sha256: 'hash1',
+          width: 480,
+          height: 480,
+          fileSizeBytes: 50000,
+          fileContentType: 'image/webp',
+          displayOrder: 0,
+        },
+        {
+          id: mediaId2,
+          commentId: 'comment-1',
+          storageKey: `comments/comment-1/${mediaId2}.webp`,
+          stagingKey: `staging/${userId}/${mediaId2}`,
+          sha256: 'hash2',
+          width: 480,
+          height: 480,
+          fileSizeBytes: 60000,
+          fileContentType: 'image/webp',
+          displayOrder: 1,
+        },
+      ];
+
+      mockUploadService.finalizeCommentImages.mockResolvedValueOnce(finalizedItems);
+
+      const result = await service.createComment(userId, {
+        clientRequestId: 'req-2-images',
+        postId,
+        text: 'Two images attached',
+        mediaIds: [mediaId1, mediaId2],
+      });
+
+      expect(result).toBeDefined();
+      expect(mockUploadService.finalizeCommentImages).toHaveBeenCalledWith(
+        [mediaId1, mediaId2],
+        userId,
+        expect.any(String),
+      );
+      expect(mockCommentsRepo.createCommentWithCounter).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mediaItems: finalizedItems,
+        }),
+      );
+      // Cleaned up private staging objects after commit
+      expect(mockUploadService.deleteObject).toHaveBeenCalledWith(`staging/${userId}/${mediaId1}`);
+      expect(mockUploadService.deleteObject).toHaveBeenCalledWith(`staging/${userId}/${mediaId2}`);
+    });
+
+    it('compensates and queues media deletion work when database commit fails', async () => {
+      const mediaId1 = '01916327-0000-7000-8000-000000000051';
+      const finalizedItems = [
+        {
+          id: mediaId1,
+          commentId: 'comment-1',
+          storageKey: `comments/comment-1/${mediaId1}.webp`,
+          stagingKey: `staging/${userId}/${mediaId1}`,
+          sha256: 'hash1',
+          width: 480,
+          height: 480,
+          fileSizeBytes: 50000,
+          fileContentType: 'image/webp',
+          displayOrder: 0,
+        },
+      ];
+
+      mockUploadService.finalizeCommentImages.mockResolvedValueOnce(finalizedItems);
+      mockCommentsRepo.createCommentWithCounter.mockRejectedValueOnce(new Error('DB commit crash'));
+
+      await expect(
+        service.createComment(userId, {
+          clientRequestId: 'req-db-fail',
+          postId,
+          text: 'Failing DB commit',
+          mediaIds: [mediaId1],
+        }),
+      ).rejects.toThrow('DB commit crash');
+
+      // Outbox compensation queued
+      expect(mockCommentsRepo.queueMediaDeletionWork).toHaveBeenCalledWith(
+        `comments/comment-1/${mediaId1}.webp`,
+        `https://cdn.pupzy.net/comments/comment-1/${mediaId1}.webp`,
+      );
+      expect(mockUploadService.markMediaFailed).toHaveBeenCalledWith([mediaId1], 'Database transaction failed');
     });
   });
 
@@ -650,10 +769,14 @@ describe('CommentsService', () => {
   });
 
   describe('deleteComment', () => {
-    it('delegates deletion to repository', async () => {
+    it('delegates deletion to repository with cdnBase', async () => {
       const result = await service.deleteComment(userId, mockComment.id);
       expect(result).toBe(true);
-      expect(mockCommentsRepo.deleteCommentWithCounters).toHaveBeenCalledWith(mockComment.id, userId);
+      expect(mockCommentsRepo.deleteCommentWithCounters).toHaveBeenCalledWith(
+        mockComment.id,
+        userId,
+        'https://cdn.pupzy.net',
+      );
     });
   });
 

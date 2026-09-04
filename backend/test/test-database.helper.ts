@@ -60,6 +60,7 @@ export class TestDatabaseHelper {
         comment_boosts,
         comment_idempotency,
         comment_media,
+        media_deletion_work,
         comments
       CASCADE;
     `);

@@ -12,6 +12,7 @@ import {
   posts,
   stagedUploads,
   commentMedia,
+  mediaDeletionWork,
   Comment,
   CommentIdempotency,
   CommentMedia,
@@ -72,8 +73,19 @@ export class CommentsRepository {
       fileContentType: string;
       displayOrder: number;
     };
+    mediaItems?: Array<{
+      id: string;
+      storageKey: string;
+      sha256: string;
+      width: number;
+      height: number;
+      fileSizeBytes: number;
+      fileContentType: string;
+      displayOrder: number;
+    }>;
   }): Promise<Comment> {
-    const { commentId, postId, authorId, text, clientRequestId, requestHash, mediaData } = params;
+    const { commentId, postId, authorId, text, clientRequestId, requestHash, mediaData, mediaItems } = params;
+    const itemsToInsert = mediaItems ?? (mediaData ? [mediaData] : []);
 
     try {
       return await this.db.transaction(async (tx) => {
@@ -103,28 +115,28 @@ export class CommentsRepository {
           throw new NotFoundError('Post', postId);
         }
 
-        // 3. Insert media relationship if attached and finalize staged upload in DB
-        if (mediaData) {
+        // 3. Insert media relationships if attached and finalize staged uploads in DB
+        for (const item of itemsToInsert) {
           await tx.insert(commentMedia).values({
-            id: mediaData.id,
+            id: item.id,
             commentId: newComment.id,
-            storageKey: mediaData.storageKey,
-            sha256: mediaData.sha256,
-            width: mediaData.width,
-            height: mediaData.height,
-            fileSizeBytes: mediaData.fileSizeBytes,
-            fileContentType: mediaData.fileContentType,
-            displayOrder: mediaData.displayOrder,
+            storageKey: item.storageKey,
+            sha256: item.sha256,
+            width: item.width,
+            height: item.height,
+            fileSizeBytes: item.fileSizeBytes,
+            fileContentType: item.fileContentType,
+            displayOrder: item.displayOrder,
           });
 
           await tx
             .update(stagedUploads)
             .set({
               status: 'FINALIZED',
-              finalStorageKey: mediaData.storageKey,
+              finalStorageKey: item.storageKey,
               updatedAt: new Date(),
             })
-            .where(eq(stagedUploads.id, mediaData.id));
+            .where(eq(stagedUploads.id, item.id));
         }
 
         // 4. Record durable author-scoped idempotency
@@ -443,13 +455,30 @@ export class CommentsRepository {
   }
 
   /**
+   * Enqueues durable media deletion work for compensation or cleanup.
+   */
+  async queueMediaDeletionWork(storageKey: string, cdnUrl: string): Promise<void> {
+    await this.db.insert(mediaDeletionWork).values({
+      storageKey,
+      cdnUrl,
+      status: 'PENDING',
+      attempts: 0,
+    });
+  }
+
+  /**
    * Transactionally deletes a comment or reply.
    * - Enforces author ownership (rejects other users and post authors).
    * - Idempotent: returns true if already DELETED.
    * - Irreversible: updates status to DELETED.
+   * - Immediately removes public media relationship and creates durable work for R2 deletion & CDN purge.
    * - Decrements engagement counts transactionally.
    */
-  async deleteCommentWithCounters(commentId: string, userId: string): Promise<boolean> {
+  async deleteCommentWithCounters(
+    commentId: string,
+    userId: string,
+    cdnBase: string = 'https://cdn.pupzy.net',
+  ): Promise<boolean> {
     return this.db.transaction(async (tx) => {
       // 1. Lock target comment
       const [comment] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('update');
@@ -470,7 +499,23 @@ export class CommentsRepository {
 
       const wasVisible = comment.status === 'ACTIVE' || comment.status === 'IMAGE_HIDDEN';
 
-      // 4. Mark status DELETED
+      // 4. Immediately remove public media relationship and queue durable work for R2 deletion and CDN purge
+      const mediaRows = await tx.select().from(commentMedia).where(eq(commentMedia.commentId, commentId));
+      if (mediaRows.length > 0) {
+        await tx.delete(commentMedia).where(eq(commentMedia.commentId, commentId));
+        for (const row of mediaRows) {
+          const cleanKey = row.storageKey.replace(/^\/+/, '');
+          const cdnUrl = `${cdnBase.replace(/\/+$/, '')}/${cleanKey}`;
+          await tx.insert(mediaDeletionWork).values({
+            storageKey: row.storageKey,
+            cdnUrl,
+            status: 'PENDING',
+            attempts: 0,
+          });
+        }
+      }
+
+      // 5. Mark status DELETED
       await tx
         .update(comments)
         .set({
@@ -479,10 +524,10 @@ export class CommentsRepository {
         })
         .where(eq(comments.id, commentId));
 
-      // 5. Delete pin record if this comment was pinned
+      // 6. Delete pin record if this comment was pinned
       await tx.delete(postPins).where(eq(postPins.commentId, commentId));
 
-      // 6. Decrement counters if the item was visible
+      // 7. Decrement counters if the item was visible
       if (wasVisible) {
         if (comment.parentId) {
           // It is a Reply: decrement parent comment's reply_count and post's comment_count

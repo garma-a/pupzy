@@ -91,8 +91,8 @@ export function validateCreateCommentInput(rawInput: unknown): CreateCommentDto 
     if (!Array.isArray(input.mediaIds)) {
       throw new ValidationError('mediaIds must be an array');
     }
-    if (input.mediaIds.length > 1) {
-      throw new ValidationError('Maximum 1 image allowed per comment in this version');
+    if (input.mediaIds.length > 2) {
+      throw new ValidationError('Maximum 2 images allowed per comment');
     }
     const seen = new Set<string>();
     for (const id of input.mediaIds) {

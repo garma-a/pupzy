@@ -120,24 +120,34 @@ describe('validateCreateCommentInput & validateCommentText', () => {
       ).toThrow(ValidationError);
     });
 
-    it('accepts zero or one valid mediaId in this slice', () => {
-      const validMediaId = '01916327-0000-7000-8000-000000000002';
-      const result = validateCreateCommentInput({
+    it('accepts zero, one, or two distinct valid mediaIds', () => {
+      const validMediaId1 = '01916327-0000-7000-8000-000000000002';
+      const validMediaId2 = '01916327-0000-7000-8000-000000000003';
+      const result1 = validateCreateCommentInput({
         clientRequestId: validClientRequestId,
         postId: validPostId,
         text: 'Hello',
-        mediaIds: [validMediaId],
+        mediaIds: [validMediaId1],
       });
-      expect(result.mediaIds).toEqual([validMediaId]);
+      expect(result1.mediaIds).toEqual([validMediaId1]);
+
+      const result2 = validateCreateCommentInput({
+        clientRequestId: validClientRequestId,
+        postId: validPostId,
+        text: 'Hello',
+        mediaIds: [validMediaId1, validMediaId2],
+      });
+      expect(result2.mediaIds).toEqual([validMediaId1, validMediaId2]);
     });
 
-    it('rejects mediaIds if more than 1 media ID provided in this slice', () => {
+    it('rejects duplicate media IDs', () => {
+      const duplicateId = '01916327-0000-7000-8000-000000000002';
       expect(() =>
         validateCreateCommentInput({
           clientRequestId: validClientRequestId,
           postId: validPostId,
           text: 'Hello',
-          mediaIds: ['01916327-0000-7000-8000-000000000002', '01916327-0000-7000-8000-000000000003'],
+          mediaIds: [duplicateId, duplicateId],
         }),
       ).toThrow(ValidationError);
       expect(() =>
@@ -145,9 +155,36 @@ describe('validateCreateCommentInput & validateCommentText', () => {
           clientRequestId: validClientRequestId,
           postId: validPostId,
           text: 'Hello',
-          mediaIds: ['01916327-0000-7000-8000-000000000002', '01916327-0000-7000-8000-000000000003'],
+          mediaIds: [duplicateId, duplicateId],
         }),
-      ).toThrow(/Maximum 1 image allowed/);
+      ).toThrow(/Duplicate media IDs/);
+    });
+
+    it('rejects mediaIds if more than 2 media IDs provided', () => {
+      expect(() =>
+        validateCreateCommentInput({
+          clientRequestId: validClientRequestId,
+          postId: validPostId,
+          text: 'Hello',
+          mediaIds: [
+            '01916327-0000-7000-8000-000000000002',
+            '01916327-0000-7000-8000-000000000003',
+            '01916327-0000-7000-8000-000000000004',
+          ],
+        }),
+      ).toThrow(ValidationError);
+      expect(() =>
+        validateCreateCommentInput({
+          clientRequestId: validClientRequestId,
+          postId: validPostId,
+          text: 'Hello',
+          mediaIds: [
+            '01916327-0000-7000-8000-000000000002',
+            '01916327-0000-7000-8000-000000000003',
+            '01916327-0000-7000-8000-000000000004',
+          ],
+        }),
+      ).toThrow(/Maximum 2 images allowed/);
     });
 
     it('rejects invalid UUID in mediaIds', () => {

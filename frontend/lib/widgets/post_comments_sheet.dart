@@ -44,8 +44,8 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
   String? _createErrorMessage;
   String? _currentUserId;
 
-  XFile? _selectedImage;
-  Uint8List? _compressedImageBytes;
+  final List<XFile> _selectedImages = [];
+  final List<Uint8List> _compressedImagesBytes = [];
 
   final List<Comment> _comments = [];
   String? _endCursor;
@@ -238,8 +238,8 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     setState(() {
       _replyingToComment = comment;
       _createErrorMessage = null;
-      _selectedImage = null;
-      _compressedImageBytes = null;
+      _selectedImages.clear();
+      _compressedImagesBytes.clear();
     });
   }
 
@@ -252,6 +252,17 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
 
   Future<void> _pickCommentImage() async {
     if (_replyingToComment != null) return;
+    if (_selectedImages.length >= 2) {
+      setState(() {
+        _createErrorMessage = t(
+          context,
+          'You can only attach up to 2 images.',
+          'يمكنك إرفاق صورتين كحد أقصى.',
+        );
+      });
+      return;
+    }
+
     setState(() {
       _compressing = true;
       _createErrorMessage = null;
@@ -290,8 +301,8 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
 
       if (mounted) {
         setState(() {
-          _selectedImage = picked;
-          _compressedImageBytes = bytes;
+          _selectedImages.add(picked);
+          _compressedImagesBytes.add(bytes);
           _compressing = false;
           _createErrorMessage = null;
         });
@@ -310,10 +321,12 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     }
   }
 
-  void _removeCommentImage() {
+  void _removeCommentImage(int index) {
     setState(() {
-      _selectedImage = null;
-      _compressedImageBytes = null;
+      if (index >= 0 && index < _selectedImages.length) {
+        _selectedImages.removeAt(index);
+        _compressedImagesBytes.removeAt(index);
+      }
     });
   }
 
@@ -719,52 +732,64 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
       });
     } else {
       // Create top-level Comment
-      String? mediaId;
-      if (_selectedImage != null && _compressedImageBytes != null) {
-        // 1. Request upload ticket from backend
-        final (ticket, ticketError) = await graphql.requestCommentImageUploadUrl(
-          contentType: 'image/webp',
-          fileSizeBytes: _compressedImageBytes!.length,
-        );
+      final List<String> mediaIds = [];
+      if (_selectedImages.isNotEmpty && _compressedImagesBytes.isNotEmpty) {
+        for (int i = 0; i < _compressedImagesBytes.length; i++) {
+          final imageBytes = _compressedImagesBytes[i];
+          final positionLabel = _compressedImagesBytes.length > 1 ? 'Image ${i + 1}: ' : '';
+          final positionLabelAr = _compressedImagesBytes.length > 1 ? 'الصورة ${i + 1}: ' : '';
 
-        if (!mounted) return;
+          // 1. Request upload ticket from backend
+          final (ticket, ticketError) = await graphql.requestCommentImageUploadUrl(
+            contentType: 'image/webp',
+            fileSizeBytes: imageBytes.length,
+          );
 
-        if (ticketError != null || ticket == null) {
-          setState(() {
-            _submitting = false;
-            _createErrorMessage = ticketError ??
-                t(context, 'Failed to prepare image upload.', 'فشل تجهيز رفع الصورة.');
-          });
-          return;
+          if (!mounted) return;
+
+          if (ticketError != null || ticket == null) {
+            setState(() {
+              _submitting = false;
+              _createErrorMessage = t(
+                context,
+                '$positionLabel${ticketError ?? "Failed to prepare image upload."}',
+                '$positionLabelAr${ticketError ?? "فشل تجهيز رفع الصورة."}',
+              );
+            });
+            return;
+          }
+
+          // 2. Direct upload to private R2 staging key
+          final uploadUrl = ticket['uploadUrl'] as String;
+          final (uploadOk, uploadError) = await graphql.uploadCommentImageToR2(
+            uploadUrl: uploadUrl,
+            bytes: imageBytes,
+            contentType: 'image/webp',
+          );
+
+          if (!mounted) return;
+
+          if (!uploadOk) {
+            setState(() {
+              _submitting = false;
+              _createErrorMessage = t(
+                context,
+                '$positionLabel${uploadError ?? "Failed to upload image."}',
+                '$positionLabelAr${uploadError ?? "فشل رفع الصورة."}',
+              );
+            });
+            return;
+          }
+
+          mediaIds.add(ticket['mediaId'] as String);
         }
-
-        // 2. Direct upload to private R2 staging key
-        final uploadUrl = ticket['uploadUrl'] as String;
-        final (uploadOk, uploadError) = await graphql.uploadCommentImageToR2(
-          uploadUrl: uploadUrl,
-          bytes: _compressedImageBytes!,
-          contentType: 'image/webp',
-        );
-
-        if (!mounted) return;
-
-        if (!uploadOk) {
-          setState(() {
-            _submitting = false;
-            _createErrorMessage = uploadError ??
-                t(context, 'Failed to upload image.', 'فشل رفع الصورة.');
-          });
-          return;
-        }
-
-        mediaId = ticket['mediaId'] as String;
       }
 
       final (createdComment, error) = await graphql.createComment(
         clientRequestId: _currentClientRequestId,
         postId: widget.postId,
         text: trimmed,
-        mediaIds: mediaId != null ? [mediaId] : null,
+        mediaIds: mediaIds.isNotEmpty ? mediaIds : null,
       );
 
       if (!mounted) return;
@@ -781,8 +806,8 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
       setState(() {
         _submitting = false;
         _createErrorMessage = null;
-        _selectedImage = null;
-        _compressedImageBytes = null;
+        _selectedImages.clear();
+        _compressedImagesBytes.clear();
         final insertIndex = (_comments.isNotEmpty && _comments[0].isPinned) ? 1 : 0;
         _comments.insert(insertIndex, createdComment);
         _textController.clear();
@@ -1117,33 +1142,88 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
                   ),
                   if (!isTombstone && comment.media.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.sm),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.image),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxHeight: 280,
-                          maxWidth: 320,
-                        ),
-                        child: CachedNetworkImage(
-                          imageUrl: comment.media.first.publicUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (ctx, url) => Container(
-                            height: 160,
-                            color: AppColors.background,
-                            child: const Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                    if (comment.media.length == 1)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.image),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxHeight: 280,
+                            maxWidth: 320,
+                          ),
+                          child: CachedNetworkImage(
+                            imageUrl: comment.media.first.publicUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (ctx, url) => Container(
+                              height: 160,
+                              color: AppColors.background,
+                              child: const Center(
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
+                            errorWidget: (ctx, url, error) => Container(
+                              height: 120,
+                              color: AppColors.background,
+                              child: const Center(
+                                child: Icon(Icons.broken_image_outlined, color: AppColors.textMuted),
+                              ),
                             ),
                           ),
-                          errorWidget: (ctx, url, error) => Container(
-                            height: 120,
-                            color: AppColors.background,
-                            child: const Center(
-                              child: Icon(Icons.broken_image_outlined, color: AppColors.textMuted),
+                        ),
+                      )
+                    else
+                      Row(
+                        children: [
+                          Expanded(
+                            child: AspectRatio(
+                              aspectRatio: 1.0,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(AppRadius.image),
+                                child: CachedNetworkImage(
+                                  imageUrl: comment.media[0].publicUrl,
+                                  fit: BoxFit.cover,
+                                  placeholder: (ctx, url) => Container(
+                                    color: AppColors.background,
+                                    child: const Center(
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  ),
+                                  errorWidget: (ctx, url, error) => Container(
+                                    color: AppColors.background,
+                                    child: const Center(
+                                      child: Icon(Icons.broken_image_outlined, color: AppColors.textMuted),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: AspectRatio(
+                              aspectRatio: 1.0,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(AppRadius.image),
+                                child: CachedNetworkImage(
+                                  imageUrl: comment.media[1].publicUrl,
+                                  fit: BoxFit.cover,
+                                  placeholder: (ctx, url) => Container(
+                                    color: AppColors.background,
+                                    child: const Center(
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  ),
+                                  errorWidget: (ctx, url, error) => Container(
+                                    color: AppColors.background,
+                                    child: const Center(
+                                      child: Icon(Icons.broken_image_outlined, color: AppColors.textMuted),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
                   ],
                   const SizedBox(height: 6),
 
@@ -1452,46 +1532,73 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
               ),
             ],
 
-            // Image preview above input row if selected
-            if (_selectedImage != null && _compressedImageBytes != null && !isReplying) ...[
+            // Image previews above input row if selected
+            if (_selectedImages.isNotEmpty && !isReplying) ...[
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                child: Row(
-                  children: [
-                    Stack(
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
+                  children: List.generate(_selectedImages.length, (index) {
+                    final bytes = _compressedImagesBytes[index];
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.image),
-                          child: Image.memory(
-                            _compressedImageBytes!,
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        Positioned(
-                          top: 2,
-                          right: 2,
-                          child: GestureDetector(
-                            onTap: _removeCommentImage,
-                            child: Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: const BoxDecoration(
-                                color: Colors.black54,
-                                shape: BoxShape.circle,
+                        Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(AppRadius.image),
+                              child: Image.memory(
+                                bytes,
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.cover,
                               ),
-                              child: const Icon(Icons.close, size: 14, color: Colors.white),
                             ),
-                          ),
+                            Positioned(
+                              top: 2,
+                              left: 2,
+                              child: Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black87,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  '${index + 1}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 2,
+                              right: 2,
+                              child: GestureDetector(
+                                onTap: () => _removeCommentImage(index),
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close, size: 14, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${(bytes.length / 1024).toStringAsFixed(1)} KB',
+                          style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                         ),
                       ],
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      '${(_compressedImageBytes!.length / 1024).toStringAsFixed(1)} KB (WebP)',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-                    ),
-                  ],
+                    );
+                  }),
                 ),
               ),
             ],
@@ -1501,7 +1608,9 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
               children: [
                 if (!isReplying) ...[
                   IconButton(
-                    onPressed: _submitting || _compressing ? null : _pickCommentImage,
+                    onPressed: _submitting || _compressing || _selectedImages.length >= 2
+                        ? null
+                        : _pickCommentImage,
                     icon: _compressing
                         ? const SizedBox(
                             width: 20,
@@ -1509,10 +1618,10 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : Icon(
-                            _selectedImage != null ? Icons.photo : Icons.photo_outlined,
-                            color: _selectedImage != null ? AppColors.primary : AppColors.textMuted,
+                            _selectedImages.isNotEmpty ? Icons.photo : Icons.photo_outlined,
+                            color: _selectedImages.isNotEmpty ? AppColors.primary : AppColors.textMuted,
                           ),
-                    tooltip: t(context, 'Attach Image', 'إرفاق صورة'),
+                    tooltip: t(context, 'Attach Image (Max 2)', 'إرفاق صورة (بحد أقصى 2)'),
                   ),
                 ],
                 Expanded(

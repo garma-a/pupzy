@@ -15,6 +15,8 @@ export class AppError extends Error {
     message: string,
     /** Machine-readable error code sent in GraphQL `extensions.code`. */
     public readonly code: string,
+    /** Optional domain extensions (e.g. mediaPosition, retryable). */
+    public readonly extensions?: Record<string, unknown>,
   ) {
     super(message);
     this.name = this.constructor.name;
