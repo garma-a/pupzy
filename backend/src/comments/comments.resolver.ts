@@ -116,7 +116,7 @@ export class CommentsResolver {
    */
   @ResolveField('author')
   async author(@Root() comment: Comment, @Context() ctx: GqlContext) {
-    if (comment.status === 'DELETED' || comment.status === 'HIDDEN') {
+    if (comment.status === 'DELETED' || comment.status === 'HIDDEN' || comment.status === 'REMOVED') {
       return null;
     }
     return ctx.loaders.userById.load(comment.authorId);
@@ -133,6 +133,9 @@ export class CommentsResolver {
     }
     if (comment.status === 'HIDDEN') {
       return '[Hidden]';
+    }
+    if (comment.status === 'REMOVED') {
+      return '[Removed]';
     }
     return comment.text;
   }
@@ -176,7 +179,8 @@ export class CommentsResolver {
    */
   @ResolveField('isPinned')
   async isPinned(@Root() comment: Comment, @Context() ctx: GqlContext): Promise<boolean> {
-    if (comment.parentId || comment.status === 'DELETED' || comment.status === 'HIDDEN') return false;
+    if (comment.parentId || comment.status === 'DELETED' || comment.status === 'HIDDEN' || comment.status === 'REMOVED')
+      return false;
     if ((comment as unknown as { isPinned?: boolean }).isPinned !== undefined) {
       return (comment as unknown as { isPinned: boolean }).isPinned;
     }

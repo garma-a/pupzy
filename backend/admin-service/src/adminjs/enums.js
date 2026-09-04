@@ -38,8 +38,11 @@ export const ENUMS = {
     'POST_RESTORED',
     'USER_BANNED',
     'USER_UNBANNED',
+    'COMMENT_RESTORED',
+    'COMMENT_REMOVED',
   ],
-  moderationTargetType: ['POST', 'USER'],
+  moderationTargetType: ['POST', 'USER', 'COMMENT'],
+  commentStatus: ['ACTIVE', 'IMAGE_HIDDEN', 'HIDDEN', 'DELETED', 'REMOVED'],
 };
 
 export function toAvailableValues(values) {

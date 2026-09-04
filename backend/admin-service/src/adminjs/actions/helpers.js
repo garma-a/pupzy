@@ -1,4 +1,4 @@
-const MODERATION_TABLES = new Set(['users', 'posts']);
+const MODERATION_TABLES = new Set(['users', 'posts', 'comments']);
 
 export async function runModerationAction(pool, params) {
   if (!MODERATION_TABLES.has(params.table)) {

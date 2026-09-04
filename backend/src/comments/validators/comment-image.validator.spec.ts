@@ -333,4 +333,35 @@ describe('CommentImageValidator', () => {
       );
     });
   });
+
+  describe('blocked media hashes exact matching (Ticket 09)', () => {
+    it('rejects an image whose exact sha256 matches a blocked hash with COMMENT_MEDIA_INVALID_FORMAT', () => {
+      const buffer = createVp8Webp(200, 200);
+      const validResult = validateCommentImage(buffer);
+      const blockedSet = new Set([validResult.sha256]);
+
+      expect(() => validateCommentImage(buffer, blockedSet)).toThrow(
+        expect.objectContaining({
+          code: 'COMMENT_MEDIA_INVALID_FORMAT',
+          message: 'Invalid image format',
+        }),
+      );
+    });
+
+    it('permits an image when blockedHashes contains unrelated hashes', () => {
+      const buffer = createVp8Webp(200, 200);
+      const unrelatedSet = new Set(['e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855']);
+      const result = validateCommentImage(buffer, unrelatedSet);
+      expect(result.sha256).toBeDefined();
+    });
+
+    it('permits a modified image with a distinct hash even if original is blocked', () => {
+      const original = createVp8Webp(200, 200);
+      const blockedHash = validateCommentImage(original).sha256;
+      const modified = createVp8Webp(201, 200);
+
+      const result = validateCommentImage(modified, new Set([blockedHash]));
+      expect(result.sha256).not.toBe(blockedHash);
+    });
+  });
 });

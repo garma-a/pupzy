@@ -600,6 +600,18 @@ export class UploadService {
       position: number;
     }> = [];
 
+    let blockedHashes = new Set<string>();
+    try {
+      const blockedRows = await this.db
+        .select({ sha256: schema.blockedMediaHashes.sha256 })
+        .from(schema.blockedMediaHashes);
+      if (Array.isArray(blockedRows)) {
+        blockedHashes = new Set(blockedRows.map((r) => r.sha256));
+      }
+    } catch {
+      blockedHashes = new Set<string>();
+    }
+
     for (let position = 0; position < mediaIds.length; position++) {
       const mediaId = mediaIds[position];
       const [ticket] = await this.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId)).limit(1);
@@ -625,45 +637,44 @@ export class UploadService {
         });
       }
 
-      // Fetch bytes from R2
+      // Download bytes from R2 stagingKey
       let objectBytes: Buffer;
       try {
-        const response = await this.s3Client.send(
-          new GetObjectCommand({
-            Bucket: this.bucketName,
-            Key: ticket.stagingKey,
-          }),
-        );
+        const command = new GetObjectCommand({
+          Bucket: this.bucketName,
+          Key: ticket.stagingKey,
+        });
+        const response = await this.s3Client.send(command);
         if (!response.Body) {
-          throw new Error('Empty body from storage');
-        }
-        const byteArray = await response.Body.transformToByteArray();
-        objectBytes = Buffer.from(byteArray);
-      } catch (err: unknown) {
-        const s3Err = err as { name?: string; $metadata?: { httpStatusCode?: number } };
-        if (s3Err?.name === 'NoSuchKey' || s3Err?.$metadata?.httpStatusCode === 404) {
-          await this.db
-            .update(stagedUploads)
-            .set({ status: 'FAILED', errorMessage: 'Staged object not found in R2', updatedAt: new Date() })
-            .where(eq(stagedUploads.id, mediaId));
-          throw new AppError('Media is not available', 'COMMENT_MEDIA_NOT_AVAILABLE', {
+          throw new AppError('Media is not available in staging', 'COMMENT_MEDIA_NOT_AVAILABLE', {
             mediaPosition: position,
             retryable: false,
           });
         }
-        // Transient error: do NOT delete, ticket stays ISSUED
-        this.logger.error(
-          `Transient error fetching staged object ${ticket.stagingKey}: ${err instanceof Error ? err.message : String(err)}`,
-        );
-        throw new AppError('Failed to process staged media', 'COMMENT_MEDIA_PROCESSING_FAILED', {
+        const byteArray = await response.Body.transformToByteArray();
+        objectBytes = Buffer.from(byteArray);
+      } catch (err: unknown) {
+        if (err instanceof AppError) throw err;
+        const errObj = typeof err === 'object' && err !== null ? (err as Record<string, unknown>) : null;
+        const metadata =
+          errObj && typeof errObj.$metadata === 'object' && errObj.$metadata !== null
+            ? (errObj.$metadata as Record<string, unknown>)
+            : null;
+        if (errObj?.name === 'NoSuchKey' || errObj?.name === 'NotFound' || metadata?.httpStatusCode === 404) {
+          await this.markMediaFailed(mediaId, 'Staged file missing in storage');
+          throw new AppError('Media is not available in staging', 'COMMENT_MEDIA_NOT_AVAILABLE', {
+            mediaPosition: position,
+            retryable: false,
+          });
+        }
+        throw new AppError('Failed to retrieve media from storage', 'COMMENT_MEDIA_PROCESSING_FAILED', {
           mediaPosition: position,
           retryable: true,
         });
       }
 
-      // Check byte size <= 100,000
+      // Check byte limit
       if (objectBytes.length > 100_000) {
-        // Immediate deletion of invalid staged object
         await this.deleteObject(ticket.stagingKey);
         await this.db
           .update(stagedUploads)
@@ -675,10 +686,10 @@ export class UploadService {
         });
       }
 
-      // WebP binary validation
+      // WebP binary validation with blocked hash checking
       let validated: ReturnType<typeof validateCommentImage>;
       try {
-        validated = validateCommentImage(objectBytes);
+        validated = validateCommentImage(objectBytes, blockedHashes);
       } catch (err) {
         // Immediate deletion of invalid staged object
         await this.deleteObject(ticket.stagingKey);

@@ -152,9 +152,9 @@ describe('Task 12: Finish Responsive Pupzy States & Browser Polish', () => {
     });
   });
 
-  describe('Anti-Collapse & Character Squeezing Guarantees across all 21 tables', () => {
-    it('ensures ADMIN_RESOURCE_TABLES contains all 21 curated tables', () => {
-      assert.equal(ADMIN_RESOURCE_TABLES.length, 21);
+  describe('Anti-Collapse & Character Squeezing Guarantees across all 22 tables', () => {
+    it('ensures ADMIN_RESOURCE_TABLES contains all 22 curated tables', () => {
+      assert.equal(ADMIN_RESOURCE_TABLES.length, 22);
     });
 
     it('enforces no-wrap on all structural table data types (IDs, timestamps, statuses, enums, counts, actions)', () => {

@@ -29,6 +29,7 @@ import { buildSavedSearchesResource } from './resources/saved-searches.resource.
 import { buildUsersResource } from './resources/users.resource.js';
 import { buildVetClinicsResource } from './resources/vet-clinics.resource.js';
 import { buildVetClinicLocationAuditsResource } from './resources/vet-clinic-location-audits.resource.js';
+import { buildCommentsResource } from './resources/comments.resource.js';
 
 AdminJS.registerAdapter({ Database, Resource });
 
@@ -45,6 +46,7 @@ export const ADMIN_RESOURCE_TABLES = Object.freeze([
   'post_saves',
   'post_reports',
   'comment_reports',
+  'comments',
   'contact_requests',
   'adoption_applications',
   'saved_searches',
@@ -113,6 +115,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     buildPostSavesResource(db, components),
     buildPostReportsResource(db, components),
     buildCommentReportsResource(db, components),
+    buildCommentsResource(db, pool, components, cache),
     buildContactRequestsResource(db, components),
     buildAdoptionApplicationsResource(db, components),
     buildSavedSearchesResource(db, components),

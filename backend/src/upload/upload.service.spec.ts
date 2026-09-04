@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment */
+import * as crypto from 'crypto';
 import { UploadService } from './upload.service';
 import { ConfigService } from '@nestjs/config';
 import { Cache } from 'cache-manager';
@@ -40,6 +41,7 @@ describe('UploadService', () => {
   let ticketStore: Map<string, StagedUpload>;
   let mockRateLimitMinuteOverride: number | null = null;
   let mockRateLimitDayOverride: number | null = null;
+  let mockBlockedHashes: string[] = [];
 
   const createMockTicket = (overrides: Partial<StagedUpload> = {}): StagedUpload => ({
     id: 'media-1',
@@ -63,6 +65,7 @@ describe('UploadService', () => {
     ticketStore.set('media-1', createMockTicket());
     mockRateLimitMinuteOverride = null;
     mockRateLimitDayOverride = null;
+    mockBlockedHashes = [];
 
     mockConfig = {
       get: jest.fn((key: string) => {
@@ -148,31 +151,36 @@ describe('UploadService', () => {
         }),
       })),
       select: jest.fn().mockImplementation((fields?: any) => ({
-        from: jest.fn().mockImplementation(() => ({
-          where: jest.fn().mockImplementation((cond: any) => {
-            if (fields && typeof fields === 'object' && 'count' in fields) {
-              const queryIdx = countQueryCallCount++;
-              let count = 0;
-              if (queryIdx === 0) {
-                count = mockRateLimitMinuteOverride ?? 0;
-              } else {
-                count = mockRateLimitDayOverride ?? 0;
+        from: jest.fn().mockImplementation(() => {
+          const defaultRows = mockBlockedHashes.map((h) => ({ sha256: h }));
+          return {
+            where: jest.fn().mockImplementation((cond: any) => {
+              if (fields && typeof fields === 'object' && 'count' in fields) {
+                const queryIdx = countQueryCallCount++;
+                let count = 0;
+                if (queryIdx === 0) {
+                  count = mockRateLimitMinuteOverride ?? 0;
+                } else {
+                  count = mockRateLimitDayOverride ?? 0;
+                }
+                const countResult = [{ count }];
+                return {
+                  limit: jest.fn().mockImplementation((n: number) => Promise.resolve(countResult.slice(0, n))),
+                  then: (resolve: any, reject: any) => Promise.resolve(countResult).then(resolve, reject),
+                };
               }
-              const countResult = [{ count }];
+              const ticketKey = findTicketKeyFromCondition(cond) ?? 'media-1';
+              const ticket = ticketStore.get(ticketKey);
+              const res = ticket ? [ticket] : [];
               return {
-                limit: jest.fn().mockImplementation((n: number) => Promise.resolve(countResult.slice(0, n))),
-                then: (resolve: any, reject: any) => Promise.resolve(countResult).then(resolve, reject),
+                limit: jest.fn().mockImplementation((n: number) => Promise.resolve(res.slice(0, n))),
+                then: (resolve: any, reject: any) => Promise.resolve(res).then(resolve, reject),
               };
-            }
-            const ticketKey = findTicketKeyFromCondition(cond) ?? 'media-1';
-            const ticket = ticketStore.get(ticketKey);
-            const res = ticket ? [ticket] : [];
-            return {
-              limit: jest.fn().mockImplementation((n: number) => Promise.resolve(res.slice(0, n))),
-              then: (resolve: any, reject: any) => Promise.resolve(res).then(resolve, reject),
-            };
-          }),
-        })),
+            }),
+            limit: jest.fn().mockImplementation((n: number) => Promise.resolve(defaultRows.slice(0, n))),
+            then: (resolve: any, reject: any) => Promise.resolve(defaultRows).then(resolve, reject),
+          };
+        }),
       })),
       update: jest.fn().mockImplementation(() => ({
         set: jest.fn().mockImplementation((setValues) => ({
@@ -623,6 +631,29 @@ describe('UploadService', () => {
 
       await expect(service.finalizeCommentImage(mediaId, 'user-1', commentId)).rejects.toMatchObject({
         code: 'COMMENT_MEDIA_DIMENSIONS_EXCEEDED',
+      });
+      expect(ticketStore.get(mediaId)!.status).toBe('FAILED');
+    });
+
+    it('deletes staged object, marks ticket FAILED, and throws COMMENT_MEDIA_INVALID_FORMAT when media matches a blocked hash (Ticket 09)', async () => {
+      const mediaId = setupCommentTicket();
+      const hash = crypto.createHash('sha256').update(validImage).digest('hex');
+      mockBlockedHashes = [hash];
+
+      const mockSend = jest.fn().mockImplementation((command: any) => {
+        if (command.constructor.name === 'GetObjectCommand') {
+          return Promise.resolve({
+            Body: {
+              transformToByteArray: () => Promise.resolve(new Uint8Array(validImage)),
+            },
+          });
+        }
+        return Promise.resolve({});
+      });
+      (service as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockSend;
+
+      await expect(service.finalizeCommentImage(mediaId, 'user-1', commentId)).rejects.toMatchObject({
+        code: 'COMMENT_MEDIA_INVALID_FORMAT',
       });
       expect(ticketStore.get(mediaId)!.status).toBe('FAILED');
     });

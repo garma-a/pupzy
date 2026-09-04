@@ -26,8 +26,12 @@ export interface ValidatedCommentImage {
  * - Decoder bounds: explicit input-pixel (230,400), memory (100KB), and microsecond execution bounds
  * - Computes SHA-256 hash for future exact-match moderation
  */
-export function validateCommentImage(buffer: Buffer): ValidatedCommentImage {
+export function validateCommentImage(
+  buffer: Buffer,
+  blockedHashes?: Set<string> | Iterable<string>,
+): ValidatedCommentImage {
   // 1. Byte limit check: exact bytes <= 100,000
+
   if (buffer.length > MAX_COMMENT_IMAGE_BYTES) {
     throw new AppError('File size exceeds 100,000 bytes', 'COMMENT_MEDIA_TOO_LARGE');
   }
@@ -194,6 +198,14 @@ export function validateCommentImage(buffer: Buffer): ValidatedCommentImage {
 
   // Compute SHA-256 digest
   const sha256 = crypto.createHash('sha256').update(buffer).digest('hex');
+
+  // Exact-match blocked-media set check
+  if (blockedHashes) {
+    const isBlocked = blockedHashes instanceof Set ? blockedHashes.has(sha256) : new Set(blockedHashes).has(sha256);
+    if (isBlocked) {
+      throw new AppError('Invalid image format', 'COMMENT_MEDIA_INVALID_FORMAT');
+    }
+  }
 
   return {
     width,

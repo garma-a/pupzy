@@ -62,7 +62,8 @@ export class TestDatabaseHelper {
         comment_media,
         media_deletion_work,
         comment_reports,
-        comments
+        comments,
+        blocked_media_hashes
       CASCADE;
     `);
   }

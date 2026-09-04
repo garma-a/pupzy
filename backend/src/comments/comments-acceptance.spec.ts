@@ -1346,5 +1346,41 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
         ).rejects.toThrow();
       });
     });
+
+    describe('Administrative Comment Moderation (Ticket 09)', () => {
+      it('masking removed comment (REMOVED): exposes neutral text, masks author, strips media, unpins', async () => {
+        const removedComment: Comment = {
+          ...mockTopLevelComment,
+          status: 'REMOVED',
+          replyCount: 1,
+        };
+
+        const ctx = createContext(thirdPartyUserId);
+        const textResult = resolver.text(removedComment);
+        expect(textResult).toBe('[Removed]');
+
+        const authorResult = await resolver.author(removedComment, ctx);
+        expect(authorResult).toBeNull();
+
+        const mediaResult = await resolver.media(removedComment, ctx);
+        expect(mediaResult).toEqual([]);
+
+        const isPinnedResult = await resolver.isPinned(removedComment, ctx);
+        expect(isPinnedResult).toBe(false);
+      });
+
+      it('restoring a removed post does NOT unmask or restore an individually REMOVED comment', async () => {
+        // Even when post status is restored to ACTIVE, comment with status REMOVED remains masked
+        const individuallyRemovedComment: Comment = {
+          ...mockTopLevelComment,
+          status: 'REMOVED',
+        };
+
+        const ctx = createContext(thirdPartyUserId);
+        expect(resolver.text(individuallyRemovedComment)).toBe('[Removed]');
+        expect(await resolver.author(individuallyRemovedComment, ctx)).toBeNull();
+        expect(await resolver.media(individuallyRemovedComment, ctx)).toEqual([]);
+      });
+    });
   });
 });
