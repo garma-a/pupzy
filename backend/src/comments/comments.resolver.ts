@@ -3,8 +3,9 @@ import { CommentsService, CommentConnection } from './comments.service';
 import { validateCreateCommentInput } from './dto/create-comment.input';
 import { validateCreateReplyInput } from './dto/create-reply.input';
 import { validateCommentsQueryInput, validateRepliesQueryInput } from './dto/comments-query.input';
+import { validateRequestCommentImageUploadInput } from './dto/request-comment-image-upload.input';
 import { assertUuid } from '../common/utils/validate-uuid';
-import type { Comment } from '../database/schema';
+import type { Comment, CommentMedia } from '../database/schema';
 import type { GqlContext } from '../common/types/gql-context.type';
 
 @Resolver('Comment')
@@ -146,6 +147,16 @@ export class CommentsResolver {
   }
 
   /**
+   * Generates a presigned PUT URL and durable upload ticket for a comment image.
+   * Requires authenticated user and enforces kill switch + rate limits (6/min, 50/day).
+   */
+  @Mutation('requestCommentImageUploadUrl')
+  async requestCommentImageUploadUrl(@Args('input') rawInput: unknown, @Context() ctx: GqlContext) {
+    const input = validateRequestCommentImageUploadInput(rawInput);
+    return this.commentsService.requestCommentImageUploadUrl(ctx.user!.id, input);
+  }
+
+  /**
    * Resolves whether this top-level comment is pinned.
    * Replies can never be pinned (always returns false).
    */
@@ -160,5 +171,34 @@ export class CommentsResolver {
       return pinnedId === comment.id;
     }
     return this.commentsService.isCommentPinned(comment.postId, comment.id);
+  }
+
+  /**
+   * Resolves media attached to this comment.
+   * If comment is deleted, hidden, or image is hidden, returns empty array.
+   */
+  @ResolveField('media')
+  async media(@Root() comment: Comment, @Context() ctx: GqlContext): Promise<CommentMedia[]> {
+    if (comment.status !== 'ACTIVE') {
+      return [];
+    }
+    if (ctx.loaders?.commentMediaByCommentId) {
+      return ctx.loaders.commentMediaByCommentId.load(comment.id);
+    }
+    return this.commentsService.getCommentMedia(comment.id);
+  }
+}
+
+@Resolver('CommentMedia')
+export class CommentMediaResolver {
+  constructor(private readonly commentsService: CommentsService) {}
+
+  /**
+   * Resolves the public CDN URL for a comment media item.
+   * Derived dynamically at read time; never stored as a raw URL.
+   */
+  @ResolveField('publicUrl')
+  publicUrl(@Root() media: CommentMedia): string {
+    return this.commentsService.getCommentMediaPublicUrl(media.storageKey);
   }
 }

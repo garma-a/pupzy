@@ -64,3 +64,4 @@ export * from './comments.schema';
 export * from './comment-idempotency.schema';
 export * from './comment-boosts.schema';
 export * from './post-pins.schema';
+export * from './comment-media.schema';

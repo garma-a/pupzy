@@ -18,6 +18,17 @@ enum CommentSort {
 }
 
 """
+An image attached to a Comment.
+"""
+type CommentMedia {
+  id: ID!
+  publicUrl: String!
+  width: Int!
+  height: Int!
+  displayOrder: Int!
+}
+
+"""
 A user-created discussion contribution published beneath a Post or parent Comment.
 """
 type Comment {
@@ -31,6 +42,7 @@ type Comment {
   boostCount: Int!
   isBoostedByMe: Boolean!
   isPinned: Boolean!
+  media: [CommentMedia!]!
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -86,7 +98,34 @@ extend type Query {
   replies(commentId: ID!, first: Int, after: String): CommentConnection!
 }
 
+"""
+Presigned direct upload ticket for a Comment image.
+"""
+type CommentImageUploadTicket {
+  mediaId: ID!
+  uploadUrl: String!
+  expiresAt: DateTime!
+  maxSizeBytes: Int!
+  maxWidth: Int!
+  maxHeight: Int!
+  allowedContentType: String!
+}
+
+"""
+Input for requesting a direct Comment image upload ticket.
+"""
+input RequestCommentImageUploadInput {
+  contentType: String!
+  fileSizeBytes: Int!
+}
+
 extend type Mutation {
+  """
+  Request a presigned direct upload ticket to stage a Comment image.
+  Requires authentication. Rate limited to 6/min and 50/day.
+  """
+  requestCommentImageUploadUrl(input: RequestCommentImageUploadInput!): CommentImageUploadTicket!
+
   """
   Publish a text Comment beneath a Post.
   Requires authentication and a durable author-scoped clientRequestId for idempotency.

@@ -10,8 +10,11 @@ import {
   commentBoosts,
   postPins,
   posts,
+  stagedUploads,
+  commentMedia,
   Comment,
   CommentIdempotency,
+  CommentMedia,
 } from '../database/schema';
 import { NotFoundError, ConflictError, ForbiddenError, ValidationError } from '../common/errors/app.errors';
 import { CommentCursorPayload, CommentSortOrder } from './dto/comments-query.input';
@@ -50,16 +53,27 @@ export class CommentsRepository {
 
   /**
    * Transactionally creates a top-level Comment, increments the Post's commentCount,
-   * and records durable idempotency metadata.
+   * stores attached comment media, and records durable idempotency metadata.
    */
   async createCommentWithCounter(params: {
+    commentId?: string;
     postId: string;
     authorId: string;
     text: string;
     clientRequestId: string;
     requestHash: string;
+    mediaData?: {
+      id: string;
+      storageKey: string;
+      sha256: string;
+      width: number;
+      height: number;
+      fileSizeBytes: number;
+      fileContentType: string;
+      displayOrder: number;
+    };
   }): Promise<Comment> {
-    const { postId, authorId, text, clientRequestId, requestHash } = params;
+    const { commentId, postId, authorId, text, clientRequestId, requestHash, mediaData } = params;
 
     try {
       return await this.db.transaction(async (tx) => {
@@ -67,6 +81,7 @@ export class CommentsRepository {
         const [newComment] = await tx
           .insert(comments)
           .values({
+            ...(commentId ? { id: commentId } : {}),
             postId,
             authorId,
             text,
@@ -88,7 +103,31 @@ export class CommentsRepository {
           throw new NotFoundError('Post', postId);
         }
 
-        // 3. Record durable author-scoped idempotency
+        // 3. Insert media relationship if attached and finalize staged upload in DB
+        if (mediaData) {
+          await tx.insert(commentMedia).values({
+            id: mediaData.id,
+            commentId: newComment.id,
+            storageKey: mediaData.storageKey,
+            sha256: mediaData.sha256,
+            width: mediaData.width,
+            height: mediaData.height,
+            fileSizeBytes: mediaData.fileSizeBytes,
+            fileContentType: mediaData.fileContentType,
+            displayOrder: mediaData.displayOrder,
+          });
+
+          await tx
+            .update(stagedUploads)
+            .set({
+              status: 'FINALIZED',
+              finalStorageKey: mediaData.storageKey,
+              updatedAt: new Date(),
+            })
+            .where(eq(stagedUploads.id, mediaData.id));
+        }
+
+        // 4. Record durable author-scoped idempotency
         await tx.insert(commentIdempotency).values({
           authorId,
           clientRequestId,
@@ -116,6 +155,39 @@ export class CommentsRepository {
       }
       throw error;
     }
+  }
+
+  /**
+   * Finds media attached to a comment, ordered by displayOrder ASC.
+   */
+  async findMediaByCommentId(commentId: string): Promise<CommentMedia[]> {
+    return this.db
+      .select()
+      .from(commentMedia)
+      .where(eq(commentMedia.commentId, commentId))
+      .orderBy(sql`${commentMedia.displayOrder} ASC`);
+  }
+
+  /**
+   * Batch-loads CommentMedia rows grouped by comment ID.
+   */
+  createCommentMediaByCommentIdLoader(): DataLoader<string, CommentMedia[]> {
+    return new DataLoader<string, CommentMedia[]>(async (commentIds) => {
+      const rows = await this.db
+        .select()
+        .from(commentMedia)
+        .where(inArray(commentMedia.commentId, commentIds as string[]))
+        .orderBy(sql`${commentMedia.displayOrder} ASC`);
+
+      const map = new Map<string, CommentMedia[]>();
+      for (const row of rows) {
+        const list = map.get(row.commentId) ?? [];
+        list.push(row);
+        map.set(row.commentId, list);
+      }
+
+      return commentIds.map((id) => map.get(id) ?? []);
+    });
   }
 
   /**

@@ -176,6 +176,13 @@
       "when": 1789150400000,
       "tag": "0024_add_post_pins",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1789236800000,
+      "tag": "0025_add_comment_media",
+      "breakpoints": true
     }
   ]
 }

@@ -120,13 +120,24 @@ describe('validateCreateCommentInput & validateCommentText', () => {
       ).toThrow(ValidationError);
     });
 
-    it('rejects mediaIds if provided (no media in this slice)', () => {
+    it('accepts zero or one valid mediaId in this slice', () => {
+      const validMediaId = '01916327-0000-7000-8000-000000000002';
+      const result = validateCreateCommentInput({
+        clientRequestId: validClientRequestId,
+        postId: validPostId,
+        text: 'Hello',
+        mediaIds: [validMediaId],
+      });
+      expect(result.mediaIds).toEqual([validMediaId]);
+    });
+
+    it('rejects mediaIds if more than 1 media ID provided in this slice', () => {
       expect(() =>
         validateCreateCommentInput({
           clientRequestId: validClientRequestId,
           postId: validPostId,
           text: 'Hello',
-          mediaIds: ['01916327-0000-7000-8000-000000000002'],
+          mediaIds: ['01916327-0000-7000-8000-000000000002', '01916327-0000-7000-8000-000000000003'],
         }),
       ).toThrow(ValidationError);
       expect(() =>
@@ -134,9 +145,20 @@ describe('validateCreateCommentInput & validateCommentText', () => {
           clientRequestId: validClientRequestId,
           postId: validPostId,
           text: 'Hello',
-          mediaIds: ['01916327-0000-7000-8000-000000000002'],
+          mediaIds: ['01916327-0000-7000-8000-000000000002', '01916327-0000-7000-8000-000000000003'],
         }),
-      ).toThrow(/Comment media is not supported/);
+      ).toThrow(/Maximum 1 image allowed/);
+    });
+
+    it('rejects invalid UUID in mediaIds', () => {
+      expect(() =>
+        validateCreateCommentInput({
+          clientRequestId: validClientRequestId,
+          postId: validPostId,
+          text: 'Hello',
+          mediaIds: ['not-a-uuid'],
+        }),
+      ).toThrow(ValidationError);
     });
   });
 });

@@ -103,16 +103,19 @@ describe('CommentsService', () => {
 
       expect(result).toEqual(mockComment);
       expect(mockPostsRepo.findById).toHaveBeenCalledWith(postId);
-      expect(mockCommentsRepo.createCommentWithCounter).toHaveBeenCalledWith({
-        postId,
-        authorId: userId,
-        text: 'I can foster this dog!',
-        clientRequestId: 'req-1',
-        requestHash: crypto
-          .createHash('sha256')
-          .update(JSON.stringify({ postId, text: 'I can foster this dog!' }))
-          .digest('hex'),
-      });
+      expect(mockCommentsRepo.createCommentWithCounter).toHaveBeenCalledWith(
+        expect.objectContaining({
+          postId,
+          authorId: userId,
+          text: 'I can foster this dog!',
+          clientRequestId: 'req-1',
+          requestHash: crypto
+            .createHash('sha256')
+            .update(JSON.stringify({ postId, text: 'I can foster this dog!', mediaIds: [] }))
+            .digest('hex'),
+          mediaData: undefined,
+        }),
+      );
     });
 
     it('allows comment creation on resolved, reunited, adopted, and sold post statuses', async () => {
@@ -157,7 +160,7 @@ describe('CommentsService', () => {
     });
 
     it('returns original result on identical retry with same clientRequestId and payload', async () => {
-      const payload = { postId, text: 'I can foster this dog!' };
+      const payload = { postId, text: 'I can foster this dog!', mediaIds: [] };
       const hash = crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
 
       mockCommentsRepo.findIdempotencyRecord.mockResolvedValueOnce({

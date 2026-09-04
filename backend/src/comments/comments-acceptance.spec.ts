@@ -1,14 +1,18 @@
-import { CommentsResolver } from './comments.resolver';
+import * as crypto from 'crypto';
+import { CommentsResolver, CommentMediaResolver } from './comments.resolver';
 import { CommentsService } from './comments.service';
 import { CommentsRepository } from './comments.repository';
 import { PostsRepository } from '../posts/posts.repository';
-import { Comment, Post } from '../database/schema';
-import { ValidationError, NotFoundError, ForbiddenError } from '../common/errors/app.errors';
+import { Comment, Post, CommentMedia } from '../database/schema';
+import { ValidationError, NotFoundError, ForbiddenError, AppError } from '../common/errors/app.errors';
 import { CommentCursorPayload } from './dto/comments-query.input';
+import { UploadService } from '../upload/upload.service';
+import { ConfigService } from '@nestjs/config';
 import type { GqlContext } from '../common/types/gql-context.type';
 
 describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
   let resolver: CommentsResolver;
+  let mediaResolver: CommentMediaResolver;
   let service: CommentsService;
   let mockCommentsRepo: {
     findIdempotencyRecord: jest.Mock;
@@ -24,9 +28,19 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
     pinComment: jest.Mock;
     unpinComment: jest.Mock;
     isCommentPinned: jest.Mock;
+    findMediaByCommentId: jest.Mock;
   };
   let mockPostsRepo: {
     findById: jest.Mock;
+  };
+  let mockUploadService: {
+    requestCommentImageUploadUrl: jest.Mock;
+    finalizeCommentImage: jest.Mock;
+    deleteObject: jest.Mock;
+    markMediaFailed: jest.Mock;
+  };
+  let mockConfigService: {
+    get: jest.Mock;
   };
   let loadUserMock: jest.Mock;
 
@@ -41,6 +55,35 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
   const otherPostId = '01916327-0000-7000-8000-000000000011';
   const otherPostCommentId = '01916327-0000-7000-8000-000000000022';
   const deletedCommentId = '01916327-0000-7000-8000-000000000023';
+  const commentWithMediaId = '01916327-0000-7000-8000-000000000025';
+  const mediaId = '01916327-0000-7000-8000-000000000050';
+
+  const mockCommentMedia: CommentMedia = {
+    id: mediaId,
+    commentId: commentWithMediaId,
+    storageKey: `comments/${commentWithMediaId}/${mediaId}.webp`,
+    sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    width: 320,
+    height: 240,
+    fileSizeBytes: 45000,
+    fileContentType: 'image/webp',
+    displayOrder: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const mockCommentWithMedia: Comment = {
+    id: commentWithMediaId,
+    postId,
+    authorId,
+    parentId: null,
+    text: 'Check out this dog photo!',
+    status: 'ACTIVE',
+    replyCount: 0,
+    boostCount: 0,
+    createdAt: new Date('2026-09-04T00:30:00.000Z'),
+    updatedAt: new Date('2026-09-04T00:30:00.000Z'),
+  };
 
   let currentPinnedCommentId: string | null = null;
 
@@ -139,6 +182,11 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
             .fn()
             .mockImplementation((pId: string) => Promise.resolve(pId === postId ? currentPinnedCommentId : null)),
         } as unknown as NonNullable<GqlContext['loaders']['pinnedCommentIdByPostId']>,
+        commentMediaByCommentId: {
+          load: jest
+            .fn()
+            .mockImplementation((cId: string) => Promise.resolve(cId === commentWithMediaId ? [mockCommentMedia] : [])),
+        } as unknown as NonNullable<GqlContext['loaders']['commentMediaByCommentId']>,
       },
     };
   }
@@ -150,10 +198,56 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
       .fn()
       .mockImplementation((id: string) => Promise.resolve({ id, fullName: `User ${id.slice(-4)}` }));
 
+    mockUploadService = {
+      requestCommentImageUploadUrl: jest.fn().mockImplementation(() => {
+        return Promise.resolve({
+          mediaId: '01916327-0000-7000-8000-000000000050',
+          uploadUrl: 'https://r2.example.com/staging/put',
+          expiresAt: new Date(Date.now() + 600_000),
+          maxSizeBytes: 100_000,
+          maxWidth: 480,
+          maxHeight: 480,
+          mimeType: 'image/webp',
+          allowedContentType: 'image/webp',
+        });
+      }),
+      finalizeCommentImage: jest.fn().mockImplementation((mediaId: string, _userId: string, commentId: string) => {
+        return Promise.resolve({
+          id: mediaId,
+          commentId,
+          storageKey: `comments/${commentId}/${mediaId}.webp`,
+          sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+          width: 320,
+          height: 240,
+          fileSizeBytes: 45000,
+          fileContentType: 'image/webp',
+          displayOrder: 0,
+        });
+      }),
+      deleteObject: jest.fn().mockResolvedValue(undefined),
+      markMediaFailed: jest.fn().mockResolvedValue(undefined),
+    };
+
+    mockConfigService = {
+      get: jest.fn().mockImplementation((key: string) => {
+        if (key === 'COMMENT_MEDIA_CDN_BASE') return 'https://cdn.pupzy.net';
+        if (key === 'COMMENT_IMAGES_ENABLED') return 'true';
+        return undefined;
+      }),
+    };
+
     mockCommentsRepo = {
       findIdempotencyRecord: jest.fn().mockResolvedValue(null),
       countRecentCreationsByAuthor: jest.fn().mockResolvedValue(0),
-      createCommentWithCounter: jest.fn().mockResolvedValue(mockTopLevelComment),
+      createCommentWithCounter: jest.fn().mockImplementation((data: { commentId?: string; mediaData?: unknown }) => {
+        if (data.mediaData) {
+          return Promise.resolve({
+            ...mockCommentWithMedia,
+            id: data.commentId ?? commentWithMediaId,
+          });
+        }
+        return Promise.resolve(mockTopLevelComment);
+      }),
       findTopLevelCommentsByPostId: jest
         .fn()
         .mockImplementation((targetPostId: string, limit: number, sort: string, cursor?: CommentCursorPayload) => {
@@ -180,6 +274,7 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
         if (id === replyId) return Promise.resolve(mockReplyComment);
         if (id === otherPostCommentId) return Promise.resolve(mockOtherPostComment);
         if (id === deletedCommentId) return Promise.resolve(mockDeletedComment);
+        if (id === commentWithMediaId) return Promise.resolve(mockCommentWithMedia);
         return Promise.resolve(null);
       }),
       createReplyWithCounters: jest.fn().mockResolvedValue(mockReplyComment),
@@ -192,7 +287,9 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
               ? mockSecondComment
               : targetId === replyId
                 ? mockReplyComment
-                : null;
+                : targetId === commentWithMediaId
+                  ? mockCommentWithMedia
+                  : null;
         if (!item) throw new NotFoundError('Comment', targetId);
         if (item.authorId !== callerId) throw new ForbiddenError('You can only delete your own comments or replies');
         if (currentPinnedCommentId === targetId) {
@@ -239,6 +336,10 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
       isCommentPinned: jest.fn().mockImplementation((targetPostId: string, targetCommentId: string) => {
         return Promise.resolve(currentPinnedCommentId === targetCommentId);
       }),
+      findMediaByCommentId: jest.fn().mockImplementation((cId: string) => {
+        if (cId === commentWithMediaId) return Promise.resolve([mockCommentMedia]);
+        return Promise.resolve([]);
+      }),
     };
 
     mockPostsRepo = {
@@ -252,9 +353,12 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
     service = new CommentsService(
       mockCommentsRepo as unknown as CommentsRepository,
       mockPostsRepo as unknown as PostsRepository,
+      mockUploadService as unknown as UploadService,
+      mockConfigService as unknown as ConfigService,
     );
 
     resolver = new CommentsResolver(service);
+    mediaResolver = new CommentMediaResolver(service);
   });
 
   describe('1. Nesting Rejection', () => {
@@ -767,6 +871,301 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
 
         // Exactly one is true (exclusive OR)
         expect(isComment1Pinned !== isComment2Pinned).toBe(true);
+      });
+    });
+  });
+
+  describe('10. One Verified Image on a Comment Acceptance (Ticket 06)', () => {
+    describe('Dedicated Additive Upload Mutation & Constraints', () => {
+      it('returns opaque mediaId, presigned PUT URL, expiry, and authoritative constraints', async () => {
+        const ctx = createContext(authorId);
+        const ticket = await resolver.requestCommentImageUploadUrl(
+          {
+            contentType: 'image/webp',
+            fileSizeBytes: 50000,
+          },
+          ctx,
+        );
+
+        expect(ticket).toBeDefined();
+        expect(ticket.mediaId).toBe('01916327-0000-7000-8000-000000000050');
+        expect(ticket.uploadUrl).toBe('https://r2.example.com/staging/put');
+        expect(ticket.maxSizeBytes).toBe(100000);
+        expect(ticket.maxWidth).toBe(480);
+        expect(ticket.maxHeight).toBe(480);
+        expect(ticket.mimeType).toBe('image/webp');
+      });
+
+      it('rejects upload ticket request for non-webp content type with COMMENT_MEDIA_INVALID_FORMAT', async () => {
+        const ctx = createContext(authorId);
+        await expect(
+          resolver.requestCommentImageUploadUrl(
+            {
+              contentType: 'image/jpeg',
+              fileSizeBytes: 50000,
+            },
+            ctx,
+          ),
+        ).rejects.toThrow('Only static WebP images are allowed');
+      });
+
+      it('rejects upload ticket request exceeding 100,000 bytes with COMMENT_MEDIA_TOO_LARGE', async () => {
+        const ctx = createContext(authorId);
+        await expect(
+          resolver.requestCommentImageUploadUrl(
+            {
+              contentType: 'image/webp',
+              fileSizeBytes: 100001,
+            },
+            ctx,
+          ),
+        ).rejects.toThrow('File size exceeds 100,000 bytes');
+      });
+    });
+
+    describe('Kill Switch (COMMENT_IMAGES_ENABLED=false)', () => {
+      it('blocks new comment image tickets while text comments and reads continue working', async () => {
+        const ctx = createContext(authorId);
+
+        // Turn off kill switch
+        mockUploadService.requestCommentImageUploadUrl.mockRejectedValueOnce(
+          new AppError('Comment images are currently disabled', 'COMMENT_IMAGES_DISABLED'),
+        );
+
+        await expect(
+          resolver.requestCommentImageUploadUrl(
+            {
+              contentType: 'image/webp',
+              fileSizeBytes: 50000,
+            },
+            ctx,
+          ),
+        ).rejects.toThrow('Comment images are currently disabled');
+
+        // Text comments still work!
+        const textComment = await resolver.createComment(
+          {
+            clientRequestId: 'req-text-during-killswitch',
+            postId,
+            text: 'Text comments continue to work even when images are disabled',
+          },
+          ctx,
+        );
+        expect(textComment).toBeDefined();
+        expect(textComment.text).toBe(mockTopLevelComment.text);
+
+        // Comment queries still work!
+        const list = await resolver.comments(postId, 'NEWEST', 10);
+        expect(list.edges.length).toBeGreaterThan(0);
+      });
+    });
+
+    describe('Single Image Limit & Mandatory Text', () => {
+      it('allows publishing a comment with 0 media IDs', async () => {
+        const ctx = createContext(authorId);
+        const result = await resolver.createComment(
+          {
+            clientRequestId: 'req-no-media',
+            postId,
+            text: 'Comment with no media',
+            mediaIds: [],
+          },
+          ctx,
+        );
+        expect(result).toBeDefined();
+      });
+
+      it('allows publishing a comment with 1 valid media ID', async () => {
+        const ctx = createContext(authorId);
+        const result = await resolver.createComment(
+          {
+            clientRequestId: 'req-one-media',
+            postId,
+            text: 'Comment with 1 media item',
+            mediaIds: [mediaId],
+          },
+          ctx,
+        );
+        expect(result).toBeDefined();
+        expect(mockUploadService.finalizeCommentImage).toHaveBeenCalledWith(mediaId, authorId, expect.any(String));
+      });
+
+      it('rejects publishing a comment with more than 1 media ID in this slice', async () => {
+        const ctx = createContext(authorId);
+        await expect(
+          resolver.createComment(
+            {
+              clientRequestId: 'req-too-many-media',
+              postId,
+              text: 'Comment with 2 media items',
+              mediaIds: [mediaId, '01916327-0000-7000-8000-000000000051'],
+            },
+            ctx,
+          ),
+        ).rejects.toThrow('Maximum 1 image allowed per comment in this version');
+      });
+
+      it('rejects duplicate media IDs', async () => {
+        const ctx = createContext(authorId);
+        await expect(
+          resolver.createComment(
+            {
+              clientRequestId: 'req-duplicate-media',
+              postId,
+              text: 'Comment with duplicate media',
+              mediaIds: [mediaId, mediaId],
+            },
+            ctx,
+          ),
+        ).rejects.toThrow();
+      });
+
+      it('still requires non-empty text when attaching an image', async () => {
+        const ctx = createContext(authorId);
+        await expect(
+          resolver.createComment(
+            {
+              clientRequestId: 'req-empty-text-with-image',
+              postId,
+              text: '   ',
+              mediaIds: [mediaId],
+            },
+            ctx,
+          ),
+        ).rejects.toThrow('Comment text cannot be empty');
+      });
+    });
+
+    describe('Safe Error Propagation & Staged Object Deletion', () => {
+      it('propagates safe error when uploadService rejects invalid image format', async () => {
+        const ctx = createContext(authorId);
+        mockUploadService.finalizeCommentImage.mockRejectedValueOnce(
+          new AppError('Invalid image format', 'COMMENT_MEDIA_INVALID_FORMAT'),
+        );
+
+        await expect(
+          resolver.createComment(
+            {
+              clientRequestId: 'req-invalid-format',
+              postId,
+              text: 'Trying corrupt image',
+              mediaIds: [mediaId],
+            },
+            ctx,
+          ),
+        ).rejects.toThrow(AppError);
+      });
+
+      it('propagates COMMENT_MEDIA_NOT_AVAILABLE for unavailable / expired / wrong user media', async () => {
+        const ctx = createContext(authorId);
+        mockUploadService.finalizeCommentImage.mockRejectedValueOnce(
+          new AppError('Media is not available', 'COMMENT_MEDIA_NOT_AVAILABLE'),
+        );
+
+        await expect(
+          resolver.createComment(
+            {
+              clientRequestId: 'req-not-available',
+              postId,
+              text: 'Trying unavailable media',
+              mediaIds: [mediaId],
+            },
+            ctx,
+          ),
+        ).rejects.toThrow('Media is not available');
+      });
+
+      it('rolls back staged object from R2 if database insert fails', async () => {
+        const ctx = createContext(authorId);
+        mockCommentsRepo.createCommentWithCounter.mockRejectedValueOnce(new Error('DB transaction error'));
+
+        await expect(
+          resolver.createComment(
+            {
+              clientRequestId: 'req-db-fail',
+              postId,
+              text: 'Failing DB insert',
+              mediaIds: [mediaId],
+            },
+            ctx,
+          ),
+        ).rejects.toThrow('DB transaction error');
+
+        expect(mockUploadService.deleteObject).toHaveBeenCalledWith(
+          expect.stringMatching(new RegExp(`^comments/[^/]+/${mediaId}\\.webp$`)),
+        );
+      });
+    });
+
+    describe('Dynamic Public URL Resolution & R2 Operational Override', () => {
+      it('resolves publicUrl using default COMMENT_MEDIA_CDN_BASE', () => {
+        const url = mediaResolver.publicUrl(mockCommentMedia);
+        expect(url).toBe(`https://cdn.pupzy.net/${mockCommentMedia.storageKey}`);
+      });
+
+      it('dynamically adapts when CDN base configuration changes without modifying DB rows', () => {
+        mockConfigService.get.mockImplementation((key: string) => {
+          if (key === 'COMMENT_MEDIA_CDN_BASE') return 'https://fallback-cdn.pupzy.net';
+          return undefined;
+        });
+
+        const url = mediaResolver.publicUrl(mockCommentMedia);
+        expect(url).toBe(`https://fallback-cdn.pupzy.net/${mockCommentMedia.storageKey}`);
+      });
+    });
+
+    describe('Tombstone Privacy & Moderation', () => {
+      it('returns empty media array when comment status is DELETED (tombstone)', async () => {
+        const ctx = createContext(authorId);
+        const media = await resolver.media(mockDeletedComment, ctx);
+        expect(media).toEqual([]);
+      });
+
+      it('resolves media for ACTIVE comment', async () => {
+        const ctx = createContext(authorId);
+        const media = await resolver.media(mockCommentWithMedia, ctx);
+        expect(media).toHaveLength(1);
+        expect(media[0].id).toBe(mediaId);
+      });
+    });
+
+    describe('Durable Idempotency with Media', () => {
+      it('replays identical response on retry with same clientRequestId and mediaIds', async () => {
+        const ctx = createContext(authorId);
+        const hash = crypto
+          .createHash('sha256')
+          .update(
+            JSON.stringify({
+              postId,
+              text: 'Check out this dog photo!',
+              mediaIds: [mediaId],
+            }),
+          )
+          .digest('hex');
+
+        mockCommentsRepo.findIdempotencyRecord.mockResolvedValueOnce({
+          id: 'idem-media-1',
+          authorId,
+          clientRequestId: 'req-idem-media',
+          requestHash: hash,
+          commentId: commentWithMediaId,
+          responsePayload: mockCommentWithMedia,
+          createdAt: new Date(),
+        });
+
+        const result = await resolver.createComment(
+          {
+            clientRequestId: 'req-idem-media',
+            postId,
+            text: 'Check out this dog photo!',
+            mediaIds: [mediaId],
+          },
+          ctx,
+        );
+
+        expect(result.id).toBe(commentWithMediaId);
+        // Does NOT re-finalize media on replay
+        expect(mockUploadService.finalizeCommentImage).not.toHaveBeenCalled();
       });
     });
   });

@@ -85,15 +85,33 @@ export function validateCreateCommentInput(rawInput: unknown): CreateCommentDto 
   // Validate text
   const text = validateCommentText(input.text);
 
-  // Validate mediaIds (no media supported in this ticket)
-  if (Array.isArray(input.mediaIds) && input.mediaIds.length > 0) {
-    throw new ValidationError('Comment media is not supported in this version');
+  // Validate mediaIds (at most 1 image supported in Ticket 06)
+  let mediaIds: string[] | undefined;
+  if (input.mediaIds !== undefined && input.mediaIds !== null) {
+    if (!Array.isArray(input.mediaIds)) {
+      throw new ValidationError('mediaIds must be an array');
+    }
+    if (input.mediaIds.length > 1) {
+      throw new ValidationError('Maximum 1 image allowed per comment in this version');
+    }
+    const seen = new Set<string>();
+    for (const id of input.mediaIds) {
+      if (typeof id !== 'string') {
+        throw new ValidationError('Each mediaId must be a string');
+      }
+      assertUuid(id, 'mediaId');
+      if (seen.has(id)) {
+        throw new ValidationError('Duplicate media IDs are not allowed');
+      }
+      seen.add(id);
+    }
+    mediaIds = input.mediaIds as string[];
   }
 
   return {
     clientRequestId,
     postId,
     text,
-    mediaIds: input.mediaIds as string[] | undefined,
+    mediaIds,
   };
 }

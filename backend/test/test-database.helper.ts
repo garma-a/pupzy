@@ -59,6 +59,7 @@ export class TestDatabaseHelper {
         post_pins,
         comment_boosts,
         comment_idempotency,
+        comment_media,
         comments
       CASCADE;
     `);

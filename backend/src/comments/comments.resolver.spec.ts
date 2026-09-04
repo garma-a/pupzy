@@ -1,6 +1,6 @@
-import { CommentsResolver } from './comments.resolver';
+import { CommentsResolver, CommentMediaResolver } from './comments.resolver';
 import { CommentsService } from './comments.service';
-import { Comment } from '../database/schema';
+import { Comment, CommentMedia } from '../database/schema';
 import type { GqlContext } from '../common/types/gql-context.type';
 
 describe('CommentsResolver', () => {
@@ -267,14 +267,98 @@ describe('CommentsResolver', () => {
     expect(loadPinnedSpy).toHaveBeenCalledWith(mockComment.postId);
   });
 
-  it('resolves isPinned via service fallback when DataLoader is absent', async () => {
-    const noLoaderContext: GqlContext = {
-      ...mockContext,
-      loaders: { ...mockContext.loaders, pinnedCommentIdByPostId: undefined },
+  it('delegates requestCommentImageUploadUrl to service with authenticated userId', async () => {
+    const mockTicket = {
+      mediaId: '01916327-0000-7000-8000-000000000020',
+      uploadUrl: 'https://r2.example.com/put',
+      expiresAt: '2026-09-04T12:00:00.000Z',
+      maxSizeBytes: 100000,
+      maxWidth: 480,
+      maxHeight: 480,
+      mimeType: 'image/webp',
     };
-    (mockCommentsService.isCommentPinned as jest.Mock).mockResolvedValueOnce(true);
-    const isPinned = await resolver.isPinned(mockComment, noLoaderContext);
-    expect(isPinned).toBe(true);
-    expect(mockCommentsService.isCommentPinned).toHaveBeenCalledWith(mockComment.postId, mockComment.id);
+    mockCommentsService.requestCommentImageUploadUrl = jest.fn().mockResolvedValue(mockTicket);
+
+    const result = await resolver.requestCommentImageUploadUrl(
+      {
+        clientRequestId: 'req-upload-1',
+        fileSizeBytes: 50000,
+        width: 300,
+        height: 200,
+        contentType: 'image/webp',
+      },
+      mockContext,
+    );
+
+    expect(result).toEqual(mockTicket);
+    expect(mockCommentsService.requestCommentImageUploadUrl).toHaveBeenCalledWith(userId, {
+      contentType: 'image/webp',
+      fileSizeBytes: 50000,
+    });
+  });
+
+  describe('media field resolver', () => {
+    const mockMediaList = [
+      {
+        id: '01916327-0000-7000-8000-000000000030',
+        commentId: mockComment.id,
+        storageKey: 'comments/1/2.webp',
+        sha256: 'abc',
+        width: 300,
+        height: 200,
+        fileSizeBytes: 40000,
+        fileContentType: 'image/webp',
+        displayOrder: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+
+    it('returns empty array when comment status is not ACTIVE (e.g. DELETED tombstone)', async () => {
+      const deletedComment = { ...mockComment, status: 'DELETED' as const };
+      const media = await resolver.media(deletedComment, mockContext);
+      expect(media).toEqual([]);
+    });
+
+    it('returns media via DataLoader when present', async () => {
+      const loaderMock = jest.fn().mockResolvedValue(mockMediaList);
+      const ctxWithLoader: GqlContext = {
+        ...mockContext,
+        loaders: {
+          ...mockContext.loaders,
+          commentMediaByCommentId: { load: loaderMock } as unknown as NonNullable<
+            GqlContext['loaders']['commentMediaByCommentId']
+          >,
+        },
+      };
+
+      const media = await resolver.media(mockComment, ctxWithLoader);
+      expect(media).toEqual(mockMediaList);
+      expect(loaderMock).toHaveBeenCalledWith(mockComment.id);
+    });
+
+    it('falls back to service when DataLoader is absent', async () => {
+      mockCommentsService.getCommentMedia = jest.fn().mockResolvedValue(mockMediaList);
+      const media = await resolver.media(mockComment, mockContext);
+      expect(media).toEqual(mockMediaList);
+      expect(mockCommentsService.getCommentMedia).toHaveBeenCalledWith(mockComment.id);
+    });
+  });
+});
+
+describe('CommentMediaResolver', () => {
+  it('resolves publicUrl using commentsService.getCommentMediaPublicUrl', () => {
+    const mockCommentsService = {
+      getCommentMediaPublicUrl: jest.fn().mockReturnValue('https://cdn.pupzy.net/comments/1/2.webp'),
+    };
+    const mediaResolver = new CommentMediaResolver(mockCommentsService as unknown as CommentsService);
+
+    const result = mediaResolver.publicUrl({
+      id: '01916327-0000-7000-8000-000000000030',
+      storageKey: 'comments/1/2.webp',
+    } as unknown as CommentMedia);
+
+    expect(result).toBe('https://cdn.pupzy.net/comments/1/2.webp');
+    expect(mockCommentsService.getCommentMediaPublicUrl).toHaveBeenCalledWith('comments/1/2.webp');
   });
 });

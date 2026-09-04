@@ -105,6 +105,52 @@ describe('Comments GraphQL Schema Contract (Additive & Backward Compatibility)',
     expect(mutationFields).toContain('toggleCommentBoost');
     expect(mutationFields).toContain('pinComment');
     expect(mutationFields).toContain('unpinComment');
+    expect(mutationFields).toContain('requestCommentImageUploadUrl');
+  });
+
+  it('verifies CommentMedia, CommentImageUploadTicket, and Comment.media (Ticket 06)', () => {
+    const source = fs.readFileSync(COMMENTS_GRAPHQL_FILE, 'utf8');
+    const doc = parse(source);
+
+    const commentMedia = doc.definitions.find(
+      (d): d is ObjectTypeDefinitionNode => d.kind === Kind.OBJECT_TYPE_DEFINITION && d.name.value === 'CommentMedia',
+    );
+    expect(commentMedia).toBeDefined();
+    const mediaFieldNames = commentMedia!.fields?.map((f) => f.name.value) ?? [];
+    expect(mediaFieldNames).toContain('id');
+    expect(mediaFieldNames).toContain('publicUrl');
+    expect(mediaFieldNames).toContain('width');
+    expect(mediaFieldNames).toContain('height');
+    expect(mediaFieldNames).toContain('displayOrder');
+
+    const commentType = doc.definitions.find(
+      (d): d is ObjectTypeDefinitionNode => d.kind === Kind.OBJECT_TYPE_DEFINITION && d.name.value === 'Comment',
+    );
+    const mediaField = commentType!.fields?.find((f) => f.name.value === 'media');
+    expect(mediaField).toBeDefined();
+
+    const ticketType = doc.definitions.find(
+      (d): d is ObjectTypeDefinitionNode =>
+        d.kind === Kind.OBJECT_TYPE_DEFINITION && d.name.value === 'CommentImageUploadTicket',
+    );
+    expect(ticketType).toBeDefined();
+    const ticketFieldNames = ticketType!.fields?.map((f) => f.name.value) ?? [];
+    expect(ticketFieldNames).toContain('mediaId');
+    expect(ticketFieldNames).toContain('uploadUrl');
+    expect(ticketFieldNames).toContain('expiresAt');
+    expect(ticketFieldNames).toContain('maxSizeBytes');
+    expect(ticketFieldNames).toContain('maxWidth');
+    expect(ticketFieldNames).toContain('maxHeight');
+    expect(ticketFieldNames).toContain('allowedContentType');
+
+    const inputType = doc.definitions.find(
+      (d): d is InputObjectTypeDefinitionNode =>
+        d.kind === Kind.INPUT_OBJECT_TYPE_DEFINITION && d.name.value === 'RequestCommentImageUploadInput',
+    );
+    expect(inputType).toBeDefined();
+    const inputFieldNames = inputType!.fields?.map((f) => f.name.value) ?? [];
+    expect(inputFieldNames).toContain('contentType');
+    expect(inputFieldNames).toContain('fileSizeBytes');
   });
 
   it('ensures Post in posts.graphql includes additive commentCount: Int!', () => {

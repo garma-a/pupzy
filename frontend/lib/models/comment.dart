@@ -30,6 +30,39 @@ class CommentAuthor {
   }
 }
 
+/// Attached media for a Comment.
+class CommentMedia {
+  final String id;
+  final String publicUrl;
+  final int width;
+  final int height;
+  final int displayOrder;
+
+  const CommentMedia({
+    required this.id,
+    required this.publicUrl,
+    required this.width,
+    required this.height,
+    required this.displayOrder,
+  });
+
+  factory CommentMedia.fromJson(Map<String, dynamic> json) => CommentMedia(
+        id: json['id'] as String,
+        publicUrl: json['publicUrl'] as String,
+        width: json['width'] as int? ?? 0,
+        height: json['height'] as int? ?? 0,
+        displayOrder: json['displayOrder'] as int? ?? 0,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'publicUrl': publicUrl,
+        'width': width,
+        'height': height,
+        'displayOrder': displayOrder,
+      };
+}
+
 /// A discussion Comment or Reply on a Post.
 class Comment {
   final String id;
@@ -42,6 +75,7 @@ class Comment {
   final int boostCount;
   final bool isBoostedByMe;
   final bool isPinned;
+  final List<CommentMedia> media;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -56,6 +90,7 @@ class Comment {
     this.boostCount = 0,
     this.isBoostedByMe = false,
     this.isPinned = false,
+    this.media = const [],
     required this.createdAt,
     required this.updatedAt,
   });
@@ -76,6 +111,10 @@ class Comment {
         boostCount: json['boostCount'] as int? ?? 0,
         isBoostedByMe: json['isBoostedByMe'] as bool? ?? false,
         isPinned: json['isPinned'] as bool? ?? false,
+        media: (json['media'] as List<dynamic>?)
+                ?.map((e) => CommentMedia.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            const [],
         createdAt: DateTime.parse(json['createdAt'] as String),
         updatedAt: DateTime.parse(json['updatedAt'] as String),
       );
@@ -91,6 +130,7 @@ class Comment {
     int? boostCount,
     bool? isBoostedByMe,
     bool? isPinned,
+    List<CommentMedia>? media,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -105,6 +145,7 @@ class Comment {
       boostCount: boostCount ?? this.boostCount,
       isBoostedByMe: isBoostedByMe ?? this.isBoostedByMe,
       isPinned: isPinned ?? this.isPinned,
+      media: media ?? this.media,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

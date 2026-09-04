@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
@@ -35,9 +39,13 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
   bool _loading = true;
   bool _loadingMore = false;
   bool _submitting = false;
+  bool _compressing = false;
   String? _errorMessage;
   String? _createErrorMessage;
   String? _currentUserId;
+
+  XFile? _selectedImage;
+  Uint8List? _compressedImageBytes;
 
   final List<Comment> _comments = [];
   String? _endCursor;
@@ -230,6 +238,8 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     setState(() {
       _replyingToComment = comment;
       _createErrorMessage = null;
+      _selectedImage = null;
+      _compressedImageBytes = null;
     });
   }
 
@@ -237,6 +247,73 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     setState(() {
       _replyingToComment = null;
       _createErrorMessage = null;
+    });
+  }
+
+  Future<void> _pickCommentImage() async {
+    if (_replyingToComment != null) return;
+    setState(() {
+      _compressing = true;
+      _createErrorMessage = null;
+    });
+
+    try {
+      final picker = ImagePicker();
+      // Bounded to 480x480 max per dimension, compressed
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 480,
+        maxHeight: 480,
+        imageQuality: 70,
+      );
+
+      if (picked == null) {
+        if (mounted) setState(() => _compressing = false);
+        return;
+      }
+
+      final bytes = await picked.readAsBytes();
+
+      if (bytes.length > 100000) {
+        if (mounted) {
+          setState(() {
+            _compressing = false;
+            _createErrorMessage = t(
+              context,
+              'Image exceeds 100 KB limit. Please select a smaller or simpler photo.',
+              'حجم الصورة يتجاوز 100 كيلوبايت. يرجى اختيار صورة أصغر أو أبسط.',
+            );
+          });
+        }
+        return;
+      }
+
+      if (mounted) {
+        setState(() {
+          _selectedImage = picked;
+          _compressedImageBytes = bytes;
+          _compressing = false;
+          _createErrorMessage = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _compressing = false;
+          _createErrorMessage = t(
+            context,
+            'Failed to pick or compress image.',
+            'فشل اختيار أو ضغط الصورة.',
+          );
+        });
+      }
+    }
+  }
+
+  void _removeCommentImage() {
+    setState(() {
+      _selectedImage = null;
+      _compressedImageBytes = null;
     });
   }
 
@@ -642,10 +719,52 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
       });
     } else {
       // Create top-level Comment
+      String? mediaId;
+      if (_selectedImage != null && _compressedImageBytes != null) {
+        // 1. Request upload ticket from backend
+        final (ticket, ticketError) = await graphql.requestCommentImageUploadUrl(
+          contentType: 'image/webp',
+          fileSizeBytes: _compressedImageBytes!.length,
+        );
+
+        if (!mounted) return;
+
+        if (ticketError != null || ticket == null) {
+          setState(() {
+            _submitting = false;
+            _createErrorMessage = ticketError ??
+                t(context, 'Failed to prepare image upload.', 'فشل تجهيز رفع الصورة.');
+          });
+          return;
+        }
+
+        // 2. Direct upload to private R2 staging key
+        final uploadUrl = ticket['uploadUrl'] as String;
+        final (uploadOk, uploadError) = await graphql.uploadCommentImageToR2(
+          uploadUrl: uploadUrl,
+          bytes: _compressedImageBytes!,
+          contentType: 'image/webp',
+        );
+
+        if (!mounted) return;
+
+        if (!uploadOk) {
+          setState(() {
+            _submitting = false;
+            _createErrorMessage = uploadError ??
+                t(context, 'Failed to upload image.', 'فشل رفع الصورة.');
+          });
+          return;
+        }
+
+        mediaId = ticket['mediaId'] as String;
+      }
+
       final (createdComment, error) = await graphql.createComment(
         clientRequestId: _currentClientRequestId,
         postId: widget.postId,
         text: trimmed,
+        mediaIds: mediaId != null ? [mediaId] : null,
       );
 
       if (!mounted) return;
@@ -662,6 +781,8 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
       setState(() {
         _submitting = false;
         _createErrorMessage = null;
+        _selectedImage = null;
+        _compressedImageBytes = null;
         final insertIndex = (_comments.isNotEmpty && _comments[0].isPinned) ? 1 : 0;
         _comments.insert(insertIndex, createdComment);
         _textController.clear();
@@ -994,6 +1115,36 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
                           fontStyle: isTombstone ? FontStyle.italic : FontStyle.normal,
                         ),
                   ),
+                  if (!isTombstone && comment.media.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.image),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxHeight: 280,
+                          maxWidth: 320,
+                        ),
+                        child: CachedNetworkImage(
+                          imageUrl: comment.media.first.publicUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (ctx, url) => Container(
+                            height: 160,
+                            color: AppColors.background,
+                            child: const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                          errorWidget: (ctx, url, error) => Container(
+                            height: 120,
+                            color: AppColors.background,
+                            child: const Center(
+                              child: Icon(Icons.broken_image_outlined, color: AppColors.textMuted),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 6),
 
                   // Action Row: Reply, View Replies & Boost buttons
@@ -1301,9 +1452,69 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
               ),
             ],
 
+            // Image preview above input row if selected
+            if (_selectedImage != null && _compressedImageBytes != null && !isReplying) ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: Row(
+                  children: [
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.image),
+                          child: Image.memory(
+                            _compressedImageBytes!,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: GestureDetector(
+                            onTap: _removeCommentImage,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.close, size: 14, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      '${(_compressedImageBytes!.length / 1024).toStringAsFixed(1)} KB (WebP)',
+                      style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             // Input Row
             Row(
               children: [
+                if (!isReplying) ...[
+                  IconButton(
+                    onPressed: _submitting || _compressing ? null : _pickCommentImage,
+                    icon: _compressing
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(
+                            _selectedImage != null ? Icons.photo : Icons.photo_outlined,
+                            color: _selectedImage != null ? AppColors.primary : AppColors.textMuted,
+                          ),
+                    tooltip: t(context, 'Attach Image', 'إرفاق صورة'),
+                  ),
+                ],
                 Expanded(
                   child: TextField(
                     controller: _textController,

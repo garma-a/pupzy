@@ -521,6 +521,13 @@ class GraphQLService {
             isPinned
             createdAt
             updatedAt
+            media {
+              id
+              publicUrl
+              width
+              height
+              displayOrder
+            }
             author {
               id
               fullName
@@ -555,6 +562,13 @@ class GraphQLService {
             isPinned
             createdAt
             updatedAt
+            media {
+              id
+              publicUrl
+              width
+              height
+              displayOrder
+            }
             author {
               id
               fullName
@@ -587,6 +601,13 @@ class GraphQLService {
         isPinned
         createdAt
         updatedAt
+        media {
+          id
+          publicUrl
+          width
+          height
+          displayOrder
+        }
         author {
           id
           fullName
@@ -612,6 +633,13 @@ class GraphQLService {
         isPinned
         createdAt
         updatedAt
+        media {
+          id
+          publicUrl
+          width
+          height
+          displayOrder
+        }
         author {
           id
           fullName
@@ -653,6 +681,13 @@ class GraphQLService {
         isPinned
         createdAt
         updatedAt
+        media {
+          id
+          publicUrl
+          width
+          height
+          displayOrder
+        }
         author {
           id
           fullName
@@ -667,6 +702,20 @@ class GraphQLService {
   static const String unpinCommentMutation = r'''
     mutation UnpinComment($postId: ID!) {
       unpinComment(postId: $postId)
+    }
+  ''';
+
+  static const String requestCommentImageUploadUrlMutation = r'''
+    mutation RequestCommentImageUploadUrl($input: RequestCommentImageUploadInput!) {
+      requestCommentImageUploadUrl(input: $input) {
+        mediaId
+        uploadUrl
+        expiresAt
+        maxSizeBytes
+        maxWidth
+        maxHeight
+        mimeType
+      }
     }
   ''';
 
@@ -1865,11 +1914,12 @@ class GraphQLService {
     );
   }
 
-  /// Publishes a text comment on a post with author-scoped durable clientRequestId.
+  /// Publishes a comment on a post with author-scoped durable clientRequestId and optional mediaIds.
   Future<(Comment? comment, String? errorMessage)> createComment({
     required String clientRequestId,
     required String postId,
     required String text,
+    List<String>? mediaIds,
   }) async {
     final result = await client.value.mutate(
       MutationOptions(
@@ -1879,6 +1929,7 @@ class GraphQLService {
             'clientRequestId': clientRequestId,
             'postId': postId,
             'text': text,
+            if (mediaIds != null && mediaIds.isNotEmpty) 'mediaIds': mediaIds,
           },
         },
       ),
@@ -1890,6 +1941,53 @@ class GraphQLService {
     final node = result.data?['createComment'] as Map<String, dynamic>?;
     if (node == null) return (null, null);
     return (Comment.fromJson(node), null);
+  }
+
+  /// Requests a presigned PUT URL and durable upload ticket for a comment image.
+  Future<(Map<String, dynamic>? ticket, String? errorMessage)> requestCommentImageUploadUrl({
+    required String contentType,
+    required int fileSizeBytes,
+  }) async {
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(requestCommentImageUploadUrlMutation),
+        variables: {
+          'input': {
+            'contentType': contentType,
+            'fileSizeBytes': fileSizeBytes,
+          },
+        },
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _serverErrorMessage(result.exception));
+    }
+    final data = result.data?['requestCommentImageUploadUrl'] as Map<String, dynamic>?;
+    return (data, null);
+  }
+
+  /// Directly uploads the raw image bytes to R2 via presigned PUT.
+  Future<(bool success, String? errorMessage)> uploadCommentImageToR2({
+    required String uploadUrl,
+    required List<int> bytes,
+    String contentType = 'image/webp',
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse(uploadUrl),
+        headers: {
+          'Content-Type': contentType,
+        },
+        body: bytes,
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return (true, null);
+      }
+      return (false, 'Upload failed with status ${response.statusCode}');
+    } catch (e) {
+      return (false, 'Network error during upload');
+    }
   }
 
   /// Fetches visible replies for a top-level comment with keyset cursor pagination (oldest first).

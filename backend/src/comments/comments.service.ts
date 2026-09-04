@@ -10,8 +10,12 @@ import {
   decodeCommentCursor,
   encodeCommentCursor,
 } from './dto/comments-query.input';
-import { Comment } from '../database/schema';
+import { Comment, CommentMedia } from '../database/schema';
 import { NotFoundError, ConflictError, AppError, ValidationError } from '../common/errors/app.errors';
+import { UploadService } from '../upload/upload.service';
+import { ConfigService } from '@nestjs/config';
+import { generateUuidV7 } from '../common/utils/generate-uuidv7';
+import { RequestCommentImageUploadDto } from './dto/request-comment-image-upload.input';
 
 export interface CommentEdge {
   node: Comment;
@@ -33,6 +37,8 @@ export class CommentsService {
   constructor(
     private readonly commentsRepository: CommentsRepository,
     private readonly postsRepository: PostsRepository,
+    private readonly uploadService: UploadService,
+    private readonly config: ConfigService,
   ) {}
 
   /**
@@ -62,7 +68,11 @@ export class CommentsService {
     }
 
     // 2. Canonical payload fingerprinting
-    const canonicalPayload = JSON.stringify({ postId, text });
+    const canonicalPayload = JSON.stringify({
+      postId,
+      text,
+      mediaIds: input.mediaIds ?? [],
+    });
     const requestHash = crypto.createHash('sha256').update(canonicalPayload).digest('hex');
 
     // 3. Durable author-scoped idempotency check
@@ -88,14 +98,105 @@ export class CommentsService {
       throw new AppError('Comment creation rate limit exceeded (max 100 per day)', 'RATE_LIMITED');
     }
 
-    // 5. Transactional comment creation + counter update
-    return this.commentsRepository.createCommentWithCounter({
-      postId,
-      authorId: userId,
-      text,
-      clientRequestId,
-      requestHash,
-    });
+    // 5. Finalize staged comment image if attached
+    const commentId = generateUuidV7();
+    let mediaData:
+      | {
+          id: string;
+          storageKey: string;
+          sha256: string;
+          width: number;
+          height: number;
+          fileSizeBytes: number;
+          fileContentType: string;
+          displayOrder: number;
+        }
+      | undefined;
+
+    if (input.mediaIds && input.mediaIds.length > 0) {
+      const mediaId = input.mediaIds[0];
+      const finalized = await this.uploadService.finalizeCommentImage(mediaId, userId, commentId);
+      mediaData = {
+        id: finalized.id,
+        storageKey: finalized.storageKey,
+        sha256: finalized.sha256,
+        width: finalized.width,
+        height: finalized.height,
+        fileSizeBytes: finalized.fileSizeBytes,
+        fileContentType: finalized.fileContentType,
+        displayOrder: finalized.displayOrder,
+      };
+    }
+
+    // 6. Transactional comment creation + counter update + media insert
+    try {
+      return await this.commentsRepository.createCommentWithCounter({
+        commentId,
+        postId,
+        authorId: userId,
+        text,
+        clientRequestId,
+        requestHash,
+        mediaData,
+      });
+    } catch (err) {
+      // Compensate R2 if DB transaction fails
+      if (mediaData) {
+        await this.uploadService.deleteObject(mediaData.storageKey).catch(() => {});
+        await this.uploadService.markMediaFailed([mediaData.id], 'Database transaction failed');
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Delegates ticket issuance to UploadService.
+   */
+  async requestCommentImageUploadUrl(userId: string, input: RequestCommentImageUploadDto) {
+    if (!this.uploadService) {
+      throw new AppError('Upload service is unavailable', 'INTERNAL_ERROR');
+    }
+    const ticket = await this.uploadService.requestCommentImageUploadUrl(userId, input);
+    return {
+      ...ticket,
+      expiresAt: ticket.expiresAt instanceof Date ? ticket.expiresAt.toISOString() : String(ticket.expiresAt),
+      mimeType:
+        (ticket as { mimeType?: string }).mimeType ??
+        (ticket as { allowedContentType?: string }).allowedContentType ??
+        'image/webp',
+    };
+  }
+
+  /**
+   * Resolves configured CDN base URL for public Comment media.
+   * Priority: COMMENT_MEDIA_CDN_BASE -> R2_PUBLIC_URL -> https://cdn.pupzy.net
+   */
+  getMediaBaseUrl(): string {
+    const commentCdnBase = process.env.COMMENT_MEDIA_CDN_BASE || this.config?.get<string>('COMMENT_MEDIA_CDN_BASE');
+    if (commentCdnBase) {
+      return commentCdnBase.replace(/\/+$/, '');
+    }
+    const r2Public = process.env.R2_PUBLIC_URL || this.config?.get<string>('R2_PUBLIC_URL');
+    if (r2Public) {
+      return r2Public.replace(/\/+$/, '');
+    }
+    return 'https://cdn.pupzy.net';
+  }
+
+  /**
+   * Derives safe public URL for Comment media from immutable storageKey and configured base URL.
+   */
+  getCommentMediaPublicUrl(storageKey: string): string {
+    const base = this.getMediaBaseUrl();
+    const cleanKey = storageKey.replace(/^\/+/, '');
+    return `${base}/${cleanKey}`;
+  }
+
+  /**
+   * Fetches media records for a comment.
+   */
+  async getCommentMedia(commentId: string): Promise<CommentMedia[]> {
+    return this.commentsRepository.findMediaByCommentId(commentId);
   }
 
   /**

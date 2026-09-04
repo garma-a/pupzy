@@ -8,15 +8,17 @@ import {
   CopyObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { eq, and, gt, inArray } from 'drizzle-orm';
+import { eq, and, gt, gte, inArray, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import { stagedUploads, type StagedUpload, type StagedUploadPurpose } from '../database/schema';
 import * as schema from '../database/schema';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
-import { NotFoundError } from '../common/errors/app.errors';
+import { NotFoundError, AppError } from '../common/errors/app.errors';
+import { validateCommentImage } from '../comments/validators/comment-image.validator';
 
 /**
  * UploadService — manages media uploads to Cloudflare R2 via presigned URLs.
@@ -387,5 +389,321 @@ export class UploadService {
         updatedAt: new Date(),
       })
       .where(inArray(stagedUploads.id, mediaIds));
+  }
+
+  /**
+   * Generates a presigned Cloudflare R2 upload URL for a Comment image.
+   *
+   * Rate limits: 6/min and 50/day per authenticated user (Postgres-backed).
+   * Kill switch: COMMENT_IMAGES_ENABLED=false rejects ticket issuance.
+   *
+   * Authoritative constraints: static WebP, 100,000 bytes, 480x480 max dimensions.
+   */
+  async requestCommentImageUploadUrl(
+    userId: string,
+    input: { contentType: string; fileSizeBytes: number },
+  ): Promise<{
+    mediaId: string;
+    uploadUrl: string;
+    expiresAt: Date;
+    maxSizeBytes: number;
+    maxWidth: number;
+    maxHeight: number;
+    allowedContentType: string;
+  }> {
+    // 1. Kill switch check
+    const enabled = this.config.get<string | boolean>('COMMENT_IMAGES_ENABLED');
+    if (enabled === false || enabled === 'false') {
+      throw new AppError('Comment images are currently disabled', 'COMMENT_IMAGES_DISABLED');
+    }
+
+    // 2. Validate declared contentType and size
+    if (input.contentType !== 'image/webp') {
+      throw new AppError('Only static WebP images are allowed', 'COMMENT_MEDIA_INVALID_FORMAT');
+    }
+    if (input.fileSizeBytes > 100_000) {
+      throw new AppError('File size exceeds 100,000 bytes', 'COMMENT_MEDIA_TOO_LARGE');
+    }
+
+    const now = new Date();
+
+    // 3. Rate limiting: 6 per minute
+    const oneMinuteAgo = new Date(now.getTime() - 60_000);
+    const [minResult] = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(stagedUploads)
+      .where(
+        and(
+          eq(stagedUploads.userId, userId),
+          eq(stagedUploads.purpose, 'COMMENT_IMAGE'),
+          gte(stagedUploads.createdAt, oneMinuteAgo),
+        ),
+      );
+
+    if ((minResult?.count ?? 0) >= 6) {
+      throw new AppError('Comment image upload rate limit exceeded (max 6 per minute)', 'RATE_LIMITED');
+    }
+
+    // 4. Rate limiting: 50 per day (failed and abandoned count toward it)
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60_000);
+    const [dayResult] = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(stagedUploads)
+      .where(
+        and(
+          eq(stagedUploads.userId, userId),
+          eq(stagedUploads.purpose, 'COMMENT_IMAGE'),
+          gte(stagedUploads.createdAt, oneDayAgo),
+        ),
+      );
+
+    if ((dayResult?.count ?? 0) >= 50) {
+      throw new AppError('Comment image upload daily limit exceeded (max 50 per day)', 'RATE_LIMITED');
+    }
+
+    // 5. Generate ticket and presigned URL
+    const mediaId = generateUuidV7();
+    const stagingKey = `staging/${userId}/${mediaId}.webp`;
+
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: stagingKey,
+      ContentType: 'image/webp',
+      ContentLength: input.fileSizeBytes,
+    });
+
+    const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 600 });
+    const expiresAt = new Date(now.getTime() + 600_000);
+    const ticketExpiresAt = new Date(now.getTime() + 900_000);
+
+    // Commit ticket durably in PostgreSQL BEFORE returning
+    await this.db.insert(stagedUploads).values({
+      id: mediaId,
+      userId,
+      purpose: 'COMMENT_IMAGE',
+      stagingKey,
+      declaredContentType: 'image/webp',
+      declaredFileSizeBytes: input.fileSizeBytes,
+      status: 'ISSUED',
+      expiresAt: ticketExpiresAt,
+    });
+
+    return {
+      mediaId,
+      uploadUrl,
+      expiresAt,
+      maxSizeBytes: 100_000,
+      maxWidth: 480,
+      maxHeight: 480,
+      mimeType: 'image/webp',
+      allowedContentType: 'image/webp',
+    };
+  }
+
+  /**
+   * Validates and finalizes a staged Comment image upload.
+   *
+   * 1. Atomically claims ticket in PostgreSQL (owner and COMMENT_IMAGE purpose bound).
+   * 2. Reads raw staged object bytes from R2 stagingKey.
+   * 3. Performs strict binary WebP validation:
+   *    - WebP signature, single-frame static, stripped metadata (no EXIF/XMP), dimensions <= 480x480, size <= 100,000 bytes.
+   *    - Deletes invalid staged object from R2 immediately on validation failure.
+   * 4. Copies object to `comments/{commentId}/{mediaId}.webp`.
+   * 5. Deletes staging object from R2.
+   * 6. Returns finalized media descriptor.
+   */
+  async finalizeCommentImage(
+    mediaId: string,
+    userId: string,
+    commentId: string,
+  ): Promise<{
+    id: string;
+    commentId: string;
+    storageKey: string;
+    sha256: string;
+    width: number;
+    height: number;
+    fileSizeBytes: number;
+    fileContentType: string;
+    displayOrder: number;
+  }> {
+    const [ticket] = await this.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId)).limit(1);
+
+    if (!ticket || ticket.userId !== userId || ticket.purpose !== 'COMMENT_IMAGE') {
+      throw new AppError('Media is not available', 'COMMENT_MEDIA_NOT_AVAILABLE', {
+        mediaPosition: 0,
+        retryable: false,
+      });
+    }
+
+    if (ticket.status === 'FINALIZED' || ticket.status === 'CLAIMED') {
+      throw new AppError('Media has already been used', 'COMMENT_MEDIA_ALREADY_USED', {
+        mediaPosition: 0,
+        retryable: false,
+      });
+    }
+
+    if (ticket.status === 'FAILED' || ticket.expiresAt.getTime() <= Date.now()) {
+      throw new AppError('Media is not available', 'COMMENT_MEDIA_NOT_AVAILABLE', {
+        mediaPosition: 0,
+        retryable: false,
+      });
+    }
+
+    // Atomically claim ticket in DB
+    const [claimed] = await this.db
+      .update(stagedUploads)
+      .set({ status: 'CLAIMED', updatedAt: new Date() })
+      .where(
+        and(
+          eq(stagedUploads.id, mediaId),
+          eq(stagedUploads.userId, userId),
+          eq(stagedUploads.purpose, 'COMMENT_IMAGE'),
+          eq(stagedUploads.status, 'ISSUED'),
+          gt(stagedUploads.expiresAt, new Date()),
+        ),
+      )
+      .returning();
+
+    if (!claimed) {
+      throw new AppError('Media has already been used', 'COMMENT_MEDIA_ALREADY_USED', {
+        mediaPosition: 0,
+        retryable: false,
+      });
+    }
+
+    // Download staged object from R2
+    let objectBytes: Buffer;
+    try {
+      const response = await this.s3Client.send(
+        new GetObjectCommand({
+          Bucket: this.bucketName,
+          Key: ticket.stagingKey,
+        }),
+      );
+      if (!response.Body) {
+        throw new Error('Empty body from storage');
+      }
+      const byteArray = await response.Body.transformToByteArray();
+      objectBytes = Buffer.from(byteArray);
+    } catch (err: unknown) {
+      const s3Err = err as { name?: string; $metadata?: { httpStatusCode?: number } };
+      if (s3Err?.name === 'NoSuchKey' || s3Err?.$metadata?.httpStatusCode === 404) {
+        await this.db
+          .update(stagedUploads)
+          .set({ status: 'FAILED', errorMessage: 'Staged object not found in R2', updatedAt: new Date() })
+          .where(eq(stagedUploads.id, mediaId));
+        throw new AppError('Media is not available', 'COMMENT_MEDIA_NOT_AVAILABLE', {
+          mediaPosition: 0,
+          retryable: false,
+        });
+      }
+      // Transient error: reset ticket to ISSUED so user can retry
+      await this.db
+        .update(stagedUploads)
+        .set({ status: 'ISSUED', updatedAt: new Date() })
+        .where(eq(stagedUploads.id, mediaId));
+      this.logger.error(
+        `Transient error fetching staged object ${ticket.stagingKey}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      throw new AppError('Failed to process staged media', 'COMMENT_MEDIA_PROCESSING_FAILED', {
+        mediaPosition: 0,
+        retryable: true,
+      });
+    }
+
+    // Validate byte size and binary WebP format
+    if (objectBytes.length > 100_000) {
+      await this.s3Client
+        .send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: ticket.stagingKey }))
+        .catch(() => {});
+      await this.db
+        .update(stagedUploads)
+        .set({ status: 'FAILED', errorMessage: 'File size exceeds 100,000 bytes', updatedAt: new Date() })
+        .where(eq(stagedUploads.id, mediaId));
+      throw new AppError('File size exceeds 100,000 bytes', 'COMMENT_MEDIA_TOO_LARGE', {
+        mediaPosition: 0,
+        retryable: false,
+      });
+    }
+
+    let validated: ReturnType<typeof validateCommentImage>;
+    try {
+      validated = validateCommentImage(objectBytes);
+    } catch (err) {
+      // Immediate deletion of invalid staged object
+      await this.s3Client
+        .send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: ticket.stagingKey }))
+        .catch(() => {});
+      await this.db
+        .update(stagedUploads)
+        .set({
+          status: 'FAILED',
+          errorMessage: err instanceof Error ? err.message : String(err),
+          updatedAt: new Date(),
+        })
+        .where(eq(stagedUploads.id, mediaId));
+      if (err instanceof AppError) {
+        throw new AppError(err.message, err.code, { mediaPosition: 0, retryable: false });
+      }
+      throw new AppError('Invalid image format', 'COMMENT_MEDIA_INVALID_FORMAT', {
+        mediaPosition: 0,
+        retryable: false,
+      });
+    }
+
+    // Copy to final location
+    const finalStorageKey = `comments/${commentId}/${mediaId}.webp`;
+    try {
+      await this.s3Client.send(
+        new CopyObjectCommand({
+          Bucket: this.bucketName,
+          CopySource: `${this.bucketName}/${ticket.stagingKey}`,
+          Key: finalStorageKey,
+        }),
+      );
+    } catch (err) {
+      await this.db
+        .update(stagedUploads)
+        .set({ status: 'ISSUED', updatedAt: new Date() })
+        .where(eq(stagedUploads.id, mediaId));
+      this.logger.error(
+        `Transient error copying staged object ${ticket.stagingKey} to ${finalStorageKey}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      throw new AppError('Failed to finalize media in storage', 'COMMENT_MEDIA_PROCESSING_FAILED', {
+        mediaPosition: 0,
+        retryable: true,
+      });
+    }
+
+    // Clean up staging object
+    await this.s3Client
+      .send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: ticket.stagingKey }))
+      .catch((err) => {
+        this.logger.warn(`Failed to delete staging object ${ticket.stagingKey} after copy: ${err}`);
+      });
+
+    return {
+      id: mediaId,
+      commentId,
+      storageKey: finalStorageKey,
+      sha256: validated.sha256,
+      width: validated.width,
+      height: validated.height,
+      fileSizeBytes: validated.fileSizeBytes,
+      fileContentType: 'image/webp',
+      displayOrder: 0,
+    };
+  }
+
+  /**
+   * Deletes an object from R2 (e.g. for rollback on DB failure).
+   */
+  async deleteObject(key: string): Promise<void> {
+    try {
+      await this.s3Client.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: key }));
+    } catch (err) {
+      this.logger.warn(`Failed to delete object ${key}: ${err}`);
+    }
   }
 }
