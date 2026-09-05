@@ -590,7 +590,53 @@ export class UploadService {
    *    - Copies objects to `comments/{commentId}/{mediaId}.webp`.
    *    - Returns finalized descriptors (including stagingKey for post-commit cleanup).
    */
-  async finalizeCommentImages(mediaIds: string[], userId: string, commentId: string): Promise<FinalizedCommentMedia[]> {
+  /**
+   * Enqueues durable media deletion work in media_deletion_work.
+   * For final comment media, queues all configured CDN purge URLs.
+   * For staging objects, queues with empty cdnUrl (storage deletion only).
+   */
+  async queueMediaDeletion(storageKey: string, cdnUrl?: string): Promise<void> {
+    const purgeUrls = cdnUrl ? [cdnUrl] : storageKey.startsWith('comments/') ? this.getPurgeCdnUrls(storageKey) : [''];
+
+    for (const url of purgeUrls) {
+      await this.db
+        .insert(schema.mediaDeletionWork)
+        .values({
+          storageKey,
+          cdnUrl: url,
+          status: 'PENDING',
+          attempts: 0,
+        })
+        .catch((err) => {
+          this.logger.error(`Failed to enqueue media_deletion_work for ${storageKey}: ${err}`);
+        });
+    }
+  }
+
+  /**
+   * Validates and finalizes up to 2 staged Comment image uploads.
+   *
+   * 1. Validates all images outside DB transaction:
+   *    - Checks ownership, COMMENT_IMAGE purpose, non-expiry, single-use.
+   *    - Fetches bytes from R2 stagingKey.
+   *    - Strict WebP binary validation (<=100KB, <=480x480, single-frame static, stripped metadata).
+   *    - If any image fails validation, deletes THAT invalid staged object immediately (or queues deletion if delete fails),
+   *      marks it FAILED, and throws structured error with `mediaPosition` and safe error code.
+   *      Other valid unconsumed staged objects remain eligible until expiry!
+   *    - If transient R2 error occurs, retains eligible staging and returns retryable error.
+   * 2. Once all images pass validation:
+   *    - Atomically claims tickets in PostgreSQL and records intended finalStorageKey and postId before PutObject (AC 1).
+   *    - Copies verified bytes directly to `comments/{commentId}/{mediaId}.webp`.
+   *    - On copy errors, immediately deletes finalStorageKey (or queues to media_deletion_work) and resets tickets to ISSUED.
+   *    - Once all copies succeed, transitions tickets to FINALIZED.
+   *    - Returns finalized descriptors (including stagingKey for post-commit cleanup).
+   */
+  async finalizeCommentImages(
+    mediaIds: string[],
+    userId: string,
+    commentId: string,
+    options?: { postId?: string },
+  ): Promise<FinalizedCommentMedia[]> {
     if (!mediaIds || mediaIds.length === 0) {
       return [];
     }
@@ -648,7 +694,11 @@ export class UploadService {
         downloadETag = response.ETag;
 
         if (response.ContentLength && response.ContentLength > MAX_COMMENT_IMAGE_BYTES) {
-          await this.deleteObject(ticket.stagingKey).catch(() => {});
+          try {
+            await this.deleteObject(ticket.stagingKey);
+          } catch {
+            await this.queueMediaDeletion(ticket.stagingKey);
+          }
           await this.db
             .update(stagedUploads)
             .set({ status: 'FAILED', errorMessage: 'File size exceeds 100,000 bytes', updatedAt: new Date() })
@@ -667,7 +717,11 @@ export class UploadService {
         }
         const byteArray = await response.Body.transformToByteArray();
         if (byteArray.length > MAX_COMMENT_IMAGE_BYTES) {
-          await this.deleteObject(ticket.stagingKey).catch(() => {});
+          try {
+            await this.deleteObject(ticket.stagingKey);
+          } catch {
+            await this.queueMediaDeletion(ticket.stagingKey);
+          }
           await this.db
             .update(stagedUploads)
             .set({ status: 'FAILED', errorMessage: 'File size exceeds 100,000 bytes', updatedAt: new Date() })
@@ -715,8 +769,12 @@ export class UploadService {
       try {
         validated = await validateCommentImage(item.objectBytes);
       } catch (err) {
-        // Immediate deletion of invalid staged object
-        await this.deleteObject(item.ticket.stagingKey).catch(() => {});
+        // Immediate deletion of invalid staged object, queuing if delete fails (AC 3)
+        try {
+          await this.deleteObject(item.ticket.stagingKey);
+        } catch {
+          await this.queueMediaDeletion(item.ticket.stagingKey);
+        }
         await this.db
           .update(stagedUploads)
           .set({
@@ -759,7 +817,11 @@ export class UploadService {
         const blockedSet = new Set(blockedRows.map((r) => r.sha256));
         const blockedIndex = validatedItems.findIndex((item) => blockedSet.has(item.validated.sha256));
         const blockedItem = validatedItems[blockedIndex >= 0 ? blockedIndex : 0];
-        await this.deleteObject(blockedItem.ticket.stagingKey).catch(() => {});
+        try {
+          await this.deleteObject(blockedItem.ticket.stagingKey);
+        } catch {
+          await this.queueMediaDeletion(blockedItem.ticket.stagingKey);
+        }
         await this.db
           .update(stagedUploads)
           .set({
@@ -776,7 +838,7 @@ export class UploadService {
       }
     }
 
-    // Step 4: Atomic claim, Staging replacement detection, and Verified byte publication (Criteria 5 & 6)
+    // Step 4: Atomic claim, Staging replacement detection, and Verified byte publication (AC 1, AC 3, AC 4)
     const claimedIds: string[] = [];
     const publishedFinalKeys: string[] = [];
     const results: FinalizedCommentMedia[] = [];
@@ -785,10 +847,15 @@ export class UploadService {
       const { ticket, validated, objectBytes, downloadETag, position } = item;
       const finalStorageKey = `comments/${commentId}/${ticket.id}.webp`;
 
-      // Atomically claim ticket in DB
+      // Durably record claim identity, intended final destination, and postId BEFORE external effects (AC 1)
       const [claimed] = await this.db
         .update(stagedUploads)
-        .set({ status: 'CLAIMED', updatedAt: new Date() })
+        .set({
+          status: 'CLAIMED',
+          finalStorageKey,
+          postId: options?.postId ?? null,
+          updatedAt: new Date(),
+        })
         .where(
           and(
             eq(stagedUploads.id, ticket.id),
@@ -801,15 +868,24 @@ export class UploadService {
         .returning();
 
       if (!claimed) {
-        // Rollback previous claims in this batch
+        // Rollback previous claims in this batch: reset them to ISSUED, clearing finalStorageKey so they remain usable through expiry (AC 3)
         if (claimedIds.length > 0) {
           await this.db
             .update(stagedUploads)
-            .set({ status: 'ISSUED', updatedAt: new Date() })
+            .set({
+              status: 'ISSUED',
+              finalStorageKey: null,
+              postId: null,
+              updatedAt: new Date(),
+            })
             .where(inArray(stagedUploads.id, claimedIds));
         }
         for (const key of publishedFinalKeys) {
-          await this.deleteObject(key).catch(() => {});
+          try {
+            await this.deleteObject(key);
+          } catch {
+            await this.queueMediaDeletion(key);
+          }
         }
         throw new AppError('Media has already been used', 'COMMENT_MEDIA_ALREADY_USED', {
           mediaPosition: position,
@@ -827,12 +903,23 @@ export class UploadService {
           }),
         );
         if (downloadETag && head.ETag && head.ETag !== downloadETag) {
-          await this.db
-            .update(stagedUploads)
-            .set({ status: 'ISSUED', updatedAt: new Date() })
-            .where(inArray(stagedUploads.id, claimedIds));
+          if (claimedIds.length > 0) {
+            await this.db
+              .update(stagedUploads)
+              .set({
+                status: 'ISSUED',
+                finalStorageKey: null,
+                postId: null,
+                updatedAt: new Date(),
+              })
+              .where(inArray(stagedUploads.id, claimedIds));
+          }
           for (const key of publishedFinalKeys) {
-            await this.deleteObject(key).catch(() => {});
+            try {
+              await this.deleteObject(key);
+            } catch {
+              await this.queueMediaDeletion(key);
+            }
           }
           throw new AppError('Staged media was modified during processing', 'COMMENT_MEDIA_PROCESSING_FAILED', {
             mediaPosition: position,
@@ -841,12 +928,23 @@ export class UploadService {
         }
       } catch (err) {
         if (err instanceof AppError) throw err;
-        await this.db
-          .update(stagedUploads)
-          .set({ status: 'ISSUED', updatedAt: new Date() })
-          .where(inArray(stagedUploads.id, claimedIds));
+        if (claimedIds.length > 0) {
+          await this.db
+            .update(stagedUploads)
+            .set({
+              status: 'ISSUED',
+              finalStorageKey: null,
+              postId: null,
+              updatedAt: new Date(),
+            })
+            .where(inArray(stagedUploads.id, claimedIds));
+        }
         for (const key of publishedFinalKeys) {
-          await this.deleteObject(key).catch(() => {});
+          try {
+            await this.deleteObject(key);
+          } catch {
+            await this.queueMediaDeletion(key);
+          }
         }
         throw new AppError('Failed to verify staged object state', 'COMMENT_MEDIA_PROCESSING_FAILED', {
           mediaPosition: position,
@@ -865,14 +963,33 @@ export class UploadService {
             ContentLength: objectBytes.length,
           }),
         );
+        publishedFinalKeys.push(finalStorageKey);
       } catch (err) {
-        await this.db
-          .update(stagedUploads)
-          .set({ status: 'ISSUED', updatedAt: new Date() })
-          .where(inArray(stagedUploads.id, claimedIds));
-        for (const key of publishedFinalKeys) {
-          await this.deleteObject(key).catch(() => {});
+        // On transient errors or timeouts during PutObjectCommand:
+        // Do not assume no object was created in R2. Attempt immediate deletion of finalStorageKey.
+        // If deletion fails, queue to media_deletion_work. (AC 4)
+        const keysToClean = [finalStorageKey, ...publishedFinalKeys];
+        for (const key of keysToClean) {
+          try {
+            await this.deleteObject(key);
+          } catch {
+            await this.queueMediaDeletion(key);
+          }
         }
+
+        // Reset claimed tickets to ISSUED and clear finalStorageKey = NULL so they remain usable through expiry
+        if (claimedIds.length > 0) {
+          await this.db
+            .update(stagedUploads)
+            .set({
+              status: 'ISSUED',
+              finalStorageKey: null,
+              postId: null,
+              updatedAt: new Date(),
+            })
+            .where(inArray(stagedUploads.id, claimedIds));
+        }
+
         this.logger.error(
           `Transient error publishing verified object to ${finalStorageKey}: ${err instanceof Error ? err.message : String(err)}`,
         );
@@ -881,7 +998,6 @@ export class UploadService {
           retryable: true,
         });
       }
-      publishedFinalKeys.push(finalStorageKey);
 
       results.push({
         id: ticket.id,
@@ -906,7 +1022,7 @@ export class UploadService {
           finalStorageKey: item.storageKey,
           updatedAt: new Date(),
         })
-        .where(eq(stagedUploads.id, item.id));
+        .where(and(eq(stagedUploads.id, item.id), eq(stagedUploads.status, 'CLAIMED')));
     }
 
     return results;
@@ -915,8 +1031,13 @@ export class UploadService {
   /**
    * Validates and finalizes a staged Comment image upload (single-image convenience wrapper).
    */
-  async finalizeCommentImage(mediaId: string, userId: string, commentId: string): Promise<FinalizedCommentMedia> {
-    const results = await this.finalizeCommentImages([mediaId], userId, commentId);
+  async finalizeCommentImage(
+    mediaId: string,
+    userId: string,
+    commentId: string,
+    options?: { postId?: string },
+  ): Promise<FinalizedCommentMedia> {
+    const results = await this.finalizeCommentImages([mediaId], userId, commentId, options);
     return results[0];
   }
 

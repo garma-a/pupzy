@@ -110,7 +110,25 @@ export class CommentsService {
     let mediaItems: FinalizedCommentMedia[] | undefined;
 
     if (input.mediaIds && input.mediaIds.length > 0) {
-      mediaItems = await this.uploadService.finalizeCommentImages(input.mediaIds, userId, commentId);
+      try {
+        mediaItems = await this.uploadService.finalizeCommentImages(input.mediaIds, userId, commentId, { postId });
+      } catch (finalizeErr) {
+        // If media was already used, check if this was a concurrent duplicate that already succeeded or is in-flight (AC 8)
+        if (finalizeErr instanceof AppError && finalizeErr.code === 'COMMENT_MEDIA_ALREADY_USED') {
+          for (let attempt = 0; attempt < 20; attempt++) {
+            const recheck = await this.commentsRepository.findIdempotencyRecord(userId, clientRequestId);
+            if (recheck) {
+              if (recheck.requestHash === requestHash) {
+                this.logger.log(`Concurrent duplicate resolved to existing comment clientRequestId=${clientRequestId}`);
+                return recheck.responsePayload as Comment;
+              }
+              throw new ConflictError('Client request ID was previously used with different parameters');
+            }
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+        }
+        throw finalizeErr;
+      }
     }
 
     // 6. Transactional comment creation + counter update + media insert
@@ -158,6 +176,33 @@ export class CommentsService {
 
       return newComment;
     } catch (err) {
+      // If DB transaction failed due to unique constraint on clientRequestId (concurrent identical request won), recheck idempotency! (AC 8)
+      const errObj = typeof err === 'object' && err !== null ? (err as Record<string, unknown>) : null;
+      if (errObj?.code === '23505') {
+        for (let attempt = 0; attempt < 20; attempt++) {
+          const recheck = await this.commentsRepository.findIdempotencyRecord(userId, clientRequestId);
+          if (recheck) {
+            if (recheck.requestHash === requestHash) {
+              if (mediaItems && mediaItems.length > 0) {
+                for (const item of mediaItems) {
+                  await this.uploadService.deleteObject(item.storageKey).catch(() => {});
+                  await this.commentsRepository
+                    .queueMediaDeletionWork(item.storageKey, this.getCommentMediaPublicUrl(item.storageKey))
+                    .catch(() => {});
+                }
+                await this.uploadService.markMediaFailed(
+                  mediaItems.map((m) => m.id),
+                  'Duplicate request superseded',
+                );
+              }
+              return recheck.responsePayload as Comment;
+            }
+            throw new ConflictError('Client request ID was previously used with different parameters');
+          }
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+
       // Compensate R2 if DB transaction fails: delete final objects and queue for deletion outbox
       if (mediaItems && mediaItems.length > 0) {
         for (const item of mediaItems) {

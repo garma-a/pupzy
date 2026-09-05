@@ -166,11 +166,11 @@ describe('UploadService', () => {
                 };
               }
               if (fields && typeof fields === 'object' && 'sha256' in fields) {
-                if (mockBlockedHashesQueryError) {
+                const queryErr = mockBlockedHashesQueryError;
+                if (queryErr) {
                   return {
-                    limit: jest.fn().mockRejectedValue(mockBlockedHashesQueryError),
-                    then: (resolve: any, reject: any) =>
-                      Promise.reject(mockBlockedHashesQueryError).then(resolve, reject),
+                    limit: jest.fn().mockRejectedValue(queryErr),
+                    then: (resolve: any, reject: any) => Promise.reject(queryErr).then(resolve, reject),
                   };
                 }
                 return {
@@ -1012,7 +1012,7 @@ describe('UploadService', () => {
         text: () => Promise.resolve('ok'),
       });
       const originalFetch = global.fetch;
-      global.fetch = mockFetch as unknown as typeof fetch;
+      global.fetch = mockFetch;
 
       try {
         await expect(service.purgeCdn('https://cdn.pupzy.com/comments/c1/m1.webp')).resolves.not.toThrow();
@@ -1041,7 +1041,7 @@ describe('UploadService', () => {
         text: () => Promise.resolve('Unauthorized'),
       });
       const originalFetch = global.fetch;
-      global.fetch = mockFetch as unknown as typeof fetch;
+      global.fetch = mockFetch;
 
       try {
         await expect(service.purgeCdn('https://cdn.pupzy.com/comments/c1/m1.webp')).rejects.toThrow(

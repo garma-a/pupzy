@@ -367,6 +367,7 @@ describe('CommentsService', () => {
         [mediaId1, mediaId2],
         userId,
         expect.any(String),
+        { postId },
       );
       expect(mockCommentsRepo.createCommentWithCounter).toHaveBeenCalledWith(
         expect.objectContaining({

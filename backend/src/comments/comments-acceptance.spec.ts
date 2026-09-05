@@ -1034,7 +1034,9 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
           ctx,
         );
         expect(result).toBeDefined();
-        expect(mockUploadService.finalizeCommentImages).toHaveBeenCalledWith([mediaId], authorId, expect.any(String));
+        expect(mockUploadService.finalizeCommentImages).toHaveBeenCalledWith([mediaId], authorId, expect.any(String), {
+          postId,
+        });
       });
 
       it('allows publishing a comment with 2 valid media IDs (Ticket 07)', async () => {
@@ -1054,6 +1056,7 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
           [mediaId, secondMediaId],
           authorId,
           expect.any(String),
+          { postId },
         );
       });
 
