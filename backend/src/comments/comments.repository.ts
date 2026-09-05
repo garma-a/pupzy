@@ -22,6 +22,19 @@ import {
 import { NotFoundError, ConflictError, ForbiddenError, ValidationError } from '../common/errors/app.errors';
 import { CommentCursorPayload, CommentSortOrder } from './dto/comments-query.input';
 
+export interface FinalizedCommentMedia {
+  id: string;
+  commentId?: string;
+  storageKey: string;
+  stagingKey?: string;
+  sha256: string;
+  width: number;
+  height: number;
+  fileSizeBytes: number;
+  fileContentType: string;
+  displayOrder: number;
+}
+
 @Injectable()
 export class CommentsRepository {
   constructor(
@@ -65,29 +78,10 @@ export class CommentsRepository {
     text: string;
     clientRequestId: string;
     requestHash: string;
-    mediaData?: {
-      id: string;
-      storageKey: string;
-      sha256: string;
-      width: number;
-      height: number;
-      fileSizeBytes: number;
-      fileContentType: string;
-      displayOrder: number;
-    };
-    mediaItems?: Array<{
-      id: string;
-      storageKey: string;
-      sha256: string;
-      width: number;
-      height: number;
-      fileSizeBytes: number;
-      fileContentType: string;
-      displayOrder: number;
-    }>;
+    mediaItems?: FinalizedCommentMedia[];
   }): Promise<Comment> {
-    const { commentId, postId, authorId, text, clientRequestId, requestHash, mediaData, mediaItems } = params;
-    const itemsToInsert = mediaItems ?? (mediaData ? [mediaData] : []);
+    const { commentId, postId, authorId, text, clientRequestId, requestHash, mediaItems } = params;
+    const itemsToInsert = mediaItems ?? [];
 
     try {
       return await this.db.transaction(async (tx) => {

@@ -1,33 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment */
 import * as crypto from 'crypto';
+import sharp from 'sharp';
 import { UploadService } from './upload.service';
 import { ConfigService } from '@nestjs/config';
 import { Cache } from 'cache-manager';
 import { NotFoundError } from '../common/errors/app.errors';
 import type { StagedUpload } from '../database/schema';
-
-function createVp8Webp(width: number, height: number, totalSize?: number): Buffer {
-  const payloadLen = totalSize ? totalSize - 20 : 10;
-  const vp8Payload = Buffer.alloc(payloadLen);
-  vp8Payload[0] = 0x00; // keyframe
-  vp8Payload[3] = 0x9d;
-  vp8Payload[4] = 0x01;
-  vp8Payload[5] = 0x2a;
-  vp8Payload.writeUInt16LE(width & 0x3fff, 6);
-  vp8Payload.writeUInt16LE(height & 0x3fff, 8);
-
-  const chunkHeader = Buffer.alloc(8);
-  chunkHeader.write('VP8 ', 0, 'ascii');
-  chunkHeader.writeUInt32LE(vp8Payload.length, 4);
-
-  const body = Buffer.concat([chunkHeader, vp8Payload]);
-  const header = Buffer.alloc(12);
-  header.write('RIFF', 0, 'ascii');
-  header.writeUInt32LE(body.length + 4, 4);
-  header.write('WEBP', 8, 'ascii');
-
-  return Buffer.concat([header, body]);
-}
 
 jest.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: jest.fn().mockResolvedValue('https://r2.example.com/staging-presigned-url'),
@@ -42,6 +20,23 @@ describe('UploadService', () => {
   let mockRateLimitMinuteOverride: number | null = null;
   let mockRateLimitDayOverride: number | null = null;
   let mockBlockedHashes: string[] = [];
+  let mockBlockedHashesQueryError: Error | null = null;
+  let validImage: Buffer;
+  let oversizedImage: Buffer;
+
+  beforeAll(async () => {
+    validImage = await sharp({
+      create: { width: 320, height: 240, channels: 3, background: { r: 120, g: 120, b: 120 } },
+    })
+      .webp()
+      .toBuffer();
+
+    oversizedImage = await sharp({
+      create: { width: 640, height: 480, channels: 3, background: { r: 120, g: 120, b: 120 } },
+    })
+      .webp()
+      .toBuffer();
+  });
 
   const createMockTicket = (overrides: Partial<StagedUpload> = {}): StagedUpload => ({
     id: 'media-1',
@@ -66,6 +61,7 @@ describe('UploadService', () => {
     mockRateLimitMinuteOverride = null;
     mockRateLimitDayOverride = null;
     mockBlockedHashes = [];
+    mockBlockedHashesQueryError = null;
 
     mockConfig = {
       get: jest.fn((key: string) => {
@@ -167,6 +163,19 @@ describe('UploadService', () => {
                 return {
                   limit: jest.fn().mockImplementation((n: number) => Promise.resolve(countResult.slice(0, n))),
                   then: (resolve: any, reject: any) => Promise.resolve(countResult).then(resolve, reject),
+                };
+              }
+              if (fields && typeof fields === 'object' && 'sha256' in fields) {
+                if (mockBlockedHashesQueryError) {
+                  return {
+                    limit: jest.fn().mockRejectedValue(mockBlockedHashesQueryError),
+                    then: (resolve: any, reject: any) =>
+                      Promise.reject(mockBlockedHashesQueryError).then(resolve, reject),
+                  };
+                }
+                return {
+                  limit: jest.fn().mockImplementation((n: number) => Promise.resolve(defaultRows.slice(0, n))),
+                  then: (resolve: any, reject: any) => Promise.resolve(defaultRows).then(resolve, reject),
                 };
               }
               const ticketKey = findTicketKeyFromCondition(cond) ?? 'media-1';
@@ -474,7 +483,6 @@ describe('UploadService', () => {
 
   describe('finalizeCommentImage', () => {
     const commentId = 'comment-123';
-    const validImage = createVp8Webp(320, 240, 20_000);
 
     const setupCommentTicket = (overrides: Partial<StagedUpload> = {}): string => {
       const id = 'comment-media-1';
@@ -486,7 +494,7 @@ describe('UploadService', () => {
           purpose: 'COMMENT_IMAGE',
           stagingKey: `staging/user-1/${id}.webp`,
           declaredContentType: 'image/webp',
-          declaredFileSizeBytes: validImage.length,
+          declaredFileSizeBytes: overrides.declaredFileSizeBytes ?? (validImage ? validImage.length : 20_000),
           status: 'ISSUED',
           expiresAt: new Date(Date.now() + 900_000),
           ...overrides,
@@ -616,10 +624,11 @@ describe('UploadService', () => {
 
     it('deletes staged object, marks ticket FAILED, and throws dimension error when exceeding 480x480', async () => {
       const mediaId = setupCommentTicket();
-      const oversizedImage = createVp8Webp(640, 480);
       const mockSend = jest.fn().mockImplementation((command: any) => {
         if (command.constructor.name === 'GetObjectCommand') {
           return Promise.resolve({
+            ETag: '"etag-over"',
+            ContentLength: oversizedImage.length,
             Body: {
               transformToByteArray: () => Promise.resolve(new Uint8Array(oversizedImage)),
             },
@@ -643,6 +652,8 @@ describe('UploadService', () => {
       const mockSend = jest.fn().mockImplementation((command: any) => {
         if (command.constructor.name === 'GetObjectCommand') {
           return Promise.resolve({
+            ETag: '"etag-valid"',
+            ContentLength: validImage.length,
             Body: {
               transformToByteArray: () => Promise.resolve(new Uint8Array(validImage)),
             },
@@ -658,18 +669,74 @@ describe('UploadService', () => {
       expect(ticketStore.get(mediaId)!.status).toBe('FAILED');
     });
 
-    it('resets ticket to ISSUED and throws COMMENT_MEDIA_PROCESSING_FAILED when CopyObject fails', async () => {
+    it('resets ticket to ISSUED and throws COMMENT_MEDIA_PROCESSING_FAILED with retryable=true when blocked hash DB query fails', async () => {
       const mediaId = setupCommentTicket();
       const mockSend = jest.fn().mockImplementation((command: any) => {
         if (command.constructor.name === 'GetObjectCommand') {
           return Promise.resolve({
+            ETag: '"etag-valid"',
+            ContentLength: validImage.length,
             Body: {
               transformToByteArray: () => Promise.resolve(new Uint8Array(validImage)),
             },
           });
         }
-        if (command.constructor.name === 'CopyObjectCommand') {
-          return Promise.reject(new Error('CopyObject failed'));
+        return Promise.resolve({});
+      });
+      (service as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockSend;
+
+      mockBlockedHashesQueryError = new Error('Blocked hash DB timeout');
+
+      await expect(service.finalizeCommentImage(mediaId, 'user-1', commentId)).rejects.toMatchObject({
+        code: 'COMMENT_MEDIA_PROCESSING_FAILED',
+        extensions: expect.objectContaining({ retryable: true }),
+      });
+      expect(ticketStore.get(mediaId)!.status).toBe('ISSUED');
+    });
+
+    it('resets ticket to ISSUED and throws COMMENT_MEDIA_PROCESSING_FAILED when staging object was modified between download and publication (ETag mismatch)', async () => {
+      const mediaId = setupCommentTicket();
+      const mockSend = jest.fn().mockImplementation((command: any) => {
+        if (command.constructor.name === 'GetObjectCommand') {
+          return Promise.resolve({
+            ETag: '"original-etag"',
+            ContentLength: validImage.length,
+            Body: {
+              transformToByteArray: () => Promise.resolve(new Uint8Array(validImage)),
+            },
+          });
+        }
+        if (command.constructor.name === 'HeadObjectCommand') {
+          return Promise.resolve({ ETag: '"tampered-etag"' });
+        }
+        return Promise.resolve({});
+      });
+      (service as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockSend;
+
+      await expect(service.finalizeCommentImage(mediaId, 'user-1', commentId)).rejects.toMatchObject({
+        code: 'COMMENT_MEDIA_PROCESSING_FAILED',
+        message: expect.stringContaining('modified during processing'),
+      });
+      expect(ticketStore.get(mediaId)!.status).toBe('ISSUED');
+    });
+
+    it('resets ticket to ISSUED and throws COMMENT_MEDIA_PROCESSING_FAILED when PutObject fails', async () => {
+      const mediaId = setupCommentTicket();
+      const mockSend = jest.fn().mockImplementation((command: any) => {
+        if (command.constructor.name === 'GetObjectCommand') {
+          return Promise.resolve({
+            ETag: '"etag-valid"',
+            ContentLength: validImage.length,
+            Body: {
+              transformToByteArray: () => Promise.resolve(new Uint8Array(validImage)),
+            },
+          });
+        }
+        if (command.constructor.name === 'HeadObjectCommand') {
+          return Promise.resolve({ ETag: '"etag-valid"' });
+        }
+        if (command.constructor.name === 'PutObjectCommand') {
+          return Promise.reject(new Error('PutObject failed'));
         }
         return Promise.resolve({});
       });
@@ -681,15 +748,20 @@ describe('UploadService', () => {
       expect(ticketStore.get(mediaId)!.status).toBe('ISSUED');
     });
 
-    it('successfully finalizes valid WebP comment image: copies to comments namespace, deletes staging, and returns metadata', async () => {
+    it('successfully finalizes valid WebP comment image: publishes verified bytes to comments namespace, deletes staging, and returns metadata', async () => {
       const mediaId = setupCommentTicket();
       const mockSend = jest.fn().mockImplementation((command: any) => {
         if (command.constructor.name === 'GetObjectCommand') {
           return Promise.resolve({
+            ETag: '"etag-valid"',
+            ContentLength: validImage.length,
             Body: {
               transformToByteArray: () => Promise.resolve(new Uint8Array(validImage)),
             },
           });
+        }
+        if (command.constructor.name === 'HeadObjectCommand') {
+          return Promise.resolve({ ETag: '"etag-valid"' });
         }
         return Promise.resolve({});
       });
@@ -720,8 +792,10 @@ describe('UploadService', () => {
       expect(mockSend).toHaveBeenCalledWith(
         expect.objectContaining({
           input: expect.objectContaining({
-            CopySource: `pupzy-bucket/staging/user-1/${mediaId}.webp`,
+            Bucket: 'pupzy-bucket',
             Key: `comments/${commentId}/${mediaId}.webp`,
+            ContentType: 'image/webp',
+            Body: validImage,
           }),
         }),
       );
@@ -755,7 +829,6 @@ describe('UploadService', () => {
 
   describe('finalizeCommentImages (Ticket 07)', () => {
     const commentId = 'comment-multi';
-    const validImage = createVp8Webp(320, 240);
 
     const setupTicket = (id: string, overrides: Partial<StagedUpload> = {}) => {
       ticketStore.set(
@@ -766,6 +839,7 @@ describe('UploadService', () => {
           purpose: 'COMMENT_IMAGE',
           declaredContentType: 'image/webp',
           stagingKey: `staging/user-1/${id}.webp`,
+          declaredFileSizeBytes: overrides.declaredFileSizeBytes ?? (validImage ? validImage.length : 20_000),
           status: 'ISSUED',
           ...overrides,
         }),
@@ -796,10 +870,15 @@ describe('UploadService', () => {
       const mockSend = jest.fn().mockImplementation((command: any) => {
         if (command.constructor.name === 'GetObjectCommand') {
           return Promise.resolve({
+            ETag: '"etag-valid"',
+            ContentLength: validImage.length,
             Body: {
               transformToByteArray: () => Promise.resolve(new Uint8Array(validImage)),
             },
           });
+        }
+        if (command.constructor.name === 'HeadObjectCommand') {
+          return Promise.resolve({ ETag: '"etag-valid"' });
         }
         return Promise.resolve({});
       });
@@ -824,6 +903,8 @@ describe('UploadService', () => {
           const key = String(command.input.Key);
           if (key.includes(id1)) {
             return Promise.resolve({
+              ETag: '"etag-1"',
+              ContentLength: validImage.length,
               Body: {
                 transformToByteArray: () => Promise.resolve(new Uint8Array(validImage)),
               },
@@ -831,6 +912,8 @@ describe('UploadService', () => {
           }
           // id2 is oversized (100,001 bytes)
           return Promise.resolve({
+            ETag: '"etag-2"',
+            ContentLength: 100_001,
             Body: {
               transformToByteArray: () => Promise.resolve(new Uint8Array(Buffer.alloc(100_001))),
             },
@@ -857,23 +940,28 @@ describe('UploadService', () => {
       );
     });
 
-    it('cleans up copied final objects and resets tickets to ISSUED on transient copy error', async () => {
+    it('cleans up published final objects and resets tickets to ISSUED on transient put error', async () => {
       const id1 = setupTicket('m1');
       const id2 = setupTicket('m2');
 
-      let copyCount = 0;
+      let putCount = 0;
       const mockSend = jest.fn().mockImplementation((command: any) => {
         if (command.constructor.name === 'GetObjectCommand') {
           return Promise.resolve({
+            ETag: '"etag-valid"',
+            ContentLength: validImage.length,
             Body: {
               transformToByteArray: () => Promise.resolve(new Uint8Array(validImage)),
             },
           });
         }
-        if (command.constructor.name === 'CopyObjectCommand') {
-          copyCount++;
-          if (copyCount === 2) {
-            return Promise.reject(new Error('Transient R2 error on second copy'));
+        if (command.constructor.name === 'HeadObjectCommand') {
+          return Promise.resolve({ ETag: '"etag-valid"' });
+        }
+        if (command.constructor.name === 'PutObjectCommand') {
+          putCount++;
+          if (putCount === 2) {
+            return Promise.reject(new Error('Transient R2 error on second put'));
           }
           return Promise.resolve({});
         }
@@ -888,7 +976,7 @@ describe('UploadService', () => {
       // Both tickets reset to ISSUED
       expect(ticketStore.get(id1)!.status).toBe('ISSUED');
       expect(ticketStore.get(id2)!.status).toBe('ISSUED');
-      // First copied object was cleaned up
+      // First published object was cleaned up
       expect(mockSend).toHaveBeenCalledWith(
         expect.objectContaining({
           input: expect.objectContaining({

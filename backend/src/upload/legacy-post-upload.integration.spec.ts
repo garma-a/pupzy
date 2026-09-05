@@ -5,12 +5,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { eq, sql } from 'drizzle-orm';
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
-import {
-  HeadObjectCommand,
-  CopyObjectCommand,
-  DeleteObjectCommand,
-  GetObjectCommand,
-} from '@aws-sdk/client-s3';
+import { HeadObjectCommand, CopyObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { TestDatabaseHelper } from '../../test/test-database.helper';
 import {
   users,
@@ -257,9 +252,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       'src/vet-clinics/vet-clinics.graphql',
     ];
 
-    const typeDefs = schemaFiles.map((relPath) =>
-      fs.readFileSync(path.resolve(__dirname, '../../', relPath), 'utf8'),
-    );
+    const typeDefs = schemaFiles.map((relPath) => fs.readFileSync(path.resolve(__dirname, '../../', relPath), 'utf8'));
 
     executableSchema = makeExecutableSchema({
       typeDefs,
@@ -351,11 +344,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
   });
 
   /** Helper to execute GraphQL queries/mutations with context */
-  async function executeGql(
-    source: string,
-    variables: Record<string, any> = {},
-    user: User = testUser1,
-  ) {
+  async function executeGql(source: string, variables: Record<string, any> = {}, user: User = testUser1) {
     const ctx: GqlContext = {
       req: {} as any,
       user: { id: user.id } as any,
@@ -395,20 +384,13 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       }
     `;
 
-    const res = await executeGql(
-      REQUEST_MEDIA_MUTATION,
-      { input: { contentType, fileSizeBytes } },
-      user,
-    );
+    const res = await executeGql(REQUEST_MEDIA_MUTATION, { input: { contentType, fileSizeBytes } }, user);
 
     expect(res.errors).toBeUndefined();
     const mediaId = res.data?.requestMediaUploadUrl?.mediaId;
     expect(mediaId).toBeDefined();
 
-    const [ticket] = await dbHelper.db
-      .select()
-      .from(stagedUploads)
-      .where(eq(stagedUploads.id, mediaId));
+    const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
     expect(ticket).toBeDefined();
 
     // Stage bytes into controllable R2 adapter
@@ -1085,13 +1067,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
 
   describe('Acceptance Criterion 5: Validation limits & signatures', () => {
     it('rejects post creation with more than 4 images', async () => {
-      const mediaIds = [
-        generateUuidV7(),
-        generateUuidV7(),
-        generateUuidV7(),
-        generateUuidV7(),
-        generateUuidV7(),
-      ];
+      const mediaIds = [generateUuidV7(), generateUuidV7(), generateUuidV7(), generateUuidV7(), generateUuidV7()];
 
       const mutation = `
         mutation CreateRescue($input: CreateRescuePostInput!) {

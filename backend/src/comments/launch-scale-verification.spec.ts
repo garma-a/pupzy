@@ -8,6 +8,7 @@ import { CommentsRepository } from './comments.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { UploadService } from '../upload/upload.service';
 import { ConfigService } from '@nestjs/config';
+import sharp from 'sharp';
 import { validateCommentImage } from './validators/comment-image.validator';
 import {
   comments,
@@ -378,51 +379,28 @@ describe('Ticket 11: Launch-Scale Verification & Compatibility Gate', () => {
 
   // --- 6. Binary Security & Decoder Resource Bounding Gate ---
   describe('Gate 6: Binary Security & Decoder Resource Bounding', () => {
-    it('enforces 100 KB byte ceiling strictly on binary input', () => {
+    it('enforces 100 KB byte ceiling strictly on binary input', async () => {
       const oversizedBuffer = Buffer.alloc(100001);
-      expect(() => validateCommentImage(oversizedBuffer)).toThrow(AppError);
-      expect(() => validateCommentImage(oversizedBuffer)).toThrow(/100,000 bytes/);
+      await expect(validateCommentImage(oversizedBuffer)).rejects.toThrow(AppError);
+      await expect(validateCommentImage(oversizedBuffer)).rejects.toThrow(/100,000 bytes/);
     });
 
-    it('rejects non-WebP signatures and corrupted binary headers', () => {
+    it('rejects non-WebP signatures and corrupted binary headers', async () => {
       const nonWebp = Buffer.from('GIF89a\x01\x00\x01\x00\x80\x00\x00');
-      expect(() => validateCommentImage(nonWebp)).toThrow(AppError);
+      await expect(validateCommentImage(nonWebp)).rejects.toThrow(AppError);
 
       const truncated = Buffer.from('RIFF');
-      expect(() => validateCommentImage(truncated)).toThrow(AppError);
+      await expect(validateCommentImage(truncated)).rejects.toThrow(AppError);
     });
 
-    it('computes deterministic SHA-256 for exact-match moderation without claiming perceptual matching', () => {
-      // Construct a minimal valid 1x1 static VP8 WebP
-      const riffHeader = Buffer.from('RIFF', 'ascii');
-      const webpHeader = Buffer.from('WEBP', 'ascii');
-      const vp8Header = Buffer.from('VP8 ', 'ascii');
+    it('computes deterministic SHA-256 for exact-match moderation without claiming perceptual matching', async () => {
+      const validWebp = await sharp({
+        create: { width: 1, height: 1, channels: 3, background: { r: 0, g: 0, b: 0 } },
+      })
+        .webp()
+        .toBuffer();
 
-      // Minimal valid uncompressed VP8 keyframe (1x1 pixel)
-      const vp8Data = Buffer.from([
-        0x00,
-        0x00,
-        0x00, // frame tag
-        0x9d,
-        0x01,
-        0x2a, // start code
-        0x01,
-        0x00, // width 1
-        0x01,
-        0x00, // height 1
-        0x00, // dummy bitstream byte
-      ]);
-
-      const vp8ChunkSize = Buffer.alloc(4);
-      vp8ChunkSize.writeUInt32LE(vp8Data.length, 0);
-
-      const totalRiffSize = 4 + 4 + 4 + vp8Data.length;
-      const riffSize = Buffer.alloc(4);
-      riffSize.writeUInt32LE(totalRiffSize, 0);
-
-      const validWebp = Buffer.concat([riffHeader, riffSize, webpHeader, vp8Header, vp8ChunkSize, vp8Data]);
-
-      const result = validateCommentImage(validWebp);
+      const result = await validateCommentImage(validWebp);
       expect(result).toBeDefined();
       expect(result.width).toBe(1);
       expect(result.height).toBe(1);

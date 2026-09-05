@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
-import { CommentsRepository } from './comments.repository';
+import { CommentsRepository, FinalizedCommentMedia } from './comments.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { CreateCommentDto } from './dto/create-comment.input';
 import { CreateReplyDto } from './dto/create-reply.input';
@@ -107,20 +107,7 @@ export class CommentsService {
 
     // 5. Finalize staged comment images if attached
     const commentId = generateUuidV7();
-    let mediaItems:
-      | Array<{
-          id: string;
-          commentId: string;
-          storageKey: string;
-          stagingKey: string;
-          sha256: string;
-          width: number;
-          height: number;
-          fileSizeBytes: number;
-          fileContentType: string;
-          displayOrder: number;
-        }>
-      | undefined;
+    let mediaItems: FinalizedCommentMedia[] | undefined;
 
     if (input.mediaIds && input.mediaIds.length > 0) {
       mediaItems = await this.uploadService.finalizeCommentImages(input.mediaIds, userId, commentId);
@@ -141,9 +128,11 @@ export class CommentsService {
       // 7. Cleanup staging objects after successful DB commit
       if (mediaItems && mediaItems.length > 0) {
         for (const item of mediaItems) {
-          await this.uploadService.deleteObject(item.stagingKey).catch((delErr) => {
-            this.logger.warn(`Failed to delete staging object ${item.stagingKey} after copy: ${delErr}`);
-          });
+          if (item.stagingKey) {
+            await this.uploadService.deleteObject(item.stagingKey).catch((delErr) => {
+              this.logger.warn(`Failed to delete staging object ${item.stagingKey} after copy: ${delErr}`);
+            });
+          }
         }
       }
 
