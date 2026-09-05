@@ -105,16 +105,16 @@ describe('Database Migration Runner Integration', () => {
     expect(stagedColNullMap['status']).toBe('NO');
     expect(stagedColNullMap['expires_at']).toBe('NO');
 
-    // Verify staged_uploads foreign keys (user_id cascade, post_id set null)
+    // Verify staged_uploads foreign keys (user_id cascade; post_id has no FK to allow pre-creation claim binding)
     const stagedFkRes = await pool.query<{ conname: string; confdeltype: string }>(`
       SELECT conname, confdeltype::text AS confdeltype
       FROM pg_constraint
       WHERE conrelid = 'staged_uploads'::regclass AND contype = 'f'
     `);
-    expect(stagedFkRes.rows.length).toBe(2);
+    expect(stagedFkRes.rows.length).toBe(1);
     const stagedFkMap = Object.fromEntries(stagedFkRes.rows.map((r) => [r.conname, r.confdeltype]));
     expect(stagedFkMap['staged_uploads_user_id_users_id_fk']).toBe('c'); // 'c' = CASCADE
-    expect(stagedFkMap['staged_uploads_post_id_posts_id_fk']).toBe('n'); // 'n' = SET NULL
+    expect(stagedFkMap['staged_uploads_post_id_posts_id_fk']).toBeUndefined();
 
     // Verify vet_clinic_location_audits attribution columns are all NOT NULL
     const auditColsRes = await pool.query<{ column_name: string; is_nullable: string }>(`

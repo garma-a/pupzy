@@ -1,7 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { pgTable, uuid, text, integer, varchar, index, timestamp } from 'drizzle-orm/pg-core';
 import { users } from './users.schema';
-import { posts } from './posts.schema';
 import { stagedUploadPurposeEnum, stagedUploadStatusEnum } from './enums';
 
 /**
@@ -48,8 +47,8 @@ export const stagedUploads = pgTable(
     /** Ticket expiration timestamp. After this, ticket cannot be claimed. */
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
 
-    /** ID of the post consuming this staged upload (set upon claim). */
-    postId: uuid('post_id').references(() => posts.id, { onDelete: 'set null' }),
+    /** ID of the post consuming this staged upload (set upon claim). Intended post ID without FK constraint because claims occur before post insertion. */
+    postId: uuid('post_id'),
 
     /** Final R2 object key after successful finalization, e.g. `posts/{postId}/{mediaId}.webp`. */
     finalStorageKey: text('final_storage_key'),

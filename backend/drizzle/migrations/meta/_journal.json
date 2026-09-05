@@ -211,6 +211,13 @@
       "when": 1789582400000,
       "tag": "0029_add_discussion_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1789668800000,
+      "tag": "0030_drop_staged_uploads_post_id_fk",
+      "breakpoints": true
     }
   ]
 }

@@ -14,7 +14,7 @@ We establish **PostgreSQL as the sole authoritative state machine** for media up
 
 Upload capabilities are tracked across four explicit states:
 - `ISSUED`: Created durably in PostgreSQL before the presigned PUT URL is handed to the client. Bound to the authenticated owner (`user_id`), target domain (`purpose`, e.g., `POST_MEDIA`, `COMMENT_IMAGE`), declared content type, file size, opaque staging key, and a 15-minute expiration timestamp.
-- `CLAIMED`: Atomically bound to a target entity (`post_id`) upon validation. An atomic conditional update (`UPDATE staged_uploads SET status = 'CLAIMED', post_id = $1 WHERE id = $2 AND user_id = $3 AND status = 'ISSUED' AND expires_at > now() RETURNING *`) guarantees single-use semantics under concurrent creation requests without holding open long database locks.
+- `CLAIMED`: Atomically bound to the intended target entity (`post_id`, a client/service-generated UUIDv7) upon validation. Because media verification and R2 finalization execute before the post row is inserted into PostgreSQL (to ensure no broken post referencing unready media can ever be persisted or returned, per Section 3), `staged_uploads.post_id` stores the intended entity UUID without an enforced PostgreSQL foreign key constraint to `posts(id)`. Relational integrity is established transactionally in the `post_media` table when the post entity is persisted. An atomic conditional update (`UPDATE staged_uploads SET status = 'CLAIMED', post_id = $1 WHERE id = $2 AND user_id = $3 AND status = 'ISSUED' AND expires_at > now() RETURNING *`) guarantees single-use semantics under concurrent creation requests without holding open long database locks.
 - `FINALIZED`: Marked upon successful byte relocation in R2 from `staging/` to `posts/{postId}/{mediaId}.{ext}`. Records `final_storage_key`.
 - `FAILED`: Recorded if object verification or R2 finalization fails, or if post creation database transaction fails, permanently marking the staged ticket unusable.
 
@@ -24,11 +24,13 @@ Upload capabilities are tracked across four explicit states:
 - Flutter mobile clients require zero code changes or migration coordination.
 - Existing posts and existing media in `post_media` remain fully readable and valid without rewriting public CDN URLs or storage keys.
 
-### 3. Separation of Network I/O and Database Transactions
+### 3. Separation of Network I/O, Pre-Creation Claims, and Entity Persistence
 
-- Network operations against Cloudflare R2 (`HeadObjectCommand`, `CopyObjectCommand`, `DeleteObjectCommand`) are executed **outside** any open PostgreSQL transaction.
-- Media finalization runs before the post entity is persisted and returned. If finalization fails, the operation fails fast and cleanly without persisting a broken post referencing unready media.
-- If post entity creation fails, `markMediaFailed` marks the tickets `FAILED` durably.
+- **Pre-Creation Claim Binding:** Media tickets are claimed for the intended `postId` prior to R2 relocation. Because the post entity row does not exist yet, `staged_uploads.post_id` must not enforce a database foreign key referencing `posts.id`.
+- **Zero-Transaction Network I/O:** Network operations against Cloudflare R2 (`HeadObjectCommand`, `CopyObjectCommand`, `DeleteObjectCommand`) are executed **outside** any open PostgreSQL transaction.
+- **Strict Entity Safety:** Media finalization runs before the post entity is persisted and returned. If finalization fails, the operation fails fast and cleanly without persisting a broken post referencing unready media.
+- **Transactional Persistence:** Once media is finalized in R2, the base `posts` row, domain extension row, and `post_media` rows (with foreign keys to `posts.id`) are committed together in a single database transaction.
+- **Durable Failure Compensation:** If post entity creation fails after media finalization, `markMediaFailed` marks the tickets `FAILED` durably in PostgreSQL to prevent silent or process-memory-only failures.
 
 ### 4. Cache Decoupling and Restart Resilience
 
