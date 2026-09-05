@@ -51,25 +51,40 @@ export class MediaDeletionProcessor {
     let processedCount = 0;
 
     for (const item of pendingItems) {
-      const nextAttempts = item.attempts + 1;
-      // Mark PROCESSING
-      await this.db
+      // Atomic conditional claim: ensures overlapping workers cannot race or double-claim
+      const [claimed] = await this.db
         .update(mediaDeletionWork)
         .set({
           status: 'PROCESSING',
-          attempts: nextAttempts,
+          attempts: sql`${mediaDeletionWork.attempts} + 1`,
           updatedAt: new Date(),
         })
-        .where(eq(mediaDeletionWork.id, item.id));
+        .where(
+          and(
+            eq(mediaDeletionWork.id, item.id),
+            or(
+              eq(mediaDeletionWork.status, 'PENDING'),
+              and(eq(mediaDeletionWork.status, 'PROCESSING'), lt(mediaDeletionWork.updatedAt, fiveMinutesAgo)),
+            ),
+          ),
+        )
+        .returning();
+
+      if (!claimed) {
+        // Another worker claimed or completed this item; skip safely
+        continue;
+      }
+
+      const nextAttempts = claimed.attempts;
 
       try {
         // Step 1: Delete from R2 (idempotent)
-        await this.uploadService.deleteObject(item.storageKey);
+        await this.uploadService.deleteObject(claimed.storageKey);
 
         // Step 2: Purge CDN cache (idempotent)
-        await this.uploadService.purgeCdn(item.cdnUrl);
+        await this.uploadService.purgeCdn(claimed.cdnUrl);
 
-        // Step 3: Mark COMPLETED
+        // Step 3: Mark COMPLETED conditionally ensuring row is still PROCESSING
         await this.db
           .update(mediaDeletionWork)
           .set({
@@ -77,13 +92,13 @@ export class MediaDeletionProcessor {
             lastError: null,
             updatedAt: new Date(),
           })
-          .where(eq(mediaDeletionWork.id, item.id));
+          .where(and(eq(mediaDeletionWork.id, claimed.id), eq(mediaDeletionWork.status, 'PROCESSING')));
 
         processedCount++;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
         this.logger.error(
-          `Failed to process media deletion work ${item.id} (attempt ${nextAttempts}): ${errorMessage}`,
+          `Failed to process media deletion work ${claimed.id} (attempt ${nextAttempts}): ${errorMessage}`,
         );
 
         if (nextAttempts >= 5) {
@@ -95,7 +110,7 @@ export class MediaDeletionProcessor {
               lastError: errorMessage,
               updatedAt: new Date(),
             })
-            .where(eq(mediaDeletionWork.id, item.id));
+            .where(and(eq(mediaDeletionWork.id, claimed.id), eq(mediaDeletionWork.status, 'PROCESSING')));
         } else {
           // Retryable
           await this.db
@@ -105,7 +120,7 @@ export class MediaDeletionProcessor {
               lastError: errorMessage,
               updatedAt: new Date(),
             })
-            .where(eq(mediaDeletionWork.id, item.id));
+            .where(and(eq(mediaDeletionWork.id, claimed.id), eq(mediaDeletionWork.status, 'PROCESSING')));
         }
       }
     }
@@ -196,12 +211,17 @@ export class MediaDeletionProcessor {
           .limit(1);
 
         if (!exists) {
-          await this.db.insert(mediaDeletionWork).values({
-            storageKey: orphan.finalStorageKey,
-            cdnUrl: this.uploadService.getPublicCdnUrl(orphan.finalStorageKey),
-            status: 'PENDING',
-            attempts: 0,
-          });
+          const purgeUrls = this.uploadService.getPurgeCdnUrls
+            ? this.uploadService.getPurgeCdnUrls(orphan.finalStorageKey)
+            : [this.uploadService.getPublicCdnUrl(orphan.finalStorageKey)];
+          for (const cdnUrl of purgeUrls) {
+            await this.db.insert(mediaDeletionWork).values({
+              storageKey: orphan.finalStorageKey,
+              cdnUrl,
+              status: 'PENDING',
+              attempts: 0,
+            });
+          }
           orphanedCompensated++;
         }
       }

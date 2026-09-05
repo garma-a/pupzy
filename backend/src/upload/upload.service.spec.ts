@@ -819,11 +819,11 @@ describe('UploadService', () => {
       );
     });
 
-    it('suppresses and logs deletion errors gracefully without throwing', async () => {
+    it('propagates provider deletion errors so they can be retried durably', async () => {
       const mockSend = jest.fn().mockRejectedValue(new Error('S3 error'));
       (service as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockSend;
 
-      await expect(service.deleteObject('comments/c1/m1.webp')).resolves.not.toThrow();
+      await expect(service.deleteObject('comments/c1/m1.webp')).rejects.toThrow('S3 error');
     });
   });
 
@@ -987,13 +987,82 @@ describe('UploadService', () => {
     });
   });
 
-  describe('getPublicCdnUrl & purgeCdn', () => {
+  describe('getPublicCdnUrl & purgeCdn & getPurgeCdnUrls', () => {
     it('constructs public CDN URL with configured CDN base', () => {
       expect(service.getPublicCdnUrl('comments/c1/m1.webp')).toBe('https://cdn.pupzy.com/comments/c1/m1.webp');
     });
 
-    it('purges CDN without throwing', async () => {
-      await expect(service.purgeCdn('https://cdn.pupzy.com/comments/c1/m1.webp')).resolves.not.toThrow();
+    it('throws error when Cloudflare credentials are missing', async () => {
+      await expect(service.purgeCdn('https://cdn.pupzy.com/comments/c1/m1.webp')).rejects.toThrow(
+        'Cloudflare credentials missing',
+      );
+    });
+
+    it('successfully purges CDN when Cloudflare credentials are configured and response is ok', async () => {
+      mockConfig.get = jest.fn((key: string) => {
+        if (key === 'CLOUDFLARE_ZONE_ID') return 'zone-123';
+        if (key === 'CLOUDFLARE_API_TOKEN') return 'token-abc';
+        if (key === 'COMMENT_MEDIA_CDN_BASE') return 'https://cdn.pupzy.com';
+        return undefined;
+      });
+
+      const mockFetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve('ok'),
+      });
+      const originalFetch = global.fetch;
+      global.fetch = mockFetch as unknown as typeof fetch;
+
+      try {
+        await expect(service.purgeCdn('https://cdn.pupzy.com/comments/c1/m1.webp')).resolves.not.toThrow();
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://api.cloudflare.com/client/v4/zones/zone-123/purge_cache',
+          expect.objectContaining({
+            method: 'POST',
+            body: JSON.stringify({ files: ['https://cdn.pupzy.com/comments/c1/m1.webp'] }),
+          }),
+        );
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
+
+    it('throws error when Cloudflare API responds with error', async () => {
+      mockConfig.get = jest.fn((key: string) => {
+        if (key === 'CLOUDFLARE_ZONE_ID') return 'zone-123';
+        if (key === 'CLOUDFLARE_API_TOKEN') return 'token-abc';
+        return undefined;
+      });
+
+      const mockFetch = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        text: () => Promise.resolve('Unauthorized'),
+      });
+      const originalFetch = global.fetch;
+      global.fetch = mockFetch as unknown as typeof fetch;
+
+      try {
+        await expect(service.purgeCdn('https://cdn.pupzy.com/comments/c1/m1.webp')).rejects.toThrow(
+          'Cloudflare purge cache failed with status 403',
+        );
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
+
+    it('generates purge CDN URLs with fallback domain during transition', () => {
+      mockConfig.get = jest.fn((key: string) => {
+        if (key === 'COMMENT_MEDIA_CDN_BASE') return 'https://cdn.pupzy.net';
+        if (key === 'COMMENT_MEDIA_DOMAIN_TRANSITION') return 'true';
+        if (key === 'COMMENT_MEDIA_PREVIOUS_CDN_BASE') return 'https://legacy-cdn.pupzy.net';
+        return undefined;
+      });
+
+      const urls = service.getPurgeCdnUrls('comments/c1/m1.webp');
+      expect(urls).toContain('https://cdn.pupzy.net/comments/c1/m1.webp');
+      expect(urls).toContain('https://legacy-cdn.pupzy.net/comments/c1/m1.webp');
     });
   });
 });

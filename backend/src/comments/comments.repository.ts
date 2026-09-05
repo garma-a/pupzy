@@ -21,6 +21,7 @@ import {
 } from '../database/schema';
 import { NotFoundError, ConflictError, ForbiddenError, ValidationError } from '../common/errors/app.errors';
 import { CommentCursorPayload, CommentSortOrder } from './dto/comments-query.input';
+import { getCommentMediaPurgeUrls } from '../upload/media-delivery.util';
 
 export interface FinalizedCommentMedia {
   id: string;
@@ -498,14 +499,15 @@ export class CommentsRepository {
       if (mediaRows.length > 0) {
         await tx.delete(commentMedia).where(eq(commentMedia.commentId, commentId));
         for (const row of mediaRows) {
-          const cleanKey = row.storageKey.replace(/^\/+/, '');
-          const cdnUrl = `${cdnBase.replace(/\/+$/, '')}/${cleanKey}`;
-          await tx.insert(mediaDeletionWork).values({
-            storageKey: row.storageKey,
-            cdnUrl,
-            status: 'PENDING',
-            attempts: 0,
-          });
+          const purgeUrls = getCommentMediaPurgeUrls(row.storageKey, { cdnBase });
+          for (const cdnUrl of purgeUrls) {
+            await tx.insert(mediaDeletionWork).values({
+              storageKey: row.storageKey,
+              cdnUrl,
+              status: 'PENDING',
+              attempts: 0,
+            });
+          }
         }
       }
 

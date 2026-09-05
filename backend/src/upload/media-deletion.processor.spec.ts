@@ -87,7 +87,13 @@ describe('MediaDeletionProcessor', () => {
         set: jest.fn().mockImplementation((setValues: any) => ({
           where: jest.fn().mockImplementation(() => {
             Object.assign(workItem, setValues);
-            return Promise.resolve([workItem]);
+            if (setValues.attempts && typeof setValues.attempts !== 'number') {
+              workItem.attempts = (workItem.attempts ?? 0) + 1;
+            }
+            const p = Promise.resolve([workItem]);
+            return Object.assign(p, {
+              returning: jest.fn().mockResolvedValue([workItem]),
+            });
           }),
         })),
       }));
@@ -118,8 +124,15 @@ describe('MediaDeletionProcessor', () => {
       mockDb.update = jest.fn().mockImplementation(() => ({
         set: jest.fn().mockImplementation((setValues: any) => ({
           where: jest.fn().mockImplementation(() => {
-            Object.assign(workItem, setValues);
-            return Promise.resolve([workItem]);
+            const nextAttempts =
+              setValues.attempts && typeof setValues.attempts !== 'number'
+                ? workItem.attempts + 1
+                : (setValues.attempts ?? workItem.attempts);
+            Object.assign(workItem, setValues, { attempts: nextAttempts });
+            const p = Promise.resolve([workItem]);
+            return Object.assign(p, {
+              returning: jest.fn().mockResolvedValue([workItem]),
+            });
           }),
         })),
       }));
@@ -150,8 +163,15 @@ describe('MediaDeletionProcessor', () => {
       mockDb.update = jest.fn().mockImplementation(() => ({
         set: jest.fn().mockImplementation((setValues: any) => ({
           where: jest.fn().mockImplementation(() => {
-            Object.assign(workItem, setValues);
-            return Promise.resolve([workItem]);
+            const nextAttempts =
+              setValues.attempts && typeof setValues.attempts !== 'number'
+                ? workItem.attempts + 1
+                : (setValues.attempts ?? workItem.attempts);
+            Object.assign(workItem, setValues, { attempts: nextAttempts });
+            const p = Promise.resolve([workItem]);
+            return Object.assign(p, {
+              returning: jest.fn().mockResolvedValue([workItem]),
+            });
           }),
         })),
       }));

@@ -24,6 +24,7 @@ import {
   ValidatedCommentImage,
 } from '../comments/validators/comment-image.validator';
 import { FinalizedCommentMedia } from '../comments/comments.repository';
+import { getCommentMediaPurgeUrls } from './media-delivery.util';
 
 /**
  * UploadService — manages media uploads to Cloudflare R2 via presigned URLs.
@@ -522,33 +523,54 @@ export class UploadService {
   }
 
   /**
+   * Resolves CDN purge URLs for a storage key according to configured delivery policy and domain transitions.
+   */
+  getPurgeCdnUrls(storageKey: string, options?: { cdnBase?: string; domainTransition?: boolean }): string[] {
+    const cdnBase =
+      options?.cdnBase || this.config.get<string>('COMMENT_MEDIA_CDN_BASE') || this.config.get<string>('R2_PUBLIC_URL');
+    const domainTransition =
+      options?.domainTransition ??
+      (this.config.get<string>('COMMENT_MEDIA_DOMAIN_TRANSITION') === 'true' ||
+        this.config.get<string>('COMMENT_MEDIA_DOMAIN_TRANSITION') === '1');
+    const previousCdnBase = this.config.get<string>('COMMENT_MEDIA_PREVIOUS_CDN_BASE');
+
+    return getCommentMediaPurgeUrls(storageKey, { cdnBase, domainTransition, previousCdnBase });
+  }
+
+  /**
    * Purges a CDN cache URL via Cloudflare API.
-   * Idempotent; logs and succeeds if Cloudflare credentials are not configured.
+   * Fails observably if required credentials (CLOUDFLARE_ZONE_ID or CLOUDFLARE_API_TOKEN) are missing,
+   * if the network request fails or times out, or if Cloudflare returns an error response.
    */
   async purgeCdn(cdnUrl: string): Promise<void> {
     const zoneId = this.config.get<string>('CLOUDFLARE_ZONE_ID');
     const apiToken = this.config.get<string>('CLOUDFLARE_API_TOKEN');
 
-    if (zoneId && apiToken) {
-      try {
-        const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ files: [cdnUrl] }),
-        });
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`Cloudflare purge cache failed with status ${res.status}: ${text}`);
-        }
-      } catch (err) {
-        this.logger.error(`Failed to purge CDN for ${cdnUrl}: ${err instanceof Error ? err.message : String(err)}`);
-        throw err;
+    if (!zoneId || !apiToken) {
+      const err = new Error(
+        `Cloudflare credentials missing: CLOUDFLARE_ZONE_ID and CLOUDFLARE_API_TOKEN are required to purge CDN URL ${cdnUrl}`,
+      );
+      this.logger.error(err.message);
+      throw err;
+    }
+
+    try {
+      const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ files: [cdnUrl] }),
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Cloudflare purge cache failed with status ${res.status}: ${text}`);
       }
-    } else {
-      this.logger.log(`CDN purge simulated for ${cdnUrl} (no credentials configured)`);
+    } catch (err) {
+      this.logger.error(`Failed to purge CDN for ${cdnUrl}: ${err instanceof Error ? err.message : String(err)}`);
+      throw err;
     }
   }
 
@@ -626,7 +648,7 @@ export class UploadService {
         downloadETag = response.ETag;
 
         if (response.ContentLength && response.ContentLength > MAX_COMMENT_IMAGE_BYTES) {
-          await this.deleteObject(ticket.stagingKey);
+          await this.deleteObject(ticket.stagingKey).catch(() => {});
           await this.db
             .update(stagedUploads)
             .set({ status: 'FAILED', errorMessage: 'File size exceeds 100,000 bytes', updatedAt: new Date() })
@@ -645,7 +667,7 @@ export class UploadService {
         }
         const byteArray = await response.Body.transformToByteArray();
         if (byteArray.length > MAX_COMMENT_IMAGE_BYTES) {
-          await this.deleteObject(ticket.stagingKey);
+          await this.deleteObject(ticket.stagingKey).catch(() => {});
           await this.db
             .update(stagedUploads)
             .set({ status: 'FAILED', errorMessage: 'File size exceeds 100,000 bytes', updatedAt: new Date() })
@@ -694,7 +716,7 @@ export class UploadService {
         validated = await validateCommentImage(item.objectBytes);
       } catch (err) {
         // Immediate deletion of invalid staged object
-        await this.deleteObject(item.ticket.stagingKey);
+        await this.deleteObject(item.ticket.stagingKey).catch(() => {});
         await this.db
           .update(stagedUploads)
           .set({
@@ -737,7 +759,7 @@ export class UploadService {
         const blockedSet = new Set(blockedRows.map((r) => r.sha256));
         const blockedIndex = validatedItems.findIndex((item) => blockedSet.has(item.validated.sha256));
         const blockedItem = validatedItems[blockedIndex >= 0 ? blockedIndex : 0];
-        await this.deleteObject(blockedItem.ticket.stagingKey);
+        await this.deleteObject(blockedItem.ticket.stagingKey).catch(() => {});
         await this.db
           .update(stagedUploads)
           .set({
@@ -787,7 +809,7 @@ export class UploadService {
             .where(inArray(stagedUploads.id, claimedIds));
         }
         for (const key of publishedFinalKeys) {
-          await this.deleteObject(key);
+          await this.deleteObject(key).catch(() => {});
         }
         throw new AppError('Media has already been used', 'COMMENT_MEDIA_ALREADY_USED', {
           mediaPosition: position,
@@ -810,7 +832,7 @@ export class UploadService {
             .set({ status: 'ISSUED', updatedAt: new Date() })
             .where(inArray(stagedUploads.id, claimedIds));
           for (const key of publishedFinalKeys) {
-            await this.deleteObject(key);
+            await this.deleteObject(key).catch(() => {});
           }
           throw new AppError('Staged media was modified during processing', 'COMMENT_MEDIA_PROCESSING_FAILED', {
             mediaPosition: position,
@@ -824,7 +846,7 @@ export class UploadService {
           .set({ status: 'ISSUED', updatedAt: new Date() })
           .where(inArray(stagedUploads.id, claimedIds));
         for (const key of publishedFinalKeys) {
-          await this.deleteObject(key);
+          await this.deleteObject(key).catch(() => {});
         }
         throw new AppError('Failed to verify staged object state', 'COMMENT_MEDIA_PROCESSING_FAILED', {
           mediaPosition: position,
@@ -849,7 +871,7 @@ export class UploadService {
           .set({ status: 'ISSUED', updatedAt: new Date() })
           .where(inArray(stagedUploads.id, claimedIds));
         for (const key of publishedFinalKeys) {
-          await this.deleteObject(key);
+          await this.deleteObject(key).catch(() => {});
         }
         this.logger.error(
           `Transient error publishing verified object to ${finalStorageKey}: ${err instanceof Error ? err.message : String(err)}`,
@@ -899,13 +921,15 @@ export class UploadService {
   }
 
   /**
-   * Deletes an object from R2 (e.g. for rollback on DB failure).
+   * Deletes an object from R2 (e.g. for rollback on DB failure, or durable deletion worker).
+   * Propagates provider failures so errors remain observable and retryable.
    */
   async deleteObject(key: string): Promise<void> {
     try {
       await this.s3Client.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: key }));
     } catch (err) {
       this.logger.warn(`Failed to delete object ${key}: ${err}`);
+      throw err;
     }
   }
 }
