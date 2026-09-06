@@ -7,6 +7,7 @@ This runbook defines the operational controls, failure recovery procedures, mode
 ## 1. System Topology & Zero-Worker Architecture
 
 The entire Comments & Images feature operates strictly within the existing **three-service deployment topology**:
+
 1. **PostgreSQL (Continuous):** Holds tables `comments`, `comment_media`, `post_pins`, `comment_reports`, `staged_uploads`, `media_deletion_work`, and `blocked_media_hashes`.
 2. **Main NestJS API (Continuous):** Serves client GraphQL traffic, validates WebP uploads, hosts in-process cron reconcilers (`StagingCleanupCron`, `MediaDeletionProcessor`), and coordinates notifications.
 3. **AdminJS Service (Serverless Sleep):** Provides back-office review for comments, comment reports, and blocked image hashes.
@@ -18,32 +19,36 @@ The entire Comments & Images feature operates strictly within the existing **thr
 ## 2. Media Publishing Recovery & Reconciliation Lifecycle (Ticket 04)
 
 ### 2.1 Continuous & Restart-Time Recovery
+
 - **Component:** `MediaDeletionProcessor` in `backend/src/upload/media-deletion.processor.ts`.
 - **Zero-Fourth-Service Topology:** Runs completely inside the main continuously available NestJS API without requiring Redis, a separate scheduler daemon, or a 4th Railway service.
 - **Startup Reconciliation:** Implements `OnApplicationBootstrap` to run `reconcile()` immediately when the application starts up or restarts following a deployment, crash, or OOM event.
 - **Periodic Reconciliation:** Annotated with `@Cron(CronExpression.EVERY_5_MINUTES)` to continuously detect and heal interrupted operations in the background.
 
 ### 2.2 Recoverable Failure States
+
 1. **Copied-but-uncommitted State:**
-   - *Condition:* `staged_uploads` with `purpose = 'COMMENT_IMAGE'`, `finalStorageKey IS NOT NULL`, `status IN ('CLAIMED', 'FINALIZED', 'FAILED')`, and `updatedAt < NOW() - 5 minutes`, where no corresponding row exists in `comment_media`.
-   - *Resolution:* The object was published to R2 or claimed, but comment creation never committed (e.g. database commit crash, validation abort, or API crash).
-   - *Action:* Atomically transitions `status = 'FAILED'` using conditional update `WHERE id = $1 AND status = $2 RETURNING *`. Enqueues durable storage deletion and CDN purge tasks in `media_deletion_work` for `finalStorageKey`. Deletes the staging object from R2 and marks `stagingKey = cleaned/...`.
+   - _Condition:_ `staged_uploads` with `purpose = 'COMMENT_IMAGE'`, `finalStorageKey IS NOT NULL`, `status IN ('CLAIMED', 'FINALIZED', 'FAILED')`, and `updatedAt < NOW() - 5 minutes`, where no corresponding row exists in `comment_media`.
+   - _Resolution:_ The object was published to R2 or claimed, but comment creation never committed (e.g. database commit crash, validation abort, or API crash).
+   - _Action:_ Atomically transitions `status = 'FAILED'` using conditional update `WHERE id = $1 AND status = $2 RETURNING *`. Enqueues durable storage deletion and CDN purge tasks in `media_deletion_work` for `finalStorageKey`. Deletes the staging object from R2 and marks `stagingKey = cleaned/...`.
 2. **Committed-but-not-cleaned State:**
-   - *Condition:* `staged_uploads` with `status = 'FINALIZED'`, `finalStorageKey IS NOT NULL`, and `updatedAt < NOW() - 5 minutes`, where `comment_media` DOES contain a matching row.
-   - *Resolution:* Comment creation succeeded and committed to PostgreSQL, but staging deletion in R2 was interrupted before completion.
-   - *Action:* Confirms the active comment attachment. Safely deletes the original staging object (`stagingKey`) from R2 and updates `stagingKey = cleaned/...` to prevent redundant checks while leaving the public finalized object completely intact.
+   - _Condition:_ `staged_uploads` with `status = 'FINALIZED'`, `finalStorageKey IS NOT NULL`, and `updatedAt < NOW() - 5 minutes`, where `comment_media` DOES contain a matching row.
+   - _Resolution:_ Comment creation succeeded and committed to PostgreSQL, but staging deletion in R2 was interrupted before completion.
+   - _Action:_ Confirms the active comment attachment. Safely deletes the original staging object (`stagingKey`) from R2 and updates `stagingKey = cleaned/...` to prevent redundant checks while leaving the public finalized object completely intact.
 3. **Expired or Abandoned Staging:**
-   - *Condition:* `staged_uploads` with `status IN ('ISSUED', 'CLAIMED')` where `expiresAt < NOW()`, or `status = 'FAILED'` older than 5 minutes that has not yet been cleaned.
-   - *Action:* Deletes the staging object from R2 (queuing to `media_deletion_work` if delete fails) and marks `status = 'EXPIRED'`, setting `stagingKey = cleaned/...`.
+   - _Condition:_ `staged_uploads` with `status IN ('ISSUED', 'CLAIMED')` where `expiresAt < NOW()`, or `status = 'FAILED'` older than 5 minutes that has not yet been cleaned.
+   - _Action:_ Deletes the staging object from R2 (queuing to `media_deletion_work` if delete fails) and marks `status = 'EXPIRED'`, setting `stagingKey = cleaned/...`.
 4. **Committed Media Protection Guard (AC 6):**
    - In `MediaDeletionProcessor.processPendingWork()`, before deleting any R2 object, the worker checks if `comment_media` contains a row referencing the target storage key.
    - If a committed record exists, deletion is safely bypassed and marked `COMPLETED` with note `Skipped: media is committed to comment`, preventing stale worker races from deleting live user content.
 
 ### 2.3 Cloudflare R2 1-Day Lifecycle Rule (Failsafe)
+
 - Cloudflare R2 bucket `staging/` prefix is configured with an automated **1-day object expiration lifecycle rule**.
 - If the NestJS API restarts during a cleanup iteration or experiences network degradation reaching R2, Cloudflare's native lifecycle rule guarantees eventual garbage collection of abandoned staging objects at zero compute cost.
 
 ### 2.4 Operator Inspection & Historical Recovery Queries
+
 Operators can monitor interrupted tickets and verify convergence using the following queries:
 
 ```sql
@@ -84,6 +89,7 @@ WHERE purpose = 'COMMENT_IMAGE'
 ## 3. Media Deletion Outbox & CDN Purge Backlog
 
 ### 3.1 Durable Deletion Outbox Pattern
+
 - When a user deletes a comment containing media or an administrator permanently removes a comment (`removeComment`), public media rows are immediately unlinked and records are committed to `media_deletion_work` within the same database transaction.
 - **Processor:** `MediaDeletionProcessor` in `backend/src/upload/media-deletion.processor.ts` runs every minute (`@Cron(CronExpression.EVERY_MINUTE)`).
 - **Execution & Idempotency:**
@@ -97,12 +103,14 @@ WHERE purpose = 'COMMENT_IMAGE'
   - Missing Cloudflare credentials (`CLOUDFLARE_ZONE_ID` or `CLOUDFLARE_API_TOKEN`) fail loudly as observable operational errors rather than simulating success.
 
 ### 3.2 Delivery Policy & Domain Transitions
+
 - Deletion outbox records match the configured media delivery policy:
   - **Primary CDN domain:** `https://cdn.pupzy.net` by default.
   - **Explicit fallback / override:** `COMMENT_MEDIA_CDN_BASE` or `R2_PUBLIC_URL`.
   - **Domain transitions:** When `COMMENT_MEDIA_DOMAIN_TRANSITION=true` or `COMMENT_MEDIA_PREVIOUS_CDN_BASE` is configured, permanent removal queues purge tasks for both the current active CDN URL and any legacy/fallback CDN URLs to ensure cached copies do not outlive removal.
 
 ### 3.3 Backlog Inspection & Operator Retry Policy
+
 - **Transient Failures:** Work items retry with exponential backoff up to 5 attempts. While `attempts < 5`, the status is reset to `PENDING` with `last_error` recorded.
 - **Persistent Failures:** After 5 failed attempts, the record transitions to `FAILED` with `last_error` recorded, retaining work for operator intervention.
 - **Operator Inspection Queries:**
@@ -140,12 +148,15 @@ WHERE purpose = 'COMMENT_IMAGE'
 ## 4. Moderation & Exact-Hash Blocklist (AdminJS)
 
 ### 4.1 Actions Available in AdminJS
+
 Moderators navigate to the `Comments` and `Comment Reports` resources in AdminJS:
+
 1. **Restore Comment (`restoreComment`):** Restores visibility of a comment currently in `IMAGE_HIDDEN` or `HIDDEN` status back to `ACTIVE`.
 2. **Permanent Removal (`removeComment`):** Transitions comment to `REMOVED`. Masks text as `[Removed]`, unlinks author, unpins if pinned, unlinks media, and transactionally enqueues R2 deletion and CDN purge tasks to `media_deletion_work`.
 3. **Block Image Hash:** If a comment is removed for inappropriate content, the image SHA-256 digest is transactionally added to `blocked_media_hashes`.
 
 ### 4.2 Temporary Hiding vs. Permanent Removal
+
 - **Temporary Hiding (Automated Reports or Review):**
   - Triggered automatically by report thresholds (e.g. 1 qualifying inappropriate report sets status to `IMAGE_HIDDEN`; 3 qualifying reports set status to `HIDDEN`).
   - Hides media URLs from GraphQL query responses while keeping the database records and underlying R2 storage intact so comments/media can be restored if reports are invalidated.
@@ -156,6 +167,7 @@ Moderators navigate to the `Comments` and `Comment Reports` resources in AdminJS
   - Guarantees that permanent removal does not claim completion before its required deletion and purge effects succeed.
 
 ### 4.3 Exact-Hash Limitations
+
 - The blocklist stores cryptographic **SHA-256 digests**.
 - It matches images **bit-for-bit**. It is **not a perceptual or fuzzy hash**.
 - A single pixel change, re-compression, or metadata modification produces a distinct SHA-256 hash. Moderators must rely on comment reporting and manual review for variant or altered abusive imagery.
@@ -165,6 +177,7 @@ Moderators navigate to the `Comments` and `Comment Reports` resources in AdminJS
 ## 5. Operational Rollback & Kill-Switch (`COMMENT_IMAGES_ENABLED`)
 
 If abusive image flooding, storage anomalies, or R2 outages occur:
+
 1. Set Railway environment variable in `Main NestJS API`:
    ```env
    COMMENT_IMAGES_ENABLED=false
@@ -188,6 +201,7 @@ If abusive image flooding, storage anomalies, or R2 outages occur:
 ## 7. Discussion Counters Reconciliation & Reachability Policy (Ticket 09)
 
 ### 7.1 Reachability and Visibility Invariants
+
 - **Public Reachability Rules:**
   - A top-level comment is reachable if `status IN ('ACTIVE', 'IMAGE_HIDDEN')` or if it is a tombstone (`status IN ('DELETED', 'HIDDEN') AND reply_count > 0`).
   - A reply is reachable only if its status is `ACTIVE` or `IMAGE_HIDDEN` AND its parent comment is reachable and NOT permanently `REMOVED`.
@@ -202,6 +216,7 @@ If abusive image flooding, storage anomalies, or R2 outages occur:
   - Removing and restoring a post (`removePost` / `restorePost`) does not undo individual permanent removals or deletions of comments, nor does it revive pins of removed comments.
 
 ### 7.2 Counter Drift Inspection Queries
+
 Operators can detect counter drift across posts, comments, and boosts using the following read-only queries:
 
 ```sql
@@ -222,7 +237,7 @@ reachable_top_level AS (
   GROUP BY post_id
 ),
 computed_counts AS (
-  SELECT 
+  SELECT
     p.id AS post_id,
     p.comment_count AS current_comment_count,
     COALESCE(tl.top_count, 0) + COALESCE(rr.reply_count, 0) AS expected_comment_count
@@ -236,10 +251,10 @@ WHERE current_comment_count != expected_comment_count;
 
 -- 2. Inspect drifted comment reply_counts:
 WITH computed_reply_counts AS (
-  SELECT 
+  SELECT
     p.id AS comment_id,
     p.reply_count AS current_reply_count,
-    CASE 
+    CASE
       WHEN p.status = 'REMOVED' THEN 0
       ELSE COALESCE(COUNT(c.id) FILTER (WHERE c.status IN ('ACTIVE', 'IMAGE_HIDDEN')), 0)::int
     END AS expected_reply_count
@@ -254,7 +269,7 @@ WHERE current_reply_count != expected_reply_count;
 
 -- 3. Inspect drifted comment boost_counts:
 WITH computed_boost_counts AS (
-  SELECT 
+  SELECT
     c.id AS comment_id,
     c.boost_count AS current_boost_count,
     COALESCE(COUNT(cb.id), 0)::int AS expected_boost_count
@@ -268,6 +283,7 @@ WHERE current_boost_count != expected_boost_count;
 ```
 
 ### 7.3 Operational Reconciliation & Repair Procedure
+
 To repair drifted counters transactionally, invoke `CommentsService.reconcileCommentCounters(options)` or run the following SQL update:
 
 ```sql
@@ -291,7 +307,7 @@ reachable_top_level AS (
   GROUP BY post_id
 ),
 computed_counts AS (
-  SELECT 
+  SELECT
     p.id AS post_id,
     COALESCE(tl.top_count, 0) + COALESCE(rr.reply_count, 0) AS expected_comment_count
   FROM posts p
@@ -307,9 +323,9 @@ WHERE posts.id = cc.post_id
 
 -- Repair comments reply_count
 WITH computed_reply_counts AS (
-  SELECT 
+  SELECT
     p.id AS comment_id,
-    CASE 
+    CASE
       WHEN p.status = 'REMOVED' THEN 0
       ELSE COALESCE(COUNT(c.id) FILTER (WHERE c.status IN ('ACTIVE', 'IMAGE_HIDDEN')), 0)::int
     END AS expected_reply_count
@@ -327,7 +343,7 @@ WHERE comments.id = crc.comment_id
 
 -- Repair comments boost_count
 WITH computed_boost_counts AS (
-  SELECT 
+  SELECT
     c.id AS comment_id,
     COALESCE(COUNT(cb.id), 0)::int AS expected_boost_count
   FROM comments c
@@ -344,3 +360,44 @@ WHERE comments.id = cbc.comment_id
 COMMIT;
 ```
 
+---
+
+## 8. Discussion Quotas & Abuse Prevention
+
+### 8.1 Enforced Quota Windows & Limits
+
+The API enforces durable, atomic per-user quotas across all discussion write operations:
+
+| Operation                             | Minute Limit  | Daily (24h) Limit | Accounting & Retention Policy                                                          |
+| ------------------------------------- | ------------- | ----------------- | -------------------------------------------------------------------------------------- |
+| **Comment & Reply Creation** (Shared) | 10 per minute | 100 per day       | Atomic reservation; failed mutations roll back; identical retries do not consume quota |
+| **Comment Image Tickets**             | 6 per minute  | 50 per day        | Counted at issuance; failed, cancelled, and abandoned tickets remain counted           |
+| **Comment Boost Toggles**             | 60 per minute | -                 | Backed by `comment_quota_admissions`; survives restarts                                |
+| **Comment Reports**                   | -             | 10 per day        | Enforces 10 reports per user per 24 hours                                              |
+
+### 8.2 Concurrency & Atomicity Design
+
+- **Advisory Locks:** Admissions use PostgreSQL transaction-scoped advisory locks:
+  `SELECT pg_advisory_xact_lock(hashtext('comment_quota'), hashtext(user_id || ':' || action))`
+  This cleanly serializes concurrent bursts for the same user without table locking or cross-user contention.
+- **Durable Storage:** Quota events are persisted in `comment_quota_admissions`, guaranteeing correctness across service restarts and multi-process deployments.
+- **Short Transactions:** Quota admissions execute within lightweight (~1-2ms) database transactions. External network and storage operations (such as Cloudflare R2 uploads, presigned URL signing, and Sharp image processing) are **never** held inside quota transactions.
+
+### 8.3 Operator Inspection Queries
+
+```sql
+-- View recent quota admissions for a specific user
+SELECT action, client_request_id, created_at
+FROM comment_quota_admissions
+WHERE user_id = '<USER_UUID>'
+  AND created_at >= NOW() - INTERVAL '24 hours'
+ORDER BY created_at DESC;
+
+-- Quota consumption summary for a user in the last 24 hours
+SELECT action,
+       COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '1 minute') AS past_minute_count,
+       COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '24 hours') AS past_day_count
+FROM comment_quota_admissions
+WHERE user_id = '<USER_UUID>'
+GROUP BY action;
+```

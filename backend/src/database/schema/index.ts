@@ -68,3 +68,4 @@ export * from './comment-media.schema';
 export * from './media-deletion-work.schema';
 export * from './comment-reports.schema';
 export * from './blocked-media-hashes.schema';
+export * from './comment-quota-admissions.schema';

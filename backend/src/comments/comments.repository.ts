@@ -22,6 +22,7 @@ import {
 import { NotFoundError, ConflictError, ForbiddenError, ValidationError } from '../common/errors/app.errors';
 import { CommentCursorPayload, CommentSortOrder } from './dto/comments-query.input';
 import { getCommentMediaPurgeUrls } from '../upload/media-delivery.util';
+import { CommentsQuotaManager, QuotaReservation } from './comments-quota.manager';
 
 export interface FinalizedCommentMedia {
   id: string;
@@ -48,10 +49,42 @@ export function isUniqueViolation(err: unknown): boolean {
 
 @Injectable()
 export class CommentsRepository {
+  private readonly quotaManager: CommentsQuotaManager;
+
   constructor(
     @Inject(DATABASE_TOKEN)
     private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  ) {
+    this.quotaManager = new CommentsQuotaManager(this.db);
+  }
+
+  /**
+   * Atomically checks and reserves creation quota (10/min, 100/day).
+   */
+  async reserveCreationQuota(userId: string, clientRequestId?: string): Promise<QuotaReservation> {
+    return this.quotaManager.reserveCreationQuota(userId, clientRequestId);
+  }
+
+  /**
+   * Atomically checks and records quota for comment boost toggle (60/min).
+   */
+  async checkAndRecordBoostQuota(userId: string): Promise<QuotaReservation> {
+    return this.quotaManager.checkAndRecordBoostQuota(userId);
+  }
+
+  /**
+   * Atomically checks and records quota for comment report (10/day).
+   */
+  async checkAndRecordReportQuota(userId: string): Promise<QuotaReservation> {
+    return this.quotaManager.checkAndRecordReportQuota(userId);
+  }
+
+  /**
+   * Resets quota admissions for a user.
+   */
+  async resetQuota(userId: string, action?: string): Promise<void> {
+    return this.quotaManager.resetQuota(userId, action);
+  }
 
   /**
    * Finds a durable idempotency record by author and clientRequestId.

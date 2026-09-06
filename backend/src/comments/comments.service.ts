@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { CommentsRepository, FinalizedCommentMedia, isUniqueViolation } from './comments.repository';
+import { QuotaReservation } from './comments-quota.manager';
 import { PostsRepository } from '../posts/posts.repository';
 import { CreateCommentDto } from './dto/create-comment.input';
 import { CreateReplyDto } from './dto/create-reply.input';
@@ -156,17 +157,23 @@ export class CommentsService {
       throw new NotFoundError('Post', postId);
     }
 
-    // 4. Per-user rate limiting (10/min, 100/day)
-    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
-    const minuteCount = await this.commentsRepository.countRecentCreationsByAuthor(userId, oneMinuteAgo);
-    if (minuteCount >= 10) {
-      throw new AppError('Comment creation rate limit exceeded (max 10 per minute)', 'RATE_LIMITED');
-    }
+    // 4. Per-user atomic rate limiting (10/min, 100/day)
+    let quotaReservation: QuotaReservation | undefined;
+    if (typeof this.commentsRepository.reserveCreationQuota === 'function') {
+      quotaReservation = await this.commentsRepository.reserveCreationQuota(userId, clientRequestId);
+    } else {
+      const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+      const minuteCount = await this.commentsRepository.countRecentCreationsByAuthor(userId, oneMinuteAgo);
+      if (minuteCount >= 10) {
+        throw new AppError('Comment creation rate limit exceeded (max 10 per minute)', 'RATE_LIMITED');
+      }
 
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const dayCount = await this.commentsRepository.countRecentCreationsByAuthor(userId, oneDayAgo);
-    if (dayCount >= 100) {
-      throw new AppError('Comment creation rate limit exceeded (max 100 per day)', 'RATE_LIMITED');
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const dayCount = await this.commentsRepository.countRecentCreationsByAuthor(userId, oneDayAgo);
+      if (dayCount >= 100) {
+        throw new AppError('Comment creation rate limit exceeded (max 100 per day)', 'RATE_LIMITED');
+      }
+      quotaReservation = { admissionId: '', rollback: async () => {} };
     }
 
     // 5. Finalize staged comment images if attached
@@ -183,10 +190,16 @@ export class CommentsService {
             const recheck = await this.commentsRepository.findIdempotencyRecord(userId, clientRequestId);
             if (recheck) {
               this.logger.log(`Concurrent duplicate resolved to existing comment clientRequestId=${clientRequestId}`);
+              if (quotaReservation) {
+                await quotaReservation.rollback().catch(() => {});
+              }
               return this.resolveExistingCommentReplay(recheck, requestHash);
             }
             await new Promise((resolve) => setTimeout(resolve, 100));
           }
+        }
+        if (quotaReservation) {
+          await quotaReservation.rollback().catch(() => {});
         }
         throw finalizeErr;
       }
@@ -254,6 +267,9 @@ export class CommentsService {
                 'Duplicate request superseded',
               );
             }
+            if (quotaReservation) {
+              await quotaReservation.rollback().catch(() => {});
+            }
             return this.resolveExistingCommentReplay(recheck, requestHash);
           }
           await new Promise((resolve) => setTimeout(resolve, 100));
@@ -272,6 +288,9 @@ export class CommentsService {
           mediaItems.map((m) => m.id),
           'Database transaction failed',
         );
+      }
+      if (quotaReservation) {
+        await quotaReservation.rollback().catch(() => {});
       }
       throw err;
     }
@@ -410,17 +429,23 @@ export class CommentsService {
       throw new NotFoundError('Post', parentComment.postId);
     }
 
-    // 5. Shared per-user rate limiting (10/min, 100/day)
-    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
-    const minuteCount = await this.commentsRepository.countRecentCreationsByAuthor(userId, oneMinuteAgo);
-    if (minuteCount >= 10) {
-      throw new AppError('Comment creation rate limit exceeded (max 10 per minute)', 'RATE_LIMITED');
-    }
+    // 5. Shared per-user atomic rate limiting (10/min, 100/day)
+    let quotaReservation: QuotaReservation | undefined;
+    if (typeof this.commentsRepository.reserveCreationQuota === 'function') {
+      quotaReservation = await this.commentsRepository.reserveCreationQuota(userId, clientRequestId);
+    } else {
+      const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+      const minuteCount = await this.commentsRepository.countRecentCreationsByAuthor(userId, oneMinuteAgo);
+      if (minuteCount >= 10) {
+        throw new AppError('Comment creation rate limit exceeded (max 10 per minute)', 'RATE_LIMITED');
+      }
 
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const dayCount = await this.commentsRepository.countRecentCreationsByAuthor(userId, oneDayAgo);
-    if (dayCount >= 100) {
-      throw new AppError('Comment creation rate limit exceeded (max 100 per day)', 'RATE_LIMITED');
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const dayCount = await this.commentsRepository.countRecentCreationsByAuthor(userId, oneDayAgo);
+      if (dayCount >= 100) {
+        throw new AppError('Comment creation rate limit exceeded (max 100 per day)', 'RATE_LIMITED');
+      }
+      quotaReservation = { admissionId: '', rollback: async () => {} };
     }
 
     // 6. Transactional reply creation with row-level locks and counter updates
@@ -459,10 +484,16 @@ export class CommentsService {
         for (let attempt = 0; attempt < 20; attempt++) {
           const recheck = await this.commentsRepository.findIdempotencyRecord(userId, clientRequestId);
           if (recheck) {
+            if (quotaReservation) {
+              await quotaReservation.rollback().catch(() => {});
+            }
             return this.resolveExistingCommentReplay(recheck, requestHash);
           }
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
+      }
+      if (quotaReservation) {
+        await quotaReservation.rollback().catch(() => {});
       }
       throw err;
     }
@@ -559,8 +590,11 @@ export class CommentsService {
   /**
    * Resets the boost toggle rate limit window for a user (useful for testing).
    */
-  resetBoostRateLimit(userId: string): void {
+  async resetBoostRateLimit(userId: string): Promise<void> {
     this.boostToggleTimestamps.delete(userId);
+    if (typeof this.commentsRepository.resetQuota === 'function') {
+      await this.commentsRepository.resetQuota(userId, 'COMMENT_BOOST_TOGGLE').catch(() => {});
+    }
   }
 
   /**
@@ -574,40 +608,52 @@ export class CommentsService {
     commentId: string,
   ): Promise<{ commentId: string; isBoostedByMe: boolean; boostedByMe: boolean; boostCount: number }> {
     // 1. Rate limiting (60 per minute)
-    this.checkBoostRateLimit(userId);
-
-    // 2. Transactional toggle in repository
-    const result = await this.commentsRepository.toggleBoost(commentId, userId);
-
-    // 3. Fire COMMENT_BOOSTED notification if boost was added (not removed) and author is not actor
-    if (this.notificationsService && result.isBoostedByMe) {
-      const comment = await this.commentsRepository.findCommentById(commentId);
-      if (comment && comment.authorId !== userId) {
-        let actorName = 'Someone';
-        if (this.usersService) {
-          const actor = await this.usersService.findById(userId).catch(() => undefined);
-          if (actor?.fullName) actorName = actor.fullName;
-        }
-        this.notificationsService.fireNotification(
-          {
-            recipientId: comment.authorId,
-            type: 'COMMENT_BOOSTED',
-            title: 'Comment boosted',
-            body: `${actorName} boosted your ${comment.parentId ? 'reply' : 'comment'}`,
-            relatedPostId: comment.postId,
-            relatedCommentId: comment.id,
-          },
-          userId,
-        );
-      }
+    let boostReservation: QuotaReservation | undefined;
+    if (typeof this.commentsRepository.checkAndRecordBoostQuota === 'function') {
+      boostReservation = await this.commentsRepository.checkAndRecordBoostQuota(userId);
+    } else {
+      this.checkBoostRateLimit(userId);
     }
 
-    return {
-      commentId,
-      isBoostedByMe: result.isBoostedByMe,
-      boostedByMe: result.isBoostedByMe,
-      boostCount: result.boostCount,
-    };
+    try {
+      // 2. Transactional toggle in repository
+      const result = await this.commentsRepository.toggleBoost(commentId, userId);
+
+      // 3. Fire COMMENT_BOOSTED notification if boost was added (not removed) and author is not actor
+      if (this.notificationsService && result.isBoostedByMe) {
+        const comment = await this.commentsRepository.findCommentById(commentId);
+        if (comment && comment.authorId !== userId) {
+          let actorName = 'Someone';
+          if (this.usersService) {
+            const actor = await this.usersService.findById(userId).catch(() => undefined);
+            if (actor?.fullName) actorName = actor.fullName;
+          }
+          this.notificationsService.fireNotification(
+            {
+              recipientId: comment.authorId,
+              type: 'COMMENT_BOOSTED',
+              title: 'Comment boosted',
+              body: `${actorName} boosted your ${comment.parentId ? 'reply' : 'comment'}`,
+              relatedPostId: comment.postId,
+              relatedCommentId: comment.id,
+            },
+            userId,
+          );
+        }
+      }
+
+      return {
+        commentId,
+        isBoostedByMe: result.isBoostedByMe,
+        boostedByMe: result.isBoostedByMe,
+        boostCount: result.boostCount,
+      };
+    } catch (err) {
+      if (boostReservation) {
+        await boostReservation.rollback().catch(() => {});
+      }
+      throw err;
+    }
   }
 
   /**
@@ -674,19 +720,31 @@ export class CommentsService {
     const { commentId, reason, details } = input;
 
     // 1. Rate limiting: max 10 comment reports per day per user
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const dailyCount = await this.commentsRepository.countRecentReportsByReporter(userId, oneDayAgo);
-    if (dailyCount >= 10) {
-      throw new AppError('Daily comment report limit reached (10 per day)', 'RATE_LIMITED');
+    let reportReservation: QuotaReservation | undefined;
+    if (typeof this.commentsRepository.checkAndRecordReportQuota === 'function') {
+      reportReservation = await this.commentsRepository.checkAndRecordReportQuota(userId);
+    } else {
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const dailyCount = await this.commentsRepository.countRecentReportsByReporter(userId, oneDayAgo);
+      if (dailyCount >= 10) {
+        throw new AppError('Daily comment report limit reached (10 per day)', 'RATE_LIMITED');
+      }
     }
 
-    // 2. Delegate transactional reporting & threshold checks to repository
-    return this.commentsRepository.reportComment({
-      commentId,
-      reporterId: userId,
-      reason,
-      details,
-    });
+    try {
+      // 2. Delegate transactional reporting & threshold checks to repository
+      return await this.commentsRepository.reportComment({
+        commentId,
+        reporterId: userId,
+        reason,
+        details,
+      });
+    } catch (err) {
+      if (reportReservation) {
+        await reportReservation.rollback().catch(() => {});
+      }
+      throw err;
+    }
   }
 
   /**

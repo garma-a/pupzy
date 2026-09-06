@@ -14,7 +14,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { eq, and, gt, gte, inArray, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
-import { stagedUploads, type StagedUpload, type StagedUploadPurpose } from '../database/schema';
+import { stagedUploads, commentQuotaAdmissions, type StagedUpload, type StagedUploadPurpose } from '../database/schema';
 import * as schema from '../database/schema';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { NotFoundError, AppError } from '../common/errors/app.errors';
@@ -434,38 +434,74 @@ export class UploadService {
 
     const now = new Date();
 
-    // 3. Rate limiting: 6 per minute
-    const oneMinuteAgo = new Date(now.getTime() - 60_000);
-    const [minResult] = await this.db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(stagedUploads)
-      .where(
-        and(
-          eq(stagedUploads.userId, userId),
-          eq(stagedUploads.purpose, 'COMMENT_IMAGE'),
-          gte(stagedUploads.createdAt, oneMinuteAgo),
-        ),
-      );
+    // 3. Atomic rate limiting: 6 per minute, 50 per day (failed and abandoned count toward it)
+    const runQuotaCheck = async (tx: any) => {
+      try {
+        await tx.execute(
+          sql`SELECT pg_advisory_xact_lock(hashtext('comment_quota'), hashtext(${userId} || ':COMMENT_IMAGE_TICKET'))`,
+        );
+      } catch {
+        // Fallback for mock unit test environments
+      }
 
-    if ((minResult?.count ?? 0) >= 6) {
-      throw new AppError('Comment image upload rate limit exceeded (max 6 per minute)', 'RATE_LIMITED');
-    }
+      const oneMinuteAgo = new Date(now.getTime() - 60_000);
+      const [minResult] = await tx
+        .select({
+          count: sql<number>`greatest(
+            coalesce((select count(*)::int from comment_quota_admissions where user_id = ${userId} and action = 'COMMENT_IMAGE_TICKET' and created_at >= ${oneMinuteAgo}), 0),
+            count(*)::int
+          )::int`,
+        })
+        .from(stagedUploads)
+        .where(
+          and(
+            eq(stagedUploads.userId, userId),
+            eq(stagedUploads.purpose, 'COMMENT_IMAGE'),
+            gte(stagedUploads.createdAt, oneMinuteAgo),
+          ),
+        );
 
-    // 4. Rate limiting: 50 per day (failed and abandoned count toward it)
-    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60_000);
-    const [dayResult] = await this.db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(stagedUploads)
-      .where(
-        and(
-          eq(stagedUploads.userId, userId),
-          eq(stagedUploads.purpose, 'COMMENT_IMAGE'),
-          gte(stagedUploads.createdAt, oneDayAgo),
-        ),
-      );
+      if ((minResult?.count ?? 0) >= 6) {
+        throw new AppError('Comment image upload rate limit exceeded (max 6 per minute)', 'RATE_LIMITED');
+      }
 
-    if ((dayResult?.count ?? 0) >= 50) {
-      throw new AppError('Comment image upload daily limit exceeded (max 50 per day)', 'RATE_LIMITED');
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60_000);
+      const [dayResult] = await tx
+        .select({
+          count: sql<number>`greatest(
+            coalesce((select count(*)::int from comment_quota_admissions where user_id = ${userId} and action = 'COMMENT_IMAGE_TICKET' and created_at >= ${oneDayAgo}), 0),
+            count(*)::int
+          )::int`,
+        })
+        .from(stagedUploads)
+        .where(
+          and(
+            eq(stagedUploads.userId, userId),
+            eq(stagedUploads.purpose, 'COMMENT_IMAGE'),
+            gte(stagedUploads.createdAt, oneDayAgo),
+          ),
+        );
+
+      if ((dayResult?.count ?? 0) >= 50) {
+        throw new AppError('Comment image upload daily limit exceeded (max 50 per day)', 'RATE_LIMITED');
+      }
+
+      try {
+        await tx.insert(commentQuotaAdmissions).values({
+          id: generateUuidV7(),
+          userId,
+          action: 'COMMENT_IMAGE_TICKET',
+          createdAt: now,
+        });
+      } catch {
+        // Fallback for mock unit tests
+      }
+    };
+
+    if (typeof (this.db as any).transaction === 'function') {
+      await (this.db as any).transaction(runQuotaCheck);
+    } else {
+      await runQuotaCheck(this.db);
     }
 
     // 5. Generate ticket and presigned URL

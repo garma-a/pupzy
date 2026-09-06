@@ -225,6 +225,13 @@
       "when": 1789755200000,
       "tag": "0031_add_reviewed_at_to_comment_reports",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1789841600000,
+      "tag": "0032_add_comment_quota_admissions",
+      "breakpoints": true
     }
   ]
 }
