@@ -7,9 +7,11 @@ import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
 import '../models/comment.dart';
+import '../models/comment_submission.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/comment_image_compressor.dart';
+import '../utils/comment_submission_manager.dart';
 import '../utils/time_format.dart';
 import 'animated_boost_chip.dart';
 
@@ -43,7 +45,15 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
   bool _compressing = false;
   String? _errorMessage;
   String? _createErrorMessage;
+  CommentSubmissionError? _submissionError;
   String? _currentUserId;
+
+  final CommentSubmissionManager _submissionManager = CommentSubmissionManager();
+
+  CommentSubmissionManager get submissionManager => _submissionManager;
+  CommentSubmissionError? get submissionError => _submissionError;
+  String? get currentClientRequestId =>
+      _submissionManager.currentSubmission?.clientRequestId;
 
   final List<XFile> _selectedImages = [];
   final List<Uint8List> _compressedImagesBytes = [];
@@ -64,14 +74,48 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
   final Map<String, String?> _repliesEndCursor = {};
   final Map<String, bool> _repliesHasNextPage = {};
 
-  /// Author-scoped durable clientRequestId for idempotency.
-  /// Preserved across failed retries so retrying sends the identical key.
-  late String _currentClientRequestId;
+  String _getLocalizedErrorMessage(BuildContext context, CommentSubmissionError error) {
+    final pos = error.mediaPosition;
+    final posPrefix = pos != null
+        ? t(context, 'Image ${pos + 1}: ', 'الصورة ${pos + 1}: ')
+        : '';
+    switch (error.code) {
+      case 'COMMENT_MEDIA_INVALID_FORMAT':
+        return '$posPrefix${t(context, 'Only static WebP images are supported. Please choose another image.', 'يتم دعم صور WebP الثابتة فقط. يرجى اختيار صورة أخرى.')}';
+      case 'COMMENT_MEDIA_TOO_LARGE':
+        return '$posPrefix${t(context, 'Image exceeds the 100 KB limit. Please choose another image.', 'يتجاوز حجم الصورة حد 100 كيلوبايت. يرجى اختيار صورة أخرى.')}';
+      case 'COMMENT_MEDIA_DIMENSIONS_EXCEEDED':
+        return '$posPrefix${t(context, 'Image dimensions exceed 480x480 pixels.', 'تتجاوز أبعاد الصورة 480×480 بكسل.')}';
+      case 'COMMENT_MEDIA_METADATA_FORBIDDEN':
+        return '$posPrefix${t(context, 'Image contains embedded metadata. Please re-select.', 'تحتوي الصورة على بيانات وصفية مدمجة. يرجى إعادة الاختيار.')}';
+      case 'COMMENT_MEDIA_NOT_READY':
+        return '$posPrefix${t(context, 'Media upload is still processing. Please retry.', 'لا يزال رفع الوسائط قيد المعالجة. يرجى إعادة المحاولة.')}';
+      case 'COMMENT_MEDIA_BLOCKED':
+        return '$posPrefix${t(context, 'This image cannot be uploaded as it violates platform guidelines.', 'لا يمكن رفع هذه الصورة لأنها تنتهك إرشادات المنصة.')}';
+      case 'COMMENT_MEDIA_CLAIM_CONFLICT':
+        return '$posPrefix${t(context, 'Upload ticket is invalid. Please select the image again.', 'تذكرة الرفع غير صالحة. يرجى تحديد الصورة مرة أخرى.')}';
+      case 'COMMENT_MEDIA_NOT_AVAILABLE':
+        return '$posPrefix${t(context, 'Media is no longer available. Please select the image again.', 'الوسائط لم تعد متاحة. يرجى تحديد الصورة مرة أخرى.')}';
+      case 'COMMENT_MEDIA_ALREADY_USED':
+        return '$posPrefix${t(context, 'Media has already been published. Please select a fresh image.', 'تم نشر الوسائط بالفعل. يرجى تحديد صورة جديدة.')}';
+      case 'COMMENT_MEDIA_PROCESSING_FAILED':
+        return '$posPrefix${t(context, 'Media processing temporarily failed. Please retry.', 'فشلت معالجة الوسائط مؤقتًا. يرجى إعادة المحاولة.')}';
+      case 'COMMENT_IMAGES_DISABLED':
+        return t(context, 'Image attachments are temporarily disabled. You can still post text comments.', 'تم تعطيل إرفاق الصور مؤقتًا. لا يزال بإمكانك نشر تعليقات نصية.');
+      case 'CONFLICT':
+        return t(context, 'A different comment with this request ID was already submitted. Please try again.', 'تم إرسال تعليق مختلف بمعرف الطلب هذا بالفعل. يرجى المحاولة مرة أخرى.');
+      case 'RATE_LIMITED':
+        return t(context, 'You are commenting too fast. Please wait a moment.', 'أنت تعلق بسرعة كبيرة. يرجى الانتظار لحظة.');
+      case 'NETWORK_ERROR':
+        return '$posPrefix${t(context, 'Network error. Please check your connection and retry.', 'خطأ في الشبكة. يرجى التحقق من اتصالك وإعادة المحاولة.')}';
+      default:
+        return '$posPrefix${error.message}';
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _currentClientRequestId = _generateClientRequestId();
     _loadInitial();
     _scrollController.addListener(_onScroll);
   }
@@ -81,10 +125,6 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
-  }
-
-  String _generateClientRequestId() {
-    return 'cr-${DateTime.now().millisecondsSinceEpoch}-${UniqueKey().toString()}';
   }
 
   void _onScroll() {
@@ -239,8 +279,10 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     setState(() {
       _replyingToComment = comment;
       _createErrorMessage = null;
+      _submissionError = null;
       _selectedImages.clear();
       _compressedImagesBytes.clear();
+      _submissionManager.reset();
     });
   }
 
@@ -248,6 +290,8 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     setState(() {
       _replyingToComment = null;
       _createErrorMessage = null;
+      _submissionError = null;
+      _submissionManager.reset();
     });
   }
 
@@ -255,6 +299,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     if (_replyingToComment != null) return;
     if (_selectedImages.length >= 2) {
       setState(() {
+        _submissionError = null;
         _createErrorMessage = t(
           context,
           'You can only attach up to 2 images.',
@@ -267,6 +312,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     setState(() {
       _compressing = true;
       _createErrorMessage = null;
+      _submissionError = null;
     });
 
     try {
@@ -291,10 +337,16 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
           _compressedImagesBytes.add(result.bytes);
           _compressing = false;
           _createErrorMessage = null;
+          _submissionError = null;
+          _submissionManager.reset();
         });
       } else if (result is CommentImageFailure) {
         setState(() {
           _compressing = false;
+          _submissionError = CommentSubmissionError.permanent(
+            code: 'COMMENT_MEDIA_TOO_LARGE',
+            message: result.messageEn,
+          );
           _createErrorMessage = t(
             context,
             result.messageEn,
@@ -306,6 +358,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
       if (mounted) {
         setState(() {
           _compressing = false;
+          _submissionError = null;
           _createErrorMessage = t(
             context,
             'Failed to pick or compress image.',
@@ -321,6 +374,9 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
       if (index >= 0 && index < _selectedImages.length) {
         _selectedImages.removeAt(index);
         _compressedImagesBytes.removeAt(index);
+        _submissionManager.reset();
+        _createErrorMessage = null;
+        _submissionError = null;
       }
     });
   }
@@ -672,7 +728,9 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
                         final (value, label, subtitle) = r;
                         return RadioListTile<String>(
                           value: value,
+                          // ignore: deprecated_member_use
                           groupValue: selectedReason,
+                          // ignore: deprecated_member_use
                           onChanged: (val) {
                             if (val != null) {
                               setDialogState(() => selectedReason = val);
@@ -930,6 +988,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
 
     if (trimmed.isEmpty) {
       setState(() {
+        _submissionError = null;
         _createErrorMessage = _replyingToComment != null
             ? t(context, 'Please enter a reply.', 'يرجى كتابة رد.')
             : t(context, 'Please enter a comment.', 'يرجى كتابة تعليق.');
@@ -940,133 +999,97 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     setState(() {
       _submitting = true;
       _createErrorMessage = null;
+      _submissionError = null;
     });
 
     final graphql = context.read<GraphQLService>();
+    final isReply = _replyingToComment != null;
+    final targetId = isReply ? _replyingToComment!.id : widget.postId;
+    final targetType = isReply ? CommentTargetType.reply : CommentTargetType.post;
 
-    if (_replyingToComment != null) {
-      // Create Reply
+    // Prepare or reuse canonical submission (AC 1, AC 5, AC 6)
+    final submission = _submissionManager.prepareSubmission(
+      targetId: targetId,
+      targetType: targetType,
+      text: trimmed,
+      compressedImagesBytes: isReply ? [] : _compressedImagesBytes,
+    );
+
+    // Execute upload tickets + R2 PUTs + GraphQL create (AC 1, AC 3, AC 7)
+    final result = await _submissionManager.execute(
+      graphql: graphql,
+      submission: submission,
+    );
+
+    if (!mounted) return;
+
+    if (!result.success || result.comment == null) {
+      setState(() {
+        _submitting = false;
+        _submissionError = result.error;
+        _createErrorMessage = result.error != null
+            ? _getLocalizedErrorMessage(context, result.error!)
+            : t(context, 'Failed to publish.', 'فشل النشر.');
+      });
+      return;
+    }
+
+    final created = result.comment!;
+
+    if (isReply) {
       final targetParent = _replyingToComment!;
-      final (createdReply, error) = await graphql.createReply(
-        clientRequestId: _currentClientRequestId,
-        commentId: targetParent.id,
-        text: trimmed,
-      );
-
-      if (!mounted) return;
-
-      if (error != null || createdReply == null) {
-        setState(() {
-          _submitting = false;
-          _createErrorMessage = error ?? t(context, 'Failed to publish reply.', 'فشل نشر الرد.');
-        });
-        return;
-      }
-
-      // Success for reply: add to cached replies, expand thread, increment parent replyCount
       setState(() {
         _submitting = false;
         _createErrorMessage = null;
+        _submissionError = null;
         _replyingToComment = null;
         _textController.clear();
-        _currentClientRequestId = _generateClientRequestId();
 
         _expandedComments.add(targetParent.id);
-        if (_repliesMap.containsKey(targetParent.id)) {
-          _repliesMap[targetParent.id]!.add(createdReply);
-        } else {
-          _repliesMap[targetParent.id] = [createdReply];
-        }
+        final currentReplies = _repliesMap[targetParent.id] ?? [];
+        final alreadyExists = currentReplies.any((r) => r.id == created.id);
 
-        final pIdx = _comments.indexWhere((c) => c.id == targetParent.id);
-        if (pIdx != -1) {
-          _comments[pIdx] = _comments[pIdx].copyWith(
-            replyCount: _comments[pIdx].replyCount + 1,
-          );
+        if (!alreadyExists) {
+          if (_repliesMap.containsKey(targetParent.id)) {
+            _repliesMap[targetParent.id]!.add(created);
+          } else {
+            _repliesMap[targetParent.id] = [created];
+          }
+
+          final pIdx = _comments.indexWhere((c) => c.id == targetParent.id);
+          if (pIdx != -1) {
+            _comments[pIdx] = _comments[pIdx].copyWith(
+              replyCount: _comments[pIdx].replyCount + 1,
+            );
+          }
+        } else {
+          // Reconcile in place without duplicate list entries (AC 2)
+          final rIdx = currentReplies.indexWhere((r) => r.id == created.id);
+          if (rIdx != -1) {
+            currentReplies[rIdx] = created;
+          }
         }
       });
     } else {
-      // Create top-level Comment
-      final List<String> mediaIds = [];
-      if (_selectedImages.isNotEmpty && _compressedImagesBytes.isNotEmpty) {
-        for (int i = 0; i < _compressedImagesBytes.length; i++) {
-          final imageBytes = _compressedImagesBytes[i];
-          final positionLabel = _compressedImagesBytes.length > 1 ? 'Image ${i + 1}: ' : '';
-          final positionLabelAr = _compressedImagesBytes.length > 1 ? 'الصورة ${i + 1}: ' : '';
-
-          // 1. Request upload ticket from backend
-          final (ticket, ticketError) = await graphql.requestCommentImageUploadUrl(
-            contentType: 'image/webp',
-            fileSizeBytes: imageBytes.length,
-          );
-
-          if (!mounted) return;
-
-          if (ticketError != null || ticket == null) {
-            setState(() {
-              _submitting = false;
-              _createErrorMessage = t(
-                context,
-                '$positionLabel${ticketError ?? "Failed to prepare image upload."}',
-                '$positionLabelAr${ticketError ?? "فشل تجهيز رفع الصورة."}',
-              );
-            });
-            return;
-          }
-
-          // 2. Direct upload to private R2 staging key
-          final uploadUrl = ticket['uploadUrl'] as String;
-          final (uploadOk, uploadError) = await graphql.uploadCommentImageToR2(
-            uploadUrl: uploadUrl,
-            bytes: imageBytes,
-            contentType: 'image/webp',
-          );
-
-          if (!mounted) return;
-
-          if (!uploadOk) {
-            setState(() {
-              _submitting = false;
-              _createErrorMessage = t(
-                context,
-                '$positionLabel${uploadError ?? "Failed to upload image."}',
-                '$positionLabelAr${uploadError ?? "فشل رفع الصورة."}',
-              );
-            });
-            return;
-          }
-
-          mediaIds.add(ticket['mediaId'] as String);
-        }
-      }
-
-      final (createdComment, error) = await graphql.createComment(
-        clientRequestId: _currentClientRequestId,
-        postId: widget.postId,
-        text: trimmed,
-        mediaIds: mediaIds.isNotEmpty ? mediaIds : null,
-      );
-
-      if (!mounted) return;
-
-      if (error != null || createdComment == null) {
-        setState(() {
-          _submitting = false;
-          _createErrorMessage = error ?? t(context, 'Failed to publish comment.', 'فشل نشر التعليق.');
-        });
-        return;
-      }
-
-      // Success for comment: insert at top
       setState(() {
         _submitting = false;
         _createErrorMessage = null;
+        _submissionError = null;
         _selectedImages.clear();
         _compressedImagesBytes.clear();
-        final insertIndex = (_comments.isNotEmpty && _comments[0].isPinned) ? 1 : 0;
-        _comments.insert(insertIndex, createdComment);
         _textController.clear();
-        _currentClientRequestId = _generateClientRequestId();
+
+        // Reconcile canonical result without creating duplicate list entries (AC 2)
+        final alreadyExists = _comments.any((c) => c.id == created.id);
+        if (!alreadyExists) {
+          final insertIndex = (_comments.isNotEmpty && _comments[0].isPinned) ? 1 : 0;
+          _comments.insert(insertIndex, created);
+        } else {
+          final existingIdx = _comments.indexWhere((c) => c.id == created.id);
+          if (existingIdx != -1) {
+            _comments[existingIdx] = created;
+          }
+        }
       });
     }
 
@@ -1235,7 +1258,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
       controller: _scrollController,
       padding: const EdgeInsets.all(AppSpacing.lg),
       itemCount: _comments.length + (_hasNextPage ? 1 : 0),
-      separatorBuilder: (_, __) => const Divider(height: AppSpacing.lg),
+      separatorBuilder: (_, index) => const Divider(height: AppSpacing.lg),
       itemBuilder: (context, index) {
         if (index == _comments.length) {
           return Center(

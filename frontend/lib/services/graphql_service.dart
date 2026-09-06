@@ -6,6 +6,7 @@ import '../config/api_config.dart';
 import '../models/adoption_application.dart';
 import '../models/app_notification.dart';
 import '../models/comment.dart';
+import '../models/comment_submission.dart';
 import '../models/contact_request.dart';
 import '../models/feed_post.dart';
 import '../models/mating_detail.dart';
@@ -1895,8 +1896,11 @@ class GraphQLService {
         document: gql(commentsQuery),
         variables: {
           'postId': postId,
+          // ignore: use_null_aware_elements
           if (sort != null) 'sort': sort,
+          // ignore: use_null_aware_elements
           if (first != null) 'first': first,
+          // ignore: use_null_aware_elements
           if (after != null) 'after': after,
         },
         fetchPolicy: FetchPolicy.networkOnly,
@@ -1923,7 +1927,7 @@ class GraphQLService {
   }
 
   /// Publishes a comment on a post with author-scoped durable clientRequestId and optional mediaIds.
-  Future<(Comment? comment, String? errorMessage)> createComment({
+  Future<(Comment? comment, CommentSubmissionError? error)> createComment({
     required String clientRequestId,
     required String postId,
     required String text,
@@ -1944,7 +1948,7 @@ class GraphQLService {
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (null, _serverErrorMessage(result.exception));
+      return (null, CommentSubmissionError.fromOperationException(result.exception));
     }
     final node = result.data?['createComment'] as Map<String, dynamic>?;
     if (node == null) return (null, null);
@@ -1952,9 +1956,10 @@ class GraphQLService {
   }
 
   /// Requests a presigned PUT URL and durable upload ticket for a comment image.
-  Future<(Map<String, dynamic>? ticket, String? errorMessage)> requestCommentImageUploadUrl({
+  Future<(Map<String, dynamic>? ticket, CommentSubmissionError? error)> requestCommentImageUploadUrl({
     required String contentType,
     required int fileSizeBytes,
+    int? mediaPosition,
   }) async {
     final result = await client.value.mutate(
       MutationOptions(
@@ -1969,17 +1974,24 @@ class GraphQLService {
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (null, _serverErrorMessage(result.exception));
+      return (
+        null,
+        CommentSubmissionError.fromOperationException(
+          result.exception,
+          mediaPosition: mediaPosition,
+        ),
+      );
     }
     final data = result.data?['requestCommentImageUploadUrl'] as Map<String, dynamic>?;
     return (data, null);
   }
 
   /// Directly uploads the raw image bytes to R2 via presigned PUT.
-  Future<(bool success, String? errorMessage)> uploadCommentImageToR2({
+  Future<(bool success, CommentSubmissionError? error)> uploadCommentImageToR2({
     required String uploadUrl,
     required List<int> bytes,
     String contentType = 'image/webp',
+    int? mediaPosition,
   }) async {
     try {
       final response = await http.put(
@@ -1992,9 +2004,27 @@ class GraphQLService {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return (true, null);
       }
-      return (false, 'Upload failed with status ${response.statusCode}');
+      final isRetryable = response.statusCode >= 500 || response.statusCode == 408;
+      final code = response.statusCode == 403 || response.statusCode == 401
+          ? 'COMMENT_MEDIA_NOT_AVAILABLE'
+          : (isRetryable ? 'COMMENT_MEDIA_PROCESSING_FAILED' : 'UPLOAD_FAILED');
+      return (
+        false,
+        CommentSubmissionError(
+          code: code,
+          message: 'Upload failed with status ${response.statusCode}',
+          isRetryable: isRetryable,
+          mediaPosition: mediaPosition,
+        ),
+      );
     } catch (e) {
-      return (false, 'Network error during upload');
+      return (
+        false,
+        CommentSubmissionError.network(
+          message: 'Network error during upload',
+          mediaPosition: mediaPosition,
+        ),
+      );
     }
   }
 
@@ -2009,7 +2039,9 @@ class GraphQLService {
         document: gql(repliesQuery),
         variables: {
           'commentId': commentId,
+          // ignore: use_null_aware_elements
           if (first != null) 'first': first,
+          // ignore: use_null_aware_elements
           if (after != null) 'after': after,
         },
         fetchPolicy: FetchPolicy.networkOnly,
@@ -2036,7 +2068,7 @@ class GraphQLService {
   }
 
   /// Publishes a text reply beneath a top-level comment.
-  Future<(Comment? comment, String? errorMessage)> createReply({
+  Future<(Comment? comment, CommentSubmissionError? error)> createReply({
     required String clientRequestId,
     required String commentId,
     required String text,
@@ -2055,7 +2087,7 @@ class GraphQLService {
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (null, _serverErrorMessage(result.exception));
+      return (null, CommentSubmissionError.fromOperationException(result.exception));
     }
     final node = result.data?['createReply'] as Map<String, dynamic>?;
     if (node == null) return (null, null);
