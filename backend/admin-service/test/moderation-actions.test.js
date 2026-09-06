@@ -3,6 +3,7 @@ import { after, before, beforeEach, describe, it } from 'node:test';
 
 import { buildBanUserAction, buildUnbanUserAction } from '../src/adminjs/actions/ban-user.action.js';
 import { buildPostActions } from '../src/adminjs/actions/moderate-post.actions.js';
+import { buildCommentActions } from '../src/adminjs/actions/moderate-comment.actions.js';
 import { computeStats } from '../src/adminjs/dashboard/dashboard-cache.js';
 import { TestDatabaseHelper, insertPost, seedPrincipals } from './test-database.helper.js';
 
@@ -364,5 +365,106 @@ describe('dashboard queries', () => {
       result.rows.every((row) => row.status === 'ACTIVE' && row.moderation_status !== 'CLEAN'),
       true,
     );
+  });
+
+  describe('comment moderation actions', () => {
+    it('restores hidden comment, restores post comment count, marks reports reviewed, and writes audit row', async () => {
+      const postId = await insertPost(database.pool, { ...principals, title: 'Comment post' });
+      const commentRes = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, text, status)
+         VALUES ($1, $2, 'Hidden comment', 'HIDDEN')
+         RETURNING id`,
+        [postId, principals.userId],
+      );
+      const commentId = commentRes.rows[0].id;
+
+      await database.pool.query(
+        `INSERT INTO comment_reports (comment_id, reporter_id, reason, details)
+         VALUES ($1, $2, 'SPAM', 'Spam details')`,
+        [commentId, principals.userId],
+      );
+
+      const actions = buildCommentActions(database.pool, 'ModerationAction');
+      const response = await call(actions.restoreComment, commentId, {
+        reason: 'Restoring compliant comment',
+      });
+      assert.equal(response.notice?.type, 'success');
+
+      const comment = await database.pool.query(`SELECT status FROM comments WHERE id = $1`, [commentId]);
+      assert.equal(comment.rows[0].status, 'ACTIVE');
+
+      const post = await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [postId]);
+      assert.equal(post.rows[0].comment_count, 1);
+
+      const reports = await database.pool.query(`SELECT reviewed_at FROM comment_reports WHERE comment_id = $1`, [commentId]);
+      assert.notEqual(reports.rows[0].reviewed_at, null);
+
+      const audit = await database.pool.query(
+        `SELECT action_type, reason, target_type FROM moderation_actions WHERE target_id = $1`,
+        [commentId],
+      );
+      assert.equal(audit.rows[0].action_type, 'COMMENT_RESTORED');
+      assert.equal(audit.rows[0].target_type, 'COMMENT');
+      assert.equal(audit.rows[0].reason, 'Restoring compliant comment');
+    });
+
+    it('rejects restoration of active, deleted, or removed comment', async () => {
+      const postId = await insertPost(database.pool, { ...principals, title: 'Active comment post' });
+      const commentRes = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, text, status)
+         VALUES ($1, $2, 'Active comment', 'ACTIVE')
+         RETURNING id`,
+        [postId, principals.userId],
+      );
+      const commentId = commentRes.rows[0].id;
+
+      const actions = buildCommentActions(database.pool, 'ModerationAction');
+      const response = await call(actions.restoreComment, commentId, {
+        reason: 'Attempt invalid restore',
+      });
+      assert.equal(response.notice?.type, 'error');
+      assert.match(response.notice?.message, /Only hidden comments can be restored/);
+    });
+
+    it('inspectMedia returns ordered media and reports for hidden comments', async () => {
+      const postId = await insertPost(database.pool, { ...principals, title: 'Inspect media post' });
+      const commentRes = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, text, status)
+         VALUES ($1, $2, 'Image hidden comment', 'IMAGE_HIDDEN')
+         RETURNING id`,
+        [postId, principals.userId],
+      );
+      const commentId = commentRes.rows[0].id;
+
+      await database.pool.query(
+        `INSERT INTO comment_media (comment_id, storage_key, sha256, width, height, file_size_bytes, file_content_type, display_order)
+         VALUES ($1, 'comments/c1/img1.webp', '1111111111111111111111111111111111111111111111111111111111111111', 480, 320, 25000, 'image/webp', 0),
+                ($1, 'comments/c1/img2.webp', '2222222222222222222222222222222222222222222222222222222222222222', 400, 400, 35000, 'image/webp', 1)`,
+        [commentId],
+      );
+
+      await database.pool.query(
+        `INSERT INTO comment_reports (comment_id, reporter_id, reason, details)
+         VALUES ($1, $2, 'INAPPROPRIATE_CONTENT', 'Bad photo')`,
+        [commentId, principals.userId],
+      );
+
+      const actions = buildCommentActions(database.pool, 'ModerationAction');
+      const result = await actions.inspectMedia.handler(
+        { method: 'get' },
+        null,
+        context(commentId, principals.adminId),
+      );
+
+      assert.equal(result.media.length, 2);
+      assert.equal(result.media[0].display_order, 0);
+      assert.equal(result.media[0].storage_key, 'comments/c1/img1.webp');
+      assert.equal(result.media[1].display_order, 1);
+      assert.equal(result.media[1].storage_key, 'comments/c1/img2.webp');
+
+      assert.equal(result.reports.length, 1);
+      assert.equal(result.reports[0].reason, 'INAPPROPRIATE_CONTENT');
+      assert.equal(result.reports[0].reviewed_at, null);
+    });
   });
 });

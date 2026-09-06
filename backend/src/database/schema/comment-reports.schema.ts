@@ -44,6 +44,9 @@ export const commentReports = pgTable(
 
     /** Row creation timestamp. */
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+
+    /** Timestamp when report was reviewed during moderation/restoration. NULL if unreviewed. */
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
   },
   (table) => ({
     uniqueCommentReportPerCommentAndReporter: uniqueIndex('unique_comment_report_per_comment_and_reporter').on(
@@ -52,6 +55,9 @@ export const commentReports = pgTable(
     ),
     commentIdx: index('idx_comment_reports_comment').on(table.commentId),
     reporterCreatedIdx: index('idx_comment_reports_reporter_created').on(table.reporterId, table.createdAt),
+    commentUnreviewedIdx: index('idx_comment_reports_comment_unreviewed')
+      .on(table.commentId)
+      .where(sql`"reviewed_at" IS NULL`),
   }),
 );
 

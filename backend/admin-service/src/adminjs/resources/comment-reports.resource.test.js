@@ -9,7 +9,14 @@ const db = { table: (name) => ({ name }) };
 describe('AdminJS Comment Reports Resource Configuration', () => {
   it('declares concise intentional listProperties excluding heavy details', () => {
     const resource = buildCommentReportsResource(db);
-    assert.deepEqual(resource.options.listProperties, ['id', 'comment_id', 'reporter_id', 'reason', 'created_at']);
+    assert.deepEqual(resource.options.listProperties, [
+      'id',
+      'comment_id',
+      'reporter_id',
+      'reason',
+      'reviewed_at',
+      'created_at',
+    ]);
     assert.equal(
       resource.options.listProperties.includes('details'),
       false,
@@ -25,6 +32,7 @@ describe('AdminJS Comment Reports Resource Configuration', () => {
       'reporter_id',
       'reason',
       'details',
+      'reviewed_at',
       'created_at',
     ]);
   });

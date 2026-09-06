@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/unbound-method, @typescript-eslint/require-await */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/require-await */
 import * as crypto from 'crypto';
 import sharp from 'sharp';
 import { eq, sql } from 'drizzle-orm';
@@ -91,9 +91,7 @@ class ControllableR2Adapter {
     }
 
     if (cmdName === 'PutObjectCommand' || command instanceof PutObjectCommand) {
-      const bytes = Buffer.isBuffer(command.input?.Body)
-        ? command.input.Body
-        : Buffer.from(command.input?.Body ?? '');
+      const bytes = Buffer.isBuffer(command.input?.Body) ? command.input.Body : Buffer.from(command.input?.Body ?? '');
       const etag = `"${crypto.createHash('md5').update(bytes).digest('hex')}"`;
       this.objects.set(key, { bytes, etag });
       return { ETag: etag };

@@ -121,10 +121,54 @@ export function buildCommentActions(pool, component, cache) {
             }
           }
           await client.query(`UPDATE comments SET status = 'ACTIVE', updated_at = now() WHERE id = $1`, [row.id]);
+          await client.query(
+            `UPDATE comment_reports SET reviewed_at = now() WHERE comment_id = $1 AND reviewed_at IS NULL`,
+            [row.id],
+          );
         },
       },
       cache,
     ),
+    inspectMedia: {
+      actionType: 'record',
+      icon: 'Image',
+      isAccessible: isAnyAdmin,
+      isVisible: (context) => {
+        const record = context?.record;
+        if (!record) return false;
+        const status = getRecordProperty(record, 'status');
+        return status === 'IMAGE_HIDDEN' || status === 'HIDDEN' || status === 'ACTIVE';
+      },
+      handler: async (request, _response, context) => {
+        const { record, currentAdmin } = context;
+        const commentId = record.id();
+        const { rows: media } = await pool.query(
+          `SELECT id, storage_key, width, height, file_size_bytes, display_order, file_content_type, created_at
+           FROM comment_media
+           WHERE comment_id = $1
+           ORDER BY display_order ASC`,
+          [commentId],
+        );
+        const { rows: reports } = await pool.query(
+          `SELECT id, reporter_id, reason, details, reviewed_at, created_at
+           FROM comment_reports
+           WHERE comment_id = $1
+           ORDER BY created_at DESC`,
+          [commentId],
+        );
+
+        if (record.params) {
+          record.params.comment_media = JSON.stringify(media);
+          record.params.comment_reports = JSON.stringify(reports);
+        }
+
+        return {
+          record: record.toJSON(currentAdmin),
+          media,
+          reports,
+        };
+      },
+    },
     removeComment: buildCommentAction(
       pool,
       component,

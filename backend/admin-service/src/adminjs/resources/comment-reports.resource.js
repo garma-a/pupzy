@@ -10,6 +10,7 @@ export function buildCommentReportsResource(db, components = {}) {
   const properties = {
     reason: enumProperty(ENUMS.reportReason),
     details: { isDisabled: true },
+    reviewed_at: { isDisabled: true },
     created_at: { isDisabled: true },
   };
 
@@ -17,9 +18,9 @@ export function buildCommentReportsResource(db, components = {}) {
 
   return buildReadOnlyResource(db, 'comment_reports', { name: 'Moderation', icon: 'Flag' }, properties, {
     sort: { sortBy: 'created_at', direction: 'desc' },
-    listProperties: ['id', 'comment_id', 'reporter_id', 'reason', 'created_at'],
-    showProperties: ['id', 'comment_id', 'reporter_id', 'reason', 'details', 'created_at'],
-    filterProperties: ['reason', 'comment_id', 'reporter_id', 'created_at'],
+    listProperties: ['id', 'comment_id', 'reporter_id', 'reason', 'reviewed_at', 'created_at'],
+    showProperties: ['id', 'comment_id', 'reporter_id', 'reason', 'details', 'reviewed_at', 'created_at'],
+    filterProperties: ['reason', 'comment_id', 'reporter_id', 'reviewed_at', 'created_at'],
     actions: {
       list: { after: stripPopulatedPasswordHashes },
       show: { after: stripPopulatedPasswordHashes },

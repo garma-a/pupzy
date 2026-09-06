@@ -995,6 +995,7 @@ export class CommentsRepository {
           FROM comment_reports cr
           JOIN users u ON u.id = cr.reporter_id
           WHERE cr.comment_id = ${commentId}
+            AND cr.reviewed_at IS NULL
             AND u.created_at <= cr.created_at - interval '24 hours'
             AND u.full_name IS NOT NULL
             AND length(trim(u.full_name)) > 0

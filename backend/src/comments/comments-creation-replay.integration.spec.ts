@@ -319,7 +319,10 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
 
   async function executeGql(source: string, variables: Record<string, any> = {}, user: User = authorUser) {
     const userByIdLoader = new DataLoader(async (ids: readonly string[]) => {
-      const rows = await dbHelper.db.select().from(users).where(inArray(users.id, ids as string[]));
+      const rows = await dbHelper.db
+        .select()
+        .from(users)
+        .where(inArray(users.id, ids as string[]));
       const map = new Map(rows.map((u) => [u.id, u]));
       return ids.map((id) => map.get(id) ?? null);
     });
@@ -940,10 +943,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       expect(replayRes.errors![0].message).toContain(`Comment with id "${replyId}" was not found`);
 
       // Case B: Parent is DELETED and has replyCount === 0
-      await dbHelper.db
-        .update(comments)
-        .set({ status: 'DELETED', replyCount: 0 })
-        .where(eq(comments.id, parentId));
+      await dbHelper.db.update(comments).set({ status: 'DELETED', replyCount: 0 }).where(eq(comments.id, parentId));
 
       replayRes = await executeGql(
         CREATE_REPLY_MUTATION,

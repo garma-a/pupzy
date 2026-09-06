@@ -340,7 +340,7 @@ describe('Media Deletion Outbox & Reliability Integration (Ticket 03)', () => {
           });
 
           await tx.insert(blockedMediaHashes).values({
-            sha256: media.sha256!,
+            sha256: media.sha256,
             reason: 'Inappropriate image content',
             blockedByAdminId: testAdminId,
           });
