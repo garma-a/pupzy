@@ -688,4 +688,14 @@ export class CommentsService {
       details,
     });
   }
+
+  /**
+   * Operational reconciliation of comment, reply, and boost counters.
+   * Repairs any counter drift to reflect the reachability-consistent state.
+   */
+  async reconcileCommentCounters(options?: {
+    postId?: string;
+  }): Promise<{ postsRepaired: number; commentsRepaired: number }> {
+    return this.commentsRepository.reconcileCommentCounters(options);
+  }
 }

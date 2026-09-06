@@ -179,6 +179,168 @@ If abusive image flooding, storage anomalies, or R2 outages occur:
 
 ## 6. Railway Hobby vs. Pro Scaling Policy
 
-- **Launch Configuration:** 1 NestJS API replica (512 MB RAM, 1 vCPU, 150 MB V8 heap), 1 PostgreSQL instance (1 GB RAM, 1 vCPU), 1 AdminJS replica (Serverless sleep, 512 MB RAM, 256 MB V8 heap).
-- **Scale Limits:** Sustains 100 req/sec steady and 200 req/sec burst under normal read/write distribution.
-- **Pro Plan Transition:** Upgrading to Railway Pro ($20/mo base) remains a manual operator decision. Never trigger automatic plan transitions based on user registration counts.
+- Launch Configuration: 1 NestJS API replica (512 MB RAM, 1 vCPU, 150 MB V8 heap), 1 PostgreSQL instance (1 GB RAM, 1 vCPU), 1 AdminJS replica (Serverless sleep, 512 MB RAM, 256 MB V8 heap).
+- Scale Limits: Sustains 100 req/sec steady and 200 req/sec burst under normal read/write distribution.
+- Pro Plan Transition: Upgrading to Railway Pro ($20/mo base) remains a manual operator decision. Never trigger automatic plan transitions based on user registration counts.
+
+---
+
+## 7. Discussion Counters Reconciliation & Reachability Policy (Ticket 09)
+
+### 7.1 Reachability and Visibility Invariants
+- **Public Reachability Rules:**
+  - A top-level comment is reachable if `status IN ('ACTIVE', 'IMAGE_HIDDEN')` or if it is a tombstone (`status IN ('DELETED', 'HIDDEN') AND reply_count > 0`).
+  - A reply is reachable only if its status is `ACTIVE` or `IMAGE_HIDDEN` AND its parent comment is reachable and NOT permanently `REMOVED`.
+  - When a parent comment is permanently removed (`status = 'REMOVED'`), all replies beneath it become permanently unreachable from public feeds, search, and replies listings.
+- **Engagement Invariants:**
+  - Boosts, reports, and new replies are rejected with `NotFoundError` on unreachable targets (e.g. replies beneath a `REMOVED` parent).
+  - Tombstones (`DELETED` or `HIDDEN` with `reply_count > 0`) preserve surviving replies and allow existing replies to be read, but do not accept new boosts or replies.
+- **Counter Invariants:**
+  - `posts.comment_count` reflects only reachable visible discussion (visible top-level comments + visible replies whose parents are NOT `REMOVED`).
+  - When an administrator permanently removes a parent comment (`removeComment`), `posts.comment_count` is decremented by `1` (if parent was visible) plus the count of visible replies under it, leaving zero phantom counts. Parent `reply_count` is set to `0`.
+  - Deleting or removing a reply under an already removed parent does not double-decrement `posts.comment_count`.
+  - Removing and restoring a post (`removePost` / `restorePost`) does not undo individual permanent removals or deletions of comments, nor does it revive pins of removed comments.
+
+### 7.2 Counter Drift Inspection Queries
+Operators can detect counter drift across posts, comments, and boosts using the following read-only queries:
+
+```sql
+-- 1. Inspect drifted post comment_counts:
+WITH reachable_replies AS (
+  SELECT c.post_id, count(*)::int AS reply_count
+  FROM comments c
+  JOIN comments p ON c.parent_id = p.id
+  WHERE c.status IN ('ACTIVE', 'IMAGE_HIDDEN')
+    AND p.status != 'REMOVED'
+  GROUP BY c.post_id
+),
+reachable_top_level AS (
+  SELECT post_id, count(*)::int AS top_count
+  FROM comments
+  WHERE parent_id IS NULL
+    AND status IN ('ACTIVE', 'IMAGE_HIDDEN')
+  GROUP BY post_id
+),
+computed_counts AS (
+  SELECT 
+    p.id AS post_id,
+    p.comment_count AS current_comment_count,
+    COALESCE(tl.top_count, 0) + COALESCE(rr.reply_count, 0) AS expected_comment_count
+  FROM posts p
+  LEFT JOIN reachable_top_level tl ON p.id = tl.post_id
+  LEFT JOIN reachable_replies rr ON p.id = rr.post_id
+)
+SELECT post_id, current_comment_count, expected_comment_count
+FROM computed_counts
+WHERE current_comment_count != expected_comment_count;
+
+-- 2. Inspect drifted comment reply_counts:
+WITH computed_reply_counts AS (
+  SELECT 
+    p.id AS comment_id,
+    p.reply_count AS current_reply_count,
+    CASE 
+      WHEN p.status = 'REMOVED' THEN 0
+      ELSE COALESCE(COUNT(c.id) FILTER (WHERE c.status IN ('ACTIVE', 'IMAGE_HIDDEN')), 0)::int
+    END AS expected_reply_count
+  FROM comments p
+  LEFT JOIN comments c ON c.parent_id = p.id
+  WHERE p.parent_id IS NULL
+  GROUP BY p.id, p.status, p.reply_count
+)
+SELECT comment_id, current_reply_count, expected_reply_count
+FROM computed_reply_counts
+WHERE current_reply_count != expected_reply_count;
+
+-- 3. Inspect drifted comment boost_counts:
+WITH computed_boost_counts AS (
+  SELECT 
+    c.id AS comment_id,
+    c.boost_count AS current_boost_count,
+    COALESCE(COUNT(cb.id), 0)::int AS expected_boost_count
+  FROM comments c
+  LEFT JOIN comment_boosts cb ON c.id = cb.comment_id
+  GROUP BY c.id, c.boost_count
+)
+SELECT comment_id, current_boost_count, expected_boost_count
+FROM computed_boost_counts
+WHERE current_boost_count != expected_boost_count;
+```
+
+### 7.3 Operational Reconciliation & Repair Procedure
+To repair drifted counters transactionally, invoke `CommentsService.reconcileCommentCounters(options)` or run the following SQL update:
+
+```sql
+-- Transactional repair of all posts and comments:
+BEGIN;
+
+-- Repair posts comment_count
+WITH reachable_replies AS (
+  SELECT c.post_id, count(*)::int AS reply_count
+  FROM comments c
+  JOIN comments p ON c.parent_id = p.id
+  WHERE c.status IN ('ACTIVE', 'IMAGE_HIDDEN')
+    AND p.status != 'REMOVED'
+  GROUP BY c.post_id
+),
+reachable_top_level AS (
+  SELECT post_id, count(*)::int AS top_count
+  FROM comments
+  WHERE parent_id IS NULL
+    AND status IN ('ACTIVE', 'IMAGE_HIDDEN')
+  GROUP BY post_id
+),
+computed_counts AS (
+  SELECT 
+    p.id AS post_id,
+    COALESCE(tl.top_count, 0) + COALESCE(rr.reply_count, 0) AS expected_comment_count
+  FROM posts p
+  LEFT JOIN reachable_top_level tl ON p.id = tl.post_id
+  LEFT JOIN reachable_replies rr ON p.id = rr.post_id
+)
+UPDATE posts
+SET comment_count = cc.expected_comment_count,
+    updated_at = now()
+FROM computed_counts cc
+WHERE posts.id = cc.post_id
+  AND posts.comment_count != cc.expected_comment_count;
+
+-- Repair comments reply_count
+WITH computed_reply_counts AS (
+  SELECT 
+    p.id AS comment_id,
+    CASE 
+      WHEN p.status = 'REMOVED' THEN 0
+      ELSE COALESCE(COUNT(c.id) FILTER (WHERE c.status IN ('ACTIVE', 'IMAGE_HIDDEN')), 0)::int
+    END AS expected_reply_count
+  FROM comments p
+  LEFT JOIN comments c ON c.parent_id = p.id
+  WHERE p.parent_id IS NULL
+  GROUP BY p.id, p.status
+)
+UPDATE comments
+SET reply_count = crc.expected_reply_count,
+    updated_at = now()
+FROM computed_reply_counts crc
+WHERE comments.id = crc.comment_id
+  AND comments.reply_count != crc.expected_reply_count;
+
+-- Repair comments boost_count
+WITH computed_boost_counts AS (
+  SELECT 
+    c.id AS comment_id,
+    COALESCE(COUNT(cb.id), 0)::int AS expected_boost_count
+  FROM comments c
+  LEFT JOIN comment_boosts cb ON c.id = cb.comment_id
+  GROUP BY c.id
+)
+UPDATE comments
+SET boost_count = cbc.expected_boost_count,
+    updated_at = now()
+FROM computed_boost_counts cbc
+WHERE comments.id = cbc.comment_id
+  AND comments.boost_count != cbc.expected_boost_count;
+
+COMMIT;
+```
+

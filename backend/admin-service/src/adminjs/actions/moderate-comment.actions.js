@@ -105,14 +105,21 @@ export function buildCommentActions(pool, component, cache) {
         mutate: async (client, row) => {
           if (row.status === 'HIDDEN') {
             if (row.parent_id) {
-              await client.query(
-                `UPDATE comments SET reply_count = reply_count + 1, updated_at = now() WHERE id = $1`,
+              const { rows: parentRows } = await client.query(
+                `SELECT status FROM comments WHERE id = $1`,
                 [row.parent_id],
               );
-              await client.query(
-                `UPDATE posts SET comment_count = comment_count + 1, updated_at = now() WHERE id = $1`,
-                [row.post_id],
-              );
+              const parent = parentRows[0];
+              if (parent && parent.status !== 'REMOVED') {
+                await client.query(
+                  `UPDATE comments SET reply_count = reply_count + 1, updated_at = now() WHERE id = $1`,
+                  [row.parent_id],
+                );
+                await client.query(
+                  `UPDATE posts SET comment_count = comment_count + 1, updated_at = now() WHERE id = $1`,
+                  [row.post_id],
+                );
+              }
             } else {
               await client.query(
                 `UPDATE posts SET comment_count = comment_count + 1, updated_at = now() WHERE id = $1`,
@@ -192,8 +199,31 @@ export function buildCommentActions(pool, component, cache) {
         },
         mutate: async (client, row, adminId, reason) => {
           const wasVisible = row.status === 'ACTIVE' || row.status === 'IMAGE_HIDDEN';
-          if (wasVisible) {
-            if (row.parent_id) {
+
+          if (!row.parent_id) {
+            const { rows: replyCountRows } = await client.query(
+              `SELECT count(*)::int AS count FROM comments WHERE parent_id = $1 AND status IN ('ACTIVE', 'IMAGE_HIDDEN')`,
+              [row.id],
+            );
+            const totalDecrement = (wasVisible ? 1 : 0) + Number(replyCountRows[0]?.count || 0);
+            if (totalDecrement > 0) {
+              await client.query(
+                `UPDATE posts SET comment_count = GREATEST(0, comment_count - $1), updated_at = now() WHERE id = $2`,
+                [totalDecrement, row.post_id],
+              );
+            }
+            await client.query(`DELETE FROM post_pins WHERE comment_id = $1`, [row.id]);
+            await client.query(
+              `UPDATE comments SET status = 'REMOVED', reply_count = 0, updated_at = now() WHERE id = $1`,
+              [row.id],
+            );
+          } else {
+            const { rows: parentRows } = await client.query(
+              `SELECT status FROM comments WHERE id = $1`,
+              [row.parent_id],
+            );
+            const parent = parentRows[0];
+            if (parent && parent.status !== 'REMOVED' && wasVisible) {
               await client.query(
                 `UPDATE comments SET reply_count = GREATEST(0, reply_count - 1), updated_at = now() WHERE id = $1`,
                 [row.parent_id],
@@ -202,16 +232,9 @@ export function buildCommentActions(pool, component, cache) {
                 `UPDATE posts SET comment_count = GREATEST(0, comment_count - 1), updated_at = now() WHERE id = $1`,
                 [row.post_id],
               );
-            } else {
-              await client.query(
-                `UPDATE posts SET comment_count = GREATEST(0, comment_count - 1), updated_at = now() WHERE id = $1`,
-                [row.post_id],
-              );
-              await client.query(`DELETE FROM post_pins WHERE comment_id = $1`, [row.id]);
             }
+            await client.query(`UPDATE comments SET status = 'REMOVED', updated_at = now() WHERE id = $1`, [row.id]);
           }
-
-          await client.query(`UPDATE comments SET status = 'REMOVED', updated_at = now() WHERE id = $1`, [row.id]);
 
           // Find any attached media
           const { rows: mediaRows } = await client.query(`SELECT * FROM comment_media WHERE comment_id = $1`, [row.id]);

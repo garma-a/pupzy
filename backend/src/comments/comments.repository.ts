@@ -220,12 +220,14 @@ export class CommentsRepository {
       .select({ comment: comments })
       .from(postPins)
       .innerJoin(comments, eq(postPins.commentId, comments.id))
+      .innerJoin(posts, eq(postPins.postId, posts.id))
       .where(
         and(
           eq(postPins.postId, postId),
           eq(comments.postId, postId),
           sql`${comments.parentId} IS NULL`,
           inArray(comments.status, ['ACTIVE', 'IMAGE_HIDDEN']),
+          ne(posts.status, 'REMOVED'),
         ),
       )
       .limit(1);
@@ -381,13 +383,17 @@ export class CommentsRepository {
         // 1. Lock parent comment with FOR UPDATE
         const [parent] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('update');
 
-        if (!parent) {
+        if (!parent || parent.status === 'REMOVED') {
           throw new NotFoundError('Comment', commentId);
         }
 
         // Nesting check: Replies cannot receive replies
         if (parent.parentId !== null) {
           throw new ValidationError('Replies cannot receive replies');
+        }
+
+        if ((parent.status === 'DELETED' || parent.status === 'HIDDEN') && parent.replyCount === 0) {
+          throw new NotFoundError('Comment', commentId);
         }
 
         // Status check: parent must be ACTIVE or IMAGE_HIDDEN (cannot reply to DELETED, HIDDEN, or REMOVED)
@@ -541,9 +547,10 @@ export class CommentsRepository {
       await tx.delete(postPins).where(eq(postPins.commentId, commentId));
 
       // 7. Decrement counters if the item was visible
-      if (wasVisible) {
-        if (comment.parentId) {
-          // It is a Reply: decrement parent comment's reply_count and post's comment_count
+      if (comment.parentId) {
+        // Lock parent comment
+        const [parent] = await tx.select().from(comments).where(eq(comments.id, comment.parentId)).for('update');
+        if (wasVisible && parent && parent.status !== 'REMOVED') {
           await tx
             .update(comments)
             .set({
@@ -559,8 +566,9 @@ export class CommentsRepository {
               updatedAt: new Date(),
             })
             .where(eq(posts.id, comment.postId));
-        } else {
-          // It is a top-level Comment: decrement post's comment_count
+        }
+      } else {
+        if (wasVisible) {
           await tx
             .update(posts)
             .set({
@@ -604,6 +612,17 @@ export class CommentsRepository {
       // 2. Status check: must be ACTIVE or IMAGE_HIDDEN (cannot boost DELETED, HIDDEN, or REMOVED)
       if (comment.status !== 'ACTIVE' && comment.status !== 'IMAGE_HIDDEN') {
         throw new NotFoundError('Comment', commentId);
+      }
+
+      // Check reachability if target is a reply
+      if (comment.parentId !== null) {
+        const [parent] = await tx.select().from(comments).where(eq(comments.id, comment.parentId)).for('share');
+        if (!parent || parent.status === 'REMOVED') {
+          throw new NotFoundError('Comment', commentId);
+        }
+        if ((parent.status === 'DELETED' || parent.status === 'HIDDEN') && parent.replyCount === 0) {
+          throw new NotFoundError('Comment', commentId);
+        }
       }
 
       // 3. Self-boost rejection
@@ -830,12 +849,14 @@ export class CommentsRepository {
       .select({ id: postPins.id })
       .from(postPins)
       .innerJoin(comments, eq(postPins.commentId, comments.id))
+      .innerJoin(posts, eq(postPins.postId, posts.id))
       .where(
         and(
           eq(postPins.postId, postId),
           eq(postPins.commentId, commentId),
           sql`${comments.parentId} IS NULL`,
           inArray(comments.status, ['ACTIVE', 'IMAGE_HIDDEN']),
+          ne(posts.status, 'REMOVED'),
         ),
       )
       .limit(1);
@@ -861,11 +882,13 @@ export class CommentsRepository {
           })
           .from(postPins)
           .innerJoin(comments, eq(postPins.commentId, comments.id))
+          .innerJoin(posts, eq(postPins.postId, posts.id))
           .where(
             and(
               inArray(postPins.postId, uniquePostIds),
               sql`${comments.parentId} IS NULL`,
               inArray(comments.status, ['ACTIVE', 'IMAGE_HIDDEN']),
+              ne(posts.status, 'REMOVED'),
             ),
           );
 
@@ -955,6 +978,17 @@ export class CommentsRepository {
           throw new NotFoundError('Comment', commentId);
         }
 
+        // If target is a reply, verify parent comment reachability
+        if (comment.parentId !== null) {
+          const [parent] = await tx.select().from(comments).where(eq(comments.id, comment.parentId)).for('share');
+          if (!parent || parent.status === 'REMOVED') {
+            throw new NotFoundError('Comment', commentId);
+          }
+          if ((parent.status === 'DELETED' || parent.status === 'HIDDEN') && parent.replyCount === 0) {
+            throw new NotFoundError('Comment', commentId);
+          }
+        }
+
         // 2. Check parent post status
         const [post] = await tx.select().from(posts).where(eq(posts.id, comment.postId)).for('share');
         if (!post || post.status === 'REMOVED') {
@@ -1021,22 +1055,24 @@ export class CommentsRepository {
 
             // Decrement counts
             if (comment.parentId) {
-              // Reply: decrement parent's reply_count and post's comment_count
-              await tx
-                .update(comments)
-                .set({
-                  replyCount: sql`GREATEST(0, ${comments.replyCount} - 1)`,
-                  updatedAt: new Date(),
-                })
-                .where(eq(comments.id, comment.parentId));
+              const [parent] = await tx.select().from(comments).where(eq(comments.id, comment.parentId)).for('update');
+              if (parent && parent.status !== 'REMOVED') {
+                await tx
+                  .update(comments)
+                  .set({
+                    replyCount: sql`GREATEST(0, ${comments.replyCount} - 1)`,
+                    updatedAt: new Date(),
+                  })
+                  .where(eq(comments.id, comment.parentId));
 
-              await tx
-                .update(posts)
-                .set({
-                  commentCount: sql`GREATEST(0, ${posts.commentCount} - 1)`,
-                  updatedAt: new Date(),
-                })
-                .where(eq(posts.id, comment.postId));
+                await tx
+                  .update(posts)
+                  .set({
+                    commentCount: sql`GREATEST(0, ${posts.commentCount} - 1)`,
+                    updatedAt: new Date(),
+                  })
+                  .where(eq(posts.id, comment.postId));
+              }
             } else {
               // Top-level comment: decrement post's comment_count
               await tx
@@ -1073,5 +1109,115 @@ export class CommentsRepository {
       }
       throw error;
     }
+  }
+
+  /**
+   * Reconciles comment and reply counters to ensure reachability consistency.
+   * - Computes reachable comment_count for posts:
+   *   Visible top-level comments (ACTIVE, IMAGE_HIDDEN) + visible replies under non-REMOVED parents.
+   * - Computes reachable reply_count for top-level comments:
+   *   0 if parent is REMOVED, otherwise count of active/image_hidden replies.
+   * - Computes boost_count for comments from comment_boosts table.
+   * Returns counts of repaired posts and comments.
+   */
+  async reconcileCommentCounters(options?: {
+    postId?: string;
+  }): Promise<{ postsRepaired: number; commentsRepaired: number }> {
+    return this.db.transaction(async (tx) => {
+      // 1. Reconcile posts comment_count
+      const postFilter = options?.postId ? sql`WHERE p.id = ${options.postId}` : sql``;
+      const postReconcileResult = await tx.execute<{ id: string }>(sql`
+        WITH reachable_replies AS (
+          SELECT c.post_id, count(*)::int AS reply_count
+          FROM comments c
+          JOIN comments p ON c.parent_id = p.id
+          WHERE c.status IN ('ACTIVE', 'IMAGE_HIDDEN')
+            AND p.status != 'REMOVED'
+            ${options?.postId ? sql`AND c.post_id = ${options.postId}` : sql``}
+          GROUP BY c.post_id
+        ),
+        reachable_top_level AS (
+          SELECT post_id, count(*)::int AS top_count
+          FROM comments
+          WHERE parent_id IS NULL
+            AND status IN ('ACTIVE', 'IMAGE_HIDDEN')
+            ${options?.postId ? sql`AND post_id = ${options.postId}` : sql``}
+          GROUP BY post_id
+        ),
+        computed_counts AS (
+          SELECT 
+            p.id AS post_id,
+            COALESCE(tl.top_count, 0) + COALESCE(rr.reply_count, 0) AS expected_comment_count
+          FROM posts p
+          LEFT JOIN reachable_top_level tl ON p.id = tl.post_id
+          LEFT JOIN reachable_replies rr ON p.id = rr.post_id
+          ${postFilter}
+        )
+        UPDATE posts
+        SET comment_count = cc.expected_comment_count,
+            updated_at = now()
+        FROM computed_counts cc
+        WHERE posts.id = cc.post_id
+          AND posts.comment_count != cc.expected_comment_count
+        RETURNING posts.id
+      `);
+
+      // 2. Reconcile comments reply_count
+      const replyReconcileResult = await tx.execute<{ id: string }>(sql`
+        WITH computed_reply_counts AS (
+          SELECT 
+            p.id AS comment_id,
+            CASE 
+              WHEN p.status = 'REMOVED' THEN 0
+              ELSE COALESCE(COUNT(c.id) FILTER (WHERE c.status IN ('ACTIVE', 'IMAGE_HIDDEN')), 0)::int
+            END AS expected_reply_count
+          FROM comments p
+          LEFT JOIN comments c ON c.parent_id = p.id
+          WHERE p.parent_id IS NULL
+            ${options?.postId ? sql`AND p.post_id = ${options.postId}` : sql``}
+          GROUP BY p.id, p.status
+        )
+        UPDATE comments
+        SET reply_count = crc.expected_reply_count,
+            updated_at = now()
+        FROM computed_reply_counts crc
+        WHERE comments.id = crc.comment_id
+          AND comments.reply_count != crc.expected_reply_count
+        RETURNING comments.id
+      `);
+
+      // 3. Reconcile comments boost_count
+      const boostReconcileResult = await tx.execute<{ id: string }>(sql`
+        WITH computed_boost_counts AS (
+          SELECT 
+            c.id AS comment_id,
+            COALESCE(COUNT(cb.id), 0)::int AS expected_boost_count
+          FROM comments c
+          LEFT JOIN comment_boosts cb ON c.id = cb.comment_id
+          ${options?.postId ? sql`WHERE c.post_id = ${options.postId}` : sql``}
+          GROUP BY c.id
+        )
+        UPDATE comments
+        SET boost_count = cbc.expected_boost_count,
+            updated_at = now()
+        FROM computed_boost_counts cbc
+        WHERE comments.id = cbc.comment_id
+          AND comments.boost_count != cbc.expected_boost_count
+        RETURNING comments.id
+      `);
+
+      const repairedCommentIds = new Set<string>();
+      for (const row of replyReconcileResult.rows) {
+        repairedCommentIds.add(row.id);
+      }
+      for (const row of boostReconcileResult.rows) {
+        repairedCommentIds.add(row.id);
+      }
+
+      return {
+        postsRepaired: postReconcileResult.rows.length,
+        commentsRepaired: repairedCommentIds.size,
+      };
+    });
   }
 }

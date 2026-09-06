@@ -466,5 +466,128 @@ describe('dashboard queries', () => {
       assert.equal(result.reports[0].reason, 'INAPPROPRIATE_CONTENT');
       assert.equal(result.reports[0].reviewed_at, null);
     });
+
+    it('removeComment on parent with visible replies decrements post comment_count by 1 + replies, clears pins, and sets reply_count to 0', async () => {
+      const postId = await insertPost(database.pool, { ...principals, title: 'Parent removal post' });
+      await database.pool.query(`UPDATE posts SET comment_count = 3 WHERE id = $1`, [postId]);
+
+      const parentRes = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, text, status, reply_count)
+         VALUES ($1, $2, 'Parent comment', 'ACTIVE', 2)
+         RETURNING id`,
+        [postId, principals.userId],
+      );
+      const parentId = parentRes.rows[0].id;
+
+      // Pin the parent comment
+      await database.pool.query(
+        `INSERT INTO post_pins (post_id, comment_id) VALUES ($1, $2)`,
+        [postId, parentId],
+      );
+
+      // Insert 2 visible replies
+      await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, parent_id, text, status)
+         VALUES ($1, $2, $3, 'Reply 1', 'ACTIVE'),
+                ($1, $2, $3, 'Reply 2', 'ACTIVE')`,
+        [postId, principals.userId, parentId],
+      );
+
+      const actions = buildCommentActions(database.pool, 'ModerationAction');
+      const response = await call(actions.removeComment, parentId, {
+        reason: 'Abusive thread violation',
+      });
+      assert.equal(response.notice?.type, 'success');
+
+      // Verify parent is REMOVED and reply_count is 0
+      const parentRow = await database.pool.query(`SELECT status, reply_count FROM comments WHERE id = $1`, [parentId]);
+      assert.equal(parentRow.rows[0].status, 'REMOVED');
+      assert.equal(parentRow.rows[0].reply_count, 0);
+
+      // Verify pin was deleted
+      const pins = await database.pool.query(`SELECT * FROM post_pins WHERE comment_id = $1`, [parentId]);
+      assert.equal(pins.rows.length, 0);
+
+      // Verify post comment_count decremented by 3 (1 parent + 2 replies) -> 0
+      const postRow = await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [postId]);
+      assert.equal(postRow.rows[0].comment_count, 0);
+    });
+
+    it('removeComment on whole-hidden parent with visible replies removes phantom reply count', async () => {
+      const postId = await insertPost(database.pool, { ...principals, title: 'Hidden parent post' });
+      // Post comment_count currently 2 (since parent was whole-hidden, only replies were counted)
+      await database.pool.query(`UPDATE posts SET comment_count = 2 WHERE id = $1`, [postId]);
+
+      const parentRes = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, text, status, reply_count)
+         VALUES ($1, $2, 'Hidden parent', 'HIDDEN', 2)
+         RETURNING id`,
+        [postId, principals.userId],
+      );
+      const parentId = parentRes.rows[0].id;
+
+      await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, parent_id, text, status)
+         VALUES ($1, $2, $3, 'Reply 1', 'ACTIVE'),
+                ($1, $2, $3, 'Reply 2', 'IMAGE_HIDDEN')`,
+        [postId, principals.userId, parentId],
+      );
+
+      const actions = buildCommentActions(database.pool, 'ModerationAction');
+      const response = await call(actions.removeComment, parentId, {
+        reason: 'Permanent removal of hidden thread',
+      });
+      assert.equal(response.notice?.type, 'success');
+
+      // Post comment_count must be 0 (the 2 replies decremented)
+      const postRow = await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [postId]);
+      assert.equal(postRow.rows[0].comment_count, 0);
+    });
+
+    it('removeComment on reply under already removed parent does not double-decrement post comment_count', async () => {
+      const postId = await insertPost(database.pool, { ...principals, title: 'Reply removal post' });
+      await database.pool.query(`UPDATE posts SET comment_count = 2 WHERE id = $1`, [postId]);
+
+      const parentRes = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, text, status, reply_count)
+         VALUES ($1, $2, 'Parent comment', 'ACTIVE', 1)
+         RETURNING id`,
+        [postId, principals.userId],
+      );
+      const parentId = parentRes.rows[0].id;
+
+      const replyRes = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, parent_id, text, status)
+         VALUES ($1, $2, $3, 'Reply to be removed', 'ACTIVE')
+         RETURNING id`,
+        [postId, principals.userId, parentId],
+      );
+      const replyId = replyRes.rows[0].id;
+
+      const actions = buildCommentActions(database.pool, 'ModerationAction');
+
+      // 1. Permanently remove parent comment
+      await call(actions.removeComment, parentId, { reason: 'Remove thread parent' });
+
+      // Post comment_count is now 0 (both parent and reply decremented)
+      const postAfterParentRemoval = await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [postId]);
+      assert.equal(postAfterParentRemoval.rows[0].comment_count, 0);
+
+      // 2. Now remove the reply under the already-removed parent
+      const replyResponse = await call(actions.removeComment, replyId, { reason: 'Remove reply' });
+      assert.equal(replyResponse.notice?.type, 'success');
+
+      // Status is REMOVED
+      const replyRow = await database.pool.query(`SELECT status FROM comments WHERE id = $1`, [replyId]);
+      assert.equal(replyRow.rows[0].status, 'REMOVED');
+
+      // Post comment_count must NOT be double-decremented (remains 0)
+      const postAfterReplyRemoval = await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [postId]);
+      assert.equal(postAfterReplyRemoval.rows[0].comment_count, 0);
+
+      // Parent reply_count remains 0
+      const parentRow = await database.pool.query(`SELECT reply_count FROM comments WHERE id = $1`, [parentId]);
+      assert.equal(parentRow.rows[0].reply_count, 0);
+    });
   });
 });
