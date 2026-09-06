@@ -36,6 +36,16 @@ export interface FinalizedCommentMedia {
   displayOrder: number;
 }
 
+export function isUniqueViolation(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const anyErr = err as Record<string, any>;
+  if (anyErr.code === '23505') return true;
+  if (anyErr.cause?.code === '23505') return true;
+  if (anyErr.driverError?.code === '23505') return true;
+  const msg = `${anyErr.message ?? ''} ${anyErr.cause?.message ?? ''} ${anyErr.driverError?.message ?? ''}`;
+  return msg.includes('23505') || msg.toLowerCase().includes('unique constraint');
+}
+
 @Injectable()
 export class CommentsRepository {
   constructor(
@@ -148,18 +158,20 @@ export class CommentsRepository {
         return newComment;
       });
     } catch (error) {
-      // Handle Postgres unique violation on (author_id, client_request_id)
-      const err = error as { code?: string; constraint?: string };
-      if (
-        err.code === '23505' &&
-        (err.constraint?.includes('comment_idempotency') || err.constraint?.includes('author_client_req'))
-      ) {
+      if (isUniqueViolation(error)) {
         const existing = await this.findIdempotencyRecord(authorId, clientRequestId);
         if (existing) {
-          if (existing.requestHash === requestHash) {
-            return existing.responsePayload as Comment;
+          if (existing.requestHash !== requestHash) {
+            throw new ConflictError('Client request ID was previously used with different parameters');
           }
-          throw new ConflictError('Client request ID was previously used with different parameters');
+          const targetCommentId = existing.commentId ?? (existing.responsePayload as any)?.id;
+          if (targetCommentId) {
+            const fresh = await this.findCommentById(targetCommentId);
+            if (fresh) {
+              return fresh;
+            }
+          }
+          return existing.responsePayload as Comment;
         }
       }
       throw error;
@@ -355,13 +367,14 @@ export class CommentsRepository {
    * replyCount and post's commentCount atomically, and records durable idempotency metadata.
    */
   async createReplyWithCounters(params: {
+    replyId?: string;
     commentId: string;
     authorId: string;
     text: string;
     clientRequestId: string;
     requestHash: string;
   }): Promise<Comment> {
-    const { commentId, authorId, text, clientRequestId, requestHash } = params;
+    const { replyId, commentId, authorId, text, clientRequestId, requestHash } = params;
 
     try {
       return await this.db.transaction(async (tx) => {
@@ -393,6 +406,7 @@ export class CommentsRepository {
         const [newReply] = await tx
           .insert(comments)
           .values({
+            ...(replyId ? { id: replyId } : {}),
             postId: parent.postId,
             authorId,
             parentId: parent.id,
@@ -432,17 +446,20 @@ export class CommentsRepository {
         return newReply;
       });
     } catch (error) {
-      const err = error as { code?: string; constraint?: string };
-      if (
-        err.code === '23505' &&
-        (err.constraint?.includes('comment_idempotency') || err.constraint?.includes('author_client_req'))
-      ) {
+      if (isUniqueViolation(error)) {
         const existing = await this.findIdempotencyRecord(authorId, clientRequestId);
         if (existing) {
-          if (existing.requestHash === requestHash) {
-            return existing.responsePayload as Comment;
+          if (existing.requestHash !== requestHash) {
+            throw new ConflictError('Client request ID was previously used with different parameters');
           }
-          throw new ConflictError('Client request ID was previously used with different parameters');
+          const targetCommentId = existing.commentId ?? (existing.responsePayload as any)?.id;
+          if (targetCommentId) {
+            const fresh = await this.findCommentById(targetCommentId);
+            if (fresh) {
+              return fresh;
+            }
+          }
+          return existing.responsePayload as Comment;
         }
       }
       throw error;

@@ -86,7 +86,10 @@ describe('CommentsService', () => {
       countRecentCreationsByAuthor: jest.fn().mockResolvedValue(0),
       createCommentWithCounter: jest.fn().mockResolvedValue(mockComment),
       findTopLevelCommentsByPostId: jest.fn(),
-      findCommentById: jest.fn().mockResolvedValue(mockComment),
+      findCommentById: jest.fn().mockImplementation(async (id: string) => {
+        if (id === mockReply.id) return mockReply;
+        return mockComment;
+      }),
       createReplyWithCounters: jest.fn().mockResolvedValue(mockReply),
       findRepliesByCommentId: jest.fn(),
       deleteCommentWithCounters: jest.fn().mockResolvedValue(true),

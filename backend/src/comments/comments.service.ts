@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
-import { CommentsRepository, FinalizedCommentMedia } from './comments.repository';
+import { CommentsRepository, FinalizedCommentMedia, isUniqueViolation } from './comments.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { CreateCommentDto } from './dto/create-comment.input';
 import { CreateReplyDto } from './dto/create-reply.input';
@@ -10,7 +10,7 @@ import {
   decodeCommentCursor,
   encodeCommentCursor,
 } from './dto/comments-query.input';
-import { Comment, CommentMedia } from '../database/schema';
+import { Comment, CommentMedia, CommentIdempotency } from '../database/schema';
 import { NotFoundError, ConflictError, AppError, ValidationError } from '../common/errors/app.errors';
 import { UploadService } from '../upload/upload.service';
 import { MediaDeletionProcessor } from '../upload/media-deletion.processor';
@@ -49,6 +49,73 @@ export class CommentsService {
   ) {}
 
   /**
+   * Centralized resolution helper for idempotent replays.
+   * Ensures replays apply current deletion, moderation, and Post reachability
+   * rather than returning a frozen or stale snapshot.
+   */
+  async resolveExistingCommentReplay(existingIdempotency: CommentIdempotency, requestHash: string): Promise<Comment> {
+    // 1. Conflict verification
+    if (existingIdempotency.requestHash !== requestHash) {
+      throw new ConflictError('Client request ID was previously used with different parameters');
+    }
+
+    // 2. Resolve target comment ID
+    const targetCommentId = existingIdempotency.commentId ?? (existingIdempotency.responsePayload as any)?.id;
+    if (!targetCommentId) {
+      throw new NotFoundError('Comment', 'unknown');
+    }
+
+    // 3. Fetch fresh comment from DB
+    const comment = await this.commentsRepository.findCommentById(targetCommentId);
+    if (!comment) {
+      throw new NotFoundError('Comment', targetCommentId);
+    }
+
+    // 4. Check parent Post reachability
+    const post = await this.postsRepository.findById(comment.postId);
+    if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Post', comment.postId);
+    }
+
+    // 5. Apply reachability and visibility
+    if (!comment.parentId) {
+      // Top-level comment
+      if (comment.status === 'REMOVED') {
+        throw new NotFoundError('Comment', comment.id);
+      }
+      if (comment.status === 'DELETED' || comment.status === 'HIDDEN') {
+        if (comment.replyCount > 0) {
+          return {
+            ...comment,
+            text: comment.status === 'DELETED' ? '[Deleted]' : '[Hidden]',
+          };
+        }
+        throw new NotFoundError('Comment', comment.id);
+      }
+      if (comment.status === 'ACTIVE' || comment.status === 'IMAGE_HIDDEN') {
+        return comment;
+      }
+      throw new NotFoundError('Comment', comment.id);
+    } else {
+      // Reply
+      const parentComment = await this.commentsRepository.findCommentById(comment.parentId);
+      if (!parentComment || parentComment.status === 'REMOVED') {
+        throw new NotFoundError('Comment', comment.id);
+      }
+      if ((parentComment.status === 'DELETED' || parentComment.status === 'HIDDEN') && parentComment.replyCount === 0) {
+        throw new NotFoundError('Comment', comment.id);
+      }
+      if (comment.status === 'REMOVED' || comment.status === 'DELETED' || comment.status === 'HIDDEN') {
+        throw new NotFoundError('Comment', comment.id);
+      }
+      if (comment.status === 'ACTIVE' || comment.status === 'IMAGE_HIDDEN') {
+        return comment;
+      }
+      throw new NotFoundError('Comment', comment.id);
+    }
+  }
+
+  /**
    * Publishes a text-only top-level Comment beneath an eligible Post.
    *
    * ## Idempotency
@@ -68,13 +135,7 @@ export class CommentsService {
   async createComment(userId: string, input: CreateCommentDto): Promise<Comment> {
     const { postId, text, clientRequestId } = input;
 
-    // 1. Post eligibility check
-    const post = await this.postsRepository.findById(postId);
-    if (!post || post.status === 'REMOVED') {
-      throw new NotFoundError('Post', postId);
-    }
-
-    // 2. Canonical payload fingerprinting
+    // 1. Canonical payload fingerprinting
     const canonicalPayload = JSON.stringify({
       postId,
       text,
@@ -82,14 +143,17 @@ export class CommentsService {
     });
     const requestHash = crypto.createHash('sha256').update(canonicalPayload).digest('hex');
 
-    // 3. Durable author-scoped idempotency check
+    // 2. Durable author-scoped idempotency check FIRST
     const existingIdempotency = await this.commentsRepository.findIdempotencyRecord(userId, clientRequestId);
     if (existingIdempotency) {
-      if (existingIdempotency.requestHash === requestHash) {
-        this.logger.log(`Idempotent replay for comment clientRequestId=${clientRequestId} author=${userId}`);
-        return existingIdempotency.responsePayload as Comment;
-      }
-      throw new ConflictError('Client request ID was previously used with different parameters');
+      this.logger.log(`Idempotent replay for comment clientRequestId=${clientRequestId} author=${userId}`);
+      return this.resolveExistingCommentReplay(existingIdempotency, requestHash);
+    }
+
+    // 3. Post eligibility check
+    const post = await this.postsRepository.findById(postId);
+    if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Post', postId);
     }
 
     // 4. Per-user rate limiting (10/min, 100/day)
@@ -118,11 +182,8 @@ export class CommentsService {
           for (let attempt = 0; attempt < 20; attempt++) {
             const recheck = await this.commentsRepository.findIdempotencyRecord(userId, clientRequestId);
             if (recheck) {
-              if (recheck.requestHash === requestHash) {
-                this.logger.log(`Concurrent duplicate resolved to existing comment clientRequestId=${clientRequestId}`);
-                return recheck.responsePayload as Comment;
-              }
-              throw new ConflictError('Client request ID was previously used with different parameters');
+              this.logger.log(`Concurrent duplicate resolved to existing comment clientRequestId=${clientRequestId}`);
+              return this.resolveExistingCommentReplay(recheck, requestHash);
             }
             await new Promise((resolve) => setTimeout(resolve, 100));
           }
@@ -177,27 +238,23 @@ export class CommentsService {
       return newComment;
     } catch (err) {
       // If DB transaction failed due to unique constraint on clientRequestId (concurrent identical request won), recheck idempotency! (AC 8)
-      const errObj = typeof err === 'object' && err !== null ? (err as Record<string, unknown>) : null;
-      if (errObj?.code === '23505') {
+      if (isUniqueViolation(err)) {
         for (let attempt = 0; attempt < 20; attempt++) {
           const recheck = await this.commentsRepository.findIdempotencyRecord(userId, clientRequestId);
           if (recheck) {
-            if (recheck.requestHash === requestHash) {
-              if (mediaItems && mediaItems.length > 0) {
-                for (const item of mediaItems) {
-                  await this.uploadService.deleteObject(item.storageKey).catch(() => {});
-                  await this.commentsRepository
-                    .queueMediaDeletionWork(item.storageKey, this.getCommentMediaPublicUrl(item.storageKey))
-                    .catch(() => {});
-                }
-                await this.uploadService.markMediaFailed(
-                  mediaItems.map((m) => m.id),
-                  'Duplicate request superseded',
-                );
+            if (mediaItems && mediaItems.length > 0) {
+              for (const item of mediaItems) {
+                await this.uploadService.deleteObject(item.storageKey).catch(() => {});
+                await this.commentsRepository
+                  .queueMediaDeletionWork(item.storageKey, this.getCommentMediaPublicUrl(item.storageKey))
+                  .catch(() => {});
               }
-              return recheck.responsePayload as Comment;
+              await this.uploadService.markMediaFailed(
+                mediaItems.map((m) => m.id),
+                'Duplicate request superseded',
+              );
             }
-            throw new ConflictError('Client request ID was previously used with different parameters');
+            return this.resolveExistingCommentReplay(recheck, requestHash);
           }
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
@@ -324,7 +381,18 @@ export class CommentsService {
   async createReply(userId: string, input: CreateReplyDto): Promise<Comment> {
     const { commentId, text, clientRequestId } = input;
 
-    // 1. Check parent comment eligibility
+    // 1. Canonical payload fingerprinting
+    const canonicalPayload = JSON.stringify({ commentId, text });
+    const requestHash = crypto.createHash('sha256').update(canonicalPayload).digest('hex');
+
+    // 2. Durable author-scoped idempotency check FIRST
+    const existingIdempotency = await this.commentsRepository.findIdempotencyRecord(userId, clientRequestId);
+    if (existingIdempotency) {
+      this.logger.log(`Idempotent replay for reply clientRequestId=${clientRequestId} author=${userId}`);
+      return this.resolveExistingCommentReplay(existingIdempotency, requestHash);
+    }
+
+    // 3. Check parent comment eligibility
     const parentComment = await this.commentsRepository.findCommentById(commentId);
     if (!parentComment) {
       throw new NotFoundError('Comment', commentId);
@@ -336,24 +404,10 @@ export class CommentsService {
       throw new NotFoundError('Comment', commentId);
     }
 
-    // 2. Check parent post eligibility
+    // 4. Check parent post eligibility
     const post = await this.postsRepository.findById(parentComment.postId);
     if (!post || post.status === 'REMOVED') {
       throw new NotFoundError('Post', parentComment.postId);
-    }
-
-    // 3. Canonical payload fingerprinting
-    const canonicalPayload = JSON.stringify({ commentId, text });
-    const requestHash = crypto.createHash('sha256').update(canonicalPayload).digest('hex');
-
-    // 4. Durable author-scoped idempotency check
-    const existingIdempotency = await this.commentsRepository.findIdempotencyRecord(userId, clientRequestId);
-    if (existingIdempotency) {
-      if (existingIdempotency.requestHash === requestHash) {
-        this.logger.log(`Idempotent replay for reply clientRequestId=${clientRequestId} author=${userId}`);
-        return existingIdempotency.responsePayload as Comment;
-      }
-      throw new ConflictError('Client request ID was previously used with different parameters');
     }
 
     // 5. Shared per-user rate limiting (10/min, 100/day)
@@ -370,35 +424,48 @@ export class CommentsService {
     }
 
     // 6. Transactional reply creation with row-level locks and counter updates
-    const reply = await this.commentsRepository.createReplyWithCounters({
-      commentId,
-      authorId: userId,
-      text,
-      clientRequestId,
-      requestHash,
-    });
+    try {
+      const reply = await this.commentsRepository.createReplyWithCounters({
+        commentId,
+        authorId: userId,
+        text,
+        clientRequestId,
+        requestHash,
+      });
 
-    // 7. Fire NEW_REPLY notification to parent comment author (self-notification suppressed)
-    if (this.notificationsService && parentComment.authorId !== userId) {
-      let actorName = 'Someone';
-      if (this.usersService) {
-        const actor = await this.usersService.findById(userId).catch(() => undefined);
-        if (actor?.fullName) actorName = actor.fullName;
+      // 7. Fire NEW_REPLY notification to parent comment author (self-notification suppressed)
+      if (this.notificationsService && parentComment.authorId !== userId) {
+        let actorName = 'Someone';
+        if (this.usersService) {
+          const actor = await this.usersService.findById(userId).catch(() => undefined);
+          if (actor?.fullName) actorName = actor.fullName;
+        }
+        this.notificationsService.fireNotification(
+          {
+            recipientId: parentComment.authorId,
+            type: 'NEW_REPLY',
+            title: 'New reply',
+            body: `${actorName} replied to your comment`,
+            relatedPostId: post.id,
+            relatedCommentId: reply.id,
+          },
+          userId,
+        );
       }
-      this.notificationsService.fireNotification(
-        {
-          recipientId: parentComment.authorId,
-          type: 'NEW_REPLY',
-          title: 'New reply',
-          body: `${actorName} replied to your comment`,
-          relatedPostId: post.id,
-          relatedCommentId: reply.id,
-        },
-        userId,
-      );
-    }
 
-    return reply;
+      return reply;
+    } catch (err) {
+      if (isUniqueViolation(err)) {
+        for (let attempt = 0; attempt < 20; attempt++) {
+          const recheck = await this.commentsRepository.findIdempotencyRecord(userId, clientRequestId);
+          if (recheck) {
+            return this.resolveExistingCommentReplay(recheck, requestHash);
+          }
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+      throw err;
+    }
   }
 
   /**

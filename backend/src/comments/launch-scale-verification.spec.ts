@@ -482,9 +482,11 @@ describe('Ticket 11: Launch-Scale Verification & Compatibility Gate', () => {
         findIdempotencyRecord: jest.fn().mockImplementation(() => {
           return Promise.resolve({
             requestHash,
+            commentId: canonicalComment.id,
             responsePayload: canonicalComment,
           });
         }),
+        findCommentById: jest.fn().mockResolvedValue(canonicalComment),
         countRecentCreationsByAuthor: jest.fn().mockResolvedValue(0),
       } as unknown as CommentsRepository;
 
