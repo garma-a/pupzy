@@ -11,7 +11,6 @@ import 'adoption_detail_screen.dart';
 import 'mating_detail_screen.dart';
 import 'product_detail_screen.dart';
 import 'rescue_detail_screen.dart';
-import '../widgets/post_comments_sheet.dart';
 
 IconData _iconForType(String type) {
   switch (type) {

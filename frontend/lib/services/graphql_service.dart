@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
 import '../models/adoption_application.dart';

@@ -9,6 +9,7 @@ import '../localization/lang_provider.dart';
 import '../models/comment.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/comment_image_compressor.dart';
 import '../utils/time_format.dart';
 import 'animated_boost_chip.dart';
 
@@ -270,12 +271,8 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
 
     try {
       final picker = ImagePicker();
-      // Bounded to 480x480 max per dimension, compressed
       final picked = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 480,
-        maxHeight: 480,
-        imageQuality: 70,
       );
 
       if (picked == null) {
@@ -283,28 +280,26 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
         return;
       }
 
-      final bytes = await picked.readAsBytes();
+      final rawBytes = await picked.readAsBytes();
+      final result = CommentImageCompressor.compress(rawBytes);
 
-      if (bytes.length > 100000) {
-        if (mounted) {
-          setState(() {
-            _compressing = false;
-            _createErrorMessage = t(
-              context,
-              'Image exceeds 100 KB limit. Please select a smaller or simpler photo.',
-              'حجم الصورة يتجاوز 100 كيلوبايت. يرجى اختيار صورة أصغر أو أبسط.',
-            );
-          });
-        }
-        return;
-      }
+      if (!mounted) return;
 
-      if (mounted) {
+      if (result is CommentImageSuccess) {
         setState(() {
           _selectedImages.add(picked);
-          _compressedImagesBytes.add(bytes);
+          _compressedImagesBytes.add(result.bytes);
           _compressing = false;
           _createErrorMessage = null;
+        });
+      } else if (result is CommentImageFailure) {
+        setState(() {
+          _compressing = false;
+          _createErrorMessage = t(
+            context,
+            result.messageEn,
+            result.messageAr,
+          );
         });
       }
     } catch (e) {
@@ -439,7 +434,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     });
 
     final graphql = context.read<GraphQLService>();
-    final (pinnedComment, error) = await graphql.pinComment(commentId: comment.id);
+    final (pinnedComment, error) = await graphql.pinComment(comment.id);
 
     if (!mounted) return;
 
@@ -482,7 +477,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     });
 
     final graphql = context.read<GraphQLService>();
-    final (success, error) = await graphql.unpinComment(postId: widget.postId);
+    final (success, error) = await graphql.unpinComment(widget.postId);
 
     if (!mounted) return;
 
@@ -1268,7 +1263,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
     final isPostCreator = !isTombstone && _currentUserId != null && widget.postCreatorId != null && widget.postCreatorId == _currentUserId;
     final isPinned = comment.isPinned && !isTombstone;
     final authorName = isTombstone ? '' : (comment.author?.displayName(isAr ? 'ar' : 'en') ?? 'User');
-    final timeStr = formatTimeAgo(context, comment.createdAt);
+    final timeStr = timeAgo(comment.createdAt, isAr ? Lang.ar : Lang.en);
     final isExpanded = _expandedComments.contains(comment.id);
     final replies = _repliesMap[comment.id] ?? [];
     final isLoadingReplies = _loadingReplies.contains(comment.id);
@@ -1618,7 +1613,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
   Widget _buildReplyItem(BuildContext context, Comment reply, String parentCommentId, bool isAr) {
     final isAuthor = _currentUserId != null && reply.author?.id == _currentUserId;
     final authorName = reply.author?.displayName(isAr ? 'ar' : 'en') ?? 'User';
-    final timeStr = formatTimeAgo(context, reply.createdAt);
+    final timeStr = timeAgo(reply.createdAt, isAr ? Lang.ar : Lang.en);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
