@@ -92,13 +92,8 @@ export class CommentsRepository {
     return post;
   }
 
-
   private async getDiscussionActorName(tx: any, actorId: string): Promise<string> {
-    const [actor] = await tx
-      .select({ fullName: users.fullName })
-      .from(users)
-      .where(eq(users.id, actorId))
-      .limit(1);
+    const [actor] = await tx.select({ fullName: users.fullName }).from(users).where(eq(users.id, actorId)).limit(1);
     return actor?.fullName?.trim() || 'Someone';
   }
 
@@ -121,10 +116,7 @@ export class CommentsRepository {
     },
   ): Promise<void> {
     if (event.recipientId === event.actorId) return;
-    await tx
-      .insert(discussionNotificationEvents)
-      .values(event)
-      .onConflictDoNothing();
+    await tx.insert(discussionNotificationEvents).values(event).onConflictDoNothing();
   }
 
   /**

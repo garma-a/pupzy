@@ -58,9 +58,7 @@ describe('AdminJS Comments Resource & Actions (Ticket 09)', () => {
         { id: 'm1', storage_key: 'comments/c1/1.webp', display_order: 0 },
         { id: 'm2', storage_key: 'comments/c1/2.webp', display_order: 1 },
       ];
-      const mockReports = [
-        { id: 'r1', reporter_id: 'u1', reason: 'INAPPROPRIATE_CONTENT', reviewed_at: null },
-      ];
+      const mockReports = [{ id: 'r1', reporter_id: 'u1', reason: 'INAPPROPRIATE_CONTENT', reviewed_at: null }];
       const testPool = {
         query: async (sql) => {
           if (sql.includes('comment_media')) return { rows: mockMedia };

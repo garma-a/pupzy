@@ -114,7 +114,9 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
       'src/adoptions/adoptions.graphql',
       'src/vet-clinics/vet-clinics.graphql',
     ];
-    const typeDefs = schemaFiles.map((relativePath) => fs.readFileSync(path.resolve(__dirname, '../../', relativePath), 'utf8'));
+    const typeDefs = schemaFiles.map((relativePath) =>
+      fs.readFileSync(path.resolve(__dirname, '../../', relativePath), 'utf8'),
+    );
     schema = makeExecutableSchema({
       typeDefs,
       resolvers: {
@@ -137,11 +139,14 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
             notificationsResolver.myUnreadNotificationCount(context),
         },
         Mutation: {
-          createComment: (_root: unknown, args: any, context: GqlContext) => commentsResolver.createComment(args.input, context),
-          createReply: (_root: unknown, args: any, context: GqlContext) => commentsResolver.createReply(args.input, context),
+          createComment: (_root: unknown, args: any, context: GqlContext) =>
+            commentsResolver.createComment(args.input, context),
+          createReply: (_root: unknown, args: any, context: GqlContext) =>
+            commentsResolver.createReply(args.input, context),
           toggleCommentBoost: (_root: unknown, args: any, context: GqlContext) =>
             commentsResolver.toggleCommentBoost(args.commentId, context),
-          pinComment: (_root: unknown, args: any, context: GqlContext) => commentsResolver.pinComment(args.commentId, context),
+          pinComment: (_root: unknown, args: any, context: GqlContext) =>
+            commentsResolver.pinComment(args.commentId, context),
         },
       },
     });
@@ -194,7 +199,10 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
 
   async function executeGql(source: string, variables: Record<string, unknown>, authenticatedUser: User) {
     const userLoader = new DataLoader(async (ids: readonly string[]) => {
-      const rows = await dbHelper.db.select().from(users).where(inArray(users.id, ids as string[]));
+      const rows = await dbHelper.db
+        .select()
+        .from(users)
+        .where(inArray(users.id, ids as string[]));
       const byId = new Map(rows.map((row) => [row.id, row]));
       return ids.map((id) => byId.get(id) ?? null);
     });
@@ -220,7 +228,11 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
     return graphql({ schema, source, variableValues: variables, contextValue: context });
   }
 
-  async function createComment(text: string, clientRequestId = `comment-${generateUuidV7()}`, author = commenter): Promise<string> {
+  async function createComment(
+    text: string,
+    clientRequestId = `comment-${generateUuidV7()}`,
+    author = commenter,
+  ): Promise<string> {
     const result = await executeGql(CREATE_COMMENT, { input: { postId: post.id, text, clientRequestId } }, author);
     expect(result.errors).toBeUndefined();
     return (result.data as any).createComment.id;
@@ -265,14 +277,17 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
 
   it('recovers an expired delivery lease after a worker crash without duplicating the inbox row', async () => {
     const commentId = await createComment('A lease-recovery comment');
-    await dbHelper.pool.query(`
+    await dbHelper.pool.query(
+      `
       UPDATE discussion_notification_events
       SET status = 'PROCESSING',
           attempts = 1,
           lease_token = uuidv7(),
           lease_expires_at = now() - INTERVAL '1 second'
       WHERE related_comment_id = $1
-    `, [commentId]);
+    `,
+      [commentId],
+    );
 
     expect(await new DiscussionNotificationProcessor(dbHelper.db).processPendingEvents()).toBe(1);
     const [event] = await dbHelper.db.select().from(discussionNotificationEvents);
@@ -319,7 +334,11 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
     const clientRequestId = `concurrent-${generateUuidV7()}`;
     const responses = await Promise.all(
       Array.from({ length: 4 }, () =>
-        executeGql(CREATE_COMMENT, { input: { postId: post.id, text: 'Concurrent durable create', clientRequestId } }, commenter),
+        executeGql(
+          CREATE_COMMENT,
+          { input: { postId: post.id, text: 'Concurrent durable create', clientRequestId } },
+          commenter,
+        ),
       ),
     );
     for (const response of responses) {
@@ -359,7 +378,10 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
     expect((await executeGql(PIN_COMMENT, { commentId }, postOwner)).errors).toBeUndefined();
     await createComment('Post-owner self comment', `self-${generateUuidV7()}`, postOwner);
 
-    const events = await dbHelper.db.select().from(discussionNotificationEvents).orderBy(discussionNotificationEvents.type);
+    const events = await dbHelper.db
+      .select()
+      .from(discussionNotificationEvents)
+      .orderBy(discussionNotificationEvents.type);
     expect(events).toHaveLength(4);
     expect(events).toEqual(
       expect.arrayContaining([
@@ -406,14 +428,22 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
     try {
       const response = await executeGql(
         CREATE_COMMENT,
-        { input: { postId: post.id, text: 'This source action must roll back', clientRequestId: `rollback-${generateUuidV7()}` } },
+        {
+          input: {
+            postId: post.id,
+            text: 'This source action must roll back',
+            clientRequestId: `rollback-${generateUuidV7()}`,
+          },
+        },
         commenter,
       );
       expect(response.errors).toBeDefined();
       expect(await dbHelper.db.select().from(comments)).toHaveLength(0);
       expect(await dbHelper.db.select().from(discussionNotificationEvents)).toHaveLength(0);
     } finally {
-      await dbHelper.pool.query(`DROP TRIGGER IF EXISTS test_fail_discussion_event_insert ON discussion_notification_events;`);
+      await dbHelper.pool.query(
+        `DROP TRIGGER IF EXISTS test_fail_discussion_event_insert ON discussion_notification_events;`,
+      );
       await dbHelper.pool.query(`DROP FUNCTION IF EXISTS test_fail_discussion_event_insert();`);
     }
   });
