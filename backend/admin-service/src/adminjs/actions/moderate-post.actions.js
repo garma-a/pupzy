@@ -1,4 +1,4 @@
-import { actionResponse, readModerationReason, runModerationAction } from './helpers.js';
+import { actionResponse, lockPostDiscussion, readModerationReason, runModerationAction } from './helpers.js';
 import { isAnyAdmin } from '../rbac.js';
 
 function getRecordProperty(record, property) {
@@ -41,6 +41,7 @@ function buildPostAction(pool, component, definition, cache) {
         targetType: 'POST',
         reason: reason || undefined,
         onSuccess: () => cache?.invalidate(),
+        lockDiscussion: lockPostDiscussion,
         validate: definition.validate,
         mutate: (client, row) => definition.mutate(client, row, currentAdmin.id, reason),
       });

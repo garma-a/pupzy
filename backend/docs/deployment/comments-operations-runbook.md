@@ -198,6 +198,62 @@ If abusive image flooding, storage anomalies, or R2 outages occur:
 
 ---
 
+## 6.5 Discussion Write Contention and Deadlock Diagnosis (Ticket 11)
+
+All mutations that can change discussion reachability, counters, or pin state use one short PostgreSQL transaction and acquire locks in this order:
+
+1. A transaction-scoped advisory key for the Post: `hashtextextended('comment_discussion:' || postId, 0)`.
+2. The canonical `posts` row with `FOR UPDATE`.
+3. The parent Comment with `FOR UPDATE`, when the target is a Reply.
+4. The target Comment with `FOR UPDATE`, followed by pin, report, counter, and moderation rows as needed.
+
+This order applies to Comment and Reply creation, author deletion, Boost toggles, pin/unpin, reports, author Post status changes and deletion, AdminJS Comment transitions, and AdminJS Post transitions. Preflight Comment reads only select the Post key; authorization, visibility, parent reachability, and lifecycle state are checked again after canonical locks are held. The advisory key is a low-contention 64-bit serialization aid. A theoretical hash collision can only serialize unrelated Posts; the locked canonical Post row and revalidation remain the integrity boundary. Advisory locks are transaction-scoped and release on commit or rollback.
+
+Report threshold crossings take the exclusive Post lock before modifying reports, Comment state, pins, or counters. This prevents the former shared-Post-lock to write-lock upgrade cycle. Transactions contain database work only: R2, CDN, cache callbacks, and external notification delivery do not run in a retryable transaction. A durable notification row may be written atomically with its source transition; its eventual provider delivery remains outside this transaction.
+
+An AdminJS `banUser` with `alsoRemovePosts` first commits the User ban, its audit row, and a durable `user_ban_post_cascades` work record together. The request processes no more than one ascending-UUID page of 100 Posts. The existing always-on Nest API scheduler resumes one durable page on bootstrap and every five seconds, so correctness does not depend on the sleep-prone AdminJS service. Every page takes Post advisory keys and canonical Post rows in ascending order, then locks the User row, verifies the original ban marker, and applies only that bounded update. Progress cursor, count, terminal state, audit metadata, and the one aggregate notification are committed in the same page transaction. Unban or a newer ban epoch cancels stale work instead of applying old intent.
+
+The database also prevents an ACTIVE Post from being inserted or restored for a banned creator. It locks the creator User row while checking that rule; public Post creation repeats the check under `FOR UPDATE` to return the established safe forbidden response. Thus a request that acquired the User lock before the ban can commit and is included by the cascade, while a create/restore after the ban commits is rejected. This is the boundary that makes a terminal empty cascade page meaningful; do not bypass it with direct maintenance SQL.
+
+Counter reconciliation never writes a count calculated before a competing discussion mutation for the same Post. A targeted repair locks that Post under the same advisory/Post-row protocol before recomputing and writing its counters. A global repair keyset-pages at most 100 Post IDs at a time and repairs one Post per transaction, so it retains neither a cross-Post snapshot nor an unbounded Node array. The global scan is intentionally not a snapshot: a concurrently inserted or UUID-moved-below-cursor Post can be deferred to the next run, but every selected Post is recalculated after its canonical lock and cannot overwrite a competing discussion write with a stale count.
+
+Only PostgreSQL `40P01` (deadlock detected) and `40001` (serialization failure) retry, with at most three jittered retries. Lock-timeout/busy `55P03`, domain validation, authorization, quota, and uniqueness errors are not retried. Retry wrapping is restricted to the transaction callback, so no externally visible action is replayed. Request identity remains in the durable Comment idempotency record, and report uniqueness remains enforced by PostgreSQL.
+
+### Contention investigation
+
+If clients report safe mutation failures or database deadlock logs occur, first identify the Post and transaction age; do not terminate broad application connections or manually unlock advisory locks.
+
+```sql
+SELECT a.pid, a.usename, a.state, a.wait_event_type, a.wait_event,
+       now() - a.xact_start AS transaction_age, a.query
+FROM pg_stat_activity a
+WHERE a.datname = current_database()
+  AND a.xact_start IS NOT NULL
+ORDER BY a.xact_start;
+
+SELECT l.pid, l.locktype, l.mode, l.granted, a.query
+FROM pg_locks l
+JOIN pg_stat_activity a ON a.pid = l.pid
+WHERE l.locktype IN ('advisory', 'relation', 'transactionid')
+ORDER BY l.granted, l.pid;
+```
+
+For a large ban backlog, inspect durable progress rather than assuming the initiating AdminJS request completed it:
+
+```sql
+SELECT c.action_id, c.user_id, c.state, c.cascaded_post_count, c.cursor_post_id,
+       c.created_at, c.updated_at, c.completed_at
+FROM user_ban_post_cascades c
+WHERE c.state = 'PENDING'
+ORDER BY c.created_at;
+```
+
+The API scheduler intentionally advances one 100-Post page per tick to remain responsive. A stopped API, a migration not applied everywhere, or a continually growing pending backlog delays completion and requires operational attention; this mechanism is durable recovery, not a throughput guarantee.
+
+Capture the GraphQL operation, safe request ID, Post ID, SQLSTATE, and transaction age. A repeated `40P01` or `40001` after the bounded retry budget warrants investigation of a path that bypasses this ordering. A `55P03` is a bounded busy/lock-timeout response: inspect the blocking transaction and reduce its work rather than enabling unbounded retries. This runbook describes the locking implementation and diagnosis procedure; it is not launch-scale throughput evidence.
+
+---
+
 ## 7. Discussion Counters Reconciliation & Reachability Policy (Ticket 09)
 
 ### 7.1 Reachability and Visibility Invariants
@@ -400,4 +456,67 @@ SELECT action,
 FROM comment_quota_admissions
 WHERE user_id = '<USER_UUID>'
 GROUP BY action;
+```
+
+---
+
+## 9. Durable Discussion Notifications (Ticket 12)
+
+### 9.1 Transactional Source Events and Delivery Boundary
+
+`discussion_notification_events` is the PostgreSQL outbox for in-app discussion notifications. Comment creation, Reply creation, an added Comment Boost, and a newly established pin write their source event inside the same short PostgreSQL transaction that writes the source state, counters, and idempotency row. A transaction rollback writes neither source state nor event.
+
+The source identity is unique and durable:
+
+- `NEW_COMMENT:{commentId}` and `NEW_REPLY:{replyId}` use the newly committed discussion ID.
+- `COMMENT_BOOSTED:{commentBoostId}` uses the unique Boost relationship row created only on addition.
+- `COMMENT_PINNED:{eventUuid}` is minted only when the serialized Post pin transition changes to a different Comment; a no-op repeated pin does not create an event.
+
+Self-notifications are suppressed before an event is inserted. Removing a Boost, unpinning, failed mutations, and idempotent Comment/Reply replays do not enqueue an event. Events retain recipient, actor, type, stable Post ID, and stable Comment/Reply ID; the existing notification inbox keeps its established pagination and unread behavior.
+
+Delivery is the atomic insertion of the existing in-app `notifications` row, not an unrecorded network callback. The processor inserts that row and marks its outbox event `DELIVERED` in one database transaction. `notifications.discussion_event_id` has a partial unique index, so a repeated worker execution cannot create a second inbox row. A crash before this transaction commits leaves a retained event; a crash after it commits leaves both the inbox row and `DELIVERED` state.
+
+### 9.2 Existing-Service Recovery and Leases
+
+- **Component:** `DiscussionNotificationProcessor` in `backend/src/notifications/discussion-notification.processor.ts`.
+- **Topology:** It is a provider in the existing `NotificationsModule`, runs on Nest API bootstrap, and runs every minute with the existing Nest scheduler. It adds no queue daemon, Redis instance, provider callback, or fourth service.
+- **Claiming:** Workers select one due `PENDING` event, or an expired `PROCESSING` lease, with `FOR UPDATE SKIP LOCKED`; they atomically assign a UUID lease token, expiry, and incremented attempt count. Conditional state updates require the same lease token, so a stale process cannot complete or requeue work claimed by another API process.
+- **Bounded work:** One invocation processes at most 50 events. Failed inbox inserts return the event to `PENDING` with a bounded exponential retry delay (up to five minutes), incremented attempts, and a safe retained error summary. Events are never silently discarded or falsely marked delivered.
+
+### 9.3 Inspection and Safe Operator Intervention
+
+```sql
+-- Current backlog and retained delivery failures
+SELECT status, count(*) AS events, max(attempts) AS max_attempts,
+       min(next_attempt_at) AS next_due_at
+FROM discussion_notification_events
+GROUP BY status
+ORDER BY status;
+
+-- Events that have repeatedly failed inbox persistence
+SELECT id, source_event_id, type, recipient_id, related_post_id,
+       related_comment_id, attempts, last_error, next_attempt_at, updated_at
+FROM discussion_notification_events
+WHERE status = 'PENDING' AND last_error IS NOT NULL
+ORDER BY attempts DESC, updated_at ASC;
+
+-- Expired worker leases that will be recovered by the next API tick
+SELECT id, source_event_id, attempts, lease_expires_at, updated_at
+FROM discussion_notification_events
+WHERE status = 'PROCESSING'
+  AND lease_expires_at < NOW()
+ORDER BY lease_expires_at ASC;
+```
+
+Do not manually insert an inbox notification for an outbox event: the unique `discussion_event_id` is the delivery deduplication boundary. After investigating and repairing an unusual database problem, an operator may make a retained event due immediately; preserve its attempt history and lease ownership:
+
+```sql
+UPDATE discussion_notification_events
+SET status = 'PENDING',
+    next_attempt_at = NOW(),
+    lease_token = NULL,
+    lease_expires_at = NULL,
+    updated_at = NOW()
+WHERE id = '<EVENT_UUID>'
+  AND status IN ('PENDING', 'PROCESSING');
 ```

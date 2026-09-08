@@ -46,6 +46,7 @@ export class TestDatabaseHelper {
         adoption_applications,
         post_reports,
         notifications,
+        discussion_notification_events,
         saved_searches,
         moderation_actions,
         posts,

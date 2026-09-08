@@ -14,6 +14,8 @@ import {
   commentMedia,
   mediaDeletionWork,
   commentReports,
+  discussionNotificationEvents,
+  users,
   Comment,
   CommentIdempotency,
   CommentMedia,
@@ -23,6 +25,10 @@ import { NotFoundError, ConflictError, ForbiddenError, ValidationError } from '.
 import { CommentCursorPayload, CommentSortOrder } from './dto/comments-query.input';
 import { getCommentMediaPurgeUrls } from '../upload/media-delivery.util';
 import { CommentsQuotaManager, QuotaReservation } from './comments-quota.manager';
+import { withDbRetry } from '../common/utils/db-retry.util';
+import { generateUuidV7 } from '../common/utils/generate-uuidv7';
+
+type DiscussionNotificationType = 'NEW_COMMENT' | 'NEW_REPLY' | 'COMMENT_BOOSTED' | 'COMMENT_PINNED';
 
 export interface FinalizedCommentMedia {
   id: string;
@@ -36,6 +42,13 @@ export interface FinalizedCommentMedia {
   fileContentType: string;
   displayOrder: number;
 }
+
+/**
+ * Global counter repair is deliberately paged. Keeping this modest means an
+ * operational repair never turns its discovery query into an unbounded heap
+ * allocation or holds discussion locks for more than one Post at a time.
+ */
+const COUNTER_RECONCILIATION_POST_BATCH_SIZE = 100;
 
 export function isUniqueViolation(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false;
@@ -56,6 +69,62 @@ export class CommentsRepository {
     private readonly db: NodePgDatabase<typeof schema>,
   ) {
     this.quotaManager = new CommentsQuotaManager(this.db);
+  }
+
+  /**
+   * Serializes one Post's discussion writes before acquiring any discussion row:
+   * advisory Post key -> Post -> parent Comment -> target Comment -> pin/report
+   * rows. The exclusive Post lock is deliberate, including validation-only
+   * reads: report threshold crossings can update its counter and must never
+   * upgrade a shared Post lock while another mutation holds one.
+   *
+   * `postId` comes from an unlocked preflight lookup only to choose this
+   * advisory key. Every authorization and lifecycle check is repeated after
+   * the transaction locks the canonical rows.
+   */
+  private async lockDiscussionPost(tx: any, postId: string) {
+    await tx.execute(sql`
+      SELECT pg_advisory_xact_lock(hashtextextended('comment_discussion:' || ${postId}, 0))
+    `);
+
+    const [post] = await tx.select().from(posts).where(eq(posts.id, postId)).for('update');
+    if (!post) throw new NotFoundError('Post', postId);
+    return post;
+  }
+
+
+  private async getDiscussionActorName(tx: any, actorId: string): Promise<string> {
+    const [actor] = await tx
+      .select({ fullName: users.fullName })
+      .from(users)
+      .where(eq(users.id, actorId))
+      .limit(1);
+    return actor?.fullName?.trim() || 'Someone';
+  }
+
+  /**
+   * Writes a source event inside the same transaction as its discussion
+   * mutation. The unique source identity is the first deduplication boundary;
+   * the processor has a second unique boundary on the inbox row it creates.
+   */
+  private async enqueueDiscussionNotificationEvent(
+    tx: any,
+    event: {
+      sourceEventId: string;
+      recipientId: string;
+      actorId: string;
+      type: DiscussionNotificationType;
+      title: string;
+      body: string;
+      relatedPostId: string;
+      relatedCommentId: string;
+    },
+  ): Promise<void> {
+    if (event.recipientId === event.actorId) return;
+    await tx
+      .insert(discussionNotificationEvents)
+      .values(event)
+      .onConflictDoNothing();
   }
 
   /**
@@ -128,68 +197,86 @@ export class CommentsRepository {
     const itemsToInsert = mediaItems ?? [];
 
     try {
-      return await this.db.transaction(async (tx) => {
-        // 1. Insert the comment
-        const [newComment] = await tx
-          .insert(comments)
-          .values({
-            ...(commentId ? { id: commentId } : {}),
-            postId,
-            authorId,
-            text,
-            status: 'ACTIVE',
-          })
-          .returning();
+      return await withDbRetry(() =>
+        this.db.transaction(async (tx) => {
+          // The Post is always locked before discussion rows or counters.
+          const post = await this.lockDiscussionPost(tx, postId);
+          if (post.status === 'REMOVED') throw new NotFoundError('Post', postId);
 
-        // 2. Increment post commentCount atomically, ensuring post is not REMOVED
-        const updatedPosts = await tx
-          .update(posts)
-          .set({
-            commentCount: sql`${posts.commentCount} + 1`,
-            updatedAt: new Date(),
-          })
-          .where(and(eq(posts.id, postId), ne(posts.status, 'REMOVED')))
-          .returning({ id: posts.id });
+          // 1. Insert the comment
+          const [newComment] = await tx
+            .insert(comments)
+            .values({
+              ...(commentId ? { id: commentId } : {}),
+              postId,
+              authorId,
+              text,
+              status: 'ACTIVE',
+            })
+            .returning();
 
-        if (!updatedPosts || updatedPosts.length === 0) {
-          throw new NotFoundError('Post', postId);
-        }
-
-        // 3. Insert media relationships if attached and finalize staged uploads in DB
-        for (const item of itemsToInsert) {
-          await tx.insert(commentMedia).values({
-            id: item.id,
-            commentId: newComment.id,
-            storageKey: item.storageKey,
-            sha256: item.sha256,
-            width: item.width,
-            height: item.height,
-            fileSizeBytes: item.fileSizeBytes,
-            fileContentType: item.fileContentType,
-            displayOrder: item.displayOrder,
-          });
-
-          await tx
-            .update(stagedUploads)
+          // 2. Increment post commentCount atomically, ensuring post is not REMOVED
+          const updatedPosts = await tx
+            .update(posts)
             .set({
-              status: 'FINALIZED',
-              finalStorageKey: item.storageKey,
+              commentCount: sql`${posts.commentCount} + 1`,
               updatedAt: new Date(),
             })
-            .where(eq(stagedUploads.id, item.id));
-        }
+            .where(and(eq(posts.id, postId), ne(posts.status, 'REMOVED')))
+            .returning({ id: posts.id });
 
-        // 4. Record durable author-scoped idempotency
-        await tx.insert(commentIdempotency).values({
-          authorId,
-          clientRequestId,
-          requestHash,
-          commentId: newComment.id,
-          responsePayload: newComment,
-        });
+          if (!updatedPosts || updatedPosts.length === 0) {
+            throw new NotFoundError('Post', postId);
+          }
 
-        return newComment;
-      });
+          // 3. Insert media relationships if attached and finalize staged uploads in DB
+          for (const item of itemsToInsert) {
+            await tx.insert(commentMedia).values({
+              id: item.id,
+              commentId: newComment.id,
+              storageKey: item.storageKey,
+              sha256: item.sha256,
+              width: item.width,
+              height: item.height,
+              fileSizeBytes: item.fileSizeBytes,
+              fileContentType: item.fileContentType,
+              displayOrder: item.displayOrder,
+            });
+
+            await tx
+              .update(stagedUploads)
+              .set({
+                status: 'FINALIZED',
+                finalStorageKey: item.storageKey,
+                updatedAt: new Date(),
+              })
+              .where(eq(stagedUploads.id, item.id));
+          }
+
+          // 4. Record durable author-scoped idempotency
+          await tx.insert(commentIdempotency).values({
+            authorId,
+            clientRequestId,
+            requestHash,
+            commentId: newComment.id,
+            responsePayload: newComment,
+          });
+
+          const actorName = await this.getDiscussionActorName(tx, authorId);
+          await this.enqueueDiscussionNotificationEvent(tx, {
+            sourceEventId: `NEW_COMMENT:${newComment.id}`,
+            recipientId: post.creatorId,
+            actorId: authorId,
+            type: 'NEW_COMMENT',
+            title: 'New comment',
+            body: `${actorName} commented on your post "${post.title}"`,
+            relatedPostId: post.id,
+            relatedCommentId: newComment.id,
+          });
+
+          return newComment;
+        }),
+      );
     } catch (error) {
       if (isUniqueViolation(error)) {
         const existing = await this.findIdempotencyRecord(authorId, clientRequestId);
@@ -410,80 +497,92 @@ export class CommentsRepository {
     requestHash: string;
   }): Promise<Comment> {
     const { replyId, commentId, authorId, text, clientRequestId, requestHash } = params;
+    const parentBeforeLock = await this.findCommentById(commentId);
+    if (!parentBeforeLock) throw new NotFoundError('Comment', commentId);
 
     try {
-      return await this.db.transaction(async (tx) => {
-        // 1. Lock parent comment with FOR UPDATE
-        const [parent] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('update');
+      return await withDbRetry(() =>
+        this.db.transaction(async (tx) => {
+          // Post -> parent is the discussion lock order.
+          const post = await this.lockDiscussionPost(tx, parentBeforeLock.postId);
+          if (post.status === 'REMOVED') throw new NotFoundError('Post', parentBeforeLock.postId);
+          // 1. Lock parent comment with FOR UPDATE
+          const [parent] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('update');
 
-        if (!parent || parent.status === 'REMOVED') {
-          throw new NotFoundError('Comment', commentId);
-        }
+          if (!parent || parent.status === 'REMOVED') {
+            throw new NotFoundError('Comment', commentId);
+          }
 
-        // Nesting check: Replies cannot receive replies
-        if (parent.parentId !== null) {
-          throw new ValidationError('Replies cannot receive replies');
-        }
+          // Nesting check: Replies cannot receive replies
+          if (parent.parentId !== null) {
+            throw new ValidationError('Replies cannot receive replies');
+          }
 
-        if ((parent.status === 'DELETED' || parent.status === 'HIDDEN') && parent.replyCount === 0) {
-          throw new NotFoundError('Comment', commentId);
-        }
+          if ((parent.status === 'DELETED' || parent.status === 'HIDDEN') && parent.replyCount === 0) {
+            throw new NotFoundError('Comment', commentId);
+          }
 
-        // Status check: parent must be ACTIVE or IMAGE_HIDDEN (cannot reply to DELETED, HIDDEN, or REMOVED)
-        if (parent.status !== 'ACTIVE' && parent.status !== 'IMAGE_HIDDEN') {
-          throw new NotFoundError('Comment', commentId);
-        }
+          // Status check: parent must be ACTIVE or IMAGE_HIDDEN (cannot reply to DELETED, HIDDEN, or REMOVED)
+          if (parent.status !== 'ACTIVE' && parent.status !== 'IMAGE_HIDDEN') {
+            throw new NotFoundError('Comment', commentId);
+          }
 
-        // 2. Lock parent post with FOR UPDATE to prevent race with post removal
-        const [post] = await tx.select().from(posts).where(eq(posts.id, parent.postId)).for('update');
+          // 3. Insert reply
+          const [newReply] = await tx
+            .insert(comments)
+            .values({
+              ...(replyId ? { id: replyId } : {}),
+              postId: parent.postId,
+              authorId,
+              parentId: parent.id,
+              text,
+              status: 'ACTIVE',
+              replyCount: 0,
+            })
+            .returning();
 
-        if (!post || post.status === 'REMOVED') {
-          throw new NotFoundError('Post', parent.postId);
-        }
+          // 4. Increment parent comment's reply_count
+          await tx
+            .update(comments)
+            .set({
+              replyCount: sql`${comments.replyCount} + 1`,
+              updatedAt: new Date(),
+            })
+            .where(eq(comments.id, parent.id));
 
-        // 3. Insert reply
-        const [newReply] = await tx
-          .insert(comments)
-          .values({
-            ...(replyId ? { id: replyId } : {}),
-            postId: parent.postId,
+          // 5. Increment post's comment_count
+          await tx
+            .update(posts)
+            .set({
+              commentCount: sql`${posts.commentCount} + 1`,
+              updatedAt: new Date(),
+            })
+            .where(eq(posts.id, parent.postId));
+
+          // 6. Record durable idempotency
+          await tx.insert(commentIdempotency).values({
             authorId,
-            parentId: parent.id,
-            text,
-            status: 'ACTIVE',
-            replyCount: 0,
-          })
-          .returning();
+            clientRequestId,
+            requestHash,
+            commentId: newReply.id,
+            responsePayload: newReply,
+          });
 
-        // 4. Increment parent comment's reply_count
-        await tx
-          .update(comments)
-          .set({
-            replyCount: sql`${comments.replyCount} + 1`,
-            updatedAt: new Date(),
-          })
-          .where(eq(comments.id, parent.id));
+          const actorName = await this.getDiscussionActorName(tx, authorId);
+          await this.enqueueDiscussionNotificationEvent(tx, {
+            sourceEventId: `NEW_REPLY:${newReply.id}`,
+            recipientId: parent.authorId,
+            actorId: authorId,
+            type: 'NEW_REPLY',
+            title: 'New reply',
+            body: `${actorName} replied to your comment`,
+            relatedPostId: post.id,
+            relatedCommentId: newReply.id,
+          });
 
-        // 5. Increment post's comment_count
-        await tx
-          .update(posts)
-          .set({
-            commentCount: sql`${posts.commentCount} + 1`,
-            updatedAt: new Date(),
-          })
-          .where(eq(posts.id, parent.postId));
-
-        // 6. Record durable idempotency
-        await tx.insert(commentIdempotency).values({
-          authorId,
-          clientRequestId,
-          requestHash,
-          commentId: newReply.id,
-          responsePayload: newReply,
-        });
-
-        return newReply;
-      });
+          return newReply;
+        }),
+      );
     } catch (error) {
       if (isUniqueViolation(error)) {
         const existing = await this.findIdempotencyRecord(authorId, clientRequestId);
@@ -530,90 +629,104 @@ export class CommentsRepository {
     userId: string,
     cdnBase: string = 'https://cdn.pupzy.net',
   ): Promise<boolean> {
-    return this.db.transaction(async (tx) => {
-      // 1. Lock target comment
-      const [comment] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('update');
+    const commentBeforeLock = await this.findCommentById(commentId);
+    if (!commentBeforeLock) throw new NotFoundError('Comment', commentId);
 
-      if (!comment) {
-        throw new NotFoundError('Comment', commentId);
-      }
+    return withDbRetry(() =>
+      this.db.transaction(async (tx) => {
+        // Post -> parent -> target is the discussion lock order.
+        await this.lockDiscussionPost(tx, commentBeforeLock.postId);
+        let lockedParent: Comment | undefined;
+        if (commentBeforeLock.parentId) {
+          [lockedParent] = await tx
+            .select()
+            .from(comments)
+            .where(eq(comments.id, commentBeforeLock.parentId))
+            .for('update');
+        }
+        // 1. Lock target comment
+        const [comment] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('update');
 
-      // 2. Ownership check: author only
-      if (comment.authorId !== userId) {
-        throw new ForbiddenError('You can only delete your own comments or replies');
-      }
+        if (!comment) {
+          throw new NotFoundError('Comment', commentId);
+        }
 
-      // 3. Idempotent check
-      if (comment.status === 'DELETED') {
-        return true;
-      }
+        // 2. Ownership check: author only
+        if (comment.authorId !== userId) {
+          throw new ForbiddenError('You can only delete your own comments or replies');
+        }
 
-      const wasVisible = comment.status === 'ACTIVE' || comment.status === 'IMAGE_HIDDEN';
+        // 3. Idempotent check
+        if (comment.status === 'DELETED') {
+          return true;
+        }
 
-      // 4. Immediately remove public media relationship and queue durable work for R2 deletion and CDN purge
-      const mediaRows = await tx.select().from(commentMedia).where(eq(commentMedia.commentId, commentId));
-      if (mediaRows.length > 0) {
-        await tx.delete(commentMedia).where(eq(commentMedia.commentId, commentId));
-        for (const row of mediaRows) {
-          const purgeUrls = getCommentMediaPurgeUrls(row.storageKey, { cdnBase });
-          for (const cdnUrl of purgeUrls) {
-            await tx.insert(mediaDeletionWork).values({
-              storageKey: row.storageKey,
-              cdnUrl,
-              status: 'PENDING',
-              attempts: 0,
-            });
+        const wasVisible = comment.status === 'ACTIVE' || comment.status === 'IMAGE_HIDDEN';
+
+        // 4. Immediately remove public media relationship and queue durable work for R2 deletion and CDN purge
+        const mediaRows = await tx.select().from(commentMedia).where(eq(commentMedia.commentId, commentId));
+        if (mediaRows.length > 0) {
+          await tx.delete(commentMedia).where(eq(commentMedia.commentId, commentId));
+          for (const row of mediaRows) {
+            const purgeUrls = getCommentMediaPurgeUrls(row.storageKey, { cdnBase });
+            for (const cdnUrl of purgeUrls) {
+              await tx.insert(mediaDeletionWork).values({
+                storageKey: row.storageKey,
+                cdnUrl,
+                status: 'PENDING',
+                attempts: 0,
+              });
+            }
           }
         }
-      }
 
-      // 5. Mark status DELETED
-      await tx
-        .update(comments)
-        .set({
-          status: 'DELETED',
-          updatedAt: new Date(),
-        })
-        .where(eq(comments.id, commentId));
+        // 5. Mark status DELETED
+        await tx
+          .update(comments)
+          .set({
+            status: 'DELETED',
+            updatedAt: new Date(),
+          })
+          .where(eq(comments.id, commentId));
 
-      // 6. Delete pin record if this comment was pinned
-      await tx.delete(postPins).where(eq(postPins.commentId, commentId));
+        // 6. Delete pin record if this comment was pinned
+        await tx.delete(postPins).where(eq(postPins.commentId, commentId));
 
-      // 7. Decrement counters if the item was visible
-      if (comment.parentId) {
-        // Lock parent comment
-        const [parent] = await tx.select().from(comments).where(eq(comments.id, comment.parentId)).for('update');
-        if (wasVisible && parent && parent.status !== 'REMOVED') {
-          await tx
-            .update(comments)
-            .set({
-              replyCount: sql`GREATEST(0, ${comments.replyCount} - 1)`,
-              updatedAt: new Date(),
-            })
-            .where(eq(comments.id, comment.parentId));
+        // 7. Decrement counters if the item was visible
+        if (comment.parentId) {
+          const parent = lockedParent;
+          if (wasVisible && parent && parent.status !== 'REMOVED') {
+            await tx
+              .update(comments)
+              .set({
+                replyCount: sql`GREATEST(0, ${comments.replyCount} - 1)`,
+                updatedAt: new Date(),
+              })
+              .where(eq(comments.id, comment.parentId));
 
-          await tx
-            .update(posts)
-            .set({
-              commentCount: sql`GREATEST(0, ${posts.commentCount} - 1)`,
-              updatedAt: new Date(),
-            })
-            .where(eq(posts.id, comment.postId));
+            await tx
+              .update(posts)
+              .set({
+                commentCount: sql`GREATEST(0, ${posts.commentCount} - 1)`,
+                updatedAt: new Date(),
+              })
+              .where(eq(posts.id, comment.postId));
+          }
+        } else {
+          if (wasVisible) {
+            await tx
+              .update(posts)
+              .set({
+                commentCount: sql`GREATEST(0, ${posts.commentCount} - 1)`,
+                updatedAt: new Date(),
+              })
+              .where(eq(posts.id, comment.postId));
+          }
         }
-      } else {
-        if (wasVisible) {
-          await tx
-            .update(posts)
-            .set({
-              commentCount: sql`GREATEST(0, ${posts.commentCount} - 1)`,
-              updatedAt: new Date(),
-            })
-            .where(eq(posts.id, comment.postId));
-        }
-      }
 
-      return true;
-    });
+        return true;
+      }),
+    );
   }
 
   /**
@@ -634,75 +747,68 @@ export class CommentsRepository {
    * - Updates comment boostCount transactionally (GREATEST(0, boost_count - 1) on remove).
    */
   async toggleBoost(commentId: string, userId: string): Promise<{ isBoostedByMe: boolean; boostCount: number }> {
-    return this.db.transaction(async (tx) => {
-      // 1. Lock target comment
-      const [comment] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('update');
+    const commentBeforeLock = await this.findCommentById(commentId);
+    if (!commentBeforeLock) throw new NotFoundError('Comment', commentId);
 
-      if (!comment) {
-        throw new NotFoundError('Comment', commentId);
-      }
+    return withDbRetry(() =>
+      this.db.transaction(async (tx) => {
+        const post = await this.lockDiscussionPost(tx, commentBeforeLock.postId);
+        if (post.status === 'REMOVED') throw new NotFoundError('Post', commentBeforeLock.postId);
 
-      // 2. Status check: must be ACTIVE or IMAGE_HIDDEN (cannot boost DELETED, HIDDEN, or REMOVED)
-      if (comment.status !== 'ACTIVE' && comment.status !== 'IMAGE_HIDDEN') {
-        throw new NotFoundError('Comment', commentId);
-      }
+        let parent: Comment | undefined;
+        if (commentBeforeLock.parentId) {
+          [parent] = await tx.select().from(comments).where(eq(comments.id, commentBeforeLock.parentId)).for('update');
+        }
 
-      // Check reachability if target is a reply
-      if (comment.parentId !== null) {
-        const [parent] = await tx.select().from(comments).where(eq(comments.id, comment.parentId)).for('share');
-        if (!parent || parent.status === 'REMOVED') {
+        const [comment] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('update');
+        if (!comment || comment.postId !== post.id) throw new NotFoundError('Comment', commentId);
+
+        // Status check: must be ACTIVE or IMAGE_HIDDEN (cannot boost DELETED, HIDDEN, or REMOVED)
+        if (comment.status !== 'ACTIVE' && comment.status !== 'IMAGE_HIDDEN') {
           throw new NotFoundError('Comment', commentId);
         }
-        if ((parent.status === 'DELETED' || parent.status === 'HIDDEN') && parent.replyCount === 0) {
-          throw new NotFoundError('Comment', commentId);
+
+        // The parent is held FOR UPDATE before its Reply target.
+        if (comment.parentId !== null) {
+          if (!parent || parent.status === 'REMOVED') {
+            throw new NotFoundError('Comment', commentId);
+          }
+          if ((parent.status === 'DELETED' || parent.status === 'HIDDEN') && parent.replyCount === 0) {
+            throw new NotFoundError('Comment', commentId);
+          }
         }
-      }
 
-      // 3. Self-boost rejection
-      if (comment.authorId === userId) {
-        throw new ForbiddenError('You cannot boost your own comment or reply');
-      }
+        if (comment.authorId === userId) {
+          throw new ForbiddenError('You cannot boost your own comment or reply');
+        }
 
-      // 4. Check parent post status
-      const [post] = await tx.select().from(posts).where(eq(posts.id, comment.postId)).for('share');
+        const [existing] = await tx
+          .select()
+          .from(commentBoosts)
+          .where(and(eq(commentBoosts.userId, userId), eq(commentBoosts.commentId, commentId)))
+          .for('update');
 
-      if (!post || post.status === 'REMOVED') {
-        throw new NotFoundError('Post', comment.postId);
-      }
+        if (existing) {
+          await tx
+            .delete(commentBoosts)
+            .where(and(eq(commentBoosts.userId, userId), eq(commentBoosts.commentId, commentId)));
 
-      // 5. Check existing boost
-      const [existing] = await tx
-        .select()
-        .from(commentBoosts)
-        .where(and(eq(commentBoosts.userId, userId), eq(commentBoosts.commentId, commentId)))
-        .for('update');
+          const [updated] = await tx
+            .update(comments)
+            .set({
+              boostCount: sql`GREATEST(0, ${comments.boostCount} - 1)`,
+              updatedAt: new Date(),
+            })
+            .where(eq(comments.id, commentId))
+            .returning({ boostCount: comments.boostCount });
 
-      if (existing) {
-        // Remove boost
-        await tx
-          .delete(commentBoosts)
-          .where(and(eq(commentBoosts.userId, userId), eq(commentBoosts.commentId, commentId)));
+          return { isBoostedByMe: false, boostCount: updated.boostCount };
+        }
 
-        const [updated] = await tx
-          .update(comments)
-          .set({
-            boostCount: sql`GREATEST(0, ${comments.boostCount} - 1)`,
-            updatedAt: new Date(),
-          })
-          .where(eq(comments.id, commentId))
-          .returning({ boostCount: comments.boostCount });
-
-        return {
-          isBoostedByMe: false,
-          boostCount: updated.boostCount,
-        };
-      } else {
-        // Add boost
-        await tx.insert(commentBoosts).values({
-          userId,
-          commentId,
-        });
-
+        const [newBoost] = await tx
+          .insert(commentBoosts)
+          .values({ userId, commentId })
+          .returning({ id: commentBoosts.id });
         const [updated] = await tx
           .update(comments)
           .set({
@@ -712,12 +818,21 @@ export class CommentsRepository {
           .where(eq(comments.id, commentId))
           .returning({ boostCount: comments.boostCount });
 
-        return {
-          isBoostedByMe: true,
-          boostCount: updated.boostCount,
-        };
-      }
-    });
+        const actorName = await this.getDiscussionActorName(tx, userId);
+        await this.enqueueDiscussionNotificationEvent(tx, {
+          sourceEventId: `COMMENT_BOOSTED:${newBoost.id}`,
+          recipientId: comment.authorId,
+          actorId: userId,
+          type: 'COMMENT_BOOSTED',
+          title: 'Comment boosted',
+          body: `${actorName} boosted your ${comment.parentId ? 'reply' : 'comment'}`,
+          relatedPostId: post.id,
+          relatedCommentId: comment.id,
+        });
+
+        return { isBoostedByMe: true, boostCount: updated.boostCount };
+      }),
+    );
   }
 
   /**
@@ -791,60 +906,65 @@ export class CommentsRepository {
     commentId: string,
     userId: string,
   ): Promise<{ comment: Comment; isNewPin: boolean; postTitle: string }> {
-    return this.db.transaction(async (tx) => {
-      // 1. Lock and check the comment
-      const [comment] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('share');
+    const commentBeforeLock = await this.findCommentById(commentId);
+    if (!commentBeforeLock) throw new NotFoundError('Comment', commentId);
 
-      if (!comment) {
-        throw new NotFoundError('Comment', commentId);
-      }
+    return withDbRetry(() =>
+      this.db.transaction(async (tx) => {
+        const post = await this.lockDiscussionPost(tx, commentBeforeLock.postId);
+        if (post.status === 'REMOVED') throw new NotFoundError('Post', commentBeforeLock.postId);
 
-      if (comment.parentId !== null) {
-        throw new ValidationError('Only top-level comments can be pinned');
-      }
+        const [comment] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('update');
+        if (!comment || comment.postId !== post.id) throw new NotFoundError('Comment', commentId);
 
-      if (comment.status !== 'ACTIVE' && comment.status !== 'IMAGE_HIDDEN') {
-        throw new NotFoundError('Comment', commentId);
-      }
+        if (comment.parentId !== null) {
+          throw new ValidationError('Only top-level comments can be pinned');
+        }
+        if (comment.status !== 'ACTIVE' && comment.status !== 'IMAGE_HIDDEN') {
+          throw new NotFoundError('Comment', commentId);
+        }
+        if (post.creatorId !== userId) {
+          throw new ForbiddenError('Only the post author can pin comments');
+        }
 
-      // 2. Lock and check the post
-      const [post] = await tx.select().from(posts).where(eq(posts.id, comment.postId)).for('share');
+        const [previousPin] = await tx.select().from(postPins).where(eq(postPins.postId, post.id));
+        const isNewPin = !previousPin || previousPin.commentId !== comment.id;
 
-      if (!post || post.status === 'REMOVED') {
-        throw new NotFoundError('Post', comment.postId);
-      }
-
-      // 3. Authorization check: Only post creator can pin
-      if (post.creatorId !== userId) {
-        throw new ForbiddenError('Only the post author can pin comments');
-      }
-
-      // 4. Check if this exact comment is already pinned (idempotency check for notifications)
-      const [previousPin] = await tx.select().from(postPins).where(eq(postPins.postId, post.id));
-      const isNewPin = !previousPin || previousPin.commentId !== comment.id;
-
-      // 5. Atomic upsert into post_pins on postId conflict
-      await tx
-        .insert(postPins)
-        .values({
-          postId: post.id,
-          commentId: comment.id,
-          updatedAt: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: postPins.postId,
-          set: {
+        await tx
+          .insert(postPins)
+          .values({
+            postId: post.id,
             commentId: comment.id,
             updatedAt: new Date(),
-          },
-        });
+          })
+          .onConflictDoUpdate({
+            target: postPins.postId,
+            set: {
+              commentId: comment.id,
+              updatedAt: new Date(),
+            },
+          });
 
-      return {
-        comment: Object.assign(comment, { isPinned: true }),
-        isNewPin,
-        postTitle: post.title,
-      };
-    });
+        if (isNewPin) {
+          await this.enqueueDiscussionNotificationEvent(tx, {
+            sourceEventId: `COMMENT_PINNED:${generateUuidV7()}`,
+            recipientId: comment.authorId,
+            actorId: userId,
+            type: 'COMMENT_PINNED',
+            title: 'Comment pinned',
+            body: `Your comment was pinned on "${post.title}"`,
+            relatedPostId: post.id,
+            relatedCommentId: comment.id,
+          });
+        }
+
+        return {
+          comment: Object.assign(comment, { isPinned: true }),
+          isNewPin,
+          postTitle: post.title,
+        };
+      }),
+    );
   }
 
   /**
@@ -854,24 +974,18 @@ export class CommentsRepository {
    * - Returns true.
    */
   async unpinComment(postId: string, userId: string): Promise<boolean> {
-    return this.db.transaction(async (tx) => {
-      // 1. Lock and check the post
-      const [post] = await tx.select().from(posts).where(eq(posts.id, postId)).for('share');
+    return withDbRetry(() =>
+      this.db.transaction(async (tx) => {
+        const post = await this.lockDiscussionPost(tx, postId);
+        if (post.status === 'REMOVED') throw new NotFoundError('Post', postId);
+        if (post.creatorId !== userId) {
+          throw new ForbiddenError('Only the post author can unpin comments');
+        }
 
-      if (!post || post.status === 'REMOVED') {
-        throw new NotFoundError('Post', postId);
-      }
-
-      // 2. Authorization check: Only post creator can unpin
-      if (post.creatorId !== userId) {
-        throw new ForbiddenError('Only the post author can unpin comments');
-      }
-
-      // 3. Delete from post_pins
-      await tx.delete(postPins).where(eq(postPins.postId, postId));
-
-      return true;
-    });
+        await tx.delete(postPins).where(eq(postPins.postId, postId));
+        return true;
+      }),
+    );
   }
 
   /**
@@ -997,65 +1111,62 @@ export class CommentsRepository {
     details?: string;
   }): Promise<boolean> {
     const { commentId, reporterId, reason, details } = params;
+    const commentBeforeLock = await this.findCommentById(commentId);
+    if (!commentBeforeLock) throw new NotFoundError('Comment', commentId);
 
     try {
-      return await this.db.transaction(async (tx) => {
-        // 1. Lock the target comment
-        const [comment] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('update');
+      return await withDbRetry(() =>
+        this.db.transaction(async (tx) => {
+          // A report can change status, pins, and counters. It therefore takes
+          // the same exclusive Post lock as every other discussion mutation.
+          const post = await this.lockDiscussionPost(tx, commentBeforeLock.postId);
+          if (post.status === 'REMOVED') throw new NotFoundError('Comment', commentId);
 
-        if (!comment) {
-          throw new NotFoundError('Comment', commentId);
-        }
+          let parent: Comment | undefined;
+          if (commentBeforeLock.parentId) {
+            [parent] = await tx
+              .select()
+              .from(comments)
+              .where(eq(comments.id, commentBeforeLock.parentId))
+              .for('update');
+          }
 
-        if (comment.status === 'DELETED' || comment.status === 'REMOVED') {
-          throw new NotFoundError('Comment', commentId);
-        }
-
-        // If target is a reply, verify parent comment reachability
-        if (comment.parentId !== null) {
-          const [parent] = await tx.select().from(comments).where(eq(comments.id, comment.parentId)).for('share');
-          if (!parent || parent.status === 'REMOVED') {
+          const [comment] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('update');
+          if (!comment || comment.postId !== post.id) throw new NotFoundError('Comment', commentId);
+          if (comment.status === 'DELETED' || comment.status === 'REMOVED') {
             throw new NotFoundError('Comment', commentId);
           }
-          if ((parent.status === 'DELETED' || parent.status === 'HIDDEN') && parent.replyCount === 0) {
-            throw new NotFoundError('Comment', commentId);
+
+          if (comment.parentId !== null) {
+            if (!parent || parent.status === 'REMOVED') {
+              throw new NotFoundError('Comment', commentId);
+            }
+            if ((parent.status === 'DELETED' || parent.status === 'HIDDEN') && parent.replyCount === 0) {
+              throw new NotFoundError('Comment', commentId);
+            }
           }
-        }
 
-        // 2. Check parent post status
-        const [post] = await tx.select().from(posts).where(eq(posts.id, comment.postId)).for('share');
-        if (!post || post.status === 'REMOVED') {
-          throw new NotFoundError('Comment', commentId);
-        }
+          if (comment.authorId === reporterId) {
+            throw new ForbiddenError('You cannot report your own comment');
+          }
 
-        // 3. Self-report rejection
-        if (comment.authorId === reporterId) {
-          throw new ForbiddenError('You cannot report your own comment');
-        }
+          const [existingReport] = await tx
+            .select()
+            .from(commentReports)
+            .where(and(eq(commentReports.commentId, commentId), eq(commentReports.reporterId, reporterId)))
+            .limit(1);
+          if (existingReport) {
+            throw new ConflictError('You have already reported this comment', 'COMMENT_ALREADY_REPORTED');
+          }
 
-        // 4. Duplicate report check
-        const [existingReport] = await tx
-          .select()
-          .from(commentReports)
-          .where(and(eq(commentReports.commentId, commentId), eq(commentReports.reporterId, reporterId)))
-          .limit(1);
+          await tx.insert(commentReports).values({
+            commentId,
+            reporterId,
+            reason,
+            details: details ?? null,
+          });
 
-        if (existingReport) {
-          throw new ConflictError('You have already reported this comment', 'COMMENT_ALREADY_REPORTED');
-        }
-
-        // 5. Insert report into comment_reports
-        await tx.insert(commentReports).values({
-          commentId,
-          reporterId,
-          reason,
-          details: details ?? null,
-        });
-
-        // 6. Check qualifying reports for this comment
-        // A report qualifies if the reporter's account was created > 24 hours before report submission
-        // and reporter has a completed profile (full_name IS NOT NULL and not empty).
-        const qualifyingStats = await tx.execute<{ total_qualifying: number; inappropriate_qualifying: number }>(sql`
+          const qualifyingStats = await tx.execute<{ total_qualifying: number; inappropriate_qualifying: number }>(sql`
           SELECT
             count(*)::int AS total_qualifying,
             count(*) FILTER (WHERE cr.reason = 'INAPPROPRIATE_CONTENT')::int AS inappropriate_qualifying
@@ -1068,36 +1179,37 @@ export class CommentsRepository {
             AND length(trim(u.full_name)) > 0
         `);
 
-        const totalQualifying = Number(qualifyingStats.rows[0]?.total_qualifying ?? 0);
-        const inappropriateQualifying = Number(qualifyingStats.rows[0]?.inappropriate_qualifying ?? 0);
+          const totalQualifying = Number(qualifyingStats.rows[0]?.total_qualifying ?? 0);
+          const inappropriateQualifying = Number(qualifyingStats.rows[0]?.inappropriate_qualifying ?? 0);
 
-        // 7. Threshold evaluations
-        // Threshold 1: 3 qualifying reports of any reason temporarily hide whole comment
-        if (totalQualifying >= 3) {
-          if (comment.status === 'ACTIVE' || comment.status === 'IMAGE_HIDDEN') {
-            await tx
-              .update(comments)
-              .set({
-                status: 'HIDDEN',
-                updatedAt: new Date(),
-              })
-              .where(eq(comments.id, commentId));
+          if (totalQualifying >= 3) {
+            if (comment.status === 'ACTIVE' || comment.status === 'IMAGE_HIDDEN') {
+              await tx
+                .update(comments)
+                .set({ status: 'HIDDEN', updatedAt: new Date() })
+                .where(eq(comments.id, commentId));
 
-            // Invalidate pin if this comment was pinned
-            await tx.delete(postPins).where(eq(postPins.commentId, commentId));
+              await tx.delete(postPins).where(eq(postPins.commentId, commentId));
 
-            // Decrement counts
-            if (comment.parentId) {
-              const [parent] = await tx.select().from(comments).where(eq(comments.id, comment.parentId)).for('update');
-              if (parent && parent.status !== 'REMOVED') {
-                await tx
-                  .update(comments)
-                  .set({
-                    replyCount: sql`GREATEST(0, ${comments.replyCount} - 1)`,
-                    updatedAt: new Date(),
-                  })
-                  .where(eq(comments.id, comment.parentId));
+              if (comment.parentId) {
+                if (parent && parent.status !== 'REMOVED') {
+                  await tx
+                    .update(comments)
+                    .set({
+                      replyCount: sql`GREATEST(0, ${comments.replyCount} - 1)`,
+                      updatedAt: new Date(),
+                    })
+                    .where(eq(comments.id, comment.parentId));
 
+                  await tx
+                    .update(posts)
+                    .set({
+                      commentCount: sql`GREATEST(0, ${posts.commentCount} - 1)`,
+                      updatedAt: new Date(),
+                    })
+                    .where(eq(posts.id, comment.postId));
+                }
+              } else {
                 await tx
                   .update(posts)
                   .set({
@@ -1106,38 +1218,19 @@ export class CommentsRepository {
                   })
                   .where(eq(posts.id, comment.postId));
               }
-            } else {
-              // Top-level comment: decrement post's comment_count
-              await tx
-                .update(posts)
-                .set({
-                  commentCount: sql`GREATEST(0, ${posts.commentCount} - 1)`,
-                  updatedAt: new Date(),
-                })
-                .where(eq(posts.id, comment.postId));
             }
+          } else if (inappropriateQualifying >= 1 && comment.status === 'ACTIVE') {
+            await tx
+              .update(comments)
+              .set({ status: 'IMAGE_HIDDEN', updatedAt: new Date() })
+              .where(eq(comments.id, commentId));
           }
-        }
-        // Threshold 2: 1 qualifying INAPPROPRIATE_CONTENT report hides images
-        else if (inappropriateQualifying >= 1 && comment.status === 'ACTIVE') {
-          await tx
-            .update(comments)
-            .set({
-              status: 'IMAGE_HIDDEN',
-              updatedAt: new Date(),
-            })
-            .where(eq(comments.id, commentId));
-          // Counts and pin remain unchanged
-        }
 
-        return true;
-      });
+          return true;
+        }),
+      );
     } catch (error) {
-      const err = error as { code?: string; constraint?: string };
-      if (
-        err.code === '23505' &&
-        (err.constraint?.includes('comment_report') || err.constraint?.includes('unique_comment_report'))
-      ) {
+      if (isUniqueViolation(error)) {
         throw new ConflictError('You have already reported this comment', 'COMMENT_ALREADY_REPORTED');
       }
       throw error;
@@ -1156,10 +1249,49 @@ export class CommentsRepository {
   async reconcileCommentCounters(options?: {
     postId?: string;
   }): Promise<{ postsRepaired: number; commentsRepaired: number }> {
-    return this.db.transaction(async (tx) => {
-      // 1. Reconcile posts comment_count
-      const postFilter = options?.postId ? sql`WHERE p.id = ${options.postId}` : sql``;
-      const postReconcileResult = await tx.execute<{ id: string }>(sql`
+    let postsRepaired = 0;
+    let commentsRepaired = 0;
+
+    if (options?.postId) {
+      return this.reconcileCommentCountersForPost({ postId: options.postId });
+    }
+
+    // A global repair deliberately commits each Post separately. Discovery is
+    // keyset-paged rather than materializing every Post ID in Node. It is not
+    // a database snapshot: a concurrently created/moved Post on or below the
+    // cursor can be picked up by the next run. Each Post that is selected is
+    // nevertheless recalculated only after its own canonical discussion locks
+    // are held, so this scan never writes a stale count over a concurrent
+    // discussion mutation.
+    let afterPostId: string | undefined;
+    while (true) {
+      const postPage = await this.db
+        .select({ id: posts.id })
+        .from(posts)
+        .where(afterPostId ? gt(posts.id, afterPostId) : undefined)
+        .orderBy(posts.id)
+        .limit(COUNTER_RECONCILIATION_POST_BATCH_SIZE);
+      if (postPage.length === 0) break;
+
+      for (const post of postPage) {
+        const repaired = await this.reconcileCommentCountersForPost({ postId: post.id });
+        postsRepaired += repaired.postsRepaired;
+        commentsRepaired += repaired.commentsRepaired;
+      }
+      afterPostId = postPage[postPage.length - 1].id;
+    }
+    return { postsRepaired, commentsRepaired };
+  }
+
+  private async reconcileCommentCountersForPost(options: {
+    postId: string;
+  }): Promise<{ postsRepaired: number; commentsRepaired: number }> {
+    return withDbRetry(() =>
+      this.db.transaction(async (tx) => {
+        await this.lockDiscussionPost(tx, options.postId);
+        // 1. Reconcile posts comment_count
+        const postFilter = options?.postId ? sql`WHERE p.id = ${options.postId}` : sql``;
+        const postReconcileResult = await tx.execute<{ id: string }>(sql`
         WITH reachable_replies AS (
           SELECT c.post_id, count(*)::int AS reply_count
           FROM comments c
@@ -1195,8 +1327,8 @@ export class CommentsRepository {
         RETURNING posts.id
       `);
 
-      // 2. Reconcile comments reply_count
-      const replyReconcileResult = await tx.execute<{ id: string }>(sql`
+        // 2. Reconcile comments reply_count
+        const replyReconcileResult = await tx.execute<{ id: string }>(sql`
         WITH computed_reply_counts AS (
           SELECT 
             p.id AS comment_id,
@@ -1219,8 +1351,8 @@ export class CommentsRepository {
         RETURNING comments.id
       `);
 
-      // 3. Reconcile comments boost_count
-      const boostReconcileResult = await tx.execute<{ id: string }>(sql`
+        // 3. Reconcile comments boost_count
+        const boostReconcileResult = await tx.execute<{ id: string }>(sql`
         WITH computed_boost_counts AS (
           SELECT 
             c.id AS comment_id,
@@ -1239,18 +1371,19 @@ export class CommentsRepository {
         RETURNING comments.id
       `);
 
-      const repairedCommentIds = new Set<string>();
-      for (const row of replyReconcileResult.rows) {
-        repairedCommentIds.add(row.id);
-      }
-      for (const row of boostReconcileResult.rows) {
-        repairedCommentIds.add(row.id);
-      }
+        const repairedCommentIds = new Set<string>();
+        for (const row of replyReconcileResult.rows) {
+          repairedCommentIds.add(row.id);
+        }
+        for (const row of boostReconcileResult.rows) {
+          repairedCommentIds.add(row.id);
+        }
 
-      return {
-        postsRepaired: postReconcileResult.rows.length,
-        commentsRepaired: repairedCommentIds.size,
-      };
-    });
+        return {
+          postsRepaired: postReconcileResult.rows.length,
+          commentsRepaired: repairedCommentIds.size,
+        };
+      }),
+    );
   }
 }

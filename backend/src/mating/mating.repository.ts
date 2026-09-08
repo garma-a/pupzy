@@ -4,6 +4,7 @@ import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import {
   posts,
+  users,
   matingPosts,
   postMedia,
   type Post,
@@ -14,6 +15,7 @@ import {
 } from '../database/schema';
 import type * as schema from '../database/schema';
 
+import { ForbiddenError, NotFoundError } from '../common/errors/app.errors';
 export type NewMatingDetailsInput = Omit<NewMatingPostRow, 'postId'>;
 
 @Injectable()
@@ -23,6 +25,22 @@ export class MatingRepository {
     private readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
+  /**
+   * Rechecks the creator while holding the same User row lock as the active
+   * Post trigger. This closes the gap between authentication and an AdminJS
+   * ban, returning the established safe Forbidden error for legacy MATING
+   * creation rather than exposing the trigger constraint failure. If creation
+   * wins that race, the durable ban cascade removes its committed ACTIVE Post.
+   */
+  private async lockActiveCreator(tx: any, creatorId: string): Promise<void> {
+    const [creator] = await tx
+      .select({ id: users.id, isBanned: users.isBanned })
+      .from(users)
+      .where(eq(users.id, creatorId))
+      .for('update');
+    if (!creator) throw new NotFoundError('User', creatorId);
+    if (creator.isBanned) throw new ForbiddenError('Your account has been suspended.');
+  }
   /**
    * Atomically creates the parent posts row + mating_posts extension row +
    * post_media rows (if any) in ONE transaction — same shape as
@@ -37,6 +55,7 @@ export class MatingRepository {
     mediaRows: Array<Omit<NewPostMedia, 'postId' | 'displayOrder'>>,
   ): Promise<Post> {
     return this.db.transaction(async (tx) => {
+      await this.lockActiveCreator(tx, baseData.creatorId);
       const [post] = await tx.insert(posts).values(baseData).returning();
 
       await tx.insert(matingPosts).values({

@@ -735,6 +735,26 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       expect(ext).toBeDefined();
       expect(ext.petName).toBe('Rocky');
     });
+    it('Ticket 11: returns a safe Forbidden error for a stale authorized MATING creation after a ban', async () => {
+      const { mediaId } = await stageMedia(testUser1, 'image/jpeg');
+      await dbHelper.db
+        .update(users)
+        .set({ isBanned: true, bannedAt: new Date(), banReason: 'Ticket 11 race test' })
+        .where(eq(users.id, testUser1.id));
+
+      const result = await executeGql(
+        `mutation CreateMating($input: CreateMatingPostInput!) {
+          createMatingPost(input: $input) { id }
+        }`,
+        { input: makeValidMatingInput([mediaId]) },
+        testUser1,
+      );
+
+      expect(result.errors).toHaveLength(1);
+      expect((result.errors?.[0].originalError as { code?: string }).code).toBe('FORBIDDEN');
+      const created = await dbHelper.db.select({ id: posts.id }).from(posts).where(eq(posts.creatorId, testUser1.id));
+      expect(created).toHaveLength(0);
+    });
   });
 
   // ─── 3. Text-Only Publishing Unchanged (AC 3) ─────────────────────────────────

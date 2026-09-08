@@ -26,6 +26,7 @@ import { CommentsRepository } from './comments.repository';
 import { CommentsService } from './comments.service';
 import { CommentsResolver, CommentMediaResolver } from './comments.resolver';
 import { PostsRepository } from '../posts/posts.repository';
+import { UserBanPostCascadeProcessor } from '../posts/user-ban-post-cascade.processor';
 import { CitiesRepository } from '../cities/cities.repository';
 import { UsersRepository } from '../users/users.repository';
 import { CitiesService } from '../cities/cities.service';
@@ -1088,5 +1089,699 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     const idempotentResult = await commentsService.reconcileCommentCounters({ postId: testPost.id });
     expect(idempotentResult.postsRepaired).toBe(0);
     expect(idempotentResult.commentsRepaired).toBe(0);
+  });
+  it('Ticket 11: global counter repair keyset-pages more than one fixed Post batch', async () => {
+    await dbHelper.pool.query(
+      `INSERT INTO posts
+         (creator_id, post_type, title, description, status, moderation_status, city_id, coordinates, report_count, urgency)
+       SELECT $1, 'ADOPTION', 'Counter page ' || series, 'Description', 'ACTIVE',
+              'PENDING_AUTO_REVIEW', $2, ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326), 0, NULL
+       FROM generate_series(1, 101) AS series`,
+      [authorUser.id, testCity.id],
+    );
+    await dbHelper.pool.query(
+      `UPDATE posts SET comment_count = 9
+       WHERE creator_id = $1 AND id != $2`,
+      [authorUser.id, testPost.id],
+    );
+
+    const repaired = await commentsService.reconcileCommentCounters();
+    expect(repaired.postsRepaired).toBe(101);
+    expect(repaired.commentsRepaired).toBe(0);
+    const stale = await dbHelper.pool.query(
+      `SELECT count(*)::int AS count FROM posts
+       WHERE creator_id = $1 AND id != $2 AND comment_count != 0`,
+      [authorUser.id, testPost.id],
+    );
+    expect(Number(stale.rows[0].count)).toBe(0);
+  });
+
+  it('Ticket 11: the existing API scheduler resumes a durable multi-page ban cascade after restart', async () => {
+    // The recovery fixture intentionally has 101 active Posts: 100 + 1 pages.
+    await dbHelper.db.update(posts).set({ status: 'REMOVED' }).where(eq(posts.id, testPost.id));
+
+    await dbHelper.pool.query(
+      `INSERT INTO posts
+         (creator_id, post_type, title, description, status, moderation_status, city_id, coordinates, report_count, urgency)
+       SELECT $1, 'ADOPTION', 'Ban recovery page ' || series, 'Description', 'ACTIVE',
+              'PENDING_AUTO_REVIEW', $2, ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326), 0, NULL
+       FROM generate_series(1, 101) AS series`,
+      [authorUser.id, testCity.id],
+    );
+    const ban = await dbHelper.pool.query(
+      `UPDATE users
+       SET is_banned = true, banned_at = now(), ban_reason = 'Durable recovery test'
+       WHERE id = $1
+       RETURNING to_char(banned_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS ban_marker`,
+      [authorUser.id],
+    );
+    const audit = await dbHelper.pool.query(
+      `INSERT INTO moderation_actions (admin_user_id, action_type, target_type, target_id, reason, metadata)
+       VALUES ($1, 'USER_BANNED', 'USER', $2, 'Durable recovery test',
+               jsonb_build_object('alsoRemovePosts', true, 'cascadedPostCount', 0, 'postCascade', jsonb_build_object('state', 'PENDING')))
+       RETURNING id`,
+      [adminUser.id, authorUser.id],
+    );
+    await dbHelper.pool.query(
+      `INSERT INTO user_ban_post_cascades (action_id, user_id, reason, ban_marker)
+       VALUES ($1, $2, 'Durable recovery test', $3)`,
+      [audit.rows[0].id, authorUser.id, ban.rows[0].ban_marker],
+    );
+
+    const beforeRestart = new UserBanPostCascadeProcessor(dbHelper.db);
+    expect(await beforeRestart.processPendingCascades()).toBe(1);
+    const afterFirstPage = await dbHelper.pool.query(
+      `SELECT state, cascaded_post_count FROM user_ban_post_cascades WHERE action_id = $1`,
+      [audit.rows[0].id],
+    );
+    expect(afterFirstPage.rows[0].state).toBe('PENDING');
+    expect(Number(afterFirstPage.rows[0].cascaded_post_count)).toBe(100);
+
+    // A fresh processor instance represents an API process restart. Bootstrap
+    // processes another durable page without relying on AdminJS being awake.
+    const afterRestart = new UserBanPostCascadeProcessor(dbHelper.db);
+    await afterRestart.onApplicationBootstrap();
+    expect(await afterRestart.processPendingCascades()).toBe(1);
+    const completed = await dbHelper.pool.query(
+      `SELECT state, cascaded_post_count, notification_sent_at
+       FROM user_ban_post_cascades WHERE action_id = $1`,
+      [audit.rows[0].id],
+    );
+    expect(completed.rows[0].state).toBe('COMPLETED');
+    expect(Number(completed.rows[0].cascaded_post_count)).toBe(101);
+    expect(completed.rows[0].notification_sent_at).not.toBeNull();
+    const active = await dbHelper.pool.query(
+      `SELECT count(*)::int AS count FROM posts WHERE creator_id = $1 AND status = 'ACTIVE'`,
+      [authorUser.id],
+    );
+    expect(Number(active.rows[0].count)).toBe(0);
+    const notifications = await dbHelper.pool.query(
+      `SELECT count(*)::int AS count FROM notifications
+       WHERE recipient_id = $1 AND type = 'POST_REMOVED_BY_ADMIN'`,
+      [authorUser.id],
+    );
+    expect(Number(notifications.rows[0].count)).toBe(1);
+  });
+
+  it('Ticket 11: separate API schedulers use a database claim and emit one cascade notification', async () => {
+    // Keep the shared beforeEach fixture out of this isolated cascade page.
+    await dbHelper.db.update(posts).set({ status: 'REMOVED' }).where(eq(posts.id, testPost.id));
+
+    const [post] = await dbHelper.db
+      .insert(posts)
+      .values({
+        creatorId: authorUser.id,
+        title: 'Cross-process cascade claim target',
+        description: 'Post description',
+        postType: 'ADOPTION',
+        status: 'ACTIVE',
+        cityId: testCity.id,
+        coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+      })
+      .returning();
+    const ban = await dbHelper.pool.query(
+      `UPDATE users SET is_banned = true, banned_at = now(), ban_reason = 'Claim test' WHERE id = $1
+       RETURNING to_char(banned_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS ban_marker`,
+      [authorUser.id],
+    );
+    const audit = await dbHelper.pool.query(
+      `INSERT INTO moderation_actions (admin_user_id, action_type, target_type, target_id, reason)
+       VALUES ($1, 'USER_BANNED', 'USER', $2, 'Claim test') RETURNING id`,
+      [adminUser.id, authorUser.id],
+    );
+    const actionId = audit.rows[0].id;
+    await dbHelper.pool.query(
+      `INSERT INTO user_ban_post_cascades (action_id, user_id, reason, ban_marker) VALUES ($1, $2, 'Claim test', $3)`,
+      [actionId, authorUser.id, ban.rows[0].ban_marker],
+    );
+
+    const blocker = await dbHelper.pool.connect();
+    const barrierClass = 71_113;
+    const barrierObject = 20_264;
+    let released = false;
+    try {
+      await blocker.query('SELECT pg_advisory_lock($1, $2)', [barrierClass, barrierObject]);
+      await dbHelper.pool.query(`
+        CREATE FUNCTION ticket11_cascade_claim_barrier() RETURNS trigger LANGUAGE plpgsql AS $$
+        BEGIN
+          IF NEW.id = '${post.id}'::uuid THEN
+            PERFORM pg_advisory_xact_lock(${barrierClass}, ${barrierObject});
+          END IF;
+          RETURN NEW;
+        END;
+        $$;
+        CREATE TRIGGER ticket11_cascade_claim_barrier_trigger
+          BEFORE UPDATE OF status ON posts FOR EACH ROW EXECUTE FUNCTION ticket11_cascade_claim_barrier();
+      `);
+
+      const firstProcessor = new UserBanPostCascadeProcessor(dbHelper.db);
+      const firstPage = firstProcessor.processPendingCascades();
+      for (let attempt = 0; attempt < 80; attempt += 1) {
+        const { rows } = await dbHelper.pool.query<{ count: number }>(
+          `SELECT count(*)::int AS count FROM pg_locks
+           WHERE locktype = 'advisory' AND NOT granted AND classid = $1 AND objid = $2`,
+          [barrierClass, barrierObject],
+        );
+        if (Number(rows[0]?.count ?? 0) === 1) break;
+        if (attempt === 79) throw new Error('cascade did not reach the claim barrier');
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+
+      expect(await new UserBanPostCascadeProcessor(dbHelper.db).processPendingCascades()).toBe(0);
+      await blocker.query('SELECT pg_advisory_unlock($1, $2)', [barrierClass, barrierObject]);
+      released = true;
+      expect(await firstPage).toBe(1);
+      expect(await new UserBanPostCascadeProcessor(dbHelper.db).processPendingCascades()).toBe(1);
+
+      const cascade = await dbHelper.pool.query(
+        `SELECT state, cascaded_post_count FROM user_ban_post_cascades WHERE action_id = $1`,
+        [actionId],
+      );
+      expect(cascade.rows[0].state).toBe('COMPLETED');
+      expect(Number(cascade.rows[0].cascaded_post_count)).toBe(1);
+      const notifications = await dbHelper.pool.query(
+        `SELECT count(*)::int AS count FROM notifications WHERE recipient_id = $1 AND type = 'POST_REMOVED_BY_ADMIN'`,
+        [authorUser.id],
+      );
+      expect(Number(notifications.rows[0].count)).toBe(1);
+    } finally {
+      if (!released)
+        await blocker.query('SELECT pg_advisory_unlock($1, $2)', [barrierClass, barrierObject]).catch(() => {});
+      await dbHelper.pool.query('DROP TRIGGER IF EXISTS ticket11_cascade_claim_barrier_trigger ON posts');
+      await dbHelper.pool.query('DROP FUNCTION IF EXISTS ticket11_cascade_claim_barrier()');
+      blocker.release();
+    }
+  });
+
+  it('Ticket 11: synchronized third qualifying reports on separate comments complete with durable hiding and counters', async () => {
+    const [left, right] = await dbHelper.db
+      .insert(comments)
+      .values([
+        { postId: testPost.id, authorId: authorUser.id, text: 'Left threshold target', status: 'ACTIVE' },
+        { postId: testPost.id, authorId: authorUser.id, text: 'Right threshold target', status: 'ACTIVE' },
+      ])
+      .returning();
+    await dbHelper.db.update(posts).set({ commentCount: 2 }).where(eq(posts.id, testPost.id));
+
+    const report = async (commentId: string, reporterId: string) =>
+      graphql({
+        schema,
+        source: `mutation Report($input: ReportCommentInput!) { reportComment(input: $input) }`,
+        variableValues: { input: { commentId, reason: 'SPAM', details: 'Concurrent threshold test' } },
+        contextValue: createContext(reporterId),
+      });
+
+    for (const reporter of [matureReporter1, matureReporter2]) {
+      expect((await report(left.id, reporter.id)).errors).toBeUndefined();
+      expect((await report(right.id, reporter.id)).errors).toBeUndefined();
+    }
+
+    let release!: () => void;
+    const start = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const concurrent = [left.id, right.id].map(async (commentId) => {
+      await start;
+      return report(commentId, matureReporter3.id);
+    });
+    release();
+    const results = await Promise.race([
+      Promise.all(concurrent),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('discussion writes timed out')), 5000)),
+    ]);
+
+    for (const result of results) {
+      expect(result.errors).toBeUndefined();
+      expect(result.data?.reportComment).toBe(true);
+    }
+
+    const targets = await dbHelper.db
+      .select()
+      .from(comments)
+      .where(inArray(comments.id, [left.id, right.id]));
+    expect(targets.map((target) => target.status).sort()).toEqual(['HIDDEN', 'HIDDEN']);
+    const persistedReports = await dbHelper.db
+      .select()
+      .from(commentReports)
+      .where(inArray(commentReports.commentId, [left.id, right.id]));
+    expect(persistedReports).toHaveLength(6);
+    const [post] = await dbHelper.db.select().from(posts).where(eq(posts.id, testPost.id));
+    expect(post.commentCount).toBe(0);
+  });
+
+  it('Ticket 11: report/delete and report/pin races finish with one durable reachable state', async () => {
+    const report = async (commentId: string, reporterId: string) =>
+      graphql({
+        schema,
+        source: `mutation Report($input: ReportCommentInput!) { reportComment(input: $input) }`,
+        variableValues: { input: { commentId, reason: 'SPAM' } },
+        contextValue: createContext(reporterId),
+      });
+    const waitFor = async <T>(work: Promise<T>) =>
+      Promise.race([
+        work,
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('discussion writes timed out')), 5000)),
+      ]);
+
+    const deleteTarget = await commentsService.createComment(authorUser.id, {
+      clientRequestId: 'ticket-11-delete-target',
+      postId: testPost.id,
+      text: 'Delete race target',
+    });
+    for (const reporter of [matureReporter1, matureReporter2]) {
+      expect((await report(deleteTarget.id, reporter.id)).errors).toBeUndefined();
+    }
+
+    let releaseDelete!: () => void;
+    const startDelete = new Promise<void>((resolve) => {
+      releaseDelete = resolve;
+    });
+    const deletion = (async () => {
+      await startDelete;
+      return graphql({
+        schema,
+        source: `mutation Delete($id: ID!) { deleteComment(id: $id) }`,
+        variableValues: { id: deleteTarget.id },
+        contextValue: createContext(authorUser.id),
+      });
+    })();
+    const thirdReport = (async () => {
+      await startDelete;
+      return report(deleteTarget.id, matureReporter3.id);
+    })();
+    releaseDelete();
+    const [deleteResult, thirdReportResult] = await waitFor(Promise.all([deletion, thirdReport]));
+
+    expect(deleteResult.errors).toBeUndefined();
+    expect(deleteResult.data?.deleteComment).toBe(true);
+    const [deleted] = await dbHelper.db.select().from(comments).where(eq(comments.id, deleteTarget.id));
+    expect(deleted.status).toBe('DELETED');
+    const deleteReports = await dbHelper.db
+      .select()
+      .from(commentReports)
+      .where(eq(commentReports.commentId, deleteTarget.id));
+    expect(deleteReports.length).toBeGreaterThanOrEqual(2);
+    expect(deleteReports.length).toBeLessThanOrEqual(3);
+    if (!thirdReportResult.errors) {
+      expect(deleteReports).toHaveLength(3);
+    } else {
+      expect((thirdReportResult.errors[0].originalError as any)?.code).toBe('NOT_FOUND');
+    }
+
+    const pinTarget = await commentsService.createComment(authorUser.id, {
+      clientRequestId: 'ticket-11-pin-target',
+      postId: testPost.id,
+      text: 'Pin race target',
+    });
+    for (const reporter of [matureReporter1, matureReporter2]) {
+      expect((await report(pinTarget.id, reporter.id)).errors).toBeUndefined();
+    }
+
+    let releasePin!: () => void;
+    const startPin = new Promise<void>((resolve) => {
+      releasePin = resolve;
+    });
+    const pin = (async () => {
+      await startPin;
+      return graphql({
+        schema,
+        source: `mutation Pin($commentId: ID!) { pinComment(commentId: $commentId) { id } }`,
+        variableValues: { commentId: pinTarget.id },
+        contextValue: createContext(authorUser.id),
+      });
+    })();
+    const pinReport = (async () => {
+      await startPin;
+      return report(pinTarget.id, matureReporter3.id);
+    })();
+    releasePin();
+    const [pinResult, pinReportResult] = await waitFor(Promise.all([pin, pinReport]));
+
+    if (pinResult.errors) {
+      expect((pinResult.errors[0].originalError as any)?.code).toBe('NOT_FOUND');
+    }
+    expect(pinReportResult.errors).toBeUndefined();
+    expect(pinReportResult.data?.reportComment).toBe(true);
+    const [hidden] = await dbHelper.db.select().from(comments).where(eq(comments.id, pinTarget.id));
+    expect(hidden.status).toBe('HIDDEN');
+    const pins = await dbHelper.db.select().from(postPins).where(eq(postPins.commentId, pinTarget.id));
+    expect(pins).toHaveLength(0);
+    const [post] = await dbHelper.db.select().from(posts).where(eq(posts.id, testPost.id));
+    expect(post.commentCount).toBe(0);
+  });
+
+  it('Ticket 11: concurrent parent reporting and Reply creation leaves a coherent tombstone or active Reply', async () => {
+    const parent = await commentsService.createComment(authorUser.id, {
+      clientRequestId: 'ticket-11-parent-target',
+      postId: testPost.id,
+      text: 'Parent report/reply target',
+    });
+    const report = async (reporterId: string) =>
+      graphql({
+        schema,
+        source: `mutation Report($input: ReportCommentInput!) { reportComment(input: $input) }`,
+        variableValues: { input: { commentId: parent.id, reason: 'SPAM' } },
+        contextValue: createContext(reporterId),
+      });
+    for (const reporter of [matureReporter1, matureReporter2]) {
+      expect((await report(reporter.id)).errors).toBeUndefined();
+    }
+
+    let release!: () => void;
+    const start = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const reply = (async () => {
+      await start;
+      return graphql({
+        schema,
+        source: `mutation Reply($input: CreateReplyInput!) { createReply(input: $input) { id } }`,
+        variableValues: {
+          input: {
+            commentId: parent.id,
+            text: 'Reply racing a report',
+            clientRequestId: 'ticket-11-reply-race',
+          },
+        },
+        contextValue: createContext(user2.id),
+      });
+    })();
+    const thirdReport = (async () => {
+      await start;
+      return report(matureReporter3.id);
+    })();
+    release();
+    const [replyResult, reportResult] = await Promise.race([
+      Promise.all([reply, thirdReport]),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('discussion writes timed out')), 5000)),
+    ]);
+
+    expect(reportResult.errors).toBeUndefined();
+    expect(reportResult.data?.reportComment).toBe(true);
+    const [parentAfter] = await dbHelper.db.select().from(comments).where(eq(comments.id, parent.id));
+    expect(parentAfter.status).toBe('HIDDEN');
+    const replies = await dbHelper.db.select().from(comments).where(eq(comments.parentId, parent.id));
+    expect(replies).toHaveLength(replyResult.errors ? 0 : 1);
+    expect(parentAfter.replyCount).toBe(replies.length);
+    const [post] = await dbHelper.db.select().from(posts).where(eq(posts.id, testPost.id));
+    expect(post.commentCount).toBe(replies.length);
+  });
+
+  it('Ticket 11: reproduces the legacy shared-Post to write-lock upgrade deadlock in PostgreSQL', async () => {
+    const [left, right] = await dbHelper.db
+      .insert(comments)
+      .values([
+        { postId: testPost.id, authorId: authorUser.id, text: 'Legacy left report target', status: 'ACTIVE' },
+        { postId: testPost.id, authorId: authorUser.id, text: 'Legacy right report target', status: 'ACTIVE' },
+      ])
+      .returning();
+    const first = await dbHelper.pool.connect();
+    const second = await dbHelper.pool.connect();
+
+    try {
+      await Promise.all([first.query('BEGIN'), second.query('BEGIN')]);
+      await Promise.all([
+        first.query('SELECT id FROM comments WHERE id = $1 FOR UPDATE', [left.id]),
+        second.query('SELECT id FROM comments WHERE id = $1 FOR UPDATE', [right.id]),
+      ]);
+      await Promise.all([
+        first.query('SELECT id FROM posts WHERE id = $1 FOR SHARE', [testPost.id]),
+        second.query('SELECT id FROM posts WHERE id = $1 FOR SHARE', [testPost.id]),
+      ]);
+
+      const outcomes = await Promise.allSettled([
+        first.query('UPDATE posts SET comment_count = comment_count + 1 WHERE id = $1', [testPost.id]),
+        second.query('UPDATE posts SET comment_count = comment_count + 1 WHERE id = $1', [testPost.id]),
+      ]);
+      const aborted = outcomes.filter((outcome): outcome is PromiseRejectedResult => outcome.status === 'rejected');
+      expect(aborted).toHaveLength(1);
+      expect((aborted[0].reason as { code?: string }).code).toBe('40P01');
+    } finally {
+      await Promise.allSettled([first.query('ROLLBACK'), second.query('ROLLBACK')]);
+      first.release();
+      second.release();
+    }
+  });
+
+  it('Ticket 11: database-controlled authenticated GraphQL third-report race serializes before the legacy upgrade seam', async () => {
+    const [left, right] = await dbHelper.db
+      .insert(comments)
+      .values([
+        { postId: testPost.id, authorId: authorUser.id, text: 'Barrier left report target', status: 'ACTIVE' },
+        { postId: testPost.id, authorId: authorUser.id, text: 'Barrier right report target', status: 'ACTIVE' },
+      ])
+      .returning();
+    await dbHelper.db.update(posts).set({ commentCount: 2 }).where(eq(posts.id, testPost.id));
+
+    const report = (commentId: string) =>
+      graphql({
+        schema,
+        source: `mutation Report($input: ReportCommentInput!) { reportComment(input: $input) }`,
+        variableValues: { input: { commentId, reason: 'SPAM', details: 'Database barrier race' } },
+        contextValue: createContext(matureReporter3.id),
+      });
+    for (const reporter of [matureReporter1, matureReporter2]) {
+      expect(
+        (
+          await graphql({
+            schema,
+            source: `mutation Report($input: ReportCommentInput!) { reportComment(input: $input) }`,
+            variableValues: { input: { commentId: left.id, reason: 'SPAM' } },
+            contextValue: createContext(reporter.id),
+          })
+        ).errors,
+      ).toBeUndefined();
+      expect(
+        (
+          await graphql({
+            schema,
+            source: `mutation Report($input: ReportCommentInput!) { reportComment(input: $input) }`,
+            variableValues: { input: { commentId: right.id, reason: 'SPAM' } },
+            contextValue: createContext(reporter.id),
+          })
+        ).errors,
+      ).toBeUndefined();
+    }
+
+    const barrierClass = 71_111;
+    const barrierObject = 20_261;
+    const blocker = await dbHelper.pool.connect();
+    let barrierReleased = false;
+    const waitForLocks = async (predicate: (locks: { barrierWaits: number; discussionWaits: number }) => boolean) => {
+      for (let attempt = 0; attempt < 80; attempt += 1) {
+        const { rows } = await dbHelper.pool.query<{
+          barrier_waits: number;
+          discussion_waits: number;
+        }>(
+          `SELECT
+             count(*) FILTER (WHERE NOT granted AND classid = $1 AND objid = $2)::int AS barrier_waits,
+             count(*) FILTER (WHERE NOT granted AND NOT (classid = $1 AND objid = $2))::int AS discussion_waits
+           FROM pg_locks WHERE locktype = 'advisory'`,
+          [barrierClass, barrierObject],
+        );
+        const locks = {
+          barrierWaits: Number(rows[0]?.barrier_waits ?? 0),
+          discussionWaits: Number(rows[0]?.discussion_waits ?? 0),
+        };
+        if (predicate(locks)) return;
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+      throw new Error('expected database advisory-lock contention was not observed');
+    };
+
+    try {
+      await blocker.query('SELECT pg_advisory_lock($1, $2)', [barrierClass, barrierObject]);
+      await dbHelper.pool.query(`
+        CREATE FUNCTION ticket11_report_barrier() RETURNS trigger LANGUAGE plpgsql AS $$
+        BEGIN
+          PERFORM pg_advisory_xact_lock(${barrierClass}, ${barrierObject});
+          RETURN NEW;
+        END;
+        $$;
+        CREATE TRIGGER ticket11_report_barrier_trigger
+          BEFORE INSERT ON comment_reports FOR EACH ROW EXECUTE FUNCTION ticket11_report_barrier();
+      `);
+
+      const first = report(left.id);
+      await waitForLocks((locks) => locks.barrierWaits === 1);
+      const second = report(right.id);
+      // The second request is waiting on the production Post advisory key,
+      // rather than merely being promise-gated by the test. With the old
+      // shared Post lock both writes reached the test barrier instead.
+      await waitForLocks((locks) => locks.barrierWaits === 1 && locks.discussionWaits >= 1);
+
+      await blocker.query('SELECT pg_advisory_unlock($1, $2)', [barrierClass, barrierObject]);
+      barrierReleased = true;
+      const results = await Promise.race([
+        Promise.all([first, second]),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('GraphQL report race timed out')), 8_000)),
+      ]);
+      for (const result of results) {
+        expect(result.errors).toBeUndefined();
+        expect(result.data?.reportComment).toBe(true);
+      }
+
+      const targets = await dbHelper.db
+        .select()
+        .from(comments)
+        .where(inArray(comments.id, [left.id, right.id]));
+      expect(targets.map((target) => target.status).sort()).toEqual(['HIDDEN', 'HIDDEN']);
+      const reports = await dbHelper.db
+        .select()
+        .from(commentReports)
+        .where(inArray(commentReports.commentId, [left.id, right.id]));
+      expect(reports).toHaveLength(6);
+      const [post] = await dbHelper.db.select().from(posts).where(eq(posts.id, testPost.id));
+      expect(post.commentCount).toBe(0);
+    } finally {
+      if (!barrierReleased) await blocker.query('SELECT pg_advisory_unlock($1, $2)', [barrierClass, barrierObject]);
+      await dbHelper.pool.query('DROP TRIGGER IF EXISTS ticket11_report_barrier_trigger ON comment_reports');
+      await dbHelper.pool.query('DROP FUNCTION IF EXISTS ticket11_report_barrier()');
+      blocker.release();
+    }
+  });
+
+  it('Ticket 11: retries a database-generated 40001 report abort without losing or duplicating the report', async () => {
+    const [target] = await dbHelper.db
+      .insert(comments)
+      .values({ postId: testPost.id, authorId: authorUser.id, text: 'Retry failpoint target', status: 'ACTIVE' })
+      .returning();
+    await dbHelper.db.update(posts).set({ commentCount: 1 }).where(eq(posts.id, testPost.id));
+
+    try {
+      await dbHelper.pool.query(`
+        CREATE SEQUENCE ticket11_report_retry_sequence START 1;
+        CREATE FUNCTION ticket11_report_retry_once() RETURNS trigger LANGUAGE plpgsql AS $$
+        BEGIN
+          IF nextval('ticket11_report_retry_sequence') = 1 THEN
+            RAISE EXCEPTION 'Ticket 11 controlled serialization failure' USING ERRCODE = '40001';
+          END IF;
+          RETURN NEW;
+        END;
+        $$;
+        CREATE TRIGGER ticket11_report_retry_once_trigger
+          BEFORE INSERT ON comment_reports FOR EACH ROW EXECUTE FUNCTION ticket11_report_retry_once();
+      `);
+
+      const accepted = await graphql({
+        schema,
+        source: `mutation Report($input: ReportCommentInput!) { reportComment(input: $input) }`,
+        variableValues: { input: { commentId: target.id, reason: 'SPAM', details: 'Genuine database retry' } },
+        contextValue: createContext(matureReporter1.id),
+      });
+      expect(accepted.errors).toBeUndefined();
+      expect(accepted.data?.reportComment).toBe(true);
+
+      const persisted = await dbHelper.db.select().from(commentReports).where(eq(commentReports.commentId, target.id));
+      expect(persisted).toHaveLength(1);
+      expect(persisted[0].reporterId).toBe(matureReporter1.id);
+
+      const duplicate = await graphql({
+        schema,
+        source: `mutation Report($input: ReportCommentInput!) { reportComment(input: $input) }`,
+        variableValues: { input: { commentId: target.id, reason: 'SPAM' } },
+        contextValue: createContext(matureReporter1.id),
+      });
+      expect(duplicate.errors).toHaveLength(1);
+      expect((duplicate.errors?.[0].originalError as { code?: string }).code).toBe('COMMENT_ALREADY_REPORTED');
+      const afterDuplicate = await dbHelper.db
+        .select()
+        .from(commentReports)
+        .where(eq(commentReports.commentId, target.id));
+      expect(afterDuplicate).toHaveLength(1);
+    } finally {
+      await dbHelper.pool.query('DROP TRIGGER IF EXISTS ticket11_report_retry_once_trigger ON comment_reports');
+      await dbHelper.pool.query('DROP FUNCTION IF EXISTS ticket11_report_retry_once()');
+      await dbHelper.pool.query('DROP SEQUENCE IF EXISTS ticket11_report_retry_sequence');
+    }
+  });
+
+  it('Ticket 11: a database-controlled reconciliation/create race preserves the exact durable counter', async () => {
+    await dbHelper.db.insert(comments).values({
+      postId: testPost.id,
+      authorId: authorUser.id,
+      text: 'Existing reachable comment for reconciliation',
+      status: 'ACTIVE',
+    });
+    const barrierClass = 71_111;
+    const barrierObject = 20_262;
+    const blocker = await dbHelper.pool.connect();
+    let barrierReleased = false;
+
+    const waitForDiscussionWait = async () => {
+      for (let attempt = 0; attempt < 80; attempt += 1) {
+        const { rows } = await dbHelper.pool.query<{ count: number }>(
+          `SELECT count(*)::int AS count
+           FROM pg_locks
+           WHERE locktype = 'advisory' AND NOT granted AND NOT (classid = $1 AND objid = $2)`,
+          [barrierClass, barrierObject],
+        );
+        if (Number(rows[0]?.count ?? 0) >= 1) return;
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+      throw new Error('expected reconciliation/create Post advisory contention was not observed');
+    };
+
+    try {
+      await blocker.query('SELECT pg_advisory_lock($1, $2)', [barrierClass, barrierObject]);
+      await dbHelper.pool.query(`
+        CREATE FUNCTION ticket11_reconciliation_barrier() RETURNS trigger LANGUAGE plpgsql AS $$
+        BEGIN
+          PERFORM pg_advisory_xact_lock(${barrierClass}, ${barrierObject});
+          RETURN NEW;
+        END;
+        $$;
+        CREATE TRIGGER ticket11_reconciliation_barrier_trigger
+          BEFORE UPDATE OF comment_count ON posts FOR EACH ROW EXECUTE FUNCTION ticket11_reconciliation_barrier();
+      `);
+
+      const reconciliation = commentsService.reconcileCommentCounters({ postId: testPost.id });
+      for (let attempt = 0; attempt < 80; attempt += 1) {
+        const { rows } = await dbHelper.pool.query<{ count: number }>(
+          `SELECT count(*)::int AS count FROM pg_locks
+           WHERE locktype = 'advisory' AND NOT granted AND classid = $1 AND objid = $2`,
+          [barrierClass, barrierObject],
+        );
+        if (Number(rows[0]?.count ?? 0) === 1) break;
+        if (attempt === 79) throw new Error('reconciliation did not reach the database barrier');
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+
+      const creation = graphql({
+        schema,
+        source: `mutation Create($input: CreateCommentInput!) { createComment(input: $input) { id } }`,
+        variableValues: {
+          input: {
+            clientRequestId: 'ticket11-reconciliation-race-create',
+            postId: testPost.id,
+            text: 'Comment created while reconciliation is blocked',
+          },
+        },
+        contextValue: createContext(user2.id),
+      });
+      await waitForDiscussionWait();
+      await blocker.query('SELECT pg_advisory_unlock($1, $2)', [barrierClass, barrierObject]);
+      barrierReleased = true;
+      const [, createResult] = await Promise.race([
+        Promise.all([reconciliation, creation]),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('reconciliation/create race timed out')), 8_000),
+        ),
+      ]);
+      expect(createResult.errors).toBeUndefined();
+      const [post] = await dbHelper.db.select().from(posts).where(eq(posts.id, testPost.id));
+      expect(post.commentCount).toBe(2);
+      const reachable = await dbHelper.pool.query(
+        `SELECT count(*)::int AS count FROM comments
+         WHERE post_id = $1 AND parent_id IS NULL AND status IN ('ACTIVE', 'IMAGE_HIDDEN')`,
+        [testPost.id],
+      );
+      expect(post.commentCount).toBe(Number(reachable.rows[0].count));
+    } finally {
+      if (!barrierReleased) await blocker.query('SELECT pg_advisory_unlock($1, $2)', [barrierClass, barrierObject]);
+      await dbHelper.pool.query('DROP TRIGGER IF EXISTS ticket11_reconciliation_barrier_trigger ON posts');
+      await dbHelper.pool.query('DROP FUNCTION IF EXISTS ticket11_reconciliation_barrier()');
+      blocker.release();
+    }
   });
 });

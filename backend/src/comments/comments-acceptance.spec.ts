@@ -1406,195 +1406,30 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
       });
     });
 
-    describe('Discussion Notifications Acceptance Tests (Ticket 10)', () => {
-      it('NEW_COMMENT: fires notification to post owner when third-party comments', async () => {
-        const ctx = createContext(thirdPartyUserId);
-        const res = await resolver.createComment(
-          {
-            clientRequestId: 'cr-notif-comment-1',
-            postId,
-            text: 'I love this post!',
-          },
-          ctx,
-        );
-
-        expect(res).toBeDefined();
-        expect(mockNotificationsService.fireNotification).toHaveBeenCalledWith(
-          expect.objectContaining({
-            recipientId: postCreatorId,
-            type: 'NEW_COMMENT',
-            relatedPostId: postId,
-            relatedCommentId: mockTopLevelComment.id,
-          }),
-          thirdPartyUserId,
-        );
-      });
-
-      it('NEW_COMMENT: suppresses notification when post owner comments on own post', async () => {
-        const ctx = createContext(postCreatorId);
+    describe('Discussion Notifications Durable Outbox Boundary (Ticket 12)', () => {
+      it('does not use the legacy post-commit fire-and-forget path', async () => {
+        const commentContext = createContext(thirdPartyUserId);
         await resolver.createComment(
           {
-            clientRequestId: 'cr-notif-comment-self',
+            clientRequestId: 'cr-outbox-comment',
             postId,
-            text: 'Author update on post',
+            text: 'Durable source event is transactional',
           },
-          ctx,
+          commentContext,
         );
-
-        expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
-      });
-
-      it('NEW_COMMENT: suppresses notification on idempotent replay', async () => {
-        const payloadHash = crypto
-          .createHash('sha256')
-          .update(JSON.stringify({ postId, text: 'Author update', mediaIds: [] }))
-          .digest('hex');
-        mockCommentsRepo.findIdempotencyRecord.mockResolvedValueOnce({
-          responsePayload: mockTopLevelComment,
-          requestHash: payloadHash,
-        });
-
-        const ctx = createContext(thirdPartyUserId);
-        await resolver.createComment(
-          {
-            clientRequestId: 'cr-notif-replay',
-            postId,
-            text: 'Author update',
-          },
-          ctx,
-        );
-
-        expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
-      });
-
-      it('NEW_REPLY: fires notification to parent author when third-party replies', async () => {
-        const ctx = createContext(thirdPartyUserId);
-        const res = await resolver.createReply(
-          {
-            clientRequestId: 'cr-notif-reply-1',
-            commentId,
-            text: 'Replying to you!',
-          },
-          ctx,
-        );
-
-        expect(res).toBeDefined();
-        expect(mockNotificationsService.fireNotification).toHaveBeenCalledWith(
-          expect.objectContaining({
-            recipientId: authorId,
-            type: 'NEW_REPLY',
-            relatedPostId: postId,
-            relatedCommentId: mockReplyComment.id,
-          }),
-          thirdPartyUserId,
-        );
-      });
-
-      it('NEW_REPLY: suppresses notification when parent author replies to own comment', async () => {
-        const ctx = createContext(authorId);
         await resolver.createReply(
           {
-            clientRequestId: 'cr-notif-reply-self',
+            clientRequestId: 'cr-outbox-reply',
             commentId,
-            text: 'Replying to myself',
+            text: 'Durable reply source event is transactional',
           },
-          ctx,
+          commentContext,
         );
+        await resolver.toggleCommentBoost(commentId, commentContext);
+        await resolver.pinComment(commentId, createContext(postCreatorId));
 
-        expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
-      });
-
-      it('NEW_REPLY: suppresses notification on idempotent replay', async () => {
-        const payloadHash = crypto
-          .createHash('sha256')
-          .update(JSON.stringify({ commentId, text: 'Replying' }))
-          .digest('hex');
-        mockCommentsRepo.findIdempotencyRecord.mockResolvedValueOnce({
-          responsePayload: mockReplyComment,
-          requestHash: payloadHash,
-        });
-
-        const ctx = createContext(thirdPartyUserId);
-        await resolver.createReply(
-          {
-            clientRequestId: 'cr-notif-reply-rep',
-            commentId,
-            text: 'Replying',
-          },
-          ctx,
-        );
-
-        expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
-      });
-
-      it('COMMENT_BOOSTED: fires notification to author when boost is added', async () => {
-        const ctx = createContext(thirdPartyUserId);
-        const res = await resolver.toggleCommentBoost(commentId, ctx);
-
-        expect(res.isBoostedByMe).toBe(true);
-        expect(mockNotificationsService.fireNotification).toHaveBeenCalledWith(
-          expect.objectContaining({
-            recipientId: authorId,
-            type: 'COMMENT_BOOSTED',
-            relatedPostId: postId,
-            relatedCommentId: commentId,
-          }),
-          thirdPartyUserId,
-        );
-      });
-
-      it('COMMENT_BOOSTED: does NOT fire notification when removing a boost', async () => {
-        mockCommentsRepo.toggleBoost.mockResolvedValueOnce({
-          isBoostedByMe: false,
-          boostCount: 0,
-        });
-
-        const ctx = createContext(thirdPartyUserId);
-        const res = await resolver.toggleCommentBoost(commentId, ctx);
-
-        expect(res.isBoostedByMe).toBe(false);
-        expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
-      });
-
-      it('COMMENT_PINNED: fires notification to author when comment is pinned', async () => {
-        const ctx = createContext(postCreatorId);
-        const res = await resolver.pinComment(commentId, ctx);
-
-        expect(res.id).toBe(commentId);
-        expect(mockNotificationsService.fireNotification).toHaveBeenCalledWith(
-          expect.objectContaining({
-            recipientId: authorId,
-            type: 'COMMENT_PINNED',
-            relatedPostId: postId,
-            relatedCommentId: commentId,
-          }),
-          postCreatorId,
-        );
-      });
-
-      it('COMMENT_PINNED: suppresses notification if pinned comment belongs to post author', async () => {
-        mockCommentsRepo.pinComment.mockResolvedValueOnce({
-          comment: { ...mockTopLevelComment, authorId: postCreatorId, isPinned: true },
-          isNewPin: true,
-          postTitle: mockPost.title,
-        });
-
-        const ctx = createContext(postCreatorId);
-        await resolver.pinComment(commentId, ctx);
-
-        expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
-      });
-
-      it('COMMENT_PINNED: suppresses notification on idempotent re-pin (isNewPin is false)', async () => {
-        mockCommentsRepo.pinComment.mockResolvedValueOnce({
-          comment: { ...mockTopLevelComment, isPinned: true },
-          isNewPin: false,
-          postTitle: mockPost.title,
-        });
-
-        const ctx = createContext(postCreatorId);
-        await resolver.pinComment(commentId, ctx);
-
+        // Real event delivery, routing, retry, and deduplication are covered at
+        // the schema-first PostgreSQL seam in discussion-notifications.integration.spec.ts.
         expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
       });
     });

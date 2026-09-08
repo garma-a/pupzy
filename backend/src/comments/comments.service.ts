@@ -45,8 +45,10 @@ export class CommentsService {
     private readonly uploadService: UploadService,
     private readonly config: ConfigService,
     private readonly mediaDeletionProcessor?: MediaDeletionProcessor,
-    private readonly notificationsService?: NotificationsService,
-    private readonly usersService?: UsersService,
+    // Retained optional injection positions for backwards-compatible test wiring;
+    // durable discussion events are now written by CommentsRepository.
+    private readonly _notificationsService?: NotificationsService,
+    private readonly _usersService?: UsersService,
   ) {}
 
   /**
@@ -226,26 +228,6 @@ export class CommentsService {
             });
           }
         }
-      }
-
-      // 8. Fire NEW_COMMENT notification to post owner (self-notification suppressed)
-      if (this.notificationsService && post.creatorId !== userId) {
-        let actorName = 'Someone';
-        if (this.usersService) {
-          const actor = await this.usersService.findById(userId).catch(() => undefined);
-          if (actor?.fullName) actorName = actor.fullName;
-        }
-        this.notificationsService.fireNotification(
-          {
-            recipientId: post.creatorId,
-            type: 'NEW_COMMENT',
-            title: 'New comment',
-            body: `${actorName} commented on your post "${post.title}"`,
-            relatedPostId: post.id,
-            relatedCommentId: newComment.id,
-          },
-          userId,
-        );
       }
 
       return newComment;
@@ -458,26 +440,6 @@ export class CommentsService {
         requestHash,
       });
 
-      // 7. Fire NEW_REPLY notification to parent comment author (self-notification suppressed)
-      if (this.notificationsService && parentComment.authorId !== userId) {
-        let actorName = 'Someone';
-        if (this.usersService) {
-          const actor = await this.usersService.findById(userId).catch(() => undefined);
-          if (actor?.fullName) actorName = actor.fullName;
-        }
-        this.notificationsService.fireNotification(
-          {
-            recipientId: parentComment.authorId,
-            type: 'NEW_REPLY',
-            title: 'New reply',
-            body: `${actorName} replied to your comment`,
-            relatedPostId: post.id,
-            relatedCommentId: reply.id,
-          },
-          userId,
-        );
-      }
-
       return reply;
     } catch (err) {
       if (isUniqueViolation(err)) {
@@ -619,29 +581,6 @@ export class CommentsService {
       // 2. Transactional toggle in repository
       const result = await this.commentsRepository.toggleBoost(commentId, userId);
 
-      // 3. Fire COMMENT_BOOSTED notification if boost was added (not removed) and author is not actor
-      if (this.notificationsService && result.isBoostedByMe) {
-        const comment = await this.commentsRepository.findCommentById(commentId);
-        if (comment && comment.authorId !== userId) {
-          let actorName = 'Someone';
-          if (this.usersService) {
-            const actor = await this.usersService.findById(userId).catch(() => undefined);
-            if (actor?.fullName) actorName = actor.fullName;
-          }
-          this.notificationsService.fireNotification(
-            {
-              recipientId: comment.authorId,
-              type: 'COMMENT_BOOSTED',
-              title: 'Comment boosted',
-              body: `${actorName} boosted your ${comment.parentId ? 'reply' : 'comment'}`,
-              relatedPostId: comment.postId,
-              relatedCommentId: comment.id,
-            },
-            userId,
-          );
-        }
-      }
-
       return {
         commentId,
         isBoostedByMe: result.isBoostedByMe,
@@ -669,21 +608,6 @@ export class CommentsService {
    */
   async pinComment(userId: string, commentId: string): Promise<Comment> {
     const result = await this.commentsRepository.pinComment(commentId, userId);
-
-    // Fire COMMENT_PINNED notification if pin was added/changed (not idempotent) and author is not actor
-    if (this.notificationsService && result.isNewPin && result.comment.authorId !== userId) {
-      this.notificationsService.fireNotification(
-        {
-          recipientId: result.comment.authorId,
-          type: 'COMMENT_PINNED',
-          title: 'Comment pinned',
-          body: `Your comment was pinned on "${result.postTitle}"`,
-          relatedPostId: result.comment.postId,
-          relatedCommentId: result.comment.id,
-        },
-        userId,
-      );
-    }
 
     return result.comment;
   }

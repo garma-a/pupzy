@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { after, before, beforeEach, describe, it } from 'node:test';
 
-import { buildBanUserAction, buildUnbanUserAction } from '../src/adminjs/actions/ban-user.action.js';
+import {
+  buildBanUserAction,
+  buildUnbanUserAction,
+  runUserBanPostCascade,
+} from '../src/adminjs/actions/ban-user.action.js';
 import { buildPostActions } from '../src/adminjs/actions/moderate-post.actions.js';
 import { buildCommentActions } from '../src/adminjs/actions/moderate-comment.actions.js';
 import { computeStats } from '../src/adminjs/dashboard/dashboard-cache.js';
@@ -52,6 +56,148 @@ describe('moderation actions', () => {
     );
   });
 
+  it('uses the active creator UUID keyset index for a late durable ban-cascade page', async () => {
+    const otherCreator = (
+      await database.pool.query(
+        `INSERT INTO users (firebase_user_id, email, full_name)
+         VALUES ('ticket11-plan-other-creator', 'ticket11-plan-other@example.com', 'Plan Other Creator')
+         RETURNING id`,
+      )
+    ).rows[0];
+
+    await database.pool.query(
+      `INSERT INTO public.posts
+         (creator_id, post_type, title, description, status, moderation_status, city_id,
+          coordinates, report_count, urgency)
+       SELECT CASE WHEN series % 24 = 0 THEN $1::uuid ELSE $2::uuid END,
+              'ADOPTION', 'Ticket 11 keyset plan ' || series, 'Description', 'ACTIVE',
+              'PENDING_AUTO_REVIEW', $3,
+              ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326), 0, NULL
+       FROM generate_series(1, 24000) AS series`,
+      [principals.userId, otherCreator.id, principals.cityId],
+    );
+
+    const { rows: cursorRows } = await database.pool.query(
+      `SELECT id
+       FROM public.posts
+       WHERE creator_id = $1 AND status = 'ACTIVE'
+       ORDER BY id ASC
+       OFFSET 800
+       LIMIT 1`,
+      [principals.userId],
+    );
+    assert.equal(cursorRows.length, 1);
+    await database.pool.query('VACUUM (ANALYZE) public.posts');
+
+    const { rows: explainRows } = await database.pool.query(
+      `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
+       SELECT id
+       FROM public.posts
+       WHERE creator_id = $1
+         AND status = 'ACTIVE'
+         AND ($2::uuid IS NULL OR id > $2::uuid)
+       ORDER BY id ASC
+       LIMIT 100`,
+      [principals.userId, cursorRows[0].id],
+    );
+    const plan = explainRows[0]['QUERY PLAN'][0].Plan;
+    const planJson = JSON.stringify(plan);
+    const walkPlan = (node, collected = []) => {
+      collected.push(node);
+      for (const child of node.Plans ?? []) walkPlan(child, collected);
+      return collected;
+    };
+    const keysetIndexScan = walkPlan(plan).find(
+      (node) =>
+        ['Index Scan', 'Index Only Scan'].includes(node['Node Type']) &&
+        node['Index Name'] === 'idx_posts_active_creator_id_id',
+    );
+
+    assert.equal(plan['Node Type'], 'Limit');
+    assert.equal(Number(plan['Actual Rows']), 100);
+    assert.ok(keysetIndexScan, 'late keyset page must directly scan the ACTIVE creator/id partial index');
+    assert.match(keysetIndexScan['Index Cond'], /creator_id/);
+    assert.match(keysetIndexScan['Index Cond'], /id >/);
+    assert.equal(Number(keysetIndexScan['Actual Rows']), 100);
+    assert.doesNotMatch(planJson, /"Node Type":"(?:Seq Scan|Bitmap Heap Scan|Sort)"/);
+  });
+
+  it('keeps the banned-creator database boundary safe with a prepended shadow schema', async () => {
+    await database.pool.query(
+      `UPDATE public.users
+       SET is_banned = true, banned_at = now(), ban_reason = 'Ticket 11 search path regression'
+       WHERE id = $1`,
+      [principals.userId],
+    );
+    const { rows: bindings } = await database.pool.query(
+      `SELECT function_namespace.nspname AS function_schema, function_proc.proname, function_proc.proconfig
+       FROM pg_trigger AS trigger_binding
+       JOIN pg_class AS relation ON relation.oid = trigger_binding.tgrelid
+       JOIN pg_proc AS function_proc ON function_proc.oid = trigger_binding.tgfoid
+       JOIN pg_namespace AS function_namespace ON function_namespace.oid = function_proc.pronamespace
+       WHERE trigger_binding.tgname = 'trg_prevent_banned_creator_active_post'
+         AND relation.oid = 'public.posts'::regclass`,
+    );
+    assert.deepEqual(bindings, [
+      {
+        function_schema: 'public',
+        proname: 'prevent_banned_creator_active_post',
+        proconfig: ['search_path=pg_catalog, public'],
+      },
+    ]);
+
+    await database.pool.query('CREATE SCHEMA ticket11_shadow');
+    const client = await database.pool.connect();
+    try {
+      await database.pool.query(
+        `CREATE TABLE ticket11_shadow.users (
+           id uuid PRIMARY KEY,
+           is_banned boolean NOT NULL
+         )`,
+      );
+      await database.pool.query('INSERT INTO ticket11_shadow.users (id, is_banned) VALUES ($1, false)', [
+        principals.userId,
+      ]);
+
+      await client.query('BEGIN');
+      await client.query('SET LOCAL search_path = ticket11_shadow, public, pg_catalog');
+      const { rows: sessionRows } = await client.query(
+        `SELECT current_schema() AS current_schema, current_setting('search_path') AS configured_path`,
+      );
+      assert.equal(sessionRows[0].current_schema, 'ticket11_shadow');
+      assert.equal(sessionRows[0].configured_path, 'ticket11_shadow, public, pg_catalog');
+
+      await assert.rejects(
+        client.query(
+          `INSERT INTO public.posts
+             (creator_id, post_type, title, description, status, moderation_status, city_id,
+              coordinates, report_count, urgency)
+           VALUES ($1, 'ADOPTION', 'Shadow schema ban boundary', 'Description', 'ACTIVE',
+                   'PENDING_AUTO_REVIEW', $2,
+                   ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326), 0, NULL)`,
+          [principals.userId, principals.cityId],
+        ),
+        (error) => {
+          assert.equal(error.code, '23514');
+          assert.equal(error.message, 'ACTIVE_POST_CREATOR_BANNED');
+          return true;
+        },
+      );
+    } finally {
+      await client.query('ROLLBACK').catch(() => {});
+      client.release();
+      await database.pool.query('DROP SCHEMA IF EXISTS ticket11_shadow CASCADE');
+    }
+
+    const persisted = await database.pool.query(
+      `SELECT count(*)::int AS count
+       FROM public.posts
+       WHERE creator_id = $1 AND title = 'Shadow schema ban boundary'`,
+      [principals.userId],
+    );
+    assert.equal(persisted.rows[0].count, 0);
+  });
+
   it('serializes concurrent bans so only one succeeds', async () => {
     const action = buildBanUserAction(database.pool, 'ModerationAction');
     const responses = await Promise.all([
@@ -81,8 +227,8 @@ describe('moderation actions', () => {
     assert.equal(state.rows[0].audit_count, 0);
   });
 
-  it('optionally removes only active posts and sends one batched notification', async () => {
-    for (let index = 0; index < 3; index += 1) {
+  it('durably pages a user ban cascade and emits one notification after completion', async () => {
+    for (let index = 0; index < 101; index += 1) {
       await insertPost(database.pool, {
         ...principals,
         title: `Active ${index}`,
@@ -94,19 +240,179 @@ describe('moderation actions', () => {
       status: 'REMOVED',
     });
 
-    await call(buildBanUserAction(database.pool, 'ModerationAction'), principals.userId, {
+    const response = await call(buildBanUserAction(database.pool, 'ModerationAction'), principals.userId, {
       reason: 'Coordinated spam',
       alsoRemovePosts: true,
     });
+    assert.equal(response.notice.type, 'success');
+    const [pending] = (
+      await database.pool.query(
+        `SELECT action_id, state, cascaded_post_count FROM user_ban_post_cascades WHERE user_id = $1`,
+        [principals.userId],
+      )
+    ).rows;
+    assert.equal(pending.state, 'PENDING');
+    assert.equal(Number(pending.cascaded_post_count), 100);
+    const activeDuringRecovery = await database.pool.query(
+      `SELECT count(*)::int AS count FROM posts WHERE creator_id = $1 AND status = 'ACTIVE'`,
+      [principals.userId],
+    );
+    assert.equal(Number(activeDuringRecovery.rows[0].count), 1);
+
+    await runUserBanPostCascade(database.pool, pending.action_id);
     const posts = await database.pool.query(`SELECT title, status FROM posts ORDER BY title`);
-    assert.equal(posts.rows.filter((row) => row.status === 'REMOVED').length, 4);
+    assert.equal(posts.rows.filter((row) => row.status === 'REMOVED').length, 102);
     const notifications = await database.pool.query(`SELECT type FROM notifications`);
     assert.deepEqual(
       notifications.rows.map((row) => row.type),
       ['POST_REMOVED_BY_ADMIN'],
     );
     const audit = await database.pool.query(`SELECT metadata FROM moderation_actions`);
-    assert.equal(audit.rows[0].metadata.cascadedPostCount, 3);
+    assert.equal(audit.rows[0].metadata.cascadedPostCount, 101);
+    assert.equal(audit.rows[0].metadata.postCascade.state, 'COMPLETED');
+  });
+
+  it('serializes an in-flight Post creation with ban paging and releases the first page locks before the next page', async () => {
+    for (let index = 0; index < 100; index += 1) {
+      await insertPost(database.pool, { ...principals, title: `Existing cascade Post ${index}` });
+    }
+
+    const creator = await database.pool.connect();
+    const blocker = await database.pool.connect();
+    const barrierClass = 71_112;
+    const barrierObject = 20_263;
+    let creatorOpen = false;
+    let barrierReleased = false;
+    let triggerInstalled = false;
+
+    const waitFor = async (predicate, description) => {
+      for (let attempt = 0; attempt < 100; attempt += 1) {
+        if (await predicate()) return;
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      throw new Error(description);
+    };
+
+    try {
+      await creator.query('BEGIN');
+      creatorOpen = true;
+      await creator.query('SELECT id FROM users WHERE id = $1 FOR UPDATE', [principals.userId]);
+      const ban = call(buildBanUserAction(database.pool, 'ModerationAction'), principals.userId, {
+        reason: 'Concurrent creation evidence',
+        alsoRemovePosts: true,
+      });
+      await waitFor(async () => {
+        const { rows } = await database.pool.query(
+          `SELECT count(*)::int AS count
+             FROM pg_stat_activity
+             WHERE wait_event_type = 'Lock'
+               AND query LIKE '%FROM users WHERE id = $1 FOR UPDATE%'`,
+        );
+        return Number(rows[0].count) >= 1;
+      }, 'ban action did not block on the in-flight Post creator user lock');
+
+      const inserted = await creator.query(
+        `INSERT INTO posts
+           (creator_id, post_type, title, description, status, moderation_status, city_id, coordinates, report_count, urgency)
+         VALUES ($1, 'ADOPTION', 'Post committed immediately before ban', 'Description', 'ACTIVE',
+                 'PENDING_AUTO_REVIEW', $2, ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326), 0, NULL)
+         RETURNING id`,
+        [principals.userId, principals.cityId],
+      );
+      const inFlightPostId = inserted.rows[0].id;
+      await creator.query('COMMIT');
+      creatorOpen = false;
+
+      const response = await ban;
+      assert.equal(response.notice.type, 'success');
+      const active = await database.pool.query(
+        `SELECT id FROM posts WHERE creator_id = $1 AND status = 'ACTIVE' ORDER BY id ASC`,
+        [principals.userId],
+      );
+      assert.equal(active.rows.length, 1);
+      assert.equal(active.rows[0].id, inFlightPostId);
+
+      const { rows: cascadeRows } = await database.pool.query(
+        `SELECT action_id FROM user_ban_post_cascades WHERE user_id = $1`,
+        [principals.userId],
+      );
+      const actionId = cascadeRows[0].action_id;
+      const { rows: pageRows } = await database.pool.query(
+        `SELECT id FROM posts WHERE creator_id = $1 ORDER BY id ASC`,
+        [principals.userId],
+      );
+      const firstPagePostId = pageRows[0].id;
+      const secondPagePostId = pageRows[100].id;
+      assert.equal(secondPagePostId, inFlightPostId);
+
+      await blocker.query('SELECT pg_advisory_lock($1, $2)', [barrierClass, barrierObject]);
+      await database.pool.query(
+        `CREATE FUNCTION ticket11_ban_page_barrier() RETURNS trigger LANGUAGE plpgsql AS $$
+         BEGIN
+           IF NEW.id = '${secondPagePostId}'::uuid THEN
+             PERFORM pg_advisory_xact_lock(${barrierClass}, ${barrierObject});
+           END IF;
+           RETURN NEW;
+         END;
+         $$;
+         CREATE TRIGGER ticket11_ban_page_barrier_trigger
+           BEFORE UPDATE OF status ON posts FOR EACH ROW EXECUTE FUNCTION ticket11_ban_page_barrier();`,
+      );
+      triggerInstalled = true;
+
+      const recovery = runUserBanPostCascade(database.pool, actionId, { maxBatches: 1 });
+      await waitFor(async () => {
+        const { rows } = await database.pool.query(
+          `SELECT count(*)::int AS count FROM pg_locks
+             WHERE locktype = 'advisory' AND NOT granted AND classid = $1 AND objid = $2`,
+          [barrierClass, barrierObject],
+        );
+        return Number(rows[0].count) === 1;
+      }, 'second cascade page did not reach the database barrier');
+
+      const probe = await database.pool.connect();
+      try {
+        const acquired = await probe.query(
+          `SELECT pg_try_advisory_lock(hashtextextended('comment_discussion:' || $1, 0)) AS acquired`,
+          [firstPagePostId],
+        );
+        assert.equal(acquired.rows[0].acquired, true, 'first-page discussion lock must be released before page two');
+        await probe.query(`SELECT pg_advisory_unlock(hashtextextended('comment_discussion:' || $1, 0))`, [
+          firstPagePostId,
+        ]);
+      } finally {
+        probe.release();
+      }
+
+      await blocker.query('SELECT pg_advisory_unlock($1, $2)', [barrierClass, barrierObject]);
+      barrierReleased = true;
+      await recovery;
+      await runUserBanPostCascade(database.pool, actionId);
+
+      const finalPost = await database.pool.query('SELECT status FROM posts WHERE id = $1', [inFlightPostId]);
+      assert.equal(finalPost.rows[0].status, 'REMOVED');
+      const finalCascade = await database.pool.query(
+        `SELECT state, cascaded_post_count FROM user_ban_post_cascades WHERE action_id = $1`,
+        [actionId],
+      );
+      assert.equal(finalCascade.rows[0].state, 'COMPLETED');
+      assert.equal(Number(finalCascade.rows[0].cascaded_post_count), 101);
+      await assert.rejects(
+        insertPost(database.pool, { ...principals, title: 'Post after committed ban' }),
+        (error) => error?.code === '23514' && /ACTIVE_POST_CREATOR_BANNED/.test(error.message),
+      );
+    } finally {
+      if (!barrierReleased) {
+        await blocker.query('SELECT pg_advisory_unlock($1, $2)', [barrierClass, barrierObject]).catch(() => {});
+      }
+      if (triggerInstalled) {
+        await database.pool.query('DROP TRIGGER IF EXISTS ticket11_ban_page_barrier_trigger ON posts');
+        await database.pool.query('DROP FUNCTION IF EXISTS ticket11_ban_page_barrier()');
+      }
+      if (creatorOpen) await creator.query('ROLLBACK').catch(() => {});
+      creator.release();
+      blocker.release();
+    }
   });
 
   it('does not send an empty removal notification when the banned user has no posts', async () => {
@@ -396,7 +702,9 @@ describe('dashboard queries', () => {
       const post = await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [postId]);
       assert.equal(post.rows[0].comment_count, 1);
 
-      const reports = await database.pool.query(`SELECT reviewed_at FROM comment_reports WHERE comment_id = $1`, [commentId]);
+      const reports = await database.pool.query(`SELECT reviewed_at FROM comment_reports WHERE comment_id = $1`, [
+        commentId,
+      ]);
       assert.notEqual(reports.rows[0].reviewed_at, null);
 
       const audit = await database.pool.query(
@@ -480,10 +788,7 @@ describe('dashboard queries', () => {
       const parentId = parentRes.rows[0].id;
 
       // Pin the parent comment
-      await database.pool.query(
-        `INSERT INTO post_pins (post_id, comment_id) VALUES ($1, $2)`,
-        [postId, parentId],
-      );
+      await database.pool.query(`INSERT INTO post_pins (post_id, comment_id) VALUES ($1, $2)`, [postId, parentId]);
 
       // Insert 2 visible replies
       await database.pool.query(
@@ -570,7 +875,9 @@ describe('dashboard queries', () => {
       await call(actions.removeComment, parentId, { reason: 'Remove thread parent' });
 
       // Post comment_count is now 0 (both parent and reply decremented)
-      const postAfterParentRemoval = await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [postId]);
+      const postAfterParentRemoval = await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [
+        postId,
+      ]);
       assert.equal(postAfterParentRemoval.rows[0].comment_count, 0);
 
       // 2. Now remove the reply under the already-removed parent
@@ -582,12 +889,50 @@ describe('dashboard queries', () => {
       assert.equal(replyRow.rows[0].status, 'REMOVED');
 
       // Post comment_count must NOT be double-decremented (remains 0)
-      const postAfterReplyRemoval = await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [postId]);
+      const postAfterReplyRemoval = await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [
+        postId,
+      ]);
       assert.equal(postAfterReplyRemoval.rows[0].comment_count, 0);
 
       // Parent reply_count remains 0
       const parentRow = await database.pool.query(`SELECT reply_count FROM comments WHERE id = $1`, [parentId]);
       assert.equal(parentRow.rows[0].reply_count, 0);
+    });
+
+    it('serializes concurrent restore and removal with durable state and audit outcomes', async () => {
+      const postId = await insertPost(database.pool, { ...principals, title: 'Ticket 11 moderation race' });
+      const comment = await database.pool.query(
+        `INSERT INTO comments (post_id, author_id, text, status, reply_count)
+         VALUES ($1, $2, 'Hidden moderation race target', 'HIDDEN', 0)
+         RETURNING id`,
+        [postId, principals.userId],
+      );
+      const commentId = comment.rows[0].id;
+      const actions = buildCommentActions(database.pool, 'ModerationAction');
+
+      const results = await Promise.race([
+        Promise.all([
+          call(actions.restoreComment, commentId, { reason: 'Confirmed clean' }),
+          call(actions.removeComment, commentId, { reason: 'Permanent policy removal' }),
+        ]),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('AdminJS moderation race timed out')), 5000)),
+      ]);
+
+      assert.equal(results[1].notice.type, 'success');
+      assert.equal(['success', 'error'].includes(results[0].notice.type), true);
+      const finalComment = await database.pool.query(`SELECT status, reply_count FROM comments WHERE id = $1`, [
+        commentId,
+      ]);
+      assert.equal(finalComment.rows[0].status, 'REMOVED');
+      assert.equal(finalComment.rows[0].reply_count, 0);
+      const finalPost = await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [postId]);
+      assert.equal(finalPost.rows[0].comment_count, 0);
+      const audits = await database.pool.query(
+        `SELECT action_type FROM moderation_actions WHERE target_id = $1 ORDER BY created_at`,
+        [commentId],
+      );
+      assert.equal(audits.rows.filter((row) => row.action_type === 'COMMENT_REMOVED').length, 1);
+      assert.equal(audits.rows.length >= 1 && audits.rows.length <= 2, true);
     });
   });
 });

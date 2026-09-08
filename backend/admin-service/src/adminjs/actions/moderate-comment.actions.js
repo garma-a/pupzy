@@ -1,4 +1,4 @@
-import { actionResponse, readModerationReason, runModerationAction } from './helpers.js';
+import { actionResponse, lockCommentDiscussion, readModerationReason, runModerationAction } from './helpers.js';
 import { isAnyAdmin } from '../rbac.js';
 
 function getRecordProperty(record, property) {
@@ -72,6 +72,7 @@ function buildCommentAction(pool, component, definition, cache) {
         targetType: 'COMMENT',
         reason: reason || undefined,
         onSuccess: () => cache?.invalidate(),
+        lockDiscussion: lockCommentDiscussion,
         validate: definition.validate,
         mutate: (client, row) => definition.mutate(client, row, currentAdmin.id, reason),
       });
@@ -105,10 +106,9 @@ export function buildCommentActions(pool, component, cache) {
         mutate: async (client, row) => {
           if (row.status === 'HIDDEN') {
             if (row.parent_id) {
-              const { rows: parentRows } = await client.query(
-                `SELECT status FROM comments WHERE id = $1`,
-                [row.parent_id],
-              );
+              const { rows: parentRows } = await client.query(`SELECT status FROM comments WHERE id = $1`, [
+                row.parent_id,
+              ]);
               const parent = parentRows[0];
               if (parent && parent.status !== 'REMOVED') {
                 await client.query(
@@ -218,10 +218,9 @@ export function buildCommentActions(pool, component, cache) {
               [row.id],
             );
           } else {
-            const { rows: parentRows } = await client.query(
-              `SELECT status FROM comments WHERE id = $1`,
-              [row.parent_id],
-            );
+            const { rows: parentRows } = await client.query(`SELECT status FROM comments WHERE id = $1`, [
+              row.parent_id,
+            ]);
             const parent = parentRows[0];
             if (parent && parent.status !== 'REMOVED' && wasVisible) {
               await client.query(

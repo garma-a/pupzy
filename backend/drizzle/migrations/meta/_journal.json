@@ -232,8 +232,20 @@
       "when": 1789841600000,
       "tag": "0032_add_comment_quota_admissions",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1789928000000,
+      "tag": "0033_add_durable_user_ban_cascades",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1790014400000,
+      "tag": "0034_add_discussion_notification_outbox",
+      "breakpoints": true
     }
   ]
 }
-
-

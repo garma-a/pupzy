@@ -3,6 +3,7 @@ import { pgTable, uuid, varchar, text, boolean, timestamp, index } from 'drizzle
 import { users } from './users.schema';
 import { posts } from './posts.schema';
 import { comments } from './comments.schema';
+import { discussionNotificationEvents } from './discussion-notification-events.schema';
 import { contactRequests } from './contact-requests.schema';
 import { adoptionApplications } from './adoption-applications.schema';
 import { notificationTypeEnum } from './enums';
@@ -72,6 +73,14 @@ export const notifications = pgTable(
     }),
 
     /**
+     * Set only for durable discussion notifications. The partial unique index
+     * makes repeated outbox delivery attempts create at most one inbox row.
+     */
+    discussionEventId: uuid('discussion_event_id').references(() => discussionNotificationEvents.id, {
+      onDelete: 'set null',
+    }),
+
+    /**
      * Optional link to the related contact request.
      * SET NULL if the contact request is later deleted.
      */
@@ -102,6 +111,7 @@ export const notifications = pgTable(
 
     relatedPostIdx: index('idx_notifications_related_post').on(table.relatedPostId),
     relatedCommentIdx: index('idx_notifications_related_comment').on(table.relatedCommentId),
+    discussionEventIdx: index('uq_notifications_discussion_event_id').on(table.discussionEventId),
     relatedContactRequestIdx: index('idx_notifications_related_contact_request').on(table.relatedContactRequestId),
     relatedApplicationIdx: index('idx_notifications_related_application').on(table.relatedApplicationId),
 
