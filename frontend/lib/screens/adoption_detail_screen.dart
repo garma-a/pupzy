@@ -12,7 +12,6 @@ import '../widgets/animated_favorite_icon.dart';
 import '../widgets/adoption_applications_owner_section.dart';
 import '../widgets/nearby_vets_section.dart';
 import '../widgets/pet_carousel.dart';
-import '../widgets/post_comments_sheet.dart';
 import '../widgets/skeleton_loader.dart';
 
 class AdoptionDetailScreen extends StatefulWidget {
@@ -102,24 +101,6 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
     }
     setState(() => _post = _post!.copyWith(saveCount: count, isSavedByMe: saved));
     return true;
-  }
-
-  void _openComments() {
-    if (_post == null) return;
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => PostCommentsSheet(
-        postId: _post!.id,
-        postCreatorId: _post!.creator.id,
-        onCommentCreated: () {
-          setState(() {
-            _post = _post!.copyWith(commentCount: _post!.commentCount + 1);
-          });
-        },
-      ),
-    );
   }
 
   String _applyButtonLabel(BuildContext context) {
@@ -226,32 +207,6 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                       Row(
                         children: [
                           Expanded(child: Text(ext.petName, style: Theme.of(context).textTheme.headlineLarge)),
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(AppRadius.chip),
-                              onTap: _openComments,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                                decoration: BoxDecoration(
-                                  color: AppColors.background,
-                                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                                  border: Border.all(color: AppColors.border),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.chat_bubble_outline, size: 15, color: AppColors.textSecondary),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      '${post.commentCount}  ${t(context, 'Comments', 'التعليقات')}',
-                                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
                           Padding(
                             padding: const EdgeInsets.all(8),
                             child: AnimatedFavoriteIcon(

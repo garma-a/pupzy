@@ -8,7 +8,6 @@ import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
 import '../widgets/skeleton_loader.dart';
 import 'adoption_detail_screen.dart';
-import 'mating_detail_screen.dart';
 import 'product_detail_screen.dart';
 import 'rescue_detail_screen.dart';
 
@@ -34,14 +33,6 @@ IconData _iconForType(String type) {
       return Icons.timer_outlined;
     case 'SYSTEM_ANNOUNCEMENT':
       return Icons.campaign_outlined;
-    case 'NEW_COMMENT':
-      return Icons.chat_bubble_outline;
-    case 'NEW_REPLY':
-      return Icons.reply_outlined;
-    case 'COMMENT_BOOSTED':
-      return Icons.rocket_launch_outlined;
-    case 'COMMENT_PINNED':
-      return Icons.push_pin_outlined;
     default:
       return Icons.notifications_none;
   }
@@ -103,9 +94,6 @@ class _NotificationsPanelState extends State<NotificationsPanel> {
         break;
       case 'PRODUCT':
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => ProductDetailScreen(postId: postId)));
-        break;
-      case 'MATING':
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => MatingDetailScreen(postId: postId)));
         break;
     }
   }
