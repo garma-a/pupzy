@@ -84,7 +84,7 @@ export function createAdminSqlClient(connection) {
   return sql;
 }
 
-async function getProperties(sql, tableName, schemaName) {
+async function getProperties(sql, tableName, schemaName, availableTables) {
   const [columns, primaryKeys, relations] = await Promise.all([
     sql
       .from('information_schema.columns as col')
@@ -142,7 +142,8 @@ async function getProperties(sql, tableName, schemaName) {
   return columns.map((column) => {
     const relation = relations.rows.find((candidate) => {
       const relatedColumns = relationColumns(candidate.columns);
-      return relatedColumns.length === 1 && relatedColumns[0] === column.column_name;
+      const isAvailable = !Array.isArray(availableTables) || availableTables.includes(candidate.referenced_table);
+      return isAvailable && relatedColumns.length === 1 && relatedColumns[0] === column.column_name;
     });
     return new Property({
       name: column.column_name,
@@ -175,7 +176,7 @@ export async function buildAdminSqlDatabase(connection, options = {}) {
 
     const resources = [];
     for (const { table_name: tableName } of tableRows) {
-      const properties = await getProperties(sql, tableName, schemaName);
+      const properties = await getProperties(sql, tableName, schemaName, options.tables);
       const hasId = properties.some((property) => property.isId);
       if (!hasId) {
         continue;

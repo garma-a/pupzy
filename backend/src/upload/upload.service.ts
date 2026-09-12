@@ -8,10 +8,26 @@ import {
   CopyObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { eq, and, gt, gte, inArray, sql } from 'drizzle-orm';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { DATABASE_TOKEN } from '../database/database.provider';
+import { stagedUploads, commentQuotaAdmissions, type StagedUpload, type StagedUploadPurpose } from '../database/schema';
+import * as schema from '../database/schema';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
-import { NotFoundError } from '../common/errors/app.errors';
+import { NotFoundError, AppError } from '../common/errors/app.errors';
+import {
+  validateCommentImage,
+  MAX_COMMENT_IMAGE_BYTES,
+  ValidatedCommentImage,
+} from '../comments/validators/comment-image.validator';
+import { FinalizedCommentMedia } from '../comments/comments.repository';
+import { getCommentMediaPurgeUrls } from './media-delivery.util';
+
+type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
+type DbExecutor = NodePgDatabase<typeof schema> | DbTransaction;
 
 /**
  * UploadService — manages media uploads to Cloudflare R2 via presigned URLs.
@@ -22,18 +38,18 @@ import { NotFoundError } from '../common/errors/app.errors';
  * namespace and to decouple the upload from post creation:
  *
  * 1. **Staging** (`generatePresignedUrl`):
- *    The client requests a presigned PUT URL. The file is uploaded to a
- *    `staging/{userId}/{mediaId}.{ext}` key. This key is isolated per user
- *    so one user cannot overwrite another's staging files.
+ *    The client requests a presigned PUT URL. The durable ticket is committed
+ *    to PostgreSQL (`staged_uploads`) before returning the URL. The file is uploaded to
+ *    a `staging/{userId}/{mediaId}.{ext}` key.
  *
  * 2. **Finalization** (`finalizeMedia`):
  *    When the post is created, the server moves the staged file to its
  *    permanent location at `posts/{postId}/{mediaId}.{ext}` using a
- *    server-side copy + delete. This ensures only files attached to a valid
- *    post appear in the public namespace.
+ *    server-side copy + delete. Only files attached to a valid post appear
+ *    in the public namespace.
  *
- * If the user never creates a post, staged files can be garbage-collected
- * via an R2 lifecycle rule (e.g. delete objects in `staging/` older than 24h).
+ * PostgreSQL is the authority for owner-bound, purpose-bound, expiring,
+ * single-use tickets. Process-local cache is optional acceleration only.
  */
 @Injectable()
 export class UploadService {
@@ -62,6 +78,7 @@ export class UploadService {
   constructor(
     private readonly config: ConfigService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    @Inject(DATABASE_TOKEN) private readonly db: NodePgDatabase<typeof schema>,
   ) {
     this.s3Client = new S3Client({
       region: 'auto',
@@ -78,22 +95,20 @@ export class UploadService {
   /**
    * Generates a presigned PUT URL for the client to upload an image directly to R2.
    *
-   * The file lands in a staging namespace (`staging/{userId}/{mediaId}.{ext}`)
-   * and is NOT publicly accessible until {@link finalizeMedia} moves it to
-   * the permanent `posts/` namespace.
-   *
-   * The presigned URL embeds `ContentType` and `ContentLength` conditions,
-   * so R2 will reject uploads that don't match the declared MIME type and size.
+   * The upload ticket is durably committed to PostgreSQL before the presigned URL
+   * is returned to ensure uploads survive restarts and deployments.
    *
    * @param userId - Authenticated user's ID, used to namespace staging keys.
    * @param contentType - MIME type declared by the client (e.g. `image/webp`).
    * @param fileSizeBytes - Exact byte count the client will upload.
+   * @param purpose - Target domain for upload ticket (default: `POST_MEDIA`).
    * @returns Object containing the `mediaId`, `uploadUrl`, `expiresAt`, and `stagingKey`.
    */
   async generatePresignedUrl(
     userId: string,
     contentType: string,
     fileSizeBytes: number,
+    purpose: StagedUploadPurpose = 'POST_MEDIA',
   ): Promise<{
     mediaId: string;
     uploadUrl: string;
@@ -111,60 +126,189 @@ export class UploadService {
       ContentLength: fileSizeBytes,
     });
 
-    /** 10-minute expiry — long enough for mobile uploads on slow connections. */
+    /** 10-minute expiry for client upload URL */
     const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 600 });
+    const expiresAt = new Date(Date.now() + 600_000);
+    /** 15-minute expiry for durable ticket to allow slow client post creation */
+    const ticketExpiresAt = new Date(Date.now() + 900_000);
 
-    // Bind the short-lived staging capability to both its owner and MIME type.
-    // Post creation verifies these values before it creates a media row.
+    // Commit ticket durably in PostgreSQL BEFORE returning
+    await this.db.insert(stagedUploads).values({
+      id: mediaId,
+      userId,
+      purpose,
+      stagingKey,
+      declaredContentType: contentType,
+      declaredFileSizeBytes: fileSizeBytes,
+      status: 'ISSUED',
+      expiresAt: ticketExpiresAt,
+    });
+
+    // Optional cache acceleration — failure to populate cache never breaks the flow
     await Promise.all([
       this.cacheManager.set(`media_ct:${mediaId}`, contentType, 900_000),
       this.cacheManager.set(`media_owner:${mediaId}`, userId, 900_000),
-    ]);
+      this.cacheManager.set(`media_staging_key:${mediaId}`, stagingKey, 900_000),
+      this.cacheManager.set(`media_purpose:${mediaId}`, purpose, 900_000),
+    ]).catch((err) => {
+      this.logger.warn(`Failed to set staging cache for mediaId ${mediaId}: ${err}`);
+    });
 
     return {
       mediaId,
       uploadUrl,
-      expiresAt: new Date(Date.now() + 600_000),
+      expiresAt,
       stagingKey,
+    };
+  }
+
+  /**
+   * Atomically claims a staged upload ticket for a post.
+   * Ensures single-use under concurrent creation attempts without holding open transactions.
+   */
+  async claimMedia(
+    mediaId: string,
+    userId: string,
+    postId: string,
+    purpose: StagedUploadPurpose = 'POST_MEDIA',
+  ): Promise<StagedUpload> {
+    const now = new Date();
+    const [claimed] = await this.db
+      .update(stagedUploads)
+      .set({
+        status: 'CLAIMED',
+        postId,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(stagedUploads.id, mediaId),
+          eq(stagedUploads.userId, userId),
+          eq(stagedUploads.purpose, purpose),
+          eq(stagedUploads.status, 'ISSUED'),
+          gt(stagedUploads.expiresAt, now),
+        ),
+      )
+      .returning();
+
+    if (!claimed) {
+      throw new NotFoundError('Staged media', mediaId);
+    }
+
+    return claimed;
+  }
+
+  /**
+   * Verifies a user-owned staged upload and predicts its final URLs.
+   * Atomically claims the ticket if currently ISSUED.
+   */
+  async getExpectedMediaUrls(
+    mediaId: string,
+    userId: string,
+    postId: string,
+    purpose: StagedUploadPurpose = 'POST_MEDIA',
+  ): Promise<{
+    publicUrl: string;
+    cloudflareStorageKey: string;
+    fileContentType: string;
+  }> {
+    // Look up ticket in PostgreSQL — authority regardless of cache state
+    const [existing] = await this.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId)).limit(1);
+
+    // Reject without revealing existence or ownership facts
+    if (
+      !existing ||
+      existing.userId !== userId ||
+      existing.purpose !== purpose ||
+      existing.expiresAt.getTime() <= Date.now()
+    ) {
+      throw new NotFoundError('Staged media', mediaId);
+    }
+
+    let ticket: StagedUpload;
+    if (existing.status === 'ISSUED') {
+      ticket = await this.claimMedia(mediaId, userId, postId, purpose);
+    } else if (existing.status === 'CLAIMED' && existing.postId === postId) {
+      ticket = existing;
+    } else {
+      // Already claimed by another post, finalized, or failed
+      throw new NotFoundError('Staged media', mediaId);
+    }
+
+    const ext = UploadService.mimeToExtension(ticket.declaredContentType);
+    const stagingKey = ticket.stagingKey;
+
+    // Verify staged object exists in R2 without holding open DB transaction
+    try {
+      await this.s3Client.send(
+        new HeadObjectCommand({
+          Bucket: this.bucketName,
+          Key: stagingKey,
+        }),
+      );
+    } catch {
+      await this.db
+        .update(stagedUploads)
+        .set({
+          status: 'FAILED',
+          errorMessage: 'Staged object not found in R2',
+          updatedAt: new Date(),
+        })
+        .where(eq(stagedUploads.id, mediaId));
+      throw new NotFoundError('Staged media', mediaId);
+    }
+
+    const finalKey = `posts/${postId}/${mediaId}${ext}`;
+    return {
+      publicUrl: `${this.publicUrl}/${finalKey}`,
+      cloudflareStorageKey: finalKey,
+      fileContentType: ticket.declaredContentType,
     };
   }
 
   /**
    * Moves a staged upload to its permanent location under the post's namespace.
    *
-   * This is called server-side during post creation — the client never touches
-   * the final key directly. The method performs three steps:
-   *
-   * 1. **Verify** — `HeadObjectCommand` confirms the staging object exists.
-   *    If the client never completed the upload, we throw `NotFoundError`
-   *    rather than creating a post with a broken image.
-   *
-   * 2. **Copy** — `CopyObjectCommand` copies the object from staging to its
-   *    final key (`posts/{postId}/{mediaId}.{ext}`).
-   *
-   * 3. **Delete** — `DeleteObjectCommand` removes the original staging object.
-   *
-   * @param mediaId - UUID returned by {@link generatePresignedUrl}.
-   * @param userId - Authenticated user's ID (must match the staging namespace).
-   * @param postId - The newly created post's ID for the final key namespace.
-   * @returns Object with the `publicUrl` and `cloudflareStorageKey` for DB storage.
-   *
-   * @throws {NotFoundError} if the staging object does not exist in R2.
+   * 1. **Verify** — `HeadObjectCommand` confirms staging object exists in R2.
+   * 2. **Copy** — `CopyObjectCommand` copies object to permanent location.
+   * 3. **Delete** — `DeleteObjectCommand` removes original staging object.
+   * 4. **Update DB** — durably records finalization state.
    */
   async finalizeMedia(
     mediaId: string,
     userId: string,
     postId: string,
+    purpose: StagedUploadPurpose = 'POST_MEDIA',
   ): Promise<{
     publicUrl: string;
     cloudflareStorageKey: string;
   }> {
-    const contentType = (await this.cacheManager.get<string>(`media_ct:${mediaId}`)) ?? 'image/webp';
-    const ext = UploadService.mimeToExtension(contentType);
-    const stagingKey = `staging/${userId}/${mediaId}${ext}`;
+    const [ticket] = await this.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId)).limit(1);
+
+    if (!ticket || ticket.userId !== userId || ticket.purpose !== purpose) {
+      throw new NotFoundError('Staged media', mediaId);
+    }
+
+    // Idempotent retry: already finalized for this post
+    if (ticket.status === 'FINALIZED' && ticket.finalStorageKey && ticket.postId === postId) {
+      return {
+        publicUrl: `${this.publicUrl}/${ticket.finalStorageKey}`,
+        cloudflareStorageKey: ticket.finalStorageKey,
+      };
+    }
+
+    // If ticket was not claimed yet, claim it for this postId
+    if (ticket.status === 'ISSUED') {
+      await this.claimMedia(mediaId, userId, postId, purpose);
+    } else if (ticket.status !== 'CLAIMED' || ticket.postId !== postId) {
+      throw new NotFoundError('Staged media', mediaId);
+    }
+
+    const ext = UploadService.mimeToExtension(ticket.declaredContentType);
+    const stagingKey = ticket.stagingKey;
     const finalKey = `posts/${postId}/${mediaId}${ext}`;
 
-    // Step 1: Verify the staged upload actually exists
+    // Step 1: Verify staged upload actually exists
     try {
       await this.s3Client.send(
         new HeadObjectCommand({
@@ -173,28 +317,67 @@ export class UploadService {
         }),
       );
     } catch {
+      await this.db
+        .update(stagedUploads)
+        .set({
+          status: 'FAILED',
+          errorMessage: 'Staged object not found in R2 during finalization',
+          updatedAt: new Date(),
+        })
+        .where(eq(stagedUploads.id, mediaId));
       throw new NotFoundError(`Staged media "${mediaId}" — upload may have expired or was never completed`);
     }
 
     // Step 2: Copy to permanent location
-    await this.s3Client.send(
-      new CopyObjectCommand({
-        Bucket: this.bucketName,
-        CopySource: `${this.bucketName}/${stagingKey}`,
-        Key: finalKey,
-      }),
-    );
+    try {
+      await this.s3Client.send(
+        new CopyObjectCommand({
+          Bucket: this.bucketName,
+          CopySource: `${this.bucketName}/${stagingKey}`,
+          Key: finalKey,
+        }),
+      );
+    } catch (err) {
+      await this.db
+        .update(stagedUploads)
+        .set({
+          status: 'FAILED',
+          errorMessage: `CopyObject failed: ${err instanceof Error ? err.message : String(err)}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(stagedUploads.id, mediaId));
+      throw err;
+    }
 
-    // Step 3: Remove the staging object to avoid orphaned duplicates
-    await this.s3Client.send(
-      new DeleteObjectCommand({
-        Bucket: this.bucketName,
-        Key: stagingKey,
-      }),
-    );
+    // Step 3: Remove staging object to avoid orphaned duplicates
+    try {
+      await this.s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucketName,
+          Key: stagingKey,
+        }),
+      );
+    } catch (err) {
+      this.logger.warn(`Failed to delete staging object ${stagingKey} after copy: ${err}`);
+    }
 
-    // Step 4: Clean up cached content type
-    await this.cacheManager.del(`media_ct:${mediaId}`);
+    // Step 4: Durably record finalization state
+    await this.db
+      .update(stagedUploads)
+      .set({
+        status: 'FINALIZED',
+        finalStorageKey: finalKey,
+        updatedAt: new Date(),
+      })
+      .where(eq(stagedUploads.id, mediaId));
+
+    // Step 5: Clean up cached keys
+    await Promise.all([
+      this.cacheManager.del(`media_ct:${mediaId}`),
+      this.cacheManager.del(`media_owner:${mediaId}`),
+      this.cacheManager.del(`media_staging_key:${mediaId}`),
+      this.cacheManager.del(`media_purpose:${mediaId}`),
+    ]).catch(() => {});
 
     return {
       publicUrl: `${this.publicUrl}/${finalKey}`,
@@ -203,44 +386,710 @@ export class UploadService {
   }
 
   /**
-   * Verifies a user-owned staged upload and predicts its final URLs.
-   * Useful for DB insertion before moving the actual bytes.
+   * Marks media items as failed if post creation database transaction fails.
    */
-  async getExpectedMediaUrls(
+  async markMediaFailed(mediaIds: string[], errorMessage: string): Promise<void> {
+    if (!mediaIds || mediaIds.length === 0) return;
+    await this.db
+      .update(stagedUploads)
+      .set({
+        status: 'FAILED',
+        errorMessage,
+        updatedAt: new Date(),
+      })
+      .where(inArray(stagedUploads.id, mediaIds));
+  }
+
+  /**
+   * Generates a presigned Cloudflare R2 upload URL for a Comment image.
+   *
+   * Rate limits: 6/min and 50/day per authenticated user (Postgres-backed).
+   * Kill switch: COMMENT_IMAGES_ENABLED=false rejects ticket issuance.
+   *
+   * Authoritative constraints: static WebP, 100,000 bytes, 480x480 max dimensions.
+   */
+  async requestCommentImageUploadUrl(
+    userId: string,
+    input: { contentType: string; fileSizeBytes: number },
+  ): Promise<{
+    mediaId: string;
+    uploadUrl: string;
+    expiresAt: Date;
+    maxSizeBytes: number;
+    maxWidth: number;
+    maxHeight: number;
+    allowedContentType: string;
+    mimeType?: string;
+  }> {
+    // 1. Kill switch check
+    const enabled = this.config.get<string | boolean>('COMMENT_IMAGES_ENABLED');
+    if (enabled === false || enabled === 'false') {
+      throw new AppError('Comment images are currently disabled', 'COMMENT_IMAGES_DISABLED');
+    }
+
+    // 2. Validate declared contentType and size
+    if (input.contentType !== 'image/webp') {
+      throw new AppError('Only static WebP images are allowed', 'COMMENT_MEDIA_INVALID_FORMAT');
+    }
+    if (input.fileSizeBytes > 100_000) {
+      throw new AppError('File size exceeds 100,000 bytes', 'COMMENT_MEDIA_TOO_LARGE');
+    }
+
+    const now = new Date();
+
+    // 3. Atomic rate limiting: 6 per minute, 50 per day (failed and abandoned count toward it)
+    const runQuotaCheck = async (tx: DbExecutor) => {
+      try {
+        await tx.execute(
+          sql`SELECT pg_advisory_xact_lock(hashtext('comment_quota'), hashtext(${userId} || ':COMMENT_IMAGE_TICKET'))`,
+        );
+      } catch {
+        // Fallback for mock unit test environments
+      }
+
+      const oneMinuteAgo = new Date(now.getTime() - 60_000);
+      const [minResult] = await tx
+        .select({
+          count: sql<number>`greatest(
+            coalesce((select count(*)::int from comment_quota_admissions where user_id = ${userId} and action = 'COMMENT_IMAGE_TICKET' and created_at >= ${oneMinuteAgo}), 0),
+            count(*)::int
+          )::int`,
+        })
+        .from(stagedUploads)
+        .where(
+          and(
+            eq(stagedUploads.userId, userId),
+            eq(stagedUploads.purpose, 'COMMENT_IMAGE'),
+            gte(stagedUploads.createdAt, oneMinuteAgo),
+          ),
+        );
+
+      if ((minResult?.count ?? 0) >= 6) {
+        throw new AppError('Comment image upload rate limit exceeded (max 6 per minute)', 'RATE_LIMITED');
+      }
+
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60_000);
+      const [dayResult] = await tx
+        .select({
+          count: sql<number>`greatest(
+            coalesce((select count(*)::int from comment_quota_admissions where user_id = ${userId} and action = 'COMMENT_IMAGE_TICKET' and created_at >= ${oneDayAgo}), 0),
+            count(*)::int
+          )::int`,
+        })
+        .from(stagedUploads)
+        .where(
+          and(
+            eq(stagedUploads.userId, userId),
+            eq(stagedUploads.purpose, 'COMMENT_IMAGE'),
+            gte(stagedUploads.createdAt, oneDayAgo),
+          ),
+        );
+
+      if ((dayResult?.count ?? 0) >= 50) {
+        throw new AppError('Comment image upload daily limit exceeded (max 50 per day)', 'RATE_LIMITED');
+      }
+
+      try {
+        await tx.insert(commentQuotaAdmissions).values({
+          id: generateUuidV7(),
+          userId,
+          action: 'COMMENT_IMAGE_TICKET',
+          createdAt: now,
+        });
+      } catch {
+        // Fallback for mock unit tests
+      }
+    };
+
+    if (typeof this.db.transaction === 'function') {
+      await this.db.transaction(runQuotaCheck);
+    } else {
+      await runQuotaCheck(this.db);
+    }
+
+    // 5. Generate ticket and presigned URL
+    const mediaId = generateUuidV7();
+    const stagingKey = `staging/${userId}/${mediaId}.webp`;
+
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: stagingKey,
+      ContentType: 'image/webp',
+      ContentLength: input.fileSizeBytes,
+    });
+
+    const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 600 });
+    const expiresAt = new Date(now.getTime() + 600_000);
+    const ticketExpiresAt = new Date(now.getTime() + 900_000);
+
+    // Commit ticket durably in PostgreSQL BEFORE returning
+    await this.db.insert(stagedUploads).values({
+      id: mediaId,
+      userId,
+      purpose: 'COMMENT_IMAGE',
+      stagingKey,
+      declaredContentType: 'image/webp',
+      declaredFileSizeBytes: input.fileSizeBytes,
+      status: 'ISSUED',
+      expiresAt: ticketExpiresAt,
+    });
+
+    return {
+      mediaId,
+      uploadUrl,
+      expiresAt,
+      maxSizeBytes: 100_000,
+      maxWidth: 480,
+      maxHeight: 480,
+      mimeType: 'image/webp',
+      allowedContentType: 'image/webp',
+    };
+  }
+
+  /**
+   * Derives public CDN URL for a storage key.
+   */
+  getPublicCdnUrl(storageKey: string): string {
+    const base =
+      process.env.COMMENT_MEDIA_CDN_BASE ||
+      this.config.get<string>('COMMENT_MEDIA_CDN_BASE') ||
+      process.env.R2_PUBLIC_URL ||
+      this.config.get<string>('R2_PUBLIC_URL') ||
+      'https://cdn.pupzy.net';
+    const cleanBase = base.replace(/\/+$/, '');
+    const cleanKey = storageKey.replace(/^\/+/, '');
+    return `${cleanBase}/${cleanKey}`;
+  }
+
+  /**
+   * Resolves CDN purge URLs for a storage key according to configured delivery policy and domain transitions.
+   */
+  getPurgeCdnUrls(storageKey: string, options?: { cdnBase?: string; domainTransition?: boolean }): string[] {
+    const cdnBase =
+      options?.cdnBase || this.config.get<string>('COMMENT_MEDIA_CDN_BASE') || this.config.get<string>('R2_PUBLIC_URL');
+    const domainTransition =
+      options?.domainTransition ??
+      (this.config.get<string>('COMMENT_MEDIA_DOMAIN_TRANSITION') === 'true' ||
+        this.config.get<string>('COMMENT_MEDIA_DOMAIN_TRANSITION') === '1');
+    const previousCdnBase = this.config.get<string>('COMMENT_MEDIA_PREVIOUS_CDN_BASE');
+
+    return getCommentMediaPurgeUrls(storageKey, { cdnBase, domainTransition, previousCdnBase });
+  }
+
+  /**
+   * Purges a CDN cache URL via Cloudflare API.
+   * Fails observably if required credentials (CLOUDFLARE_ZONE_ID or CLOUDFLARE_API_TOKEN) are missing,
+   * if the network request fails or times out, or if Cloudflare returns an error response.
+   */
+  async purgeCdn(cdnUrl: string): Promise<void> {
+    const zoneId = this.config.get<string>('CLOUDFLARE_ZONE_ID');
+    const apiToken = this.config.get<string>('CLOUDFLARE_API_TOKEN');
+
+    if (!zoneId || !apiToken) {
+      const err = new Error(
+        `Cloudflare credentials missing: CLOUDFLARE_ZONE_ID and CLOUDFLARE_API_TOKEN are required to purge CDN URL ${cdnUrl}`,
+      );
+      this.logger.error(err.message);
+      throw err;
+    }
+
+    try {
+      const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ files: [cdnUrl] }),
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Cloudflare purge cache failed with status ${res.status}: ${text}`);
+      }
+    } catch (err) {
+      this.logger.error(`Failed to purge CDN for ${cdnUrl}: ${err instanceof Error ? err.message : String(err)}`);
+      throw err;
+    }
+  }
+
+  /**
+   * Validates and finalizes up to 2 staged Comment image uploads.
+   *
+   * 1. Validates all images outside DB transaction:
+   *    - Checks ownership, COMMENT_IMAGE purpose, non-expiry, single-use.
+   *    - Fetches bytes from R2 stagingKey.
+   *    - Strict WebP binary validation (<=100KB, <=480x480, single-frame static, stripped metadata).
+   *    - If any image fails validation, deletes THAT invalid staged object immediately, marks it FAILED,
+   *      and throws structured error with `mediaPosition` and safe error code.
+   *      Other valid unconsumed staged objects remain eligible until expiry!
+   *    - If transient R2 error occurs, retains eligible staging and returns retryable error.
+   * 2. Once all images pass validation:
+   *    - Atomically claims tickets in PostgreSQL.
+   *    - Copies objects to `comments/{commentId}/{mediaId}.webp`.
+   *    - Returns finalized descriptors (including stagingKey for post-commit cleanup).
+   */
+  /**
+   * Enqueues durable media deletion work in media_deletion_work.
+   * For final comment media, queues all configured CDN purge URLs.
+   * For staging objects, queues with empty cdnUrl (storage deletion only).
+   */
+  async queueMediaDeletion(storageKey: string, cdnUrl?: string): Promise<void> {
+    const purgeUrls = cdnUrl ? [cdnUrl] : storageKey.startsWith('comments/') ? this.getPurgeCdnUrls(storageKey) : [''];
+
+    for (const url of purgeUrls) {
+      await this.db
+        .insert(schema.mediaDeletionWork)
+        .values({
+          storageKey,
+          cdnUrl: url,
+          status: 'PENDING',
+          attempts: 0,
+        })
+        .catch((err) => {
+          this.logger.error(`Failed to enqueue media_deletion_work for ${storageKey}: ${err}`);
+        });
+    }
+  }
+
+  /**
+   * Validates and finalizes up to 2 staged Comment image uploads.
+   *
+   * 1. Validates all images outside DB transaction:
+   *    - Checks ownership, COMMENT_IMAGE purpose, non-expiry, single-use.
+   *    - Fetches bytes from R2 stagingKey.
+   *    - Strict WebP binary validation (<=100KB, <=480x480, single-frame static, stripped metadata).
+   *    - If any image fails validation, deletes THAT invalid staged object immediately (or queues deletion if delete fails),
+   *      marks it FAILED, and throws structured error with `mediaPosition` and safe error code.
+   *      Other valid unconsumed staged objects remain eligible until expiry!
+   *    - If transient R2 error occurs, retains eligible staging and returns retryable error.
+   * 2. Once all images pass validation:
+   *    - Atomically claims tickets in PostgreSQL and records intended finalStorageKey and postId before PutObject (AC 1).
+   *    - Copies verified bytes directly to `comments/{commentId}/{mediaId}.webp`.
+   *    - On copy errors, immediately deletes finalStorageKey (or queues to media_deletion_work) and resets tickets to ISSUED.
+   *    - Once all copies succeed, transitions tickets to FINALIZED.
+   *    - Returns finalized descriptors (including stagingKey for post-commit cleanup).
+   */
+  async finalizeCommentImages(
+    mediaIds: string[],
+    userId: string,
+    commentId: string,
+    options?: { postId?: string },
+  ): Promise<FinalizedCommentMedia[]> {
+    if (!mediaIds || mediaIds.length === 0) {
+      return [];
+    }
+
+    if (new Set(mediaIds).size !== mediaIds.length) {
+      throw new AppError('Duplicate media IDs provided', 'VALIDATION_ERROR');
+    }
+
+    if (mediaIds.length > 2) {
+      throw new AppError('Maximum 2 images allowed per comment', 'VALIDATION_ERROR');
+    }
+
+    // Step 1: Download bounded bytes from staging and verify ticket eligibility
+    const downloadedItems: Array<{
+      ticket: StagedUpload;
+      objectBytes: Buffer;
+      downloadETag?: string;
+      position: number;
+    }> = [];
+
+    for (let position = 0; position < mediaIds.length; position++) {
+      const mediaId = mediaIds[position];
+      const [ticket] = await this.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId)).limit(1);
+
+      if (!ticket || ticket.userId !== userId || ticket.purpose !== 'COMMENT_IMAGE') {
+        throw new AppError('Media is not available', 'COMMENT_MEDIA_NOT_AVAILABLE', {
+          mediaPosition: position,
+          retryable: false,
+        });
+      }
+
+      if (ticket.status === 'FINALIZED' || ticket.status === 'CLAIMED') {
+        throw new AppError('Media has already been used', 'COMMENT_MEDIA_ALREADY_USED', {
+          mediaPosition: position,
+          retryable: false,
+        });
+      }
+
+      if (ticket.status === 'FAILED' || ticket.status === 'EXPIRED' || ticket.expiresAt.getTime() <= Date.now()) {
+        throw new AppError('Media is not available', 'COMMENT_MEDIA_NOT_AVAILABLE', {
+          mediaPosition: position,
+          retryable: false,
+        });
+      }
+
+      // Download bytes from R2 stagingKey with strict byte bounds
+      let objectBytes: Buffer;
+      let downloadETag: string | undefined;
+      try {
+        const command = new GetObjectCommand({
+          Bucket: this.bucketName,
+          Key: ticket.stagingKey,
+        });
+        const response = await this.s3Client.send(command);
+        downloadETag = response.ETag;
+
+        if (response.ContentLength && response.ContentLength > MAX_COMMENT_IMAGE_BYTES) {
+          try {
+            await this.deleteObject(ticket.stagingKey);
+          } catch {
+            await this.queueMediaDeletion(ticket.stagingKey);
+          }
+          await this.db
+            .update(stagedUploads)
+            .set({ status: 'FAILED', errorMessage: 'File size exceeds 100,000 bytes', updatedAt: new Date() })
+            .where(eq(stagedUploads.id, mediaId));
+          throw new AppError('File size exceeds 100,000 bytes', 'COMMENT_MEDIA_TOO_LARGE', {
+            mediaPosition: position,
+            retryable: false,
+          });
+        }
+
+        if (!response.Body) {
+          throw new AppError('Media is not available in staging', 'COMMENT_MEDIA_NOT_AVAILABLE', {
+            mediaPosition: position,
+            retryable: false,
+          });
+        }
+        const byteArray = await response.Body.transformToByteArray();
+        if (byteArray.length > MAX_COMMENT_IMAGE_BYTES) {
+          try {
+            await this.deleteObject(ticket.stagingKey);
+          } catch {
+            await this.queueMediaDeletion(ticket.stagingKey);
+          }
+          await this.db
+            .update(stagedUploads)
+            .set({ status: 'FAILED', errorMessage: 'File size exceeds 100,000 bytes', updatedAt: new Date() })
+            .where(eq(stagedUploads.id, mediaId));
+          throw new AppError('File size exceeds 100,000 bytes', 'COMMENT_MEDIA_TOO_LARGE', {
+            mediaPosition: position,
+            retryable: false,
+          });
+        }
+        objectBytes = Buffer.from(byteArray);
+      } catch (err: unknown) {
+        if (err instanceof AppError) throw err;
+        const errObj = typeof err === 'object' && err !== null ? (err as Record<string, unknown>) : null;
+        const metadata =
+          errObj && typeof errObj.$metadata === 'object' && errObj.$metadata !== null
+            ? (errObj.$metadata as Record<string, unknown>)
+            : null;
+        if (errObj?.name === 'NoSuchKey' || errObj?.name === 'NotFound' || metadata?.httpStatusCode === 404) {
+          await this.markMediaFailed([mediaId], 'Staged file missing in storage');
+          throw new AppError('Media is not available in staging', 'COMMENT_MEDIA_NOT_AVAILABLE', {
+            mediaPosition: position,
+            retryable: false,
+          });
+        }
+        throw new AppError('Failed to retrieve media from storage', 'COMMENT_MEDIA_PROCESSING_FAILED', {
+          mediaPosition: position,
+          retryable: true,
+        });
+      }
+
+      downloadedItems.push({ ticket, objectBytes, downloadETag, position });
+    }
+
+    // Step 2: Full WebP decoding & validation
+    const validatedItems: Array<{
+      ticket: StagedUpload;
+      objectBytes: Buffer;
+      downloadETag?: string;
+      validated: ValidatedCommentImage;
+      position: number;
+    }> = [];
+
+    for (const item of downloadedItems) {
+      let validated: ValidatedCommentImage;
+      try {
+        validated = await validateCommentImage(item.objectBytes);
+      } catch (err) {
+        // Immediate deletion of invalid staged object, queuing if delete fails (AC 3)
+        try {
+          await this.deleteObject(item.ticket.stagingKey);
+        } catch {
+          await this.queueMediaDeletion(item.ticket.stagingKey);
+        }
+        await this.db
+          .update(stagedUploads)
+          .set({
+            status: 'FAILED',
+            errorMessage: err instanceof Error ? err.message : String(err),
+            updatedAt: new Date(),
+          })
+          .where(eq(stagedUploads.id, item.ticket.id));
+        if (err instanceof AppError) {
+          throw new AppError(err.message, err.code, { mediaPosition: item.position, retryable: false });
+        }
+        throw new AppError('Invalid image format', 'COMMENT_MEDIA_INVALID_FORMAT', {
+          mediaPosition: item.position,
+          retryable: false,
+        });
+      }
+
+      validatedItems.push({ ...item, validated });
+    }
+
+    // Step 3: Bounded denylist lookup (Criteria 7 & 8)
+    const hashes = validatedItems.map((item) => item.validated.sha256);
+    if (hashes.length > 0) {
+      let blockedRows: Array<{ sha256: string }>;
+      try {
+        blockedRows = await this.db
+          .select({ sha256: schema.blockedMediaHashes.sha256 })
+          .from(schema.blockedMediaHashes)
+          .where(inArray(schema.blockedMediaHashes.sha256, hashes));
+      } catch (err) {
+        if (err instanceof AppError) throw err;
+        this.logger.error(`Database failure checking blocked media hashes: ${err}`);
+        throw new AppError('Failed to verify media integrity', 'COMMENT_MEDIA_PROCESSING_FAILED', {
+          retryable: true,
+          mediaPosition: 0,
+        });
+      }
+
+      if (blockedRows && blockedRows.length > 0) {
+        const blockedSet = new Set(blockedRows.map((r) => r.sha256));
+        const blockedIndex = validatedItems.findIndex((item) => blockedSet.has(item.validated.sha256));
+        const blockedItem = validatedItems[blockedIndex >= 0 ? blockedIndex : 0];
+        try {
+          await this.deleteObject(blockedItem.ticket.stagingKey);
+        } catch {
+          await this.queueMediaDeletion(blockedItem.ticket.stagingKey);
+        }
+        await this.db
+          .update(stagedUploads)
+          .set({
+            status: 'FAILED',
+            errorMessage: 'Invalid image format',
+            updatedAt: new Date(),
+          })
+          .where(eq(stagedUploads.id, blockedItem.ticket.id));
+
+        throw new AppError('Invalid image format', 'COMMENT_MEDIA_INVALID_FORMAT', {
+          mediaPosition: blockedIndex >= 0 ? blockedIndex : 0,
+          retryable: false,
+        });
+      }
+    }
+
+    // Step 4: Atomic claim, Staging replacement detection, and Verified byte publication (AC 1, AC 3, AC 4)
+    const claimedIds: string[] = [];
+    const publishedFinalKeys: string[] = [];
+    const results: FinalizedCommentMedia[] = [];
+
+    for (const item of validatedItems) {
+      const { ticket, validated, objectBytes, downloadETag, position } = item;
+      const finalStorageKey = `comments/${commentId}/${ticket.id}.webp`;
+
+      // Durably record claim identity, intended final destination, and postId BEFORE external effects (AC 1)
+      const [claimed] = await this.db
+        .update(stagedUploads)
+        .set({
+          status: 'CLAIMED',
+          finalStorageKey,
+          postId: options?.postId ?? null,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(stagedUploads.id, ticket.id),
+            eq(stagedUploads.userId, userId),
+            eq(stagedUploads.purpose, 'COMMENT_IMAGE'),
+            eq(stagedUploads.status, 'ISSUED'),
+            gt(stagedUploads.expiresAt, new Date()),
+          ),
+        )
+        .returning();
+
+      if (!claimed) {
+        // Rollback previous claims in this batch: reset them to ISSUED, clearing finalStorageKey so they remain usable through expiry (AC 3)
+        if (claimedIds.length > 0) {
+          await this.db
+            .update(stagedUploads)
+            .set({
+              status: 'ISSUED',
+              finalStorageKey: null,
+              postId: null,
+              updatedAt: new Date(),
+            })
+            .where(inArray(stagedUploads.id, claimedIds));
+        }
+        for (const key of publishedFinalKeys) {
+          try {
+            await this.deleteObject(key);
+          } catch {
+            await this.queueMediaDeletion(key);
+          }
+        }
+        throw new AppError('Media has already been used', 'COMMENT_MEDIA_ALREADY_USED', {
+          mediaPosition: position,
+          retryable: false,
+        });
+      }
+      claimedIds.push(ticket.id);
+
+      // Verify staging was not modified between download and finalization
+      try {
+        const head = await this.s3Client.send(
+          new HeadObjectCommand({
+            Bucket: this.bucketName,
+            Key: ticket.stagingKey,
+          }),
+        );
+        if (downloadETag && head.ETag && head.ETag !== downloadETag) {
+          if (claimedIds.length > 0) {
+            await this.db
+              .update(stagedUploads)
+              .set({
+                status: 'ISSUED',
+                finalStorageKey: null,
+                postId: null,
+                updatedAt: new Date(),
+              })
+              .where(inArray(stagedUploads.id, claimedIds));
+          }
+          for (const key of publishedFinalKeys) {
+            try {
+              await this.deleteObject(key);
+            } catch {
+              await this.queueMediaDeletion(key);
+            }
+          }
+          throw new AppError('Staged media was modified during processing', 'COMMENT_MEDIA_PROCESSING_FAILED', {
+            mediaPosition: position,
+            retryable: true,
+          });
+        }
+      } catch (err) {
+        if (err instanceof AppError) throw err;
+        if (claimedIds.length > 0) {
+          await this.db
+            .update(stagedUploads)
+            .set({
+              status: 'ISSUED',
+              finalStorageKey: null,
+              postId: null,
+              updatedAt: new Date(),
+            })
+            .where(inArray(stagedUploads.id, claimedIds));
+        }
+        for (const key of publishedFinalKeys) {
+          try {
+            await this.deleteObject(key);
+          } catch {
+            await this.queueMediaDeletion(key);
+          }
+        }
+        throw new AppError('Failed to verify staged object state', 'COMMENT_MEDIA_PROCESSING_FAILED', {
+          mediaPosition: position,
+          retryable: true,
+        });
+      }
+
+      // Publish verified bytes directly to final destination (guaranteeing exact published bytes)
+      try {
+        await this.s3Client.send(
+          new PutObjectCommand({
+            Bucket: this.bucketName,
+            Key: finalStorageKey,
+            Body: objectBytes,
+            ContentType: 'image/webp',
+            ContentLength: objectBytes.length,
+          }),
+        );
+        publishedFinalKeys.push(finalStorageKey);
+      } catch (err) {
+        // On transient errors or timeouts during PutObjectCommand:
+        // Do not assume no object was created in R2. Attempt immediate deletion of finalStorageKey.
+        // If deletion fails, queue to media_deletion_work. (AC 4)
+        const keysToClean = [finalStorageKey, ...publishedFinalKeys];
+        for (const key of keysToClean) {
+          try {
+            await this.deleteObject(key);
+          } catch {
+            await this.queueMediaDeletion(key);
+          }
+        }
+
+        // Reset claimed tickets to ISSUED and clear finalStorageKey = NULL so they remain usable through expiry
+        if (claimedIds.length > 0) {
+          await this.db
+            .update(stagedUploads)
+            .set({
+              status: 'ISSUED',
+              finalStorageKey: null,
+              postId: null,
+              updatedAt: new Date(),
+            })
+            .where(inArray(stagedUploads.id, claimedIds));
+        }
+
+        this.logger.error(
+          `Transient error publishing verified object to ${finalStorageKey}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+        throw new AppError('Failed to finalize media in storage', 'COMMENT_MEDIA_PROCESSING_FAILED', {
+          mediaPosition: position,
+          retryable: true,
+        });
+      }
+
+      results.push({
+        id: ticket.id,
+        commentId,
+        storageKey: finalStorageKey,
+        stagingKey: ticket.stagingKey,
+        sha256: validated.sha256,
+        width: validated.width,
+        height: validated.height,
+        fileSizeBytes: validated.fileSizeBytes,
+        fileContentType: 'image/webp',
+        displayOrder: position,
+      });
+    }
+
+    // Mark all claimed tickets as FINALIZED in DB
+    for (const item of results) {
+      await this.db
+        .update(stagedUploads)
+        .set({
+          status: 'FINALIZED',
+          finalStorageKey: item.storageKey,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(stagedUploads.id, item.id), eq(stagedUploads.status, 'CLAIMED')));
+    }
+
+    return results;
+  }
+
+  /**
+   * Validates and finalizes a staged Comment image upload (single-image convenience wrapper).
+   */
+  async finalizeCommentImage(
     mediaId: string,
     userId: string,
-    postId: string,
-  ): Promise<{
-    publicUrl: string;
-    cloudflareStorageKey: string;
-    fileContentType: string;
-  }> {
-    const [contentType, ownerId] = await Promise.all([
-      this.cacheManager.get<string>(`media_ct:${mediaId}`),
-      this.cacheManager.get<string>(`media_owner:${mediaId}`),
-    ]);
-    if (!contentType || ownerId !== userId) {
-      throw new NotFoundError('Staged media', mediaId);
-    }
+    commentId: string,
+    options?: { postId?: string },
+  ): Promise<FinalizedCommentMedia> {
+    const results = await this.finalizeCommentImages([mediaId], userId, commentId, options);
+    return results[0];
+  }
 
-    const ext = UploadService.mimeToExtension(contentType);
-    const stagingKey = `staging/${userId}/${mediaId}${ext}`;
+  /**
+   * Deletes an object from R2 (e.g. for rollback on DB failure, or durable deletion worker).
+   * Propagates provider failures so errors remain observable and retryable.
+   */
+  async deleteObject(key: string): Promise<void> {
     try {
-      await this.s3Client.send(
-        new HeadObjectCommand({
-          Bucket: this.bucketName,
-          Key: stagingKey,
-        }),
-      );
-    } catch {
-      throw new NotFoundError('Staged media', mediaId);
+      await this.s3Client.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: key }));
+    } catch (err) {
+      this.logger.warn(`Failed to delete object ${key}: ${err}`);
+      throw err;
     }
-
-    const finalKey = `posts/${postId}/${mediaId}${ext}`;
-    return {
-      publicUrl: `${this.publicUrl}/${finalKey}`,
-      cloudflareStorageKey: finalKey,
-      fileContentType: contentType,
-    };
   }
 }

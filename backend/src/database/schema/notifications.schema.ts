@@ -2,6 +2,8 @@ import { sql } from 'drizzle-orm';
 import { pgTable, uuid, varchar, text, boolean, timestamp, index } from 'drizzle-orm/pg-core';
 import { users } from './users.schema';
 import { posts } from './posts.schema';
+import { comments } from './comments.schema';
+import { discussionNotificationEvents } from './discussion-notification-events.schema';
 import { contactRequests } from './contact-requests.schema';
 import { adoptionApplications } from './adoption-applications.schema';
 import { notificationTypeEnum } from './enums';
@@ -63,6 +65,22 @@ export const notifications = pgTable(
     }),
 
     /**
+     * Optional link to the related comment or reply.
+     * SET NULL if the comment is later deleted.
+     */
+    relatedCommentId: uuid('related_comment_id').references(() => comments.id, {
+      onDelete: 'set null',
+    }),
+
+    /**
+     * Set only for durable discussion notifications. The partial unique index
+     * makes repeated outbox delivery attempts create at most one inbox row.
+     */
+    discussionEventId: uuid('discussion_event_id').references(() => discussionNotificationEvents.id, {
+      onDelete: 'set null',
+    }),
+
+    /**
      * Optional link to the related contact request.
      * SET NULL if the contact request is later deleted.
      */
@@ -92,6 +110,8 @@ export const notifications = pgTable(
     recipientTimeIdx: index('idx_notifications_recipient_time').on(table.recipientId, table.createdAt),
 
     relatedPostIdx: index('idx_notifications_related_post').on(table.relatedPostId),
+    relatedCommentIdx: index('idx_notifications_related_comment').on(table.relatedCommentId),
+    discussionEventIdx: index('uq_notifications_discussion_event_id').on(table.discussionEventId),
     relatedContactRequestIdx: index('idx_notifications_related_contact_request').on(table.relatedContactRequestId),
     relatedApplicationIdx: index('idx_notifications_related_application').on(table.relatedApplicationId),
 

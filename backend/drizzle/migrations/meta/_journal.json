@@ -141,6 +141,111 @@
       "when": 1788718400000,
       "tag": "0019_fix_audit_fk_set_null",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1788804800000,
+      "tag": "0020_add_staged_uploads",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1788891200000,
+      "tag": "0021_add_comments_and_post_comment_count",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1788977600000,
+      "tag": "0022_add_reply_count_to_comments",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1789064000000,
+      "tag": "0023_add_comment_boosts",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1789150400000,
+      "tag": "0024_add_post_pins",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1789236800000,
+      "tag": "0025_add_comment_media",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1789323200000,
+      "tag": "0026_add_media_deletion_work",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1789409600000,
+      "tag": "0027_add_comment_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1789496000000,
+      "tag": "0028_add_comment_moderation_and_blocked_hashes",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1789582400000,
+      "tag": "0029_add_discussion_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1789668800000,
+      "tag": "0030_drop_staged_uploads_post_id_fk",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1789755200000,
+      "tag": "0031_add_reviewed_at_to_comment_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1789841600000,
+      "tag": "0032_add_comment_quota_admissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1789928000000,
+      "tag": "0033_add_durable_user_ban_cascades",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1790014400000,
+      "tag": "0034_add_discussion_notification_outbox",
+      "breakpoints": true
     }
   ]
 }

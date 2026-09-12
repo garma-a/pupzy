@@ -1,5 +1,5 @@
 import DataLoader from 'dataloader';
-import type { City, User, PostMedia } from '../../database/schema';
+import type { City, User, PostMedia, CommentMedia } from '../../database/schema';
 
 /**
  * DataLoaders bag — one instance per GraphQL request.
@@ -44,4 +44,24 @@ export interface DataLoaders {
    * Created per-request using the authenticated user's ID.
    */
   savedByMe: DataLoader<string, boolean>;
+
+  /**
+   * Batch-checks if the current viewer has boosted each comment or reply.
+   * Returns `false` for all comments if the viewer is not authenticated.
+   * Created per-request using the authenticated user's ID.
+   */
+  commentBoostedByMe?: DataLoader<string, boolean>;
+
+  /**
+   * Batch-loads the active pinned comment ID for each post.
+   * Returns `null` if the post has no active pinned comment.
+   */
+  pinnedCommentIdByPostId?: DataLoader<string, string | null>;
+
+  /**
+   * Batch-loads CommentMedia rows grouped by comment UUID.
+   * Returns an ordered array (by display_order) for each comment.
+   * Returns an empty array for comments with no media.
+   */
+  commentMediaByCommentId?: DataLoader<string, CommentMedia[]>;
 }

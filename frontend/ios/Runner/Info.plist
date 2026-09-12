@@ -45,5 +45,21 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Permission usage descriptions (required by App Store Review) -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Pupzy uses your location to show nearby rescue alerts, lost &amp; found pets, adoption listings, and vet clinics around you.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Pupzy needs camera access so you can take photos of pets for your listings and comments.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Pupzy needs photo library access so you can attach pet photos to your listings and comments.</string>
+	<!-- Schemes checked by url_launcher / canLaunchUrl -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>http</string>
+		<string>tel</string>
+		<string>mailto</string>
+		<string>whatsapp</string>
+	</array>
 </dict>
 </plist>

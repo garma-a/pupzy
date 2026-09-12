@@ -27,6 +27,10 @@ export const ENUMS = {
     'POST_REMOVED_BY_ADMIN',
     'POST_INACTIVITY_NUDGE',
     'SYSTEM_ANNOUNCEMENT',
+    'NEW_COMMENT',
+    'NEW_REPLY',
+    'COMMENT_BOOSTED',
+    'COMMENT_PINNED',
   ],
   vetClinicSource: ['OSM', 'GOOGLE_PLACES', 'MANUAL'],
   cityLifecycleStatus: ['OFFICIAL', 'LEGACY', 'RETIRED'],
@@ -38,8 +42,11 @@ export const ENUMS = {
     'POST_RESTORED',
     'USER_BANNED',
     'USER_UNBANNED',
+    'COMMENT_RESTORED',
+    'COMMENT_REMOVED',
   ],
-  moderationTargetType: ['POST', 'USER'],
+  moderationTargetType: ['POST', 'USER', 'COMMENT'],
+  commentStatus: ['ACTIVE', 'IMAGE_HIDDEN', 'HIDDEN', 'DELETED', 'REMOVED'],
 };
 
 export function toAvailableValues(values) {

@@ -45,6 +45,7 @@ export * from './adoption-applications.schema';
 // Moderation & notifications
 export * from './post-reports.schema';
 export * from './notifications.schema';
+export * from './discussion-notification-events.schema';
 
 // Alert system
 export * from './saved-searches.schema';
@@ -55,3 +56,17 @@ export * from './vet-clinic-location-audits.schema';
 
 // Durable address search cache for OSM Nominatim
 export * from './address-search-cache.schema';
+
+// Staged uploads — durable authority for media upload tickets
+export * from './staged-uploads.schema';
+
+// Comments & Discussion
+export * from './comments.schema';
+export * from './comment-idempotency.schema';
+export * from './comment-boosts.schema';
+export * from './post-pins.schema';
+export * from './comment-media.schema';
+export * from './media-deletion-work.schema';
+export * from './comment-reports.schema';
+export * from './blocked-media-hashes.schema';
+export * from './comment-quota-admissions.schema';

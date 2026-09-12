@@ -9,9 +9,11 @@ export const moderationActionTypeEnum = pgEnum('moderation_action_type', [
   'POST_RESTORED',
   'USER_BANNED',
   'USER_UNBANNED',
+  'COMMENT_RESTORED',
+  'COMMENT_REMOVED',
 ]);
 
-export const moderationTargetTypeEnum = pgEnum('moderation_target_type', ['POST', 'USER']);
+export const moderationTargetTypeEnum = pgEnum('moderation_target_type', ['POST', 'USER', 'COMMENT']);
 
 /**
  * Append-only audit log. targetId is polymorphic and deliberately has no

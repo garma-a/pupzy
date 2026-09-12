@@ -80,28 +80,36 @@ export class MatingService {
       effectiveScore: 0.0,
     };
 
-    const post = await this.matingRepository.createMatingPost(
-      baseData,
-      {
-        petName: input.petName,
-        species: input.species,
-        breed: input.breed,
-        gender: input.gender,
-        ageValue: input.ageValue,
-        ageUnit: input.ageUnit,
-        isPurebred: input.isPurebred,
-        hasPedigreeCertificate: input.hasPedigreeCertificate,
-        vaccinated: input.vaccinated,
-        dewormed: input.dewormed,
-        termsSummary: input.termsSummary,
-        matingConditions: input.matingConditions,
-      },
-      mediaRows,
-    );
+    await this.finalizeMedia(input.mediaIds, userId, postId);
 
-    // AFTER the transaction commits — fire and forget, moves R2 objects from
-    // staging/ to posts/{postId}/. See plan §2.1 for why this order matters.
-    this.runFinalizeMediaAsync(input.mediaIds, userId, postId);
+    let post: Post;
+    try {
+      post = await this.matingRepository.createMatingPost(
+        baseData,
+        {
+          petName: input.petName,
+          species: input.species,
+          breed: input.breed,
+          gender: input.gender,
+          ageValue: input.ageValue,
+          ageUnit: input.ageUnit,
+          isPurebred: input.isPurebred,
+          hasPedigreeCertificate: input.hasPedigreeCertificate,
+          vaccinated: input.vaccinated,
+          dewormed: input.dewormed,
+          termsSummary: input.termsSummary,
+          matingConditions: input.matingConditions,
+        },
+        mediaRows,
+      );
+    } catch (err) {
+      if (input.mediaIds && input.mediaIds.length > 0) {
+        await this.uploadService
+          .markMediaFailed(input.mediaIds, 'Post creation database transaction failed')
+          .catch(() => {});
+      }
+      throw err;
+    }
 
     this.logger.log({ postId: post.id, userId }, 'MATING post created');
     return post;
@@ -155,19 +163,15 @@ export class MatingService {
     if (mediaIds.length > 4) {
       throw new ValidationError('Maximum 4 images allowed per post');
     }
+    if (new Set(mediaIds).size !== mediaIds.length) {
+      throw new ValidationError('Duplicate media IDs are not allowed');
+    }
     return Promise.all(mediaIds.map((mediaId) => this.uploadService.getExpectedMediaUrls(mediaId, userId, postId)));
   }
 
-  private runFinalizeMediaAsync(mediaIds: string[] | undefined, userId: string, postId: string): void {
+  private async finalizeMedia(mediaIds: string[] | undefined, userId: string, postId: string): Promise<void> {
     if (!mediaIds || mediaIds.length === 0) return;
-    void Promise.allSettled(mediaIds.map((mediaId) => this.uploadService.finalizeMedia(mediaId, userId, postId))).then(
-      (results) => {
-        const failures = results.filter((r) => r.status === 'rejected');
-        if (failures.length > 0) {
-          this.logger.error(`Failed to finalize ${failures.length} media items for post ${postId}`);
-        }
-      },
-    );
+    await Promise.all(mediaIds.map((mediaId) => this.uploadService.finalizeMedia(mediaId, userId, postId)));
   }
 
   // ── Cursor helpers (duplicated from ContactsService, incl. AUD-06 hardening —

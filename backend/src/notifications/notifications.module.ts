@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { NotificationsResolver } from './notifications.resolver';
 import { NotificationsService } from './notifications.service';
 import { NotificationsRepository } from './notifications.repository';
+import { DiscussionNotificationProcessor } from './discussion-notification.processor';
 
 /**
  * NotificationsModule — owns the notification lifecycle.
@@ -14,7 +15,7 @@ import { NotificationsRepository } from './notifications.repository';
  * - `DatabaseModule` — global, provides DATABASE_TOKEN for Drizzle.
  */
 @Module({
-  providers: [NotificationsResolver, NotificationsService, NotificationsRepository],
+  providers: [NotificationsResolver, NotificationsService, NotificationsRepository, DiscussionNotificationProcessor],
   exports: [NotificationsService],
 })
 export class NotificationsModule {}

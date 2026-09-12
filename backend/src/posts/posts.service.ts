@@ -116,6 +116,7 @@ export class PostsService {
     const city = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
     const mediaRows = await this.prepareMedia(input.mediaIds, creatorId, postId);
+    await this.finalizeMedia(input.mediaIds, creatorId, postId);
 
     const urgency = computeRescueUrgency({
       isLifeThreatening: input.isLifeThreatening,
@@ -141,21 +142,30 @@ export class PostsService {
       effectiveScore: 0.0,
     };
 
-    const post = await this.postsRepository.createRescuePost(
-      baseData,
-      {
-        species: input.species,
-        conditionSummary: input.conditionSummary,
-        reporterRole: input.reporterRole,
-        isLifeThreatening: input.isLifeThreatening,
-        hasVisibleSeriousInjury: input.hasVisibleSeriousInjury,
-        isInDangerousLocation: input.isInDangerousLocation,
-        canAnimalMoveOrEscape: input.canAnimalMoveOrEscape,
-      },
-      mediaRows,
-    );
+    let post: Post;
+    try {
+      post = await this.postsRepository.createRescuePost(
+        baseData,
+        {
+          species: input.species,
+          conditionSummary: input.conditionSummary,
+          reporterRole: input.reporterRole,
+          isLifeThreatening: input.isLifeThreatening,
+          hasVisibleSeriousInjury: input.hasVisibleSeriousInjury,
+          isInDangerousLocation: input.isInDangerousLocation,
+          canAnimalMoveOrEscape: input.canAnimalMoveOrEscape,
+        },
+        mediaRows,
+      );
+    } catch (err) {
+      if (input.mediaIds && input.mediaIds.length > 0) {
+        await this.uploadService
+          .markMediaFailed(input.mediaIds, 'Post creation database transaction failed')
+          .catch(() => {});
+      }
+      throw err;
+    }
 
-    this.runFinalizeMediaAsync(input.mediaIds, creatorId, postId);
     // Bust stale user cache — DB trigger updated post counts
     this.usersService.invalidateUserCacheById(creatorId).catch(() => {});
     return post;
@@ -168,6 +178,7 @@ export class PostsService {
     const city = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
     const mediaRows = await this.prepareMedia(input.mediaIds, creatorId, postId);
+    await this.finalizeMedia(input.mediaIds, creatorId, postId);
 
     const urgency =
       input.reportType === 'LOST_PET'
@@ -197,28 +208,37 @@ export class PostsService {
       effectiveScore: 0.0,
     };
 
-    const post = await this.postsRepository.createLostPost(
-      baseData,
-      {
-        reportType: input.reportType,
-        species: input.species,
-        breed: input.breed,
-        colorAndMarkings: input.colorAndMarkings,
-        hasCollarWithIdentificationTag: input.hasCollarWithIdentificationTag,
-        circumstances: input.circumstances,
-        petName: input.petName,
-        dateLastSeen: input.dateLastSeen,
-        hasMedicalNeeds: input.hasMedicalNeeds,
-        isElderlyOrVeryYoung: input.isElderlyOrVeryYoung,
-        lastSeenNearHazard: input.lastSeenNearHazard,
-        currentCondition: input.currentCondition,
-        isCurrentlySafeWithReporter: input.isCurrentlySafeWithReporter,
-        dateFound: input.dateFound,
-      },
-      mediaRows,
-    );
+    let post: Post;
+    try {
+      post = await this.postsRepository.createLostPost(
+        baseData,
+        {
+          reportType: input.reportType,
+          species: input.species,
+          breed: input.breed,
+          colorAndMarkings: input.colorAndMarkings,
+          hasCollarWithIdentificationTag: input.hasCollarWithIdentificationTag,
+          circumstances: input.circumstances,
+          petName: input.petName,
+          dateLastSeen: input.dateLastSeen,
+          hasMedicalNeeds: input.hasMedicalNeeds,
+          isElderlyOrVeryYoung: input.isElderlyOrVeryYoung,
+          lastSeenNearHazard: input.lastSeenNearHazard,
+          currentCondition: input.currentCondition,
+          isCurrentlySafeWithReporter: input.isCurrentlySafeWithReporter,
+          dateFound: input.dateFound,
+        },
+        mediaRows,
+      );
+    } catch (err) {
+      if (input.mediaIds && input.mediaIds.length > 0) {
+        await this.uploadService
+          .markMediaFailed(input.mediaIds, 'Post creation database transaction failed')
+          .catch(() => {});
+      }
+      throw err;
+    }
 
-    this.runFinalizeMediaAsync(input.mediaIds, creatorId, postId);
     // Bust stale user cache — DB trigger updated post counts
     this.usersService.invalidateUserCacheById(creatorId).catch(() => {});
     return post;
@@ -231,6 +251,7 @@ export class PostsService {
     const city = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
     const mediaRows = await this.prepareMedia(input.mediaIds, creatorId, postId);
+    await this.finalizeMedia(input.mediaIds, creatorId, postId);
 
     const baseData: NewPost = {
       id: postId,
@@ -248,28 +269,37 @@ export class PostsService {
       effectiveScore: 0.0,
     };
 
-    const post = await this.postsRepository.createAdoptionPost(
-      baseData,
-      {
-        petName: input.petName,
-        species: input.species,
-        breed: input.breed,
-        ageValue: input.ageValue,
-        ageUnit: input.ageUnit,
-        gender: input.gender,
-        vaccinated: input.vaccinated,
-        neutered: input.neutered,
-        healthNotes: input.healthNotes,
-        personalityTags: input.personalityTags ?? [],
-        spaceRequirement: input.spaceRequirement,
-        priorPetExperienceRequired: input.priorPetExperienceRequired,
-        additionalRequirements: input.additionalRequirements,
-        currentlyWith: input.currentlyWith,
-      },
-      mediaRows,
-    );
+    let post: Post;
+    try {
+      post = await this.postsRepository.createAdoptionPost(
+        baseData,
+        {
+          petName: input.petName,
+          species: input.species,
+          breed: input.breed,
+          ageValue: input.ageValue,
+          ageUnit: input.ageUnit,
+          gender: input.gender,
+          vaccinated: input.vaccinated,
+          neutered: input.neutered,
+          healthNotes: input.healthNotes,
+          personalityTags: input.personalityTags ?? [],
+          spaceRequirement: input.spaceRequirement,
+          priorPetExperienceRequired: input.priorPetExperienceRequired,
+          additionalRequirements: input.additionalRequirements,
+          currentlyWith: input.currentlyWith,
+        },
+        mediaRows,
+      );
+    } catch (err) {
+      if (input.mediaIds && input.mediaIds.length > 0) {
+        await this.uploadService
+          .markMediaFailed(input.mediaIds, 'Post creation database transaction failed')
+          .catch(() => {});
+      }
+      throw err;
+    }
 
-    this.runFinalizeMediaAsync(input.mediaIds, creatorId, postId);
     // Bust stale user cache — DB trigger updated post counts
     this.usersService.invalidateUserCacheById(creatorId).catch(() => {});
     return post;
@@ -282,6 +312,7 @@ export class PostsService {
     const city = await this.resolveCity(input.cityId, input.coordinates);
     const moderationStatus = this.checkModeration(input.title, input.description);
     const mediaRows = await this.prepareMedia(input.mediaIds, creatorId, postId);
+    await this.finalizeMedia(input.mediaIds, creatorId, postId);
 
     const baseData: NewPost = {
       id: postId,
@@ -300,20 +331,29 @@ export class PostsService {
       effectiveScore: 0.0,
     };
 
-    const post = await this.postsRepository.createProductPost(
-      baseData,
-      {
-        category: input.category,
-        condition: input.condition,
-        priceAmount: input.isFree ? undefined : String(input.priceAmount),
-        priceCurrency: input.priceCurrency ?? 'EGP',
-        isFree: input.isFree,
-        openToOffers: input.openToOffers ?? false,
-      },
-      mediaRows,
-    );
+    let post: Post;
+    try {
+      post = await this.postsRepository.createProductPost(
+        baseData,
+        {
+          category: input.category,
+          condition: input.condition,
+          priceAmount: input.isFree ? undefined : String(input.priceAmount),
+          priceCurrency: input.priceCurrency ?? 'EGP',
+          isFree: input.isFree,
+          openToOffers: input.openToOffers ?? false,
+        },
+        mediaRows,
+      );
+    } catch (err) {
+      if (input.mediaIds && input.mediaIds.length > 0) {
+        await this.uploadService
+          .markMediaFailed(input.mediaIds, 'Post creation database transaction failed')
+          .catch(() => {});
+      }
+      throw err;
+    }
 
-    this.runFinalizeMediaAsync(input.mediaIds, creatorId, postId);
     // Bust stale user cache — DB trigger updated post counts
     this.usersService.invalidateUserCacheById(creatorId).catch(() => {});
     return post;
@@ -747,24 +787,18 @@ export class PostsService {
     if (mediaIds.length > 4) {
       throw new ValidationError('Maximum 4 images allowed per post');
     }
+    if (new Set(mediaIds).size !== mediaIds.length) {
+      throw new ValidationError('Duplicate media IDs are not allowed');
+    }
     return Promise.all(mediaIds.map((mediaId) => this.uploadService.getExpectedMediaUrls(mediaId, userId, postId)));
   }
 
   /**
-   * Runs the actual R2 finalization AFTER the database transaction succeeds.
-   * If this fails, the post remains but the images will appear broken to the client.
-   * This is much safer than moving images before the DB transaction and risking orphans.
+   * Finalizes media before database commit so no broken post can be returned.
+   * R2 network work runs outside any open PostgreSQL transaction.
    */
-  private runFinalizeMediaAsync(mediaIds: string[] | undefined, userId: string, postId: string): void {
+  private async finalizeMedia(mediaIds: string[] | undefined, userId: string, postId: string): Promise<void> {
     if (!mediaIds || mediaIds.length === 0) return;
-
-    void Promise.allSettled(mediaIds.map((mediaId) => this.uploadService.finalizeMedia(mediaId, userId, postId))).then(
-      (results) => {
-        const failures = results.filter((r) => r.status === 'rejected');
-        if (failures.length > 0) {
-          this.logger.error(`Failed to finalize ${failures.length} media items for post ${postId}`);
-        }
-      },
-    );
+    await Promise.all(mediaIds.map((mediaId) => this.uploadService.finalizeMedia(mediaId, userId, postId)));
   }
 }

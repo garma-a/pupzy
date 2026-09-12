@@ -7,6 +7,7 @@ import { PostsResolver } from './posts.resolver';
 import { PostsService } from './posts.service';
 import { PostsRepository } from './posts.repository';
 import { ViewFlushCron } from './view-flush.cron';
+import { UserBanPostCascadeProcessor } from './user-ban-post-cascade.processor';
 
 /**
  * PostsModule — encapsulates all post CRUD, feed queries, and view tracking.
@@ -25,7 +26,7 @@ import { ViewFlushCron } from './view-flush.cron';
  */
 @Module({
   imports: [UploadModule, CitiesModule, UsersModule, NotificationsModule],
-  providers: [PostsResolver, PostsService, PostsRepository, ViewFlushCron],
+  providers: [PostsResolver, PostsService, PostsRepository, ViewFlushCron, UserBanPostCascadeProcessor],
   exports: [PostsService, PostsRepository, ViewFlushCron],
 })
 export class PostsModule {}

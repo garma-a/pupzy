@@ -12,6 +12,7 @@ import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/animated_boost_chip.dart';
 import '../widgets/animated_favorite_icon.dart';
+import '../widgets/comments_sheet.dart';
 import '../widgets/contact_request_sheet.dart';
 import '../widgets/contact_requests_owner_section.dart';
 import '../widgets/image_with_fallback.dart';
@@ -367,6 +368,29 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                             ),
                           ],
                           const Spacer(),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(AppRadius.chip),
+                              onTap: () => showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) => CommentsSheet(postId: post.id, isPostOwner: _isOwner),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.mode_comment_outlined, size: 18, color: AppColors.textSecondary),
+                                    const SizedBox(width: 4),
+                                    Text('${post.commentCount}', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                           Padding(
                             padding: const EdgeInsets.all(8),
                             child: AnimatedFavoriteIcon(

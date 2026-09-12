@@ -10,6 +10,7 @@ import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
 import '../widgets/animated_favorite_icon.dart';
+import '../widgets/comments_sheet.dart';
 import '../widgets/pet_carousel.dart';
 import '../widgets/skeleton_loader.dart';
 
@@ -311,6 +312,30 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           Text(
                             '· ${t(context, 'Posted', 'نُشر')} ${timeAgo(post.createdAt, lang)} ${t(context, 'ago', 'مضت')}',
                             style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          const Spacer(),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(AppRadius.chip),
+                              onTap: () => showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) => CommentsSheet(postId: post.id, isPostOwner: _isOwner),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.mode_comment_outlined, size: 16, color: AppColors.textSecondary),
+                                    const SizedBox(width: 4),
+                                    Text('${post.commentCount}', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),

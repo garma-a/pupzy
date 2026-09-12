@@ -1,6 +1,12 @@
 .scratch/
 .agents/
-docs/
+docs/*
+!docs/adr/
+docs/adr/*
+!docs/adr/0005-durable-staged-uploads.md
+!docs/comments-flutter-integration-contract.md
+!docs/deployment/
+!docs/deployment/comments-operations-runbook.md
 pupzy-app-5f707-firebase-adminsdk-fbsvc-44ac11fd5b.json
 # compiled output
 /dist

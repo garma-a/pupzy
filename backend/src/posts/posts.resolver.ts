@@ -332,4 +332,12 @@ export class PostsResolver {
     if (!userId) return Promise.resolve(false);
     return ctx.loaders.savedByMe.load(`${userId}:${post.id}`);
   }
+
+  /**
+   * Resolves the visible comment count for this post.
+   */
+  @ResolveField('commentCount')
+  commentCount(@Root() post: Post): number {
+    return post.commentCount ?? 0;
+  }
 }

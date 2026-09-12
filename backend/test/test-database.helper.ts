@@ -46,6 +46,7 @@ export class TestDatabaseHelper {
         adoption_applications,
         post_reports,
         notifications,
+        discussion_notification_events,
         saved_searches,
         moderation_actions,
         posts,
@@ -54,7 +55,16 @@ export class TestDatabaseHelper {
         cities,
         vet_clinics,
         vet_clinic_location_audits,
-        address_search_cache
+        address_search_cache,
+        staged_uploads,
+        post_pins,
+        comment_boosts,
+        comment_idempotency,
+        comment_media,
+        media_deletion_work,
+        comment_reports,
+        comments,
+        blocked_media_hashes
       CASCADE;
     `);
   }

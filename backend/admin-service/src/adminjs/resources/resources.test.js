@@ -14,6 +14,7 @@ import { buildModerationActionsResource } from './moderation-actions.resource.js
 import { buildNotificationsResource } from './notifications.resource.js';
 import { buildPostMediaResource } from './post-media.resource.js';
 import { buildPostReportsResource } from './post-reports.resource.js';
+import { buildCommentReportsResource } from './comment-reports.resource.js';
 import { buildPostSavesResource } from './post-saves.resource.js';
 import { buildPostUpvotesResource } from './post-upvotes.resource.js';
 import { buildPostsResource } from './posts.resource.js';
@@ -21,6 +22,7 @@ import { buildProductPostsResource } from './product-posts.resource.js';
 import { buildRescuePostsResource } from './rescue-posts.resource.js';
 import { buildSavedSearchesResource } from './saved-searches.resource.js';
 import { buildUsersResource } from './users.resource.js';
+import { buildCommentsResource } from './comments.resource.js';
 import { buildVetClinicsResource } from './vet-clinics.resource.js';
 import { buildVetClinicLocationAuditsResource } from './vet-clinic-location-audits.resource.js';
 
@@ -45,6 +47,8 @@ function resources() {
     buildPostUpvotesResource(db, components),
     buildPostSavesResource(db, components),
     buildPostReportsResource(db, components),
+    buildCommentReportsResource(db, components),
+    buildCommentsResource(db, pool, components),
     buildContactRequestsResource(db, components),
     buildAdoptionApplicationsResource(db, components),
     buildSavedSearchesResource(db, components),
@@ -58,9 +62,9 @@ function resources() {
 }
 
 describe('AdminJS resource configuration', () => {
-  it('includes all 20 registered domain tables', () => {
+  it('includes all 22 registered domain tables', () => {
     const list = resources();
-    assert.equal(list.length, 20);
+    assert.equal(list.length, 22);
     const names = list.map((r) => r.resource.name);
     assert.deepEqual(names, [...ADMIN_RESOURCE_TABLES]);
   });
@@ -88,6 +92,7 @@ describe('AdminJS resource configuration', () => {
       ['mating_posts', 'gender', ENUMS.genderType],
       ['mating_posts', 'age_unit', ENUMS.ageUnit],
       ['post_reports', 'reason', ENUMS.reportReason],
+      ['comment_reports', 'reason', ENUMS.reportReason],
       ['contact_requests', 'status', ENUMS.requestStatus],
       ['adoption_applications', 'status', ENUMS.requestStatus],
       ['adoption_applications', 'species_preference', ENUMS.speciesType],
@@ -102,6 +107,7 @@ describe('AdminJS resource configuration', () => {
       ['admin_users', 'role', ENUMS.adminRole],
       ['moderation_actions', 'action_type', ENUMS.moderationActionType],
       ['moderation_actions', 'target_type', ENUMS.moderationTargetType],
+      ['comments', 'status', ENUMS.commentStatus],
     ];
     for (const [table, property, expected] of expectations) {
       assert.deepEqual(values(byTable[table], property), expected, `${table}.${property}`);

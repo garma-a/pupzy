@@ -136,6 +136,12 @@ export const posts = pgTable(
     viewCount: integer('view_count').notNull().default(0),
 
     /**
+     * Visible top-level comments and replies count.
+     * Updated transactionally on comment creation/deletion.
+     */
+    commentCount: integer('comment_count').notNull().default(0),
+
+    /**
      * Denormalized from post_reports. AdminJS moderation queue sorts by this
      * to surface most-reported posts first.
      */

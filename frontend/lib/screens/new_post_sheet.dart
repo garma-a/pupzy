@@ -13,6 +13,7 @@ class NewPostSheet extends StatelessWidget {
   static const Color _lostPetAccent = Color(0xFFE08A2E);
   static const Color _adoptionAccent = Color(0xFFB08C3A);
   static const Color _productAccent = Color(0xFF5B8DEF);
+  static const Color _matingAccent = Color(0xFFD1608A);
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +105,15 @@ class NewPostSheet extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             _TypeOption(
               index: 3,
+              icon: Icons.favorite_border,
+              accent: _matingAccent,
+              title: t(context, 'Find a Mate', 'البحث عن شريك'),
+              subtitle: t(context, 'Post your pet as a mating partner search', 'انشر حيوانك للبحث عن شريك تزاوج'),
+              onTap: () => _openForm(context, PostType.mating),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _TypeOption(
+              index: 4,
               icon: Icons.shopping_bag_outlined,
               accent: _productAccent,
               title: t(context, 'List a Product', 'إضافة منتج'),
