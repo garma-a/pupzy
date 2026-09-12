@@ -63,7 +63,12 @@ export class CommentsService {
     }
 
     // 2. Resolve target comment ID
-    const targetCommentId = existingIdempotency.commentId ?? (existingIdempotency.responsePayload as any)?.id;
+    const payload = existingIdempotency.responsePayload;
+    let payloadId: string | undefined;
+    if (typeof payload === 'object' && payload !== null && 'id' in payload && typeof payload.id === 'string') {
+      payloadId = payload.id;
+    }
+    const targetCommentId = existingIdempotency.commentId ?? payloadId;
     if (!targetCommentId) {
       throw new NotFoundError('Comment', 'unknown');
     }

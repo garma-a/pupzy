@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { graphql } from 'graphql';
+import { graphql, GraphQLSchema, type ExecutionResult } from 'graphql';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { eq, sql } from 'drizzle-orm';
 import { ConfigService } from '@nestjs/config';
@@ -14,7 +14,6 @@ import {
   postMedia,
   stagedUploads,
   rescuePosts,
-  lostPosts,
   adoptionPosts,
   productPosts,
   matingPosts,
@@ -34,8 +33,66 @@ import { MatingService } from '../mating/mating.service';
 import { PostsResolver } from '../posts/posts.resolver';
 import { UploadResolver } from './upload.resolver';
 import { MatingResolver } from '../mating/mating.resolver';
+import type { NotificationsService } from '../notifications/notifications.service';
 import type { GqlContext } from '../common/types/gql-context.type';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
+
+interface R2Error extends Error {
+  name: string;
+  $metadata?: { httpStatusCode: number };
+}
+
+interface S3CommandLike {
+  constructor?: { name?: string };
+  name?: string;
+  input?: { Key?: string; CopySource?: string; Body?: unknown };
+}
+
+interface S3ClientHolder {
+  s3Client: { send: (cmd: unknown) => Promise<unknown> };
+}
+
+interface RequestMediaResponse {
+  requestMediaUploadUrl: {
+    mediaId: string;
+    uploadUrl: string;
+    expiresAt: string;
+  };
+}
+
+interface PostMutationResponse {
+  createRescuePost?: {
+    id: string;
+    title: string;
+    postType: string;
+    status: string;
+    coordinates?: { latitude: number; longitude: number } | null;
+    media: Array<{ id: string; publicUrl: string }>;
+  };
+  createLostPost?: {
+    id: string;
+    postType: string;
+    media: Array<{ id: string; publicUrl: string }>;
+  };
+  createAdoptionPost?: {
+    id: string;
+    postType: string;
+    coordinates?: { latitude: number; longitude: number } | null;
+    media: Array<{ id: string; publicUrl: string }>;
+  };
+  createProductPost?: {
+    id: string;
+    postType: string;
+    coordinates?: { latitude: number; longitude: number } | null;
+    media: Array<{ id: string; publicUrl: string }>;
+  };
+  createMatingPost?: {
+    id: string;
+    postType: string;
+    coordinates?: { latitude: number; longitude: number } | null;
+    media: Array<{ id: string; publicUrl: string }>;
+  };
+}
 
 /**
  * Controllable Cloudflare R2 adapter to simulate storage behavior,
@@ -60,53 +117,53 @@ class ControllableR2Adapter {
     this.shouldFailHead = false;
   }
 
-  async send(command: any): Promise<any> {
+  send(command: S3CommandLike): Promise<Record<string, unknown>> {
     const cmdName = command.constructor?.name ?? command.name;
-    const key = command.input?.Key;
+    const key = command.input?.Key ?? '';
 
     if (cmdName === 'HeadObjectCommand' || command instanceof HeadObjectCommand) {
       if (this.shouldFailHead || !this.objects.has(key)) {
-        const err: any = new Error(`NotFound: ${key}`);
+        const err = new Error(`NotFound: ${key}`) as R2Error;
         err.name = 'NotFound';
         err.$metadata = { httpStatusCode: 404 };
-        throw err;
+        return Promise.reject(err);
       }
-      return { ContentLength: this.objects.get(key)?.length ?? 1024 };
+      return Promise.resolve({ ContentLength: this.objects.get(key)?.length ?? 1024 });
     }
 
     if (cmdName === 'CopyObjectCommand' || command instanceof CopyObjectCommand) {
       if (this.shouldFailCopy) {
-        throw new Error('Simulated R2 transient copy failure');
+        return Promise.reject(new Error('Simulated R2 transient copy failure'));
       }
-      const copySource: string = command.input?.CopySource ?? '';
+      const copySource = command.input?.CopySource ?? '';
       const slashIdx = copySource.indexOf('/');
       const sourceKey = slashIdx >= 0 ? copySource.substring(slashIdx + 1) : copySource;
       const content = this.objects.get(sourceKey) ?? Buffer.from('staged-image-bytes');
       this.objects.set(key, content);
-      return {};
+      return Promise.resolve({});
     }
 
     if (cmdName === 'DeleteObjectCommand' || command instanceof DeleteObjectCommand) {
       this.objects.delete(key);
-      return {};
+      return Promise.resolve({});
     }
 
     if (cmdName === 'GetObjectCommand' || command instanceof GetObjectCommand) {
       const content = this.objects.get(key);
       if (!content) {
-        const err: any = new Error(`NoSuchKey: ${key}`);
+        const err = new Error(`NoSuchKey: ${key}`) as R2Error;
         err.name = 'NoSuchKey';
         err.$metadata = { httpStatusCode: 404 };
-        throw err;
+        return Promise.reject(err);
       }
-      return {
+      return Promise.resolve({
         Body: {
-          transformToByteArray: async () => new Uint8Array(content),
+          transformToByteArray: () => Promise.resolve(new Uint8Array(content)),
         },
-      };
+      });
     }
 
-    return {};
+    return Promise.resolve({});
   }
 }
 
@@ -115,7 +172,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
 
   let dbHelper: TestDatabaseHelper;
   let r2Adapter: ControllableR2Adapter;
-  let cacheStore: Map<string, any>;
+  let cacheStore: Map<string, unknown>;
   let mockCache: Cache;
   let mockConfig: ConfigService;
 
@@ -138,44 +195,52 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
   let testUser1: User;
   let testUser2: User;
 
-  let executableSchema: any;
+  let executableSchema: GraphQLSchema;
 
   beforeAll(async () => {
     dbHelper = new TestDatabaseHelper();
     await dbHelper.start();
 
     r2Adapter = new ControllableR2Adapter();
-    cacheStore = new Map<string, any>();
+    cacheStore = new Map<string, unknown>();
 
     mockCache = {
-      get: jest.fn(async (key: string) => cacheStore.get(key)),
-      set: jest.fn(async (key: string, val: any) => {
+      get: jest.fn((key: string) => Promise.resolve(cacheStore.get(key))),
+      set: jest.fn((key: string, val: unknown) => {
         cacheStore.set(key, val);
+        return Promise.resolve();
       }),
-      del: jest.fn(async (key: string) => {
+      del: jest.fn((key: string) => {
         cacheStore.delete(key);
+        return Promise.resolve();
       }),
-      reset: jest.fn(async () => {
+      reset: jest.fn(() => {
         cacheStore.clear();
+        return Promise.resolve();
       }),
       wrap: jest.fn(),
       store: {
-        get: async (key: string) => cacheStore.get(key),
-        set: async (key: string, val: any) => {
+        get: (key: string) => Promise.resolve(cacheStore.get(key)),
+        set: (key: string, val: unknown) => {
           cacheStore.set(key, val);
+          return Promise.resolve();
         },
-        del: async (key: string) => {
+        del: (key: string) => {
           cacheStore.delete(key);
+          return Promise.resolve();
         },
-        reset: async () => {
+        reset: () => {
           cacheStore.clear();
+          return Promise.resolve();
         },
-        mget: async (...keys: string[]) => keys.map((k) => cacheStore.get(k)),
-        mset: async (list: [string, any][]) => {
+        mget: (...keys: string[]) => Promise.resolve(keys.map((k) => cacheStore.get(k))),
+        mset: (list: [string, unknown][]) => {
           list.forEach(([k, v]) => cacheStore.set(k, v));
+          return Promise.resolve();
         },
-        mdel: async (...keys: string[]) => {
+        mdel: (...keys: string[]) => {
           keys.forEach((k) => cacheStore.delete(k));
+          return Promise.resolve();
         },
       },
     } as unknown as Cache;
@@ -213,11 +278,13 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
     uploadService = new UploadService(mockConfig, mockCache, dbHelper.db);
 
     // Wire controllable R2 adapter into uploadService's S3Client
-    (uploadService as any).s3Client.send = jest.fn((cmd) => r2Adapter.send(cmd));
+    (uploadService as unknown as S3ClientHolder).s3Client.send = jest.fn((cmd: unknown) =>
+      r2Adapter.send(cmd as S3CommandLike),
+    );
 
     const mockNotificationsService = {
       fireNotification: jest.fn().mockResolvedValue(undefined),
-    };
+    } as unknown as NotificationsService;
     const viewFlushCron = new ViewFlushCron(postsRepo, mockCache);
 
     postsService = new PostsService(
@@ -226,7 +293,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       uploadService,
       viewFlushCron,
       usersService,
-      mockNotificationsService as any,
+      mockNotificationsService,
       mockCache,
     );
 
@@ -258,37 +325,67 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       typeDefs,
       resolvers: {
         DateTime: {
-          __parseValue(v: any) {
+          __parseValue(v: unknown) {
             return v;
           },
-          __serialize(v: any) {
-            return v instanceof Date ? v.toISOString() : v;
+          __serialize(v: unknown) {
+            return v instanceof Date ? v.toISOString() : (v as string);
           },
         },
         Query: {
-          post: (_root, args) => postsResolver.post(args.id),
-          rescuePostDetail: (_root, args) => postsResolver.rescuePostDetail(args.postId),
-          lostPostDetail: (_root, args) => postsResolver.lostPostDetail(args.postId),
-          adoptionPostDetail: (_root, args) => postsResolver.adoptionPostDetail(args.postId),
-          productPostDetail: (_root, args) => postsResolver.productPostDetail(args.postId),
-          matingPostDetail: (_root, args) => matingResolver.matingPostDetail(args.postId),
+          post: (_root: unknown, args: { id: string }) => postsResolver.post(args.id),
+          rescuePostDetail: (_root: unknown, args: { postId: string }) => postsResolver.rescuePostDetail(args.postId),
+          lostPostDetail: (_root: unknown, args: { postId: string }) => postsResolver.lostPostDetail(args.postId),
+          adoptionPostDetail: (_root: unknown, args: { postId: string }) =>
+            postsResolver.adoptionPostDetail(args.postId),
+          productPostDetail: (_root: unknown, args: { postId: string }) => postsResolver.productPostDetail(args.postId),
+          matingPostDetail: (_root: unknown, args: { postId: string }) => matingResolver.matingPostDetail(args.postId),
         },
         Mutation: {
-          requestMediaUploadUrl: (_root, args, ctx) => uploadResolver.requestMediaUploadUrl(args.input, ctx),
-          createRescuePost: (_root, args, ctx) => postsResolver.createRescuePost(args.input, ctx),
-          createLostPost: (_root, args, ctx) => postsResolver.createLostPost(args.input, ctx),
-          createAdoptionPost: (_root, args, ctx) => postsResolver.createAdoptionPost(args.input, ctx),
-          createProductPost: (_root, args, ctx) => postsResolver.createProductPost(args.input, ctx),
-          createMatingPost: (_root, args, ctx) => matingResolver.createMatingPost(args.input, ctx),
+          requestMediaUploadUrl: (
+            _root: unknown,
+            args: { input: Parameters<typeof uploadResolver.requestMediaUploadUrl>[0] },
+            ctx: GqlContext,
+          ) => uploadResolver.requestMediaUploadUrl(args.input, ctx),
+          createRescuePost: (
+            _root: unknown,
+            args: { input: Parameters<typeof postsResolver.createRescuePost>[0] },
+            ctx: GqlContext,
+          ) => postsResolver.createRescuePost(args.input, ctx),
+          createLostPost: (
+            _root: unknown,
+            args: { input: Parameters<typeof postsResolver.createLostPost>[0] },
+            ctx: GqlContext,
+          ) => postsResolver.createLostPost(args.input, ctx),
+          createAdoptionPost: (
+            _root: unknown,
+            args: { input: Parameters<typeof postsResolver.createAdoptionPost>[0] },
+            ctx: GqlContext,
+          ) => postsResolver.createAdoptionPost(args.input, ctx),
+          createProductPost: (
+            _root: unknown,
+            args: { input: Parameters<typeof postsResolver.createProductPost>[0] },
+            ctx: GqlContext,
+          ) => postsResolver.createProductPost(args.input, ctx),
+          createMatingPost: (
+            _root: unknown,
+            args: { input: Parameters<typeof matingResolver.createMatingPost>[0] },
+            ctx: GqlContext,
+          ) => matingResolver.createMatingPost(args.input, ctx),
         },
         Post: {
-          coordinates: (root) => postsResolver.coordinates(root),
-          city: (root, _args, ctx) => postsResolver.city(root, ctx),
-          creator: (root, _args, ctx) => postsResolver.creator(root, ctx),
-          media: (root, _args, ctx) => postsResolver.media(root, ctx),
-          isUpvotedByMe: (root, _args, ctx) => postsResolver.isUpvotedByMe(root, ctx),
-          isSavedByMe: (root, _args, ctx) => postsResolver.isSavedByMe(root, ctx),
-          commentCount: (root) => postsResolver.commentCount(root),
+          coordinates: (root: Parameters<typeof postsResolver.coordinates>[0]) => postsResolver.coordinates(root),
+          city: (root: Parameters<typeof postsResolver.city>[0], _args: unknown, ctx: GqlContext) =>
+            postsResolver.city(root, ctx),
+          creator: (root: Parameters<typeof postsResolver.creator>[0], _args: unknown, ctx: GqlContext) =>
+            postsResolver.creator(root, ctx),
+          media: (root: Parameters<typeof postsResolver.media>[0], _args: unknown, ctx: GqlContext) =>
+            postsResolver.media(root, ctx),
+          isUpvotedByMe: (root: Parameters<typeof postsResolver.isUpvotedByMe>[0], _args: unknown, ctx: GqlContext) =>
+            postsResolver.isUpvotedByMe(root, ctx),
+          isSavedByMe: (root: Parameters<typeof postsResolver.isSavedByMe>[0], _args: unknown, ctx: GqlContext) =>
+            postsResolver.isSavedByMe(root, ctx),
+          commentCount: (root: Parameters<typeof postsResolver.commentCount>[0]) => postsResolver.commentCount(root),
         },
       },
     });
@@ -344,19 +441,29 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
   });
 
   /** Helper to execute GraphQL queries/mutations with context */
-  async function executeGql(source: string, variables: Record<string, any> = {}, user: User = testUser1) {
+  async function executeGql<TData = Record<string, unknown>>(
+    source: string,
+    variables: Record<string, unknown> = {},
+    user: User = testUser1,
+  ): Promise<ExecutionResult<TData>> {
     const ctx: GqlContext = {
-      req: {} as any,
-      user: { id: user.id } as any,
+      req: {} as unknown as GqlContext['req'],
+      user,
       loaders: {
         cityById: citiesService.createCityByIdLoader(),
         userById: usersService.createUserByIdLoader(),
         mediaByPostId: postsRepo.createMediaByPostIdLoader(),
         upvotedByMe: postsRepo.createUpvotedByMeLoader(),
         savedByMe: postsRepo.createSavedByMeLoader(),
-        commentBoostedByMe: { load: jest.fn().mockResolvedValue(false) } as any,
-        pinnedCommentIdByPostId: { load: jest.fn().mockResolvedValue(null) } as any,
-        commentMediaByCommentId: { load: jest.fn().mockResolvedValue([]) } as any,
+        commentBoostedByMe: {
+          load: jest.fn().mockResolvedValue(false),
+        } as unknown as GqlContext['loaders']['commentBoostedByMe'],
+        pinnedCommentIdByPostId: {
+          load: jest.fn().mockResolvedValue(null),
+        } as unknown as GqlContext['loaders']['pinnedCommentIdByPostId'],
+        commentMediaByCommentId: {
+          load: jest.fn().mockResolvedValue([]),
+        } as unknown as GqlContext['loaders']['commentMediaByCommentId'],
       },
     };
 
@@ -365,7 +472,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       source,
       variableValues: variables,
       contextValue: ctx,
-    });
+    }) as Promise<ExecutionResult<TData>>;
   }
 
   /** Helper to request a media upload ticket via GraphQL and simulate staging upload in R2 */
@@ -384,10 +491,14 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       }
     `;
 
-    const res = await executeGql(REQUEST_MEDIA_MUTATION, { input: { contentType, fileSizeBytes } }, user);
+    const res = await executeGql<RequestMediaResponse>(
+      REQUEST_MEDIA_MUTATION,
+      { input: { contentType, fileSizeBytes } },
+      user,
+    );
 
     expect(res.errors).toBeUndefined();
-    const mediaId = res.data?.requestMediaUploadUrl?.mediaId;
+    const mediaId = res.data!.requestMediaUploadUrl.mediaId;
     expect(mediaId).toBeDefined();
 
     const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
@@ -400,7 +511,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
   }
 
   // Input builders conforming to authoritative GraphQL SDL schemas
-  function makeValidRescueInput(mediaIds?: string[], overrides: Record<string, any> = {}) {
+  function makeValidRescueInput(mediaIds?: string[], overrides: Record<string, unknown> = {}) {
     return {
       title: 'Injured stray dog near Tahrir',
       description: 'Dog needs urgent rescue and vet attention',
@@ -418,7 +529,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
     };
   }
 
-  function makeValidLostPetInput(mediaIds?: string[], overrides: Record<string, any> = {}) {
+  function makeValidLostPetInput(mediaIds?: string[], overrides: Record<string, unknown> = {}) {
     return {
       title: 'Lost Golden Retriever',
       description: 'Wearing a red collar, ran away during fireworks.',
@@ -436,7 +547,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
     };
   }
 
-  function makeValidFoundStrayInput(mediaIds?: string[], overrides: Record<string, any> = {}) {
+  function makeValidFoundStrayInput(mediaIds?: string[], overrides: Record<string, unknown> = {}) {
     return {
       title: 'Found stray kitten',
       description: 'Found shivering in a box near the market.',
@@ -452,7 +563,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
     };
   }
 
-  function makeValidAdoptionInput(mediaIds?: string[], overrides: Record<string, any> = {}) {
+  function makeValidAdoptionInput(mediaIds?: string[], overrides: Record<string, unknown> = {}) {
     return {
       title: 'Loving Labrador Puppy',
       description: 'Healthy and vaccinated Labrador looking for a good home.',
@@ -472,7 +583,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
     };
   }
 
-  function makeValidProductInput(mediaIds?: string[], overrides: Record<string, any> = {}) {
+  function makeValidProductInput(mediaIds?: string[], overrides: Record<string, unknown> = {}) {
     return {
       title: 'Wooden Bird Cage',
       description: 'Handmade wooden bird cage in great condition.',
@@ -489,7 +600,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
     };
   }
 
-  function makeValidMatingInput(mediaIds: string[], overrides: Record<string, any> = {}) {
+  function makeValidMatingInput(mediaIds: string[], overrides: Record<string, unknown> = {}) {
     return {
       petName: 'Rocky',
       species: 'DOG',
@@ -548,7 +659,8 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
         // Verify that PostgreSQL throws the foreign key constraint violation
         expect(failRes.errors).toBeDefined();
         expect(failRes.errors!.length).toBeGreaterThan(0);
-        const origErr: any = failRes.errors![0].originalError;
+        const origErr = failRes.errors![0].originalError as
+          { cause?: { constraint?: string; message?: string }; constraint?: string; message?: string } | undefined;
         const pgErr = origErr?.cause ?? origErr;
         const constraintOrMsg = pgErr?.constraint ?? pgErr?.message ?? failRes.errors![0].message;
         expect(constraintOrMsg).toContain('staged_uploads_post_id_posts_id_fk');
@@ -570,10 +682,14 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
         .where(eq(stagedUploads.id, mediaId));
 
       // 5. Execute the exact same GraphQL mutation again
-      const successRes = await executeGql(CREATE_RESCUE_MUTATION, { input: rescueInput }, testUser1);
+      const successRes = await executeGql<PostMutationResponse>(
+        CREATE_RESCUE_MUTATION,
+        { input: rescueInput },
+        testUser1,
+      );
 
       expect(successRes.errors).toBeUndefined();
-      const createdPost = successRes.data?.createRescuePost;
+      const createdPost = successRes.data!.createRescuePost!;
       expect(createdPost).toBeDefined();
       expect(createdPost.title).toBe(rescueInput.title);
       expect(createdPost.status).toBe('ACTIVE');
@@ -615,7 +731,11 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
           }
         }
       `;
-      const res = await executeGql(mutation, { input: makeValidRescueInput([mediaId]) }, testUser1);
+      const res = await executeGql<PostMutationResponse>(
+        mutation,
+        { input: makeValidRescueInput([mediaId]) },
+        testUser1,
+      );
 
       expect(res.errors).toBeUndefined();
       expect(res.data?.createRescuePost?.postType).toBe('RESCUE');
@@ -624,7 +744,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       const [ext] = await dbHelper.db
         .select()
         .from(rescuePosts)
-        .where(eq(rescuePosts.postId, res.data?.createRescuePost?.id));
+        .where(eq(rescuePosts.postId, res.data!.createRescuePost!.id));
       expect(ext).toBeDefined();
     });
 
@@ -640,7 +760,11 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
           }
         }
       `;
-      const lostRes = await executeGql(lostMutation, { input: makeValidLostPetInput([m1]) }, testUser1);
+      const lostRes = await executeGql<PostMutationResponse>(
+        lostMutation,
+        { input: makeValidLostPetInput([m1]) },
+        testUser1,
+      );
 
       expect(lostRes.errors).toBeUndefined();
       expect(lostRes.data?.createLostPost?.postType).toBe('LOST');
@@ -648,7 +772,11 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
 
       // FOUND_STRAY
       const { mediaId: m2 } = await stageMedia(testUser1, 'image/webp');
-      const strayRes = await executeGql(lostMutation, { input: makeValidFoundStrayInput([m2]) }, testUser1);
+      const strayRes = await executeGql<PostMutationResponse>(
+        lostMutation,
+        { input: makeValidFoundStrayInput([m2]) },
+        testUser1,
+      );
 
       expect(strayRes.errors).toBeUndefined();
       expect(strayRes.data?.createLostPost?.media).toHaveLength(1);
@@ -667,7 +795,11 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
           }
         }
       `;
-      const res = await executeGql(mutation, { input: makeValidAdoptionInput([mediaId]) }, testUser1);
+      const res = await executeGql<PostMutationResponse>(
+        mutation,
+        { input: makeValidAdoptionInput([mediaId]) },
+        testUser1,
+      );
 
       expect(res.errors).toBeUndefined();
       expect(res.data?.createAdoptionPost?.postType).toBe('ADOPTION');
@@ -677,7 +809,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       const [ext] = await dbHelper.db
         .select()
         .from(adoptionPosts)
-        .where(eq(adoptionPosts.postId, res.data?.createAdoptionPost?.id));
+        .where(eq(adoptionPosts.postId, res.data!.createAdoptionPost!.id));
       expect(ext).toBeDefined();
     });
 
@@ -694,7 +826,11 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
           }
         }
       `;
-      const res = await executeGql(mutation, { input: makeValidProductInput([mediaId]) }, testUser1);
+      const res = await executeGql<PostMutationResponse>(
+        mutation,
+        { input: makeValidProductInput([mediaId]) },
+        testUser1,
+      );
 
       expect(res.errors).toBeUndefined();
       expect(res.data?.createProductPost?.postType).toBe('PRODUCT');
@@ -704,7 +840,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       const [ext] = await dbHelper.db
         .select()
         .from(productPosts)
-        .where(eq(productPosts.postId, res.data?.createProductPost?.id));
+        .where(eq(productPosts.postId, res.data!.createProductPost!.id));
       expect(ext).toBeDefined();
     });
 
@@ -721,7 +857,11 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
           }
         }
       `;
-      const res = await executeGql(mutation, { input: makeValidMatingInput([mediaId]) }, testUser1);
+      const res = await executeGql<PostMutationResponse>(
+        mutation,
+        { input: makeValidMatingInput([mediaId]) },
+        testUser1,
+      );
 
       expect(res.errors).toBeUndefined();
       expect(res.data?.createMatingPost?.postType).toBe('MATING');
@@ -731,7 +871,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       const [ext] = await dbHelper.db
         .select()
         .from(matingPosts)
-        .where(eq(matingPosts.postId, res.data?.createMatingPost?.id));
+        .where(eq(matingPosts.postId, res.data!.createMatingPost!.id));
       expect(ext).toBeDefined();
       expect(ext.petName).toBe('Rocky');
     });
@@ -762,7 +902,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
   describe('Acceptance Criterion 3: Text-only workflows remain unchanged', () => {
     it('publishes RESCUE, LOST, ADOPTION, and PRODUCT posts without mediaIds', async () => {
       // RESCUE text-only
-      const rescueRes = await executeGql(
+      const rescueRes = await executeGql<PostMutationResponse>(
         `mutation CreateRescue($input: CreateRescuePostInput!) {
           createRescuePost(input: $input) { id postType media { id } }
         }`,
@@ -773,7 +913,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       expect(rescueRes.data?.createRescuePost?.media).toEqual([]);
 
       // LOST text-only
-      const lostRes = await executeGql(
+      const lostRes = await executeGql<PostMutationResponse>(
         `mutation CreateLost($input: CreateLostPostInput!) {
           createLostPost(input: $input) { id postType media { id } }
         }`,
@@ -784,7 +924,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       expect(lostRes.data?.createLostPost?.media).toEqual([]);
 
       // ADOPTION text-only
-      const adoptRes = await executeGql(
+      const adoptRes = await executeGql<PostMutationResponse>(
         `mutation CreateAdopt($input: CreateAdoptionPostInput!) {
           createAdoptionPost(input: $input) { id postType media { id } }
         }`,
@@ -795,7 +935,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       expect(adoptRes.data?.createAdoptionPost?.media).toEqual([]);
 
       // PRODUCT text-only
-      const prodRes = await executeGql(
+      const prodRes = await executeGql<PostMutationResponse>(
         `mutation CreateProd($input: CreateProductPostInput!) {
           createProductPost(input: $input) { id postType media { id } }
         }`,
@@ -841,14 +981,14 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
           }
         }
       `;
-      const res = await executeGql(
+      const res = await executeGql<PostMutationResponse>(
         mutation,
         { input: makeValidRescueInput([mediaId], { title: 'Rescue After Cache Loss' }) },
         testUser1,
       );
 
       expect(res.errors).toBeUndefined();
-      const post = res.data?.createRescuePost;
+      const post = res.data!.createRescuePost!;
       expect(post).toBeDefined();
       expect(post.media).toHaveLength(1);
       expect(post.media[0].id).toBeDefined();

@@ -10,18 +10,7 @@ jest.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: jest.fn().mockResolvedValue('https://r2.pupzy.com/staging-presigned-url'),
 }));
 import { TestDatabaseHelper } from '../../test/test-database.helper';
-import {
-  users,
-  cities,
-  posts,
-  comments,
-  commentMedia,
-  stagedUploads,
-  mediaDeletionWork,
-  type User,
-  type City,
-  type Post,
-} from '../database/schema';
+import { users, cities, posts, stagedUploads, type User, type City, type Post } from '../database/schema';
 import { CommentsRepository } from '../comments/comments.repository';
 import { CommentsService } from '../comments/comments.service';
 import { PostsRepository } from '../posts/posts.repository';
@@ -141,7 +130,7 @@ describe('CommentImageFlutterCompatIntegration (Ticket 05)', () => {
     await dbHelper.clean();
     r2 = new ControllableR2Adapter();
 
-    const configMap: Record<string, any> = {
+    const configMap: Record<string, string> = {
       R2_BUCKET_NAME: 'pupzy-media-bucket',
       R2_PUBLIC_URL: 'https://media.pupzy.com',
       COMMENT_MEDIA_CDN_BASE: 'https://media.pupzy.com',
@@ -152,7 +141,7 @@ describe('CommentImageFlutterCompatIntegration (Ticket 05)', () => {
     };
 
     configService = {
-      get: jest.fn((key: string, defaultValue?: any) => {
+      get: jest.fn((key: string, defaultValue?: unknown) => {
         if (key in configMap) return configMap[key];
         return defaultValue;
       }),
@@ -332,7 +321,7 @@ describe('CommentImageFlutterCompatIntegration (Ticket 05)', () => {
 
   it('AC 8: when comment image uploads are disabled, tickets are rejected without disabling text discussion', async () => {
     // 1. Simulate feature flag disabled: COMMENT_IMAGES_ENABLED = false
-    (configService.get as jest.Mock).mockImplementation((key: string, defaultValue?: any) => {
+    (configService.get as jest.Mock).mockImplementation((key: string, defaultValue?: unknown) => {
       if (key === 'COMMENT_IMAGES_ENABLED') return 'false';
       if (key === 'R2_BUCKET_NAME') return 'pupzy-media-bucket';
       if (key === 'R2_PUBLIC_URL') return 'https://media.pupzy.com';

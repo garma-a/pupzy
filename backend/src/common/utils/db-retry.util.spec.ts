@@ -1,5 +1,15 @@
 import { withDbRetry, isRetryableDbError } from './db-retry.util';
 
+interface DbErrorWithCode extends Error {
+  code: string;
+}
+
+function createDbError(message: string, code: string): DbErrorWithCode {
+  const err = new Error(message) as DbErrorWithCode;
+  err.code = code;
+  return err;
+}
+
 describe('db-retry.util', () => {
   describe('isRetryableDbError', () => {
     it('identifies 40P01 deadlock error as retryable', () => {
@@ -42,14 +52,12 @@ describe('db-retry.util', () => {
 
     it('retries on retryable error and succeeds on subsequent attempt', async () => {
       let attempts = 0;
-      const op = jest.fn().mockImplementation(async () => {
+      const op = jest.fn().mockImplementation(() => {
         attempts++;
         if (attempts < 3) {
-          const err = new Error('deadlock detected') as any;
-          err.code = '40P01';
-          throw err;
+          return Promise.reject(createDbError('deadlock detected', '40P01'));
         }
-        return 'recovered';
+        return Promise.resolve('recovered');
       });
 
       const result = await withDbRetry(op, { maxRetries: 3, baseDelayMs: 1, maxDelayMs: 10 });
@@ -58,22 +66,14 @@ describe('db-retry.util', () => {
     });
 
     it('throws immediately on non-retryable error without retrying', async () => {
-      const op = jest.fn().mockImplementation(async () => {
-        const err = new Error('Unique constraint failed') as any;
-        err.code = '23505';
-        throw err;
-      });
+      const op = jest.fn().mockImplementation(() => Promise.reject(createDbError('Unique constraint failed', '23505')));
 
       await expect(withDbRetry(op, { maxRetries: 3 })).rejects.toThrow('Unique constraint failed');
       expect(op).toHaveBeenCalledTimes(1);
     });
 
     it('exhausts maxRetries and throws last retryable error', async () => {
-      const op = jest.fn().mockImplementation(async () => {
-        const err = new Error('deadlock detected') as any;
-        err.code = '40P01';
-        throw err;
-      });
+      const op = jest.fn().mockImplementation(() => Promise.reject(createDbError('deadlock detected', '40P01')));
 
       await expect(withDbRetry(op, { maxRetries: 2, baseDelayMs: 1, maxDelayMs: 10 })).rejects.toThrow(
         'deadlock detected',

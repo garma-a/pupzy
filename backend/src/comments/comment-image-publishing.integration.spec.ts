@@ -2,9 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import sharp from 'sharp';
-import { graphql, GraphQLSchema } from 'graphql';
+import { graphql, GraphQLSchema, type ExecutionResult } from 'graphql';
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { eq, sql, inArray } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { HeadObjectCommand, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
@@ -20,6 +20,8 @@ import {
   type User,
   type City,
   type Post,
+  type Comment,
+  type CommentMedia,
 } from '../database/schema';
 import { CommentsRepository } from './comments.repository';
 import { CommentsService } from './comments.service';
@@ -33,10 +35,47 @@ import { UploadService } from '../upload/upload.service';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import type { GqlContext } from '../common/types/gql-context.type';
 import { AppError } from '../common/errors/app.errors';
+import type { CreateCommentInput } from './dto/create-comment.input';
 
 interface R2Object {
   bytes: Buffer;
   etag: string;
+}
+
+interface R2Error extends Error {
+  name: string;
+  $metadata?: { httpStatusCode: number };
+}
+
+interface S3CommandLike {
+  constructor?: { name?: string };
+  name?: string;
+  input?: { Key?: string; Body?: unknown };
+}
+
+interface S3ClientHolder {
+  s3Client: { send: (cmd: unknown) => Promise<unknown> };
+}
+
+interface CreateCommentResponse {
+  createComment: {
+    id: string;
+    postId: string;
+    text: string;
+    status: string;
+    media: Array<{
+      id: string;
+      publicUrl: string;
+      width: number;
+      height: number;
+      displayOrder: number;
+    }>;
+  };
+}
+
+interface GraphQLErrorExtensionWithCode {
+  code?: string;
+  retryable?: boolean;
 }
 
 /**
@@ -69,57 +108,58 @@ class ControllableR2Adapter {
     this.onGetObject = undefined;
   }
 
-  async send(command: any): Promise<any> {
+  send(command: S3CommandLike): Promise<Record<string, unknown>> {
     const cmdName = command.constructor?.name ?? command.name;
-    const key = command.input?.Key;
+    const key = command.input?.Key ?? '';
 
     if (cmdName === 'HeadObjectCommand' || command instanceof HeadObjectCommand) {
       if (this.shouldFailHead || !this.objects.has(key)) {
-        const err: any = new Error(`NotFound: ${key}`);
+        const err = new Error(`NotFound: ${key}`) as R2Error;
         err.name = 'NotFound';
         err.$metadata = { httpStatusCode: 404 };
-        throw err;
+        return Promise.reject(err);
       }
       const item = this.objects.get(key)!;
-      return { ContentLength: item.bytes.length, ETag: item.etag };
+      return Promise.resolve({ ContentLength: item.bytes.length, ETag: item.etag });
     }
 
     if (cmdName === 'GetObjectCommand' || command instanceof GetObjectCommand) {
       const item = this.objects.get(key);
       if (!item) {
-        const err: any = new Error(`NoSuchKey: ${key}`);
+        const err = new Error(`NoSuchKey: ${key}`) as R2Error;
         err.name = 'NoSuchKey';
         err.$metadata = { httpStatusCode: 404 };
-        throw err;
+        return Promise.reject(err);
       }
       if (this.onGetObject) {
         this.onGetObject(key);
       }
-      return {
+      return Promise.resolve({
         ContentLength: item.bytes.length,
         ETag: item.etag,
         Body: {
-          transformToByteArray: async () => new Uint8Array(item.bytes),
+          transformToByteArray: () => Promise.resolve(new Uint8Array(item.bytes)),
         },
-      };
+      });
     }
 
     if (cmdName === 'PutObjectCommand' || command instanceof PutObjectCommand) {
       if (this.shouldFailPut) {
-        throw new Error('Simulated R2 PutObject transient failure');
+        return Promise.reject(new Error('Simulated R2 PutObject transient failure'));
       }
-      const bytes = Buffer.isBuffer(command.input?.Body) ? command.input.Body : Buffer.from(command.input?.Body ?? '');
+      const body = command.input?.Body;
+      const bytes = Buffer.isBuffer(body) ? body : typeof body === 'string' ? Buffer.from(body) : Buffer.from('');
       const etag = `"${crypto.createHash('md5').update(bytes).digest('hex')}"`;
       this.objects.set(key, { bytes, etag });
-      return {};
+      return Promise.resolve({});
     }
 
     if (cmdName === 'DeleteObjectCommand' || command instanceof DeleteObjectCommand) {
       this.objects.delete(key);
-      return {};
+      return Promise.resolve({});
     }
 
-    return {};
+    return Promise.resolve({});
   }
 }
 
@@ -197,10 +237,10 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
 
     r2Adapter = new ControllableR2Adapter();
 
-    const cacheStore = new Map<string, any>();
+    const cacheStore = new Map<string, unknown>();
     mockCache = {
       get: jest.fn((key: string) => Promise.resolve(cacheStore.get(key))),
-      set: jest.fn((key: string, val: any) => {
+      set: jest.fn((key: string, val: unknown) => {
         cacheStore.set(key, val);
         return Promise.resolve();
       }),
@@ -245,7 +285,9 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
     uploadService = new UploadService(mockConfig, mockCache, dbHelper.db);
 
     // Wire controllable R2 adapter into uploadService's S3Client
-    (uploadService as any).s3Client.send = jest.fn((cmd) => r2Adapter.send(cmd));
+    (uploadService as unknown as S3ClientHolder).s3Client.send = jest.fn((cmd: unknown) =>
+      r2Adapter.send(cmd as S3CommandLike),
+    );
 
     commentsService = new CommentsService(
       commentsRepo,
@@ -282,24 +324,25 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
       typeDefs,
       resolvers: {
         DateTime: {
-          __parseValue(v: any) {
+          __parseValue(v: unknown) {
             return v;
           },
-          __serialize(v: any) {
-            return v instanceof Date ? v.toISOString() : v;
+          __serialize(v: unknown) {
+            return v instanceof Date ? v.toISOString() : (v as string);
           },
         },
         Query: {
-          post: (_root, args) => postsRepo.findById(args.id),
+          post: (_root: unknown, args: { id: string }) => postsRepo.findById(args.id),
         },
         Mutation: {
-          createComment: (_root, args, ctx) => commentsResolver.createComment(args.input, ctx),
+          createComment: (_root: unknown, args: { input: CreateCommentInput }, ctx: GqlContext) =>
+            commentsResolver.createComment(args.input, ctx),
         },
         Comment: {
-          media: (root, _args, ctx) => commentsResolver.media(root, ctx),
+          media: (root: Comment, _args: unknown, ctx: GqlContext) => commentsResolver.media(root, ctx),
         },
         CommentMedia: {
-          publicUrl: (root) => commentMediaResolver.publicUrl(root),
+          publicUrl: (root: CommentMedia) => commentMediaResolver.publicUrl(root),
         },
       },
     });
@@ -354,18 +397,26 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
     testPost = post;
   });
 
-  async function executeGql(source: string, variables: Record<string, any> = {}, user: User = authorUser) {
+  async function executeGql<TData = Record<string, unknown>>(
+    source: string,
+    variables: Record<string, unknown> = {},
+    user: User = authorUser,
+  ): Promise<ExecutionResult<TData>> {
     const ctx: GqlContext = {
-      req: {} as any,
-      user: { id: user.id } as any,
+      req: {} as unknown as GqlContext['req'],
+      user,
       loaders: {
         cityById: citiesService.createCityByIdLoader(),
         userById: usersService.createUserByIdLoader(),
         mediaByPostId: postsRepo.createMediaByPostIdLoader(),
         upvotedByMe: postsRepo.createUpvotedByMeLoader(),
         savedByMe: postsRepo.createSavedByMeLoader(),
-        commentBoostedByMe: { load: jest.fn().mockResolvedValue(false) } as any,
-        pinnedCommentIdByPostId: { load: jest.fn().mockResolvedValue(null) } as any,
+        commentBoostedByMe: {
+          load: jest.fn().mockResolvedValue(false),
+        } as unknown as GqlContext['loaders']['commentBoostedByMe'],
+        pinnedCommentIdByPostId: {
+          load: jest.fn().mockResolvedValue(null),
+        } as unknown as GqlContext['loaders']['pinnedCommentIdByPostId'],
         commentMediaByCommentId: commentsRepo.createCommentMediaByCommentIdLoader(),
       },
     };
@@ -375,7 +426,7 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
       source,
       variableValues: variables,
       contextValue: ctx,
-    });
+    }) as Promise<ExecutionResult<TData>>;
   }
 
   async function stageCommentImage(user: User, imageBytes: Buffer): Promise<{ mediaId: string; stagingKey: string }> {
@@ -421,7 +472,7 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
     const { mediaId, stagingKey } = await stageCommentImage(authorUser, validWebp1);
     const expectedHash = crypto.createHash('sha256').update(validWebp1).digest('hex');
 
-    const res = await executeGql(CREATE_COMMENT_MUTATION, {
+    const res = await executeGql<CreateCommentResponse>(CREATE_COMMENT_MUTATION, {
       input: {
         postId: testPost.id,
         text: 'Look at this photo!',
@@ -431,7 +482,7 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
     });
 
     expect(res.errors).toBeUndefined();
-    const commentData = (res.data as any).createComment;
+    const commentData = res.data!.createComment;
     expect(commentData.id).toBeDefined();
     expect(commentData.media).toHaveLength(1);
     expect(commentData.media[0]).toMatchObject({
@@ -469,7 +520,7 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
     const { mediaId: mediaId1, stagingKey: stagingKey1 } = await stageCommentImage(authorUser, validWebp1);
     const { mediaId: mediaId2, stagingKey: stagingKey2 } = await stageCommentImage(authorUser, validWebp2);
 
-    const res = await executeGql(CREATE_COMMENT_MUTATION, {
+    const res = await executeGql<CreateCommentResponse>(CREATE_COMMENT_MUTATION, {
       input: {
         postId: testPost.id,
         text: 'Two photos attached',
@@ -479,7 +530,7 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
     });
 
     expect(res.errors).toBeUndefined();
-    const commentData = (res.data as any).createComment;
+    const commentData = res.data!.createComment;
     expect(commentData.media).toHaveLength(2);
     expect(commentData.media[0]).toMatchObject({ id: mediaId1, displayOrder: 0 });
     expect(commentData.media[1]).toMatchObject({ id: mediaId2, displayOrder: 1 });
@@ -508,7 +559,7 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
     const headerOnly = createHeaderOnlyVp8x();
     expect(headerOnly.length).toBe(30);
 
-    const { mediaId, stagingKey } = await stageCommentImage(authorUser, headerOnly);
+    const { mediaId } = await stageCommentImage(authorUser, headerOnly);
 
     const res = await executeGql(CREATE_COMMENT_MUTATION, {
       input: {
@@ -522,7 +573,9 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
     expect(res.errors).toBeDefined();
     expect(res.errors!.length).toBeGreaterThan(0);
     const err = res.errors![0];
-    const code = (err.originalError as AppError)?.code ?? (err.extensions as any)?.code;
+    const code =
+      (err.originalError as AppError | undefined)?.code ??
+      (err.extensions as GraphQLErrorExtensionWithCode | undefined)?.code;
     expect(code).toBe('COMMENT_MEDIA_INVALID_FORMAT');
 
     // Comment must not be created
@@ -559,7 +612,9 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
 
     expect(res.errors).toBeDefined();
     const err = res.errors![0];
-    const code = (err.originalError as AppError)?.code ?? (err.extensions as any)?.code;
+    const code =
+      (err.originalError as AppError | undefined)?.code ??
+      (err.extensions as GraphQLErrorExtensionWithCode | undefined)?.code;
     expect(code).toBe('COMMENT_MEDIA_INVALID_FORMAT');
 
     // No comment or media created
@@ -589,7 +644,9 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
 
     expect(res.errors).toBeDefined();
     const err = res.errors![0];
-    const code = (err.originalError as AppError)?.code ?? (err.extensions as any)?.code;
+    const code =
+      (err.originalError as AppError | undefined)?.code ??
+      (err.extensions as GraphQLErrorExtensionWithCode | undefined)?.code;
     expect(code).toBe('COMMENT_MEDIA_TOO_LARGE');
 
     const dbComments = await dbHelper.db.select().from(comments).where(eq(comments.postId, testPost.id));
@@ -612,7 +669,9 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
 
     expect(res.errors).toBeDefined();
     const err = res.errors![0];
-    const code = (err.originalError as AppError)?.code ?? (err.extensions as any)?.code;
+    const code =
+      (err.originalError as AppError | undefined)?.code ??
+      (err.extensions as GraphQLErrorExtensionWithCode | undefined)?.code;
     expect(code).toBe('COMMENT_MEDIA_DIMENSIONS_EXCEEDED');
 
     const dbComments = await dbHelper.db.select().from(comments).where(eq(comments.postId, testPost.id));
@@ -647,7 +706,9 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
 
     expect(res.errors).toBeDefined();
     const err = res.errors![0];
-    const code = (err.originalError as AppError)?.code ?? (err.extensions as any)?.code;
+    const code =
+      (err.originalError as AppError | undefined)?.code ??
+      (err.extensions as GraphQLErrorExtensionWithCode | undefined)?.code;
     expect(code).toBe('COMMENT_MEDIA_PROCESSING_FAILED');
 
     // Comment was NOT created
@@ -673,7 +734,10 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
     `);
 
     // Verify row count is at least 10,000
-    const countRes = await dbHelper.pool.query('SELECT count(*) FROM blocked_media_hashes;');
+    interface CountRow {
+      count: string;
+    }
+    const countRes = await dbHelper.pool.query<CountRow>('SELECT count(*) FROM blocked_media_hashes;');
     expect(Number(countRes.rows[0].count)).toBeGreaterThanOrEqual(10000);
 
     // 2. Add the hash of validWebp1 to blocked_media_hashes
@@ -684,7 +748,15 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
     });
 
     // 3. Measure query execution time and verify index usage
-    const explainRes = await dbHelper.pool.query(
+    interface ExplainPlan {
+      Plan: Record<string, unknown>;
+      'Execution Time': number;
+      [key: string]: unknown;
+    }
+    interface ExplainRow {
+      'QUERY PLAN': ExplainPlan[];
+    }
+    const explainRes = await dbHelper.pool.query<ExplainRow>(
       `EXPLAIN (ANALYZE, FORMAT JSON) SELECT sha256 FROM blocked_media_hashes WHERE sha256 = $1`,
       [blockedHash],
     );
@@ -709,7 +781,9 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
 
     expect(res.errors).toBeDefined();
     const err = res.errors![0];
-    const code = (err.originalError as AppError)?.code ?? (err.extensions as any)?.code;
+    const code =
+      (err.originalError as AppError | undefined)?.code ??
+      (err.extensions as GraphQLErrorExtensionWithCode | undefined)?.code;
     // Generic error without leaking moderation details
     expect(code).toBe('COMMENT_MEDIA_INVALID_FORMAT');
     expect(err.message).not.toContain('blocked');
@@ -732,17 +806,19 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
     const { mediaId } = await stageCommentImage(authorUser, validWebp1);
 
     // Spy on uploadService.db.select and simulate a database connection error during denylist lookup
-    const originalSelect = uploadService['db'].select.bind(uploadService['db']);
-    jest.spyOn(uploadService['db'] as any, 'select').mockImplementation(((fields?: any) => {
+    type DbSelectMethod = (typeof uploadService)['db']['select'];
+    const dbObj = (uploadService as unknown as { db: { select: DbSelectMethod } }).db;
+    const originalSelect = dbObj.select.bind(dbObj);
+    jest.spyOn(dbObj, 'select').mockImplementation((fields?: unknown) => {
       if (fields && typeof fields === 'object' && 'sha256' in fields) {
         return {
           from: () => ({
             where: () => Promise.reject(new Error('PostgreSQL connection dropped')),
           }),
-        };
+        } as unknown as ReturnType<DbSelectMethod>;
       }
-      return originalSelect(fields);
-    }) as any);
+      return originalSelect(fields as never);
+    });
 
     const res = await executeGql(CREATE_COMMENT_MUTATION, {
       input: {
@@ -755,7 +831,9 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
 
     expect(res.errors).toBeDefined();
     const err = res.errors![0];
-    const code = (err.originalError as AppError)?.code ?? (err.extensions as any)?.code;
+    const code =
+      (err.originalError as AppError | undefined)?.code ??
+      (err.extensions as GraphQLErrorExtensionWithCode | undefined)?.code;
     expect(code).toBe('COMMENT_MEDIA_PROCESSING_FAILED');
 
     const origErr = err.originalError as AppError;

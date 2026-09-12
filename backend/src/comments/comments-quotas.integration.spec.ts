@@ -1,26 +1,27 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { graphql, GraphQLSchema } from 'graphql';
+import { graphql, GraphQLSchema, type ExecutionResult } from 'graphql';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { eq, and, sql, inArray, gte } from 'drizzle-orm';
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import DataLoader from 'dataloader';
 import { PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { AppError } from '../common/errors/app.errors';
 import { TestDatabaseHelper } from '../../test/test-database.helper';
 import {
   users,
   cities,
   posts,
   comments,
-  commentMedia,
   stagedUploads,
   commentQuotaAdmissions,
-  commentReports,
   type User,
   type City,
   type Post,
+  type Comment,
+  type CommentMedia,
 } from '../database/schema';
 import { CommentsRepository } from './comments.repository';
 import { CommentsService } from './comments.service';
@@ -86,16 +87,44 @@ const REPORT_COMMENT_MUTATION = `
   }
 `;
 
+interface CreateCommentResponse {
+  createComment: {
+    id: string;
+    text: string;
+    postId: string;
+    parentId?: string | null;
+    createdAt: string;
+  };
+}
+
+interface RequestTicketResponse {
+  requestCommentImageUploadUrl: {
+    mediaId: string;
+    uploadUrl: string;
+    maxSizeBytes?: number;
+    allowedContentType?: string;
+  };
+}
+
+interface R2Error extends Error {
+  name: string;
+  $metadata?: { httpStatusCode: number };
+}
+
 class ControllableR2Adapter {
   public objects = new Map<string, { bytes: Buffer; etag: string }>();
 
-  send(command: any): any {
+  send(command: {
+    constructor?: { name?: string };
+    name?: string;
+    input?: { Key?: string; Body?: unknown };
+  }): Record<string, unknown> {
     const cmdName = command.constructor?.name ?? command.name;
-    const key = command.input?.Key;
+    const key = command.input?.Key ?? '';
 
     if (cmdName === 'HeadObjectCommand' || command instanceof HeadObjectCommand) {
       if (!this.objects.has(key)) {
-        const err: any = new Error(`NotFound: ${key}`);
+        const err = new Error(`NotFound: ${key}`) as R2Error;
         err.name = 'NotFound';
         err.$metadata = { httpStatusCode: 404 };
         throw err;
@@ -107,7 +136,7 @@ class ControllableR2Adapter {
     if (cmdName === 'GetObjectCommand' || command instanceof GetObjectCommand) {
       const item = this.objects.get(key);
       if (!item) {
-        const err: any = new Error(`NoSuchKey: ${key}`);
+        const err = new Error(`NoSuchKey: ${key}`) as R2Error;
         err.name = 'NoSuchKey';
         err.$metadata = { httpStatusCode: 404 };
         throw err;
@@ -116,13 +145,18 @@ class ControllableR2Adapter {
         ContentLength: item.bytes.length,
         ETag: item.etag,
         Body: {
-          transformToByteArray: async () => new Uint8Array(item.bytes),
+          transformToByteArray: () => Promise.resolve(new Uint8Array(item.bytes)),
         },
       };
     }
 
     if (cmdName === 'PutObjectCommand' || command instanceof PutObjectCommand) {
-      const bytes = Buffer.isBuffer(command.input?.Body) ? command.input.Body : Buffer.from(command.input?.Body ?? '');
+      const rawBody = command.input?.Body;
+      const bytes = Buffer.isBuffer(rawBody)
+        ? rawBody
+        : typeof rawBody === 'string'
+          ? Buffer.from(rawBody)
+          : Buffer.from('');
       const etag = `"${crypto.createHash('md5').update(bytes).digest('hex')}"`;
       this.objects.set(key, { bytes, etag });
       return {};
@@ -171,10 +205,10 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
 
     r2Adapter = new ControllableR2Adapter();
 
-    const cacheStore = new Map<string, any>();
+    const cacheStore = new Map<string, unknown>();
     mockCache = {
       get: jest.fn((key: string) => Promise.resolve(cacheStore.get(key))),
-      set: jest.fn((key: string, val: any) => {
+      set: jest.fn((key: string, val: unknown) => {
         cacheStore.set(key, val);
         return Promise.resolve();
       }),
@@ -219,7 +253,9 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
     citiesService = new CitiesService(citiesRepo, mockCache);
     usersService = new UsersService(usersRepo, citiesService, mockConfig, mockCache);
     uploadService = new UploadService(mockConfig, mockCache, dbHelper.db);
-    (uploadService as any).s3Client.send = jest.fn((cmd) => r2Adapter.send(cmd));
+    (uploadService as unknown as { s3Client: { send: unknown } }).s3Client.send = jest.fn(
+      (cmd: Parameters<typeof r2Adapter.send>[0]) => r2Adapter.send(cmd),
+    );
 
     commentsService = new CommentsService(
       commentsRepo,
@@ -255,36 +291,42 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       typeDefs,
       resolvers: {
         DateTime: {
-          __parseValue(v: any) {
+          __parseValue(v: unknown) {
             return v;
           },
-          __serialize(v: any) {
+          __serialize(v: unknown) {
             return v instanceof Date ? v.toISOString() : v;
           },
         },
         Query: {
-          post: (_root, args) => postsRepo.findById(args.id),
-          comments: (_root, args) => commentsResolver.comments(args.postId, args.sort, args.first, args.after),
-          replies: (_root, args) => commentsResolver.replies(args.commentId, args.first, args.after),
+          post: (_root: unknown, args: { id: string }) => postsRepo.findById(args.id),
+          comments: (_root: unknown, args: { postId: string; sort?: string; first?: number; after?: string }) =>
+            commentsResolver.comments(args.postId, args.sort, args.first, args.after),
+          replies: (_root: unknown, args: { commentId: string; first?: number; after?: string }) =>
+            commentsResolver.replies(args.commentId, args.first, args.after),
         },
         Mutation: {
-          createComment: (_root, args, ctx) => commentsResolver.createComment(args.input, ctx),
-          createReply: (_root, args, ctx) => commentsResolver.createReply(args.input, ctx),
-          requestCommentImageUploadUrl: (_root, args, ctx) =>
+          createComment: (_root: unknown, args: { input: unknown }, ctx: GqlContext) =>
+            commentsResolver.createComment(args.input, ctx),
+          createReply: (_root: unknown, args: { input: unknown }, ctx: GqlContext) =>
+            commentsResolver.createReply(args.input, ctx),
+          requestCommentImageUploadUrl: (_root: unknown, args: { input: unknown }, ctx: GqlContext) =>
             commentsResolver.requestCommentImageUploadUrl(args.input, ctx),
-          toggleCommentBoost: (_root, args, ctx) => commentsResolver.toggleCommentBoost(args.commentId, ctx),
-          reportComment: (_root, args, ctx) => commentsResolver.reportComment(args.input, ctx),
+          toggleCommentBoost: (_root: unknown, args: { commentId: string }, ctx: GqlContext) =>
+            commentsResolver.toggleCommentBoost(args.commentId, ctx),
+          reportComment: (_root: unknown, args: { input: unknown }, ctx: GqlContext) =>
+            commentsResolver.reportComment(args.input, ctx),
         },
         Comment: {
-          author: (root, _args, ctx) => commentsResolver.author(root, ctx),
-          text: (root) => commentsResolver.text(root),
-          media: (root, _args, ctx) => commentsResolver.media(root, ctx),
-          isBoostedByMe: (root, _args, ctx) => commentsResolver.isBoostedByMe(root, ctx),
-          boostCount: (root) => commentsResolver.boostCount(root),
-          isPinned: (root, _args, ctx) => commentsResolver.isPinned(root, ctx),
+          author: (root: Comment, _args: unknown, ctx: GqlContext) => commentsResolver.author(root, ctx),
+          text: (root: Comment) => commentsResolver.text(root),
+          media: (root: Comment, _args: unknown, ctx: GqlContext) => commentsResolver.media(root, ctx),
+          isBoostedByMe: (root: Comment, _args: unknown, ctx: GqlContext) => commentsResolver.isBoostedByMe(root, ctx),
+          boostCount: (root: Comment) => commentsResolver.boostCount(root),
+          isPinned: (root: Comment, _args: unknown, ctx: GqlContext) => commentsResolver.isPinned(root, ctx),
         },
         CommentMedia: {
-          publicUrl: (root) => commentMediaResolver.publicUrl(root),
+          publicUrl: (root: CommentMedia) => commentMediaResolver.publicUrl(root),
         },
       },
     });
@@ -361,8 +403,12 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
     parentCommentId = parent.id;
   });
 
-  async function executeGql(source: string, variables: Record<string, any> = {}, user: User = user1) {
-    const userByIdLoader = new DataLoader(async (ids: readonly string[]) => {
+  async function executeGql<TData = Record<string, unknown>>(
+    source: string,
+    variables: Record<string, unknown> = {},
+    user: User = user1,
+  ): Promise<ExecutionResult<TData>> {
+    const userByIdLoader = new DataLoader<string, User | null>(async (ids: readonly string[]) => {
       const rows = await dbHelper.db
         .select()
         .from(users)
@@ -372,21 +418,20 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
     });
 
     const ctx: GqlContext = {
-      req: {} as any,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        role: user.role,
-      } as any,
+      req: {} as unknown as GqlContext['req'],
+      user,
       loaders: {
         cityById: citiesService.createCityByIdLoader(),
         userById: userByIdLoader,
         mediaByPostId: postsRepo.createMediaByPostIdLoader(),
         upvotedByMe: postsRepo.createUpvotedByMeLoader(),
         savedByMe: postsRepo.createSavedByMeLoader(),
-        commentBoostedByMe: { load: jest.fn().mockResolvedValue(false) } as any,
-        pinnedCommentIdByPostId: { load: jest.fn().mockResolvedValue(null) } as any,
+        commentBoostedByMe: {
+          load: jest.fn().mockResolvedValue(false),
+        } as unknown as GqlContext['loaders']['commentBoostedByMe'],
+        pinnedCommentIdByPostId: {
+          load: jest.fn().mockResolvedValue(null),
+        } as unknown as GqlContext['loaders']['pinnedCommentIdByPostId'],
         commentMediaByCommentId: commentsRepo.createCommentMediaByCommentIdLoader(),
       },
     };
@@ -396,7 +441,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       source,
       variableValues: variables,
       contextValue: ctx,
-    });
+    }) as Promise<ExecutionResult<TData>>;
   }
 
   describe('AC 1 & AC 2: Shared Comment/Reply creation limits (10/min and 100/day)', () => {
@@ -442,7 +487,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       // Verify every rejection carries RATE_LIMITED code and standard message
       for (const fail of failures) {
         const err = fail.errors![0];
-        expect((err.originalError as any)?.code).toBe('RATE_LIMITED');
+        expect((err.originalError as { code?: string })?.code).toBe('RATE_LIMITED');
         expect(err.message).toContain('Comment creation rate limit exceeded (max 10 per minute)');
       }
 
@@ -510,7 +555,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       );
 
       expect(res101.errors).toBeDefined();
-      expect((res101.errors![0].originalError as any)?.code).toBe('RATE_LIMITED');
+      expect((res101.errors![0].originalError as { code?: string })?.code).toBe('RATE_LIMITED');
       expect(res101.errors![0].message).toContain('Comment creation rate limit exceeded (max 100 per day)');
     });
 
@@ -544,7 +589,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
         user1,
       );
       expect(blockedRes.errors).toBeDefined();
-      expect((blockedRes.errors![0].originalError as any)?.code).toBe('RATE_LIMITED');
+      expect((blockedRes.errors![0].originalError as { code?: string })?.code).toBe('RATE_LIMITED');
 
       // User2 concurrently makes 5 requests - all must succeed without interference
       const user2Requests = Array.from({ length: 5 }, (_, i) =>
@@ -574,7 +619,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       const initialRequestId = `req-initial-${generateUuidV7()}`;
 
       // 1. Create initial comment
-      const initialRes = await executeGql(
+      const initialRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -616,11 +661,11 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
         user1,
       );
       expect(blockedRes.errors).toBeDefined();
-      expect((blockedRes.errors![0].originalError as any)?.code).toBe('RATE_LIMITED');
+      expect((blockedRes.errors![0].originalError as { code?: string })?.code).toBe('RATE_LIMITED');
 
       // 4. Replay initial comment with identical clientRequestId and text
       // MUST SUCCEED with 200 and return canonical entity without consuming another allowance!
-      const retryRes = await executeGql(
+      const retryRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -645,7 +690,9 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       };
 
       // 5 concurrent requests with the identical clientRequestId and payload
-      const requests = Array.from({ length: 5 }, () => executeGql(CREATE_COMMENT_MUTATION, { input: payload }, user2));
+      const requests = Array.from({ length: 5 }, () =>
+        executeGql<CreateCommentResponse>(CREATE_COMMENT_MUTATION, { input: payload }, user2),
+      );
 
       const results = await Promise.all(requests);
 
@@ -718,7 +765,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
         user2,
       );
       expect(overflowRes.errors).toBeDefined();
-      expect((overflowRes.errors![0].originalError as any)?.code).toBe('RATE_LIMITED');
+      expect((overflowRes.errors![0].originalError as { code?: string })?.code).toBe('RATE_LIMITED');
     });
   });
 
@@ -746,7 +793,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       expect(failures.length).toBe(6);
 
       for (const fail of failures) {
-        expect((fail.errors![0].originalError as any)?.code).toBe('RATE_LIMITED');
+        expect((fail.errors![0].originalError as { code?: string })?.code).toBe('RATE_LIMITED');
         expect(fail.errors![0].message).toContain('Comment image upload rate limit exceeded (max 6 per minute)');
       }
     });
@@ -807,7 +854,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       );
 
       expect(res51.errors).toBeDefined();
-      expect((res51.errors![0].originalError as any)?.code).toBe('RATE_LIMITED');
+      expect((res51.errors![0].originalError as { code?: string })?.code).toBe('RATE_LIMITED');
       expect(res51.errors![0].message).toContain('Comment image upload daily limit exceeded (max 50 per day)');
     });
 
@@ -815,7 +862,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       // User 2 requests 6 tickets
       const issuedMediaIds: string[] = [];
       for (let i = 0; i < 6; i++) {
-        const res = await executeGql(
+        const res = await executeGql<RequestTicketResponse>(
           REQUEST_TICKET_MUTATION,
           {
             input: {
@@ -855,7 +902,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       );
 
       expect(blockedRes.errors).toBeDefined();
-      expect((blockedRes.errors![0].originalError as any)?.code).toBe('RATE_LIMITED');
+      expect((blockedRes.errors![0].originalError as { code?: string })?.code).toBe('RATE_LIMITED');
       expect(blockedRes.errors![0].message).toContain('Comment image upload rate limit exceeded (max 6 per minute)');
 
       // Verify all 6 admissions remain in comment_quota_admissions
@@ -884,7 +931,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       expect(failures.length).toBe(10);
 
       for (const fail of failures) {
-        expect((fail.errors![0].originalError as any)?.code).toBe('RATE_LIMITED');
+        expect((fail.errors![0].originalError as { code?: string })?.code).toBe('RATE_LIMITED');
         expect(fail.errors![0].message).toContain('Comment boost rate limit exceeded (max 60 per minute)');
       }
     });
@@ -908,10 +955,15 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       );
 
       // 3. Attempt 61st boost toggle against restarted service instance
-      await expect(coldCommentsService.toggleCommentBoost(user2.id, parentCommentId)).rejects.toMatchObject({
-        code: 'RATE_LIMITED',
-        message: expect.stringContaining('Comment boost rate limit exceeded (max 60 per minute)'),
-      });
+      let boostError: unknown;
+      try {
+        await coldCommentsService.toggleCommentBoost(user2.id, parentCommentId);
+      } catch (err) {
+        boostError = err;
+      }
+      expect(boostError).toBeInstanceOf(AppError);
+      expect((boostError as AppError).code).toBe('RATE_LIMITED');
+      expect((boostError as AppError).message).toContain('Comment boost rate limit exceeded (max 60 per minute)');
     });
   });
 
@@ -951,7 +1003,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       expect(failures.length).toBe(5);
 
       for (const fail of failures) {
-        expect((fail.errors![0].originalError as any)?.code).toBe('RATE_LIMITED');
+        expect((fail.errors![0].originalError as { code?: string })?.code).toBe('RATE_LIMITED');
         expect(fail.errors![0].message).toContain('Daily comment report limit reached (10 per day)');
       }
     });
@@ -1024,7 +1076,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       );
 
       expect(blockedRes.errors).toBeDefined();
-      expect((blockedRes.errors![0].originalError as any)?.code).toBe('RATE_LIMITED');
+      expect((blockedRes.errors![0].originalError as { code?: string })?.code).toBe('RATE_LIMITED');
       expect(blockedRes.errors![0].message).toContain('Daily comment report limit reached (10 per day)');
     });
   });
@@ -1062,7 +1114,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       expect(blockedRes.errors!.length).toBe(1);
 
       const gqlError = blockedRes.errors![0];
-      expect((gqlError.originalError as any)?.code).toBe('RATE_LIMITED');
+      expect((gqlError.originalError as { code?: string })?.code).toBe('RATE_LIMITED');
       expect(gqlError.message).toBe('Comment creation rate limit exceeded (max 10 per minute)');
 
       // Verify no other user's identity or activity is leaked in the error payload
@@ -1073,11 +1125,8 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
     });
 
     it('quota transaction commits immediately and no R2 work is held inside DB transaction', async () => {
-      // Verify requestCommentImageUploadUrl performs quota check, commits it, and signs URL outside DB transaction
-      const insideTransactionDuringUrlSigning = false;
-
       // Spy on s3 client or verify transaction state
-      const ticketRes = await executeGql(
+      const ticketRes = await executeGql<RequestTicketResponse>(
         REQUEST_TICKET_MUTATION,
         {
           input: {
@@ -1089,14 +1138,15 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       );
 
       expect(ticketRes.errors).toBeUndefined();
-      expect(ticketRes.data?.requestCommentImageUploadUrl?.mediaId).toBeDefined();
-      expect(ticketRes.data?.requestCommentImageUploadUrl?.uploadUrl).toBeDefined();
+      const ticketData = ticketRes.data!;
+      expect(ticketData.requestCommentImageUploadUrl.mediaId).toBeDefined();
+      expect(ticketData.requestCommentImageUploadUrl.uploadUrl).toBeDefined();
 
       // Verify ticket was durably committed
       const [ticketInDb] = await dbHelper.db
         .select()
         .from(stagedUploads)
-        .where(eq(stagedUploads.id, ticketRes.data!.requestCommentImageUploadUrl.mediaId));
+        .where(eq(stagedUploads.id, ticketData.requestCommentImageUploadUrl.mediaId));
       expect(ticketInDb).toBeDefined();
       expect(ticketInDb.status).toBe('ISSUED');
     });

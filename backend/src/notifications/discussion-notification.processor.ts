@@ -165,9 +165,10 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
     );
   }
 
-  private async requeueClaimedEvent(event: DiscussionNotificationEvent, _error: unknown): Promise<void> {
+  private async requeueClaimedEvent(event: DiscussionNotificationEvent, error: unknown): Promise<void> {
     const retryDelayMs = Math.min(MAX_RETRY_DELAY_MS, 1_000 * 2 ** Math.min(event.attempts, 8));
     const now = new Date();
+    this.logger.warn(`Requeueing event ${event.id}: ${error instanceof Error ? error.message : String(error)}`);
 
     // Keep every failed event for observability and future recovery. The lease
     // token condition prevents a stale worker from overwriting a newer owner.

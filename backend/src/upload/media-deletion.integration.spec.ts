@@ -1,5 +1,6 @@
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { ConfigService } from '@nestjs/config';
+import type { Cache } from 'cache-manager';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { TestDatabaseHelper } from '../../test/test-database.helper';
 import {
@@ -35,22 +36,26 @@ class ControllableR2Adapter {
     this.deleteCalls = [];
   }
 
-  async send(command: any): Promise<any> {
+  send(command: {
+    constructor?: { name?: string };
+    name?: string;
+    input?: { Key?: string };
+  }): Promise<Record<string, unknown>> {
     const cmdName = command.constructor?.name ?? command.name;
-    const key = command.input?.Key;
+    const key = command.input?.Key ?? '';
 
     if (cmdName === 'DeleteObjectCommand' || command instanceof DeleteObjectCommand) {
       this.deleteCalls.push(key);
       if (this.shouldFailDelete) {
         const err = new Error(`Simulated R2 provider delete error for ${key}`);
         err.name = 'StorageServiceException';
-        throw err;
+        return Promise.reject(err);
       }
       this.objects.delete(key);
-      return {};
+      return Promise.resolve({});
     }
 
-    return {};
+    return Promise.resolve({});
   }
 }
 
@@ -107,16 +112,16 @@ describe('Media Deletion Outbox & Reliability Integration (Ticket 03)', () => {
     } as unknown as ConfigService;
 
     // Real UploadService with controllable S3 client
-    uploadService = new UploadService(mockConfig, null as any, dbHelper.db);
-    (uploadService as unknown as { s3Client: any }).s3Client = r2Adapter;
+    uploadService = new UploadService(mockConfig, null as unknown as Cache, dbHelper.db);
+    (uploadService as unknown as { s3Client: unknown }).s3Client = r2Adapter;
 
     commentsRepo = new CommentsRepository(dbHelper.db);
     mediaDeletionProcessor = new MediaDeletionProcessor(dbHelper.db, uploadService);
 
     // Mock global fetch for Cloudflare CDN purge API
     originalFetch = global.fetch;
-    global.fetch = jest.fn(async (input: any, init?: any) => {
-      const urlStr = typeof input === 'string' ? input : input.url;
+    global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const urlStr = typeof input === 'string' ? input : 'url' in input ? input.url : input.toString();
       if (urlStr.includes('cloudflare.com') && urlStr.includes('purge_cache')) {
         if (purgeShouldTimeout) {
           const timeoutErr = new Error('The operation was aborted due to timeout');
@@ -127,15 +132,16 @@ describe('Media Deletion Outbox & Reliability Integration (Ticket 03)', () => {
           return {
             ok: false,
             status: purgeFailStatus,
-            text: async () => 'Cloudflare API Gateway Timeout',
+            text: () => Promise.resolve('Cloudflare API Gateway Timeout'),
           } as Response;
         }
-        const body = JSON.parse(init?.body || '{}');
+        const bodyStr = typeof init?.body === 'string' ? init.body : '{}';
+        const body = JSON.parse(bodyStr) as { files?: string[] };
         purgeCalls.push({ url: urlStr, files: body.files || [] });
         return {
           ok: true,
           status: 200,
-          text: async () => JSON.stringify({ success: true }),
+          text: () => Promise.resolve(JSON.stringify({ success: true })),
         } as Response;
       }
       return originalFetch(input, init);

@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { graphql, GraphQLSchema } from 'graphql';
+import { graphql, GraphQLSchema, type ExecutionResult } from 'graphql';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { ConfigService } from '@nestjs/config';
@@ -12,11 +12,8 @@ import {
   cities,
   posts,
   comments,
-  commentMedia,
   commentReports,
-  commentBoosts,
   postPins,
-  moderationActions,
   adminUsers,
   type User,
   type City,
@@ -125,36 +122,62 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
       typeDefs,
       resolvers: {
         DateTime: {
-          __parseValue(v: any) {
+          __parseValue(v: unknown) {
             return v;
           },
-          __serialize(v: any) {
+          __serialize(v: unknown) {
             return v instanceof Date ? v.toISOString() : v;
           },
         },
         Query: {
-          comments: (_root, args) => commentsResolver.comments(args.postId, args.sort, args.first, args.after),
-          replies: (_root, args) => commentsResolver.replies(args.commentId, args.first, args.after),
+          comments: (_root: unknown, args: { postId: string; sort?: string; first?: number; after?: string }) =>
+            commentsResolver.comments(args.postId, args.sort, args.first, args.after),
+          replies: (_root: unknown, args: { commentId: string; first?: number; after?: string }) =>
+            commentsResolver.replies(args.commentId, args.first, args.after),
         },
         Mutation: {
-          createComment: (_root, args, ctx) => commentsResolver.createComment(args.input, ctx),
-          createReply: (_root, args, ctx) => commentsResolver.createReply(args.input, ctx),
-          deleteComment: (_root, args, ctx) => commentsResolver.deleteComment(args.id, ctx),
-          toggleCommentBoost: (_root, args, ctx) => commentsResolver.toggleCommentBoost(args.commentId, ctx),
-          pinComment: (_root, args, ctx) => commentsResolver.pinComment(args.commentId, ctx),
-          unpinComment: (_root, args, ctx) => commentsResolver.unpinComment(args.postId, ctx),
-          reportComment: (_root, args, ctx) => commentsResolver.reportComment(args.input, ctx),
+          createComment: (
+            _root: unknown,
+            args: { input: Parameters<typeof commentsResolver.createComment>[0] },
+            ctx: GqlContext,
+          ) => commentsResolver.createComment(args.input, ctx),
+          createReply: (
+            _root: unknown,
+            args: { input: Parameters<typeof commentsResolver.createReply>[0] },
+            ctx: GqlContext,
+          ) => commentsResolver.createReply(args.input, ctx),
+          deleteComment: (_root: unknown, args: { id: string }, ctx: GqlContext) =>
+            commentsResolver.deleteComment(args.id, ctx),
+          toggleCommentBoost: (_root: unknown, args: { commentId: string }, ctx: GqlContext) =>
+            commentsResolver.toggleCommentBoost(args.commentId, ctx),
+          pinComment: (_root: unknown, args: { commentId: string }, ctx: GqlContext) =>
+            commentsResolver.pinComment(args.commentId, ctx),
+          unpinComment: (_root: unknown, args: { postId: string }, ctx: GqlContext) =>
+            commentsResolver.unpinComment(args.postId, ctx),
+          reportComment: (
+            _root: unknown,
+            args: { input: Parameters<typeof commentsResolver.reportComment>[0] },
+            ctx: GqlContext,
+          ) => commentsResolver.reportComment(args.input, ctx),
         },
         Comment: {
-          author: (root, _args, ctx) => commentsResolver.author(root, ctx),
-          text: (root) => commentsResolver.text(root),
-          media: (root, _args, ctx) => commentsResolver.media(root, ctx),
-          isBoostedByMe: (root, _args, ctx) => commentsResolver.isBoostedByMe(root, ctx),
-          boostCount: (root) => commentsResolver.boostCount(root),
-          isPinned: (root, _args, ctx) => commentsResolver.isPinned(root, ctx),
+          author: (root: Parameters<typeof commentsResolver.author>[0], _args: unknown, ctx: GqlContext) =>
+            commentsResolver.author(root, ctx),
+          text: (root: Parameters<typeof commentsResolver.text>[0]) => commentsResolver.text(root),
+          media: (root: Parameters<typeof commentsResolver.media>[0], _args: unknown, ctx: GqlContext) =>
+            commentsResolver.media(root, ctx),
+          isBoostedByMe: (
+            root: Parameters<typeof commentsResolver.isBoostedByMe>[0],
+            _args: unknown,
+            ctx: GqlContext,
+          ) => commentsResolver.isBoostedByMe(root, ctx),
+          boostCount: (root: Parameters<typeof commentsResolver.boostCount>[0]) => commentsResolver.boostCount(root),
+          isPinned: (root: Parameters<typeof commentsResolver.isPinned>[0], _args: unknown, ctx: GqlContext) =>
+            commentsResolver.isPinned(root, ctx),
         },
         CommentMedia: {
-          publicUrl: (root) => commentMediaResolver.publicUrl(root),
+          publicUrl: (root: Parameters<typeof commentMediaResolver.publicUrl>[0]) =>
+            commentMediaResolver.publicUrl(root),
         },
       },
     });
@@ -187,7 +210,6 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
         firebaseUserId: `fb-${generateUuidV7()}`,
         email: `author-${generateUuidV7()}@pupzy.dev`,
         fullName: 'Author Pupzy',
-        username: `author_${generateUuidV7().slice(0, 8)}`,
         cityId: testCity.id,
         createdAt: new Date(Date.now() - 48 * 3600 * 1000),
       })
@@ -199,7 +221,6 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
         firebaseUserId: `fb-${generateUuidV7()}`,
         email: `user2-${generateUuidV7()}@pupzy.dev`,
         fullName: 'User Two',
-        username: `user2_${generateUuidV7().slice(0, 8)}`,
         cityId: testCity.id,
         createdAt: new Date(Date.now() - 48 * 3600 * 1000),
       })
@@ -211,7 +232,6 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
         firebaseUserId: `fb-${generateUuidV7()}`,
         email: `user3-${generateUuidV7()}@pupzy.dev`,
         fullName: 'User Three',
-        username: `user3_${generateUuidV7().slice(0, 8)}`,
         cityId: testCity.id,
         createdAt: new Date(Date.now() - 48 * 3600 * 1000),
       })
@@ -223,7 +243,6 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
         firebaseUserId: `fb-${generateUuidV7()}`,
         email: `reporter1-${generateUuidV7()}@pupzy.dev`,
         fullName: 'Mature Reporter 1',
-        username: `rep1_${generateUuidV7().slice(0, 8)}`,
         cityId: testCity.id,
         createdAt: new Date(Date.now() - 48 * 3600 * 1000),
       })
@@ -235,7 +254,6 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
         firebaseUserId: `fb-${generateUuidV7()}`,
         email: `reporter2-${generateUuidV7()}@pupzy.dev`,
         fullName: 'Mature Reporter 2',
-        username: `rep2_${generateUuidV7().slice(0, 8)}`,
         cityId: testCity.id,
         createdAt: new Date(Date.now() - 48 * 3600 * 1000),
       })
@@ -247,7 +265,6 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
         firebaseUserId: `fb-${generateUuidV7()}`,
         email: `reporter3-${generateUuidV7()}@pupzy.dev`,
         fullName: 'Mature Reporter 3',
-        username: `rep3_${generateUuidV7().slice(0, 8)}`,
         cityId: testCity.id,
         createdAt: new Date(Date.now() - 48 * 3600 * 1000),
       })
@@ -282,8 +299,86 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
       .returning();
   });
 
+  interface RawCommentRow {
+    id: string;
+    post_id: string;
+    parent_id: string | null;
+    status: string;
+  }
+
+  interface CreateCommentResult {
+    createComment: {
+      id: string;
+      text: string;
+      status: string;
+      replyCount: number;
+    };
+  }
+
+  interface CreateReplyResult {
+    createReply: {
+      id: string;
+      text: string;
+    };
+  }
+
+  interface CommentsFeedResult {
+    comments: {
+      edges: Array<{
+        node: {
+          id: string;
+          text: string;
+          author: { id: string; fullName?: string } | null;
+          replyCount: number;
+        };
+      }>;
+    };
+  }
+
+  interface EmptyCommentsFeedResult {
+    comments: {
+      edges: Array<{
+        node: {
+          id: string;
+        };
+      }>;
+    };
+  }
+
+  interface RepliesFeedResult {
+    replies: {
+      edges: Array<{
+        node: {
+          id: string;
+          text: string;
+          author?: {
+            id: string;
+            fullName: string;
+          };
+        };
+      }>;
+    };
+  }
+
+  interface BoostReplyResult {
+    toggleCommentBoost: {
+      isBoostedByMe: boolean;
+      boostCount: number;
+    };
+  }
+
+  interface DeleteCommentResult {
+    deleteComment: boolean;
+  }
+
+  function runGql<TData = Record<string, unknown>>(
+    args: Parameters<typeof graphql>[0],
+  ): Promise<ExecutionResult<TData>> {
+    return graphql(args) as Promise<ExecutionResult<TData>>;
+  }
+
   function createContext(userId?: string): GqlContext {
-    const userLoader = new DataLoader<string, any>(async (ids: readonly string[]) => {
+    const userLoader = new DataLoader<string, User | null>(async (ids: readonly string[]) => {
       const rows = await dbHelper.db
         .select()
         .from(users)
@@ -292,23 +387,23 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
       return ids.map((id) => map.get(id) || null);
     });
 
-    const commentMediaLoader = new DataLoader<string, any[]>(async (commentIds: readonly string[]) => {
-      return commentsRepository.findMediaByCommentIds(commentIds);
-    });
-
+    const commentMediaLoader = commentsRepository.createCommentMediaByCommentIdLoader();
     const pinnedCommentLoader = commentsRepository.createPinnedCommentIdByPostIdLoader();
+    const userObj = userId ? ({ id: userId, email: 'user@pupzy.dev', role: 'USER' } as unknown as User) : undefined;
 
     return {
       req: {
-        user: userId ? { id: userId } : undefined,
-      } as any,
-      res: {} as any,
-      user: userId ? { id: userId, email: 'user@pupzy.dev', role: 'USER' } : undefined,
+        user: userObj,
+      } as unknown as GqlContext['req'],
+      user: userObj,
       loaders: {
         userById: userLoader,
         commentMediaByCommentId: commentMediaLoader,
         pinnedCommentIdByPostId: pinnedCommentLoader,
-      } as any,
+        commentBoostedByMe: {
+          load: jest.fn().mockResolvedValue(false),
+        } as unknown as GqlContext['loaders']['commentBoostedByMe'],
+      } as unknown as GqlContext['loaders'],
     };
   }
 
@@ -319,14 +414,16 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     const client = dbHelper.pool;
     await client.query('BEGIN');
     try {
-      const { rows } = await client.query('SELECT * FROM comments WHERE id = $1 FOR UPDATE', [commentId]);
+      const { rows } = await client.query<RawCommentRow>('SELECT * FROM comments WHERE id = $1 FOR UPDATE', [
+        commentId,
+      ]);
       const row = rows[0];
       if (!row) throw new Error('Comment not found');
 
       const wasVisible = row.status === 'ACTIVE' || row.status === 'IMAGE_HIDDEN';
 
       if (!row.parent_id) {
-        const { rows: replyCountRows } = await client.query(
+        const { rows: replyCountRows } = await client.query<{ count: string | number }>(
           `SELECT count(*)::int AS count FROM comments WHERE parent_id = $1 AND status IN ('ACTIVE', 'IMAGE_HIDDEN')`,
           [row.id],
         );
@@ -343,7 +440,10 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
           [row.id],
         );
       } else {
-        const { rows: parentRows } = await client.query(`SELECT status FROM comments WHERE id = $1`, [row.parent_id]);
+        const { rows: parentRows } = await client.query<{ status: string }>(
+          `SELECT status FROM comments WHERE id = $1`,
+          [row.parent_id],
+        );
         const parent = parentRows[0];
         if (parent && parent.status !== 'REMOVED' && wasVisible) {
           await client.query(
@@ -389,7 +489,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
 
   it('AC 1 & AC 2: Parent permanent removal eliminates phantom reply counts, unlinks replies, and blocks engagement', async () => {
     // 1. Create a parent comment via GraphQL
-    const createParentResult = await graphql({
+    const createParentResult = await runGql<CreateCommentResult>({
       schema,
       source: `
         mutation CreateComment($input: CreateCommentInput!) {
@@ -415,7 +515,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     const parentId = createParentResult.data!.createComment.id;
 
     // 2. Create 2 replies under this parent comment
-    const createReply1Result = await graphql({
+    const createReply1Result = await runGql<CreateReplyResult>({
       schema,
       source: `
         mutation CreateReply($input: CreateReplyInput!) {
@@ -437,7 +537,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     expect(createReply1Result.errors).toBeUndefined();
     const reply1Id = createReply1Result.data!.createReply.id;
 
-    const createReply2Result = await graphql({
+    const createReply2Result = await runGql<CreateReplyResult>({
       schema,
       source: `
         mutation CreateReply($input: CreateReplyInput!) {
@@ -457,7 +557,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
       contextValue: createContext(user3.id),
     });
     expect(createReply2Result.errors).toBeUndefined();
-    const reply2Id = createReply2Result.data!.createReply.id;
+    expect(createReply2Result.data!.createReply.id).toBeDefined();
 
     // Verify post commentCount is 3 and parent replyCount is 2
     const [postBeforeRemoval] = await dbHelper.db.select().from(posts).where(eq(posts.id, testPost.id));
@@ -478,7 +578,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     expect(parentAfterRemoval.replyCount).toBe(0);
 
     // 4. AC 1: Verify GraphQL reads make the parent and replies inaccessible
-    const commentsQueryResult = await graphql({
+    const commentsQueryResult = await runGql<EmptyCommentsFeedResult>({
       schema,
       source: `
         query GetComments($postId: ID!) {
@@ -600,7 +700,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     });
 
     // 2. Author deletes parent comment
-    const deleteResult = await graphql({
+    const deleteResult = await runGql<DeleteCommentResult>({
       schema,
       source: `
         mutation Delete($id: ID!) {
@@ -622,7 +722,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     expect(parentRow.replyCount).toBe(2);
 
     // 4. Query top-level comments via GraphQL: parent renders as [Deleted] tombstone with author null
-    const commentsQueryResult = await graphql({
+    const commentsQueryResult = await runGql<CommentsFeedResult>({
       schema,
       source: `
         query GetComments($postId: ID!) {
@@ -652,7 +752,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     expect(edges[0].node.replyCount).toBe(2);
 
     // 5. Query replies under tombstone: both replies remain fully readable
-    const repliesQueryResult = await graphql({
+    const repliesQueryResult = await runGql<RepliesFeedResult>({
       schema,
       source: `
         query GetReplies($commentId: ID!) {
@@ -677,12 +777,12 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     const replyEdges = repliesQueryResult.data!.replies.edges;
     expect(replyEdges).toHaveLength(2);
     expect(replyEdges[0].node.text).toBe('Surviving reply 1');
-    expect(replyEdges[0].node.author.fullName).toBe('User Two');
+    expect(replyEdges[0].node.author?.fullName).toBe('User Two');
     expect(replyEdges[1].node.text).toBe('Surviving reply 2');
-    expect(replyEdges[1].node.author.fullName).toBe('User Three');
+    expect(replyEdges[1].node.author?.fullName).toBe('User Three');
 
     // 6. Replies under tombstone accept engagement (e.g. authorUser boosts reply 1)
-    const boostReplyResult = await graphql({
+    const boostReplyResult = await runGql<BoostReplyResult>({
       schema,
       source: `
         mutation Boost($commentId: ID!) {
@@ -720,7 +820,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     expect(parentAfterReply2Delete.replyCount).toBe(0);
 
     // Now that replyCount === 0, tombstone disappears from public comment feeds
-    const emptyFeedResult = await graphql({
+    const emptyFeedResult = await runGql<EmptyCommentsFeedResult>({
       schema,
       source: `
         query GetComments($postId: ID!) {
@@ -792,7 +892,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     expect(postAfterHide.commentCount).toBe(2);
 
     // 3. Query via GraphQL: renders as [Hidden] tombstone with author masked
-    const commentsQueryResult = await graphql({
+    const commentsQueryResult = await runGql<CommentsFeedResult>({
       schema,
       source: `
         query GetComments($postId: ID!) {
@@ -821,7 +921,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     expect(edges[0].node.replyCount).toBe(2);
 
     // Replies remain readable
-    const repliesResult = await graphql({
+    const repliesResult = await runGql<RepliesFeedResult>({
       schema,
       source: `
         query GetReplies($commentId: ID!) {
@@ -1108,7 +1208,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     const repaired = await commentsService.reconcileCommentCounters();
     expect(repaired.postsRepaired).toBe(101);
     expect(repaired.commentsRepaired).toBe(0);
-    const stale = await dbHelper.pool.query(
+    const stale = await dbHelper.pool.query<{ count: string | number }>(
       `SELECT count(*)::int AS count FROM posts
        WHERE creator_id = $1 AND id != $2 AND comment_count != 0`,
       [authorUser.id, testPost.id],
@@ -1128,14 +1228,14 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
        FROM generate_series(1, 101) AS series`,
       [authorUser.id, testCity.id],
     );
-    const ban = await dbHelper.pool.query(
+    const ban = await dbHelper.pool.query<{ ban_marker: string }>(
       `UPDATE users
        SET is_banned = true, banned_at = now(), ban_reason = 'Durable recovery test'
        WHERE id = $1
        RETURNING to_char(banned_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS ban_marker`,
       [authorUser.id],
     );
-    const audit = await dbHelper.pool.query(
+    const audit = await dbHelper.pool.query<{ id: string }>(
       `INSERT INTO moderation_actions (admin_user_id, action_type, target_type, target_id, reason, metadata)
        VALUES ($1, 'USER_BANNED', 'USER', $2, 'Durable recovery test',
                jsonb_build_object('alsoRemovePosts', true, 'cascadedPostCount', 0, 'postCascade', jsonb_build_object('state', 'PENDING')))
@@ -1150,7 +1250,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
 
     const beforeRestart = new UserBanPostCascadeProcessor(dbHelper.db);
     expect(await beforeRestart.processPendingCascades()).toBe(1);
-    const afterFirstPage = await dbHelper.pool.query(
+    const afterFirstPage = await dbHelper.pool.query<{ state: string; cascaded_post_count: string | number }>(
       `SELECT state, cascaded_post_count FROM user_ban_post_cascades WHERE action_id = $1`,
       [audit.rows[0].id],
     );
@@ -1162,7 +1262,11 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     const afterRestart = new UserBanPostCascadeProcessor(dbHelper.db);
     await afterRestart.onApplicationBootstrap();
     expect(await afterRestart.processPendingCascades()).toBe(1);
-    const completed = await dbHelper.pool.query(
+    const completed = await dbHelper.pool.query<{
+      state: string;
+      cascaded_post_count: string | number;
+      notification_sent_at: Date | null;
+    }>(
       `SELECT state, cascaded_post_count, notification_sent_at
        FROM user_ban_post_cascades WHERE action_id = $1`,
       [audit.rows[0].id],
@@ -1170,12 +1274,12 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     expect(completed.rows[0].state).toBe('COMPLETED');
     expect(Number(completed.rows[0].cascaded_post_count)).toBe(101);
     expect(completed.rows[0].notification_sent_at).not.toBeNull();
-    const active = await dbHelper.pool.query(
+    const active = await dbHelper.pool.query<{ count: string | number }>(
       `SELECT count(*)::int AS count FROM posts WHERE creator_id = $1 AND status = 'ACTIVE'`,
       [authorUser.id],
     );
     expect(Number(active.rows[0].count)).toBe(0);
-    const notifications = await dbHelper.pool.query(
+    const notifications = await dbHelper.pool.query<{ count: string | number }>(
       `SELECT count(*)::int AS count FROM notifications
        WHERE recipient_id = $1 AND type = 'POST_REMOVED_BY_ADMIN'`,
       [authorUser.id],
@@ -1199,12 +1303,12 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
         coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
       })
       .returning();
-    const ban = await dbHelper.pool.query(
+    const ban = await dbHelper.pool.query<{ ban_marker: string }>(
       `UPDATE users SET is_banned = true, banned_at = now(), ban_reason = 'Claim test' WHERE id = $1
        RETURNING to_char(banned_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS ban_marker`,
       [authorUser.id],
     );
-    const audit = await dbHelper.pool.query(
+    const audit = await dbHelper.pool.query<{ id: string }>(
       `INSERT INTO moderation_actions (admin_user_id, action_type, target_type, target_id, reason)
        VALUES ($1, 'USER_BANNED', 'USER', $2, 'Claim test') RETURNING id`,
       [adminUser.id, authorUser.id],
@@ -1253,13 +1357,13 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
       expect(await firstPage).toBe(1);
       expect(await new UserBanPostCascadeProcessor(dbHelper.db).processPendingCascades()).toBe(1);
 
-      const cascade = await dbHelper.pool.query(
+      const cascade = await dbHelper.pool.query<{ state: string; cascaded_post_count: string | number }>(
         `SELECT state, cascaded_post_count FROM user_ban_post_cascades WHERE action_id = $1`,
         [actionId],
       );
       expect(cascade.rows[0].state).toBe('COMPLETED');
       expect(Number(cascade.rows[0].cascaded_post_count)).toBe(1);
-      const notifications = await dbHelper.pool.query(
+      const notifications = await dbHelper.pool.query<{ count: string | number }>(
         `SELECT count(*)::int AS count FROM notifications WHERE recipient_id = $1 AND type = 'POST_REMOVED_BY_ADMIN'`,
         [authorUser.id],
       );
@@ -1385,7 +1489,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     if (!thirdReportResult.errors) {
       expect(deleteReports).toHaveLength(3);
     } else {
-      expect((thirdReportResult.errors[0].originalError as any)?.code).toBe('NOT_FOUND');
+      expect((thirdReportResult.errors[0].originalError as { code?: string } | undefined)?.code).toBe('NOT_FOUND');
     }
 
     const pinTarget = await commentsService.createComment(authorUser.id, {
@@ -1418,7 +1522,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     const [pinResult, pinReportResult] = await waitFor(Promise.all([pin, pinReport]));
 
     if (pinResult.errors) {
-      expect((pinResult.errors[0].originalError as any)?.code).toBe('NOT_FOUND');
+      expect((pinResult.errors[0].originalError as { code?: string } | undefined)?.code).toBe('NOT_FOUND');
     }
     expect(pinReportResult.errors).toBeUndefined();
     expect(pinReportResult.data?.reportComment).toBe(true);
@@ -1771,7 +1875,7 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
       expect(createResult.errors).toBeUndefined();
       const [post] = await dbHelper.db.select().from(posts).where(eq(posts.id, testPost.id));
       expect(post.commentCount).toBe(2);
-      const reachable = await dbHelper.pool.query(
+      const reachable = await dbHelper.pool.query<{ count: string | number }>(
         `SELECT count(*)::int AS count FROM comments
          WHERE post_id = $1 AND parent_id IS NULL AND status IN ('ACTIVE', 'IMAGE_HIDDEN')`,
         [testPost.id],

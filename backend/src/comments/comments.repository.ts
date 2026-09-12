@@ -16,6 +16,7 @@ import {
   commentReports,
   discussionNotificationEvents,
   users,
+  Post,
   Comment,
   CommentIdempotency,
   CommentMedia,
@@ -27,6 +28,16 @@ import { getCommentMediaPurgeUrls } from '../upload/media-delivery.util';
 import { CommentsQuotaManager, QuotaReservation } from './comments-quota.manager';
 import { withDbRetry } from '../common/utils/db-retry.util';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
+
+type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
+type DbExecutor = NodePgDatabase<typeof schema> | DbTransaction;
+
+interface DatabaseErrorLike {
+  code?: string;
+  message?: string;
+  cause?: { code?: string; message?: string };
+  driverError?: { code?: string; message?: string };
+}
 
 type DiscussionNotificationType = 'NEW_COMMENT' | 'NEW_REPLY' | 'COMMENT_BOOSTED' | 'COMMENT_PINNED';
 
@@ -52,11 +63,11 @@ const COUNTER_RECONCILIATION_POST_BATCH_SIZE = 100;
 
 export function isUniqueViolation(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false;
-  const anyErr = err as Record<string, any>;
-  if (anyErr.code === '23505') return true;
-  if (anyErr.cause?.code === '23505') return true;
-  if (anyErr.driverError?.code === '23505') return true;
-  const msg = `${anyErr.message ?? ''} ${anyErr.cause?.message ?? ''} ${anyErr.driverError?.message ?? ''}`;
+  const dbErr = err as DatabaseErrorLike;
+  if (dbErr.code === '23505') return true;
+  if (dbErr.cause?.code === '23505') return true;
+  if (dbErr.driverError?.code === '23505') return true;
+  const msg = `${dbErr.message ?? ''} ${dbErr.cause?.message ?? ''} ${dbErr.driverError?.message ?? ''}`;
   return msg.includes('23505') || msg.toLowerCase().includes('unique constraint');
 }
 
@@ -82,7 +93,7 @@ export class CommentsRepository {
    * advisory key. Every authorization and lifecycle check is repeated after
    * the transaction locks the canonical rows.
    */
-  private async lockDiscussionPost(tx: any, postId: string) {
+  private async lockDiscussionPost(tx: DbExecutor, postId: string): Promise<Post> {
     await tx.execute(sql`
       SELECT pg_advisory_xact_lock(hashtextextended('comment_discussion:' || ${postId}, 0))
     `);
@@ -92,7 +103,7 @@ export class CommentsRepository {
     return post;
   }
 
-  private async getDiscussionActorName(tx: any, actorId: string): Promise<string> {
+  private async getDiscussionActorName(tx: DbExecutor, actorId: string): Promise<string> {
     const [actor] = await tx.select({ fullName: users.fullName }).from(users).where(eq(users.id, actorId)).limit(1);
     return actor?.fullName?.trim() || 'Someone';
   }
@@ -103,7 +114,7 @@ export class CommentsRepository {
    * the processor has a second unique boundary on the inbox row it creates.
    */
   private async enqueueDiscussionNotificationEvent(
-    tx: any,
+    tx: DbExecutor,
     event: {
       sourceEventId: string;
       recipientId: string;
@@ -276,7 +287,12 @@ export class CommentsRepository {
           if (existing.requestHash !== requestHash) {
             throw new ConflictError('Client request ID was previously used with different parameters');
           }
-          const targetCommentId = existing.commentId ?? (existing.responsePayload as any)?.id;
+          const payload = existing.responsePayload;
+          let payloadId: string | undefined;
+          if (typeof payload === 'object' && payload !== null && 'id' in payload && typeof payload.id === 'string') {
+            payloadId = payload.id;
+          }
+          const targetCommentId = existing.commentId ?? payloadId;
           if (targetCommentId) {
             const fresh = await this.findCommentById(targetCommentId);
             if (fresh) {
@@ -582,7 +598,12 @@ export class CommentsRepository {
           if (existing.requestHash !== requestHash) {
             throw new ConflictError('Client request ID was previously used with different parameters');
           }
-          const targetCommentId = existing.commentId ?? (existing.responsePayload as any)?.id;
+          const payload = existing.responsePayload;
+          let payloadId: string | undefined;
+          if (typeof payload === 'object' && payload !== null && 'id' in payload && typeof payload.id === 'string') {
+            payloadId = payload.id;
+          }
+          const targetCommentId = existing.commentId ?? payloadId;
           if (targetCommentId) {
             const fresh = await this.findCommentById(targetCommentId);
             if (fresh) {

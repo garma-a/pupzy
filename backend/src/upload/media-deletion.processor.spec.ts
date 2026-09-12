@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment */
 import { MediaDeletionProcessor } from './media-deletion.processor';
 import { UploadService } from './upload.service';
 import { mediaDeletionWork, stagedUploads, type MediaDeletionWork, type StagedUpload } from '../database/schema';

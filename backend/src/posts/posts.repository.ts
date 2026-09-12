@@ -31,6 +31,8 @@ import type * as schema from '../database/schema';
 import { ForbiddenError, NotFoundError } from '../common/errors/app.errors';
 import { withDbRetry } from '../common/utils/db-retry.util';
 
+type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
+
 /**
  * PostsRepository — data-access layer for post creation.
  *
@@ -94,7 +96,7 @@ export class PostsRepository {
    * take the same first two locks: otherwise a Comment mutation can hold a
    * Comment row while a competing lifecycle update holds the Post row.
    */
-  private async lockDiscussionPost(tx: any, postId: string): Promise<Post | undefined> {
+  private async lockDiscussionPost(tx: DbTransaction, postId: string): Promise<Post | undefined> {
     await tx.execute(sql`
       SELECT pg_advisory_xact_lock(hashtextextended('comment_discussion:' || ${postId}, 0))
     `);
@@ -109,7 +111,7 @@ export class PostsRepository {
    * a Post creation either commits before that ban (and is cascaded) or is
    * rejected afterwards with the established safe application error.
    */
-  private async lockActiveCreator(tx: any, creatorId: string): Promise<void> {
+  private async lockActiveCreator(tx: DbTransaction, creatorId: string): Promise<void> {
     const [creator] = await tx
       .select({ id: users.id, isBanned: users.isBanned })
       .from(users)

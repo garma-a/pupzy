@@ -18,6 +18,8 @@ import type * as schema from '../database/schema';
 import { ForbiddenError, NotFoundError } from '../common/errors/app.errors';
 export type NewMatingDetailsInput = Omit<NewMatingPostRow, 'postId'>;
 
+type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
+
 @Injectable()
 export class MatingRepository {
   constructor(
@@ -32,7 +34,7 @@ export class MatingRepository {
    * creation rather than exposing the trigger constraint failure. If creation
    * wins that race, the durable ban cascade removes its committed ACTIVE Post.
    */
-  private async lockActiveCreator(tx: any, creatorId: string): Promise<void> {
+  private async lockActiveCreator(tx: DbTransaction, creatorId: string): Promise<void> {
     const [creator] = await tx
       .select({ id: users.id, isBanned: users.isBanned })
       .from(users)

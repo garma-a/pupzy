@@ -130,22 +130,23 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
         },
         Query: {
           post: (_root: unknown, args: { id: string }) => postsRepo.findById(args.id),
-          comments: (_root: unknown, args: any) =>
+          comments: (_root: unknown, args: { postId: string; sort?: string; first?: number; after?: string }) =>
             commentsResolver.comments(args.postId, args.sort, args.first, args.after),
-          replies: (_root: unknown, args: any) => commentsResolver.replies(args.commentId, args.first, args.after),
-          myNotifications: (_root: unknown, args: any, context: GqlContext) =>
+          replies: (_root: unknown, args: { commentId: string; first?: number; after?: string }) =>
+            commentsResolver.replies(args.commentId, args.first, args.after),
+          myNotifications: (_root: unknown, args: { first?: number; after?: string }, context: GqlContext) =>
             notificationsResolver.myNotifications(args.first, args.after, context),
           myUnreadNotificationCount: (_root: unknown, _args: unknown, context: GqlContext) =>
             notificationsResolver.myUnreadNotificationCount(context),
         },
         Mutation: {
-          createComment: (_root: unknown, args: any, context: GqlContext) =>
+          createComment: (_root: unknown, args: { input: unknown }, context: GqlContext) =>
             commentsResolver.createComment(args.input, context),
-          createReply: (_root: unknown, args: any, context: GqlContext) =>
+          createReply: (_root: unknown, args: { input: unknown }, context: GqlContext) =>
             commentsResolver.createReply(args.input, context),
-          toggleCommentBoost: (_root: unknown, args: any, context: GqlContext) =>
+          toggleCommentBoost: (_root: unknown, args: { commentId: string }, context: GqlContext) =>
             commentsResolver.toggleCommentBoost(args.commentId, context),
-          pinComment: (_root: unknown, args: any, context: GqlContext) =>
+          pinComment: (_root: unknown, args: { commentId: string }, context: GqlContext) =>
             commentsResolver.pinComment(args.commentId, context),
         },
       },
@@ -198,7 +199,7 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
   });
 
   async function executeGql(source: string, variables: Record<string, unknown>, authenticatedUser: User) {
-    const userLoader = new DataLoader(async (ids: readonly string[]) => {
+    const userLoader = new DataLoader<string, User | null>(async (ids: readonly string[]) => {
       const rows = await dbHelper.db
         .select()
         .from(users)
@@ -207,19 +208,14 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
       return ids.map((id) => byId.get(id) ?? null);
     });
     const context: GqlContext = {
-      req: {} as any,
-      user: {
-        id: authenticatedUser.id,
-        email: authenticatedUser.email,
-        username: authenticatedUser.username,
-        role: authenticatedUser.role,
-      } as any,
+      req: {} as unknown as GqlContext['req'],
+      user: authenticatedUser,
       loaders: {
-        cityById: { load: jest.fn() } as any,
+        cityById: { load: jest.fn() } as unknown as GqlContext['loaders']['cityById'],
         userById: userLoader,
-        mediaByPostId: { load: jest.fn() } as any,
-        upvotedByMe: { load: jest.fn() } as any,
-        savedByMe: { load: jest.fn() } as any,
+        mediaByPostId: { load: jest.fn() } as unknown as GqlContext['loaders']['mediaByPostId'],
+        upvotedByMe: { load: jest.fn() } as unknown as GqlContext['loaders']['upvotedByMe'],
+        savedByMe: { load: jest.fn() } as unknown as GqlContext['loaders']['savedByMe'],
         commentBoostedByMe: commentsRepo.createCommentBoostedByMeLoader(),
         pinnedCommentIdByPostId: commentsRepo.createPinnedCommentIdByPostIdLoader(),
         commentMediaByCommentId: commentsRepo.createCommentMediaByCommentIdLoader(),
@@ -235,7 +231,10 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
   ): Promise<string> {
     const result = await executeGql(CREATE_COMMENT, { input: { postId: post.id, text, clientRequestId } }, author);
     expect(result.errors).toBeUndefined();
-    return (result.data as any).createComment.id;
+    interface CreateCommentResult {
+      createComment: { id: string };
+    }
+    return (result.data as unknown as CreateCommentResult).createComment.id;
   }
 
   it('commits one durable event with the source action, recovers it after restart, and preserves unread navigation IDs', async () => {
@@ -259,7 +258,7 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
 
     const inbox = await executeGql(MY_NOTIFICATIONS, {}, postOwner);
     expect(inbox.errors).toBeUndefined();
-    expect((inbox.data as any).myNotifications).toMatchObject({
+    expect((inbox.data as { myNotifications: unknown }).myNotifications).toMatchObject({
       unreadCount: 1,
       edges: [
         {
@@ -344,7 +343,12 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
     for (const response of responses) {
       expect(response.errors).toBeUndefined();
     }
-    const createdIds = new Set(responses.map((response) => (response.data as any).createComment.id));
+    interface CreateCommentBatchData {
+      createComment: { id: string };
+    }
+    const createdIds = new Set(
+      responses.map((response) => (response.data as unknown as CreateCommentBatchData).createComment.id),
+    );
     expect(createdIds.size).toBe(1);
     expect(await dbHelper.db.select().from(comments)).toHaveLength(1);
     expect(await dbHelper.db.select().from(discussionNotificationEvents)).toHaveLength(1);
@@ -365,14 +369,20 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
       replier,
     );
     expect(replyResult.errors).toBeUndefined();
-    const replyId = (replyResult.data as any).createReply.id;
+    interface CreateReplyResult {
+      createReply: { id: string };
+    }
+    const replyId = (replyResult.data as unknown as CreateReplyResult).createReply.id;
 
+    interface ToggleBoostResult {
+      toggleCommentBoost: { isBoostedByMe: boolean };
+    }
     const boostAdded = await executeGql(TOGGLE_BOOST, { commentId }, booster);
     expect(boostAdded.errors).toBeUndefined();
-    expect((boostAdded.data as any).toggleCommentBoost.isBoostedByMe).toBe(true);
+    expect((boostAdded.data as unknown as ToggleBoostResult).toggleCommentBoost.isBoostedByMe).toBe(true);
     const boostRemoved = await executeGql(TOGGLE_BOOST, { commentId }, booster);
     expect(boostRemoved.errors).toBeUndefined();
-    expect((boostRemoved.data as any).toggleCommentBoost.isBoostedByMe).toBe(false);
+    expect((boostRemoved.data as unknown as ToggleBoostResult).toggleCommentBoost.isBoostedByMe).toBe(false);
 
     expect((await executeGql(PIN_COMMENT, { commentId }, postOwner)).errors).toBeUndefined();
     expect((await executeGql(PIN_COMMENT, { commentId }, postOwner)).errors).toBeUndefined();

@@ -3,6 +3,8 @@ import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 
 type DrizzleDB = NodePgDatabase<typeof schema>;
+type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
+type DbExecutor = NodePgDatabase<typeof schema> | DbTransaction;
 import { commentQuotaAdmissions, comments, stagedUploads, commentReports } from '../database/schema';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { AppError } from '../common/errors/app.errors';
@@ -29,8 +31,8 @@ export interface QuotaReservation {
 export class CommentsQuotaManager {
   constructor(private readonly db: DrizzleDB) {}
 
-  private async runWithAdvisoryLock<T>(userId: string, action: string, fn: (tx: any) => Promise<T>): Promise<T> {
-    const executeWithLock = async (tx: any) => {
+  private async runWithAdvisoryLock<T>(userId: string, action: string, fn: (tx: DbExecutor) => Promise<T>): Promise<T> {
+    const executeWithLock = async (tx: DbExecutor) => {
       try {
         await tx.execute(
           sql`SELECT pg_advisory_xact_lock(hashtext('comment_quota'), hashtext(${userId} || ':' || ${action}))`,
@@ -41,8 +43,8 @@ export class CommentsQuotaManager {
       return fn(tx);
     };
 
-    if (typeof (this.db as any).transaction === 'function') {
-      return (this.db as any).transaction(executeWithLock);
+    if ('transaction' in this.db && typeof this.db.transaction === 'function') {
+      return this.db.transaction((tx) => executeWithLock(tx));
     }
     return executeWithLock(this.db);
   }

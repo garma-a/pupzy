@@ -5,7 +5,6 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { eq, sql } from 'drizzle-orm';
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
-import DataLoader from 'dataloader';
 import { TestDatabaseHelper } from '../../test/test-database.helper';
 import {
   users,
@@ -19,6 +18,8 @@ import {
   type User,
   type City,
   type Post,
+  type Comment,
+  type CommentMedia,
 } from '../database/schema';
 import { CommentsRepository } from './comments.repository';
 import { CommentsService } from './comments.service';
@@ -121,31 +122,33 @@ describe('Comments Moderation Inspection & Restoration Integration (Ticket 08)',
       typeDefs,
       resolvers: {
         DateTime: {
-          __parseValue(v: any) {
+          __parseValue(v: unknown) {
             return v;
           },
-          __serialize(v: any) {
+          __serialize(v: unknown) {
             return v instanceof Date ? v.toISOString() : v;
           },
         },
         Query: {
-          comments: (_root, args) => commentsResolver.comments(args.postId, args.sort, args.first, args.after),
-          replies: (_root, args) => commentsResolver.replies(args.commentId, args.first, args.after),
+          comments: (_root: unknown, args: { postId: string; sort?: string; first?: number; after?: string }) =>
+            commentsResolver.comments(args.postId, args.sort, args.first, args.after),
+          replies: (_root: unknown, args: { commentId: string; first?: number; after?: string }) =>
+            commentsResolver.replies(args.commentId, args.first, args.after),
         },
         Mutation: {
-          reportComment: (_root, args, ctx) =>
-            commentsResolver.reportComment(args.commentId, args.reason, args.details, ctx),
+          reportComment: (_root: unknown, args: { input: unknown }, ctx: GqlContext) =>
+            commentsResolver.reportComment(args.input, ctx),
         },
         Comment: {
-          author: (root, _args, ctx) => commentsResolver.author(root, ctx),
-          text: (root) => commentsResolver.text(root),
-          media: (root, _args, ctx) => commentsResolver.media(root, ctx),
-          isBoostedByMe: (root, _args, ctx) => commentsResolver.isBoostedByMe(root, ctx),
-          boostCount: (root) => commentsResolver.boostCount(root),
-          isPinned: (root, _args, ctx) => commentsResolver.isPinned(root, ctx),
+          author: (root: Comment, _args: unknown, ctx: GqlContext) => commentsResolver.author(root, ctx),
+          text: (root: Comment) => commentsResolver.text(root),
+          media: (root: Comment, _args: unknown, ctx: GqlContext) => commentsResolver.media(root, ctx),
+          isBoostedByMe: (root: Comment, _args: unknown, ctx: GqlContext) => commentsResolver.isBoostedByMe(root, ctx),
+          boostCount: (root: Comment) => commentsResolver.boostCount(root),
+          isPinned: (root: Comment, _args: unknown, ctx: GqlContext) => commentsResolver.isPinned(root, ctx),
         },
         CommentMedia: {
-          publicUrl: (root) => commentMediaResolver.publicUrl(root),
+          publicUrl: (root: CommentMedia) => commentMediaResolver.publicUrl(root),
         },
       },
     });
@@ -264,22 +267,21 @@ describe('Comments Moderation Inspection & Restoration Integration (Ticket 08)',
   });
 
   function createContext(userId?: string): GqlContext {
-    const mediaLoader = new DataLoader(async (commentIds: readonly string[]) => {
-      const rows = await commentsRepository.findMediaByCommentIds(commentIds);
-      const grouped = new Map<string, any[]>();
-      for (const id of commentIds) grouped.set(id, []);
-      for (const row of rows) grouped.get(row.commentId)?.push(row);
-      return commentIds.map((id) => grouped.get(id) ?? []);
-    });
+    const authenticatedUser = userId
+      ? ({ id: userId, email: 'user@pupzy.dev', role: 'USER' } as unknown as User)
+      : undefined;
 
     return {
       req: {
         headers: {},
         ip: '127.0.0.1',
-      } as any,
-      res: {} as any,
-      user: userId ? { id: userId, email: 'user@pupzy.dev', role: 'USER' } : undefined,
-      mediaLoader,
+        user: authenticatedUser,
+      } as unknown as GqlContext['req'],
+      user: authenticatedUser,
+      loaders: {
+        commentMediaByCommentId: commentsRepository.createCommentMediaByCommentIdLoader(),
+        pinnedCommentIdByPostId: commentsRepository.createPinnedCommentIdByPostIdLoader(),
+      } as unknown as GqlContext['loaders'],
     };
   }
 
@@ -352,7 +354,18 @@ describe('Comments Moderation Inspection & Restoration Integration (Ticket 08)',
     });
 
     expect(publicResult.errors).toBeUndefined();
-    const node = (publicResult.data?.comments as any)?.edges?.[0]?.node;
+    interface CommentNode {
+      id: string;
+      text: string;
+      media: unknown[];
+    }
+    interface CommentsQueryData {
+      comments?: {
+        edges?: Array<{ node?: CommentNode }>;
+      };
+    }
+    const publicData = publicResult.data as CommentsQueryData;
+    const node = publicData?.comments?.edges?.[0]?.node;
     expect(node).toMatchObject({
       id: comment.id,
       text: 'Comment with images reported as inappropriate',
@@ -360,7 +373,16 @@ describe('Comments Moderation Inspection & Restoration Integration (Ticket 08)',
     });
 
     // 3. Inspect via database moderation query (matches AdminJS inspectMedia)
-    const { rows: inspectMediaRows } = await dbHelper.pool.query(
+    interface InspectMediaRow {
+      id: string;
+      storage_key: string;
+      width: number;
+      height: number;
+      file_size_bytes: number;
+      display_order: number;
+      file_content_type: string;
+    }
+    const { rows: inspectMediaRows } = await dbHelper.pool.query<InspectMediaRow>(
       `SELECT id, storage_key, width, height, file_size_bytes, display_order, file_content_type
        FROM comment_media
        WHERE comment_id = $1
@@ -374,7 +396,14 @@ describe('Comments Moderation Inspection & Restoration Integration (Ticket 08)',
     expect(inspectMediaRows[1].storage_key).toBe(`comments/${comment.id}/photo2.webp`);
     expect(inspectMediaRows[1].display_order).toBe(1);
 
-    const { rows: inspectReportRows } = await dbHelper.pool.query(
+    interface InspectReportRow {
+      id: string;
+      reporter_id: string;
+      reason: string;
+      details: string | null;
+      reviewed_at: Date | null;
+    }
+    const { rows: inspectReportRows } = await dbHelper.pool.query<InspectReportRow>(
       `SELECT id, reporter_id, reason, details, reviewed_at
        FROM comment_reports
        WHERE comment_id = $1

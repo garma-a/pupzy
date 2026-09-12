@@ -10,6 +10,8 @@ const USER_BAN_POST_CASCADE_BATCH_SIZE = 100;
 
 type CascadeState = 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'MISSING';
 
+type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
+
 interface CascadeOutcome {
   state: CascadeState;
   cascadedPostCount: number;
@@ -63,7 +65,7 @@ export class UserBanPostCascadeProcessor implements OnApplicationBootstrap {
   }
 
   private async updateAudit(
-    tx: any,
+    tx: DbTransaction,
     actionId: string,
     state: Exclude<CascadeState, 'MISSING'>,
     cascadedPostCount: number,

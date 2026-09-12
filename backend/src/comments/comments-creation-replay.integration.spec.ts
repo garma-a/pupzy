@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import sharp from 'sharp';
-import { graphql, GraphQLSchema } from 'graphql';
+import { graphql, GraphQLSchema, type ExecutionResult } from 'graphql';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { eq, sql, inArray } from 'drizzle-orm';
 import { ConfigService } from '@nestjs/config';
@@ -15,7 +15,6 @@ import {
   cities,
   posts,
   comments,
-  commentMedia,
   stagedUploads,
   commentIdempotency,
   type User,
@@ -33,11 +32,23 @@ import { UsersService } from '../users/users.service';
 import { UploadService } from '../upload/upload.service';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import type { GqlContext } from '../common/types/gql-context.type';
-import { ConflictError, NotFoundError } from '../common/errors/app.errors';
 
 interface R2Object {
   bytes: Buffer;
   etag: string;
+}
+
+interface S3CommandLike {
+  constructor?: { name?: string };
+  name?: string;
+  input?: {
+    Key?: string;
+    Body?: unknown;
+  };
+}
+
+interface R2Error extends Error {
+  $metadata?: { httpStatusCode: number };
 }
 
 class ControllableR2Adapter {
@@ -56,51 +67,52 @@ class ControllableR2Adapter {
     this.objects.clear();
   }
 
-  async send(command: any): Promise<any> {
+  send(command: S3CommandLike): Promise<Record<string, unknown>> {
     const cmdName = command.constructor?.name ?? command.name;
-    const key = command.input?.Key;
+    const key = command.input?.Key ?? '';
 
     if (cmdName === 'HeadObjectCommand' || command instanceof HeadObjectCommand) {
       if (!this.objects.has(key)) {
-        const err: any = new Error(`NotFound: ${key}`);
+        const err: R2Error = new Error(`NotFound: ${key}`);
         err.name = 'NotFound';
         err.$metadata = { httpStatusCode: 404 };
-        throw err;
+        return Promise.reject(err);
       }
       const item = this.objects.get(key)!;
-      return { ContentLength: item.bytes.length, ETag: item.etag };
+      return Promise.resolve({ ContentLength: item.bytes.length, ETag: item.etag });
     }
 
     if (cmdName === 'GetObjectCommand' || command instanceof GetObjectCommand) {
       const item = this.objects.get(key);
       if (!item) {
-        const err: any = new Error(`NoSuchKey: ${key}`);
+        const err: R2Error = new Error(`NoSuchKey: ${key}`);
         err.name = 'NoSuchKey';
         err.$metadata = { httpStatusCode: 404 };
-        throw err;
+        return Promise.reject(err);
       }
-      return {
+      return Promise.resolve({
         ContentLength: item.bytes.length,
         ETag: item.etag,
         Body: {
-          transformToByteArray: async () => new Uint8Array(item.bytes),
+          transformToByteArray: () => Promise.resolve(new Uint8Array(item.bytes)),
         },
-      };
+      });
     }
 
     if (cmdName === 'PutObjectCommand' || command instanceof PutObjectCommand) {
-      const bytes = Buffer.isBuffer(command.input?.Body) ? command.input.Body : Buffer.from(command.input?.Body ?? '');
+      const body = command.input?.Body;
+      const bytes = Buffer.isBuffer(body) ? body : typeof body === 'string' ? Buffer.from(body) : Buffer.from([]);
       const etag = `"${crypto.createHash('md5').update(bytes).digest('hex')}"`;
       this.objects.set(key, { bytes, etag });
-      return {};
+      return Promise.resolve({});
     }
 
     if (cmdName === 'DeleteObjectCommand' || command instanceof DeleteObjectCommand) {
       this.objects.delete(key);
-      return {};
+      return Promise.resolve({});
     }
 
-    return {};
+    return Promise.resolve({});
   }
 }
 
@@ -145,10 +157,10 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
 
     r2Adapter = new ControllableR2Adapter();
 
-    const cacheStore = new Map<string, any>();
+    const cacheStore = new Map<string, unknown>();
     mockCache = {
-      get: jest.fn((key: string) => Promise.resolve(cacheStore.get(key))),
-      set: jest.fn((key: string, val: any) => {
+      get: jest.fn(<T>(key: string) => Promise.resolve(cacheStore.get(key) as T | undefined)),
+      set: jest.fn((key: string, val: unknown) => {
         cacheStore.set(key, val);
         return Promise.resolve();
       }),
@@ -193,7 +205,9 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
     citiesService = new CitiesService(citiesRepo, mockCache);
     usersService = new UsersService(usersRepo, citiesService, mockConfig, mockCache);
     uploadService = new UploadService(mockConfig, mockCache, dbHelper.db);
-    (uploadService as any).s3Client.send = jest.fn((cmd) => r2Adapter.send(cmd));
+    (uploadService as unknown as { s3Client: { send: unknown } }).s3Client.send = jest.fn((cmd: S3CommandLike) =>
+      r2Adapter.send(cmd),
+    );
 
     commentsService = new CommentsService(
       commentsRepo,
@@ -229,33 +243,52 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       typeDefs,
       resolvers: {
         DateTime: {
-          __parseValue(v: any) {
+          __parseValue(v: unknown) {
             return v;
           },
-          __serialize(v: any) {
+          __serialize(v: unknown) {
             return v instanceof Date ? v.toISOString() : v;
           },
         },
         Query: {
-          post: (_root, args) => postsRepo.findById(args.id),
-          comments: (_root, args) => commentsResolver.comments(args.postId, args.sort, args.first, args.after),
-          replies: (_root, args) => commentsResolver.replies(args.commentId, args.first, args.after),
+          post: (_root: unknown, args: { id: string }) => postsRepo.findById(args.id),
+          comments: (_root: unknown, args: { postId: string; sort?: string; first?: number; after?: string }) =>
+            commentsResolver.comments(args.postId, args.sort, args.first, args.after),
+          replies: (_root: unknown, args: { commentId: string; first?: number; after?: string }) =>
+            commentsResolver.replies(args.commentId, args.first, args.after),
         },
         Mutation: {
-          createComment: (_root, args, ctx) => commentsResolver.createComment(args.input, ctx),
-          createReply: (_root, args, ctx) => commentsResolver.createReply(args.input, ctx),
-          deleteComment: (_root, args, ctx) => commentsResolver.deleteComment(args.id, ctx),
+          createComment: (
+            _root: unknown,
+            args: { input: Parameters<typeof commentsResolver.createComment>[0] },
+            ctx: GqlContext,
+          ) => commentsResolver.createComment(args.input, ctx),
+          createReply: (
+            _root: unknown,
+            args: { input: Parameters<typeof commentsResolver.createReply>[0] },
+            ctx: GqlContext,
+          ) => commentsResolver.createReply(args.input, ctx),
+          deleteComment: (_root: unknown, args: { id: string }, ctx: GqlContext) =>
+            commentsResolver.deleteComment(args.id, ctx),
         },
         Comment: {
-          author: (root, _args, ctx) => commentsResolver.author(root, ctx),
-          text: (root) => commentsResolver.text(root),
-          media: (root, _args, ctx) => commentsResolver.media(root, ctx),
-          isBoostedByMe: (root, _args, ctx) => commentsResolver.isBoostedByMe(root, ctx),
-          boostCount: (root) => commentsResolver.boostCount(root),
-          isPinned: (root, _args, ctx) => commentsResolver.isPinned(root, ctx),
+          author: (root: Parameters<typeof commentsResolver.author>[0], _args: unknown, ctx: GqlContext) =>
+            commentsResolver.author(root, ctx),
+          text: (root: Parameters<typeof commentsResolver.text>[0]) => commentsResolver.text(root),
+          media: (root: Parameters<typeof commentsResolver.media>[0], _args: unknown, ctx: GqlContext) =>
+            commentsResolver.media(root, ctx),
+          isBoostedByMe: (
+            root: Parameters<typeof commentsResolver.isBoostedByMe>[0],
+            _args: unknown,
+            ctx: GqlContext,
+          ) => commentsResolver.isBoostedByMe(root, ctx),
+          boostCount: (root: Parameters<typeof commentsResolver.boostCount>[0]) => commentsResolver.boostCount(root),
+          isPinned: (root: Parameters<typeof commentsResolver.isPinned>[0], _args: unknown, ctx: GqlContext) =>
+            commentsResolver.isPinned(root, ctx),
         },
         CommentMedia: {
-          publicUrl: (root) => commentMediaResolver.publicUrl(root),
+          publicUrl: (root: Parameters<typeof commentMediaResolver.publicUrl>[0]) =>
+            commentMediaResolver.publicUrl(root),
         },
       },
     });
@@ -288,13 +321,11 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
           firebaseUserId: `fb-${generateUuidV7()}`,
           email: `author-${generateUuidV7()}@example.com`,
           fullName: 'Comment Author',
-          username: 'author_user',
         },
         {
           firebaseUserId: `fb-${generateUuidV7()}`,
           email: `reply-${generateUuidV7()}@example.com`,
           fullName: 'Reply User',
-          username: 'reply_user',
         },
       ])
       .returning();
@@ -317,8 +348,57 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
     testPost = post;
   });
 
-  async function executeGql(source: string, variables: Record<string, any> = {}, user: User = authorUser) {
-    const userByIdLoader = new DataLoader(async (ids: readonly string[]) => {
+  interface CreateCommentResponse {
+    createComment: {
+      id: string;
+      postId?: string;
+      parentId?: string | null;
+      text: string;
+      status: string;
+      replyCount: number;
+      boostCount?: number;
+      createdAt?: string;
+      updatedAt?: string;
+      author?: {
+        id: string;
+        fullName: string | null;
+      } | null;
+      media?: Array<{
+        id: string;
+        publicUrl: string;
+        width: number;
+        height: number;
+        displayOrder?: number;
+      }>;
+    };
+  }
+
+  interface CreateReplyResponse {
+    createReply: {
+      id: string;
+      postId?: string;
+      parentId?: string | null;
+      text: string;
+      status?: string;
+      replyCount?: number;
+      boostCount?: number;
+      author?: {
+        id: string;
+        fullName: string | null;
+      } | null;
+    };
+  }
+
+  interface DeleteCommentResponse {
+    deleteComment: boolean;
+  }
+
+  async function executeGql<TData = Record<string, unknown>>(
+    source: string,
+    variables: Record<string, unknown> = {},
+    user: User = authorUser,
+  ): Promise<ExecutionResult<TData>> {
+    const userByIdLoader = new DataLoader<string, User | null>(async (ids: readonly string[]) => {
       const rows = await dbHelper.db
         .select()
         .from(users)
@@ -328,31 +408,33 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
     });
 
     const ctx: GqlContext = {
-      req: {} as any,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        role: user.role,
-      } as any,
+      req: {
+        user,
+      } as unknown as GqlContext['req'],
+      user,
       loaders: {
         cityById: citiesService.createCityByIdLoader(),
         userById: userByIdLoader,
         mediaByPostId: postsRepo.createMediaByPostIdLoader(),
         upvotedByMe: postsRepo.createUpvotedByMeLoader(),
         savedByMe: postsRepo.createSavedByMeLoader(),
-        commentBoostedByMe: { load: jest.fn().mockResolvedValue(false) } as any,
-        pinnedCommentIdByPostId: { load: jest.fn().mockResolvedValue(null) } as any,
+        commentBoostedByMe: {
+          load: jest.fn().mockResolvedValue(false),
+        } as unknown as GqlContext['loaders']['commentBoostedByMe'],
+        pinnedCommentIdByPostId: {
+          load: jest.fn().mockResolvedValue(null),
+        } as unknown as GqlContext['loaders']['pinnedCommentIdByPostId'],
         commentMediaByCommentId: commentsRepo.createCommentMediaByCommentIdLoader(),
       },
     };
 
-    return graphql({
+    const res = await graphql({
       schema: executableSchema,
       source,
       variableValues: variables,
       contextValue: ctx,
     });
+    return res as ExecutionResult<TData>;
   }
 
   async function stageCommentImage(user: User, imageBytes: Buffer): Promise<{ mediaId: string; stagingKey: string }> {
@@ -436,11 +518,11 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
 
       // Run 5 identical requests concurrently against PostgreSQL
       const results = await Promise.all([
-        executeGql(CREATE_COMMENT_MUTATION, { input }, authorUser),
-        executeGql(CREATE_COMMENT_MUTATION, { input }, authorUser),
-        executeGql(CREATE_COMMENT_MUTATION, { input }, authorUser),
-        executeGql(CREATE_COMMENT_MUTATION, { input }, authorUser),
-        executeGql(CREATE_COMMENT_MUTATION, { input }, authorUser),
+        executeGql<CreateCommentResponse>(CREATE_COMMENT_MUTATION, { input }, authorUser),
+        executeGql<CreateCommentResponse>(CREATE_COMMENT_MUTATION, { input }, authorUser),
+        executeGql<CreateCommentResponse>(CREATE_COMMENT_MUTATION, { input }, authorUser),
+        executeGql<CreateCommentResponse>(CREATE_COMMENT_MUTATION, { input }, authorUser),
+        executeGql<CreateCommentResponse>(CREATE_COMMENT_MUTATION, { input }, authorUser),
       ]);
 
       // All 5 must succeed without error
@@ -450,11 +532,11 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       }
 
       // All 5 must resolve to the EXACT same canonical comment ID
-      const canonicalId = (results[0].data as any).createComment.id;
+      const canonicalId = results[0].data!.createComment.id;
       for (const res of results) {
-        expect((res.data as any).createComment.id).toBe(canonicalId);
-        expect((res.data as any).createComment.text).toBe('Concurrent comment submission');
-        expect((res.data as any).createComment.status).toBe('ACTIVE');
+        expect(res.data!.createComment.id).toBe(canonicalId);
+        expect(res.data!.createComment.text).toBe('Concurrent comment submission');
+        expect(res.data!.createComment.status).toBe('ACTIVE');
       }
 
       // Exactly 1 comment row and 1 idempotency record in PostgreSQL
@@ -470,7 +552,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
 
     it('concurrent identical createReply requests return one canonical entity and increment replyCount once', async () => {
       // Create top-level parent first
-      const parentRes = await executeGql(
+      const parentRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -481,7 +563,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         },
         authorUser,
       );
-      const parentId = (parentRes.data as any).createComment.id;
+      const parentId = parentRes.data!.createComment.id;
 
       const clientRequestId = `reply-concurrent-${generateUuidV7()}`;
       const input = {
@@ -492,21 +574,21 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
 
       // Run 5 identical reply requests concurrently
       const results = await Promise.all([
-        executeGql(CREATE_REPLY_MUTATION, { input }, replyUser),
-        executeGql(CREATE_REPLY_MUTATION, { input }, replyUser),
-        executeGql(CREATE_REPLY_MUTATION, { input }, replyUser),
-        executeGql(CREATE_REPLY_MUTATION, { input }, replyUser),
-        executeGql(CREATE_REPLY_MUTATION, { input }, replyUser),
+        executeGql<CreateReplyResponse>(CREATE_REPLY_MUTATION, { input }, replyUser),
+        executeGql<CreateReplyResponse>(CREATE_REPLY_MUTATION, { input }, replyUser),
+        executeGql<CreateReplyResponse>(CREATE_REPLY_MUTATION, { input }, replyUser),
+        executeGql<CreateReplyResponse>(CREATE_REPLY_MUTATION, { input }, replyUser),
+        executeGql<CreateReplyResponse>(CREATE_REPLY_MUTATION, { input }, replyUser),
       ]);
 
       for (const res of results) {
         expect(res.errors).toBeUndefined();
       }
 
-      const canonicalReplyId = (results[0].data as any).createReply.id;
+      const canonicalReplyId = results[0].data!.createReply.id;
       for (const res of results) {
-        expect((res.data as any).createReply.id).toBe(canonicalReplyId);
-        expect((res.data as any).createReply.text).toBe('Concurrent reply submission');
+        expect(res.data!.createReply.id).toBe(canonicalReplyId);
+        expect(res.data!.createReply.text).toBe('Concurrent reply submission');
       }
 
       // Exactly 1 reply row in DB
@@ -522,7 +604,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       const clientRequestId = `conf-req-${generateUuidV7()}`;
 
       // First create
-      const firstRes = await executeGql(
+      const firstRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -536,7 +618,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       expect(firstRes.errors).toBeUndefined();
 
       // Second create with DIFFERENT payload but SAME clientRequestId
-      const secondRes = await executeGql(
+      const secondRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -550,7 +632,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
 
       expect(secondRes.errors).toBeDefined();
       expect(secondRes.errors![0].message).toContain('Client request ID was previously used with different parameters');
-      expect((secondRes.errors![0].originalError as any)?.code).toBe('CONFLICT');
+      expect((secondRes.errors![0].originalError as { code?: string } | undefined)?.code).toBe('CONFLICT');
 
       // Ensure no second row was inserted
       const allComments = await dbHelper.db.select().from(comments);
@@ -566,7 +648,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       const clientRequestId = `del-tomb-${generateUuidV7()}`;
 
       // 1. Create parent comment with image
-      const createRes = await executeGql(
+      const createRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -579,10 +661,10 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         authorUser,
       );
       expect(createRes.errors).toBeUndefined();
-      const commentId = (createRes.data as any).createComment.id;
+      const commentId = createRes.data!.createComment.id;
 
       // 2. Add reply so parent has surviving reply
-      const replyRes = await executeGql(
+      const replyRes = await executeGql<CreateReplyResponse>(
         CREATE_REPLY_MUTATION,
         {
           input: {
@@ -596,9 +678,9 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       expect(replyRes.errors).toBeUndefined();
 
       // 3. Author deletes the parent comment
-      const delRes = await executeGql(DELETE_COMMENT_MUTATION, { id: commentId }, authorUser);
+      const delRes = await executeGql<DeleteCommentResponse>(DELETE_COMMENT_MUTATION, { id: commentId }, authorUser);
       expect(delRes.errors).toBeUndefined();
-      expect((delRes.data as any).deleteComment).toBe(true);
+      expect(delRes.data!.deleteComment).toBe(true);
 
       // Verify DB status is DELETED and replyCount is 1
       const [dbParent] = await dbHelper.db.select().from(comments).where(eq(comments.id, commentId));
@@ -606,7 +688,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       expect(dbParent.replyCount).toBe(1);
 
       // 4. Replay creation with original clientRequestId
-      const replayRes = await executeGql(
+      const replayRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -620,7 +702,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       );
 
       expect(replayRes.errors).toBeUndefined();
-      const replayData = (replayRes.data as any).createComment;
+      const replayData = replayRes.data!.createComment;
       expect(replayData.id).toBe(commentId);
       expect(replayData.status).toBe('DELETED');
       // Privacy invariant: text masked to [Deleted]
@@ -636,7 +718,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       const clientRequestId = `del-zero-${generateUuidV7()}`;
 
       // 1. Create comment with 0 replies
-      const createRes = await executeGql(
+      const createRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -647,13 +729,13 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         },
         authorUser,
       );
-      const commentId = (createRes.data as any).createComment.id;
+      const commentId = createRes.data!.createComment.id;
 
       // 2. Delete comment
-      await executeGql(DELETE_COMMENT_MUTATION, { id: commentId }, authorUser);
+      await executeGql<DeleteCommentResponse>(DELETE_COMMENT_MUTATION, { id: commentId }, authorUser);
 
       // 3. Replay creation with original clientRequestId
-      const replayRes = await executeGql(
+      const replayRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -667,7 +749,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
 
       expect(replayRes.errors).toBeDefined();
       expect(replayRes.errors![0].message).toContain(`Comment with id "${commentId}" was not found`);
-      expect((replayRes.errors![0].originalError as any)?.code).toBe('NOT_FOUND');
+      expect((replayRes.errors![0].originalError as { code?: string } | undefined)?.code).toBe('NOT_FOUND');
       expect(replayRes.data?.createComment).toBeFalsy();
     });
 
@@ -675,7 +757,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       const clientRequestId = `hide-tomb-${generateUuidV7()}`;
 
       // 1. Create comment
-      const createRes = await executeGql(
+      const createRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -686,10 +768,10 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         },
         authorUser,
       );
-      const commentId = (createRes.data as any).createComment.id;
+      const commentId = createRes.data!.createComment.id;
 
       // 2. Add reply
-      await executeGql(
+      await executeGql<CreateReplyResponse>(
         CREATE_REPLY_MUTATION,
         {
           input: {
@@ -708,7 +790,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         .where(eq(comments.id, commentId));
 
       // 4. Replay creation
-      const replayRes = await executeGql(
+      const replayRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -721,7 +803,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       );
 
       expect(replayRes.errors).toBeUndefined();
-      const replayData = (replayRes.data as any).createComment;
+      const replayData = replayRes.data!.createComment;
       expect(replayData.id).toBe(commentId);
       expect(replayData.status).toBe('HIDDEN');
       expect(replayData.text).toBe('[Hidden]');
@@ -733,7 +815,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
     it('replay after moderator whole hiding (HIDDEN) with 0 replies throws NotFoundError', async () => {
       const clientRequestId = `hide-zero-${generateUuidV7()}`;
 
-      const createRes = await executeGql(
+      const createRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -744,14 +826,14 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         },
         authorUser,
       );
-      const commentId = (createRes.data as any).createComment.id;
+      const commentId = createRes.data!.createComment.id;
 
       await dbHelper.db
         .update(comments)
         .set({ status: 'HIDDEN', updatedAt: new Date() })
         .where(eq(comments.id, commentId));
 
-      const replayRes = await executeGql(
+      const replayRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -765,14 +847,14 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
 
       expect(replayRes.errors).toBeDefined();
       expect(replayRes.errors![0].message).toContain(`Comment with id "${commentId}" was not found`);
-      expect((replayRes.errors![0].originalError as any)?.code).toBe('NOT_FOUND');
+      expect((replayRes.errors![0].originalError as { code?: string } | undefined)?.code).toBe('NOT_FOUND');
     });
 
     it('replay after image hiding (IMAGE_HIDDEN): text and author preserved, but media stripped to empty array', async () => {
       const { mediaId } = await stageCommentImage(authorUser, validWebp);
       const clientRequestId = `img-hide-${generateUuidV7()}`;
 
-      const createRes = await executeGql(
+      const createRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -784,7 +866,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         },
         authorUser,
       );
-      const commentId = (createRes.data as any).createComment.id;
+      const commentId = createRes.data!.createComment.id;
 
       // Simulate image hiding
       await dbHelper.db
@@ -792,7 +874,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         .set({ status: 'IMAGE_HIDDEN', updatedAt: new Date() })
         .where(eq(comments.id, commentId));
 
-      const replayRes = await executeGql(
+      const replayRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -806,7 +888,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       );
 
       expect(replayRes.errors).toBeUndefined();
-      const replayData = (replayRes.data as any).createComment;
+      const replayData = replayRes.data!.createComment;
       expect(replayData.id).toBe(commentId);
       expect(replayData.status).toBe('IMAGE_HIDDEN');
       // Original text preserved
@@ -823,7 +905,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
     it('replay after permanent removal (REMOVED) throws NotFoundError', async () => {
       const clientRequestId = `perm-rem-${generateUuidV7()}`;
 
-      const createRes = await executeGql(
+      const createRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -834,14 +916,14 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         },
         authorUser,
       );
-      const commentId = (createRes.data as any).createComment.id;
+      const commentId = createRes.data!.createComment.id;
 
       await dbHelper.db
         .update(comments)
         .set({ status: 'REMOVED', updatedAt: new Date() })
         .where(eq(comments.id, commentId));
 
-      const replayRes = await executeGql(
+      const replayRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -855,13 +937,13 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
 
       expect(replayRes.errors).toBeDefined();
       expect(replayRes.errors![0].message).toContain(`Comment with id "${commentId}" was not found`);
-      expect((replayRes.errors![0].originalError as any)?.code).toBe('NOT_FOUND');
+      expect((replayRes.errors![0].originalError as { code?: string } | undefined)?.code).toBe('NOT_FOUND');
     });
 
     it('replay after Post removal throws NotFoundError("Post") and exposes no discussion', async () => {
       const clientRequestId = `post-rem-${generateUuidV7()}`;
 
-      const createRes = await executeGql(
+      const createRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -877,7 +959,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       // Mark post as REMOVED
       await dbHelper.db.update(posts).set({ status: 'REMOVED' }).where(eq(posts.id, testPost.id));
 
-      const replayRes = await executeGql(
+      const replayRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -891,12 +973,12 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
 
       expect(replayRes.errors).toBeDefined();
       expect(replayRes.errors![0].message).toContain(`Post with id "${testPost.id}" was not found`);
-      expect((replayRes.errors![0].originalError as any)?.code).toBe('NOT_FOUND');
+      expect((replayRes.errors![0].originalError as { code?: string } | undefined)?.code).toBe('NOT_FOUND');
     });
 
     it('reply replay when parent comment is removed or deleted/hidden without surviving replies throws NotFoundError', async () => {
       // 1. Create parent
-      const parentRes = await executeGql(
+      const parentRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -907,11 +989,11 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         },
         authorUser,
       );
-      const parentId = (parentRes.data as any).createComment.id;
+      const parentId = parentRes.data!.createComment.id;
 
       // 2. Create reply
       const replyClientRequestId = `reply-under-parent-${generateUuidV7()}`;
-      const replyRes = await executeGql(
+      const replyRes = await executeGql<CreateReplyResponse>(
         CREATE_REPLY_MUTATION,
         {
           input: {
@@ -923,12 +1005,12 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         replyUser,
       );
       expect(replyRes.errors).toBeUndefined();
-      const replyId = (replyRes.data as any).createReply.id;
+      const replyId = replyRes.data!.createReply.id;
 
       // Case A: Parent is REMOVED
       await dbHelper.db.update(comments).set({ status: 'REMOVED' }).where(eq(comments.id, parentId));
 
-      let replayRes = await executeGql(
+      let replayRes = await executeGql<CreateReplyResponse>(
         CREATE_REPLY_MUTATION,
         {
           input: {
@@ -945,7 +1027,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       // Case B: Parent is DELETED and has replyCount === 0
       await dbHelper.db.update(comments).set({ status: 'DELETED', replyCount: 0 }).where(eq(comments.id, parentId));
 
-      replayRes = await executeGql(
+      replayRes = await executeGql<CreateReplyResponse>(
         CREATE_REPLY_MUTATION,
         {
           input: {
@@ -962,7 +1044,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
 
     it('reply replay when reply itself is deleted or hidden throws NotFoundError', async () => {
       // 1. Create parent
-      const parentRes = await executeGql(
+      const parentRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -973,11 +1055,11 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         },
         authorUser,
       );
-      const parentId = (parentRes.data as any).createComment.id;
+      const parentId = parentRes.data!.createComment.id;
 
       // 2. Create reply
       const replyClientRequestId = `reply-self-del-${generateUuidV7()}`;
-      const replyRes = await executeGql(
+      const replyRes = await executeGql<CreateReplyResponse>(
         CREATE_REPLY_MUTATION,
         {
           input: {
@@ -988,13 +1070,13 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         },
         replyUser,
       );
-      const replyId = (replyRes.data as any).createReply.id;
+      const replyId = replyRes.data!.createReply.id;
 
       // 3. Delete reply
-      await executeGql(DELETE_COMMENT_MUTATION, { id: replyId }, replyUser);
+      await executeGql<DeleteCommentResponse>(DELETE_COMMENT_MUTATION, { id: replyId }, replyUser);
 
       // 4. Replay reply creation
-      const replayRes = await executeGql(
+      const replayRes = await executeGql<CreateReplyResponse>(
         CREATE_REPLY_MUTATION,
         {
           input: {
@@ -1008,7 +1090,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
 
       expect(replayRes.errors).toBeDefined();
       expect(replayRes.errors![0].message).toContain(`Comment with id "${replyId}" was not found`);
-      expect((replayRes.errors![0].originalError as any)?.code).toBe('NOT_FOUND');
+      expect((replayRes.errors![0].originalError as { code?: string } | undefined)?.code).toBe('NOT_FOUND');
     });
   });
 
@@ -1017,7 +1099,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
     it('completed identical retry succeeds when creation quota is exhausted (10/min)', async () => {
       // 1. First comment successfully created
       const initialClientRequestId = `first-req-${generateUuidV7()}`;
-      const firstRes = await executeGql(
+      const firstRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -1029,11 +1111,11 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         authorUser,
       );
       expect(firstRes.errors).toBeUndefined();
-      const firstCommentId = (firstRes.data as any).createComment.id;
+      const firstCommentId = firstRes.data!.createComment.id;
 
       // 2. Author creates 9 more comments (reaching the 10/min rate limit)
       for (let i = 2; i <= 10; i++) {
-        const res = await executeGql(
+        const res = await executeGql<CreateCommentResponse>(
           CREATE_COMMENT_MUTATION,
           {
             input: {
@@ -1048,7 +1130,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       }
 
       // Verify 11th new creation is blocked by rate limit
-      const blockedRes = await executeGql(
+      const blockedRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -1061,11 +1143,11 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       );
       expect(blockedRes.errors).toBeDefined();
       expect(blockedRes.errors![0].message).toContain('Comment creation rate limit exceeded');
-      expect((blockedRes.errors![0].originalError as any)?.code).toBe('RATE_LIMITED');
+      expect((blockedRes.errors![0].originalError as { code?: string } | undefined)?.code).toBe('RATE_LIMITED');
 
       // 3. NOW replay the FIRST comment with its identical clientRequestId
       // It MUST succeed and NOT be blocked by the rate limit!
-      const retryRes = await executeGql(
+      const retryRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -1078,15 +1160,15 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       );
 
       expect(retryRes.errors).toBeUndefined();
-      expect((retryRes.data as any).createComment.id).toBe(firstCommentId);
-      expect((retryRes.data as any).createComment.text).toBe('Initial comment before quota exhaustion');
+      expect(retryRes.data!.createComment.id).toBe(firstCommentId);
+      expect(retryRes.data!.createComment.text).toBe('Initial comment before quota exhaustion');
     });
 
     it('idempotent replay survives application restart (cold service instance)', async () => {
       const clientRequestId = `restart-req-${generateUuidV7()}`;
 
       // 1. Create comment on service instance 1
-      const firstRes = await executeGql(
+      const firstRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -1098,7 +1180,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         authorUser,
       );
       expect(firstRes.errors).toBeUndefined();
-      const commentId = (firstRes.data as any).createComment.id;
+      const commentId = firstRes.data!.createComment.id;
 
       // 2. Simulate complete application restart by instantiating a brand new CommentsService
       const restartedCommentsService = new CommentsService(
@@ -1141,7 +1223,7 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
       const clientRequestId = `wrapped-conflict-${generateUuidV7()}`;
 
       // Create comment first
-      const createRes = await executeGql(
+      const createRes = await executeGql<CreateCommentResponse>(
         CREATE_COMMENT_MUTATION,
         {
           input: {
@@ -1153,16 +1235,16 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
         authorUser,
       );
       expect(createRes.errors).toBeUndefined();
-      const createdId = (createRes.data as any).createComment.id;
+      const createdId = createRes.data!.createComment.id;
 
       // Simulate a concurrent call where createCommentWithCounter throws a wrapped 23505 error
-      const originalMethod = commentsRepo.createCommentWithCounter.bind(commentsRepo);
       let simulated = false;
-      jest.spyOn(commentsRepo, 'createCommentWithCounter').mockImplementationOnce(async (params) => {
+      jest.spyOn(commentsRepo, 'createCommentWithCounter').mockImplementationOnce(() => {
         simulated = true;
-        const wrappedError: any = new Error('Database query execution failed');
-        wrappedError.driverError = { code: '23505', message: 'duplicate key value violates unique constraint' };
-        throw wrappedError;
+        const wrappedError = Object.assign(new Error('Database query execution failed'), {
+          driverError: { code: '23505', message: 'duplicate key value violates unique constraint' },
+        });
+        return Promise.reject(wrappedError);
       });
 
       // Execute via commentsService
@@ -1177,10 +1259,11 @@ describe('Comment Creation Replays Integration (Ticket 06)', () => {
 
       // Now force createComment to run past the idempotency check by stubbing findIdempotencyRecord once
       jest.spyOn(commentsRepo, 'findIdempotencyRecord').mockResolvedValueOnce(null);
-      jest.spyOn(commentsRepo, 'createCommentWithCounter').mockImplementationOnce(async (params) => {
-        const wrappedError: any = new Error('Database query execution failed');
-        wrappedError.cause = { code: '23505', message: 'unique constraint error' };
-        throw wrappedError;
+      jest.spyOn(commentsRepo, 'createCommentWithCounter').mockImplementationOnce(() => {
+        const wrappedError = Object.assign(new Error('Database query execution failed'), {
+          cause: { code: '23505', message: 'unique constraint error' },
+        });
+        return Promise.reject(wrappedError);
       });
 
       const recoveredResult = await commentsService.createComment(authorUser.id, {

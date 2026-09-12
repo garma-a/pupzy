@@ -1,11 +1,10 @@
-import * as crypto from 'crypto';
 import sharp from 'sharp';
+import { AppError } from '../../common/errors/app.errors';
 import {
   validateCommentImage,
   MAX_COMMENT_IMAGE_BYTES,
   MAX_COMMENT_IMAGE_WIDTH,
   MAX_COMMENT_IMAGE_HEIGHT,
-  MAX_COMMENT_IMAGE_PIXELS,
   _setDecoderConcurrencyLimits,
   _resetDecoderConcurrency,
 } from './comment-image.validator';
@@ -426,10 +425,16 @@ describe('CommentImageValidator', () => {
       const buffer = await createValidLossyWebp(200, 200);
       _setDecoderConcurrencyLimits({ decoderTimeoutMs: 1 }); // 1ms timeout
 
-      await expect(validateCommentImage(buffer)).rejects.toMatchObject({
-        code: 'COMMENT_MEDIA_PROCESSING_FAILED',
-        message: expect.stringMatching(/execution limit exceeded|timed out/i),
-      });
+      try {
+        await validateCommentImage(buffer);
+        throw new Error('Expected to throw');
+      } catch (err) {
+        expect(err).toBeInstanceOf(AppError);
+        if (err instanceof AppError) {
+          expect(err.code).toBe('COMMENT_MEDIA_PROCESSING_FAILED');
+          expect(err.message).toMatch(/execution limit exceeded|timed out/i);
+        }
+      }
     });
 
     it('enforces concurrency queue bounds safely when decoder capacity is exceeded', async () => {

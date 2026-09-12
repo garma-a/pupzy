@@ -26,6 +26,9 @@ import {
 import { FinalizedCommentMedia } from '../comments/comments.repository';
 import { getCommentMediaPurgeUrls } from './media-delivery.util';
 
+type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
+type DbExecutor = NodePgDatabase<typeof schema> | DbTransaction;
+
 /**
  * UploadService — manages media uploads to Cloudflare R2 via presigned URLs.
  *
@@ -435,7 +438,7 @@ export class UploadService {
     const now = new Date();
 
     // 3. Atomic rate limiting: 6 per minute, 50 per day (failed and abandoned count toward it)
-    const runQuotaCheck = async (tx: any) => {
+    const runQuotaCheck = async (tx: DbExecutor) => {
       try {
         await tx.execute(
           sql`SELECT pg_advisory_xact_lock(hashtext('comment_quota'), hashtext(${userId} || ':COMMENT_IMAGE_TICKET'))`,
@@ -498,8 +501,8 @@ export class UploadService {
       }
     };
 
-    if (typeof (this.db as any).transaction === 'function') {
-      await (this.db as any).transaction(runQuotaCheck);
+    if (typeof this.db.transaction === 'function') {
+      await this.db.transaction(runQuotaCheck);
     } else {
       await runQuotaCheck(this.db);
     }

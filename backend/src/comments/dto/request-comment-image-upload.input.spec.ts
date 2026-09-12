@@ -1,5 +1,5 @@
 import { validateRequestCommentImageUploadInput } from './request-comment-image-upload.input';
-import { ValidationError } from '../../common/errors/app.errors';
+import { AppError, ValidationError } from '../../common/errors/app.errors';
 
 describe('validateRequestCommentImageUploadInput', () => {
   it('validates a valid input payload', () => {
@@ -24,42 +24,48 @@ describe('validateRequestCommentImageUploadInput', () => {
   });
 
   it('rejects content type other than image/webp with COMMENT_MEDIA_INVALID_FORMAT', () => {
-    expect(() =>
+    try {
       validateRequestCommentImageUploadInput({
         contentType: 'image/jpeg',
         fileSizeBytes: 50_000,
-      }),
-    ).toThrow(
-      expect.objectContaining({
-        code: 'COMMENT_MEDIA_INVALID_FORMAT',
-        message: 'Only static WebP images are allowed',
-      }),
-    );
+      });
+      throw new Error('Expected to throw');
+    } catch (err) {
+      expect(err).toBeInstanceOf(AppError);
+      if (err instanceof AppError) {
+        expect(err.code).toBe('COMMENT_MEDIA_INVALID_FORMAT');
+        expect(err.message).toBe('Only static WebP images are allowed');
+      }
+    }
 
-    expect(() =>
+    try {
       validateRequestCommentImageUploadInput({
         contentType: 'image/png',
         fileSizeBytes: 50_000,
-      }),
-    ).toThrow(
-      expect.objectContaining({
-        code: 'COMMENT_MEDIA_INVALID_FORMAT',
-      }),
-    );
+      });
+      throw new Error('Expected to throw');
+    } catch (err) {
+      expect(err).toBeInstanceOf(AppError);
+      if (err instanceof AppError) {
+        expect(err.code).toBe('COMMENT_MEDIA_INVALID_FORMAT');
+      }
+    }
   });
 
   it('rejects fileSizeBytes exceeding 100,000 bytes with COMMENT_MEDIA_TOO_LARGE', () => {
-    expect(() =>
+    try {
       validateRequestCommentImageUploadInput({
         contentType: 'image/webp',
         fileSizeBytes: 100_001,
-      }),
-    ).toThrow(
-      expect.objectContaining({
-        code: 'COMMENT_MEDIA_TOO_LARGE',
-        message: 'File size exceeds 100,000 bytes',
-      }),
-    );
+      });
+      throw new Error('Expected to throw');
+    } catch (err) {
+      expect(err).toBeInstanceOf(AppError);
+      if (err instanceof AppError) {
+        expect(err.code).toBe('COMMENT_MEDIA_TOO_LARGE');
+        expect(err.message).toBe('File size exceeds 100,000 bytes');
+      }
+    }
   });
 
   it('rejects non-positive or non-integer fileSizeBytes with ValidationError', () => {
