@@ -6,8 +6,10 @@ import '../models/app_notification.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
+import '../widgets/comments_sheet.dart';
 import '../widgets/skeleton_loader.dart';
 import 'adoption_detail_screen.dart';
+import 'mating_detail_screen.dart';
 import 'product_detail_screen.dart';
 import 'rescue_detail_screen.dart';
 
@@ -33,6 +35,13 @@ IconData _iconForType(String type) {
       return Icons.timer_outlined;
     case 'SYSTEM_ANNOUNCEMENT':
       return Icons.campaign_outlined;
+    case 'NEW_COMMENT':
+    case 'NEW_REPLY':
+      return Icons.mode_comment_outlined;
+    case 'COMMENT_BOOSTED':
+      return Icons.arrow_upward;
+    case 'COMMENT_PINNED':
+      return Icons.push_pin_outlined;
     default:
       return Icons.notifications_none;
   }
@@ -75,7 +84,9 @@ class _NotificationsPanelState extends State<NotificationsPanel> {
     final graphql = context.read<GraphQLService>();
     if (!n.isRead) {
       setState(() {
-        _notifications = _notifications.map((x) => x.id == n.id ? x.copyWith(isRead: true) : x).toList();
+        _notifications = _notifications
+            .map((x) => x.id == n.id ? x.copyWith(isRead: true) : x)
+            .toList();
       });
       graphql.markNotificationRead(n.id);
     }
@@ -84,17 +95,53 @@ class _NotificationsPanelState extends State<NotificationsPanel> {
     final (post, _) = await graphql.fetchPostDetail(postId);
     if (!mounted || post == null) return;
     Navigator.of(context).pop();
+    // Comment-related notifications open the post's detail screen and then
+    // pop the comments sheet straight open, since that's the content the
+    // notification is actually about.
+    final isCommentNotification = const {
+      'NEW_COMMENT',
+      'NEW_REPLY',
+      'COMMENT_BOOSTED',
+      'COMMENT_PINNED',
+    }.contains(n.type);
+    final navigatorContext = context;
     switch (post.postType) {
       case 'RESCUE':
       case 'LOST':
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => RescueDetailScreen(postId: postId)));
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => RescueDetailScreen(postId: postId)),
+        );
         break;
       case 'ADOPTION':
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => AdoptionDetailScreen(postId: postId)));
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => AdoptionDetailScreen(postId: postId),
+          ),
+        );
         break;
       case 'PRODUCT':
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => ProductDetailScreen(postId: postId)));
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ProductDetailScreen(postId: postId),
+          ),
+        );
         break;
+      case 'MATING':
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => MatingDetailScreen(postId: postId)),
+        );
+        break;
+    }
+    if (isCommentNotification && navigatorContext.mounted) {
+      final me = await graphql.fetchMe();
+      final isOwner = (me?['id'] as String?) == post.creator.id;
+      if (!navigatorContext.mounted) return;
+      showModalBottomSheet(
+        context: navigatorContext,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => CommentsSheet(postId: postId, isPostOwner: isOwner),
+      );
     }
   }
 
@@ -110,77 +157,143 @@ class _NotificationsPanelState extends State<NotificationsPanel> {
         return Container(
           decoration: const BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(AppRadius.sheet),
+            ),
           ),
           child: Column(
             children: [
               const SizedBox(height: AppSpacing.sm),
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Text(t(context, 'Notifications', 'الإشعارات'), style: Theme.of(context).textTheme.headlineMedium),
+                child: Text(
+                  t(context, 'Notifications', 'الإشعارات'),
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
               ),
               Expanded(
                 child: _loading
                     ? ListView(
-                        children: const [ListRowSkeleton(), ListRowSkeleton(), ListRowSkeleton(), ListRowSkeleton()],
+                        children: const [
+                          ListRowSkeleton(),
+                          ListRowSkeleton(),
+                          ListRowSkeleton(),
+                          ListRowSkeleton(),
+                        ],
                       )
                     : _errorMessage != null
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.cloud_off_outlined, size: 40, color: AppColors.textMuted),
-                                  const SizedBox(height: AppSpacing.sm),
-                                  Text(_errorMessage!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted), textAlign: TextAlign.center),
-                                  const SizedBox(height: AppSpacing.md),
-                                  OutlinedButton(onPressed: _load, child: Text(t(context, 'Retry', 'إعادة المحاولة'))),
-                                ],
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xl,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.cloud_off_outlined,
+                                size: 40,
+                                color: AppColors.textMuted,
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                _errorMessage!,
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(color: AppColors.textMuted),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              OutlinedButton(
+                                onPressed: _load,
+                                child: Text(
+                                  t(context, 'Retry', 'إعادة المحاولة'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : _notifications.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.notifications_none,
+                              size: 44,
+                              color: AppColors.textMuted,
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(
+                              t(
+                                context,
+                                'No notifications yet',
+                                'لا توجد إشعارات بعد',
+                              ),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: AppColors.textMuted),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: scrollController,
+                        itemCount: _notifications.length,
+                        itemBuilder: (context, i) {
+                          final n = _notifications[i];
+                          return ListTile(
+                            onTap: () => _openNotification(n),
+                            leading: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.12,
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                _iconForType(n.type),
+                                size: 18,
+                                color: AppColors.primary,
                               ),
                             ),
-                          )
-                        : _notifications.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.notifications_none, size: 44, color: AppColors.textMuted),
-                                    const SizedBox(height: AppSpacing.sm),
-                                    Text(
-                                      t(context, 'No notifications yet', 'لا توجد إشعارات بعد'),
-                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
-                                    ),
-                                  ],
+                            title: Text(
+                              n.title,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  n.body,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              )
-                            : ListView.builder(
-                                controller: scrollController,
-                                itemCount: _notifications.length,
-                                itemBuilder: (context, i) {
-                                  final n = _notifications[i];
-                                  return ListTile(
-                                    onTap: () => _openNotification(n),
-                                    leading: Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.12), shape: BoxShape.circle),
-                                      child: Icon(_iconForType(n.type), size: 18, color: AppColors.primary),
-                                    ),
-                                    title: Text(n.title, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
-                                    subtitle: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(n.body, style: Theme.of(context).textTheme.bodySmall, maxLines: 2, overflow: TextOverflow.ellipsis),
-                                        Text(timeAgo(n.createdAt, lang), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted)),
-                                      ],
-                                    ),
-                                    isThreeLine: true,
-                                    tileColor: n.isRead ? null : AppColors.primary.withValues(alpha: 0.05),
-                                  );
-                                },
-                              ),
+                                Text(
+                                  timeAgo(n.createdAt, lang),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(color: AppColors.textMuted),
+                                ),
+                              ],
+                            ),
+                            isThreeLine: true,
+                            tileColor: n.isRead
+                                ? null
+                                : AppColors.primary.withValues(alpha: 0.05),
+                          );
+                        },
+                      ),
               ),
             ],
           ),

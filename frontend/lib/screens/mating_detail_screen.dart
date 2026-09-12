@@ -10,6 +10,7 @@ import '../models/post_detail.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/animated_favorite_icon.dart';
+import '../widgets/comments_sheet.dart';
 import '../widgets/contact_request_sheet.dart';
 import '../widgets/contact_requests_owner_section.dart';
 import '../widgets/nearby_vets_section.dart';
@@ -226,6 +227,29 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
                       Row(
                         children: [
                           Expanded(child: Text(ext.petName, style: Theme.of(context).textTheme.headlineLarge)),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(AppRadius.chip),
+                              onTap: () => showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) => CommentsSheet(postId: post.id, isPostOwner: _isOwner),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.mode_comment_outlined, size: 18, color: AppColors.textSecondary),
+                                    const SizedBox(width: 4),
+                                    Text('${post.commentCount}', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                           Padding(
                             padding: const EdgeInsets.all(8),
                             child: AnimatedFavoriteIcon(

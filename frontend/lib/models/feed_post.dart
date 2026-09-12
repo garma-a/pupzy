@@ -17,6 +17,7 @@ class FeedPost {
   final int upvoteCount;
   final int saveCount;
   final int viewCount;
+  final int commentCount;
   final bool isUpvotedByMe;
   final bool isSavedByMe;
   final List<String> mediaUrls;
@@ -37,6 +38,7 @@ class FeedPost {
     required this.upvoteCount,
     required this.saveCount,
     required this.viewCount,
+    this.commentCount = 0,
     required this.isUpvotedByMe,
     required this.isSavedByMe,
     required this.mediaUrls,
@@ -82,6 +84,7 @@ class FeedPost {
       upvoteCount: node['upvoteCount'] as int? ?? 0,
       saveCount: node['saveCount'] as int? ?? 0,
       viewCount: node['viewCount'] as int? ?? 0,
+      commentCount: node['commentCount'] as int? ?? 0,
       isUpvotedByMe: node['isUpvotedByMe'] as bool? ?? false,
       isSavedByMe: node['isSavedByMe'] as bool? ?? false,
       mediaUrls: mediaList.map((m) => m['publicUrl'] as String).toList(),
@@ -96,6 +99,7 @@ class FeedPost {
     int? saveCount,
     bool? isSavedByMe,
     String? status,
+    int? commentCount,
   }) {
     return FeedPost(
       id: id,
@@ -111,6 +115,7 @@ class FeedPost {
       upvoteCount: upvoteCount ?? this.upvoteCount,
       saveCount: saveCount ?? this.saveCount,
       viewCount: viewCount,
+      commentCount: commentCount ?? this.commentCount,
       isUpvotedByMe: isUpvotedByMe ?? this.isUpvotedByMe,
       isSavedByMe: isSavedByMe ?? this.isSavedByMe,
       mediaUrls: mediaUrls,
