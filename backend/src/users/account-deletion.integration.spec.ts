@@ -1716,6 +1716,64 @@ describe('Account Deletion Feature Integration', () => {
       expect(copyCall).toBeUndefined();
     });
 
+    it('blocks concurrent finalizeMedia while storage cleanup holds the user_media advisory lock', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-concurrent-lock-1',
+          email: 'concurrent-lock@example.com',
+          fullName: 'Concurrent Lock User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const uploadServiceWithDb = new UploadService(
+        mockConfig as unknown as ConfigService,
+        mockCacheManager,
+        dbHelper.db,
+      );
+
+      const mockS3Send = jest.fn().mockResolvedValue({});
+      (uploadServiceWithDb as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockS3Send;
+
+      let releaseLock!: () => void;
+      const lockHeldPromise = new Promise<void>((resolve) => {
+        releaseLock = resolve;
+      });
+
+      let finalizeMediaFinished = false;
+
+      // Start an explicit transaction holding the advisory lock
+      const txPromise = dbHelper.db.transaction(async (tx) => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${'user_media:' + user.id}))`);
+        await lockHeldPromise;
+      });
+
+      // Small delay to ensure the transaction has acquired the lock
+      await new Promise((r) => setTimeout(r, 50));
+
+      // Attempt to finalize media - this must block waiting for the advisory lock
+      const finalizePromise = uploadServiceWithDb.finalizeMedia('staged-media-uuid', user.id, 'post-id-1').then(
+        () => {
+          finalizeMediaFinished = true;
+        },
+        () => {
+          finalizeMediaFinished = true;
+        },
+      );
+
+      await new Promise((r) => setTimeout(r, 50));
+      expect(finalizeMediaFinished).toBe(false);
+
+      // Release lock and allow transaction to commit
+      releaseLock();
+      await txPromise;
+
+      await finalizePromise;
+      expect(finalizeMediaFinished).toBe(true);
+    });
+
     it('blocks approved-contact lookup immediately from exposing a deleting owner phone even if cleanup failed', async () => {
       const cityId = await seedCity();
       const [owner] = await dbHelper.db

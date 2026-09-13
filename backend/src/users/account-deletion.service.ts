@@ -94,8 +94,10 @@ export class AccountDeletionService {
       throw new ForbiddenError('RECENT_AUTHENTICATION_REQUIRED');
     }
 
-    // 2. Check idempotency: does an active deletion record already exist for this Firebase UID?
-    const existing = await this.accountDeletionRepository.findByFirebaseUserId(user.firebaseUserId);
+    // 2. Check idempotency: does an active deletion record already exist for this identity?
+    const existing =
+      (await this.accountDeletionRepository.findByFirebaseUserId(user.firebaseUserId)) ??
+      (await this.accountDeletionRepository.findByUserId(user.id));
     if (existing) {
       this.logger.log(`Duplicate deletion request for Firebase UID ${user.firebaseUserId}, returning existing status.`);
       return {
@@ -277,13 +279,7 @@ export class AccountDeletionService {
         }
 
         // 2. Grace period has passed or was null: safe to delete permanent media keys and staged prefix!
-        const scope = deletionRecord.mediaCleanupScope as { mediaKeys?: string[]; stagedPrefix?: string } | null;
-        if (scope?.mediaKeys && scope.mediaKeys.length > 0) {
-          await this.uploadService.deleteObjects(scope.mediaKeys);
-        }
-
-        const stagedPrefix = scope?.stagedPrefix ?? `staging/${deletionRecord.userId}/`;
-        await this.uploadService.deletePrefix(stagedPrefix);
+        await this.cleanupStorageData(deletionRecord);
 
         await this.accountDeletionRepository.update(deletionRecord.id, {
           step: 'STORAGE_CLEANED',

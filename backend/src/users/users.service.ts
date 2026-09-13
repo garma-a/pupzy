@@ -103,6 +103,12 @@ export class UsersService {
   }
 
   async findActiveById(id: string): Promise<User | undefined> {
+    if (this.accountDeletionRepository) {
+      const deletion = await this.accountDeletionRepository.findByUserId(id);
+      if (deletion && isAccountDeletionBlockedStatus(deletion.status)) {
+        return undefined;
+      }
+    }
     const user = await this.usersRepository.findActiveById(id);
     return user ? this.decryptUserPhone(user) : undefined;
   }

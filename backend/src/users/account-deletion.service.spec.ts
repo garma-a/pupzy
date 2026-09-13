@@ -365,6 +365,15 @@ describe('AccountDeletionService', () => {
         }),
       );
     });
+
+    it('executes storage cleanup serialized under transaction advisory lock', async () => {
+      const recentAuthTime = Math.floor(Date.now() / 1000) - 10;
+      const result = await service.initiateDeletion(sampleUser, recentAuthTime);
+
+      expect(result.status).toBe('COMPLETED');
+      expect(mockUploadService.deletePrefix).toHaveBeenCalledWith(`staging/${sampleUser.id}/`);
+      expect(mockDb.execute).toHaveBeenCalled();
+    });
   });
 
   describe('getProgress', () => {

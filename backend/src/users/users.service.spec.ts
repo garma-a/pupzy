@@ -31,9 +31,15 @@ describe('UsersService', () => {
         { provide: CitiesService, useValue: {} },
         {
           provide: AccountDeletionRepository,
-          useValue: { findByFirebaseUserId: jest.fn().mockResolvedValue(undefined) },
+          useValue: {
+            findByFirebaseUserId: jest.fn().mockResolvedValue(undefined),
+            findByUserId: jest.fn().mockResolvedValue(undefined),
+          },
         },
-        { provide: ConfigService, useValue: { get: jest.fn() } },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=') },
+        },
         { provide: CACHE_MANAGER, useValue: {} },
       ],
     }).compile();
@@ -71,6 +77,32 @@ describe('UsersService', () => {
       const res = await service.findOrCreate({ firebaseUserId: 'fb-fresh-user', email: 'fresh@example.com' });
       expect(res.id).toBe('new-user-id');
       expect(mockUsersRepo.create).toHaveBeenCalled();
+    });
+  });
+
+  describe('findActiveById', () => {
+    it('returns undefined if an account deletion is PENDING or COMPLETED', async () => {
+      const deletionRepo = testingModule.get<AccountDeletionRepository>(AccountDeletionRepository);
+      jest.spyOn(deletionRepo, 'findByUserId').mockResolvedValue({
+        status: 'PENDING',
+      } as unknown as AccountDeletion);
+
+      const res = await service.findActiveById('deleting-user-id');
+      expect(res).toBeUndefined();
+    });
+
+    it('returns decrypted active user if no deletion record is active', async () => {
+      const mockUser = {
+        id: 'active-user-id',
+        firebaseUserId: 'fb-active',
+        phoneNumber: null,
+        isBanned: false,
+      } as unknown as User;
+      const usersRepo = testingModule.get<UsersRepository>(UsersRepository);
+      usersRepo.findActiveById = jest.fn().mockResolvedValue(mockUser);
+
+      const res = await service.findActiveById('active-user-id');
+      expect(res).toEqual(mockUser);
     });
   });
 });
