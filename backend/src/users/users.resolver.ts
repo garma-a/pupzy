@@ -1,9 +1,12 @@
 import { Resolver, Query, Mutation, Args, Context, ResolveField, Root } from '@nestjs/graphql';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { Public } from '../auth/firebase.guard';
 import { UsersService } from './users.service';
+import { AccountDeletionService, type AccountDeletionPayload } from './account-deletion.service';
 import { validateCompleteProfileInput } from './dto/complete-profile.input';
 import { validateUpdateProfileInput } from './dto/update-profile.input';
 import { validateGeoLocationInput } from './dto/geo-location.input';
+import { validateDeleteMyAccountInput } from './dto/delete-my-account.input';
 import type { User, City } from '../database/schema';
 import type { GqlContext } from '../common/types/gql-context.type';
 
@@ -22,7 +25,10 @@ import type { GqlContext } from '../common/types/gql-context.type';
  */
 @Resolver('User')
 export class UsersResolver {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly accountDeletionService: AccountDeletionService,
+  ) {}
 
   /**
    * Returns the currently authenticated user.
@@ -30,6 +36,19 @@ export class UsersResolver {
   @Query()
   me(@CurrentUser() user: User): User {
     return user;
+  }
+
+  /**
+   * Checks deletion progress using the scoped deletionId and progressToken.
+   * Public query — does not require or grant ordinary account access.
+   */
+  @Query('accountDeletionProgress')
+  @Public()
+  async accountDeletionProgress(
+    @Args('deletionId') deletionId: string,
+    @Args('progressToken') progressToken: string,
+  ): Promise<AccountDeletionPayload> {
+    return this.accountDeletionService.getProgress(deletionId, progressToken);
   }
 
   /**
@@ -86,4 +105,19 @@ export class UsersResolver {
     const validated = validateGeoLocationInput(location);
     return this.usersService.updateMyLocation(context.user!.id, validated);
   }
+
+  /**
+   * Permanently deletes the authenticated user's Pupzy Account and all associated data.
+   * Target is derived exclusively from verified authentication.
+   * Requires authentication within the preceding 5 minutes.
+   */
+  @Mutation('deleteMyAccount')
+  async deleteMyAccount(
+    @Args('input') input: unknown,
+    @Context() context: GqlContext,
+  ): Promise<AccountDeletionPayload> {
+    const validated = validateDeleteMyAccountInput(input);
+    return this.accountDeletionService.initiateDeletion(context.user!, context.authTime, validated.progressToken);
+  }
 }
+

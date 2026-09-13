@@ -4,6 +4,14 @@ Pupzy connects pet owners and animal-care communities through location-aware lis
 
 ## Language
 
+**Pupzy Account**:
+A person's membership in Pupzy, including their profile and community participation. A person who registers again after deleting their Pupzy Account starts fresh, without restored content.
+_Avoid_: Apple account, Firebase account
+
+**Account Deletion**:
+Permanent removal of a Pupzy Account, its owned Posts and uploaded photos, and associated personal information, subject to established retention obligations. This includes unresolved rescue and lost-pet Posts and is distinct from a reversible administrative takedown.
+_Avoid_: Deactivation, suspension
+
 **City**:
 An authoritative selectable Egyptian ADM2 area (Markaz, Kism, or new urban community) across Egypt's 27 governorates, managed through reviewed local dataset releases. Each City maintains canonical English and Arabic names, an internal source identity, an explicit lifecycle state (`official`, `legacy`, or `retired`), and an approximate WGS84 representative point for distance-based discovery.
 _Avoid_: City record, location entry, custom city creation, operator-created city

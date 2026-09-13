@@ -15,6 +15,7 @@ import type { App } from 'firebase-admin/app';
 import { getAuth, DecodedIdToken } from 'firebase-admin/auth';
 import { FIREBASE_ADMIN_TOKEN } from './firebase.module';
 import { UsersService } from '../users/users.service';
+import { AccountDeletionRepository } from '../users/account-deletion.repository';
 import type { GqlContext } from '../common/types/gql-context.type';
 import type { User } from '../database/schema';
 
@@ -70,6 +71,7 @@ export class FirebaseAuthGuard implements CanActivate {
   constructor(
     @Inject(FIREBASE_ADMIN_TOKEN) private readonly firebaseApp: App,
     private readonly usersService: UsersService,
+    private readonly accountDeletionRepository: AccountDeletionRepository,
     private readonly reflector: Reflector,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
@@ -110,22 +112,56 @@ export class FirebaseAuthGuard implements CanActivate {
     // ── 3. Verify token (with cache) ────────────────────────────────────────
     const decoded = await this.verifyToken(idToken);
 
-    // ── 4. Resolve user (with cache) ────────────────────────────────────────
+    // ── 4. Account Deletion Check (zero ban-propagation window) ───────────
+    const deletionRecord = await this.accountDeletionRepository.findByFirebaseUserId(decoded.uid);
+    if (deletionRecord && (deletionRecord.status === 'PENDING' || deletionRecord.status === 'COMPLETED')) {
+      await this.cacheManager.del(`user_resolve:${decoded.uid}`);
+      const handler = context.getHandler();
+      const handlerName = handler ? handler.name : undefined;
+
+      // Allow deleteMyAccount to handle idempotent duplicate requests safely
+      if (handlerName === 'deleteMyAccount') {
+        const stubUser = {
+          id: deletionRecord.userId,
+          firebaseUserId: deletionRecord.firebaseUserId,
+          email: deletionRecord.email,
+        } as User;
+        if (context.getType() === 'http') {
+          const req = context.switchToHttp().getRequest<{ user?: unknown; authTime?: number }>();
+          req.user = stubUser;
+          req.authTime = decoded.auth_time;
+        } else {
+          const gqlCtx = GqlExecutionContext.create(context).getContext<GqlContext>();
+          gqlCtx.user = stubUser;
+          gqlCtx.authTime = decoded.auth_time;
+        }
+        return true;
+      }
+
+      throw new ForbiddenError('ACCOUNT_DELETED');
+    }
+
+    // ── 5. Resolve user (with cache) ────────────────────────────────────────
     const user = await this.resolveUser(decoded);
 
     if (user.isBanned) {
       throw new ForbiddenError('Your account has been suspended.');
     }
 
-    // ── 5. Attach user to context ───────────────────────────────────────────
+    // ── 6. Attach user and verified authTime to context ─────────────────────
     if (context.getType() === 'http') {
-      context.switchToHttp().getRequest<{ user?: unknown }>().user = user;
+      const req = context.switchToHttp().getRequest<{ user?: unknown; authTime?: number }>();
+      req.user = user;
+      req.authTime = decoded.auth_time;
     } else {
-      GqlExecutionContext.create(context).getContext<GqlContext>().user = user;
+      const gqlCtx = GqlExecutionContext.create(context).getContext<GqlContext>();
+      gqlCtx.user = user;
+      gqlCtx.authTime = decoded.auth_time;
     }
 
     return true;
   }
+
 
   /**
    * Verifies a Firebase ID token.

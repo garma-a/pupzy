@@ -141,6 +141,13 @@
       "when": 1788718400000,
       "tag": "0019_fix_audit_fk_set_null",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1788800000000,
+      "tag": "0020_add_account_deletions",
+      "breakpoints": true
     }
   ]
 }

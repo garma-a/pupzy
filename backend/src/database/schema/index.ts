@@ -55,3 +55,7 @@ export * from './vet-clinic-location-audits.schema';
 
 // Durable address search cache for OSM Nominatim
 export * from './address-search-cache.schema';
+
+// Account deletion
+export * from './account-deletions.schema';
+

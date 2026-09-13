@@ -59,4 +59,10 @@ export class UsersRepository {
       .returning();
     return user;
   }
+
+  async delete(id: string): Promise<boolean> {
+    const result = await this.db.delete(users).where(eq(users.id, id)).returning({ id: users.id });
+    return result.length > 0;
+  }
 }
+

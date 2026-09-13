@@ -122,12 +122,53 @@ ISO-8601 date-time string, always in UTC.
 """
 scalar DateTime
 
+"""
+Status of the account deletion process.
+"""
+enum AccountDeletionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+"""
+Payload returned when account deletion is requested or its progress queried.
+"""
+type AccountDeletionPayload {
+  status: AccountDeletionStatus!
+  deletionId: ID!
+  """
+  Progress token returned on acceptance. Used to query progress after ordinary auth is blocked.
+  """
+  progressToken: String
+  message: String!
+  acceptedAt: DateTime!
+  completedAt: DateTime
+}
+
+"""
+Input for the deleteMyAccount mutation. Requires explicit confirmation.
+"""
+input DeleteMyAccountInput {
+  confirm: Boolean!
+  """
+  Optional client-supplied progress token (min 16 chars). Enables resilient unauthenticated progress queries even if initial response is dropped.
+  """
+  progressToken: String
+}
+
 type Query {
   """
   Returns the currently authenticated user.
   Requires a valid Firebase Bearer token.
   """
   me: User!
+
+  """
+  Checks deletion progress using the scoped deletionId and progressToken.
+  Public query — does not require or permit ordinary account access.
+  """
+  accountDeletionProgress(deletionId: ID!, progressToken: String!): AccountDeletionPayload!
 }
 
 type Mutation {
@@ -150,4 +191,12 @@ type Mutation {
   Requires authentication.
   """
   updateMyLocation(location: GeoLocationInput!): User!
+
+  """
+  Permanently deletes the authenticated user's Pupzy Account and all associated data.
+  Target is derived exclusively from verified authentication.
+  Requires authentication within the preceding 5 minutes.
+  """
+  deleteMyAccount(input: DeleteMyAccountInput!): AccountDeletionPayload!
 }
+

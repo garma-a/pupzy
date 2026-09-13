@@ -8,6 +8,8 @@ import {
   CopyObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
+  DeleteObjectsCommand,
+  ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
@@ -116,9 +118,11 @@ export class UploadService {
 
     // Bind the short-lived staging capability to both its owner and MIME type.
     // Post creation verifies these values before it creates a media row.
+    // Also record the grace expiry so account deletion accounts for in-flight signed URLs.
     await Promise.all([
       this.cacheManager.set(`media_ct:${mediaId}`, contentType, 900_000),
       this.cacheManager.set(`media_owner:${mediaId}`, userId, 900_000),
+      this.cacheManager.set(`user_last_upload_grace:${userId}`, Date.now() + 600_000, 600_000),
     ]);
 
     return {
@@ -127,6 +131,14 @@ export class UploadService {
       expiresAt: new Date(Date.now() + 600_000),
       stagingKey,
     };
+  }
+
+  /**
+   * Returns the expiry timestamp of the latest outstanding presigned upload URL for a user.
+   */
+  async getLastUploadGraceUntil(userId: string): Promise<Date | null> {
+    const expiry = await this.cacheManager.get<number>(`user_last_upload_grace:${userId}`);
+    return expiry ? new Date(expiry) : null;
   }
 
   /**
@@ -243,4 +255,75 @@ export class UploadService {
       fileContentType: contentType,
     };
   }
+
+  /**
+   * Deletes a batch of storage keys from R2.
+   * Tolerates missing objects and individual failures.
+   */
+  async deleteObjects(keys: string[]): Promise<void> {
+    if (!keys || keys.length === 0) return;
+    const batchSize = 1000;
+    for (let i = 0; i < keys.length; i += batchSize) {
+      const batch = keys.slice(i, i + batchSize);
+      try {
+        await this.s3Client.send(
+          new DeleteObjectsCommand({
+            Bucket: this.bucketName,
+            Delete: {
+              Objects: batch.map((key) => ({ Key: key })),
+              Quiet: true,
+            },
+          }),
+        );
+      } catch (err: unknown) {
+        this.logger.warn(`Bulk delete failed, falling back to individual deletes: ${err instanceof Error ? err.message : String(err)}`);
+        for (const key of batch) {
+          try {
+            await this.s3Client.send(
+              new DeleteObjectCommand({
+                Bucket: this.bucketName,
+                Key: key,
+              }),
+            );
+          } catch (individualErr: unknown) {
+            this.logger.warn(`Failed to delete object "${key}": ${individualErr instanceof Error ? individualErr.message : String(individualErr)}`);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Deletes all objects under a given key prefix (e.g. `staging/{userId}/`).
+   */
+  async deletePrefix(prefix: string): Promise<number> {
+    let totalDeleted = 0;
+    let continuationToken: string | undefined;
+
+    do {
+      try {
+        const listResponse = await this.s3Client.send(
+          new ListObjectsV2Command({
+            Bucket: this.bucketName,
+            Prefix: prefix,
+            ContinuationToken: continuationToken,
+          }),
+        );
+
+        const keys = listResponse.Contents?.map((o) => o.Key).filter((k): k is string => typeof k === 'string' && k.length > 0) ?? [];
+        if (keys.length > 0) {
+          await this.deleteObjects(keys);
+          totalDeleted += keys.length;
+        }
+
+        continuationToken = listResponse.IsTruncated ? listResponse.NextContinuationToken : undefined;
+      } catch (err: unknown) {
+        this.logger.warn(`Failed to list/delete prefix "${prefix}": ${err instanceof Error ? err.message : String(err)}`);
+        break;
+      }
+    } while (continuationToken);
+
+    return totalDeleted;
+  }
 }
+
