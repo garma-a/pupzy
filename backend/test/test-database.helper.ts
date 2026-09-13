@@ -48,6 +48,7 @@ export class TestDatabaseHelper {
         notifications,
         saved_searches,
         moderation_actions,
+        media_finalizations,
         posts,
         admin_users,
         users,

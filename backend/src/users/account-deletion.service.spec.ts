@@ -7,6 +7,7 @@ import { AccountDeletionService } from './account-deletion.service';
 import { AccountDeletionRepository } from './account-deletion.repository';
 import { UsersRepository } from './users.repository';
 import { UploadService } from '../upload/upload.service';
+import { MediaFinalizationRepository } from '../upload/media-finalization.repository';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import { FIREBASE_ADMIN_TOKEN } from '../auth/firebase.module';
 import { ForbiddenError, NotFoundError } from '../common/errors/app.errors';
@@ -33,6 +34,16 @@ describe('AccountDeletionService', () => {
     deleteObjects: jest.Mock;
     deletePrefix: jest.Mock;
     getLastUploadGraceUntil: jest.Mock;
+  };
+  let mockMediaFinalizationRepo: {
+    create: jest.Mock;
+    findById: jest.Mock;
+    findByUserId: jest.Mock;
+    touch: jest.Mock;
+    markCompensationRequired: jest.Mock;
+    recordError: jest.Mock;
+    findStale: jest.Mock;
+    delete: jest.Mock;
   };
   let mockCacheManager: { get: jest.Mock; set: jest.Mock; del: jest.Mock };
   let mockDb: {
@@ -120,6 +131,17 @@ describe('AccountDeletionService', () => {
       getLastUploadGraceUntil: jest.fn().mockResolvedValue(null),
     };
 
+    mockMediaFinalizationRepo = {
+      create: jest.fn(),
+      findById: jest.fn(),
+      findByUserId: jest.fn().mockResolvedValue([]),
+      touch: jest.fn(),
+      markCompensationRequired: jest.fn(),
+      recordError: jest.fn(),
+      findStale: jest.fn().mockResolvedValue([]),
+      delete: jest.fn().mockResolvedValue(undefined),
+    };
+
     mockCacheManager = {
       get: jest.fn(),
       set: jest.fn(),
@@ -181,6 +203,7 @@ describe('AccountDeletionService', () => {
         { provide: AccountDeletionRepository, useValue: mockAccountDeletionRepo },
         { provide: UsersRepository, useValue: mockUsersRepo },
         { provide: UploadService, useValue: mockUploadService },
+        { provide: MediaFinalizationRepository, useValue: mockMediaFinalizationRepo },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: FIREBASE_ADMIN_TOKEN, useValue: {} },
         { provide: DATABASE_TOKEN, useValue: mockDb },
@@ -316,14 +339,10 @@ describe('AccountDeletionService', () => {
       // Outside the transaction, repo finds nothing (race window)
       mockAccountDeletionRepo.findByFirebaseUserId.mockResolvedValue(undefined);
 
-      // Inside transaction, select on accountDeletions finds existingRecord
-      let selectCalls = 0;
+      // Inside transaction, the first serialized existence check on
+      // accountDeletions finds the record created by the concurrent request.
       mockDb.select = jest.fn().mockImplementation(() => {
-        selectCalls++;
-        const p = Promise.resolve(selectCalls === 1 ? [{ id: sampleUser.id }] : [existingRecord]) as unknown as Record<
-          string,
-          unknown
-        >;
+        const p = Promise.resolve([existingRecord]) as unknown as Record<string, unknown>;
         p.from = jest.fn().mockReturnValue(p);
         p.where = jest.fn().mockReturnValue(p);
         p.orderBy = jest.fn().mockReturnValue(p);
@@ -366,13 +385,59 @@ describe('AccountDeletionService', () => {
       );
     });
 
-    it('executes storage cleanup serialized under transaction advisory lock', async () => {
+    it('executes storage cleanup via the upload service without holding a database transaction open', async () => {
       const recentAuthTime = Math.floor(Date.now() / 1000) - 10;
       const result = await service.initiateDeletion(sampleUser, recentAuthTime);
 
       expect(result.status).toBe('COMPLETED');
+      expect(mockUploadService.deleteObjects).not.toHaveBeenCalled();
       expect(mockUploadService.deletePrefix).toHaveBeenCalledWith(`staging/${sampleUser.id}/`);
-      expect(mockDb.execute).toHaveBeenCalled();
+    });
+
+    it('defers storage cleanup while a fresh media finalization obligation is in flight', async () => {
+      mockMediaFinalizationRepo.findByUserId.mockResolvedValue([
+        {
+          id: 'mf-in-flight',
+          userId: sampleUser.id,
+          status: 'IN_FLIGHT',
+          updatedAt: new Date(),
+          finalKey: 'posts/post-1/media-1.webp',
+          stagingKey: `staging/${sampleUser.id}/media-1.webp`,
+        },
+      ]);
+
+      const recentAuthTime = Math.floor(Date.now() / 1000) - 10;
+      const result = await service.initiateDeletion(sampleUser, recentAuthTime);
+
+      expect(result.status).toBe('PENDING');
+      expect(mockUploadService.deleteObjects).not.toHaveBeenCalled();
+      expect(mockUploadService.deletePrefix).not.toHaveBeenCalled();
+      expect(mockAccountDeletionRepo.update).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ nextRetryAt: expect.any(Date) as unknown }),
+      );
+    });
+
+    it('resolves stale finalization obligations before storage cleanup completes', async () => {
+      mockMediaFinalizationRepo.findByUserId.mockResolvedValue([
+        {
+          id: 'mf-stale',
+          userId: sampleUser.id,
+          status: 'IN_FLIGHT',
+          updatedAt: new Date(Date.now() - 10 * 60_000),
+          finalKey: 'posts/post-2/media-2.webp',
+          stagingKey: `staging/${sampleUser.id}/media-2.webp`,
+        },
+      ]);
+
+      const recentAuthTime = Math.floor(Date.now() / 1000) - 10;
+      const result = await service.initiateDeletion(sampleUser, recentAuthTime);
+
+      expect(result.status).toBe('COMPLETED');
+      expect(mockUploadService.deleteObjects).toHaveBeenCalledWith(['posts/post-2/media-2.webp']);
+      expect(mockUploadService.deleteObjects).toHaveBeenCalledWith([`staging/${sampleUser.id}/media-2.webp`]);
+      expect(mockMediaFinalizationRepo.delete).toHaveBeenCalledWith('mf-stale');
+      expect(mockUploadService.deletePrefix).toHaveBeenCalledWith(`staging/${sampleUser.id}/`);
     });
   });
 

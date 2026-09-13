@@ -58,3 +58,6 @@ export * from './address-search-cache.schema';
 
 // Account deletion
 export * from './account-deletions.schema';
+
+// Durable media-finalization obligations (survive user deletion)
+export * from './media-finalizations.schema';

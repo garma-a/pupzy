@@ -3,10 +3,69 @@ import { ConfigService } from '@nestjs/config';
 import { Cache } from 'cache-manager';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { NotFoundError } from '../common/errors/app.errors';
+import type { MediaFinalizationRepository } from './media-finalization.repository';
 
 jest.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: jest.fn().mockResolvedValue('https://r2.example.com/staging-presigned-url'),
 }));
+
+/**
+ * Builds a database mock for `finalizeMedia`: the start transaction allows the
+ * creator, and the post-copy account check reports the account as blocked or
+ * not based on `blockedAtSettle`.
+ */
+function createFinalizationDbMock({
+  blockedAtSettle,
+}: {
+  blockedAtSettle: boolean;
+}): NodePgDatabase<Record<string, unknown>> {
+  let transactionSelectCount = 0;
+  let topLevelSelectCount = 0;
+
+  return {
+    transaction: jest.fn().mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => {
+      const mockTx = {
+        select: jest.fn().mockImplementation(() => {
+          transactionSelectCount++;
+          if (transactionSelectCount === 1) {
+            return {
+              from: jest.fn().mockReturnValue({
+                where: jest.fn().mockReturnValue({
+                  for: jest.fn().mockResolvedValue([{ id: 'user-1', isBanned: false }]),
+                }),
+              }),
+            };
+          }
+          return {
+            from: jest.fn().mockReturnValue({
+              where: jest.fn().mockReturnValue({
+                orderBy: jest.fn().mockReturnValue({ limit: jest.fn().mockResolvedValue([]) }),
+              }),
+            }),
+          };
+        }),
+      };
+      return cb(mockTx);
+    }),
+    select: jest.fn().mockImplementation(() => {
+      topLevelSelectCount++;
+      if (topLevelSelectCount % 2 === 1) {
+        return {
+          from: jest.fn().mockReturnValue({
+            where: jest.fn().mockResolvedValue([{ isBanned: blockedAtSettle }]),
+          }),
+        };
+      }
+      return {
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            orderBy: jest.fn().mockReturnValue({ limit: jest.fn().mockResolvedValue([]) }),
+          }),
+        }),
+      };
+    }),
+  } as unknown as NodePgDatabase<Record<string, unknown>>;
+}
 
 describe('UploadService', () => {
   let service: UploadService;
@@ -138,29 +197,15 @@ describe('UploadService', () => {
 
     it('aborts finalization and cleans up staging when user is deleted or deletion is pending', async () => {
       const mockSend = jest.fn().mockResolvedValue({});
-      let selectCount = 0;
       const mockDb = {
         transaction: jest.fn().mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => {
           const mockTx = {
-            execute: jest.fn().mockResolvedValue({}),
-            select: jest.fn().mockImplementation(() => {
-              selectCount++;
-              if (selectCount === 1) {
-                return {
-                  from: jest.fn().mockReturnValue({
-                    where: jest.fn().mockResolvedValue([{ isBanned: true }]),
-                  }),
-                };
-              }
-              return {
-                from: jest.fn().mockReturnValue({
-                  where: jest.fn().mockReturnValue({
-                    orderBy: jest.fn().mockReturnValue({
-                      limit: jest.fn().mockResolvedValue([{ id: 'del-1', status: 'PENDING' }]),
-                    }),
-                  }),
+            select: jest.fn().mockReturnValue({
+              from: jest.fn().mockReturnValue({
+                where: jest.fn().mockReturnValue({
+                  for: jest.fn().mockResolvedValue([{ id: 'user-1', isBanned: true, uploadGraceUntil: null }]),
                 }),
-              };
+              }),
             }),
           };
           return cb(mockTx);
@@ -178,6 +223,236 @@ describe('UploadService', () => {
       const sendCalls = mockSend.mock.calls as Array<[{ input?: { Key?: string } }]>;
       const lastCall = sendCalls[sendCalls.length - 1];
       expect(lastCall?.[0]?.input?.Key).toBe('staging/user-1/media-1.jpg');
+    });
+
+    it('leaves the staged object untouched when the start check fails transiently', async () => {
+      const mockSend = jest.fn().mockResolvedValue({});
+      const mockDb = {
+        transaction: jest.fn().mockRejectedValue(new Error('database unavailable')),
+      };
+
+      const serviceWithDb = new UploadService(
+        mockConfig as ConfigService,
+        mockCache as Cache,
+        mockDb as unknown as NodePgDatabase,
+      );
+      (serviceWithDb as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockSend;
+
+      await expect(serviceWithDb.finalizeMedia('media-1', 'user-1', 'post-1')).rejects.toThrow('database unavailable');
+      expect(mockSend).not.toHaveBeenCalled();
+    });
+
+    it('compensates by deleting the permanent object when acceptance commits during the copy', async () => {
+      const sentKeys: Array<string | undefined> = [];
+      const mockSend = jest.fn().mockImplementation((command: { input?: { Key?: string } }) => {
+        sentKeys.push(command.input?.Key);
+        return Promise.resolve({});
+      });
+      let transactionSelectCount = 0;
+      const mockDb = {
+        transaction: jest.fn().mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => {
+          const mockTx = {
+            select: jest.fn().mockImplementation(() => {
+              transactionSelectCount++;
+              if (transactionSelectCount === 1) {
+                return {
+                  from: jest.fn().mockReturnValue({
+                    where: jest.fn().mockReturnValue({
+                      for: jest.fn().mockResolvedValue([{ id: 'user-1', isBanned: false, uploadGraceUntil: null }]),
+                    }),
+                  }),
+                };
+              }
+              return {
+                from: jest.fn().mockReturnValue({
+                  where: jest.fn().mockReturnValue({
+                    orderBy: jest.fn().mockReturnValue({
+                      limit: jest.fn().mockResolvedValue([]),
+                    }),
+                  }),
+                }),
+              };
+            }),
+            update: jest.fn().mockReturnValue({
+              set: jest.fn().mockReturnValue({
+                where: jest.fn().mockResolvedValue([]),
+              }),
+            }),
+          };
+          return cb(mockTx);
+        }),
+        select: jest.fn().mockReturnValue({
+          from: jest.fn().mockReturnValue({
+            where: jest.fn().mockResolvedValue([{ isBanned: true }]),
+          }),
+        }),
+      };
+
+      const serviceWithDb = new UploadService(
+        mockConfig as ConfigService,
+        mockCache as Cache,
+        mockDb as unknown as NodePgDatabase,
+      );
+      (serviceWithDb as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockSend;
+
+      await expect(serviceWithDb.finalizeMedia('media-1', 'user-1', 'post-1')).rejects.toThrow('ACCOUNT_DELETED');
+
+      // Head (staging), copy (permanent), staging delete, then compensation delete of the permanent object.
+      expect(sentKeys).toEqual([
+        'staging/user-1/media-1.jpg',
+        'posts/post-1/media-1.jpg',
+        'staging/user-1/media-1.jpg',
+        'posts/post-1/media-1.jpg',
+      ]);
+    });
+
+    it('durably records an in-flight finalization obligation before copying and clears it on success', async () => {
+      const mockRepository = {
+        create: jest.fn().mockResolvedValue({}),
+        delete: jest.fn().mockResolvedValue(undefined),
+        markCompensationRequired: jest.fn().mockResolvedValue(undefined),
+        recordError: jest.fn().mockResolvedValue(undefined),
+        touch: jest.fn().mockResolvedValue(undefined),
+      };
+      const serviceWithDb = new UploadService(
+        mockConfig as ConfigService,
+        mockCache as Cache,
+        createFinalizationDbMock({ blockedAtSettle: false }),
+        mockRepository as unknown as MediaFinalizationRepository,
+      );
+      const mockSend = jest.fn().mockResolvedValue({});
+      (serviceWithDb as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockSend;
+
+      await serviceWithDb.finalizeMedia('media-1', 'user-1', 'post-1');
+
+      expect(mockRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-1',
+          mediaId: 'media-1',
+          stagingKey: 'staging/user-1/media-1.jpg',
+          finalKey: 'posts/post-1/media-1.jpg',
+          status: 'IN_FLIGHT',
+        }),
+        expect.anything(),
+      );
+      expect(mockRepository.touch).toHaveBeenCalledTimes(3);
+      expect(mockRepository.delete).toHaveBeenCalledTimes(1);
+      expect(mockRepository.markCompensationRequired).not.toHaveBeenCalled();
+      expect(mockSend).toHaveBeenCalledTimes(3);
+    });
+
+    it('keeps the compensation obligation retryable when the permanent object cannot be deleted', async () => {
+      const mockRepository = {
+        create: jest.fn().mockResolvedValue({}),
+        delete: jest.fn().mockResolvedValue(undefined),
+        markCompensationRequired: jest.fn().mockResolvedValue(undefined),
+        recordError: jest.fn().mockResolvedValue(undefined),
+        touch: jest.fn().mockResolvedValue(undefined),
+      };
+      const serviceWithDb = new UploadService(
+        mockConfig as ConfigService,
+        mockCache as Cache,
+        createFinalizationDbMock({ blockedAtSettle: true }),
+        mockRepository as unknown as MediaFinalizationRepository,
+      );
+      const mockSend = jest
+        .fn()
+        .mockResolvedValueOnce({}) // Head
+        .mockResolvedValueOnce({}) // Copy
+        .mockResolvedValueOnce({}) // staging delete
+        .mockRejectedValueOnce(new Error('R2 delete failed')); // compensation delete
+      (serviceWithDb as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockSend;
+
+      await expect(serviceWithDb.finalizeMedia('media-1', 'user-1', 'post-1')).rejects.toThrow('ACCOUNT_DELETED');
+
+      expect(mockRepository.markCompensationRequired).toHaveBeenCalledWith(expect.any(String));
+      // The obligation row survives so account deletion or the cron can retry.
+      expect(mockRepository.delete).not.toHaveBeenCalled();
+      expect(mockRepository.recordError).toHaveBeenCalledWith(expect.any(String), 'R2 delete failed');
+    });
+
+    it('aborts a finalization whose obligation was force-resolved instead of recreating media', async () => {
+      const mockRepository = {
+        create: jest.fn().mockResolvedValue({}),
+        delete: jest.fn().mockResolvedValue(undefined),
+        markCompensationRequired: jest.fn().mockResolvedValue(undefined),
+        recordError: jest.fn().mockResolvedValue(undefined),
+        touch: jest.fn().mockRejectedValue(new Error('Media finalization obligation mf-1 is no longer active')),
+      };
+      const serviceWithDb = new UploadService(
+        mockConfig as ConfigService,
+        mockCache as Cache,
+        createFinalizationDbMock({ blockedAtSettle: true }),
+        mockRepository as unknown as MediaFinalizationRepository,
+      );
+      const sentKeys: Array<string | undefined> = [];
+      const mockSend = jest.fn().mockImplementation((command: { input?: { Key?: string } }) => {
+        sentKeys.push(command.input?.Key);
+        return Promise.resolve({});
+      });
+      (serviceWithDb as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockSend;
+
+      await expect(serviceWithDb.finalizeMedia('media-1', 'user-1', 'post-1')).rejects.toThrow('no longer active');
+
+      // The first heartbeat runs before any copy, so only the compensating
+      // delete of the (never created) permanent object is dispatched.
+      expect(sentKeys).toEqual(['posts/post-1/media-1.jpg']);
+      expect(mockRepository.markCompensationRequired).toHaveBeenCalledWith(expect.any(String));
+    });
+
+    it('leaves the obligation in flight when the post-copy account check fails, for deletion to resolve', async () => {
+      const mockRepository = {
+        create: jest.fn().mockResolvedValue({}),
+        delete: jest.fn().mockResolvedValue(undefined),
+        markCompensationRequired: jest.fn().mockResolvedValue(undefined),
+        recordError: jest.fn().mockResolvedValue(undefined),
+        touch: jest.fn().mockResolvedValue(undefined),
+      };
+      const mockDb = {
+        transaction: jest.fn().mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => {
+          let transactionSelectCount = 0;
+          const mockTx = {
+            select: jest.fn().mockImplementation(() => {
+              transactionSelectCount++;
+              if (transactionSelectCount === 1) {
+                return {
+                  from: jest.fn().mockReturnValue({
+                    where: jest.fn().mockReturnValue({
+                      for: jest.fn().mockResolvedValue([{ id: 'user-1', isBanned: false }]),
+                    }),
+                  }),
+                };
+              }
+              return {
+                from: jest.fn().mockReturnValue({
+                  where: jest.fn().mockReturnValue({
+                    orderBy: jest.fn().mockReturnValue({ limit: jest.fn().mockResolvedValue([]) }),
+                  }),
+                }),
+              };
+            }),
+          };
+          return cb(mockTx);
+        }),
+        select: jest.fn().mockImplementation(() => ({
+          from: jest.fn().mockReturnValue({
+            where: jest.fn().mockRejectedValue(new Error('database unavailable')),
+          }),
+        })),
+      };
+      const serviceWithDb = new UploadService(
+        mockConfig as ConfigService,
+        mockCache as Cache,
+        mockDb as unknown as NodePgDatabase,
+        mockRepository as unknown as MediaFinalizationRepository,
+      );
+      (serviceWithDb as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = jest.fn().mockResolvedValue({});
+
+      await serviceWithDb.finalizeMedia('media-1', 'user-1', 'post-1');
+
+      // The copy may or may not exist; deletion resolves the row after the lease.
+      expect(mockRepository.delete).not.toHaveBeenCalled();
+      expect(mockRepository.markCompensationRequired).not.toHaveBeenCalled();
     });
   });
 

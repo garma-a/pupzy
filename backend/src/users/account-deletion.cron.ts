@@ -36,7 +36,22 @@ export class AccountDeletionCron implements OnApplicationBootstrap {
   @Cron('*/2 * * * *')
   async handleCron(): Promise<void> {
     await this.processPendingDeletions();
+    await this.reconcileAbandonedMediaFinalizations();
     await this.purgeExpiredRecords();
+  }
+
+  /**
+   * Resolves durable media-finalization obligations that no deletion request
+   * will pick up: abandoned in-flight bookkeeping and failed compensations.
+   */
+  async reconcileAbandonedMediaFinalizations(): Promise<void> {
+    try {
+      await this.accountDeletionService.reconcileAbandonedMediaFinalizations();
+    } catch (err) {
+      this.logger.error(
+        `Error reconciling abandoned media finalizations: ${err instanceof Error ? err.stack : String(err)}`,
+      );
+    }
   }
 
   async processPendingDeletions(): Promise<void> {

@@ -36,6 +36,7 @@ import {
   moderationActions,
   cities,
   accountDeletions,
+  mediaFinalizations,
   type AccountDeletion,
   type User,
 } from '../database/schema';
@@ -46,6 +47,11 @@ import { UsersRepository } from './users.repository';
 import { UsersService } from './users.service';
 import { UsersResolver } from './users.resolver';
 import { UploadService } from '../upload/upload.service';
+import {
+  MediaFinalizationRepository,
+  MEDIA_FINALIZATION_LEASE_MS,
+  MEDIA_FINALIZATION_ORPHAN_TTL_MS,
+} from '../upload/media-finalization.repository';
 import { CitiesService } from '../cities/cities.service';
 import { PostsRepository } from '../posts/posts.repository';
 import { ContactsRepository } from '../contacts/contacts.repository';
@@ -110,6 +116,7 @@ describe('Account Deletion Feature Integration', () => {
   let dbHelper: TestDatabaseHelper;
   let accountDeletionRepo: AccountDeletionRepository;
   let usersRepo: UsersRepository;
+  let mediaFinalizationRepo: MediaFinalizationRepository;
   let usersService: UsersService;
   let accountDeletionService: AccountDeletionService;
   let accountDeletionCron: AccountDeletionCron;
@@ -147,6 +154,7 @@ describe('Account Deletion Feature Integration', () => {
 
     accountDeletionRepo = new AccountDeletionRepository(dbHelper.db);
     usersRepo = new UsersRepository(dbHelper.db);
+    mediaFinalizationRepo = new MediaFinalizationRepository(dbHelper.db);
 
     mockUploadService = {
       deleteObjects: jest.fn().mockResolvedValue(undefined),
@@ -209,6 +217,7 @@ describe('Account Deletion Feature Integration', () => {
       mockFirebaseApp,
       dbHelper.db,
       mockCacheManager,
+      mediaFinalizationRepo,
     );
 
     accountDeletionCron = new AccountDeletionCron(accountDeletionRepo, accountDeletionService);
@@ -1057,6 +1066,7 @@ describe('Account Deletion Feature Integration', () => {
         mockConfig as unknown as ConfigService,
         mockCacheManager,
         dbHelper.db,
+        mediaFinalizationRepo,
       );
 
       // Generate a presigned upload URL
@@ -1354,6 +1364,7 @@ describe('Account Deletion Feature Integration', () => {
         mockConfig as unknown as ConfigService,
         mockCacheManager,
         dbHelper.db,
+        mediaFinalizationRepo,
       );
 
       // Verify issuance works before deletion
@@ -1442,6 +1453,7 @@ describe('Account Deletion Feature Integration', () => {
         mockConfig as unknown as ConfigService,
         mockCacheManager,
         dbHelper.db,
+        mediaFinalizationRepo,
       );
 
       // Mock cache returning owner
@@ -1664,6 +1676,7 @@ describe('Account Deletion Feature Integration', () => {
         mockConfig as unknown as ConfigService,
         mockCacheManager,
         dbHelper.db,
+        mediaFinalizationRepo,
       );
 
       const result = await uploadServiceWithDb.generatePresignedUrl(user.id, 'image/webp', 2048);
@@ -1697,6 +1710,7 @@ describe('Account Deletion Feature Integration', () => {
         mockConfig as unknown as ConfigService,
         mockCacheManager,
         dbHelper.db,
+        mediaFinalizationRepo,
       );
 
       const currentEpochSeconds = Math.floor(Date.now() / 1000) - 20;
@@ -1716,14 +1730,14 @@ describe('Account Deletion Feature Integration', () => {
       expect(copyCall).toBeUndefined();
     });
 
-    it('blocks concurrent finalizeMedia while storage cleanup holds the user_media advisory lock', async () => {
+    it('does not hold database connections open during stalled storage operations', async () => {
       const cityId = await seedCity();
       const [user] = await dbHelper.db
         .insert(users)
         .values({
-          firebaseUserId: 'fb-concurrent-lock-1',
-          email: 'concurrent-lock@example.com',
-          fullName: 'Concurrent Lock User',
+          firebaseUserId: 'fb-stalled-finalize-1',
+          email: 'stalled-finalize@example.com',
+          fullName: 'Stalled Finalize User',
           homeCityId: cityId,
         })
         .returning();
@@ -1732,46 +1746,294 @@ describe('Account Deletion Feature Integration', () => {
         mockConfig as unknown as ConfigService,
         mockCacheManager,
         dbHelper.db,
+        mediaFinalizationRepo,
       );
 
-      const mockS3Send = jest.fn().mockResolvedValue({});
+      // Simulate a storage provider that accepts the connection and never responds
+      // until the test explicitly releases every pending operation.
+      let releaseStalledStorage!: () => void;
+      const stalledStorageGate = new Promise<void>((resolve) => {
+        releaseStalledStorage = resolve;
+      });
+      const stalledSend = jest.fn().mockImplementation(() => stalledStorageGate.then(() => ({})));
+      (uploadServiceWithDb as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = stalledSend;
+      (mockCacheManager.get as jest.Mock).mockResolvedValue('image/webp');
+
+      const stalledFinalizations = Array.from({ length: 12 }, (_, index) =>
+        uploadServiceWithDb.finalizeMedia(`stalled-media-${index}`, user.id, `stalled-post-${index}`),
+      );
+
+      // Wait until a full pool's worth of finalizations reached the storage boundary.
+      // Under the previous implementation each of them held an open transaction,
+      // which is exactly what this regression test must not allow.
+      const waitUntilStalledCount = async (minimum: number, timeoutMs: number): Promise<void> => {
+        const deadline = Date.now() + timeoutMs;
+        while (stalledSend.mock.calls.length < minimum && Date.now() < deadline) {
+          await new Promise((resolve) => setTimeout(resolve, 25));
+        }
+      };
+
+      let poolRemainedAvailable = false;
+      let poolProbeTimeout: NodeJS.Timeout | undefined;
+      try {
+        await waitUntilStalledCount(10, 10_000);
+        expect(stalledSend.mock.calls.length).toBeGreaterThanOrEqual(10);
+
+        // Unrelated API work must still acquire a database connection: no finalization
+        // may hold a transaction open while waiting on storage.
+        const unrelatedQuery = Promise.race([
+          dbHelper.db.execute(sql`SELECT 1`),
+          new Promise((_, reject) => {
+            poolProbeTimeout = setTimeout(
+              () => reject(new Error('connection pool exhausted by stalled storage operations')),
+              2000,
+            );
+          }),
+        ]);
+        try {
+          await expect(unrelatedQuery).resolves.toBeDefined();
+        } finally {
+          if (poolProbeTimeout) clearTimeout(poolProbeTimeout);
+        }
+        poolRemainedAvailable = true;
+      } finally {
+        releaseStalledStorage();
+        await Promise.allSettled(stalledFinalizations);
+      }
+
+      expect(poolRemainedAvailable).toBe(true);
+    });
+
+    it('defers deletion while a durable finalization obligation is in flight, then completes after it resolves', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-inflight-grace-1',
+          email: 'inflight-grace@example.com',
+          fullName: 'In-Flight Grace User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const uploadServiceWithDb = new UploadService(
+        mockConfig as unknown as ConfigService,
+        mockCacheManager,
+        dbHelper.db,
+        mediaFinalizationRepo,
+      );
+
+      let releaseStorage!: () => void;
+      const storageGate = new Promise<void>((resolve) => {
+        releaseStorage = resolve;
+      });
+      let sendCount = 0;
+      const mockS3Send = jest.fn().mockImplementation(() => {
+        sendCount++;
+        if (sendCount === 1) {
+          return storageGate.then(() => ({}));
+        }
+        return Promise.resolve({});
+      });
       (uploadServiceWithDb as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockS3Send;
+      (mockCacheManager.get as jest.Mock).mockResolvedValue('image/webp');
 
-      let releaseLock!: () => void;
-      const lockHeldPromise = new Promise<void>((resolve) => {
-        releaseLock = resolve;
+      const inFlightFinalization = uploadServiceWithDb
+        .finalizeMedia('media-inflight-1', user.id, 'post-inflight-1')
+        .catch(() => undefined);
+
+      // Wait for the durable obligation to be recorded before accepting deletion.
+      const waitForObligations = async (): Promise<Array<{ status: string; finalKey: string }>> => {
+        const deadline = Date.now() + 5000;
+        while (Date.now() < deadline) {
+          const rows = await dbHelper.db
+            .select({ status: mediaFinalizations.status, finalKey: mediaFinalizations.finalKey })
+            .from(mediaFinalizations)
+            .where(eq(mediaFinalizations.userId, user.id));
+          if (rows.length > 0) return rows;
+          await new Promise((resolve) => setTimeout(resolve, 25));
+        }
+        return [];
+      };
+      const obligations = await waitForObligations();
+      expect(obligations).toHaveLength(1);
+      expect(obligations[0].status).toBe('IN_FLIGHT');
+      expect(obligations[0].finalKey).toBe('posts/post-inflight-1/media-inflight-1.webp');
+
+      const currentEpochSeconds = Math.floor(Date.now() / 1000) - 20;
+      const result = await accountDeletionService.initiateDeletion(user, currentEpochSeconds);
+
+      // Cleanup is accepted, but storage must wait for the in-flight obligation.
+      expect(result.status).toBe('PENDING');
+      expect(mockUploadService.deleteObjects).not.toHaveBeenCalled();
+      expect(mockUploadService.deletePrefix).not.toHaveBeenCalled();
+      const [deferredRecord] = await dbHelper.db
+        .select()
+        .from(accountDeletions)
+        .where(eq(accountDeletions.userId, user.id));
+      expect(deferredRecord.nextRetryAt).toBeDefined();
+      expect(deferredRecord.nextRetryAt!.getTime()).toBeGreaterThan(Date.now());
+
+      releaseStorage();
+      await inFlightFinalization;
+
+      // The finalization must compensate by removing the permanent object it
+      // recreated after acceptance banned the creator, then clear its obligation.
+      const sendCalls = mockS3Send.mock.calls as Array<[{ input?: { Key?: string } }]>;
+      const lastCall = sendCalls[sendCalls.length - 1];
+      expect(lastCall?.[0]?.input?.Key).toBe('posts/post-inflight-1/media-inflight-1.webp');
+      const remainingObligations = await dbHelper.db
+        .select()
+        .from(mediaFinalizations)
+        .where(eq(mediaFinalizations.userId, user.id));
+      expect(remainingObligations).toHaveLength(0);
+
+      // Only now may the retry sweep storage and report completion.
+      await accountDeletionService.executeCleanup(deferredRecord);
+      const [completedRecord] = await dbHelper.db
+        .select()
+        .from(accountDeletions)
+        .where(eq(accountDeletions.userId, user.id));
+      expect(completedRecord.status).toBe('COMPLETED');
+      expect(mockUploadService.deletePrefix).toHaveBeenCalledWith(`staging/${user.id}/`);
+    });
+
+    it('resolves stale in-flight obligations from a crashed finalizer before sweeping storage', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-stale-obligation-1',
+          email: 'stale-obligation@example.com',
+          fullName: 'Stale Obligation User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const finalKey = 'posts/post-stale-1/media-stale-1.webp';
+      const stagingKey = `staging/${user.id}/media-stale-1.webp`;
+      const obligation = await mediaFinalizationRepo.create({
+        userId: user.id,
+        mediaId: 'media-stale-1',
+        stagingKey,
+        finalKey,
+        status: 'IN_FLIGHT',
+      });
+      await dbHelper.db
+        .update(mediaFinalizations)
+        .set({ updatedAt: new Date(Date.now() - MEDIA_FINALIZATION_LEASE_MS - 1000) })
+        .where(eq(mediaFinalizations.id, obligation.id));
+
+      const currentEpochSeconds = Math.floor(Date.now() / 1000) - 20;
+      const result = await accountDeletionService.initiateDeletion(user, currentEpochSeconds);
+
+      expect(result.status).toBe('COMPLETED');
+      expect(mockUploadService.deleteObjects).toHaveBeenCalledWith([finalKey]);
+      expect(mockUploadService.deleteObjects).toHaveBeenCalledWith([stagingKey]);
+      expect(mockUploadService.deletePrefix).toHaveBeenCalledWith(`staging/${user.id}/`);
+      const remaining = await dbHelper.db
+        .select()
+        .from(mediaFinalizations)
+        .where(eq(mediaFinalizations.userId, user.id));
+      expect(remaining).toHaveLength(0);
+    });
+
+    it('keeps a failed compensation obligation retryable and blocks completion until it resolves', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-failed-compensation-1',
+          email: 'failed-compensation@example.com',
+          fullName: 'Failed Compensation User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const finalKey = 'posts/post-comp-1/media-comp-1.webp';
+      const obligation = await mediaFinalizationRepo.create({
+        userId: user.id,
+        mediaId: 'media-comp-1',
+        stagingKey: `staging/${user.id}/media-comp-1.webp`,
+        finalKey,
+        status: 'IN_FLIGHT',
+      });
+      await mediaFinalizationRepo.markCompensationRequired(obligation.id, 'copy completed during blocked account');
+
+      mockUploadService.deleteObjects.mockRejectedValueOnce(new Error('R2 unavailable'));
+
+      const currentEpochSeconds = Math.floor(Date.now() / 1000) - 20;
+      const firstAttempt = await accountDeletionService.initiateDeletion(user, currentEpochSeconds);
+
+      expect(firstAttempt.status).toBe('PENDING');
+      expect(mockUploadService.deletePrefix).not.toHaveBeenCalled();
+      const [stillPending] = await dbHelper.db
+        .select()
+        .from(accountDeletions)
+        .where(eq(accountDeletions.userId, user.id));
+      expect(stillPending.status).toBe('PENDING');
+      const [retainedObligation] = await dbHelper.db
+        .select()
+        .from(mediaFinalizations)
+        .where(eq(mediaFinalizations.id, obligation.id));
+      expect(retainedObligation).toBeDefined();
+      expect(retainedObligation.status).toBe('COMPENSATION_REQUIRED');
+
+      // Retry now that storage recovers: the obligation clears before completion.
+      await accountDeletionService.executeCleanup(stillPending);
+      const [completed] = await dbHelper.db.select().from(accountDeletions).where(eq(accountDeletions.userId, user.id));
+      expect(completed.status).toBe('COMPLETED');
+      const remaining = await dbHelper.db
+        .select()
+        .from(mediaFinalizations)
+        .where(eq(mediaFinalizations.id, obligation.id));
+      expect(remaining).toHaveLength(0);
+    });
+
+    it('reconciles abandoned obligations that no deletion request will resolve', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-orphan-obligation-1',
+          email: 'orphan-obligation@example.com',
+          fullName: 'Orphan Obligation User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const compensationFinalKey = 'posts/post-orphan-1/media-orphan-comp.webp';
+      const compensation = await mediaFinalizationRepo.create({
+        userId: user.id,
+        mediaId: 'media-orphan-comp',
+        stagingKey: `staging/${user.id}/media-orphan-comp.webp`,
+        finalKey: compensationFinalKey,
+        status: 'IN_FLIGHT',
+      });
+      await mediaFinalizationRepo.markCompensationRequired(compensation.id, 'compensation failed during outage');
+
+      const inFlight = await mediaFinalizationRepo.create({
+        userId: user.id,
+        mediaId: 'media-orphan-flight',
+        stagingKey: `staging/${user.id}/media-orphan-flight.webp`,
+        finalKey: 'posts/post-orphan-1/media-orphan-flight.webp',
+        status: 'IN_FLIGHT',
       });
 
-      let finalizeMediaFinished = false;
+      const staleAt = new Date(Date.now() - MEDIA_FINALIZATION_ORPHAN_TTL_MS - 1000);
+      await dbHelper.db
+        .update(mediaFinalizations)
+        .set({ updatedAt: staleAt })
+        .where(inArray(mediaFinalizations.id, [compensation.id, inFlight.id]));
 
-      // Start an explicit transaction holding the advisory lock
-      const txPromise = dbHelper.db.transaction(async (tx) => {
-        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${'user_media:' + user.id}))`);
-        await lockHeldPromise;
-      });
+      await accountDeletionService.reconcileAbandonedMediaFinalizations();
 
-      // Small delay to ensure the transaction has acquired the lock
-      await new Promise((r) => setTimeout(r, 50));
-
-      // Attempt to finalize media - this must block waiting for the advisory lock
-      const finalizePromise = uploadServiceWithDb.finalizeMedia('staged-media-uuid', user.id, 'post-id-1').then(
-        () => {
-          finalizeMediaFinished = true;
-        },
-        () => {
-          finalizeMediaFinished = true;
-        },
-      );
-
-      await new Promise((r) => setTimeout(r, 50));
-      expect(finalizeMediaFinished).toBe(false);
-
-      // Release lock and allow transaction to commit
-      releaseLock();
-      await txPromise;
-
-      await finalizePromise;
-      expect(finalizeMediaFinished).toBe(true);
+      expect(mockUploadService.deleteObjects).toHaveBeenCalledWith([compensationFinalKey]);
+      const remaining = await dbHelper.db
+        .select()
+        .from(mediaFinalizations)
+        .where(inArray(mediaFinalizations.id, [compensation.id, inFlight.id]));
+      expect(remaining).toHaveLength(0);
     });
 
     it('blocks approved-contact lookup immediately from exposing a deleting owner phone even if cleanup failed', async () => {

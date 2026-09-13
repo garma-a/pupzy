@@ -18,6 +18,7 @@ import { DATABASE_TOKEN } from '../database/database.provider';
 import { users, accountDeletions, isAccountDeletionBlockedStatus } from '../database/schema';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { NotFoundError, ForbiddenError } from '../common/errors/app.errors';
+import { MediaFinalizationRepository } from './media-finalization.repository';
 
 /**
  * UploadService — manages media uploads to Cloudflare R2 via presigned URLs.
@@ -49,6 +50,15 @@ export class UploadService {
   private readonly publicUrl: string;
 
   /**
+   * Network bounds for every R2 command so storage outages cannot pin
+   * application work indefinitely. Together with the bounded retry count this
+   * keeps a finalization inside its durable obligation lease.
+   */
+  private static readonly R2_CONNECTION_TIMEOUT_MS = 3_000;
+  private static readonly R2_REQUEST_TIMEOUT_MS = 15_000;
+  private static readonly R2_MAX_ATTEMPTS = 3;
+
+  /**
    * Maps an allowed MIME type to its canonical file extension.
    * Only called with validated content types from the Zod schema.
    */
@@ -69,6 +79,8 @@ export class UploadService {
     private readonly config: ConfigService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     @Optional() @Inject(DATABASE_TOKEN) private readonly db?: NodePgDatabase<Record<string, unknown>>,
+    @Inject(MediaFinalizationRepository)
+    private readonly mediaFinalizationRepository?: MediaFinalizationRepository,
   ) {
     this.s3Client = new S3Client({
       region: 'auto',
@@ -76,6 +88,17 @@ export class UploadService {
       credentials: {
         accessKeyId: config.get('R2_ACCESS_KEY_ID')!,
         secretAccessKey: config.get('R2_SECRET_ACCESS_KEY')!,
+      },
+      maxAttempts: UploadService.R2_MAX_ATTEMPTS,
+      /**
+       * Bound every R2 call. Timeouts keep storage outages from pinning
+       * application work (including durable finalization obligations) forever.
+       * The AWS SDK ignores request timeouts unless `throwOnRequestTimeout` is set.
+       */
+      requestHandler: {
+        connectionTimeout: UploadService.R2_CONNECTION_TIMEOUT_MS,
+        requestTimeout: UploadService.R2_REQUEST_TIMEOUT_MS,
+        throwOnRequestTimeout: true,
       },
     });
     this.bucketName = config.get<string>('R2_BUCKET_NAME')!;
@@ -249,8 +272,17 @@ export class UploadService {
     const stagingKey = `staging/${userId}/${mediaId}${ext}`;
     const finalKey = `posts/${postId}/${mediaId}${ext}`;
 
-    const executeFinalization = async () => {
+    const executeFinalization = async (obligationId: string | null) => {
+      // Heartbeat the durable obligation before each storage call so a live
+      // finalization is never mistaken for a crashed one while it copies.
+      const heartbeat = async (): Promise<void> => {
+        if (obligationId && this.mediaFinalizationRepository) {
+          await this.mediaFinalizationRepository.touch(obligationId);
+        }
+      };
+
       // Step 1: Verify the staged upload actually exists
+      await heartbeat();
       try {
         await this.s3Client.send(
           new HeadObjectCommand({
@@ -263,6 +295,7 @@ export class UploadService {
       }
 
       // Step 2: Copy to permanent location
+      await heartbeat();
       await this.s3Client.send(
         new CopyObjectCommand({
           Bucket: this.bucketName,
@@ -272,6 +305,7 @@ export class UploadService {
       );
 
       // Step 3: Remove the staging object to avoid orphaned duplicates
+      await heartbeat();
       await this.s3Client.send(
         new DeleteObjectCommand({
           Bucket: this.bucketName,
@@ -288,38 +322,237 @@ export class UploadService {
       };
     };
 
-    // Step 0: Abort if user is banned or account deletion is accepted, avoiding recreating permanent media.
-    // Serialize user media operations with deletion storage cleanup using advisory lock.
-    if (this.db) {
-      return await this.db.transaction(async (tx) => {
-        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${'user_media:' + userId}))`);
-
-        const [userRow] = await tx.select({ isBanned: users.isBanned }).from(users).where(eq(users.id, userId));
-
-        const [deletionRecord] = await tx
-          .select({ id: accountDeletions.id, status: accountDeletions.status })
-          .from(accountDeletions)
-          .where(eq(accountDeletions.userId, userId))
-          .orderBy(sql`${accountDeletions.createdAt} DESC`)
-          .limit(1);
-
-        if (!userRow || userRow.isBanned || (deletionRecord && isAccountDeletionBlockedStatus(deletionRecord.status))) {
-          await this.s3Client
-            .send(
-              new DeleteObjectCommand({
-                Bucket: this.bucketName,
-                Key: stagingKey,
-              }),
-            )
-            .catch(() => {});
-          throw new ForbiddenError('ACCOUNT_DELETED');
-        }
-
-        return await executeFinalization();
-      });
+    // Step 0: Serialize the start of finalization with account deletion acceptance,
+    // and durably record the obligation in the same short transaction. The user row
+    // lock is held only for that transaction; the R2 calls run outside any database
+    // transaction so stalled storage cannot exhaust the connection pool, while the
+    // obligation row guarantees account deletion waits for or compensates the copy.
+    let obligationId: string | null = null;
+    try {
+      obligationId = await this.beginFinalizationObligation(userId, mediaId, stagingKey, finalKey);
+    } catch (err) {
+      // Only a blocked account justifies destroying the staged upload. A transient
+      // database error leaves staging untouched so the media can still be finalized.
+      if (err instanceof ForbiddenError) {
+        await this.deleteObjectQuietly(stagingKey, 'staged object');
+      }
+      throw err;
     }
 
-    return await executeFinalization();
+    // Steps 1-3: Head, copy, and staging delete with bounded timeouts, outside
+    // any database transaction.
+    let result: { publicUrl: string; cloudflareStorageKey: string };
+    try {
+      result = await executeFinalization(obligationId);
+    } catch (err) {
+      await this.settleFinalizationObligation(obligationId, finalKey, userId);
+      throw err;
+    }
+
+    // Step 4: Settle the obligation. When acceptance raced the copy, the
+    // permanent object is deleted and the obligation is cleared only after that
+    // succeeds; otherwise the row stays for account deletion or cron to retry.
+    const accountBlocked = await this.settleFinalizationObligation(obligationId, finalKey, userId);
+    if (accountBlocked) {
+      throw new ForbiddenError('ACCOUNT_DELETED');
+    }
+
+    return result;
+  }
+
+  /**
+   * Verifies the creator may still finalize media and durably records an
+   * `IN_FLIGHT` obligation in the same transaction. The user row lock serializes
+   * this check with account deletion acceptance, so either the obligation is
+   * visible to the deletion sweep or the copy is rejected outright.
+   *
+   * @returns The obligation ID, or null when durable tracking is unavailable.
+   * @throws {ForbiddenError} when the creator is banned or an account deletion
+   * is accepted, so no permanent object may be created.
+   */
+  private async beginFinalizationObligation(
+    userId: string,
+    mediaId: string,
+    stagingKey: string,
+    finalKey: string,
+  ): Promise<string | null> {
+    if (!this.db) return null;
+
+    const obligationId = generateUuidV7();
+
+    await this.db.transaction(async (tx) => {
+      const [userRow] = await tx
+        .select({
+          id: users.id,
+          isBanned: users.isBanned,
+        })
+        .from(users)
+        .where(eq(users.id, userId))
+        .for('update');
+
+      if (!userRow || userRow.isBanned) {
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+
+      const [deletionRecord] = await tx
+        .select({ id: accountDeletions.id, status: accountDeletions.status })
+        .from(accountDeletions)
+        .where(eq(accountDeletions.userId, userId))
+        .orderBy(sql`${accountDeletions.createdAt} DESC`)
+        .limit(1);
+
+      if (deletionRecord && isAccountDeletionBlockedStatus(deletionRecord.status)) {
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+
+      if (this.mediaFinalizationRepository) {
+        await this.mediaFinalizationRepository.create(
+          {
+            id: obligationId,
+            userId,
+            mediaId,
+            stagingKey,
+            finalKey,
+            status: 'IN_FLIGHT',
+          },
+          tx,
+        );
+      }
+    });
+
+    return this.mediaFinalizationRepository ? obligationId : null;
+  }
+
+  /**
+   * Resolves a finalization obligation after the R2 work has finished or failed.
+   *
+   * - Live account: the row is removed; the permanent object (if any) belongs to
+   *   a surviving post and account deletion later captures its key from `post_media`.
+   * - Blocked account: the row moves to `COMPENSATION_REQUIRED`, the permanent
+   *   object is deleted, and only then is the row removed. A failed deletion keeps
+   *   the row so account deletion or the maintenance cron retries it.
+   * - Unknown account state (database read failed): the row is left `IN_FLIGHT`;
+   *   deletion treats it as fresh until the lease expires, then cleans it.
+   *
+   * @returns true when the account is deletion-blocked.
+   */
+  private async settleFinalizationObligation(
+    obligationId: string | null,
+    finalKey: string,
+    userId: string,
+  ): Promise<boolean> {
+    let accountBlocked: boolean | null = null;
+    try {
+      accountBlocked = !(await this.isFinalizationAllowed(userId));
+    } catch (err) {
+      this.logger.warn(
+        `Could not re-check account state for media finalization ${obligationId ?? '(untracked)'}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
+    if (!obligationId || !this.mediaFinalizationRepository) {
+      if (accountBlocked === true) {
+        await this.deleteObjectQuietly(finalKey, 'permanent object');
+        return true;
+      }
+      return false;
+    }
+
+    if (accountBlocked === false) {
+      await this.removeFinalizationObligation(obligationId);
+      return false;
+    }
+
+    if (accountBlocked === true) {
+      try {
+        await this.mediaFinalizationRepository.markCompensationRequired(obligationId);
+      } catch (err) {
+        this.logger.error(
+          `Failed to mark media finalization ${obligationId} as compensation-required: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+
+      try {
+        await this.deleteObject(finalKey);
+        await this.mediaFinalizationRepository.delete(obligationId);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.error(
+          `Failed to compensate permanent object "${finalKey}" for obligation ${obligationId}; account deletion will retry: ${message}`,
+        );
+        try {
+          await this.mediaFinalizationRepository.recordError(obligationId, message);
+        } catch (recordErr) {
+          this.logger.error(
+            `Failed to persist compensation error for obligation ${obligationId}: ${recordErr instanceof Error ? recordErr.message : String(recordErr)}`,
+          );
+        }
+      }
+      return true;
+    }
+
+    // accountBlocked === null — leave the obligation in place for deletion to
+    // resolve after the lease, or for the cron to reconcile as an orphan.
+    return false;
+  }
+
+  /** Removes an obligation, logging rather than masking a storage/finalization error. */
+  private async removeFinalizationObligation(obligationId: string): Promise<void> {
+    if (!this.mediaFinalizationRepository) return;
+    try {
+      await this.mediaFinalizationRepository.delete(obligationId);
+    } catch (err) {
+      this.logger.warn(
+        `Failed to clear media finalization obligation ${obligationId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
+  /**
+   * Re-reads durable account state to confirm the media finalization is still
+   * authorized after the R2 copy completed.
+   */
+  private async isFinalizationAllowed(userId: string): Promise<boolean> {
+    if (!this.db) return true;
+
+    const [userRow] = await this.db.select({ isBanned: users.isBanned }).from(users).where(eq(users.id, userId));
+
+    if (!userRow || userRow.isBanned) return false;
+
+    const [deletionRecord] = await this.db
+      .select({ id: accountDeletions.id, status: accountDeletions.status })
+      .from(accountDeletions)
+      .where(eq(accountDeletions.userId, userId))
+      .orderBy(sql`${accountDeletions.createdAt} DESC`)
+      .limit(1);
+
+    return !deletionRecord || !isAccountDeletionBlockedStatus(deletionRecord.status);
+  }
+
+  /** Deletes a single object, propagating failures so callers can retry durably. */
+  private async deleteObject(key: string): Promise<void> {
+    await this.s3Client.send(
+      new DeleteObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      }),
+    );
+  }
+
+  /**
+   * Best-effort object deletion for blocked or compensated finalizations.
+   * Deletion failures are logged but do not mask the authorization error: any
+   * surviving staging object is covered by the staged-prefix sweep, and any
+   * surviving permanent object is covered by the durable obligation layer.
+   */
+  private async deleteObjectQuietly(key: string, objectKind: string): Promise<void> {
+    try {
+      await this.deleteObject(key);
+    } catch (err) {
+      this.logger.warn(
+        `Failed to delete ${objectKind} "${key}" after a blocked finalization: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 
   /**

@@ -34,6 +34,11 @@ import {
 import { AccountDeletionRepository } from './account-deletion.repository';
 import { UsersRepository } from './users.repository';
 import { UploadService } from '../upload/upload.service';
+import {
+  MediaFinalizationRepository,
+  MEDIA_FINALIZATION_LEASE_MS,
+  MEDIA_FINALIZATION_ORPHAN_TTL_MS,
+} from '../upload/media-finalization.repository';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { ForbiddenError, NotFoundError } from '../common/errors/app.errors';
 
@@ -59,6 +64,8 @@ export class AccountDeletionService {
     @Inject(FIREBASE_ADMIN_TOKEN) private readonly firebaseApp: App,
     @Inject(DATABASE_TOKEN) private readonly db: NodePgDatabase<Record<string, unknown>>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    @Inject(MediaFinalizationRepository)
+    private readonly mediaFinalizationRepository: MediaFinalizationRepository,
   ) {}
 
   /**
@@ -265,8 +272,6 @@ export class AccountDeletionService {
 
         // 1. Check if staged upload grace window is still active.
         // Defer storage cleanup until all issued upload URLs expire.
-        // Crucially: DO NOT delete or discard permanent media keys before grace expires,
-        // so any in-flight asynchronous finalization cannot recreate permanent objects undetected.
         if (deletionRecord.stagedUploadGraceUntil && deletionRecord.stagedUploadGraceUntil.getTime() > Date.now()) {
           this.logger.log(
             `Staged upload grace window active until ${deletionRecord.stagedUploadGraceUntil.toISOString()} for deletion ${deletionRecord.id}. Deferring storage cleanup.`,
@@ -277,7 +282,23 @@ export class AccountDeletionService {
           return; // Do not delete permanent keys or advance to STORAGE_CLEANED yet!
         }
 
-        // 2. Grace period has passed or was null: safe to delete permanent media keys and staged prefix!
+        // 2. Resolve durable media-finalization obligations. A fresh in-flight copy
+        // can still create a permanent object, so deletion defers until its lease
+        // expires. Stale or compensation-required obligations are deleted now, and
+        // a storage failure keeps the row and this step retryable.
+        const obligations = await this.resolveMediaFinalizationObligations(userId);
+        if (!obligations.resolved) {
+          this.logger.log(
+            `Media finalization obligation still in flight for deletion ${deletionRecord.id}. Deferring storage cleanup until ${obligations.retryAt.toISOString()}.`,
+          );
+          await this.accountDeletionRepository.update(deletionRecord.id, {
+            nextRetryAt: obligations.retryAt,
+          });
+          return; // Completion must wait until every outstanding copy is resolved!
+        }
+
+        // 3. All outstanding copies are resolved: safe to delete permanent media
+        // keys and the staged prefix.
         await this.cleanupStorageData(deletionRecord);
 
         await this.accountDeletionRepository.update(deletionRecord.id, {
@@ -536,32 +557,100 @@ export class AccountDeletionService {
   }
 
   /**
+   * Resolves every durable media-finalization obligation for a user before
+   * account deletion sweeps storage.
+   *
+   * - Fresh `IN_FLIGHT` rows mean a live copy may still create a permanent
+   *   object: nothing is swept and the caller retries after the lease expires.
+   * - Stale `IN_FLIGHT` rows had no heartbeat for the full lease, so the process
+   *   can no longer be copying; their permanent and staging objects are removed.
+   * - `COMPENSATION_REQUIRED` rows had a copy during a blocked account; their
+   *   permanent object is removed here.
+   *
+   * Rows are deleted only after their objects are gone. A storage failure
+   * propagates so the deletion request stays retryable instead of completing.
+   */
+  private async resolveMediaFinalizationObligations(
+    userId: string,
+  ): Promise<{ resolved: true } | { resolved: false; retryAt: Date }> {
+    const obligations = await this.mediaFinalizationRepository.findByUserId(userId);
+    if (obligations.length === 0) return { resolved: true };
+
+    const now = Date.now();
+    const freshInFlight = obligations.filter(
+      (obligation) =>
+        obligation.status === 'IN_FLIGHT' && obligation.updatedAt.getTime() + MEDIA_FINALIZATION_LEASE_MS > now,
+    );
+    if (freshInFlight.length > 0) {
+      const earliestExpiry = Math.min(
+        ...freshInFlight.map((obligation) => obligation.updatedAt.getTime() + MEDIA_FINALIZATION_LEASE_MS),
+      );
+      return { resolved: false, retryAt: new Date(earliestExpiry) };
+    }
+
+    for (const obligation of obligations) {
+      await this.uploadService.deleteObjects([obligation.finalKey]);
+      if (obligation.status === 'IN_FLIGHT') {
+        await this.uploadService.deleteObjects([obligation.stagingKey]);
+      }
+      await this.mediaFinalizationRepository.delete(obligation.id);
+    }
+
+    return { resolved: true };
+  }
+
+  /**
+   * Maintenance pass for obligations that no deletion request will resolve:
+   * removes abandoned `IN_FLIGHT` bookkeeping and retries failed compensations.
+   * Invoked by {@link AccountDeletionCron}.
+   */
+  async reconcileAbandonedMediaFinalizations(limit = 20): Promise<void> {
+    const staleBefore = new Date(Date.now() - MEDIA_FINALIZATION_ORPHAN_TTL_MS);
+    const abandoned = await this.mediaFinalizationRepository.findStale(staleBefore, limit);
+
+    for (const obligation of abandoned) {
+      if (obligation.status === 'COMPENSATION_REQUIRED') {
+        try {
+          await this.uploadService.deleteObjects([obligation.finalKey]);
+          await this.mediaFinalizationRepository.delete(obligation.id);
+          this.logger.log(`Resolved orphaned media compensation obligation ${obligation.id}`);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          this.logger.warn(
+            `Media compensation obligation ${obligation.id} could not be resolved; will retry: ${message}`,
+          );
+          await this.mediaFinalizationRepository.recordError(obligation.id, message);
+        }
+        continue;
+      }
+
+      // Abandoned IN_FLIGHT bookkeeping: the crash happened long ago, and the
+      // surviving post still owns its object. Account deletion captures the key
+      // from post_media, so dropping the row cannot leave media behind.
+      await this.mediaFinalizationRepository.delete(obligation.id);
+      this.logger.warn(
+        `Removed abandoned media finalization obligation ${obligation.id} for user ${obligation.userId}`,
+      );
+    }
+  }
+
+  /**
    * Deletes permanent R2 media objects and staged upload prefixes.
-   * Serialized with concurrent post finalization via user_media advisory lock.
+   *
+   * Runs entirely outside database transactions. The caller resolves all durable
+   * media-finalization obligations first, so this sweep only runs once no copy
+   * can recreate a permanent object. Outstanding presigned upload URLs are
+   * covered by the caller's `stagedUploadGraceUntil` check.
    */
   private async cleanupStorageData(deletionRecord: AccountDeletion): Promise<void> {
-    await this.db.transaction(async (tx) => {
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${'user_media:' + deletionRecord.userId}))`);
+    const scope = deletionRecord.mediaCleanupScope as { mediaKeys?: string[]; stagedPrefix?: string } | null;
 
-      const scope = deletionRecord.mediaCleanupScope as { mediaKeys?: string[]; stagedPrefix?: string } | null;
+    if (scope?.mediaKeys && scope.mediaKeys.length > 0) {
+      await this.uploadService.deleteObjects(scope.mediaKeys);
+    }
 
-      if (scope?.mediaKeys && scope.mediaKeys.length > 0) {
-        try {
-          await this.uploadService.deleteObjects(scope.mediaKeys);
-        } catch (err) {
-          this.logger.warn(`Storage deleteObjects failed: ${err instanceof Error ? err.message : String(err)}`);
-          throw err;
-        }
-      }
-
-      const stagedPrefix = scope?.stagedPrefix ?? `staging/${deletionRecord.userId}/`;
-      try {
-        await this.uploadService.deletePrefix(stagedPrefix);
-      } catch (err) {
-        this.logger.warn(`Storage deletePrefix failed: ${err instanceof Error ? err.message : String(err)}`);
-        throw err;
-      }
-    });
+    const stagedPrefix = scope?.stagedPrefix ?? `staging/${deletionRecord.userId}/`;
+    await this.uploadService.deletePrefix(stagedPrefix);
   }
 
   /**
