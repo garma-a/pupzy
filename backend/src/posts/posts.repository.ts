@@ -13,6 +13,7 @@ import {
   postMedia,
   postUpvotes,
   postSaves,
+  users,
   type Post,
   type PostMedia,
   type NewPost,
@@ -27,7 +28,7 @@ import {
   type ProductPost,
 } from '../database/schema';
 import type * as schema from '../database/schema';
-import { NotFoundError } from '../common/errors/app.errors';
+import { NotFoundError, ForbiddenError } from '../common/errors/app.errors';
 
 /**
  * PostsRepository — data-access layer for post creation.
@@ -84,6 +85,18 @@ export class PostsRepository {
     private readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
+  private async assertCreatorActive(tx: NodePgDatabase<typeof schema>, creatorId: string): Promise<void> {
+    const [creator] = await tx
+      .select({ id: users.id, isBanned: users.isBanned })
+      .from(users)
+      .where(eq(users.id, creatorId))
+      .for('update');
+
+    if (!creator || creator.isBanned) {
+      throw new ForbiddenError('ACCOUNT_DELETED');
+    }
+  }
+
   /**
    * Creates a RESCUE post atomically.
    *
@@ -98,6 +111,8 @@ export class PostsRepository {
     mediaRows: Omit<NewPostMedia, 'postId'>[],
   ): Promise<Post> {
     return this.db.transaction(async (tx) => {
+      await this.assertCreatorActive(tx, baseData.creatorId);
+
       const [post] = await tx.insert(posts).values(baseData).returning();
 
       await tx.insert(rescuePosts).values({
@@ -133,6 +148,8 @@ export class PostsRepository {
     mediaRows: Omit<NewPostMedia, 'postId'>[],
   ): Promise<Post> {
     return this.db.transaction(async (tx) => {
+      await this.assertCreatorActive(tx, baseData.creatorId);
+
       const [post] = await tx.insert(posts).values(baseData).returning();
 
       await tx.insert(lostPosts).values({
@@ -167,6 +184,8 @@ export class PostsRepository {
     mediaRows: Omit<NewPostMedia, 'postId'>[],
   ): Promise<Post> {
     return this.db.transaction(async (tx) => {
+      await this.assertCreatorActive(tx, baseData.creatorId);
+
       const [post] = await tx.insert(posts).values(baseData).returning();
 
       await tx.insert(adoptionPosts).values({
@@ -206,6 +225,8 @@ export class PostsRepository {
     mediaRows: Omit<NewPostMedia, 'postId'>[],
   ): Promise<Post> {
     return this.db.transaction(async (tx) => {
+      await this.assertCreatorActive(tx, baseData.creatorId);
+
       const [post] = await tx.insert(posts).values(baseData).returning();
 
       await tx.insert(productPosts).values({

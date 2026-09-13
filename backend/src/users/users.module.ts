@@ -34,4 +34,3 @@ import { AccountDeletionCron } from './account-deletion.cron';
   exports: [UsersService, AccountDeletionRepository, AccountDeletionService],
 })
 export class UsersModule {}
-

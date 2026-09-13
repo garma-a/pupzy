@@ -1,9 +1,21 @@
 import { sql, eq, inArray } from 'drizzle-orm';
-import * as crypto from 'crypto';
+import { join } from 'path';
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
+const request = require('supertest');
+import { INestApplication } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import { TestDatabaseHelper } from '../../test/test-database.helper';
 
 jest.mock('firebase-admin/auth', () => ({
   getAuth: jest.fn(),
+}));
+
+jest.mock('@aws-sdk/s3-request-presigner', () => ({
+  getSignedUrl: jest.fn().mockResolvedValue('https://r2.example.com/staging-presigned-url'),
 }));
 
 import {
@@ -14,7 +26,6 @@ import {
   postSaves,
   postReports,
   notifications,
-  savedSearches,
   contactRequests,
   adoptionApplications,
   rescuePosts,
@@ -25,17 +36,73 @@ import {
   moderationActions,
   cities,
   accountDeletions,
+  type AccountDeletion,
+  type User,
 } from '../database/schema';
 import { AccountDeletionService } from './account-deletion.service';
 import { AccountDeletionRepository } from './account-deletion.repository';
 import { AccountDeletionCron } from './account-deletion.cron';
 import { UsersRepository } from './users.repository';
 import { UsersService } from './users.service';
+import { UsersResolver } from './users.resolver';
 import { UploadService } from '../upload/upload.service';
+import { CitiesService } from '../cities/cities.service';
+import { PostsRepository } from '../posts/posts.repository';
+import { ContactsResolver } from '../contacts/contacts.resolver';
+import { AdoptionsResolver } from '../adoptions/adoptions.resolver';
+import { ContactsService } from '../contacts/contacts.service';
+import { AdoptionsService } from '../adoptions/adoptions.service';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
-import { ForbiddenError, NotFoundError, ValidationError } from '../common/errors/app.errors';
+import { ForbiddenError, NotFoundError } from '../common/errors/app.errors';
+import { GqlExceptionFilter } from '../common/filters/gql-exception.filter';
+import { FirebaseAuthGuard } from '../auth/firebase.guard';
+import { FIREBASE_ADMIN_TOKEN } from '../auth/firebase.module';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import type { App } from 'firebase-admin/app';
+import type { GqlContext } from '../common/types/gql-context.type';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import type * as schema from '../database/schema';
+
+interface DeleteMyAccountGqlData {
+  status: string;
+  deletionId: string;
+  progressToken: string | null;
+  message: string;
+}
+
+interface AccountDeletionProgressGqlData {
+  status: string;
+  deletionId: string;
+  message: string;
+}
+
+interface GqlResponseBody {
+  data?: {
+    deleteMyAccount?: DeleteMyAccountGqlData;
+    accountDeletionProgress?: AccountDeletionProgressGqlData;
+    me?: { id: string; email: string };
+    [key: string]: unknown;
+  };
+  errors?: Array<{ message: string; extensions?: { code?: string } }>;
+}
+
+async function executeGql(
+  targetApp: INestApplication,
+  query: string,
+  variables?: Record<string, unknown>,
+  token?: string,
+): Promise<{ status: number; body: GqlResponseBody }> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  const req = request(targetApp.getHttpServer()).post('/graphql');
+  if (token) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    req.set('Authorization', `Bearer ${token}`);
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  const res = (await req.send({ query, variables })) as { status: number; body: GqlResponseBody };
+  return res;
+}
 
 describe('Account Deletion Feature Integration', () => {
   let dbHelper: TestDatabaseHelper;
@@ -44,11 +111,17 @@ describe('Account Deletion Feature Integration', () => {
   let usersService: UsersService;
   let accountDeletionService: AccountDeletionService;
   let accountDeletionCron: AccountDeletionCron;
-  let mockUploadService: jest.Mocked<UploadService>;
+  let mockUploadService: {
+    deleteObjects: jest.Mock;
+    deletePrefix: jest.Mock;
+    getLastUploadGraceUntil: jest.Mock;
+  };
   let mockCacheManager: jest.Mocked<Cache>;
   let mockFirebaseApp: App;
   let mockDeleteUser: jest.Mock;
+  let mockVerifyIdToken: jest.Mock;
   let mockConfig: { get: jest.Mock };
+  let app: INestApplication | undefined;
 
   beforeAll(async () => {
     dbHelper = new TestDatabaseHelper();
@@ -57,6 +130,13 @@ describe('Account Deletion Feature Integration', () => {
 
   afterAll(async () => {
     await dbHelper.stop();
+  });
+
+  afterEach(async () => {
+    if (app) {
+      await app.close();
+      app = undefined;
+    }
   });
 
   beforeEach(async () => {
@@ -70,52 +150,60 @@ describe('Account Deletion Feature Integration', () => {
       deleteObjects: jest.fn().mockResolvedValue(undefined),
       deletePrefix: jest.fn().mockResolvedValue(1),
       getLastUploadGraceUntil: jest.fn().mockResolvedValue(null),
-    } as unknown as jest.Mocked<UploadService>;
+    };
 
     const cacheStore = new Map<string, unknown>();
     mockCacheManager = {
-      get: jest.fn().mockImplementation((key) => Promise.resolve(cacheStore.get(key))),
-      set: jest.fn().mockImplementation((key, val) => {
+      get: jest.fn().mockImplementation((key: string) => Promise.resolve(cacheStore.get(key))),
+      set: jest.fn().mockImplementation((key: string, val: unknown) => {
         cacheStore.set(key, val);
         return Promise.resolve();
       }),
-      del: jest.fn().mockImplementation((key) => {
+      del: jest.fn().mockImplementation((key: string) => {
         cacheStore.delete(key);
         return Promise.resolve();
       }),
     } as unknown as jest.Mocked<Cache>;
 
     mockDeleteUser = jest.fn().mockResolvedValue(undefined);
+    mockVerifyIdToken = jest.fn();
     mockFirebaseApp = {} as unknown as App;
     // Mock getAuth implementation
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
     const authModule = require('firebase-admin/auth');
+
     jest.spyOn(authModule, 'getAuth').mockReturnValue({
       deleteUser: mockDeleteUser,
+      verifyIdToken: mockVerifyIdToken,
     });
 
     mockConfig = {
       get: jest.fn().mockImplementation((key: string) => {
         if (key === 'ACCOUNT_DELETION_ENABLED') return true;
         if (key === 'PHONE_ENCRYPTION_KEY') return 'MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=';
+        if (key === 'R2_BUCKET_NAME') return 'pupzy-bucket';
+        if (key === 'R2_PUBLIC_URL') return 'https://cdn.pupzy.com';
+        if (key === 'R2_ACCOUNT_ID') return 'test-account';
+        if (key === 'R2_ACCESS_KEY_ID') return 'test-key';
+        if (key === 'R2_SECRET_ACCESS_KEY') return 'test-secret';
         return undefined;
       }),
     };
 
-    const mockCitiesService = {} as any;
+    const mockCitiesService = {} as unknown as CitiesService;
     usersService = new UsersService(
       usersRepo,
       mockCitiesService,
       accountDeletionRepo,
-      mockConfig as any,
+      mockConfig as unknown as ConfigService,
       mockCacheManager,
     );
 
     accountDeletionService = new AccountDeletionService(
       accountDeletionRepo,
       usersRepo,
-      mockUploadService,
-      mockConfig as any,
+      mockUploadService as unknown as UploadService,
+      mockConfig as unknown as ConfigService,
       mockFirebaseApp,
       dbHelper.db,
       mockCacheManager,
@@ -123,6 +211,32 @@ describe('Account Deletion Feature Integration', () => {
 
     accountDeletionCron = new AccountDeletionCron(accountDeletionRepo, accountDeletionService);
   });
+
+  async function initTestApp(): Promise<INestApplication> {
+    const moduleRef: TestingModule = await Test.createTestingModule({
+      imports: [
+        GraphQLModule.forRoot<ApolloDriverConfig>({
+          driver: ApolloDriver,
+          typePaths: [join(process.cwd(), 'src/**/*.graphql')],
+          context: ({ req }: { req: unknown }) => ({ req }),
+        }),
+      ],
+      providers: [
+        UsersResolver,
+        { provide: UsersService, useValue: usersService },
+        { provide: AccountDeletionService, useValue: accountDeletionService },
+        { provide: AccountDeletionRepository, useValue: accountDeletionRepo },
+        { provide: FIREBASE_ADMIN_TOKEN, useValue: mockFirebaseApp },
+        { provide: CACHE_MANAGER, useValue: mockCacheManager },
+        { provide: APP_GUARD, useClass: FirebaseAuthGuard },
+        { provide: APP_FILTER, useClass: GqlExceptionFilter },
+      ],
+    }).compile();
+
+    const nestApp = moduleRef.createNestApplication();
+    await nestApp.init();
+    return nestApp;
+  }
 
   async function seedCity(name = 'Cairo'): Promise<string> {
     const [city] = await dbHelper.db
@@ -201,7 +315,7 @@ describe('Account Deletion Feature Integration', () => {
         })
         .returning();
 
-      const nowSec = Math.floor(Date.now() / 1000);
+      const currentEpochSeconds = Math.floor(Date.now() / 1000);
 
       // 1. Missing authTime
       await expect(accountDeletionService.initiateDeletion(user, undefined)).rejects.toThrow(
@@ -209,17 +323,17 @@ describe('Account Deletion Feature Integration', () => {
       );
 
       // 2. Stale authTime (301 seconds ago)
-      await expect(accountDeletionService.initiateDeletion(user, nowSec - 301)).rejects.toThrow(
+      await expect(accountDeletionService.initiateDeletion(user, currentEpochSeconds - 301)).rejects.toThrow(
         new ForbiddenError('RECENT_AUTHENTICATION_REQUIRED'),
       );
 
       // 3. Future authTime (>30s tolerance)
-      await expect(accountDeletionService.initiateDeletion(user, nowSec + 120)).rejects.toThrow(
+      await expect(accountDeletionService.initiateDeletion(user, currentEpochSeconds + 120)).rejects.toThrow(
         new ForbiddenError('INVALID_AUTHENTICATION_TIME'),
       );
 
       // 4. Valid authTime (290 seconds ago = 4m 50s) succeeds
-      const result = await accountDeletionService.initiateDeletion(user, nowSec - 290);
+      const result = await accountDeletionService.initiateDeletion(user, currentEpochSeconds - 290);
       expect(result.status).toBe('COMPLETED');
     });
 
@@ -595,15 +709,7 @@ describe('Account Deletion Feature Integration', () => {
       const remainingPosts = await dbHelper.db
         .select()
         .from(posts)
-        .where(
-          inArray(posts.id, [
-            rescuePost.id,
-            lostPost.id,
-            adoptionPost.id,
-            productPost.id,
-            matingPost.id,
-          ]),
-        );
+        .where(inArray(posts.id, [rescuePost.id, lostPost.id, adoptionPost.id, productPost.id, matingPost.id]));
       expect(remainingPosts).toHaveLength(0);
 
       // Verify extension rows are gone
@@ -654,6 +760,50 @@ describe('Account Deletion Feature Integration', () => {
       // 11. Verify storage cleanup called for captured media keys
       expect(mockUploadService.deleteObjects).toHaveBeenCalledWith([`posts/${rescuePost.id}/img1.webp`]);
       expect(mockUploadService.deletePrefix).toHaveBeenCalledWith(`staging/${user.id}/`);
+    });
+
+    it('immediately hides user posts and marks user banned at acceptance before cleanup completes', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-hide-test-1',
+          email: 'hide@example.com',
+          fullName: 'Hide User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const [post] = await dbHelper.db
+        .insert(posts)
+        .values({
+          creatorId: user.id,
+          cityId,
+          postType: 'ADOPTION',
+          title: 'Puppy for Adoption',
+          description: 'Cute puppy',
+          coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+          status: 'ACTIVE',
+        })
+        .returning();
+
+      // Simulate cleanup failure after acceptance so posts remain in database for inspection
+      jest
+        .spyOn(accountDeletionService as unknown as { cleanupDatabaseData: () => Promise<void> }, 'cleanupDatabaseData')
+        .mockRejectedValueOnce(new Error('Transient DB glitch'));
+
+      const authTime = Math.floor(Date.now() / 1000) - 10;
+      const initial = await accountDeletionService.initiateDeletion(user, authTime);
+      expect(initial.status).toBe('PENDING');
+
+      // Post must be immediately set to REMOVED status
+      const [removedPost] = await dbHelper.db.select().from(posts).where(eq(posts.id, post.id));
+      expect(removedPost.status).toBe('REMOVED');
+
+      // User must be banned with banReason ACCOUNT_DELETED
+      const [bannedUser] = await dbHelper.db.select().from(users).where(eq(users.id, user.id));
+      expect(bannedUser.isBanned).toBe(true);
+      expect(bannedUser.banReason).toBe('ACCOUNT_DELETED');
     });
   });
 
@@ -752,6 +902,178 @@ describe('Account Deletion Feature Integration', () => {
       expect(finalRecord?.status).toBe('COMPLETED');
       expect(mockDeleteUser).toHaveBeenCalledWith('fb-fail-retry-1');
     });
+
+    it('preserves media targets in mediaCleanupScope upon storage failure and does not mark COMPLETED', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-storage-fail-1',
+          email: 'storagefail@example.com',
+          fullName: 'Storage Fail User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const [post] = await dbHelper.db
+        .insert(posts)
+        .values({
+          creatorId: user.id,
+          cityId,
+          postType: 'PRODUCT',
+          title: 'Pet Collar',
+          description: 'Durable collar',
+          coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+          status: 'ACTIVE',
+        })
+        .returning();
+
+      await dbHelper.db.insert(postMedia).values({
+        postId: post.id,
+        mediaType: 'IMAGE',
+        cloudflareStorageKey: `posts/${post.id}/photo.jpg`,
+        publicUrl: `https://cdn.example.com/posts/${post.id}/photo.jpg`,
+        sortOrder: 0,
+      });
+
+      // Storage deleteObjects fails (e.g. bulk error or individual failure)
+      mockUploadService.deleteObjects.mockRejectedValueOnce(
+        new Error('R2 bulk delete returned 1 object errors. Failed keys: posts/' + post.id + '/photo.jpg'),
+      );
+
+      const authTime = Math.floor(Date.now() / 1000) - 10;
+      const payload = await accountDeletionService.initiateDeletion(user, authTime);
+      expect(payload.status).toBe('PENDING');
+
+      const record = await accountDeletionRepo.findById(payload.deletionId);
+      expect(record?.status).toBe('PENDING');
+      expect(record?.step).toBe('DATA_CLEANED');
+      // Media keys must be preserved for retry!
+      const scope = record?.mediaCleanupScope as { mediaKeys?: string[] } | null;
+      expect(scope?.mediaKeys).toContain(`posts/${post.id}/photo.jpg`);
+
+      // Reset nextRetryAt to past so cron picks it up
+      await accountDeletionRepo.update(payload.deletionId, {
+        nextRetryAt: new Date(Date.now() - 1000),
+      });
+
+      // Now retry with working storage: targets are deleted and record completes
+      mockUploadService.deleteObjects.mockResolvedValueOnce(undefined);
+      mockUploadService.deletePrefix.mockResolvedValueOnce(0);
+      await accountDeletionCron.processPendingDeletions();
+
+      const completedRecord = await accountDeletionRepo.findById(payload.deletionId);
+      expect(completedRecord?.status).toBe('COMPLETED');
+      expect(mockUploadService.deleteObjects).toHaveBeenCalledWith([`posts/${post.id}/photo.jpg`]);
+    });
+
+    it('crash recovery preserves mediaCleanupScope targets even when posts are already deleted', async () => {
+      const userId = generateUuidV7();
+      const deletionId = generateUuidV7();
+      const preservedKeys = [`posts/crash-p1/img1.jpg`, `posts/crash-p1/img2.jpg`];
+
+      // Simulate a crashed state where step is DATA_CLEANED, posts are already gone, but mediaKeys exist in DB
+      await dbHelper.db
+        .insert(accountDeletions)
+        .values({
+          id: deletionId,
+          userId,
+          firebaseUserId: 'fb-crashed-user',
+          email: 'crash@example.com',
+          status: 'PENDING',
+          step: 'DATA_CLEANED',
+          progressTokenHash: 'crashhash',
+          mediaCleanupScope: {
+            mediaKeys: preservedKeys,
+            stagedPrefix: `staging/${userId}/`,
+          },
+          nextRetryAt: new Date(Date.now() - 1000),
+        })
+        .returning();
+
+      await accountDeletionCron.processPendingDeletions();
+
+      // Verified: deleteObjects was called with the preserved keys!
+      expect(mockUploadService.deleteObjects).toHaveBeenCalledWith(preservedKeys);
+      const finished = await accountDeletionRepo.findById(deletionId);
+      expect(finished?.status).toBe('COMPLETED');
+    });
+
+    it('10+ failures keep access blocked and keep retrying in cron with backoff', async () => {
+      const userId = generateUuidV7();
+      const deletionId = generateUuidV7();
+
+      await dbHelper.db
+        .insert(accountDeletions)
+        .values({
+          id: deletionId,
+          userId,
+          firebaseUserId: 'fb-failed-10-user',
+          email: 'failed10@example.com',
+          status: 'FAILED',
+          step: 'DATA_CLEANED',
+          progressTokenHash: 'failedhash',
+          storageCleanupAttempts: 10,
+          nextRetryAt: new Date(Date.now() - 1000), // Due for retry
+        })
+        .returning();
+
+      // 1. Access is blocked: findOrCreate throws ForbiddenError ACCOUNT_DELETED
+      await expect(
+        usersService.findOrCreate({ firebaseUserId: 'fb-failed-10-user', email: 'failed10@example.com' }),
+      ).rejects.toThrow(ForbiddenError);
+
+      // 2. isDeletedOrPending returns true
+      expect(await accountDeletionService.isDeletedOrPending('fb-failed-10-user')).toBe(true);
+
+      // 3. findPendingForRetry still selects this FAILED record so retry never stops!
+      const retryList = await accountDeletionRepo.findPendingForRetry();
+      expect(retryList.some((r) => r.id === deletionId)).toBe(true);
+
+      // 4. Cron processes it and completes when storage recovers
+      mockUploadService.deletePrefix.mockResolvedValue(0);
+      await accountDeletionCron.processPendingDeletions();
+
+      const recovered = await accountDeletionRepo.findById(deletionId);
+      expect(recovered?.status).toBe('COMPLETED');
+    });
+
+    it('persists uploadGraceUntil in PostgreSQL so protection survives process restarts and cache misses', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-grace-db-1',
+          email: 'gracedb@example.com',
+          fullName: 'Grace DB User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      // Real UploadService with test database helper DB
+      const uploadServiceWithDb = new UploadService(
+        mockConfig as unknown as ConfigService,
+        mockCacheManager,
+        dbHelper.db,
+      );
+
+      // Generate a presigned upload URL
+      const upload = await uploadServiceWithDb.generatePresignedUrl(user.id, 'image/jpeg', 1024);
+      expect(upload.expiresAt).toBeDefined();
+
+      // Verify column upload_grace_until was written to PostgreSQL
+      const [dbUser] = await dbHelper.db.select().from(users).where(eq(users.id, user.id));
+      expect(dbUser.uploadGraceUntil).toBeDefined();
+      expect(dbUser.uploadGraceUntil?.getTime()).toBeCloseTo(upload.expiresAt.getTime(), -3);
+
+      // Simulate process restart: cache is completely cleared
+      mockCacheManager.get.mockResolvedValue(null);
+
+      // getLastUploadGraceUntil falls back to PostgreSQL and returns the timestamp!
+      const fallbackGrace = await uploadServiceWithDb.getLastUploadGraceUntil(user.id);
+      expect(fallbackGrace).toBeDefined();
+      expect(fallbackGrace?.getTime()).toBeCloseTo(upload.expiresAt.getTime(), -3);
+    });
   });
 
   // ─── TICKET 04: Apple-Linked & Private Relay Accounts ───────────────────────
@@ -823,6 +1145,470 @@ describe('Account Deletion Feature Integration', () => {
       // Active record remains
       const checkActive = await accountDeletionRepo.findById(activeRecord.id);
       expect(checkActive).toBeDefined();
+    });
+
+    it('retention purge only purges COMPLETED records, never PENDING or FAILED', async () => {
+      // Seed an expired PENDING record
+      const [pendingRecord] = await dbHelper.db
+        .insert(accountDeletions)
+        .values({
+          userId: generateUuidV7(),
+          firebaseUserId: 'fb-purge-pending',
+          email: 'pending@example.com',
+          status: 'PENDING',
+          step: 'DATA_CLEANED',
+          progressTokenHash: 'hash1',
+          purgeAt: new Date(Date.now() - 10_000), // Expired
+        })
+        .returning();
+
+      // Seed an expired FAILED record
+      const [failedRecord] = await dbHelper.db
+        .insert(accountDeletions)
+        .values({
+          userId: generateUuidV7(),
+          firebaseUserId: 'fb-purge-failed',
+          email: 'failed@example.com',
+          status: 'FAILED',
+          step: 'DATA_CLEANED',
+          progressTokenHash: 'hash2',
+          purgeAt: new Date(Date.now() - 10_000), // Expired
+        })
+        .returning();
+
+      // Seed an expired COMPLETED record
+      const [completedRecord] = await dbHelper.db
+        .insert(accountDeletions)
+        .values({
+          userId: generateUuidV7(),
+          firebaseUserId: 'fb-purge-completed',
+          email: 'completed@example.com',
+          status: 'COMPLETED',
+          step: 'COMPLETED',
+          progressTokenHash: 'hash3',
+          purgeAt: new Date(Date.now() - 10_000), // Expired
+        })
+        .returning();
+
+      await accountDeletionCron.purgeExpiredRecords();
+
+      // ONLY completed record is purged
+      expect(await accountDeletionRepo.findById(completedRecord.id)).toBeUndefined();
+      // PENDING and FAILED records MUST NOT be purged
+      expect(await accountDeletionRepo.findById(pendingRecord.id)).toBeDefined();
+      expect(await accountDeletionRepo.findById(failedRecord.id)).toBeDefined();
+    });
+  });
+
+  // ─── TICKET 05 / SPEC 7: GraphQL API Execution Seam ─────────────────────────
+
+  describe('Ticket 05 / Spec 7: GraphQL API Execution Seam', () => {
+    it('executes deleteMyAccount mutation via GraphQL over HTTP through FirebaseAuthGuard and GqlExceptionFilter', async () => {
+      app = await initTestApp();
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-gql-user-1',
+          email: 'gql@example.com',
+          fullName: 'GraphQL User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const authTime = Math.floor(Date.now() / 1000) - 20;
+      mockVerifyIdToken.mockResolvedValue({
+        uid: user.firebaseUserId,
+        auth_time: authTime,
+        firebase: { sign_in_provider: 'google.com' },
+      });
+
+      const response = await executeGql(
+        app,
+        `
+          mutation DeleteMyAccount($input: DeleteMyAccountInput!) {
+            deleteMyAccount(input: $input) {
+              status
+              deletionId
+              progressToken
+              message
+            }
+          }
+        `,
+        {
+          input: {
+            confirm: true,
+            progressToken: 'custom-client-token-12345',
+          },
+        },
+        'valid-firebase-token',
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data?.deleteMyAccount).toBeDefined();
+      expect(response.body.data?.deleteMyAccount?.status).toBe('COMPLETED');
+      expect(response.body.data?.deleteMyAccount?.progressToken).toBe('custom-client-token-12345');
+      expect(mockDeleteUser).toHaveBeenCalledWith(user.firebaseUserId);
+    });
+
+    it('queries public accountDeletionProgress query via GraphQL over HTTP without auth header', async () => {
+      app = await initTestApp();
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-gql-progress-1',
+          email: 'gqlprog@example.com',
+          fullName: 'Progress User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const authTime = Math.floor(Date.now() / 1000) - 20;
+      const progressToken = 'custom-progress-token-67890';
+      const initial = await accountDeletionService.initiateDeletion(user, authTime, progressToken);
+
+      const response = await executeGql(
+        app,
+        `
+          query CheckProgress($deletionId: ID!, $progressToken: String!) {
+            accountDeletionProgress(deletionId: $deletionId, progressToken: $progressToken) {
+              status
+              deletionId
+              message
+            }
+          }
+        `,
+        {
+          deletionId: initial.deletionId,
+          progressToken,
+        },
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data?.accountDeletionProgress?.status).toBe('COMPLETED');
+      expect(response.body.data?.accountDeletionProgress?.deletionId).toBe(initial.deletionId);
+    });
+
+    it('rejects authenticated requests with ACCOUNT_DELETED via FirebaseAuthGuard when account is deleted or pending', async () => {
+      app = await initTestApp();
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-gql-deleted-1',
+          email: 'deleted@example.com',
+          fullName: 'Deleted User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const authTime = Math.floor(Date.now() / 1000) - 20;
+      await accountDeletionService.initiateDeletion(user, authTime);
+
+      mockVerifyIdToken.mockResolvedValue({
+        uid: user.firebaseUserId,
+        auth_time: authTime,
+        firebase: { sign_in_provider: 'google.com' },
+      });
+
+      const response = await executeGql(
+        app,
+        `
+          query GetMe {
+            me {
+              id
+              email
+            }
+          }
+        `,
+        undefined,
+        'valid-firebase-token',
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.errors).toBeDefined();
+      expect(response.body.errors?.[0]?.message).toBe('ACCOUNT_DELETED');
+      expect(response.body.errors?.[0]?.extensions?.code).toBe('FORBIDDEN');
+    });
+  });
+
+  describe('Concurrency, Upload Grace Serialization, and Relationship Protection', () => {
+    it('blocks presigned upload issuance when account deletion is pending or accepted', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-upload-serialize-1',
+          email: 'upload-serialize@example.com',
+          fullName: 'Upload Serialize User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const uploadServiceWithDatabase = new UploadService(
+        mockConfig as unknown as ConfigService,
+        mockCacheManager,
+        dbHelper.db,
+      );
+
+      // Verify issuance works before deletion
+      const presigned = await uploadServiceWithDatabase.generatePresignedUrl(user.id, 'image/jpeg', 1024);
+      expect(presigned.uploadUrl).toBeDefined();
+
+      // Now initiate deletion
+      const currentEpochSeconds = Math.floor(Date.now() / 1000) - 20;
+      await accountDeletionService.initiateDeletion(user, currentEpochSeconds);
+
+      // Upload issuance must now fail closed with ForbiddenError('ACCOUNT_DELETED')
+      await expect(uploadServiceWithDatabase.generatePresignedUrl(user.id, 'image/jpeg', 1024)).rejects.toThrow(
+        'ACCOUNT_DELETED',
+      );
+    });
+
+    it('fails closed when database transaction encounters an error during upload issuance', async () => {
+      const mockDatabaseWithError = {
+        transaction: jest.fn().mockRejectedValue(new Error('Connection terminated')),
+      } as unknown as NodePgDatabase<typeof schema>;
+      const uploadServiceWithFailingDatabase = new UploadService(
+        mockConfig as unknown as ConfigService,
+        mockCacheManager,
+        mockDatabaseWithError,
+      );
+
+      await expect(
+        uploadServiceWithFailingDatabase.generatePresignedUrl('some-user-id', 'image/jpeg', 1024),
+      ).rejects.toThrow('Connection terminated');
+    });
+
+    it('blocks in-flight post creation with ForbiddenError when user is banned/deleting', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-post-serialize-1',
+          email: 'post-serialize@example.com',
+          fullName: 'Post Serialize User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const postsRepository = new PostsRepository(dbHelper.db);
+
+      // Initiate deletion, which marks user as banned with reason ACCOUNT_DELETED
+      const currentEpochSeconds = Math.floor(Date.now() / 1000) - 20;
+      await accountDeletionService.initiateDeletion(user, currentEpochSeconds);
+
+      // Attempt to create post in-flight
+      await expect(
+        postsRepository.createRescuePost(
+          {
+            creatorId: user.id,
+            postType: 'RESCUE',
+            title: 'Late Rescue Post',
+            description: 'This post should not be created',
+            status: 'ACTIVE',
+            cityId,
+            urgency: 'HIGH',
+          },
+          {
+            rescueAnimalType: 'DOG',
+            healthCondition: 'CRITICAL',
+          },
+          [],
+        ),
+      ).rejects.toThrow('ACCOUNT_DELETED');
+    });
+
+    it('cleans up staging object and aborts finalization when creator is banned/deleting', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-finalize-serialize-1',
+          email: 'finalize-serialize@example.com',
+          fullName: 'Finalize Serialize User',
+          homeCityId: cityId,
+          isBanned: true,
+          banReason: 'ACCOUNT_DELETED',
+        })
+        .returning();
+
+      const uploadServiceWithDatabase = new UploadService(
+        mockConfig as unknown as ConfigService,
+        mockCacheManager,
+        dbHelper.db,
+      );
+
+      // Mock cache returning owner
+      (mockCacheManager.get as jest.Mock).mockImplementation((key: string) => {
+        if (key === 'media_owner:media-uuid-1') return Promise.resolve(user.id);
+        if (key === 'media_ct:media-uuid-1') return Promise.resolve('image/jpeg');
+        return Promise.resolve(null);
+      });
+
+      // Mock s3Client send
+      const mockS3Send = jest.fn().mockResolvedValue({});
+      (uploadServiceWithDatabase as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockS3Send;
+
+      await expect(uploadServiceWithDatabase.finalizeMedia('media-uuid-1', user.id, 'post-id-1')).rejects.toThrow(
+        'ACCOUNT_DELETED',
+      );
+
+      // Verify staging object was deleted
+      expect(mockS3Send).toHaveBeenCalled();
+      const sendCalls = mockS3Send.mock.calls as Array<[{ input?: { Key?: string } }]>;
+      const lastCall = sendCalls[sendCalls.length - 1];
+      expect(lastCall?.[0]?.input?.Key).toContain('staging/');
+    });
+
+    it('prevents profile exposure through contact requests and adoption applications when user is deleting', async () => {
+      const cityId = await seedCity();
+      const [requesterUser] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-rel-requester-1',
+          email: 'requester@example.com',
+          fullName: 'Requester Person',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const [postOwnerUser] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-rel-owner-1',
+          email: 'owner@example.com',
+          fullName: 'Owner Person',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const [samplePost] = await dbHelper.db
+        .insert(posts)
+        .values({
+          creatorId: postOwnerUser.id,
+          postType: 'ADOPTION',
+          title: 'Post with Contact Request',
+          description: 'Description',
+          cityId,
+          coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+        })
+        .returning();
+
+      const [contactRequestRecord] = await dbHelper.db
+        .insert(contactRequests)
+        .values({
+          postId: samplePost.id,
+          requesterId: requesterUser.id,
+          message: 'Can I help?',
+          status: 'PENDING',
+        })
+        .returning();
+
+      const [adoptionApplicationRecord] = await dbHelper.db
+        .insert(adoptionApplications)
+        .values({
+          targetPostId: samplePost.id,
+          applicantId: requesterUser.id,
+          status: 'PENDING',
+          livingSituation: 'APARTMENT',
+          hasOutdoorAccess: true,
+          hasOtherPetsAtHome: false,
+          hasChildrenAtHome: false,
+          whyAdopt: 'Loving home ready for a puppy',
+        })
+        .returning();
+
+      // Before deletion, DataLoader resolves requester
+      const initialLoader = usersService.createUserByIdLoader();
+      const initialLoadedUser = await initialLoader.load(requesterUser.id);
+      expect(initialLoadedUser?.id).toBe(requesterUser.id);
+
+      // Now requester initiates deletion
+      const currentEpochSeconds = Math.floor(Date.now() / 1000) - 20;
+      await accountDeletionService.initiateDeletion(requesterUser, currentEpochSeconds);
+
+      // DataLoader must not return the deleting/banned user
+      const freshLoader = usersService.createUserByIdLoader();
+      const resolvedAfterDeletion = await freshLoader.load(requesterUser.id);
+      expect(resolvedAfterDeletion).toBeNull();
+
+      // ContactsResolver and AdoptionsResolver must return null for requester/applicant
+      const contactsResolver = new ContactsResolver({} as unknown as ContactsService);
+      const adoptionsResolver = new AdoptionsResolver({} as unknown as AdoptionsService);
+
+      const mockContext = {
+        loaders: {
+          userById: freshLoader,
+        },
+      } as unknown as GqlContext;
+
+      const requesterProfile = await contactsResolver.requester(contactRequestRecord, mockContext);
+      expect(requesterProfile).toBeNull();
+
+      const applicantProfile = await adoptionsResolver.applicant(adoptionApplicationRecord, mockContext);
+      expect(applicantProfile).toBeNull();
+    });
+
+    it('concurrent cleanup retains captured media keys and does not overwrite with an empty list', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-concurrent-cleanup-1',
+          email: 'concurrent-cleanup@example.com',
+          fullName: 'Concurrent Cleanup User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const [userPost] = await dbHelper.db
+        .insert(posts)
+        .values({
+          creatorId: user.id,
+          postType: 'ADOPTION',
+          title: 'Post With Media',
+          description: 'Description',
+          cityId,
+          coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+        })
+        .returning();
+
+      await dbHelper.db.insert(postMedia).values({
+        postId: userPost.id,
+        cloudflareStorageKey: `posts/${userPost.id}/photo.jpg`,
+        publicUrl: `https://cdn.pupzy.com/posts/${userPost.id}/photo.jpg`,
+        displayOrder: 0,
+      });
+
+      // Mock storage deleteObjects to fail initially to simulate deferred/retrying cleanup
+      mockUploadService.deleteObjects.mockRejectedValueOnce(new Error('Transient storage failure'));
+
+      const currentEpochSeconds = Math.floor(Date.now() / 1000) - 20;
+      const initial = await accountDeletionService.initiateDeletion(user, currentEpochSeconds);
+
+      // Deletion record should be in PENDING with captured media keys
+      const pendingRecord = await accountDeletionRepo.findById(initial.deletionId);
+      expect(pendingRecord?.step).toBe('DATA_CLEANED');
+      expect((pendingRecord?.mediaCleanupScope as { mediaKeys: string[] })?.mediaKeys).toEqual([
+        `posts/${userPost.id}/photo.jpg`,
+      ]);
+
+      // Simulate a concurrent cleanup attempt when posts are already deleted
+      // The second execution must retain existing mediaKeys from mediaCleanupScope
+      await (
+        accountDeletionService as unknown as {
+          cleanupDatabaseData: (record: AccountDeletion, userHint?: User) => Promise<void>;
+        }
+      ).cleanupDatabaseData(pendingRecord!);
+
+      const verifiedRecord = await accountDeletionRepo.findById(initial.deletionId);
+      expect((verifiedRecord?.mediaCleanupScope as { mediaKeys: string[] })?.mediaKeys).toEqual([
+        `posts/${userPost.id}/photo.jpg`,
+      ]);
     });
   });
 });

@@ -17,7 +17,7 @@ import { FIREBASE_ADMIN_TOKEN } from './firebase.module';
 import { UsersService } from '../users/users.service';
 import { AccountDeletionRepository } from '../users/account-deletion.repository';
 import type { GqlContext } from '../common/types/gql-context.type';
-import type { User } from '../database/schema';
+import { isAccountDeletionBlockedStatus, type User } from '../database/schema';
 
 import { ForbiddenError } from '../common/errors/app.errors';
 // ─── Public decorator ─────────────────────────────────────────────────────────
@@ -114,7 +114,7 @@ export class FirebaseAuthGuard implements CanActivate {
 
     // ── 4. Account Deletion Check (zero ban-propagation window) ───────────
     const deletionRecord = await this.accountDeletionRepository.findByFirebaseUserId(decoded.uid);
-    if (deletionRecord && (deletionRecord.status === 'PENDING' || deletionRecord.status === 'COMPLETED')) {
+    if (deletionRecord && isAccountDeletionBlockedStatus(deletionRecord.status)) {
       await this.cacheManager.del(`user_resolve:${decoded.uid}`);
       const handler = context.getHandler();
       const handlerName = handler ? handler.name : undefined;
@@ -161,7 +161,6 @@ export class FirebaseAuthGuard implements CanActivate {
 
     return true;
   }
-
 
   /**
    * Verifies a Firebase ID token.

@@ -1,6 +1,7 @@
 import { UploadService } from './upload.service';
 import { ConfigService } from '@nestjs/config';
 import { Cache } from 'cache-manager';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { NotFoundError } from '../common/errors/app.errors';
 
 jest.mock('@aws-sdk/s3-request-presigner', () => ({
@@ -83,6 +84,71 @@ describe('UploadService', () => {
         .mockRejectedValue(new Error('NoSuchKey'));
 
       await expect(service.finalizeMedia('media-1', 'user-1', 'post-1')).rejects.toThrow(NotFoundError);
+    });
+  });
+
+  describe('deleteObjects', () => {
+    it('throws an error if bulk delete returns per-object errors and individual delete fails', async () => {
+      const mockSend = jest
+        .fn()
+        .mockResolvedValueOnce({
+          Errors: [{ Key: 'posts/p1/m1.jpg', Message: 'InternalError' }],
+        })
+        .mockRejectedValueOnce(new Error('Individual delete failed'));
+      (service as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockSend;
+
+      await expect(service.deleteObjects(['posts/p1/m1.jpg'])).rejects.toThrow(/Failed to delete 1 storage objects/);
+    });
+
+    it('throws an error if fallback individual delete fails', async () => {
+      (service as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = jest
+        .fn()
+        .mockRejectedValue(new Error('Network error'));
+
+      await expect(service.deleteObjects(['posts/p1/m1.jpg'])).rejects.toThrow(/Failed to delete 1 storage objects/);
+    });
+  });
+
+  describe('deletePrefix', () => {
+    it('propagates errors when listing objects fails', async () => {
+      (service as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = jest
+        .fn()
+        .mockRejectedValue(new Error('R2 list failed'));
+
+      await expect(service.deletePrefix('staging/user-1/')).rejects.toThrow('R2 list failed');
+    });
+  });
+
+  describe('getLastUploadGraceUntil', () => {
+    it('returns timestamp from cache when present', async () => {
+      const now = Date.now() + 100_000;
+      mockCache.get = jest.fn().mockResolvedValue(now);
+
+      const result = await service.getLastUploadGraceUntil('user-1');
+      expect(result).toEqual(new Date(now));
+    });
+
+    it('falls back to database when cache misses', async () => {
+      mockCache.get = jest.fn().mockResolvedValue(null);
+      const graceDate = new Date(Date.now() + 200_000);
+      const mockDb = {
+        select: jest.fn().mockReturnValue({
+          from: jest.fn().mockReturnValue({
+            where: jest.fn().mockReturnValue({
+              limit: jest.fn().mockResolvedValue([{ uploadGraceUntil: graceDate }]),
+            }),
+          }),
+        }),
+      };
+
+      const serviceWithDb = new UploadService(
+        mockConfig as ConfigService,
+        mockCache as Cache,
+        mockDb as unknown as NodePgDatabase,
+      );
+
+      const result = await serviceWithDb.getLastUploadGraceUntil('user-1');
+      expect(result).toEqual(graceDate);
     });
   });
 });

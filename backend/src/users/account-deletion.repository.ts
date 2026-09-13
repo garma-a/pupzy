@@ -8,8 +8,9 @@ import { accountDeletions, type AccountDeletion, type NewAccountDeletion } from 
 export class AccountDeletionRepository {
   constructor(@Inject(DATABASE_TOKEN) private readonly db: NodePgDatabase<Record<string, unknown>>) {}
 
-  async create(data: NewAccountDeletion): Promise<AccountDeletion> {
-    const [record] = await this.db.insert(accountDeletions).values(data).returning();
+  async create(data: NewAccountDeletion, tx?: NodePgDatabase<Record<string, unknown>>): Promise<AccountDeletion> {
+    const executor = tx ?? this.db;
+    const [record] = await executor.insert(accountDeletions).values(data).returning();
     return record;
   }
 
@@ -34,11 +35,7 @@ export class AccountDeletionRepository {
   }
 
   async findById(id: string): Promise<AccountDeletion | undefined> {
-    const [record] = await this.db
-      .select()
-      .from(accountDeletions)
-      .where(eq(accountDeletions.id, id))
-      .limit(1);
+    const [record] = await this.db.select().from(accountDeletions).where(eq(accountDeletions.id, id)).limit(1);
     return record;
   }
 
@@ -61,7 +58,7 @@ export class AccountDeletionRepository {
       .from(accountDeletions)
       .where(
         and(
-          eq(accountDeletions.status, 'PENDING'),
+          or(eq(accountDeletions.status, 'PENDING'), eq(accountDeletions.status, 'FAILED')),
           or(isNull(accountDeletions.nextRetryAt), lte(accountDeletions.nextRetryAt, now)),
         ),
       )
@@ -74,7 +71,7 @@ export class AccountDeletionRepository {
     return this.db
       .select()
       .from(accountDeletions)
-      .where(and(lte(accountDeletions.purgeAt, now)))
+      .where(and(eq(accountDeletions.status, 'COMPLETED'), lte(accountDeletions.purgeAt, now)))
       .limit(limit);
   }
 

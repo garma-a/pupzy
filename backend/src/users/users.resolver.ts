@@ -120,4 +120,3 @@ export class UsersResolver {
     return this.accountDeletionService.initiateDeletion(context.user!, context.authTime, validated.progressToken);
   }
 }
-

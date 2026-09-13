@@ -94,3 +94,14 @@ export const accountDeletions = pgTable(
 
 export type AccountDeletion = typeof accountDeletions.$inferSelect;
 export type NewAccountDeletion = typeof accountDeletions.$inferInsert;
+
+/**
+ * Centralized predicate: returns true if the given account deletion status
+ * represents an account whose access and profile recreation must be blocked.
+ * Covers PENDING, COMPLETED, and FAILED (so that prolonged external outages
+ * never allow stale sessions to recreate or access the account).
+ */
+export function isAccountDeletionBlockedStatus(status?: string | null): boolean {
+  if (!status) return false;
+  return status === 'PENDING' || status === 'COMPLETED' || status === 'FAILED';
+}

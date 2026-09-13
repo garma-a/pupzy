@@ -54,15 +54,20 @@ export class AccountDeletionCron implements OnApplicationBootstrap {
           await this.accountDeletionService.executeCleanup(record);
         } catch (err) {
           const attempts = (record.storageCleanupAttempts || 0) + 1;
-          const backoffSec = Math.min(300, Math.pow(2, attempts) * 5); // backoff up to 5 min
+          const backoffSeconds = Math.min(3600, Math.pow(2, Math.min(attempts, 8)) * 15); // exponential backoff up to 1 hour
           this.logger.warn(
             `Retry failed for deletion ${record.id} (attempt ${attempts}): ${err instanceof Error ? err.message : String(err)}`,
           );
+          if (attempts >= 10) {
+            this.logger.error(
+              `Account deletion ${record.id} (user ${record.userId}) has reached ${attempts} failures; alerting operators and scheduling continued backoff retry.`,
+            );
+          }
 
           await this.accountDeletionRepository.update(record.id, {
             storageCleanupAttempts: attempts,
             lastError: err instanceof Error ? err.message : String(err),
-            nextRetryAt: new Date(Date.now() + backoffSec * 1000),
+            nextRetryAt: new Date(Date.now() + backoffSeconds * 1000),
             status: attempts >= 10 ? 'FAILED' : 'PENDING',
           });
         }

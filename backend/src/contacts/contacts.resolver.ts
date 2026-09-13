@@ -95,6 +95,10 @@ export class ContactsResolver {
    */
   @ResolveField('requester')
   async requester(@Parent() contactRequest: ContactRequest, @Context() ctx: GqlContext): Promise<User | null> {
-    return ctx.loaders.userById.load(contactRequest.requesterId);
+    const user = await ctx.loaders.userById.load(contactRequest.requesterId);
+    if (!user || user.isBanned || user.banReason === 'ACCOUNT_DELETED') {
+      return null;
+    }
+    return user;
   }
 }

@@ -18,11 +18,31 @@ jest.mock('firebase-admin/auth', () => ({
 
 describe('AccountDeletionService', () => {
   let service: AccountDeletionService;
-  let mockAccountDeletionRepo: jest.Mocked<Partial<AccountDeletionRepository>>;
-  let mockUsersRepo: jest.Mocked<Partial<UsersRepository>>;
-  let mockUploadService: jest.Mocked<Partial<UploadService>>;
+  let mockAccountDeletionRepo: {
+    findByFirebaseUserId: jest.Mock;
+    findByUserId: jest.Mock;
+    findById: jest.Mock;
+    create: jest.Mock;
+    update: jest.Mock;
+  };
+  let mockUsersRepo: {
+    findById: jest.Mock;
+    delete: jest.Mock;
+  };
+  let mockUploadService: {
+    deleteObjects: jest.Mock;
+    deletePrefix: jest.Mock;
+    getLastUploadGraceUntil: jest.Mock;
+  };
   let mockCacheManager: { get: jest.Mock; set: jest.Mock; del: jest.Mock };
-  let mockDb: { select: jest.Mock; delete: jest.Mock; update: jest.Mock; execute: jest.Mock; transaction: jest.Mock };
+  let mockDb: {
+    insert: jest.Mock;
+    select: jest.Mock;
+    delete: jest.Mock;
+    update: jest.Mock;
+    execute: jest.Mock;
+    transaction: jest.Mock;
+  };
   let mockDeleteUser: jest.Mock;
   let mockConfigService: { get: jest.Mock };
 
@@ -63,32 +83,31 @@ describe('AccountDeletionService', () => {
 
     const inMemoryRecords = new Map<string, AccountDeletion>();
     mockAccountDeletionRepo = {
-      findByFirebaseUserId: jest.fn().mockImplementation(async (uid) => {
+      findByFirebaseUserId: jest.fn().mockImplementation((uid: string) => {
         for (const r of inMemoryRecords.values()) {
-          if (r.firebaseUserId === uid) return r;
+          if (r.firebaseUserId === uid) return Promise.resolve(r);
         }
-        return undefined;
+        return Promise.resolve(undefined);
       }),
-      findByUserId: jest.fn().mockImplementation(async (uid) => {
+      findByUserId: jest.fn().mockImplementation((uid: string) => {
         for (const r of inMemoryRecords.values()) {
-          if (r.userId === uid) return r;
+          if (r.userId === uid) return Promise.resolve(r);
         }
-        return undefined;
+        return Promise.resolve(undefined);
       }),
-      findById: jest.fn().mockImplementation(async (id) => inMemoryRecords.get(id)),
-      create: jest.fn().mockImplementation(async (data) => {
+      findById: jest.fn().mockImplementation((id: string) => Promise.resolve(inMemoryRecords.get(id))),
+      create: jest.fn().mockImplementation((data: { id: string } & Partial<AccountDeletion>) => {
         const r = { ...data, createdAt: new Date(), updatedAt: new Date() } as AccountDeletion;
         inMemoryRecords.set(data.id, r);
-        return r;
+        return Promise.resolve(r);
       }),
-      update: jest.fn().mockImplementation(async (id, data) => {
+      update: jest.fn().mockImplementation((id: string, data: Partial<AccountDeletion>) => {
         const existing = inMemoryRecords.get(id) || ({ id } as AccountDeletion);
-        const updated = { ...existing, ...data, updatedAt: new Date() } as AccountDeletion;
+        const updated = { ...existing, ...data, updatedAt: new Date() };
         inMemoryRecords.set(id, updated);
-        return updated;
+        return Promise.resolve(updated);
       }),
     };
-
 
     mockUsersRepo = {
       findById: jest.fn().mockResolvedValue(sampleUser),
@@ -116,17 +135,38 @@ describe('AccountDeletionService', () => {
       p.orderBy = jest.fn().mockReturnValue(p);
       p.limit = jest.fn().mockReturnValue(p);
       p.returning = jest.fn().mockReturnValue(p);
+      p.for = jest.fn().mockReturnValue(p);
       return p;
     };
 
     mockDb = {
+      insert: jest.fn().mockImplementation(() => {
+        const record = {
+          id: 'del-1',
+          userId: 'user-1',
+          firebaseUserId: 'fb-user-1',
+          email: 'test@example.com',
+          status: 'PENDING',
+          step: 'ACCEPTED',
+          progressTokenHash: 'hash',
+          stagedUploadGraceUntil: null,
+          acceptedAt: new Date(),
+          purgeAt: new Date(),
+        };
+        const p = Promise.resolve([record]) as unknown as Record<string, unknown>;
+        p.values = jest.fn().mockImplementation((val) => {
+          Object.assign(record, val);
+          return p;
+        });
+        p.returning = jest.fn().mockReturnValue(p);
+        return p;
+      }),
       select: jest.fn().mockImplementation(createChain),
       delete: jest.fn().mockImplementation(createChain),
       update: jest.fn().mockImplementation(createChain),
       execute: jest.fn().mockResolvedValue({}),
-      transaction: jest.fn().mockImplementation(async (cb) => cb(mockDb)),
+      transaction: jest.fn().mockImplementation((cb: (tx: unknown) => Promise<unknown>) => cb(mockDb)),
     };
-
 
     mockConfigService = {
       get: jest.fn().mockImplementation((key: string) => {
@@ -209,7 +249,7 @@ describe('AccountDeletionService', () => {
     it('defers completion when staged upload grace window is active', async () => {
       const recentAuthTime = Math.floor(Date.now() / 1000) - 10;
       const futureGrace = new Date(Date.now() + 300_000); // 5 minutes in future
-      mockUploadService.getLastUploadGraceUntil!.mockResolvedValue(futureGrace);
+      mockUploadService.getLastUploadGraceUntil.mockResolvedValue(futureGrace);
 
       const result = await service.initiateDeletion(sampleUser, recentAuthTime);
 
@@ -241,7 +281,7 @@ describe('AccountDeletionService', () => {
         updatedAt: new Date(),
       };
 
-      mockAccountDeletionRepo.findByFirebaseUserId!.mockResolvedValue(existingRecord);
+      mockAccountDeletionRepo.findByFirebaseUserId.mockResolvedValue(existingRecord);
 
       const result = await service.initiateDeletion(sampleUser, recentAuthTime);
 
@@ -271,7 +311,7 @@ describe('AccountDeletionService', () => {
         expect.any(String),
         expect.objectContaining({
           lastError: 'Firebase service unavailable',
-          nextRetryAt: expect.any(Date),
+          nextRetryAt: expect.any(Date) as unknown,
         }),
       );
     });
@@ -303,7 +343,7 @@ describe('AccountDeletionService', () => {
         updatedAt: new Date(),
       };
 
-      mockAccountDeletionRepo.findById!.mockResolvedValue(record);
+      mockAccountDeletionRepo.findById.mockResolvedValue(record);
 
       const progress = await service.getProgress('del-456', token);
 
@@ -333,7 +373,7 @@ describe('AccountDeletionService', () => {
         updatedAt: new Date(),
       };
 
-      mockAccountDeletionRepo.findById!.mockResolvedValue(record);
+      mockAccountDeletionRepo.findById.mockResolvedValue(record);
 
       await expect(service.getProgress('del-456', 'wrong-token')).rejects.toThrow(NotFoundError);
     });
@@ -341,23 +381,23 @@ describe('AccountDeletionService', () => {
 
   describe('isDeletedOrPending', () => {
     it('returns true when record is PENDING', async () => {
-      mockAccountDeletionRepo.findByFirebaseUserId!.mockResolvedValue({
+      mockAccountDeletionRepo.findByFirebaseUserId.mockResolvedValue({
         status: 'PENDING',
-      } as AccountDeletion);
+      });
 
       expect(await service.isDeletedOrPending('fb-1')).toBe(true);
     });
 
     it('returns true when record is COMPLETED', async () => {
-      mockAccountDeletionRepo.findByFirebaseUserId!.mockResolvedValue({
+      mockAccountDeletionRepo.findByFirebaseUserId.mockResolvedValue({
         status: 'COMPLETED',
-      } as AccountDeletion);
+      });
 
       expect(await service.isDeletedOrPending('fb-1')).toBe(true);
     });
 
     it('returns false when no record exists', async () => {
-      mockAccountDeletionRepo.findByFirebaseUserId!.mockResolvedValue(undefined);
+      mockAccountDeletionRepo.findByFirebaseUserId.mockResolvedValue(undefined);
 
       expect(await service.isDeletedOrPending('fb-fresh')).toBe(false);
     });

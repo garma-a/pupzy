@@ -6,6 +6,7 @@ import {
   posts,
   matingPosts,
   postMedia,
+  users,
   type Post,
   type NewPost,
   type NewPostMedia,
@@ -13,6 +14,7 @@ import {
   type NewMatingPostRow,
 } from '../database/schema';
 import type * as schema from '../database/schema';
+import { ForbiddenError } from '../common/errors/app.errors';
 
 export type NewMatingDetailsInput = Omit<NewMatingPostRow, 'postId'>;
 
@@ -37,6 +39,16 @@ export class MatingRepository {
     mediaRows: Array<Omit<NewPostMedia, 'postId' | 'displayOrder'>>,
   ): Promise<Post> {
     return this.db.transaction(async (tx) => {
+      const [creator] = await tx
+        .select({ id: users.id, isBanned: users.isBanned })
+        .from(users)
+        .where(eq(users.id, baseData.creatorId))
+        .for('update');
+
+      if (!creator || creator.isBanned) {
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+
       const [post] = await tx.insert(posts).values(baseData).returning();
 
       await tx.insert(matingPosts).values({

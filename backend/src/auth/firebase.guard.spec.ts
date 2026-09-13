@@ -53,7 +53,6 @@ describe('FirebaseAuthGuard', () => {
     guard = module.get<FirebaseAuthGuard>(FirebaseAuthGuard);
   });
 
-
   function httpContext(request: { headers: Record<string, string>; user?: unknown }): ExecutionContext {
     return {
       getType: () => 'http',
@@ -105,9 +104,7 @@ describe('FirebaseAuthGuard', () => {
     });
     const request = { headers: { authorization: 'Bearer valid-token' } };
 
-    await expect(guard.canActivate(httpContext(request))).rejects.toThrow(
-      new ForbiddenError('ACCOUNT_DELETED'),
-    );
+    await expect(guard.canActivate(httpContext(request))).rejects.toThrow(new ForbiddenError('ACCOUNT_DELETED'));
     expect(mockCacheManager.del).toHaveBeenCalledWith('user_resolve:firebase-1');
   });
 

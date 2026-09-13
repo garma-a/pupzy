@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import { users, type User, type NewUser } from '../database/schema';
@@ -28,11 +28,10 @@ export class UsersRepository {
   }
 
   /**
-   * Batch-loads users by an array of IDs.
-   * Used exclusively by the DataLoader to resolve N user IDs in one query.
-   *
-   * Returns results in the same order as the input IDs array,
+   * Batch-loads users by their IDs for the `userById` DataLoader.
+   * Returns users in the exact order of the requested IDs, padded
    * with `null` for any ID that was not found — required by the DataLoader contract.
+   * Excludes banned/deleting accounts to prevent relationship profile leaks.
    */
   async findByIds(ids: readonly string[]): Promise<(User | null)[]> {
     if (ids.length === 0) return [];
@@ -40,7 +39,7 @@ export class UsersRepository {
     const rows = await this.db
       .select()
       .from(users)
-      .where(inArray(users.id, ids as string[]));
+      .where(and(inArray(users.id, ids as string[]), eq(users.isBanned, false)));
 
     const userMap = new Map<string, User>(rows.map((u) => [u.id, u]));
     return ids.map((id) => userMap.get(id) ?? null);
@@ -65,4 +64,3 @@ export class UsersRepository {
     return result.length > 0;
   }
 }
-

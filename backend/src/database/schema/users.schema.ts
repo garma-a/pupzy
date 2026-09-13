@@ -142,6 +142,12 @@ export const users = pgTable(
      * A DB trigger (`set_updated_at`) is recommended — see custom migration SQL.
      */
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+
+    /**
+     * Timestamp until which an outstanding pre-signed upload URL issued to this user
+     * remains valid. Persisted to ensure outstanding upload protection survives process restarts.
+     */
+    uploadGraceUntil: timestamp('upload_grace_until', { withTimezone: true }),
   },
   (table) => ({
     /** Prevents full-table scans when listing users in a city. */

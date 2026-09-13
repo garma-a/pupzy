@@ -58,4 +58,3 @@ export * from './address-search-cache.schema';
 
 // Account deletion
 export * from './account-deletions.schema';
-

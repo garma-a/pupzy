@@ -9,7 +9,7 @@ import { AccountDeletionRepository } from './account-deletion.repository';
 import { CitiesService } from '../cities/cities.service';
 import { encryptString, decryptString } from '../common/utils/crypto.util';
 import { ForbiddenError, NotFoundError, ValidationError } from '../common/errors/app.errors';
-import type { User } from '../database/schema';
+import { isAccountDeletionBlockedStatus, type User } from '../database/schema';
 
 interface FindOrCreateInput {
   firebaseUserId: string;
@@ -32,7 +32,6 @@ export class UsersService {
   ) {
     this.phoneEncryptionKey = config.get<string>('PHONE_ENCRYPTION_KEY')!;
   }
-
 
   /**
    * Helper to decrypt a user's phone number before returning to the client.
@@ -64,13 +63,12 @@ export class UsersService {
    */
   async findOrCreate(input: FindOrCreateInput): Promise<User> {
     const deletion = await this.accountDeletionRepository.findByFirebaseUserId(input.firebaseUserId);
-    if (deletion && (deletion.status === 'PENDING' || deletion.status === 'COMPLETED')) {
+    if (deletion && isAccountDeletionBlockedStatus(deletion.status)) {
       throw new ForbiddenError('ACCOUNT_DELETED');
     }
 
     const existing = await this.usersRepository.findByFirebaseUserId(input.firebaseUserId);
     if (existing) return this.decryptUserPhone(existing);
-
 
     if (input.email) {
       const existingByEmail = await this.usersRepository.findByEmail(input.email);

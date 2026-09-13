@@ -606,7 +606,7 @@ export interface ProductPost {
 export interface ContactRequest {
   id: string;
   postId: string;
-  requester: User;
+  requester?: Nullable<User>;
   message: string;
   status: RequestStatus;
   whatsappLink?: Nullable<string>;
@@ -617,7 +617,7 @@ export interface ContactRequest {
 export interface AdoptionApplication {
   id: string;
   targetPostId: string;
-  applicant: User;
+  applicant?: Nullable<User>;
   status: RequestStatus;
   speciesPreference?: Nullable<SpeciesType>;
   breedPreference?: Nullable<string>;

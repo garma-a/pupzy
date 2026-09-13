@@ -166,11 +166,7 @@ export type PersonalityTag = (typeof PERSONALITY_TAGS)[number];
 // ACCOUNT DELETION ENUMS
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const accountDeletionStatusEnum = pgEnum('account_deletion_status', [
-  'PENDING',
-  'COMPLETED',
-  'FAILED',
-]);
+export const accountDeletionStatusEnum = pgEnum('account_deletion_status', ['PENDING', 'COMPLETED', 'FAILED']);
 
 export type AccountDeletionStatus = (typeof accountDeletionStatusEnum.enumValues)[number];
 
@@ -184,4 +180,3 @@ export const accountDeletionStepEnum = pgEnum('account_deletion_step', [
 ]);
 
 export type AccountDeletionStep = (typeof accountDeletionStepEnum.enumValues)[number];
-

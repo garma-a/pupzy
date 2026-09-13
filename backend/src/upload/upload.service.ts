@@ -1,7 +1,9 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject, Optional, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { ConfigService } from '@nestjs/config';
+import { eq } from 'drizzle-orm';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   S3Client,
   PutObjectCommand,
@@ -12,8 +14,10 @@ import {
   ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { DATABASE_TOKEN } from '../database/database.provider';
+import { users, accountDeletions, isAccountDeletionBlockedStatus } from '../database/schema';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
-import { NotFoundError } from '../common/errors/app.errors';
+import { NotFoundError, ForbiddenError } from '../common/errors/app.errors';
 
 /**
  * UploadService — manages media uploads to Cloudflare R2 via presigned URLs.
@@ -64,6 +68,7 @@ export class UploadService {
   constructor(
     private readonly config: ConfigService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    @Optional() @Inject(DATABASE_TOKEN) private readonly db?: NodePgDatabase<Record<string, unknown>>,
   ) {
     this.s3Client = new S3Client({
       region: 'auto',
@@ -106,6 +111,43 @@ export class UploadService {
     const ext = UploadService.mimeToExtension(contentType);
     const stagingKey = `staging/${userId}/${mediaId}${ext}`;
 
+    const graceUntil = new Date(Date.now() + 600_000);
+
+    // 0. Serialize with account deletion acceptance: lock the user row FOR UPDATE.
+    // If the account is banned, deleted, or pending deletion, refuse upload URL issuance.
+    // Durably persist uploadGraceUntil before generating and returning the signed URL.
+    if (this.db) {
+      await this.db.transaction(async (tx) => {
+        const [userRow] = await tx
+          .select({
+            id: users.id,
+            isBanned: users.isBanned,
+          })
+          .from(users)
+          .where(eq(users.id, userId))
+          .for('update');
+
+        if (!userRow || userRow.isBanned) {
+          throw new ForbiddenError('ACCOUNT_DELETED');
+        }
+
+        const [deletionRecord] = await tx
+          .select({
+            id: accountDeletions.id,
+            status: accountDeletions.status,
+          })
+          .from(accountDeletions)
+          .where(eq(accountDeletions.userId, userId))
+          .for('update');
+
+        if (deletionRecord && isAccountDeletionBlockedStatus(deletionRecord.status)) {
+          throw new ForbiddenError('ACCOUNT_DELETED');
+        }
+
+        await tx.update(users).set({ uploadGraceUntil: graceUntil }).where(eq(users.id, userId));
+      });
+    }
+
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
       Key: stagingKey,
@@ -122,23 +164,44 @@ export class UploadService {
     await Promise.all([
       this.cacheManager.set(`media_ct:${mediaId}`, contentType, 900_000),
       this.cacheManager.set(`media_owner:${mediaId}`, userId, 900_000),
-      this.cacheManager.set(`user_last_upload_grace:${userId}`, Date.now() + 600_000, 600_000),
+      this.cacheManager.set(`user_last_upload_grace:${userId}`, graceUntil.getTime(), 600_000),
     ]);
 
     return {
       mediaId,
       uploadUrl,
-      expiresAt: new Date(Date.now() + 600_000),
+      expiresAt: graceUntil,
       stagingKey,
     };
   }
 
   /**
    * Returns the expiry timestamp of the latest outstanding presigned upload URL for a user.
+   * Falls back to PostgreSQL if the process-local or Redis cache misses, ensuring protection
+   * survives server restarts.
    */
   async getLastUploadGraceUntil(userId: string): Promise<Date | null> {
     const expiry = await this.cacheManager.get<number>(`user_last_upload_grace:${userId}`);
-    return expiry ? new Date(expiry) : null;
+    if (expiry) {
+      return new Date(expiry);
+    }
+    if (this.db) {
+      try {
+        const rows = await this.db
+          .select({ uploadGraceUntil: users.uploadGraceUntil })
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1);
+        if (rows.length > 0 && rows[0].uploadGraceUntil) {
+          return rows[0].uploadGraceUntil;
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Failed to query uploadGraceUntil from database for user ${userId}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
+    return null;
   }
 
   /**
@@ -175,6 +238,23 @@ export class UploadService {
     const ext = UploadService.mimeToExtension(contentType);
     const stagingKey = `staging/${userId}/${mediaId}${ext}`;
     const finalKey = `posts/${postId}/${mediaId}${ext}`;
+
+    // Step 0: Abort if user is banned or account deletion is accepted, avoiding recreating permanent media
+    if (this.db) {
+      const [userRow] = await this.db.select({ isBanned: users.isBanned }).from(users).where(eq(users.id, userId));
+
+      if (!userRow || userRow.isBanned) {
+        await this.s3Client
+          .send(
+            new DeleteObjectCommand({
+              Bucket: this.bucketName,
+              Key: stagingKey,
+            }),
+          )
+          .catch(() => {});
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+    }
 
     // Step 1: Verify the staged upload actually exists
     try {
@@ -258,7 +338,7 @@ export class UploadService {
 
   /**
    * Deletes a batch of storage keys from R2.
-   * Tolerates missing objects and individual failures.
+   * Throws if any object fails to delete, so cleanup targets are durably preserved for retry.
    */
   async deleteObjects(keys: string[]): Promise<void> {
     if (!keys || keys.length === 0) return;
@@ -266,7 +346,7 @@ export class UploadService {
     for (let i = 0; i < keys.length; i += batchSize) {
       const batch = keys.slice(i, i + batchSize);
       try {
-        await this.s3Client.send(
+        const response = await this.s3Client.send(
           new DeleteObjectsCommand({
             Bucket: this.bucketName,
             Delete: {
@@ -275,8 +355,17 @@ export class UploadService {
             },
           }),
         );
+        if (response.Errors && response.Errors.length > 0) {
+          const failedKeys = response.Errors.map((e) => e.Key).filter(Boolean);
+          throw new Error(
+            `R2 bulk delete returned ${response.Errors.length} object errors. Failed keys: ${failedKeys.slice(0, 5).join(', ')}`,
+          );
+        }
       } catch (err: unknown) {
-        this.logger.warn(`Bulk delete failed, falling back to individual deletes: ${err instanceof Error ? err.message : String(err)}`);
+        this.logger.warn(
+          `Bulk delete failed, falling back to individual deletes: ${err instanceof Error ? err.message : String(err)}`,
+        );
+        const failedKeys: string[] = [];
         for (const key of batch) {
           try {
             await this.s3Client.send(
@@ -286,8 +375,16 @@ export class UploadService {
               }),
             );
           } catch (individualErr: unknown) {
-            this.logger.warn(`Failed to delete object "${key}": ${individualErr instanceof Error ? individualErr.message : String(individualErr)}`);
+            this.logger.error(
+              `Failed to delete object "${key}": ${individualErr instanceof Error ? individualErr.message : String(individualErr)}`,
+            );
+            failedKeys.push(key);
           }
+        }
+        if (failedKeys.length > 0) {
+          throw new Error(
+            `Failed to delete ${failedKeys.length} storage objects: ${failedKeys.slice(0, 5).join(', ')}`,
+          );
         }
       }
     }
@@ -295,35 +392,32 @@ export class UploadService {
 
   /**
    * Deletes all objects under a given key prefix (e.g. `staging/{userId}/`).
+   * Propagates errors so callers never falsely assume complete deletion.
    */
   async deletePrefix(prefix: string): Promise<number> {
     let totalDeleted = 0;
     let continuationToken: string | undefined;
 
     do {
-      try {
-        const listResponse = await this.s3Client.send(
-          new ListObjectsV2Command({
-            Bucket: this.bucketName,
-            Prefix: prefix,
-            ContinuationToken: continuationToken,
-          }),
-        );
+      const listResponse = await this.s3Client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucketName,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+        }),
+      );
 
-        const keys = listResponse.Contents?.map((o) => o.Key).filter((k): k is string => typeof k === 'string' && k.length > 0) ?? [];
-        if (keys.length > 0) {
-          await this.deleteObjects(keys);
-          totalDeleted += keys.length;
-        }
-
-        continuationToken = listResponse.IsTruncated ? listResponse.NextContinuationToken : undefined;
-      } catch (err: unknown) {
-        this.logger.warn(`Failed to list/delete prefix "${prefix}": ${err instanceof Error ? err.message : String(err)}`);
-        break;
+      const keys =
+        listResponse.Contents?.map((o) => o.Key).filter((k): k is string => typeof k === 'string' && k.length > 0) ??
+        [];
+      if (keys.length > 0) {
+        await this.deleteObjects(keys);
+        totalDeleted += keys.length;
       }
+
+      continuationToken = listResponse.IsTruncated ? listResponse.NextContinuationToken : undefined;
     } while (continuationToken);
 
     return totalDeleted;
   }
 }
-
