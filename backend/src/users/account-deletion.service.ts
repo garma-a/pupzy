@@ -129,21 +129,20 @@ export class AccountDeletionService {
       // Serialize concurrent deletion attempts for the same identity using an advisory transaction lock
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${'account_deletion:' + user.firebaseUserId}))`);
 
-      // Lock user row FOR UPDATE to serialize with any concurrent upload issuance or post creation
-      const [lockedUser] = await tx.select().from(users).where(eq(users.id, user.id)).for('update');
-
       // Re-check existence inside the serialized transaction to guarantee one deletion job per identity
       const [existingInTx] = await tx
         .select()
         .from(accountDeletions)
         .where(or(eq(accountDeletions.firebaseUserId, user.firebaseUserId), eq(accountDeletions.userId, user.id)))
         .orderBy(sql`${accountDeletions.createdAt} DESC`)
-        .limit(1)
-        .for('update');
+        .limit(1);
 
       if (existingInTx) {
         return { record: existingInTx, isExisting: true };
       }
+
+      // Lock user row FOR UPDATE to serialize with any concurrent upload issuance or post creation
+      const [lockedUser] = await tx.select().from(users).where(eq(users.id, user.id)).for('update');
 
       const persistedUploadGraceUntil = lockedUser?.uploadGraceUntil ?? null;
       let effectiveGraceUntil =
@@ -340,9 +339,6 @@ export class AccountDeletionService {
         deletionRecord.mediaCleanupScope = currentDeletion.mediaCleanupScope;
         return;
       }
-
-      // Lock the user row if it exists
-      await tx.execute(sql`SELECT id FROM users WHERE id = ${userId} FOR UPDATE`).catch(() => {});
 
       // 1. Fetch all posts owned by this user
       const userPosts = await tx.select({ id: posts.id }).from(posts).where(eq(posts.creatorId, userId));
