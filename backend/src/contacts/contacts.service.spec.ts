@@ -65,6 +65,9 @@ describe('ContactsService', () => {
 
     mockUsersService = {
       findById: jest.fn().mockResolvedValue({ id: validOwnerId, fullName: 'Owner User', phoneNumber: '+201012345678' }),
+      findActiveById: jest
+        .fn()
+        .mockResolvedValue({ id: validOwnerId, fullName: 'Owner User', phoneNumber: '+201012345678', isBanned: false }),
     };
 
     mockNotificationsService = {
@@ -263,6 +266,34 @@ describe('ContactsService', () => {
 
       await expect(service.getWhatsAppLink(validRequesterId, validRequestId)).rejects.toThrow(ValidationError);
     });
+
+    it('throws NotFoundError if the post has status REMOVED (e.g. account deletion in progress)', async () => {
+      mockContactsRepo.findById = jest.fn().mockResolvedValue({
+        id: validRequestId,
+        status: 'APPROVED',
+        postId: validPostId,
+        requesterId: validRequesterId,
+      });
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({
+        ...mockPost,
+        status: 'REMOVED',
+      });
+
+      await expect(service.getWhatsAppLink(validRequesterId, validRequestId)).rejects.toThrow(NotFoundError);
+    });
+
+    it('throws NotFoundError if the post owner is banned or deleting', async () => {
+      mockContactsRepo.findById = jest.fn().mockResolvedValue({
+        id: validRequestId,
+        status: 'APPROVED',
+        postId: validPostId,
+        requesterId: validRequesterId,
+      });
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(mockPost);
+      mockUsersService.findActiveById = jest.fn().mockResolvedValue(undefined);
+
+      await expect(service.getWhatsAppLink(validRequesterId, validRequestId)).rejects.toThrow(NotFoundError);
+    });
   });
 
   describe('getProductSellerContact', () => {
@@ -276,6 +307,18 @@ describe('ContactsService', () => {
 
       const link = await service.getProductSellerContact(validRequesterId, validPostId);
       expect(link).toBe('https://wa.me/201012345678');
+    });
+
+    it('throws NotFoundError if seller is banned or deleting', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({
+        id: validPostId,
+        creatorId: validOwnerId,
+        postType: 'PRODUCT',
+        status: 'ACTIVE',
+      });
+      mockUsersService.findActiveById = jest.fn().mockResolvedValue(undefined);
+
+      await expect(service.getProductSellerContact(validRequesterId, validPostId)).rejects.toThrow(NotFoundError);
     });
 
     it('throws ForbiddenError when requesting contact on own product listing', async () => {

@@ -48,6 +48,8 @@ import { UsersResolver } from './users.resolver';
 import { UploadService } from '../upload/upload.service';
 import { CitiesService } from '../cities/cities.service';
 import { PostsRepository } from '../posts/posts.repository';
+import { ContactsRepository } from '../contacts/contacts.repository';
+import { NotificationsService } from '../notifications/notifications.service';
 import { ContactsResolver } from '../contacts/contacts.resolver';
 import { AdoptionsResolver } from '../adoptions/adoptions.resolver';
 import { ContactsService } from '../contacts/contacts.service';
@@ -1411,7 +1413,7 @@ describe('Account Deletion Feature Integration', () => {
             description: 'This post should not be created',
             status: 'ACTIVE',
             cityId,
-            urgency: 'HIGH',
+            urgency: 'URGENT',
           },
           {
             rescueAnimalType: 'DOG',
@@ -1609,6 +1611,185 @@ describe('Account Deletion Feature Integration', () => {
       expect((verifiedRecord?.mediaCleanupScope as { mediaKeys: string[] })?.mediaKeys).toEqual([
         `posts/${userPost.id}/photo.jpg`,
       ]);
+    });
+
+    it('enforces one job per identity and reuses it atomically across concurrent requests', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-concurrent-atomic-1',
+          email: 'concurrent-atomic@example.com',
+          fullName: 'Concurrent Atomic User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const currentEpochSeconds = Math.floor(Date.now() / 1000) - 20;
+
+      // Run two concurrent deletion requests for the same identity
+      const [res1, res2] = await Promise.all([
+        accountDeletionService.initiateDeletion(user, currentEpochSeconds),
+        accountDeletionService.initiateDeletion(user, currentEpochSeconds),
+      ]);
+
+      // Both requests must yield the exact same deletionId
+      expect(res1.deletionId).toBeDefined();
+      expect(res2.deletionId).toBeDefined();
+      expect(res1.deletionId).toBe(res2.deletionId);
+
+      // Exactly one deletion row must exist in PostgreSQL
+      const deletionRows = await dbHelper.db
+        .select()
+        .from(accountDeletions)
+        .where(eq(accountDeletions.firebaseUserId, user.firebaseUserId));
+
+      expect(deletionRows).toHaveLength(1);
+      expect(deletionRows[0].id).toBe(res1.deletionId);
+    });
+
+    it('binds persisted upload grace deadline and presigned URL signature to the same timestamp', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-grace-window-1',
+          email: 'grace-window@example.com',
+          fullName: 'Grace Window User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const uploadServiceWithDb = new UploadService(
+        mockConfig as unknown as ConfigService,
+        mockCacheManager,
+        dbHelper.db,
+      );
+
+      const result = await uploadServiceWithDb.generatePresignedUrl(user.id, 'image/webp', 2048);
+
+      const [updatedUser] = await dbHelper.db
+        .select({ uploadGraceUntil: users.uploadGraceUntil })
+        .from(users)
+        .where(eq(users.id, user.id));
+
+      expect(updatedUser.uploadGraceUntil).toBeDefined();
+      expect(result.expiresAt).toEqual(updatedUser.uploadGraceUntil);
+
+      const remainingMs = updatedUser.uploadGraceUntil!.getTime() - Date.now();
+      expect(remainingMs).toBeGreaterThan(590_000);
+      expect(remainingMs).toBeLessThanOrEqual(600_000);
+    });
+
+    it('serializes media finalization with account deletion and rejects after deletion acceptance', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-finalize-serialized-1',
+          email: 'finalize-serialized@example.com',
+          fullName: 'Finalize Serialized User',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const uploadServiceWithDb = new UploadService(
+        mockConfig as unknown as ConfigService,
+        mockCacheManager,
+        dbHelper.db,
+      );
+
+      const currentEpochSeconds = Math.floor(Date.now() / 1000) - 20;
+      await accountDeletionService.initiateDeletion(user, currentEpochSeconds);
+
+      // Attempt to finalize media for the deleted user
+      const mockS3Send = jest.fn().mockResolvedValue({});
+      (uploadServiceWithDb as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockS3Send;
+
+      await expect(uploadServiceWithDb.finalizeMedia('staged-media-uuid', user.id, 'post-id-1')).rejects.toThrow(
+        'ACCOUNT_DELETED',
+      );
+
+      // Permanent media copy command must never be dispatched
+      const sendCalls = mockS3Send.mock.calls as Array<[{ input?: { CopySource?: string; Key?: string } }]>;
+      const copyCall = sendCalls.find((call) => call[0]?.input?.CopySource !== undefined);
+      expect(copyCall).toBeUndefined();
+    });
+
+    it('blocks approved-contact lookup immediately from exposing a deleting owner phone even if cleanup failed', async () => {
+      const cityId = await seedCity();
+      const [owner] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-approved-owner-1',
+          email: 'approved-owner@example.com',
+          fullName: 'Approved Owner',
+          phoneNumber: 'encrypted-phone-val',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const [requester] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-approved-requester-1',
+          email: 'approved-requester@example.com',
+          fullName: 'Approved Requester',
+          phoneNumber: 'encrypted-phone-req',
+          homeCityId: cityId,
+        })
+        .returning();
+
+      const [samplePost] = await dbHelper.db
+        .insert(posts)
+        .values({
+          creatorId: owner.id,
+          postType: 'RESCUE',
+          title: 'Rescue Post For Contact',
+          description: 'Help needed',
+          status: 'ACTIVE',
+          cityId,
+          urgency: 'URGENT',
+          coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+        })
+        .returning();
+
+      const [contactRequestRecord] = await dbHelper.db
+        .insert(contactRequests)
+        .values({
+          postId: samplePost.id,
+          requesterId: requester.id,
+          message: 'I can foster this dog',
+          status: 'APPROVED',
+        })
+        .returning();
+
+      // Owner initiates deletion, but DB cleanup fails/defers so records remain in DB
+      jest
+        .spyOn(accountDeletionService as unknown as { cleanupDatabaseData: () => Promise<void> }, 'cleanupDatabaseData')
+        .mockRejectedValueOnce(new Error('Transient DB glitch'));
+
+      const currentEpochSeconds = Math.floor(Date.now() / 1000) - 20;
+      await accountDeletionService.initiateDeletion(owner, currentEpochSeconds);
+
+      // Verify the post is in REMOVED status and owner is banned
+      const [removedPost] = await dbHelper.db.select().from(posts).where(eq(posts.id, samplePost.id));
+      expect(removedPost?.status).toBe('REMOVED');
+
+      const [bannedOwner] = await dbHelper.db.select().from(users).where(eq(users.id, owner.id));
+      expect(bannedOwner?.isBanned).toBe(true);
+
+      // Calling getWhatsAppLink must throw NotFoundError and NEVER return the phone link
+      const contactsService = new ContactsService(
+        new ContactsRepository(dbHelper.db as unknown as NodePgDatabase),
+        new PostsRepository(dbHelper.db),
+        usersService,
+        { fireNotification: jest.fn() } as unknown as NotificationsService,
+      );
+
+      await expect(contactsService.getWhatsAppLink(requester.id, contactRequestRecord.id)).rejects.toThrow(
+        NotFoundError,
+      );
     });
   });
 });

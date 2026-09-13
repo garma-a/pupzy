@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, text, integer, timestamp, jsonb, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, integer, timestamp, jsonb, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { accountDeletionStatusEnum, accountDeletionStepEnum } from './enums';
 
 /**
@@ -85,7 +85,7 @@ export const accountDeletions = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    firebaseUserIdx: index('idx_account_deletions_firebase_user').on(table.firebaseUserId),
+    firebaseUserIdx: uniqueIndex('idx_account_deletions_firebase_user').on(table.firebaseUserId),
     userIdx: index('idx_account_deletions_user_id').on(table.userId),
     statusRetryIdx: index('idx_account_deletions_status_retry').on(table.status, table.nextRetryAt),
     purgeIdx: index('idx_account_deletions_purge').on(table.purgeAt),

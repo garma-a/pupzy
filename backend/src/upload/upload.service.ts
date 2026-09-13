@@ -2,7 +2,7 @@ import { Injectable, Inject, Optional, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { ConfigService } from '@nestjs/config';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   S3Client,
@@ -111,7 +111,9 @@ export class UploadService {
     const ext = UploadService.mimeToExtension(contentType);
     const stagingKey = `staging/${userId}/${mediaId}${ext}`;
 
-    const graceUntil = new Date(Date.now() + 600_000);
+    const expiresInSeconds = 600;
+    let signingDate = new Date();
+    let graceUntil = new Date(signingDate.getTime() + expiresInSeconds * 1000);
 
     // 0. Serialize with account deletion acceptance: lock the user row FOR UPDATE.
     // If the account is banned, deleted, or pending deletion, refuse upload URL issuance.
@@ -144,6 +146,10 @@ export class UploadService {
           throw new ForbiddenError('ACCOUNT_DELETED');
         }
 
+        // Bind the persisted deadline and signature to the exact same timestamp AFTER acquiring lock
+        signingDate = new Date();
+        graceUntil = new Date(signingDate.getTime() + expiresInSeconds * 1000);
+
         await tx.update(users).set({ uploadGraceUntil: graceUntil }).where(eq(users.id, userId));
       });
     }
@@ -155,15 +161,19 @@ export class UploadService {
       ContentLength: fileSizeBytes,
     });
 
-    /** 10-minute expiry — long enough for mobile uploads on slow connections. */
-    const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 600 });
+    /** 10-minute expiry — bound to the exact same signing timestamp as persisted in the database. */
+    const uploadUrl = await getSignedUrl(this.s3Client, command, {
+      expiresIn: expiresInSeconds,
+      signingDate,
+    });
 
     // Bind the short-lived staging capability to both its owner and MIME type.
     // Post creation verifies these values before it creates a media row.
     // Also record the grace expiry so account deletion accounts for in-flight signed URLs.
+    // Staging attachability is limited to 10 minutes (600_000 ms) to match the grace window.
     await Promise.all([
-      this.cacheManager.set(`media_ct:${mediaId}`, contentType, 900_000),
-      this.cacheManager.set(`media_owner:${mediaId}`, userId, 900_000),
+      this.cacheManager.set(`media_ct:${mediaId}`, contentType, 600_000),
+      this.cacheManager.set(`media_owner:${mediaId}`, userId, 600_000),
       this.cacheManager.set(`user_last_upload_grace:${userId}`, graceUntil.getTime(), 600_000),
     ]);
 
@@ -239,59 +249,77 @@ export class UploadService {
     const stagingKey = `staging/${userId}/${mediaId}${ext}`;
     const finalKey = `posts/${postId}/${mediaId}${ext}`;
 
-    // Step 0: Abort if user is banned or account deletion is accepted, avoiding recreating permanent media
-    if (this.db) {
-      const [userRow] = await this.db.select({ isBanned: users.isBanned }).from(users).where(eq(users.id, userId));
-
-      if (!userRow || userRow.isBanned) {
-        await this.s3Client
-          .send(
-            new DeleteObjectCommand({
-              Bucket: this.bucketName,
-              Key: stagingKey,
-            }),
-          )
-          .catch(() => {});
-        throw new ForbiddenError('ACCOUNT_DELETED');
+    const executeFinalization = async () => {
+      // Step 1: Verify the staged upload actually exists
+      try {
+        await this.s3Client.send(
+          new HeadObjectCommand({
+            Bucket: this.bucketName,
+            Key: stagingKey,
+          }),
+        );
+      } catch {
+        throw new NotFoundError(`Staged media "${mediaId}" — upload may have expired or was never completed`);
       }
-    }
 
-    // Step 1: Verify the staged upload actually exists
-    try {
+      // Step 2: Copy to permanent location
       await this.s3Client.send(
-        new HeadObjectCommand({
+        new CopyObjectCommand({
+          Bucket: this.bucketName,
+          CopySource: `${this.bucketName}/${stagingKey}`,
+          Key: finalKey,
+        }),
+      );
+
+      // Step 3: Remove the staging object to avoid orphaned duplicates
+      await this.s3Client.send(
+        new DeleteObjectCommand({
           Bucket: this.bucketName,
           Key: stagingKey,
         }),
       );
-    } catch {
-      throw new NotFoundError(`Staged media "${mediaId}" — upload may have expired or was never completed`);
+
+      // Step 4: Clean up cached content type
+      await this.cacheManager.del(`media_ct:${mediaId}`);
+
+      return {
+        publicUrl: `${this.publicUrl}/${finalKey}`,
+        cloudflareStorageKey: finalKey,
+      };
+    };
+
+    // Step 0: Abort if user is banned or account deletion is accepted, avoiding recreating permanent media.
+    // Serialize user media operations with deletion storage cleanup using advisory lock.
+    if (this.db) {
+      return await this.db.transaction(async (tx) => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${'user_media:' + userId}))`);
+
+        const [userRow] = await tx.select({ isBanned: users.isBanned }).from(users).where(eq(users.id, userId));
+
+        const [deletionRecord] = await tx
+          .select({ id: accountDeletions.id, status: accountDeletions.status })
+          .from(accountDeletions)
+          .where(eq(accountDeletions.userId, userId))
+          .orderBy(sql`${accountDeletions.createdAt} DESC`)
+          .limit(1);
+
+        if (!userRow || userRow.isBanned || (deletionRecord && isAccountDeletionBlockedStatus(deletionRecord.status))) {
+          await this.s3Client
+            .send(
+              new DeleteObjectCommand({
+                Bucket: this.bucketName,
+                Key: stagingKey,
+              }),
+            )
+            .catch(() => {});
+          throw new ForbiddenError('ACCOUNT_DELETED');
+        }
+
+        return await executeFinalization();
+      });
     }
 
-    // Step 2: Copy to permanent location
-    await this.s3Client.send(
-      new CopyObjectCommand({
-        Bucket: this.bucketName,
-        CopySource: `${this.bucketName}/${stagingKey}`,
-        Key: finalKey,
-      }),
-    );
-
-    // Step 3: Remove the staging object to avoid orphaned duplicates
-    await this.s3Client.send(
-      new DeleteObjectCommand({
-        Bucket: this.bucketName,
-        Key: stagingKey,
-      }),
-    );
-
-    // Step 4: Clean up cached content type
-    await this.cacheManager.del(`media_ct:${mediaId}`);
-
-    return {
-      publicUrl: `${this.publicUrl}/${finalKey}`,
-      cloudflareStorageKey: finalKey,
-    };
+    return await executeFinalization();
   }
 
   /**

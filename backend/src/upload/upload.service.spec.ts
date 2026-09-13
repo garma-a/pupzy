@@ -50,6 +50,56 @@ describe('UploadService', () => {
       expect(result.stagingKey).toContain('staging/user-1/');
       expect(mockCache.set).toHaveBeenCalled();
     });
+    it('binds persisted upload grace deadline and getSignedUrl signature to the exact same timestamp', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
+      const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+      let capturedGraceUntil: Date | undefined;
+      const mockDb = {
+        transaction: jest.fn().mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => {
+          const mockTx = {
+            select: jest.fn().mockReturnValue({
+              from: jest.fn().mockReturnValue({
+                where: jest.fn().mockReturnValue({
+                  for: jest.fn().mockResolvedValue([{ id: 'user-1', isBanned: false }]),
+                }),
+              }),
+            }),
+            update: jest.fn().mockReturnValue({
+              set: jest.fn().mockImplementation((val: { uploadGraceUntil: Date }) => {
+                capturedGraceUntil = val.uploadGraceUntil;
+                return {
+                  where: jest.fn().mockResolvedValue([{ id: 'user-1' }]),
+                };
+              }),
+            }),
+          };
+          return cb(mockTx);
+        }),
+      };
+
+      const serviceWithDb = new UploadService(
+        mockConfig as ConfigService,
+        mockCache as Cache,
+        mockDb as unknown as NodePgDatabase,
+      );
+
+      const result = await serviceWithDb.generatePresignedUrl('user-1', 'image/jpeg', 1024);
+
+      expect(capturedGraceUntil).toBeDefined();
+      expect(result.expiresAt).toEqual(capturedGraceUntil);
+
+      const calls = (getSignedUrl as jest.Mock).mock.calls as Array<
+        [unknown, unknown, { expiresIn: number; signingDate: Date }]
+      >;
+      const getSignedUrlCall = calls[calls.length - 1];
+      const signingOptions = getSignedUrlCall[2];
+      expect(signingOptions.expiresIn).toBe(600);
+      expect(signingOptions.signingDate).toBeDefined();
+      expect(signingOptions.signingDate.getTime() + 600_000).toBe(capturedGraceUntil!.getTime());
+
+      expect(mockCache.set).toHaveBeenCalledWith(`media_ct:${result.mediaId}`, 'image/jpeg', 600_000);
+      expect(mockCache.set).toHaveBeenCalledWith(`media_owner:${result.mediaId}`, 'user-1', 600_000);
+    });
   });
 
   describe('getExpectedMediaUrls', () => {
@@ -84,6 +134,50 @@ describe('UploadService', () => {
         .mockRejectedValue(new Error('NoSuchKey'));
 
       await expect(service.finalizeMedia('media-1', 'user-1', 'post-1')).rejects.toThrow(NotFoundError);
+    });
+
+    it('aborts finalization and cleans up staging when user is deleted or deletion is pending', async () => {
+      const mockSend = jest.fn().mockResolvedValue({});
+      let selectCount = 0;
+      const mockDb = {
+        transaction: jest.fn().mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => {
+          const mockTx = {
+            execute: jest.fn().mockResolvedValue({}),
+            select: jest.fn().mockImplementation(() => {
+              selectCount++;
+              if (selectCount === 1) {
+                return {
+                  from: jest.fn().mockReturnValue({
+                    where: jest.fn().mockResolvedValue([{ isBanned: true }]),
+                  }),
+                };
+              }
+              return {
+                from: jest.fn().mockReturnValue({
+                  where: jest.fn().mockReturnValue({
+                    orderBy: jest.fn().mockReturnValue({
+                      limit: jest.fn().mockResolvedValue([{ id: 'del-1', status: 'PENDING' }]),
+                    }),
+                  }),
+                }),
+              };
+            }),
+          };
+          return cb(mockTx);
+        }),
+      };
+
+      const serviceWithDb = new UploadService(
+        mockConfig as ConfigService,
+        mockCache as Cache,
+        mockDb as unknown as NodePgDatabase,
+      );
+      (serviceWithDb as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockSend;
+
+      await expect(serviceWithDb.finalizeMedia('media-1', 'user-1', 'post-1')).rejects.toThrow('ACCOUNT_DELETED');
+      const sendCalls = mockSend.mock.calls as Array<[{ input?: { Key?: string } }]>;
+      const lastCall = sendCalls[sendCalls.length - 1];
+      expect(lastCall?.[0]?.input?.Key).toBe('staging/user-1/media-1.jpg');
     });
   });
 

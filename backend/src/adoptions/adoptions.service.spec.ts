@@ -65,6 +65,9 @@ describe('AdoptionsService', () => {
 
     mockUsersService = {
       findById: jest.fn().mockResolvedValue({ id: validOwnerId, fullName: 'Owner User', phoneNumber: '+201012345678' }),
+      findActiveById: jest
+        .fn()
+        .mockResolvedValue({ id: validOwnerId, fullName: 'Owner User', phoneNumber: '+201012345678', isBanned: false }),
     };
 
     mockNotificationsService = {

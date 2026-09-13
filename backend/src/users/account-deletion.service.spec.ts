@@ -290,6 +290,56 @@ describe('AccountDeletionService', () => {
       expect(mockAccountDeletionRepo.create).not.toHaveBeenCalled();
     });
 
+    it('is idempotent inside transaction: reuses existing record atomically if concurrent request created it', async () => {
+      const recentAuthTime = Math.floor(Date.now() / 1000) - 10;
+      const existingRecord: AccountDeletion = {
+        id: 'del-concurrent-1',
+        userId: sampleUser.id,
+        firebaseUserId: sampleUser.firebaseUserId,
+        email: sampleUser.email,
+        status: 'PENDING',
+        step: 'ACCEPTED',
+        progressTokenHash: 'hash',
+        mediaCleanupScope: null,
+        storageCleanupAttempts: 0,
+        firebaseCleanupAttempts: 0,
+        lastError: null,
+        nextRetryAt: null,
+        stagedUploadGraceUntil: null,
+        acceptedAt: new Date(),
+        completedAt: null,
+        purgeAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      // Outside the transaction, repo finds nothing (race window)
+      mockAccountDeletionRepo.findByFirebaseUserId.mockResolvedValue(undefined);
+
+      // Inside transaction, select on accountDeletions finds existingRecord
+      let selectCalls = 0;
+      mockDb.select = jest.fn().mockImplementation(() => {
+        selectCalls++;
+        const p = Promise.resolve(selectCalls === 1 ? [{ id: sampleUser.id }] : [existingRecord]) as unknown as Record<
+          string,
+          unknown
+        >;
+        p.from = jest.fn().mockReturnValue(p);
+        p.where = jest.fn().mockReturnValue(p);
+        p.orderBy = jest.fn().mockReturnValue(p);
+        p.limit = jest.fn().mockReturnValue(p);
+        p.for = jest.fn().mockReturnValue(p);
+        return p;
+      });
+
+      const result = await service.initiateDeletion(sampleUser, recentAuthTime);
+
+      expect(result.deletionId).toBe('del-concurrent-1');
+      expect(result.status).toBe('PENDING');
+      expect(mockAccountDeletionRepo.create).not.toHaveBeenCalled();
+      expect(mockDeleteUser).not.toHaveBeenCalled();
+    });
+
     it('handles Firebase user-not-found gracefully during cleanup', async () => {
       const recentAuthTime = Math.floor(Date.now() / 1000) - 10;
       mockDeleteUser.mockRejectedValue({ code: 'auth/user-not-found' });

@@ -27,6 +27,15 @@ export class UsersRepository {
     return user;
   }
 
+  async findActiveById(id: string): Promise<User | undefined> {
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(and(eq(users.id, id), eq(users.isBanned, false)))
+      .limit(1);
+    return user;
+  }
+
   /**
    * Batch-loads users by their IDs for the `userById` DataLoader.
    * Returns users in the exact order of the requested IDs, padded

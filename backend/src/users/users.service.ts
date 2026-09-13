@@ -102,6 +102,11 @@ export class UsersService {
     return user ? this.decryptUserPhone(user) : undefined;
   }
 
+  async findActiveById(id: string): Promise<User | undefined> {
+    const user = await this.usersRepository.findActiveById(id);
+    return user ? this.decryptUserPhone(user) : undefined;
+  }
+
   /**
    * Called once after the user's first login to set required profile fields.
    *

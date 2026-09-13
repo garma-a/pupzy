@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import type { App } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import { eq, and, inArray, sql } from 'drizzle-orm';
+import { eq, and, or, inArray, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import { FIREBASE_ADMIN_TOKEN } from '../auth/firebase.module';
@@ -123,12 +123,31 @@ export class AccountDeletionService {
     const lastUploadGrace = await this.uploadService.getLastUploadGraceUntil(user.id);
 
     // 5. Durably persist acceptance in PostgreSQL and immediately hide content across the platform
-    const deletionRecord = await this.db.transaction(async (tx) => {
+    const { record: deletionRecord, isExisting } = await this.db.transaction(async (tx) => {
+      // Serialize concurrent deletion attempts for the same identity using an advisory transaction lock
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${'account_deletion:' + user.firebaseUserId}))`);
+
       // Lock user row FOR UPDATE to serialize with any concurrent upload issuance or post creation
       const [lockedUser] = await tx.select().from(users).where(eq(users.id, user.id)).for('update');
 
-      const dbGrace = lockedUser?.uploadGraceUntil ?? null;
-      let effectiveGraceUntil = dbGrace && dbGrace.getTime() > Date.now() ? dbGrace : null;
+      // Re-check existence inside the serialized transaction to guarantee one deletion job per identity
+      const [existingInTx] = await tx
+        .select()
+        .from(accountDeletions)
+        .where(or(eq(accountDeletions.firebaseUserId, user.firebaseUserId), eq(accountDeletions.userId, user.id)))
+        .orderBy(sql`${accountDeletions.createdAt} DESC`)
+        .limit(1)
+        .for('update');
+
+      if (existingInTx) {
+        return { record: existingInTx, isExisting: true };
+      }
+
+      const persistedUploadGraceUntil = lockedUser?.uploadGraceUntil ?? null;
+      let effectiveGraceUntil =
+        persistedUploadGraceUntil && persistedUploadGraceUntil.getTime() > Date.now()
+          ? persistedUploadGraceUntil
+          : null;
       if (lastUploadGrace && lastUploadGrace.getTime() > Date.now()) {
         if (!effectiveGraceUntil || lastUploadGrace.getTime() > effectiveGraceUntil.getTime()) {
           effectiveGraceUntil = lastUploadGrace;
@@ -157,8 +176,23 @@ export class AccountDeletionService {
         tx,
       );
 
-      return record;
+      return { record, isExisting: false };
     });
+
+    if (isExisting) {
+      this.logger.log(`Duplicate deletion request for Firebase UID ${user.firebaseUserId}, returning existing status.`);
+      return {
+        status: deletionRecord.status,
+        deletionId: deletionRecord.id,
+        progressToken: customProgressToken ?? null,
+        message:
+          deletionRecord.status === 'COMPLETED'
+            ? 'Your account and all associated data have been permanently deleted.'
+            : 'Account deletion has been accepted and cleanup is in progress.',
+        acceptedAt: deletionRecord.acceptedAt,
+        completedAt: deletionRecord.completedAt,
+      };
+    }
 
     // 6. Invalidate warm caches immediately
     await this.invalidateUserCaches(user.id, user.firebaseUserId);
@@ -511,26 +545,31 @@ export class AccountDeletionService {
 
   /**
    * Deletes permanent R2 media objects and staged upload prefixes.
+   * Serialized with concurrent post finalization via user_media advisory lock.
    */
   private async cleanupStorageData(deletionRecord: AccountDeletion): Promise<void> {
-    const scope = deletionRecord.mediaCleanupScope as { mediaKeys?: string[]; stagedPrefix?: string } | null;
+    await this.db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${'user_media:' + deletionRecord.userId}))`);
 
-    if (scope?.mediaKeys && scope.mediaKeys.length > 0) {
+      const scope = deletionRecord.mediaCleanupScope as { mediaKeys?: string[]; stagedPrefix?: string } | null;
+
+      if (scope?.mediaKeys && scope.mediaKeys.length > 0) {
+        try {
+          await this.uploadService.deleteObjects(scope.mediaKeys);
+        } catch (err) {
+          this.logger.warn(`Storage deleteObjects failed: ${err instanceof Error ? err.message : String(err)}`);
+          throw err;
+        }
+      }
+
+      const stagedPrefix = scope?.stagedPrefix ?? `staging/${deletionRecord.userId}/`;
       try {
-        await this.uploadService.deleteObjects(scope.mediaKeys);
+        await this.uploadService.deletePrefix(stagedPrefix);
       } catch (err) {
-        this.logger.warn(`Storage deleteObjects failed: ${err instanceof Error ? err.message : String(err)}`);
+        this.logger.warn(`Storage deletePrefix failed: ${err instanceof Error ? err.message : String(err)}`);
         throw err;
       }
-    }
-
-    const stagedPrefix = scope?.stagedPrefix ?? `staging/${deletionRecord.userId}/`;
-    try {
-      await this.uploadService.deletePrefix(stagedPrefix);
-    } catch (err) {
-      this.logger.warn(`Storage deletePrefix failed: ${err instanceof Error ? err.message : String(err)}`);
-      throw err;
-    }
+    });
   }
 
   /**
