@@ -187,7 +187,7 @@ class _HelpScreenState extends State<HelpScreen> with RouteAware {
     final (count, upvoted, error) = await graphql.toggleUpvote(post.id);
     if (!mounted) return false;
     if (error != null || count == null || upvoted == null) {
-      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update boost. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.'));
+      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update raise. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.'));
       return false;
     }
     setState(() {
@@ -540,8 +540,8 @@ class _HelpFeedCard extends StatelessWidget {
                   count: post.upvoteCount,
                   boosted: post.isUpvotedByMe,
                   onToggle: onBoost,
-                  boostedLabel: t(context, 'Boosted', 'مُعزَّز'),
-                  unboostedLabel: t(context, 'Boost', 'تعزيز'),
+                  boostedLabel: t(context, 'Raised', 'مُعزَّز'),
+                  unboostedLabel: t(context, 'Raise', 'تعزيز'),
                   activeColor: AppColors.primary,
                   inactiveColor: AppColors.textMuted,
                 ),

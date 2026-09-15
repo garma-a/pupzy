@@ -18,7 +18,10 @@ class ContactRequestUser {
 class ContactRequest {
   final String id;
   final String postId;
-  final ContactRequestUser requester;
+  // Null when the requester has since deleted their account — the backend
+  // returns the request with an anonymized/absent requester rather than
+  // leaking a stale profile or erroring the whole list.
+  final ContactRequestUser? requester;
   final String message;
   final String status; // PENDING, APPROVED, REJECTED
   final String? whatsappLink;
@@ -28,7 +31,7 @@ class ContactRequest {
   const ContactRequest({
     required this.id,
     required this.postId,
-    required this.requester,
+    this.requester,
     required this.message,
     required this.status,
     this.whatsappLink,
@@ -39,7 +42,7 @@ class ContactRequest {
   factory ContactRequest.fromJson(Map<String, dynamic> json) => ContactRequest(
         id: json['id'] as String,
         postId: json['postId'] as String,
-        requester: ContactRequestUser.fromJson(json['requester'] as Map<String, dynamic>),
+        requester: json['requester'] != null ? ContactRequestUser.fromJson(json['requester'] as Map<String, dynamic>) : null,
         message: json['message'] as String,
         status: json['status'] as String,
         whatsappLink: json['whatsappLink'] as String?,

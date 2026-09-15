@@ -100,7 +100,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
     final (count, upvoted, error) = await graphql.toggleUpvote(_post!.id);
     if (!mounted) return false;
     if (error != null || count == null || upvoted == null) {
-      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update boost. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.'));
+      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update raise. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.'));
       return false;
     }
     setState(() => _post = _post!.copyWith(upvoteCount: count, isUpvotedByMe: upvoted));
@@ -307,7 +307,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                         children: [
                           if (_isOwner)
                             Tooltip(
-                              message: t(context, "You can't boost your own post", 'لا يمكنك تعزيز منشورك الخاص'),
+                              message: t(context, "You can't raise your own post", 'لا يمكنك تعزيز منشورك الخاص'),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                                 decoration: BoxDecoration(
@@ -321,7 +321,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                                     const Icon(Icons.arrow_upward, size: 15, color: AppColors.textMuted),
                                     const SizedBox(width: 5),
                                     Text(
-                                      '${post.upvoteCount}  ${t(context, 'Boost', 'تعزيز')}',
+                                      '${post.upvoteCount}  ${t(context, 'Raise', 'تعزيز')}',
                                       style: const TextStyle(fontSize: 13, color: AppColors.textMuted, fontWeight: FontWeight.w500),
                                     ),
                                   ],
@@ -333,8 +333,8 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                               count: post.upvoteCount,
                               boosted: post.isUpvotedByMe,
                               onToggle: _toggleBoost,
-                              boostedLabel: t(context, 'Boosted', 'مُعزَّز'),
-                              unboostedLabel: t(context, 'Boost', 'تعزيز'),
+                              boostedLabel: t(context, 'Raised', 'مُعزَّز'),
+                              unboostedLabel: t(context, 'Raise', 'تعزيز'),
                               activeColor: AppColors.primary,
                               inactiveColor: AppColors.textMuted,
                             ),

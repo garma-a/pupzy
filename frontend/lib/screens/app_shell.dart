@@ -62,7 +62,12 @@ class _AppShellState extends State<AppShell> {
         body: IndexedStack(
           index: _index,
           children: [
-            HomeScreen(onNavigateToMarket: () => _goToIndex(4), active: _index == 0),
+            HomeScreen(
+              onNavigateToHelp: () => _goToIndex(1),
+              onNavigateToAdopt: () => _goToIndex(3),
+              onNavigateToMarket: () => _goToIndex(4),
+              active: _index == 0,
+            ),
             _visitedIndices.contains(1) ? HelpScreen(active: _index == 1) : const SizedBox.shrink(),
             const SizedBox.shrink(),
             _visitedIndices.contains(3) ? AdoptScreen(active: _index == 3) : const SizedBox.shrink(),

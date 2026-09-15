@@ -22,6 +22,7 @@ import '../widgets/blurred_thumbnail.dart';
 import '../widgets/distance_filter.dart';
 import '../widgets/image_with_fallback.dart';
 import '../widgets/saved_post_card.dart';
+import '../widgets/section_header.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/top_bar.dart';
 import 'adoption_detail_screen.dart';
@@ -32,12 +33,20 @@ import 'vets_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onNavigateToMarket;
+  final VoidCallback? onNavigateToHelp;
+  final VoidCallback? onNavigateToAdopt;
   // Whether this tab is the one currently shown by the bottom nav — Home
   // stays mounted in the background (IndexedStack) even when another tab is
   // active, so this is how it knows to refresh FAVORITES when the user
   // switches back after saving a post from a different tab or detail screen.
   final bool active;
-  const HomeScreen({super.key, this.onNavigateToMarket, this.active = true});
+  const HomeScreen({
+    super.key,
+    this.onNavigateToMarket,
+    this.onNavigateToHelp,
+    this.onNavigateToAdopt,
+    this.active = true,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -253,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final (count, upvoted, error) = await graphql.toggleUpvote(post.id);
     if (!mounted) return false;
     if (error != null || count == null || upvoted == null) {
-      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update boost. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.'));
+      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update raise. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.'));
       return false;
     }
     setState(() {
@@ -378,17 +387,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                               const SizedBox(height: AppSpacing.md),
                               // FAVORITES
                               if (_savedLoading || _savedPosts.isNotEmpty) ...[
-                                _SectionHeader(
-                                  leading: const Icon(Icons.favorite, size: 16, color: AppColors.critical),
-                                  title: t(context, 'FAVORITES', 'المفضلة'),
-                                  trailing: GestureDetector(
-                                    onTap: () => Navigator.of(context).push(
-                                      MaterialPageRoute(builder: (_) => const SavedPostsScreen()),
-                                    ),
-                                    child: Text(t(context, 'See more →', 'المزيد ←'), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                                SectionHeader(
+                                  icon: Icons.favorite_rounded,
+                                  accentColor: AppColors.critical,
+                                  title: t(context, 'Favorites', 'المفضلة'),
+                                  subtitle: t(context, 'Posts you saved', 'المنشورات التي حفظتها'),
+                                  onSeeAll: () => Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (_) => const SavedPostsScreen()),
                                   ),
                                 ),
-                                const SizedBox(height: AppSpacing.sm),
+                                const SizedBox(height: AppSpacing.md),
                                 SizedBox(
                                   height: 190,
                                   child: _savedLoading
@@ -414,18 +422,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                               ],
 
                               // HELP A PET
-                              const SizedBox(height: AppSpacing.lg),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                                child: Row(
-                                  children: [
-                                    Text(t(context, 'Help a Pet', 'ساعد حيوانًا'), style: Theme.of(context).textTheme.headlineMedium),
-                                    const SizedBox(width: AppSpacing.md),
-                                    Container(width: 4, height: 32, color: AppColors.critical),
-                                  ],
-                                ),
+                              const SizedBox(height: AppSpacing.xxl),
+                              SectionHeader(
+                                icon: Icons.volunteer_activism_outlined,
+                                accentColor: AppColors.critical,
+                                title: t(context, 'Help a Pet', 'ساعد حيوانًا'),
+                                subtitle: t(context, 'Urgent pets near you', 'حيوانات تحتاج المساعدة بالقرب منك'),
+                                onSeeAll: widget.onNavigateToHelp,
                               ),
-                              const SizedBox(height: AppSpacing.sm),
+                              const SizedBox(height: AppSpacing.md),
                               if (urgent.isNotEmpty)
                                 _HomeUrgentBanner(
                                   post: urgent.first,
@@ -459,18 +464,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                                 ),
 
                               // FIND A PET (Lost & Found)
-                              const SizedBox(height: AppSpacing.lg),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                                child: Row(
-                                  children: [
-                                    Text(t(context, 'Find a Pet', 'ابحث عن حيوان'), style: Theme.of(context).textTheme.headlineMedium),
-                                    const SizedBox(width: AppSpacing.md),
-                                    Container(width: 4, height: 32, color: AppColors.sectionLine),
-                                  ],
-                                ),
+                              const SizedBox(height: AppSpacing.xxl),
+                              SectionHeader(
+                                icon: Icons.travel_explore_outlined,
+                                accentColor: AppColors.sectionLine,
+                                title: t(context, 'Find a Pet', 'ابحث عن حيوان'),
+                                subtitle: t(context, 'Lost and found nearby', 'حيوانات مفقودة وموجودة بالقرب منك'),
+                                onSeeAll: widget.onNavigateToHelp,
                               ),
-                              const SizedBox(height: AppSpacing.sm),
+                              const SizedBox(height: AppSpacing.md),
                               if (findPosts.isEmpty)
                                 _EmptySection(
                                   icon: Icons.search_outlined,
@@ -496,18 +498,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                                 ),
 
                               // ADOPT A PET
-                              const SizedBox(height: AppSpacing.lg),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                                child: Row(
-                                  children: [
-                                    Text(t(context, 'Adopt a Pet', 'تبنَّ حيوانًا'), style: Theme.of(context).textTheme.headlineMedium),
-                                    const SizedBox(width: AppSpacing.md),
-                                    Container(width: 4, height: 32, color: AppColors.primary),
-                                  ],
-                                ),
+                              const SizedBox(height: AppSpacing.xxl),
+                              SectionHeader(
+                                icon: Icons.pets_outlined,
+                                accentColor: AppColors.primary,
+                                title: t(context, 'Adopt a Pet', 'تبنَّ حيوانًا'),
+                                subtitle: t(context, 'Pets looking for a home', 'حيوانات تبحث عن منزل'),
+                                onSeeAll: widget.onNavigateToAdopt,
                               ),
-                              const SizedBox(height: AppSpacing.sm),
+                              const SizedBox(height: AppSpacing.md),
                               if (adoption.isEmpty)
                                 _EmptySection(
                                   icon: Icons.pets_outlined,
@@ -523,18 +522,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                                 ),
 
                               // MARKETPLACE
-                              const SizedBox(height: AppSpacing.lg),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                                child: Row(
-                                  children: [
-                                    Text(t(context, 'Marketplace', 'السوق'), style: Theme.of(context).textTheme.headlineMedium),
-                                    const SizedBox(width: AppSpacing.md),
-                                    Container(width: 4, height: 32, color: AppColors.sectionLineGreen),
-                                  ],
-                                ),
+                              const SizedBox(height: AppSpacing.xxl),
+                              SectionHeader(
+                                icon: Icons.storefront_outlined,
+                                accentColor: AppColors.sectionLineGreen,
+                                title: t(context, 'Marketplace', 'السوق'),
+                                subtitle: t(context, 'Essentials for your pet', 'كل ما يحتاجه حيوانك الأليف'),
+                                onSeeAll: widget.onNavigateToMarket,
                               ),
-                              const SizedBox(height: AppSpacing.sm),
+                              const SizedBox(height: AppSpacing.md),
                               if (products.isEmpty)
                                 _EmptySection(
                                   icon: Icons.storefront_outlined,
@@ -1067,28 +1063,6 @@ class _EmptySection extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final Widget? leading;
-  final String title;
-  final Widget? trailing;
-  const _SectionHeader({this.leading, required this.title, this.trailing});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      child: Row(
-        children: [
-          if (leading != null) ...[leading!, const SizedBox(width: 6)],
-          Text(title, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1)),
-          const Spacer(),
-          ?trailing,
-        ],
-      ),
-    );
-  }
-}
-
 /// A single critical/urgent RESCUE or LOST post surfaced above the fold.
 class _HomeUrgentBanner extends StatelessWidget {
   final FeedPost post;
@@ -1265,8 +1239,8 @@ class _HomeRescueCard extends StatelessWidget {
                   count: post.upvoteCount,
                   boosted: post.isUpvotedByMe,
                   onToggle: onBoost,
-                  boostedLabel: t(context, 'Boosted', 'مُعزَّز'),
-                  unboostedLabel: t(context, 'Boost', 'تعزيز'),
+                  boostedLabel: t(context, 'Raised', 'مُعزَّز'),
+                  unboostedLabel: t(context, 'Raise', 'تعزيز'),
                   activeColor: AppColors.primary,
                   inactiveColor: AppColors.textMuted,
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),

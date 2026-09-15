@@ -65,7 +65,10 @@ class _ContactRequestsOwnerSectionState extends State<ContactRequestsOwnerSectio
         ),
         const SizedBox(height: AppSpacing.sm),
         ..._requests.map((r) {
-          final name = (lang == 'ar' ? r.requester.fullNameArabic : r.requester.fullName) ?? r.requester.fullName ?? t(context, 'Someone', 'شخص ما');
+          final requester = r.requester;
+          final name = requester == null
+              ? t(context, 'Deleted user', 'مستخدم محذوف')
+              : (lang == 'ar' ? requester.fullNameArabic : requester.fullName) ?? requester.fullName ?? t(context, 'Someone', 'شخص ما');
           return Container(
             margin: const EdgeInsets.only(bottom: AppSpacing.sm),
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -81,8 +84,8 @@ class _ContactRequestsOwnerSectionState extends State<ContactRequestsOwnerSectio
                   children: [
                     CircleAvatar(
                       radius: 18,
-                      backgroundImage: r.requester.profilePictureUrl != null ? NetworkImage(r.requester.profilePictureUrl!) : null,
-                      child: r.requester.profilePictureUrl == null ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?') : null,
+                      backgroundImage: requester?.profilePictureUrl != null ? NetworkImage(requester!.profilePictureUrl!) : null,
+                      child: requester?.profilePictureUrl == null ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?') : null,
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(child: Text(name, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700))),

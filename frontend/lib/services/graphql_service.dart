@@ -1,20 +1,36 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../config/api_config.dart';
+import '../models/account_deletion.dart';
 import '../models/adoption_application.dart';
 import '../models/app_notification.dart';
-import '../models/comment.dart';
 import '../models/contact_request.dart';
 import '../models/feed_post.dart';
 import '../models/mating_detail.dart';
 import '../models/post_detail.dart';
 import '../models/vet_clinic.dart';
+import '../screens/account_deletion_in_progress_screen.dart';
+import '../screens/account_suspended_screen.dart';
+import '../utils/navigation.dart';
 import 'auth_service.dart';
 
 class GraphQLService {
+  // The GraphQL package defaults to five seconds, which is too short for the
+  // first request after an emulator/backend restart. In that case Firebase
+  // sign-in succeeds, but loading the profile or city list times out before
+  // the local connection is ready.
+  static const Duration _requestTimeout = Duration(seconds: 30);
+
   late final ValueNotifier<GraphQLClient> client;
   final AuthService _authService;
+
+  /// Guards against acting on a ban/deletion lockout more than once —
+  /// once a request has tripped it, every other in-flight/queued request
+  /// will hit the same rejection until sign-out completes; only the first
+  /// should force navigation and sign-out.
+  bool _lockoutHandled = false;
 
   GraphQLService(this._authService) {
     final httpLink = HttpLink(
@@ -32,6 +48,7 @@ class GraphQLService {
       GraphQLClient(
         link: link,
         cache: GraphQLCache(store: InMemoryStore()),
+        queryRequestTimeout: _requestTimeout,
       ),
     );
   }
@@ -199,7 +216,6 @@ class GraphQLService {
         upvoteCount
         saveCount
         viewCount
-        commentCount
         isUpvotedByMe
         isSavedByMe
         createdAt
@@ -270,7 +286,6 @@ class GraphQLService {
         upvoteCount
         saveCount
         viewCount
-        commentCount
         isUpvotedByMe
         isSavedByMe
         createdAt
@@ -358,7 +373,6 @@ class GraphQLService {
         upvoteCount
         saveCount
         viewCount
-        commentCount
         isUpvotedByMe
         isSavedByMe
         createdAt
@@ -656,7 +670,6 @@ class GraphQLService {
     title
     body
     relatedPostId
-    relatedCommentId
     isRead
     createdAt
   ''';
@@ -704,6 +717,7 @@ class GraphQLService {
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      if (result.exception != null) _checkForAccountLockout(result.exception!);
       return null;
     }
     return result.data?['me'];
@@ -724,6 +738,7 @@ class GraphQLService {
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      if (result.exception != null) _checkForAccountLockout(result.exception!);
       return [];
     }
     final list = result.data?['cities'] as List<dynamic>?;
@@ -759,10 +774,37 @@ class GraphQLService {
   /// generic connectivity message for instead.
   String? _serverErrorMessage(OperationException? exception) {
     if (exception == null) return null;
+    _checkForAccountLockout(exception);
     if (exception.graphqlErrors.isNotEmpty) {
       return exception.graphqlErrors.first.message;
     }
     return null;
+  }
+
+  /// Detects the two lockout rejections `FirebaseAuthGuard` throws on
+  /// every authenticated request — a ban ("Your account has been
+  /// suspended.") or an accepted account-deletion ("ACCOUNT_DELETED") —
+  /// and, the first time either is seen this session, force-signs-out and
+  /// replaces the whole navigation stack with a dedicated explanation
+  /// screen, rather than letting it surface as a generic, confusing error
+  /// toast wherever the user happened to be. Ban messages are matched by
+  /// text (the error code, FORBIDDEN, is shared with unrelated permission
+  /// checks); ACCOUNT_DELETED is matched by its distinct code.
+  void _checkForAccountLockout(OperationException exception) {
+    if (_lockoutHandled) return;
+    final isBanned = exception.graphqlErrors.any(
+      (e) => e.message.toLowerCase().contains('account has been suspended'),
+    );
+    final isDeleted = exception.graphqlErrors.any((e) => e.message.contains('ACCOUNT_DELETED'));
+    if (!isBanned && !isDeleted) return;
+    _lockoutHandled = true;
+    _authService.signOut();
+    rootNavigatorKey.currentState?.pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => isDeleted ? const AccountDeletionInProgressScreen() : const AccountSuspendedScreen(),
+      ),
+      (route) => false,
+    );
   }
 
   /// Returns the created/updated profile on success, or `(null, message)`
@@ -816,6 +858,7 @@ class GraphQLService {
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      if (result.exception != null) _checkForAccountLockout(result.exception!);
       return null;
     }
     return result.data?['updateProfile'];
@@ -838,6 +881,7 @@ class GraphQLService {
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      if (result.exception != null) _checkForAccountLockout(result.exception!);
       return null;
     }
     return result.data?['updateMyLocation'];
@@ -860,6 +904,7 @@ class GraphQLService {
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      if (result.exception != null) _checkForAccountLockout(result.exception!);
       return null;
     }
     return result.data?['requestMediaUploadUrl'];
@@ -1660,295 +1705,75 @@ class GraphQLService {
     return (result.data?['markAllNotificationsRead'] as int?, null);
   }
 
-  // ─── Comments ───────────────────────────────────────────────
+  // ─── Account deletion ─────────────────────────────────────────
 
-  static const String _commentFields = r'''
-    id
-    postId
-    parentId
-    text
+  static const String _accountDeletionPayloadFields = r'''
     status
-    replyCount
-    boostCount
-    isBoostedByMe
-    isPinned
-    createdAt
-    updatedAt
-    author {
-      id
-      fullName
-      fullNameArabic
-      profilePictureUrl
-    }
-    media {
-      id
-      publicUrl
-      width
-      height
-      displayOrder
+    deletionId
+    progressToken
+    message
+    acceptedAt
+    completedAt
+  ''';
+
+  static final String deleteMyAccountMutation = '''
+    mutation DeleteMyAccount(\$input: DeleteMyAccountInput!) {
+      deleteMyAccount(input: \$input) { $_accountDeletionPayloadFields }
     }
   ''';
 
-  static final String commentsQuery = '''
-    query Comments(\$postId: ID!, \$sort: CommentSort, \$first: Int, \$after: String) {
-      comments(postId: \$postId, sort: \$sort, first: \$first, after: \$after) {
-        edges {
-          cursor
-          node { $_commentFields }
-        }
-        pageInfo { endCursor hasNextPage }
-      }
+  static final String accountDeletionProgressQuery = '''
+    query AccountDeletionProgress(\$deletionId: ID!, \$progressToken: String!) {
+      accountDeletionProgress(deletionId: \$deletionId, progressToken: \$progressToken) { $_accountDeletionPayloadFields }
     }
   ''';
 
-  static final String repliesQuery = '''
-    query Replies(\$commentId: ID!, \$first: Int, \$after: String) {
-      replies(commentId: \$commentId, first: \$first, after: \$after) {
-        edges {
-          cursor
-          node { $_commentFields }
-        }
-        pageInfo { endCursor hasNextPage }
-      }
+  /// Permanently deletes the signed-in user's account. The backend only
+  /// accepts this within 5 minutes of the user's last authentication, so
+  /// the caller must re-authenticate (see AuthService.reauthenticateWith*)
+  /// immediately before calling this — not at some earlier point in the
+  /// session. [progressToken], if supplied, lets the caller look up
+  /// progress later via [fetchAccountDeletionProgress] even if this
+  /// response never arrives (e.g. the app is killed mid-request);
+  /// generate one with generateClientRequestId() and hang onto it until
+  /// you see a successful result.
+  Future<(AccountDeletionPayload? payload, String? errorMessage)> deleteMyAccount({
+    required bool confirm,
+    String? progressToken,
+  }) async {
+    final input = <String, dynamic>{'confirm': confirm};
+    if (progressToken != null) input['progressToken'] = progressToken;
+    final result = await client.value.mutate(
+      MutationOptions(document: gql(deleteMyAccountMutation), variables: {'input': input}),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _serverErrorMessage(result.exception));
     }
-  ''';
+    final node = result.data?['deleteMyAccount'] as Map<String, dynamic>?;
+    return (node != null ? AccountDeletionPayload.fromJson(node) : null, null);
+  }
 
-  static final String createCommentMutation = '''
-    mutation CreateComment(\$input: CreateCommentInput!) {
-      createComment(input: \$input) { $_commentFields }
-    }
-  ''';
-
-  static final String createReplyMutation = '''
-    mutation CreateReply(\$input: CreateReplyInput!) {
-      createReply(input: \$input) { $_commentFields }
-    }
-  ''';
-
-  static const String deleteCommentMutation = r'''
-    mutation DeleteComment($id: ID!) {
-      deleteComment(id: $id)
-    }
-  ''';
-
-  static const String toggleCommentBoostMutation = r'''
-    mutation ToggleCommentBoost($commentId: ID!) {
-      toggleCommentBoost(commentId: $commentId) {
-        commentId
-        isBoostedByMe
-        boostCount
-      }
-    }
-  ''';
-
-  static final String pinCommentMutation = '''
-    mutation PinComment(\$commentId: ID!) {
-      pinComment(commentId: \$commentId) { $_commentFields }
-    }
-  ''';
-
-  static const String unpinCommentMutation = r'''
-    mutation UnpinComment($postId: ID!) {
-      unpinComment(postId: $postId)
-    }
-  ''';
-
-  static const String reportCommentMutation = r'''
-    mutation ReportComment($input: ReportCommentInput!) {
-      reportComment(input: $input)
-    }
-  ''';
-
-  static const String requestCommentImageUploadUrlMutation = r'''
-    mutation RequestCommentImageUploadUrl($input: RequestCommentImageUploadInput!) {
-      requestCommentImageUploadUrl(input: $input) {
-        mediaId
-        uploadUrl
-        expiresAt
-        maxSizeBytes
-        maxWidth
-        maxHeight
-        allowedContentType
-      }
-    }
-  ''';
-
-  /// Runs a comments/replies query and parses its CommentConnection.
-  Future<(List<Comment> comments, String? endCursor, bool hasNextPage, String? errorMessage)> _runCommentsQuery(
-    String document,
-    String fieldName,
-    Map<String, dynamic> variables,
-  ) async {
+  /// Public, unauthenticated status check for an in-progress deletion —
+  /// works even though the account it refers to may already be locked out
+  /// of ordinary access. Requires the exact (deletionId, progressToken)
+  /// pair returned by [deleteMyAccount].
+  Future<(AccountDeletionPayload? payload, String? errorMessage)> fetchAccountDeletionProgress({
+    required String deletionId,
+    required String progressToken,
+  }) async {
     final result = await client.value.query(
-      QueryOptions(document: gql(document), variables: variables, fetchPolicy: FetchPolicy.networkOnly),
-    );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (<Comment>[], null, false, _serverErrorMessage(result.exception));
-    }
-    final connection = result.data?[fieldName] as Map<String, dynamic>?;
-    final edges = connection?['edges'] as List<dynamic>? ?? [];
-    final comments = edges.map((e) => Comment.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>)).toList();
-    final pageInfo = connection?['pageInfo'] as Map<String, dynamic>?;
-    return (comments, pageInfo?['endCursor'] as String?, pageInfo?['hasNextPage'] as bool? ?? false, null);
-  }
-
-  /// Fetches top-level comments for a post. [sort] is 'TOP' (default) or 'NEWEST'.
-  Future<(List<Comment> comments, String? endCursor, bool hasNextPage, String? errorMessage)> fetchComments({
-    required String postId,
-    String sort = 'TOP',
-    int first = 20,
-    String? after,
-  }) {
-    return _runCommentsQuery(commentsQuery, 'comments', {'postId': postId, 'sort': sort, 'first': first, 'after': after});
-  }
-
-  /// Fetches replies beneath a top-level comment, oldest first.
-  Future<(List<Comment> comments, String? endCursor, bool hasNextPage, String? errorMessage)> fetchReplies({
-    required String commentId,
-    int first = 20,
-    String? after,
-  }) {
-    return _runCommentsQuery(repliesQuery, 'replies', {'commentId': commentId, 'first': first, 'after': after});
-  }
-
-  /// Publishes a top-level comment. [clientRequestId] must be a durable,
-  /// author-scoped idempotency key (e.g. generated once when the compose
-  /// box is opened) so a retried request never double-posts.
-  Future<(Comment? comment, String? errorMessage)> createComment({
-    required String clientRequestId,
-    required String postId,
-    required String text,
-    List<String>? mediaIds,
-  }) async {
-    final input = <String, dynamic>{
-      'clientRequestId': clientRequestId,
-      'postId': postId,
-      'text': text,
-    };
-    if (mediaIds != null && mediaIds.isNotEmpty) input['mediaIds'] = mediaIds;
-    final result = await client.value.mutate(
-      MutationOptions(document: gql(createCommentMutation), variables: {'input': input}),
-    );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (null, _serverErrorMessage(result.exception));
-    }
-    final node = result.data?['createComment'] as Map<String, dynamic>?;
-    return (node != null ? Comment.fromJson(node) : null, null);
-  }
-
-  /// Publishes a text-only reply beneath a top-level comment.
-  Future<(Comment? comment, String? errorMessage)> createReply({
-    required String clientRequestId,
-    required String commentId,
-    required String text,
-  }) async {
-    final result = await client.value.mutate(
-      MutationOptions(
-        document: gql(createReplyMutation),
-        variables: {
-          'input': {'clientRequestId': clientRequestId, 'commentId': commentId, 'text': text},
-        },
+      QueryOptions(
+        document: gql(accountDeletionProgressQuery),
+        variables: {'deletionId': deletionId, 'progressToken': progressToken},
+        fetchPolicy: FetchPolicy.networkOnly,
       ),
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _serverErrorMessage(result.exception));
     }
-    final node = result.data?['createReply'] as Map<String, dynamic>?;
-    return (node != null ? Comment.fromJson(node) : null, null);
-  }
-
-  /// Deletes an authored comment or reply. Author-only, idempotent.
-  Future<(bool success, String? errorMessage)> deleteComment(String id) async {
-    final result = await client.value.mutate(
-      MutationOptions(document: gql(deleteCommentMutation), variables: {'id': id}),
-    );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (false, _serverErrorMessage(result.exception));
-    }
-    return (result.data?['deleteComment'] as bool? ?? false, null);
-  }
-
-  /// Toggles boost on a comment or reply.
-  Future<(int? boostCount, bool? isBoostedByMe, String? errorMessage)> toggleCommentBoost(String commentId) async {
-    final result = await client.value.mutate(
-      MutationOptions(document: gql(toggleCommentBoostMutation), variables: {'commentId': commentId}),
-    );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (null, null, _serverErrorMessage(result.exception));
-    }
-    final data = result.data?['toggleCommentBoost'] as Map<String, dynamic>?;
-    return (data?['boostCount'] as int?, data?['isBoostedByMe'] as bool?, null);
-  }
-
-  /// Pins a top-level comment beneath its post. Post-author-only;
-  /// atomically replaces any existing pin.
-  Future<(Comment? comment, String? errorMessage)> pinComment(String commentId) async {
-    final result = await client.value.mutate(
-      MutationOptions(document: gql(pinCommentMutation), variables: {'commentId': commentId}),
-    );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (null, _serverErrorMessage(result.exception));
-    }
-    final node = result.data?['pinComment'] as Map<String, dynamic>?;
-    return (node != null ? Comment.fromJson(node) : null, null);
-  }
-
-  /// Unpins the currently pinned comment on a post. Post-author-only.
-  Future<(bool success, String? errorMessage)> unpinComment(String postId) async {
-    final result = await client.value.mutate(
-      MutationOptions(document: gql(unpinCommentMutation), variables: {'postId': postId}),
-    );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (false, _serverErrorMessage(result.exception));
-    }
-    return (result.data?['unpinComment'] as bool? ?? false, null);
-  }
-
-  /// Reports an abusive comment or reply. [reason] must be one of
-  /// UNRELATED_TO_ANIMALS, SPAM, INAPPROPRIATE_CONTENT, SCAM, DUPLICATE, OTHER.
-  Future<(bool success, String? errorMessage)> reportComment({
-    required String commentId,
-    required String reason,
-    String? details,
-  }) async {
-    final input = <String, dynamic>{'commentId': commentId, 'reason': reason};
-    if (details != null && details.isNotEmpty) input['details'] = details;
-    final result = await client.value.mutate(
-      MutationOptions(document: gql(reportCommentMutation), variables: {'input': input}),
-    );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (false, _serverErrorMessage(result.exception));
-    }
-    return (result.data?['reportComment'] as bool? ?? false, null);
-  }
-
-  /// Requests a presigned upload ticket for a single comment image.
-  /// Unlike post media, comment images must already be WebP and ≤100,000
-  /// bytes by the time this is called — the backend rejects anything else.
-  Future<(Map<String, dynamic>? ticket, String? errorMessage)> requestCommentImageUploadUrl({
-    required String contentType,
-    required int fileSizeBytes,
-  }) async {
-    final result = await client.value.mutate(
-      MutationOptions(
-        document: gql(requestCommentImageUploadUrlMutation),
-        variables: {
-          'input': {'contentType': contentType, 'fileSizeBytes': fileSizeBytes},
-        },
-      ),
-    );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (null, _serverErrorMessage(result.exception));
-    }
-    return (result.data?['requestCommentImageUploadUrl'] as Map<String, dynamic>?, null);
+    final node = result.data?['accountDeletionProgress'] as Map<String, dynamic>?;
+    return (node != null ? AccountDeletionPayload.fromJson(node) : null, null);
   }
 }

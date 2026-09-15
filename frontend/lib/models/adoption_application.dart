@@ -18,7 +18,10 @@ class AdoptionApplicationUser {
 class AdoptionApplication {
   final String id;
   final String targetPostId;
-  final AdoptionApplicationUser applicant;
+  // Null when the applicant has since deleted their account — the backend
+  // returns the application with an anonymized/absent applicant rather than
+  // leaking a stale profile or erroring the whole list.
+  final AdoptionApplicationUser? applicant;
   final String status; // PENDING, APPROVED, REJECTED
   final String? speciesPreference;
   final String? breedPreference;
@@ -39,7 +42,7 @@ class AdoptionApplication {
   const AdoptionApplication({
     required this.id,
     required this.targetPostId,
-    required this.applicant,
+    this.applicant,
     required this.status,
     this.speciesPreference,
     this.breedPreference,
@@ -61,7 +64,7 @@ class AdoptionApplication {
   factory AdoptionApplication.fromJson(Map<String, dynamic> json) => AdoptionApplication(
         id: json['id'] as String,
         targetPostId: json['targetPostId'] as String,
-        applicant: AdoptionApplicationUser.fromJson(json['applicant'] as Map<String, dynamic>),
+        applicant: json['applicant'] != null ? AdoptionApplicationUser.fromJson(json['applicant'] as Map<String, dynamic>) : null,
         status: json['status'] as String,
         speciesPreference: json['speciesPreference'] as String?,
         breedPreference: json['breedPreference'] as String?,

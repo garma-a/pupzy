@@ -78,7 +78,23 @@ class _LoginScreenState extends State<LoginScreen> {
     final me = await graphql.fetchMe();
     if (!mounted) return;
 
-    final profileComplete = me?['profileComplete'] == true;
+    // A failed backend request is not evidence that this is a new account.
+    // Keeping the user on this screen lets them retry once the connection is
+    // available instead of sending them to profile completion with no data.
+    if (me == null) {
+      Fluttertoast.showToast(
+        msg: t(
+          context,
+          'Could not reach the server. Please try again.',
+          'تعذر الاتصال بالخادم. يرجى المحاولة مرة أخرى.',
+        ),
+        backgroundColor: AppColors.critical,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
+    final profileComplete = me['profileComplete'] == true;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => profileComplete ? const AppShell() : const CompleteProfileScreen(),

@@ -76,7 +76,10 @@ class _AdoptionApplicationsOwnerSectionState extends State<AdoptionApplicationsO
         ),
         const SizedBox(height: AppSpacing.sm),
         ..._applications.map((a) {
-          final name = (lang == 'ar' ? a.applicant.fullNameArabic : a.applicant.fullName) ?? a.applicant.fullName ?? t(context, 'Someone', 'شخص ما');
+          final applicant = a.applicant;
+          final name = applicant == null
+              ? t(context, 'Deleted user', 'مستخدم محذوف')
+              : (lang == 'ar' ? applicant.fullNameArabic : applicant.fullName) ?? applicant.fullName ?? t(context, 'Someone', 'شخص ما');
           return Container(
             margin: const EdgeInsets.only(bottom: AppSpacing.sm),
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -92,8 +95,8 @@ class _AdoptionApplicationsOwnerSectionState extends State<AdoptionApplicationsO
                   children: [
                     CircleAvatar(
                       radius: 18,
-                      backgroundImage: a.applicant.profilePictureUrl != null ? NetworkImage(a.applicant.profilePictureUrl!) : null,
-                      child: a.applicant.profilePictureUrl == null ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?') : null,
+                      backgroundImage: applicant?.profilePictureUrl != null ? NetworkImage(applicant!.profilePictureUrl!) : null,
+                      child: applicant?.profilePictureUrl == null ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?') : null,
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(child: Text(name, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700))),

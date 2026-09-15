@@ -9,7 +9,9 @@ import '../localization/lang_provider.dart';
 import '../services/auth_service.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/language_toggle.dart';
 import 'contact_requests_screen.dart';
+import 'delete_account_screen.dart';
 import 'login_screen.dart';
 import 'my_posts_screen.dart';
 
@@ -289,46 +291,9 @@ class _ProfileSheetState extends State<ProfileSheet> {
           const SizedBox(height: AppSpacing.sm),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppRadius.chip),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => context.read<LangProvider>().setLang(Lang.en),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: lang == Lang.en ? AppColors.primary : Colors.transparent,
-                          borderRadius: BorderRadius.circular(AppRadius.chip),
-                        ),
-                        child: Center(
-                          child: Text('English', style: TextStyle(color: lang == Lang.en ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w600)),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => context.read<LangProvider>().setLang(Lang.ar),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: lang == Lang.ar ? AppColors.primary : Colors.transparent,
-                          borderRadius: BorderRadius.circular(AppRadius.chip),
-                        ),
-                        child: Center(
-                          child: Text('العربية', style: TextStyle(color: lang == Lang.ar ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w600)),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            child: LanguageToggle(
+              lang: lang,
+              onChanged: (l) => context.read<LangProvider>().setLang(l),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -403,6 +368,23 @@ class _ProfileSheetState extends State<ProfileSheet> {
                   foregroundColor: AppColors.critical,
                   side: BorderSide(color: AppColors.critical.withValues(alpha: 0.3)),
                 ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            child: SizedBox(
+              width: double.infinity,
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const DeleteAccountScreen()),
+                  );
+                },
+                icon: const Icon(Icons.delete_forever_outlined, size: 18),
+                label: Text(t(context, 'Delete Account', 'حذف الحساب')),
+                style: TextButton.styleFrom(foregroundColor: AppColors.textMuted),
               ),
             ),
           ),

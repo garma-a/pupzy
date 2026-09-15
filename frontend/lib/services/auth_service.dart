@@ -84,4 +84,41 @@ class AuthService extends ChangeNotifier {
     await _auth.signOut();
     notifyListeners();
   }
+
+  /// Whether the current user's primary sign-in method is Google
+  /// (vs. email/password) — determines which re-auth flow to show before
+  /// a sensitive action like account deletion.
+  bool get signedInWithGoogle {
+    final providers = _auth.currentUser?.providerData ?? const [];
+    return providers.any((p) => p.providerId == 'google.com');
+  }
+
+  /// Re-confirms the user's identity via Google, refreshing the Firebase
+  /// session's `auth_time` to "now". Required by the backend before
+  /// deleteMyAccount, which only accepts requests authenticated within the
+  /// preceding 5 minutes. Throws if the user cancels or re-auth fails.
+  Future<void> reauthenticateWithGoogle() async {
+    final user = _auth.currentUser;
+    if (user == null) throw StateError('No signed-in user to re-authenticate.');
+    final googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) throw StateError('Re-authentication cancelled.');
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    await user.reauthenticateWithCredential(credential);
+    notifyListeners();
+  }
+
+  /// Re-confirms the user's identity via their account password. Same
+  /// purpose as [reauthenticateWithGoogle], for email/password accounts.
+  Future<void> reauthenticateWithPassword(String password) async {
+    final user = _auth.currentUser;
+    final email = user?.email;
+    if (user == null || email == null) throw StateError('No signed-in email/password user to re-authenticate.');
+    final credential = EmailAuthProvider.credential(email: email, password: password);
+    await user.reauthenticateWithCredential(credential);
+    notifyListeners();
+  }
 }

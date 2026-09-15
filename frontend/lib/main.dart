@@ -13,6 +13,7 @@ import 'services/browse_location_service.dart';
 import 'services/graphql_service.dart';
 import 'services/location_service.dart';
 import 'theme/app_theme.dart';
+import 'utils/navigation.dart';
 
 /// Lets a screen detect when it's been returned to after a pushed route
 /// (e.g. a post detail screen) is popped — used by Home to refresh its
@@ -67,6 +68,7 @@ class PupzyApp extends StatelessWidget {
           return MaterialApp(
             title: 'Pupzy',
             debugShowCheckedModeBanner: false,
+            navigatorKey: rootNavigatorKey,
             navigatorObservers: [routeObserver],
             theme: AppTheme.light(langProvider.lang),
             locale: langProvider.locale,

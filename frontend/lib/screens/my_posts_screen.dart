@@ -290,7 +290,7 @@ class _MyPostTile extends StatelessWidget {
                   Text(post.title, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 2),
                   Text(
-                    '${post.upvoteCount} ${t(context, 'boosts', 'تعزيز')} · ${post.saveCount} ${t(context, 'saves', 'حفظ')} · ${post.viewCount} ${t(context, 'views', 'مشاهدة')}',
+                    '${post.upvoteCount} ${t(context, 'raises', 'تعزيز')} · ${post.saveCount} ${t(context, 'saves', 'حفظ')} · ${post.viewCount} ${t(context, 'views', 'مشاهدة')}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
