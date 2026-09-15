@@ -161,6 +161,19 @@ export enum MarketFeedSort {
   NEWEST = 'NEWEST',
 }
 
+export enum CommentStatus {
+  ACTIVE = 'ACTIVE',
+  IMAGE_HIDDEN = 'IMAGE_HIDDEN',
+  HIDDEN = 'HIDDEN',
+  DELETED = 'DELETED',
+  REMOVED = 'REMOVED',
+}
+
+export enum CommentSort {
+  TOP = 'TOP',
+  NEWEST = 'NEWEST',
+}
+
 export interface SubmitAdoptionApplicationInput {
   targetPostId: string;
   speciesPreference?: Nullable<SpeciesType>;
@@ -306,6 +319,19 @@ export interface UpdateProfileInput {
   phoneNumber?: Nullable<string>;
 }
 
+export interface CreateCommentInput {
+  clientRequestId: string;
+  postId: string;
+  text: string;
+  mediaIds?: Nullable<string[]>;
+}
+
+export interface CreateReplyInput {
+  clientRequestId: string;
+  commentId: string;
+  text: string;
+}
+
 export interface AdoptionApplicationConnection {
   edges: AdoptionApplicationEdge[];
   pageInfo: PageInfo;
@@ -405,6 +431,17 @@ export interface IQuery {
     progressToken: string,
   ): AccountDeletionPayload | Promise<AccountDeletionPayload>;
   nearbyVetClinics(cityId: string): VetClinic[] | Promise<VetClinic[]>;
+  comments(
+    postId: string,
+    sort?: Nullable<CommentSort>,
+    first?: Nullable<number>,
+    after?: Nullable<string>,
+  ): CommentConnection | Promise<CommentConnection>;
+  replies(
+    commentId: string,
+    first?: Nullable<number>,
+    after?: Nullable<string>,
+  ): CommentConnection | Promise<CommentConnection>;
 }
 
 export enum AccountDeletionStatus {
@@ -428,6 +465,9 @@ export interface DeleteMyAccountInput {
 }
 
 export interface IMutation {
+  createComment(input: CreateCommentInput): Comment | Promise<Comment>;
+  createReply(input: CreateReplyInput): Comment | Promise<Comment>;
+  deleteComment(id: string): boolean | Promise<boolean>;
   submitAdoptionApplication(input: SubmitAdoptionApplicationInput): AdoptionApplication | Promise<AdoptionApplication>;
   approveAdoptionApplication(applicationId: string): AdoptionApplication | Promise<AdoptionApplication>;
   rejectAdoptionApplication(applicationId: string): AdoptionApplication | Promise<AdoptionApplication>;
@@ -537,6 +577,7 @@ export interface Post {
   upvoteCount: number;
   saveCount: number;
   viewCount: number;
+  commentCount: number;
   effectiveScore: number;
   isUpvotedByMe: boolean;
   isSavedByMe: boolean;
@@ -544,6 +585,28 @@ export interface Post {
   createdAt: DateTime;
   updatedAt: DateTime;
   nearestVetClinics: VetClinic[];
+}
+
+export interface Comment {
+  id: string;
+  postId: string;
+  parentId?: Nullable<string>;
+  author?: Nullable<User>;
+  text: string;
+  status: CommentStatus;
+  replyCount: number;
+  createdAt: DateTime;
+  updatedAt: DateTime;
+}
+
+export interface CommentEdge {
+  node: Comment;
+  cursor: string;
+}
+
+export interface CommentConnection {
+  edges: CommentEdge[];
+  pageInfo: PageInfo;
 }
 
 export interface RescuePost {

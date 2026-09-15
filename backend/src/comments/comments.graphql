@@ -1,0 +1,196 @@
+"""
+Moderation and lifecycle status of a Comment.
+"""
+enum CommentStatus {
+  ACTIVE
+  IMAGE_HIDDEN
+  HIDDEN
+  DELETED
+  REMOVED
+}
+
+"""
+Ordering options for top-level Comments.
+"""
+enum CommentSort {
+  TOP
+  NEWEST
+}
+
+"""
+An image attached to a Comment.
+"""
+type CommentMedia {
+  id: ID!
+  publicUrl: String!
+  width: Int!
+  height: Int!
+  displayOrder: Int!
+}
+
+"""
+A user-created discussion contribution published beneath a Post or parent Comment.
+"""
+type Comment {
+  id: ID!
+  postId: ID!
+  parentId: ID
+  author: User
+  text: String!
+  status: CommentStatus!
+  replyCount: Int!
+  boostCount: Int!
+  isBoostedByMe: Boolean!
+  isPinned: Boolean!
+  media: [CommentMedia!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+An edge in a Comment connection for cursor-based keyset pagination.
+"""
+type CommentEdge {
+  node: Comment!
+  cursor: String!
+}
+
+"""
+Paginated comments response — Relay-style connection with opaque cursors.
+"""
+type CommentConnection {
+  edges: [CommentEdge!]!
+  pageInfo: PageInfo!
+}
+
+"""
+Input for publishing a top-level Comment beneath a Post.
+"""
+input CreateCommentInput {
+  clientRequestId: String!
+  postId: ID!
+  text: String!
+  mediaIds: [ID!]
+}
+
+"""
+Input for publishing a text Reply beneath a top-level Comment.
+"""
+input CreateReplyInput {
+  clientRequestId: String!
+  commentId: ID!
+  text: String!
+}
+
+"""
+Input for reporting an abusive Comment or Reply.
+"""
+input ReportCommentInput {
+  commentId: ID!
+  reason: ReportReason!
+  details: String
+}
+
+extend type Query {
+  """
+  Fetch visible top-level Comments for a Post using keyset pagination.
+  Defaults to 20 items, max 50 items.
+  TOP falls back to newest creation order before Boosts exist.
+  """
+  comments(postId: ID!, sort: CommentSort, first: Int, after: String): CommentConnection!
+
+  """
+  Fetch visible Replies for a top-level Comment using keyset pagination.
+  Oldest first (createdAt ASC, id ASC).
+  Defaults to 20 items, max 50 items.
+  """
+  replies(commentId: ID!, first: Int, after: String): CommentConnection!
+}
+
+"""
+Presigned direct upload ticket for a Comment image.
+"""
+type CommentImageUploadTicket {
+  mediaId: ID!
+  uploadUrl: String!
+  expiresAt: DateTime!
+  maxSizeBytes: Int!
+  maxWidth: Int!
+  maxHeight: Int!
+  allowedContentType: String!
+}
+
+"""
+Input for requesting a direct Comment image upload ticket.
+"""
+input RequestCommentImageUploadInput {
+  contentType: String!
+  fileSizeBytes: Int!
+}
+
+extend type Mutation {
+  """
+  Request a presigned direct upload ticket to stage a Comment image.
+  Requires authentication. Rate limited to 6/min and 50/day.
+  """
+  requestCommentImageUploadUrl(input: RequestCommentImageUploadInput!): CommentImageUploadTicket!
+
+  """
+  Publish a text Comment beneath a Post.
+  Requires authentication and a durable author-scoped clientRequestId for idempotency.
+  Returns the canonical Comment for immediate UI update.
+  """
+  createComment(input: CreateCommentInput!): Comment!
+
+  """
+  Publish a text Reply beneath a top-level Comment.
+  Requires authentication and a durable author-scoped clientRequestId for idempotency.
+  Returns the canonical Comment for immediate UI update.
+  """
+  createReply(input: CreateReplyInput!): Comment!
+
+  """
+  Delete an authored Comment or Reply.
+  Requires authentication and ownership (author only).
+  Deletion is idempotent and irreversible.
+  """
+  deleteComment(id: ID!): Boolean!
+
+  """
+  Toggle boost on a Comment or Reply.
+  Requires authentication. Returns resulting isBoostedByMe state and canonical boostCount.
+  Reversible toggle: adds boost if not present, removes boost if already present.
+  """
+  toggleCommentBoost(commentId: ID!): ToggleCommentBoostPayload!
+
+  """
+  Pin an eligible top-level Comment beneath a Post.
+  Only the Post author can pin. Atomically replaces any existing pin for the Post.
+  Idempotent.
+  """
+  pinComment(commentId: ID!): Comment!
+
+  """
+  Unpin the currently pinned Comment beneath a Post.
+  Only the Post author can unpin.
+  Idempotent.
+  """
+  unpinComment(postId: ID!): Boolean!
+
+  """
+  Report an abusive Comment or Reply.
+  Requires authentication. Rate limited to 10 reports per user per day.
+  Cannot report own comment or report the same comment twice.
+  """
+  reportComment(input: ReportCommentInput!): Boolean!
+}
+
+"""
+Payload returned by toggleCommentBoost mutation.
+"""
+type ToggleCommentBoostPayload {
+  commentId: ID!
+  isBoostedByMe: Boolean!
+  boostedByMe: Boolean!
+  boostCount: Int!
+}

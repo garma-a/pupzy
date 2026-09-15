@@ -11,6 +11,7 @@ import '../localization/lang_provider.dart';
 import '../models/post.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/city_picker_sheet.dart';
 
 /// A fixed-choice option: (canonical value sent to the backend, English label, Arabic label).
 /// The canonical value is what state/logic keys off of — never the translated label.
@@ -41,8 +42,20 @@ class _PostFormScreenState extends State<PostFormScreen> {
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _healthNotesController = TextEditingController();
   final TextEditingController _additionalRequirementsController = TextEditingController();
+  final TextEditingController _termsSummaryController = TextEditingController();
+  final TextEditingController _matingConditionsController = TextEditingController();
+  final TextEditingController _citySearchController = TextEditingController();
   final List<XFile> _images = [];
   String? _selectedCategory;
+
+  // MATING-only state
+  List<Map<String, dynamic>> _cities = [];
+  Map<String, dynamic>? _selectedCity;
+  bool _loadingCities = false;
+  bool _isPurebred = false;
+  bool _hasPedigreeCertificate = false;
+  bool _matingVaccinated = true;
+  bool _matingDewormed = true;
 
   String? _species;
   String? _role;
@@ -129,6 +142,40 @@ class _PostFormScreenState extends State<PostFormScreen> {
   void initState() {
     super.initState();
     _selectedCategory = widget.initialCategory;
+    if (widget.type == PostType.mating) {
+      _loadCities();
+    }
+  }
+
+  Future<void> _loadCities() async {
+    setState(() => _loadingCities = true);
+    final graphql = context.read<GraphQLService>();
+    final cities = await graphql.fetchCities();
+    if (!mounted) return;
+    setState(() {
+      _cities = cities;
+      _loadingCities = false;
+    });
+  }
+
+  void _showCityPicker() {
+    _citySearchController.clear();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return CityPickerSheet(
+          cities: _cities,
+          searchController: _citySearchController,
+          title: t(context, "Select your pet's city", 'اختر مدينة حيوانك'),
+          onSelected: (city) {
+            setState(() => _selectedCity = city);
+            Navigator.of(ctx).pop();
+          },
+        );
+      },
+    );
   }
 
   List<Choice> get _categories {
@@ -164,6 +211,10 @@ class _PostFormScreenState extends State<PostFormScreen> {
           ('TRAINING', 'Training', 'تدريب'),
           ('STORY', 'Story', 'قصة'),
         ];
+      case PostType.mating:
+        // Mating has no generic "category" concept — species/breed/gender are
+        // captured by their own dedicated fields in _buildMatingForm.
+        return const [];
     }
   }
 
@@ -622,6 +673,88 @@ class _PostFormScreenState extends State<PostFormScreen> {
     }
   }
 
+  bool get _matingFormValid {
+    return _images.isNotEmpty &&
+        _petNameController.text.trim().isNotEmpty &&
+        _species != null &&
+        _breedController.text.trim().isNotEmpty &&
+        _gender != null &&
+        _parseAge(_ageController.text.trim()) != null &&
+        _selectedCity != null;
+  }
+
+  Future<void> _submitMating() async {
+    if (!_matingFormValid || _submitting) return;
+    setState(() => _submitting = true);
+
+    try {
+      final graphql = context.read<GraphQLService>();
+
+      final mediaIds = <String>[];
+      for (final image in _images) {
+        final bytes = await image.readAsBytes();
+        final contentType = _mimeTypeFor(image);
+        final uploadInfo = await graphql.requestMediaUploadUrl(
+          contentType: contentType,
+          fileSizeBytes: bytes.length,
+        );
+        if (uploadInfo == null) continue;
+        final response = await http.put(
+          Uri.parse(uploadInfo['uploadUrl'] as String),
+          headers: {'Content-Type': contentType},
+          body: bytes,
+        );
+        if (!mounted) return;
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          mediaIds.add(uploadInfo['mediaId'] as String);
+        } else {
+          Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
+        }
+      }
+      if (mediaIds.isEmpty) {
+        Fluttertoast.showToast(
+          msg: t(context, 'At least one photo is required', 'مطلوب صورة واحدة على الأقل'),
+          backgroundColor: AppColors.critical,
+          textColor: Colors.white,
+        );
+        return;
+      }
+
+      final agePair = _parseAge(_ageController.text.trim())!;
+
+      final (result, errorMessage) = await graphql.createMatingPost(
+        cityId: _selectedCity!['id'] as String,
+        petName: _petNameController.text.trim(),
+        species: _species!,
+        breed: _breedController.text.trim(),
+        gender: _gender!,
+        ageValue: agePair.$1,
+        ageUnit: agePair.$2,
+        isPurebred: _isPurebred,
+        hasPedigreeCertificate: _hasPedigreeCertificate,
+        vaccinated: _matingVaccinated,
+        dewormed: _matingDewormed,
+        termsSummary: _termsSummaryController.text.trim().isEmpty ? null : _termsSummaryController.text.trim(),
+        matingConditions: _matingConditionsController.text.trim().isEmpty ? null : _matingConditionsController.text.trim(),
+        mediaIds: mediaIds,
+      );
+      if (!mounted) return;
+
+      if (result != null) {
+        Fluttertoast.showToast(msg: t(context, 'Mating listing posted!', 'تم نشر إعلان التزاوج!'));
+        if (mounted) Navigator.of(context).pop();
+      } else {
+        Fluttertoast.showToast(
+          msg: errorMessage ?? t(context, 'Failed to post listing', 'فشل نشر الإعلان'),
+          backgroundColor: AppColors.critical,
+          textColor: Colors.white,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
   @override
   void dispose() {
     _captionController.dispose();
@@ -638,6 +771,9 @@ class _PostFormScreenState extends State<PostFormScreen> {
     _ageController.dispose();
     _healthNotesController.dispose();
     _additionalRequirementsController.dispose();
+    _termsSummaryController.dispose();
+    _matingConditionsController.dispose();
+    _citySearchController.dispose();
     super.dispose();
   }
 
@@ -655,8 +791,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
     if (widget.type == PostType.adoption) {
       return _buildAdoptionForm(context);
     }
+    if (widget.type == PostType.mating) {
+      return _buildMatingForm(context);
+    }
     // Every PostType value is handled above (rescue/LOST, rescue, product,
-    // adoption) — PostFormScreen is never constructed with PostType.general.
+    // adoption, mating) — PostFormScreen is never constructed with PostType.general.
     throw StateError('Unhandled PostType: ${widget.type}');
   }
 
@@ -1434,6 +1573,282 @@ class _PostFormScreenState extends State<PostFormScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
                             )
                           : Text(t(context, 'List for Adoption', 'نشر إعلان التبني')),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMatingForm(BuildContext context) {
+    final lang = context.watch<LangProvider>().lang;
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
+              child: Row(
+                children: [
+                  _BackCircle(onTap: () => Navigator.of(context).pop()),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(t(context, 'Find a Mate', 'البحث عن شريك'), style: Theme.of(context).textTheme.headlineMedium),
+                        Text(
+                          t(context, 'List your pet as a mating partner search', 'اعرض حيوانك للبحث عن شريك تزاوج'),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Divider(height: 1, color: AppColors.border),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
+                children: [
+                  _SectionLabel(t(context, 'PET PROFILE', 'ملف الحيوان')),
+                  const SizedBox(height: AppSpacing.sm),
+                  InkWell(
+                    onTap: _pickImage,
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceWarm,
+                        borderRadius: BorderRadius.circular(AppRadius.card),
+                        border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+                      ),
+                      child: Column(
+                        children: [
+                          if (_images.isEmpty) ...[
+                            const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(
+                              t(context, 'Add pet photos', 'أضف صور الحيوان'),
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              t(context, 'Up to 4 photos — first is the cover', 'حتى 4 صور — الأولى هي الغلاف'),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ] else
+                            SizedBox(
+                              height: 90,
+                              child: ListView(
+                                scrollDirection: Axis.horizontal,
+                                children: [
+                                  ..._images.map(
+                                    (img) => Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
+                                      ),
+                                    ),
+                                  ),
+                                  if (_images.length < 4)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                      child: Container(
+                                        width: 90,
+                                        height: 90,
+                                        decoration: BoxDecoration(
+                                          border: Border.all(color: AppColors.border),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(t(context, "Pet's name", 'اسم الحيوان'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: _petNameController,
+                    textCapitalization: TextCapitalization.words,
+                    onChanged: (_) => setState(() {}),
+                    decoration: _fieldDecoration(t(context, 'e.g. Rex', 'مثال: ريكس')),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(t(context, 'Species', 'النوع'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    children: _adoptionSpeciesOptions.map((s) {
+                      return _PillChoice(
+                        label: t(context, s.$2, s.$3),
+                        selected: _species == s.$1,
+                        onTap: () => setState(() => _species = s.$1),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(t(context, 'Breed', 'السلالة'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: _breedController,
+                    onChanged: (_) => setState(() {}),
+                    decoration: _fieldDecoration(t(context, 'e.g. German Shepherd', 'مثال: جيرمن شيبرد')),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(t(context, 'Age', 'العمر'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: _ageController,
+                    onChanged: (_) => setState(() {}),
+                    decoration: _fieldDecoration(t(context, 'e.g. 2 years', 'مثال: سنتان')),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(t(context, 'Gender', 'الجنس'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: 2),
+                  Text(
+                    t(context, "Your pet's gender — we'll search for the opposite", 'جنس حيوانك — سنبحث عن الجنس المقابل'),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    children: _genderOptions.map((g) {
+                      return _PillChoice(
+                        label: t(context, g.$2, g.$3),
+                        selected: _gender == g.$1,
+                        onTap: () => setState(() => _gender = g.$1),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  _SectionLabel(t(context, 'PEDIGREE & HEALTH', 'النسب والصحة')),
+                  const SizedBox(height: AppSpacing.md),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(t(context, 'Purebred', 'أصيل')),
+                    value: _isPurebred,
+                    onChanged: (v) => setState(() => _isPurebred = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(t(context, 'Has pedigree certificate', 'يملك شهادة نسب')),
+                    value: _hasPedigreeCertificate,
+                    onChanged: (v) => setState(() => _hasPedigreeCertificate = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(t(context, 'Vaccinated', 'مُطعّم')),
+                    value: _matingVaccinated,
+                    onChanged: (v) => setState(() => _matingVaccinated = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(t(context, 'Dewormed', 'مُطهّر من الديدان')),
+                    value: _matingDewormed,
+                    onChanged: (v) => setState(() => _matingDewormed = v),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  _SectionLabel(t(context, 'MATING TERMS', 'شروط التزاوج')),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(t(context, 'Terms summary (optional)', 'ملخص الشروط (اختياري)'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: _termsSummaryController,
+                    maxLines: 2,
+                    decoration: _fieldDecoration(
+                      t(context, 'e.g. Pick of the litter, stud fee negotiable...', 'مثال: اختيار جرو من المولود، رسم قابل للتفاوض...'),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(t(context, 'Mating conditions (optional)', 'شروط التزاوج (اختياري)'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: _matingConditionsController,
+                    maxLines: 3,
+                    decoration: _fieldDecoration(
+                      t(context, 'Health checks required, preferred breed match...', 'فحوصات صحية مطلوبة، سلالة مفضلة للتزاوج...'),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  _SectionLabel(t(context, 'LOCATION', 'الموقع')),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(t(context, 'City', 'المدينة'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  GestureDetector(
+                    onTap: _loadingCities ? null : _showCityPicker,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceWarm,
+                        borderRadius: BorderRadius.circular(AppRadius.card),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.location_city_outlined, color: AppColors.textMuted, size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _loadingCities
+                                ? SizedBox(
+                                    height: 18,
+                                    width: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                                  )
+                                : Text(
+                                    _selectedCity != null
+                                        ? (lang == Lang.ar ? _selectedCity!['nameArabic'] as String : _selectedCity!['nameEnglish'] as String)
+                                        : t(context, 'Search and select a city', 'ابحث واختر مدينة'),
+                                    style: TextStyle(
+                                      color: _selectedCity != null ? AppColors.textPrimary : AppColors.textMuted,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                          ),
+                          const Icon(Icons.search, color: AppColors.textMuted, size: 18),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  Center(
+                    child: Text(
+                      t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر'),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: (_matingFormValid && !_submitting) ? _submitMating : null,
+                      child: _submitting
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                            )
+                          : Text(t(context, 'Post Mating Listing', 'نشر إعلان التزاوج')),
                     ),
                   ),
                 ],

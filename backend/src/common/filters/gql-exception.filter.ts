@@ -41,7 +41,7 @@ export class GqlExceptionFilter implements NestGqlExceptionFilter {
     if (exception instanceof AppError) {
       this.logger.warn(`[Domain Error] ${exception.code}: ${exception.message}`, exception.stack);
       return new GraphQLError(exception.message, {
-        extensions: { code: exception.code },
+        extensions: { code: exception.code, ...(exception.extensions ?? {}) },
       });
     }
 

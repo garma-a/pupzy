@@ -5,6 +5,7 @@ import DataLoader from 'dataloader';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import {
   posts,
+  users,
   cities,
   rescuePosts,
   lostPosts,
@@ -13,7 +14,6 @@ import {
   postMedia,
   postUpvotes,
   postSaves,
-  users,
   type Post,
   type PostMedia,
   type NewPost,
@@ -28,7 +28,10 @@ import {
   type ProductPost,
 } from '../database/schema';
 import type * as schema from '../database/schema';
-import { NotFoundError, ForbiddenError } from '../common/errors/app.errors';
+import { ForbiddenError, NotFoundError } from '../common/errors/app.errors';
+import { withDbRetry } from '../common/utils/db-retry.util';
+
+type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
 /**
  * PostsRepository — data-access layer for post creation.
@@ -85,18 +88,38 @@ export class PostsRepository {
     private readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
-  private async assertCreatorActive(tx: NodePgDatabase<typeof schema>, creatorId: string): Promise<void> {
+  /**
+   * Coordinates Post lifecycle writes with Comment discussion mutations.
+   *
+   * Discussion mutations acquire this transaction-scoped key before the
+   * canonical Post row, then any Comment rows. Post lifecycle changes must
+   * take the same first two locks: otherwise a Comment mutation can hold a
+   * Comment row while a competing lifecycle update holds the Post row.
+   */
+  private async lockDiscussionPost(tx: DbTransaction, postId: string): Promise<Post | undefined> {
+    await tx.execute(sql`
+      SELECT pg_advisory_xact_lock(hashtextextended('comment_discussion:' || ${postId}, 0))
+    `);
+    const [post] = await tx.select().from(posts).where(eq(posts.id, postId)).for('update');
+
+    return post;
+  }
+
+  /**
+   * The request guard may have read an unbanned user before an AdminJS ban
+   * commits. Recheck under the same User row lock as the database trigger so
+   * a Post creation either commits before that ban (and is cascaded) or is
+   * rejected afterwards with the established safe application error.
+   */
+  private async lockActiveCreator(tx: DbTransaction, creatorId: string): Promise<void> {
     const [creator] = await tx
       .select({ id: users.id, isBanned: users.isBanned })
       .from(users)
       .where(eq(users.id, creatorId))
       .for('update');
-
-    if (!creator || creator.isBanned) {
-      throw new ForbiddenError('ACCOUNT_DELETED');
-    }
+    if (!creator) throw new NotFoundError('User', creatorId);
+    if (creator.isBanned) throw new ForbiddenError('Your account has been suspended.');
   }
-
   /**
    * Creates a RESCUE post atomically.
    *
@@ -111,8 +134,7 @@ export class PostsRepository {
     mediaRows: Omit<NewPostMedia, 'postId'>[],
   ): Promise<Post> {
     return this.db.transaction(async (tx) => {
-      await this.assertCreatorActive(tx, baseData.creatorId);
-
+      await this.lockActiveCreator(tx, baseData.creatorId);
       const [post] = await tx.insert(posts).values(baseData).returning();
 
       await tx.insert(rescuePosts).values({
@@ -148,8 +170,7 @@ export class PostsRepository {
     mediaRows: Omit<NewPostMedia, 'postId'>[],
   ): Promise<Post> {
     return this.db.transaction(async (tx) => {
-      await this.assertCreatorActive(tx, baseData.creatorId);
-
+      await this.lockActiveCreator(tx, baseData.creatorId);
       const [post] = await tx.insert(posts).values(baseData).returning();
 
       await tx.insert(lostPosts).values({
@@ -184,8 +205,7 @@ export class PostsRepository {
     mediaRows: Omit<NewPostMedia, 'postId'>[],
   ): Promise<Post> {
     return this.db.transaction(async (tx) => {
-      await this.assertCreatorActive(tx, baseData.creatorId);
-
+      await this.lockActiveCreator(tx, baseData.creatorId);
       const [post] = await tx.insert(posts).values(baseData).returning();
 
       await tx.insert(adoptionPosts).values({
@@ -225,8 +245,7 @@ export class PostsRepository {
     mediaRows: Omit<NewPostMedia, 'postId'>[],
   ): Promise<Post> {
     return this.db.transaction(async (tx) => {
-      await this.assertCreatorActive(tx, baseData.creatorId);
-
+      await this.lockActiveCreator(tx, baseData.creatorId);
       const [post] = await tx.insert(posts).values(baseData).returning();
 
       await tx.insert(productPosts).values({
@@ -364,12 +383,18 @@ export class PostsRepository {
    *          or no longer belongs to the caller.
    */
   async updateStatus(postId: string, creatorId: string, status: string): Promise<Post | undefined> {
-    const [post] = await this.db
-      .update(posts)
-      .set({ status: status as Post['status'] })
-      .where(and(eq(posts.id, postId), eq(posts.creatorId, creatorId), eq(posts.status, 'ACTIVE')))
-      .returning();
-    return post;
+    return withDbRetry(() =>
+      this.db.transaction(async (tx) => {
+        const lockedPost = await this.lockDiscussionPost(tx, postId);
+        if (!lockedPost || lockedPost.creatorId !== creatorId || lockedPost.status !== 'ACTIVE') return undefined;
+        const [post] = await tx
+          .update(posts)
+          .set({ status: status as Post['status'] })
+          .where(eq(posts.id, postId))
+          .returning();
+        return post;
+      }),
+    );
   }
 
   /**
@@ -377,12 +402,14 @@ export class PostsRepository {
    * The DB trigger `trg_sync_user_post_counts` decrements user counters.
    */
   async softDelete(postId: string, creatorId: string): Promise<Post | undefined> {
-    const [post] = await this.db
-      .update(posts)
-      .set({ status: 'REMOVED' })
-      .where(and(eq(posts.id, postId), eq(posts.creatorId, creatorId), ne(posts.status, 'REMOVED')))
-      .returning();
-    return post;
+    return withDbRetry(() =>
+      this.db.transaction(async (tx) => {
+        const lockedPost = await this.lockDiscussionPost(tx, postId);
+        if (!lockedPost || lockedPost.creatorId !== creatorId || lockedPost.status === 'REMOVED') return undefined;
+        const [post] = await tx.update(posts).set({ status: 'REMOVED' }).where(eq(posts.id, postId)).returning();
+        return post;
+      }),
+    );
   }
 
   // ─── Engagement Toggles ───────────────────────────────────────────────

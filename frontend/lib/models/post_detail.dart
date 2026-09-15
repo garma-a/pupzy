@@ -50,6 +50,7 @@ class PostDetail {
   final int upvoteCount;
   final int saveCount;
   final int viewCount;
+  final int commentCount;
   final bool isUpvotedByMe;
   final bool isSavedByMe;
   final List<String> mediaUrls;
@@ -73,6 +74,7 @@ class PostDetail {
     required this.upvoteCount,
     required this.saveCount,
     required this.viewCount,
+    this.commentCount = 0,
     required this.isUpvotedByMe,
     required this.isSavedByMe,
     required this.mediaUrls,
@@ -110,6 +112,7 @@ class PostDetail {
       upvoteCount: json['upvoteCount'] as int? ?? 0,
       saveCount: json['saveCount'] as int? ?? 0,
       viewCount: json['viewCount'] as int? ?? 0,
+      commentCount: json['commentCount'] as int? ?? 0,
       isUpvotedByMe: json['isUpvotedByMe'] as bool? ?? false,
       isSavedByMe: json['isSavedByMe'] as bool? ?? false,
       mediaUrls: mediaList.map((m) => m['publicUrl'] as String).toList(),
@@ -118,7 +121,7 @@ class PostDetail {
     );
   }
 
-  PostDetail copyWith({int? upvoteCount, bool? isUpvotedByMe, int? saveCount, bool? isSavedByMe, String? status}) {
+  PostDetail copyWith({int? upvoteCount, bool? isUpvotedByMe, int? saveCount, bool? isSavedByMe, String? status, int? commentCount}) {
     return PostDetail(
       id: id,
       creator: creator,
@@ -136,6 +139,7 @@ class PostDetail {
       upvoteCount: upvoteCount ?? this.upvoteCount,
       saveCount: saveCount ?? this.saveCount,
       viewCount: viewCount,
+      commentCount: commentCount ?? this.commentCount,
       isUpvotedByMe: isUpvotedByMe ?? this.isUpvotedByMe,
       isSavedByMe: isSavedByMe ?? this.isSavedByMe,
       mediaUrls: mediaUrls,

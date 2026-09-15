@@ -64,6 +64,7 @@ describe('PostsService', () => {
         .fn()
         .mockResolvedValue({ publicUrl: 'https://cdn.example.com/1.jpg', fileContentType: 'image/jpeg' }),
       finalizeMedia: jest.fn().mockResolvedValue(undefined),
+      markMediaFailed: jest.fn().mockResolvedValue(undefined),
     };
 
     mockViewFlushCron = {
@@ -147,14 +148,13 @@ describe('PostsService', () => {
       ).rejects.toThrow(ValidationError);
     });
 
-    it('throws NotFoundError when auto-resolving GPS coordinates finds no nearby city', async () => {
-      mockCitiesService.findNearest = jest.fn().mockResolvedValue(undefined);
-
+    it('throws ValidationError when duplicate mediaIds are provided', async () => {
       await expect(
         service.createRescuePost(validUserId, {
           title: 'Emergency: Kitten hit by car',
           description: 'Needs urgent surgery.',
-          coordinates: { latitude: 0, longitude: 0 },
+          cityId: mockCity.id,
+          coordinates: { latitude: 30.0444, longitude: 31.2357 },
           species: 'CAT',
           conditionSummary: 'Severe bleeding',
           reporterRole: 'ON_SITE',
@@ -162,8 +162,59 @@ describe('PostsService', () => {
           hasVisibleSeriousInjury: true,
           isInDangerousLocation: true,
           canAnimalMoveOrEscape: false,
+          mediaIds: ['01916327-0000-7000-8000-000000000005', '01916327-0000-7000-8000-000000000005'],
         }),
-      ).rejects.toThrow(NotFoundError);
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('aborts post creation and throws if finalizeMedia fails, preventing broken post', async () => {
+      mockUploadService.finalizeMedia = jest.fn().mockRejectedValue(new Error('R2 copy failed'));
+
+      await expect(
+        service.createRescuePost(validUserId, {
+          title: 'Emergency: Kitten hit by car',
+          description: 'Needs urgent surgery.',
+          cityId: mockCity.id,
+          coordinates: { latitude: 30.0444, longitude: 31.2357 },
+          species: 'CAT',
+          conditionSummary: 'Severe bleeding',
+          reporterRole: 'ON_SITE',
+          isLifeThreatening: true,
+          hasVisibleSeriousInjury: true,
+          isInDangerousLocation: true,
+          canAnimalMoveOrEscape: false,
+          mediaIds: ['01916327-0000-7000-8000-000000000005'],
+        }),
+      ).rejects.toThrow('R2 copy failed');
+
+      // Verify createRescuePost was NEVER called in repository
+      expect(mockPostsRepo.createRescuePost).not.toHaveBeenCalled();
+    });
+
+    it('marks media as failed if repository database transaction throws', async () => {
+      mockPostsRepo.createRescuePost = jest.fn().mockRejectedValue(new Error('DB transaction constraint failed'));
+
+      await expect(
+        service.createRescuePost(validUserId, {
+          title: 'Emergency: Kitten hit by car',
+          description: 'Needs urgent surgery.',
+          cityId: mockCity.id,
+          coordinates: { latitude: 30.0444, longitude: 31.2357 },
+          species: 'CAT',
+          conditionSummary: 'Severe bleeding',
+          reporterRole: 'ON_SITE',
+          isLifeThreatening: true,
+          hasVisibleSeriousInjury: true,
+          isInDangerousLocation: true,
+          canAnimalMoveOrEscape: false,
+          mediaIds: ['01916327-0000-7000-8000-000000000005'],
+        }),
+      ).rejects.toThrow('DB transaction constraint failed');
+
+      expect(mockUploadService.markMediaFailed).toHaveBeenCalledWith(
+        ['01916327-0000-7000-8000-000000000005'],
+        'Post creation database transaction failed',
+      );
     });
 
     it('flags post for moderation if title or description matches blocklist', async () => {

@@ -34,6 +34,7 @@ let staffCookie;
 let superCsrf;
 let staffCsrf;
 let staffId;
+let bannedUserId;
 
 async function login(email, password) {
   const loginPage = await fetch(`${baseUrl}/admin/login`);
@@ -78,12 +79,13 @@ describe('AdminJS HTTP security and resource behavior', () => {
       [staffHash],
     );
     staffId = staff.rows[0].id;
-    await database.pool.query(
-      `UPDATE users
-       SET is_banned = true, banned_by_admin_id = $2
-       WHERE id = $1`,
-      [principals.userId, principals.adminId],
+    const bannedUser = await database.pool.query(
+      `INSERT INTO users (firebase_user_id, email, full_name, is_banned, banned_by_admin_id, banned_at)
+       VALUES ('firebase-banned-user', 'banned@example.com', 'Banned User', true, $1, now())
+       RETURNING id`,
+      [principals.adminId],
     );
+    bannedUserId = bannedUser.rows[0].id;
 
     const databaseName = new URL(connectionString).pathname.replace(/^\//, '');
     const built = await buildAdminJs(connectionString, databaseName, database.pool);
@@ -283,7 +285,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
   });
 
   it('removes private fields from users and populated admin references', async () => {
-    const response = await fetch(`${baseUrl}/admin/api/resources/users/records/${principals.userId}/show`, {
+    const response = await fetch(`${baseUrl}/admin/api/resources/users/records/${bannedUserId}/show`, {
       headers: { cookie: superCookie },
     });
     assert.equal(response.status, 200);
@@ -399,8 +401,8 @@ describe('AdminJS HTTP security and resource behavior', () => {
   });
 
   it('exposes only state-valid record actions for users over HTTP API', async () => {
-    // 1. Banned user (principals.userId was banned in setup)
-    const bannedRes = await fetch(`${baseUrl}/admin/api/resources/users/records/${principals.userId}/show`, {
+    // 1. Dedicated banned user; the shared Post fixture principal stays active.
+    const bannedRes = await fetch(`${baseUrl}/admin/api/resources/users/records/${bannedUserId}/show`, {
       headers: { cookie: superCookie },
     });
     assert.equal(bannedRes.status, 200);
@@ -3276,5 +3278,65 @@ describe('AdminJS HTTP security and resource behavior', () => {
       mediaId2,
     ]);
     assert.equal(Number(survivingMediaCount.rows[0].count), 2, 'Media records must survive bulkDelete');
+  });
+
+  it('Ticket 11: routes a concurrent Comment restore/removal through authenticated AdminJS HTTP with durable RBAC outcomes', async () => {
+    const postId = await insertPost(database.pool, {
+      ...principals,
+      title: 'Ticket 11 AdminJS HTTP moderation race',
+      status: 'ACTIVE',
+    });
+    const inserted = await database.pool.query(
+      `INSERT INTO comments (post_id, author_id, text, status, reply_count)
+       VALUES ($1, $2, 'AdminJS HTTP race target', 'HIDDEN', 0)
+       RETURNING id`,
+      [postId, principals.userId],
+    );
+    const commentId = inserted.rows[0].id;
+
+    const postAction = (path, payload, cookie, csrf) =>
+      fetch(`${baseUrl}${path}`, {
+        method: 'POST',
+        headers: {
+          cookie: `${cookie}; ${csrf.cookie}`,
+          origin: baseUrl,
+          'x-xsrf-token': csrf.token,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+    // An ADMIN (not just SUPER_ADMIN) performs the permanent action through
+    // the real AdminJS route while a SUPER_ADMIN attempts restoration.
+    const [restoreResponse, removeResponse] = await Promise.race([
+      Promise.all([
+        postAction(`/admin/api/resources/comments/records/${commentId}/restoreComment`, {}, superCookie, superCsrf),
+        postAction(
+          `/admin/api/resources/comments/records/${commentId}/removeComment`,
+          { reason: 'Ticket 11 policy removal' },
+          staffCookie,
+          staffCsrf,
+        ),
+      ]),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('AdminJS HTTP moderation race timed out')), 8_000)),
+    ]);
+    assert.equal(restoreResponse.status, 200);
+    assert.equal(removeResponse.status, 200);
+    const restoreResult = await restoreResponse.json();
+    const removeResult = await removeResponse.json();
+    assert.equal(removeResult.notice?.type, 'success', 'ADMIN role must remain authorized for Comment removal');
+    assert.ok(['success', 'error'].includes(restoreResult.notice?.type));
+
+    const comment = await database.pool.query(`SELECT status, reply_count FROM comments WHERE id = $1`, [commentId]);
+    assert.equal(comment.rows[0].status, 'REMOVED');
+    assert.equal(comment.rows[0].reply_count, 0);
+    const post = await database.pool.query(`SELECT comment_count FROM posts WHERE id = $1`, [postId]);
+    assert.equal(post.rows[0].comment_count, 0);
+    const actions = await database.pool.query(
+      `SELECT action_type FROM moderation_actions WHERE target_id = $1 ORDER BY created_at`,
+      [commentId],
+    );
+    assert.equal(actions.rows.filter((action) => action.action_type === 'COMMENT_REMOVED').length, 1);
+    assert.ok(actions.rows.length >= 1 && actions.rows.length <= 2);
   });
 });

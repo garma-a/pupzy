@@ -3,10 +3,11 @@
 /// type name it wraps.
 class AppNotification {
   final String id;
-  final String type; // NEW_UPVOTE, POST_SAVED, CONTACT_REQUEST_RECEIVED, etc.
+  final String type; // NEW_UPVOTE, POST_SAVED, CONTACT_REQUEST_RECEIVED, NEW_COMMENT, NEW_REPLY, COMMENT_BOOSTED, COMMENT_PINNED, etc.
   final String title;
   final String body;
   final String? relatedPostId;
+  final String? relatedCommentId;
   final bool isRead;
   final DateTime createdAt;
 
@@ -16,6 +17,7 @@ class AppNotification {
     required this.title,
     required this.body,
     this.relatedPostId,
+    this.relatedCommentId,
     required this.isRead,
     required this.createdAt,
   });
@@ -26,6 +28,7 @@ class AppNotification {
         title: json['title'] as String,
         body: json['body'] as String,
         relatedPostId: json['relatedPostId'] as String?,
+        relatedCommentId: json['relatedCommentId'] as String?,
         isRead: json['isRead'] as bool? ?? false,
         createdAt: DateTime.parse(json['createdAt'] as String),
       );
@@ -36,6 +39,7 @@ class AppNotification {
         title: title,
         body: body,
         relatedPostId: relatedPostId,
+        relatedCommentId: relatedCommentId,
         isRead: isRead ?? this.isRead,
         createdAt: createdAt,
       );

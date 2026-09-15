@@ -244,6 +244,11 @@ describe('AdminJS Redis-free dashboard and cache invalidation HTTP behavior', ()
       `INSERT INTO users (firebase_user_id, email, full_name) VALUES ('firebase-to-ban', 'to-ban@example.com', 'To Ban') RETURNING id`,
     );
     const targetUserId = userRes.rows[0].id;
+    const postId = await insertPost(database.pool, {
+      ...principals,
+      userId: targetUserId,
+      title: 'AdminJS HTTP durable ban cascade',
+    });
 
     // Warm cache
     const beforeBan = await getDashboard();
@@ -252,9 +257,18 @@ describe('AdminJS Redis-free dashboard and cache invalidation HTTP behavior', ()
     // Ban user via record action route: /admin/api/resources/users/records/:id/banUser
     const actionRes = await postAction(`/admin/api/resources/users/records/${targetUserId}/banUser`, {
       reason: 'Violated terms of service',
+      alsoRemovePosts: true,
     });
     assert.equal(actionRes.status, 200);
     assert.equal(actionRes.data?.notice?.type, 'success');
+    const removedPost = await database.pool.query('SELECT status FROM posts WHERE id = $1', [postId]);
+    assert.equal(removedPost.rows[0].status, 'REMOVED');
+    const durableCascade = await database.pool.query(
+      `SELECT state, cascaded_post_count FROM user_ban_post_cascades WHERE user_id = $1`,
+      [targetUserId],
+    );
+    assert.equal(durableCascade.rows[0].state, 'PENDING');
+    assert.equal(Number(durableCascade.rows[0].cascaded_post_count), 1);
 
     // Next dashboard view immediately reflects the ban without waiting for TTL
     const afterBan = await getDashboard();

@@ -110,6 +110,8 @@ export const reportReasonEnum = pgEnum('report_reason', [
   'OTHER',
 ]);
 
+export type ReportReason = (typeof reportReasonEnum.enumValues)[number];
+
 export const notificationTypeEnum = pgEnum('notification_type', [
   'NEW_UPVOTE',
   'POST_SAVED',
@@ -122,6 +124,10 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'POST_REMOVED_BY_ADMIN',
   'POST_INACTIVITY_NUDGE',
   'SYSTEM_ANNOUNCEMENT',
+  'NEW_COMMENT',
+  'NEW_REPLY',
+  'COMMENT_BOOSTED',
+  'COMMENT_PINNED',
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -197,3 +203,68 @@ export type AccountDeletionStep = (typeof accountDeletionStepEnum.enumValues)[nu
 export const mediaFinalizationStatusEnum = pgEnum('media_finalization_status', ['IN_FLIGHT', 'COMPENSATION_REQUIRED']);
 
 export type MediaFinalizationStatus = (typeof mediaFinalizationStatusEnum.enumValues)[number];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STAGED UPLOAD ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Purpose of an upload ticket.
+ * Binds the media to a specific vertical/domain to prevent purpose confusion.
+ */
+export const stagedUploadPurposeEnum = pgEnum('staged_upload_purpose', ['POST_MEDIA', 'COMMENT_IMAGE']);
+
+export type StagedUploadPurpose = (typeof stagedUploadPurposeEnum.enumValues)[number];
+
+/**
+ * Lifecycle states of a staged upload ticket.
+ * - ISSUED: Ticket issued with presigned PUT URL, awaiting client upload.
+ * - CLAIMED: Atomically claimed during post or comment creation to prevent concurrent reuse.
+ * - FINALIZED: Verified and copied to permanent public storage.
+ * - FAILED: Expired, missing in R2, or failed during finalization.
+ */
+export const stagedUploadStatusEnum = pgEnum('staged_upload_status', [
+  'ISSUED',
+  'CLAIMED',
+  'FINALIZED',
+  'FAILED',
+  'EXPIRED',
+]);
+
+export type StagedUploadStatus = (typeof stagedUploadStatusEnum.enumValues)[number];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMMENT ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Moderation and lifecycle states of a comment.
+ * - ACTIVE: Visible in discussions.
+ * - IMAGE_HIDDEN: Text visible, images hidden by reports.
+ * - HIDDEN: Temporarily hidden by reports.
+ * - DELETED: Deleted by author (neutral structural tombstone if replies exist).
+ * - REMOVED: Permanently removed by administrator.
+ */
+export const commentStatusEnum = pgEnum('comment_status', ['ACTIVE', 'IMAGE_HIDDEN', 'HIDDEN', 'DELETED', 'REMOVED']);
+
+export type CommentStatus = (typeof commentStatusEnum.enumValues)[number];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MEDIA DELETION ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Status of background media deletion work items.
+ * - PENDING: Queued for deletion from R2 and CDN cache purge.
+ * - PROCESSING: Currently being executed by worker.
+ * - COMPLETED: Successfully deleted from R2 and purged from CDN.
+ * - FAILED: Reached maximum retry attempts; visible for operator intervention.
+ */
+export const mediaDeletionStatusEnum = pgEnum('media_deletion_status', [
+  'PENDING',
+  'PROCESSING',
+  'COMPLETED',
+  'FAILED',
+]);
+
+export type MediaDeletionStatus = (typeof mediaDeletionStatusEnum.enumValues)[number];

@@ -199,4 +199,3 @@ type Mutation {
   """
   deleteMyAccount(input: DeleteMyAccountInput!): AccountDeletionPayload!
 }
-

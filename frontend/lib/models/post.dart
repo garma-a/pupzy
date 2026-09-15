@@ -1,1 +1,1 @@
-enum PostType { general, adoption, rescue, product }
+enum PostType { general, adoption, rescue, product, mating }
