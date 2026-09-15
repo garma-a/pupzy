@@ -117,8 +117,7 @@ export class PostsRepository {
       .from(users)
       .where(eq(users.id, creatorId))
       .for('update');
-    if (!creator) throw new NotFoundError('User', creatorId);
-    if (creator.isBanned) throw new ForbiddenError('Your account has been suspended.');
+    if (!creator || creator.isBanned) throw new ForbiddenError('ACCOUNT_DELETED');
   }
   /**
    * Creates a RESCUE post atomically.

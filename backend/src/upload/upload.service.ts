@@ -364,6 +364,20 @@ export class UploadService {
     publicUrl: string;
     cloudflareStorageKey: string;
   }> {
+    // Check account state before parsing or looking up a durable ticket. Deleted
+    // users lose staged-upload rows via FK cascade, but callers must still get
+    // the stable ACCOUNT_DELETED error and no storage copy may begin.
+    try {
+      await this.assertFinalizationAccountActive(userId);
+    } catch (err) {
+      if (err instanceof ForbiddenError) {
+        const contentType = (await this.cacheManager.get<string>(`media_ct:${mediaId}`)) ?? 'image/webp';
+        const ext = UploadService.mimeToExtension(contentType);
+        await this.deleteObjectQuietly(`staging/${userId}/${mediaId}${ext}`, 'staged object');
+      }
+      throw err;
+    }
+
     const [ticket] = await this.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId)).limit(1);
 
     if (!ticket || ticket.userId !== userId || ticket.purpose !== purpose) {
@@ -482,6 +496,35 @@ export class UploadService {
       publicUrl: `${this.publicUrl}/${finalKey}`,
       cloudflareStorageKey: finalKey,
     };
+  }
+
+  /**
+   * Produces the stable deletion error before ticket lookup. This is required
+   * after user deletion cascades remove staged_uploads rows.
+   */
+  private async assertFinalizationAccountActive(userId: string): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      const [userRow] = await tx
+        .select({ id: users.id, isBanned: users.isBanned })
+        .from(users)
+        .where(eq(users.id, userId))
+        .for('update');
+
+      if (!userRow || userRow.isBanned) {
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+
+      const [deletionRecord] = await tx
+        .select({ id: accountDeletions.id, status: accountDeletions.status })
+        .from(accountDeletions)
+        .where(eq(accountDeletions.userId, userId))
+        .orderBy(sql`${accountDeletions.createdAt} DESC`)
+        .limit(1);
+
+      if (deletionRecord && isAccountDeletionBlockedStatus(deletionRecord.status)) {
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+    });
   }
 
   /**

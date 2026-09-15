@@ -51,11 +51,11 @@ function createFinalizationDbMock({
 }: {
   blockedAtSettle: boolean;
 }): NodePgDatabase<Record<string, unknown>> {
-  let transactionSelectCount = 0;
   let topLevelSelectCount = 0;
 
   return {
     transaction: jest.fn().mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => {
+      let transactionSelectCount = 0;
       const mockTx = {
         select: jest.fn().mockImplementation(() => {
           transactionSelectCount++;
@@ -1301,9 +1301,9 @@ describe('UploadService', () => {
         sentKeys.push(command.input?.Key);
         return Promise.resolve({});
       });
-      let transactionSelectCount = 0;
       const mockDb = {
         transaction: jest.fn().mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => {
+          let transactionSelectCount = 0;
           const mockTx = {
             select: jest.fn().mockImplementation(() => {
               transactionSelectCount++;

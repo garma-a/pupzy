@@ -15,7 +15,7 @@ import {
 } from '../database/schema';
 import type * as schema from '../database/schema';
 
-import { ForbiddenError, NotFoundError } from '../common/errors/app.errors';
+import { ForbiddenError } from '../common/errors/app.errors';
 export type NewMatingDetailsInput = Omit<NewMatingPostRow, 'postId'>;
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
@@ -40,8 +40,7 @@ export class MatingRepository {
       .from(users)
       .where(eq(users.id, creatorId))
       .for('update');
-    if (!creator) throw new NotFoundError('User', creatorId);
-    if (creator.isBanned) throw new ForbiddenError('Your account has been suspended.');
+    if (!creator || creator.isBanned) throw new ForbiddenError('ACCOUNT_DELETED');
   }
   /**
    * Atomically creates the parent posts row + mating_posts extension row +

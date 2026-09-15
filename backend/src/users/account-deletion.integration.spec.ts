@@ -37,6 +37,7 @@ import {
   cities,
   accountDeletions,
   mediaFinalizations,
+  stagedUploads,
   type AccountDeletion,
   type User,
 } from '../database/schema';
@@ -261,6 +262,27 @@ describe('Account Deletion Feature Integration', () => {
       })
       .returning();
     return city.id;
+  }
+
+  async function seedPostMediaTicket(userId: string): Promise<{
+    mediaId: string;
+    postId: string;
+    stagingKey: string;
+  }> {
+    const mediaId = generateUuidV7();
+    const postId = generateUuidV7();
+    const stagingKey = `staging/${userId}/${mediaId}.webp`;
+    await dbHelper.db.insert(stagedUploads).values({
+      id: mediaId,
+      userId,
+      purpose: 'POST_MEDIA',
+      stagingKey,
+      declaredContentType: 'image/webp',
+      declaredFileSizeBytes: 1024,
+      status: 'ISSUED',
+      expiresAt: new Date(Date.now() + 900_000),
+    });
+    return { mediaId, postId, stagingKey };
   }
 
   // ─── TICKET 01: Empty Account Deletion Journey ──────────────────────────────
@@ -1455,6 +1477,7 @@ describe('Account Deletion Feature Integration', () => {
         dbHelper.db,
         mediaFinalizationRepo,
       );
+      const ticket = await seedPostMediaTicket(user.id);
 
       // Mock cache returning owner
       (mockCacheManager.get as jest.Mock).mockImplementation((key: string) => {
@@ -1467,7 +1490,7 @@ describe('Account Deletion Feature Integration', () => {
       const mockS3Send = jest.fn().mockResolvedValue({});
       (uploadServiceWithDatabase as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockS3Send;
 
-      await expect(uploadServiceWithDatabase.finalizeMedia('media-uuid-1', user.id, 'post-id-1')).rejects.toThrow(
+      await expect(uploadServiceWithDatabase.finalizeMedia(ticket.mediaId, user.id, ticket.postId)).rejects.toThrow(
         'ACCOUNT_DELETED',
       );
 
@@ -1713,6 +1736,7 @@ describe('Account Deletion Feature Integration', () => {
         mediaFinalizationRepo,
       );
 
+      const ticket = await seedPostMediaTicket(user.id);
       const currentEpochSeconds = Math.floor(Date.now() / 1000) - 20;
       await accountDeletionService.initiateDeletion(user, currentEpochSeconds);
 
@@ -1720,7 +1744,7 @@ describe('Account Deletion Feature Integration', () => {
       const mockS3Send = jest.fn().mockResolvedValue({});
       (uploadServiceWithDb as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockS3Send;
 
-      await expect(uploadServiceWithDb.finalizeMedia('staged-media-uuid', user.id, 'post-id-1')).rejects.toThrow(
+      await expect(uploadServiceWithDb.finalizeMedia(ticket.mediaId, user.id, ticket.postId)).rejects.toThrow(
         'ACCOUNT_DELETED',
       );
 
@@ -1759,8 +1783,9 @@ describe('Account Deletion Feature Integration', () => {
       (uploadServiceWithDb as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = stalledSend;
       (mockCacheManager.get as jest.Mock).mockResolvedValue('image/webp');
 
-      const stalledFinalizations = Array.from({ length: 12 }, (_, index) =>
-        uploadServiceWithDb.finalizeMedia(`stalled-media-${index}`, user.id, `stalled-post-${index}`),
+      const stalledTickets = await Promise.all(Array.from({ length: 12 }, () => seedPostMediaTicket(user.id)));
+      const stalledFinalizations = stalledTickets.map((ticket) =>
+        uploadServiceWithDb.finalizeMedia(ticket.mediaId, user.id, ticket.postId),
       );
 
       // Wait until a full pool's worth of finalizations reached the storage boundary.
@@ -1838,8 +1863,9 @@ describe('Account Deletion Feature Integration', () => {
       (uploadServiceWithDb as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockS3Send;
       (mockCacheManager.get as jest.Mock).mockResolvedValue('image/webp');
 
+      const ticket = await seedPostMediaTicket(user.id);
       const inFlightFinalization = uploadServiceWithDb
-        .finalizeMedia('media-inflight-1', user.id, 'post-inflight-1')
+        .finalizeMedia(ticket.mediaId, user.id, ticket.postId)
         .catch(() => undefined);
 
       // Wait for the durable obligation to be recorded before accepting deletion.
@@ -1858,7 +1884,7 @@ describe('Account Deletion Feature Integration', () => {
       const obligations = await waitForObligations();
       expect(obligations).toHaveLength(1);
       expect(obligations[0].status).toBe('IN_FLIGHT');
-      expect(obligations[0].finalKey).toBe('posts/post-inflight-1/media-inflight-1.webp');
+      expect(obligations[0].finalKey).toBe(`posts/${ticket.postId}/${ticket.mediaId}.webp`);
 
       const currentEpochSeconds = Math.floor(Date.now() / 1000) - 20;
       const result = await accountDeletionService.initiateDeletion(user, currentEpochSeconds);
@@ -1881,7 +1907,7 @@ describe('Account Deletion Feature Integration', () => {
       // recreated after acceptance banned the creator, then clear its obligation.
       const sendCalls = mockS3Send.mock.calls as Array<[{ input?: { Key?: string } }]>;
       const lastCall = sendCalls[sendCalls.length - 1];
-      expect(lastCall?.[0]?.input?.Key).toBe('posts/post-inflight-1/media-inflight-1.webp');
+      expect(lastCall?.[0]?.input?.Key).toBe(`posts/${ticket.postId}/${ticket.mediaId}.webp`);
       const remainingObligations = await dbHelper.db
         .select()
         .from(mediaFinalizations)
