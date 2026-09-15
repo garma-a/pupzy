@@ -35,7 +35,7 @@ describe('Repository Layer with Testcontainers (Integration)', () => {
 
   afterAll(async () => {
     await dbHelper.stop();
-  });
+  }, 120_000);
 
   beforeEach(async () => {
     await dbHelper.clean();
