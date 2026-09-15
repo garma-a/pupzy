@@ -57,6 +57,12 @@ export * from './vet-clinic-location-audits.schema';
 // Durable address search cache for OSM Nominatim
 export * from './address-search-cache.schema';
 
+// Account deletion
+export * from './account-deletions.schema';
+
+// Durable media-finalization obligations (survive user deletion)
+export * from './media-finalizations.schema';
+
 // Staged uploads — durable authority for media upload tickets
 export * from './staged-uploads.schema';
 

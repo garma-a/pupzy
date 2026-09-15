@@ -490,7 +490,7 @@ describe('Comment Image Publishing Integration (Ticket 02)', () => {
       width: 320,
       height: 240,
       displayOrder: 0,
-      publicUrl: `https://cdn.pupzy.net/comments/${commentData.id}/${mediaId}.webp`,
+      publicUrl: uploadService.getPublicCdnUrl(`comments/${commentData.id}/${mediaId}.webp`),
     });
 
     // Verify DB records

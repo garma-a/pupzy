@@ -128,7 +128,7 @@ export class ContactsService {
     }
 
     // Decrypt owner phone → build wa.me link
-    const owner = await this.usersService.findById(ownerId);
+    const owner = await this.usersService.findActiveById(ownerId);
     const whatsappLink = owner?.phoneNumber ? `https://wa.me/${owner.phoneNumber.replace(/\D/g, '')}` : null;
 
     // Notification ONLY after the transition succeeded
@@ -206,10 +206,12 @@ export class ContactsService {
     }
 
     const post = await this.postsRepository.findById(request.postId);
-    if (!post) throw new NotFoundError('Post', request.postId);
+    if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Post', request.postId);
+    }
 
-    const owner = await this.usersService.findById(post.creatorId);
-    if (!owner?.phoneNumber) {
+    const owner = await this.usersService.findActiveById(post.creatorId);
+    if (!owner || owner.isBanned || !owner.phoneNumber) {
       throw new NotFoundError('Owner contact information is not available');
     }
 
@@ -237,8 +239,8 @@ export class ContactsService {
       throw new ForbiddenError('You cannot request contact for your own listing');
     }
 
-    const seller = await this.usersService.findById(post.creatorId);
-    if (!seller?.phoneNumber) {
+    const seller = await this.usersService.findActiveById(post.creatorId);
+    if (!seller || seller.isBanned || !seller.phoneNumber) {
       throw new NotFoundError('Seller contact information is not available');
     }
 

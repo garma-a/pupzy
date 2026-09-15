@@ -6,6 +6,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { ForbiddenError } from '../common/errors/app.errors';
 import type { User } from '../database/schema';
 import { UsersService } from '../users/users.service';
+import { AccountDeletionRepository } from '../users/account-deletion.repository';
 import { FirebaseAuthGuard } from './firebase.guard';
 
 jest.mock('firebase-admin/auth', () => ({
@@ -19,9 +20,13 @@ describe('FirebaseAuthGuard', () => {
   const mockUsersService = {
     findOrCreate: jest.fn(),
   } satisfies Partial<UsersService>;
+  const mockAccountDeletionRepo = {
+    findByFirebaseUserId: jest.fn().mockResolvedValue(undefined),
+  };
   const mockCacheManager = {
     get: jest.fn(),
     set: jest.fn(),
+    del: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -40,6 +45,7 @@ describe('FirebaseAuthGuard', () => {
         Reflector,
         { provide: 'FIREBASE_ADMIN', useValue: mockFirebaseApp },
         { provide: UsersService, useValue: mockUsersService },
+        { provide: AccountDeletionRepository, useValue: mockAccountDeletionRepo },
         { provide: CACHE_MANAGER, useValue: mockCacheManager },
       ],
     }).compile();
@@ -86,5 +92,45 @@ describe('FirebaseAuthGuard', () => {
 
     await expect(guard.canActivate(httpContext(request))).resolves.toBe(true);
     expect(request.user).toBe(user);
+  });
+
+  it('throws ForbiddenError(ACCOUNT_DELETED) when user deletion is PENDING or COMPLETED', async () => {
+    mockAccountDeletionRepo.findByFirebaseUserId.mockResolvedValue({
+      id: 'del-1',
+      userId: 'user-1',
+      firebaseUserId: 'firebase-1',
+      email: 'deleted@example.com',
+      status: 'PENDING',
+    });
+    const request = { headers: { authorization: 'Bearer valid-token' } };
+
+    await expect(guard.canActivate(httpContext(request))).rejects.toThrow(new ForbiddenError('ACCOUNT_DELETED'));
+    expect(mockCacheManager.del).toHaveBeenCalledWith('user_resolve:firebase-1');
+  });
+
+  it('allows deleteMyAccount handler through when already deleted to support idempotency', async () => {
+    mockAccountDeletionRepo.findByFirebaseUserId.mockResolvedValue({
+      id: 'del-1',
+      userId: 'user-1',
+      firebaseUserId: 'firebase-1',
+      email: 'deleted@example.com',
+      status: 'COMPLETED',
+    });
+    const request: { headers: Record<string, string>; user?: unknown; authTime?: number } = {
+      headers: { authorization: 'Bearer valid-token' },
+    };
+    const deleteMyAccountContext: ExecutionContext = {
+      getType: () => 'http',
+      getHandler: () => function deleteMyAccount() {},
+      getClass: () => class UsersResolver {},
+      switchToHttp: () => ({ getRequest: () => request }),
+    } as unknown as ExecutionContext;
+
+    await expect(guard.canActivate(deleteMyAccountContext)).resolves.toBe(true);
+    expect(request.user).toEqual({
+      id: 'user-1',
+      firebaseUserId: 'firebase-1',
+      email: 'deleted@example.com',
+    });
   });
 });

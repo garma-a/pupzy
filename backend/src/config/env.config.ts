@@ -58,6 +58,10 @@ const envSchema = z.object({
   THROTTLE_LIMIT: z.coerce.number().positive().default(100),
   /** Rate-limit window in milliseconds. Defaults to 60s. */
   THROTTLE_TTL_MS: z.coerce.number().positive().default(60_000),
+
+  // ─── Feature Flags ──────────────────────────────────────────────────────
+  /** Feature toggle for account deletion. Defaults to true in dev/test. */
+  ACCOUNT_DELETION_ENABLED: z.coerce.boolean().default(true),
 });
 
 export type Env = z.infer<typeof envSchema>;

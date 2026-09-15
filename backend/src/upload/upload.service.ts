@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject, Optional, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { ConfigService } from '@nestjs/config';
@@ -9,15 +9,25 @@ import {
   DeleteObjectCommand,
   HeadObjectCommand,
   GetObjectCommand,
+  DeleteObjectsCommand,
+  ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { eq, and, gt, gte, inArray, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
-import { stagedUploads, commentQuotaAdmissions, type StagedUpload, type StagedUploadPurpose } from '../database/schema';
+import {
+  stagedUploads,
+  commentQuotaAdmissions,
+  users,
+  accountDeletions,
+  isAccountDeletionBlockedStatus,
+  type StagedUpload,
+  type StagedUploadPurpose,
+} from '../database/schema';
 import * as schema from '../database/schema';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
-import { NotFoundError, AppError } from '../common/errors/app.errors';
+import { NotFoundError, ForbiddenError, AppError } from '../common/errors/app.errors';
 import {
   validateCommentImage,
   MAX_COMMENT_IMAGE_BYTES,
@@ -25,6 +35,7 @@ import {
 } from '../comments/validators/comment-image.validator';
 import { FinalizedCommentMedia } from '../comments/comments.repository';
 import { getCommentMediaPurgeUrls } from './media-delivery.util';
+import { MediaFinalizationRepository } from './media-finalization.repository';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 type DbExecutor = NodePgDatabase<typeof schema> | DbTransaction;
@@ -58,6 +69,11 @@ export class UploadService {
   private readonly bucketName: string;
   private readonly publicUrl: string;
 
+  /** Bound every R2 command so storage outages cannot outlive the durable finalization lease. */
+  private static readonly R2_CONNECTION_TIMEOUT_MS = 3_000;
+  private static readonly R2_REQUEST_TIMEOUT_MS = 15_000;
+  private static readonly R2_MAX_ATTEMPTS = 3;
+
   /**
    * Maps an allowed MIME type to its canonical file extension.
    * Only called with validated content types from the Zod schema.
@@ -79,6 +95,9 @@ export class UploadService {
     private readonly config: ConfigService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     @Inject(DATABASE_TOKEN) private readonly db: NodePgDatabase<typeof schema>,
+    @Optional()
+    @Inject(MediaFinalizationRepository)
+    private readonly mediaFinalizationRepository?: MediaFinalizationRepository,
   ) {
     this.s3Client = new S3Client({
       region: 'auto',
@@ -86,6 +105,12 @@ export class UploadService {
       credentials: {
         accessKeyId: config.get('R2_ACCESS_KEY_ID')!,
         secretAccessKey: config.get('R2_SECRET_ACCESS_KEY')!,
+      },
+      maxAttempts: UploadService.R2_MAX_ATTEMPTS,
+      requestHandler: {
+        connectionTimeout: UploadService.R2_CONNECTION_TIMEOUT_MS,
+        requestTimeout: UploadService.R2_REQUEST_TIMEOUT_MS,
+        throwOnRequestTimeout: true,
       },
     });
     this.bucketName = config.get<string>('R2_BUCKET_NAME')!;
@@ -126,30 +151,63 @@ export class UploadService {
       ContentLength: fileSizeBytes,
     });
 
-    /** 10-minute expiry for client upload URL */
-    const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 600 });
-    const expiresAt = new Date(Date.now() + 600_000);
-    /** 15-minute expiry for durable ticket to allow slow client post creation */
-    const ticketExpiresAt = new Date(Date.now() + 900_000);
+    const expiresInSeconds = 600;
+    let signingDate = new Date();
+    let expiresAt = new Date(signingDate.getTime() + expiresInSeconds * 1000);
+    let ticketExpiresAt = new Date(signingDate.getTime() + 900_000);
 
-    // Commit ticket durably in PostgreSQL BEFORE returning
-    await this.db.insert(stagedUploads).values({
-      id: mediaId,
-      userId,
-      purpose,
-      stagingKey,
-      declaredContentType: contentType,
-      declaredFileSizeBytes: fileSizeBytes,
-      status: 'ISSUED',
-      expiresAt: ticketExpiresAt,
+    // Serialize URL issuance with account deletion acceptance. The staged
+    // ticket and the exact signed-URL grace deadline commit atomically.
+    await this.db.transaction(async (tx) => {
+      const [userRow] = await tx
+        .select({ id: users.id, isBanned: users.isBanned })
+        .from(users)
+        .where(eq(users.id, userId))
+        .for('update');
+
+      if (!userRow || userRow.isBanned) {
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+
+      const [deletionRecord] = await tx
+        .select({ id: accountDeletions.id, status: accountDeletions.status })
+        .from(accountDeletions)
+        .where(eq(accountDeletions.userId, userId))
+        .for('update');
+
+      if (deletionRecord && isAccountDeletionBlockedStatus(deletionRecord.status)) {
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+
+      signingDate = new Date();
+      expiresAt = new Date(signingDate.getTime() + expiresInSeconds * 1000);
+      ticketExpiresAt = new Date(signingDate.getTime() + 900_000);
+
+      await tx.update(users).set({ uploadGraceUntil: expiresAt }).where(eq(users.id, userId));
+      await tx.insert(stagedUploads).values({
+        id: mediaId,
+        userId,
+        purpose,
+        stagingKey,
+        declaredContentType: contentType,
+        declaredFileSizeBytes: fileSizeBytes,
+        status: 'ISSUED',
+        expiresAt: ticketExpiresAt,
+      });
     });
 
-    // Optional cache acceleration — failure to populate cache never breaks the flow
+    const uploadUrl = await getSignedUrl(this.s3Client, command, {
+      expiresIn: expiresInSeconds,
+      signingDate,
+    });
+
+    // Optional cache acceleration — PostgreSQL remains authoritative.
     await Promise.all([
       this.cacheManager.set(`media_ct:${mediaId}`, contentType, 900_000),
       this.cacheManager.set(`media_owner:${mediaId}`, userId, 900_000),
       this.cacheManager.set(`media_staging_key:${mediaId}`, stagingKey, 900_000),
       this.cacheManager.set(`media_purpose:${mediaId}`, purpose, 900_000),
+      this.cacheManager.set(`user_last_upload_grace:${userId}`, expiresAt.getTime(), 600_000),
     ]).catch((err) => {
       this.logger.warn(`Failed to set staging cache for mediaId ${mediaId}: ${err}`);
     });
@@ -160,6 +218,29 @@ export class UploadService {
       expiresAt,
       stagingKey,
     };
+  }
+
+  /**
+   * Returns the latest outstanding presigned-upload deadline for account
+   * deletion. PostgreSQL is the durable fallback when cache state is absent.
+   */
+  async getLastUploadGraceUntil(userId: string): Promise<Date | null> {
+    const cachedExpiry = await this.cacheManager.get<number>(`user_last_upload_grace:${userId}`);
+    if (cachedExpiry) return new Date(cachedExpiry);
+
+    try {
+      const rows = await this.db
+        .select({ uploadGraceUntil: users.uploadGraceUntil })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      return rows[0]?.uploadGraceUntil ?? null;
+    } catch (err) {
+      this.logger.warn(
+        `Failed to query uploadGraceUntil for user ${userId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      return null;
+    }
   }
 
   /**
@@ -283,13 +364,27 @@ export class UploadService {
     publicUrl: string;
     cloudflareStorageKey: string;
   }> {
+    // Check account state before parsing or looking up a durable ticket. Deleted
+    // users lose staged-upload rows via FK cascade, but callers must still get
+    // the stable ACCOUNT_DELETED error and no storage copy may begin.
+    try {
+      await this.assertFinalizationAccountActive(userId);
+    } catch (err) {
+      if (err instanceof ForbiddenError) {
+        const contentType = (await this.cacheManager.get<string>(`media_ct:${mediaId}`)) ?? 'image/webp';
+        const ext = UploadService.mimeToExtension(contentType);
+        await this.deleteObjectQuietly(`staging/${userId}/${mediaId}${ext}`, 'staged object');
+      }
+      throw err;
+    }
+
     const [ticket] = await this.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId)).limit(1);
 
     if (!ticket || ticket.userId !== userId || ticket.purpose !== purpose) {
       throw new NotFoundError('Staged media', mediaId);
     }
 
-    // Idempotent retry: already finalized for this post
+    // Idempotent retry: already finalized for this post.
     if (ticket.status === 'FINALIZED' && ticket.finalStorageKey && ticket.postId === postId) {
       return {
         publicUrl: `${this.publicUrl}/${ticket.finalStorageKey}`,
@@ -297,7 +392,6 @@ export class UploadService {
       };
     }
 
-    // If ticket was not claimed yet, claim it for this postId
     if (ticket.status === 'ISSUED') {
       await this.claimMedia(mediaId, userId, postId, purpose);
     } else if (ticket.status !== 'CLAIMED' || ticket.postId !== postId) {
@@ -308,81 +402,278 @@ export class UploadService {
     const stagingKey = ticket.stagingKey;
     const finalKey = `posts/${postId}/${mediaId}${ext}`;
 
-    // Step 1: Verify staged upload actually exists
+    let obligationId: string | null = null;
     try {
-      await this.s3Client.send(
-        new HeadObjectCommand({
-          Bucket: this.bucketName,
-          Key: stagingKey,
-        }),
-      );
-    } catch {
-      await this.db
-        .update(stagedUploads)
-        .set({
-          status: 'FAILED',
-          errorMessage: 'Staged object not found in R2 during finalization',
-          updatedAt: new Date(),
-        })
-        .where(eq(stagedUploads.id, mediaId));
-      throw new NotFoundError(`Staged media "${mediaId}" — upload may have expired or was never completed`);
-    }
-
-    // Step 2: Copy to permanent location
-    try {
-      await this.s3Client.send(
-        new CopyObjectCommand({
-          Bucket: this.bucketName,
-          CopySource: `${this.bucketName}/${stagingKey}`,
-          Key: finalKey,
-        }),
-      );
+      obligationId = await this.beginFinalizationObligation(userId, mediaId, stagingKey, finalKey);
     } catch (err) {
-      await this.db
-        .update(stagedUploads)
-        .set({
-          status: 'FAILED',
-          errorMessage: `CopyObject failed: ${err instanceof Error ? err.message : String(err)}`,
-          updatedAt: new Date(),
-        })
-        .where(eq(stagedUploads.id, mediaId));
+      if (err instanceof ForbiddenError) {
+        await this.deleteObjectQuietly(stagingKey, 'staged object');
+      }
       throw err;
     }
 
-    // Step 3: Remove staging object to avoid orphaned duplicates
+    const heartbeat = async (): Promise<void> => {
+      if (obligationId && this.mediaFinalizationRepository) {
+        await this.mediaFinalizationRepository.touch(obligationId);
+      }
+    };
+
     try {
-      await this.s3Client.send(
-        new DeleteObjectCommand({
-          Bucket: this.bucketName,
-          Key: stagingKey,
-        }),
-      );
+      await heartbeat();
+      try {
+        await this.s3Client.send(
+          new HeadObjectCommand({
+            Bucket: this.bucketName,
+            Key: stagingKey,
+          }),
+        );
+      } catch {
+        await this.db
+          .update(stagedUploads)
+          .set({
+            status: 'FAILED',
+            errorMessage: 'Staged object not found in R2 during finalization',
+            updatedAt: new Date(),
+          })
+          .where(eq(stagedUploads.id, mediaId));
+        throw new NotFoundError(`Staged media "${mediaId}" — upload may have expired or was never completed`);
+      }
+
+      await heartbeat();
+      try {
+        await this.s3Client.send(
+          new CopyObjectCommand({
+            Bucket: this.bucketName,
+            CopySource: `${this.bucketName}/${stagingKey}`,
+            Key: finalKey,
+          }),
+        );
+      } catch (err) {
+        await this.db
+          .update(stagedUploads)
+          .set({
+            status: 'FAILED',
+            errorMessage: `CopyObject failed: ${err instanceof Error ? err.message : String(err)}`,
+            updatedAt: new Date(),
+          })
+          .where(eq(stagedUploads.id, mediaId));
+        throw err;
+      }
+
+      await heartbeat();
+      try {
+        await this.deleteObject(stagingKey);
+      } catch (err) {
+        this.logger.warn(`Failed to delete staging object ${stagingKey} after copy: ${err}`);
+      }
+
+      await this.db
+        .update(stagedUploads)
+        .set({
+          status: 'FINALIZED',
+          finalStorageKey: finalKey,
+          updatedAt: new Date(),
+        })
+        .where(eq(stagedUploads.id, mediaId));
+
+      await Promise.all([
+        this.cacheManager.del(`media_ct:${mediaId}`),
+        this.cacheManager.del(`media_owner:${mediaId}`),
+        this.cacheManager.del(`media_staging_key:${mediaId}`),
+        this.cacheManager.del(`media_purpose:${mediaId}`),
+      ]).catch(() => {});
     } catch (err) {
-      this.logger.warn(`Failed to delete staging object ${stagingKey} after copy: ${err}`);
+      await this.settleFinalizationObligation(obligationId, finalKey, userId);
+      throw err;
     }
 
-    // Step 4: Durably record finalization state
-    await this.db
-      .update(stagedUploads)
-      .set({
-        status: 'FINALIZED',
-        finalStorageKey: finalKey,
-        updatedAt: new Date(),
-      })
-      .where(eq(stagedUploads.id, mediaId));
-
-    // Step 5: Clean up cached keys
-    await Promise.all([
-      this.cacheManager.del(`media_ct:${mediaId}`),
-      this.cacheManager.del(`media_owner:${mediaId}`),
-      this.cacheManager.del(`media_staging_key:${mediaId}`),
-      this.cacheManager.del(`media_purpose:${mediaId}`),
-    ]).catch(() => {});
+    const accountBlocked = await this.settleFinalizationObligation(obligationId, finalKey, userId);
+    if (accountBlocked) {
+      throw new ForbiddenError('ACCOUNT_DELETED');
+    }
 
     return {
       publicUrl: `${this.publicUrl}/${finalKey}`,
       cloudflareStorageKey: finalKey,
     };
+  }
+
+  /**
+   * Produces the stable deletion error before ticket lookup. This is required
+   * after user deletion cascades remove staged_uploads rows.
+   */
+  private async assertFinalizationAccountActive(userId: string): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      const [userRow] = await tx
+        .select({ id: users.id, isBanned: users.isBanned })
+        .from(users)
+        .where(eq(users.id, userId))
+        .for('update');
+
+      if (!userRow || userRow.isBanned) {
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+
+      const [deletionRecord] = await tx
+        .select({ id: accountDeletions.id, status: accountDeletions.status })
+        .from(accountDeletions)
+        .where(eq(accountDeletions.userId, userId))
+        .orderBy(sql`${accountDeletions.createdAt} DESC`)
+        .limit(1);
+
+      if (deletionRecord && isAccountDeletionBlockedStatus(deletionRecord.status)) {
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+    });
+  }
+
+  /**
+   * Locks the creator against deletion acceptance and records the external-copy
+   * obligation in the same short database transaction.
+   */
+  private async beginFinalizationObligation(
+    userId: string,
+    mediaId: string,
+    stagingKey: string,
+    finalKey: string,
+  ): Promise<string | null> {
+    const obligationId = generateUuidV7();
+
+    await this.db.transaction(async (tx) => {
+      const [userRow] = await tx
+        .select({ id: users.id, isBanned: users.isBanned })
+        .from(users)
+        .where(eq(users.id, userId))
+        .for('update');
+
+      if (!userRow || userRow.isBanned) {
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+
+      const [deletionRecord] = await tx
+        .select({ id: accountDeletions.id, status: accountDeletions.status })
+        .from(accountDeletions)
+        .where(eq(accountDeletions.userId, userId))
+        .orderBy(sql`${accountDeletions.createdAt} DESC`)
+        .limit(1);
+
+      if (deletionRecord && isAccountDeletionBlockedStatus(deletionRecord.status)) {
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+
+      if (this.mediaFinalizationRepository) {
+        await this.mediaFinalizationRepository.create(
+          {
+            id: obligationId,
+            userId,
+            mediaId,
+            stagingKey,
+            finalKey,
+            status: 'IN_FLIGHT',
+          },
+          tx,
+        );
+      }
+    });
+
+    return this.mediaFinalizationRepository ? obligationId : null;
+  }
+
+  /**
+   * Clears a successful obligation for a live account, or compensates a copy
+   * that raced with account deletion. Failed compensation stays durable.
+   */
+  private async settleFinalizationObligation(
+    obligationId: string | null,
+    finalKey: string,
+    userId: string,
+  ): Promise<boolean> {
+    let accountBlocked: boolean | null = null;
+    try {
+      accountBlocked = !(await this.isFinalizationAllowed(userId));
+    } catch (err) {
+      this.logger.warn(
+        `Could not re-check account state for media finalization ${obligationId ?? '(untracked)'}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
+    if (!obligationId || !this.mediaFinalizationRepository) {
+      if (accountBlocked === true) {
+        await this.deleteObjectQuietly(finalKey, 'permanent object');
+        return true;
+      }
+      return false;
+    }
+
+    if (accountBlocked === false) {
+      await this.removeFinalizationObligation(obligationId);
+      return false;
+    }
+
+    if (accountBlocked === true) {
+      try {
+        await this.mediaFinalizationRepository.markCompensationRequired(obligationId);
+      } catch (err) {
+        this.logger.error(
+          `Failed to mark media finalization ${obligationId} as compensation-required: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+
+      try {
+        await this.deleteObject(finalKey);
+        await this.mediaFinalizationRepository.delete(obligationId);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.error(
+          `Failed to compensate permanent object "${finalKey}" for obligation ${obligationId}; account deletion will retry: ${message}`,
+        );
+        try {
+          await this.mediaFinalizationRepository.recordError(obligationId, message);
+        } catch (recordErr) {
+          this.logger.error(
+            `Failed to persist compensation error for obligation ${obligationId}: ${recordErr instanceof Error ? recordErr.message : String(recordErr)}`,
+          );
+        }
+      }
+      return true;
+    }
+
+    return false;
+  }
+
+  private async removeFinalizationObligation(obligationId: string): Promise<void> {
+    if (!this.mediaFinalizationRepository) return;
+    try {
+      await this.mediaFinalizationRepository.delete(obligationId);
+    } catch (err) {
+      this.logger.warn(
+        `Failed to clear media finalization obligation ${obligationId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
+  private async isFinalizationAllowed(userId: string): Promise<boolean> {
+    const [userRow] = await this.db.select({ isBanned: users.isBanned }).from(users).where(eq(users.id, userId));
+    if (!userRow || userRow.isBanned) return false;
+
+    const [deletionRecord] = await this.db
+      .select({ id: accountDeletions.id, status: accountDeletions.status })
+      .from(accountDeletions)
+      .where(eq(accountDeletions.userId, userId))
+      .orderBy(sql`${accountDeletions.createdAt} DESC`)
+      .limit(1);
+
+    return !deletionRecord || !isAccountDeletionBlockedStatus(deletionRecord.status);
+  }
+
+  private async deleteObjectQuietly(key: string, objectKind: string): Promise<void> {
+    try {
+      await this.deleteObject(key);
+    } catch (err) {
+      this.logger.warn(
+        `Failed to delete ${objectKind} "${key}" after a blocked finalization: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 
   /**
@@ -1091,5 +1382,81 @@ export class UploadService {
       this.logger.warn(`Failed to delete object ${key}: ${err}`);
       throw err;
     }
+  }
+  /**
+   * Deletes storage keys in R2 batches, falling back to individual deletes so
+   * partial provider failures remain visible and retryable.
+   */
+  async deleteObjects(keys: string[]): Promise<void> {
+    if (!keys || keys.length === 0) return;
+
+    const batchSize = 1000;
+    for (let i = 0; i < keys.length; i += batchSize) {
+      const batch = keys.slice(i, i + batchSize);
+      try {
+        const response = await this.s3Client.send(
+          new DeleteObjectsCommand({
+            Bucket: this.bucketName,
+            Delete: {
+              Objects: batch.map((key) => ({ Key: key })),
+              Quiet: true,
+            },
+          }),
+        );
+        if (response.Errors && response.Errors.length > 0) {
+          const failedKeys = response.Errors.map((error) => error.Key).filter(Boolean);
+          throw new Error(
+            `R2 bulk delete returned ${response.Errors.length} object errors. Failed keys: ${failedKeys.slice(0, 5).join(', ')}`,
+          );
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Bulk delete failed, falling back to individual deletes: ${err instanceof Error ? err.message : String(err)}`,
+        );
+        const failedKeys: string[] = [];
+        for (const key of batch) {
+          try {
+            await this.deleteObject(key);
+          } catch {
+            failedKeys.push(key);
+          }
+        }
+        if (failedKeys.length > 0) {
+          throw new Error(
+            `Failed to delete ${failedKeys.length} storage objects: ${failedKeys.slice(0, 5).join(', ')}`,
+          );
+        }
+      }
+    }
+  }
+
+  /** Deletes every object under a staging prefix, following R2 pagination. */
+  async deletePrefix(prefix: string): Promise<number> {
+    let totalDeleted = 0;
+    let continuationToken: string | undefined;
+
+    do {
+      const listResponse = await this.s3Client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucketName,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+        }),
+      );
+
+      const keys =
+        listResponse.Contents?.map((object) => object.Key).filter(
+          (key): key is string => typeof key === 'string' && key.length > 0,
+        ) ?? [];
+
+      if (keys.length > 0) {
+        await this.deleteObjects(keys);
+        totalDeleted += keys.length;
+      }
+
+      continuationToken = listResponse.IsTruncated ? listResponse.NextContinuationToken : undefined;
+    } while (continuationToken);
+
+    return totalDeleted;
   }
 }

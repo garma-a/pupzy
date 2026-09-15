@@ -5,10 +5,11 @@ import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { UsersRepository } from './users.repository';
+import { AccountDeletionRepository } from './account-deletion.repository';
 import { CitiesService } from '../cities/cities.service';
 import { encryptString, decryptString } from '../common/utils/crypto.util';
-import { NotFoundError, ValidationError } from '../common/errors/app.errors';
-import type { User } from '../database/schema';
+import { ForbiddenError, NotFoundError, ValidationError } from '../common/errors/app.errors';
+import { isAccountDeletionBlockedStatus, type User } from '../database/schema';
 
 interface FindOrCreateInput {
   firebaseUserId: string;
@@ -25,6 +26,7 @@ export class UsersService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly citiesService: CitiesService,
+    private readonly accountDeletionRepository: AccountDeletionRepository,
     config: ConfigService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {
@@ -60,6 +62,11 @@ export class UsersService {
    * phoneNumber and homeCityId will be null until the user calls completeProfile().
    */
   async findOrCreate(input: FindOrCreateInput): Promise<User> {
+    const deletion = await this.accountDeletionRepository.findByFirebaseUserId(input.firebaseUserId);
+    if (deletion && isAccountDeletionBlockedStatus(deletion.status)) {
+      throw new ForbiddenError('ACCOUNT_DELETED');
+    }
+
     const existing = await this.usersRepository.findByFirebaseUserId(input.firebaseUserId);
     if (existing) return this.decryptUserPhone(existing);
 
@@ -92,6 +99,17 @@ export class UsersService {
 
   async findById(id: string): Promise<User | undefined> {
     const user = await this.usersRepository.findById(id);
+    return user ? this.decryptUserPhone(user) : undefined;
+  }
+
+  async findActiveById(id: string): Promise<User | undefined> {
+    if (this.accountDeletionRepository) {
+      const deletion = await this.accountDeletionRepository.findByUserId(id);
+      if (deletion && isAccountDeletionBlockedStatus(deletion.status)) {
+        return undefined;
+      }
+    }
+    const user = await this.usersRepository.findActiveById(id);
     return user ? this.decryptUserPhone(user) : undefined;
   }
 

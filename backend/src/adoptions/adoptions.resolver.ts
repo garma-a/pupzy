@@ -75,6 +75,10 @@ export class AdoptionsResolver {
    */
   @ResolveField('applicant')
   async applicant(@Parent() application: AdoptionApplication, @Context() ctx: GqlContext): Promise<User | null> {
-    return ctx.loaders.userById.load(application.applicantId);
+    const user = await ctx.loaders.userById.load(application.applicantId);
+    if (!user || user.isBanned || user.banReason === 'ACCOUNT_DELETED') {
+      return null;
+    }
+    return user;
   }
 }

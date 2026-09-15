@@ -169,6 +169,42 @@ export const PERSONALITY_TAGS = [
 export type PersonalityTag = (typeof PERSONALITY_TAGS)[number];
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ACCOUNT DELETION ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const accountDeletionStatusEnum = pgEnum('account_deletion_status', ['PENDING', 'COMPLETED', 'FAILED']);
+
+export type AccountDeletionStatus = (typeof accountDeletionStatusEnum.enumValues)[number];
+
+export const accountDeletionStepEnum = pgEnum('account_deletion_step', [
+  'ACCEPTED',
+  'POSTS_DELETED',
+  'DATA_CLEANED',
+  'STORAGE_CLEANED',
+  'FIREBASE_USER_DELETED',
+  'COMPLETED',
+]);
+
+export type AccountDeletionStep = (typeof accountDeletionStepEnum.enumValues)[number];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MEDIA FINALIZATION ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lifecycle of a durable media-finalization obligation.
+ *
+ * - IN_FLIGHT: a staged upload is being copied to its permanent key; account
+ *   deletion must not sweep storage until this obligation is resolved.
+ * - COMPENSATION_REQUIRED: the copy may have completed for an account that
+ *   became deletion-blocked, so the permanent object must be removed before
+ *   deletion can finish.
+ */
+export const mediaFinalizationStatusEnum = pgEnum('media_finalization_status', ['IN_FLIGHT', 'COMPENSATION_REQUIRED']);
+
+export type MediaFinalizationStatus = (typeof mediaFinalizationStatusEnum.enumValues)[number];
+
+// ─────────────────────────────────────────────────────────────────────────────
 // STAGED UPLOAD ENUMS
 // ─────────────────────────────────────────────────────────────────────────────
 

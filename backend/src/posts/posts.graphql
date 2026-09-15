@@ -209,7 +209,7 @@ The WhatsApp link is only available when status = APPROVED.
 type ContactRequest {
   id: ID!
   postId: ID!
-  requester: User!
+  requester: User
   """
   Message from the requester explaining why they want to connect.
   """
@@ -231,7 +231,7 @@ Visible only to the applicant and the listing owner.
 type AdoptionApplication {
   id: ID!
   targetPostId: ID!
-  applicant: User!
+  applicant: User
   status: RequestStatus!
   speciesPreference: SpeciesType
   breedPreference: String

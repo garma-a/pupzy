@@ -426,6 +426,10 @@ export interface IQuery {
     after?: Nullable<string>,
   ): PostConnection | Promise<PostConnection>;
   me(): User | Promise<User>;
+  accountDeletionProgress(
+    deletionId: string,
+    progressToken: string,
+  ): AccountDeletionPayload | Promise<AccountDeletionPayload>;
   nearbyVetClinics(cityId: string): VetClinic[] | Promise<VetClinic[]>;
   comments(
     postId: string,
@@ -438,6 +442,26 @@ export interface IQuery {
     first?: Nullable<number>,
     after?: Nullable<string>,
   ): CommentConnection | Promise<CommentConnection>;
+}
+
+export enum AccountDeletionStatus {
+  PENDING = 'PENDING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+}
+
+export interface AccountDeletionPayload {
+  status: AccountDeletionStatus;
+  deletionId: string;
+  progressToken?: Nullable<string>;
+  message: string;
+  acceptedAt: Date;
+  completedAt?: Nullable<Date>;
+}
+
+export interface DeleteMyAccountInput {
+  confirm: boolean;
+  progressToken?: Nullable<string>;
 }
 
 export interface IMutation {
@@ -466,6 +490,7 @@ export interface IMutation {
   completeProfile(input: CompleteProfileInput): User | Promise<User>;
   updateProfile(input: UpdateProfileInput): User | Promise<User>;
   updateMyLocation(location: GeoLocationInput): User | Promise<User>;
+  deleteMyAccount(input: DeleteMyAccountInput): AccountDeletionPayload | Promise<AccountDeletionPayload>;
 }
 
 export interface City {
@@ -644,7 +669,7 @@ export interface ProductPost {
 export interface ContactRequest {
   id: string;
   postId: string;
-  requester: User;
+  requester?: Nullable<User>;
   message: string;
   status: RequestStatus;
   whatsappLink?: Nullable<string>;
@@ -655,7 +680,7 @@ export interface ContactRequest {
 export interface AdoptionApplication {
   id: string;
   targetPostId: string;
-  applicant: User;
+  applicant?: Nullable<User>;
   status: RequestStatus;
   speciesPreference?: Nullable<SpeciesType>;
   breedPreference?: Nullable<string>;

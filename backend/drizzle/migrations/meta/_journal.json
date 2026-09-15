@@ -246,6 +246,34 @@
       "when": 1790014400000,
       "tag": "0034_add_discussion_notification_outbox",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1790100800000,
+      "tag": "0035_add_account_deletions",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1790187200000,
+      "tag": "0036_add_upload_grace_until",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1790273600000,
+      "tag": "0037_enforce_unique_account_deletions",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1790360000000,
+      "tag": "0038_add_media_finalizations",
+      "breakpoints": true
     }
   ]
 }
