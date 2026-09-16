@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:provider/provider.dart';
 
 import 'config/firebase_options.dart';
@@ -22,7 +23,15 @@ final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
 void main() {
   runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
+    final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+
+    // Keep the OS-rendered native splash (see flutter_native_splash.yaml)
+    // on screen past Flutter's first frame, instead of handing off to a
+    // second, Flutter-drawn splash widget underneath it. SplashScreen below
+    // renders nothing visible — it only resolves where to navigate — and
+    // calls FlutterNativeSplash.remove() itself once that's known, so the
+    // native splash is the only splash the user ever sees.
+    FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
     // Route framework-caught errors (widget build/layout/paint exceptions)
     // through the same reporting path as everything else, instead of just

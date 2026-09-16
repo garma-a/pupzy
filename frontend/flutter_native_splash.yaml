@@ -1,0 +1,22 @@
+# Native splash config — see https://pub.dev/packages/flutter_native_splash
+#
+# This is the ONLY splash screen the app shows. It's an OS-rendered launch
+# screen displayed before the Flutter engine attaches (and kept on screen a
+# little longer via FlutterNativeSplash.preserve()/.remove() in main.dart
+# and splash_screen.dart, while auth state resolves) — there is
+# deliberately no second, Flutter-rendered splash widget underneath it.
+#
+# Regenerate the platform assets after editing this file:
+#   dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#FAF6F1"
+  image: assets/icon/app_icon_foreground.png
+
+  android_12:
+    image: assets/icon/app_icon_foreground.png
+    icon_background_color: "#FAF6F1"
+    color: "#FAF6F1"
+
+  android: true
+  ios: true
+  web: false

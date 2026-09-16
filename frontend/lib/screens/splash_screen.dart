@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:provider/provider.dart';
 
 import '../services/auth_service.dart';
@@ -9,6 +10,12 @@ import 'app_shell.dart';
 import 'complete_profile_screen.dart';
 import 'login_screen.dart';
 
+/// Resolves where the app should land (Login / CompleteProfile / AppShell)
+/// while the OS-rendered native splash (see flutter_native_splash.yaml,
+/// kept up via FlutterNativeSplash.preserve() in main.dart) is still
+/// covering the screen. This widget renders nothing visible of its own —
+/// no logo, no animation — so there's only ever one splash screen, not a
+/// native one immediately followed by a second Flutter-drawn one.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -16,33 +23,19 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _fade;
-  late final Animation<double> _scale;
-
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-    _scale = Tween<double>(begin: 0.75, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
-    _controller.forward();
 
-    // Navigate as soon as both the auth chain AND a short minimum splash
-    // time are done — whichever finishes last — instead of always waiting
-    // out a fixed delay. An already-authenticated, fast-network user isn't
-    // taxed on every single cold start; a fresh sign-in still gets a brief,
-    // non-flashy splash instead of an abrupt cut.
+    // Still enforce a short minimum before handing off, even though
+    // nothing is visibly animating — an auth chain that resolves in a few
+    // milliseconds (fully cached, fast network) shouldn't make the native
+    // splash flicker off almost instantly; whichever of the two finishes
+    // last decides when we navigate.
     Future.wait([
       _resolveDestination(),
-      Future.delayed(const Duration(milliseconds: 500)),
+      Future.delayed(const Duration(milliseconds: 400)),
     ]).then((results) {
       if (mounted) _goTo(results[0] as Widget);
     });
@@ -105,41 +98,16 @@ class _SplashScreenState extends State<SplashScreen>
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => destination),
     );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+    // Reveal the destination now that it's the thing underneath — this is
+    // the only place the native splash ever comes off.
+    FlutterNativeSplash.remove();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
-        child: FadeTransition(
-          opacity: _fade,
-          child: ScaleTransition(
-            scale: _scale,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: Image.asset(
-                    'assets/images/Logo.png',
-                    width: 120,
-                    height: 120,
-                    color: AppColors.primary,
-                    colorBlendMode: BlendMode.srcIn,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+    // Matches flutter_native_splash.yaml's background so there's no
+    // mismatch in the unlikely event a frame of this paints before the
+    // native splash is removed.
+    return const Scaffold(backgroundColor: AppColors.background);
   }
 }

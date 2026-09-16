@@ -6,6 +6,7 @@ import '../config/api_config.dart';
 import '../models/account_deletion.dart';
 import '../models/adoption_application.dart';
 import '../models/app_notification.dart';
+import '../models/comment.dart';
 import '../models/contact_request.dart';
 import '../models/feed_post.dart';
 import '../models/mating_detail.dart';
@@ -216,6 +217,7 @@ class GraphQLService {
         upvoteCount
         saveCount
         viewCount
+        commentCount
         isUpvotedByMe
         isSavedByMe
         createdAt
@@ -286,6 +288,7 @@ class GraphQLService {
         upvoteCount
         saveCount
         viewCount
+        commentCount
         isUpvotedByMe
         isSavedByMe
         createdAt
@@ -373,6 +376,7 @@ class GraphQLService {
         upvoteCount
         saveCount
         viewCount
+        commentCount
         isUpvotedByMe
         isSavedByMe
         createdAt
@@ -1775,5 +1779,331 @@ class GraphQLService {
     }
     final node = result.data?['accountDeletionProgress'] as Map<String, dynamic>?;
     return (node != null ? AccountDeletionPayload.fromJson(node) : null, null);
+  }
+
+  // ─── Comments ─────────────────────────────────────────────────────────
+
+  /// Shared field selection for a Comment (a Reply is the same type),
+  /// reused by the comments/replies queries and every mutation that
+  /// returns a Comment.
+  static const String _commentFields = r'''
+    id
+    postId
+    parentId
+    author {
+      id
+      fullName
+      fullNameArabic
+      profilePictureUrl
+    }
+    text
+    status
+    replyCount
+    boostCount
+    isBoostedByMe
+    isPinned
+    media {
+      id
+      publicUrl
+      width
+      height
+      displayOrder
+    }
+    createdAt
+    updatedAt
+  ''';
+
+  static final String commentsQuery = '''
+    query Comments(\$postId: ID!, \$sort: CommentSort, \$first: Int, \$after: String) {
+      comments(postId: \$postId, sort: \$sort, first: \$first, after: \$after) {
+        edges {
+          cursor
+          node {
+            $_commentFields
+          }
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+      }
+    }
+  ''';
+
+  static final String repliesQuery = '''
+    query Replies(\$commentId: ID!, \$first: Int, \$after: String) {
+      replies(commentId: \$commentId, first: \$first, after: \$after) {
+        edges {
+          cursor
+          node {
+            $_commentFields
+          }
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+      }
+    }
+  ''';
+
+  static const String requestCommentImageUploadUrlMutation = r'''
+    mutation RequestCommentImageUploadUrl($input: RequestCommentImageUploadInput!) {
+      requestCommentImageUploadUrl(input: $input) {
+        mediaId
+        uploadUrl
+        expiresAt
+        maxSizeBytes
+        maxWidth
+        maxHeight
+        allowedContentType
+      }
+    }
+  ''';
+
+  static final String createCommentMutation = '''
+    mutation CreateComment(\$input: CreateCommentInput!) {
+      createComment(input: \$input) {
+        $_commentFields
+      }
+    }
+  ''';
+
+  static final String createReplyMutation = '''
+    mutation CreateReply(\$input: CreateReplyInput!) {
+      createReply(input: \$input) {
+        $_commentFields
+      }
+    }
+  ''';
+
+  static const String deleteCommentMutation = r'''
+    mutation DeleteComment($id: ID!) {
+      deleteComment(id: $id)
+    }
+  ''';
+
+  static const String toggleCommentBoostMutation = r'''
+    mutation ToggleCommentBoost($commentId: ID!) {
+      toggleCommentBoost(commentId: $commentId) {
+        commentId
+        isBoostedByMe
+        boostedByMe
+        boostCount
+      }
+    }
+  ''';
+
+  static final String pinCommentMutation = '''
+    mutation PinComment(\$commentId: ID!) {
+      pinComment(commentId: \$commentId) {
+        $_commentFields
+      }
+    }
+  ''';
+
+  static const String unpinCommentMutation = r'''
+    mutation UnpinComment($postId: ID!) {
+      unpinComment(postId: $postId)
+    }
+  ''';
+
+  static const String reportCommentMutation = r'''
+    mutation ReportComment($input: ReportCommentInput!) {
+      reportComment(input: $input)
+    }
+  ''';
+
+  /// Runs a comments/replies connection query and parses it into a (list,
+  /// endCursor, hasNextPage, errorMessage) tuple — shared by [fetchComments]
+  /// and [fetchReplies] since both return the same CommentConnection shape.
+  Future<(List<Comment> comments, String? endCursor, bool hasNextPage, String? errorMessage)> _runCommentsQuery(
+    String document,
+    String fieldName,
+    Map<String, dynamic> variables,
+  ) async {
+    final result = await client.value.query(
+      QueryOptions(
+        document: gql(document),
+        variables: variables,
+        fetchPolicy: FetchPolicy.networkOnly,
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (<Comment>[], null, false, _serverErrorMessage(result.exception));
+    }
+    final connection = result.data?[fieldName] as Map<String, dynamic>?;
+    final edges = connection?['edges'] as List<dynamic>? ?? [];
+    final comments = edges.map((e) => Comment.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>)).toList();
+    final pageInfo = connection?['pageInfo'] as Map<String, dynamic>?;
+    final endCursor = pageInfo?['endCursor'] as String?;
+    final hasNextPage = pageInfo?['hasNextPage'] as bool? ?? false;
+    return (comments, endCursor, hasNextPage, null);
+  }
+
+  /// Fetches top-level comments for a post, sorted by [sort] ('TOP' or
+  /// 'NEWEST').
+  Future<(List<Comment> comments, String? endCursor, bool hasNextPage, String? errorMessage)> fetchComments({
+    required String postId,
+    required String sort,
+    int first = 20,
+    String? after,
+  }) {
+    return _runCommentsQuery(commentsQuery, 'comments', {
+      'postId': postId,
+      'sort': sort,
+      'first': first,
+      'after': after,
+    });
+  }
+
+  /// Fetches replies beneath a top-level comment, oldest first.
+  Future<(List<Comment> replies, String? endCursor, bool hasNextPage, String? errorMessage)> fetchReplies({
+    required String commentId,
+    int first = 20,
+    String? after,
+  }) {
+    return _runCommentsQuery(repliesQuery, 'replies', {
+      'commentId': commentId,
+      'first': first,
+      'after': after,
+    });
+  }
+
+  /// Requests a presigned upload ticket for a comment image. Returns the
+  /// raw ticket map (mediaId/uploadUrl/...) — the caller PUTs the image
+  /// bytes to `uploadUrl` directly, same pattern as post media uploads.
+  Future<(Map<String, dynamic>? ticket, String? errorMessage)> requestCommentImageUploadUrl({
+    required String contentType,
+    required int fileSizeBytes,
+  }) async {
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(requestCommentImageUploadUrlMutation),
+        variables: {
+          'input': {'contentType': contentType, 'fileSizeBytes': fileSizeBytes},
+        },
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _serverErrorMessage(result.exception));
+    }
+    return (result.data?['requestCommentImageUploadUrl'] as Map<String, dynamic>?, null);
+  }
+
+  Future<(Comment? comment, String? errorMessage)> createComment({
+    required String clientRequestId,
+    required String postId,
+    required String text,
+    List<String>? mediaIds,
+  }) async {
+    final input = <String, dynamic>{
+      'clientRequestId': clientRequestId,
+      'postId': postId,
+      'text': text,
+    };
+    if (mediaIds != null && mediaIds.isNotEmpty) input['mediaIds'] = mediaIds;
+    final result = await client.value.mutate(
+      MutationOptions(document: gql(createCommentMutation), variables: {'input': input}),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _serverErrorMessage(result.exception));
+    }
+    final node = result.data?['createComment'] as Map<String, dynamic>?;
+    return (node != null ? Comment.fromJson(node) : null, null);
+  }
+
+  Future<(Comment? reply, String? errorMessage)> createReply({
+    required String clientRequestId,
+    required String commentId,
+    required String text,
+  }) async {
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(createReplyMutation),
+        variables: {
+          'input': {'clientRequestId': clientRequestId, 'commentId': commentId, 'text': text},
+        },
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _serverErrorMessage(result.exception));
+    }
+    final node = result.data?['createReply'] as Map<String, dynamic>?;
+    return (node != null ? Comment.fromJson(node) : null, null);
+  }
+
+  Future<(bool success, String? errorMessage)> deleteComment(String id) async {
+    final result = await client.value.mutate(
+      MutationOptions(document: gql(deleteCommentMutation), variables: {'id': id}),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (false, _serverErrorMessage(result.exception));
+    }
+    return (result.data?['deleteComment'] as bool? ?? false, null);
+  }
+
+  /// Toggles boost on a comment/reply. Returns the updated (count,
+  /// isBoostedByMe) on success, or (null, null, message) on failure — same
+  /// three-part shape as [toggleUpvote]/[toggleSave].
+  Future<(int? boostCount, bool? isBoostedByMe, String? errorMessage)> toggleCommentBoost(String commentId) async {
+    final result = await client.value.mutate(
+      MutationOptions(document: gql(toggleCommentBoostMutation), variables: {'commentId': commentId}),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, null, _serverErrorMessage(result.exception));
+    }
+    final data = result.data?['toggleCommentBoost'] as Map<String, dynamic>?;
+    return (data?['boostCount'] as int?, data?['isBoostedByMe'] as bool?, null);
+  }
+
+  /// Pins a comment beneath its post. Post-owner only; atomically replaces
+  /// any existing pin.
+  Future<(Comment? pinned, String? errorMessage)> pinComment(String commentId) async {
+    final result = await client.value.mutate(
+      MutationOptions(document: gql(pinCommentMutation), variables: {'commentId': commentId}),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _serverErrorMessage(result.exception));
+    }
+    final node = result.data?['pinComment'] as Map<String, dynamic>?;
+    return (node != null ? Comment.fromJson(node) : null, null);
+  }
+
+  Future<(bool success, String? errorMessage)> unpinComment(String postId) async {
+    final result = await client.value.mutate(
+      MutationOptions(document: gql(unpinCommentMutation), variables: {'postId': postId}),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (false, _serverErrorMessage(result.exception));
+    }
+    return (result.data?['unpinComment'] as bool? ?? false, null);
+  }
+
+  Future<(bool success, String? errorMessage)> reportComment({
+    required String commentId,
+    required String reason,
+  }) async {
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(reportCommentMutation),
+        variables: {
+          'input': {'commentId': commentId, 'reason': reason},
+        },
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (false, _serverErrorMessage(result.exception));
+    }
+    return (result.data?['reportComment'] as bool? ?? false, null);
   }
 }
