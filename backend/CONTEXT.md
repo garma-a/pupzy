@@ -48,4 +48,19 @@ _Avoid_: Nested reply, sub-comment, thread comment, comment reply
 A positive, reversible engagement signal that an authenticated user can give to a Post, top-level Comment, or Reply to increase its visibility in ranked views. A user can have at most one Boost relationship with a target and cannot Boost their own contribution. Adding or removing a Boost transactionally updates the target's denormalized counter. In discussion threads, visible top-level Comments can be ordered by TOP ranking based on Boost count.
 _Avoid_: Comment upvote, comment like, upvote comment, thread upvote
 
+**Post Report**:
+A moderation complaint submitted by one Pupzy Account about a specific Post. It is distinct from blocking the Post's creator.
+_Avoid_: Post flag, user report
+
+**Comment Report**:
+A moderation complaint submitted by one Pupzy Account about a specific Comment or Reply. It is distinct from reporting the author's Pupzy Account.
+_Avoid_: Comment flag, Post Report
+
+**Pupzy Account Report**:
+A moderation complaint submitted about another Pupzy Account's conduct rather than about one specific contribution.
+_Avoid_: User report, account flag, Post Report
+
+**Block**:
+A reversible, directional safety relationship initiated and owned by one Pupzy Account that creates mutual visibility and interaction isolation between it and another Pupzy Account. Only the initiating Pupzy Account can remove the Block.
+_Avoid_: Ban, suspension, mute, one-way hide
 
