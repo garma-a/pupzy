@@ -5,6 +5,7 @@ import { validateCreateLostPostInput } from './dto/create-lost-post.input';
 import { validateCreateAdoptionPostInput } from './dto/create-adoption-post.input';
 import { validateCreateProductPostInput } from './dto/create-product-post.input';
 import { validateUpdatePostStatusInput } from './dto/update-post-status.input';
+import { validateReportPostInput } from './dto/report-post.input';
 import {
   validateHelpFeedInput,
   validateAdoptFeedInput,
@@ -194,6 +195,16 @@ export class PostsResolver {
   async deletePost(@Args('postId') postId: string, @Context() ctx: GqlContext): Promise<boolean> {
     await this.postsService.deletePost(postId, ctx.user!.id);
     return true;
+  }
+
+  /**
+   * Reports an abusive Post of any listing type.
+   * Requires authentication and uses the shared moderation-report allowance.
+   */
+  @Mutation('reportPost')
+  async reportPost(@Args('input') rawInput: unknown, @Context() ctx: GqlContext): Promise<boolean> {
+    const input = validateReportPostInput(rawInput);
+    return this.postsService.reportPost(ctx.user!.id, input);
   }
 
   /**

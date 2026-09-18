@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq, ne, inArray, asc, desc, and, or, gt, lt, sql, getTableColumns, type SQL } from 'drizzle-orm';
 import DataLoader from 'dataloader';
@@ -14,6 +14,7 @@ import {
   postMedia,
   postUpvotes,
   postSaves,
+  postReports,
   type Post,
   type PostMedia,
   type NewPost,
@@ -26,10 +27,15 @@ import {
   type LostPost,
   type AdoptionPost,
   type ProductPost,
+  type ReportReason,
 } from '../database/schema';
 import type * as schema from '../database/schema';
-import { ForbiddenError, NotFoundError } from '../common/errors/app.errors';
+import { ConflictError, ForbiddenError, NotFoundError } from '../common/errors/app.errors';
 import { withDbRetry } from '../common/utils/db-retry.util';
+import {
+  ModerationReportQuotaManager,
+  ReportQuotaReservation,
+} from '../moderation-reports/moderation-report-quota.manager';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -81,12 +87,41 @@ export interface FeedResult {
   hasNextPage: boolean;
 }
 
+interface DatabaseErrorLike {
+  code?: string;
+  message?: string;
+  cause?: { code?: string; message?: string };
+  driverError?: { code?: string; message?: string };
+}
+
+/**
+ * Detects PostgreSQL unique violations whether pg, Drizzle, or Nest wrapped
+ * them. Used to map the report duplicate index race to the same domain error
+ * as the in-transaction duplicate check.
+ */
+function isUniqueViolation(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const dbErr = err as DatabaseErrorLike;
+  if (dbErr.code === '23505') return true;
+  if (dbErr.cause?.code === '23505') return true;
+  if (dbErr.driverError?.code === '23505') return true;
+  const msg = `${dbErr.message ?? ''} ${dbErr.cause?.message ?? ''} ${dbErr.driverError?.message ?? ''}`;
+  return msg.includes('23505') || msg.toLowerCase().includes('unique constraint');
+}
+
 @Injectable()
 export class PostsRepository {
+  private readonly reportQuotaManager: ModerationReportQuotaManager;
+
   constructor(
     @Inject(DATABASE_TOKEN)
     private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+    @Optional()
+    @Inject(ModerationReportQuotaManager)
+    reportQuotaManager?: ModerationReportQuotaManager,
+  ) {
+    this.reportQuotaManager = reportQuotaManager ?? new ModerationReportQuotaManager(this.db);
+  }
 
   /**
    * Coordinates Post lifecycle writes with Comment discussion mutations.
@@ -409,6 +444,83 @@ export class PostsRepository {
         return post;
       }),
     );
+  }
+
+  // ─── Moderation Reports ───────────────────────────────────────────────
+
+  /**
+   * Atomically reserves one slot of the shared moderation-report allowance.
+   * Post Reports admit through the same seam as Comment Reports and future
+   * Pupzy Account Reports, so alternating target types cannot bypass the cap.
+   * Callers must roll back the reservation when the report is rejected.
+   */
+  async reserveReportAllowance(userId: string): Promise<ReportQuotaReservation> {
+    return this.reportQuotaManager.reserveReportAllowance(userId);
+  }
+
+  /**
+   * Records a Post Report and enters the Post into moderation review.
+   *
+   * - Any accessible Post type (status !== 'REMOVED') may be reported.
+   * - Self-reports and duplicate reporter/Post pairs are rejected.
+   * - The report row reuses the shared-allowance admission id, so the
+   *   database trigger increments `posts.report_count` exactly once and the
+   *   committed report counts against the shared allowance exactly once.
+   * - The first accepted report on a CLEAN Post sets moderation_status to
+   *   FLAGGED while leaving its lifecycle status untouched. Reports never
+   *   remove a Post.
+   */
+  async reportPost(params: {
+    postId: string;
+    reporterId: string;
+    reason: ReportReason;
+    details?: string;
+    quotaAdmissionId?: string;
+  }): Promise<boolean> {
+    const { postId, reporterId, reason, details, quotaAdmissionId } = params;
+    try {
+      return await withDbRetry(() =>
+        this.db.transaction(async (tx) => {
+          const post = await this.lockDiscussionPost(tx, postId);
+          if (!post || post.status === 'REMOVED') throw new NotFoundError('Post', postId);
+
+          if (post.creatorId === reporterId) {
+            throw new ForbiddenError('You cannot report your own post');
+          }
+
+          const [existingReport] = await tx
+            .select()
+            .from(postReports)
+            .where(and(eq(postReports.postId, postId), eq(postReports.reporterId, reporterId)))
+            .limit(1);
+          if (existingReport) {
+            throw new ConflictError('You have already reported this post', 'POST_ALREADY_REPORTED');
+          }
+
+          await tx.insert(postReports).values({
+            // The reservation id doubles as the report row id, which links the
+            // shared-allowance admission to its committed report so it is
+            // counted exactly once under concurrency.
+            ...(quotaAdmissionId ? { id: quotaAdmissionId } : {}),
+            postId,
+            reporterId,
+            reason,
+            details: details ?? null,
+          });
+
+          if (post.moderationStatus === 'CLEAN') {
+            await tx.update(posts).set({ moderationStatus: 'FLAGGED' }).where(eq(posts.id, postId));
+          }
+
+          return true;
+        }),
+      );
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new ConflictError('You have already reported this post', 'POST_ALREADY_REPORTED');
+      }
+      throw error;
+    }
   }
 
   // ─── Engagement Toggles ───────────────────────────────────────────────
