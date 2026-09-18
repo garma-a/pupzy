@@ -14,13 +14,14 @@ export class MatingResolver {
     @Args('filter') filter: MatingFeedFilterInput | undefined,
     @Args('first') first: number | undefined,
     @Args('after') after: string | undefined,
+    @Context() ctx: GqlContext,
   ) {
-    return this.matingService.matingFeed(filter ?? null, first ?? null, after ?? null);
+    return this.matingService.matingFeed(filter ?? null, first ?? null, after ?? null, ctx.user?.id);
   }
 
   @Query('matingPostDetail')
-  async matingPostDetail(@Args('postId') postId: string) {
-    return this.matingService.getMatingPostDetail(postId);
+  async matingPostDetail(@Args('postId') postId: string, @Context() ctx: GqlContext) {
+    return this.matingService.getMatingPostDetail(postId, ctx.user?.id);
   }
 
   /**

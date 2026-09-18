@@ -44,8 +44,8 @@ export class PostsResolver {
    * Returns null if the post does not exist or has been soft-deleted.
    */
   @Query('post')
-  async post(@Args('id') id: string): Promise<Post | null> {
-    return this.postsService.getPost(id);
+  async post(@Args('id') id: string, @Context() ctx: GqlContext): Promise<Post | null> {
+    return this.postsService.getPost(id, ctx.user?.id);
   }
 
   /**
@@ -53,8 +53,8 @@ export class PostsResolver {
    * Returns null if the post is not of type RESCUE.
    */
   @Query('rescuePostDetail')
-  async rescuePostDetail(@Args('postId') postId: string): Promise<RescuePost> {
-    return this.postsService.getRescueDetail(postId);
+  async rescuePostDetail(@Args('postId') postId: string, @Context() ctx: GqlContext): Promise<RescuePost> {
+    return this.postsService.getRescueDetail(postId, ctx.user?.id);
   }
 
   /**
@@ -62,8 +62,8 @@ export class PostsResolver {
    * Returns null if the post is not of type LOST.
    */
   @Query('lostPostDetail')
-  async lostPostDetail(@Args('postId') postId: string): Promise<LostPost> {
-    return this.postsService.getLostDetail(postId);
+  async lostPostDetail(@Args('postId') postId: string, @Context() ctx: GqlContext): Promise<LostPost> {
+    return this.postsService.getLostDetail(postId, ctx.user?.id);
   }
 
   /**
@@ -71,8 +71,8 @@ export class PostsResolver {
    * Returns null if the post is not of type ADOPTION.
    */
   @Query('adoptionPostDetail')
-  async adoptionPostDetail(@Args('postId') postId: string): Promise<AdoptionPost> {
-    return this.postsService.getAdoptionDetail(postId);
+  async adoptionPostDetail(@Args('postId') postId: string, @Context() ctx: GqlContext): Promise<AdoptionPost> {
+    return this.postsService.getAdoptionDetail(postId, ctx.user?.id);
   }
 
   /**
@@ -80,8 +80,8 @@ export class PostsResolver {
    * Returns null if the post is not of type PRODUCT.
    */
   @Query('productPostDetail')
-  async productPostDetail(@Args('postId') postId: string): Promise<ProductPost> {
-    return this.postsService.getProductDetail(postId);
+  async productPostDetail(@Args('postId') postId: string, @Context() ctx: GqlContext): Promise<ProductPost> {
+    return this.postsService.getProductDetail(postId, ctx.user?.id);
   }
 
   // ─── Feeds ──────────────────────────────────────────────────────────────
@@ -90,36 +90,36 @@ export class PostsResolver {
    * Help Feed — RESCUE and LOST posts.
    */
   @Query('helpFeed')
-  async helpFeed(@Args() args: unknown) {
+  async helpFeed(@Args() args: unknown, @Context() ctx: GqlContext) {
     const input = validateHelpFeedInput(args);
-    return this.postsService.getHelpFeed(input);
+    return this.postsService.getHelpFeed(input, ctx.user?.id);
   }
 
   /**
    * Adopt Feed — ADOPTION posts.
    */
   @Query('adoptFeed')
-  async adoptFeed(@Args() args: unknown) {
+  async adoptFeed(@Args() args: unknown, @Context() ctx: GqlContext) {
     const input = validateAdoptFeedInput(args);
-    return this.postsService.getAdoptFeed(input);
+    return this.postsService.getAdoptFeed(input, ctx.user?.id);
   }
 
   /**
    * Market Feed — PRODUCT posts.
    */
   @Query('marketFeed')
-  async marketFeed(@Args() args: unknown) {
+  async marketFeed(@Args() args: unknown, @Context() ctx: GqlContext) {
     const input = validateMarketFeedInput(args);
-    return this.postsService.getMarketFeed(input);
+    return this.postsService.getMarketFeed(input, ctx.user?.id);
   }
 
   /**
    * Home Feed — All post types combined.
    */
   @Query('homeFeed')
-  async homeFeed(@Args() args: unknown) {
+  async homeFeed(@Args() args: unknown, @Context() ctx: GqlContext) {
     const input = validateHomeFeedInput(args);
-    return this.postsService.getHomeFeed(input);
+    return this.postsService.getHomeFeed(input, ctx.user?.id);
   }
 
   /**

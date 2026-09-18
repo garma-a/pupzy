@@ -366,9 +366,9 @@ export class PostsService {
    * Returns null if the post does not exist or has been soft-deleted (REMOVED).
    * Used by the `post(id)` query resolver.
    */
-  async getPost(postId: string): Promise<Post | null> {
+  async getPost(postId: string, viewerId?: string | null): Promise<Post | null> {
     assertUuid(postId, 'postId');
-    const post = await this.postsRepository.findById(postId);
+    const post = await this.postsRepository.findById(postId, viewerId);
     if (!post || post.status === 'REMOVED') return null;
     return post;
   }
@@ -377,9 +377,9 @@ export class PostsService {
    * Fetches the RESCUE extension data for a post's detail screen.
    * @throws {NotFoundError} if the extension row does not exist.
    */
-  async getRescueDetail(postId: string): Promise<RescuePost> {
+  async getRescueDetail(postId: string, viewerId?: string | null): Promise<RescuePost> {
     assertUuid(postId, 'postId');
-    const detail = await this.postsRepository.findRescueDetail(postId);
+    const detail = await this.postsRepository.findRescueDetail(postId, viewerId);
     if (!detail) throw new NotFoundError('RescuePost', postId);
     return detail;
   }
@@ -388,9 +388,9 @@ export class PostsService {
    * Fetches the LOST extension data for a post's detail screen.
    * @throws {NotFoundError} if the extension row does not exist.
    */
-  async getLostDetail(postId: string): Promise<LostPost> {
+  async getLostDetail(postId: string, viewerId?: string | null): Promise<LostPost> {
     assertUuid(postId, 'postId');
-    const detail = await this.postsRepository.findLostDetail(postId);
+    const detail = await this.postsRepository.findLostDetail(postId, viewerId);
     if (!detail) throw new NotFoundError('LostPost', postId);
     return detail;
   }
@@ -399,9 +399,9 @@ export class PostsService {
    * Fetches the ADOPTION extension data for a post's detail screen.
    * @throws {NotFoundError} if the extension row does not exist.
    */
-  async getAdoptionDetail(postId: string): Promise<AdoptionPost> {
+  async getAdoptionDetail(postId: string, viewerId?: string | null): Promise<AdoptionPost> {
     assertUuid(postId, 'postId');
-    const detail = await this.postsRepository.findAdoptionDetail(postId);
+    const detail = await this.postsRepository.findAdoptionDetail(postId, viewerId);
     if (!detail) throw new NotFoundError('AdoptionPost', postId);
     return detail;
   }
@@ -410,9 +410,9 @@ export class PostsService {
    * Fetches the PRODUCT extension data for a post's detail screen.
    * @throws {NotFoundError} if the extension row does not exist.
    */
-  async getProductDetail(postId: string): Promise<ProductPost> {
+  async getProductDetail(postId: string, viewerId?: string | null): Promise<ProductPost> {
     assertUuid(postId, 'postId');
-    const detail = await this.postsRepository.findProductDetail(postId);
+    const detail = await this.postsRepository.findProductDetail(postId, viewerId);
     if (!detail) throw new NotFoundError('ProductPost', postId);
     return detail;
   }
@@ -618,7 +618,7 @@ export class PostsService {
     };
   }
 
-  async getHelpFeed(input: HelpFeedInput) {
+  async getHelpFeed(input: HelpFeedInput, viewerId?: string | null) {
     const result = await this.postsRepository.findHelpFeed({
       governorate: input.governorate,
       cityId: input.cityId,
@@ -626,6 +626,7 @@ export class PostsService {
       radiusKm: input.radiusKm ?? 25,
       limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor(input.after, isHelpFeedCursor),
+      viewerId,
     });
     return this.mapFeedResultToConnection(result, (post) => ({
       urgency: post.urgency,
@@ -634,7 +635,7 @@ export class PostsService {
     }));
   }
 
-  async getAdoptFeed(input: AdoptFeedInput) {
+  async getAdoptFeed(input: AdoptFeedInput, viewerId?: string | null) {
     const sort = input.sort ?? 'HOT';
     const result = await this.postsRepository.findAdoptFeed({
       governorate: input.governorate,
@@ -644,6 +645,7 @@ export class PostsService {
       sort,
       limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor(input.after, (cursor): cursor is ScoredFeedCursor => isScoredFeedCursor(cursor, sort)),
+      viewerId,
     });
     return this.mapFeedResultToConnection(result, (post) =>
       sort === 'HOT'
@@ -652,7 +654,7 @@ export class PostsService {
     );
   }
 
-  async getMarketFeed(input: MarketFeedInput) {
+  async getMarketFeed(input: MarketFeedInput, viewerId?: string | null) {
     const sort = input.sort ?? 'HOT';
     const result = await this.postsRepository.findMarketFeed({
       governorate: input.governorate,
@@ -663,6 +665,7 @@ export class PostsService {
       category: input.category,
       limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor(input.after, (cursor): cursor is ScoredFeedCursor => isScoredFeedCursor(cursor, sort)),
+      viewerId,
     });
     return this.mapFeedResultToConnection(result, (post) =>
       sort === 'HOT'
@@ -671,7 +674,7 @@ export class PostsService {
     );
   }
 
-  async getHomeFeed(input: HomeFeedInput) {
+  async getHomeFeed(input: HomeFeedInput, viewerId?: string | null) {
     const result = await this.postsRepository.findHomeFeed({
       governorate: input.governorate,
       cityId: input.cityId,
@@ -679,6 +682,7 @@ export class PostsService {
       radiusKm: input.radiusKm ?? 25,
       limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor(input.after, isIdCursor),
+      viewerId,
     });
     return this.mapFeedResultToConnection(result, (post) => ({ id: post.id }));
   }
