@@ -281,6 +281,13 @@
       "when": 1790446400000,
       "tag": "0039_shared_report_allowance_counter_repair",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1790532800000,
+      "tag": "0040_add_blocks",
+      "breakpoints": true
     }
   ]
 }
