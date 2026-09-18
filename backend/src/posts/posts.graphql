@@ -265,6 +265,15 @@ type PostReport {
 }
 
 """
+Input for reporting an abusive Post.
+"""
+input ReportPostInput {
+  postId: ID!
+  reason: ReportReason!
+  details: String
+}
+
+"""
 An in-app notification for the current user.
 """
 type Notification {
@@ -777,4 +786,13 @@ extend type Mutation {
   Fire-and-forget from Flutter — always returns true.
   """
   recordView(postId: ID!): Boolean!
+
+  """
+  Report an abusive Post.
+  Requires authentication. Uses the shared moderation-report allowance
+  (10 reports per rolling 24 hours across Post, Comment, and Account Reports).
+  Cannot report own or Removed posts, or report the same post twice.
+  An accepted report never removes the post.
+  """
+  reportPost(input: ReportPostInput!): Boolean!
 }

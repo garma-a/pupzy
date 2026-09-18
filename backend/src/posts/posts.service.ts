@@ -29,6 +29,7 @@ import type { CreateRescuePostInput } from './dto/create-rescue-post.input';
 import type { CreateLostPostInput } from './dto/create-lost-post.input';
 import type { CreateAdoptionPostInput } from './dto/create-adoption-post.input';
 import type { CreateProductPostInput } from './dto/create-product-post.input';
+import type { ReportPostInput } from './dto/report-post.input';
 import type { FeedResult } from './posts.repository';
 import type {
   HelpFeedInput,
@@ -441,6 +442,32 @@ export class PostsService {
     const removedPost = await this.postsRepository.softDelete(postId, userId);
     if (!removedPost) throw new NotFoundError('Post', postId);
     await this.usersService.invalidateUserCacheById(userId).catch(() => {});
+  }
+
+  // ─── Moderation Reports ─────────────────────────────────────────────────
+
+  /**
+   * Reports an abusive Post of any listing type.
+   * - Reserves one slot of the shared moderation-report allowance first, so
+   *   invalid, duplicate, and failed reports release it without consuming.
+   * - Rejects missing/Removed Posts, self-reports, and duplicates.
+   * - Accepted reports never remove the Post; the repository flags CLEAN
+   *   Posts for review.
+   */
+  async reportPost(userId: string, input: ReportPostInput): Promise<boolean> {
+    const reservation = await this.postsRepository.reserveReportAllowance(userId);
+    try {
+      return await this.postsRepository.reportPost({
+        postId: input.postId,
+        reporterId: userId,
+        reason: input.reason,
+        details: input.details,
+        quotaAdmissionId: reservation.admissionId,
+      });
+    } catch (err) {
+      await reservation.rollback().catch(() => {});
+      throw err;
+    }
   }
 
   // ─── Status Update ──────────────────────────────────────────────────────
