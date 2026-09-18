@@ -1,6 +1,8 @@
+import * as path from 'path';
 import { eq } from 'drizzle-orm';
 import { generateUuidV7 } from '../../common/utils/generate-uuidv7';
 import { TestDatabaseHelper } from '../../../test/test-database.helper';
+import { reconcileMigrationHistory } from '../../cities/migration';
 import { blocks, users } from './index';
 
 interface ExplainPlanNode {
@@ -25,7 +27,7 @@ describe('Blocks schema (integration)', () => {
 
   afterAll(async () => {
     await dbHelper.stop();
-  });
+  }, 120_000);
 
   beforeEach(async () => {
     await dbHelper.clean();
@@ -171,5 +173,13 @@ describe('Blocks schema (integration)', () => {
       await client.query('RESET enable_seqscan');
       client.release();
     }
+  });
+
+  it('keeps the migration journal reconciled with the repository numbering invariant', () => {
+    const migrationsFolder = path.resolve(__dirname, '../../../drizzle/migrations');
+    const history = reconcileMigrationHistory(migrationsFolder);
+
+    expect(history.errors).toEqual([]);
+    expect(history.isValid).toBe(true);
   });
 });

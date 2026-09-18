@@ -4,6 +4,11 @@ import { TestDatabaseHelper } from '../../test/test-database.helper';
 import { blocks, users } from '../database/schema';
 import { AccountIsolationPolicy, canonicalAccountPairKey } from './account-isolation.policy';
 
+// Fixed, lexicographically ordered UUIDs so canonical pair ordering is deterministic.
+const ACCOUNT_A = '0192f0aa-0000-7000-8000-00000000000a';
+const ACCOUNT_B = '0192f0bb-0000-7000-8000-00000000000b';
+const ACCOUNT_C = '0192f0cc-0000-7000-8000-00000000000c';
+
 function deferred() {
   let resolve!: () => void;
   const promise = new Promise<void>((res) => {
@@ -24,16 +29,17 @@ describe('AccountIsolationPolicy (integration)', () => {
 
   afterAll(async () => {
     await dbHelper.stop();
-  });
+  }, 120_000);
 
   beforeEach(async () => {
     await dbHelper.clean();
   });
 
-  async function insertAccount(label: string) {
+  async function insertAccount(label: string, id?: string) {
     const [user] = await dbHelper.db
       .insert(users)
       .values({
+        ...(id ? { id } : {}),
         firebaseUserId: `firebase-isolation-${label}-${generateUuidV7()}`,
         email: `isolation-${label}-${generateUuidV7()}@example.com`,
         fullName: `Isolation Fixture ${label}`,
@@ -154,7 +160,11 @@ describe('AccountIsolationPolicy (integration)', () => {
   }, 10_000);
 
   it('acquires multiple pair locks in deterministic canonical order', async () => {
-    const [a, b, c] = await Promise.all([insertAccount('a'), insertAccount('b'), insertAccount('c')]);
+    const [a, b, c] = await Promise.all([
+      insertAccount('a', ACCOUNT_A),
+      insertAccount('b', ACCOUNT_B),
+      insertAccount('c', ACCOUNT_C),
+    ]);
     const holderReady = deferred();
     const holderMayCommit = deferred();
 
