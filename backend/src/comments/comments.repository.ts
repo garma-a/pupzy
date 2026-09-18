@@ -1,5 +1,6 @@
 import { Injectable, Inject, Optional } from '@nestjs/common';
-import { eq, and, ne, sql, gte, gt, lt, or, inArray } from 'drizzle-orm';
+import { eq, and, ne, sql, gte, gt, lt, or, inArray, isNull, type SQL } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import DataLoader from 'dataloader';
 import { DATABASE_TOKEN } from '../database/database.provider';
@@ -32,6 +33,8 @@ import {
 } from '../moderation-reports/moderation-report-quota.manager';
 import { withDbRetry } from '../common/utils/db-retry.util';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
+import { excludeIsolatedAccounts } from '../blocks/account-isolation.sql';
+import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 type DbExecutor = NodePgDatabase<typeof schema> | DbTransaction;
@@ -79,6 +82,7 @@ export function isUniqueViolation(err: unknown): boolean {
 export class CommentsRepository {
   private readonly quotaManager: CommentsQuotaManager;
   private readonly reportQuotaManager: ModerationReportQuotaManager;
+  private readonly isolationPolicy: AccountIsolationPolicy;
 
   constructor(
     @Inject(DATABASE_TOKEN)
@@ -86,9 +90,13 @@ export class CommentsRepository {
     @Optional()
     @Inject(ModerationReportQuotaManager)
     reportQuotaManager?: ModerationReportQuotaManager,
+    @Optional()
+    @Inject(AccountIsolationPolicy)
+    isolationPolicy?: AccountIsolationPolicy,
   ) {
     this.quotaManager = new CommentsQuotaManager(this.db);
     this.reportQuotaManager = reportQuotaManager ?? new ModerationReportQuotaManager(this.db);
+    this.isolationPolicy = isolationPolicy ?? new AccountIsolationPolicy(this.db);
   }
 
   /**
@@ -221,6 +229,20 @@ export class CommentsRepository {
     try {
       return await withDbRetry(() =>
         this.db.transaction(async (tx) => {
+          // Cross-account writes serialize on the canonical account-pair lock
+          // before any discussion lock, then recheck inside this transaction so
+          // a concurrent Block either commits first (rejecting this write) or
+          // waits behind this creation.
+          const [postBeforeLock] = await tx
+            .select({ creatorId: posts.creatorId })
+            .from(posts)
+            .where(eq(posts.id, postId))
+            .limit(1);
+          if (!postBeforeLock) throw new NotFoundError('Post', postId);
+          if (await this.isolationPolicy.lockPairAndRecheck(tx, authorId, postBeforeLock.creatorId)) {
+            throw new NotFoundError('Post', postId);
+          }
+
           // The Post is always locked before discussion rows or counters.
           const post = await this.lockDiscussionPost(tx, postId);
           if (post.status === 'REMOVED') throw new NotFoundError('Post', postId);
@@ -359,10 +381,184 @@ export class CommentsRepository {
   }
 
   /**
-   * Finds the currently active pinned top-level comment for a post, if one exists.
-   * Only returns the comment if its status is 'ACTIVE' or 'IMAGE_HIDDEN'.
+   * Batch-loads viewer-visible Post `commentCount` values.
+   *
+   * Keys are `${viewerId}:${postId}` (an empty viewer prefix means anonymous),
+   * mirroring the existing composite-key loader convention so the authenticated
+   * viewer can be resolved after the guard runs. One per-request DataLoader
+   * instance batches every Post in a response into a constant number of SQL
+   * queries instead of one count/pair query per Post.
    */
-  async findPinnedCommentForPost(postId: string): Promise<Comment | null> {
+  createReachableCommentCountByPostIdLoader(): DataLoader<string, number> {
+    return new DataLoader<string, number>(
+      async (keys: readonly string[]) => {
+        if (keys.length === 0) return [];
+
+        const parsed = keys.map((key) => {
+          const separator = key.indexOf(':');
+          return {
+            key,
+            viewerId: separator > 0 ? key.slice(0, separator) : null,
+            postId: key.slice(separator + 1),
+          };
+        });
+
+        const postIdsByViewer = new Map<string, Set<string>>();
+        for (const entry of parsed) {
+          const viewerKey = entry.viewerId ?? '';
+          const postIds = postIdsByViewer.get(viewerKey) ?? new Set<string>();
+          postIds.add(entry.postId);
+          postIdsByViewer.set(viewerKey, postIds);
+        }
+
+        const counts = new Map<string, number>();
+        await Promise.all(
+          Array.from(postIdsByViewer.entries()).map(async ([viewerKey, postIdSet]) => {
+            const perPost = await this.countReachableDiscussionContributions(viewerKey || null, Array.from(postIdSet));
+            for (const postId of postIdSet) {
+              counts.set(`${viewerKey}:${postId}`, perPost.get(postId) ?? 0);
+            }
+          }),
+        );
+
+        return keys.map((key) => counts.get(key) ?? 0);
+      },
+      { cache: true, maxBatchSize: 100 },
+    );
+  }
+
+  /**
+   * Batch-loads viewer-visible Comment `replyCount` values.
+   *
+   * Keys are `${viewerId}:${commentId}`. Applies the same branch-reachability
+   * and Block rules as the Replies query: a Reply is counted only when its
+   * parent is reachable to the viewer and neither author is isolated.
+   */
+  createReachableReplyCountByCommentIdLoader(): DataLoader<string, number> {
+    return new DataLoader<string, number>(
+      async (keys: readonly string[]) => {
+        if (keys.length === 0) return [];
+
+        const parsed = keys.map((key) => {
+          const separator = key.indexOf(':');
+          return {
+            key,
+            viewerId: separator > 0 ? key.slice(0, separator) : null,
+            commentId: key.slice(separator + 1),
+          };
+        });
+
+        const commentIdsByViewer = new Map<string, Set<string>>();
+        for (const entry of parsed) {
+          const viewerKey = entry.viewerId ?? '';
+          const commentIds = commentIdsByViewer.get(viewerKey) ?? new Set<string>();
+          commentIds.add(entry.commentId);
+          commentIdsByViewer.set(viewerKey, commentIds);
+        }
+
+        const counts = new Map<string, number>();
+        await Promise.all(
+          Array.from(commentIdsByViewer.entries()).map(async ([viewerKey, commentIdSet]) => {
+            const perComment = await this.countReachableReplies(viewerKey || null, Array.from(commentIdSet));
+            for (const commentId of commentIdSet) {
+              counts.set(`${viewerKey}:${commentId}`, perComment.get(commentId) ?? 0);
+            }
+          }),
+        );
+
+        return keys.map((key) => counts.get(key) ?? 0);
+      },
+      { cache: true, maxBatchSize: 100 },
+    );
+  }
+
+  /**
+   * Reachable discussion contributions for a batch of Posts: visible top-level
+   * Comments plus visible Replies whose parent is not REMOVED. Authors isolated
+   * from the viewer — including an isolated top-level author whose whole branch
+   * becomes unreachable — are excluded in SQL before aggregation.
+   */
+  private async countReachableDiscussionContributions(
+    viewerId: string | null,
+    postIds: string[],
+  ): Promise<Map<string, number>> {
+    if (postIds.length === 0) return new Map();
+
+    const topLevelRows = await this.db
+      .select({ postId: comments.postId, count: sql<number>`count(*)::int` })
+      .from(comments)
+      .where(
+        and(
+          inArray(comments.postId, postIds),
+          isNull(comments.parentId),
+          inArray(comments.status, ['ACTIVE', 'IMAGE_HIDDEN']),
+          excludeIsolatedAccounts(viewerId, comments.authorId),
+        ),
+      )
+      .groupBy(comments.postId);
+
+    const replyComments = alias(comments, 'reachable_reply');
+    const replyParents = alias(comments, 'reachable_reply_parent');
+    const replyRows = await this.db
+      .select({ postId: replyComments.postId, count: sql<number>`count(*)::int` })
+      .from(replyComments)
+      .innerJoin(replyParents, eq(replyComments.parentId, replyParents.id))
+      .where(
+        and(
+          inArray(replyComments.postId, postIds),
+          inArray(replyComments.status, ['ACTIVE', 'IMAGE_HIDDEN']),
+          excludeIsolatedAccounts(viewerId, replyComments.authorId),
+          ne(replyParents.status, 'REMOVED'),
+          excludeIsolatedAccounts(viewerId, replyParents.authorId),
+        ),
+      )
+      .groupBy(replyComments.postId);
+
+    const totals = new Map<string, number>();
+    for (const row of topLevelRows) totals.set(row.postId, Number(row.count));
+    for (const row of replyRows) totals.set(row.postId, (totals.get(row.postId) ?? 0) + Number(row.count));
+    return totals;
+  }
+
+  /**
+   * Reachable Replies for a batch of top-level Comments. Isolated parents,
+   * REMOVED parents, and Replies from isolated authors all resolve to 0.
+   */
+  private async countReachableReplies(viewerId: string | null, commentIds: string[]): Promise<Map<string, number>> {
+    if (commentIds.length === 0) return new Map();
+
+    const parentComments = alias(comments, 'reply_count_parent');
+    const childReplies = alias(comments, 'reachable_child_reply');
+    const rows = await this.db
+      .select({ commentId: parentComments.id, count: sql<number>`count(${childReplies.id})::int` })
+      .from(parentComments)
+      .leftJoin(
+        childReplies,
+        and(
+          eq(childReplies.parentId, parentComments.id),
+          inArray(childReplies.status, ['ACTIVE', 'IMAGE_HIDDEN']),
+          excludeIsolatedAccounts(viewerId, childReplies.authorId),
+        ),
+      )
+      .where(
+        and(
+          inArray(parentComments.id, commentIds),
+          isNull(parentComments.parentId),
+          ne(parentComments.status, 'REMOVED'),
+          excludeIsolatedAccounts(viewerId, parentComments.authorId),
+        ),
+      )
+      .groupBy(parentComments.id);
+
+    return new Map(rows.map((row) => [row.commentId, Number(row.count)]));
+  }
+
+  /**
+   * Finds the currently active pinned top-level comment for a post, if one exists.
+   * Only returns the comment if its status is 'ACTIVE' or 'IMAGE_HIDDEN' and its
+   * author is not isolated from the viewer, so a pin can never bypass a Block.
+   */
+  async findPinnedCommentForPost(postId: string, viewerId?: string | null): Promise<Comment | null> {
     const rows = await this.db
       .select({ comment: comments })
       .from(postPins)
@@ -375,11 +571,36 @@ export class CommentsRepository {
           sql`${comments.parentId} IS NULL`,
           inArray(comments.status, ['ACTIVE', 'IMAGE_HIDDEN']),
           ne(posts.status, 'REMOVED'),
+          excludeIsolatedAccounts(viewerId, comments.authorId),
         ),
       )
       .limit(1);
 
     return rows[0]?.comment ?? null;
+  }
+
+  /**
+   * Visible-status predicate for a top-level Comment.
+   *
+   * Anonymous viewers keep the stored `replyCount` tombstone probe. Authenticated
+   * viewers additionally require at least one reachable Reply inside the branch,
+   * so an isolated top-level author can never leave a tombstone that exposes the
+   * hidden contribution, and a tombstone whose only Replies are isolated stops
+   * being a reachable result.
+   */
+  private reachableTopLevelStatusCondition(viewerId?: string | null): SQL {
+    if (!viewerId) {
+      return sql`(${comments.status} IN ('ACTIVE', 'IMAGE_HIDDEN') OR (${comments.status} IN ('DELETED', 'HIDDEN') AND ${comments.replyCount} > 0))`;
+    }
+
+    const reachableReply = sql`EXISTS (
+      SELECT 1 FROM ${comments} AS reachable_replies
+      WHERE reachable_replies.parent_id = ${comments.id}
+        AND reachable_replies.status IN ('ACTIVE', 'IMAGE_HIDDEN')
+        AND ${excludeIsolatedAccounts(viewerId, sql`reachable_replies.author_id`)}
+    )`;
+
+    return sql`(${comments.status} IN ('ACTIVE', 'IMAGE_HIDDEN') OR (${comments.status} IN ('DELETED', 'HIDDEN') AND ${reachableReply}))`;
   }
 
   /**
@@ -389,19 +610,25 @@ export class CommentsRepository {
    * Returns up to limit + 1 items for keyset continuation detection.
    * Includes deleted comments that have visible replies (replyCount > 0) as tombstones.
    * Excludes the pinned comment from subsequent positions to prevent duplication.
+   *
+   * Comments authored by accounts isolated from the viewer are excluded inside the
+   * same `where()` as the keyset predicates and the limit, so filtered pages stay
+   * dense and `hasNextPage` reflects the viewer-visible set.
    */
   async findTopLevelCommentsByPostId(
     postId: string,
     limit: number,
     sort: CommentSortOrder = 'TOP',
     cursor?: CommentCursorPayload,
+    viewerId?: string | null,
   ): Promise<Comment[]> {
-    const pinnedComment = await this.findPinnedCommentForPost(postId);
+    const pinnedComment = await this.findPinnedCommentForPost(postId, viewerId);
 
     const baseConditions = [
       eq(comments.postId, postId),
       sql`${comments.parentId} IS NULL`,
-      sql`(${comments.status} IN ('ACTIVE', 'IMAGE_HIDDEN') OR (${comments.status} IN ('DELETED', 'HIDDEN') AND ${comments.replyCount} > 0))`,
+      this.reachableTopLevelStatusCondition(viewerId),
+      excludeIsolatedAccounts(viewerId, comments.authorId),
     ];
 
     if (pinnedComment) {
@@ -448,7 +675,7 @@ export class CommentsRepository {
         );
       } else {
         cursorConditions.push(
-          or(lt(comments.createdAt, cursorDate), and(eq(comments.createdAt, cursorDate), lt(comments.id, cursor.id)))!,
+          or(lt(comments.createdAt, cursorDate), and(eq(comments.createdAt, cursorDate), lt(comments.id, cursor.id))),
         );
       }
 
@@ -492,14 +719,25 @@ export class CommentsRepository {
   /**
    * Fetches visible replies for a top-level comment ordered by createdAt ASC, id ASC.
    * Returns up to limit + 1 items for keyset continuation detection.
+   * Replies authored by accounts isolated from the viewer are excluded before the
+   * cursor predicate and limit.
    */
-  async findRepliesByCommentId(commentId: string, limit: number, cursor?: CommentCursorPayload): Promise<Comment[]> {
-    const conditions = [eq(comments.parentId, commentId), inArray(comments.status, ['ACTIVE', 'IMAGE_HIDDEN'])];
+  async findRepliesByCommentId(
+    commentId: string,
+    limit: number,
+    cursor?: CommentCursorPayload,
+    viewerId?: string | null,
+  ): Promise<Comment[]> {
+    const conditions = [
+      eq(comments.parentId, commentId),
+      inArray(comments.status, ['ACTIVE', 'IMAGE_HIDDEN']),
+      excludeIsolatedAccounts(viewerId, comments.authorId),
+    ];
 
     if (cursor) {
       const cursorDate = new Date(cursor.createdAt);
       conditions.push(
-        or(gt(comments.createdAt, cursorDate), and(eq(comments.createdAt, cursorDate), gt(comments.id, cursor.id)))!,
+        or(gt(comments.createdAt, cursorDate), and(eq(comments.createdAt, cursorDate), gt(comments.id, cursor.id))),
       );
     }
 
@@ -530,6 +768,28 @@ export class CommentsRepository {
     try {
       return await withDbRetry(() =>
         this.db.transaction(async (tx) => {
+          // A Reply can cross more than one account relationship (the parent
+          // Comment's author and the Post's creator). Every relevant pair lock is
+          // acquired in deterministic canonical-key order before the discussion
+          // lock, then rechecked inside this transaction.
+          const [postBeforeLock] = await tx
+            .select({ creatorId: posts.creatorId, status: posts.status })
+            .from(posts)
+            .where(eq(posts.id, parentBeforeLock.postId))
+            .limit(1);
+          if (!postBeforeLock || postBeforeLock.status === 'REMOVED') {
+            throw new NotFoundError('Post', parentBeforeLock.postId);
+          }
+
+          const pairs: Array<readonly [string, string]> = [
+            [authorId, parentBeforeLock.authorId],
+            [authorId, postBeforeLock.creatorId],
+          ];
+          const crossAccountPairs = pairs.filter(([first, second]) => first !== second);
+          if (await this.isolationPolicy.lockPairsAndRecheck(tx, crossAccountPairs)) {
+            throw new NotFoundError('Comment', commentId);
+          }
+
           // Post -> parent is the discussion lock order.
           const post = await this.lockDiscussionPost(tx, parentBeforeLock.postId);
           if (post.status === 'REMOVED') throw new NotFoundError('Post', parentBeforeLock.postId);

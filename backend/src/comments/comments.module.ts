@@ -7,9 +7,17 @@ import { UploadModule } from '../upload/upload.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { UsersModule } from '../users/users.module';
 import { ModerationReportsModule } from '../moderation-reports/moderation-reports.module';
+import { AccountIsolationModule } from '../blocks/account-isolation.module';
 
 @Module({
-  imports: [PostsModule, UploadModule, NotificationsModule, UsersModule, ModerationReportsModule],
+  imports: [
+    PostsModule,
+    UploadModule,
+    NotificationsModule,
+    UsersModule,
+    ModerationReportsModule,
+    AccountIsolationModule,
+  ],
   providers: [CommentsRepository, CommentsService, CommentsResolver, CommentMediaResolver],
   exports: [CommentsRepository, CommentsService],
 })

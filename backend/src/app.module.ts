@@ -121,6 +121,8 @@ import type { GqlContext } from './common/types/gql-context.type';
               commentBoostedByMe: commentsRepository.createCommentBoostedByMeLoader(),
               pinnedCommentIdByPostId: commentsRepository.createPinnedCommentIdByPostIdLoader(),
               commentMediaByCommentId: commentsRepository.createCommentMediaByCommentIdLoader(),
+              reachableCommentCountByPostId: commentsRepository.createReachableCommentCountByPostIdLoader(),
+              reachableReplyCountByCommentId: commentsRepository.createReachableReplyCountByCommentIdLoader(),
             },
           };
           return ctx;

@@ -74,6 +74,9 @@ describe('CommentsResolver', () => {
         pinnedCommentIdByPostId: {
           load: jest.fn().mockResolvedValue(null),
         } as unknown as NonNullable<GqlContext['loaders']['pinnedCommentIdByPostId']>,
+        reachableReplyCountByCommentId: {
+          load: jest.fn().mockResolvedValue(2),
+        } as unknown as NonNullable<GqlContext['loaders']['reachableReplyCountByCommentId']>,
       },
     };
 
@@ -143,12 +146,15 @@ describe('CommentsResolver', () => {
     const result = await resolver.comments(postId, 'NEWEST', 10, validCursor);
 
     expect(result.edges.length).toBe(1);
-    expect(mockCommentsService.getComments).toHaveBeenCalledWith({
-      postId,
-      sort: 'NEWEST',
-      first: 10,
-      after: validCursor,
-    });
+    expect(mockCommentsService.getComments).toHaveBeenCalledWith(
+      {
+        postId,
+        sort: 'NEWEST',
+        first: 10,
+        after: validCursor,
+      },
+      undefined,
+    );
   });
 
   it('delegates replies query to service', async () => {
@@ -164,11 +170,14 @@ describe('CommentsResolver', () => {
     const result = await resolver.replies(mockComment.id, 10, validCursor);
 
     expect(result.edges.length).toBe(1);
-    expect(mockCommentsService.getReplies).toHaveBeenCalledWith({
-      commentId: mockComment.id,
-      first: 10,
-      after: validCursor,
-    });
+    expect(mockCommentsService.getReplies).toHaveBeenCalledWith(
+      {
+        commentId: mockComment.id,
+        first: 10,
+        after: validCursor,
+      },
+      undefined,
+    );
   });
 
   it('resolves author via DataLoader to prevent N+1 queries when active', async () => {
@@ -230,6 +239,29 @@ describe('CommentsResolver', () => {
   it('resolves boostCount directly from comment entity', () => {
     expect(resolver.boostCount(mockComment)).toBe(3);
     expect(resolver.boostCount({ ...mockComment, boostCount: 0 })).toBe(0);
+  });
+
+  it('resolves replyCount via the viewer-scoped DataLoader for top-level comments', async () => {
+    const loadSpy = jest.spyOn(mockContext.loaders.reachableReplyCountByCommentId!, 'load');
+    const replyCount = await resolver.replyCount(mockComment, mockContext);
+    expect(replyCount).toBe(2);
+    expect(loadSpy).toHaveBeenCalledWith(`${userId}:${mockComment.id}`);
+  });
+
+  it('resolves replyCount as 0 for replies without querying the loader', async () => {
+    const loadSpy = jest.spyOn(mockContext.loaders.reachableReplyCountByCommentId!, 'load');
+    const replyCount = await resolver.replyCount({ ...mockComment, parentId: 'parent-1' }, mockContext);
+    expect(replyCount).toBe(0);
+    expect(loadSpy).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the stored replyCount when the loader is not wired', async () => {
+    const ctxWithoutLoader: GqlContext = {
+      ...mockContext,
+      loaders: { ...mockContext.loaders, reachableReplyCountByCommentId: undefined },
+    };
+    const replyCount = await resolver.replyCount({ ...mockComment, replyCount: 4 }, ctxWithoutLoader);
+    expect(replyCount).toBe(4);
   });
 
   it('delegates pinComment to service with authenticated userId and commentId', async () => {
