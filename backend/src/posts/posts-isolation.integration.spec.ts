@@ -43,6 +43,10 @@ interface PlanNode {
 
 const NONEXISTENT_POST_ID = '0192ffff-0000-7000-8000-000000000000';
 
+const REPORT_POST_MUTATION = `mutation ReportPost($input: ReportPostInput!) {
+  reportPost(input: $input)
+}`;
+
 const HOME_FEED = `query Home($cityId: ID, $first: Int, $after: String) {
   homeFeed(cityId: $cityId, first: $first, after: $after) {
     edges { node { id creator { id } } cursor }
@@ -237,6 +241,10 @@ describe('Post account isolation across discovery and retrieval (Ticket 06)', ()
           ) => matingResolver.matingFeed(args.filter ?? undefined, args.first, args.after, ctx),
           matingPostDetail: (_root: unknown, args: { postId: string }, ctx: GqlContext) =>
             matingResolver.matingPostDetail(args.postId, ctx),
+        },
+        Mutation: {
+          reportPost: (_root: unknown, args: { input: unknown }, ctx: GqlContext) =>
+            postsResolver.reportPost(args.input, ctx),
         },
         Post: {
           coordinates: (root: Post) => postsResolver.coordinates(root),
@@ -749,6 +757,57 @@ describe('Post account isolation across discovery and retrieval (Ticket 06)', ()
     expect(ids(mine)).toEqual([viewerPost.id]);
     theirs = await runFeed(MY_POSTS, 'myPosts', { postType: 'RESCUE', first: 10 }, author);
     expect(ids(theirs)).toEqual([authorPost.id]);
+  });
+
+  it('reporting an isolated Post fails with the neutral not-found in either direction', async () => {
+    const moderationAdmissions = async (): Promise<number> => {
+      const result = await dbHelper.pool.query<{ count: string }>(
+        `SELECT count(*)::text AS count FROM comment_quota_admissions WHERE user_id = $1 AND action = 'MODERATION_REPORT'`,
+        [viewer.id],
+      );
+      return Number(result.rows[0].count);
+    };
+
+    const missing = await runGql<{ reportPost: boolean }>(
+      REPORT_POST_MUTATION,
+      { input: { postId: NONEXISTENT_POST_ID, reason: 'SPAM' } },
+      viewer,
+    );
+    const missingMessage = missing.errors![0].message;
+
+    for (const direction of ['viewer-blocks', 'author-blocks'] as const) {
+      const isolated = await seedLost({ creatorId: author.id });
+      const admissionsBefore = await moderationAdmissions();
+
+      if (direction === 'viewer-blocks') {
+        await setBlock(viewer, author);
+      } else {
+        await setBlock(author, viewer);
+      }
+
+      const res = await runGql<{ reportPost: boolean }>(
+        REPORT_POST_MUTATION,
+        { input: { postId: isolated.id, reason: 'SPAM' } },
+        viewer,
+      );
+      expect(res.data?.reportPost ?? null).toBeNull();
+      expect(res.errors).toHaveLength(1);
+      expect(neutralized(res.errors![0].message, isolated.id)).toBe(neutralized(missingMessage, NONEXISTENT_POST_ID));
+      expect(res.errors![0].message).not.toMatch(/block/i);
+
+      // The rejected report consumed no shared allowance slot.
+      expect(await moderationAdmissions()).toBe(admissionsBefore);
+    }
+
+    await setNoBlocks();
+    const restored = await seedLost({ creatorId: author.id });
+    const res = await runGql<{ reportPost: boolean }>(
+      REPORT_POST_MUTATION,
+      { input: { postId: restored.id, reason: 'SCAM' } },
+      viewer,
+    );
+    expect(res.errors).toBeUndefined();
+    expect(res.data?.reportPost).toBe(true);
   });
 
   it('query-plan evidence: isolation executes in SQL before the limit with bounded indexed blocks access', async () => {

@@ -16,7 +16,7 @@ export interface CreateAccountReportParams extends ReportUserInput {
 }
 
 /**
- * AccountsRepository — durable Pupzy Account Report persistence.
+ * AccountReportsRepository — durable Pupzy Account Report persistence.
  *
  * ## Allowance
  * The caller reserves one slot of the shared moderation-report allowance

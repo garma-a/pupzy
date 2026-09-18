@@ -37,6 +37,7 @@ import {
   ReportQuotaReservation,
 } from '../moderation-reports/moderation-report-quota.manager';
 import { excludeIsolatedAccounts } from '../blocks/account-isolation.sql';
+import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -113,6 +114,7 @@ function isUniqueViolation(err: unknown): boolean {
 @Injectable()
 export class PostsRepository {
   private readonly reportQuotaManager: ModerationReportQuotaManager;
+  private readonly isolationPolicy: AccountIsolationPolicy;
 
   constructor(
     @Inject(DATABASE_TOKEN)
@@ -120,8 +122,12 @@ export class PostsRepository {
     @Optional()
     @Inject(ModerationReportQuotaManager)
     reportQuotaManager?: ModerationReportQuotaManager,
+    @Optional()
+    @Inject(AccountIsolationPolicy)
+    isolationPolicy?: AccountIsolationPolicy,
   ) {
     this.reportQuotaManager = reportQuotaManager ?? new ModerationReportQuotaManager(this.db);
+    this.isolationPolicy = isolationPolicy ?? new AccountIsolationPolicy(this.db);
   }
 
   /**
@@ -520,6 +526,12 @@ export class PostsRepository {
         this.db.transaction(async (tx) => {
           const post = await this.lockDiscussionPost(tx, postId);
           if (!post || post.status === 'REMOVED') throw new NotFoundError('Post', postId);
+
+          // An isolated Post is inaccessible, so it is not reportable. The
+          // neutral not-found response never reveals the Block direction.
+          if (await this.isolationPolicy.isIsolated(reporterId, post.creatorId, tx)) {
+            throw new NotFoundError('Post', postId);
+          }
 
           if (post.creatorId === reporterId) {
             throw new ForbiddenError('You cannot report your own post');

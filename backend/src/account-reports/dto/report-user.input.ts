@@ -39,13 +39,15 @@ export const reportUserSchema = z
     }),
     details: z
       .string()
-      .max(500, 'Details must not exceed 500 characters')
       .optional()
       .nullable()
       .transform((val) => {
         if (val === undefined || val === null) return undefined;
         const trimmed = val.trim();
         return trimmed.length === 0 ? undefined : trimmed;
+      })
+      .refine((val) => val === undefined || val.length <= 500, {
+        message: 'Details must not exceed 500 characters',
       }),
     sourceType: z
       .enum(accountReportSourceTypeValues, { message: 'Invalid source type' })
