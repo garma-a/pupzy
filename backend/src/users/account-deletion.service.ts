@@ -16,6 +16,9 @@ import {
   postSaves,
   postUpvotes,
   postReports,
+  accountReports,
+  comments,
+  commentReports,
   notifications,
   savedSearches,
   contactRequests,
@@ -455,6 +458,27 @@ export class AccountDeletionService {
       // database trigger is the single counter authority: deleting each report
       // row decrements its Post's report_count exactly once and never below zero.
       await tx.delete(postReports).where(eq(postReports.reporterId, userId));
+
+      // 5b. Remove Pupzy Account Reports and Comment Reports involving this
+      // account. Open report rows are personal safety data and free-text
+      // details must not survive; every completed review already has an
+      // append-only moderation_actions entry, which is retained (redacted)
+      // instead of the personal report content.
+      const userCommentIds = (
+        await tx.select({ id: comments.id }).from(comments).where(eq(comments.authorId, userId))
+      ).map((row) => row.id);
+
+      await tx
+        .delete(accountReports)
+        .where(or(eq(accountReports.reporterId, userId), eq(accountReports.reportedUserId, userId)));
+
+      if (userCommentIds.length > 0) {
+        await tx
+          .delete(commentReports)
+          .where(or(eq(commentReports.reporterId, userId), inArray(commentReports.commentId, userCommentIds)));
+      } else {
+        await tx.delete(commentReports).where(eq(commentReports.reporterId, userId));
+      }
 
       // 6. Delete applications & contact requests
       await tx.delete(savedSearches).where(eq(savedSearches.userId, userId));

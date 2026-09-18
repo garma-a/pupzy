@@ -11,6 +11,8 @@ export const moderationActionTypeEnum = pgEnum('moderation_action_type', [
   'USER_UNBANNED',
   'COMMENT_RESTORED',
   'COMMENT_REMOVED',
+  'POST_REPORT_REVIEWED_NO_ACTION',
+  'ACCOUNT_REPORT_REVIEWED_NO_ACTION',
 ]);
 
 export const moderationTargetTypeEnum = pgEnum('moderation_target_type', ['POST', 'USER', 'COMMENT']);

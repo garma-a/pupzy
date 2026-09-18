@@ -10,7 +10,14 @@ export default function ModerationAction({ action, resource, record }) {
   const [alsoRemovePosts, setAlsoRemovePosts] = useState(false);
   const [loading, setLoading] = useState(false);
   const isBan = action.name === 'banUser';
-  const label = { banUser: 'Ban User', flagPost: 'Flag Post', removePost: 'Remove Post' }[action.name] ?? action.label;
+  const isReviewWithNoAction = action.name === 'reviewWithNoAction';
+  const label =
+    {
+      banUser: 'Ban User',
+      flagPost: 'Flag Post',
+      removePost: 'Remove Post',
+      reviewWithNoAction: 'Review with No Action',
+    }[action.name] ?? action.label;
 
   const submit = async () => {
     setLoading(true);
@@ -59,7 +66,11 @@ export default function ModerationAction({ action, resource, record }) {
           </Label>
         </FormGroup>
       ) : null}
-      <Button variant="danger" disabled={loading || !reason.trim()} onClick={() => void submit()}>
+      <Button
+        variant={isReviewWithNoAction ? 'primary' : 'danger'}
+        disabled={loading || (!isReviewWithNoAction && !reason.trim())}
+        onClick={() => void submit()}
+      >
         {loading ? 'Applying…' : label}
       </Button>
     </Box>

@@ -105,7 +105,14 @@ describe('Moderation and Activity Tables Curation & Layout Rules (Task 10)', () 
 
     it('post_reports resource exposes moderation context without long details in list', () => {
       const reportsRes = buildPostReportsResource(db, components);
-      assert.deepEqual(reportsRes.options.listProperties, ['id', 'post_id', 'reporter_id', 'reason', 'created_at']);
+      assert.deepEqual(reportsRes.options.listProperties, [
+        'id',
+        'post_id',
+        'reporter_id',
+        'reason',
+        'reviewed_at',
+        'created_at',
+      ]);
       assert.ok(!reportsRes.options.listProperties.includes('details'));
       assert.ok(reportsRes.options.showProperties.includes('details'));
       assert.equal(reportsRes.options.properties.id.components.list, 'ShortUuidMock');

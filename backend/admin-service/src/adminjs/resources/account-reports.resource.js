@@ -1,3 +1,4 @@
+import { buildAccountReportReviewAction } from '../actions/review-report.actions.js';
 import { ENUMS } from '../enums.js';
 import {
   attachShortUuid,
@@ -6,7 +7,7 @@ import {
   stripPopulatedPasswordHashes,
 } from './resource-helpers.js';
 
-export function buildAccountReportsResource(db, components = {}) {
+export function buildAccountReportsResource(db, components = {}, pool) {
   const properties = {
     reason: enumProperty(ENUMS.accountReportReason),
     source_type: enumProperty(ENUMS.accountReportSourceType),
@@ -43,6 +44,7 @@ export function buildAccountReportsResource(db, components = {}) {
     actions: {
       list: { after: stripPopulatedPasswordHashes },
       show: { after: stripPopulatedPasswordHashes },
+      reviewWithNoAction: buildAccountReportReviewAction(pool, components?.ModerationAction),
     },
   });
 }

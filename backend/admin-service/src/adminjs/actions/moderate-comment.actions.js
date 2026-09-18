@@ -1,4 +1,10 @@
-import { actionResponse, lockCommentDiscussion, readModerationReason, runModerationAction } from './helpers.js';
+import {
+  actionResponse,
+  closeOpenCommentReports,
+  lockCommentDiscussion,
+  readModerationReason,
+  runModerationAction,
+} from './helpers.js';
 import { isAnyAdmin } from '../rbac.js';
 
 function getRecordProperty(record, property) {
@@ -128,10 +134,8 @@ export function buildCommentActions(pool, component, cache) {
             }
           }
           await client.query(`UPDATE comments SET status = 'ACTIVE', updated_at = now() WHERE id = $1`, [row.id]);
-          await client.query(
-            `UPDATE comment_reports SET reviewed_at = now() WHERE comment_id = $1 AND reviewed_at IS NULL`,
-            [row.id],
-          );
+          const closedCommentReportIds = await closeOpenCommentReports(client, row.id);
+          return { closedCommentReportIds };
         },
       },
       cache,
@@ -265,6 +269,12 @@ export function buildCommentActions(pool, component, cache) {
           if (mediaRows.length > 0) {
             await client.query(`DELETE FROM comment_media WHERE comment_id = $1`, [row.id]);
           }
+
+          // Removal and restoration both close every currently open Comment
+          // Report for this Comment or Reply in the same transaction as the
+          // moderation action and its audit entry.
+          const closedCommentReportIds = await closeOpenCommentReports(client, row.id);
+          return { closedCommentReportIds };
         },
       },
       cache,

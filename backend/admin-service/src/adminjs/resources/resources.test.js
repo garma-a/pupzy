@@ -94,6 +94,7 @@ describe('AdminJS resource configuration', () => {
       ['mating_posts', 'gender', ENUMS.genderType],
       ['mating_posts', 'age_unit', ENUMS.ageUnit],
       ['post_reports', 'reason', ENUMS.reportReason],
+      ['post_reports', 'review_outcome', ENUMS.postReportReviewOutcome],
       ['comment_reports', 'reason', ENUMS.reportReason],
       ['account_reports', 'reason', ENUMS.accountReportReason],
       ['account_reports', 'source_type', ENUMS.accountReportSourceType],
