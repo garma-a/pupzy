@@ -20,7 +20,7 @@ describe('AdminJS SQL adapter compatibility', () => {
     }
   });
 
-  it('exports ADMIN_RESOURCE_TABLES with exactly the 22 domain tables', () => {
+  it('exports ADMIN_RESOURCE_TABLES with exactly the 23 domain tables', () => {
     const expectedTables = [
       'users',
       'posts',
@@ -34,6 +34,7 @@ describe('AdminJS SQL adapter compatibility', () => {
       'post_saves',
       'post_reports',
       'comment_reports',
+      'account_reports',
       'comments',
       'contact_requests',
       'adoption_applications',

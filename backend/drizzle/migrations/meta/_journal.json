@@ -288,6 +288,13 @@
       "when": 1790532800000,
       "tag": "0040_add_blocks",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1790705600000,
+      "tag": "0042_add_account_reports",
+      "breakpoints": true
     }
   ]
 }

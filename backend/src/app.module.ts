@@ -32,6 +32,7 @@ import { VetClinicsModule } from './vet-clinics/vet-clinics.module';
 import { MatingModule } from './mating/mating.module';
 import { CommentsModule } from './comments/comments.module';
 import { CommentsRepository } from './comments/comments.repository';
+import { AccountReportsModule } from './account-reports/account-reports.module';
 import { GqlExceptionFilter } from './common/filters/gql-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
@@ -218,6 +219,7 @@ import type { GqlContext } from './common/types/gql-context.type';
     VetClinicsModule,
     MatingModule,
     CommentsModule,
+    AccountReportsModule,
     CacheModule.register({
       /**
        * Max cached items across all namespaces (auth, view dedup, idempotency).

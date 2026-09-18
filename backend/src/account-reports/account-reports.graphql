@@ -1,0 +1,57 @@
+"""
+Account-specific reasons for a Pupzy Account Report.
+These describe conduct, not a specific contribution, so content-only reasons
+such as DUPLICATE or UNRELATED_TO_ANIMALS are never offered.
+"""
+enum AccountReportReason {
+  HARASSMENT
+  SPAM
+  SCAM_OR_FRAUD
+  IMPERSONATION
+  INAPPROPRIATE_CONDUCT
+  SAFETY_CONCERN
+  OTHER
+}
+
+"""
+The single interaction surface optionally supplied as evidence for a Pupzy
+Account Report. COMMENT covers both top-level Comments and Replies because
+they share the comments table.
+"""
+enum AccountReportSourceType {
+  POST
+  COMMENT
+  CONTACT_REQUEST
+  ADOPTION_APPLICATION
+}
+
+"""
+Input for reporting another Pupzy Account's conduct.
+
+- userId: the reported Pupzy Account.
+- reason: an account-specific reason.
+- details: optional, trimmed, max 500 characters; required (nonblank) for OTHER.
+- sourceType/sourceId: optional evidence reference. Both must be provided
+  together or both omitted. The reference must exist, be accessible to the
+  reporter, and involve the reported account. It never creates a separate
+  Post or Comment Report.
+"""
+input ReportUserInput {
+  userId: ID!
+  reason: AccountReportReason!
+  details: String
+  sourceType: AccountReportSourceType
+  sourceId: ID
+}
+
+extend type Mutation {
+  """
+  Report another Pupzy Account's conduct.
+  Requires authentication. Consumes one slot of the shared moderation-report
+  allowance (10 successfully committed reports per rolling 24 hours).
+  Rejects self-reports, missing targets, invalid source context, and a
+  duplicate open report for the same reporter and reported account.
+  Never automatically bans or suspends the reported account.
+  """
+  reportUser(input: ReportUserInput!): Boolean!
+}

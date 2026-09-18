@@ -47,6 +47,7 @@ export * from './adoption-applications.schema';
 
 // Moderation & notifications
 export * from './post-reports.schema';
+export * from './account-reports.schema';
 export * from './notifications.schema';
 export * from './discussion-notification-events.schema';
 
