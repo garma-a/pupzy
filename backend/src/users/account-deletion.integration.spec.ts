@@ -630,7 +630,6 @@ describe('Account Deletion Feature Integration', () => {
           coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
           upvoteCount: 5,
           saveCount: 3,
-          reportCount: 1,
           effectiveScore: 10.5,
           status: 'ACTIVE',
         })
@@ -753,7 +752,7 @@ describe('Account Deletion Feature Integration', () => {
       const [updatedSurviving] = await dbHelper.db.select().from(posts).where(eq(posts.id, survivingPost.id));
       expect(updatedSurviving.upvoteCount).toBe(4); // 5 - 1
       expect(updatedSurviving.saveCount).toBe(2); // 3 - 1
-      expect(updatedSurviving.reportCount).toBe(0); // 1 - 1
+      expect(updatedSurviving.reportCount).toBe(0); // 0 + trigger insert - trigger delete
       expect(updatedSurviving.effectiveScore).toBeLessThan(10.5);
 
       // 9. Verify surviving notifications are redacted
@@ -793,6 +792,110 @@ describe('Account Deletion Feature Integration', () => {
       // 11. Verify storage cleanup called for captured media keys
       expect(mockUploadService.deleteObjects).toHaveBeenCalledWith([`posts/${rescuePost.id}/img1.webp`]);
       expect(mockUploadService.deletePrefix).toHaveBeenCalledWith(`staging/${user.id}/`);
+    });
+
+    it('decrements every surviving Post Report count exactly once through the trigger and never below zero', async () => {
+      const cityId = await seedCity();
+      const [reporter] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-reporter-1',
+          email: 'reporter@example.com',
+          fullName: 'Reporting User',
+        })
+        .returning();
+      const [otherUser] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-survivor-1',
+          email: 'survivor@example.com',
+          fullName: 'Surviving User',
+        })
+        .returning();
+      const [thirdUser] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-survivor-2',
+          email: 'survivor2@example.com',
+          fullName: 'Other Reporting User',
+        })
+        .returning();
+
+      const [postWithTwoOtherReports] = await dbHelper.db
+        .insert(posts)
+        .values({
+          creatorId: otherUser.id,
+          postType: 'RESCUE',
+          cityId,
+          title: 'Rescue with reports from two reporters',
+          description: 'Needs review',
+          urgency: 'URGENT',
+          coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+          status: 'ACTIVE',
+        })
+        .returning();
+      const [postWithOnlyReporterReport] = await dbHelper.db
+        .insert(posts)
+        .values({
+          creatorId: otherUser.id,
+          postType: 'RESCUE',
+          cityId,
+          title: 'Rescue reported only by deleting reporter',
+          description: 'Needs review',
+          urgency: 'URGENT',
+          coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+          status: 'ACTIVE',
+        })
+        .returning();
+      const [driftedPost] = await dbHelper.db
+        .insert(posts)
+        .values({
+          creatorId: otherUser.id,
+          postType: 'RESCUE',
+          cityId,
+          title: 'Rescue with drifted report counter',
+          description: 'Needs review',
+          urgency: 'URGENT',
+          coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+          status: 'ACTIVE',
+        })
+        .returning();
+
+      await dbHelper.db.insert(postReports).values([
+        { postId: postWithTwoOtherReports.id, reporterId: otherUser.id, reason: 'SPAM' },
+        { postId: postWithTwoOtherReports.id, reporterId: thirdUser.id, reason: 'SCAM' },
+        { postId: postWithTwoOtherReports.id, reporterId: reporter.id, reason: 'DUPLICATE' },
+        { postId: postWithOnlyReporterReport.id, reporterId: reporter.id, reason: 'SPAM' },
+        { postId: driftedPost.id, reporterId: reporter.id, reason: 'SPAM' },
+      ]);
+
+      await dbHelper.db.update(posts).set({ reportCount: 0 }).where(eq(posts.id, driftedPost.id));
+
+      const authTime = Math.floor(Date.now() / 1000) - 10;
+      const result = await accountDeletionService.initiateDeletion(reporter, authTime);
+      expect(result.status).toBe('COMPLETED');
+
+      const survivingPosts = await dbHelper.db
+        .select()
+        .from(posts)
+        .where(inArray(posts.id, [postWithTwoOtherReports.id, postWithOnlyReporterReport.id, driftedPost.id]));
+      const countByPostId = new Map(survivingPosts.map((post) => [post.id, post.reportCount]));
+
+      expect(countByPostId.get(postWithTwoOtherReports.id)).toBe(2);
+      expect(countByPostId.get(postWithOnlyReporterReport.id)).toBe(0);
+      expect(countByPostId.get(driftedPost.id)).toBe(0);
+
+      const remainingReports = await dbHelper.db
+        .select()
+        .from(postReports)
+        .where(eq(postReports.reporterId, reporter.id));
+      expect(remainingReports).toHaveLength(0);
+
+      const survivingReports = await dbHelper.db
+        .select()
+        .from(postReports)
+        .where(inArray(postReports.postId, [postWithTwoOtherReports.id]));
+      expect(survivingReports).toHaveLength(2);
     });
 
     it('immediately hides user posts and marks user banned at acceptance before cleanup completes', async () => {

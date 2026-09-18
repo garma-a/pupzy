@@ -451,22 +451,9 @@ export class AccountDeletionService {
       }
       await tx.delete(postSaves).where(eq(postSaves.userId, userId));
 
-      // 5. Reconcile reports submitted by this user
-      const reports = await tx
-        .select({ postId: postReports.postId })
-        .from(postReports)
-        .where(eq(postReports.reporterId, userId));
-
-      for (const report of reports) {
-        if (!userPostIds.includes(report.postId)) {
-          await tx
-            .update(posts)
-            .set({
-              reportCount: sql`GREATEST(0, ${posts.reportCount} - 1)`,
-            })
-            .where(eq(posts.id, report.postId));
-        }
-      }
+      // 5. Remove reports submitted by this user. The `trg_post_report_count`
+      // database trigger is the single counter authority: deleting each report
+      // row decrements its Post's report_count exactly once and never below zero.
       await tx.delete(postReports).where(eq(postReports.reporterId, userId));
 
       // 6. Delete applications & contact requests
