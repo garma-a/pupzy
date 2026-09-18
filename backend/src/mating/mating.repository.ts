@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { and, desc, eq, lt, or, sql } from 'drizzle-orm';
+import { and, desc, eq, getTableColumns, lt, ne, or, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import {
@@ -16,6 +16,7 @@ import {
 import type * as schema from '../database/schema';
 
 import { ForbiddenError } from '../common/errors/app.errors';
+import { excludeIsolatedAccounts } from '../blocks/account-isolation.sql';
 export type NewMatingDetailsInput = Omit<NewMatingPostRow, 'postId'>;
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
@@ -78,8 +79,26 @@ export class MatingRepository {
     });
   }
 
-  async findDetailsByPostId(postId: string): Promise<MatingPostRow | undefined> {
-    const [row] = await this.db.select().from(matingPosts).where(eq(matingPosts.postId, postId)).limit(1);
+  /**
+   * Fetches the MATING extension row only while its base Post is accessible:
+   * type MATING, not REMOVED, and not created by an account isolated from the
+   * viewer by a Block in either direction. Mirrors the base-Post guard used by
+   * the other type-specific detail lookups in PostsRepository.
+   */
+  async findDetailsByPostId(postId: string, viewerId?: string | null): Promise<MatingPostRow | undefined> {
+    const [row] = await this.db
+      .select(getTableColumns(matingPosts))
+      .from(matingPosts)
+      .innerJoin(posts, eq(matingPosts.postId, posts.id))
+      .where(
+        and(
+          eq(matingPosts.postId, postId),
+          eq(posts.postType, 'MATING'),
+          ne(posts.status, 'REMOVED'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
+        ),
+      )
+      .limit(1);
     return row;
   }
 
@@ -93,8 +112,9 @@ export class MatingRepository {
     };
     limit: number;
     cursor: { createdAt: string; id: string } | null;
+    viewerId?: string | null;
   }): Promise<{ rows: Post[]; hasNextPage: boolean }> {
-    const { filter, limit, cursor } = params;
+    const { filter, limit, cursor, viewerId } = params;
     // Escape LIKE wildcards so user input can't scan the whole table
     const escapeLike = (s: string) => s.replace(/[\\%_]/g, (m) => '\\' + m);
 
@@ -106,6 +126,7 @@ export class MatingRepository {
         and(
           eq(posts.postType, 'MATING'),
           eq(posts.status, 'ACTIVE'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
           filter.species ? eq(matingPosts.species, filter.species as never) : undefined,
           filter.gender ? eq(matingPosts.gender, filter.gender as never) : undefined,
           filter.cityId ? eq(posts.cityId, filter.cityId) : undefined,

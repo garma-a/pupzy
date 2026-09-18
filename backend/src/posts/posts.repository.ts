@@ -36,6 +36,7 @@ import {
   ModerationReportQuotaManager,
   ReportQuotaReservation,
 } from '../moderation-reports/moderation-report-quota.manager';
+import { excludeIsolatedAccounts } from '../blocks/account-isolation.sql';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -304,9 +305,17 @@ export class PostsRepository {
   /**
    * Finds a single post by ID.
    * Used by the resolver for single-post detail queries.
+   *
+   * When a viewer is supplied, posts created by an account Blocked in either
+   * direction are treated exactly like missing rows — the caller returns the
+   * same null/not-found result it uses for inaccessible content.
    */
-  async findById(id: string): Promise<Post | undefined> {
-    const [post] = await this.db.select().from(posts).where(eq(posts.id, id)).limit(1);
+  async findById(id: string, viewerId?: string | null): Promise<Post | undefined> {
+    const [post] = await this.db
+      .select()
+      .from(posts)
+      .where(and(eq(posts.id, id), excludeIsolatedAccounts(viewerId, posts.creatorId)))
+      .limit(1);
     return post;
   }
 
@@ -357,12 +366,19 @@ export class PostsRepository {
    * Finds a single RESCUE extension row by post ID.
    * Returns undefined if the post ID doesn't have a rescue extension.
    */
-  async findRescueDetail(postId: string): Promise<RescuePost | undefined> {
+  async findRescueDetail(postId: string, viewerId?: string | null): Promise<RescuePost | undefined> {
     const [row] = await this.db
       .select(getTableColumns(rescuePosts))
       .from(rescuePosts)
       .innerJoin(posts, eq(rescuePosts.postId, posts.id))
-      .where(and(eq(rescuePosts.postId, postId), eq(posts.postType, 'RESCUE'), ne(posts.status, 'REMOVED')))
+      .where(
+        and(
+          eq(rescuePosts.postId, postId),
+          eq(posts.postType, 'RESCUE'),
+          ne(posts.status, 'REMOVED'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
+        ),
+      )
       .limit(1);
     return row;
   }
@@ -370,12 +386,19 @@ export class PostsRepository {
   /**
    * Finds a single LOST extension row by post ID.
    */
-  async findLostDetail(postId: string): Promise<LostPost | undefined> {
+  async findLostDetail(postId: string, viewerId?: string | null): Promise<LostPost | undefined> {
     const [row] = await this.db
       .select(getTableColumns(lostPosts))
       .from(lostPosts)
       .innerJoin(posts, eq(lostPosts.postId, posts.id))
-      .where(and(eq(lostPosts.postId, postId), eq(posts.postType, 'LOST'), ne(posts.status, 'REMOVED')))
+      .where(
+        and(
+          eq(lostPosts.postId, postId),
+          eq(posts.postType, 'LOST'),
+          ne(posts.status, 'REMOVED'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
+        ),
+      )
       .limit(1);
     return row;
   }
@@ -383,12 +406,19 @@ export class PostsRepository {
   /**
    * Finds a single ADOPTION extension row by post ID.
    */
-  async findAdoptionDetail(postId: string): Promise<AdoptionPost | undefined> {
+  async findAdoptionDetail(postId: string, viewerId?: string | null): Promise<AdoptionPost | undefined> {
     const [row] = await this.db
       .select(getTableColumns(adoptionPosts))
       .from(adoptionPosts)
       .innerJoin(posts, eq(adoptionPosts.postId, posts.id))
-      .where(and(eq(adoptionPosts.postId, postId), eq(posts.postType, 'ADOPTION'), ne(posts.status, 'REMOVED')))
+      .where(
+        and(
+          eq(adoptionPosts.postId, postId),
+          eq(posts.postType, 'ADOPTION'),
+          ne(posts.status, 'REMOVED'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
+        ),
+      )
       .limit(1);
     return row;
   }
@@ -396,12 +426,19 @@ export class PostsRepository {
   /**
    * Finds a single PRODUCT extension row by post ID.
    */
-  async findProductDetail(postId: string): Promise<ProductPost | undefined> {
+  async findProductDetail(postId: string, viewerId?: string | null): Promise<ProductPost | undefined> {
     const [row] = await this.db
       .select(getTableColumns(productPosts))
       .from(productPosts)
       .innerJoin(posts, eq(productPosts.postId, posts.id))
-      .where(and(eq(productPosts.postId, postId), eq(posts.postType, 'PRODUCT'), ne(posts.status, 'REMOVED')))
+      .where(
+        and(
+          eq(productPosts.postId, postId),
+          eq(posts.postType, 'PRODUCT'),
+          ne(posts.status, 'REMOVED'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
+        ),
+      )
       .limit(1);
     return row;
   }
@@ -1002,8 +1039,9 @@ export class PostsRepository {
     radiusKm: number;
     limit: number;
     cursor: { urgency: NonNullable<Post['urgency']>; createdAt: string; id: string } | null;
+    viewerId?: string | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor } = parameters;
+    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor, viewerId } = parameters;
     const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
@@ -1030,6 +1068,7 @@ export class PostsRepository {
         and(
           eq(posts.status, 'ACTIVE'),
           inArray(posts.postType, ['RESCUE', 'LOST']),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
           locationCondition,
           cursorCondition,
         ),
@@ -1053,8 +1092,9 @@ export class PostsRepository {
     sort: 'HOT' | 'NEWEST';
     limit: number;
     cursor: { score?: number; createdAt?: string; id: string } | null;
+    viewerId?: string | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, sort, limit, cursor } = parameters;
+    const { governorate, cityId, viewerLocation, radiusKm, sort, limit, cursor, viewerId } = parameters;
     const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
@@ -1071,7 +1111,15 @@ export class PostsRepository {
         distanceKm: this.buildDistanceInKilometersExpression(centerPointAsEwkt, true),
       })
       .from(posts)
-      .where(and(eq(posts.status, 'ACTIVE'), eq(posts.postType, 'ADOPTION'), locationCondition, cursorCondition))
+      .where(
+        and(
+          eq(posts.status, 'ACTIVE'),
+          eq(posts.postType, 'ADOPTION'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
+          locationCondition,
+          cursorCondition,
+        ),
+      )
       .orderBy(...orderByClauses)
       .limit(limit + 1);
 
@@ -1094,8 +1142,9 @@ export class PostsRepository {
     category: Post['marketCategory'] | null | undefined;
     limit: number;
     cursor: { score?: number; createdAt?: string; id: string } | null;
+    viewerId?: string | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, sort, category, limit, cursor } = parameters;
+    const { governorate, cityId, viewerLocation, radiusKm, sort, category, limit, cursor, viewerId } = parameters;
     const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
@@ -1116,6 +1165,7 @@ export class PostsRepository {
         and(
           eq(posts.status, 'ACTIVE'),
           eq(posts.postType, 'PRODUCT'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
           locationCondition,
           category ? eq(posts.marketCategory, category) : undefined,
           cursorCondition,
@@ -1138,8 +1188,9 @@ export class PostsRepository {
     radiusKm: number;
     limit: number;
     cursor: { id: string } | null;
+    viewerId?: string | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor } = parameters;
+    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor, viewerId } = parameters;
     const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
@@ -1150,7 +1201,14 @@ export class PostsRepository {
     const rows = await this.db
       .select({ ...getTableColumns(posts), distanceKm: this.buildDistanceInKilometersExpression(centerPointAsEwkt) })
       .from(posts)
-      .where(and(eq(posts.status, 'ACTIVE'), locationCondition, cursor ? lt(posts.id, cursor.id) : undefined))
+      .where(
+        and(
+          eq(posts.status, 'ACTIVE'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
+          locationCondition,
+          cursor ? lt(posts.id, cursor.id) : undefined,
+        ),
+      )
       .orderBy(desc(posts.id))
       .limit(limit + 1);
 
@@ -1186,7 +1244,14 @@ export class PostsRepository {
       })
       .from(postSaves)
       .innerJoin(posts, eq(postSaves.postId, posts.id))
-      .where(and(eq(postSaves.userId, userId), ne(posts.status, 'REMOVED'), cursorCondition))
+      .where(
+        and(
+          eq(postSaves.userId, userId),
+          ne(posts.status, 'REMOVED'),
+          excludeIsolatedAccounts(userId, posts.creatorId),
+          cursorCondition,
+        ),
+      )
       .orderBy(desc(postSaves.createdAt), desc(postSaves.postId))
       .limit(limit + 1);
 

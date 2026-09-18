@@ -4,6 +4,7 @@ import { CitiesModule } from '../cities/cities.module';
 import { UsersModule } from '../users/users.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ModerationReportsModule } from '../moderation-reports/moderation-reports.module';
+import { AccountIsolationModule } from '../blocks/account-isolation.module';
 import { PostsResolver } from './posts.resolver';
 import { PostsService } from './posts.service';
 import { PostsRepository } from './posts.repository';
@@ -27,7 +28,14 @@ import { UserBanPostCascadeProcessor } from './user-ban-post-cascade.processor';
  * - `ViewFlushCron` — buffers views in-memory, flushes to Postgres every 3 minutes
  */
 @Module({
-  imports: [UploadModule, CitiesModule, UsersModule, NotificationsModule, ModerationReportsModule],
+  imports: [
+    UploadModule,
+    CitiesModule,
+    UsersModule,
+    NotificationsModule,
+    ModerationReportsModule,
+    AccountIsolationModule,
+  ],
   providers: [PostsResolver, PostsService, PostsRepository, ViewFlushCron, UserBanPostCascadeProcessor],
   exports: [PostsService, PostsRepository, ViewFlushCron],
 })

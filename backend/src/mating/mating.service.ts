@@ -119,6 +119,7 @@ export class MatingService {
     filter: MatingFeedFilterInput | null,
     first: number | null | undefined,
     after: string | null | undefined,
+    viewerId?: string | null,
   ) {
     const f = filter ?? {};
     if (f.cityId) assertUuid(f.cityId, 'filter.cityId');
@@ -127,7 +128,7 @@ export class MatingService {
     const limit = clampFirst(first);
     const cursor = this.decodeCursor(after);
 
-    const result = await this.matingRepository.findFeed({ filter: f, limit, cursor });
+    const result = await this.matingRepository.findFeed({ filter: f, limit, cursor, viewerId });
 
     return {
       edges: result.rows.map((post) => ({ node: post, cursor: this.encodeCursor(post) })),
@@ -145,9 +146,9 @@ export class MatingService {
    * not a MATING post") — does NOT silently return null. See plan §0.3
    * decision 2 for why this is a top-level query, not a Post field resolver.
    */
-  async getMatingPostDetail(postId: string): Promise<MatingDetailsDto> {
+  async getMatingPostDetail(postId: string, viewerId?: string | null): Promise<MatingDetailsDto> {
     assertUuid(postId, 'postId');
-    const row = await this.matingRepository.findDetailsByPostId(postId);
+    const row = await this.matingRepository.findDetailsByPostId(postId, viewerId);
     if (!row) throw new NotFoundError('MatingPost', postId);
     return row;
   }
