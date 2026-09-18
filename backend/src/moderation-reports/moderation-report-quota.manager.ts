@@ -1,7 +1,7 @@
 import { and, eq, gte, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
-import { commentQuotaAdmissions, commentReports, postReports } from '../database/schema';
+import { commentQuotaAdmissions, commentReports, postReports, accountReports } from '../database/schema';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { AppError } from '../common/errors/app.errors';
 
@@ -150,12 +150,33 @@ export class ModerationReportQuotaManager {
         ),
       );
 
+    const [unadmittedAccountRows] = await tx
+      .select({ count: sql<number>`count(*)::int` })
+      .from(accountReports)
+      .where(
+        and(
+          eq(accountReports.reporterId, reporterId),
+          gte(accountReports.createdAt, since),
+          sql`NOT EXISTS (
+            SELECT 1 FROM ${commentQuotaAdmissions}
+            WHERE ${commentQuotaAdmissions.id} = ${accountReports.id}
+              AND ${commentQuotaAdmissions.action} = ${MODERATION_REPORT_ACTION}
+          )`,
+        ),
+      );
+
     // Paired historical admissions and their report rows collapse to one
     // slot; crash orphans and rows recorded outside this seam stay counted.
     const historicalCommentSlots = Math.max(historicalAdmissions?.count ?? 0, unadmittedCommentRows?.count ?? 0);
 
-    // Add committed Pupzy Account Report rows here when their table lands.
-    // Never introduce a second admission method or allowance.
-    return (admissions?.count ?? 0) + historicalCommentSlots + (unadmittedPostRows?.count ?? 0);
+    // Committed account-report rows that never admitted through this seam are
+    // counted the same way as Post Reports, so the shared allowance cannot be
+    // bypassed by alternating report types.
+    return (
+      (admissions?.count ?? 0) +
+      historicalCommentSlots +
+      (unadmittedPostRows?.count ?? 0) +
+      (unadmittedAccountRows?.count ?? 0)
+    );
   }
 }

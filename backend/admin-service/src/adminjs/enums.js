@@ -15,6 +15,17 @@ export const ENUMS = {
   productCondition: ['NEW', 'LIKE_NEW', 'USED'],
   requestStatus: ['PENDING', 'APPROVED', 'REJECTED'],
   reportReason: ['UNRELATED_TO_ANIMALS', 'SPAM', 'INAPPROPRIATE_CONTENT', 'SCAM', 'DUPLICATE', 'OTHER'],
+  accountReportReason: [
+    'HARASSMENT',
+    'SPAM',
+    'SCAM_OR_FRAUD',
+    'IMPERSONATION',
+    'INAPPROPRIATE_CONDUCT',
+    'SAFETY_CONCERN',
+    'OTHER',
+  ],
+  accountReportSourceType: ['POST', 'COMMENT', 'CONTACT_REQUEST', 'ADOPTION_APPLICATION'],
+  accountReportReviewOutcome: ['NO_ACTION', 'ACTION_TAKEN'],
   notificationType: [
     'NEW_UPVOTE',
     'POST_SAVED',

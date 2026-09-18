@@ -392,6 +392,59 @@ describe('AdminJS HTTP security and resource behavior', () => {
     );
   });
 
+  it('lists open account reports with validated source context despite a Block between the accounts', async () => {
+    const reporterRes = await database.pool.query(
+      `INSERT INTO users (firebase_user_id, email, full_name)
+       VALUES ('admin-http-account-reporter', 'account-reporter@example.com', 'Account Reporter')
+       RETURNING id`,
+    );
+    const reportedRes = await database.pool.query(
+      `INSERT INTO users (firebase_user_id, email, full_name)
+       VALUES ('admin-http-account-reported', 'account-reported@example.com', 'Account Reported')
+       RETURNING id`,
+    );
+    const reporterId = reporterRes.rows[0].id;
+    const reportedId = reportedRes.rows[0].id;
+    const sourcePostId = await insertPost(database.pool, {
+      userId: reportedId,
+      cityId: principals.cityId,
+      title: 'Evidence post',
+    });
+    await database.pool.query(`INSERT INTO blocks (blocker_id, blocked_id) VALUES ($1, $2)`, [reporterId, reportedId]);
+    const reportRes = await database.pool.query(
+      `INSERT INTO account_reports (reporter_id, reported_user_id, reason, details, source_type, source_id)
+       VALUES ($1, $2, 'HARASSMENT', 'Threatening messages after contact', 'POST', $3)
+       RETURNING id`,
+      [reporterId, reportedId, sourcePostId],
+    );
+    const reportId = reportRes.rows[0].id;
+
+    const listRes = await fetch(`${baseUrl}/admin/api/resources/account_reports/actions/list`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(listRes.status, 200);
+    const listData = await listRes.json();
+    assert.notEqual(listData.notice?.type, 'error');
+    const recordInList = listData.records.find((r) => r.id === reportId || r.params.id === reportId);
+    assert.ok(recordInList, 'Expected the open account report in the administrator list');
+    assert.equal(recordInList.params.reason, 'HARASSMENT');
+    assert.equal(recordInList.params.source_type, 'POST');
+    assert.equal(recordInList.params.reviewed_at, null);
+
+    const showRes = await fetch(`${baseUrl}/admin/api/resources/account_reports/records/${reportId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(showRes.status, 200);
+    const showData = await showRes.json();
+    assert.equal(showData.record.params.id, reportId);
+    assert.equal(showData.record.params.reporter_id, reporterId);
+    assert.equal(showData.record.params.reported_user_id, reportedId);
+    assert.equal(showData.record.params.details, 'Threatening messages after contact');
+    assert.equal(showData.record.params.source_type, 'POST');
+    assert.equal(showData.record.params.source_id, sourcePostId);
+    assert.equal(showData.record.params.reviewed_at, null);
+  });
+
   it('rate-limits the eleventh login attempt from one IP', async () => {
     let response;
     for (let attempt = 1; attempt <= 11; attempt += 1) {

@@ -53,6 +53,7 @@ export class TestDatabaseHelper {
         posts,
         admin_users,
         blocks,
+        account_reports,
         users,
         cities,
         vet_clinics,

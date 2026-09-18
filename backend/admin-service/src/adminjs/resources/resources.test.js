@@ -15,6 +15,7 @@ import { buildNotificationsResource } from './notifications.resource.js';
 import { buildPostMediaResource } from './post-media.resource.js';
 import { buildPostReportsResource } from './post-reports.resource.js';
 import { buildCommentReportsResource } from './comment-reports.resource.js';
+import { buildAccountReportsResource } from './account-reports.resource.js';
 import { buildPostSavesResource } from './post-saves.resource.js';
 import { buildPostUpvotesResource } from './post-upvotes.resource.js';
 import { buildPostsResource } from './posts.resource.js';
@@ -48,6 +49,7 @@ function resources() {
     buildPostSavesResource(db, components),
     buildPostReportsResource(db, components),
     buildCommentReportsResource(db, components),
+    buildAccountReportsResource(db, components),
     buildCommentsResource(db, pool, components),
     buildContactRequestsResource(db, components),
     buildAdoptionApplicationsResource(db, components),
@@ -62,9 +64,9 @@ function resources() {
 }
 
 describe('AdminJS resource configuration', () => {
-  it('includes all 22 registered domain tables', () => {
+  it('includes all 23 registered domain tables', () => {
     const list = resources();
-    assert.equal(list.length, 22);
+    assert.equal(list.length, 23);
     const names = list.map((r) => r.resource.name);
     assert.deepEqual(names, [...ADMIN_RESOURCE_TABLES]);
   });
@@ -93,6 +95,9 @@ describe('AdminJS resource configuration', () => {
       ['mating_posts', 'age_unit', ENUMS.ageUnit],
       ['post_reports', 'reason', ENUMS.reportReason],
       ['comment_reports', 'reason', ENUMS.reportReason],
+      ['account_reports', 'reason', ENUMS.accountReportReason],
+      ['account_reports', 'source_type', ENUMS.accountReportSourceType],
+      ['account_reports', 'review_outcome', ENUMS.accountReportReviewOutcome],
       ['contact_requests', 'status', ENUMS.requestStatus],
       ['adoption_applications', 'status', ENUMS.requestStatus],
       ['adoption_applications', 'species_preference', ENUMS.speciesType],
