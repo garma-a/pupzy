@@ -6,9 +6,10 @@ import { PostsModule } from '../posts/posts.module';
 import { UploadModule } from '../upload/upload.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { UsersModule } from '../users/users.module';
+import { ModerationReportsModule } from '../moderation-reports/moderation-reports.module';
 
 @Module({
-  imports: [PostsModule, UploadModule, NotificationsModule, UsersModule],
+  imports: [PostsModule, UploadModule, NotificationsModule, UsersModule, ModerationReportsModule],
   providers: [CommentsRepository, CommentsService, CommentsResolver, CommentMediaResolver],
   exports: [CommentsRepository, CommentsService],
 })

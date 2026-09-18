@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { CommentsRepository, FinalizedCommentMedia, isUniqueViolation } from './comments.repository';
 import { QuotaReservation } from './comments-quota.manager';
+import { ReportQuotaReservation } from '../moderation-reports/moderation-report-quota.manager';
 import { PostsRepository } from '../posts/posts.repository';
 import { CreateCommentDto } from './dto/create-comment.input';
 import { CreateReplyDto } from './dto/create-reply.input';
@@ -648,8 +649,8 @@ export class CommentsService {
   async reportComment(userId: string, input: ReportCommentInput): Promise<boolean> {
     const { commentId, reason, details } = input;
 
-    // 1. Rate limiting: max 10 comment reports per day per user
-    let reportReservation: QuotaReservation | undefined;
+    // 1. Rate limiting: shared moderation-report allowance (10 per rolling 24h)
+    let reportReservation: ReportQuotaReservation | undefined;
     if (typeof this.commentsRepository.checkAndRecordReportQuota === 'function') {
       reportReservation = await this.commentsRepository.checkAndRecordReportQuota(userId);
     } else {
@@ -661,12 +662,14 @@ export class CommentsService {
     }
 
     try {
-      // 2. Delegate transactional reporting & threshold checks to repository
+      // 2. Delegate transactional reporting & threshold checks to repository.
+      // It consumes the reservation in the same transaction as the report row.
       return await this.commentsRepository.reportComment({
         commentId,
         reporterId: userId,
         reason,
         details,
+        quotaAdmissionId: reportReservation?.admissionId,
       });
     } catch (err) {
       if (reportReservation) {

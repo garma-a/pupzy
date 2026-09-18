@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Optional } from '@nestjs/common';
 import { eq, and, ne, sql, gte, gt, lt, or, inArray } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import DataLoader from 'dataloader';
@@ -22,10 +22,14 @@ import {
   CommentMedia,
   CommentReport,
 } from '../database/schema';
-import { NotFoundError, ConflictError, ForbiddenError, ValidationError } from '../common/errors/app.errors';
+import { NotFoundError, ConflictError, ForbiddenError, ValidationError, AppError } from '../common/errors/app.errors';
 import { CommentCursorPayload, CommentSortOrder } from './dto/comments-query.input';
 import { getCommentMediaPurgeUrls } from '../upload/media-delivery.util';
 import { CommentsQuotaManager, QuotaReservation } from './comments-quota.manager';
+import {
+  ModerationReportQuotaManager,
+  ReportQuotaReservation,
+} from '../moderation-reports/moderation-report-quota.manager';
 import { withDbRetry } from '../common/utils/db-retry.util';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 
@@ -74,12 +78,17 @@ export function isUniqueViolation(err: unknown): boolean {
 @Injectable()
 export class CommentsRepository {
   private readonly quotaManager: CommentsQuotaManager;
+  private readonly reportQuotaManager: ModerationReportQuotaManager;
 
   constructor(
     @Inject(DATABASE_TOKEN)
     private readonly db: NodePgDatabase<typeof schema>,
+    @Optional()
+    @Inject(ModerationReportQuotaManager)
+    reportQuotaManager?: ModerationReportQuotaManager,
   ) {
     this.quotaManager = new CommentsQuotaManager(this.db);
+    this.reportQuotaManager = reportQuotaManager ?? new ModerationReportQuotaManager(this.db);
   }
 
   /**
@@ -145,10 +154,20 @@ export class CommentsRepository {
   }
 
   /**
-   * Atomically checks and records quota for comment report (10/day).
+   * Atomically reserves one slot of the shared moderation-report allowance.
+   * Comment Reports admit through the same seam as Post Reports and future
+   * Pupzy Account Reports, so alternating target types cannot bypass the cap.
+   * The legacy Comment Report limit message is preserved for compatibility.
    */
-  async checkAndRecordReportQuota(userId: string): Promise<QuotaReservation> {
-    return this.quotaManager.checkAndRecordReportQuota(userId);
+  async checkAndRecordReportQuota(userId: string): Promise<ReportQuotaReservation> {
+    try {
+      return await this.reportQuotaManager.reserveReportAllowance(userId);
+    } catch (error) {
+      if (error instanceof AppError && error.code === 'RATE_LIMITED') {
+        throw new AppError('Daily comment report limit reached (10 per day)', 'RATE_LIMITED');
+      }
+      throw error;
+    }
   }
 
   /**
@@ -1122,8 +1141,9 @@ export class CommentsRepository {
     reporterId: string;
     reason: schema.ReportReason;
     details?: string;
+    quotaAdmissionId?: string;
   }): Promise<boolean> {
-    const { commentId, reporterId, reason, details } = params;
+    const { commentId, reporterId, reason, details, quotaAdmissionId } = params;
     const commentBeforeLock = await this.findCommentById(commentId);
     if (!commentBeforeLock) throw new NotFoundError('Comment', commentId);
 
@@ -1173,6 +1193,10 @@ export class CommentsRepository {
           }
 
           await tx.insert(commentReports).values({
+            // The reservation id doubles as the report row id, which links the
+            // shared-allowance admission to its committed report so it is
+            // counted exactly once under concurrency.
+            ...(quotaAdmissionId ? { id: quotaAdmissionId } : {}),
             commentId,
             reporterId,
             reason,

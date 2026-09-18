@@ -5,7 +5,7 @@ import * as schema from '../database/schema';
 type DrizzleDB = NodePgDatabase<typeof schema>;
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 type DbExecutor = NodePgDatabase<typeof schema> | DbTransaction;
-import { commentQuotaAdmissions, comments, stagedUploads, commentReports } from '../database/schema';
+import { commentQuotaAdmissions, comments, stagedUploads } from '../database/schema';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { AppError } from '../common/errors/app.errors';
 
@@ -21,7 +21,9 @@ export interface QuotaReservation {
  * 1. Shared Comment & Reply creation: 10 per minute, 100 per day.
  * 2. Comment-image tickets: 6 per minute, 50 per day (failed and abandoned tickets stay counted).
  * 3. Comment Boost toggles: 60 per minute (PostgreSQL-backed, survives restarts).
- * 4. Comment Reports: 10 per day.
+ *
+ * Moderation reports share one durable allowance across every report type and
+ * are admitted by `ModerationReportQuotaManager`, not by this manager.
  *
  * Uses PostgreSQL transaction-scoped advisory locks:
  * `pg_advisory_xact_lock(hashtext('comment_quota'), hashtext(userId || ':' || action))`
@@ -247,62 +249,6 @@ export class CommentsQuotaManager {
         id: admissionId,
         userId,
         action: 'COMMENT_BOOST_TOGGLE',
-        createdAt: now,
-      });
-
-      return {
-        admissionId,
-        rollback: async () => {
-          if (!admissionId) return;
-          await this.db
-            .delete(commentQuotaAdmissions)
-            .where(eq(commentQuotaAdmissions.id, admissionId))
-            .catch(() => {});
-        },
-      };
-    });
-  }
-
-  /**
-   * Atomically checks and records quota for comment reports.
-   * Limit: 10 per day per authenticated user.
-   */
-  async checkAndRecordReportQuota(userId: string): Promise<QuotaReservation> {
-    return this.runWithAdvisoryLock(userId, 'COMMENT_REPORT', async (tx) => {
-      const now = new Date();
-      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-      const [admissionCounts] = await tx
-        .select({
-          dayCount: sql<number>`count(*)::int`,
-        })
-        .from(commentQuotaAdmissions)
-        .where(
-          and(
-            eq(commentQuotaAdmissions.userId, userId),
-            eq(commentQuotaAdmissions.action, 'COMMENT_REPORT'),
-            gte(commentQuotaAdmissions.createdAt, oneDayAgo),
-          ),
-        );
-
-      const [reportCounts] = await tx
-        .select({
-          dayCount: sql<number>`count(*)::int`,
-        })
-        .from(commentReports)
-        .where(and(eq(commentReports.reporterId, userId), gte(commentReports.createdAt, oneDayAgo)));
-
-      const effectiveDay = Math.max(admissionCounts?.dayCount ?? 0, reportCounts?.dayCount ?? 0);
-
-      if (effectiveDay >= 10) {
-        throw new AppError('Daily comment report limit reached (10 per day)', 'RATE_LIMITED');
-      }
-
-      const admissionId = generateUuidV7();
-      await tx.insert(commentQuotaAdmissions).values({
-        id: admissionId,
-        userId,
-        action: 'COMMENT_REPORT',
         createdAt: now,
       });
 

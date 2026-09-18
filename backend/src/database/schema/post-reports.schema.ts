@@ -65,6 +65,9 @@ export const postReports = pgTable(
 
     /** Lets the system fetch all reports for a given post (for admin review). */
     postIdx: index('idx_post_reports_post').on(table.postId),
+
+    /** Supports the shared moderation-report allowance's rolling reporter lookup. */
+    reporterCreatedIdx: index('idx_post_reports_reporter_created').on(table.reporterId, table.createdAt),
   }),
 );
 
