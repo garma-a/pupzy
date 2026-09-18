@@ -21,6 +21,9 @@ export * from './cities.schema';
 // Identity
 export * from './users.schema';
 
+// Directional account isolation (Blocks)
+export * from './blocks.schema';
+
 // CTI base table
 export * from './posts.schema';
 

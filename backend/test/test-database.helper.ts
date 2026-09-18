@@ -52,6 +52,7 @@ export class TestDatabaseHelper {
         media_finalizations,
         posts,
         admin_users,
+        blocks,
         users,
         cities,
         vet_clinics,
