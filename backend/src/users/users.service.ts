@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
-import { UsersRepository } from './users.repository';
+import { UsersRepository, type UsersExecutor } from './users.repository';
 import { AccountDeletionRepository } from './account-deletion.repository';
 import { CitiesService } from '../cities/cities.service';
 import { encryptString, decryptString } from '../common/utils/crypto.util';
@@ -102,14 +102,19 @@ export class UsersService {
     return user ? this.decryptUserPhone(user) : undefined;
   }
 
-  async findActiveById(id: string): Promise<User | undefined> {
+  /**
+   * Finds a non-banned user by ID. Accepts an optional Drizzle executor so
+   * isolation-sensitive callers (contact disclosure, approval) can read the
+   * phone number inside the same transaction that holds the account-pair lock.
+   */
+  async findActiveById(id: string, executor?: UsersExecutor): Promise<User | undefined> {
     if (this.accountDeletionRepository) {
       const deletion = await this.accountDeletionRepository.findByUserId(id);
       if (deletion && isAccountDeletionBlockedStatus(deletion.status)) {
         return undefined;
       }
     }
-    const user = await this.usersRepository.findActiveById(id);
+    const user = await this.usersRepository.findActiveById(id, executor);
     return user ? this.decryptUserPhone(user) : undefined;
   }
 

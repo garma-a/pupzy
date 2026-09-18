@@ -5,6 +5,11 @@ import { DATABASE_TOKEN } from '../database/database.provider';
 import { users, type User, type NewUser } from '../database/schema';
 import type * as schema from '../database/schema';
 
+type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
+
+/** Drizzle executor: the pooled database handle or a caller-owned transaction. */
+export type UsersExecutor = NodePgDatabase<typeof schema> | DbTransaction;
+
 @Injectable()
 export class UsersRepository {
   constructor(
@@ -27,8 +32,8 @@ export class UsersRepository {
     return user;
   }
 
-  async findActiveById(id: string): Promise<User | undefined> {
-    const [user] = await this.db
+  async findActiveById(id: string, executor: UsersExecutor = this.db): Promise<User | undefined> {
+    const [user] = await executor
       .select()
       .from(users)
       .where(and(eq(users.id, id), eq(users.isBanned, false)))

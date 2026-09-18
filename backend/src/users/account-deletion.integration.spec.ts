@@ -61,6 +61,7 @@ import { ContactsResolver } from '../contacts/contacts.resolver';
 import { AdoptionsResolver } from '../adoptions/adoptions.resolver';
 import { ContactsService } from '../contacts/contacts.service';
 import { AdoptionsService } from '../adoptions/adoptions.service';
+import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { ForbiddenError, NotFoundError } from '../common/errors/app.errors';
 import { GqlExceptionFilter } from '../common/filters/gql-exception.filter';
@@ -2230,10 +2231,12 @@ describe('Account Deletion Feature Integration', () => {
 
       // Calling getWhatsAppLink must throw NotFoundError and NEVER return the phone link
       const contactsService = new ContactsService(
-        new ContactsRepository(dbHelper.db as unknown as NodePgDatabase),
+        new ContactsRepository(dbHelper.db),
         new PostsRepository(dbHelper.db),
         usersService,
         { fireNotification: jest.fn() } as unknown as NotificationsService,
+        dbHelper.db,
+        new AccountIsolationPolicy(dbHelper.db),
       );
 
       await expect(contactsService.getWhatsAppLink(requester.id, contactRequestRecord.id)).rejects.toThrow(
