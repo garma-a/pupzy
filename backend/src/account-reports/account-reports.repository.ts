@@ -40,15 +40,18 @@ export class AccountReportsRepository {
   async createAccountReport(params: CreateAccountReportParams): Promise<boolean> {
     const { reporterId, userId, reason, details, sourceType, sourceId, quotaAdmissionId } = params;
 
-    if (reporterId === userId) {
+    // Canonical UUID form: a case-variant self target must not slip past the
+    // service check and hit the database self-report constraint.
+    const targetUserId = userId.toLowerCase();
+    if (reporterId.toLowerCase() === targetUserId) {
       throw new ForbiddenError('You cannot report your own Pupzy Account');
     }
 
     try {
       return await this.db.transaction(async (tx) => {
-        const [target] = await tx.select({ id: users.id }).from(users).where(eq(users.id, userId)).limit(1);
+        const [target] = await tx.select({ id: users.id }).from(users).where(eq(users.id, targetUserId)).limit(1);
         if (!target) {
-          throw new NotFoundError('User', userId);
+          throw new NotFoundError('User', targetUserId);
         }
 
         const [existingOpenReport] = await tx
@@ -57,7 +60,7 @@ export class AccountReportsRepository {
           .where(
             and(
               eq(accountReports.reporterId, reporterId),
-              eq(accountReports.reportedUserId, userId),
+              eq(accountReports.reportedUserId, targetUserId),
               isNull(accountReports.reviewedAt),
             ),
           )
@@ -67,7 +70,7 @@ export class AccountReportsRepository {
         }
 
         if (sourceType && sourceId) {
-          await this.assertSourceContext(tx, { reporterId, reportedUserId: userId, sourceType, sourceId });
+          await this.assertSourceContext(tx, { reporterId, reportedUserId: targetUserId, sourceType, sourceId });
         }
 
         await tx.insert(accountReports).values({
@@ -75,7 +78,7 @@ export class AccountReportsRepository {
           // allowance counts the committed report exactly once.
           ...(quotaAdmissionId ? { id: quotaAdmissionId } : {}),
           reporterId,
-          reportedUserId: userId,
+          reportedUserId: targetUserId,
           reason,
           details: details ?? null,
           sourceType: sourceType ?? null,

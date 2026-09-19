@@ -85,6 +85,50 @@ export class UserBanPostCascadeProcessor implements OnApplicationBootstrap {
     `);
   }
 
+  /**
+   * Closes every open Post Report for Posts removed by this cascade page and
+   * accumulates the closed ids into the ban audit metadata, mirroring the
+   * AdminJS batch path so resumed pages cannot leave stale open reports.
+   */
+  private async closeCascadedPostReports(
+    tx: DbTransaction,
+    actionId: string,
+    removedPostIds: string[],
+  ): Promise<void> {
+    if (removedPostIds.length === 0) return;
+
+    const auditResult = await tx.execute<{ admin_user_id: string | null }>(sql`
+      SELECT admin_user_id FROM moderation_actions WHERE id = ${actionId}
+    `);
+    const adminUserId = auditResult.rows[0]?.admin_user_id ?? null;
+
+    const closed = await tx.execute<{ id: string }>(sql`
+      UPDATE post_reports
+      SET reviewed_at = now(),
+          reviewed_by_admin_id = ${adminUserId},
+          review_outcome = 'ACTION_TAKEN'
+      WHERE post_id IN (${sql.join(
+        removedPostIds.map((postId) => sql`${postId}::uuid`),
+        sql`, `,
+      )})
+        AND reviewed_at IS NULL
+      RETURNING id
+    `);
+    const closedPostReportIds = closed.rows.map((row) => row.id);
+    if (closedPostReportIds.length === 0) return;
+
+    await tx.execute(sql`
+      UPDATE moderation_actions
+      SET metadata = jsonb_set(
+        COALESCE(metadata, '{}'::jsonb),
+        '{closedPostReportIds}',
+        COALESCE(metadata->'closedPostReportIds', '[]'::jsonb) || ${JSON.stringify(closedPostReportIds)}::jsonb,
+        true
+      )
+      WHERE id = ${actionId}
+    `);
+  }
+
   private async processNextCascadeBatch(): Promise<CascadeOutcome | undefined> {
     return withDbRetry(() =>
       this.db.transaction(async (tx) => {
@@ -197,6 +241,11 @@ export class UserBanPostCascadeProcessor implements OnApplicationBootstrap {
             AND status = 'ACTIVE'
           RETURNING id
         `);
+        await this.closeCascadedPostReports(
+          tx,
+          actionId,
+          removed.rows.map((row) => row.id),
+        );
         const cascadedPostCount = previousCount + removed.rows.length;
         const cursorPostId = postIds[postIds.length - 1];
         await tx.execute(sql`

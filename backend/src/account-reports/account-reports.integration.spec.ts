@@ -402,6 +402,16 @@ describe('Pupzy Account Reports (integration)', () => {
       ).rejects.toMatchObject({ cause: { code: '23514' } });
     });
 
+    it('rejects a case-variant self target as FORBIDDEN without reaching the database constraint', async () => {
+      const reporter = await seedUser('reporter');
+      authenticateAs(reporter);
+
+      const body = await reportUser({ userId: reporter.id.toUpperCase(), reason: 'HARASSMENT' });
+      expect(body.errors?.[0]?.extensions?.code).toBe('FORBIDDEN');
+      expect(await dbHelper.db.select().from(accountReports)).toHaveLength(0);
+      expect(await countAdmissions(reporter.id)).toBe(0);
+    });
+
     it('rejects a missing reported account without consuming quota', async () => {
       const reporter = await seedUser('reporter');
       authenticateAs(reporter);

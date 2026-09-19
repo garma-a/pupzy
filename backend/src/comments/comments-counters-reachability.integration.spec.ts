@@ -1220,13 +1220,25 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     // The recovery fixture intentionally has 101 active Posts: 100 + 1 pages.
     await dbHelper.db.update(posts).set({ status: 'REMOVED' }).where(eq(posts.id, testPost.id));
 
-    await dbHelper.pool.query(
+    const recoveryPosts = await dbHelper.pool.query<{ id: string }>(
       `INSERT INTO posts
          (creator_id, post_type, title, description, status, moderation_status, city_id, coordinates, report_count, urgency)
        SELECT $1, 'ADOPTION', 'Ban recovery page ' || series, 'Description', 'ACTIVE',
               'PENDING_AUTO_REVIEW', $2, ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326), 0, NULL
-       FROM generate_series(1, 101) AS series`,
+       FROM generate_series(1, 101) AS series
+       RETURNING id`,
       [authorUser.id, testCity.id],
+    );
+    const orderedRecoveryPostIds = recoveryPosts.rows.map((row) => row.id).sort();
+    const firstPageReport = await dbHelper.pool.query<{ id: string }>(
+      `INSERT INTO post_reports (post_id, reporter_id, reason)
+       VALUES ($1, $2, 'SPAM') RETURNING id`,
+      [orderedRecoveryPostIds[0], matureReporter1.id],
+    );
+    const lastPageReport = await dbHelper.pool.query<{ id: string }>(
+      `INSERT INTO post_reports (post_id, reporter_id, reason)
+       VALUES ($1, $2, 'SPAM') RETURNING id`,
+      [orderedRecoveryPostIds[orderedRecoveryPostIds.length - 1], matureReporter2.id],
     );
     const ban = await dbHelper.pool.query<{ ban_marker: string }>(
       `UPDATE users
@@ -1285,6 +1297,32 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
       [authorUser.id],
     );
     expect(Number(notifications.rows[0].count)).toBe(1);
+
+    // Reports on Posts removed by resumed scheduler pages close in the same
+    // page transaction and correlate into the ban audit metadata.
+    const closedReports = await dbHelper.pool.query<{
+      id: string;
+      reviewed_at: Date | null;
+      reviewed_by_admin_id: string | null;
+      review_outcome: string | null;
+    }>(
+      `SELECT id, reviewed_at, reviewed_by_admin_id, review_outcome
+       FROM post_reports WHERE id = ANY($1::uuid[]) ORDER BY id`,
+      [[firstPageReport.rows[0].id, lastPageReport.rows[0].id]],
+    );
+    expect(closedReports.rows).toHaveLength(2);
+    for (const row of closedReports.rows) {
+      expect(row.reviewed_at).not.toBeNull();
+      expect(row.reviewed_by_admin_id).toBe(adminUser.id);
+      expect(row.review_outcome).toBe('ACTION_TAKEN');
+    }
+    const cascadeAudit = await dbHelper.pool.query<{ metadata: { closedPostReportIds?: string[] } }>(
+      `SELECT metadata FROM moderation_actions WHERE id = $1`,
+      [audit.rows[0].id],
+    );
+    expect([...(cascadeAudit.rows[0].metadata.closedPostReportIds ?? [])].sort()).toEqual(
+      [firstPageReport.rows[0].id, lastPageReport.rows[0].id].sort(),
+    );
   });
 
   it('Ticket 11: separate API schedulers use a database claim and emit one cascade notification', async () => {
