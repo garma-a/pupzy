@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { ContactsRepository } from './contacts.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { UsersService } from '../users/users.service';
@@ -6,7 +7,12 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../common/errors/app.errors';
 import { assertUuid } from '../common/utils/validate-uuid';
 import { clampFirst } from '../common/utils/pagination.util';
+import { DATABASE_TOKEN } from '../database/database.provider';
+import * as schema from '../database/schema';
 import type { ContactRequest } from '../database/schema';
+import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
+
+type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
 const CONTACT_REQUEST_STATUSES = ['PENDING', 'APPROVED', 'REJECTED'] as const;
 
@@ -37,6 +43,9 @@ export class ContactsService {
     private readonly postsRepository: PostsRepository,
     private readonly usersService: UsersService,
     private readonly notificationsService: NotificationsService,
+    @Inject(DATABASE_TOKEN)
+    private readonly db: NodePgDatabase<typeof schema>,
+    private readonly isolationPolicy: AccountIsolationPolicy,
   ) {}
 
   /**
@@ -47,11 +56,14 @@ export class ContactsService {
    * - Post must be ACTIVE
    * - Requester cannot be the post owner
    * - One request per (requester, post) — duplicate check before DB constraint
+   * - Requester and post creator must not be isolated: the viewer-aware Post
+   *   lookup hides a Blocked post like any inaccessible content, and the insert
+   *   rechecks isolation under the canonical pair lock before committing
    */
   async requestContact(requesterId: string, postId: string, message: string): Promise<ContactRequest> {
     assertUuid(postId, 'postId');
 
-    const post = await this.postsRepository.findById(postId);
+    const post = await this.postsRepository.findById(postId, requesterId);
     if (!post || post.status === 'REMOVED') {
       throw new NotFoundError('Post', postId);
     }
@@ -71,11 +83,17 @@ export class ContactsService {
       throw new ConflictError('You have already sent a contact request for this post');
     }
 
-    const contactRequest = await this.contactsRepository.create({
-      postId,
-      requesterId,
-      message: message.trim(),
+    const contactRequest = await this.db.transaction(async (tx) => {
+      // Pair lock before the insert: a Block committing first makes this fail
+      // neutrally, and a Block committing second rejects the pending row.
+      if (await this.isolationPolicy.lockPairAndRecheck(tx, requesterId, post.creatorId)) {
+        return null;
+      }
+      return this.contactsRepository.create({ postId, requesterId, message: message.trim() }, tx);
     });
+    if (!contactRequest) {
+      throw new NotFoundError('Post', postId);
+    }
 
     // Fire notification to post owner (non-blocking)
     const requester = await this.usersService.findById(requesterId);
@@ -98,6 +116,11 @@ export class ContactsService {
    * Approves a pending contact request.
    * Only the post owner can approve.
    * Returns the updated request with the WhatsApp link.
+   *
+   * The isolation recheck, the PENDING → APPROVED transition, and the owner
+   * phone read that builds the wa.me link all run inside one transaction that
+   * holds the canonical account-pair lock. Across a Block the request is
+   * treated as unavailable and no link is ever disclosed.
    */
   async approveContactRequest(
     ownerId: string,
@@ -120,16 +143,32 @@ export class ContactsService {
       throw new ValidationError(`Request is already ${request.status}`);
     }
 
-    const updated = await this.contactsRepository.updateStatus(requestId, 'APPROVED');
-    if (!updated) {
+    const outcome = await this.db.transaction(async (tx) => {
+      if (await this.isolationPolicy.lockPairAndRecheck(tx, post.creatorId, request.requesterId)) {
+        return { kind: 'unavailable' as const };
+      }
+
+      const updated = await this.contactsRepository.updateStatus(requestId, 'APPROVED', tx);
+      if (!updated) {
+        return { kind: 'lost' as const };
+      }
+
+      // Decrypt owner phone → build wa.me link inside the same transaction so
+      // the disclosure is ordered with the approval, never after a later Block.
+      const owner = await this.usersService.findActiveById(ownerId, tx);
+      const whatsappLink = owner?.phoneNumber ? `https://wa.me/${owner.phoneNumber.replace(/\D/g, '')}` : null;
+      return { kind: 'approved' as const, updated, whatsappLink };
+    });
+
+    if (outcome.kind === 'unavailable') {
+      // Neutral: identical to an unknown request, never reveals the Block.
+      throw new NotFoundError('ContactRequest', requestId);
+    }
+    if (outcome.kind === 'lost') {
       // Lost a concurrent approve/reject race — no state change, no notification.
       const current = await this.contactsRepository.findById(requestId);
       throw new ConflictError(`Request is already ${current?.status ?? 'processed'}`);
     }
-
-    // Decrypt owner phone → build wa.me link
-    const owner = await this.usersService.findActiveById(ownerId);
-    const whatsappLink = owner?.phoneNumber ? `https://wa.me/${owner.phoneNumber.replace(/\D/g, '')}` : null;
 
     // Notification ONLY after the transition succeeded
     this.notificationsService.fireNotification(
@@ -144,7 +183,7 @@ export class ContactsService {
       ownerId,
     );
 
-    return { ...updated, whatsappLink };
+    return { ...outcome.updated, whatsappLink: outcome.whatsappLink };
   }
 
   /**
@@ -192,6 +231,11 @@ export class ContactsService {
   /**
    * Re-fetches the WhatsApp link for an already-approved contact request.
    * Only the original requester can call this.
+   *
+   * Isolation is rechecked under the canonical account-pair lock, and the
+   * owner phone is read inside the same transaction so no disclosure can be
+   * ordered after a Block. Across a Block the request resolves as unknown and
+   * no phone or WhatsApp link is returned.
    */
   async getWhatsAppLink(callerId: string, requestId: string): Promise<string> {
     assertUuid(requestId, 'requestId');
@@ -210,22 +254,32 @@ export class ContactsService {
       throw new NotFoundError('Post', request.postId);
     }
 
-    const owner = await this.usersService.findActiveById(post.creatorId);
-    if (!owner || owner.isBanned || !owner.phoneNumber) {
-      throw new NotFoundError('Owner contact information is not available');
-    }
+    return this.db.transaction(async (tx) => {
+      if (await this.isolationPolicy.lockPairAndRecheck(tx, callerId, post.creatorId)) {
+        throw new NotFoundError('ContactRequest', requestId);
+      }
 
-    return `https://wa.me/${owner.phoneNumber.replace(/\D/g, '')}`;
+      const owner = await this.usersService.findActiveById(post.creatorId, tx);
+      if (!owner || owner.isBanned || !owner.phoneNumber) {
+        throw new NotFoundError('Owner contact information is not available');
+      }
+
+      return `https://wa.me/${owner.phoneNumber.replace(/\D/g, '')}`;
+    });
   }
 
   /**
    * Returns the seller's WhatsApp contact for a PRODUCT post.
    * No approval gate — direct phone decrypt for classifieds.
+   *
+   * The caller's view of the Post already hides isolated creators, and the
+   * disclosure rechecks isolation under the canonical account-pair lock while
+   * reading the seller phone inside the same transaction.
    */
   async getProductSellerContact(callerId: string, postId: string): Promise<string> {
     assertUuid(postId, 'postId');
 
-    const post = await this.postsRepository.findById(postId);
+    const post = await this.postsRepository.findById(postId, callerId);
     if (!post || post.status === 'REMOVED') {
       throw new NotFoundError('Post', postId);
     }
@@ -239,12 +293,18 @@ export class ContactsService {
       throw new ForbiddenError('You cannot request contact for your own listing');
     }
 
-    const seller = await this.usersService.findActiveById(post.creatorId);
-    if (!seller || seller.isBanned || !seller.phoneNumber) {
-      throw new NotFoundError('Seller contact information is not available');
-    }
+    return this.db.transaction(async (tx) => {
+      if (await this.isolationPolicy.lockPairAndRecheck(tx, callerId, post.creatorId)) {
+        throw new NotFoundError('Post', postId);
+      }
 
-    return `https://wa.me/${seller.phoneNumber.replace(/\D/g, '')}`;
+      const seller = await this.usersService.findActiveById(post.creatorId, tx);
+      if (!seller || seller.isBanned || !seller.phoneNumber) {
+        throw new NotFoundError('Seller contact information is not available');
+      }
+
+      return `https://wa.me/${seller.phoneNumber.replace(/\D/g, '')}`;
+    });
   }
 
   /**
@@ -265,6 +325,7 @@ export class ContactsService {
 
     const result = await this.contactsRepository.findByRequester({
       requesterId: userId,
+      viewerId: userId,
       postId,
       status,
       limit,
@@ -302,12 +363,35 @@ export class ContactsService {
 
     const result = await this.contactsRepository.findByPost({
       postId,
+      viewerId: userId,
       status,
       limit,
       cursor,
     });
 
     return this.mapToConnection(result);
+  }
+
+  // ─── Isolation cleanup ───────────────────────────────────────────────
+
+  /**
+   * Transaction-safe cleanup contract for `blockUser`.
+   *
+   * Rejects every PENDING Contact Request between the two accounts in either
+   * direction without deleting rows, so history is preserved and a rejected
+   * record can never be approved later. Must run inside the caller's Block
+   * transaction so the Block insert and the rejections commit atomically.
+   *
+   * Acquires the canonical account-pair lock, so standalone calls also
+   * serialize with create/approval/disclosure paths. Emits no notification.
+   */
+  async rejectPendingContactRequestsBetweenAccounts(
+    tx: DbTransaction,
+    firstAccountId: string,
+    secondAccountId: string,
+  ): Promise<number> {
+    await this.isolationPolicy.lockPair(tx, firstAccountId, secondAccountId);
+    return this.contactsRepository.rejectPendingBetweenAccounts(firstAccountId, secondAccountId, tx);
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────
