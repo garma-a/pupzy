@@ -12,7 +12,7 @@ describe('NotificationsService', () => {
 
   beforeEach(() => {
     mockRepo = {
-      create: jest.fn().mockResolvedValue({ id: validNotificationId }),
+      createIfNotIsolated: jest.fn().mockResolvedValue({ id: validNotificationId }),
       findByRecipient: jest.fn().mockResolvedValue({ rows: [], hasNextPage: false }),
       countUnread: jest.fn().mockResolvedValue(3),
       markRead: jest.fn().mockResolvedValue({ id: validNotificationId, isRead: true }),
@@ -23,6 +23,7 @@ describe('NotificationsService', () => {
 
   describe('fireNotification', () => {
     it('creates notification for recipient', () => {
+      const actorId = '01916327-0000-7000-8000-000000000009';
       service.fireNotification(
         {
           recipientId: validUserId,
@@ -30,10 +31,13 @@ describe('NotificationsService', () => {
           title: 'New upvote',
           body: 'Someone upvoted your post',
         },
-        '01916327-0000-7000-8000-000000000009',
+        actorId,
       );
 
-      expect(mockRepo.create).toHaveBeenCalled();
+      expect(mockRepo.createIfNotIsolated).toHaveBeenCalledWith(
+        expect.objectContaining({ recipientId: validUserId, type: 'NEW_UPVOTE' }),
+        actorId,
+      );
     });
 
     it('creates discussion notifications with relatedPostId and relatedCommentId (Ticket 10)', () => {
@@ -53,12 +57,13 @@ describe('NotificationsService', () => {
         otherUser,
       );
 
-      expect(mockRepo.create).toHaveBeenCalledWith(
+      expect(mockRepo.createIfNotIsolated).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'NEW_COMMENT',
           relatedPostId: postId,
           relatedCommentId: commentId,
         }),
+        otherUser,
       );
 
       service.fireNotification(
@@ -73,12 +78,13 @@ describe('NotificationsService', () => {
         otherUser,
       );
 
-      expect(mockRepo.create).toHaveBeenCalledWith(
+      expect(mockRepo.createIfNotIsolated).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'NEW_REPLY',
           relatedPostId: postId,
           relatedCommentId: commentId,
         }),
+        otherUser,
       );
 
       service.fireNotification(
@@ -93,12 +99,13 @@ describe('NotificationsService', () => {
         otherUser,
       );
 
-      expect(mockRepo.create).toHaveBeenCalledWith(
+      expect(mockRepo.createIfNotIsolated).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'COMMENT_BOOSTED',
           relatedPostId: postId,
           relatedCommentId: commentId,
         }),
+        otherUser,
       );
 
       service.fireNotification(
@@ -113,12 +120,13 @@ describe('NotificationsService', () => {
         otherUser,
       );
 
-      expect(mockRepo.create).toHaveBeenCalledWith(
+      expect(mockRepo.createIfNotIsolated).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'COMMENT_PINNED',
           relatedPostId: postId,
           relatedCommentId: commentId,
         }),
+        otherUser,
       );
     });
 
@@ -133,11 +141,11 @@ describe('NotificationsService', () => {
         validUserId, // Same as recipientId
       );
 
-      expect(mockRepo.create).not.toHaveBeenCalled();
+      expect(mockRepo.createIfNotIsolated).not.toHaveBeenCalled();
     });
 
     it('catches and logs errors without throwing to caller', () => {
-      mockRepo.create = jest.fn().mockRejectedValue(new Error('DB failure'));
+      mockRepo.createIfNotIsolated = jest.fn().mockRejectedValue(new Error('DB failure'));
 
       expect(() => {
         service.fireNotification({

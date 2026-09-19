@@ -26,12 +26,17 @@ export class NotificationsService {
    *
    * ## Self-notification guard
    * Silently skips if recipientId equals the actor (don't notify yourself).
+   *
+   * ## Account isolation guard
+   * Persistence rechecks mutual isolation between actor and recipient under
+   * the canonical account-pair lock, so an active Block — including one that
+   * commits concurrently — suppresses the notification before it is stored.
    */
   fireNotification(data: NewNotification, actorId?: string): void {
     // Don't notify yourself
     if (actorId && data.recipientId === actorId) return;
 
-    this.notificationsRepository.create(data).catch((err) => {
+    this.notificationsRepository.createIfNotIsolated(data, actorId).catch((err) => {
       this.logger.error(
         `Failed to create notification type=${data.type} for recipient=${data.recipientId}`,
         err instanceof Error ? err.stack : String(err),

@@ -302,6 +302,13 @@
       "when": 1790705600000,
       "tag": "0042_post_report_review_outcomes",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1790792000000,
+      "tag": "0043_suppress_isolated_notification_events",
+      "breakpoints": true
     }
   ]
 }

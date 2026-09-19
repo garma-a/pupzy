@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Inject, Logger, OnApplicationBootstrap, Optional } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { and, eq, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
@@ -7,6 +7,9 @@ import * as schema from '../database/schema';
 import { discussionNotificationEvents, notifications, type DiscussionNotificationEvent } from '../database/schema';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { withDbRetry } from '../common/utils/db-retry.util';
+import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
+
+type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
 const DISCUSSION_NOTIFICATION_BATCH_SIZE = 50;
 const DISCUSSION_NOTIFICATION_LEASE_MS = 60_000;
@@ -16,16 +19,26 @@ const MAX_RETRY_DELAY_MS = 5 * 60_000;
  * Delivers the durable discussion-notification outbox in the existing NestJS
  * API. No external provider is involved: delivery is the atomic creation of
  * the user's existing in-app notification row.
+ *
+ * A Block committed before delivery is a terminal suppression: the event is
+ * marked SUPPRESSED without an inbox row, so it never retries. The canonical
+ * account-pair lock orders that check against a concurrently committing Block.
  */
 @Injectable()
 export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
   private readonly logger = new Logger(DiscussionNotificationProcessor.name);
+  private readonly isolationPolicy: AccountIsolationPolicy;
   private isProcessing = false;
 
   constructor(
     @Inject(DATABASE_TOKEN)
     private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+    @Optional()
+    @Inject(AccountIsolationPolicy)
+    isolationPolicy?: AccountIsolationPolicy,
+  ) {
+    this.isolationPolicy = isolationPolicy ?? new AccountIsolationPolicy(this.db);
+  }
 
   async onApplicationBootstrap(): Promise<void> {
     try {
@@ -126,6 +139,17 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
           return false;
         }
 
+        // A Block committed before delivery is terminal: no inbox row is
+        // created and the event never retries. The canonical pair lock makes
+        // this check ordered against a concurrently committing Block.
+        if (
+          current.actorId &&
+          (await this.isolationPolicy.lockPairAndRecheck(tx, current.actorId, current.recipientId))
+        ) {
+          await this.markSuppressed(tx, current.id, event.leaseToken!);
+          return false;
+        }
+
         // This insert and the DELIVERED transition share one transaction. A
         // crash yields either neither effect or both; the unique event key also
         // makes recovery harmless if a delivery attempt is repeated.
@@ -163,6 +187,30 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
         return !!delivered;
       }),
     );
+  }
+
+  /**
+   * Marks a claimed event as terminally suppressed. Lease-guarded so a stale
+   * worker can never overwrite a newer owner's state.
+   */
+  private async markSuppressed(tx: DbTransaction, eventId: string, leaseToken: string): Promise<void> {
+    const now = new Date();
+    await tx
+      .update(discussionNotificationEvents)
+      .set({
+        status: 'SUPPRESSED',
+        leaseToken: null,
+        leaseExpiresAt: null,
+        lastError: null,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(discussionNotificationEvents.id, eventId),
+          eq(discussionNotificationEvents.status, 'PROCESSING'),
+          eq(discussionNotificationEvents.leaseToken, leaseToken),
+        ),
+      );
   }
 
   private async requeueClaimedEvent(event: DiscussionNotificationEvent, error: unknown): Promise<void> {
