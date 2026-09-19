@@ -2301,7 +2301,7 @@ describe('Account Deletion Feature Integration', () => {
         .returning();
 
       // Open Post Report filed by the deleting account against a surviving Post.
-      const [deletedPostReport] = await dbHelper.db
+      const [accountDeletionPostReport] = await dbHelper.db
         .insert(postReports)
         .values({
           postId: survivingPost.id,
@@ -2394,7 +2394,7 @@ describe('Account Deletion Feature Integration', () => {
           targetType: 'POST',
           targetId: survivingPost.id,
           reason: 'Post report dismissed',
-          metadata: { reportId: deletedPostReport.id, reviewOutcome: 'NO_ACTION' },
+          metadata: { reportId: accountDeletionPostReport.id, reviewOutcome: 'NO_ACTION' },
         })
         .returning();
       const [unrelatedAudit] = await dbHelper.db
