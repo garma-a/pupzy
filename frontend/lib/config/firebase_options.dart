@@ -42,7 +42,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAHOJUrXQWayBW0v9pMfE0wo6lWrY8fz3Y',
-    appId: '1:48374136555:android:771759429f522ce35cc8ae',
+    appId: '1:48374136555:android:796d202347d02eb75cc8ae',
     messagingSenderId: '48374136555',
     projectId: 'pupzy-app-5f707',
     storageBucket: 'pupzy-app-5f707.firebasestorage.app',
@@ -50,12 +50,12 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBlCH-MLNACbFcJFf4pxxl8Ma31D1Oj91I',
-    appId: '1:48374136555:ios:eec39fc56ad1a5c65cc8ae',
+    appId: '1:48374136555:ios:768e6984998c1fbf5cc8ae',
     messagingSenderId: '48374136555',
     projectId: 'pupzy-app-5f707',
     storageBucket: 'pupzy-app-5f707.firebasestorage.app',
-    iosClientId: '48374136555-t9kh4nrdpaneun0g6uf1on2cs01610pt.apps.googleusercontent.com',
-    iosBundleId: 'com.example.pupzy',
+    iosClientId: '48374136555-attbbliehsi35qtjobimhb1r8uod9cme.apps.googleusercontent.com',
+    iosBundleId: 'com.pupzy.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(

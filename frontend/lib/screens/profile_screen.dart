@@ -10,6 +10,7 @@ import '../services/auth_service.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/language_toggle.dart';
+import 'blocked_accounts_screen.dart';
 import 'contact_requests_screen.dart';
 import 'delete_account_screen.dart';
 import 'login_screen.dart';
@@ -349,6 +350,14 @@ class _ProfileSheetState extends State<ProfileSheet> {
                       );
                       if (mounted) _fetchPendingSentCount();
                     },
+                  ),
+                  const Divider(height: 1, indent: 48),
+                  _SettingsRow(
+                    icon: Icons.block_outlined,
+                    label: t(context, 'Blocked Accounts', 'الحسابات المحظورة'),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const BlockedAccountsScreen()),
+                    ),
                   ),
                 ],
               ),

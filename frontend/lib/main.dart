@@ -13,6 +13,7 @@ import 'services/auth_service.dart';
 import 'services/browse_location_service.dart';
 import 'services/graphql_service.dart';
 import 'services/location_service.dart';
+import 'services/safety_events.dart';
 import 'theme/app_theme.dart';
 import 'utils/navigation.dart';
 
@@ -68,6 +69,7 @@ class PupzyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LangProvider()),
         ChangeNotifierProvider(create: (_) => LocationService()),
         ChangeNotifierProvider(create: (_) => BrowseLocationService()),
+        ChangeNotifierProvider(create: (_) => SafetyEvents()),
         ProxyProvider<AuthService, GraphQLService>(
           update: (_, auth, prev) => GraphQLService(auth),
         ),

@@ -9,6 +9,7 @@ import '../models/feed_post.dart';
 import '../services/browse_location_service.dart';
 import '../services/feed_location_resolver.dart';
 import '../services/graphql_service.dart';
+import '../services/safety_events.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/adaptive_search_bar.dart';
@@ -39,6 +40,7 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
   bool _initialized = false;
   double? _lastRadius;
   Object? _lastBrowseCityId;
+  int? _lastSafetyVersion;
   String? _governorate;
   String? _cityId;
   String? _endCursor;
@@ -141,12 +143,18 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
     routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
     final maxDist = DistanceProvider.of(context).maxDistance;
     final browseCityId = context.watch<BrowseLocationService>().selectedCity?['id'];
+    // A Block/Unblock changes what the server returns for every feed, and a
+    // quiet patch-in-place refresh can never remove posts that vanished — so
+    // a change in the block list forces a full reload.
+    final safetyVersion = context.watch<SafetyEvents>().version;
+    final safetyChanged = _lastSafetyVersion != null && safetyVersion != _lastSafetyVersion;
+    _lastSafetyVersion = safetyVersion;
     if (!_initialized) {
       _initialized = true;
       _lastRadius = maxDist;
       _lastBrowseCityId = browseCityId;
       _loadFeed();
-    } else if (maxDist != _lastRadius || browseCityId != _lastBrowseCityId) {
+    } else if (maxDist != _lastRadius || browseCityId != _lastBrowseCityId || safetyChanged) {
       _lastRadius = maxDist;
       _lastBrowseCityId = browseCityId;
       _loadFeed();

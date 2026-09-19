@@ -6,11 +6,13 @@ import '../config/api_config.dart';
 import '../models/account_deletion.dart';
 import '../models/adoption_application.dart';
 import '../models/app_notification.dart';
+import '../models/blocked_user.dart';
 import '../models/comment.dart';
 import '../models/contact_request.dart';
 import '../models/feed_post.dart';
 import '../models/mating_detail.dart';
 import '../models/post_detail.dart';
+import '../models/safety.dart';
 import '../models/vet_clinic.dart';
 import '../screens/account_deletion_in_progress_screen.dart';
 import '../screens/account_suspended_screen.dart';
@@ -2088,22 +2090,162 @@ class GraphQLService {
     return (result.data?['unpinComment'] as bool? ?? false, null);
   }
 
-  Future<(bool success, String? errorMessage)> reportComment({
+  // ── UGC reporting & account blocking ──────────────────────────────────────
+  // Contract: backend/docs/ugc-reporting-and-account-blocking-flutter-
+  // integration-contract.md. Every mutation returns Boolean!; failures carry
+  // a stable `extensions.code` (POST_ALREADY_REPORTED, RATE_LIMITED, ...) that
+  // callers branch on via [SafetyResult].
+
+  static const String reportPostMutation = r'''
+    mutation ReportPost($input: ReportPostInput!) {
+      reportPost(input: $input)
+    }
+  ''';
+
+  static const String reportUserMutation = r'''
+    mutation ReportUser($input: ReportUserInput!) {
+      reportUser(input: $input)
+    }
+  ''';
+
+  static const String blockUserMutation = r'''
+    mutation BlockUser($userId: ID!) {
+      blockUser(userId: $userId)
+    }
+  ''';
+
+  static const String unblockUserMutation = r'''
+    mutation UnblockUser($userId: ID!) {
+      unblockUser(userId: $userId)
+    }
+  ''';
+
+  static const String blockedUsersQuery = r'''
+    query BlockedUsers($first: Int, $after: String) {
+      blockedUsers(first: $first, after: $after) {
+        edges {
+          node { id fullName fullNameArabic profilePictureUrl isVerified }
+          blockedAt
+          cursor
+        }
+        pageInfo { hasNextPage endCursor }
+      }
+    }
+  ''';
+
+  /// The backend's stable machine-readable error code for a failed operation
+  /// (`extensions.code`), or null when there is none (e.g. no response).
+  String? _errorCode(OperationException? exception) {
+    if (exception == null) return null;
+    for (final error in exception.graphqlErrors) {
+      final code = error.extensions?['code'];
+      if (code is String) return code;
+    }
+    return null;
+  }
+
+  /// Runs a Boolean!-returning safety mutation and folds the outcome into a
+  /// [SafetyResult] carrying the error code + message on failure.
+  Future<SafetyResult> _runSafetyMutation(String document, String field, Map<String, dynamic> variables) async {
+    final result = await client.value.mutate(MutationOptions(document: gql(document), variables: variables));
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return SafetyResult(ok: false, code: _errorCode(result.exception), message: _serverErrorMessage(result.exception));
+    }
+    final ok = result.data?[field] as bool? ?? false;
+    return ok ? SafetyResult.success : SafetyResult(ok: false, message: null);
+  }
+
+  /// Reports a Comment or Reply. `details` is optional here (unlike
+  /// [reportPost]/[reportUser], `OTHER` does not require it).
+  Future<SafetyResult> reportComment({
     required String commentId,
     required String reason,
-  }) async {
-    final result = await client.value.mutate(
-      MutationOptions(
-        document: gql(reportCommentMutation),
-        variables: {
-          'input': {'commentId': commentId, 'reason': reason},
+    String? details,
+  }) {
+    return _runSafetyMutation(reportCommentMutation, 'reportComment', {
+      'input': {
+        'commentId': commentId,
+        'reason': reason,
+        'details': ?details,
+      },
+    });
+  }
+
+  /// Reports a Post of any listing type. `details` is required (nonblank)
+  /// when `reason` is `OTHER`, and is capped at 500 characters.
+  Future<SafetyResult> reportPost({
+    required String postId,
+    required String reason,
+    String? details,
+  }) {
+    return _runSafetyMutation(reportPostMutation, 'reportPost', {
+      'input': {
+        'postId': postId,
+        'reason': reason,
+        'details': ?details,
+      },
+    });
+  }
+
+  /// Reports another Pupzy Account. `sourceType` and `sourceId` must be
+  /// supplied together (or both omitted); see the contract §6.4 for which
+  /// evidence records are accepted.
+  Future<SafetyResult> reportUser({
+    required String userId,
+    required String reason,
+    String? details,
+    AccountReportSource? sourceType,
+    String? sourceId,
+  }) {
+    return _runSafetyMutation(reportUserMutation, 'reportUser', {
+      'input': {
+        'userId': userId,
+        'reason': reason,
+        'details': ?details,
+        if (sourceType != null && sourceId != null) ...{
+          'sourceType': sourceType.value,
+          'sourceId': sourceId,
         },
+      },
+    });
+  }
+
+  /// Creates the caller-owned Block. Idempotent; atomically rejects pending
+  /// contact requests/adoption applications between the pair server-side.
+  Future<SafetyResult> blockUser(String userId) {
+    return _runSafetyMutation(blockUserMutation, 'blockUser', {'userId': userId});
+  }
+
+  /// Removes the Block the caller owns. Idempotent.
+  Future<SafetyResult> unblockUser(String userId) {
+    return _runSafetyMutation(unblockUserMutation, 'unblockUser', {'userId': userId});
+  }
+
+  /// One page of the accounts the caller has blocked, newest first.
+  Future<(List<BlockedUser> users, String? endCursor, bool hasNextPage, String? errorMessage)> fetchBlockedUsers({
+    int first = 20,
+    String? after,
+  }) async {
+    final result = await client.value.query(
+      QueryOptions(
+        document: gql(blockedUsersQuery),
+        variables: {'first': first, 'after': ?after},
+        fetchPolicy: FetchPolicy.networkOnly,
       ),
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (false, _serverErrorMessage(result.exception));
+      return (<BlockedUser>[], null, false, _serverErrorMessage(result.exception));
     }
-    return (result.data?['reportComment'] as bool? ?? false, null);
+    final connection = result.data?['blockedUsers'] as Map<String, dynamic>?;
+    final edges = (connection?['edges'] as List<dynamic>? ?? const []).cast<Map<String, dynamic>>();
+    final pageInfo = connection?['pageInfo'] as Map<String, dynamic>?;
+    return (
+      edges.map(BlockedUser.fromEdge).toList(),
+      pageInfo?['endCursor'] as String?,
+      pageInfo?['hasNextPage'] as bool? ?? false,
+      null,
+    );
   }
 }

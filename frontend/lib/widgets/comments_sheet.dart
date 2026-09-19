@@ -11,10 +11,12 @@ import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
 import '../models/comment.dart';
+import '../models/safety.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/client_request_id.dart';
 import '../utils/time_format.dart';
+import 'safety_actions.dart';
 
 /// Max bytes the backend accepts for a comment image (see
 /// MAX_COMMENT_IMAGE_BYTES in comment-image.validator.ts).
@@ -111,6 +113,10 @@ class _CommentsSheetState extends State<CommentsSheet> {
   bool _hasNextPage = false;
   bool _loadingMore = false;
   String? _myUserId;
+
+  /// Authors blocked during this sheet's lifetime. Their comments and replies
+  /// disappear immediately; the server already omits them on the next load.
+  final Set<String> _hiddenAuthorIds = {};
 
   final _textController = TextEditingController();
   XFile? _pendingImage;
@@ -294,39 +300,38 @@ class _CommentsSheetState extends State<CommentsSheet> {
     _removeComment(comment.id);
   }
 
-  Future<void> _reportComment(Comment comment) async {
-    final reasons = <(String, String, String)>[
-      ('SPAM', 'Spam', 'محتوى مزعج'),
-      ('INAPPROPRIATE_CONTENT', 'Inappropriate content', 'محتوى غير لائق'),
-      ('UNRELATED_TO_ANIMALS', 'Unrelated to animals', 'غير متعلق بالحيوانات'),
-      ('SCAM', 'Scam', 'احتيال'),
-      ('DUPLICATE', 'Duplicate', 'مكرر'),
-      ('OTHER', 'Other', 'أخرى'),
-    ];
-    final reason = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppColors.background,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet))),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: AppSpacing.md),
-            Text(t(ctx, 'Report this comment', 'الإبلاغ عن هذا التعليق'), style: Theme.of(ctx).textTheme.headlineSmall),
-            const SizedBox(height: AppSpacing.sm),
-            ...reasons.map((r) => ListTile(title: Text(t(ctx, r.$2, r.$3)), onTap: () => Navigator.of(ctx).pop(r.$1))),
-            const SizedBox(height: AppSpacing.sm),
-          ],
-        ),
-      ),
+  void _hideAuthor(String authorId) {
+    setState(() {
+      _hiddenAuthorIds.add(authorId);
+      _comments = _comments.where((c) => c.author?.id != authorId).toList();
+    });
+  }
+
+  /// Reports a Comment or Reply (same `commentId` space), then offers to block
+  /// its author. Hides the author's content if the follow-up block happens.
+  Future<void> _reportComment(Comment target) async {
+    final authorId = target.author?.id;
+    final blocked = await reportCommentFlow(context, commentId: target.id, authorId: authorId);
+    if (blocked && authorId != null && mounted) _hideAuthor(authorId);
+  }
+
+  Future<void> _reportAccountOf(Comment target) async {
+    final authorId = target.author?.id;
+    if (authorId == null) return;
+    final blocked = await reportAccountFlow(
+      context,
+      userId: authorId,
+      sourceType: AccountReportSource.comment,
+      sourceId: target.id,
     );
-    if (reason == null || !mounted) return;
-    final graphql = context.read<GraphQLService>();
-    final (success, error) = await graphql.reportComment(commentId: comment.id, reason: reason);
-    if (!mounted) return;
-    Fluttertoast.showToast(
-      msg: success ? t(context, 'Report submitted', 'تم إرسال البلاغ') : (error ?? t(context, 'Could not submit report.', 'تعذر إرسال البلاغ.')),
-    );
+    if (blocked && mounted) _hideAuthor(authorId);
+  }
+
+  Future<void> _blockAuthorOf(Comment target) async {
+    final authorId = target.author?.id;
+    if (authorId == null) return;
+    final blocked = await blockAccountFlow(context, userId: authorId);
+    if (blocked && mounted) _hideAuthor(authorId);
   }
 
   @override
@@ -414,7 +419,10 @@ class _CommentsSheetState extends State<CommentsSheet> {
                                     onPin: () => _pinComment(comment),
                                     onUnpin: () => _unpinComment(comment),
                                     onDelete: () => _deleteComment(comment),
-                                    onReport: () => _reportComment(comment),
+                                    onReport: _reportComment,
+                                    onReportAccount: _reportAccountOf,
+                                    onBlockAuthor: _blockAuthorOf,
+                                    hiddenAuthorIds: _hiddenAuthorIds,
                                     onReplyCountChanged: (count) => _replaceComment(comment.copyWith(replyCount: count)),
                                   );
                                 },
@@ -540,7 +548,10 @@ class _CommentTile extends StatefulWidget {
   final VoidCallback onPin;
   final VoidCallback onUnpin;
   final VoidCallback onDelete;
-  final VoidCallback onReport;
+  final ValueChanged<Comment> onReport;
+  final ValueChanged<Comment> onReportAccount;
+  final ValueChanged<Comment> onBlockAuthor;
+  final Set<String> hiddenAuthorIds;
   final ValueChanged<int> onReplyCountChanged;
 
   const _CommentTile({
@@ -555,6 +566,9 @@ class _CommentTile extends StatefulWidget {
     required this.onUnpin,
     required this.onDelete,
     required this.onReport,
+    required this.onReportAccount,
+    required this.onBlockAuthor,
+    required this.hiddenAuthorIds,
     required this.onReplyCountChanged,
   });
 
@@ -722,7 +736,13 @@ class _CommentTileState extends State<_CommentTile> {
                                 widget.onDelete();
                                 break;
                               case 'report':
-                                widget.onReport();
+                                widget.onReport(comment);
+                                break;
+                              case 'reportAccount':
+                                widget.onReportAccount(comment);
+                                break;
+                              case 'block':
+                                widget.onBlockAuthor(comment);
                                 break;
                             }
                           },
@@ -730,7 +750,10 @@ class _CommentTileState extends State<_CommentTile> {
                             if (widget.isPostOwner && !comment.isPinned) PopupMenuItem(value: 'pin', child: Text(t(ctx, 'Pin comment', 'تثبيت التعليق'))),
                             if (widget.isPostOwner && comment.isPinned) PopupMenuItem(value: 'unpin', child: Text(t(ctx, 'Unpin comment', 'إلغاء تثبيت التعليق'))),
                             if (widget.isMine) PopupMenuItem(value: 'delete', child: Text(t(ctx, 'Delete', 'حذف'))),
-                            if (!widget.isMine) PopupMenuItem(value: 'report', child: Text(t(ctx, 'Report', 'إبلاغ'))),
+                            if (!widget.isMine) PopupMenuItem(value: 'report', child: Text(t(ctx, 'Report Comment', 'الإبلاغ عن التعليق'))),
+                            if (!widget.isMine && comment.author != null) PopupMenuItem(value: 'reportAccount', child: Text(t(ctx, 'Report Account', 'الإبلاغ عن الحساب'))),
+                            if (!widget.isMine && comment.author != null)
+                              PopupMenuItem(value: 'block', child: Text(t(ctx, 'Block Account', 'حظر الحساب'), style: const TextStyle(color: AppColors.critical))),
                           ],
                         ),
                       ],
@@ -763,7 +786,18 @@ class _CommentTileState extends State<_CommentTile> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: _replies
-                              .map((r) => _ReplyTile(reply: r, lang: widget.lang, isMine: r.author?.id != null && r.author!.id == widget.myUserId, onDelete: () => _deleteReply(r)))
+                              .where((r) => r.author?.id == null || !widget.hiddenAuthorIds.contains(r.author!.id))
+                              .map(
+                                (r) => _ReplyTile(
+                                  reply: r,
+                                  lang: widget.lang,
+                                  isMine: r.author?.id != null && r.author!.id == widget.myUserId,
+                                  onDelete: () => _deleteReply(r),
+                                  onReport: () => widget.onReport(r),
+                                  onReportAccount: () => widget.onReportAccount(r),
+                                  onBlock: () => widget.onBlockAuthor(r),
+                                ),
+                              )
                               .toList(),
                         ),
                       ),
@@ -818,8 +852,19 @@ class _ReplyTile extends StatelessWidget {
   final Lang lang;
   final bool isMine;
   final VoidCallback onDelete;
+  final VoidCallback onReport;
+  final VoidCallback onReportAccount;
+  final VoidCallback onBlock;
 
-  const _ReplyTile({required this.reply, required this.lang, required this.isMine, required this.onDelete});
+  const _ReplyTile({
+    required this.reply,
+    required this.lang,
+    required this.isMine,
+    required this.onDelete,
+    required this.onReport,
+    required this.onReportAccount,
+    required this.onBlock,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -844,13 +889,20 @@ class _ReplyTile extends StatelessWidget {
                     Flexible(child: Text(_authorName(context, reply.author), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis)),
                     const SizedBox(width: 6),
                     Text(timeAgo(reply.createdAt, lang), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted)),
-                    if (isMine) ...[
-                      const Spacer(),
+                    const Spacer(),
+                    if (isMine)
                       GestureDetector(
                         onTap: onDelete,
                         child: Text(t(context, 'Delete', 'حذف'), style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                      )
+                    else if (reply.author != null)
+                      SafetyMenuButton(
+                        compact: true,
+                        contentKind: SafetyContentKind.comment,
+                        onReportContent: onReport,
+                        onReportAccount: onReportAccount,
+                        onBlock: onBlock,
                       ),
-                    ],
                   ],
                 ),
                 Text(reply.text, style: Theme.of(context).textTheme.bodySmall),

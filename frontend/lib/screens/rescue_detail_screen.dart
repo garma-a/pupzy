@@ -18,6 +18,7 @@ import '../widgets/contact_requests_owner_section.dart';
 import '../widgets/image_with_fallback.dart';
 import '../widgets/nearby_vets_section.dart';
 import '../widgets/pet_carousel.dart';
+import '../widgets/safety_actions.dart';
 import '../widgets/skeleton_loader.dart';
 
 class RescueDetailScreen extends StatefulWidget {
@@ -248,6 +249,18 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                         ),
                       ),
                     ),
+                    if (!_isOwner && _myUserId != null)
+                      PositionedDirectional(
+                        top: 0,
+                        end: 0,
+                        child: SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppSpacing.sm),
+                            // Blocking the creator makes this post unreachable, so leave it.
+                            child: PostSafetyMenu(postId: post.id, creatorId: post.creator.id, onBlocked: () => Navigator.of(context).pop()),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 Padding(

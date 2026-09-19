@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
 import '../models/contact_request.dart';
+import '../models/safety.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import 'safety_actions.dart';
 
 /// Shows PENDING contact requests received on a post I own, with inline
 /// Approve/Reject actions. Renders nothing while loading or if there are
@@ -37,6 +39,31 @@ class _ContactRequestsOwnerSectionState extends State<ContactRequestsOwnerSectio
       _loading = false;
       _requests = requests;
     });
+  }
+
+  /// A Block atomically rejects every pending request between the pair
+  /// server-side, so drop all of that requester's rows locally too.
+  void _dropRequestsFrom(String userId) {
+    setState(() => _requests = _requests.where((x) => x.requester?.id != userId).toList());
+  }
+
+  Future<void> _reportRequester(ContactRequest r) async {
+    final requester = r.requester;
+    if (requester == null) return;
+    final blocked = await reportAccountFlow(
+      context,
+      userId: requester.id,
+      sourceType: AccountReportSource.contactRequest,
+      sourceId: r.id,
+    );
+    if (blocked && mounted) _dropRequestsFrom(requester.id);
+  }
+
+  Future<void> _blockRequester(ContactRequest r) async {
+    final requester = r.requester;
+    if (requester == null) return;
+    final blocked = await blockAccountFlow(context, userId: requester.id);
+    if (blocked && mounted) _dropRequestsFrom(requester.id);
   }
 
   Future<void> _respond(ContactRequest r, bool approve) async {
@@ -89,6 +116,12 @@ class _ContactRequestsOwnerSectionState extends State<ContactRequestsOwnerSectio
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(child: Text(name, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700))),
+                    if (requester != null)
+                      SafetyMenuButton(
+                        compact: true,
+                        onReportAccount: () => _reportRequester(r),
+                        onBlock: () => _blockRequester(r),
+                      ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.sm),

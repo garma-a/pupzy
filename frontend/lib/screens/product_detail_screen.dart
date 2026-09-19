@@ -12,6 +12,7 @@ import '../utils/time_format.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/pet_carousel.dart';
+import '../widgets/safety_actions.dart';
 import '../widgets/skeleton_loader.dart';
 
 const Map<String, (String, String)> _categoryLabels = {
@@ -277,6 +278,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         ),
                       ),
                     ),
+                    if (!_isOwner && _myUserId != null)
+                      PositionedDirectional(
+                        top: 0,
+                        end: 0,
+                        child: SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppSpacing.sm),
+                            // Blocking the creator makes this post unreachable, so leave it.
+                            child: PostSafetyMenu(postId: post.id, creatorId: post.creator.id, onBlocked: () => Navigator.of(context).pop()),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 Padding(

@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
 import '../models/adoption_application.dart';
+import '../models/safety.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import 'safety_actions.dart';
 
 /// Shows PENDING adoption applications received on a post I own, with
 /// inline Approve/Reject actions. Renders nothing while loading or empty.
@@ -35,6 +37,31 @@ class _AdoptionApplicationsOwnerSectionState extends State<AdoptionApplicationsO
       _loading = false;
       _applications = applications;
     });
+  }
+
+  /// A Block atomically rejects every pending application between the pair
+  /// server-side, so drop all of that applicant's rows locally too.
+  void _dropApplicationsFrom(String userId) {
+    setState(() => _applications = _applications.where((x) => x.applicant?.id != userId).toList());
+  }
+
+  Future<void> _reportApplicant(AdoptionApplication a) async {
+    final applicant = a.applicant;
+    if (applicant == null) return;
+    final blocked = await reportAccountFlow(
+      context,
+      userId: applicant.id,
+      sourceType: AccountReportSource.adoptionApplication,
+      sourceId: a.id,
+    );
+    if (blocked && mounted) _dropApplicationsFrom(applicant.id);
+  }
+
+  Future<void> _blockApplicant(AdoptionApplication a) async {
+    final applicant = a.applicant;
+    if (applicant == null) return;
+    final blocked = await blockAccountFlow(context, userId: applicant.id);
+    if (blocked && mounted) _dropApplicationsFrom(applicant.id);
   }
 
   Future<void> _respond(AdoptionApplication a, bool approve) async {
@@ -100,6 +127,12 @@ class _AdoptionApplicationsOwnerSectionState extends State<AdoptionApplicationsO
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(child: Text(name, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700))),
+                    if (applicant != null)
+                      SafetyMenuButton(
+                        compact: true,
+                        onReportAccount: () => _reportApplicant(a),
+                        onBlock: () => _blockApplicant(a),
+                      ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.sm),
