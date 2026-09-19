@@ -4,9 +4,9 @@ This document records reproducible evidence that the UGC Reporting and Account B
 
 - **Branch:** `task/12-publish-contract-prove-compatibility`
 - **Schema/compatibility baseline:** `b6df50c` (pre-feature `main` commit, repository history)
-- **Code candidate under test:** `ce4282a` (`style(moderation): apply lint formatting to ban-cascade processor`), the final product-code commit after post-audit fixes `1d07efe`. The commit containing this document adds only docs, `.gitignore` exceptions, and evidence scripts; it changes no SDL, no resolver, and no Flutter code.
+- **Code candidate under test:** `60f1370` (`test(users): use glossary-safe identifier in account deletion redaction test`), the final product/test commit after the post-review fixes. The commit containing this document adds only docs; it changes no SDL, no resolver, no test, and no Flutter code.
 - **Evidence date:** 2026-09-19
-- **Evidence commit note:** suites were re-executed against `ce4282a` after the post-audit fixes, so the counts below describe that candidate. Any later commit on the branch is documentation-only.
+- **Evidence commit note:** the full suite set was re-executed against `60f1370` in a clean detached worktree; the counts below describe that candidate. Any later commit on the branch is documentation-only.
 - **Environment:** Linux, Node.js `v24.4.0`, Docker `29.6.1` (rootless context `unix:///run/user/1000/docker.sock`), test database image `postgis/postgis:16-3.4-alpine`, Chromium/Chrome `150.0.7871.46`.
 - **Related documents:** `docs/ugc-reporting-and-account-blocking-flutter-integration-contract.md`, `docs/adr/0006-directional-blocks-create-mutual-isolation.md`.
 
@@ -28,11 +28,11 @@ This document records reproducible evidence that the UGC Reporting and Account B
 | 4 | `npm run build` | EXECUTED | exit 0 |
 | 5 | `npm run check:glossary` (root + admin) | EXECUTED | 6 passed (root), 3 passed (admin) |
 | 6 | `npm run test:unit` | EXECUTED | 63 suites, **866/866 tests**, 73.2 s |
-| 7 | `npm run test:integration` | EXECUTED | 28 suites, **376/376 tests**, 1294.7 s |
+| 7 | `npm run test:integration` | EXECUTED | 28 suites, **379/379 tests** (clean-worktree run) |
 | 8 | `cd admin-service && npm test` | EXECUTED | 83 suites, **361/361 tests**, 74.1 s |
-| 9 | `cd admin-service && npm run test:integration` | EXECUTED | 14 suites, **113/113 tests**, 440.1 s |
+| 9 | `cd admin-service && npm run test:integration` | EXECUTED | 14 suites, **115/115 tests** |
 | 9b | `cd admin-service && npm run test:browser` | EXECUTED | 10/10 real-browser tests, 257.7 s |
-| 10 | Focused reporting/Block/isolation/Account Deletion matrices | EXECUTED | 13 suites, **195/195 tests**, 644.2 s |
+| 10 | Focused reporting/Block/isolation/Account Deletion matrices | EXECUTED | 13 suites, **197/197 tests** (re-run after the post-review fixes) |
 | 11 | Query-plan inspection (feeds, Saved Posts, discussions, counts, Blocked Accounts) | EXECUTED | See §6; no N+1, Block predicate precedes `LIMIT` |
 | 12 | No-Flutter-change confirmation | EXECUTED (command) | 0 frontend files changed vs `b6df50c` |
 | 13 | `npm run test:e2e` (production container smoke) | **UNAVAILABLE** | 6–7 of 9 pass; remaining tests fail on container→host DB reachability under this Docker setup; exact errors in §7 |
@@ -60,7 +60,7 @@ node scripts/graphql-schema-compat.mjs b6df50c HEAD --dump-dir /tmp/opencode/har
 
 ```
 Baseline:  b6df50c -> b6df50cd900027ec3e3cb15dd46508f47dc1c2db (12 SDL files)
-Candidate: HEAD    -> e4220d445556744c03a276a83a3d705be7ac7c83 (14 SDL files)
+Candidate: HEAD    -> 60f1370c1f10f23f1bc39d85df44a2a80408c020 (14 SDL files)
 
 Additive changes (9):
   + ADDED_FIELDS Mutation: reportUser, blockUser, unblockUser, reportPost
