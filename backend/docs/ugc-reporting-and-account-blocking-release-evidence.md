@@ -4,9 +4,9 @@ This document records reproducible evidence that the UGC Reporting and Account B
 
 - **Branch:** `task/12-publish-contract-prove-compatibility`
 - **Schema/compatibility baseline:** `b6df50c` (pre-feature `main` commit, repository history)
-- **Code candidate under test:** `e4220d4` (`merge: issue 11 expose Block, Unblock, and Blocked Accounts safely`)
+- **Code candidate under test:** `ce4282a` (`style(moderation): apply lint formatting to ban-cascade processor`), the final product-code commit after post-audit fixes `1d07efe`. The commit containing this document adds only docs, `.gitignore` exceptions, and evidence scripts; it changes no SDL, no resolver, and no Flutter code.
 - **Evidence date:** 2026-09-19
-- **Evidence commit note:** the commit containing this document adds only docs, `.gitignore` exceptions, and two evidence scripts; it changes no SDL, no resolver, and no Flutter code, so the results below hold for the final branch HEAD.
+- **Evidence commit note:** suites were re-executed against `ce4282a` after the post-audit fixes, so the counts below describe that candidate. Any later commit on the branch is documentation-only.
 - **Environment:** Linux, Node.js `v24.4.0`, Docker `29.6.1` (rootless context `unix:///run/user/1000/docker.sock`), test database image `postgis/postgis:16-3.4-alpine`, Chromium/Chrome `150.0.7871.46`.
 - **Related documents:** `docs/ugc-reporting-and-account-blocking-flutter-integration-contract.md`, `docs/adr/0006-directional-blocks-create-mutual-isolation.md`.
 
@@ -228,7 +228,7 @@ cd backend
 npx ts-node -r tsconfig-paths/register scripts/query-plan-evidence.ts
 ```
 
-**Method.** The script starts a disposable PostGIS test database, runs the real migrations, seeds realistic cardinality, then calls the **real repository methods** (Home/help/market feeds, Saved Posts, pinned/top-level Comments, Replies, both personalized count DataLoaders, Blocked Accounts page 1 and cursor page 2) with a Drizzle query logger attached. Each captured SQL statement is replayed through `EXPLAIN (ANALYZE, BUFFERS)` with its bind parameters against the same database.
+**Method.** The script starts a disposable PostGIS test database, runs the real migrations, seeds realistic cardinality, then calls the **real repository methods** (Home/help/market feeds, Saved Posts, pinned/top-level Comments, Replies, both personalized count DataLoaders, Blocked Accounts page 1 and cursor page 2) with a Drizzle query logger attached. The main captured `SELECT` per surface is replayed through `EXPLAIN (ANALYZE, BUFFERS)` with its bind parameters against the same database; structural conclusions apply to that replayed statement.
 
 **Seeded cardinality:** 2,000 users; 20,000 Posts across all five listing types (≈20% authored by accounts the viewer blocked); 1,117 Blocks in both directions (viewer owns 250 outgoing Blocks, is blocked by others); 12,000 top-level Comments + 18,000 Replies concentrated on 12 discussion Posts; 8,000 Saved Posts including Posts from blocked creators. `ANALYZE` was run before inspection.
 
