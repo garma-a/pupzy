@@ -673,6 +673,20 @@ describe('Block, Unblock, and Blocked Accounts (Ticket 11)', () => {
     const self = await blockUser(viewer, viewer.id);
     expect(errorMessage(self)).toBe('You cannot block your own Pupzy Account');
 
+    // A case-variant self target must not reach the database self-Block check.
+    const letteredId = '01916327-0000-7000-8000-0000000000ab';
+    const [caseSelf] = await dbHelper.db
+      .insert(users)
+      .values({
+        id: letteredId,
+        firebaseUserId: `fb-case-self-${generateUuidV7()}`,
+        email: `case-self-${generateUuidV7()}@pupzy.dev`,
+        fullName: 'Case Self',
+      })
+      .returning();
+    const caseSelfBlock = await blockUser(caseSelf, letteredId.toUpperCase());
+    expect(errorMessage(caseSelfBlock)).toBe('You cannot block your own Pupzy Account');
+
     const malformed = await blockUser(viewer, 'not-a-uuid');
     expect(errorMessage(malformed)).toContain('userId must be a valid UUID');
 
@@ -709,6 +723,21 @@ describe('Block, Unblock, and Blocked Accounts (Ticket 11)', () => {
 
   it('unblockUser rejects self, malformed, and nonexistent targets', async () => {
     expect(errorMessage(await unblockUser(viewer, viewer.id))).toBe('You cannot unblock your own Pupzy Account');
+
+    const letteredId = '01916327-0000-7000-8000-0000000000cd';
+    const [caseSelf] = await dbHelper.db
+      .insert(users)
+      .values({
+        id: letteredId,
+        firebaseUserId: `fb-case-unblock-${generateUuidV7()}`,
+        email: `case-unblock-${generateUuidV7()}@pupzy.dev`,
+        fullName: 'Case Unblock',
+      })
+      .returning();
+    expect(errorMessage(await unblockUser(caseSelf, letteredId.toUpperCase()))).toBe(
+      'You cannot unblock your own Pupzy Account',
+    );
+
     expect(errorMessage(await unblockUser(viewer, 'not-a-uuid'))).toContain('userId must be a valid UUID');
     expect(errorMessage(await unblockUser(viewer, NONEXISTENT_ID))).toBe(
       `User with id "${NONEXISTENT_ID}" was not found`,
@@ -1094,6 +1123,15 @@ describe('Block, Unblock, and Blocked Accounts (Ticket 11)', () => {
 
     const invalidCursor = await runGql(BLOCKED_USERS, { first: 2, after: 'not-a-cursor' }, viewer);
     expect(errorMessage(invalidCursor)).toBe('Invalid cursor format');
+
+    // A well-formed cursor whose id is not a UUID must fail validation rather
+    // than reaching the uuid comparison in SQL.
+    const nonUuidIdCursor = Buffer.from(
+      JSON.stringify({ createdAt: t1.toISOString(), id: 'not-a-uuid' }),
+      'utf8',
+    ).toString('base64url');
+    const invalidIdCursor = await runGql(BLOCKED_USERS, { first: 2, after: nonUuidIdCursor }, viewer);
+    expect(errorMessage(invalidIdCursor)).toBe('Invalid cursor format');
   });
 
   it('exposes only minimal display identity on every Blocked Accounts edge', async () => {

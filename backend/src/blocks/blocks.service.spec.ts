@@ -18,6 +18,8 @@ describe('BlocksService', () => {
   const validBlockerId = '01916327-0000-7000-8000-000000000001';
   const validTargetId = '01916327-0000-7000-8000-000000000002';
   const validBlockId = '01916327-0000-7000-8000-000000000003';
+  const letteredBlockerId = '01916327-0000-7000-8000-0000000000ab';
+  const letteredTargetId = '01916327-0000-7000-8000-0000000000cd';
 
   beforeEach(() => {
     mockBlocksRepo = {
@@ -86,12 +88,27 @@ describe('BlocksService', () => {
 
     it('rejects self-blocking, malformed targets, and nonexistent accounts', async () => {
       await expect(service.blockUser(validBlockerId, validBlockerId)).rejects.toBeInstanceOf(ValidationError);
+      await expect(service.blockUser(letteredBlockerId, letteredBlockerId.toUpperCase())).rejects.toBeInstanceOf(
+        ValidationError,
+      );
       await expect(service.blockUser(validBlockerId, 'not-a-uuid')).rejects.toBeInstanceOf(ValidationError);
       expect(mockDb.transaction).not.toHaveBeenCalled();
 
       mockBlocksRepo.userExists = jest.fn().mockResolvedValue(false);
       await expect(service.blockUser(validBlockerId, validTargetId)).rejects.toBeInstanceOf(NotFoundError);
       expect(mockBlocksRepo.insert).not.toHaveBeenCalled();
+    });
+
+    it('normalizes a case-variant target to the canonical UUID', async () => {
+      await expect(service.blockUser(validBlockerId, letteredTargetId.toUpperCase())).resolves.toBe(true);
+
+      expect(mockBlocksRepo.findDirected).toHaveBeenCalledWith(validBlockerId, letteredTargetId, { tx: true });
+      expect(mockBlocksRepo.insert).toHaveBeenCalledWith(validBlockerId, letteredTargetId, { tx: true });
+      expect(mockContactsService.rejectPendingContactRequestsBetweenAccounts).toHaveBeenCalledWith(
+        { tx: true },
+        validBlockerId,
+        letteredTargetId,
+      );
     });
   });
 
@@ -110,11 +127,20 @@ describe('BlocksService', () => {
 
     it('rejects self-unblock, malformed targets, and nonexistent accounts', async () => {
       await expect(service.unblockUser(validBlockerId, validBlockerId)).rejects.toBeInstanceOf(ValidationError);
+      await expect(service.unblockUser(letteredBlockerId, letteredBlockerId.toUpperCase())).rejects.toBeInstanceOf(
+        ValidationError,
+      );
       await expect(service.unblockUser(validBlockerId, 'not-a-uuid')).rejects.toBeInstanceOf(ValidationError);
 
       mockBlocksRepo.userExists = jest.fn().mockResolvedValue(false);
       await expect(service.unblockUser(validBlockerId, validTargetId)).rejects.toBeInstanceOf(NotFoundError);
       expect(mockBlocksRepo.deleteDirected).not.toHaveBeenCalled();
+    });
+
+    it('normalizes a case-variant target to the canonical UUID', async () => {
+      await expect(service.unblockUser(validBlockerId, letteredTargetId.toUpperCase())).resolves.toBe(true);
+
+      expect(mockBlocksRepo.deleteDirected).toHaveBeenCalledWith(validBlockerId, letteredTargetId, { tx: true });
     });
   });
 
@@ -179,6 +205,16 @@ describe('BlocksService', () => {
       const connection = await service.getBlockedUsers(validBlockerId, 10, undefined);
       expect(connection.edges).toHaveLength(0);
       expect(connection.pageInfo).toEqual({ hasNextPage: false, endCursor: null });
+    });
+
+    it('rejects a well-formed cursor whose id is not a UUID before querying', async () => {
+      const cursor = Buffer.from(
+        JSON.stringify({ createdAt: blockedAt.toISOString(), id: 'not-a-uuid' }),
+        'utf8',
+      ).toString('base64url');
+
+      await expect(service.getBlockedUsers(validBlockerId, 10, cursor)).rejects.toBeInstanceOf(ValidationError);
+      expect(mockBlocksRepo.findBlockedUsers).not.toHaveBeenCalled();
     });
   });
 });

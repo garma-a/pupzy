@@ -67,32 +67,35 @@ export class BlocksService {
    */
   async blockUser(blockerId: string, targetUserId: string): Promise<boolean> {
     assertUuid(targetUserId, 'userId');
-    if (targetUserId === blockerId) {
+    // Canonical UUID form: a case-variant self target must not slip past the
+    // service check and hit the database self-Block constraint.
+    const targetId = targetUserId.toLowerCase();
+    if (targetId === blockerId.toLowerCase()) {
       throw new ValidationError('You cannot block your own Pupzy Account');
     }
 
     return this.db.transaction(async (tx) => {
       // Serialize the undirected pair so a Block cannot race an interaction.
-      await this.isolationPolicy.lockPair(tx, blockerId, targetUserId);
+      await this.isolationPolicy.lockPair(tx, blockerId, targetId);
 
-      const existing = await this.blocksRepository.findDirected(blockerId, targetUserId, tx);
+      const existing = await this.blocksRepository.findDirected(blockerId, targetId, tx);
       if (existing) {
         // Already blocked by this caller: success without repeating cleanup.
         return true;
       }
 
-      if (!(await this.blocksRepository.userExists(targetUserId, tx))) {
-        throw new NotFoundError('User', targetUserId);
+      if (!(await this.blocksRepository.userExists(targetId, tx))) {
+        throw new NotFoundError('User', targetId);
       }
 
-      const inserted = await this.blocksRepository.insert(blockerId, targetUserId, tx);
+      const inserted = await this.blocksRepository.insert(blockerId, targetId, tx);
       if (!inserted) {
         // A concurrent writer won the ordered-pair insert; it owns the cleanup.
         return true;
       }
 
-      await this.contactsService.rejectPendingContactRequestsBetweenAccounts(tx, blockerId, targetUserId);
-      await this.adoptionsService.rejectPendingAdoptionApplicationsBetweenAccounts(tx, blockerId, targetUserId);
+      await this.contactsService.rejectPendingContactRequestsBetweenAccounts(tx, blockerId, targetId);
+      await this.adoptionsService.rejectPendingAdoptionApplicationsBetweenAccounts(tx, blockerId, targetId);
       return true;
     });
   }
@@ -103,18 +106,20 @@ export class BlocksService {
    */
   async unblockUser(blockerId: string, targetUserId: string): Promise<boolean> {
     assertUuid(targetUserId, 'userId');
-    if (targetUserId === blockerId) {
+    // Canonical UUID form so self-target rejection is case-insensitive.
+    const targetId = targetUserId.toLowerCase();
+    if (targetId === blockerId.toLowerCase()) {
       throw new ValidationError('You cannot unblock your own Pupzy Account');
     }
 
     return this.db.transaction(async (tx) => {
-      await this.isolationPolicy.lockPair(tx, blockerId, targetUserId);
+      await this.isolationPolicy.lockPair(tx, blockerId, targetId);
 
-      if (!(await this.blocksRepository.userExists(targetUserId, tx))) {
-        throw new NotFoundError('User', targetUserId);
+      if (!(await this.blocksRepository.userExists(targetId, tx))) {
+        throw new NotFoundError('User', targetId);
       }
 
-      await this.blocksRepository.deleteDirected(blockerId, targetUserId, tx);
+      await this.blocksRepository.deleteDirected(blockerId, targetId, tx);
       return true;
     });
   }
@@ -153,6 +158,9 @@ export class BlocksService {
       if (Number.isNaN(parsedDate.getTime()) || typeof parsed.id !== 'string') {
         throw new ValidationError('Invalid cursor format');
       }
+      // The cursor id reaches a uuid comparison in SQL, so a crafted non-UUID
+      // id must fail validation instead of surfacing a database error.
+      assertUuid(parsed.id, 'cursor id');
       return parsed;
     } catch {
       throw new ValidationError('Invalid cursor format');
