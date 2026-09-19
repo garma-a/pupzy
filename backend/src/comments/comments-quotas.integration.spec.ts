@@ -1333,6 +1333,30 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       }
     });
 
+    it('releases stale crash-orphan reservations after the lease while counting in-flight ones', async () => {
+      const staleAt = new Date(Date.now() - 10 * 60 * 1000);
+      const recentAt = new Date(Date.now() - 30 * 1000);
+      await dbHelper.db.insert(commentQuotaAdmissions).values([
+        { id: generateUuidV7(), userId: user2.id, action: 'MODERATION_REPORT', createdAt: staleAt },
+        { id: generateUuidV7(), userId: user2.id, action: 'MODERATION_REPORT', createdAt: recentAt },
+      ]);
+      const commentsToReport = await seedReportableComments(10);
+
+      let accepted = 0;
+      for (const comment of commentsToReport) {
+        const res = await executeGql(
+          REPORT_COMMENT_MUTATION,
+          { input: { commentId: comment.id, reason: 'SPAM' } },
+          user2,
+        );
+        if (!res.errors && res.data?.reportComment === true) accepted += 1;
+      }
+
+      // The fresh in-flight reservation holds one slot; the stale orphan no
+      // longer does, so exactly nine more reports commit.
+      expect(accepted).toBe(9);
+    });
+
     it('admits exactly the remaining slot at the rolling 24-hour window boundary', async () => {
       const survivingPosts = await seedSurvivingPosts(10);
       const insideWindow = new Date(Date.now() - 23 * 3600 * 1000);

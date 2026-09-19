@@ -22,7 +22,7 @@ function isOpenReport(record) {
  * report id. Nothing commits unless both the report closure and the audit
  * insert commit together.
  */
-function buildReportReviewAction(pool, component, definition) {
+function buildReportReviewAction(pool, component, definition, cache) {
   return {
     actionType: 'record',
     icon: 'Check',
@@ -80,31 +80,42 @@ function buildReportReviewAction(pool, component, definition) {
         return { ok: true, auditId: auditRows[0]?.id, reportId: report.id };
       });
 
+      if (result.ok) cache?.invalidate();
       return actionResponse(record, currentAdmin, result, definition.successMessage);
     },
   };
 }
 
-export function buildPostReportReviewAction(pool, component) {
-  return buildReportReviewAction(pool, component, {
-    reportTable: 'post_reports',
-    reportLabel: 'Post Report',
-    targetColumn: 'post_id',
-    targetType: 'POST',
-    actionType: 'POST_REPORT_REVIEWED_NO_ACTION',
-    successMessage: 'Post Report reviewed with no action.',
-  });
+export function buildPostReportReviewAction(pool, component, cache) {
+  return buildReportReviewAction(
+    pool,
+    component,
+    {
+      reportTable: 'post_reports',
+      reportLabel: 'Post Report',
+      targetColumn: 'post_id',
+      targetType: 'POST',
+      actionType: 'POST_REPORT_REVIEWED_NO_ACTION',
+      successMessage: 'Post Report reviewed with no action.',
+    },
+    cache,
+  );
 }
 
-export function buildAccountReportReviewAction(pool, component) {
-  return buildReportReviewAction(pool, component, {
-    reportTable: 'account_reports',
-    reportLabel: 'Pupzy Account Report',
-    targetColumn: 'reported_user_id',
-    targetType: 'USER',
-    actionType: 'ACCOUNT_REPORT_REVIEWED_NO_ACTION',
-    successMessage: 'Pupzy Account Report reviewed with no action.',
-  });
+export function buildAccountReportReviewAction(pool, component, cache) {
+  return buildReportReviewAction(
+    pool,
+    component,
+    {
+      reportTable: 'account_reports',
+      reportLabel: 'Pupzy Account Report',
+      targetColumn: 'reported_user_id',
+      targetType: 'USER',
+      actionType: 'ACCOUNT_REPORT_REVIEWED_NO_ACTION',
+      successMessage: 'Pupzy Account Report reviewed with no action.',
+    },
+    cache,
+  );
 }
 
 /**
@@ -114,7 +125,7 @@ export function buildAccountReportReviewAction(pool, component) {
  * Comment, so a false or unsubstantiated Comment Report has an auditable
  * outcome without removing or restoring the Comment.
  */
-export function buildCommentReportReviewAction(pool, component) {
+export function buildCommentReportReviewAction(pool, component, cache) {
   return {
     actionType: 'record',
     icon: 'Check',
@@ -165,6 +176,7 @@ export function buildCommentReportReviewAction(pool, component) {
         return { ok: true, auditId: auditRows[0]?.id, reportId: report.id };
       });
 
+      if (result.ok) cache?.invalidate();
       return actionResponse(record, currentAdmin, result, 'Comment Report reviewed with no action.');
     },
   };

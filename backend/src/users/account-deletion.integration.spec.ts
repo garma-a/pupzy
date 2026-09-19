@@ -2301,12 +2301,15 @@ describe('Account Deletion Feature Integration', () => {
         .returning();
 
       // Open Post Report filed by the deleting account against a surviving Post.
-      await dbHelper.db.insert(postReports).values({
-        postId: survivingPost.id,
-        reporterId: deletedUser.id,
-        reason: 'SPAM',
-        details: 'Post report free text from deleted reporter',
-      });
+      const [deletedPostReport] = await dbHelper.db
+        .insert(postReports)
+        .values({
+          postId: survivingPost.id,
+          reporterId: deletedUser.id,
+          reason: 'SPAM',
+          details: 'Post report free text from deleted reporter',
+        })
+        .returning();
 
       // Comment Reports on the deleting account's Comment: one open, one completed.
       await dbHelper.db.insert(commentReports).values({
@@ -2371,6 +2374,40 @@ describe('Account Deletion Feature Integration', () => {
         })
         .returning();
 
+      // Audits targeting the deleted account's Comment or correlated with its
+      // report rows must also be redacted, even when they target another
+      // account's content.
+      const [commentAudit] = await dbHelper.db
+        .insert(moderationActions)
+        .values({
+          actionType: 'COMMENT_REMOVED',
+          targetType: 'COMMENT',
+          targetId: deletedComment.id,
+          reason: 'Admin note naming the deleted account',
+          metadata: { closedCommentReportIds: [reviewedCommentReport.id] },
+        })
+        .returning();
+      const [correlatedPostAudit] = await dbHelper.db
+        .insert(moderationActions)
+        .values({
+          actionType: 'POST_REPORT_REVIEWED_NO_ACTION',
+          targetType: 'POST',
+          targetId: survivingPost.id,
+          reason: 'Post report dismissed',
+          metadata: { reportId: deletedPostReport.id, reviewOutcome: 'NO_ACTION' },
+        })
+        .returning();
+      const [unrelatedAudit] = await dbHelper.db
+        .insert(moderationActions)
+        .values({
+          actionType: 'ACCOUNT_REPORT_REVIEWED_NO_ACTION',
+          targetType: 'USER',
+          targetId: unrelatedUser.id,
+          reason: 'Unrelated admin note',
+          metadata: { reportId: unrelatedReport.id, reviewOutcome: 'NO_ACTION' },
+        })
+        .returning();
+
       const authTime = Math.floor(Date.now() / 1000) - 10;
       const result = await accountDeletionService.initiateDeletion(deletedUser, authTime);
       expect(result.status).toBe('COMPLETED');
@@ -2421,6 +2458,20 @@ describe('Account Deletion Feature Integration', () => {
       expect(redactedAudit.actionType).toBe('ACCOUNT_REPORT_REVIEWED_NO_ACTION');
       expect(redactedAudit.targetType).toBe('USER');
       expect(redactedAudit.targetId).toBe(deletedUser.id);
+
+      // Comment-targeted and report-correlated audits survive only redacted.
+      for (const auditId of [commentAudit.id, correlatedPostAudit.id]) {
+        const [row] = await dbHelper.db.select().from(moderationActions).where(eq(moderationActions.id, auditId));
+        expect(row.reason).toBe('Redacted (account deleted)');
+        expect(row.metadata).toBeNull();
+      }
+      // An audit for an unrelated account's report keeps its reason and metadata.
+      const [untouchedAudit] = await dbHelper.db
+        .select()
+        .from(moderationActions)
+        .where(eq(moderationActions.id, unrelatedAudit.id));
+      expect(untouchedAudit.reason).toBe('Unrelated admin note');
+      expect(untouchedAudit.metadata).toEqual({ reportId: unrelatedReport.id, reviewOutcome: 'NO_ACTION' });
 
       // The Post Report counter reflects the removed report exactly once.
       const [postAfter] = await dbHelper.db.select().from(posts).where(eq(posts.id, survivingPost.id));

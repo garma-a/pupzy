@@ -1,4 +1,4 @@
-import { and, eq, gte, sql } from 'drizzle-orm';
+import { and, eq, gte, or, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { commentQuotaAdmissions, commentReports, postReports, accountReports } from '../database/schema';
@@ -22,6 +22,14 @@ export const HISTORICAL_COMMENT_REPORT_ACTION = 'COMMENT_REPORT';
 /** One reporting Pupzy Account may commit ten moderation reports per rolling 24 hours. */
 export const MODERATION_REPORT_DAILY_LIMIT = 10;
 
+/**
+ * How long an admission with no committed report row still counts as in flight.
+ * A reservation is normally converted within milliseconds; the lease only
+ * exists so a crash between admission and report insert (or a failed
+ * rollback) stops consuming the reporter's allowance after this window.
+ */
+export const REPORT_RESERVATION_LEASE_MS = 5 * 60 * 1000;
+
 export interface ReportQuotaReservation {
   admissionId: string;
   /** Removes the reservation after the report work fails or is rejected. */
@@ -44,10 +52,14 @@ export interface ReportQuotaReservation {
  * only the reservation of work that failed or was rejected.
  *
  * The rolling 24-hour count is:
- * - one slot per admission row (successfully committed or still in flight),
+ * - one slot per admission row that is still within its reservation lease or
+ *   has a committed report row linked by id,
  * - plus committed report rows that never admitted through this seam, with
  *   historical Comment Report admissions and unmatched Comment Report rows
  *   collapsed to their larger, conservative count.
+ *
+ * A crash between admission and report insert leaves an unlinked admission;
+ * after REPORT_RESERVATION_LEASE_MS it no longer consumes the allowance.
  */
 export class ModerationReportQuotaManager {
   constructor(private readonly db: DrizzleDB) {}
@@ -98,6 +110,7 @@ export class ModerationReportQuotaManager {
   }
 
   private async countRecentReports(tx: DbExecutor, reporterId: string, since: Date): Promise<number> {
+    const leaseCutoff = new Date(Date.now() - REPORT_RESERVATION_LEASE_MS);
     const [admissions] = await tx
       .select({ count: sql<number>`count(*)::int` })
       .from(commentQuotaAdmissions)
@@ -106,6 +119,14 @@ export class ModerationReportQuotaManager {
           eq(commentQuotaAdmissions.userId, reporterId),
           eq(commentQuotaAdmissions.action, MODERATION_REPORT_ACTION),
           gte(commentQuotaAdmissions.createdAt, since),
+          // In-flight reservations count while fresh; a reservation that never
+          // became a report stops counting once its lease expires.
+          or(
+            gte(commentQuotaAdmissions.createdAt, leaseCutoff),
+            sql`EXISTS (SELECT 1 FROM ${commentReports} WHERE ${commentReports.id} = ${commentQuotaAdmissions.id})`,
+            sql`EXISTS (SELECT 1 FROM ${postReports} WHERE ${postReports.id} = ${commentQuotaAdmissions.id})`,
+            sql`EXISTS (SELECT 1 FROM ${accountReports} WHERE ${accountReports.id} = ${commentQuotaAdmissions.id})`,
+          ),
         ),
       );
 

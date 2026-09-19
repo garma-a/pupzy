@@ -7,7 +7,7 @@ import {
   stripPopulatedPasswordHashes,
 } from './resource-helpers.js';
 
-export function buildPostReportsResource(db, components = {}, pool) {
+export function buildPostReportsResource(db, components = {}, pool, cache) {
   const properties = {
     reason: enumProperty(ENUMS.reportReason),
     review_outcome: enumProperty(ENUMS.postReportReviewOutcome),
@@ -36,7 +36,7 @@ export function buildPostReportsResource(db, components = {}, pool) {
     actions: {
       list: { after: stripPopulatedPasswordHashes },
       show: { after: stripPopulatedPasswordHashes },
-      reviewWithNoAction: buildPostReportReviewAction(pool, components?.ModerationAction),
+      reviewWithNoAction: buildPostReportReviewAction(pool, components?.ModerationAction, cache),
     },
   });
 }

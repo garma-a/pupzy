@@ -869,6 +869,26 @@ describe('audited report outcomes', () => {
     assert.equal(Number(auditCount), 1);
   });
 
+  it('invalidates the dashboard cache after a successful no-action review but not on retry', async () => {
+    const reportedId = await insertUser('cache-account');
+    const reportId = await insertAccountReport({ reporterId: principals.userId, reportedUserId: reportedId });
+    let invalidations = 0;
+    const cache = {
+      invalidate: () => {
+        invalidations += 1;
+      },
+    };
+    const action = buildAccountReportReviewAction(database.pool, 'ModerationAction', cache);
+
+    const success = await call(action, reportId, { reason: 'Dismissed after review' });
+    assert.equal(success.notice.type, 'success');
+    assert.equal(invalidations, 1);
+
+    const retry = await call(action, reportId, { reason: 'Second attempt' });
+    assert.equal(retry.notice.type, 'error');
+    assert.equal(invalidations, 1);
+  });
+
   it('closes every open Post Report when the Post is removed and correlates the audit', async () => {
     const authorId = await insertUser('removed-post-author');
     const postId = await insertPost(database.pool, {
