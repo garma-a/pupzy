@@ -127,7 +127,7 @@ Existing rules kept intact:
 - Duplicate reporter/comment pairs are rejected with `COMMENT_ALREADY_REPORTED`.
 - `details` is optional and trimmed; the existing contract does **not** require details for `OTHER` (unlike `reportPost` and `reportUser`), and that behavior is intentionally preserved.
 - The existing automatic moderation rules are unchanged: one qualifying `INAPPROPRIATE_CONTENT` report can hide a Comment's images (`IMAGE_HIDDEN`), and three qualifying reports can hide the whole Comment (`HIDDEN`) with counter updates.
-- `reportComment` draws from the same shared allowance as `reportPost` and `reportUser`.
+- `reportComment` draws from the same shared allowance as `reportPost` and `reportUser`. On exhaustion it keeps its existing `RATE_LIMITED` message, `Daily comment report limit reached (10 per day)` (see §7).
 
 ---
 
@@ -222,7 +222,7 @@ The uniform message prevents probing whether an arbitrary private interaction id
 - **Limit:** 10 successfully committed Post, Comment, or Pupzy Account Reports per reporting Pupzy Account per rolling 24 hours.
 - **Concurrency-safe:** admissions are serialized per reporter in PostgreSQL, so concurrent report attempts cannot exceed the limit and alternating report types cannot bypass it.
 - **Only commits count:** validation failures, self-reports, duplicates, and rolled-back transactions consume nothing. A retry after a network failure is therefore safe.
-- **On exhaustion:** the mutation fails with `extensions.code = "RATE_LIMITED"` and message `Daily report limit reached (10 per day)`. The client should stop offering the report action, explain the daily cap, and allow retry after the rolling window passes. Do not retry immediately.
+- **On exhaustion:** the mutation fails with `extensions.code = "RATE_LIMITED"`. `reportPost` and `reportUser` return the shared message `Daily report limit reached (10 per day)`, while `reportComment` preserves its existing message `Daily comment report limit reached (10 per day)`; both draw on the same 10-report allowance. The client should stop offering the report action, explain the daily cap, and allow retry after the rolling window passes. Do not retry immediately.
 
 ---
 
@@ -233,7 +233,7 @@ The uniform message prevents probing whether an arbitrary private interaction id
 | `extensions.code` | When | Client behavior |
 |---|---|---|
 | `UNAUTHENTICATED` | No valid session | Re-authenticate |
-| `VALIDATION_ERROR` | Invalid UUID, invalid enum, details > 500, `OTHER` without details, missing/partial/invalid source context | Show the offending field; do not count as a report attempt |
+| `VALIDATION_ERROR` | Invalid UUID, details > 500, `OTHER` without details, missing/partial/invalid source context (an invalid enum literal or wrong input type is rejected earlier by standard GraphQL input validation) | Show the offending field; do not count as a report attempt |
 | `FORBIDDEN` | Self-report (`reportPost`, `reportComment`, `reportUser`) | Hide the action on own content; this indicates a UI bug |
 | `NOT_FOUND` | Target Post/Comment not accessible or `REMOVED` | Show the neutral "no longer available" state |
 | `POST_ALREADY_REPORTED` | The caller already reported this Post | Treat as **already reported**; hide or disable the action |
@@ -349,7 +349,7 @@ query BlockedUsers($first: Int, $after: String) {
 
 ### 10.3 Pagination contract
 
-- `first` defaults to **20** and is capped at **50**. Non-finite or fractional values are floored; values below 1 are treated as 1; values above 50 are clamped to 50.
+- `first` defaults to **20** and is capped at **50**. A non-numeric or non-finite value falls back to the 20 default; fractional values are floored; values below 1 are treated as 1; values above 50 are clamped to 50.
 - Ordering is **newest Block first**, with the Block id as a unique tie-breaker (microsecond-stable).
 - Treat `cursor`/`endCursor` as **opaque tokens**; never parse, construct, or store them long-term.
 - Fetch pages with `first: 20, after: endCursor` while `pageInfo.hasNextPage` is `true`.
