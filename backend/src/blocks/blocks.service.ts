@@ -154,8 +154,8 @@ export class BlocksService {
         createdAt: string;
         id: string;
       };
-      const parsedDate = new Date(parsed.createdAt);
-      if (Number.isNaN(parsedDate.getTime()) || typeof parsed.id !== 'string') {
+      const parsedDate = parsed.createdAt === undefined ? new Date(NaN) : new Date(parsed.createdAt);
+      if (typeof parsed.createdAt !== 'string' || Number.isNaN(parsedDate.getTime()) || typeof parsed.id !== 'string') {
         throw new ValidationError('Invalid cursor format');
       }
       // The cursor id reaches a uuid comparison in SQL, so a crafted non-UUID
@@ -170,7 +170,9 @@ export class BlocksService {
   private encodeCursor(row: BlockedUserRow): string {
     return Buffer.from(
       JSON.stringify({
-        createdAt: row.blockedAt.toISOString(),
+        // Microsecond precision from PostgreSQL; `blockedAt` only has
+        // milliseconds and would break the id tie-breaker within one tick.
+        createdAt: row.cursorCreatedAt,
         id: row.blockId,
       }),
       'utf8',

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, lt, or } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import * as schema from '../database/schema';
@@ -17,6 +17,13 @@ export type BlocksExecutor = NodePgDatabase<typeof schema> | DbTransaction;
 export interface BlockedUserRow {
   blockId: string;
   blockedAt: Date;
+  /**
+   * Full-precision PostgreSQL text form of `created_at`. The JS Date in
+   * `blockedAt` only carries milliseconds, which would make the id tie-breaker
+   * unreachable for Blocks created within the same millisecond and could skip
+   * rows; cursors therefore round-trip this microsecond-accurate string.
+   */
+  cursorCreatedAt: string;
   userId: string;
   fullName: string | null;
   fullNameArabic: string | null;
@@ -99,6 +106,10 @@ export class BlocksRepository {
       .select({
         blockId: blocks.id,
         blockedAt: blocks.createdAt,
+        cursorCreatedAt:
+          sql<string>`to_char(${blocks.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`.as(
+            'cursor_created_at',
+          ),
         userId: users.id,
         fullName: users.fullName,
         fullNameArabic: users.fullNameArabic,
@@ -111,10 +122,7 @@ export class BlocksRepository {
         and(
           eq(blocks.blockerId, blockerId),
           cursor
-            ? or(
-                lt(blocks.createdAt, new Date(cursor.createdAt)),
-                and(eq(blocks.createdAt, new Date(cursor.createdAt)), lt(blocks.id, cursor.id)),
-              )
+            ? sql`(${blocks.createdAt}, ${blocks.id}) < (${cursor.createdAt}::timestamptz, ${cursor.id}::uuid)`
             : undefined,
         ),
       )

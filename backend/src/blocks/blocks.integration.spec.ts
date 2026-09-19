@@ -1134,6 +1134,24 @@ describe('Block, Unblock, and Blocked Accounts (Ticket 11)', () => {
     expect(errorMessage(invalidIdCursor)).toBe('Invalid cursor format');
   });
 
+  it('blockedUsers cursors keep microsecond ordering so same-millisecond Blocks are never skipped', async () => {
+    const microA = await insertUser('micro-a');
+    const microB = await insertUser('micro-b');
+    await dbHelper.pool.query(
+      `INSERT INTO blocks (blocker_id, blocked_id, created_at)
+       VALUES ($1, $2, $3::timestamptz), ($1, $4, $5::timestamptz)`,
+      [viewer.id, microA.id, '2026-03-01T09:00:00.000100Z', microB.id, '2026-03-01T09:00:00.000900Z'],
+    );
+
+    const firstPage = await blockedUsers(viewer, 1);
+    expect(firstPage.edges.map((edge) => edge.node.id)).toEqual([microB.id]);
+    expect(firstPage.pageInfo.hasNextPage).toBe(true);
+
+    const secondPage = await blockedUsers(viewer, 1, firstPage.pageInfo.endCursor ?? undefined);
+    expect(secondPage.edges.map((edge) => edge.node.id)).toEqual([microA.id]);
+    expect(secondPage.pageInfo.hasNextPage).toBe(false);
+  });
+
   it('exposes only minimal display identity on every Blocked Accounts edge', async () => {
     const display = await insertUser('display', undefined, {
       fullName: 'Display Name',
