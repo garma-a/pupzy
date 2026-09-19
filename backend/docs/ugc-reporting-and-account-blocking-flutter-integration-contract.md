@@ -200,6 +200,8 @@ This enum deliberately excludes content-only reasons (`DUPLICATE`, `UNRELATED_TO
 | `CONTACT_REQUEST` | A Contact Request | Either party: the reporter may be the requester and the reported account the Post owner, or the reverse. |
 | `ADOPTION_APPLICATION` | An Adoption Application | Either party: the reporter may be the applicant and the reported account the Post owner, or the reverse. |
 
+Accessibility here means the record still exists and is in a client-readable lifecycle state (`ACTIVE`/`IMAGE_HIDDEN`, hosting Post not `REMOVED`, parent branch reachable) and that the reporter is a legitimate participant. It deliberately does **not** consider Blocks: either party can always report conduct, and administrators can inspect the evidence regardless of Blocks.
+
 Every invalid, missing, inaccessible, or non-involving source reference returns the **same** `VALIDATION_ERROR`:
 
 > `Source context does not exist, is inaccessible, or does not involve the reported Pupzy Account`

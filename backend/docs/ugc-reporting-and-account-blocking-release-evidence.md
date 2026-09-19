@@ -315,6 +315,13 @@ Result: **0**. `git log b6df50c..HEAD -- frontend/` is empty. No file under `fro
 - App-store review outcomes and real-device Arabic/English copy rendering are outside this backend effort.
 - The full `verify:release` aggregate was not executed end-to-end because its `e2e-root` stage is environment-blocked (§7); every other release stage was executed individually with the results above.
 
+**Post-audit interpretation notes (EXECUTED changes):**
+
+- **Account Report source/target accessibility deliberately ignores Blocks.** Source context is validated for existence, client-readable lifecycle state, and a legitimate participant relationship, but a Block never makes reporting fail or hides evidence; otherwise a blocker could suppress complaints about their own conduct. This interpretation is documented in the Flutter contract §6.4 and is covered by the "reporting works across Blocks" test. No change was made after review.
+- **Stale reservations no longer consume the allowance.** `REPORT_RESERVATION_LEASE_MS` (5 minutes) releases crash-orphan admissions that never became a report, while fresh in-flight reservations still count; a regression test proves nine additional commits alongside one live reservation and one stale orphan.
+- **Account Deletion redacts every correlated audit.** Report ids are collected before rows are deleted, and audits targeting the account's Comments or referencing any of its reports (as author, target, or evidence) survive only redacted; unrelated audits keep their reason and metadata.
+- **Comment Reports support reviewed-with-no-action** (`COMMENT_REPORT_REVIEWED_NO_ACTION`) alongside Post and Account Reports, with dashboard cache invalidation per ADR 0001 on all three.
+
 **Operational notes for the reviewer:**
 
 - Query-plan timings were measured on the developer machine with a synthetic-but-realistic dataset; absolute times will differ in production. The structural conclusions (SQL-level predicate, index usage, single anti-join, no N+1) are what the plans establish.
