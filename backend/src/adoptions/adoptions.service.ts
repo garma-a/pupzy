@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { AdoptionsRepository } from './adoptions.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { UsersService } from '../users/users.service';
@@ -6,8 +7,13 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../common/errors/app.errors';
 import { assertUuid } from '../common/utils/validate-uuid';
 import { clampFirst } from '../common/utils/pagination.util';
+import { DATABASE_TOKEN } from '../database/database.provider';
+import * as schema from '../database/schema';
 import type { AdoptionApplication } from '../database/schema';
+import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
 import type { SubmitAdoptionApplicationInput } from './dto/submit-adoption-application.input';
+
+type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
 const ADOPTION_APPLICATION_STATUSES = ['PENDING', 'APPROVED', 'REJECTED'] as const;
 
@@ -40,6 +46,9 @@ export class AdoptionsService {
     private readonly postsRepository: PostsRepository,
     private readonly usersService: UsersService,
     private readonly notificationsService: NotificationsService,
+    @Inject(DATABASE_TOKEN)
+    private readonly db: NodePgDatabase<typeof schema>,
+    private readonly isolationPolicy: AccountIsolationPolicy,
   ) {}
 
   /**
@@ -49,12 +58,15 @@ export class AdoptionsService {
    * - Target post must be ADOPTION type and ACTIVE
    * - Applicant cannot be the post owner
    * - One application per (applicant, post)
+   * - Applicant and post creator must not be isolated: the viewer-aware Post
+   *   lookup hides a Blocked post like any inaccessible content, and the insert
+   *   rechecks isolation under the canonical pair lock before committing
    */
   async submitApplication(applicantId: string, input: SubmitAdoptionApplicationInput): Promise<AdoptionApplication> {
     const { targetPostId, ...questionnaire } = input;
     assertUuid(targetPostId, 'targetPostId');
 
-    const post = await this.postsRepository.findById(targetPostId);
+    const post = await this.postsRepository.findById(targetPostId, applicantId);
     if (!post || post.status === 'REMOVED') {
       throw new NotFoundError('Post', targetPostId);
     }
@@ -74,11 +86,17 @@ export class AdoptionsService {
       throw new ConflictError('You have already submitted an application for this post');
     }
 
-    const application = await this.adoptionsRepository.create({
-      targetPostId,
-      applicantId,
-      ...questionnaire,
+    const application = await this.db.transaction(async (tx) => {
+      // Pair lock before the insert: a Block committing first makes this fail
+      // neutrally, and a Block committing second rejects the pending row.
+      if (await this.isolationPolicy.lockPairAndRecheck(tx, applicantId, post.creatorId)) {
+        return null;
+      }
+      return this.adoptionsRepository.create({ targetPostId, applicantId, ...questionnaire }, tx);
     });
+    if (!application) {
+      throw new NotFoundError('Post', targetPostId);
+    }
 
     // Fire notification to post owner (non-blocking)
     const applicant = await this.usersService.findById(applicantId);
@@ -101,6 +119,11 @@ export class AdoptionsService {
    * Approves a pending adoption application.
    * Only the post owner can approve.
    * Returns the updated application with WhatsApp link.
+   *
+   * The isolation recheck, the PENDING → APPROVED transition, and the owner
+   * phone read that builds the wa.me link all run inside one transaction that
+   * holds the canonical account-pair lock. Across a Block the application is
+   * treated as unavailable and no contact information is ever disclosed.
    */
   async approveApplication(
     ownerId: string,
@@ -127,15 +150,31 @@ export class AdoptionsService {
       throw new ValidationError(`Application is already ${application.status}`);
     }
 
-    const updated = await this.adoptionsRepository.updateStatus(applicationId, 'APPROVED');
-    if (!updated) {
+    const outcome = await this.db.transaction(async (tx) => {
+      if (await this.isolationPolicy.lockPairAndRecheck(tx, post.creatorId, application.applicantId)) {
+        return { kind: 'unavailable' as const };
+      }
+
+      const updated = await this.adoptionsRepository.updateStatus(applicationId, 'APPROVED', tx);
+      if (!updated) {
+        return { kind: 'lost' as const };
+      }
+
+      // Decrypt owner phone → build wa.me link inside the same transaction so
+      // the disclosure is ordered with the approval, never after a later Block.
+      const owner = await this.usersService.findActiveById(ownerId, tx);
+      const whatsappLink = owner?.phoneNumber ? `https://wa.me/${owner.phoneNumber.replace(/\D/g, '')}` : null;
+      return { kind: 'approved' as const, updated, whatsappLink };
+    });
+
+    if (outcome.kind === 'unavailable') {
+      // Neutral: identical to an unknown application, never reveals the Block.
+      throw new NotFoundError('AdoptionApplication', applicationId);
+    }
+    if (outcome.kind === 'lost') {
       const current = await this.adoptionsRepository.findById(applicationId);
       throw new ConflictError(`Application is already ${current?.status ?? 'processed'}`);
     }
-
-    // Decrypt owner phone → build wa.me link
-    const owner = await this.usersService.findActiveById(ownerId);
-    const whatsappLink = owner?.phoneNumber ? `https://wa.me/${owner.phoneNumber.replace(/\D/g, '')}` : null;
 
     // Fire notification to applicant (non-blocking) ONLY after transition succeeds
     this.notificationsService.fireNotification(
@@ -150,7 +189,7 @@ export class AdoptionsService {
       ownerId,
     );
 
-    return { ...updated, whatsappLink };
+    return { ...outcome.updated, whatsappLink: outcome.whatsappLink };
   }
 
   /**
@@ -207,6 +246,7 @@ export class AdoptionsService {
 
     const result = await this.adoptionsRepository.findByApplicant({
       applicantId: userId,
+      viewerId: userId,
       limit,
       cursor,
     });
@@ -242,12 +282,35 @@ export class AdoptionsService {
 
     const result = await this.adoptionsRepository.findByPost({
       targetPostId: postId,
+      viewerId: userId,
       status,
       limit,
       cursor,
     });
 
     return this.mapToConnection(result);
+  }
+
+  // ─── Isolation cleanup ───────────────────────────────────────────────
+
+  /**
+   * Transaction-safe cleanup contract for `blockUser`.
+   *
+   * Rejects every PENDING Adoption Application between the two accounts in
+   * either direction without deleting rows, so history is preserved and a
+   * rejected record can never be approved later. Must run inside the caller's
+   * Block transaction so the Block insert and the rejections commit atomically.
+   *
+   * Acquires the canonical account-pair lock, so standalone calls also
+   * serialize with create/approval/disclosure paths. Emits no notification.
+   */
+  async rejectPendingAdoptionApplicationsBetweenAccounts(
+    tx: DbTransaction,
+    firstAccountId: string,
+    secondAccountId: string,
+  ): Promise<number> {
+    await this.isolationPolicy.lockPair(tx, firstAccountId, secondAccountId);
+    return this.adoptionsRepository.rejectPendingBetweenAccounts(firstAccountId, secondAccountId, tx);
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────

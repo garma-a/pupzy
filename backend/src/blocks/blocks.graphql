@@ -1,0 +1,77 @@
+"""
+Minimal display identity of a blocked Pupzy Account.
+
+Only the fields a Blocked Accounts screen needs to show who was blocked:
+the same display fields the existing `User` type already exposes. Phone
+number, email, City, Posts, counts, reports, and the Block reason are
+deliberately absent so the list cannot leak anything beyond display identity.
+"""
+type BlockedUser {
+  id: ID!
+  fullName: String
+  fullNameArabic: String
+  profilePictureUrl: String
+  isVerified: Boolean!
+}
+
+"""
+An edge in the Blocked Accounts connection.
+
+- node: minimal display identity of the blocked Pupzy Account.
+- blockedAt: when the authenticated viewer created the Block (newest first).
+- cursor: opaque keyset cursor covering the Block's creation time and unique id.
+"""
+type BlockedUserEdge {
+  node: BlockedUser!
+  blockedAt: DateTime!
+  cursor: String!
+}
+
+"""
+Paginated list of Accounts the authenticated viewer has blocked.
+Newest first, with a deterministic unique tie-breaker for stable cursors.
+"""
+type BlockedUserConnection {
+  edges: [BlockedUserEdge!]!
+  pageInfo: PageInfo!
+}
+
+extend type Query {
+  """
+  Lists the Pupzy Accounts the authenticated viewer has blocked, newest first.
+  Defaults to 20 items, max 50 items. Each edge exposes only minimal display
+  identity, the Block timestamp, and an opaque cursor. Only callers can see
+  their own list, so Block direction is never disclosed to the other party.
+  """
+  blockedUsers(first: Int, after: String): BlockedUserConnection!
+}
+
+extend type Mutation {
+  """
+  Block another Pupzy Account. Requires authentication.
+
+  Creates a directional Block owned by the caller; both parties become mutually
+  isolated for discovery, discussion, engagement, direct contact, disclosure,
+  and notifications. Pending Contact Requests and Adoption Applications between
+  the pair are rejected in the same transaction before this returns.
+
+  Idempotent: blocking an account the caller already blocked returns true
+  without repeating cleanup. Rejects self-targets and nonexistent accounts.
+  Never creates a Report and never notifies the other party.
+  """
+  blockUser(userId: ID!): Boolean!
+
+  """
+  Remove the Block the authenticated caller owns on another Pupzy Account.
+  Requires authentication.
+
+  Only the account that initiated a Block can remove it; another account's
+  Block is never affected. Idempotent: unblocking an absent relationship
+  returns true. Rejects self-targets and nonexistent accounts.
+
+  Unblocking restores ordinary visibility and preserved engagement, but does
+  not reopen rejected Contact Requests or Adoption Applications and never
+  notifies the other party.
+  """
+  unblockUser(userId: ID!): Boolean!
+}

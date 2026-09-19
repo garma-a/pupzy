@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq, ne, inArray, asc, desc, and, or, gt, lt, sql, getTableColumns, type SQL } from 'drizzle-orm';
 import DataLoader from 'dataloader';
@@ -14,6 +14,7 @@ import {
   postMedia,
   postUpvotes,
   postSaves,
+  postReports,
   type Post,
   type PostMedia,
   type NewPost,
@@ -26,10 +27,17 @@ import {
   type LostPost,
   type AdoptionPost,
   type ProductPost,
+  type ReportReason,
 } from '../database/schema';
 import type * as schema from '../database/schema';
-import { ForbiddenError, NotFoundError } from '../common/errors/app.errors';
+import { ConflictError, ForbiddenError, NotFoundError } from '../common/errors/app.errors';
 import { withDbRetry } from '../common/utils/db-retry.util';
+import {
+  ModerationReportQuotaManager,
+  ReportQuotaReservation,
+} from '../moderation-reports/moderation-report-quota.manager';
+import { excludeIsolatedAccounts } from '../blocks/account-isolation.sql';
+import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -81,12 +89,46 @@ export interface FeedResult {
   hasNextPage: boolean;
 }
 
+interface DatabaseErrorLike {
+  code?: string;
+  message?: string;
+  cause?: { code?: string; message?: string };
+  driverError?: { code?: string; message?: string };
+}
+
+/**
+ * Detects PostgreSQL unique violations whether pg, Drizzle, or Nest wrapped
+ * them. Used to map the report duplicate index race to the same domain error
+ * as the in-transaction duplicate check.
+ */
+function isUniqueViolation(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const dbErr = err as DatabaseErrorLike;
+  if (dbErr.code === '23505') return true;
+  if (dbErr.cause?.code === '23505') return true;
+  if (dbErr.driverError?.code === '23505') return true;
+  const msg = `${dbErr.message ?? ''} ${dbErr.cause?.message ?? ''} ${dbErr.driverError?.message ?? ''}`;
+  return msg.includes('23505') || msg.toLowerCase().includes('unique constraint');
+}
+
 @Injectable()
 export class PostsRepository {
+  private readonly reportQuotaManager: ModerationReportQuotaManager;
+  private readonly isolationPolicy: AccountIsolationPolicy;
+
   constructor(
     @Inject(DATABASE_TOKEN)
     private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+    @Optional()
+    @Inject(ModerationReportQuotaManager)
+    reportQuotaManager?: ModerationReportQuotaManager,
+    @Optional()
+    @Inject(AccountIsolationPolicy)
+    isolationPolicy?: AccountIsolationPolicy,
+  ) {
+    this.reportQuotaManager = reportQuotaManager ?? new ModerationReportQuotaManager(this.db);
+    this.isolationPolicy = isolationPolicy ?? new AccountIsolationPolicy(this.db);
+  }
 
   /**
    * Coordinates Post lifecycle writes with Comment discussion mutations.
@@ -269,9 +311,17 @@ export class PostsRepository {
   /**
    * Finds a single post by ID.
    * Used by the resolver for single-post detail queries.
+   *
+   * When a viewer is supplied, posts created by an account Blocked in either
+   * direction are treated exactly like missing rows — the caller returns the
+   * same null/not-found result it uses for inaccessible content.
    */
-  async findById(id: string): Promise<Post | undefined> {
-    const [post] = await this.db.select().from(posts).where(eq(posts.id, id)).limit(1);
+  async findById(id: string, viewerId?: string | null): Promise<Post | undefined> {
+    const [post] = await this.db
+      .select()
+      .from(posts)
+      .where(and(eq(posts.id, id), excludeIsolatedAccounts(viewerId, posts.creatorId)))
+      .limit(1);
     return post;
   }
 
@@ -322,12 +372,19 @@ export class PostsRepository {
    * Finds a single RESCUE extension row by post ID.
    * Returns undefined if the post ID doesn't have a rescue extension.
    */
-  async findRescueDetail(postId: string): Promise<RescuePost | undefined> {
+  async findRescueDetail(postId: string, viewerId?: string | null): Promise<RescuePost | undefined> {
     const [row] = await this.db
       .select(getTableColumns(rescuePosts))
       .from(rescuePosts)
       .innerJoin(posts, eq(rescuePosts.postId, posts.id))
-      .where(and(eq(rescuePosts.postId, postId), eq(posts.postType, 'RESCUE'), ne(posts.status, 'REMOVED')))
+      .where(
+        and(
+          eq(rescuePosts.postId, postId),
+          eq(posts.postType, 'RESCUE'),
+          ne(posts.status, 'REMOVED'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
+        ),
+      )
       .limit(1);
     return row;
   }
@@ -335,12 +392,19 @@ export class PostsRepository {
   /**
    * Finds a single LOST extension row by post ID.
    */
-  async findLostDetail(postId: string): Promise<LostPost | undefined> {
+  async findLostDetail(postId: string, viewerId?: string | null): Promise<LostPost | undefined> {
     const [row] = await this.db
       .select(getTableColumns(lostPosts))
       .from(lostPosts)
       .innerJoin(posts, eq(lostPosts.postId, posts.id))
-      .where(and(eq(lostPosts.postId, postId), eq(posts.postType, 'LOST'), ne(posts.status, 'REMOVED')))
+      .where(
+        and(
+          eq(lostPosts.postId, postId),
+          eq(posts.postType, 'LOST'),
+          ne(posts.status, 'REMOVED'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
+        ),
+      )
       .limit(1);
     return row;
   }
@@ -348,12 +412,19 @@ export class PostsRepository {
   /**
    * Finds a single ADOPTION extension row by post ID.
    */
-  async findAdoptionDetail(postId: string): Promise<AdoptionPost | undefined> {
+  async findAdoptionDetail(postId: string, viewerId?: string | null): Promise<AdoptionPost | undefined> {
     const [row] = await this.db
       .select(getTableColumns(adoptionPosts))
       .from(adoptionPosts)
       .innerJoin(posts, eq(adoptionPosts.postId, posts.id))
-      .where(and(eq(adoptionPosts.postId, postId), eq(posts.postType, 'ADOPTION'), ne(posts.status, 'REMOVED')))
+      .where(
+        and(
+          eq(adoptionPosts.postId, postId),
+          eq(posts.postType, 'ADOPTION'),
+          ne(posts.status, 'REMOVED'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
+        ),
+      )
       .limit(1);
     return row;
   }
@@ -361,12 +432,19 @@ export class PostsRepository {
   /**
    * Finds a single PRODUCT extension row by post ID.
    */
-  async findProductDetail(postId: string): Promise<ProductPost | undefined> {
+  async findProductDetail(postId: string, viewerId?: string | null): Promise<ProductPost | undefined> {
     const [row] = await this.db
       .select(getTableColumns(productPosts))
       .from(productPosts)
       .innerJoin(posts, eq(productPosts.postId, posts.id))
-      .where(and(eq(productPosts.postId, postId), eq(posts.postType, 'PRODUCT'), ne(posts.status, 'REMOVED')))
+      .where(
+        and(
+          eq(productPosts.postId, postId),
+          eq(posts.postType, 'PRODUCT'),
+          ne(posts.status, 'REMOVED'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
+        ),
+      )
       .limit(1);
     return row;
   }
@@ -411,14 +489,142 @@ export class PostsRepository {
     );
   }
 
+  // ─── Moderation Reports ───────────────────────────────────────────────
+
+  /**
+   * Atomically reserves one slot of the shared moderation-report allowance.
+   * Post Reports admit through the same seam as Comment Reports and future
+   * Pupzy Account Reports, so alternating target types cannot bypass the cap.
+   * Callers must roll back the reservation when the report is rejected.
+   */
+  async reserveReportAllowance(userId: string): Promise<ReportQuotaReservation> {
+    return this.reportQuotaManager.reserveReportAllowance(userId);
+  }
+
+  /**
+   * Records a Post Report and enters the Post into moderation review.
+   *
+   * - Any accessible Post type (status !== 'REMOVED') may be reported.
+   * - Self-reports and duplicate reporter/Post pairs are rejected.
+   * - The report row reuses the shared-allowance admission id, so the
+   *   database trigger increments `posts.report_count` exactly once and the
+   *   committed report counts against the shared allowance exactly once.
+   * - The first accepted report on a CLEAN Post sets moderation_status to
+   *   FLAGGED while leaving its lifecycle status untouched. Reports never
+   *   remove a Post.
+   */
+  async reportPost(params: {
+    postId: string;
+    reporterId: string;
+    reason: ReportReason;
+    details?: string;
+    quotaAdmissionId?: string;
+  }): Promise<boolean> {
+    const { postId, reporterId, reason, details, quotaAdmissionId } = params;
+    try {
+      return await withDbRetry(() =>
+        this.db.transaction(async (tx) => {
+          const post = await this.lockDiscussionPost(tx, postId);
+          if (!post || post.status === 'REMOVED') throw new NotFoundError('Post', postId);
+
+          // An isolated Post is inaccessible, so it is not reportable. The
+          // neutral not-found response never reveals the Block direction.
+          if (await this.isolationPolicy.isIsolated(reporterId, post.creatorId, tx)) {
+            throw new NotFoundError('Post', postId);
+          }
+
+          if (post.creatorId === reporterId) {
+            throw new ForbiddenError('You cannot report your own post');
+          }
+
+          const [existingReport] = await tx
+            .select()
+            .from(postReports)
+            .where(and(eq(postReports.postId, postId), eq(postReports.reporterId, reporterId)))
+            .limit(1);
+          if (existingReport) {
+            throw new ConflictError('You have already reported this post', 'POST_ALREADY_REPORTED');
+          }
+
+          await tx.insert(postReports).values({
+            // The reservation id doubles as the report row id, which links the
+            // shared-allowance admission to its committed report so it is
+            // counted exactly once under concurrency.
+            ...(quotaAdmissionId ? { id: quotaAdmissionId } : {}),
+            postId,
+            reporterId,
+            reason,
+            details: details ?? null,
+          });
+
+          if (post.moderationStatus === 'CLEAN') {
+            await tx.update(posts).set({ moderationStatus: 'FLAGGED' }).where(eq(posts.id, postId));
+          }
+
+          return true;
+        }),
+      );
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new ConflictError('You have already reported this post', 'POST_ALREADY_REPORTED');
+      }
+      throw error;
+    }
+  }
+
   // ─── Engagement Toggles ───────────────────────────────────────────────
+
+  /**
+   * Serializes an engagement write on the canonical account-pair lock before
+   * acquiring the Post row, then rechecks active Blocks inside the committing
+   * transaction. Pair-before-row ordering matches discussion writes, so a
+   * concurrent Block and engagement mutation can neither interleave nor
+   * deadlock: whichever acquires the pair lock first commits first.
+   *
+   * Returns true when an active Block isolates the pair.
+   */
+  private async lockEngagementPair(tx: DbTransaction, postId: string, userId: string): Promise<boolean> {
+    const [postBeforeLock] = await tx
+      .select({ creatorId: posts.creatorId })
+      .from(posts)
+      .where(eq(posts.id, postId))
+      .limit(1);
+    if (!postBeforeLock) throw new NotFoundError('Post', postId);
+    return this.isolationPolicy.lockPairAndRecheck(tx, userId, postBeforeLock.creatorId);
+  }
+
+  /** True when the caller already owns an Upvote row for the Post. */
+  private async hasOwnedUpvote(tx: DbTransaction, postId: string, userId: string): Promise<boolean> {
+    const [row] = await tx
+      .select({ postId: postUpvotes.postId })
+      .from(postUpvotes)
+      .where(and(eq(postUpvotes.postId, postId), eq(postUpvotes.userId, userId)))
+      .limit(1);
+    return row !== undefined;
+  }
+
+  /** True when the caller already owns a Save row for the Post. */
+  private async hasOwnedSave(tx: DbTransaction, postId: string, userId: string): Promise<boolean> {
+    const [row] = await tx
+      .select({ postId: postSaves.postId })
+      .from(postSaves)
+      .where(and(eq(postSaves.postId, postId), eq(postSaves.userId, userId)))
+      .limit(1);
+    return row !== undefined;
+  }
 
   /**
    * Toggles an upvote on a post. If the user has already upvoted, removes it.
    * If not, inserts a new upvote. All operations run in a single transaction:
-   *   1. Check existing upvote
-   *   2. INSERT or DELETE the upvote row
-   *   3. Update counter + recompute score + RETURNING * (single query)
+   *   1. Lock the account pair and recheck isolation
+   *   2. Check existing upvote
+   *   3. INSERT or DELETE the upvote row
+   *   4. Update counter + recompute score + RETURNING * (single query)
+   *
+   * An isolated Post is inaccessible, so a new Upvote cannot be added and
+   * resolves to the same not-found behavior as a missing Post. An Upvote the
+   * caller already owns stays removable so prior engagement remains
+   * reversible without restoring interaction.
    *
    * PostgreSQL evaluates all SET expressions using the OLD row values, so the
    * merged score formula explicitly uses (upvote_count + delta) to account for
@@ -429,6 +635,14 @@ export class PostsRepository {
    */
   async toggleUpvote(postId: string, userId: string): Promise<{ added: boolean; updatedPost: Post }> {
     return this.db.transaction(async (tx) => {
+      const isolated = await this.lockEngagementPair(tx, postId, userId);
+
+      // Fast neutral rejection: without an owned Upvote an isolated Post can
+      // never accept this write, so reject before waiting on the Post row lock.
+      if (isolated && !(await this.hasOwnedUpvote(tx, postId, userId))) {
+        throw new NotFoundError('Post', postId);
+      }
+
       const [availablePost] = await tx
         .select({ id: posts.id })
         .from(posts)
@@ -442,6 +656,9 @@ export class PostsRepository {
         .from(postUpvotes)
         .where(and(eq(postUpvotes.postId, postId), eq(postUpvotes.userId, userId)))
         .limit(1);
+
+      // No new relationship may cross an active Block.
+      if (isolated && !existing) throw new NotFoundError('Post', postId);
 
       if (existing) {
         // 2. Remove upvote
@@ -520,6 +737,10 @@ export class PostsRepository {
    * Toggles a save/bookmark on a post. Same 3-query pattern as toggleUpvote.
    * Works on all 4 post types.
    *
+   * As with Upvotes, the account pair is locked and rechecked inside the
+   * transaction: an isolated Post cannot gain a new Save, while a Save the
+   * caller already owns remains removable.
+   *
    * Merges counter update + effective_score recomputation into a single
    * UPDATE ... RETURNING to minimize round trips within the transaction.
    *
@@ -527,6 +748,14 @@ export class PostsRepository {
    */
   async toggleSave(postId: string, userId: string): Promise<{ added: boolean; updatedPost: Post }> {
     return this.db.transaction(async (tx) => {
+      const isolated = await this.lockEngagementPair(tx, postId, userId);
+
+      // Fast neutral rejection: without an owned Save an isolated Post can
+      // never accept this write, so reject before waiting on the Post row lock.
+      if (isolated && !(await this.hasOwnedSave(tx, postId, userId))) {
+        throw new NotFoundError('Post', postId);
+      }
+
       const [availablePost] = await tx
         .select({ id: posts.id })
         .from(posts)
@@ -540,6 +769,9 @@ export class PostsRepository {
         .from(postSaves)
         .where(and(eq(postSaves.postId, postId), eq(postSaves.userId, userId)))
         .limit(1);
+
+      // No new relationship may cross an active Block.
+      if (isolated && !existing) throw new NotFoundError('Post', postId);
 
       if (existing) {
         // 2. Remove save
@@ -628,6 +860,10 @@ export class PostsRepository {
    * Batch-checks which posts from a list have been upvoted by a specific user.
    * Returns a Set of post IDs that the user has upvoted.
    * Used by the `isUpvotedByMe` DataLoader.
+   *
+   * Posts authored by an account isolated from this user resolve as not
+   * upvoted, so a relationship preserved internally never leaks through a
+   * viewer-specific field while a Block is active.
    */
   async findUpvotesByUserForPosts(userId: string, postIds: readonly string[]): Promise<Set<string>> {
     if (postIds.length === 0) return new Set();
@@ -635,7 +871,14 @@ export class PostsRepository {
     const rows = await this.db
       .select({ postId: postUpvotes.postId })
       .from(postUpvotes)
-      .where(and(eq(postUpvotes.userId, userId), inArray(postUpvotes.postId, postIds as string[])));
+      .innerJoin(posts, eq(postUpvotes.postId, posts.id))
+      .where(
+        and(
+          eq(postUpvotes.userId, userId),
+          inArray(postUpvotes.postId, postIds as string[]),
+          excludeIsolatedAccounts(userId, posts.creatorId),
+        ),
+      );
 
     return new Set(rows.map((r) => r.postId));
   }
@@ -644,6 +887,7 @@ export class PostsRepository {
    * Batch-checks which posts from a list have been saved by a specific user.
    * Returns a Set of post IDs that the user has saved.
    * Used by the `isSavedByMe` DataLoader.
+   * Masking rules match `findUpvotesByUserForPosts`.
    */
   async findSavesByUserForPosts(userId: string, postIds: readonly string[]): Promise<Set<string>> {
     if (postIds.length === 0) return new Set();
@@ -651,7 +895,14 @@ export class PostsRepository {
     const rows = await this.db
       .select({ postId: postSaves.postId })
       .from(postSaves)
-      .where(and(eq(postSaves.userId, userId), inArray(postSaves.postId, postIds as string[])));
+      .innerJoin(posts, eq(postSaves.postId, posts.id))
+      .where(
+        and(
+          eq(postSaves.userId, userId),
+          inArray(postSaves.postId, postIds as string[]),
+          excludeIsolatedAccounts(userId, posts.creatorId),
+        ),
+      );
 
     return new Set(rows.map((r) => r.postId));
   }
@@ -693,7 +944,14 @@ export class PostsRepository {
             const rows = await this.db
               .select({ postId: postUpvotes.postId })
               .from(postUpvotes)
-              .where(and(eq(postUpvotes.userId, userId), inArray(postUpvotes.postId, postIds)));
+              .innerJoin(posts, eq(postUpvotes.postId, posts.id))
+              .where(
+                and(
+                  eq(postUpvotes.userId, userId),
+                  inArray(postUpvotes.postId, postIds),
+                  excludeIsolatedAccounts(userId, posts.creatorId),
+                ),
+              );
 
             for (const row of rows) {
               upvotedSet.add(`${userId}:${row.postId}`);
@@ -742,7 +1000,14 @@ export class PostsRepository {
             const rows = await this.db
               .select({ postId: postSaves.postId })
               .from(postSaves)
-              .where(and(eq(postSaves.userId, userId), inArray(postSaves.postId, postIds)));
+              .innerJoin(posts, eq(postSaves.postId, posts.id))
+              .where(
+                and(
+                  eq(postSaves.userId, userId),
+                  inArray(postSaves.postId, postIds),
+                  excludeIsolatedAccounts(userId, posts.creatorId),
+                ),
+              );
 
             for (const row of rows) {
               savedSet.add(`${userId}:${row.postId}`);
@@ -890,8 +1155,9 @@ export class PostsRepository {
     radiusKm: number;
     limit: number;
     cursor: { urgency: NonNullable<Post['urgency']>; createdAt: string; id: string } | null;
+    viewerId?: string | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor } = parameters;
+    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor, viewerId } = parameters;
     const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
@@ -918,6 +1184,7 @@ export class PostsRepository {
         and(
           eq(posts.status, 'ACTIVE'),
           inArray(posts.postType, ['RESCUE', 'LOST']),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
           locationCondition,
           cursorCondition,
         ),
@@ -941,8 +1208,9 @@ export class PostsRepository {
     sort: 'HOT' | 'NEWEST';
     limit: number;
     cursor: { score?: number; createdAt?: string; id: string } | null;
+    viewerId?: string | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, sort, limit, cursor } = parameters;
+    const { governorate, cityId, viewerLocation, radiusKm, sort, limit, cursor, viewerId } = parameters;
     const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
@@ -959,7 +1227,15 @@ export class PostsRepository {
         distanceKm: this.buildDistanceInKilometersExpression(centerPointAsEwkt, true),
       })
       .from(posts)
-      .where(and(eq(posts.status, 'ACTIVE'), eq(posts.postType, 'ADOPTION'), locationCondition, cursorCondition))
+      .where(
+        and(
+          eq(posts.status, 'ACTIVE'),
+          eq(posts.postType, 'ADOPTION'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
+          locationCondition,
+          cursorCondition,
+        ),
+      )
       .orderBy(...orderByClauses)
       .limit(limit + 1);
 
@@ -982,8 +1258,9 @@ export class PostsRepository {
     category: Post['marketCategory'] | null | undefined;
     limit: number;
     cursor: { score?: number; createdAt?: string; id: string } | null;
+    viewerId?: string | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, sort, category, limit, cursor } = parameters;
+    const { governorate, cityId, viewerLocation, radiusKm, sort, category, limit, cursor, viewerId } = parameters;
     const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
@@ -1004,6 +1281,7 @@ export class PostsRepository {
         and(
           eq(posts.status, 'ACTIVE'),
           eq(posts.postType, 'PRODUCT'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
           locationCondition,
           category ? eq(posts.marketCategory, category) : undefined,
           cursorCondition,
@@ -1026,8 +1304,9 @@ export class PostsRepository {
     radiusKm: number;
     limit: number;
     cursor: { id: string } | null;
+    viewerId?: string | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor } = parameters;
+    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor, viewerId } = parameters;
     const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
@@ -1038,7 +1317,14 @@ export class PostsRepository {
     const rows = await this.db
       .select({ ...getTableColumns(posts), distanceKm: this.buildDistanceInKilometersExpression(centerPointAsEwkt) })
       .from(posts)
-      .where(and(eq(posts.status, 'ACTIVE'), locationCondition, cursor ? lt(posts.id, cursor.id) : undefined))
+      .where(
+        and(
+          eq(posts.status, 'ACTIVE'),
+          excludeIsolatedAccounts(viewerId, posts.creatorId),
+          locationCondition,
+          cursor ? lt(posts.id, cursor.id) : undefined,
+        ),
+      )
       .orderBy(desc(posts.id))
       .limit(limit + 1);
 
@@ -1074,7 +1360,14 @@ export class PostsRepository {
       })
       .from(postSaves)
       .innerJoin(posts, eq(postSaves.postId, posts.id))
-      .where(and(eq(postSaves.userId, userId), ne(posts.status, 'REMOVED'), cursorCondition))
+      .where(
+        and(
+          eq(postSaves.userId, userId),
+          ne(posts.status, 'REMOVED'),
+          excludeIsolatedAccounts(userId, posts.creatorId),
+          cursorCondition,
+        ),
+      )
       .orderBy(desc(postSaves.createdAt), desc(postSaves.postId))
       .limit(limit + 1);
 

@@ -274,6 +274,48 @@
       "when": 1790360000000,
       "tag": "0038_add_media_finalizations",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1790446400000,
+      "tag": "0039_shared_report_allowance_counter_repair",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1790532800000,
+      "tag": "0040_add_blocks",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1790619200000,
+      "tag": "0041_add_account_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1790705600000,
+      "tag": "0042_post_report_review_outcomes",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1790792000000,
+      "tag": "0043_suppress_isolated_notification_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1790878400000,
+      "tag": "0044_add_comment_report_no_action_outcome",
+      "breakpoints": true
     }
   ]
 }

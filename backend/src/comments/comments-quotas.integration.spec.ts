@@ -17,6 +17,9 @@ import {
   comments,
   stagedUploads,
   commentQuotaAdmissions,
+  commentReports,
+  postReports,
+  accountReports,
   type User,
   type City,
   type Post,
@@ -26,6 +29,7 @@ import {
 import { CommentsRepository } from './comments.repository';
 import { CommentsService } from './comments.service';
 import { CommentsResolver, CommentMediaResolver } from './comments.resolver';
+import { ModerationReportQuotaManager } from '../moderation-reports/moderation-report-quota.manager';
 import { PostsRepository } from '../posts/posts.repository';
 import { CitiesRepository } from '../cities/cities.repository';
 import { UsersRepository } from '../users/users.repository';
@@ -192,6 +196,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
   let commentsResolver: CommentsResolver;
   let commentMediaResolver: CommentMediaResolver;
   let executableSchema: GraphQLSchema;
+  let reportQuotaManager: ModerationReportQuotaManager;
 
   let testCity: City;
   let user1: User;
@@ -269,6 +274,7 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
 
     commentsResolver = new CommentsResolver(commentsService);
     commentMediaResolver = new CommentMediaResolver(commentsService);
+    reportQuotaManager = new ModerationReportQuotaManager(dbHelper.db);
 
     const schemaFiles = [
       'src/common/graphql/enums.graphql',
@@ -1078,6 +1084,393 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       expect(blockedRes.errors).toBeDefined();
       expect((blockedRes.errors![0].originalError as { code?: string })?.code).toBe('RATE_LIMITED');
       expect(blockedRes.errors![0].message).toContain('Daily comment report limit reached (10 per day)');
+    });
+  });
+
+  describe('Ticket 01: Shared moderation-report allowance (Comment + Post)', () => {
+    async function seedReportableComments(count: number): Promise<Comment[]> {
+      const rows = Array.from({ length: count }, (_, i) => ({
+        id: generateUuidV7(),
+        postId: testPost.id,
+        authorId: user1.id,
+        text: `Shared allowance comment ${i}`,
+        status: 'ACTIVE' as const,
+      }));
+      return dbHelper.db.insert(comments).values(rows).returning();
+    }
+
+    async function seedSurvivingPosts(count: number): Promise<Post[]> {
+      const rows = Array.from({ length: count }, (_, i) => ({
+        creatorId: user1.id,
+        postType: 'RESCUE' as const,
+        title: `Surviving post for post reports ${i}`,
+        description: 'Post description',
+        cityId: testCity.id,
+        urgency: 'URGENT' as const,
+        status: 'ACTIVE' as const,
+        coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+      }));
+      return dbHelper.db.insert(posts).values(rows).returning();
+    }
+
+    /**
+     * Mirrors the reserve -> insert report row with the reservation id ->
+     * rollback-on-failure flow that the future `reportPost` seam will use,
+     * without needing the Post Report API.
+     */
+    async function attemptSimulatedPostReport(reporter: User, targetPostId: string): Promise<boolean> {
+      let reservation;
+      try {
+        reservation = await reportQuotaManager.reserveReportAllowance(reporter.id);
+      } catch {
+        return false;
+      }
+      try {
+        await dbHelper.db.insert(postReports).values({
+          id: reservation.admissionId,
+          postId: targetPostId,
+          reporterId: reporter.id,
+          reason: 'SPAM',
+        });
+        return true;
+      } catch (err) {
+        await reservation.rollback();
+        throw err;
+      }
+    }
+
+    it('counts historical Post Reports against the same allowance as Comment Reports', async () => {
+      const survivingPosts = await seedSurvivingPosts(5);
+      await dbHelper.db.insert(postReports).values(
+        survivingPosts.map((post) => ({
+          postId: post.id,
+          reporterId: user2.id,
+          reason: 'SPAM' as const,
+        })),
+      );
+
+      const commentsToReport = await seedReportableComments(5);
+      for (const comment of commentsToReport) {
+        const res = await executeGql(
+          REPORT_COMMENT_MUTATION,
+          { input: { commentId: comment.id, reason: 'SPAM' } },
+          user2,
+        );
+        expect(res.errors).toBeUndefined();
+        expect(res.data?.reportComment).toBe(true);
+      }
+
+      const [rejectedTarget] = await seedReportableComments(1);
+      const rejected = await executeGql(
+        REPORT_COMMENT_MUTATION,
+        { input: { commentId: rejectedTarget.id, reason: 'SPAM' } },
+        user2,
+      );
+      expect(rejected.errors).toBeDefined();
+      expect((rejected.errors![0].originalError as { code?: string })?.code).toBe('RATE_LIMITED');
+      expect(rejected.errors![0].message).toContain('Daily comment report limit reached (10 per day)');
+
+      const commentReportRows = await dbHelper.db
+        .select()
+        .from(commentReports)
+        .where(eq(commentReports.reporterId, user2.id));
+      const postReportRows = await dbHelper.db.select().from(postReports).where(eq(postReports.reporterId, user2.id));
+      expect(commentReportRows.length + postReportRows.length).toBe(10);
+    });
+
+    it('counts rollout-era Comment Report admissions and rows exactly once', async () => {
+      const oneHourAgo = new Date(Date.now() - 3600 * 1000);
+      const commentsToReport = await seedReportableComments(11);
+
+      // Three committed reports already have a row; two admissions crashed
+      // before their report row ever committed. All five consumed a slot.
+      await dbHelper.db.insert(commentQuotaAdmissions).values(
+        commentsToReport.slice(0, 5).map(() => ({
+          id: generateUuidV7(),
+          userId: user2.id,
+          action: 'COMMENT_REPORT',
+          createdAt: oneHourAgo,
+        })),
+      );
+      await dbHelper.db.insert(commentReports).values(
+        commentsToReport.slice(0, 3).map((comment) => ({
+          commentId: comment.id,
+          reporterId: user2.id,
+          reason: 'SPAM' as const,
+          createdAt: oneHourAgo,
+        })),
+      );
+
+      for (let i = 5; i < 10; i++) {
+        const res = await executeGql(
+          REPORT_COMMENT_MUTATION,
+          { input: { commentId: commentsToReport[i].id, reason: 'SPAM' } },
+          user2,
+        );
+        expect(res.errors).toBeUndefined();
+        expect(res.data?.reportComment).toBe(true);
+      }
+
+      const rejected = await executeGql(
+        REPORT_COMMENT_MUTATION,
+        { input: { commentId: commentsToReport[10].id, reason: 'SPAM' } },
+        user2,
+      );
+      expect(rejected.errors).toBeDefined();
+      expect((rejected.errors![0].originalError as { code?: string })?.code).toBe('RATE_LIMITED');
+    });
+
+    it('races mixed Post and Comment Reports so alternating target types cannot exceed ten', async () => {
+      const survivingPosts = await seedSurvivingPosts(8);
+      const commentsToReport = await seedReportableComments(8);
+
+      const commentRequests = commentsToReport.map((comment) =>
+        executeGql(REPORT_COMMENT_MUTATION, { input: { commentId: comment.id, reason: 'SPAM' } }, user2).then(
+          (res) => !res.errors && res.data?.reportComment === true,
+        ),
+      );
+      const postRequests = survivingPosts.map((post) => attemptSimulatedPostReport(user2, post.id));
+
+      const results = await Promise.all([...commentRequests, ...postRequests]);
+      expect(results.filter(Boolean)).toHaveLength(10);
+
+      const commentReportRows = await dbHelper.db
+        .select()
+        .from(commentReports)
+        .where(eq(commentReports.reporterId, user2.id));
+      const postReportRows = await dbHelper.db.select().from(postReports).where(eq(postReports.reporterId, user2.id));
+      expect(commentReportRows.length + postReportRows.length).toBe(10);
+
+      const admissions = await dbHelper.db
+        .select()
+        .from(commentQuotaAdmissions)
+        .where(
+          and(eq(commentQuotaAdmissions.userId, user2.id), eq(commentQuotaAdmissions.action, 'MODERATION_REPORT')),
+        );
+      expect(admissions).toHaveLength(10);
+
+      const committedReportIds = new Set([
+        ...commentReportRows.map((report) => report.id),
+        ...postReportRows.map((report) => report.id),
+      ]);
+      for (const admission of admissions) {
+        expect(committedReportIds.has(admission.id)).toBe(true);
+      }
+    });
+
+    async function attemptSimulatedAccountReport(reporter: User, targetUserId: string): Promise<boolean> {
+      let reservation;
+      try {
+        reservation = await reportQuotaManager.reserveReportAllowance(reporter.id);
+      } catch {
+        return false;
+      }
+      try {
+        await dbHelper.db.insert(accountReports).values({
+          id: reservation.admissionId,
+          reporterId: reporter.id,
+          reportedUserId: targetUserId,
+          reason: 'SPAM',
+        });
+        return true;
+      } catch {
+        await reservation.rollback();
+        return false;
+      }
+    }
+
+    it('races mixed Post, Comment, and Account Reports so alternating target types cannot exceed ten', async () => {
+      const survivingPosts = await seedSurvivingPosts(6);
+      const commentsToReport = await seedReportableComments(6);
+      const accountTargets = await dbHelper.db
+        .insert(users)
+        .values(
+          Array.from({ length: 6 }, (_, index) => ({
+            firebaseUserId: `fb-account-target-${index}-${generateUuidV7()}`,
+            email: `account-target-${index}-${generateUuidV7()}@pupzy.dev`,
+            fullName: `Account Target ${index}`,
+          })),
+        )
+        .returning();
+
+      const commentRequests = commentsToReport.map((comment) =>
+        executeGql(REPORT_COMMENT_MUTATION, { input: { commentId: comment.id, reason: 'SPAM' } }, user2).then(
+          (res) => !res.errors && res.data?.reportComment === true,
+        ),
+      );
+      const postRequests = survivingPosts.map((post) => attemptSimulatedPostReport(user2, post.id));
+      const accountRequests = accountTargets.map((target) => attemptSimulatedAccountReport(user2, target.id));
+
+      const results = await Promise.all([...commentRequests, ...postRequests, ...accountRequests]);
+      expect(results.filter(Boolean)).toHaveLength(10);
+
+      const commentReportRows = await dbHelper.db
+        .select()
+        .from(commentReports)
+        .where(eq(commentReports.reporterId, user2.id));
+      const postReportRows = await dbHelper.db.select().from(postReports).where(eq(postReports.reporterId, user2.id));
+      const accountReportRows = await dbHelper.db
+        .select()
+        .from(accountReports)
+        .where(eq(accountReports.reporterId, user2.id));
+      expect(commentReportRows.length + postReportRows.length + accountReportRows.length).toBe(10);
+
+      const admissions = await dbHelper.db
+        .select()
+        .from(commentQuotaAdmissions)
+        .where(
+          and(eq(commentQuotaAdmissions.userId, user2.id), eq(commentQuotaAdmissions.action, 'MODERATION_REPORT')),
+        );
+      expect(admissions).toHaveLength(10);
+
+      const committedReportIds = new Set([
+        ...commentReportRows.map((report) => report.id),
+        ...postReportRows.map((report) => report.id),
+        ...accountReportRows.map((report) => report.id),
+      ]);
+      for (const admission of admissions) {
+        expect(committedReportIds.has(admission.id)).toBe(true);
+      }
+    });
+
+    it('releases stale crash-orphan reservations after the lease while counting in-flight ones', async () => {
+      const staleAt = new Date(Date.now() - 10 * 60 * 1000);
+      const recentAt = new Date(Date.now() - 30 * 1000);
+      await dbHelper.db.insert(commentQuotaAdmissions).values([
+        { id: generateUuidV7(), userId: user2.id, action: 'MODERATION_REPORT', createdAt: staleAt },
+        { id: generateUuidV7(), userId: user2.id, action: 'MODERATION_REPORT', createdAt: recentAt },
+      ]);
+      const commentsToReport = await seedReportableComments(10);
+
+      let accepted = 0;
+      for (const comment of commentsToReport) {
+        const res = await executeGql(
+          REPORT_COMMENT_MUTATION,
+          { input: { commentId: comment.id, reason: 'SPAM' } },
+          user2,
+        );
+        if (!res.errors && res.data?.reportComment === true) accepted += 1;
+      }
+
+      // The fresh in-flight reservation holds one slot; the stale orphan no
+      // longer does, so exactly nine more reports commit.
+      expect(accepted).toBe(9);
+    });
+
+    it('admits exactly the remaining slot at the rolling 24-hour window boundary', async () => {
+      const survivingPosts = await seedSurvivingPosts(10);
+      const insideWindow = new Date(Date.now() - 23 * 3600 * 1000);
+      const outsideWindow = new Date(Date.now() - 25 * 3600 * 1000);
+      await dbHelper.db.insert(postReports).values(
+        survivingPosts.map((post, i) => ({
+          postId: post.id,
+          reporterId: user2.id,
+          reason: 'SPAM' as const,
+          createdAt: i < 9 ? insideWindow : outsideWindow,
+        })),
+      );
+
+      const commentsToReport = await seedReportableComments(5);
+      const results = await Promise.all(
+        commentsToReport.map((comment) =>
+          executeGql(REPORT_COMMENT_MUTATION, { input: { commentId: comment.id, reason: 'SPAM' } }, user2).then(
+            (res) => !res.errors && res.data?.reportComment === true,
+          ),
+        ),
+      );
+
+      expect(results.filter(Boolean)).toHaveLength(1);
+    });
+
+    it('never consumes allowance for validation failures, self-reports, duplicates, or rolled-back work', async () => {
+      const [ownComment] = await dbHelper.db
+        .insert(comments)
+        .values({
+          postId: testPost.id,
+          authorId: user2.id,
+          text: 'Own comment for self-report',
+          status: 'ACTIVE',
+        })
+        .returning();
+
+      const selfReport = await executeGql(
+        REPORT_COMMENT_MUTATION,
+        { input: { commentId: ownComment.id, reason: 'SPAM' } },
+        user2,
+      );
+      expect(selfReport.errors).toBeDefined();
+      expect(selfReport.errors![0].message).toContain('You cannot report your own comment');
+
+      const commentsToReport = await seedReportableComments(12);
+      const invalidDetails = await executeGql(
+        REPORT_COMMENT_MUTATION,
+        { input: { commentId: commentsToReport[0].id, reason: 'SPAM', details: 'x'.repeat(501) } },
+        user2,
+      );
+      expect(invalidDetails.errors).toBeDefined();
+
+      const missingTarget = await executeGql(
+        REPORT_COMMENT_MUTATION,
+        { input: { commentId: generateUuidV7(), reason: 'SPAM' } },
+        user2,
+      );
+      expect(missingTarget.errors).toBeDefined();
+
+      const accepted = await executeGql(
+        REPORT_COMMENT_MUTATION,
+        { input: { commentId: commentsToReport[0].id, reason: 'SPAM' } },
+        user2,
+      );
+      expect(accepted.errors).toBeUndefined();
+      expect(accepted.data?.reportComment).toBe(true);
+
+      const duplicate = await executeGql(
+        REPORT_COMMENT_MUTATION,
+        { input: { commentId: commentsToReport[0].id, reason: 'SPAM' } },
+        user2,
+      );
+      expect(duplicate.errors).toBeDefined();
+      expect((duplicate.errors![0].originalError as { code?: string })?.code).toBe('COMMENT_ALREADY_REPORTED');
+
+      const rolledBack = await reportQuotaManager.reserveReportAllowance(user2.id);
+      await rolledBack.rollback();
+
+      for (let i = 1; i <= 9; i++) {
+        const res = await executeGql(
+          REPORT_COMMENT_MUTATION,
+          { input: { commentId: commentsToReport[i].id, reason: 'SPAM' } },
+          user2,
+        );
+        expect(res.errors).toBeUndefined();
+        expect(res.data?.reportComment).toBe(true);
+      }
+
+      const rejected = await executeGql(
+        REPORT_COMMENT_MUTATION,
+        { input: { commentId: commentsToReport[10].id, reason: 'SPAM' } },
+        user2,
+      );
+      expect(rejected.errors).toBeDefined();
+      expect((rejected.errors![0].originalError as { code?: string })?.code).toBe('RATE_LIMITED');
+
+      const commentReportRows = await dbHelper.db
+        .select()
+        .from(commentReports)
+        .where(eq(commentReports.reporterId, user2.id));
+      expect(commentReportRows).toHaveLength(10);
+
+      const admissions = await dbHelper.db
+        .select()
+        .from(commentQuotaAdmissions)
+        .where(
+          and(eq(commentQuotaAdmissions.userId, user2.id), eq(commentQuotaAdmissions.action, 'MODERATION_REPORT')),
+        );
+      expect(admissions).toHaveLength(10);
+
+      const committedReportIds = new Set(commentReportRows.map((report) => report.id));
+      for (const admission of admissions) {
+        expect(committedReportIds.has(admission.id)).toBe(true);
+      }
     });
   });
 

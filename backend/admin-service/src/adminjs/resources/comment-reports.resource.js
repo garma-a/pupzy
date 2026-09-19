@@ -1,3 +1,4 @@
+import { buildCommentReportReviewAction } from '../actions/review-report.actions.js';
 import { ENUMS } from '../enums.js';
 import {
   attachShortUuid,
@@ -6,7 +7,7 @@ import {
   stripPopulatedPasswordHashes,
 } from './resource-helpers.js';
 
-export function buildCommentReportsResource(db, components = {}) {
+export function buildCommentReportsResource(db, components = {}, pool, cache) {
   const properties = {
     reason: enumProperty(ENUMS.reportReason),
     details: { isDisabled: true },
@@ -24,6 +25,7 @@ export function buildCommentReportsResource(db, components = {}) {
     actions: {
       list: { after: stripPopulatedPasswordHashes },
       show: { after: stripPopulatedPasswordHashes },
+      reviewWithNoAction: buildCommentReportReviewAction(pool, components?.ModerationAction, cache),
     },
   });
 }

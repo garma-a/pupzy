@@ -70,6 +70,7 @@ describe('Database Migration Runner Integration', () => {
     expect(tableNames).toContain('comment_media');
     expect(tableNames).toContain('media_deletion_work');
     expect(tableNames).toContain('comment_reports');
+    expect(tableNames).toContain('account_reports');
     expect(tableNames).toContain('blocked_media_hashes');
 
     // Verify comment_count column on posts table

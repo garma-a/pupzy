@@ -1,5 +1,6 @@
 import {
   actionResponse,
+  closeOpenAccountReports,
   lockDiscussionPosts,
   readModerationReason,
   runModerationAction,
@@ -35,6 +36,44 @@ async function updateBanAudit(client, actionId, metadata) {
      SET metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb
      WHERE id = $1`,
     [actionId, JSON.stringify(metadata)],
+  );
+}
+
+/**
+ * Closes every open Post Report for Posts removed by the ban cascade and
+ * accumulates the closed ids into the ban audit metadata. Runs inside the
+ * batch transaction that removes the Posts, so a report and its Post cannot
+ * diverge. The cascade row is locked for the whole batch, which serializes
+ * the read-modify-write of the metadata array.
+ */
+async function closeCascadedPostReports(client, actionId, postIds) {
+  if (postIds.length === 0) return;
+
+  const { rows: auditRows } = await client.query(`SELECT admin_user_id FROM moderation_actions WHERE id = $1`, [
+    actionId,
+  ]);
+  const adminUserId = auditRows[0]?.admin_user_id ?? null;
+
+  const { rows: closedRows } = await client.query(
+    `UPDATE post_reports
+     SET reviewed_at = now(), reviewed_by_admin_id = $2, review_outcome = 'ACTION_TAKEN'
+     WHERE post_id = ANY($1::uuid[]) AND reviewed_at IS NULL
+     RETURNING id`,
+    [postIds, adminUserId],
+  );
+  const closedPostReportIds = closedRows.map((row) => row.id);
+  if (closedPostReportIds.length === 0) return;
+
+  await client.query(
+    `UPDATE moderation_actions
+     SET metadata = jsonb_set(
+       COALESCE(metadata, '{}'::jsonb),
+       '{closedPostReportIds}',
+       COALESCE(metadata->'closedPostReportIds', '[]'::jsonb) || $2::jsonb,
+       true
+     )
+     WHERE id = $1`,
+    [actionId, JSON.stringify(closedPostReportIds)],
   );
 }
 
@@ -130,9 +169,12 @@ export async function processUserBanPostCascadeBatch(pool, actionId) {
     const removed = await client.query(
       `UPDATE posts
        SET status = 'REMOVED', updated_at = now()
-       WHERE id = ANY($1::uuid[]) AND creator_id = $2 AND status = 'ACTIVE'`,
+       WHERE id = ANY($1::uuid[]) AND creator_id = $2 AND status = 'ACTIVE'
+       RETURNING id`,
       [postIds, cascade.user_id],
     );
+    const removedPostIds = removed.rows.map((row) => row.id);
+    await closeCascadedPostReports(client, actionId, removedPostIds);
     const cascadedPostCount = Number(cascade.cascaded_post_count) + (removed.rowCount ?? 0);
     const cursorPostId = postIds[postIds.length - 1];
     await client.query(
@@ -210,9 +252,11 @@ export function buildBanUserAction(pool, component, cache) {
              RETURNING to_char(banned_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS ban_marker`,
             [row.id, reason, currentAdmin.id],
           );
+          const closedAccountReportIds = await closeOpenAccountReports(client, row.id, currentAdmin.id);
           return {
             alsoRemovePosts,
             cascadedPostCount: 0,
+            closedAccountReportIds,
             postCascade: alsoRemovePosts
               ? { state: 'PENDING', banMarker: rows[0].ban_marker }
               : { state: 'NOT_REQUESTED' },

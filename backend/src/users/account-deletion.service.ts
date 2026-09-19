@@ -16,6 +16,9 @@ import {
   postSaves,
   postUpvotes,
   postReports,
+  accountReports,
+  comments,
+  commentReports,
   notifications,
   savedSearches,
   contactRequests,
@@ -451,23 +454,63 @@ export class AccountDeletionService {
       }
       await tx.delete(postSaves).where(eq(postSaves.userId, userId));
 
-      // 5. Reconcile reports submitted by this user
-      const reports = await tx
-        .select({ postId: postReports.postId })
-        .from(postReports)
-        .where(eq(postReports.reporterId, userId));
+      // Report rows are deleted below together with their free text. Collect
+      // their ids first so every append-only moderation audit correlated with
+      // them can be redacted after the rows are gone.
+      const userCommentIds = (
+        await tx.select({ id: comments.id }).from(comments).where(eq(comments.authorId, userId))
+      ).map((row) => row.id);
 
-      for (const report of reports) {
-        if (!userPostIds.includes(report.postId)) {
-          await tx
-            .update(posts)
-            .set({
-              reportCount: sql`GREATEST(0, ${posts.reportCount} - 1)`,
-            })
-            .where(eq(posts.id, report.postId));
-        }
-      }
+      const userPostReportIds = (
+        await tx
+          .select({ id: postReports.id })
+          .from(postReports)
+          .where(
+            userPostIds.length > 0
+              ? or(eq(postReports.reporterId, userId), inArray(postReports.postId, userPostIds))
+              : eq(postReports.reporterId, userId),
+          )
+      ).map((row) => row.id);
+
+      const userAccountReportIds = (
+        await tx
+          .select({ id: accountReports.id })
+          .from(accountReports)
+          .where(or(eq(accountReports.reporterId, userId), eq(accountReports.reportedUserId, userId)))
+      ).map((row) => row.id);
+
+      const userCommentReportIds = (
+        await tx
+          .select({ id: commentReports.id })
+          .from(commentReports)
+          .where(
+            userCommentIds.length > 0
+              ? or(eq(commentReports.reporterId, userId), inArray(commentReports.commentId, userCommentIds))
+              : eq(commentReports.reporterId, userId),
+          )
+      ).map((row) => row.id);
+
+      // 5. Remove reports submitted by this user. The `trg_post_report_count`
+      // database trigger is the single counter authority: deleting each report
+      // row decrements its Post's report_count exactly once and never below zero.
       await tx.delete(postReports).where(eq(postReports.reporterId, userId));
+
+      // 5b. Remove Pupzy Account Reports and Comment Reports involving this
+      // account. Open report rows are personal safety data and free-text
+      // details must not survive; every completed review already has an
+      // append-only moderation_actions entry, which is retained (redacted)
+      // instead of the personal report content.
+      await tx
+        .delete(accountReports)
+        .where(or(eq(accountReports.reporterId, userId), eq(accountReports.reportedUserId, userId)));
+
+      if (userCommentIds.length > 0) {
+        await tx
+          .delete(commentReports)
+          .where(or(eq(commentReports.reporterId, userId), inArray(commentReports.commentId, userCommentIds)));
+      } else {
+        await tx.delete(commentReports).where(eq(commentReports.reporterId, userId));
+      }
 
       // 6. Delete applications & contact requests
       await tx.delete(savedSearches).where(eq(savedSearches.userId, userId));
@@ -537,6 +580,56 @@ export class AccountDeletionService {
             metadata: null,
           })
           .where(and(eq(moderationActions.targetType, 'POST'), inArray(moderationActions.targetId, userPostIds)));
+      }
+
+      // Audits targeting the account's Comments, or correlated with any report
+      // row just deleted (as its author, target, or evidence), must survive
+      // only in redacted form.
+      const auditedReportIds = [...userPostReportIds, ...userAccountReportIds, ...userCommentReportIds];
+      if (userCommentIds.length > 0 || auditedReportIds.length > 0) {
+        const commentTargetClause =
+          userCommentIds.length > 0
+            ? sql`(target_type = 'COMMENT' AND target_id = ANY(ARRAY[${sql.join(
+                userCommentIds.map((id) => sql`${id}::uuid`),
+                sql`, `,
+              )}]))`
+            : sql`false`;
+        const reportCorrelationClause =
+          auditedReportIds.length > 0
+            ? sql`(
+                metadata->>'reportId' = ANY(ARRAY[${sql.join(
+                  auditedReportIds.map((id) => sql`${id}::text`),
+                  sql`, `,
+                )}])
+                OR EXISTS (
+                  SELECT 1 FROM jsonb_array_elements_text(COALESCE(metadata->'closedPostReportIds', '[]'::jsonb)) AS x
+                  WHERE x = ANY(ARRAY[${sql.join(
+                    auditedReportIds.map((id) => sql`${id}::text`),
+                    sql`, `,
+                  )}])
+                )
+                OR EXISTS (
+                  SELECT 1 FROM jsonb_array_elements_text(COALESCE(metadata->'closedCommentReportIds', '[]'::jsonb)) AS x
+                  WHERE x = ANY(ARRAY[${sql.join(
+                    auditedReportIds.map((id) => sql`${id}::text`),
+                    sql`, `,
+                  )}])
+                )
+                OR EXISTS (
+                  SELECT 1 FROM jsonb_array_elements_text(COALESCE(metadata->'closedAccountReportIds', '[]'::jsonb)) AS x
+                  WHERE x = ANY(ARRAY[${sql.join(
+                    auditedReportIds.map((id) => sql`${id}::text`),
+                    sql`, `,
+                  )}])
+                )
+              )`
+            : sql`false`;
+
+        await tx.execute(sql`
+          UPDATE moderation_actions
+          SET reason = 'Redacted (account deleted)', metadata = NULL
+          WHERE ${commentTargetClause} OR ${reportCorrelationClause}
+        `);
       }
 
       // 8. Permanently remove all owned posts and their extension rows

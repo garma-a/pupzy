@@ -174,6 +174,52 @@ export async function runModerationAction(pool, params) {
   }
 }
 
+/**
+ * Atomically closes every open Post Report for a moderated Post and returns
+ * the closed report ids so the caller can correlate them in the append-only
+ * moderation audit metadata. Must run inside the action's own transaction.
+ */
+export async function closeOpenPostReports(client, postId, adminUserId) {
+  const { rows } = await client.query(
+    `UPDATE post_reports
+     SET reviewed_at = now(), reviewed_by_admin_id = $2, review_outcome = 'ACTION_TAKEN'
+     WHERE post_id = $1 AND reviewed_at IS NULL
+     RETURNING id`,
+    [postId, adminUserId],
+  );
+  return rows.map((row) => row.id);
+}
+
+/**
+ * Atomically closes every open Pupzy Account Report for a moderated account.
+ * Used by the user-ban action so the queue reflects completed work.
+ */
+export async function closeOpenAccountReports(client, reportedUserId, adminUserId) {
+  const { rows } = await client.query(
+    `UPDATE account_reports
+     SET reviewed_at = now(), reviewed_by_admin_id = $2, review_outcome = 'ACTION_TAKEN'
+     WHERE reported_user_id = $1 AND reviewed_at IS NULL
+     RETURNING id`,
+    [reportedUserId, adminUserId],
+  );
+  return rows.map((row) => row.id);
+}
+
+/**
+ * Atomically closes every open Comment Report for a Comment or Reply.
+ * Comment Reports keep their existing reviewed_at closure marker only.
+ */
+export async function closeOpenCommentReports(client, commentId) {
+  const { rows } = await client.query(
+    `UPDATE comment_reports
+     SET reviewed_at = now()
+     WHERE comment_id = $1 AND reviewed_at IS NULL
+     RETURNING id`,
+    [commentId],
+  );
+  return rows.map((row) => row.id);
+}
+
 export function actionResponse(record, currentAdmin, result, successMessage) {
   return {
     record: record.toJSON(currentAdmin),

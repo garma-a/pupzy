@@ -1,9 +1,12 @@
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { ContactsService } from './contacts.service';
 import { ContactsRepository } from './contacts.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../common/errors/app.errors';
+import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
+import type * as schema from '../database/schema';
 import type { ContactRequest, Post } from '../database/schema';
 
 describe('ContactsService', () => {
@@ -12,6 +15,8 @@ describe('ContactsService', () => {
   let mockPostsRepo: jest.Mocked<Partial<PostsRepository>>;
   let mockUsersService: jest.Mocked<Partial<UsersService>>;
   let mockNotificationsService: jest.Mocked<Partial<NotificationsService>>;
+  let mockIsolationPolicy: { lockPairAndRecheck: jest.Mock; lockPair: jest.Mock };
+  let mockDb: { transaction: jest.Mock };
 
   const validPostId = '01916327-0000-7000-8000-000000000001';
   const validOwnerId = '01916327-0000-7000-8000-000000000002';
@@ -74,11 +79,22 @@ describe('ContactsService', () => {
       fireNotification: jest.fn(),
     };
 
+    mockIsolationPolicy = {
+      lockPairAndRecheck: jest.fn().mockResolvedValue(false),
+      lockPair: jest.fn().mockResolvedValue(undefined),
+    };
+
+    mockDb = {
+      transaction: jest.fn((callback: (tx: unknown) => Promise<unknown>) => callback({})),
+    };
+
     service = new ContactsService(
       mockContactsRepo as ContactsRepository,
       mockPostsRepo as PostsRepository,
       mockUsersService as UsersService,
       mockNotificationsService as NotificationsService,
+      mockDb as unknown as NodePgDatabase<typeof schema>,
+      mockIsolationPolicy as unknown as AccountIsolationPolicy,
     );
   });
 
@@ -386,6 +402,73 @@ describe('ContactsService', () => {
       await expect(service.getMyContactRequests(validRequesterId, null, null, 10, badCursor)).rejects.toThrow(
         ValidationError,
       );
+    });
+
+    it('filters both sent and received lists by the authenticated viewer', async () => {
+      await service.getMyContactRequests(validRequesterId, null, null, 10, null);
+      expect(mockContactsRepo.findByRequester).toHaveBeenCalledWith(
+        expect.objectContaining({ requesterId: validRequesterId, viewerId: validRequesterId }),
+      );
+
+      await service.getPostContactRequests(validOwnerId, validPostId, null, 10, null);
+      expect(mockContactsRepo.findByPost).toHaveBeenCalledWith(
+        expect.objectContaining({ postId: validPostId, viewerId: validOwnerId }),
+      );
+    });
+  });
+
+  describe('account isolation', () => {
+    it('requestContact fails neutrally and creates nothing when the pair is isolated', async () => {
+      mockIsolationPolicy.lockPairAndRecheck.mockResolvedValue(true);
+
+      await expect(service.requestContact(validRequesterId, validPostId, 'Hi')).rejects.toThrow(NotFoundError);
+      expect(mockContactsRepo.create).not.toHaveBeenCalled();
+      expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
+    });
+
+    it('approveContactRequest rechecks isolation inside the transition and never discloses a link', async () => {
+      mockIsolationPolicy.lockPairAndRecheck.mockResolvedValue(true);
+
+      await expect(service.approveContactRequest(validOwnerId, validRequestId)).rejects.toThrow(NotFoundError);
+      expect(mockContactsRepo.updateStatus).not.toHaveBeenCalled();
+      expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
+    });
+
+    it('getWhatsAppLink returns the neutral not-found across a Block', async () => {
+      mockContactsRepo.findById = jest.fn().mockResolvedValue({
+        id: validRequestId,
+        status: 'APPROVED',
+        postId: validPostId,
+        requesterId: validRequesterId,
+      });
+      mockIsolationPolicy.lockPairAndRecheck.mockResolvedValue(true);
+
+      await expect(service.getWhatsAppLink(validRequesterId, validRequestId)).rejects.toThrow(NotFoundError);
+    });
+
+    it('getProductSellerContact returns the neutral not-found across a Block', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({
+        id: validPostId,
+        creatorId: validOwnerId,
+        postType: 'PRODUCT',
+        status: 'ACTIVE',
+      });
+      mockIsolationPolicy.lockPairAndRecheck.mockResolvedValue(true);
+
+      await expect(service.getProductSellerContact(validRequesterId, validPostId)).rejects.toThrow(NotFoundError);
+    });
+
+    it('rejectPendingContactRequestsBetweenAccounts locks the canonical pair and rejects rows', async () => {
+      mockContactsRepo.rejectPendingBetweenAccounts = jest.fn().mockResolvedValue(2);
+
+      const count = await service.rejectPendingContactRequestsBetweenAccounts(
+        {} as never,
+        validRequesterId,
+        validOwnerId,
+      );
+
+      expect(count).toBe(2);
+      expect(mockIsolationPolicy.lockPair).toHaveBeenCalledWith(expect.anything(), validRequesterId, validOwnerId);
     });
   });
 });

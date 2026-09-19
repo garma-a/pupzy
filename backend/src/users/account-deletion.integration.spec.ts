@@ -25,6 +25,9 @@ import {
   postUpvotes,
   postSaves,
   postReports,
+  accountReports,
+  commentReports,
+  comments,
   notifications,
   contactRequests,
   adoptionApplications,
@@ -61,6 +64,7 @@ import { ContactsResolver } from '../contacts/contacts.resolver';
 import { AdoptionsResolver } from '../adoptions/adoptions.resolver';
 import { ContactsService } from '../contacts/contacts.service';
 import { AdoptionsService } from '../adoptions/adoptions.service';
+import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { ForbiddenError, NotFoundError } from '../common/errors/app.errors';
 import { GqlExceptionFilter } from '../common/filters/gql-exception.filter';
@@ -630,7 +634,6 @@ describe('Account Deletion Feature Integration', () => {
           coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
           upvoteCount: 5,
           saveCount: 3,
-          reportCount: 1,
           effectiveScore: 10.5,
           status: 'ACTIVE',
         })
@@ -753,7 +756,7 @@ describe('Account Deletion Feature Integration', () => {
       const [updatedSurviving] = await dbHelper.db.select().from(posts).where(eq(posts.id, survivingPost.id));
       expect(updatedSurviving.upvoteCount).toBe(4); // 5 - 1
       expect(updatedSurviving.saveCount).toBe(2); // 3 - 1
-      expect(updatedSurviving.reportCount).toBe(0); // 1 - 1
+      expect(updatedSurviving.reportCount).toBe(0); // 0 + trigger insert - trigger delete
       expect(updatedSurviving.effectiveScore).toBeLessThan(10.5);
 
       // 9. Verify surviving notifications are redacted
@@ -793,6 +796,110 @@ describe('Account Deletion Feature Integration', () => {
       // 11. Verify storage cleanup called for captured media keys
       expect(mockUploadService.deleteObjects).toHaveBeenCalledWith([`posts/${rescuePost.id}/img1.webp`]);
       expect(mockUploadService.deletePrefix).toHaveBeenCalledWith(`staging/${user.id}/`);
+    });
+
+    it('decrements every surviving Post Report count exactly once through the trigger and never below zero', async () => {
+      const cityId = await seedCity();
+      const [reporter] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-reporter-1',
+          email: 'reporter@example.com',
+          fullName: 'Reporting User',
+        })
+        .returning();
+      const [otherUser] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-survivor-1',
+          email: 'survivor@example.com',
+          fullName: 'Surviving User',
+        })
+        .returning();
+      const [thirdUser] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-survivor-2',
+          email: 'survivor2@example.com',
+          fullName: 'Other Reporting User',
+        })
+        .returning();
+
+      const [postWithTwoOtherReports] = await dbHelper.db
+        .insert(posts)
+        .values({
+          creatorId: otherUser.id,
+          postType: 'RESCUE',
+          cityId,
+          title: 'Rescue with reports from two reporters',
+          description: 'Needs review',
+          urgency: 'URGENT',
+          coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+          status: 'ACTIVE',
+        })
+        .returning();
+      const [postWithOnlyReporterReport] = await dbHelper.db
+        .insert(posts)
+        .values({
+          creatorId: otherUser.id,
+          postType: 'RESCUE',
+          cityId,
+          title: 'Rescue reported only by deleting reporter',
+          description: 'Needs review',
+          urgency: 'URGENT',
+          coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+          status: 'ACTIVE',
+        })
+        .returning();
+      const [driftedPost] = await dbHelper.db
+        .insert(posts)
+        .values({
+          creatorId: otherUser.id,
+          postType: 'RESCUE',
+          cityId,
+          title: 'Rescue with drifted report counter',
+          description: 'Needs review',
+          urgency: 'URGENT',
+          coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+          status: 'ACTIVE',
+        })
+        .returning();
+
+      await dbHelper.db.insert(postReports).values([
+        { postId: postWithTwoOtherReports.id, reporterId: otherUser.id, reason: 'SPAM' },
+        { postId: postWithTwoOtherReports.id, reporterId: thirdUser.id, reason: 'SCAM' },
+        { postId: postWithTwoOtherReports.id, reporterId: reporter.id, reason: 'DUPLICATE' },
+        { postId: postWithOnlyReporterReport.id, reporterId: reporter.id, reason: 'SPAM' },
+        { postId: driftedPost.id, reporterId: reporter.id, reason: 'SPAM' },
+      ]);
+
+      await dbHelper.db.update(posts).set({ reportCount: 0 }).where(eq(posts.id, driftedPost.id));
+
+      const authTime = Math.floor(Date.now() / 1000) - 10;
+      const result = await accountDeletionService.initiateDeletion(reporter, authTime);
+      expect(result.status).toBe('COMPLETED');
+
+      const survivingPosts = await dbHelper.db
+        .select()
+        .from(posts)
+        .where(inArray(posts.id, [postWithTwoOtherReports.id, postWithOnlyReporterReport.id, driftedPost.id]));
+      const countByPostId = new Map(survivingPosts.map((post) => [post.id, post.reportCount]));
+
+      expect(countByPostId.get(postWithTwoOtherReports.id)).toBe(2);
+      expect(countByPostId.get(postWithOnlyReporterReport.id)).toBe(0);
+      expect(countByPostId.get(driftedPost.id)).toBe(0);
+
+      const remainingReports = await dbHelper.db
+        .select()
+        .from(postReports)
+        .where(eq(postReports.reporterId, reporter.id));
+      expect(remainingReports).toHaveLength(0);
+
+      const survivingReports = await dbHelper.db
+        .select()
+        .from(postReports)
+        .where(inArray(postReports.postId, [postWithTwoOtherReports.id]));
+      expect(survivingReports).toHaveLength(2);
     });
 
     it('immediately hides user posts and marks user banned at acceptance before cleanup completes', async () => {
@@ -2127,15 +2234,248 @@ describe('Account Deletion Feature Integration', () => {
 
       // Calling getWhatsAppLink must throw NotFoundError and NEVER return the phone link
       const contactsService = new ContactsService(
-        new ContactsRepository(dbHelper.db as unknown as NodePgDatabase),
+        new ContactsRepository(dbHelper.db),
         new PostsRepository(dbHelper.db),
         usersService,
         { fireNotification: jest.fn() } as unknown as NotificationsService,
+        dbHelper.db,
+        new AccountIsolationPolicy(dbHelper.db),
       );
 
       await expect(contactsService.getWhatsAppLink(requester.id, contactRequestRecord.id)).rejects.toThrow(
         NotFoundError,
       );
+    });
+  });
+
+  describe('Issue 04: report evidence and free-text cleanup', () => {
+    it('removes open report rows and report free text involving the account and retains only redacted completed moderation history', async () => {
+      const cityId = await seedCity();
+      const [deletedUser] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-report-deleted-1',
+          email: 'report-deleted@example.com',
+          fullName: 'Deleted Reporter',
+        })
+        .returning();
+      const [reportedUser] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-report-reported-1',
+          email: 'report-reported@example.com',
+          fullName: 'Reported Account',
+        })
+        .returning();
+      const [unrelatedUser] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-report-unrelated-1',
+          email: 'report-unrelated@example.com',
+          fullName: 'Unrelated Account',
+        })
+        .returning();
+
+      const [survivingPost] = await dbHelper.db
+        .insert(posts)
+        .values({
+          creatorId: reportedUser.id,
+          postType: 'RESCUE',
+          title: 'Surviving reported post',
+          description: 'Needs review',
+          urgency: 'URGENT',
+          status: 'ACTIVE',
+          cityId,
+          coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+        })
+        .returning();
+
+      const [deletedComment] = await dbHelper.db
+        .insert(comments)
+        .values({
+          postId: survivingPost.id,
+          authorId: deletedUser.id,
+          text: 'Comment authored by the deleting account',
+          status: 'ACTIVE',
+        })
+        .returning();
+
+      // Open Post Report filed by the deleting account against a surviving Post.
+      const [accountDeletionPostReport] = await dbHelper.db
+        .insert(postReports)
+        .values({
+          postId: survivingPost.id,
+          reporterId: deletedUser.id,
+          reason: 'SPAM',
+          details: 'Post report free text from deleted reporter',
+        })
+        .returning();
+
+      // Comment Reports on the deleting account's Comment: one open, one completed.
+      await dbHelper.db.insert(commentReports).values({
+        commentId: deletedComment.id,
+        reporterId: unrelatedUser.id,
+        reason: 'SPAM',
+        details: 'Open comment report detail',
+      });
+      const [reviewedCommentReport] = await dbHelper.db
+        .insert(commentReports)
+        .values({
+          commentId: deletedComment.id,
+          reporterId: reportedUser.id,
+          reason: 'INAPPROPRIATE_CONTENT',
+          details: 'Completed comment review detail',
+        })
+        .returning();
+      await dbHelper.db
+        .update(commentReports)
+        .set({ reviewedAt: new Date() })
+        .where(eq(commentReports.id, reviewedCommentReport.id));
+
+      // Pupzy Account Reports: open by the deleting account, completed about it, unrelated.
+      await dbHelper.db.insert(accountReports).values({
+        reporterId: deletedUser.id,
+        reportedUserId: reportedUser.id,
+        reason: 'SPAM',
+        details: 'Open account report detail',
+      });
+      const [reviewedAccountReport] = await dbHelper.db
+        .insert(accountReports)
+        .values({
+          reporterId: unrelatedUser.id,
+          reportedUserId: deletedUser.id,
+          reason: 'HARASSMENT',
+          details: 'Completed account review detail',
+        })
+        .returning();
+      await dbHelper.db
+        .update(accountReports)
+        .set({ reviewedAt: new Date(), reviewOutcome: 'ACTION_TAKEN' })
+        .where(eq(accountReports.id, reviewedAccountReport.id));
+      const [unrelatedReport] = await dbHelper.db
+        .insert(accountReports)
+        .values({
+          reporterId: unrelatedUser.id,
+          reportedUserId: reportedUser.id,
+          reason: 'SPAM',
+          details: 'Unrelated detail',
+        })
+        .returning();
+
+      // Every completed review already has an append-only audit entry.
+      const [audit] = await dbHelper.db
+        .insert(moderationActions)
+        .values({
+          actionType: 'ACCOUNT_REPORT_REVIEWED_NO_ACTION',
+          targetType: 'USER',
+          targetId: deletedUser.id,
+          reason: 'Reported account reviewed with no action',
+          metadata: { reportId: reviewedAccountReport.id, reviewOutcome: 'NO_ACTION' },
+        })
+        .returning();
+
+      // Audits targeting the deleted account's Comment or correlated with its
+      // report rows must also be redacted, even when they target another
+      // account's content.
+      const [commentAudit] = await dbHelper.db
+        .insert(moderationActions)
+        .values({
+          actionType: 'COMMENT_REMOVED',
+          targetType: 'COMMENT',
+          targetId: deletedComment.id,
+          reason: 'Admin note naming the deleted account',
+          metadata: { closedCommentReportIds: [reviewedCommentReport.id] },
+        })
+        .returning();
+      const [correlatedPostAudit] = await dbHelper.db
+        .insert(moderationActions)
+        .values({
+          actionType: 'POST_REPORT_REVIEWED_NO_ACTION',
+          targetType: 'POST',
+          targetId: survivingPost.id,
+          reason: 'Post report dismissed',
+          metadata: { reportId: accountDeletionPostReport.id, reviewOutcome: 'NO_ACTION' },
+        })
+        .returning();
+      const [unrelatedAudit] = await dbHelper.db
+        .insert(moderationActions)
+        .values({
+          actionType: 'ACCOUNT_REPORT_REVIEWED_NO_ACTION',
+          targetType: 'USER',
+          targetId: unrelatedUser.id,
+          reason: 'Unrelated admin note',
+          metadata: { reportId: unrelatedReport.id, reviewOutcome: 'NO_ACTION' },
+        })
+        .returning();
+
+      const authTime = Math.floor(Date.now() / 1000) - 10;
+      const result = await accountDeletionService.initiateDeletion(deletedUser, authTime);
+      expect(result.status).toBe('COMPLETED');
+
+      // No open or completed report row involving the deleted account survives.
+      expect(
+        await dbHelper.db.select().from(postReports).where(eq(postReports.reporterId, deletedUser.id)),
+      ).toHaveLength(0);
+      expect(
+        await dbHelper.db.select().from(accountReports).where(eq(accountReports.reporterId, deletedUser.id)),
+      ).toHaveLength(0);
+      expect(
+        await dbHelper.db.select().from(accountReports).where(eq(accountReports.reportedUserId, deletedUser.id)),
+      ).toHaveLength(0);
+      expect(
+        await dbHelper.db.select().from(commentReports).where(eq(commentReports.reporterId, deletedUser.id)),
+      ).toHaveLength(0);
+      expect(
+        await dbHelper.db.select().from(commentReports).where(eq(commentReports.commentId, deletedComment.id)),
+      ).toHaveLength(0);
+
+      // Free text from those rows no longer exists anywhere.
+      const remainingDetails = await dbHelper.pool.query<{ count: number }>(
+        `SELECT count(*)::int AS count
+         FROM account_reports
+         WHERE details IN ('Open account report detail', 'Completed account review detail')`,
+      );
+      expect(remainingDetails.rows[0].count).toBe(0);
+      const remainingPostDetails = await dbHelper.pool.query<{ count: number }>(
+        `SELECT count(*)::int AS count FROM post_reports WHERE details = 'Post report free text from deleted reporter'`,
+      );
+      expect(remainingPostDetails.rows[0].count).toBe(0);
+
+      // Unrelated report and its free text remain intact.
+      const [survivor] = await dbHelper.db
+        .select()
+        .from(accountReports)
+        .where(eq(accountReports.id, unrelatedReport.id));
+      expect(survivor.details).toBe('Unrelated detail');
+
+      // The completed review audit remains, redacted, with its target correlation.
+      const [redactedAudit] = await dbHelper.db
+        .select()
+        .from(moderationActions)
+        .where(eq(moderationActions.id, audit.id));
+      expect(redactedAudit.reason).toBe('Redacted (account deleted)');
+      expect(redactedAudit.metadata).toBeNull();
+      expect(redactedAudit.actionType).toBe('ACCOUNT_REPORT_REVIEWED_NO_ACTION');
+      expect(redactedAudit.targetType).toBe('USER');
+      expect(redactedAudit.targetId).toBe(deletedUser.id);
+
+      // Comment-targeted and report-correlated audits survive only redacted.
+      for (const auditId of [commentAudit.id, correlatedPostAudit.id]) {
+        const [row] = await dbHelper.db.select().from(moderationActions).where(eq(moderationActions.id, auditId));
+        expect(row.reason).toBe('Redacted (account deleted)');
+        expect(row.metadata).toBeNull();
+      }
+      // An audit for an unrelated account's report keeps its reason and metadata.
+      const [untouchedAudit] = await dbHelper.db
+        .select()
+        .from(moderationActions)
+        .where(eq(moderationActions.id, unrelatedAudit.id));
+      expect(untouchedAudit.reason).toBe('Unrelated admin note');
+      expect(untouchedAudit.metadata).toEqual({ reportId: unrelatedReport.id, reviewOutcome: 'NO_ACTION' });
+
+      // The Post Report counter reflects the removed report exactly once.
+      const [postAfter] = await dbHelper.db.select().from(posts).where(eq(posts.id, survivingPost.id));
+      expect(postAfter.reportCount).toBe(0);
     });
   });
 });

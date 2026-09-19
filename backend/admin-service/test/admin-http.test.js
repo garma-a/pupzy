@@ -392,6 +392,59 @@ describe('AdminJS HTTP security and resource behavior', () => {
     );
   });
 
+  it('lists open account reports with validated source context despite a Block between the accounts', async () => {
+    const reporterRes = await database.pool.query(
+      `INSERT INTO users (firebase_user_id, email, full_name)
+       VALUES ('admin-http-account-reporter', 'account-reporter@example.com', 'Account Reporter')
+       RETURNING id`,
+    );
+    const reportedRes = await database.pool.query(
+      `INSERT INTO users (firebase_user_id, email, full_name)
+       VALUES ('admin-http-account-reported', 'account-reported@example.com', 'Account Reported')
+       RETURNING id`,
+    );
+    const reporterId = reporterRes.rows[0].id;
+    const reportedId = reportedRes.rows[0].id;
+    const sourcePostId = await insertPost(database.pool, {
+      userId: reportedId,
+      cityId: principals.cityId,
+      title: 'Evidence post',
+    });
+    await database.pool.query(`INSERT INTO blocks (blocker_id, blocked_id) VALUES ($1, $2)`, [reporterId, reportedId]);
+    const reportRes = await database.pool.query(
+      `INSERT INTO account_reports (reporter_id, reported_user_id, reason, details, source_type, source_id)
+       VALUES ($1, $2, 'HARASSMENT', 'Threatening messages after contact', 'POST', $3)
+       RETURNING id`,
+      [reporterId, reportedId, sourcePostId],
+    );
+    const reportId = reportRes.rows[0].id;
+
+    const listRes = await fetch(`${baseUrl}/admin/api/resources/account_reports/actions/list`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(listRes.status, 200);
+    const listData = await listRes.json();
+    assert.notEqual(listData.notice?.type, 'error');
+    const recordInList = listData.records.find((r) => r.id === reportId || r.params.id === reportId);
+    assert.ok(recordInList, 'Expected the open account report in the administrator list');
+    assert.equal(recordInList.params.reason, 'HARASSMENT');
+    assert.equal(recordInList.params.source_type, 'POST');
+    assert.equal(recordInList.params.reviewed_at, null);
+
+    const showRes = await fetch(`${baseUrl}/admin/api/resources/account_reports/records/${reportId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(showRes.status, 200);
+    const showData = await showRes.json();
+    assert.equal(showData.record.params.id, reportId);
+    assert.equal(showData.record.params.reporter_id, reporterId);
+    assert.equal(showData.record.params.reported_user_id, reportedId);
+    assert.equal(showData.record.params.details, 'Threatening messages after contact');
+    assert.equal(showData.record.params.source_type, 'POST');
+    assert.equal(showData.record.params.source_id, sourcePostId);
+    assert.equal(showData.record.params.reviewed_at, null);
+  });
+
   it('rate-limits the eleventh login attempt from one IP', async () => {
     let response;
     for (let attempt = 1; attempt <= 11; attempt += 1) {
@@ -3338,5 +3391,78 @@ describe('AdminJS HTTP security and resource behavior', () => {
     );
     assert.equal(actions.rows.filter((action) => action.action_type === 'COMMENT_REMOVED').length, 1);
     assert.ok(actions.rows.length >= 1 && actions.rows.length <= 2);
+  });
+
+  it('Ticket 04: reviews a Post Report with no action over authenticated AdminJS HTTP and appends a correlated audit entry', async () => {
+    const postAuthor = await database.pool.query(
+      `INSERT INTO users (firebase_user_id, email, full_name)
+       VALUES ('admin-http-report-author', 'report-author@example.com', 'Report Author')
+       RETURNING id`,
+    );
+    const postId = await insertPost(database.pool, {
+      userId: postAuthor.rows[0].id,
+      cityId: principals.cityId,
+      title: 'AdminJS HTTP no-action review post',
+      moderationStatus: 'FLAGGED',
+    });
+    const report = await database.pool.query(
+      `INSERT INTO post_reports (post_id, reporter_id, reason, details)
+       VALUES ($1, $2, 'SPAM', 'HTTP review evidence')
+       RETURNING id`,
+      [postId, principals.userId],
+    );
+    const reportId = report.rows[0].id;
+
+    const showRes = await fetch(`${baseUrl}/admin/api/resources/post_reports/records/${reportId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(showRes.status, 200);
+    const showData = await showRes.json();
+    const actionNames = showData.record.recordActions.map((action) => action.name);
+    assert.ok(actionNames.includes('reviewWithNoAction'));
+
+    const response = await fetch(`${baseUrl}/admin/api/resources/post_reports/records/${reportId}/reviewWithNoAction`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ reason: 'No violation found' }),
+    });
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.notice?.type, 'success');
+
+    const stored = await database.pool.query(
+      `SELECT reviewed_at, reviewed_by_admin_id, review_outcome FROM post_reports WHERE id = $1`,
+      [reportId],
+    );
+    assert.ok(stored.rows[0].reviewed_at);
+    assert.equal(stored.rows[0].reviewed_by_admin_id, principals.adminId);
+    assert.equal(stored.rows[0].review_outcome, 'NO_ACTION');
+
+    const audit = await database.pool.query(
+      `SELECT action_type, target_type, target_id, reason, metadata
+         FROM moderation_actions
+        WHERE target_id = $1`,
+      [postId],
+    );
+    assert.equal(audit.rows.length, 1);
+    assert.equal(audit.rows[0].action_type, 'POST_REPORT_REVIEWED_NO_ACTION');
+    assert.equal(audit.rows[0].target_type, 'POST');
+    assert.equal(audit.rows[0].reason, 'No violation found');
+    assert.equal(audit.rows[0].metadata.reportId, reportId);
+
+    const reviewedShowRes = await fetch(`${baseUrl}/admin/api/resources/post_reports/records/${reportId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    const reviewedShowData = await reviewedShowRes.json();
+    assert.equal(
+      reviewedShowData.record.recordActions.map((action) => action.name).includes('reviewWithNoAction'),
+      false,
+      'a reviewed Post Report must no longer offer the no-action review action',
+    );
   });
 });

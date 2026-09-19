@@ -333,13 +333,17 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
           },
         },
         Query: {
-          post: (_root: unknown, args: { id: string }) => postsResolver.post(args.id),
-          rescuePostDetail: (_root: unknown, args: { postId: string }) => postsResolver.rescuePostDetail(args.postId),
-          lostPostDetail: (_root: unknown, args: { postId: string }) => postsResolver.lostPostDetail(args.postId),
-          adoptionPostDetail: (_root: unknown, args: { postId: string }) =>
-            postsResolver.adoptionPostDetail(args.postId),
-          productPostDetail: (_root: unknown, args: { postId: string }) => postsResolver.productPostDetail(args.postId),
-          matingPostDetail: (_root: unknown, args: { postId: string }) => matingResolver.matingPostDetail(args.postId),
+          post: (_root: unknown, args: { id: string }, ctx: GqlContext) => postsResolver.post(args.id, ctx),
+          rescuePostDetail: (_root: unknown, args: { postId: string }, ctx: GqlContext) =>
+            postsResolver.rescuePostDetail(args.postId, ctx),
+          lostPostDetail: (_root: unknown, args: { postId: string }, ctx: GqlContext) =>
+            postsResolver.lostPostDetail(args.postId, ctx),
+          adoptionPostDetail: (_root: unknown, args: { postId: string }, ctx: GqlContext) =>
+            postsResolver.adoptionPostDetail(args.postId, ctx),
+          productPostDetail: (_root: unknown, args: { postId: string }, ctx: GqlContext) =>
+            postsResolver.productPostDetail(args.postId, ctx),
+          matingPostDetail: (_root: unknown, args: { postId: string }, ctx: GqlContext) =>
+            matingResolver.matingPostDetail(args.postId, ctx),
         },
         Mutation: {
           requestMediaUploadUrl: (

@@ -19,6 +19,7 @@ import { buildAdminUsersResource } from './admin-users.resource.js';
 import { buildModerationActionsResource } from './moderation-actions.resource.js';
 import { buildVetClinicLocationAuditsResource } from './vet-clinic-location-audits.resource.js';
 import { buildCommentReportsResource } from './comment-reports.resource.js';
+import { buildAccountReportsResource } from './account-reports.resource.js';
 import { buildCommentsResource } from './comments.resource.js';
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
@@ -303,9 +304,10 @@ describe('Curated Detail, Engagement, Reference, and Administration Tables (Task
     });
   });
 
-  describe('Global Table Quality Across ALL 22 Registered Resources', () => {
+  describe('Global Table Quality Across ALL 23 Registered Resources', () => {
     it('every registered resource in ADMIN_RESOURCE_TABLES defines explicit listProperties and no unsafe defaults', () => {
       const resourcesByTable = {
+        account_reports: buildAccountReportsResource(db, components),
         rescue_posts: buildRescuePostsResource(db, components),
         lost_posts: buildLostPostsResource(db, components),
         adoption_posts: buildAdoptionPostsResource(db, components),

@@ -1,8 +1,18 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, text, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { pgTable, pgEnum, uuid, text, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
 import { posts } from './posts.schema';
 import { users } from './users.schema';
+import { adminUsers } from './admin-users.schema';
 import { reportReasonEnum } from './enums';
+
+/**
+ * Administrative review outcome for a Post Report. Mirrors the Pupzy Account
+ * Report outcome vocabulary so administrators see one external meaning for
+ * reports: `NO_ACTION` dismisses the complaint, `ACTION_TAKEN` records that an
+ * existing Post moderation action resolved it. The append-only
+ * `moderation_actions` table remains the authoritative audit trail.
+ */
+export const postReportReviewOutcomeEnum = pgEnum('post_report_review_outcome', ['NO_ACTION', 'ACTION_TAKEN']);
 
 /**
  * `post_reports` — content moderation reports submitted by users.
@@ -52,6 +62,18 @@ export const postReports = pgTable(
 
     /** Row creation timestamp. */
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+
+    /**
+     * Timestamp when an administrator reviewed the report. NULL while open.
+     * Existing reports migrate as open and unreviewed.
+     */
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+
+    /** FK → admin_users. Reviewing administrator. SET NULL if the admin is removed. */
+    reviewedByAdminId: uuid('reviewed_by_admin_id').references(() => adminUsers.id, { onDelete: 'set null' }),
+
+    /** Explicit review outcome. NULL while open. */
+    reviewOutcome: postReportReviewOutcomeEnum('review_outcome'),
   },
   (table) => ({
     /**
@@ -65,8 +87,18 @@ export const postReports = pgTable(
 
     /** Lets the system fetch all reports for a given post (for admin review). */
     postIdx: index('idx_post_reports_post').on(table.postId),
+
+    /** Supports atomically closing every open report for a moderated Post. */
+    postUnreviewedIdx: index('idx_post_reports_post_unreviewed')
+      .on(table.postId)
+      .where(sql`"reviewed_at" IS NULL`),
+
+    /** Supports the shared moderation-report allowance's rolling reporter lookup. */
+    reporterCreatedIdx: index('idx_post_reports_reporter_created').on(table.reporterId, table.createdAt),
   }),
 );
+
+export type PostReportReviewOutcome = (typeof postReportReviewOutcomeEnum.enumValues)[number];
 
 /** TypeScript type for a full `post_reports` row. */
 export type PostReport = typeof postReports.$inferSelect;

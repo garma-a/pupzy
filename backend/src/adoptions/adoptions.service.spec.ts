@@ -1,9 +1,12 @@
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { AdoptionsService } from './adoptions.service';
 import { AdoptionsRepository } from './adoptions.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../common/errors/app.errors';
+import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
+import type * as schema from '../database/schema';
 import type { AdoptionApplication, Post } from '../database/schema';
 
 describe('AdoptionsService', () => {
@@ -12,6 +15,8 @@ describe('AdoptionsService', () => {
   let mockPostsRepo: jest.Mocked<Partial<PostsRepository>>;
   let mockUsersService: jest.Mocked<Partial<UsersService>>;
   let mockNotificationsService: jest.Mocked<Partial<NotificationsService>>;
+  let mockIsolationPolicy: { lockPairAndRecheck: jest.Mock; lockPair: jest.Mock };
+  let mockDb: { transaction: jest.Mock };
 
   const validPostId = '01916327-0000-7000-8000-000000000001';
   const validOwnerId = '01916327-0000-7000-8000-000000000002';
@@ -74,11 +79,22 @@ describe('AdoptionsService', () => {
       fireNotification: jest.fn(),
     };
 
+    mockIsolationPolicy = {
+      lockPairAndRecheck: jest.fn().mockResolvedValue(false),
+      lockPair: jest.fn().mockResolvedValue(undefined),
+    };
+
+    mockDb = {
+      transaction: jest.fn((callback: (tx: unknown) => Promise<unknown>) => callback({})),
+    };
+
     service = new AdoptionsService(
       mockAdoptionsRepo as AdoptionsRepository,
       mockPostsRepo as PostsRepository,
       mockUsersService as UsersService,
       mockNotificationsService as NotificationsService,
+      mockDb as unknown as NodePgDatabase<typeof schema>,
+      mockIsolationPolicy as unknown as AccountIsolationPolicy,
     );
   });
 
@@ -276,6 +292,62 @@ describe('AdoptionsService', () => {
     it('throws ValidationError on invalid date in cursor', async () => {
       const badCursor = Buffer.from(JSON.stringify({ createdAt: 'garbage-date', id: '123' })).toString('base64url');
       await expect(service.getMyApplications(validApplicantId, 10, badCursor)).rejects.toThrow(ValidationError);
+    });
+
+    it('filters both sent and received lists by the authenticated viewer', async () => {
+      await service.getMyApplications(validApplicantId, 10, null);
+      expect(mockAdoptionsRepo.findByApplicant).toHaveBeenCalledWith(
+        expect.objectContaining({ applicantId: validApplicantId, viewerId: validApplicantId }),
+      );
+
+      await service.getPostApplications(validOwnerId, validPostId, null, 10, null);
+      expect(mockAdoptionsRepo.findByPost).toHaveBeenCalledWith(
+        expect.objectContaining({ targetPostId: validPostId, viewerId: validOwnerId }),
+      );
+    });
+  });
+
+  describe('account isolation', () => {
+    const input = {
+      targetPostId: validPostId,
+      livingSituation: 'APARTMENT' as const,
+      hasOutdoorAccess: false,
+      hasOtherPetsAtHome: false,
+      hasChildrenAtHome: false,
+      hoursAtHomePerDay: 4,
+      previousPetExperience: 'Grew up with dogs',
+      whyAdopt: 'I love animals and have space for a pet.',
+      consentHomeVisit: true,
+      canProvideVetReference: true,
+    };
+
+    it('submitApplication fails neutrally and creates nothing when the pair is isolated', async () => {
+      mockIsolationPolicy.lockPairAndRecheck.mockResolvedValue(true);
+
+      await expect(service.submitApplication(validApplicantId, input)).rejects.toThrow(NotFoundError);
+      expect(mockAdoptionsRepo.create).not.toHaveBeenCalled();
+      expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
+    });
+
+    it('approveApplication rechecks isolation inside the transition and never discloses contact', async () => {
+      mockIsolationPolicy.lockPairAndRecheck.mockResolvedValue(true);
+
+      await expect(service.approveApplication(validOwnerId, validApplicationId)).rejects.toThrow(NotFoundError);
+      expect(mockAdoptionsRepo.updateStatus).not.toHaveBeenCalled();
+      expect(mockNotificationsService.fireNotification).not.toHaveBeenCalled();
+    });
+
+    it('rejectPendingAdoptionApplicationsBetweenAccounts locks the canonical pair and rejects rows', async () => {
+      mockAdoptionsRepo.rejectPendingBetweenAccounts = jest.fn().mockResolvedValue(1);
+
+      const count = await service.rejectPendingAdoptionApplicationsBetweenAccounts(
+        {} as never,
+        validApplicantId,
+        validOwnerId,
+      );
+
+      expect(count).toBe(1);
+      expect(mockIsolationPolicy.lockPair).toHaveBeenCalledWith(expect.anything(), validApplicantId, validOwnerId);
     });
   });
 });

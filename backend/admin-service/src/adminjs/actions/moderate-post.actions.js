@@ -1,4 +1,10 @@
-import { actionResponse, lockPostDiscussion, readModerationReason, runModerationAction } from './helpers.js';
+import {
+  actionResponse,
+  closeOpenPostReports,
+  lockPostDiscussion,
+  readModerationReason,
+  runModerationAction,
+} from './helpers.js';
 import { isAnyAdmin } from '../rbac.js';
 
 function getRecordProperty(record, property) {
@@ -76,14 +82,17 @@ export function buildPostActions(pool, component, cache) {
           }
           return null;
         },
-        mutate: (client, row, adminId) =>
-          client.query(
+        mutate: async (client, row, adminId) => {
+          await client.query(
             `UPDATE posts
              SET moderation_status = 'CLEAN', moderation_reason = NULL, moderated_at = now(),
                  moderated_by_admin_id = $2, updated_at = now()
              WHERE id = $1`,
             [row.id, adminId],
-          ),
+          );
+          const closedPostReportIds = await closeOpenPostReports(client, row.id, adminId);
+          return { closedPostReportIds };
+        },
       },
       cache,
     ),
@@ -115,14 +124,17 @@ export function buildPostActions(pool, component, cache) {
           }
           return null;
         },
-        mutate: (client, row, adminId, reason) =>
-          client.query(
+        mutate: async (client, row, adminId, reason) => {
+          await client.query(
             `UPDATE posts
              SET moderation_status = 'FLAGGED', moderation_reason = $2, moderated_at = now(),
                  moderated_by_admin_id = $3, updated_at = now()
              WHERE id = $1`,
             [row.id, reason, adminId],
-          ),
+          );
+          const closedPostReportIds = await closeOpenPostReports(client, row.id, adminId);
+          return { closedPostReportIds };
+        },
       },
       cache,
     ),
@@ -156,6 +168,8 @@ export function buildPostActions(pool, component, cache) {
              VALUES ($1, 'POST_REMOVED_BY_ADMIN', 'Your post was removed', $2, $3, false)`,
             [row.creator_id, reason, row.id],
           );
+          const closedPostReportIds = await closeOpenPostReports(client, row.id, adminId);
+          return { closedPostReportIds };
         },
       },
       cache,
@@ -175,13 +189,16 @@ export function buildPostActions(pool, component, cache) {
           return status === 'REMOVED';
         },
         validate: (row) => (row.status === 'REMOVED' ? null : 'Only removed posts can be restored.'),
-        mutate: (client, row, adminId) =>
-          client.query(
+        mutate: async (client, row, adminId) => {
+          await client.query(
             `UPDATE posts
              SET status = 'ACTIVE', moderated_at = now(), moderated_by_admin_id = $2, updated_at = now()
              WHERE id = $1`,
             [row.id, adminId],
-          ),
+          );
+          const closedPostReportIds = await closeOpenPostReports(client, row.id, adminId);
+          return { closedPostReportIds };
+        },
       },
       cache,
     ),

@@ -18,6 +18,7 @@ import { buildNotificationsResource } from './resources/notifications.resource.j
 import { buildPostMediaResource } from './resources/post-media.resource.js';
 import { buildPostReportsResource } from './resources/post-reports.resource.js';
 import { buildCommentReportsResource } from './resources/comment-reports.resource.js';
+import { buildAccountReportsResource } from './resources/account-reports.resource.js';
 import { buildPostSavesResource } from './resources/post-saves.resource.js';
 import { buildPostUpvotesResource } from './resources/post-upvotes.resource.js';
 import { buildPostsResource } from './resources/posts.resource.js';
@@ -46,6 +47,7 @@ export const ADMIN_RESOURCE_TABLES = Object.freeze([
   'post_saves',
   'post_reports',
   'comment_reports',
+  'account_reports',
   'comments',
   'contact_requests',
   'adoption_applications',
@@ -113,8 +115,9 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     buildPostMediaResource(db, components),
     buildPostUpvotesResource(db, components),
     buildPostSavesResource(db, components),
-    buildPostReportsResource(db, components),
-    buildCommentReportsResource(db, components),
+    buildPostReportsResource(db, components, pool, cache),
+    buildCommentReportsResource(db, components, pool, cache),
+    buildAccountReportsResource(db, components, pool, cache),
     buildCommentsResource(db, pool, components, cache),
     buildContactRequestsResource(db, components),
     buildAdoptionApplicationsResource(db, components),
