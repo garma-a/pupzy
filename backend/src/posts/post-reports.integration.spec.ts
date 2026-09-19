@@ -554,4 +554,42 @@ describe('Post Report submission (Ticket 02)', () => {
       expect(needsReview.rows.find((row) => row.id === post.id)?.report_count).toBe(1);
     });
   });
+
+  // ─── Review lifecycle metadata ─────────────────────────────────────────
+
+  describe('review lifecycle metadata', () => {
+    it('stores every submitted Post Report as open and unreviewed with the shared outcome vocabulary', async () => {
+      const post = await createPost('RESCUE');
+
+      const result = await report(post.id, reporter, { reason: 'SPAM' });
+      expect(result.errors).toBeUndefined();
+
+      const [stored] = await storedReports(post.id);
+      expect(stored.reviewedAt).toBeNull();
+      expect(stored.reviewedByAdminId).toBeNull();
+      expect(stored.reviewOutcome).toBeNull();
+
+      const outcomeValues = await dbHelper.pool.query<{ enumlabel: string }>(
+        `SELECT enumlabel
+           FROM pg_enum
+           JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+          WHERE pg_type.typname = 'post_report_review_outcome'
+          ORDER BY enumsortorder`,
+      );
+      expect(outcomeValues.rows.map((row) => row.enumlabel)).toEqual(['NO_ACTION', 'ACTION_TAKEN']);
+
+      const indexes = await dbHelper.pool.query<{ indexname: string }>(
+        `SELECT indexname FROM pg_indexes WHERE tablename = 'post_reports'`,
+      );
+      expect(indexes.rows.map((row) => row.indexname)).toEqual(
+        expect.arrayContaining([
+          'post_reports_pkey',
+          'unique_post_report_per_post_and_reporter',
+          'idx_post_reports_post',
+          'idx_post_reports_post_unreviewed',
+          'idx_post_reports_reporter_created',
+        ]),
+      );
+    });
+  });
 });

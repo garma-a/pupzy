@@ -3392,4 +3392,77 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.equal(actions.rows.filter((action) => action.action_type === 'COMMENT_REMOVED').length, 1);
     assert.ok(actions.rows.length >= 1 && actions.rows.length <= 2);
   });
+
+  it('Ticket 04: reviews a Post Report with no action over authenticated AdminJS HTTP and appends a correlated audit entry', async () => {
+    const postAuthor = await database.pool.query(
+      `INSERT INTO users (firebase_user_id, email, full_name)
+       VALUES ('admin-http-report-author', 'report-author@example.com', 'Report Author')
+       RETURNING id`,
+    );
+    const postId = await insertPost(database.pool, {
+      userId: postAuthor.rows[0].id,
+      cityId: principals.cityId,
+      title: 'AdminJS HTTP no-action review post',
+      moderationStatus: 'FLAGGED',
+    });
+    const report = await database.pool.query(
+      `INSERT INTO post_reports (post_id, reporter_id, reason, details)
+       VALUES ($1, $2, 'SPAM', 'HTTP review evidence')
+       RETURNING id`,
+      [postId, principals.userId],
+    );
+    const reportId = report.rows[0].id;
+
+    const showRes = await fetch(`${baseUrl}/admin/api/resources/post_reports/records/${reportId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(showRes.status, 200);
+    const showData = await showRes.json();
+    const actionNames = showData.record.recordActions.map((action) => action.name);
+    assert.ok(actionNames.includes('reviewWithNoAction'));
+
+    const response = await fetch(`${baseUrl}/admin/api/resources/post_reports/records/${reportId}/reviewWithNoAction`, {
+      method: 'POST',
+      headers: {
+        cookie: `${superCookie}; ${superCsrf.cookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': superCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ reason: 'No violation found' }),
+    });
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.notice?.type, 'success');
+
+    const stored = await database.pool.query(
+      `SELECT reviewed_at, reviewed_by_admin_id, review_outcome FROM post_reports WHERE id = $1`,
+      [reportId],
+    );
+    assert.ok(stored.rows[0].reviewed_at);
+    assert.equal(stored.rows[0].reviewed_by_admin_id, principals.adminId);
+    assert.equal(stored.rows[0].review_outcome, 'NO_ACTION');
+
+    const audit = await database.pool.query(
+      `SELECT action_type, target_type, target_id, reason, metadata
+         FROM moderation_actions
+        WHERE target_id = $1`,
+      [postId],
+    );
+    assert.equal(audit.rows.length, 1);
+    assert.equal(audit.rows[0].action_type, 'POST_REPORT_REVIEWED_NO_ACTION');
+    assert.equal(audit.rows[0].target_type, 'POST');
+    assert.equal(audit.rows[0].reason, 'No violation found');
+    assert.equal(audit.rows[0].metadata.reportId, reportId);
+
+    const reviewedShowRes = await fetch(`${baseUrl}/admin/api/resources/post_reports/records/${reportId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    const reviewedShowData = await reviewedShowRes.json();
+    assert.equal(
+      reviewedShowData.record.recordActions.map((action) => action.name).includes('reviewWithNoAction'),
+      false,
+      'a reviewed Post Report must no longer offer the no-action review action',
+    );
+  });
 });

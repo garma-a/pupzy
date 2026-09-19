@@ -82,6 +82,17 @@ describe('AdminJS Account Reports Resource Configuration', () => {
     assert.equal(cleaned.record.populated.reporter_id.params.password_hash, undefined);
   });
 
+  it('exposes the reviewed-with-no-action outcome for open reports', () => {
+    const resource = buildAccountReportsResource(db);
+    const action = resource.options.actions.reviewWithNoAction;
+    assert.ok(action, 'account reports must allow an explicit no-action review');
+    assert.equal(action.isAccessible({ currentAdmin: { id: 'admin-1', role: 'ADMIN' } }), true);
+    assert.equal(action.isVisible({ record: { params: { reviewed_at: null } } }), true);
+    assert.equal(action.isVisible({ record: { params: { reviewed_at: new Date() } } }), false);
+    assert.equal(action.isVisible({ record: { params: {} } }), true);
+    assert.equal(action.isVisible({}), false);
+  });
+
   it('transcribes account report enums exactly', () => {
     const resource = buildAccountReportsResource(db);
     assert.deepEqual(

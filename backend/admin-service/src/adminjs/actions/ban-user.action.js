@@ -1,5 +1,6 @@
 import {
   actionResponse,
+  closeOpenAccountReports,
   lockDiscussionPosts,
   readModerationReason,
   runModerationAction,
@@ -210,9 +211,11 @@ export function buildBanUserAction(pool, component, cache) {
              RETURNING to_char(banned_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS ban_marker`,
             [row.id, reason, currentAdmin.id],
           );
+          const closedAccountReportIds = await closeOpenAccountReports(client, row.id, currentAdmin.id);
           return {
             alsoRemovePosts,
             cascadedPostCount: 0,
+            closedAccountReportIds,
             postCascade: alsoRemovePosts
               ? { state: 'PENDING', banMarker: rows[0].ban_marker }
               : { state: 'NOT_REQUESTED' },

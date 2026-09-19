@@ -8,11 +8,86 @@ import {
 } from '../src/adminjs/actions/ban-user.action.js';
 import { buildPostActions } from '../src/adminjs/actions/moderate-post.actions.js';
 import { buildCommentActions } from '../src/adminjs/actions/moderate-comment.actions.js';
+import {
+  buildAccountReportReviewAction,
+  buildPostReportReviewAction,
+} from '../src/adminjs/actions/review-report.actions.js';
 import { computeStats } from '../src/adminjs/dashboard/dashboard-cache.js';
 import { TestDatabaseHelper, insertPost, seedPrincipals } from './test-database.helper.js';
 
 const database = new TestDatabaseHelper();
 let principals;
+let userSequence = 0;
+
+async function insertUser(label) {
+  userSequence += 1;
+  const { rows } = await database.pool.query(
+    `INSERT INTO users (firebase_user_id, email, full_name)
+     VALUES ($1, $2, $3)
+     RETURNING id`,
+    [`fb-${label}-${userSequence}`, `${label}-${userSequence}@example.com`, `User ${label} ${userSequence}`],
+  );
+  return rows[0].id;
+}
+
+async function insertPostReport({ postId, reporterId, reason = 'SPAM', details = null }) {
+  const { rows } = await database.pool.query(
+    `INSERT INTO post_reports (post_id, reporter_id, reason, details)
+     VALUES ($1, $2, $3, $4)
+     RETURNING id`,
+    [postId, reporterId, reason, details],
+  );
+  return rows[0].id;
+}
+
+async function insertAccountReport({ reporterId, reportedUserId, reason = 'SPAM', details = null }) {
+  const { rows } = await database.pool.query(
+    `INSERT INTO account_reports (reporter_id, reported_user_id, reason, details)
+     VALUES ($1, $2, $3, $4)
+     RETURNING id`,
+    [reporterId, reportedUserId, reason, details],
+  );
+  return rows[0].id;
+}
+
+async function insertCommentReport({ commentId, reporterId, reason = 'SPAM', details = null }) {
+  const { rows } = await database.pool.query(
+    `INSERT INTO comment_reports (comment_id, reporter_id, reason, details)
+     VALUES ($1, $2, $3, $4)
+     RETURNING id`,
+    [commentId, reporterId, reason, details],
+  );
+  return rows[0].id;
+}
+
+async function markReportReviewed(table, reportId, adminId, outcome) {
+  await database.pool.query(
+    `UPDATE ${table}
+     SET reviewed_at = now(), reviewed_by_admin_id = $2, review_outcome = $3
+     WHERE id = $1`,
+    [reportId, adminId, outcome],
+  );
+}
+
+async function withFailureTrigger({ table, event, suffix }, run) {
+  const functionName = `ticket04_forced_failure_${suffix}`;
+  const triggerName = `ticket04_forced_failure_trigger_${suffix}`;
+  await database.pool.query(`
+    CREATE FUNCTION ${functionName}() RETURNS trigger LANGUAGE plpgsql AS $fn$
+    BEGIN
+      RAISE EXCEPTION 'forced ${suffix} failure';
+    END;
+    $fn$;
+    CREATE TRIGGER ${triggerName} BEFORE ${event} ON ${table}
+      FOR EACH ROW EXECUTE FUNCTION ${functionName}();
+  `);
+  try {
+    await run();
+  } finally {
+    await database.pool.query(`DROP TRIGGER IF EXISTS ${triggerName} ON ${table}`);
+    await database.pool.query(`DROP FUNCTION IF EXISTS ${functionName}()`);
+  }
+}
 
 function context(id, adminId) {
   return {
@@ -32,6 +107,7 @@ async function call(action, id, payload = {}) {
 before(async () => database.start());
 beforeEach(async () => {
   await database.clean();
+  userSequence = 0;
   principals = await seedPrincipals(database.pool);
 });
 after(async () => database.stop());
@@ -615,6 +691,443 @@ describe('moderation actions', () => {
   });
 });
 
+describe('audited report outcomes', () => {
+  it('reviews a Post Report with no action and appends one correlated audit entry', async () => {
+    const authorId = await insertUser('post-author');
+    const postId = await insertPost(database.pool, {
+      userId: authorId,
+      cityId: principals.cityId,
+      title: 'No-action review post',
+      moderationStatus: 'FLAGGED',
+    });
+    const reportId = await insertPostReport({
+      postId,
+      reporterId: principals.userId,
+      details: 'Misleading rescue details',
+    });
+
+    const action = buildPostReportReviewAction(database.pool, 'ModerationAction');
+    const first = await call(action, reportId, {});
+    assert.equal(first.notice.type, 'success');
+
+    const report = (await database.pool.query(`SELECT * FROM post_reports WHERE id = $1`, [reportId])).rows[0];
+    assert.ok(report.reviewed_at, 'the report must be closed');
+    assert.equal(report.reviewed_by_admin_id, principals.adminId);
+    assert.equal(report.review_outcome, 'NO_ACTION');
+
+    const audits = (await database.pool.query(`SELECT * FROM moderation_actions WHERE target_id = $1`, [postId])).rows;
+    assert.equal(audits.length, 1);
+    assert.equal(audits[0].action_type, 'POST_REPORT_REVIEWED_NO_ACTION');
+    assert.equal(audits[0].target_type, 'POST');
+    assert.equal(audits[0].admin_user_id, principals.adminId);
+    assert.equal(audits[0].reason, null);
+    assert.equal(audits[0].metadata.reportId, reportId);
+    assert.equal(audits[0].metadata.reviewOutcome, 'NO_ACTION');
+
+    const post = (await database.pool.query(`SELECT status, moderation_status FROM posts WHERE id = $1`, [postId]))
+      .rows[0];
+    assert.equal(post.status, 'ACTIVE');
+    assert.equal(post.moderation_status, 'FLAGGED');
+
+    const retry = await call(action, reportId, { reason: 'Second attempt' });
+    assert.equal(retry.notice.type, 'error');
+    assert.match(retry.notice.message, /already been reviewed/i);
+    const auditCount = await database.pool.query(
+      `SELECT count(*)::int AS count FROM moderation_actions WHERE target_id = $1`,
+      [postId],
+    );
+    assert.equal(auditCount.rows[0].count, 1);
+  });
+
+  it('reviews a Pupzy Account Report with no action and permits a later report', async () => {
+    const reportedId = await insertUser('reported-account');
+    const reportId = await insertAccountReport({
+      reporterId: principals.userId,
+      reportedUserId: reportedId,
+      reason: 'HARASSMENT',
+      details: 'Repeated unwanted contact',
+    });
+
+    const action = buildAccountReportReviewAction(database.pool, 'ModerationAction');
+    const response = await call(action, reportId, { reason: 'Unsubstantiated after review' });
+    assert.equal(response.notice.type, 'success');
+
+    const report = (await database.pool.query(`SELECT * FROM account_reports WHERE id = $1`, [reportId])).rows[0];
+    assert.ok(report.reviewed_at);
+    assert.equal(report.reviewed_by_admin_id, principals.adminId);
+    assert.equal(report.review_outcome, 'NO_ACTION');
+
+    const audits = (await database.pool.query(`SELECT * FROM moderation_actions WHERE target_id = $1`, [reportedId]))
+      .rows;
+    assert.equal(audits.length, 1);
+    assert.equal(audits[0].action_type, 'ACCOUNT_REPORT_REVIEWED_NO_ACTION');
+    assert.equal(audits[0].target_type, 'USER');
+    assert.equal(audits[0].admin_user_id, principals.adminId);
+    assert.equal(audits[0].reason, 'Unsubstantiated after review');
+    assert.equal(audits[0].metadata.reportId, reportId);
+    assert.equal(audits[0].metadata.reviewOutcome, 'NO_ACTION');
+
+    const freshReportId = await insertAccountReport({
+      reporterId: principals.userId,
+      reportedUserId: reportedId,
+      reason: 'SPAM',
+    });
+    const openReports = await database.pool.query(
+      `SELECT count(*)::int AS count FROM account_reports
+       WHERE reporter_id = $1 AND reported_user_id = $2 AND reviewed_at IS NULL`,
+      [principals.userId, reportedId],
+    );
+    assert.equal(openReports.rows[0].count, 1);
+    assert.notEqual(freshReportId, reportId);
+  });
+
+  it('serializes concurrent no-action reviews to one closure and one audit entry', async () => {
+    const reportedId = await insertUser('raced-account');
+    const reportId = await insertAccountReport({ reporterId: principals.userId, reportedUserId: reportedId });
+    const action = buildAccountReportReviewAction(database.pool, 'ModerationAction');
+
+    const responses = await Promise.all([
+      call(action, reportId, { reason: 'First reviewer' }),
+      call(action, reportId, { reason: 'Second reviewer' }),
+    ]);
+    assert.deepEqual(responses.map((item) => item.notice.type).sort(), ['error', 'success']);
+
+    const audits = await database.pool.query(
+      `SELECT count(*)::int AS count FROM moderation_actions WHERE action_type = 'ACCOUNT_REPORT_REVIEWED_NO_ACTION'`,
+    );
+    assert.equal(audits.rows[0].count, 1);
+    const report = (await database.pool.query(`SELECT review_outcome FROM account_reports WHERE id = $1`, [reportId]))
+      .rows[0];
+    assert.equal(report.review_outcome, 'NO_ACTION');
+  });
+
+  it('closes every open Post Report when the Post is removed and correlates the audit', async () => {
+    const authorId = await insertUser('removed-post-author');
+    const postId = await insertPost(database.pool, {
+      userId: authorId,
+      cityId: principals.cityId,
+      title: 'Reported post',
+    });
+    const firstReporter = await insertUser('post-reporter-1');
+    const secondReporter = await insertUser('post-reporter-2');
+    const completedReporter = await insertUser('post-reporter-3');
+
+    const firstOpen = await insertPostReport({ postId, reporterId: firstReporter });
+    const secondOpen = await insertPostReport({ postId, reporterId: secondReporter });
+    const completed = await insertPostReport({ postId, reporterId: completedReporter });
+    await markReportReviewed('post_reports', completed, principals.adminId, 'NO_ACTION');
+    const completedBefore = (
+      await database.pool.query(`SELECT reviewed_at, review_outcome FROM post_reports WHERE id = $1`, [completed])
+    ).rows[0];
+
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const response = await call(actions.removePost, postId, { reason: 'Policy violation' });
+    assert.equal(response.notice.type, 'success');
+
+    const closed = await database.pool.query(
+      `SELECT id, reviewed_at, reviewed_by_admin_id, review_outcome
+       FROM post_reports
+       WHERE id = ANY($1::uuid[])
+       ORDER BY id`,
+      [[firstOpen, secondOpen]],
+    );
+    assert.equal(closed.rows.length, 2);
+    for (const row of closed.rows) {
+      assert.ok(row.reviewed_at);
+      assert.equal(row.reviewed_by_admin_id, principals.adminId);
+      assert.equal(row.review_outcome, 'ACTION_TAKEN');
+    }
+
+    const completedAfter = (
+      await database.pool.query(`SELECT reviewed_at, review_outcome FROM post_reports WHERE id = $1`, [completed])
+    ).rows[0];
+    assert.deepEqual(completedAfter, completedBefore);
+
+    const audit = (
+      await database.pool.query(
+        `SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_REMOVED'`,
+        [postId],
+      )
+    ).rows[0];
+    assert.deepEqual([...audit.metadata.closedPostReportIds].sort(), [firstOpen, secondOpen].sort());
+
+    const post = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0];
+    assert.equal(post.status, 'REMOVED');
+  });
+
+  it('closes open Post Reports on approval, flagging, and restoration', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const authorId = await insertUser('transition-author');
+    const reporter = await insertUser('transition-reporter');
+
+    const approvedPost = await insertPost(database.pool, {
+      userId: authorId,
+      cityId: principals.cityId,
+      title: 'Flagged approval post',
+      moderationStatus: 'FLAGGED',
+    });
+    const approvedReport = await insertPostReport({ postId: approvedPost, reporterId: reporter });
+    assert.equal((await call(actions.approvePost, approvedPost)).notice.type, 'success');
+    let row = (await database.pool.query(`SELECT review_outcome FROM post_reports WHERE id = $1`, [approvedReport]))
+      .rows[0];
+    assert.equal(row.review_outcome, 'ACTION_TAKEN');
+    let audit = (
+      await database.pool.query(
+        `SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_APPROVED'`,
+        [approvedPost],
+      )
+    ).rows[0];
+    assert.deepEqual(audit.metadata.closedPostReportIds, [approvedReport]);
+
+    const flaggedPost = await insertPost(database.pool, {
+      userId: authorId,
+      cityId: principals.cityId,
+      title: 'Clean flag post',
+      moderationStatus: 'CLEAN',
+    });
+    const flaggedReport = await insertPostReport({ postId: flaggedPost, reporterId: reporter });
+    assert.equal((await call(actions.flagPost, flaggedPost, { reason: 'Manual review' })).notice.type, 'success');
+    row = (await database.pool.query(`SELECT review_outcome FROM post_reports WHERE id = $1`, [flaggedReport])).rows[0];
+    assert.equal(row.review_outcome, 'ACTION_TAKEN');
+    audit = (
+      await database.pool.query(
+        `SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_FLAGGED'`,
+        [flaggedPost],
+      )
+    ).rows[0];
+    assert.deepEqual(audit.metadata.closedPostReportIds, [flaggedReport]);
+
+    const removedPost = await insertPost(database.pool, {
+      userId: authorId,
+      cityId: principals.cityId,
+      title: 'Restored post',
+      status: 'REMOVED',
+    });
+    const removedReport = await insertPostReport({ postId: removedPost, reporterId: reporter });
+    assert.equal((await call(actions.restorePost, removedPost)).notice.type, 'success');
+    row = (await database.pool.query(`SELECT review_outcome FROM post_reports WHERE id = $1`, [removedReport])).rows[0];
+    assert.equal(row.review_outcome, 'ACTION_TAKEN');
+    audit = (
+      await database.pool.query(
+        `SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_RESTORED'`,
+        [removedPost],
+      )
+    ).rows[0];
+    assert.deepEqual(audit.metadata.closedPostReportIds, [removedReport]);
+  });
+
+  it('closes every open Comment Report when a Comment is removed', async () => {
+    const postId = await insertPost(database.pool, { ...principals, title: 'Comment report closure post' });
+    const authorId = await insertUser('comment-author');
+    const comment = await database.pool.query(
+      `INSERT INTO comments (post_id, author_id, text, status)
+       VALUES ($1, $2, 'Reported contribution', 'HIDDEN')
+       RETURNING id`,
+      [postId, authorId],
+    );
+    const commentId = comment.rows[0].id;
+    const firstReporter = await insertUser('comment-reporter-1');
+    const secondReporter = await insertUser('comment-reporter-2');
+    const completedReporter = await insertUser('comment-reporter-3');
+
+    const firstOpen = await insertCommentReport({ commentId, reporterId: firstReporter });
+    const secondOpen = await insertCommentReport({ commentId, reporterId: secondReporter });
+    const completed = await insertCommentReport({ commentId, reporterId: completedReporter });
+    await database.pool.query(`UPDATE comment_reports SET reviewed_at = now() WHERE id = $1`, [completed]);
+    const completedBefore = (
+      await database.pool.query(`SELECT reviewed_at FROM comment_reports WHERE id = $1`, [completed])
+    ).rows[0];
+
+    const actions = buildCommentActions(database.pool, 'ModerationAction');
+    const response = await call(actions.removeComment, commentId, { reason: 'Abusive' });
+    assert.equal(response.notice.type, 'success');
+
+    const closed = await database.pool.query(
+      `SELECT id, reviewed_at FROM comment_reports WHERE id = ANY($1::uuid[]) ORDER BY id`,
+      [[firstOpen, secondOpen]],
+    );
+    assert.equal(closed.rows.length, 2);
+    for (const row2 of closed.rows) assert.ok(row2.reviewed_at);
+    const completedAfter = (
+      await database.pool.query(`SELECT reviewed_at FROM comment_reports WHERE id = $1`, [completed])
+    ).rows[0];
+    assert.deepEqual(completedAfter, completedBefore);
+
+    const audit = (
+      await database.pool.query(
+        `SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = 'COMMENT_REMOVED'`,
+        [commentId],
+      )
+    ).rows[0];
+    assert.deepEqual([...audit.metadata.closedCommentReportIds].sort(), [firstOpen, secondOpen].sort());
+  });
+
+  it('closes every open Pupzy Account Report when the account is banned', async () => {
+    const targetId = await insertUser('ban-target');
+    const firstReporter = await insertUser('account-reporter-1');
+    const secondReporter = await insertUser('account-reporter-2');
+    const completedReporter = await insertUser('account-reporter-3');
+
+    const firstOpen = await insertAccountReport({ reporterId: firstReporter, reportedUserId: targetId });
+    const secondOpen = await insertAccountReport({ reporterId: secondReporter, reportedUserId: targetId });
+    const completed = await insertAccountReport({ reporterId: completedReporter, reportedUserId: targetId });
+    await markReportReviewed('account_reports', completed, principals.adminId, 'NO_ACTION');
+    const completedBefore = (
+      await database.pool.query(`SELECT reviewed_at, review_outcome FROM account_reports WHERE id = $1`, [completed])
+    ).rows[0];
+
+    const response = await call(buildBanUserAction(database.pool, 'ModerationAction'), targetId, {
+      reason: 'Coordinated abuse',
+    });
+    assert.equal(response.notice.type, 'success');
+
+    const closed = await database.pool.query(
+      `SELECT id, reviewed_at, reviewed_by_admin_id, review_outcome
+       FROM account_reports
+       WHERE id = ANY($1::uuid[]) ORDER BY id`,
+      [[firstOpen, secondOpen]],
+    );
+    assert.equal(closed.rows.length, 2);
+    for (const row of closed.rows) {
+      assert.ok(row.reviewed_at);
+      assert.equal(row.reviewed_by_admin_id, principals.adminId);
+      assert.equal(row.review_outcome, 'ACTION_TAKEN');
+    }
+
+    const completedAfter = (
+      await database.pool.query(`SELECT reviewed_at, review_outcome FROM account_reports WHERE id = $1`, [completed])
+    ).rows[0];
+    assert.deepEqual(completedAfter, completedBefore);
+
+    const audit = (
+      await database.pool.query(
+        `SELECT metadata FROM moderation_actions WHERE target_id = $1 AND action_type = 'USER_BANNED'`,
+        [targetId],
+      )
+    ).rows[0];
+    assert.deepEqual([...audit.metadata.closedAccountReportIds].sort(), [firstOpen, secondOpen].sort());
+  });
+
+  it('reviews reports despite an active Block between the reporter and reported account', async () => {
+    const reportedId = await insertUser('blocked-reported');
+    await database.pool.query(`INSERT INTO blocks (blocker_id, blocked_id) VALUES ($1, $2)`, [
+      principals.userId,
+      reportedId,
+    ]);
+
+    const postId = await insertPost(database.pool, {
+      userId: reportedId,
+      cityId: principals.cityId,
+      title: 'Blocked evidence post',
+      moderationStatus: 'FLAGGED',
+    });
+    const postReportId = await insertPostReport({ postId, reporterId: principals.userId });
+    const postResponse = await call(buildPostReportReviewAction(database.pool, 'ModerationAction'), postReportId, {
+      reason: 'Reviewed despite Block',
+    });
+    assert.equal(postResponse.notice.type, 'success');
+    const closedPostReport = (
+      await database.pool.query(`SELECT review_outcome FROM post_reports WHERE id = $1`, [postReportId])
+    ).rows[0];
+    assert.equal(closedPostReport.review_outcome, 'NO_ACTION');
+    assert.ok(
+      (await database.pool.query(`SELECT 1 FROM posts WHERE id = $1`, [postId])).rows.length,
+      'the moderated evidence Post remains inspectable despite the Block',
+    );
+
+    const reportId = await insertAccountReport({
+      reporterId: principals.userId,
+      reportedUserId: reportedId,
+      reason: 'HARASSMENT',
+    });
+
+    const action = buildAccountReportReviewAction(database.pool, 'ModerationAction');
+    const response = await call(action, reportId, { reason: 'Reviewed with full evidence' });
+    assert.equal(response.notice.type, 'success');
+
+    const report = (await database.pool.query(`SELECT review_outcome FROM account_reports WHERE id = $1`, [reportId]))
+      .rows[0];
+    assert.equal(report.review_outcome, 'NO_ACTION');
+    const accountAuditCount = await database.pool.query(
+      `SELECT count(*)::int AS count FROM moderation_actions
+       WHERE target_id = $1 AND action_type = 'ACCOUNT_REPORT_REVIEWED_NO_ACTION'`,
+      [reportedId],
+    );
+    assert.equal(accountAuditCount.rows[0].count, 1);
+    const postAuditCount = await database.pool.query(
+      `SELECT count(*)::int AS count FROM moderation_actions
+       WHERE target_id = $1 AND action_type = 'POST_REPORT_REVIEWED_NO_ACTION'`,
+      [postId],
+    );
+    assert.equal(postAuditCount.rows[0].count, 1);
+  });
+
+  it('rolls back the target mutation and report closure when the audit insert fails', async () => {
+    const authorId = await insertUser('rollback-author');
+    const reporterId = await insertUser('rollback-reporter');
+    const postId = await insertPost(database.pool, {
+      userId: authorId,
+      cityId: principals.cityId,
+      title: 'Audit rollback post',
+    });
+    const reportId = await insertPostReport({ postId, reporterId });
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+
+    await withFailureTrigger({ table: 'moderation_actions', event: 'INSERT', suffix: 'audit' }, async () => {
+      await assert.rejects(
+        () => call(actions.removePost, postId, { reason: 'Policy violation' }),
+        /forced audit failure/,
+      );
+    });
+
+    const postAfterFailure = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0];
+    assert.equal(postAfterFailure.status, 'ACTIVE');
+    const reportAfterFailure = (
+      await database.pool.query(`SELECT reviewed_at FROM post_reports WHERE id = $1`, [reportId])
+    ).rows[0];
+    assert.equal(reportAfterFailure.reviewed_at, null);
+    const notificationCount = await database.pool.query(`SELECT count(*)::int AS count FROM notifications`);
+    assert.equal(notificationCount.rows[0].count, 0);
+    const auditCount = await database.pool.query(`SELECT count(*)::int AS count FROM moderation_actions`);
+    assert.equal(auditCount.rows[0].count, 0);
+
+    const retry = await call(actions.removePost, postId, { reason: 'Policy violation' });
+    assert.equal(retry.notice.type, 'success');
+    const finalPost = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0];
+    assert.equal(finalPost.status, 'REMOVED');
+    const finalReport = (await database.pool.query(`SELECT review_outcome FROM post_reports WHERE id = $1`, [reportId]))
+      .rows[0];
+    assert.equal(finalReport.review_outcome, 'ACTION_TAKEN');
+  });
+
+  it('rolls back a no-action review when the report closure fails', async () => {
+    const reportedId = await insertUser('rollback-reported');
+    const reportId = await insertAccountReport({ reporterId: principals.userId, reportedUserId: reportedId });
+    const action = buildAccountReportReviewAction(database.pool, 'ModerationAction');
+
+    await withFailureTrigger({ table: 'account_reports', event: 'UPDATE', suffix: 'report' }, async () => {
+      await assert.rejects(() => call(action, reportId, { reason: 'Should not commit' }), /forced report failure/);
+    });
+
+    const reportAfterFailure = (
+      await database.pool.query(`SELECT reviewed_at, review_outcome FROM account_reports WHERE id = $1`, [reportId])
+    ).rows[0];
+    assert.equal(reportAfterFailure.reviewed_at, null);
+    assert.equal(reportAfterFailure.review_outcome, null);
+    const auditCount = await database.pool.query(`SELECT count(*)::int AS count FROM moderation_actions`);
+    assert.equal(auditCount.rows[0].count, 0);
+
+    const retry = await call(action, reportId, { reason: 'Retried after fault removal' });
+    assert.equal(retry.notice.type, 'success');
+    const finalReport = (
+      await database.pool.query(`SELECT review_outcome FROM account_reports WHERE id = $1`, [reportId])
+    ).rows[0];
+    assert.equal(finalReport.review_outcome, 'NO_ACTION');
+    const finalAudits = await database.pool.query(`SELECT count(*)::int AS count FROM moderation_actions`);
+    assert.equal(finalAudits.rows[0].count, 1);
+  });
+});
+
 describe('dashboard queries', () => {
   it('counts only active pending or flagged posts as needing review', async () => {
     await insertPost(database.pool, {
@@ -708,12 +1221,13 @@ describe('dashboard queries', () => {
       assert.notEqual(reports.rows[0].reviewed_at, null);
 
       const audit = await database.pool.query(
-        `SELECT action_type, reason, target_type FROM moderation_actions WHERE target_id = $1`,
+        `SELECT action_type, reason, target_type, metadata FROM moderation_actions WHERE target_id = $1`,
         [commentId],
       );
       assert.equal(audit.rows[0].action_type, 'COMMENT_RESTORED');
       assert.equal(audit.rows[0].target_type, 'COMMENT');
       assert.equal(audit.rows[0].reason, 'Restoring compliant comment');
+      assert.equal(audit.rows[0].metadata.closedCommentReportIds.length, 1);
     });
 
     it('rejects restoration of active, deleted, or removed comment', async () => {

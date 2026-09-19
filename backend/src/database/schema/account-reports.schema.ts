@@ -104,6 +104,9 @@ export const accountReports = pgTable(
       .on(table.reporterId, table.reportedUserId)
       .where(sql`"reviewed_at" IS NULL`),
     index('idx_account_reports_reported_created').on(table.reportedUserId, table.createdAt),
+    index('idx_account_reports_reported_unreviewed')
+      .on(table.reportedUserId)
+      .where(sql`"reviewed_at" IS NULL`),
     index('idx_account_reports_reporter_created').on(table.reporterId, table.createdAt),
     check('account_reports_no_self_report', sql`${table.reporterId} <> ${table.reportedUserId}`),
     check('account_reports_source_pair', sql`(${table.sourceType} IS NULL) = (${table.sourceId} IS NULL)`),
