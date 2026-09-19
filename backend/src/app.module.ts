@@ -33,6 +33,7 @@ import { MatingModule } from './mating/mating.module';
 import { CommentsModule } from './comments/comments.module';
 import { CommentsRepository } from './comments/comments.repository';
 import { AccountReportsModule } from './account-reports/account-reports.module';
+import { BlocksModule } from './blocks/blocks.module';
 import { GqlExceptionFilter } from './common/filters/gql-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
@@ -57,6 +58,7 @@ import type { GqlContext } from './common/types/gql-context.type';
  * ├── NotificationsModule     — In-app notification lifecycle
  * ├── ContactsModule          — Contact request approval flow
  * ├── AdoptionsModule         — Adoption application questionnaire flow
+ * ├── BlocksModule            — Block, Unblock, and Blocked Accounts API
  * └── HealthModule            — GET /health endpoint for probes
  * ```
  *
@@ -222,6 +224,7 @@ import type { GqlContext } from './common/types/gql-context.type';
     MatingModule,
     CommentsModule,
     AccountReportsModule,
+    BlocksModule,
     CacheModule.register({
       /**
        * Max cached items across all namespaces (auth, view dedup, idempotency).
