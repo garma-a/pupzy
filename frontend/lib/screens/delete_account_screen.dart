@@ -86,7 +86,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   }
 
   /// Prompts for a password when the account is email/password-based
-  /// (Google accounts re-authenticate via the Google sign-in sheet
+  /// (Google/Apple accounts re-authenticate via their own sign-in sheet
   /// instead, with no typed input needed).
   Future<String?> _promptForPassword() {
     final controller = TextEditingController();
@@ -125,6 +125,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     try {
       if (auth.signedInWithGoogle) {
         await auth.reauthenticateWithGoogle();
+      } else if (auth.signedInWithApple) {
+        await auth.reauthenticateWithApple();
       } else {
         final password = await _promptForPassword();
         if (!mounted) return;
@@ -180,6 +182,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Own pushed route — see account_suspended_screen.dart's comment for
+    // why this direct dependency is needed for immediate language updates.
+    context.watch<LangProvider>();
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(

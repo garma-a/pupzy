@@ -160,6 +160,9 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Own pushed route — see account_suspended_screen.dart's comment for
+    // why this direct dependency is needed for immediate language updates.
+    context.watch<LangProvider>();
     if (_loading) {
       return const Scaffold(body: SingleChildScrollView(child: DetailScreenSkeleton()));
     }

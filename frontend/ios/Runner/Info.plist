@@ -63,5 +63,23 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<!-- Lets iOS route the Google Sign-In browser callback back into the
+		     app. Value is GoogleService-Info.plist's REVERSED_CLIENT_ID. -->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>com.googleusercontent.apps.48374136555-attbbliehsi35qtjobimhb1r8uod9cme</string>
+				</array>
+			</dict>
+		</array>
+		<!-- The app only uses standard HTTPS/TLS, no proprietary or exempt
+		     encryption, so this skips the manual export-compliance prompt on
+		     every App Store Connect / TestFlight upload. -->
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
 	</dict>
 </plist>

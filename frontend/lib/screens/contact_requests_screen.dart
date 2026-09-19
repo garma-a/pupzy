@@ -59,6 +59,9 @@ class _ContactRequestsScreenState extends State<ContactRequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Own pushed route — see account_suspended_screen.dart's comment for
+    // why this direct dependency is needed for immediate language updates.
+    context.watch<LangProvider>();
     final pending = _requests.where((r) => r.status == 'PENDING').toList();
     final resolved = _requests.where((r) => r.status != 'PENDING').toList();
 

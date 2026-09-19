@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -16,8 +17,14 @@ import '../utils/client_request_id.dart';
 import '../utils/time_format.dart';
 
 /// Max bytes the backend accepts for a comment image (see
-/// requestCommentImageUploadUrl validation on the backend).
+/// MAX_COMMENT_IMAGE_BYTES in comment-image.validator.ts).
 const int _kCommentImageMaxBytes = 100000;
+
+/// Max width/height and pixel count the backend accepts for a comment image
+/// (see MAX_COMMENT_IMAGE_WIDTH/HEIGHT/PIXELS in comment-image.validator.ts
+/// — it rejects on dimensions independently of byte size).
+const int _kCommentImageMaxSide = 480;
+const int _kCommentImageMaxPixels = _kCommentImageMaxSide * _kCommentImageMaxSide;
 
 String _authorName(BuildContext context, CommentAuthor? author) {
   if (author == null) return t(context, 'Deleted user', 'مستخدم محذوف');
@@ -26,14 +33,37 @@ String _authorName(BuildContext context, CommentAuthor? author) {
   return name ?? t(context, 'Pupzy user', 'مستخدم Pupzy');
 }
 
-/// Compresses a picked image down to WebP at or under
-/// [_kCommentImageMaxBytes]. Returns null if compression isn't achievable
-/// (e.g. unsupported platform) so the caller can skip the image gracefully.
+/// Decodes [bytes] just far enough to read its actual pixel dimensions.
+Future<(int width, int height)> _decodedDimensions(Uint8List bytes) async {
+  final codec = await ui.instantiateImageCodec(bytes);
+  final frame = await codec.getNextFrame();
+  final size = (frame.image.width, frame.image.height);
+  frame.image.dispose();
+  codec.dispose();
+  return size;
+}
+
+/// Compresses a picked image down to WebP that fits both the backend's byte
+/// budget ([_kCommentImageMaxBytes]) and its pixel-dimension cap
+/// ([_kCommentImageMaxSide] on each side). Returns null if compression isn't
+/// achievable (e.g. unsupported platform) so the caller can skip the image
+/// gracefully.
+///
+/// `compressWithFile`'s `minWidth`/`minHeight` are NOT a hard ceiling on
+/// their own: the plugin picks `scale = min(srcW/minWidth, srcH/minHeight)`,
+/// so for any non-square source (i.e. virtually every real camera photo)
+/// only the axis needing *less* shrinking is guaranteed to land at the
+/// target — the other axis can still come out larger. Passing 480 for both
+/// only reliably works for square sources. So every attempt's actual output
+/// is re-decoded and measured here rather than trusted from the input
+/// parameters, and the retry loop keeps shrinking until it's verified to
+/// actually fit — this is what makes the guarantee real instead of
+/// aspirational.
 Future<Uint8List?> _compressToWebpUnderLimit(XFile file) async {
   try {
     int quality = 80;
-    int minSide = 1024;
-    for (var attempt = 0; attempt < 6; attempt++) {
+    int minSide = _kCommentImageMaxSide;
+    for (var attempt = 0; attempt < 8; attempt++) {
       final result = await FlutterImageCompress.compressWithFile(
         file.path,
         format: CompressFormat.webp,
@@ -42,9 +72,15 @@ Future<Uint8List?> _compressToWebpUnderLimit(XFile file) async {
         minHeight: minSide,
       );
       if (result == null) return null;
-      if (result.lengthInBytes <= _kCommentImageMaxBytes) return result;
-      quality = (quality - 15).clamp(20, 100);
+      if (result.lengthInBytes <= _kCommentImageMaxBytes) {
+        final (width, height) = await _decodedDimensions(result);
+        if (width <= _kCommentImageMaxSide && height <= _kCommentImageMaxSide && width * height <= _kCommentImageMaxPixels) {
+          return result;
+        }
+      }
+      quality = (quality - 12).clamp(20, 100);
       minSide = (minSide * 0.75).round();
+      if (minSide < 16) return null;
     }
     return null;
   } catch (_) {
@@ -426,6 +462,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
                               controller: _textController,
                               minLines: 1,
                               maxLines: 4,
+                              // Backend hard-limit (validateCommentText): 1,000 Unicode characters.
+                              maxLength: 1000,
                               onChanged: (_) => setState(() {}),
                               decoration: InputDecoration(
                                 hintText: t(context, 'Add a comment...', 'أضف تعليقًا...'),
@@ -433,6 +471,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                                 fillColor: AppColors.surfaceWarm,
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.chip), borderSide: BorderSide.none),
+                                counterText: '',
                               ),
                             ),
                           ),
@@ -739,6 +778,9 @@ class _CommentTileState extends State<_CommentTile> {
                                 autofocus: true,
                                 minLines: 1,
                                 maxLines: 3,
+                                // Backend hard-limit (validateReplyText): 500 Unicode characters
+                                // — half the top-level comment limit.
+                                maxLength: 500,
                                 onChanged: (_) => setState(() {}),
                                 decoration: InputDecoration(
                                   hintText: t(context, 'Write a reply...', 'اكتب ردًا...'),
@@ -746,6 +788,7 @@ class _CommentTileState extends State<_CommentTile> {
                                   fillColor: AppColors.surfaceWarm,
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.chip), borderSide: BorderSide.none),
+                                  counterText: '',
                                 ),
                               ),
                             ),

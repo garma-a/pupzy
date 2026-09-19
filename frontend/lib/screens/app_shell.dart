@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
 import '../theme/app_theme.dart';
@@ -54,6 +55,14 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    // AppShell is its own pushed route — establishing a real rebuild
+    // dependency here (rather than relying on the root-level
+    // Consumer<LangProvider> in main.dart, which a dedicated regression
+    // test confirmed does NOT reach an already-built route's content)
+    // covers everything nested inside it too: the bottom nav and all four
+    // tab screens (Home/Help/Adopt/Market), since none of those are
+    // separately-routed — they're plain children of this same build().
+    context.watch<LangProvider>();
     return DistanceProvider(
       maxDistance: _maxDistance,
       onChanged: (d) => setState(() => _maxDistance = d),

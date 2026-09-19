@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
 import '../models/post.dart';
@@ -17,6 +18,10 @@ class NewPostSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Modal sheets are their own route/Overlay entry, cached independently
+    // of ancestor rebuilds — see account_suspended_screen.dart's comment
+    // for the full explanation of why this is needed.
+    context.watch<LangProvider>();
     return Container(
       // Depth shadow lives outside the clip so it isn't cut off
       decoration: BoxDecoration(

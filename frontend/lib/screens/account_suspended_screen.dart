@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
 import '../theme/app_theme.dart';
@@ -14,6 +15,13 @@ class AccountSuspendedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Establishes a real rebuild dependency on the language — this screen
+    // is pushed as its own route, and a route's built content is cached by
+    // Navigator/Overlay independently of ancestor rebuilds (confirmed via a
+    // dedicated regression test), so relying on the root-level
+    // Consumer<LangProvider> in main.dart alone would leave this screen's
+    // text frozen in whichever language was active when it was pushed.
+    context.watch<LangProvider>();
     return PopScope(
       canPop: false,
       child: Scaffold(

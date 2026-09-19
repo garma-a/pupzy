@@ -48,6 +48,9 @@ class _MyPostsScreenState extends State<MyPostsScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    // Own pushed route — see account_suspended_screen.dart's comment for
+    // why this direct dependency is needed for immediate language updates.
+    context.watch<LangProvider>();
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(

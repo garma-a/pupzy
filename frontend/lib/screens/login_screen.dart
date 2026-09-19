@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../localization/lang_provider.dart';
 import '../services/auth_service.dart';
@@ -117,6 +119,39 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         Fluttertoast.showToast(
           msg: t(context, 'Google sign-in failed. Please try again.', 'فشل تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.'),
+          backgroundColor: AppColors.critical,
+          textColor: Colors.white,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  /// Sign in with Apple is only offered on Apple platforms — Guideline 4.8
+  /// requires it wherever a third-party login (Google, here) is offered,
+  /// but that requirement is scoped to the App Store, not Android/web.
+  bool get _showAppleSignIn => defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS;
+
+  Future<void> _continueWithApple() async {
+    setState(() => _loading = true);
+    try {
+      final auth = context.read<AuthService>();
+      await auth.signInWithApple();
+      await _afterAuthSuccess();
+    } on SignInWithAppleAuthorizationException catch (e) {
+      // The user cancelled or dismissed the Apple sheet — not an error.
+      if (e.code != AuthorizationErrorCode.canceled && mounted) {
+        Fluttertoast.showToast(
+          msg: t(context, 'Apple sign-in failed. Please try again.', 'فشل تسجيل الدخول عبر Apple. يرجى المحاولة مرة أخرى.'),
+          backgroundColor: AppColors.critical,
+          textColor: Colors.white,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: t(context, 'Apple sign-in failed. Please try again.', 'فشل تسجيل الدخول عبر Apple. يرجى المحاولة مرة أخرى.'),
           backgroundColor: AppColors.critical,
           textColor: Colors.white,
         );
@@ -301,6 +336,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Own pushed route — see account_suspended_screen.dart's comment for
+    // why this direct dependency is needed for immediate language updates.
+    context.watch<LangProvider>();
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -373,6 +411,18 @@ class _LoginScreenState extends State<LoginScreen> {
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: AppSpacing.xl),
+        if (_showAppleSignIn) ...[
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: SignInWithAppleButton(
+              onPressed: _loading ? () {} : _continueWithApple,
+              text: t(context, 'Continue with Apple', 'المتابعة باستخدام Apple'),
+              borderRadius: const BorderRadius.all(Radius.circular(27)),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
         SizedBox(
           width: double.infinity,
           height: 54,

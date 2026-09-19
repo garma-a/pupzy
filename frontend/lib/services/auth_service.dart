@@ -1,6 +1,22 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
+/// A cryptographically random nonce, verified round-trip (raw -> Apple gets
+/// its SHA-256 -> Firebase gets the raw value back) so a captured Apple
+/// identity token can't be replayed against Firebase from elsewhere.
+String _randomNonce([int length = 32]) {
+  const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+  final random = Random.secure();
+  return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+}
+
+String _sha256(String input) => sha256.convert(utf8.encode(input)).toString();
 
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -43,6 +59,57 @@ class AuthService extends ChangeNotifier {
     final result = await _auth.signInWithEmailAndPassword(email: email, password: password);
     notifyListeners();
     return result;
+  }
+
+  /// Runs a fresh Apple authorization and builds the matching Firebase
+  /// credential, sharing the nonce-generation/round-trip logic between
+  /// sign-in and re-auth. `givenName`/`familyName` are only ever populated
+  /// on the user's very first-ever Apple authorization.
+  Future<(OAuthCredential credential, String? givenName, String? familyName)> _appleCredential() async {
+    final rawNonce = _randomNonce();
+    final appleAuth = await SignInWithApple.getAppleIDCredential(
+      scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
+      nonce: _sha256(rawNonce),
+    );
+    final credential = OAuthProvider('apple.com').credential(
+      idToken: appleAuth.identityToken,
+      rawNonce: rawNonce,
+      accessToken: appleAuth.authorizationCode,
+    );
+    return (credential, appleAuth.givenName, appleAuth.familyName);
+  }
+
+  /// Firebase doesn't sync Apple's one-time name grant to `displayName`
+  /// automatically the way it does for Google, so it's done manually here.
+  Future<UserCredential> signInWithApple() async {
+    final (credential, givenName, familyName) = await _appleCredential();
+    final result = await _auth.signInWithCredential(credential);
+    if (result.user != null && (result.user!.displayName == null || result.user!.displayName!.isEmpty)) {
+      final name = [givenName, familyName].where((s) => s != null && s.isNotEmpty).join(' ');
+      if (name.isNotEmpty) {
+        await result.user!.updateDisplayName(name);
+        await result.user!.reload();
+      }
+    }
+    notifyListeners();
+    return result;
+  }
+
+  /// Whether the current user's primary sign-in method is Apple — same
+  /// purpose as [signedInWithGoogle].
+  bool get signedInWithApple {
+    final providers = _auth.currentUser?.providerData ?? const [];
+    return providers.any((p) => p.providerId == 'apple.com');
+  }
+
+  /// Re-confirms identity via Apple. Same purpose as
+  /// [reauthenticateWithGoogle], for Apple-signed-in accounts.
+  Future<void> reauthenticateWithApple() async {
+    final user = _auth.currentUser;
+    if (user == null) throw StateError('No signed-in user to re-authenticate.');
+    final (credential, _, _) = await _appleCredential();
+    await user.reauthenticateWithCredential(credential);
+    notifyListeners();
   }
 
   /// Syncs the display name to Firebase Auth itself (not just the backend

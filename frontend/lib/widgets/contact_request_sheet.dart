@@ -45,6 +45,10 @@ class _ContactRequestSheetState extends State<ContactRequestSheet> {
 
   @override
   Widget build(BuildContext context) {
+    // Modal sheets are their own route/Overlay entry, cached independently
+    // of ancestor rebuilds — see account_suspended_screen.dart's comment
+    // for the full explanation of why this is needed.
+    context.watch<LangProvider>();
     final bottomPad = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
       padding: EdgeInsets.only(bottom: bottomPad),

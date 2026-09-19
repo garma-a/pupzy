@@ -123,6 +123,9 @@ class _AccountDeletionInProgressScreenState extends State<AccountDeletionInProgr
 
   @override
   Widget build(BuildContext context) {
+    // Own pushed route — see account_suspended_screen.dart's comment for
+    // why this direct dependency is needed for immediate language updates.
+    context.watch<LangProvider>();
     final copy = _copyFor(context);
     final checking = _state == _ProgressState.checking;
 
