@@ -316,6 +316,14 @@ describe('moderation actions', () => {
       status: 'REMOVED',
     });
 
+    const reporterId = await insertUser('cascade-reporter');
+    const reportedPosts = await database.pool.query(
+      `SELECT id FROM posts WHERE creator_id = $1 AND status = 'ACTIVE' ORDER BY id LIMIT 2`,
+      [principals.userId],
+    );
+    const firstReport = await insertPostReport({ postId: reportedPosts.rows[0].id, reporterId });
+    const secondReport = await insertPostReport({ postId: reportedPosts.rows[1].id, reporterId });
+
     const response = await call(buildBanUserAction(database.pool, 'ModerationAction'), principals.userId, {
       reason: 'Coordinated spam',
       alsoRemovePosts: true,
@@ -346,6 +354,22 @@ describe('moderation actions', () => {
     const audit = await database.pool.query(`SELECT metadata FROM moderation_actions`);
     assert.equal(audit.rows[0].metadata.cascadedPostCount, 101);
     assert.equal(audit.rows[0].metadata.postCascade.state, 'COMPLETED');
+
+    // Cascade-removed Posts close their open Post Reports in the same batch
+    // transaction and correlate the ids into the ban audit metadata.
+    const closedReports = await database.pool.query(
+      `SELECT id, reviewed_at, reviewed_by_admin_id, review_outcome
+       FROM post_reports
+       WHERE id = ANY($1::uuid[])`,
+      [[firstReport, secondReport]],
+    );
+    assert.equal(closedReports.rows.length, 2);
+    for (const row of closedReports.rows) {
+      assert.ok(row.reviewed_at);
+      assert.equal(row.reviewed_by_admin_id, principals.adminId);
+      assert.equal(row.review_outcome, 'ACTION_TAKEN');
+    }
+    assert.deepEqual([...audit.rows[0].metadata.closedPostReportIds].sort(), [firstReport, secondReport].sort());
   });
 
   it('serializes an in-flight Post creation with ban paging and releases the first page locks before the next page', async () => {
