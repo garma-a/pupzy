@@ -106,3 +106,66 @@ export function buildAccountReportReviewAction(pool, component) {
     successMessage: 'Pupzy Account Report reviewed with no action.',
   });
 }
+
+/**
+ * Comment Reports keep their existing closure marker (`reviewed_at` only) and
+ * never change the mobile API. Reviewing one with no action closes it and
+ * appends an authoritative audit entry carrying the reviewer and the target
+ * Comment, so a false or unsubstantiated Comment Report has an auditable
+ * outcome without removing or restoring the Comment.
+ */
+export function buildCommentReportReviewAction(pool, component) {
+  return {
+    actionType: 'record',
+    icon: 'Check',
+    isAccessible: isAnyAdmin,
+    isVisible: (context) => Boolean(context?.record) && isOpenReport(context.record),
+    component,
+    handler: async (request, _response, context) => {
+      const { record, currentAdmin } = context;
+      if (request.method !== 'post') return { record: record.toJSON(currentAdmin) };
+
+      const reasonResult = readModerationReason(request.payload?.reason);
+      if (reasonResult.error) {
+        return actionResponse(record, currentAdmin, { ok: false, error: reasonResult.error }, '');
+      }
+      const reason = reasonResult.reason;
+
+      const result = await runModerationTransaction(pool, async (client) => {
+        const { rows } = await client.query(
+          `SELECT id, comment_id, reviewed_at
+           FROM comment_reports
+           WHERE id = $1
+           FOR UPDATE`,
+          [record.id()],
+        );
+        const report = rows[0];
+        if (!report) {
+          return { ok: false, error: 'Comment Report not found' };
+        }
+        if (report.reviewed_at) {
+          return { ok: false, error: 'Comment Report has already been reviewed.' };
+        }
+
+        await client.query(`UPDATE comment_reports SET reviewed_at = now() WHERE id = $1`, [report.id]);
+
+        const { rows: auditRows } = await client.query(
+          `INSERT INTO moderation_actions
+             (admin_user_id, action_type, target_type, target_id, reason, metadata)
+           VALUES ($1, 'COMMENT_REPORT_REVIEWED_NO_ACTION', 'COMMENT', $2, $3, $4)
+           RETURNING id`,
+          [
+            currentAdmin.id,
+            report.comment_id,
+            reason || null,
+            JSON.stringify({ reportId: report.id, reviewOutcome: 'NO_ACTION' }),
+          ],
+        );
+
+        return { ok: true, auditId: auditRows[0]?.id, reportId: report.id };
+      });
+
+      return actionResponse(record, currentAdmin, result, 'Comment Report reviewed with no action.');
+    },
+  };
+}

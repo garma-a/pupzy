@@ -10,6 +10,7 @@ import { buildPostActions } from '../src/adminjs/actions/moderate-post.actions.j
 import { buildCommentActions } from '../src/adminjs/actions/moderate-comment.actions.js';
 import {
   buildAccountReportReviewAction,
+  buildCommentReportReviewAction,
   buildPostReportReviewAction,
 } from '../src/adminjs/actions/review-report.actions.js';
 import { computeStats } from '../src/adminjs/dashboard/dashboard-cache.js';
@@ -823,6 +824,49 @@ describe('audited report outcomes', () => {
     const report = (await database.pool.query(`SELECT review_outcome FROM account_reports WHERE id = $1`, [reportId]))
       .rows[0];
     assert.equal(report.review_outcome, 'NO_ACTION');
+  });
+
+  it('reviews a Comment Report with no action, closes it, and appends one correlated audit entry', async () => {
+    const postId = await insertPost(database.pool, { ...principals, title: 'Comment dismissal post' });
+    const authorId = await insertUser('dismissal-comment-author');
+    const comment = await database.pool.query(
+      `INSERT INTO comments (post_id, author_id, text, status)
+       VALUES ($1, $2, 'Reported contribution', 'ACTIVE')
+       RETURNING id`,
+      [postId, authorId],
+    );
+    const commentId = comment.rows[0].id;
+    const reporterId = await insertUser('dismissal-reporter');
+    const reportId = await insertCommentReport({ commentId, reporterId });
+
+    const action = buildCommentReportReviewAction(database.pool, 'ModerationAction');
+    const response = await call(action, reportId, { reason: 'Unsubstantiated after review' });
+    assert.equal(response.notice.type, 'success');
+
+    const report = (await database.pool.query(`SELECT reviewed_at FROM comment_reports WHERE id = $1`, [reportId]))
+      .rows[0];
+    assert.ok(report.reviewed_at);
+
+    const audits = (
+      await database.pool.query(
+        `SELECT * FROM moderation_actions WHERE target_id = $1 AND action_type = 'COMMENT_REPORT_REVIEWED_NO_ACTION'`,
+        [commentId],
+      )
+    ).rows;
+    assert.equal(audits.length, 1);
+    assert.equal(audits[0].target_type, 'COMMENT');
+    assert.equal(audits[0].admin_user_id, principals.adminId);
+    assert.equal(audits[0].metadata.reportId, reportId);
+    assert.equal(audits[0].metadata.reviewOutcome, 'NO_ACTION');
+
+    const retry = await call(action, reportId, { reason: 'Second attempt' });
+    assert.equal(retry.notice.type, 'error');
+    const auditCount = (
+      await database.pool.query(
+        `SELECT count(*)::int AS count FROM moderation_actions WHERE action_type = 'COMMENT_REPORT_REVIEWED_NO_ACTION'`,
+      )
+    ).rows[0].count;
+    assert.equal(Number(auditCount), 1);
   });
 
   it('closes every open Post Report when the Post is removed and correlates the audit', async () => {

@@ -116,7 +116,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     buildPostUpvotesResource(db, components),
     buildPostSavesResource(db, components),
     buildPostReportsResource(db, components, pool),
-    buildCommentReportsResource(db, components),
+    buildCommentReportsResource(db, components, pool),
     buildAccountReportsResource(db, components, pool),
     buildCommentsResource(db, pool, components, cache),
     buildContactRequestsResource(db, components),

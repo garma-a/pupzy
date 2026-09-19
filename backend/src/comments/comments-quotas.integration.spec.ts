@@ -19,6 +19,7 @@ import {
   commentQuotaAdmissions,
   commentReports,
   postReports,
+  accountReports,
   type User,
   type City,
   type Post,
@@ -1251,6 +1252,81 @@ describe('Comment Discussion Quotas Integration (Ticket 10)', () => {
       const committedReportIds = new Set([
         ...commentReportRows.map((report) => report.id),
         ...postReportRows.map((report) => report.id),
+      ]);
+      for (const admission of admissions) {
+        expect(committedReportIds.has(admission.id)).toBe(true);
+      }
+    });
+
+    async function attemptSimulatedAccountReport(reporter: User, targetUserId: string): Promise<boolean> {
+      let reservation;
+      try {
+        reservation = await reportQuotaManager.reserveReportAllowance(reporter.id);
+      } catch {
+        return false;
+      }
+      try {
+        await dbHelper.db.insert(accountReports).values({
+          id: reservation.admissionId,
+          reporterId: reporter.id,
+          reportedUserId: targetUserId,
+          reason: 'SPAM',
+        });
+        return true;
+      } catch {
+        await reservation.rollback();
+        return false;
+      }
+    }
+
+    it('races mixed Post, Comment, and Account Reports so alternating target types cannot exceed ten', async () => {
+      const survivingPosts = await seedSurvivingPosts(6);
+      const commentsToReport = await seedReportableComments(6);
+      const accountTargets = await dbHelper.db
+        .insert(users)
+        .values(
+          Array.from({ length: 6 }, (_, index) => ({
+            firebaseUserId: `fb-account-target-${index}-${generateUuidV7()}`,
+            email: `account-target-${index}-${generateUuidV7()}@pupzy.dev`,
+            fullName: `Account Target ${index}`,
+          })),
+        )
+        .returning();
+
+      const commentRequests = commentsToReport.map((comment) =>
+        executeGql(REPORT_COMMENT_MUTATION, { input: { commentId: comment.id, reason: 'SPAM' } }, user2).then(
+          (res) => !res.errors && res.data?.reportComment === true,
+        ),
+      );
+      const postRequests = survivingPosts.map((post) => attemptSimulatedPostReport(user2, post.id));
+      const accountRequests = accountTargets.map((target) => attemptSimulatedAccountReport(user2, target.id));
+
+      const results = await Promise.all([...commentRequests, ...postRequests, ...accountRequests]);
+      expect(results.filter(Boolean)).toHaveLength(10);
+
+      const commentReportRows = await dbHelper.db
+        .select()
+        .from(commentReports)
+        .where(eq(commentReports.reporterId, user2.id));
+      const postReportRows = await dbHelper.db.select().from(postReports).where(eq(postReports.reporterId, user2.id));
+      const accountReportRows = await dbHelper.db
+        .select()
+        .from(accountReports)
+        .where(eq(accountReports.reporterId, user2.id));
+      expect(commentReportRows.length + postReportRows.length + accountReportRows.length).toBe(10);
+
+      const admissions = await dbHelper.db
+        .select()
+        .from(commentQuotaAdmissions)
+        .where(
+          and(eq(commentQuotaAdmissions.userId, user2.id), eq(commentQuotaAdmissions.action, 'MODERATION_REPORT')),
+        );
+      expect(admissions).toHaveLength(10);
+
+      const committedReportIds = new Set([
+        ...commentReportRows.map((report) => report.id),
+        ...postReportRows.map((report) => report.id),
+        ...accountReportRows.map((report) => report.id),
       ]);
       for (const admission of admissions) {
         expect(committedReportIds.has(admission.id)).toBe(true);

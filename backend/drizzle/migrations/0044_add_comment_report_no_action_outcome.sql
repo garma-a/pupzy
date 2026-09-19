@@ -1,0 +1,1 @@
+ALTER TYPE "public"."moderation_action_type" ADD VALUE IF NOT EXISTS 'COMMENT_REPORT_REVIEWED_NO_ACTION';
