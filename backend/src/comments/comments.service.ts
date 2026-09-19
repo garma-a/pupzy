@@ -1,9 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, Optional } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { CommentsRepository, FinalizedCommentMedia, isUniqueViolation } from './comments.repository';
 import { QuotaReservation } from './comments-quota.manager';
 import { ReportQuotaReservation } from '../moderation-reports/moderation-report-quota.manager';
 import { PostsRepository } from '../posts/posts.repository';
+import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
 import { CreateCommentDto } from './dto/create-comment.input';
 import { CreateReplyDto } from './dto/create-reply.input';
 import {
@@ -50,7 +51,20 @@ export class CommentsService {
     // durable discussion events are now written by CommentsRepository.
     private readonly _notificationsService?: NotificationsService,
     private readonly _usersService?: UsersService,
+    @Optional()
+    @Inject(AccountIsolationPolicy)
+    private readonly isolationPolicy?: AccountIsolationPolicy,
   ) {}
+
+  /**
+   * Neutral preflight: true when the viewer is isolated from the other account.
+   * The authoritative recheck always happens inside the repository transaction,
+   * so this only avoids quota/media side effects for an obviously blocked write.
+   */
+  private async isViewerIsolated(viewerId: string | null | undefined, otherAccountId: string): Promise<boolean> {
+    if (!viewerId || !this.isolationPolicy) return false;
+    return this.isolationPolicy.isIsolated(viewerId, otherAccountId);
+  }
 
   /**
    * Centralized resolution helper for idempotent replays.
@@ -159,9 +173,12 @@ export class CommentsService {
       return this.resolveExistingCommentReplay(existingIdempotency, requestHash);
     }
 
-    // 3. Post eligibility check
+    // 3. Post eligibility check (existence, lifecycle, and account isolation)
     const post = await this.postsRepository.findById(postId);
     if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Post', postId);
+    }
+    if (await this.isViewerIsolated(userId, post.creatorId)) {
       throw new NotFoundError('Post', postId);
     }
 
@@ -344,17 +361,26 @@ export class CommentsService {
    * - Keyset pagination with deterministic tie-breaking (createdAt DESC, id DESC).
    * - Opaque cursor encoding and decoding.
    */
-  async getComments(input: CommentsQueryDto): Promise<CommentConnection> {
+  async getComments(input: CommentsQueryDto, viewerId?: string | null): Promise<CommentConnection> {
     const { postId, sort, first, after } = input;
 
-    // Check post eligibility
+    // Check post eligibility (existence, lifecycle, and account isolation)
     const post = await this.postsRepository.findById(postId);
     if (!post || post.status === 'REMOVED') {
       throw new NotFoundError('Post', postId);
     }
+    if (await this.isViewerIsolated(viewerId, post.creatorId)) {
+      throw new NotFoundError('Post', postId);
+    }
 
     const cursorPayload = after ? decodeCommentCursor(after) : undefined;
-    const rows = await this.commentsRepository.findTopLevelCommentsByPostId(postId, first, sort, cursorPayload);
+    const rows = await this.commentsRepository.findTopLevelCommentsByPostId(
+      postId,
+      first,
+      sort,
+      cursorPayload,
+      viewerId,
+    );
 
     const hasNextPage = rows.length > first;
     const items = hasNextPage ? rows.slice(0, first) : rows;
@@ -411,10 +437,18 @@ export class CommentsService {
       throw new NotFoundError('Comment', commentId);
     }
 
-    // 4. Check parent post eligibility
+    // 4. Check parent post eligibility (existence, lifecycle, and account isolation)
     const post = await this.postsRepository.findById(parentComment.postId);
     if (!post || post.status === 'REMOVED') {
       throw new NotFoundError('Post', parentComment.postId);
+    }
+    // A Reply is unreachable when the viewer is isolated from the parent
+    // Comment's author (whole branch hidden) or from the Post's creator.
+    if (await this.isViewerIsolated(userId, parentComment.authorId)) {
+      throw new NotFoundError('Comment', commentId);
+    }
+    if (await this.isViewerIsolated(userId, post.creatorId)) {
+      throw new NotFoundError('Comment', commentId);
     }
 
     // 5. Shared per-user atomic rate limiting (10/min, 100/day)
@@ -476,7 +510,7 @@ export class CommentsService {
    * - If the parent comment's post is REMOVED, throws NotFoundError (hides replies).
    * - Keyset pagination oldest first (createdAt ASC, id ASC).
    */
-  async getReplies(input: RepliesQueryDto): Promise<CommentConnection> {
+  async getReplies(input: RepliesQueryDto, viewerId?: string | null): Promise<CommentConnection> {
     const { commentId, first, after } = input;
 
     // Check parent comment
@@ -493,15 +527,23 @@ export class CommentsService {
     if ((parentComment.status === 'DELETED' || parentComment.status === 'HIDDEN') && parentComment.replyCount === 0) {
       throw new NotFoundError('Comment', commentId);
     }
+    // A top-level Comment authored by an isolated account makes its whole branch
+    // unreachable, so the Replies query reuses the neutral not-found behavior.
+    if (await this.isViewerIsolated(viewerId, parentComment.authorId)) {
+      throw new NotFoundError('Comment', commentId);
+    }
 
-    // Check parent post
+    // Check parent post (existence, lifecycle, and account isolation)
     const post = await this.postsRepository.findById(parentComment.postId);
     if (!post || post.status === 'REMOVED') {
       throw new NotFoundError('Comment', commentId);
     }
+    if (await this.isViewerIsolated(viewerId, post.creatorId)) {
+      throw new NotFoundError('Comment', commentId);
+    }
 
     const cursorPayload = after ? decodeCommentCursor(after) : undefined;
-    const rows = await this.commentsRepository.findRepliesByCommentId(commentId, first, cursorPayload);
+    const rows = await this.commentsRepository.findRepliesByCommentId(commentId, first, cursorPayload, viewerId);
 
     const hasNextPage = rows.length > first;
     const items = hasNextPage ? rows.slice(0, first) : rows;

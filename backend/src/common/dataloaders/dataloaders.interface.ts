@@ -64,4 +64,17 @@ export interface DataLoaders {
    * Returns an empty array for comments with no media.
    */
   commentMediaByCommentId?: DataLoader<string, CommentMedia[]>;
+
+  /**
+   * Batch-loads the viewer-visible discussion contribution count for each Post.
+   * Keys are `${viewerId}:${postId}` (empty viewer prefix means anonymous), and
+   * the value applies the same reachability and Block rules as Comment queries.
+   */
+  reachableCommentCountByPostId?: DataLoader<string, number>;
+
+  /**
+   * Batch-loads the viewer-visible Reply count for each top-level Comment.
+   * Keys are `${viewerId}:${commentId}` (empty viewer prefix means anonymous).
+   */
+  reachableReplyCountByCommentId?: DataLoader<string, number>;
 }

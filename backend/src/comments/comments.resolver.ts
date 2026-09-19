@@ -85,6 +85,7 @@ export class CommentsResolver {
 
   /**
    * Queries top-level Comments for a Post with keyset pagination.
+   * The authenticated viewer filters isolated authors without changing schema args.
    */
   @Query('comments')
   async comments(
@@ -92,22 +93,25 @@ export class CommentsResolver {
     @Args('sort') sort?: string,
     @Args('first') first?: number,
     @Args('after') after?: string,
+    @Context() ctx?: GqlContext,
   ): Promise<CommentConnection> {
     const input = validateCommentsQueryInput({ postId, sort, first, after });
-    return this.commentsService.getComments(input);
+    return this.commentsService.getComments(input, ctx?.user?.id);
   }
 
   /**
    * Queries Replies for a top-level Comment with keyset pagination (oldest first).
+   * The authenticated viewer filters isolated branches and authors.
    */
   @Query('replies')
   async replies(
     @Args('commentId') commentId: string,
     @Args('first') first?: number,
     @Args('after') after?: string,
+    @Context() ctx?: GqlContext,
   ): Promise<CommentConnection> {
     const input = validateRepliesQueryInput({ commentId, first, after });
-    return this.commentsService.getReplies(input);
+    return this.commentsService.getReplies(input, ctx?.user?.id);
   }
 
   /**
@@ -161,6 +165,22 @@ export class CommentsResolver {
   @ResolveField('boostCount')
   boostCount(@Root() comment: Comment): number {
     return comment.boostCount ?? 0;
+  }
+
+  /**
+   * Resolves the number of Replies reachable by the viewer for this top-level
+   * Comment. Uses the per-request DataLoader so every Comment in a response is
+   * counted in one batched query. Replies can never receive Replies, so they
+   * always resolve to 0.
+   */
+  @ResolveField('replyCount')
+  async replyCount(@Root() comment: Comment, @Context() ctx: GqlContext): Promise<number> {
+    if (comment.parentId) return 0;
+    const userId = ctx?.user?.id ?? (ctx?.req as unknown as { user?: { id: string } })?.user?.id;
+    if (ctx?.loaders?.reachableReplyCountByCommentId) {
+      return ctx.loaders.reachableReplyCountByCommentId.load(`${userId ?? ''}:${comment.id}`);
+    }
+    return comment.replyCount ?? 0;
   }
 
   /**

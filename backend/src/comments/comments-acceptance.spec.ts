@@ -672,12 +672,24 @@ describe('Comments & Replies Acceptance Tests (Ticket 03)', () => {
 
     it('passes TOP sort option to repository', async () => {
       await resolver.comments(postId, 'TOP', 20);
-      expect(mockCommentsRepo.findTopLevelCommentsByPostId).toHaveBeenCalledWith(postId, 20, 'TOP', undefined);
+      expect(mockCommentsRepo.findTopLevelCommentsByPostId).toHaveBeenCalledWith(
+        postId,
+        20,
+        'TOP',
+        undefined,
+        undefined,
+      );
     });
 
     it('passes NEWEST sort option to repository', async () => {
       await resolver.comments(postId, 'NEWEST', 20);
-      expect(mockCommentsRepo.findTopLevelCommentsByPostId).toHaveBeenCalledWith(postId, 20, 'NEWEST', undefined);
+      expect(mockCommentsRepo.findTopLevelCommentsByPostId).toHaveBeenCalledWith(
+        postId,
+        20,
+        'NEWEST',
+        undefined,
+        undefined,
+      );
     });
   });
 

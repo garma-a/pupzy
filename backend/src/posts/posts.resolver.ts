@@ -345,10 +345,17 @@ export class PostsResolver {
   }
 
   /**
-   * Resolves the visible comment count for this post.
+   * Resolves the number of discussion contributions reachable by the viewer.
+   * Uses the per-request DataLoader so every Post in a response is counted in a
+   * constant number of batched queries. Falls back to the canonical stored
+   * counter only when the loader is not wired (e.g. isolated unit fixtures).
    */
   @ResolveField('commentCount')
-  commentCount(@Root() post: Post): number {
+  commentCount(@Root() post: Post, @Context() ctx?: GqlContext): Promise<number> | number {
+    const userId = ctx?.user?.id ?? (ctx?.req as unknown as { user?: { id: string } })?.user?.id;
+    if (ctx?.loaders?.reachableCommentCountByPostId) {
+      return ctx.loaders.reachableCommentCountByPostId.load(`${userId ?? ''}:${post.id}`);
+    }
     return post.commentCount ?? 0;
   }
 }
