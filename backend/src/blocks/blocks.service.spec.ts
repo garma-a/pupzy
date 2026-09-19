@@ -146,11 +146,13 @@ describe('BlocksService', () => {
 
   describe('getBlockedUsers', () => {
     const blockedAt = new Date('2026-02-01T10:00:00.000Z');
+    const cursorCreatedAt = '2026-02-01T10:00:00.000123Z';
 
     function blockedRow() {
       return {
         blockId: validBlockId,
         blockedAt,
+        cursorCreatedAt,
         userId: validTargetId,
         fullName: 'Blocked User',
         fullNameArabic: null,
@@ -180,20 +182,21 @@ describe('BlocksService', () => {
       expect(Object.keys(connection.edges[0].node)).not.toContain('phoneNumber');
       expect(
         JSON.parse(Buffer.from(connection.edges[0].cursor, 'base64url').toString('utf8')) as Record<string, unknown>,
-      ).toEqual({ createdAt: blockedAt.toISOString(), id: validBlockId });
+      ).toEqual({ createdAt: cursorCreatedAt, id: validBlockId });
       expect(connection.pageInfo).toEqual({ hasNextPage: true, endCursor: connection.edges[0].cursor });
     });
 
     it('clamps first and decodes a valid cursor', async () => {
-      const cursor = Buffer.from(
-        JSON.stringify({ createdAt: blockedAt.toISOString(), id: validBlockId }),
-        'utf8',
-      ).toString('base64url');
+      for (const validCreatedAt of [cursorCreatedAt, '2024-02-29T23:59:59.999999Z', '2026-02-01T10:00:00Z']) {
+        const cursor = Buffer.from(JSON.stringify({ createdAt: validCreatedAt, id: validBlockId }), 'utf8').toString(
+          'base64url',
+        );
 
-      await service.getBlockedUsers(validBlockerId, undefined, cursor);
-      expect(mockBlocksRepo.findBlockedUsers).toHaveBeenCalledWith(
-        expect.objectContaining({ limit: 20, cursor: { createdAt: blockedAt.toISOString(), id: validBlockId } }),
-      );
+        await service.getBlockedUsers(validBlockerId, undefined, cursor);
+        expect(mockBlocksRepo.findBlockedUsers).toHaveBeenLastCalledWith(
+          expect.objectContaining({ limit: 20, cursor: { createdAt: validCreatedAt, id: validBlockId } }),
+        );
+      }
 
       await service.getBlockedUsers(validBlockerId, 500, undefined);
       expect(mockBlocksRepo.findBlockedUsers).toHaveBeenLastCalledWith(expect.objectContaining({ limit: 50 }));
@@ -201,6 +204,21 @@ describe('BlocksService', () => {
 
     it('rejects an invalid cursor and reports an empty page', async () => {
       await expect(service.getBlockedUsers(validBlockerId, 10, 'not-a-cursor')).rejects.toBeInstanceOf(ValidationError);
+
+      const malformedCursors = [
+        { createdAt: 123, id: validBlockId },
+        { createdAt: 'not-a-date', id: validBlockId },
+        { createdAt: null, id: validBlockId },
+        { id: validBlockId },
+        // `new Date` accepts these, but the `::timestamptz` cast does not.
+        { createdAt: '0000-01-01T00:00:00Z', id: validBlockId },
+        { createdAt: '2026-02-30T00:00:00Z', id: validBlockId },
+        { createdAt: '2026-03-01T09:00:00.000+23:59', id: validBlockId },
+      ].map((body) => Buffer.from(JSON.stringify(body), 'utf8').toString('base64url'));
+      for (const malformed of malformedCursors) {
+        await expect(service.getBlockedUsers(validBlockerId, 10, malformed)).rejects.toBeInstanceOf(ValidationError);
+      }
+      expect(mockBlocksRepo.findBlockedUsers).not.toHaveBeenCalled();
 
       const connection = await service.getBlockedUsers(validBlockerId, 10, undefined);
       expect(connection.edges).toHaveLength(0);

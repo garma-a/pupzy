@@ -154,8 +154,10 @@ export class BlocksService {
         createdAt: string;
         id: string;
       };
-      const parsedDate = parsed.createdAt === undefined ? new Date(NaN) : new Date(parsed.createdAt);
-      if (typeof parsed.createdAt !== 'string' || Number.isNaN(parsedDate.getTime()) || typeof parsed.id !== 'string') {
+      if (typeof parsed.createdAt !== 'string' || !this.isValidCursorTimestamp(parsed.createdAt)) {
+        throw new ValidationError('Invalid cursor format');
+      }
+      if (typeof parsed.id !== 'string') {
         throw new ValidationError('Invalid cursor format');
       }
       // The cursor id reaches a uuid comparison in SQL, so a crafted non-UUID
@@ -165,6 +167,34 @@ export class BlocksService {
     } catch {
       throw new ValidationError('Invalid cursor format');
     }
+  }
+
+  /**
+   * Rejects timestamp text the `::timestamptz` cast would choke on.
+   *
+   * `new Date` normalizes values PostgreSQL refuses (February 30, year 0000,
+   * offsets beyond ±15:59), so validation must confirm the exact instant
+   * described by the canonical `to_char` text survives a calendar round-trip.
+   * Only the encoder's ISO-8601 UTC shape is accepted.
+   */
+  private isValidCursorTimestamp(value: string): boolean {
+    const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?Z$/.exec(value);
+    if (!match) return false;
+    const [year, month, day, hours, minutes, seconds] = match.slice(1, 7).map(Number);
+    const milliseconds = Number((match[7] ?? '').padEnd(3, '0').slice(0, 3));
+    if (year < 1) return false;
+    const instant = new Date(0);
+    instant.setUTCFullYear(year, month - 1, day);
+    instant.setUTCHours(hours, minutes, seconds, milliseconds);
+    return (
+      instant.getUTCFullYear() === year &&
+      instant.getUTCMonth() === month - 1 &&
+      instant.getUTCDate() === day &&
+      instant.getUTCHours() === hours &&
+      instant.getUTCMinutes() === minutes &&
+      instant.getUTCSeconds() === seconds &&
+      instant.getUTCMilliseconds() === milliseconds
+    );
   }
 
   private encodeCursor(row: BlockedUserRow): string {

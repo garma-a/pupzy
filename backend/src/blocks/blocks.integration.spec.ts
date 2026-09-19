@@ -1132,6 +1132,16 @@ describe('Block, Unblock, and Blocked Accounts (Ticket 11)', () => {
     ).toString('base64url');
     const invalidIdCursor = await runGql(BLOCKED_USERS, { first: 2, after: nonUuidIdCursor }, viewer);
     expect(errorMessage(invalidIdCursor)).toBe('Invalid cursor format');
+
+    // Timestamps JavaScript normalizes but PostgreSQL rejects must fail
+    // validation instead of surfacing the `::timestamptz` cast error.
+    for (const createdAt of ['2026-02-30T00:00:00Z', '0000-01-01T00:00:00Z', '2026-03-01T09:00:00.000+23:59']) {
+      const impossibleDateCursor = Buffer.from(JSON.stringify({ createdAt, id: first.id }), 'utf8').toString(
+        'base64url',
+      );
+      const invalidDateCursor = await runGql(BLOCKED_USERS, { first: 2, after: impossibleDateCursor }, viewer);
+      expect(errorMessage(invalidDateCursor)).toBe('Invalid cursor format');
+    }
   });
 
   it('blockedUsers cursors keep microsecond ordering so same-millisecond Blocks are never skipped', async () => {
