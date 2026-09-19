@@ -28,6 +28,11 @@ export const discussionNotificationEvents = pgTable(
     body: text('body').notNull(),
     relatedPostId: uuid('related_post_id').references(() => posts.id, { onDelete: 'set null' }),
     relatedCommentId: uuid('related_comment_id').references(() => comments.id, { onDelete: 'set null' }),
+    /**
+     * Delivery state. PENDING and PROCESSING are claimable; DELIVERED and
+     * SUPPRESSED are terminal. SUPPRESSED means an active Block isolated the
+     * actor from the recipient before delivery, so no inbox row was created.
+     */
     status: varchar('status', { length: 16 }).notNull().default('PENDING'),
     attempts: integer('attempts').notNull().default(0),
     lastError: text('last_error'),
