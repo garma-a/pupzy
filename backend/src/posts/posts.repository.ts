@@ -575,11 +575,56 @@ export class PostsRepository {
   // ─── Engagement Toggles ───────────────────────────────────────────────
 
   /**
+   * Serializes an engagement write on the canonical account-pair lock before
+   * acquiring the Post row, then rechecks active Blocks inside the committing
+   * transaction. Pair-before-row ordering matches discussion writes, so a
+   * concurrent Block and engagement mutation can neither interleave nor
+   * deadlock: whichever acquires the pair lock first commits first.
+   *
+   * Returns true when an active Block isolates the pair.
+   */
+  private async lockEngagementPair(tx: DbTransaction, postId: string, userId: string): Promise<boolean> {
+    const [postBeforeLock] = await tx
+      .select({ creatorId: posts.creatorId })
+      .from(posts)
+      .where(eq(posts.id, postId))
+      .limit(1);
+    if (!postBeforeLock) throw new NotFoundError('Post', postId);
+    return this.isolationPolicy.lockPairAndRecheck(tx, userId, postBeforeLock.creatorId);
+  }
+
+  /** True when the caller already owns an Upvote row for the Post. */
+  private async hasOwnedUpvote(tx: DbTransaction, postId: string, userId: string): Promise<boolean> {
+    const [row] = await tx
+      .select({ postId: postUpvotes.postId })
+      .from(postUpvotes)
+      .where(and(eq(postUpvotes.postId, postId), eq(postUpvotes.userId, userId)))
+      .limit(1);
+    return row !== undefined;
+  }
+
+  /** True when the caller already owns a Save row for the Post. */
+  private async hasOwnedSave(tx: DbTransaction, postId: string, userId: string): Promise<boolean> {
+    const [row] = await tx
+      .select({ postId: postSaves.postId })
+      .from(postSaves)
+      .where(and(eq(postSaves.postId, postId), eq(postSaves.userId, userId)))
+      .limit(1);
+    return row !== undefined;
+  }
+
+  /**
    * Toggles an upvote on a post. If the user has already upvoted, removes it.
    * If not, inserts a new upvote. All operations run in a single transaction:
-   *   1. Check existing upvote
-   *   2. INSERT or DELETE the upvote row
-   *   3. Update counter + recompute score + RETURNING * (single query)
+   *   1. Lock the account pair and recheck isolation
+   *   2. Check existing upvote
+   *   3. INSERT or DELETE the upvote row
+   *   4. Update counter + recompute score + RETURNING * (single query)
+   *
+   * An isolated Post is inaccessible, so a new Upvote cannot be added and
+   * resolves to the same not-found behavior as a missing Post. An Upvote the
+   * caller already owns stays removable so prior engagement remains
+   * reversible without restoring interaction.
    *
    * PostgreSQL evaluates all SET expressions using the OLD row values, so the
    * merged score formula explicitly uses (upvote_count + delta) to account for
@@ -590,6 +635,14 @@ export class PostsRepository {
    */
   async toggleUpvote(postId: string, userId: string): Promise<{ added: boolean; updatedPost: Post }> {
     return this.db.transaction(async (tx) => {
+      const isolated = await this.lockEngagementPair(tx, postId, userId);
+
+      // Fast neutral rejection: without an owned Upvote an isolated Post can
+      // never accept this write, so reject before waiting on the Post row lock.
+      if (isolated && !(await this.hasOwnedUpvote(tx, postId, userId))) {
+        throw new NotFoundError('Post', postId);
+      }
+
       const [availablePost] = await tx
         .select({ id: posts.id })
         .from(posts)
@@ -603,6 +656,9 @@ export class PostsRepository {
         .from(postUpvotes)
         .where(and(eq(postUpvotes.postId, postId), eq(postUpvotes.userId, userId)))
         .limit(1);
+
+      // No new relationship may cross an active Block.
+      if (isolated && !existing) throw new NotFoundError('Post', postId);
 
       if (existing) {
         // 2. Remove upvote
@@ -681,6 +737,10 @@ export class PostsRepository {
    * Toggles a save/bookmark on a post. Same 3-query pattern as toggleUpvote.
    * Works on all 4 post types.
    *
+   * As with Upvotes, the account pair is locked and rechecked inside the
+   * transaction: an isolated Post cannot gain a new Save, while a Save the
+   * caller already owns remains removable.
+   *
    * Merges counter update + effective_score recomputation into a single
    * UPDATE ... RETURNING to minimize round trips within the transaction.
    *
@@ -688,6 +748,14 @@ export class PostsRepository {
    */
   async toggleSave(postId: string, userId: string): Promise<{ added: boolean; updatedPost: Post }> {
     return this.db.transaction(async (tx) => {
+      const isolated = await this.lockEngagementPair(tx, postId, userId);
+
+      // Fast neutral rejection: without an owned Save an isolated Post can
+      // never accept this write, so reject before waiting on the Post row lock.
+      if (isolated && !(await this.hasOwnedSave(tx, postId, userId))) {
+        throw new NotFoundError('Post', postId);
+      }
+
       const [availablePost] = await tx
         .select({ id: posts.id })
         .from(posts)
@@ -701,6 +769,9 @@ export class PostsRepository {
         .from(postSaves)
         .where(and(eq(postSaves.postId, postId), eq(postSaves.userId, userId)))
         .limit(1);
+
+      // No new relationship may cross an active Block.
+      if (isolated && !existing) throw new NotFoundError('Post', postId);
 
       if (existing) {
         // 2. Remove save
@@ -789,6 +860,10 @@ export class PostsRepository {
    * Batch-checks which posts from a list have been upvoted by a specific user.
    * Returns a Set of post IDs that the user has upvoted.
    * Used by the `isUpvotedByMe` DataLoader.
+   *
+   * Posts authored by an account isolated from this user resolve as not
+   * upvoted, so a relationship preserved internally never leaks through a
+   * viewer-specific field while a Block is active.
    */
   async findUpvotesByUserForPosts(userId: string, postIds: readonly string[]): Promise<Set<string>> {
     if (postIds.length === 0) return new Set();
@@ -796,7 +871,14 @@ export class PostsRepository {
     const rows = await this.db
       .select({ postId: postUpvotes.postId })
       .from(postUpvotes)
-      .where(and(eq(postUpvotes.userId, userId), inArray(postUpvotes.postId, postIds as string[])));
+      .innerJoin(posts, eq(postUpvotes.postId, posts.id))
+      .where(
+        and(
+          eq(postUpvotes.userId, userId),
+          inArray(postUpvotes.postId, postIds as string[]),
+          excludeIsolatedAccounts(userId, posts.creatorId),
+        ),
+      );
 
     return new Set(rows.map((r) => r.postId));
   }
@@ -805,6 +887,7 @@ export class PostsRepository {
    * Batch-checks which posts from a list have been saved by a specific user.
    * Returns a Set of post IDs that the user has saved.
    * Used by the `isSavedByMe` DataLoader.
+   * Masking rules match `findUpvotesByUserForPosts`.
    */
   async findSavesByUserForPosts(userId: string, postIds: readonly string[]): Promise<Set<string>> {
     if (postIds.length === 0) return new Set();
@@ -812,7 +895,14 @@ export class PostsRepository {
     const rows = await this.db
       .select({ postId: postSaves.postId })
       .from(postSaves)
-      .where(and(eq(postSaves.userId, userId), inArray(postSaves.postId, postIds as string[])));
+      .innerJoin(posts, eq(postSaves.postId, posts.id))
+      .where(
+        and(
+          eq(postSaves.userId, userId),
+          inArray(postSaves.postId, postIds as string[]),
+          excludeIsolatedAccounts(userId, posts.creatorId),
+        ),
+      );
 
     return new Set(rows.map((r) => r.postId));
   }
@@ -854,7 +944,14 @@ export class PostsRepository {
             const rows = await this.db
               .select({ postId: postUpvotes.postId })
               .from(postUpvotes)
-              .where(and(eq(postUpvotes.userId, userId), inArray(postUpvotes.postId, postIds)));
+              .innerJoin(posts, eq(postUpvotes.postId, posts.id))
+              .where(
+                and(
+                  eq(postUpvotes.userId, userId),
+                  inArray(postUpvotes.postId, postIds),
+                  excludeIsolatedAccounts(userId, posts.creatorId),
+                ),
+              );
 
             for (const row of rows) {
               upvotedSet.add(`${userId}:${row.postId}`);
@@ -903,7 +1000,14 @@ export class PostsRepository {
             const rows = await this.db
               .select({ postId: postSaves.postId })
               .from(postSaves)
-              .where(and(eq(postSaves.userId, userId), inArray(postSaves.postId, postIds)));
+              .innerJoin(posts, eq(postSaves.postId, posts.id))
+              .where(
+                and(
+                  eq(postSaves.userId, userId),
+                  inArray(postSaves.postId, postIds),
+                  excludeIsolatedAccounts(userId, posts.creatorId),
+                ),
+              );
 
             for (const row of rows) {
               savedSet.add(`${userId}:${row.postId}`);

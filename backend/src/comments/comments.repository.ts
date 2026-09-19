@@ -1035,8 +1035,16 @@ export class CommentsRepository {
    * - Validates comment existence and status IN ('ACTIVE', 'IMAGE_HIDDEN').
    * - Rejects self-boosts (authorId === userId).
    * - Rejects boosts under a REMOVED post.
+   * - Locks every relevant account pair (the target's author, the Post's
+   *   creator, and a Reply's parent author) in deterministic canonical order
+   *   before the discussion lock, then rechecks isolation inside the
+   *   committing transaction.
    * - Atomically inserts or deletes the comment_boosts row.
    * - Updates comment boostCount transactionally (GREATEST(0, boost_count - 1) on remove).
+   *
+   * An isolated contribution cannot gain a new Boost and resolves to the same
+   * not-found behavior as inaccessible discussion content. A Boost the caller
+   * already owns stays removable so prior engagement remains reversible.
    */
   async toggleBoost(commentId: string, userId: string): Promise<{ isBoostedByMe: boolean; boostCount: number }> {
     const commentBeforeLock = await this.findCommentById(commentId);
@@ -1044,6 +1052,44 @@ export class CommentsRepository {
 
     return withDbRetry(() =>
       this.db.transaction(async (tx) => {
+        // Isolation spans the same account boundary as the discussion write:
+        // the target's author, the surrounding Post's creator, and (for a
+        // Reply) the parent Comment's author.
+        const [postBeforeLock] = await tx
+          .select({ creatorId: posts.creatorId })
+          .from(posts)
+          .where(eq(posts.id, commentBeforeLock.postId))
+          .limit(1);
+
+        let parentAuthorId: string | null = null;
+        if (commentBeforeLock.parentId) {
+          const [parentBeforeLock] = await tx
+            .select({ authorId: comments.authorId })
+            .from(comments)
+            .where(eq(comments.id, commentBeforeLock.parentId))
+            .limit(1);
+          parentAuthorId = parentBeforeLock?.authorId ?? null;
+        }
+
+        const candidatePairs: Array<readonly [string, string]> = [[userId, commentBeforeLock.authorId]];
+        if (postBeforeLock) candidatePairs.push([userId, postBeforeLock.creatorId]);
+        if (parentAuthorId) candidatePairs.push([userId, parentAuthorId]);
+        const crossAccountPairs = candidatePairs.filter(([first, second]) => first !== second);
+
+        const isolated = await this.isolationPolicy.lockPairsAndRecheck(tx, crossAccountPairs);
+
+        // Fast neutral rejection: without an owned Boost an isolated
+        // contribution can never accept this write, so reject before touching
+        // the discussion locks.
+        if (isolated) {
+          const [ownedBeforeDiscussionLock] = await tx
+            .select({ id: commentBoosts.id })
+            .from(commentBoosts)
+            .where(and(eq(commentBoosts.userId, userId), eq(commentBoosts.commentId, commentId)))
+            .limit(1);
+          if (!ownedBeforeDiscussionLock) throw new NotFoundError('Comment', commentId);
+        }
+
         const post = await this.lockDiscussionPost(tx, commentBeforeLock.postId);
         if (post.status === 'REMOVED') throw new NotFoundError('Post', commentBeforeLock.postId);
 
@@ -1079,6 +1125,9 @@ export class CommentsRepository {
           .from(commentBoosts)
           .where(and(eq(commentBoosts.userId, userId), eq(commentBoosts.commentId, commentId)))
           .for('update');
+
+        // No new relationship may cross an active Block.
+        if (isolated && !existing) throw new NotFoundError('Comment', commentId);
 
         if (existing) {
           await tx
@@ -1129,12 +1178,22 @@ export class CommentsRepository {
 
   /**
    * Checks if a user has boosted a specific comment or reply.
+   *
+   * A Boost whose target author is isolated from this user reports false so the
+   * preserved relationship never leaks through a viewer-specific field.
    */
   async isCommentBoostedByUser(commentId: string, userId: string): Promise<boolean> {
     const rows = await this.db
       .select({ id: commentBoosts.id })
       .from(commentBoosts)
-      .where(and(eq(commentBoosts.commentId, commentId), eq(commentBoosts.userId, userId)))
+      .innerJoin(comments, eq(commentBoosts.commentId, comments.id))
+      .where(
+        and(
+          eq(commentBoosts.commentId, commentId),
+          eq(commentBoosts.userId, userId),
+          excludeIsolatedAccounts(userId, comments.authorId),
+        ),
+      )
       .limit(1);
 
     return rows.length > 0;
@@ -1143,6 +1202,10 @@ export class CommentsRepository {
   /**
    * Creates a DataLoader that batch-checks "has this user boosted each comment?"
    * Accepts composite keys in the format `${userId}:${commentId}`.
+   *
+   * Comments and Replies authored by an account isolated from this user resolve
+   * as not boosted, so a relationship preserved internally never leaks through
+   * a viewer-specific field while a Block is active.
    */
   createCommentBoostedByMeLoader(): DataLoader<string, boolean> {
     return new DataLoader<string, boolean>(
@@ -1173,7 +1236,14 @@ export class CommentsRepository {
             const rows = await this.db
               .select({ commentId: commentBoosts.commentId })
               .from(commentBoosts)
-              .where(and(eq(commentBoosts.userId, userId), inArray(commentBoosts.commentId, commentIds)));
+              .innerJoin(comments, eq(commentBoosts.commentId, comments.id))
+              .where(
+                and(
+                  eq(commentBoosts.userId, userId),
+                  inArray(commentBoosts.commentId, commentIds),
+                  excludeIsolatedAccounts(userId, comments.authorId),
+                ),
+              );
 
             for (const row of rows) {
               boostedSet.add(`${userId}:${row.commentId}`);
