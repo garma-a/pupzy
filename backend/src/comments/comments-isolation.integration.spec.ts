@@ -902,9 +902,7 @@ describe('Comment and Reply account isolation with viewer-visible counts (Ticket
       );
       expect(res.data?.pinComment ?? null).toBeNull();
       expect(res.errors).toHaveLength(1);
-      expect(neutralized(res.errors![0].message, target.id)).toBe(
-        neutralized(missingMessage, NONEXISTENT_COMMENT_ID),
-      );
+      expect(neutralized(res.errors![0].message, target.id)).toBe(neutralized(missingMessage, NONEXISTENT_COMMENT_ID));
       expect(res.errors![0].message).not.toMatch(/block/i);
 
       const pins = await dbHelper.pool.query<{ count: string }>(
