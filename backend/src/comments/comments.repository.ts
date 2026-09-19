@@ -1273,6 +1273,12 @@ export class CommentsRepository {
 
     return withDbRetry(() =>
       this.db.transaction(async (tx) => {
+        // An isolated author's Comment is unavailable, so it cannot be pinned
+        // or notified. The neutral not-found never reveals the Block direction.
+        if (await this.isolationPolicy.lockPairAndRecheck(tx, userId, commentBeforeLock.authorId)) {
+          throw new NotFoundError('Comment', commentId);
+        }
+
         const post = await this.lockDiscussionPost(tx, commentBeforeLock.postId);
         if (post.status === 'REMOVED') throw new NotFoundError('Post', commentBeforeLock.postId);
 

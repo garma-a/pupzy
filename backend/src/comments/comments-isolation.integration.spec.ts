@@ -72,6 +72,10 @@ const CREATE_REPLY_MUTATION = `mutation CreateReply($input: CreateReplyInput!) {
   createReply(input: $input) { id postId parentId text }
 }`;
 
+const PIN_COMMENT_MUTATION = `mutation PinComment($commentId: ID!) {
+  pinComment(commentId: $commentId) { id isPinned }
+}`;
+
 interface CommentNode {
   id: string;
   text: string;
@@ -860,6 +864,69 @@ describe('Comment and Reply account isolation with viewer-visible counts (Ticket
     const pinnedAfter = await commentsPage(post.id, { sort: 'TOP', first: 1 }, viewer);
     expect(pinnedAfter.edges[0].node.id).toBe(pinnedBlocked.id);
     expect(pinnedAfter.edges[0].node.isPinned).toBe(true);
+  });
+
+  it('pinning an isolated account Comment fails neutrally without pinning or notifying', async () => {
+    const post = await seedPost(poster.id);
+    const target = await seedComment({ postId: post.id, authorId: author.id, text: 'Pin target' });
+
+    const baseline = await runGql<{ pinComment: { id: string; isPinned: boolean } }>(
+      PIN_COMMENT_MUTATION,
+      { commentId: target.id },
+      poster,
+    );
+    expect(baseline.errors).toBeUndefined();
+    expect(baseline.data?.pinComment.isPinned).toBe(true);
+
+    await dbHelper.db.delete(postPins).where(eq(postPins.postId, post.id));
+    const eventsBefore = await dbHelper.pool.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM discussion_notification_events WHERE related_comment_id = $1`,
+      [target.id],
+    );
+
+    const missing = await runGql(PIN_COMMENT_MUTATION, { commentId: NONEXISTENT_COMMENT_ID }, poster);
+    const missingMessage = missing.errors![0].message;
+
+    for (const direction of ['poster-blocks', 'author-blocks'] as const) {
+      await clearBlocks();
+      if (direction === 'poster-blocks') {
+        await setBlock(poster, author);
+      } else {
+        await setBlock(author, poster);
+      }
+
+      const res = await runGql<{ pinComment: { id: string; isPinned: boolean } }>(
+        PIN_COMMENT_MUTATION,
+        { commentId: target.id },
+        poster,
+      );
+      expect(res.data?.pinComment ?? null).toBeNull();
+      expect(res.errors).toHaveLength(1);
+      expect(neutralized(res.errors![0].message, target.id)).toBe(
+        neutralized(missingMessage, NONEXISTENT_COMMENT_ID),
+      );
+      expect(res.errors![0].message).not.toMatch(/block/i);
+
+      const pins = await dbHelper.pool.query<{ count: string }>(
+        `SELECT count(*)::text AS count FROM post_pins WHERE post_id = $1`,
+        [post.id],
+      );
+      expect(Number(pins.rows[0].count)).toBe(0);
+      const eventsAfter = await dbHelper.pool.query<{ count: string }>(
+        `SELECT count(*)::text AS count FROM discussion_notification_events WHERE related_comment_id = $1`,
+        [target.id],
+      );
+      expect(eventsAfter.rows[0].count).toBe(eventsBefore.rows[0].count);
+    }
+
+    await clearBlocks();
+    const restored = await runGql<{ pinComment: { id: string; isPinned: boolean } }>(
+      PIN_COMMENT_MUTATION,
+      { commentId: target.id },
+      poster,
+    );
+    expect(restored.errors).toBeUndefined();
+    expect(restored.data?.pinComment.isPinned).toBe(true);
   });
 
   it('cursor continuation over filtered Comment and Reply pages stays complete and dense', async () => {
