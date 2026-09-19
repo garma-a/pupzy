@@ -54,7 +54,7 @@ node scripts/graphql-schema-compat.mjs b6df50c HEAD --dump-dir /tmp/opencode/har
 1. Enumerate every `backend/src/**/*.graphql` file at each revision (`git ls-tree`), read each file at that revision (`git show`).
 2. Merge the SDL with `@graphql-tools/merge` (the same merge behavior `@nestjs/graphql` applies to its schema-first `typePaths`), then build an executable schema with `graphql-js`.
 3. Walk the complete type map and compare, for every baseline type that still exists: type kind, every field's canonical type string (list nesting and `!` nullability preserved), every field argument and argument type, every enum value, and every union member. Scalar presence is compared by type name.
-4. Any baseline type/field/argument/enum value/scalar that disappears or changes is reported as **incompatible**. New types, fields, arguments, and enum values are reported as **additive**.
+4. Any baseline type/field/argument/enum value/scalar that disappears or changes is reported as **incompatible**. Adding a required (non-null, no default) argument to an existing field or a required input field to an existing input object is also reported as **incompatible**, because clients that do not send it would break. All other new types, fields, optional arguments, and enum values are reported as **additive**.
 
 **Result**
 

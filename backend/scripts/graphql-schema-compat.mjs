@@ -8,9 +8,12 @@
  *
  * A change is INCOMPATIBLE when it removes or alters anything the baseline
  * exposed: a type, an operation, an argument, a field type or nullability, an
- * enum value, an input-object field, a union member, or a scalar. Additions
- * (new types, new operations, new enum values, new optional-or-not input
- * fields) are reported as additive and allowed.
+ * enum value, an input-object field, a union member, or a scalar. Adding a
+ * required (non-null, no default) argument to an existing field or a required
+ * input field to an existing input object is also incompatible, because old
+ * clients that do not send it would fail. Other additions (new types, new
+ * operations, new optional fields and arguments, new enum values) are
+ * reported as additive and allowed.
  *
  * Usage (from backend/):
  *   node scripts/graphql-schema-compat.mjs [baselineRev] [candidateRev]
@@ -34,8 +37,9 @@ const gitRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], {
 const backendPrefix = path.relative(gitRoot, backendDir).split(path.sep).join('/');
 
 const args = process.argv.slice(2);
-const baselineRev = args.find((a) => !a.startsWith('--')) ?? 'b6df50c';
-const candidateRev = args.filter((a) => !a.startsWith('--'))[1] ?? 'HEAD';
+const positionalArgs = args.filter((arg, index) => !arg.startsWith('--') && args[index - 1] !== '--dump-dir');
+const baselineRev = positionalArgs[0] ?? 'b6df50c';
+const candidateRev = positionalArgs[1] ?? 'HEAD';
 const dumpDirIndex = args.indexOf('--dump-dir');
 const dumpDir = dumpDirIndex !== -1 ? args[dumpDirIndex + 1] : null;
 
@@ -73,7 +77,13 @@ function snapshot(schema) {
       for (const [fieldName, field] of Object.entries(type.getFields())) {
         fields[fieldName] = {
           type: namedType(field.type),
-          args: Object.fromEntries((field.args ?? []).map((arg) => [arg.name, namedType(arg.type)])),
+          hasDefault: field.defaultValue !== undefined,
+          args: Object.fromEntries(
+            (field.args ?? []).map((arg) => [
+              arg.name,
+              { type: namedType(arg.type), hasDefault: arg.defaultValue !== undefined },
+            ]),
+          ),
         };
       }
       types.set(name, { kind, fields });
@@ -132,21 +142,37 @@ function compare(baseline, candidate) {
         incompatible.push(`FIELD_TYPE_CHANGED ${typeName}.${fieldName}: ${baseField.type} -> ${candField.type}`);
       }
       const labels = rootNames.includes(typeName) ? 'operation' : 'field';
-      for (const [argName, baseArgType] of Object.entries(baseField.args)) {
-        const candArgType = candField.args[argName];
-        if (candArgType === undefined) {
+      for (const [argName, baseArg] of Object.entries(baseField.args)) {
+        const candArg = candField.args[argName];
+        if (candArg === undefined) {
           incompatible.push(`REMOVED_ARGUMENT ${typeName}.${fieldName}(${argName})`);
-        } else if (candArgType !== baseArgType) {
+        } else if (candArg.type !== baseArg.type) {
           incompatible.push(
-            `ARGUMENT_TYPE_CHANGED ${typeName}.${fieldName}(${argName}): ${baseArgType} -> ${candArgType}`,
+            `ARGUMENT_TYPE_CHANGED ${typeName}.${fieldName}(${argName}): ${baseArg.type} -> ${candArg.type}`,
           );
         }
       }
-      const addedArgs = Object.keys(candField.args).filter((a) => !(a in baseField.args));
-      if (addedArgs.length) additive.push(`ADDED_ARGUMENTS ${typeName}.${fieldName}(${labels}): ${addedArgs.join(', ')}`);
+      const addedArgs = Object.entries(candField.args).filter(([a]) => !(a in baseField.args));
+      if (addedArgs.length) {
+        additive.push(`ADDED_ARGUMENTS ${typeName}.${fieldName}(${labels}): ${addedArgs.map(([a]) => a).join(', ')}`);
+        for (const [argName, arg] of addedArgs) {
+          if (arg.type.endsWith('!') && !arg.hasDefault) {
+            incompatible.push(`REQUIRED_ARGUMENT_ADDED ${typeName}.${fieldName}(${argName}): ${arg.type}`);
+          }
+        }
+      }
     }
-    const addedFields = Object.keys(cand.fields).filter((f) => !(f in base.fields));
-    if (addedFields.length) additive.push(`ADDED_FIELDS ${typeName}: ${addedFields.join(', ')}`);
+    const addedFields = Object.entries(cand.fields).filter(([f]) => !(f in base.fields));
+    if (addedFields.length) {
+      additive.push(`ADDED_FIELDS ${typeName}: ${addedFields.map(([f]) => f).join(', ')}`);
+      if (base.kind === 'InputObject') {
+        for (const [fieldName, field] of addedFields) {
+          if (field.type.endsWith('!') && !field.hasDefault) {
+            incompatible.push(`REQUIRED_INPUT_FIELD_ADDED ${typeName}.${fieldName}: ${field.type}`);
+          }
+        }
+      }
+    }
   }
 
   for (const [typeName, cand] of candidate) {
@@ -165,7 +191,10 @@ if (dumpDir) {
     ['baseline', baseline],
     ['candidate', candidate],
   ]) {
-    writeFileSync(path.join(dumpDir, `${label}-${loaded.revision.slice(0, 12)}.graphql`), printSchema(lexicographicSortSchema(loaded.schema)));
+    writeFileSync(
+      path.join(dumpDir, `${label}-${loaded.revision.slice(0, 12)}.graphql`),
+      printSchema(lexicographicSortSchema(loaded.schema)),
+    );
   }
 }
 
@@ -182,7 +211,9 @@ console.log(`Incompatible changes (${incompatible.length}):`);
 for (const entry of incompatible.sort()) console.log(`  ! ${entry}`);
 console.log('');
 if (incompatible.length === 0) {
-  console.log('RESULT: COMPATIBLE - no existing type, operation, argument, field, nullability, enum value, or scalar changed.');
+  console.log(
+    'RESULT: COMPATIBLE - no existing type, operation, argument, field, nullability, enum value, or scalar changed.',
+  );
   process.exit(0);
 } else {
   console.log('RESULT: INCOMPATIBLE');

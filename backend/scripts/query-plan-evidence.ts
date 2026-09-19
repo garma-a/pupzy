@@ -94,7 +94,8 @@ async function main(): Promise<void> {
   for (const batch of chunk(
     Array.from({ length: POSTS }, (_, i) => {
       const type = postTypes[i % postTypes.length];
-      const creator = i % 5 === 0 ? faker.helpers.arrayElement(blockedByViewer) : faker.helpers.arrayElement(openAuthors);
+      const creator =
+        i % 5 === 0 ? faker.helpers.arrayElement(blockedByViewer) : faker.helpers.arrayElement(openAuthors);
       const city = faker.helpers.arrayElement(cities);
       return {
         creatorId: creator,
@@ -138,7 +139,8 @@ async function main(): Promise<void> {
   const parentPostIds: string[] = [];
   for (const batch of chunk(
     Array.from({ length: TOP_LEVEL_COMMENTS }, (_, i) => {
-      const author = i % 4 === 0 ? faker.helpers.arrayElement(blockedByViewer) : faker.helpers.arrayElement(openAuthors);
+      const author =
+        i % 4 === 0 ? faker.helpers.arrayElement(blockedByViewer) : faker.helpers.arrayElement(openAuthors);
       return {
         postId: discussionPosts[i % discussionPosts.length],
         authorId: author,
@@ -301,11 +303,15 @@ async function main(): Promise<void> {
   );
 
   await explain('Personalized Post commentCount (DataLoader batch)', () =>
-    commentsRepository.createReachableCommentCountByPostIdLoader().loadMany(discussionPosts.map((id) => `${viewer}:${id}`)),
+    commentsRepository
+      .createReachableCommentCountByPostIdLoader()
+      .loadMany(discussionPosts.map((id) => `${viewer}:${id}`)),
   );
 
   await explain('Personalized Comment replyCount (DataLoader batch)', () =>
-    commentsRepository.createReachableReplyCountByCommentIdLoader().loadMany(parentIds.slice(0, 50).map((id) => `${viewer}:${id}`)),
+    commentsRepository
+      .createReachableReplyCountByCommentIdLoader()
+      .loadMany(parentIds.slice(0, 50).map((id) => `${viewer}:${id}`)),
   );
 
   await explain('Blocked Accounts pagination (page 1)', () =>
