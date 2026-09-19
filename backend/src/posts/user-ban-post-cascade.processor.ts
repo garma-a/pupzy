@@ -90,11 +90,7 @@ export class UserBanPostCascadeProcessor implements OnApplicationBootstrap {
    * accumulates the closed ids into the ban audit metadata, mirroring the
    * AdminJS batch path so resumed pages cannot leave stale open reports.
    */
-  private async closeCascadedPostReports(
-    tx: DbTransaction,
-    actionId: string,
-    removedPostIds: string[],
-  ): Promise<void> {
+  private async closeCascadedPostReports(tx: DbTransaction, actionId: string, removedPostIds: string[]): Promise<void> {
     if (removedPostIds.length === 0) return;
 
     const auditResult = await tx.execute<{ admin_user_id: string | null }>(sql`
