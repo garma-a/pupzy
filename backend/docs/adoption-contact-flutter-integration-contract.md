@@ -10,7 +10,7 @@ This document is the authoritative client-facing contract for the additive `getA
 
 ## 1. Overview
 
-An approved adoption applicant needs the Post owner's WhatsApp link to act on the approval. Previously the applicant could only receive the link in the `approveAdoptionApplication` response, with no way to re-fetch it. `getAdoptionWhatsAppLink` is the additive, applicant-only re-fetch.
+An approved adoption applicant needs the Post owner's WhatsApp link to act on the approval. `approveAdoptionApplication` returns the `AdoptionApplication` fields only — the `AdoptionApplication` type has no `whatsappLink` field, so the applicant previously had no way to obtain the link. `getAdoptionWhatsAppLink` is the additive, applicant-only retrieval query.
 
 - **One purpose:** return the current WhatsApp link (`https://wa.me/<digits>`) for an already-approved adoption application.
 - **Applicant-only:** only the account that submitted the application can call it.
@@ -61,7 +61,7 @@ query GetAdoptionWhatsApp($applicationId: ID!) {
 ## 3. What the backend enforces
 
 1. **Authentication required.** The global Firebase guard rejects missing/invalid sessions; suspended or deleting accounts cannot call the query.
-2. **The application must exist.** An unknown or malformed `applicationId` returns `NOT_FOUND`.
+2. **The application must exist.** A malformed `applicationId` returns `VALIDATION_ERROR`; an unknown but well-formed `applicationId` returns `NOT_FOUND`.
 3. **The caller must be the original applicant.** The owner and any unrelated account receive `FORBIDDEN`. This is BOLA protection, not a Block signal.
 4. **The application must be `APPROVED`.** `PENDING` and `REJECTED` applications return `VALIDATION_ERROR`. A `REJECTED` application cannot be revived.
 5. **The Post must be accessible and not `REMOVED`.** A missing or administratively removed Post returns the ordinary neutral `NOT_FOUND` for the Post.
@@ -90,7 +90,7 @@ There is deliberately **no** error code that reveals a Block. An isolated pair r
 
 ## 5. Recommended client behavior
 
-1. Offer the contact action only for the applicant's own `APPROVED` applications. `approveAdoptionApplication` already returns the link on approval; use this query when the app needs to re-fetch it (for example after reopening the screen or restoring state).
+1. Offer the contact action only for the applicant's own `APPROVED` applications. Retrieve the link with this query when the app needs it (for example after approval, reopening the screen, or restoring state); the approval response itself does not carry the link.
 2. Call the query on demand rather than storing the link long-term; the owner's current phone may change.
 3. On success, open the returned `https://wa.me/...` link directly.
 4. On `NOT_FOUND`, render the app's neutral unavailable state. Never say "You were blocked" or infer Block direction.
@@ -105,4 +105,4 @@ There is deliberately **no** error code that reveals a Block. An isolated pair r
 - `approveAdoptionApplication`, `rejectAdoptionApplication`, `submitAdoptionApplication`, `myAdoptionApplications`, and `postAdoptionApplications` keep their existing names, arguments, results, and error behavior.
 - Approval remains compatible: an application approved before this feature ships can retrieve the link immediately, subject to the same account, Post-visibility, and Block restrictions.
 - Blocks continue to reuse existing unavailable/not-found behavior rather than introducing new error shapes; see `docs/ugc-reporting-and-account-blocking-flutter-integration-contract.md`.
-- Reproduce the behavior with `backend/src/adoptions/adoption-contact-access.integration.spec.ts`, which exercises the real GraphQL schema against Postgres, including both Block directions, account deletion/ban, missing phone, removed Post, and concurrent Block/approval races.
+- Reproduce the behavior with `src/adoptions/adoption-contact-access.integration.spec.ts`, which exercises the real GraphQL schema against Postgres, including both Block directions, account deletion/ban, missing phone, removed Post, and concurrent Block/approval races.
