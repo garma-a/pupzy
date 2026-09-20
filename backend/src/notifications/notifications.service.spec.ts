@@ -193,6 +193,62 @@ describe('NotificationsService', () => {
     });
   });
 
+  describe('language rendering', () => {
+    const bilingualRow = {
+      id: validNotificationId,
+      recipientId: validUserId,
+      type: 'NEW_COMMENT',
+      title: 'New comment',
+      body: 'Ahmed commented on your post "Missing cat"',
+      titleArabic: 'تعليق جديد',
+      bodyArabic: 'علّق Ahmed على منشورك "Missing cat"',
+      relatedPostId: '01916327-0000-7000-8000-000000000010',
+      relatedCommentId: null,
+      isRead: false,
+      createdAt: new Date(),
+    } as Notification;
+
+    it('renders inbox nodes in the explicitly synchronized language', async () => {
+      mockRepo.findByRecipient = jest.fn().mockResolvedValue({ rows: [bilingualRow], hasNextPage: false });
+
+      const result = await service.getMyNotifications(validUserId, 10, null, 'ar');
+
+      expect(result.edges[0].node.title).toBe('تعليق جديد');
+      expect(result.edges[0].node.body).toBe('علّق Ahmed على منشورك "Missing cat"');
+      expect(result.edges[0].node.relatedPostId).toBe(bilingualRow.relatedPostId);
+    });
+
+    it('keeps legacy English rows for an Arabic recipient', async () => {
+      const legacyRow = {
+        ...bilingualRow,
+        titleArabic: null,
+        bodyArabic: null,
+      } as Notification;
+      mockRepo.findByRecipient = jest.fn().mockResolvedValue({ rows: [legacyRow], hasNextPage: false });
+
+      const result = await service.getMyNotifications(validUserId, 10, null, 'ar');
+
+      expect(result.edges[0].node.title).toBe('New comment');
+    });
+
+    it('renders English for an unsynchronized recipient', async () => {
+      mockRepo.findByRecipient = jest.fn().mockResolvedValue({ rows: [bilingualRow], hasNextPage: false });
+
+      const result = await service.getMyNotifications(validUserId, 10, null, null);
+
+      expect(result.edges[0].node.title).toBe('New comment');
+    });
+
+    it('renders the marked-read notification in the synchronized language', async () => {
+      mockRepo.markRead = jest.fn().mockResolvedValue(bilingualRow);
+
+      const result = await service.markRead(validNotificationId, validUserId, 'ar');
+
+      expect(result.title).toBe('تعليق جديد');
+      expect(result.isRead).toBe(false);
+    });
+  });
+
   describe('getUnreadCount', () => {
     it('returns count from repository', async () => {
       const count = await service.getUnreadCount(validUserId);

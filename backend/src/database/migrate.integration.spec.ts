@@ -91,6 +91,31 @@ describe('Database Migration Runner Integration', () => {
     expect(notifColsRes.rows.length).toBe(1);
     expect(notifColsRes.rows[0].is_nullable).toBe('YES');
 
+    // Verify explicit language synchronization schema (migration 0045):
+    // no historic default and nullable so unsynchronized accounts stay NULL.
+    const languageColRes = await pool.query<{ is_nullable: string; column_default: string | null }>(`
+      SELECT is_nullable, column_default
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'language_preference'
+    `);
+    expect(languageColRes.rows.length).toBe(1);
+    expect(languageColRes.rows[0].is_nullable).toBe('YES');
+    expect(languageColRes.rows[0].column_default).toBeNull();
+
+    // Bilingual notification content columns are nullable so legacy
+    // English-only rows remain valid and fall back safely.
+    const bilingualColRes = await pool.query<{ table_name: string; column_name: string; is_nullable: string }>(`
+      SELECT table_name, column_name, is_nullable
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name IN ('notifications', 'discussion_notification_events')
+        AND column_name IN ('title_arabic', 'body_arabic')
+    `);
+    expect(bilingualColRes.rows).toHaveLength(4);
+    for (const row of bilingualColRes.rows) {
+      expect(row.is_nullable).toBe('YES');
+    }
+
     // Verify staged_uploads schema and non-null constraints
     const stagedColsRes = await pool.query<{ column_name: string; is_nullable: string }>(`
       SELECT column_name, is_nullable

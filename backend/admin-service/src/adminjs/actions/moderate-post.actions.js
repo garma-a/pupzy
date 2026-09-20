@@ -6,6 +6,7 @@ import {
   runModerationAction,
 } from './helpers.js';
 import { canAdminRemove, canAdminRestore } from '../../../../src/common/contracts/post-lifecycle.contract.ts';
+import { buildNotificationContent } from '../../../../src/notifications/notification-templates.ts';
 import { isAnyAdmin } from '../rbac.js';
 
 function getRecordProperty(record, property) {
@@ -163,11 +164,12 @@ export function buildPostActions(pool, component, cache) {
              WHERE id = $1`,
             [row.id, reason, adminId],
           );
+          const content = buildNotificationContent('POST_REMOVED_BY_ADMIN', { reason });
           await client.query(
             `INSERT INTO notifications
-               (recipient_id, type, title, body, related_post_id, is_read)
-             VALUES ($1, 'POST_REMOVED_BY_ADMIN', 'Your post was removed', $2, $3, false)`,
-            [row.creator_id, reason, row.id],
+               (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
+             VALUES ($1, 'POST_REMOVED_BY_ADMIN', $2, $3, $4, $5, $6, false)`,
+            [row.creator_id, content.title, content.body, content.titleArabic, content.bodyArabic, row.id],
           );
           const closedPostReportIds = await closeOpenPostReports(client, row.id, adminId);
           return { closedPostReportIds };

@@ -4,6 +4,7 @@ import { AdoptionsRepository } from './adoptions.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { buildNotificationContent } from '../notifications/notification-templates';
 import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../common/errors/app.errors';
 import { assertUuid } from '../common/utils/validate-uuid';
 import { clampFirst } from '../common/utils/pagination.util';
@@ -104,8 +105,10 @@ export class AdoptionsService {
       {
         recipientId: post.creatorId,
         type: 'ADOPTION_APPLICATION_RECEIVED',
-        title: 'New adoption application',
-        body: `${applicant?.fullName ?? 'Someone'} applied to adopt from "${post.title}"`,
+        ...buildNotificationContent('ADOPTION_APPLICATION_RECEIVED', {
+          actorName: applicant?.fullName ?? 'Someone',
+          postTitle: post.title,
+        }),
         relatedPostId: targetPostId,
         relatedApplicationId: application.id,
       },
@@ -181,8 +184,7 @@ export class AdoptionsService {
       {
         recipientId: application.applicantId,
         type: 'ADOPTION_APPLICATION_APPROVED',
-        title: 'Adoption application approved!',
-        body: `Your adoption application for "${post.title}" has been approved. You can now contact the owner.`,
+        ...buildNotificationContent('ADOPTION_APPLICATION_APPROVED', { postTitle: post.title }),
         relatedPostId: application.targetPostId,
         relatedApplicationId: applicationId,
       },
@@ -226,8 +228,7 @@ export class AdoptionsService {
       {
         recipientId: application.applicantId,
         type: 'ADOPTION_APPLICATION_REJECTED',
-        title: 'Adoption application update',
-        body: `Your adoption application for "${post.title}" was not approved at this time`,
+        ...buildNotificationContent('ADOPTION_APPLICATION_REJECTED', { postTitle: post.title }),
         relatedPostId: application.targetPostId,
         relatedApplicationId: applicationId,
       },

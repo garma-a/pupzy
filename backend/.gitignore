@@ -8,6 +8,7 @@ docs/adr/*
 !docs/comments-flutter-integration-contract.md
 !docs/post-lifecycle-transition-contract.md
 !docs/adoption-contact-flutter-integration-contract.md
+!docs/notification-language-flutter-integration-contract.md
 !docs/ugc-reporting-and-account-blocking-flutter-integration-contract.md
 !docs/ugc-reporting-and-account-blocking-release-evidence.md
 !docs/deployment/

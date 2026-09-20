@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ValidationError } from '../../common/errors/app.errors';
 import { geoLocationSchema } from './geo-location.input';
+import { languagePreferenceSchema } from './language-preference.input';
 
 /**
  * Zod schema for the `completeProfile` mutation input.
@@ -38,6 +39,13 @@ const completeProfileSchema = z
      * Optional if `cityId` is provided.
      */
     location: geoLocationSchema.optional(),
+
+    /**
+     * Explicit notification language synchronized during onboarding.
+     * Optional: accounts that never send it stay unsynchronized and receive
+     * English until an explicit choice is made.
+     */
+    languagePreference: languagePreferenceSchema.optional(),
   })
   .refine((data) => data.cityId || data.location, {
     message: 'Either cityId or location must be provided',

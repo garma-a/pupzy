@@ -137,6 +137,7 @@ export class UsersService {
       phoneNumber: string;
       cityId?: string;
       location?: { latitude: number; longitude: number };
+      languagePreference?: 'ar' | 'en';
     },
   ): Promise<User> {
     const encryptedPhone = encryptString(data.phoneNumber, this.phoneEncryptionKey);
@@ -161,6 +162,7 @@ export class UsersService {
       fullName: data.fullName,
       phoneNumber: encryptedPhone,
       homeCityId: resolvedCityId,
+      ...(data.languagePreference ? { languagePreference: data.languagePreference } : {}),
       ...(data.location
         ? {
             lastKnownLocation: [data.location.longitude, data.location.latitude],
@@ -202,6 +204,18 @@ export class UsersService {
     }
 
     const updatedUser = await this.usersRepository.update(userId, updates);
+    await this.invalidateUserCache(updatedUser.firebaseUserId);
+    return this.decryptUserPhone(updatedUser);
+  }
+
+  /**
+   * Explicitly synchronizes the notification language.
+   *
+   * The preference update requires no unrelated profile field: only the chosen
+   * language is written, so it cannot overwrite a name or phone number.
+   */
+  async updateLanguagePreference(userId: string, languagePreference: 'ar' | 'en'): Promise<User> {
+    const updatedUser = await this.usersRepository.update(userId, { languagePreference });
     await this.invalidateUserCache(updatedUser.firebaseUserId);
     return this.decryptUserPhone(updatedUser);
   }

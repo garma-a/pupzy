@@ -532,6 +532,9 @@ describe('PostsService', () => {
         expect.objectContaining({
           recipientId: otherUserId,
           type: 'NEW_UPVOTE',
+          title: 'New upvote',
+          titleArabic: 'إعجاب جديد',
+          bodyArabic: 'أعجب Test User بمنشورك "Puppy"',
         }),
         validUserId,
       );
@@ -580,6 +583,9 @@ describe('PostsService', () => {
         expect.objectContaining({
           recipientId: otherUserId,
           type: 'POST_SAVED',
+          title: 'Post saved',
+          titleArabic: 'تم حفظ المنشور',
+          bodyArabic: 'حفظ Test User منشورك "Crate"',
         }),
         validUserId,
       );
