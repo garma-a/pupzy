@@ -5,6 +5,7 @@ import {
   readModerationReason,
   runModerationAction,
 } from './helpers.js';
+import { canAdminRemove, canAdminRestore } from '../../../../src/common/contracts/post-lifecycle.contract.ts';
 import { isAnyAdmin } from '../rbac.js';
 
 function getRecordProperty(record, property) {
@@ -151,9 +152,9 @@ export function buildPostActions(pool, component, cache) {
           const record = context?.record;
           if (!record) return false;
           const status = getRecordProperty(record, 'status');
-          return status === 'ACTIVE';
+          return canAdminRemove(status);
         },
-        validate: (row) => (row.status === 'ACTIVE' ? null : 'Only active posts can be removed.'),
+        validate: (row) => (canAdminRemove(row.status) ? null : 'Only active posts can be removed.'),
         mutate: async (client, row, adminId, reason) => {
           await client.query(
             `UPDATE posts
@@ -186,9 +187,9 @@ export function buildPostActions(pool, component, cache) {
           const record = context?.record;
           if (!record) return false;
           const status = getRecordProperty(record, 'status');
-          return status === 'REMOVED';
+          return canAdminRestore(status);
         },
-        validate: (row) => (row.status === 'REMOVED' ? null : 'Only removed posts can be restored.'),
+        validate: (row) => (canAdminRestore(row.status) ? null : 'Only removed posts can be restored.'),
         mutate: async (client, row, adminId) => {
           await client.query(
             `UPDATE posts

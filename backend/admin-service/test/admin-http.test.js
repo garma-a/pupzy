@@ -552,6 +552,132 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.equal(removedActionNames.includes('removePost'), false);
   });
 
+  it('removes and restores a Post over authenticated AdminJS HTTP with audited, notified, counter-synced lifecycle effects', async () => {
+    const postId = await insertPost(database.pool, {
+      ...principals,
+      title: 'Ticket 01 lifecycle HTTP post',
+      moderationStatus: 'FLAGGED',
+      status: 'ACTIVE',
+    });
+
+    // Retained media and an open Post Report prove removal is not destructive.
+    await database.pool.query(
+      `INSERT INTO post_media (post_id, public_url, cloudflare_storage_key, display_order)
+       VALUES ($1, 'https://cdn.pupzy.net/posts/ticket01-lifecycle.webp', $2, 0)`,
+      [postId, `posts/${postId}/ticket01-lifecycle.webp`],
+    );
+    const reportId = (
+      await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason)
+         VALUES ($1, $2, 'SPAM')
+         RETURNING id`,
+        [postId, principals.userId],
+      )
+    ).rows[0].id;
+
+    const postAction = (path, payload, cookie, csrf) =>
+      fetch(`${baseUrl}${path}`, {
+        method: 'POST',
+        headers: {
+          cookie: `${cookie}; ${csrf.cookie}`,
+          origin: baseUrl,
+          'x-xsrf-token': csrf.token,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+    const beforeCount = (await database.pool.query(`SELECT post_count FROM users WHERE id = $1`, [principals.userId]))
+      .rows[0].post_count;
+
+    // An ADMIN (not only SUPER_ADMIN) performs the removal through the real route.
+    const removeResponse = await postAction(
+      `/admin/api/resources/posts/records/${postId}/removePost`,
+      { reason: 'Ticket 01 lifecycle takedown' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(removeResponse.status, 200);
+    const removeResult = await removeResponse.json();
+    assert.equal(removeResult.notice?.type, 'success');
+
+    const removed = (
+      await database.pool.query(
+        `SELECT status, moderation_status, moderation_reason, moderated_by_admin_id
+         FROM posts WHERE id = $1`,
+        [postId],
+      )
+    ).rows[0];
+    assert.equal(removed.status, 'REMOVED');
+    assert.equal(removed.moderation_status, 'FLAGGED');
+    assert.equal(removed.moderation_reason, 'Ticket 01 lifecycle takedown');
+    assert.equal(removed.moderated_by_admin_id, staffId);
+
+    const afterRemovalCount = (
+      await database.pool.query(`SELECT post_count FROM users WHERE id = $1`, [principals.userId])
+    ).rows[0].post_count;
+    assert.equal(Number(afterRemovalCount), Number(beforeCount) - 1);
+
+    const removalAudit = await database.pool.query(
+      `SELECT admin_user_id, metadata FROM moderation_actions
+       WHERE target_id = $1 AND action_type = 'POST_REMOVED'`,
+      [postId],
+    );
+    assert.equal(removalAudit.rows.length, 1);
+    assert.equal(removalAudit.rows[0].admin_user_id, staffId);
+    assert.deepEqual(removalAudit.rows[0].metadata.closedPostReportIds, [reportId]);
+
+    const notifications = await database.pool.query(
+      `SELECT type, related_post_id FROM notifications WHERE related_post_id = $1`,
+      [postId],
+    );
+    assert.deepEqual(notifications.rows, [{ type: 'POST_REMOVED_BY_ADMIN', related_post_id: postId }]);
+
+    const closedReport = (
+      await database.pool.query(
+        `SELECT reviewed_at, reviewed_by_admin_id, review_outcome FROM post_reports WHERE id = $1`,
+        [reportId],
+      )
+    ).rows[0];
+    assert.ok(closedReport.reviewed_at);
+    assert.equal(closedReport.reviewed_by_admin_id, staffId);
+    assert.equal(closedReport.review_outcome, 'ACTION_TAKEN');
+
+    const retainedMedia = await database.pool.query(
+      `SELECT count(*)::int AS count FROM post_media WHERE post_id = $1`,
+      [postId],
+    );
+    assert.equal(retainedMedia.rows[0].count, 1);
+
+    // A SUPER_ADMIN restores the Post; its moderation status and counters survive.
+    const restoreResponse = await postAction(
+      `/admin/api/resources/posts/records/${postId}/restorePost`,
+      {},
+      superCookie,
+      superCsrf,
+    );
+    assert.equal(restoreResponse.status, 200);
+    const restoreResult = await restoreResponse.json();
+    assert.equal(restoreResult.notice?.type, 'success');
+
+    const restored = (await database.pool.query(`SELECT status, moderation_status FROM posts WHERE id = $1`, [postId]))
+      .rows[0];
+    assert.equal(restored.status, 'ACTIVE');
+    assert.equal(restored.moderation_status, 'FLAGGED');
+
+    const afterRestoreCount = (
+      await database.pool.query(`SELECT post_count FROM users WHERE id = $1`, [principals.userId])
+    ).rows[0].post_count;
+    assert.equal(Number(afterRestoreCount), Number(beforeCount));
+
+    const restoreAudit = await database.pool.query(
+      `SELECT count(*)::int AS count FROM moderation_actions
+       WHERE target_id = $1 AND action_type = 'POST_RESTORED'`,
+      [postId],
+    );
+    assert.equal(restoreAudit.rows[0].count, 1);
+  });
+
   it('cities search action returns only official cities with bilingual titles and filters out legacy/retired', async () => {
     // 1. Insert official city
     const officialCity = await database.pool.query(

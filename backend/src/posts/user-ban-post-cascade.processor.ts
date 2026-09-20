@@ -4,6 +4,7 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import type * as schema from '../database/schema';
+import { POST_DISCUSSION_LOCK_NAMESPACE } from '../common/contracts/post-lifecycle.contract';
 import { withDbRetry } from '../common/utils/db-retry.util';
 
 const USER_BAN_POST_CASCADE_BATCH_SIZE = 100;
@@ -174,7 +175,7 @@ export class UserBanPostCascadeProcessor implements OnApplicationBootstrap {
         // The active-Post trigger used by restorePost also takes Post -> User.
         for (const postId of postIds) {
           await tx.execute(sql`
-            SELECT pg_advisory_xact_lock(hashtextextended('comment_discussion:' || ${postId}, 0))
+            SELECT pg_advisory_xact_lock(hashtextextended(${POST_DISCUSSION_LOCK_NAMESPACE} || ${postId}, 0))
           `);
           await tx.execute(sql`SELECT id FROM posts WHERE id = ${postId} FOR UPDATE`);
         }
