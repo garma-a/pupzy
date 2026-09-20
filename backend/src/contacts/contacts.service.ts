@@ -83,17 +83,33 @@ export class ContactsService {
       throw new ConflictError('You have already sent a contact request for this post');
     }
 
-    const contactRequest = await this.db.transaction(async (tx) => {
+    const outcome = await this.db.transaction(async (tx) => {
       // Pair lock before the insert: a Block committing first makes this fail
       // neutrally, and a Block committing second rejects the pending row.
       if (await this.isolationPolicy.lockPairAndRecheck(tx, requesterId, post.creatorId)) {
-        return null;
+        return { kind: 'unavailable' as const };
       }
-      return this.contactsRepository.create({ postId, requesterId, message: message.trim() }, tx);
+      // Re-read under a share lock so an owner closure committing after the
+      // preflight above cannot leave a PENDING request on a closed listing.
+      const lockedPost = await this.postsRepository.lockPostForInteraction(tx, postId);
+      if (!lockedPost || lockedPost.status === 'REMOVED') {
+        return { kind: 'unavailable' as const };
+      }
+      if (lockedPost.status !== 'ACTIVE') {
+        return { kind: 'inactive' as const };
+      }
+      return {
+        kind: 'created' as const,
+        request: await this.contactsRepository.create({ postId, requesterId, message: message.trim() }, tx),
+      };
     });
-    if (!contactRequest) {
+    if (outcome.kind === 'unavailable') {
       throw new NotFoundError('Post', postId);
     }
+    if (outcome.kind === 'inactive') {
+      throw new ValidationError('Cannot request contact on an inactive post');
+    }
+    const contactRequest = outcome.request;
 
     // Fire notification to post owner (non-blocking)
     const requester = await this.usersService.findById(requesterId);

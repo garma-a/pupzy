@@ -66,6 +66,7 @@ describe('ContactsService', () => {
 
     mockPostsRepo = {
       findById: jest.fn().mockResolvedValue(mockPost),
+      lockPostForInteraction: jest.fn().mockResolvedValue(mockPost),
     };
 
     mockUsersService = {
@@ -129,6 +130,20 @@ describe('ContactsService', () => {
     it('throws ValidationError for inactive posts', async () => {
       mockPostsRepo.findById = jest.fn().mockResolvedValue({ ...mockPost, status: 'RESOLVED' });
       await expect(service.requestContact(validRequesterId, validPostId, 'Hi')).rejects.toThrow(ValidationError);
+    });
+
+    it('rejects a request when the Post closes before the transaction commits', async () => {
+      mockPostsRepo.lockPostForInteraction = jest.fn().mockResolvedValue({ ...mockPost, status: 'RESOLVED' });
+      await expect(service.requestContact(validRequesterId, validPostId, 'Can I help?')).rejects.toThrow(
+        ValidationError,
+      );
+      expect(mockContactsRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('treats a Post removed before the transaction commits as not found', async () => {
+      mockPostsRepo.lockPostForInteraction = jest.fn().mockResolvedValue({ ...mockPost, status: 'REMOVED' });
+      await expect(service.requestContact(validRequesterId, validPostId, 'Can I help?')).rejects.toThrow(NotFoundError);
+      expect(mockContactsRepo.create).not.toHaveBeenCalled();
     });
 
     it('throws ForbiddenError if requester is the post owner', async () => {

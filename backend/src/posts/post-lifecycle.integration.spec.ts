@@ -345,15 +345,17 @@ describe('Post lifecycle transitions through the executable GraphQL schema (Tick
       },
     );
 
-    it('keeps MATING out of owner closure in this preparatory contract', async () => {
+    it('closes an ACTIVE MATING Post as RESOLVED and leaves discovery', async () => {
       const post = await seedPost({ postType: 'MATING' });
 
       const result = await closePost(post, owner, 'RESOLVED');
 
-      expect(result.data?.updatePostStatus ?? null).toBeNull();
-      expect(errorCode(result)).toBe('VALIDATION_ERROR');
-      expect(result.errors?.[0].message).toContain('MATING posts can only transition to: .');
-      expect((await storedPost(post.id)).status).toBe('ACTIVE');
+      expect(result.errors).toBeUndefined();
+      expect(result.data?.updatePostStatus).toMatchObject({ id: post.id, status: 'RESOLVED', postType: 'MATING' });
+      expect((await storedPost(post.id)).status).toBe('RESOLVED');
+
+      const feed = await runGql<FeedData>(HOME_FEED, { cityId: testCity.id, first: 20 }, viewer);
+      expect(feed.data?.homeFeed.edges.map((edge) => edge.node.id)).not.toContain(post.id);
     });
 
     it('rejects a closure target that belongs to another Post type', async () => {

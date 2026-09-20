@@ -25,8 +25,9 @@
  *
  * ## Transaction boundary
  * The status write, `trg_sync_user_post_counts` counter delta, moderation
- * audit row, owner notification and open Post Report closure commit together.
- * Cache invalidation and other external effects run only after commit.
+ * audit row, owner notification, open Post Report closure and pending direct
+ * interaction termination commit together. Cache invalidation and other
+ * external effects run only after commit.
  *
  * ## Statuses
  * This contract covers the existing lifecycle only: `ACTIVE` plus the
@@ -41,6 +42,9 @@ export type PostLifecycleStatus = 'ACTIVE' | 'RESOLVED' | 'REUNITED' | 'ADOPTED'
 
 /** Listing types a Post can hold today. */
 export type PostLifecyclePostType = 'RESCUE' | 'LOST' | 'ADOPTION' | 'PRODUCT' | 'MATING';
+
+/** Direction discriminator carried by every LOST Post. */
+export type PostLifecycleLostReportType = 'LOST_PET' | 'FOUND_STRAY';
 
 /** Named lifecycle transitions covered by this contract. */
 export type PostLifecycleTransitionName = 'OWNER_CLOSE' | 'OWNER_REMOVE' | 'ADMIN_REMOVE' | 'ADMIN_RESTORE';
@@ -61,8 +65,12 @@ export const POST_LIFECYCLE_LOCK_ORDER = Object.freeze(['post-discussion-advisor
 
 /**
  * Owner closure targets by Post type. Owners may close an `ACTIVE` Post into
- * its type-specific successful outcome only; `MATING` has no owner closure
- * today. Successful outcomes stay directly readable while leaving discovery.
+ * its type-specific successful outcome only. Successful outcomes stay directly
+ * readable while leaving discovery.
+ *
+ * LOST is the one type whose targets depend on its direction discriminator:
+ * see `LOST_SUBTYPE_CLOSURE_TRANSITIONS`. The entry here is the conservative
+ * default used when no `report_type` can be read.
  */
 export const OWNER_CLOSURE_TRANSITIONS: Readonly<Record<PostLifecyclePostType, readonly PostLifecycleStatus[]>> =
   Object.freeze({
@@ -70,25 +78,51 @@ export const OWNER_CLOSURE_TRANSITIONS: Readonly<Record<PostLifecyclePostType, r
     LOST: Object.freeze(['REUNITED'] as const),
     ADOPTION: Object.freeze(['ADOPTED'] as const),
     PRODUCT: Object.freeze(['SOLD'] as const),
-    MATING: Object.freeze([] as const),
+    MATING: Object.freeze(['RESOLVED'] as const),
   });
 
 /**
- * Resolves the owner closure targets for a Post type. Unknown types have no
- * allowed targets, matching the historical empty-list fallback.
+ * Owner closure targets for LOST Posts, keyed by their `report_type`.
+ *
+ * - `LOST_PET` closes as `REUNITED`, unchanged.
+ * - `FOUND_STRAY` accepts `RESOLVED` while retaining `REUNITED` for existing
+ *   clients that already send it.
  */
-export function ownerClosureTargets(postType: string): readonly PostLifecycleStatus[] {
+export const LOST_SUBTYPE_CLOSURE_TRANSITIONS: Readonly<
+  Record<PostLifecycleLostReportType, readonly PostLifecycleStatus[]>
+> = Object.freeze({
+  LOST_PET: Object.freeze(['REUNITED'] as const),
+  FOUND_STRAY: Object.freeze(['RESOLVED', 'REUNITED'] as const),
+});
+
+/**
+ * Resolves the owner closure targets for a Post. LOST Posts use their
+ * direction discriminator; a missing or unknown discriminator keeps the
+ * conservative REUNITED-only behavior. Unknown types have no allowed targets,
+ * matching the historical empty-list fallback.
+ */
+export function ownerClosureTargets(postType: string, lostReportType?: string | null): readonly PostLifecycleStatus[] {
+  if (postType === 'LOST') {
+    return (
+      LOST_SUBTYPE_CLOSURE_TRANSITIONS[lostReportType as PostLifecycleLostReportType] ?? OWNER_CLOSURE_TRANSITIONS.LOST
+    );
+  }
   return OWNER_CLOSURE_TRANSITIONS[postType as PostLifecyclePostType] ?? [];
 }
 
 /**
  * True when an owner may close this Post from its current status into the
- * requested target. Closing is only possible from `ACTIVE`, and only into the
- * target that belongs to the Post's type.
+ * requested target. Closing is only possible from `ACTIVE`, and only into a
+ * target that belongs to the Post's type and (for LOST) direction.
  */
-export function canOwnerClose(postType: string, currentStatus: string, targetStatus: string): boolean {
+export function canOwnerClose(
+  postType: string,
+  currentStatus: string,
+  targetStatus: string,
+  lostReportType?: string | null,
+): boolean {
   if (currentStatus !== 'ACTIVE') return false;
-  return ownerClosureTargets(postType).includes(targetStatus as PostLifecycleStatus);
+  return ownerClosureTargets(postType, lostReportType).includes(targetStatus as PostLifecycleStatus);
 }
 
 /**
@@ -135,6 +169,13 @@ export interface PostLifecycleSideEffects {
   readonly ownerNotification: string | null;
   /** Every still-open Post Report for the Post is closed in the transaction. */
   readonly closeOpenPostReports: boolean;
+  /**
+   * Every still-PENDING Contact Request and Adoption Application targeting
+   * the Post is moved to its terminal `REJECTED` state in the same
+   * transaction. Records are preserved and previously approved interactions
+   * are never touched.
+   */
+  readonly terminatePendingInteractions: boolean;
 }
 
 /**
@@ -142,7 +183,9 @@ export interface PostLifecycleSideEffects {
  *
  * - Owner actions commit the status change and the counter trigger delta only;
  *   they invalidate the API user cache after commit. They deliberately do not
- *   write moderation audit rows or owner notifications.
+ *   write moderation audit rows or owner notifications. Owner closure also
+ *   terminates pending direct interactions in the same transaction; owner
+ *   removal keeps its established behavior.
  * - Administrator removal and restoration additionally write the audit row,
  *   close open Post Reports, and invalidate the AdminJS dashboard cache.
  *   Removal notifies the owner; restoration does not.
@@ -158,6 +201,7 @@ export const POST_LIFECYCLE_SIDE_EFFECTS: Readonly<Record<PostLifecycleTransitio
       moderationAudit: false,
       ownerNotification: null,
       closeOpenPostReports: false,
+      terminatePendingInteractions: true,
     }),
     OWNER_REMOVE: Object.freeze({
       userPostCountDelta: 'DECREMENT',
@@ -166,6 +210,7 @@ export const POST_LIFECYCLE_SIDE_EFFECTS: Readonly<Record<PostLifecycleTransitio
       moderationAudit: false,
       ownerNotification: null,
       closeOpenPostReports: false,
+      terminatePendingInteractions: false,
     }),
     ADMIN_REMOVE: Object.freeze({
       userPostCountDelta: 'DECREMENT',
@@ -174,6 +219,7 @@ export const POST_LIFECYCLE_SIDE_EFFECTS: Readonly<Record<PostLifecycleTransitio
       moderationAudit: true,
       ownerNotification: 'POST_REMOVED_BY_ADMIN',
       closeOpenPostReports: true,
+      terminatePendingInteractions: false,
     }),
     ADMIN_RESTORE: Object.freeze({
       userPostCountDelta: 'INCREMENT',
@@ -182,5 +228,6 @@ export const POST_LIFECYCLE_SIDE_EFFECTS: Readonly<Record<PostLifecycleTransitio
       moderationAudit: true,
       ownerNotification: null,
       closeOpenPostReports: true,
+      terminatePendingInteractions: false,
     }),
   });

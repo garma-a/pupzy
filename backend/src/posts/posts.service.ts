@@ -478,7 +478,9 @@ export class PostsService {
    *
    * The allowed owner transitions come from the shared Post lifecycle
    * contract (`post-lifecycle.contract.ts`), so the API and admin services
-   * apply one definition of which owner closure is valid.
+   * apply one definition of which owner closure is valid. LOST Posts use
+   * their direction discriminator: LOST_PET closes as REUNITED while
+   * FOUND_STRAY accepts RESOLVED and retains REUNITED.
    *
    * @throws {NotFoundError} if the post does not exist or is REMOVED.
    * @throws {ForbiddenError} if the caller is not the post creator.
@@ -497,7 +499,8 @@ export class PostsService {
       throw new ValidationError(`Post is already in "${post.status}" status and cannot be changed`);
     }
 
-    const allowed = ownerClosureTargets(post.postType);
+    const lostReportType = post.postType === 'LOST' ? await this.postsRepository.findLostReportType(postId) : null;
+    const allowed = ownerClosureTargets(post.postType, lostReportType);
     if (!allowed.includes(status as (typeof allowed)[number])) {
       throw new ValidationError(
         `${post.postType} posts can only transition to: ${allowed.join(', ')}. Got: "${status}"`,

@@ -48,6 +48,7 @@ describe('PostsService', () => {
       findLostDetail: jest.fn(),
       findAdoptionDetail: jest.fn(),
       findProductDetail: jest.fn(),
+      findLostReportType: jest.fn().mockResolvedValue(null),
       updateStatus: jest.fn(),
       softDelete: jest.fn(),
       toggleUpvote: jest.fn(),
@@ -511,6 +512,55 @@ describe('PostsService', () => {
         .fn()
         .mockResolvedValue({ id: validPostId, creatorId: validUserId, status: 'ACTIVE', postType: 'RESCUE' });
       await expect(service.updatePostStatus(validPostId, validUserId, 'SOLD')).rejects.toThrow(ValidationError);
+    });
+
+    it('closes a MATING post as RESOLVED without reading a LOST discriminator', async () => {
+      const mockPost = {
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'MATING',
+        status: 'ACTIVE',
+      } as unknown as Post;
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(mockPost);
+      mockPostsRepo.updateStatus = jest.fn().mockResolvedValue({ ...mockPost, status: 'RESOLVED' });
+
+      const result = await service.updatePostStatus(validPostId, validUserId, 'RESOLVED');
+      expect(result.status).toBe('RESOLVED');
+      expect(mockPostsRepo.findLostReportType).not.toHaveBeenCalled();
+    });
+
+    it('closes a FOUND_STRAY LOST post as RESOLVED using its direction discriminator', async () => {
+      const mockPost = {
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'LOST',
+        status: 'ACTIVE',
+      } as unknown as Post;
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(mockPost);
+      mockPostsRepo.findLostReportType = jest.fn().mockResolvedValue('FOUND_STRAY');
+      mockPostsRepo.updateStatus = jest.fn().mockResolvedValue({ ...mockPost, status: 'RESOLVED' });
+
+      const result = await service.updatePostStatus(validPostId, validUserId, 'RESOLVED');
+      expect(result.status).toBe('RESOLVED');
+      expect(mockPostsRepo.findLostReportType).toHaveBeenCalledWith(validPostId);
+    });
+
+    it('rejects RESOLVED for a LOST_PET while retaining REUNITED', async () => {
+      const mockPost = {
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'LOST',
+        status: 'ACTIVE',
+      } as unknown as Post;
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(mockPost);
+      mockPostsRepo.findLostReportType = jest.fn().mockResolvedValue('LOST_PET');
+
+      await expect(service.updatePostStatus(validPostId, validUserId, 'RESOLVED')).rejects.toThrow(ValidationError);
+      expect(mockPostsRepo.updateStatus).not.toHaveBeenCalled();
+
+      mockPostsRepo.updateStatus = jest.fn().mockResolvedValue({ ...mockPost, status: 'REUNITED' });
+      const reunited = await service.updatePostStatus(validPostId, validUserId, 'REUNITED');
+      expect(reunited.status).toBe('REUNITED');
     });
   });
 
