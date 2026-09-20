@@ -25,7 +25,7 @@ Owner closure targets (`OWNER_CLOSURE_TRANSITIONS` in the contract):
 | `PRODUCT` | `SOLD` |
 | `MATING` | none in this slice |
 
-A Post owner can close only their own `ACTIVE` Post and only into its own outcome; every other target returns a `VALIDATION_ERROR`. A Post already in a successful outcome or `REMOVED` returns the same invalid-transition error. A non-owner receives `FORBIDDEN`, and a missing or Removed Post resolves to `NOT_FOUND`.
+A Post owner can close only their own `ACTIVE` Post and only into its own outcome; every other target returns a `VALIDATION_ERROR`. A Post already in a successful outcome returns the same invalid-transition error. A non-owner receives `FORBIDDEN`, and a missing or Removed Post resolves to `NOT_FOUND`.
 
 Administrative removal applies only to `ACTIVE` Posts. It can never overwrite a recorded successful outcome; administrators who need to take down a closed Post will use the explicit outcome controls introduced by later lifecycle work rather than an unrestricted status edit.
 
