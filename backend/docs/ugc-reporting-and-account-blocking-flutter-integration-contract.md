@@ -249,7 +249,7 @@ There is deliberately **no** error code that reveals a Block. The API reuses ord
 
 - Feeds, Saved Posts, discussion lists, Contact Request lists, and Adoption Application lists **omit** blocked records.
 - Nullable direct lookups (for example `post(id)`, `rescuePostDetail`, `matingPostDetail`) return **`null`**.
-- Contact disclosure (`getWhatsAppLink`, `getProductSellerContact`) returns `NOT_FOUND` for an isolated pair and never returns a phone number or WhatsApp link.
+- Contact disclosure (`getWhatsAppLink`, `getProductSellerContact`, `getAdoptionWhatsAppLink`) returns `NOT_FOUND` for an isolated pair and never returns a phone number or WhatsApp link.
 - Cross-Block writes (Comment, Reply, Upvote, Save, Boost, Contact Request, Adoption Application) fail with the operation's ordinary inaccessible/not-found behavior.
 - Notifications already delivered remain in the list; opening one whose target is now inaccessible shows the existing neutral unavailable screen.
 

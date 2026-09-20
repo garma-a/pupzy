@@ -41,6 +41,14 @@ export class AdoptionsResolver {
     return this.adoptionsService.getPostApplications(ctx.user!.id, postId, status, first, after);
   }
 
+  @Query('getAdoptionWhatsAppLink')
+  async getAdoptionWhatsAppLink(
+    @Args('applicationId') applicationId: string,
+    @Context() ctx: GqlContext,
+  ): Promise<string> {
+    return this.adoptionsService.getAdoptionWhatsAppLink(ctx.user!.id, applicationId);
+  }
+
   // ─── Mutations ──────────────────────────────────────────────────────
 
   /** Anti-spam: 10 applications per hour per IP (see AUD-15 re: true per-user limiting). */
