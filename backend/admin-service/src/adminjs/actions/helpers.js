@@ -1,3 +1,5 @@
+import { POST_DISCUSSION_LOCK_NAMESPACE } from '../../../../src/common/contracts/post-lifecycle.contract.ts';
+
 const MODERATION_TABLES = new Set(['users', 'posts', 'comments']);
 
 const RETRYABLE_SQLSTATES = new Set(['40P01', '40001']);
@@ -30,7 +32,8 @@ export async function lockCommentDiscussion(client, commentId) {
   const target = targets[0];
   if (!target) return null;
 
-  await client.query("SELECT pg_advisory_xact_lock(hashtextextended('comment_discussion:' || $1, 0))", [
+  await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1 || $2, 0))', [
+    POST_DISCUSSION_LOCK_NAMESPACE,
     target.post_id,
   ]);
   const { rows: posts } = await client.query('SELECT * FROM posts WHERE id = $1 FOR UPDATE', [target.post_id]);
@@ -48,7 +51,10 @@ export async function lockCommentDiscussion(client, commentId) {
  * as discussion writes. The generic target lock follows this call.
  */
 export async function lockPostDiscussion(client, postId) {
-  await client.query("SELECT pg_advisory_xact_lock(hashtextextended('comment_discussion:' || $1, 0))", [postId]);
+  await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1 || $2, 0))', [
+    POST_DISCUSSION_LOCK_NAMESPACE,
+    postId,
+  ]);
   return true;
 }
 

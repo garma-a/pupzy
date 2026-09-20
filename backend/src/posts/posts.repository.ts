@@ -31,6 +31,11 @@ import {
 } from '../database/schema';
 import type * as schema from '../database/schema';
 import { ConflictError, ForbiddenError, NotFoundError } from '../common/errors/app.errors';
+import {
+  POST_DISCUSSION_LOCK_NAMESPACE,
+  canOwnerClose,
+  canOwnerRemove,
+} from '../common/contracts/post-lifecycle.contract';
 import { withDbRetry } from '../common/utils/db-retry.util';
 import {
   ModerationReportQuotaManager,
@@ -140,7 +145,7 @@ export class PostsRepository {
    */
   private async lockDiscussionPost(tx: DbTransaction, postId: string): Promise<Post | undefined> {
     await tx.execute(sql`
-      SELECT pg_advisory_xact_lock(hashtextextended('comment_discussion:' || ${postId}, 0))
+      SELECT pg_advisory_xact_lock(hashtextextended(${POST_DISCUSSION_LOCK_NAMESPACE} || ${postId}, 0))
     `);
     const [post] = await tx.select().from(posts).where(eq(posts.id, postId)).for('update');
 
@@ -463,7 +468,13 @@ export class PostsRepository {
     return withDbRetry(() =>
       this.db.transaction(async (tx) => {
         const lockedPost = await this.lockDiscussionPost(tx, postId);
-        if (!lockedPost || lockedPost.creatorId !== creatorId || lockedPost.status !== 'ACTIVE') return undefined;
+        if (
+          !lockedPost ||
+          lockedPost.creatorId !== creatorId ||
+          !canOwnerClose(lockedPost.postType, lockedPost.status, status)
+        ) {
+          return undefined;
+        }
         const [post] = await tx
           .update(posts)
           .set({ status: status as Post['status'] })
@@ -482,7 +493,7 @@ export class PostsRepository {
     return withDbRetry(() =>
       this.db.transaction(async (tx) => {
         const lockedPost = await this.lockDiscussionPost(tx, postId);
-        if (!lockedPost || lockedPost.creatorId !== creatorId || lockedPost.status === 'REMOVED') return undefined;
+        if (!lockedPost || lockedPost.creatorId !== creatorId || !canOwnerRemove(lockedPost.status)) return undefined;
         const [post] = await tx.update(posts).set({ status: 'REMOVED' }).where(eq(posts.id, postId)).returning();
         return post;
       }),

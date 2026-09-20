@@ -6,6 +6,7 @@ docs/adr/*
 !docs/adr/0005-durable-staged-uploads.md
 !docs/adr/0006-directional-blocks-create-mutual-isolation.md
 !docs/comments-flutter-integration-contract.md
+!docs/post-lifecycle-transition-contract.md
 !docs/ugc-reporting-and-account-blocking-flutter-integration-contract.md
 !docs/ugc-reporting-and-account-blocking-release-evidence.md
 !docs/deployment/

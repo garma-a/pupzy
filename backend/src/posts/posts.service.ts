@@ -7,6 +7,7 @@ import { CitiesService } from '../cities/cities.service';
 import { UploadService } from '../upload/upload.service';
 import { shouldFlagContent } from '../common/utils/moderation.util';
 import { ValidationError, NotFoundError, ForbiddenError } from '../common/errors/app.errors';
+import { canOwnerRemove, ownerClosureTargets } from '../common/contracts/post-lifecycle.contract';
 import { assertUuid } from '../common/utils/validate-uuid';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -433,7 +434,7 @@ export class PostsService {
   async deletePost(postId: string, userId: string): Promise<void> {
     assertUuid(postId, 'postId');
     const post = await this.postsRepository.findById(postId);
-    if (!post || post.status === 'REMOVED') {
+    if (!post || !canOwnerRemove(post.status)) {
       throw new NotFoundError('Post', postId);
     }
     if (post.creatorId !== userId) {
@@ -473,24 +474,11 @@ export class PostsService {
   // ─── Status Update ──────────────────────────────────────────────────────
 
   /**
-   * Valid status transitions per post type.
-   * - RESCUE  → RESOLVED (animal was helped)
-   * - LOST    → REUNITED (pet was found)
-   * - ADOPTION → ADOPTED (pet was adopted)
-   * - PRODUCT  → SOLD (item was sold)
-   *
-   * All transitions are from ACTIVE to a terminal state.
-   * REMOVED is handled by `deletePost`, not this method.
-   */
-  private static readonly ALLOWED_TRANSITIONS: Record<string, string[]> = {
-    RESCUE: ['RESOLVED'],
-    LOST: ['REUNITED'],
-    ADOPTION: ['ADOPTED'],
-    PRODUCT: ['SOLD'],
-  };
-
-  /**
    * Updates a post's lifecycle status with transition validation.
+   *
+   * The allowed owner transitions come from the shared Post lifecycle
+   * contract (`post-lifecycle.contract.ts`), so the API and admin services
+   * apply one definition of which owner closure is valid.
    *
    * @throws {NotFoundError} if the post does not exist or is REMOVED.
    * @throws {ForbiddenError} if the caller is not the post creator.
@@ -499,7 +487,7 @@ export class PostsService {
   async updatePostStatus(postId: string, userId: string, status: string): Promise<Post> {
     assertUuid(postId, 'postId');
     const post = await this.postsRepository.findById(postId);
-    if (!post || post.status === 'REMOVED') {
+    if (!post || !canOwnerRemove(post.status)) {
       throw new NotFoundError('Post', postId);
     }
     if (post.creatorId !== userId) {
@@ -509,8 +497,8 @@ export class PostsService {
       throw new ValidationError(`Post is already in "${post.status}" status and cannot be changed`);
     }
 
-    const allowed = PostsService.ALLOWED_TRANSITIONS[post.postType] ?? [];
-    if (!allowed.includes(status)) {
+    const allowed = ownerClosureTargets(post.postType);
+    if (!allowed.includes(status as (typeof allowed)[number])) {
       throw new ValidationError(
         `${post.postType} posts can only transition to: ${allowed.join(', ')}. Got: "${status}"`,
       );

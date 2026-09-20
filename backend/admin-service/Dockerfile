@@ -6,6 +6,7 @@ COPY --chown=node:node admin-service/ .
 # The AdminJS service and main API intentionally share this single contract.
 # Build with the repository root as context so production receives the same file.
 COPY --chown=node:node src/common/contracts/google-maps-handoff.contract.ts /src/common/contracts/google-maps-handoff.contract.ts
+COPY --chown=node:node src/common/contracts/post-lifecycle.contract.ts /src/common/contracts/post-lifecycle.contract.ts
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=256"
 ENV ADMIN_JS_TMP_DIR=/tmp/adminjs
