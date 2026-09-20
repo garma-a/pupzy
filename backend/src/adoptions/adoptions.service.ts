@@ -238,6 +238,46 @@ export class AdoptionsService {
   }
 
   /**
+   * Re-fetches the owner's WhatsApp link for an already-approved adoption application.
+   * Only the original applicant can call this.
+   *
+   * Isolation is rechecked under the canonical account-pair lock, and the
+   * owner phone is read inside the same transaction so no disclosure can be
+   * ordered after a Block. Across a Block the application resolves as unknown
+   * and no phone or WhatsApp link is returned.
+   */
+  async getAdoptionWhatsAppLink(callerId: string, applicationId: string): Promise<string> {
+    assertUuid(applicationId, 'applicationId');
+
+    const application = await this.adoptionsRepository.findById(applicationId);
+    if (!application) throw new NotFoundError('AdoptionApplication', applicationId);
+    if (application.applicantId !== callerId) {
+      throw new ForbiddenError('You can only view your own approved applications');
+    }
+    if (application.status !== 'APPROVED') {
+      throw new ValidationError('Adoption application has not been approved yet');
+    }
+
+    const post = await this.postsRepository.findById(application.targetPostId);
+    if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Post', application.targetPostId);
+    }
+
+    return this.db.transaction(async (tx) => {
+      if (await this.isolationPolicy.lockPairAndRecheck(tx, callerId, post.creatorId)) {
+        throw new NotFoundError('AdoptionApplication', applicationId);
+      }
+
+      const owner = await this.usersService.findActiveById(post.creatorId, tx);
+      if (!owner || owner.isBanned || !owner.phoneNumber) {
+        throw new NotFoundError('Owner contact information is not available');
+      }
+
+      return `https://wa.me/${owner.phoneNumber.replace(/\D/g, '')}`;
+    });
+  }
+
+  /**
    * Returns paginated applications submitted by the current user.
    */
   async getMyApplications(userId: string, first: number | null | undefined, afterCursor: string | null | undefined) {

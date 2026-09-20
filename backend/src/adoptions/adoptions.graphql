@@ -47,6 +47,13 @@ extend type Query {
     first: Int
     after: String
   ): AdoptionApplicationConnection!
+
+  """
+  Re-fetches the WhatsApp link for an already-approved adoption application.
+  Only the original applicant can call this.
+  Returns the wa.me/... link string.
+  """
+  getAdoptionWhatsAppLink(applicationId: ID!): String!
 }
 
 extend type Mutation {

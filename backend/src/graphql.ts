@@ -353,6 +353,7 @@ export interface IQuery {
     first?: Nullable<number>,
     after?: Nullable<string>,
   ): AdoptionApplicationConnection | Promise<AdoptionApplicationConnection>;
+  getAdoptionWhatsAppLink(applicationId: string): string | Promise<string>;
   cities(): City[] | Promise<City[]>;
   myContactRequests(
     postId?: Nullable<string>,

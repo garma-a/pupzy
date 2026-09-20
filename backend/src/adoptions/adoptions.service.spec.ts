@@ -249,6 +249,98 @@ describe('AdoptionsService', () => {
     });
   });
 
+  describe('getAdoptionWhatsAppLink', () => {
+    const approvedApplication = {
+      id: validApplicationId,
+      status: 'APPROVED',
+      targetPostId: validPostId,
+      applicantId: validApplicantId,
+    };
+
+    it('returns the owner wa.me link to the approved applicant', async () => {
+      mockAdoptionsRepo.findById = jest.fn().mockResolvedValue(approvedApplication);
+
+      await expect(service.getAdoptionWhatsAppLink(validApplicantId, validApplicationId)).resolves.toBe(
+        'https://wa.me/201012345678',
+      );
+      expect(mockIsolationPolicy.lockPairAndRecheck).toHaveBeenCalledWith(
+        expect.anything(),
+        validApplicantId,
+        validOwnerId,
+      );
+    });
+
+    it('throws NotFoundError for an unknown application', async () => {
+      mockAdoptionsRepo.findById = jest.fn().mockResolvedValue(undefined);
+
+      await expect(service.getAdoptionWhatsAppLink(validApplicantId, validApplicationId)).rejects.toThrow(
+        NotFoundError,
+      );
+    });
+
+    it('throws ForbiddenError for the owner and unrelated callers', async () => {
+      mockAdoptionsRepo.findById = jest.fn().mockResolvedValue(approvedApplication);
+
+      await expect(service.getAdoptionWhatsAppLink(validOwnerId, validApplicationId)).rejects.toThrow(ForbiddenError);
+      await expect(
+        service.getAdoptionWhatsAppLink('01916327-0000-7000-8000-000000000999', validApplicationId),
+      ).rejects.toThrow(ForbiddenError);
+      expect(mockUsersService.findActiveById).not.toHaveBeenCalled();
+    });
+
+    it.each(['PENDING', 'REJECTED'])('throws ValidationError while the application is %s', async (status) => {
+      mockAdoptionsRepo.findById = jest.fn().mockResolvedValue({ ...approvedApplication, status });
+
+      await expect(service.getAdoptionWhatsAppLink(validApplicantId, validApplicationId)).rejects.toThrow(
+        ValidationError,
+      );
+      expect(mockUsersService.findActiveById).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundError when the target post is missing or REMOVED', async () => {
+      mockAdoptionsRepo.findById = jest.fn().mockResolvedValue(approvedApplication);
+
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(null);
+      await expect(service.getAdoptionWhatsAppLink(validApplicantId, validApplicationId)).rejects.toThrow(
+        NotFoundError,
+      );
+
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({ ...mockPost, status: 'REMOVED' });
+      await expect(service.getAdoptionWhatsAppLink(validApplicantId, validApplicationId)).rejects.toThrow(
+        NotFoundError,
+      );
+    });
+
+    it('fails neutrally as an unknown application when the pair is isolated', async () => {
+      mockAdoptionsRepo.findById = jest.fn().mockResolvedValue(approvedApplication);
+      mockIsolationPolicy.lockPairAndRecheck.mockResolvedValue(true);
+
+      await expect(service.getAdoptionWhatsAppLink(validApplicantId, validApplicationId)).rejects.toThrow(
+        `AdoptionApplication with id "${validApplicationId}" was not found`,
+      );
+      expect(mockUsersService.findActiveById).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundError when the owner account is unavailable or has no phone', async () => {
+      mockAdoptionsRepo.findById = jest.fn().mockResolvedValue(approvedApplication);
+
+      mockUsersService.findActiveById = jest.fn().mockResolvedValue(undefined);
+      await expect(service.getAdoptionWhatsAppLink(validApplicantId, validApplicationId)).rejects.toThrow(
+        'Owner contact information is not available',
+      );
+
+      mockUsersService.findActiveById = jest.fn().mockResolvedValue({
+        id: validOwnerId,
+        fullName: 'Owner User',
+        phoneNumber: null,
+        isBanned: false,
+      });
+      await expect(service.getAdoptionWhatsAppLink(validApplicantId, validApplicationId)).rejects.toThrow(
+        'Owner contact information is not available',
+      );
+    });
+  });
+
   describe('getMyApplications & getPostApplications', () => {
     it('getMyApplications returns paginated connection', async () => {
       const result = await service.getMyApplications(validApplicantId, 10, null);
