@@ -414,8 +414,13 @@ describe('Post lifecycle transitions through the executable GraphQL schema (Tick
         closePost(post, owner, 'RESOLVED'),
         closePost(post, owner, 'RESOLVED'),
       ]);
-      const outcomes = [errorCode(first), errorCode(second)].sort();
-      expect(outcomes).toEqual(['VALIDATION_ERROR', undefined]);
+      const outcomes = [errorCode(first), errorCode(second)];
+      // The loser observes the committed status either during its pre-lock read
+      // (VALIDATION_ERROR) or when it revalidates after taking the lock
+      // (NOT_FOUND). Both are stable, non-mutating rejections.
+      expect(outcomes.filter((code) => code === undefined)).toHaveLength(1);
+      expect(outcomes.filter((code) => code !== undefined)).toHaveLength(1);
+      expect(['VALIDATION_ERROR', 'NOT_FOUND']).toContain(outcomes.find((code) => code !== undefined));
       expect((await storedPost(post.id)).status).toBe('RESOLVED');
     });
   });
