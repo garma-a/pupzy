@@ -158,7 +158,7 @@ mutation UpdatePushPreference($notificationsEnabled: Boolean!) {
 | Rechecks | Preference (`notificationsEnabled`), account existence/ban state, device ownership and Block isolation are rechecked in the claim transaction. Failed rechecks set terminal `SUPPRESSED` and never remove the inbox row. |
 | Sending | The provider call happens outside database transactions. |
 | Success | The intent is set to `DELIVERED` with a lease-guarded write. |
-| Retryable failure | `PENDING` with exponential backoff (1s doubling, capped at 5 minutes). |
+| Retryable failure | `PENDING` with exponential backoff (2s doubling, capped at 5 minutes). |
 | Attempt bound | After 5 failed attempts the intent is terminal `FAILED` and is visible for operator intervention. |
 | Dead token | `registration-token-not-registered` / `invalid-registration-token` deletes the device registration, which cascades its pending intents. No further sends are attempted. |
 | Bounds | At most 50 intents per worker invocation. |

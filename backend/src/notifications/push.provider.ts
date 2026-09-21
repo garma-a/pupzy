@@ -5,7 +5,7 @@ import { FIREBASE_ADMIN_TOKEN } from '../auth/firebase.module';
 
 /** One provider-neutral push message produced from a durable delivery intent. */
 export interface PushDeliveryMessage {
-  /** Device registration token. Never logged or persisted in plain text. */
+  /** Device registration token from `device_registrations`. Never logged. */
   token: string;
   /** Localized headline, read from the notification's bilingual columns. */
   title: string;

@@ -6,8 +6,11 @@ import type { NotificationType } from './notification-templates';
  *
  * Ticket 11 proves the device registry and delivery machinery end to end with
  * the existing adoption-approval notification. Later work (the remaining
- * workflow pushes) extends this set; adding a type here is the only change a
- * new push-enabled notification needs.
+ * workflow pushes) extends this set; for types persisted through
+ * `NotificationsService.fireNotification`, adding a type here is the only
+ * change needed. A durable outbox that inserts its notification row directly
+ * (the discussion processor) must also enqueue delivery intents in that same
+ * transaction.
  */
 export const PUSH_ENABLED_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
   'ADOPTION_APPLICATION_APPROVED',
