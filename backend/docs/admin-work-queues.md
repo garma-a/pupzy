@@ -21,23 +21,23 @@ existing type, lifecycle, moderation, urgency, City and date filters remain visi
 Counts are computed with the SQL predicate shown below; the filtered list page uses the equivalent
 AdminJS filter, so a queue's count and its result page always agree.
 
-| Group       | Entry                   | Resource         | AdminJS filter parameters                                                                     | Count predicate                                                                          |
-| ----------- | ----------------------- | ---------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Needs review | Flagged — needs review | Posts            | `moderation_status=FLAGGED`, `status=ACTIVE`                                                   | `moderation_status = 'FLAGGED' AND status = 'ACTIVE'`                                     |
-| Needs review | Pending moderation     | Posts            | `moderation_status=PENDING_AUTO_REVIEW`, `status=ACTIVE`                                       | `moderation_status = 'PENDING_AUTO_REVIEW' AND status = 'ACTIVE'`                         |
-| Needs review | Open Post Reports      | Post Reports     | `review_state=OPEN`                                                                            | `reviewed_at IS NULL`                                                                     |
-| Needs review | Open Comment Reports   | Comment Reports  | `review_state=OPEN`                                                                            | `reviewed_at IS NULL`                                                                     |
-| Needs review | Open Account Reports   | Account Reports  | `review_state=OPEN`                                                                            | `reviewed_at IS NULL`                                                                     |
-| Rescue       | Active rescue          | Posts            | `post_type=RESCUE`, `status=ACTIVE`                                                            | `post_type = 'RESCUE' AND status = 'ACTIVE'`                                              |
-| Lost & found | All lost & found       | Posts            | `post_type=LOST`, `status=ACTIVE`                                                              | `post_type = 'LOST' AND status = 'ACTIVE'`                                                |
-| Lost & found | Lost pet               | Posts            | `post_type=LOST`, `status=ACTIVE`, `report_type=LOST_PET`                                      | active `LOST` with a `lost_posts` row whose `report_type = 'LOST_PET'`                    |
-| Lost & found | Found stray            | Posts            | `post_type=LOST`, `status=ACTIVE`, `report_type=FOUND_STRAY`                                   | active `LOST` with a `lost_posts` row whose `report_type = 'FOUND_STRAY'`                 |
-| Listings     | Adoption               | Posts            | `post_type=ADOPTION`, `status=ACTIVE`                                                          | `post_type = 'ADOPTION' AND status = 'ACTIVE'`                                            |
-| Listings     | Products               | Posts            | `post_type=PRODUCT`, `status=ACTIVE`                                                           | `post_type = 'PRODUCT' AND status = 'ACTIVE'`                                             |
-| Listings     | Mating                 | Posts            | `post_type=MATING`, `status=ACTIVE`                                                            | `post_type = 'MATING' AND status = 'ACTIVE'`                                              |
-| History      | Completed              | Posts            | `queue=completed`                                                                              | `status IN ('RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD')`                                   |
-| History      | Expired                | Posts            | `status=EXPIRED`                                                                               | `status = 'EXPIRED'`                                                                      |
-| History      | Removed                | Posts            | `status=REMOVED`                                                                               | `status = 'REMOVED'`                                                                      |
+| Group        | Entry                  | Resource        | AdminJS filter parameters                                    | Count predicate                                                           |
+| ------------ | ---------------------- | --------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| Needs review | Flagged — needs review | Posts           | `moderation_status=FLAGGED`, `status=ACTIVE`                 | `moderation_status = 'FLAGGED' AND status = 'ACTIVE'`                     |
+| Needs review | Pending moderation     | Posts           | `moderation_status=PENDING_AUTO_REVIEW`, `status=ACTIVE`     | `moderation_status = 'PENDING_AUTO_REVIEW' AND status = 'ACTIVE'`         |
+| Needs review | Open Post Reports      | Post Reports    | `review_state=OPEN`                                          | `reviewed_at IS NULL`                                                     |
+| Needs review | Open Comment Reports   | Comment Reports | `review_state=OPEN`                                          | `reviewed_at IS NULL`                                                     |
+| Needs review | Open Account Reports   | Account Reports | `review_state=OPEN`                                          | `reviewed_at IS NULL`                                                     |
+| Rescue       | Active rescue          | Posts           | `post_type=RESCUE`, `status=ACTIVE`                          | `post_type = 'RESCUE' AND status = 'ACTIVE'`                              |
+| Lost & found | All lost & found       | Posts           | `post_type=LOST`, `status=ACTIVE`                            | `post_type = 'LOST' AND status = 'ACTIVE'`                                |
+| Lost & found | Lost pet               | Posts           | `post_type=LOST`, `status=ACTIVE`, `report_type=LOST_PET`    | active `LOST` with a `lost_posts` row whose `report_type = 'LOST_PET'`    |
+| Lost & found | Found stray            | Posts           | `post_type=LOST`, `status=ACTIVE`, `report_type=FOUND_STRAY` | active `LOST` with a `lost_posts` row whose `report_type = 'FOUND_STRAY'` |
+| Listings     | Adoption               | Posts           | `post_type=ADOPTION`, `status=ACTIVE`                        | `post_type = 'ADOPTION' AND status = 'ACTIVE'`                            |
+| Listings     | Products               | Posts           | `post_type=PRODUCT`, `status=ACTIVE`                         | `post_type = 'PRODUCT' AND status = 'ACTIVE'`                             |
+| Listings     | Mating                 | Posts           | `post_type=MATING`, `status=ACTIVE`                          | `post_type = 'MATING' AND status = 'ACTIVE'`                              |
+| History      | Completed              | Posts           | `queue=completed`                                            | `status IN ('RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD')`                   |
+| History      | Expired                | Posts           | `status=EXPIRED`                                             | `status = 'EXPIRED'`                                                      |
+| History      | Removed                | Posts           | `status=REMOVED`                                             | `status = 'REMOVED'`                                                      |
 
 ### Predicate notes
 
@@ -80,9 +80,14 @@ enums instead of an unsupported `ILIKE`.
 - Queue entries are labeled links with a live count badge; the flagged queue is highlighted when
   outstanding work exists. Buttons expose hover, focus-visible, pressed and reduced-motion states
   from the shared Pupzy theme.
+- The dashboard **Refresh now** control is a filled primary action: it disables itself, announces
+  `aria-busy` while loading and holds its width so the header does not jump. A failed refresh keeps
+  the last good dashboard visible with an alert and a **Retry** action; the queue grid is never
+  replaced by the error state.
 - The queue grid and the review table are responsive; on narrow screens the entries stack and the
-  table scrolls horizontally without breaking the page layout.
-- Loading, refresh, empty and request-error states remain on the dashboard as before.
+  table scrolls horizontally without breaking the page layout. Long titles truncate inside their
+  cells instead of widening the page.
+- Loading, empty and request-error states remain on the dashboard as before.
 
 ## Verification
 
@@ -95,18 +100,19 @@ npm run check:glossary
 npm run format:check
 ```
 
-| Boundary                                                                                       | Evidence                                                                 |
-| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Queue definitions, predicates, count SQL and link building                                     | `src/adminjs/dashboard/work-queues.test.js`                              |
-| Virtual filter translation and enum filter properties                                          | `src/adminjs/queue-filters.test.js`, `src/adminjs/sql-adapter.test.js`   |
-| Dashboard handler returns live queue counts and unreviewed Report counts                        | `src/adminjs/dashboard/dashboard-handler.test.js`                        |
-| Counts equal filtered list totals, flagged vs open Reports, pagination, subtypes, history views | `test/admin-work-queues.test.js`                                         |
-| One labeled action reaches flagged Posts, filters survive return, narrow screens and button states | `test/admin-work-queues-browser.test.js` (evidence in `BWG05_EVIDENCE_DIR`) |
+| Boundary                                                                                                         | Evidence                                                                          |
+| ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Queue definitions, predicates, count SQL and link building                                                       | `src/adminjs/dashboard/work-queues.test.js`                                       |
+| Virtual filter translation and enum filter properties                                                            | `src/adminjs/queue-filters.test.js`, `src/adminjs/sql-adapter.test.js`            |
+| Dashboard handler returns live queue counts and unreviewed Report counts                                         | `src/adminjs/dashboard/dashboard-handler.test.js`                                 |
+| Counts equal filtered list totals, flagged vs open Reports, pagination, subtypes, history views                  | `test/admin-work-queues.test.js`                                                  |
+| One labeled action reaches flagged Posts, filters survive return, narrow screens and button states               | `test/admin-work-queues-browser.test.js` (evidence in `BWG05_EVIDENCE_DIR`)       |
+| Cross-screen keyboard/reduced-motion/narrow journeys, expired-history return and shared dashboard control states | `test/admin-review-experience-browser.test.js` (evidence in `BWG21_EVIDENCE_DIR`) |
 
 ## Out of scope for this contract
 
-- Cross-screen polish, keyboard journeys through every admin window and broken-image handling in
-  other screens (ticket 21).
+- Cross-screen interaction detail, previews and action-window feedback are contracted in
+  `admin-post-review-workspace.md` (Cross-screen review experience).
 - The audited resolution/reopen actions themselves (tickets 08 and 09); the queues only navigate to
   the existing Post review workspace.
 - Arabic admin localization, a case-assignment product and unrestricted status editing.

@@ -5,6 +5,7 @@
   --pupzy-primary: #c4622d;
   --pupzy-primary-light: #d4784a;
   --pupzy-primary-hover: #a84e1f;
+  --pupzy-primary-pressed: #8f421a;
   --pupzy-primary-subtle: #f7d1c0;
   --pupzy-bg: #faf6f1;
   --pupzy-surface: #ffffff;
@@ -452,13 +453,19 @@ button {
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    transform 0.1s ease;
 }
 
+/* Filled primary and danger outcomes. The AdminJS design system does not emit
+   the variant prop as a DOM attribute, so the shared data-variant hook set by
+   the Pupzy components is matched alongside the library selector. */
 .adminjs_Button[variant='primary'],
 .adminjs_Button[variant='contained'],
+.adminjs_Button[data-variant='primary'],
 button[variant='primary'],
-button[variant='contained'] {
+button[variant='contained'],
+button[data-variant='primary'] {
   background-color: var(--pupzy-primary) !important;
   border-color: var(--pupzy-primary) !important;
   color: #ffffff !important;
@@ -466,13 +473,24 @@ button[variant='contained'] {
 }
 
 .adminjs_Button[variant='primary']:hover,
-button[variant='primary']:hover {
+.adminjs_Button[data-variant='primary']:not(:disabled):hover,
+button[variant='primary']:hover,
+button[data-variant='primary']:not(:disabled):hover {
   background-color: var(--pupzy-primary-hover) !important;
   border-color: var(--pupzy-primary-hover) !important;
 }
 
+.adminjs_Button[data-variant='primary']:not(:disabled):active,
+button[data-variant='primary']:not(:disabled):active {
+  background-color: var(--pupzy-primary-pressed) !important;
+  border-color: var(--pupzy-primary-pressed) !important;
+  transform: translateY(1px);
+}
+
 .adminjs_Button[variant='danger'],
-button[variant='danger'] {
+.adminjs_Button[data-variant='danger'],
+button[variant='danger'],
+button[data-variant='danger'] {
   background-color: var(--pupzy-error) !important;
   border-color: var(--pupzy-error) !important;
   color: #ffffff !important;
@@ -480,15 +498,47 @@ button[variant='danger'] {
 }
 
 .adminjs_Button[variant='danger']:hover,
-button[variant='danger']:hover {
+.adminjs_Button[data-variant='danger']:not(:disabled):hover,
+button[variant='danger']:hover,
+button[data-variant='danger']:not(:disabled):hover {
   background-color: var(--pupzy-error-dark) !important;
   border-color: var(--pupzy-error-dark) !important;
 }
 
+.adminjs_Button[data-variant='danger']:not(:disabled):active,
+button[data-variant='danger']:not(:disabled):active {
+  background-color: #7f0512 !important;
+  border-color: #7f0512 !important;
+  transform: translateY(1px);
+}
+
+/* Disabled stays unmistakably inactive even with the filled brand variants. */
+.adminjs_Button[data-variant='primary']:disabled,
+.adminjs_Button[data-variant='danger']:disabled,
+button[data-variant='primary']:disabled,
+button[data-variant='danger']:disabled {
+  background-color: var(--pupzy-text-muted) !important;
+  border-color: var(--pupzy-text-muted) !important;
+  color: var(--pupzy-surface) !important;
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* Loading state: the control is disabled and announces its busy state. */
+button[aria-busy='true'],
+.adminjs_Button[aria-busy='true'] {
+  cursor: progress !important;
+}
+
 .adminjs_Button[variant='light'],
 .adminjs_Button[variant='secondary'],
+.adminjs_Button[data-variant='light'],
+.adminjs_Button[data-variant='secondary'],
 button[variant='light'],
-button[variant='secondary'] {
+button[variant='secondary'],
+button[data-variant='light'],
+button[data-variant='secondary'] {
   background-color: var(--pupzy-surface) !important;
   border: 1px solid var(--pupzy-border) !important;
   color: var(--pupzy-text-secondary) !important;
@@ -502,6 +552,24 @@ button[variant='secondary']:hover {
   background-color: var(--pupzy-bg) !important;
   color: var(--pupzy-primary) !important;
   border-color: var(--pupzy-primary-subtle) !important;
+}
+
+/* Shared pressed feedback for design-system buttons that carry no Pupzy
+   variant (the AdminJS action bar and dialog controls). */
+.adminjs_Button:not([data-variant]):not(:disabled):active,
+button:not([data-variant]):not(.pupzy-media-thumb):not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.adminjs_Button:not([data-variant]):not(:disabled):hover {
+  background-color: var(--pupzy-bg) !important;
+}
+
+/* The dashboard refresh label changes while loading; hold its width so the
+   header does not jump. */
+.pupzy-dashboard-refresh {
+  min-width: 132px;
+  justify-content: center;
 }
 
 /* ==========================================================================
@@ -872,6 +940,11 @@ svg[data-css*='Loader'] {
   box-shadow: var(--pupzy-shadow-card-hover);
 }
 
+.pupzy-media-thumb:active {
+  border-color: var(--pupzy-primary) !important;
+  transform: translateY(1px);
+}
+
 .pupzy-media-thumb img {
   display: block;
   width: 100%;
@@ -1032,7 +1105,15 @@ svg[data-css*='Loader'] {
   }
 
   .pupzy-queue-button,
-  .pupzy-queue-button:active {
+  .pupzy-queue-button:active,
+  .pupzy-media-thumb,
+  .pupzy-media-thumb:active,
+  .adminjs_Button:not([data-variant]),
+  .adminjs_Button:not([data-variant]):active,
+  [data-variant='primary'],
+  [data-variant='primary']:active,
+  [data-variant='danger'],
+  [data-variant='danger']:active {
     transition-duration: 0.01ms !important;
     transform: none !important;
   }
