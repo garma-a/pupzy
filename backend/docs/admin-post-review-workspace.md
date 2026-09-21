@@ -47,10 +47,41 @@ moderation actions:
   banned. Active, removed and expired Posts expose no Reopen action: removal and expiry keep their own
   dedicated paths.
 - Both confirmations state the consequence, require an internal reason, and use a primary
-  (non-destructive) button so outcome changes are visibly distinct from **Remove Post**.
+  (non-destructive) button so outcome changes are visibly distinct from **Remove Post**. The
+  confirmation is a filled primary action, **Remove Post** keeps the filled danger treatment, and
+  hover, pressed, disabled and loading feedback comes from the shared admin theme; the submit stays
+  disabled and unmistakably inactive until the reason is valid.
 - The action commits the outcome or correction, audit row, localized owner notification and (for
   resolution only) pending-interaction cleanup together; see `admin-case-resolution-contract.md`.
   Reopening leaves closed requests and applications closed.
+
+## Expired listings
+
+- An `EXPIRED` listing reads `Expired` in the lifecycle badge and exposes no resolution, reopening,
+  removal or restoration action: expiry keeps its own owner-renewal path, so the workspace only
+  reports state. This matches `post-expiry-and-renewal-contract.md`.
+- Expired listings keep the workspace context: original photos, paginated discussion with attached
+  images, Reports and action history stay visible for staff.
+- The History → Expired queue (see `admin-work-queues.md`) opens these listings, and **Back to
+  filtered list** returns to the same `filters.status=EXPIRED` list.
+
+## Cross-screen review experience
+
+The dashboard, Posts list, record action windows, workspace and full-image preview share one
+interaction language (ticket 21):
+
+- Outcome confirmations are filled primary actions and removal keeps its filled danger treatment, so
+  the two are visibly distinct; both expose hover, pressed, disabled and loading states and a
+  `role="status"` message while submitting. A disabled confirmation is unmistakably inactive.
+- Buttons that carry no Pupzy variant (the AdminJS action bar and dialog controls) gain the same
+  hover and pressed feedback from the shared theme.
+- Focus is visible on every control; the full-image preview traps focus, dismisses with Escape and
+  returns focus to the thumbnail that opened it; `prefers-reduced-motion` collapses every shared
+  transition and pressed translation.
+- Narrow screens keep the workspace, thumbnail grid, preview and long list titles inside the
+  viewport; list titles truncate instead of colliding.
+- Filter preservation is verified end to end for the flagged and expired queues, including Browser
+  Back.
 
 ## Discussion pagination API
 
@@ -99,7 +130,7 @@ used). Browser Back also preserves the filtered list. See `admin-work-queues.md`
 ## Out of scope for this workspace
 
 Owner reopening of completed Posts and unrestricted status editing are not exposed (administrators use
-the audited `reopenPost` correction). Cross-screen polish remains ticket 21.
+the audited `reopenPost` correction). Cross-screen polish is contracted in the section above.
 
 ## Verification
 
@@ -119,3 +150,8 @@ type/state-specific action lists, reason enforcement, banned-owner rejection, au
 atomicity and concurrency. `test/post-review-workspace-browser.test.js` drives the real AdminJS UI in
 Chrome (aligned thumbnails, full-image previews preserving aspect ratio, keyboard focus return, reduced
 motion, narrow screens, a plain `ADMIN` session and the resolution/reopening correction journeys).
+`test/admin-review-experience-browser.test.js` is the ticket 21 cross-screen acceptance suite: shared
+dashboard and confirmation control states (hover, pressed, disabled, loading, error/retry), the
+History → Expired → workspace → filtered-list return journey, keyboard/reduced-motion/narrow-screen
+journeys and long-title handling, with screenshots recorded under `BWG21_EVIDENCE_DIR` (default
+`/tmp/opencode/bwg-21-evidence`).

@@ -122,16 +122,11 @@ export default function Dashboard() {
         </H2>
         <Button
           variant="primary"
+          data-variant="primary"
+          className="pupzy-dashboard-refresh"
           disabled={loading}
+          aria-busy={loading}
           onClick={() => void load(true)}
-          style={{
-            backgroundColor: '#C4622D',
-            borderColor: '#C4622D',
-            color: '#FFFFFF',
-            borderRadius: '999px',
-            fontWeight: 600,
-            cursor: loading ? 'not-allowed' : 'pointer',
-          }}
         >
           {loading ? 'Refreshing…' : 'Refresh now'}
         </Button>
@@ -142,6 +137,7 @@ export default function Dashboard() {
         <Box
           p="lg"
           mb="xl"
+          role="alert"
           style={{
             backgroundColor: '#F9E5E7',
             border: '1px solid #F3C4CB',
@@ -152,7 +148,7 @@ export default function Dashboard() {
           <Text color="error" style={{ fontWeight: 600 }}>
             {error}
           </Text>
-          <Button mt="md" variant="danger" onClick={() => void load(true)} style={{ borderRadius: '999px' }}>
+          <Button mt="md" variant="danger" data-variant="danger" onClick={() => void load(true)}>
             Retry
           </Button>
         </Box>
