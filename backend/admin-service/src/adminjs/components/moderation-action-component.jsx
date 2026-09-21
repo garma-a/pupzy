@@ -37,6 +37,14 @@ const ACTION_CONSEQUENCES = {
     'Removes the Post from discovery and notifies the owner with this reason. Media and discussion are retained, and an administrator can restore the Post later.',
 };
 
+const POST_CORRECTION_ACTIONS = {
+  reopenPost: {
+    label: 'Reopen Post',
+    consequence:
+      'Returns this completed Post to Active so the community can keep helping. Closed contact requests and adoption applications stay closed, removed content is not restored, and the owner is notified.',
+  },
+};
+
 export default function ModerationAction({ action, resource, record }) {
   const addNotice = useNotice();
   const [reason, setReason] = useState('');
@@ -45,8 +53,10 @@ export default function ModerationAction({ action, resource, record }) {
   const isBan = action.name === 'banUser';
   const isReviewWithNoAction = action.name === 'reviewWithNoAction';
   const resolution = POST_RESOLUTION_ACTIONS[action.name];
+  const correction = POST_CORRECTION_ACTIONS[action.name];
   const isResolution = Boolean(resolution);
   const label =
+    correction?.label ??
     resolution?.label ??
     {
       banUser: 'Ban User',
@@ -55,8 +65,8 @@ export default function ModerationAction({ action, resource, record }) {
       reviewWithNoAction: 'Review with No Action',
     }[action.name] ??
     action.label;
-  const consequence = resolution?.consequence ?? ACTION_CONSEQUENCES[action.name];
-  const variant = isResolution || isReviewWithNoAction ? 'primary' : 'danger';
+  const consequence = correction?.consequence ?? resolution?.consequence ?? ACTION_CONSEQUENCES[action.name];
+  const variant = correction || isResolution || isReviewWithNoAction ? 'primary' : 'danger';
 
   const submit = async () => {
     setLoading(true);

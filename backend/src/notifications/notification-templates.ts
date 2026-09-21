@@ -40,6 +40,8 @@ export interface NotificationTemplateParamsMap {
   POST_REMOVED_BY_ADMIN: { reason: string; removedAll?: boolean };
   /** Administrator-recorded Post Resolution. The internal reason is not disclosed. */
   POST_RESOLVED_BY_ADMIN: { postTitle: string; outcome: PostResolutionOutcome };
+  /** Administrator correction of a recorded outcome. The internal reason is not disclosed. */
+  POST_REOPENED_BY_ADMIN: { postTitle: string };
   POST_INACTIVITY_NUDGE: { postTitle: string };
   SYSTEM_ANNOUNCEMENT: { postTitle: string };
   NEW_COMMENT: { actorName: string; postTitle: string };
@@ -174,6 +176,16 @@ const NOTIFICATION_TEMPLATES: NotificationTemplateRegistry = {
     ar: ({ postTitle, outcome }) => ({
       title: 'تم تسجيل نتيجة المنشور',
       body: `قام أحد المشرفين بتسجيل نتيجة منشورك "${postTitle}": ${POST_RESOLUTION_OUTCOME_LABELS[outcome].ar}.`,
+    }),
+  },
+  POST_REOPENED_BY_ADMIN: {
+    en: ({ postTitle }) => ({
+      title: 'Post reopened',
+      body: `An administrator reopened your post "${postTitle}".`,
+    }),
+    ar: ({ postTitle }) => ({
+      title: 'تمت إعادة فتح المنشور',
+      body: `قام أحد المشرفين بإعادة فتح منشورك "${postTitle}".`,
     }),
   },
   POST_REMOVED_BY_ADMIN: {

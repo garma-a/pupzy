@@ -48,4 +48,9 @@ describe('NotificationType GraphQL enum consistency (regression guard)', () => {
     expect(extractEnumValues(POSTS_ENUMS_FILE, 'NotificationType')).toContain('POST_RESOLVED_BY_ADMIN');
     expect(extractEnumValues(COMMON_ENUMS_FILE, 'NotificationType')).toContain('POST_RESOLVED_BY_ADMIN');
   });
+
+  it('exposes the administrator reopening notification introduced with ticket 09', () => {
+    expect(extractEnumValues(POSTS_ENUMS_FILE, 'NotificationType')).toContain('POST_REOPENED_BY_ADMIN');
+    expect(extractEnumValues(COMMON_ENUMS_FILE, 'NotificationType')).toContain('POST_REOPENED_BY_ADMIN');
+  });
 });

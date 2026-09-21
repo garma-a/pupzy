@@ -25,8 +25,8 @@ describe('State-Aware Action Visibility Matrix', () => {
     get: (key) => ({ id: 'test-user-id', is_banned })[key],
   });
 
-  const createTypedPostRecord = (post_type, status, report_type = null) => {
-    const params = { id: 'test-post-id', post_type, status, report_type, moderation_status: 'CLEAN' };
+  const createTypedPostRecord = (post_type, status, report_type = null, owner_is_banned = undefined) => {
+    const params = { id: 'test-post-id', post_type, status, report_type, moderation_status: 'CLEAN', owner_is_banned };
     return { id: () => 'test-post-id', params, get: (key) => params[key] };
   };
 
@@ -136,6 +136,31 @@ describe('State-Aware Action Visibility Matrix', () => {
         assert.equal(postActions[name].isVisible({}), false);
         assert.equal(postActions[name].isVisible(null), false);
       }
+    });
+
+    it('offers Reopen only to correct a completed outcome', () => {
+      for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD']) {
+        const context = { record: createTypedPostRecord('RESCUE', status) };
+        assert.equal(postActions.reopenPost.isVisible(context), true, `Reopen must be offered for ${status}`);
+      }
+      for (const status of ['ACTIVE', 'REMOVED', 'EXPIRED']) {
+        const context = { record: createTypedPostRecord('RESCUE', status) };
+        assert.equal(postActions.reopenPost.isVisible(context), false, `Reopen must be hidden for ${status}`);
+      }
+    });
+
+    it('hides Reopen while the owner is banned and for missing context', () => {
+      assert.equal(
+        postActions.reopenPost.isVisible({ record: createTypedPostRecord('RESCUE', 'RESOLVED', null, true) }),
+        false,
+      );
+      assert.equal(
+        postActions.reopenPost.isVisible({ record: createTypedPostRecord('RESCUE', 'RESOLVED', null, false) }),
+        true,
+      );
+      assert.equal(postActions.reopenPost.isVisible({ record: createTypedPostRecord('RESCUE', 'RESOLVED') }), true);
+      assert.equal(postActions.reopenPost.isVisible({}), false);
+      assert.equal(postActions.reopenPost.isVisible(null), false);
     });
 
     it('works with records using plain params object without get method', () => {

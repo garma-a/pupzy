@@ -32,20 +32,25 @@ Opening one Post shows, in this order:
    report review screens.
 5. **Action history** — administrator actions recorded for the Post and its Comments, newest first,
    with action label, target type, actor, time and reason. A recorded resolution reads
-   `Post marked <outcome>` from its audit metadata.
+   `Post marked <outcome>` from its audit metadata, and a correction reads
+   `Post reopened (was <outcome>)`.
 
-## Resolution actions
+## Resolution and reopening actions
 
-The workspace exposes only the type-specific resolution actions valid for the current record, alongside
-the existing moderation actions:
+The workspace exposes only the lifecycle actions valid for the current record, alongside the existing
+moderation actions:
 
 - `markRescued` for an active rescue; `markReunited` for an active lost/found case; `markResolved` for an
   active mating listing or found stray; `markAdopted` for an active adoption; `markSold` for an active
   product listing. A recorded outcome, removal or expiry exposes none of them.
-- The confirmation page states the consequence, requires an internal reason, and uses a primary
-  (non-destructive) button so resolution is visibly distinct from **Remove Post**.
-- The action commits the outcome, audit row, localized owner notification and pending-interaction
-  cleanup together; see `admin-case-resolution-contract.md`.
+- `reopenPost` for a completed outcome (`RESOLVED`, `REUNITED`, `ADOPTED` or `SOLD`) whose owner is not
+  banned. Active, removed and expired Posts expose no Reopen action: removal and expiry keep their own
+  dedicated paths.
+- Both confirmations state the consequence, require an internal reason, and use a primary
+  (non-destructive) button so outcome changes are visibly distinct from **Remove Post**.
+- The action commits the outcome or correction, audit row, localized owner notification and (for
+  resolution only) pending-interaction cleanup together; see `admin-case-resolution-contract.md`.
+  Reopening leaves closed requests and applications closed.
 
 ## Discussion pagination API
 
@@ -87,9 +92,8 @@ GET /admin/api/resources/posts/records/:recordId/postReviewDiscussion?page=:page
 
 ## Out of scope for this workspace
 
-Reopening a recorded outcome and administrative outcome editing remain the later correction work
-(ticket 09); unrestricted status editing is not exposed. Queue navigation and cross-screen polish remain
-tickets 05 and 21.
+Owner reopening of completed Posts and unrestricted status editing are not exposed (administrators use
+the audited `reopenPost` correction). Queue navigation and cross-screen polish remain tickets 05 and 21.
 
 ## Verification
 
@@ -104,8 +108,8 @@ npm run format:check
 
 `test/post-review-workspace.test.js` exercises the authenticated admin HTTP boundary against a real
 database (workspace payload, pagination, permissions, retention, missing media, cross-Post isolation).
-`test/admin-case-resolution.test.js` covers the authenticated resolution actions, type-specific action
-lists, reason enforcement, audit/notification/cleanup atomicity and concurrency.
-`test/post-review-workspace-browser.test.js` drives the real AdminJS UI in Chrome (aligned thumbnails,
-full-image previews preserving aspect ratio, keyboard focus return, reduced motion, narrow screens, a
-plain `ADMIN` session and the resolution confirmation/result journey).
+`test/admin-case-resolution.test.js` covers the authenticated resolution and reopening actions,
+type/state-specific action lists, reason enforcement, banned-owner rejection, audit/notification/cleanup
+atomicity and concurrency. `test/post-review-workspace-browser.test.js` drives the real AdminJS UI in
+Chrome (aligned thumbnails, full-image previews preserving aspect ratio, keyboard focus return, reduced
+motion, narrow screens, a plain `ADMIN` session and the resolution/reopening correction journeys).

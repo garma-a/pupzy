@@ -15,6 +15,7 @@
  * | `OWNER_RENEW`   | Post owner    | GraphQL `renewPost`                                |
  * | `EXPIRE`        | System job    | `PostExpiryProcessor` inactivity boundary          |
  * | `ADMIN_RESOLVE` | Administrator | AdminJS type-specific resolution actions           |
+ * | `ADMIN_REOPEN`  | Administrator | AdminJS `reopenPost`                               |
  * | `ADMIN_REMOVE`  | Administrator | AdminJS `removePost` (and the ban Post cascade)    |
  * | `ADMIN_RESTORE` | Administrator | AdminJS `restorePost`                              |
  *
@@ -52,7 +53,14 @@ export type PostLifecycleLostReportType = 'LOST_PET' | 'FOUND_STRAY';
 
 /** Named lifecycle transitions covered by this contract. */
 export type PostLifecycleTransitionName =
-  'OWNER_CLOSE' | 'OWNER_REMOVE' | 'OWNER_RENEW' | 'EXPIRE' | 'ADMIN_RESOLVE' | 'ADMIN_REMOVE' | 'ADMIN_RESTORE';
+  | 'OWNER_CLOSE'
+  | 'OWNER_REMOVE'
+  | 'OWNER_RENEW'
+  | 'EXPIRE'
+  | 'ADMIN_RESOLVE'
+  | 'ADMIN_REOPEN'
+  | 'ADMIN_REMOVE'
+  | 'ADMIN_RESTORE';
 
 /**
  * Advisory-lock key namespace that serializes a single Post's discussion
@@ -155,6 +163,32 @@ export function canAdminResolve(
 ): boolean {
   if (currentStatus !== 'ACTIVE') return false;
   return ownerClosureTargets(postType, lostReportType).includes(targetStatus as PostLifecycleStatus);
+}
+
+/**
+ * The successful outcomes a Post Resolution can record. These are the only
+ * statuses an administrator may correct through reopening; `ACTIVE`, `REMOVED`
+ * and `EXPIRED` are deliberately absent.
+ */
+export const COMPLETED_POST_OUTCOMES: readonly PostLifecycleStatus[] = Object.freeze([
+  'RESOLVED',
+  'REUNITED',
+  'ADOPTED',
+  'SOLD',
+] as const);
+
+/**
+ * True when an administrator may reopen this Post.
+ *
+ * Reopening is the administrator-only correction for a mistaken Post
+ * Resolution. It applies only to a completed successful outcome, so it never
+ * overwrites an `ACTIVE` Post and never bypasses the dedicated paths for
+ * removed or expired content: a `REMOVED` Post is returned only by the
+ * explicit restoration transition, and an `EXPIRED` listing only by explicit
+ * owner renewal. Owners have no reopening path in any case.
+ */
+export function canAdminReopen(currentStatus: string): boolean {
+  return COMPLETED_POST_OUTCOMES.includes(currentStatus as PostLifecycleStatus);
 }
 
 /**
@@ -289,6 +323,13 @@ export interface PostLifecycleSideEffects {
  *   AdminJS dashboard cache after commit. It deliberately leaves the
  *   moderation fields and open Post Reports untouched: a Post Resolution is
  *   not a moderation takedown.
+ * - Administrator reopening corrects a completed outcome back to `ACTIVE`. It
+ *   records the actor, internal reason and corrected outcome in the audit row
+ *   and inserts the bilingual owner notification in the same transaction, then
+ *   invalidates the AdminJS dashboard cache after commit. It deliberately
+ *   leaves moderation fields, open Post Reports and every terminated or
+ *   approved interaction untouched: reopening never revives closed contact
+ *   requests or adoption applications.
  * - Administrator removal and restoration additionally write the audit row,
  *   close open Post Reports, and invalidate the AdminJS dashboard cache.
  *   Removal notifies the owner; restoration does not.
@@ -346,6 +387,15 @@ export const POST_LIFECYCLE_SIDE_EFFECTS: Readonly<Record<PostLifecycleTransitio
       ownerNotification: 'POST_RESOLVED_BY_ADMIN',
       closeOpenPostReports: false,
       terminatePendingInteractions: true,
+    }),
+    ADMIN_REOPEN: Object.freeze({
+      userPostCountDelta: 'NONE',
+      invalidateOwnerUserCache: false,
+      invalidateAdminDashboardCache: true,
+      moderationAudit: true,
+      ownerNotification: 'POST_REOPENED_BY_ADMIN',
+      closeOpenPostReports: false,
+      terminatePendingInteractions: false,
     }),
     ADMIN_REMOVE: Object.freeze({
       userPostCountDelta: 'DECREMENT',

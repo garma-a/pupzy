@@ -34,6 +34,7 @@ const BUSINESS_TABLES = `
 `;
 
 const RESOLUTION_ACTION_NAMES = ['markRescued', 'markReunited', 'markResolved', 'markAdopted', 'markSold'];
+const REOPEN_ACTION_NAME = 'reopenPost';
 
 async function login(email, password) {
   const loginPage = await fetch(`${baseUrl}/admin/login`);
@@ -567,6 +568,365 @@ describe('Administrator case resolution HTTP boundary', () => {
 
     const post = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0];
     assert.equal(post.status, 'ACTIVE');
+    const audits = await database.pool.query(`SELECT count(*)::int AS count FROM moderation_actions`);
+    assert.equal(audits.rows[0].count, 0);
+    const notifications = await database.pool.query(`SELECT count(*)::int AS count FROM notifications`);
+    assert.equal(notifications.rows[0].count, 0);
+  });
+});
+
+describe('Administrator case reopening HTTP boundary', () => {
+  async function insertCompletedPost({ ownerId, postType, title, reportType = null, status }) {
+    return insertTypedPost({ ownerId, postType, title, reportType, status });
+  }
+
+  it('exposes Reopen only to correct a completed outcome and never for active, removed, expired or banned-owner cases', async () => {
+    const ownerId = await insertUser('reopen-visibility-owner');
+    const completedCases = [
+      { postType: 'RESCUE', reportType: null, status: 'RESOLVED', title: 'Reopen rescue' },
+      { postType: 'LOST', reportType: 'LOST_PET', status: 'REUNITED', title: 'Reopen lost pet' },
+      { postType: 'LOST', reportType: 'FOUND_STRAY', status: 'RESOLVED', title: 'Reopen found stray' },
+      { postType: 'ADOPTION', reportType: null, status: 'ADOPTED', title: 'Reopen adoption' },
+      { postType: 'PRODUCT', reportType: null, status: 'SOLD', title: 'Reopen product' },
+      { postType: 'MATING', reportType: null, status: 'RESOLVED', title: 'Reopen mating' },
+    ];
+
+    for (const testCase of completedCases) {
+      const postId = await insertCompletedPost({ ownerId, ...testCase });
+      const staffView = await fetchRecordActions(postId, staffCookie);
+      assert.ok(staffView.names.includes(REOPEN_ACTION_NAME), `${testCase.title} must offer the Reopen correction`);
+      const resolutionActions = RESOLUTION_ACTION_NAMES.filter((name) => staffView.names.includes(name));
+      assert.deepEqual(resolutionActions, [], 'a completed outcome is corrected, never resolved twice');
+      assert.equal(staffView.names.includes('removePost'), false, 'removal is hidden once an outcome is recorded');
+      assert.equal(staffView.names.includes('restorePost'), false, 'restoration stays reserved for removed content');
+
+      const superView = await fetchRecordActions(postId, superCookie);
+      assert.ok(superView.names.includes(REOPEN_ACTION_NAME), 'SUPER_ADMIN sees the same correction action');
+    }
+
+    const activeId = await insertTypedPost({ ownerId, postType: 'RESCUE', title: 'Active case stays active' });
+    const removedId = await insertTypedPost({
+      ownerId,
+      postType: 'ADOPTION',
+      title: 'Removed case',
+      status: 'REMOVED',
+    });
+    const expiredId = await insertTypedPost({ ownerId, postType: 'PRODUCT', title: 'Expired case', status: 'EXPIRED' });
+    for (const [postId, expectedAction] of [
+      [activeId, 'markRescued'],
+      [removedId, 'restorePost'],
+      [expiredId, null],
+    ]) {
+      const view = await fetchRecordActions(postId);
+      assert.equal(view.names.includes(REOPEN_ACTION_NAME), false, `Reopen must be hidden for ${postId}`);
+      if (expectedAction) {
+        assert.ok(view.names.includes(expectedAction), `${postId} keeps its dedicated lifecycle action`);
+      }
+    }
+
+    const bannedOwnerId = await insertUser('reopen-banned-owner');
+    await database.pool.query(`UPDATE users SET is_banned = true WHERE id = $1`, [bannedOwnerId]);
+    const bannedOwnerPostId = await insertCompletedPost({
+      ownerId: bannedOwnerId,
+      postType: 'RESCUE',
+      title: 'Banned owner correction',
+      status: 'RESOLVED',
+    });
+    const bannedView = await fetchRecordActions(bannedOwnerPostId);
+    assert.equal(bannedView.names.includes(REOPEN_ACTION_NAME), false, 'a banned owner is not offered reopening');
+    const bannedAttempt = await postAction(
+      REOPEN_ACTION_NAME,
+      bannedOwnerPostId,
+      { reason: 'Direct banned-owner attempt' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(bannedAttempt.status, 200);
+    const bannedResult = await bannedAttempt.json();
+    assert.equal(bannedResult.notice?.type, 'error');
+    assert.match(bannedResult.notice?.message ?? '', /banned account/i);
+    const bannedPost = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [bannedOwnerPostId]))
+      .rows[0];
+    assert.equal(bannedPost.status, 'RESOLVED', 'a banned owner post never reaches Active through reopening');
+
+    const removedAttempt = await postAction(
+      REOPEN_ACTION_NAME,
+      removedId,
+      { reason: 'Bypass removal attempt' },
+      staffCookie,
+      staffCsrf,
+    );
+    const removedResult = await removedAttempt.json();
+    assert.equal(removedResult.notice?.type, 'error');
+    assert.match(removedResult.notice?.message ?? '', /only a completed post/i);
+    const removedPost = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [removedId])).rows[0];
+    assert.equal(removedPost.status, 'REMOVED', 'restoration rules are not bypassed by reopening');
+
+    const audits = await database.pool.query(`SELECT count(*)::int AS count FROM moderation_actions`);
+    assert.equal(audits.rows[0].count, 0, 'opening or rejecting never records an outcome');
+    const notifications = await database.pool.query(`SELECT count(*)::int AS count FROM notifications`);
+    assert.equal(notifications.rows[0].count, 0);
+  });
+
+  it('corrects a mistaken resolution over authenticated HTTP while closed interactions stay closed', async () => {
+    const ownerId = await insertUser('reopen-flow-owner');
+    const requesterId = await insertUser('reopen-flow-requester');
+    const reporterId = await insertUser('reopen-flow-reporter');
+    const postId = await insertTypedPost({ ownerId, postType: 'ADOPTION', title: 'Correction journey case' });
+    const contactRequestId = await insertContactRequest({ postId, requesterId });
+    const reportId = (
+      await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason)
+         VALUES ($1, $2, 'SPAM')
+         RETURNING id`,
+        [postId, reporterId],
+      )
+    ).rows[0].id;
+
+    const resolution = await postAction(
+      'markAdopted',
+      postId,
+      { reason: 'Adoption completed' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal((await resolution.json()).notice?.type, 'success');
+    const afterResolution = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0];
+    assert.equal(afterResolution.status, 'ADOPTED');
+    const closedRequest = (
+      await database.pool.query(`SELECT status, responded_at FROM contact_requests WHERE id = $1`, [contactRequestId])
+    ).rows[0];
+    assert.equal(closedRequest.status, 'REJECTED');
+
+    const reopened = await postAction(
+      REOPEN_ACTION_NAME,
+      postId,
+      { reason: 'The adoption outcome was recorded by mistake' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(reopened.status, 200);
+    const reopenResult = await reopened.json();
+    assert.equal(reopenResult.notice?.type, 'success');
+    assert.equal(reopenResult.notice?.message, 'Post reopened.');
+
+    const post = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0];
+    assert.equal(post.status, 'ACTIVE', 'discovery state is restored consistently');
+
+    const audits = (
+      await database.pool.query(
+        `SELECT action_type, admin_user_id, reason, metadata FROM moderation_actions
+         WHERE target_id = $1 ORDER BY created_at, action_type`,
+        [postId],
+      )
+    ).rows;
+    assert.deepEqual(audits.map((row) => row.action_type).sort(), ['POST_REOPENED', 'POST_RESOLVED']);
+    const reopenAudit = audits.find((row) => row.action_type === 'POST_REOPENED');
+    assert.equal(reopenAudit.admin_user_id, staffId);
+    assert.equal(reopenAudit.reason, 'The adoption outcome was recorded by mistake');
+    assert.equal(reopenAudit.metadata.previousOutcome, 'ADOPTED');
+    const resolveAudit = audits.find((row) => row.action_type === 'POST_RESOLVED');
+    assert.equal(resolveAudit.reason, 'Adoption completed');
+    assert.equal(resolveAudit.metadata.outcome, 'ADOPTED');
+
+    const notifications = (
+      await database.pool.query(
+        `SELECT type, recipient_id, related_post_id, title, body, title_arabic, body_arabic
+         FROM notifications WHERE related_post_id = $1 ORDER BY created_at, type`,
+        [postId],
+      )
+    ).rows;
+    assert.deepEqual(notifications.map((row) => row.type).sort(), ['POST_REOPENED_BY_ADMIN', 'POST_RESOLVED_BY_ADMIN']);
+    const reopenNotification = notifications.find((row) => row.type === 'POST_REOPENED_BY_ADMIN');
+    assert.equal(reopenNotification.recipient_id, ownerId);
+    assert.equal(reopenNotification.title, 'Post reopened');
+    assert.equal(reopenNotification.body, 'An administrator reopened your post "Correction journey case".');
+    assert.equal(reopenNotification.title_arabic, 'تمت إعادة فتح المنشور');
+    assert.ok(reopenNotification.body_arabic.includes('Correction journey case'));
+    assert.equal(reopenNotification.body.includes('recorded by mistake'), false);
+
+    const stillClosed = (
+      await database.pool.query(`SELECT status, responded_at FROM contact_requests WHERE id = $1`, [contactRequestId])
+    ).rows[0];
+    assert.equal(stillClosed.status, 'REJECTED', 'reopening never revives a closed request');
+    assert.ok(stillClosed.responded_at);
+
+    const report = (
+      await database.pool.query(`SELECT reviewed_at, review_outcome FROM post_reports WHERE id = $1`, [reportId])
+    ).rows[0];
+    assert.equal(report.reviewed_at, null, 'a correction is not a moderation review');
+
+    const view = await fetchRecordActions(postId);
+    assert.ok(view.names.includes('markAdopted'), 'the corrected case can be resolved again if justified');
+    assert.equal(view.names.includes(REOPEN_ACTION_NAME), false, 'an active case offers no reopening');
+  });
+
+  it('requires an internal reason and rejects repeated, removed or expired reopening without writes', async () => {
+    const ownerId = await insertUser('reopen-guard-owner');
+    const completedId = await insertCompletedPost({
+      ownerId,
+      postType: 'MATING',
+      title: 'Reopen guard',
+      status: 'RESOLVED',
+    });
+    const activeId = await insertTypedPost({ ownerId, postType: 'RESCUE', title: 'Active guard' });
+    const removedId = await insertTypedPost({
+      ownerId,
+      postType: 'PRODUCT',
+      title: 'Removed guard',
+      status: 'REMOVED',
+    });
+    const expiredId = await insertTypedPost({
+      ownerId,
+      postType: 'PRODUCT',
+      title: 'Expired guard',
+      status: 'EXPIRED',
+    });
+
+    const attempts = [
+      [completedId, {}, /reason is required/i],
+      [completedId, { reason: '   ' }, /reason is required/i],
+      [activeId, { reason: 'Not completed' }, /only a completed post/i],
+      [removedId, { reason: 'Not completed' }, /only a completed post/i],
+      [expiredId, { reason: 'Not completed' }, /only a completed post/i],
+    ];
+
+    for (const [postId, payload, expectedMessage] of attempts) {
+      const response = await postAction(REOPEN_ACTION_NAME, postId, payload);
+      assert.equal(response.status, 200);
+      const result = await response.json();
+      assert.equal(result.notice?.type, 'error', `reopening ${postId} must be rejected`);
+      assert.match(result.notice?.message ?? '', expectedMessage);
+    }
+
+    const first = await postAction(REOPEN_ACTION_NAME, completedId, { reason: 'First correction' });
+    assert.equal((await first.json()).notice?.type, 'success');
+    const repeated = await postAction(REOPEN_ACTION_NAME, completedId, { reason: 'Second correction' });
+    const repeatedResult = await repeated.json();
+    assert.equal(repeatedResult.notice?.type, 'error');
+    assert.match(repeatedResult.notice?.message ?? '', /only a completed post/i);
+
+    const audits = await database.pool.query(
+      `SELECT count(*)::int AS count FROM moderation_actions WHERE action_type = 'POST_REOPENED'`,
+    );
+    assert.equal(audits.rows[0].count, 1, 'exactly one successful reopening is audited');
+    const notifications = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE type = 'POST_REOPENED_BY_ADMIN'`,
+    );
+    assert.equal(notifications.rows[0].count, 1);
+    const statuses = await database.pool.query(`SELECT status FROM posts WHERE id = ANY($1::uuid[]) ORDER BY status`, [
+      [completedId, activeId, removedId, expiredId],
+    ]);
+    assert.deepEqual(
+      statuses.rows.map((row) => row.status),
+      ['ACTIVE', 'ACTIVE', 'REMOVED', 'EXPIRED'],
+    );
+  });
+
+  it('serializes concurrent reopening requests into exactly one audited correction', async () => {
+    const ownerId = await insertUser('reopen-race-owner');
+    const postId = await insertCompletedPost({
+      ownerId,
+      postType: 'RESCUE',
+      title: 'Concurrent correction',
+      status: 'RESOLVED',
+    });
+
+    const responses = await Promise.all([
+      postAction(REOPEN_ACTION_NAME, postId, { reason: 'First reviewer' }, staffCookie, staffCsrf),
+      postAction(REOPEN_ACTION_NAME, postId, { reason: 'Second reviewer' }, superCookie, superCsrf),
+    ]);
+    const results = await Promise.all(responses.map((response) => response.json()));
+    assert.deepEqual(results.map((result) => result.notice?.type).sort(), ['error', 'success']);
+
+    const audits = await database.pool.query(
+      `SELECT count(*)::int AS count FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_REOPENED'`,
+      [postId],
+    );
+    assert.equal(audits.rows[0].count, 1);
+    const notifications = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE related_post_id = $1`,
+      [postId],
+    );
+    assert.equal(notifications.rows[0].count, 1);
+    const post = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0];
+    assert.equal(post.status, 'ACTIVE');
+  });
+
+  it('keeps unauthenticated, forged-session and CSRF-less reopening requests away from the action', async () => {
+    const ownerId = await insertUser('reopen-security-owner');
+    const postId = await insertCompletedPost({
+      ownerId,
+      postType: 'RESCUE',
+      title: 'Security correction',
+      status: 'RESOLVED',
+    });
+
+    const csrfOnlyPage = await fetch(`${baseUrl}/admin/login`);
+    const csrfOnlyCookie = csrfOnlyPage.headers
+      .getSetCookie()
+      .find((cookie) => cookie.startsWith('XSRF-TOKEN='))
+      ?.split(';', 1)[0];
+    const csrfOnlyToken = decodeURIComponent(csrfOnlyCookie?.split('=', 2)[1] ?? '');
+
+    const anonymous = await fetch(`${baseUrl}/admin/api/resources/posts/records/${postId}/${REOPEN_ACTION_NAME}`, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: {
+        cookie: csrfOnlyCookie,
+        origin: baseUrl,
+        'x-xsrf-token': csrfOnlyToken,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ reason: 'Anonymous attempt' }),
+    });
+    assert.equal(anonymous.status, 302);
+    assert.match(anonymous.headers.get('location'), /\/admin\/login/);
+
+    const forgedPage = await fetch(`${baseUrl}/admin/login`);
+    const forgedCsrfCookie = forgedPage.headers
+      .getSetCookie()
+      .find((cookie) => cookie.startsWith('XSRF-TOKEN='))
+      ?.split(';', 1)[0];
+    const forgedCsrfToken = decodeURIComponent(forgedCsrfCookie?.split('=', 2)[1] ?? '');
+    const forged = await fetch(`${baseUrl}/admin/api/resources/posts/records/${postId}/${REOPEN_ACTION_NAME}`, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: {
+        cookie: `pupzy_admin_test=forged-session-value; ${forgedCsrfCookie}`,
+        origin: baseUrl,
+        'x-xsrf-token': forgedCsrfToken,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ reason: 'Forged attempt' }),
+    });
+    assert.equal(forged.status, 302);
+
+    const csrfMissing = await fetch(`${baseUrl}/admin/api/resources/posts/records/${postId}/${REOPEN_ACTION_NAME}`, {
+      method: 'POST',
+      headers: {
+        cookie: staffCookie,
+        origin: baseUrl,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ reason: 'CSRF attempt' }),
+    });
+    assert.equal(csrfMissing.status, 403);
+
+    const crossOrigin = await fetch(`${baseUrl}/admin/api/resources/posts/records/${postId}/${REOPEN_ACTION_NAME}`, {
+      method: 'POST',
+      headers: {
+        cookie: `${staffCookie}; ${staffCsrf.cookie}`,
+        origin: 'https://attacker.example',
+        'x-xsrf-token': staffCsrf.token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ reason: 'Cross-origin attempt' }),
+    });
+    assert.equal(crossOrigin.status, 403);
+
+    const post = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0];
+    assert.equal(post.status, 'RESOLVED');
     const audits = await database.pool.query(`SELECT count(*)::int AS count FROM moderation_actions`);
     assert.equal(audits.rows[0].count, 0);
     const notifications = await database.pool.query(`SELECT count(*)::int AS count FROM notifications`);

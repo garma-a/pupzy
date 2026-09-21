@@ -47,6 +47,7 @@ const MODERATION_ACTION_LABELS = {
   POST_APPROVED: 'Post approved',
   POST_FLAGGED: 'Post flagged',
   POST_RESOLVED: 'Post resolution recorded',
+  POST_REOPENED: 'Post reopened',
   POST_REMOVED: 'Post removed',
   POST_RESTORED: 'Post restored',
   USER_BANNED: 'User banned',
@@ -97,11 +98,17 @@ export const moderationActionLabel = (value) => labelFrom(MODERATION_ACTION_LABE
 /**
  * Readable history label for one audit row. Administrator resolutions carry
  * their recorded outcome in metadata, so the history reads "Post marked
- * adopted" instead of a generic "Post resolution recorded".
+ * adopted" instead of a generic "Post resolution recorded". A reopening keeps
+ * the corrected outcome visible as "Post reopened (was adopted)".
  */
 export function moderationActionHistoryLabel(actionType, metadata) {
   if (actionType === 'POST_RESOLVED' && metadata?.outcome) {
     return `Post marked ${postStatusLabel(metadata.outcome).toLowerCase()}`;
+  }
+  if (actionType === 'POST_REOPENED') {
+    return metadata?.previousOutcome
+      ? `Post reopened (was ${postStatusLabel(metadata.previousOutcome).toLowerCase()})`
+      : 'Post reopened';
   }
   return moderationActionLabel(actionType);
 }
@@ -459,6 +466,32 @@ export function attachLostSubtype(pool) {
       record.params.report_type = rows[0]?.report_type ?? null;
     } catch {
       // Leave the discriminator unset; the conservative default still applies.
+    }
+    return request;
+  };
+}
+
+/**
+ * `show`/action before hook: attaches whether the Post owner is banned so the
+ * administrator reopening action is offered only for a Post whose owner can
+ * still hold active content. A lookup failure leaves the flag unset and keeps
+ * the action visible; the action's own transaction rejects a banned owner
+ * anyway, so content is never reopened by a missing display-side lookup.
+ */
+export function attachOwnerBanStatus(pool) {
+  return async function attachOwnerBanStatusBeforeHook(request, context) {
+    const record = context?.record;
+    if (!record?.params) return request;
+    const recordId = typeof record.id === 'function' ? record.id() : record.params.id;
+    if (!recordId || !pool || typeof pool.query !== 'function') return request;
+    try {
+      const { rows } = await pool.query(
+        `SELECT u.is_banned FROM posts p JOIN users u ON u.id = p.creator_id WHERE p.id = $1`,
+        [recordId],
+      );
+      record.params.owner_is_banned = rows[0]?.is_banned === true;
+    } catch {
+      // Leave the flag unset; the reopening transaction still rejects a banned owner.
     }
     return request;
   };

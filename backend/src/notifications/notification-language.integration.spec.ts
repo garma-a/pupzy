@@ -569,6 +569,43 @@ describe('Notification language synchronization (Ticket 07)', () => {
     expect(englishInbox[0].body).toBe(`An administrator marked your post "${rescuePost.title}" as resolved.`);
   });
 
+  it('serves the administrator reopening notification the admin service persists in the recipient language', async () => {
+    const arabicContent = buildNotificationContent('POST_REOPENED_BY_ADMIN', { postTitle: adoptionPost.title });
+    await notificationsRepository.create({
+      recipientId: owner.id,
+      type: 'POST_REOPENED_BY_ADMIN',
+      ...arabicContent,
+      relatedPostId: adoptionPost.id,
+    });
+
+    const englishContent = buildNotificationContent('POST_REOPENED_BY_ADMIN', { postTitle: rescuePost.title });
+    await notificationsRepository.create({
+      recipientId: unsyncedOwner.id,
+      type: 'POST_REOPENED_BY_ADMIN',
+      ...englishContent,
+      relatedPostId: rescuePost.id,
+    });
+
+    const arabicInbox = await inboxFor(owner);
+    expect(arabicInbox).toHaveLength(1);
+    expect(arabicInbox[0]).toMatchObject({
+      type: 'POST_REOPENED_BY_ADMIN',
+      title: 'تمت إعادة فتح المنشور',
+      relatedPostId: adoptionPost.id,
+      isRead: false,
+    });
+    expect(arabicInbox[0].body).toContain(adoptionPost.title);
+
+    const englishInbox = await inboxFor(unsyncedOwner);
+    expect(englishInbox).toHaveLength(1);
+    expect(englishInbox[0]).toMatchObject({
+      type: 'POST_REOPENED_BY_ADMIN',
+      title: 'Post reopened',
+      relatedPostId: rescuePost.id,
+    });
+    expect(englishInbox[0].body).toBe(`An administrator reopened your post "${rescuePost.title}".`);
+  });
+
   it('renders every durable discussion notification type bilingually and marks reads in the chosen language', async () => {
     const commenter = await insertUser('Arabic Commenter', 'ar');
 

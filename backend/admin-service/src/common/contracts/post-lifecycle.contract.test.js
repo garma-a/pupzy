@@ -15,6 +15,7 @@ import {
   canExpirePost,
   canAdminRemove,
   canAdminResolve,
+  canAdminReopen,
   canAdminRestore,
 } from '../../../../src/common/contracts/post-lifecycle.contract.ts';
 
@@ -61,6 +62,24 @@ describe('AdminJS Post Lifecycle Contract (shared with the API)', () => {
     assert.equal(canAdminResolve('PRODUCT', 'ACTIVE', 'RESOLVED'), false);
     assert.equal(canAdminResolve('RESCUE', 'RESOLVED', 'RESOLVED'), false);
     assert.equal(canAdminResolve('PRODUCT', 'EXPIRED', 'SOLD'), false);
+  });
+
+  it('agrees with the API on the administrator reopening correction', () => {
+    for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD']) {
+      assert.equal(canAdminReopen(status), true);
+    }
+    for (const status of ['ACTIVE', 'REMOVED', 'EXPIRED']) {
+      assert.equal(canAdminReopen(status), false);
+    }
+    assert.deepEqual(POST_LIFECYCLE_SIDE_EFFECTS.ADMIN_REOPEN, {
+      userPostCountDelta: 'NONE',
+      invalidateOwnerUserCache: false,
+      invalidateAdminDashboardCache: true,
+      moderationAudit: true,
+      ownerNotification: 'POST_REOPENED_BY_ADMIN',
+      closeOpenPostReports: false,
+      terminatePendingInteractions: false,
+    });
   });
 
   it('declares the administrative audit, report-closure and notification side effects', () => {
