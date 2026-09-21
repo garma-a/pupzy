@@ -25,9 +25,19 @@ export const lostFoundTypeEnum = pgEnum('lost_found_type', ['LOST_PET', 'FOUND_S
 /**
  * Lifecycle state of a post.
  * ADOPTED and SOLD hide posts from feeds instantly but keep them in
- * the creator's post history. REMOVED is a soft delete.
+ * the creator's post history. REMOVED is a soft delete. EXPIRED is the
+ * inactivity state for renewable listings: it also leaves active discovery
+ * but keeps direct detail, history, media and discussion for explicit renewal.
  */
-export const postStatusEnum = pgEnum('post_status', ['ACTIVE', 'RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'REMOVED']);
+export const postStatusEnum = pgEnum('post_status', [
+  'ACTIVE',
+  'RESOLVED',
+  'REUNITED',
+  'ADOPTED',
+  'SOLD',
+  'REMOVED',
+  'EXPIRED',
+]);
 
 /**
  * AI / admin moderation lifecycle.

@@ -2,7 +2,7 @@
 
 This document is the authoritative contract for every Post lifecycle status change made by the NestJS GraphQL API and the AdminJS service. The machine-readable half of the contract lives in `src/common/contracts/post-lifecycle.contract.ts`, which both services import, so the transition rules and lock namespace cannot drift between them.
 
-This document covers the existing lifecycle statuses only: it introduces **no new status values**. Earlier slices were preparatory; owner closure (ticket 03) now adds MATING and FOUND_STRAY outcomes and terminates pending direct interactions when a listing closes. Administrative outcome/reopening and inactivity expiry remain for the tickets that build on this boundary.
+This document covers the shared lifecycle statuses. Earlier slices were preparatory; owner closure (ticket 03) adds MATING and FOUND_STRAY outcomes and terminates pending direct interactions when a listing closes, and ticket 12 adds `EXPIRED` plus explicit owner renewal. Administrative outcome/reopening remain for the tickets that build on this boundary. Inactivity expiry has its own authoritative contract: `post-expiry-and-renewal-contract.md`.
 
 ---
 
@@ -12,6 +12,8 @@ This document covers the existing lifecycle statuses only: it introduces **no ne
 | --------------- | ------------------------------------- | -------------------------------------- | ---------------------------------------------------- |
 | `OWNER_CLOSE`   | Post owner                            | GraphQL `updatePostStatus`             | `ACTIVE` → the successful outcome of the Post's type |
 | `OWNER_REMOVE`  | Post owner                            | GraphQL `deletePost`                   | any non-Removed status → `REMOVED`                   |
+| `OWNER_RENEW`   | Post owner                            | GraphQL `renewPost`                    | `ACTIVE`/`EXPIRED` → `ACTIVE` under the type policy  |
+| `EXPIRE`        | System job (`PostExpiryProcessor`)    | shared inactivity boundary             | `ACTIVE` → `EXPIRED` under the type policy           |
 | `ADMIN_REMOVE`  | Administrator (`ADMIN`/`SUPER_ADMIN`) | AdminJS `removePost`, ban Post cascade | `ACTIVE` → `REMOVED`                                 |
 | `ADMIN_RESTORE` | Administrator (`ADMIN`/`SUPER_ADMIN`) | AdminJS `restorePost`                  | `REMOVED` → `ACTIVE`                                 |
 
@@ -32,12 +34,9 @@ Administrative removal applies only to `ACTIVE` Posts. It can never overwrite a 
 
 ## 2. Status meaning stays distinct
 
-`RESOLVED`, `REUNITED`, `ADOPTED` and `SOLD` are **Post Resolutions** decided by the owner (or, later, by an administrator). `REMOVED` is storage reused by two conceptually different events:
+`RESOLVED`, `REUNITED`, `ADOPTED` and `SOLD` are **Post Resolutions** decided by the owner (or, later, by an administrator). `REMOVED` is the administrative/owner takedown soft delete: a moderation action carries a reason, audit row and owner notification. `EXPIRED` is the inactivity state of a renewable listing: it leaves active discovery but keeps direct detail, owner history, media and discussion, is **not** a resolution and does **not** reuse `REMOVED`.
 
-- **administrative takedown** — a moderation action with a reason, audit row and owner notification; and
-- **inactivity expiry** — not implemented in this slice.
-
-Successful outcomes, owner removal, administrative takedown and expiry remain distinguishable through who performed the change, the recorded reason and audit metadata, and the resulting `moderation_status`. No new status value is added here.
+Successful outcomes, owner removal, administrative takedown and inactivity expiry are distinguishable by the stored status, who performed the change, the recorded reason/audit metadata, and the resulting `moderation_status`. See `post-expiry-and-renewal-contract.md` for the full expiry/renewal contract.
 
 ## 3. Transaction, locking and side effects
 
@@ -50,16 +49,16 @@ The Post row is re-read and revalidated after both locks. This is the same order
 
 The status write commits together with its database-side effects; cache invalidation and other external effects run only after commit.
 
-| Side effect                                      | `OWNER_CLOSE`                              | `OWNER_REMOVE` | `ADMIN_REMOVE`          | `ADMIN_RESTORE` |
-| ------------------------------------------------ | ------------------------------------------ | -------------- | ----------------------- | --------------- |
-| `trg_sync_user_post_counts` delta                | none                                       | decrement      | decrement               | increment       |
-| Pending Contact Requests / Adoption Applications | terminated (`REJECTED`, records preserved) | unchanged      | unchanged               | unchanged       |
-| API `user_resolve` cache invalidated             | yes                                        | yes            | no                      | no              |
-| AdminJS dashboard cache invalidated              | no                                         | no             | yes                     | yes             |
-| `moderation_actions` audit row                   | no                                         | no             | yes                     | yes             |
-| Owner notification                               | none                                       | none           | `POST_REMOVED_BY_ADMIN` | none            |
-| Open Post Reports closed                         | no                                         | no             | yes                     | yes             |
-| Media, discussion and engagement rows            | retained                                   | retained       | retained                | unchanged       |
+| Side effect                                      | `OWNER_CLOSE`                              | `OWNER_REMOVE` | `OWNER_RENEW`  | `EXPIRE`                                   | `ADMIN_REMOVE`          | `ADMIN_RESTORE` |
+| ------------------------------------------------ | ------------------------------------------ | -------------- | -------------- | ------------------------------------------ | ----------------------- | --------------- |
+| `trg_sync_user_post_counts` delta                | none                                       | decrement      | none           | none                                       | decrement               | increment       |
+| Pending Contact Requests / Adoption Applications | terminated (`REJECTED`, records preserved) | unchanged      | unchanged      | terminated (`REJECTED`, records preserved) | unchanged               | unchanged       |
+| API `user_resolve` cache invalidated             | yes                                        | yes            | yes            | no                                         | no                      | no              |
+| AdminJS dashboard cache invalidated              | no                                         | no             | no             | no                                         | yes                     | yes             |
+| `moderation_actions` audit row                   | no                                         | no             | no             | no                                         | yes                     | yes             |
+| Owner notification                               | none                                       | none           | none           | none (pre-expiry reminder already sent)    | `POST_REMOVED_BY_ADMIN` | none            |
+| Open Post Reports closed                         | no                                         | no             | no             | no                                         | yes                     | yes             |
+| Media, discussion and engagement rows            | retained                                   | retained       | retained       | retained                                   | retained                | unchanged       |
 
 Notes:
 
@@ -69,6 +68,7 @@ Notes:
 - The counter delta is applied by the existing `trg_sync_user_post_counts` database trigger, not by application code. A closure from `ACTIVE` to a successful outcome does not change the owner's counters; removal decrements them and restoration restores them.
 - Administrative removal records the actor and reason, closes every still-open Post Report in the same transaction, and inserts the owner notification. Restoration preserves the prior `moderation_status` (Clean, Flagged or Pending auto review).
 - Removal is not destructive: Post media rows, discussion Comments, and upvote/save relationships are retained. Restoration makes them reachable again. Media finalization, deletion and compensation keep their existing durable Staged Upload behavior and are untouched by this contract.
+- Expiry is not destructive either: `EXPIRED` retains media, discussion and engagement, stays directly readable, and is left only by `OWNER_RENEW`. Renewal never revives interactions that expiry terminated, and it is rate-limited by the stored `renewed_at` cooldown under the same locks.
 - Owner actions never write moderation audit rows or owner notifications; the API invalidates the owner's cached profile after the transaction commits so the refreshed Post counters are served.
 - New direct interactions cannot be created after a closure: the creation transaction re-reads the Post under a share lock, so a request or application racing an owner closure settles in exactly one serial order and never leaves a PENDING row on a closed listing. An approval racing a closure likewise settles in one order: approved-before-closure is retained, and a closure that wins leaves the row REJECTED and the approval fails with the established conflict error.
 
@@ -86,7 +86,7 @@ The contract preserves the established directional Block isolation:
 The following remain for the tickets that depend on this boundary and must extend the contract rather than duplicate it:
 
 - Administrator resolution, reopening and owner outcome notifications with localized delivery (tickets 08–09). Administrative removal/restoration keep their existing behavior and do not terminate pending interactions in this slice.
-- `EXPIRED` persistence, reminders, renewal cooldown and the inactivity jobs for ADOPTION/PRODUCT/RESCUE/LOST (tickets 12–14). Expiry will need to terminate pending interactions at its own boundary.
+- The ADOPTION inactivity window and the RESCUE/LOST inactivity reminder (tickets 13–14). Ticket 12 ships the shared machinery with those policy entries disabled; those tickets only enable policy data and add tests.
 - Termination of pending interactions on owner removal, Account Deletion or bans: those paths keep their existing (stronger) access and cleanup behavior.
 
 ## 6. Verification
@@ -96,4 +96,6 @@ The following remain for the tickets that depend on this boundary and must exten
 | Contract rules and lock namespace                                                                                                                                                                                                   | `src/common/contracts/post-lifecycle.contract.spec.ts` (API) and `admin-service/src/common/contracts/post-lifecycle.contract.test.js` (AdminJS loads the same module)                                                                                                                                                                                                             |
 | Owner closure, owner removal, counters, cache and isolation through the executable GraphQL schema on real Postgres                                                                                                                  | `src/posts/post-lifecycle.integration.spec.ts`                                                                                                                                                                                                                                                                                                                                    |
 | MATING and FOUND_STRAY closure, mating owner history, pending-interaction termination, approved-access retention, roles, Block directions and closure/request/approval races through the executable GraphQL schema on real Postgres | `src/posts/owner-post-closure.integration.spec.ts`                                                                                                                                                                                                                                                                                                                                |
-| Administrator removal/restoration through real authenticated AdminJS HTTP actions                                                                                                                                                   | `admin-service/test/admin-http.test.js` (`removes and restores a Post over authenticated AdminJS HTTP with audited, notified, counter-synced lifecycle effects`), supported by the handler-level state, audit and notification assertions in `admin-service/test/moderation-actions.test.js` and the cache invalidation assertions in `admin-service/test/dashboard-http.test.js` |
+| Administrator removal/restoration through real authenticated AdminJS HTTP actions                                                                                   | `admin-service/test/admin-http.test.js` (`removes and restores a Post over authenticated AdminJS HTTP with audited, notified, counter-synced lifecycle effects`), supported by the handler-level state, audit and notification assertions in `admin-service/test/moderation-actions.test.js` and the cache invalidation assertions in `admin-service/test/dashboard-http.test.js` |
+| Expiry, reminders, renewal cooldown, renewal/reactivation and interaction cleanup through the executable GraphQL schema and the real expiry processor on Postgres                                      | `src/posts/post-expiry.integration.spec.ts`                                                                                                                                                                                                                                                                                                                                        |
+| Contract expiry policy, renewal predicate and side-effect tables                                                                                                                                    | `src/common/contracts/post-lifecycle.contract.spec.ts` (API) and `admin-service/src/common/contracts/post-lifecycle.contract.test.js` (AdminJS loads the same module)                                                                                                                                                                                                                |

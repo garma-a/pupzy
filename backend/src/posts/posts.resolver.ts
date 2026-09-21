@@ -242,6 +242,16 @@ export class PostsResolver {
     return this.postsService.updatePostStatus(validated.postId, ctx.user!.id, validated.status);
   }
 
+  /**
+   * Explicitly renews an ACTIVE or EXPIRED product listing owned by the caller.
+   * Resets the inactivity window, reactivates an expired listing and respects
+   * the seven-day renewal cooldown.
+   */
+  @Mutation('renewPost')
+  async renewPost(@Args('postId') postId: string, @Context() ctx: GqlContext): Promise<Post> {
+    return this.postsService.renewPost(postId, ctx.user!.id);
+  }
+
   // ─── View Tracking ──────────────────────────────────────────────────────
 
   /**

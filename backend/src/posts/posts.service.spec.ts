@@ -6,7 +6,7 @@ import { ViewFlushCron } from './view-flush.cron';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Cache } from 'cache-manager';
-import { ValidationError, NotFoundError, ForbiddenError } from '../common/errors/app.errors';
+import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../common/errors/app.errors';
 import type { Post } from '../database/schema';
 
 describe('PostsService', () => {
@@ -50,6 +50,7 @@ describe('PostsService', () => {
       findProductDetail: jest.fn(),
       findLostReportType: jest.fn().mockResolvedValue(null),
       updateStatus: jest.fn(),
+      renewPost: jest.fn(),
       softDelete: jest.fn(),
       toggleUpvote: jest.fn(),
       toggleSave: jest.fn(),
@@ -561,6 +562,99 @@ describe('PostsService', () => {
       mockPostsRepo.updateStatus = jest.fn().mockResolvedValue({ ...mockPost, status: 'REUNITED' });
       const reunited = await service.updatePostStatus(validPostId, validUserId, 'REUNITED');
       expect(reunited.status).toBe('REUNITED');
+    });
+  });
+
+  describe('renewPost', () => {
+    it('renews an EXPIRED PRODUCT listing for its owner and invalidates the cached profile', async () => {
+      const expiredProduct = {
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'PRODUCT',
+        status: 'EXPIRED',
+      } as unknown as Post;
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(expiredProduct);
+      mockPostsRepo.renewPost = jest.fn().mockResolvedValue({ ...expiredProduct, status: 'ACTIVE' });
+
+      const result = await service.renewPost(validPostId, validUserId);
+
+      expect(result.status).toBe('ACTIVE');
+      expect(mockPostsRepo.renewPost).toHaveBeenCalledWith(validPostId, validUserId);
+      expect(mockUsersService.invalidateUserCacheById).toHaveBeenCalledWith(validUserId);
+    });
+
+    it('renews an ACTIVE PRODUCT listing to reset its inactivity window', async () => {
+      const activeProduct = {
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'PRODUCT',
+        status: 'ACTIVE',
+      } as unknown as Post;
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(activeProduct);
+      mockPostsRepo.renewPost = jest.fn().mockResolvedValue({ ...activeProduct, status: 'ACTIVE' });
+
+      await expect(service.renewPost(validPostId, validUserId)).resolves.toMatchObject({ status: 'ACTIVE' });
+    });
+
+    it('rejects renewal by anyone but the owner', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({
+        id: validPostId,
+        creatorId: otherUserId,
+        postType: 'PRODUCT',
+        status: 'ACTIVE',
+      });
+
+      await expect(service.renewPost(validPostId, validUserId)).rejects.toThrow(ForbiddenError);
+      expect(mockPostsRepo.renewPost).not.toHaveBeenCalled();
+    });
+
+    it('treats missing and Removed listings as not found', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(undefined);
+      await expect(service.renewPost(validPostId, validUserId)).rejects.toThrow(NotFoundError);
+
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'PRODUCT',
+        status: 'REMOVED',
+      });
+      await expect(service.renewPost(validPostId, validUserId)).rejects.toThrow(NotFoundError);
+      expect(mockPostsRepo.renewPost).not.toHaveBeenCalled();
+    });
+
+    it('rejects completed and non-renewable listings', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'PRODUCT',
+        status: 'SOLD',
+      });
+      await expect(service.renewPost(validPostId, validUserId)).rejects.toThrow(ValidationError);
+
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'ADOPTION',
+        status: 'ACTIVE',
+      });
+      await expect(service.renewPost(validPostId, validUserId)).rejects.toThrow(ValidationError);
+      expect(mockPostsRepo.renewPost).not.toHaveBeenCalled();
+    });
+
+    it('surfaces the renewal cooldown conflict raised inside the transaction', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'PRODUCT',
+        status: 'ACTIVE',
+      });
+      mockPostsRepo.renewPost = jest
+        .fn()
+        .mockRejectedValue(
+          new ConflictError('This listing was renewed within the last seven days', 'RENEWAL_COOLDOWN'),
+        );
+
+      await expect(service.renewPost(validPostId, validUserId)).rejects.toMatchObject({ code: 'RENEWAL_COOLDOWN' });
     });
   });
 

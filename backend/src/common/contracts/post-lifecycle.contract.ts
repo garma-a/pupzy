@@ -12,33 +12,36 @@
  * | --------------- | ------------- | -------------------------------------------------- |
  * | `OWNER_CLOSE`   | Post owner    | GraphQL `updatePostStatus`                         |
  * | `OWNER_REMOVE`  | Post owner    | GraphQL `deletePost`                               |
+ * | `OWNER_RENEW`   | Post owner    | GraphQL `renewPost`                                |
+ * | `EXPIRE`        | System job    | `PostExpiryProcessor` inactivity boundary          |
  * | `ADMIN_REMOVE`  | Administrator | AdminJS `removePost` (and the ban Post cascade)    |
  * | `ADMIN_RESTORE` | Administrator | AdminJS `restorePost`                              |
  *
- * ## Lock order (API and admin)
+ * ## Lock order (API, admin and jobs)
  * Every transition acquires, inside one database transaction:
  * 1. the transaction-scoped advisory key `comment_discussion:<postId>`
  *    (`POST_DISCUSSION_LOCK_NAMESPACE`), then
  * 2. the canonical `posts` row with `SELECT ... FOR UPDATE`.
  * The row is re-read and revalidated after the locks, so a competing
- * discussion write, removal, ban cascade or transition cannot interleave.
+ * discussion write, removal, renewal, ban cascade or transition cannot
+ * interleave.
  *
  * ## Transaction boundary
  * The status write, `trg_sync_user_post_counts` counter delta, moderation
- * audit row, owner notification, open Post Report closure and pending direct
- * interaction termination commit together. Cache invalidation and other
- * external effects run only after commit.
+ * audit row, owner notification, open Post Report closure, pending direct
+ * interaction termination and durable reminder state commit together. Cache
+ * invalidation and other external effects run only after commit.
  *
  * ## Statuses
- * This contract covers the existing lifecycle only: `ACTIVE` plus the
- * per-type successful outcomes and `REMOVED`. Administrative removal and
- * inactivity expiry intentionally reuse `REMOVED` as their stored status
- * while staying conceptually distinct (see `POST_LIFECYCLE_SIDE_EFFECTS`).
- * No new status is introduced here; later lifecycle work extends these tables.
+ * `ACTIVE` plus the per-type successful outcomes, `REMOVED` and `EXPIRED`.
+ * Administrative removal stores `REMOVED`; inactivity expiry stores `EXPIRED`,
+ * deliberately distinct so an expired listing keeps its detail, media and
+ * discussion until renewal. Conceptually the two events are recorded by actor,
+ * status value and side effects (see `POST_LIFECYCLE_SIDE_EFFECTS`).
  */
 
 /** Lifecycle statuses a Post can hold today. */
-export type PostLifecycleStatus = 'ACTIVE' | 'RESOLVED' | 'REUNITED' | 'ADOPTED' | 'SOLD' | 'REMOVED';
+export type PostLifecycleStatus = 'ACTIVE' | 'RESOLVED' | 'REUNITED' | 'ADOPTED' | 'SOLD' | 'REMOVED' | 'EXPIRED';
 
 /** Listing types a Post can hold today. */
 export type PostLifecyclePostType = 'RESCUE' | 'LOST' | 'ADOPTION' | 'PRODUCT' | 'MATING';
@@ -47,7 +50,8 @@ export type PostLifecyclePostType = 'RESCUE' | 'LOST' | 'ADOPTION' | 'PRODUCT' |
 export type PostLifecycleLostReportType = 'LOST_PET' | 'FOUND_STRAY';
 
 /** Named lifecycle transitions covered by this contract. */
-export type PostLifecycleTransitionName = 'OWNER_CLOSE' | 'OWNER_REMOVE' | 'ADMIN_REMOVE' | 'ADMIN_RESTORE';
+export type PostLifecycleTransitionName =
+  'OWNER_CLOSE' | 'OWNER_REMOVE' | 'OWNER_RENEW' | 'EXPIRE' | 'ADMIN_REMOVE' | 'ADMIN_RESTORE';
 
 /**
  * Advisory-lock key namespace that serializes a single Post's discussion
@@ -151,6 +155,74 @@ export function canAdminRestore(currentStatus: string): boolean {
   return currentStatus === 'REMOVED';
 }
 
+/** Days between two owner renewals of the same listing. */
+export const RENEWAL_COOLDOWN_DAYS = 7;
+
+/**
+ * Inactivity policy for one Post type.
+ *
+ * - `expiryAfterDays` is the inactive window after which the expiry job moves
+ *   an `ACTIVE` Post to `EXPIRED`; `null` means the type never expires
+ *   automatically.
+ * - `reminderAfterDays` is the inactive window after which the owner receives
+ *   one `POST_INACTIVITY_NUDGE`. With expiry enabled it is the three-days-
+ *   before marker; without expiry it is a stand-alone inactivity reminder.
+ *   `null` means no inactivity reminder.
+ * - `renewable` allows the owner to explicitly renew an `ACTIVE` or `EXPIRED`
+ *   listing of this type (subject to `RENEWAL_COOLDOWN_DAYS`).
+ *
+ * Ticket 12 ships the PRODUCT window and the shared machinery. Ticket 13 fills
+ * the ADOPTION entry with its 30/27-day window and ticket 14 fills the
+ * RESCUE/LOST reminder entries; the processor already honours every enabled
+ * entry, so those tickets change policy data and tests, not transition rules.
+ */
+export interface PostExpiryPolicy {
+  readonly expiryAfterDays: number | null;
+  readonly reminderAfterDays: number | null;
+  readonly renewable: boolean;
+}
+
+/**
+ * Per-type inactivity policy. Every type is listed explicitly so "never
+ * expires" and "not renewable" are contract statements rather than missing
+ * configuration. `MATING` expiry stays disabled, matching the agreed product
+ * model that rescue, lost/found and mating cases end by owner or administrator
+ * decision, not by clock.
+ */
+export const POST_EXPIRY_POLICIES: Readonly<Record<PostLifecyclePostType, PostExpiryPolicy>> = Object.freeze({
+  RESCUE: Object.freeze({ expiryAfterDays: null, reminderAfterDays: null, renewable: false }),
+  LOST: Object.freeze({ expiryAfterDays: null, reminderAfterDays: null, renewable: false }),
+  ADOPTION: Object.freeze({ expiryAfterDays: null, reminderAfterDays: null, renewable: false }),
+  PRODUCT: Object.freeze({ expiryAfterDays: 14, reminderAfterDays: 11, renewable: true }),
+  MATING: Object.freeze({ expiryAfterDays: null, reminderAfterDays: null, renewable: false }),
+});
+
+/** Resolves the inactivity policy for a Post type, or null for unknown types. */
+export function postExpiryPolicy(postType: string): PostExpiryPolicy | null {
+  return POST_EXPIRY_POLICIES[postType as PostLifecyclePostType] ?? null;
+}
+
+/**
+ * True when the expiry job may move this `ACTIVE` Post to `EXPIRED` under its
+ * type policy. Read-only Posts and unknown types are never eligible.
+ */
+export function canExpirePost(postType: string, currentStatus: string): boolean {
+  const policy = postExpiryPolicy(postType);
+  return currentStatus === 'ACTIVE' && policy?.expiryAfterDays != null;
+}
+
+/**
+ * True when the owner may explicitly renew this Post. Renewal applies only to
+ * the types whose policy enables it, from `ACTIVE` or `EXPIRED`. Completed
+ * outcomes and `REMOVED` are never renewable; the cooldown is enforced against
+ * the stored renewal timestamp, not this predicate.
+ */
+export function canOwnerRenew(postType: string, currentStatus: string): boolean {
+  const policy = postExpiryPolicy(postType);
+  if (!policy?.renewable) return false;
+  return currentStatus === 'ACTIVE' || currentStatus === 'EXPIRED';
+}
+
 /** Side effects that must hold for one named lifecycle transition. */
 export interface PostLifecycleSideEffects {
   /**
@@ -191,6 +263,11 @@ export interface PostLifecycleSideEffects {
  *   Removal notifies the owner; restoration does not.
  * - Removal is not destructive: Post media, discussion and engagement records
  *   are retained, and restoration makes them reachable again.
+ * - Inactivity expiry is not moderation and not a successful outcome: it keeps
+ *   the Post counted for its owner, terminates pending direct interactions in
+ *   the same transaction, and notifies nobody (the owner already received the
+ *   pre-expiry reminder). Explicit renewal returns the Post to `ACTIVE`,
+ *   resets the inactivity window and never revives terminated interactions.
  */
 export const POST_LIFECYCLE_SIDE_EFFECTS: Readonly<Record<PostLifecycleTransitionName, PostLifecycleSideEffects>> =
   Object.freeze({
@@ -211,6 +288,24 @@ export const POST_LIFECYCLE_SIDE_EFFECTS: Readonly<Record<PostLifecycleTransitio
       ownerNotification: null,
       closeOpenPostReports: false,
       terminatePendingInteractions: false,
+    }),
+    OWNER_RENEW: Object.freeze({
+      userPostCountDelta: 'NONE',
+      invalidateOwnerUserCache: true,
+      invalidateAdminDashboardCache: false,
+      moderationAudit: false,
+      ownerNotification: null,
+      closeOpenPostReports: false,
+      terminatePendingInteractions: false,
+    }),
+    EXPIRE: Object.freeze({
+      userPostCountDelta: 'NONE',
+      invalidateOwnerUserCache: false,
+      invalidateAdminDashboardCache: false,
+      moderationAudit: false,
+      ownerNotification: null,
+      closeOpenPostReports: false,
+      terminatePendingInteractions: true,
     }),
     ADMIN_REMOVE: Object.freeze({
       userPostCountDelta: 'DECREMENT',

@@ -173,12 +173,27 @@ export const posts = pgTable(
 
     /**
      * Initialized to created_at on INSERT. Updated differently per type:
-     *   ADOPTION → upvotes and saves only (views alone too passive). Auto-removed after 30 days.
-     *   PRODUCT  → views and saves. A view means a buyer looked. Auto-removed after 14 days.
-     *   RESCUE / LOST → never updated. Never auto-removed.
-     * Before the cron removes a post, POST_INACTIVITY_NUDGE is sent to the creator.
+     *   PRODUCT  → views and saves. A view means a buyer looked. Expires after 14 inactive days.
+     *   ADOPTION → upvotes and saves only (views alone too passive). Expires after 30 inactive days (ticket 13).
+     *   RESCUE / LOST → never updated. Never expire automatically (ticket 14 sends one inactivity reminder).
+     *   MATING → never updated. Expiry disabled.
+     * The expiry job sends POST_INACTIVITY_NUDGE three days before the window closes.
      */
     lastEngagedAt: timestamp('last_engaged_at', { withTimezone: true }).notNull().defaultNow(),
+
+    /**
+     * When the owner last explicitly renewed this listing. Null until the first
+     * renewal. The expiry boundary allows one renewal per seven days.
+     */
+    renewedAt: timestamp('renewed_at', { withTimezone: true }),
+
+    /**
+     * When the inactivity reminder for the current inactivity cycle was
+     * persisted. A reminder is eligible again only after new activity moves
+     * `last_engaged_at` past this value, so retries and competing workers can
+     * never duplicate a cycle's reminder.
+     */
+    reminderSentAt: timestamp('reminder_sent_at', { withTimezone: true }),
 
     /** Row creation timestamp. */
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

@@ -552,6 +552,53 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.equal(removedActionNames.includes('removePost'), false);
   });
 
+  it('filters the Posts list by the EXPIRED lifecycle status over authenticated AdminJS HTTP', async () => {
+    const expiredTitle = `Expired listing ${Date.now()}`;
+    const expiredPostId = await insertPost(database.pool, {
+      ...principals,
+      title: expiredTitle,
+      moderationStatus: 'CLEAN',
+      status: 'EXPIRED',
+    });
+    const activePostId = await insertPost(database.pool, {
+      ...principals,
+      title: `Active listing ${Date.now()}`,
+      moderationStatus: 'CLEAN',
+      status: 'ACTIVE',
+    });
+
+    const listRes = await fetch(
+      `${baseUrl}/admin/api/resources/posts/actions/list?filters.status=EXPIRED&filters.title=${encodeURIComponent(expiredTitle)}`,
+      { headers: { cookie: superCookie } },
+    );
+    const listBody = await listRes.text();
+    assert.equal(listRes.status, 200, listBody);
+    const listData = JSON.parse(listBody);
+    assert.ok(
+      listData.records.some((record) => record.id === expiredPostId),
+      'expired Post must be reachable through the status filter',
+    );
+    assert.equal(
+      listData.records.every((record) => record.params.status === 'EXPIRED'),
+      true,
+      'status filter must only return expired Posts',
+    );
+    assert.equal(
+      listData.records.some((record) => record.id === activePostId),
+      false,
+      'active Posts must not appear under the expired filter',
+    );
+
+    const showRes = await fetch(`${baseUrl}/admin/api/resources/posts/records/${expiredPostId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(showRes.status, 200);
+    const showData = await showRes.json();
+    assert.equal(showData.record.params.status, 'EXPIRED');
+    assert.ok('renewed_at' in showData.record.params, 'renewal state must be visible on the record');
+    assert.ok('reminder_sent_at' in showData.record.params, 'reminder state must be visible on the record');
+  });
+
   it('removes and restores a Post over authenticated AdminJS HTTP with audited, notified, counter-synced lifecycle effects', async () => {
     const postId = await insertPost(database.pool, {
       ...principals,

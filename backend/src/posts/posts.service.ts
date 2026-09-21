@@ -7,7 +7,7 @@ import { CitiesService } from '../cities/cities.service';
 import { UploadService } from '../upload/upload.service';
 import { shouldFlagContent } from '../common/utils/moderation.util';
 import { ValidationError, NotFoundError, ForbiddenError } from '../common/errors/app.errors';
-import { canOwnerRemove, ownerClosureTargets } from '../common/contracts/post-lifecycle.contract';
+import { canOwnerRemove, canOwnerRenew, ownerClosureTargets } from '../common/contracts/post-lifecycle.contract';
 import { assertUuid } from '../common/utils/validate-uuid';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -512,6 +512,37 @@ export class PostsService {
     if (!updatedPost) throw new NotFoundError('Post', postId);
     await this.usersService.invalidateUserCacheById(post.creatorId).catch(() => {});
     return updatedPost;
+  }
+
+  /**
+   * Explicitly renews an ACTIVE or EXPIRED listing owned by the caller.
+   *
+   * Renewal is the only way an Expired Post leaves `EXPIRED`, and the only way
+   * a listing's inactivity window is reset by hand. It is limited to once per
+   * seven days per Post and never revives interactions terminated by expiry or
+   * closure. Which types may be renewed comes from the shared expiry policy.
+   *
+   * @throws {NotFoundError} if the post does not exist or is REMOVED.
+   * @throws {ForbiddenError} if the caller is not the post creator.
+   * @throws {ValidationError} if the type/status combination is not renewable.
+   * @throws {ConflictError} with code RENEWAL_COOLDOWN inside the cooldown.
+   */
+  async renewPost(postId: string, userId: string): Promise<Post> {
+    assertUuid(postId, 'postId');
+    const post = await this.postsRepository.findById(postId);
+    if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Post', postId);
+    }
+    if (post.creatorId !== userId) {
+      throw new ForbiddenError('You can only renew your own posts');
+    }
+    if (!canOwnerRenew(post.postType, post.status)) {
+      throw new ValidationError(`A "${post.postType}" post in "${post.status}" status cannot be renewed`);
+    }
+
+    const renewedPost = await this.postsRepository.renewPost(postId, userId);
+    await this.usersService.invalidateUserCacheById(post.creatorId).catch(() => {});
+    return renewedPost;
   }
 
   // ─── Engagement Toggles ─────────────────────────────────────────────────

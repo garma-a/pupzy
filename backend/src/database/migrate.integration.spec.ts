@@ -116,6 +116,43 @@ describe('Database Migration Runner Integration', () => {
       expect(row.is_nullable).toBe('YES');
     }
 
+    // Verify the inactivity-expiry lifecycle (migrations 0046-0047):
+    // EXPIRED is appended to post_status and the renewal/reminder state is
+    // nullable with no default so existing Posts keep their behavior.
+    const postStatusEnumRes = await pool.query<{ enumlabel: string }>(`
+      SELECT enumlabel
+      FROM pg_enum
+      JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+      WHERE pg_type.typname = 'post_status'
+      ORDER BY enumsortorder
+    `);
+    expect(postStatusEnumRes.rows.map((row) => row.enumlabel)).toEqual([
+      'ACTIVE',
+      'RESOLVED',
+      'REUNITED',
+      'ADOPTED',
+      'SOLD',
+      'REMOVED',
+      'EXPIRED',
+    ]);
+
+    const expiryColRes = await pool.query<{
+      column_name: string;
+      is_nullable: string;
+      column_default: string | null;
+    }>(`
+      SELECT column_name, is_nullable, column_default
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'posts'
+        AND column_name IN ('renewed_at', 'reminder_sent_at')
+      ORDER BY column_name
+    `);
+    expect(expiryColRes.rows.map((row) => row.column_name)).toEqual(['reminder_sent_at', 'renewed_at']);
+    for (const row of expiryColRes.rows) {
+      expect(row.is_nullable).toBe('YES');
+      expect(row.column_default).toBeNull();
+    }
+
     // Verify staged_uploads schema and non-null constraints
     const stagedColsRes = await pool.query<{ column_name: string; is_nullable: string }>(`
       SELECT column_name, is_nullable
@@ -192,6 +229,27 @@ describe('Database Migration Runner Integration', () => {
     const functionNames = functionRes.rows.map((r) => r.proname);
     expect(functionNames).toContain('city_lifecycle_status_ilike');
     expect(functionNames).toContain('city_lifecycle_status_like');
+
+    // Verify the post_status filter operators from migration 0048 so the
+    // AdminJS lifecycle filter can reach EXPIRED listings.
+    const postStatusOperatorRes = await pool.query<{ oprname: string }>(`
+      SELECT oprname
+      FROM pg_operator
+      WHERE oprleft = 'post_status'::regtype
+        AND oprright = 'text'::regtype
+    `);
+    const postStatusOperatorNames = postStatusOperatorRes.rows.map((r) => r.oprname);
+    expect(postStatusOperatorNames).toContain('~~*');
+    expect(postStatusOperatorNames).toContain('~~');
+
+    const postStatusFunctionRes = await pool.query<{ proname: string }>(`
+      SELECT proname
+      FROM pg_proc
+      WHERE proname IN ('post_status_ilike', 'post_status_like')
+    `);
+    const postStatusFunctionNames = postStatusFunctionRes.rows.map((r) => r.proname);
+    expect(postStatusFunctionNames).toContain('post_status_ilike');
+    expect(postStatusFunctionNames).toContain('post_status_like');
   });
 
   it('proves city lifecycle status filtering via ~~* and ~~ operators functions properly', async () => {
