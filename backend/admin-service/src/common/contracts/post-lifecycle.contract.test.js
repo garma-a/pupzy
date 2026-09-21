@@ -100,13 +100,20 @@ describe('AdminJS Post Lifecycle Contract (shared with the API)', () => {
       reminderAfterDays: 11,
       renewable: true,
     });
+    assert.deepEqual(POST_EXPIRY_POLICIES.ADOPTION, {
+      expiryAfterDays: 30,
+      reminderAfterDays: 27,
+      renewable: true,
+    });
     assert.equal(POST_EXPIRY_POLICIES.MATING.expiryAfterDays, null);
     assert.equal(RENEWAL_COOLDOWN_DAYS, 7);
     assert.equal(canExpirePost('PRODUCT', 'ACTIVE'), true);
+    assert.equal(canExpirePost('ADOPTION', 'ACTIVE'), true);
     assert.equal(canExpirePost('MATING', 'ACTIVE'), false);
     assert.equal(canOwnerRenew('PRODUCT', 'EXPIRED'), true);
     assert.equal(canOwnerRenew('PRODUCT', 'SOLD'), false);
-    assert.equal(canOwnerRenew('ADOPTION', 'ACTIVE'), false);
+    assert.equal(canOwnerRenew('ADOPTION', 'EXPIRED'), true);
+    assert.equal(canOwnerRenew('ADOPTION', 'ADOPTED'), false);
     assert.deepEqual(POST_LIFECYCLE_SIDE_EFFECTS.EXPIRE, {
       userPostCountDelta: 'NONE',
       invalidateOwnerUserCache: false,

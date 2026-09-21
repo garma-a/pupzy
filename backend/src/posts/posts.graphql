@@ -788,11 +788,11 @@ extend type Mutation {
   updatePostStatus(postId: ID!, status: PostStatus!): Post!
 
   """
-  Explicitly renew an ACTIVE or EXPIRED product listing. Renewal resets the
-  inactivity window, returns an EXPIRED listing to ACTIVE, and is limited to
-  once every seven days per Post. Completed (SOLD) and Removed Posts cannot be
-  renewed, and renewal never revives interactions terminated by expiry.
-  Only the post creator can renew their own post.
+  Explicitly renew an ACTIVE or EXPIRED product or adoption listing. Renewal
+  resets the inactivity window, returns an EXPIRED listing to ACTIVE, and is
+  limited to once every seven days per Post. Completed (SOLD/ADOPTED) and
+  Removed Posts cannot be renewed, and renewal never revives interactions
+  terminated by expiry. Only the post creator can renew their own post.
   """
   renewPost(postId: ID!): Post!
 

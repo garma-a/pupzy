@@ -622,6 +622,20 @@ describe('PostsService', () => {
       expect(mockPostsRepo.renewPost).not.toHaveBeenCalled();
     });
 
+    it('renews an EXPIRED ADOPTION listing for its owner', async () => {
+      const expiredAdoption = {
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'ADOPTION',
+        status: 'EXPIRED',
+      } as unknown as Post;
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(expiredAdoption);
+      mockPostsRepo.renewPost = jest.fn().mockResolvedValue({ ...expiredAdoption, status: 'ACTIVE' });
+
+      await expect(service.renewPost(validPostId, validUserId)).resolves.toMatchObject({ status: 'ACTIVE' });
+      expect(mockPostsRepo.renewPost).toHaveBeenCalledWith(validPostId, validUserId);
+    });
+
     it('rejects completed and non-renewable listings', async () => {
       mockPostsRepo.findById = jest.fn().mockResolvedValue({
         id: validPostId,
@@ -635,6 +649,14 @@ describe('PostsService', () => {
         id: validPostId,
         creatorId: validUserId,
         postType: 'ADOPTION',
+        status: 'ADOPTED',
+      });
+      await expect(service.renewPost(validPostId, validUserId)).rejects.toThrow(ValidationError);
+
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'MATING',
         status: 'ACTIVE',
       });
       await expect(service.renewPost(validPostId, validUserId)).rejects.toThrow(ValidationError);
