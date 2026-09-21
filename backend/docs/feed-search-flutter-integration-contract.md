@@ -28,11 +28,16 @@ query HomeFeed(
     after: $after
   ) {
     edges {
-      node { id }
+      node {
+        id
+      }
       cursor
       distanceKm
     }
-    pageInfo { hasNextPage endCursor }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
   }
 }
 ```
@@ -43,13 +48,13 @@ query HomeFeed(
 
 Search is a server-side filter over the Post's normalized search document:
 
-| Source            | Notes                                                                       |
-| ----------------- | --------------------------------------------------------------------------- |
-| `title`           | Post headline.                                                              |
-| `description`     | Post body.                                                                  |
-| `marketCategory`  | Product category enum text, e.g. `FOOD`; only Products carry a category.     |
-| `areaName`        | Optional neighborhood label, e.g. `Maadi`.                                   |
-| City names        | The Post's City `nameEnglish` and `nameArabic`, e.g. `Cairo` / `القاهرة`.    |
+| Source           | Notes                                                                     |
+| ---------------- | ------------------------------------------------------------------------- |
+| `title`          | Post headline.                                                            |
+| `description`    | Post body.                                                                |
+| `marketCategory` | Product category enum text, e.g. `FOOD`; only Products carry a category.  |
+| `areaName`       | Optional neighborhood label, e.g. `Maadi`.                                |
+| City names       | The Post's City `nameEnglish` and `nameArabic`, e.g. `Cairo` / `القاهرة`. |
 
 The query is matched as a literal substring (`%…%`) of the normalized text. `%`, `_` and `\` in the submitted text match themselves; they are not wildcards.
 
@@ -67,14 +72,14 @@ One normalization is applied to the stored Post/City text and to the submitted q
 
 ## 4. Documented short, empty and oversize behavior
 
-| Submitted `search`                                             | Behavior                                                                                     |
-| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Omitted or `null`                                              | No search; the feed is unchanged.                                                            |
-| `""` or whitespace only                                        | No search; the feed is unchanged.                                                            |
-| Text that normalizes to nothing (for example diacritics only, `"ًَ"`) | No search; the feed is unchanged.                                                     |
-| Normalizes to fewer than 2 characters, e.g. `"x"`              | Rejected with `VALIDATION_ERROR` (`search must be at least 2 characters`).                   |
-| More than 100 characters after trimming                        | Rejected with `VALIDATION_ERROR` (`search must be at most 100 characters`).                  |
-| 2–100 characters                                               | Search filter applied.                                                                       |
+| Submitted `search`                                                    | Behavior                                                                    |
+| --------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Omitted or `null`                                                     | No search; the feed is unchanged.                                           |
+| `""` or whitespace only                                               | No search; the feed is unchanged.                                           |
+| Text that normalizes to nothing (for example diacritics only, `"ًَ"`) | No search; the feed is unchanged.                                           |
+| Normalizes to fewer than 2 characters, e.g. `"x"`                     | Rejected with `VALIDATION_ERROR` (`search must be at least 2 characters`).  |
+| More than 100 characters after trimming                               | Rejected with `VALIDATION_ERROR` (`search must be at most 100 characters`). |
+| 2–100 characters                                                      | Search filter applied.                                                      |
 
 Two-character queries are accepted but cannot use the trigram index as effectively as longer text, so they may scan more rows than a longer, selective query.
 
@@ -90,10 +95,10 @@ Search is a filter, never a re-ranking or a client-page filter:
 
 ## 6. Errors
 
-| Error code         | When                                                                 | Client behavior                                              |
-| ------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `VALIDATION_ERROR` | `search` normalizes to fewer than 2 characters                       | Keep the local minimum length at 2; do not submit shorter text. |
-| `VALIDATION_ERROR` | `search` exceeds 100 characters after trimming                       | Enforce a local 100-character maximum.                       |
+| Error code         | When                                           | Client behavior                                                 |
+| ------------------ | ---------------------------------------------- | --------------------------------------------------------------- |
+| `VALIDATION_ERROR` | `search` normalizes to fewer than 2 characters | Keep the local minimum length at 2; do not submit shorter text. |
+| `VALIDATION_ERROR` | `search` exceeds 100 characters after trimming | Enforce a local 100-character maximum.                          |
 
 The feed connection itself is unchanged; on validation failure the standard GraphQL error is returned and no partially filtered page is produced.
 
@@ -103,3 +108,4 @@ The feed connection itself is unchanged; on validation failure the standard Grap
 - `idx_posts_search_document_trgm` is a partial GIN trigram index on the normalized search document for `status = 'ACTIVE'` Posts, matching every searchable feed's lifecycle predicate.
 - `idx_cities_search_name_english_trgm` and `idx_cities_search_name_arabic_trgm` are GIN trigram indexes used to resolve matching Cities, which are then applied as an indexable `city_id` branch.
 - Automated query-plan evidence (`src/posts/posts-search.integration.spec.ts`) shows the Home Feed and help feed search plans filtering in SQL through `idx_posts_search_document_trgm` while the feed's `Limit` still receives a full page of viewer-visible rows.
+- Deployment ordering: migration `0052_add_normalized_feed_search` creates `pg_trgm`, the normalization functions and the trigram indexes. It is additive, so running it with the previous service version is safe; the new service must run migrations before it serves search requests. Requests without `search` never touch the new functions or indexes.
