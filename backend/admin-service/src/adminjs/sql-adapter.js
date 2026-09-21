@@ -1,5 +1,22 @@
 import knexModule from 'knex';
-import { DatabaseMetadata, Property, ResourceMetadata } from '@adminjs/sql';
+import { DatabaseMetadata, Property, Resource as SqlResource, ResourceMetadata } from '@adminjs/sql';
+import { ENUMS } from './enums.js';
+import { applyVirtualFilter, virtualFilterProperties } from './queue-filters.js';
+
+/**
+ * Enum-backed columns whose AdminJS filter is a value selector rather than a
+ * text search. Declaring the values on the adapter property makes the stock SQL
+ * adapter emit an equality predicate (`where "post_type" = 'RESCUE'`) instead of
+ * an ILIKE that the PostgreSQL enum type does not support.
+ */
+const COLUMN_AVAILABLE_VALUES = Object.freeze({
+  posts: Object.freeze({
+    post_type: ENUMS.postType,
+    status: ENUMS.postStatus,
+    moderation_status: ENUMS.moderationStatus,
+    urgency: ENUMS.urgencyTier,
+  }),
+});
 
 const SQL_POOL_OPTIONS = Object.freeze({
   min: 0,
@@ -63,6 +80,50 @@ function relationColumns(value) {
     .replaceAll('}', '')
     .split(',')
     .filter(Boolean);
+}
+
+/**
+ * SQL adapter resource that understands the admin work-queue virtual filters
+ * (`posts.report_type`, `posts.queue`, report `review_state`). Everything else
+ * is delegated to the stock `@adminjs/sql` resource, so filtering behavior for
+ * real columns is unchanged.
+ */
+export class QueueAwareSqlResource extends SqlResource {
+  constructor(info) {
+    const virtualProperties = virtualFilterProperties(info.tableName);
+    const resourceInfo =
+      virtualProperties.length > 0 ? { ...info, properties: [...info.properties, ...virtualProperties] } : info;
+    super(resourceInfo);
+    this.virtualFilterNames = new Set(virtualProperties.map((property) => property.name()));
+  }
+
+  filterQuery(filter) {
+    if (!filter?.filters || this.virtualFilterNames.size === 0) {
+      return super.filterQuery(filter);
+    }
+
+    const columnFilters = {};
+    const virtualSelections = [];
+    for (const [key, selection] of Object.entries(filter.filters)) {
+      if (this.virtualFilterNames.has(key)) {
+        virtualSelections.push([key, selection?.value]);
+      } else {
+        columnFilters[key] = selection;
+      }
+    }
+
+    const query = super.filterQuery({ ...filter, filters: columnFilters });
+    for (const [key, value] of virtualSelections) {
+      applyVirtualFilter(query, {
+        tableName: this.tableName,
+        key,
+        value,
+        knex: this.knex,
+        schemaName: this.schemaName,
+      });
+    }
+    return query;
+  }
 }
 
 export function createAdminSqlClient(connection) {
@@ -154,6 +215,7 @@ async function getProperties(sql, tableName, schemaName, availableTables) {
       isEditable: column.is_updatable === 'YES',
       type: relation ? 'reference' : columnType(column.data_type),
       referencedTable: relation?.referenced_table ?? null,
+      availableValues: COLUMN_AVAILABLE_VALUES[tableName]?.[column.column_name] ?? undefined,
     });
   });
 }

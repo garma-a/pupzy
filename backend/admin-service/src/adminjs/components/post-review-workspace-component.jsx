@@ -2,13 +2,17 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ApiClient } from 'adminjs';
 import { Badge, Box, Button, H3, H4, Icon, Link, Loader, MessageBox, Modal, Text } from '@adminjs/design-system';
 
+import { filteredListBackLink, recallListSearch } from './list-return.js';
+
 const api = new ApiClient();
 const DISCUSSION_ACTION = 'postReviewDiscussion';
 
+function adminRootPath() {
+  return (typeof window !== 'undefined' && window.REDUX_STATE && window.REDUX_STATE.paths?.rootPath) || '/admin';
+}
+
 function adminResourceUrl(path) {
-  const rootPath =
-    (typeof window !== 'undefined' && window.REDUX_STATE && window.REDUX_STATE.paths?.rootPath) || '/admin';
-  return `${rootPath}/resources/${path}`;
+  return `${adminRootPath()}/resources/${path}`;
 }
 
 const COMMENT_BADGE_VARIANTS = {
@@ -346,10 +350,20 @@ export default function PostReviewWorkspace({ resource, record }) {
   const photos = review.photos ?? [];
   const reports = review.reports ?? {};
   const history = review.history ?? [];
+  const currentSearch = typeof window !== 'undefined' ? window.location.search : '';
+  const backLink = filteredListBackLink(
+    /(^\?|&)filters\./.test(currentSearch) ? currentSearch : recallListSearch('posts'),
+    adminRootPath(),
+  );
 
   return (
     <Box className="pupzy-post-review" p="xl" mb="xl" data-testid="pupzy-review-workspace">
-      <H3 mb="md">Review workspace</H3>
+      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" style={{ gap: '12px' }}>
+        <H3 style={{ margin: 0 }}>Review workspace</H3>
+        <Link href={backLink.href} data-testid="pupzy-back-to-queue" style={{ fontWeight: 600 }}>
+          ← {backLink.label}
+        </Link>
+      </Box>
 
       <Box className="pupzy-review-header" mb="xl">
         <H3 mb="sm">{post.title}</H3>

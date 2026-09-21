@@ -85,11 +85,16 @@ GET /admin/api/resources/posts/records/:recordId/postReviewDiscussion?page=:page
 - History: up to 50 administrator action rows.
 - Discussion: 10 top-level Comments with all their Replies.
 
+## Returning to the queue
+
+Opening a Post from a filtered Posts list remembers that list's filters for the browser tab, and the
+workspace header offers **Back to filtered list** (or **Back to Posts list** when no filters were
+used). Browser Back also preserves the filtered list. See `admin-work-queues.md`.
+
 ## Out of scope for this workspace
 
 Reopening a recorded outcome and administrative outcome editing remain the later correction work
-(ticket 09); unrestricted status editing is not exposed. Queue navigation and cross-screen polish remain
-tickets 05 and 21.
+(ticket 09); unrestricted status editing is not exposed. Cross-screen polish remains ticket 21.
 
 ## Verification
 

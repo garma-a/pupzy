@@ -7,6 +7,7 @@ import {
   attachPostReviewData,
   buildPostReviewActions,
 } from '../review/post-review.js';
+import { virtualFilterOptions } from '../queue-filters.js';
 import { attachShortUuid, enumProperty, noDeleteActions, stripPopulatedPasswordHashes } from './resource-helpers.js';
 
 export const PROTECTED_POST_FIELDS = [
@@ -141,6 +142,7 @@ export function buildPostsResource(db, pool, components, cache) {
     reminder_sent_at: { isDisabled: true },
     created_at: { isDisabled: true },
     updated_at: { isDisabled: true },
+    ...virtualFilterOptions('posts'),
   };
 
   attachShortUuid(properties, ['id'], components, ['list', 'show']);
@@ -217,6 +219,8 @@ export function buildPostsResource(db, pool, components, cache) {
         'urgency',
         'city_id',
         'created_at',
+        'report_type',
+        'queue',
       ],
       sort: { sortBy: 'created_at', direction: 'desc' },
     },
