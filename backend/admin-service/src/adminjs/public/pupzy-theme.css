@@ -697,6 +697,192 @@ svg[data-css*='Loader'] {
 }
 
 /* ==========================================================================
+   Post Review Workspace
+   ========================================================================== */
+.pupzy-post-review {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+}
+
+.pupzy-post-review-section {
+  min-width: 0;
+}
+
+.pupzy-review-header {
+  background-color: var(--pupzy-surface);
+  border: 1px solid var(--pupzy-border);
+  border-radius: var(--pupzy-radius-card);
+  box-shadow: var(--pupzy-shadow-card);
+  padding: 20px;
+}
+
+.pupzy-review-empty {
+  background-color: var(--pupzy-bg);
+  border: 1px dashed var(--pupzy-border);
+  border-radius: var(--pupzy-radius-notice);
+}
+
+/* Aligned thumbnail grid: every cell has identical dimensions regardless of
+   the source image proportions. */
+.pupzy-media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 12px;
+  max-width: 100%;
+}
+
+.pupzy-media-thumb {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  cursor: pointer;
+  background-color: var(--pupzy-bg);
+  border: 1px solid var(--pupzy-border);
+  border-radius: var(--pupzy-radius-input);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.pupzy-media-thumb:hover {
+  border-color: var(--pupzy-primary) !important;
+  box-shadow: var(--pupzy-shadow-card-hover);
+}
+
+.pupzy-media-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pupzy-media-fallback,
+.pupzy-media-dialog-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  padding: 8px;
+  color: var(--pupzy-text-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Full-image previews preserve the complete image: never crop the only
+   available evidence view. */
+.pupzy-media-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 100%;
+}
+
+.pupzy-media-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pupzy-media-dialog-content {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 72vh;
+  margin: 0 auto;
+  object-fit: contain;
+  border-radius: var(--pupzy-radius-input);
+  background-color: var(--pupzy-bg);
+}
+
+.pupzy-media-dialog-fallback {
+  min-height: 240px;
+  border: 1px dashed var(--pupzy-border);
+  border-radius: var(--pupzy-radius-input);
+}
+
+.pupzy-media-dialog-nav {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Discussion */
+.pupzy-discussion-list,
+.pupzy-discussion-replies,
+.pupzy-report-list,
+.pupzy-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pupzy-discussion-item,
+.pupzy-report-row,
+.pupzy-history-row {
+  background-color: var(--pupzy-surface);
+  border: 1px solid var(--pupzy-border);
+  border-radius: var(--pupzy-radius-notice);
+  padding: 14px 16px;
+  min-width: 0;
+}
+
+.pupzy-discussion-replies {
+  margin-top: 12px;
+  padding-left: 14px;
+  border-left: 3px solid var(--pupzy-border);
+}
+
+.pupzy-discussion-reply {
+  background-color: var(--pupzy-bg);
+}
+
+.pupzy-discussion-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.pupzy-discussion-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.pupzy-discussion-media {
+  margin-top: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+}
+
+.pupzy-report-footer {
+  margin-top: 8px;
+  justify-content: space-between;
+}
+
+.pupzy-review-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* ==========================================================================
    Accessibility: Focus, Motion & Touch Targets
    ========================================================================== */
 /* High-contrast focus indicators */
