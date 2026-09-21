@@ -1,6 +1,7 @@
 import {
   actionResponse,
   closeOpenPostReports,
+  enqueuePushDeliveries,
   findLostReportType,
   lockPostDiscussion,
   readModerationReason,
@@ -149,12 +150,18 @@ function buildResolutionAction(pool, component, cache, definition) {
           postTitle: row.title,
           outcome: definition.outcome,
         });
-        await client.query(
+        const { rows: notificationRows } = await client.query(
           `INSERT INTO notifications
              (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
-           VALUES ($1, 'POST_RESOLVED_BY_ADMIN', $2, $3, $4, $5, $6, false)`,
+           VALUES ($1, 'POST_RESOLVED_BY_ADMIN', $2, $3, $4, $5, $6, false)
+           RETURNING id`,
           [row.creator_id, content.title, content.body, content.titleArabic, content.bodyArabic, row.id],
         );
+        await enqueuePushDeliveries(client, {
+          id: notificationRows[0].id,
+          recipientId: row.creator_id,
+          type: 'POST_RESOLVED_BY_ADMIN',
+        });
         const termination = await terminatePendingInteractions(client, row.id);
         return { outcome: definition.outcome, ...termination };
       },
@@ -217,12 +224,18 @@ function buildReopenAction(pool, component, cache) {
         const previousOutcome = row.status;
         await client.query(`UPDATE posts SET status = 'ACTIVE', updated_at = now() WHERE id = $1`, [row.id]);
         const content = buildNotificationContent('POST_REOPENED_BY_ADMIN', { postTitle: row.title });
-        await client.query(
+        const { rows: notificationRows } = await client.query(
           `INSERT INTO notifications
              (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
-           VALUES ($1, 'POST_REOPENED_BY_ADMIN', $2, $3, $4, $5, $6, false)`,
+           VALUES ($1, 'POST_REOPENED_BY_ADMIN', $2, $3, $4, $5, $6, false)
+           RETURNING id`,
           [row.creator_id, content.title, content.body, content.titleArabic, content.bodyArabic, row.id],
         );
+        await enqueuePushDeliveries(client, {
+          id: notificationRows[0].id,
+          recipientId: row.creator_id,
+          type: 'POST_REOPENED_BY_ADMIN',
+        });
         return { previousOutcome };
       },
     },
@@ -344,12 +357,18 @@ export function buildPostActions(pool, component, cache) {
             [row.id, reason, adminId],
           );
           const content = buildNotificationContent('POST_REMOVED_BY_ADMIN', { reason });
-          await client.query(
+          const { rows: notificationRows } = await client.query(
             `INSERT INTO notifications
                (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
-             VALUES ($1, 'POST_REMOVED_BY_ADMIN', $2, $3, $4, $5, $6, false)`,
+             VALUES ($1, 'POST_REMOVED_BY_ADMIN', $2, $3, $4, $5, $6, false)
+             RETURNING id`,
             [row.creator_id, content.title, content.body, content.titleArabic, content.bodyArabic, row.id],
           );
+          await enqueuePushDeliveries(client, {
+            id: notificationRows[0].id,
+            recipientId: row.creator_id,
+            type: 'POST_REMOVED_BY_ADMIN',
+          });
           const closedPostReportIds = await closeOpenPostReports(client, row.id, adminId);
           return { closedPostReportIds };
         },

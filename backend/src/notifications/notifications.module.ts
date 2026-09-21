@@ -17,6 +17,9 @@ import { AccountIsolationModule } from '../blocks/account-isolation.module';
  * ## Exports
  * `NotificationsService` is exported so other modules (PostsModule,
  * ContactsModule, AdoptionsModule) can fire notifications.
+ * `PushDeliveryRepository` is exported so direct notification-insert sites
+ * (inactivity reminders, the ban cascade) enqueue durable push intents in the
+ * same transaction through the shared outbox.
  *
  * ## Dependencies
  * - `DatabaseModule` — global, provides DATABASE_TOKEN for Drizzle.
@@ -40,6 +43,6 @@ import { AccountIsolationModule } from '../blocks/account-isolation.module';
     PushDeliveryProcessor,
     { provide: PUSH_PROVIDER, useClass: FirebasePushProvider },
   ],
-  exports: [NotificationsService],
+  exports: [NotificationsService, PushDeliveryRepository],
 })
 export class NotificationsModule {}

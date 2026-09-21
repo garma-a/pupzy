@@ -353,6 +353,11 @@ describe('moderation actions', () => {
   });
 
   it('durably pages a user ban cascade and emits one notification after completion', async () => {
+    await database.pool.query(
+      `INSERT INTO device_registrations (user_id, token, platform)
+       VALUES ($1, 'ticket20-ban-cascade-token', 'ANDROID')`,
+      [principals.userId],
+    );
     for (let index = 0; index < 101; index += 1) {
       await insertPost(database.pool, {
         ...principals,
@@ -402,6 +407,18 @@ describe('moderation actions', () => {
     );
     assert.equal(notifications.rows[0].title_arabic, 'تمت إزالة منشوراتك');
     assert.equal(notifications.rows[0].body_arabic, 'تم حظر حسابك (Coordinated spam) وتمت إزالة منشوراتك النشطة.');
+    const deliveries = await database.pool.query(
+      `SELECT pd.status, pd.recipient_id, pd.actor_id, n.type
+       FROM push_deliveries pd
+       JOIN notifications n ON n.id = pd.notification_id`,
+    );
+    assert.deepEqual(
+      deliveries.rows.map((row) => row.type),
+      ['POST_REMOVED_BY_ADMIN'],
+      'the ban cascade writes its durable push intent with the notification',
+    );
+    assert.equal(deliveries.rows[0].recipient_id, principals.userId);
+    assert.equal(deliveries.rows[0].actor_id, null);
     const audit = await database.pool.query(`SELECT metadata FROM moderation_actions`);
     assert.equal(audit.rows[0].metadata.cascadedPostCount, 101);
     assert.equal(audit.rows[0].metadata.postCascade.state, 'COMPLETED');
@@ -608,6 +625,11 @@ describe('moderation actions', () => {
   });
 
   it('removePost inserts one correctly linked bilingual notification', async () => {
+    await database.pool.query(
+      `INSERT INTO device_registrations (user_id, token, platform)
+       VALUES ($1, 'ticket20-remove-post-token', 'IOS')`,
+      [principals.userId],
+    );
     const postId = await insertPost(database.pool, principals);
     await call(buildPostActions(database.pool, 'ModerationAction').removePost, postId, { reason: 'Spam' });
     const notifications = await database.pool.query(
@@ -621,6 +643,16 @@ describe('moderation actions', () => {
     assert.equal(notifications.rows[0].body, 'Spam');
     assert.equal(notifications.rows[0].title_arabic, 'تمت إزالة منشورك');
     assert.equal(notifications.rows[0].body_arabic, 'Spam');
+    const deliveries = await database.pool.query(
+      `SELECT pd.status, pd.recipient_id, pd.actor_id, n.related_post_id
+       FROM push_deliveries pd
+       JOIN notifications n ON n.id = pd.notification_id`,
+    );
+    assert.equal(deliveries.rows.length, 1, 'removal writes its durable push intent with the notification');
+    assert.equal(deliveries.rows[0].status, 'PENDING');
+    assert.equal(deliveries.rows[0].recipient_id, principals.userId);
+    assert.equal(deliveries.rows[0].related_post_id, postId);
+    assert.equal(deliveries.rows[0].actor_id, null);
   });
 
   it('stores SQL injection text literally without executing it', async () => {

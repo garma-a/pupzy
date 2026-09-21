@@ -1,4 +1,5 @@
 import { POST_DISCUSSION_LOCK_NAMESPACE } from '../../../../src/common/contracts/post-lifecycle.contract.ts';
+import { isPushDeliveryEnabled } from '../../../../src/notifications/push-delivery.constants.ts';
 
 const MODERATION_TABLES = new Set(['users', 'posts', 'comments']);
 
@@ -266,6 +267,25 @@ export async function closeOpenCommentReports(client, commentId) {
     [commentId],
   );
   return rows.map((row) => row.id);
+}
+
+/**
+ * Writes one durable push intent per device registered to the notification's
+ * recipient, inside the same transaction as the notification insert. This
+ * mirrors the Nest API's push-delivery outbox and shares its type allowlist;
+ * `ON CONFLICT` makes a repeated enqueue harmless. Admin-triggered
+ * notifications have no acting user, so no Block actor is recorded.
+ */
+export async function enqueuePushDeliveries(client, { id, recipientId, type }) {
+  if (!isPushDeliveryEnabled(type)) return;
+  await client.query(
+    `INSERT INTO push_deliveries (notification_id, recipient_id, actor_id, device_id)
+     SELECT $1::uuid, $2::uuid, NULL, d.id
+     FROM device_registrations d
+     WHERE d.user_id = $2::uuid
+     ON CONFLICT (notification_id, device_id) DO NOTHING`,
+    [id, recipientId],
+  );
 }
 
 export function actionResponse(record, currentAdmin, result, successMessage) {

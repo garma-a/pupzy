@@ -43,6 +43,8 @@ import {
 } from '../common/contracts/post-lifecycle.contract';
 import { withDbRetry } from '../common/utils/db-retry.util';
 import type { NotificationContentColumns } from '../notifications/notification-templates';
+import { PushDeliveryRepository } from '../notifications/push-delivery.repository';
+import { isPushDeliveryEnabled } from '../notifications/push-delivery.constants';
 import {
   ModerationReportQuotaManager,
   ReportQuotaReservation,
@@ -126,6 +128,7 @@ function isUniqueViolation(err: unknown): boolean {
 export class PostsRepository {
   private readonly reportQuotaManager: ModerationReportQuotaManager;
   private readonly isolationPolicy: AccountIsolationPolicy;
+  private readonly pushDeliveryRepository: PushDeliveryRepository;
 
   constructor(
     @Inject(DATABASE_TOKEN)
@@ -136,9 +139,13 @@ export class PostsRepository {
     @Optional()
     @Inject(AccountIsolationPolicy)
     isolationPolicy?: AccountIsolationPolicy,
+    @Optional()
+    @Inject(PushDeliveryRepository)
+    pushDeliveryRepository?: PushDeliveryRepository,
   ) {
     this.reportQuotaManager = reportQuotaManager ?? new ModerationReportQuotaManager(this.db);
     this.isolationPolicy = isolationPolicy ?? new AccountIsolationPolicy(this.db);
+    this.pushDeliveryRepository = pushDeliveryRepository ?? new PushDeliveryRepository(this.db);
   }
 
   /**
@@ -618,15 +625,24 @@ export class PostsRepository {
         `);
         if (!eligibility.rows[0]?.eligible) return undefined;
 
-        await tx.insert(notifications).values({
-          recipientId: lockedPost.creatorId,
-          type: 'POST_INACTIVITY_NUDGE',
-          title: content.title,
-          body: content.body,
-          titleArabic: content.titleArabic,
-          bodyArabic: content.bodyArabic,
-          relatedPostId: postId,
-        });
+        const [notification] = await tx
+          .insert(notifications)
+          .values({
+            recipientId: lockedPost.creatorId,
+            type: 'POST_INACTIVITY_NUDGE',
+            title: content.title,
+            body: content.body,
+            titleArabic: content.titleArabic,
+            bodyArabic: content.bodyArabic,
+            relatedPostId: postId,
+          })
+          .returning();
+
+        // The durable push intents commit with the reminder notification;
+        // there is no acting user behind an inactivity reminder.
+        if (isPushDeliveryEnabled('POST_INACTIVITY_NUDGE')) {
+          await this.pushDeliveryRepository.enqueueForNotification(notification, null, tx);
+        }
 
         const [post] = await tx
           .update(posts)

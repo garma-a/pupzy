@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnApplicationBootstrap, Optional } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
@@ -6,6 +6,8 @@ import { DATABASE_TOKEN } from '../database/database.provider';
 import type * as schema from '../database/schema';
 import { POST_DISCUSSION_LOCK_NAMESPACE } from '../common/contracts/post-lifecycle.contract';
 import { buildNotificationContent } from '../notifications/notification-templates';
+import { PushDeliveryRepository } from '../notifications/push-delivery.repository';
+import { isPushDeliveryEnabled } from '../notifications/push-delivery.constants';
 import { withDbRetry } from '../common/utils/db-retry.util';
 
 const USER_BAN_POST_CASCADE_BATCH_SIZE = 100;
@@ -30,12 +32,18 @@ interface CascadeOutcome {
 @Injectable()
 export class UserBanPostCascadeProcessor implements OnApplicationBootstrap {
   private readonly logger = new Logger(UserBanPostCascadeProcessor.name);
+  private readonly pushDeliveryRepository: PushDeliveryRepository;
   private isProcessing = false;
 
   constructor(
     @Inject(DATABASE_TOKEN)
     private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+    @Optional()
+    @Inject(PushDeliveryRepository)
+    pushDeliveryRepository?: PushDeliveryRepository,
+  ) {
+    this.pushDeliveryRepository = pushDeliveryRepository ?? new PushDeliveryRepository(this.db);
+  }
 
   async onApplicationBootstrap(): Promise<void> {
     try {
@@ -206,7 +214,7 @@ export class UserBanPostCascadeProcessor implements OnApplicationBootstrap {
               reason: cascade.reason,
               removedAll: true,
             });
-            await tx.execute(sql`
+            const notificationResult = await tx.execute<{ id: string; recipient_id: string }>(sql`
               INSERT INTO notifications (recipient_id, type, title, body, title_arabic, body_arabic, is_read)
               VALUES (
                 ${cascade.user_id},
@@ -217,7 +225,18 @@ export class UserBanPostCascadeProcessor implements OnApplicationBootstrap {
                 ${content.bodyArabic},
                 false
               )
+              RETURNING id, recipient_id
             `);
+            const notification = notificationResult.rows[0];
+            // The ban cascade has no acting user; the durable push intents
+            // commit with the owner's notification.
+            if (notification && isPushDeliveryEnabled('POST_REMOVED_BY_ADMIN')) {
+              await this.pushDeliveryRepository.enqueueForNotification(
+                { id: notification.id, recipientId: notification.recipient_id },
+                null,
+                tx,
+              );
+            }
           }
           await tx.execute(sql`
             UPDATE user_ban_post_cascades
