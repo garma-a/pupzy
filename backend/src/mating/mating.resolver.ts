@@ -14,9 +14,10 @@ export class MatingResolver {
     @Args('filter') filter: MatingFeedFilterInput | undefined,
     @Args('first') first: number | undefined,
     @Args('after') after: string | undefined,
+    @Args('search') search: string | undefined,
     @Context() ctx: GqlContext,
   ) {
-    return this.matingService.matingFeed(filter ?? null, first ?? null, after ?? null, ctx.user?.id);
+    return this.matingService.matingFeed(filter ?? null, first ?? null, after ?? null, search ?? null, ctx.user?.id);
   }
 
   @Query('matingPostDetail')

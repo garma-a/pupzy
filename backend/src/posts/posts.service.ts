@@ -701,6 +701,7 @@ export class PostsService {
       sort,
       limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor(input.after, (cursor): cursor is ScoredFeedCursor => isScoredFeedCursor(cursor, sort)),
+      searchPattern: buildFeedSearchPattern(input.search),
       viewerId,
     });
     return this.mapFeedResultToConnection(result, (post) =>
@@ -721,6 +722,7 @@ export class PostsService {
       category: input.category,
       limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor(input.after, (cursor): cursor is ScoredFeedCursor => isScoredFeedCursor(cursor, sort)),
+      searchPattern: buildFeedSearchPattern(input.search),
       viewerId,
     });
     return this.mapFeedResultToConnection(result, (post) =>

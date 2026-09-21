@@ -667,6 +667,8 @@ extend type Query {
 
   """
   Adopt Feed — ADOPTION posts ranked by engagement score (HOT) or newest.
+  Optional server-side search finds Posts that have not loaded on the client,
+  keeping this feed's ordering, filters and cursor pagination.
   """
   adoptFeed(
     governorate: String
@@ -679,11 +681,21 @@ extend type Query {
     sort: AdoptFeedSort
     first: Int
     after: String
+    """
+    Optional. Case-, diacritic- and Arabic-variant-insensitive search over
+    title, description, category, area and City names (English and Arabic).
+    Empty or whitespace-only text means no search. Minimum 2 characters,
+    maximum 100; shorter or longer text is rejected with VALIDATION_ERROR.
+    The feed's own filters, ordering and cursor pagination are unchanged.
+    """
+    search: String
   ): PostConnection!
 
   """
   Market Feed — PRODUCT posts ranked by engagement score or newest.
   Supports optional category filtering without joining product_posts.
+  Optional server-side search composes with the category filter and keeps the
+  feed's ordering and cursor pagination.
   """
   marketFeed(
     governorate: String
@@ -700,6 +712,14 @@ extend type Query {
     sort: MarketFeedSort
     first: Int
     after: String
+    """
+    Optional. Case-, diacritic- and Arabic-variant-insensitive search over
+    title, description, category, area and City names (English and Arabic).
+    Empty or whitespace-only text means no search. Minimum 2 characters,
+    maximum 100; shorter or longer text is rejected with VALIDATION_ERROR.
+    The feed's own filters, ordering and cursor pagination are unchanged.
+    """
+    search: String
   ): PostConnection!
 
   """

@@ -236,9 +236,9 @@ describe('Post account isolation across discovery and retrieval (Ticket 06)', ()
           myPosts: (_root: unknown, args: Record<string, unknown>, ctx: GqlContext) => postsResolver.myPosts(args, ctx),
           matingFeed: (
             _root: unknown,
-            args: { filter?: Record<string, unknown> | null; first?: number; after?: string },
+            args: { filter?: Record<string, unknown> | null; first?: number; after?: string; search?: string },
             ctx: GqlContext,
-          ) => matingResolver.matingFeed(args.filter ?? undefined, args.first, args.after, ctx),
+          ) => matingResolver.matingFeed(args.filter ?? undefined, args.first, args.after, args.search, ctx),
           matingPostDetail: (_root: unknown, args: { postId: string }, ctx: GqlContext) =>
             matingResolver.matingPostDetail(args.postId, ctx),
         },

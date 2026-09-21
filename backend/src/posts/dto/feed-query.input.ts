@@ -54,11 +54,14 @@ const feedSearchSchema = z.object({
 
 const helpFeedSchema = locationFilterSchema.and(paginationSchema).and(feedSearchSchema);
 
-const adoptFeedSchema = locationFilterSchema.and(paginationSchema).and(
-  z.object({
-    sort: z.enum(['HOT', 'NEWEST']).nullish(),
-  }),
-);
+const adoptFeedSchema = locationFilterSchema
+  .and(paginationSchema)
+  .and(feedSearchSchema)
+  .and(
+    z.object({
+      sort: z.enum(['HOT', 'NEWEST']).nullish(),
+    }),
+  );
 
 const PRODUCT_CATEGORIES = [
   'CARE',
@@ -70,12 +73,15 @@ const PRODUCT_CATEGORIES = [
   'OTHER',
 ] as const;
 
-const marketFeedSchema = locationFilterSchema.and(paginationSchema).and(
-  z.object({
-    sort: z.enum(['HOT', 'NEWEST']).nullish(),
-    category: z.enum(PRODUCT_CATEGORIES).nullish(),
-  }),
-);
+const marketFeedSchema = locationFilterSchema
+  .and(paginationSchema)
+  .and(feedSearchSchema)
+  .and(
+    z.object({
+      sort: z.enum(['HOT', 'NEWEST']).nullish(),
+      category: z.enum(PRODUCT_CATEGORIES).nullish(),
+    }),
+  );
 
 const homeFeedSchema = locationFilterSchema.and(paginationSchema).and(feedSearchSchema);
 
