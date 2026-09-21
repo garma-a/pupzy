@@ -5,6 +5,7 @@ import { adminUsers } from './admin-users.schema';
 export const moderationActionTypeEnum = pgEnum('moderation_action_type', [
   'POST_APPROVED',
   'POST_FLAGGED',
+  'POST_RESOLVED',
   'POST_REMOVED',
   'POST_RESTORED',
   'USER_BANNED',

@@ -14,6 +14,13 @@ export type NotificationLanguage = (typeof NOTIFICATION_LANGUAGES)[number];
 export const DEFAULT_NOTIFICATION_LANGUAGE: NotificationLanguage = 'en';
 
 /**
+ * The successful outcomes an administrator can record as a Post Resolution.
+ * Mirrors the type-specific targets in the shared lifecycle contract.
+ */
+export const POST_RESOLUTION_OUTCOMES = ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD'] as const;
+export type PostResolutionOutcome = (typeof POST_RESOLUTION_OUTCOMES)[number];
+
+/**
  * Parameters each notification type interpolates into its English and Arabic
  * templates. Adding a notification type adds one key here and one entry in
  * `NOTIFICATION_TEMPLATES`; the mapped registry type refuses to compile until
@@ -31,6 +38,8 @@ export interface NotificationTemplateParamsMap {
   ADOPTION_APPLICATION_REJECTED: { postTitle: string };
   /** `removedAll` is the account-ban cascade variant that removes every post. */
   POST_REMOVED_BY_ADMIN: { reason: string; removedAll?: boolean };
+  /** Administrator-recorded Post Resolution. The internal reason is not disclosed. */
+  POST_RESOLVED_BY_ADMIN: { postTitle: string; outcome: PostResolutionOutcome };
   POST_INACTIVITY_NUDGE: { postTitle: string };
   SYSTEM_ANNOUNCEMENT: { postTitle: string };
   NEW_COMMENT: { actorName: string; postTitle: string };
@@ -61,6 +70,15 @@ interface BilingualNotificationTemplate<P> {
 type NotificationTemplateRegistry = {
   readonly [K in NotificationType]: BilingualNotificationTemplate<NotificationTemplateParamsMap[K]>;
 };
+
+/** Readable outcome wording used by the administrator-resolution notification. */
+const POST_RESOLUTION_OUTCOME_LABELS: Readonly<Record<PostResolutionOutcome, { en: string; ar: string }>> =
+  Object.freeze({
+    RESOLVED: Object.freeze({ en: 'resolved', ar: 'تم الحل' }),
+    REUNITED: Object.freeze({ en: 'reunited', ar: 'تم لمّ الشمل' }),
+    ADOPTED: Object.freeze({ en: 'adopted', ar: 'تم التبني' }),
+    SOLD: Object.freeze({ en: 'sold', ar: 'تم البيع' }),
+  });
 
 /**
  * Centralized English and Arabic definitions for every existing notification
@@ -146,6 +164,16 @@ const NOTIFICATION_TEMPLATES: NotificationTemplateRegistry = {
     ar: ({ postTitle }) => ({
       title: 'تحديث طلب التبني',
       body: `لم تتم الموافقة على طلب التبني الخاص بك لـ "${postTitle}" في الوقت الحالي`,
+    }),
+  },
+  POST_RESOLVED_BY_ADMIN: {
+    en: ({ postTitle, outcome }) => ({
+      title: 'Post outcome recorded',
+      body: `An administrator marked your post "${postTitle}" as ${POST_RESOLUTION_OUTCOME_LABELS[outcome].en}.`,
+    }),
+    ar: ({ postTitle, outcome }) => ({
+      title: 'تم تسجيل نتيجة المنشور',
+      body: `قام أحد المشرفين بتسجيل نتيجة منشورك "${postTitle}": ${POST_RESOLUTION_OUTCOME_LABELS[outcome].ar}.`,
     }),
   },
   POST_REMOVED_BY_ADMIN: {

@@ -351,6 +351,13 @@
       "when": 1791310400000,
       "tag": "0049_add_device_push_delivery",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1791396800000,
+      "tag": "0050_add_admin_post_resolution",
+      "breakpoints": true
     }
   ]
 }

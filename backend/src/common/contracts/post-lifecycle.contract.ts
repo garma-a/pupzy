@@ -14,6 +14,7 @@
  * | `OWNER_REMOVE`  | Post owner    | GraphQL `deletePost`                               |
  * | `OWNER_RENEW`   | Post owner    | GraphQL `renewPost`                                |
  * | `EXPIRE`        | System job    | `PostExpiryProcessor` inactivity boundary          |
+ * | `ADMIN_RESOLVE` | Administrator | AdminJS type-specific resolution actions           |
  * | `ADMIN_REMOVE`  | Administrator | AdminJS `removePost` (and the ban Post cascade)    |
  * | `ADMIN_RESTORE` | Administrator | AdminJS `restorePost`                              |
  *
@@ -51,7 +52,7 @@ export type PostLifecycleLostReportType = 'LOST_PET' | 'FOUND_STRAY';
 
 /** Named lifecycle transitions covered by this contract. */
 export type PostLifecycleTransitionName =
-  'OWNER_CLOSE' | 'OWNER_REMOVE' | 'OWNER_RENEW' | 'EXPIRE' | 'ADMIN_REMOVE' | 'ADMIN_RESTORE';
+  'OWNER_CLOSE' | 'OWNER_REMOVE' | 'OWNER_RENEW' | 'EXPIRE' | 'ADMIN_RESOLVE' | 'ADMIN_REMOVE' | 'ADMIN_RESTORE';
 
 /**
  * Advisory-lock key namespace that serializes a single Post's discussion
@@ -136,6 +137,24 @@ export function canOwnerClose(
  */
 export function canOwnerRemove(currentStatus: string): boolean {
   return currentStatus !== 'REMOVED';
+}
+
+/**
+ * True when an administrator may record a Post Resolution for this Post.
+ *
+ * Administrators mirror the owner's successful outcome per type (and, for
+ * LOST, direction) but are never a second owner path: the source status must
+ * still be `ACTIVE`, so a recorded outcome can only be corrected through the
+ * explicit reopening transition and never overwritten by another resolution.
+ */
+export function canAdminResolve(
+  postType: string,
+  currentStatus: string,
+  targetStatus: string,
+  lostReportType?: string | null,
+): boolean {
+  if (currentStatus !== 'ACTIVE') return false;
+  return ownerClosureTargets(postType, lostReportType).includes(targetStatus as PostLifecycleStatus);
 }
 
 /**
@@ -258,6 +277,12 @@ export interface PostLifecycleSideEffects {
  *   write moderation audit rows or owner notifications. Owner closure also
  *   terminates pending direct interactions in the same transaction; owner
  *   removal keeps its established behavior.
+ * - Administrator resolution records the actor, internal reason and outcome in
+ *   the audit row, terminates pending direct interactions and inserts the
+ *   bilingual owner notification in the same transaction, then invalidates the
+ *   AdminJS dashboard cache after commit. It deliberately leaves the
+ *   moderation fields and open Post Reports untouched: a Post Resolution is
+ *   not a moderation takedown.
  * - Administrator removal and restoration additionally write the audit row,
  *   close open Post Reports, and invalidate the AdminJS dashboard cache.
  *   Removal notifies the owner; restoration does not.
@@ -304,6 +329,15 @@ export const POST_LIFECYCLE_SIDE_EFFECTS: Readonly<Record<PostLifecycleTransitio
       invalidateAdminDashboardCache: false,
       moderationAudit: false,
       ownerNotification: null,
+      closeOpenPostReports: false,
+      terminatePendingInteractions: true,
+    }),
+    ADMIN_RESOLVE: Object.freeze({
+      userPostCountDelta: 'NONE',
+      invalidateOwnerUserCache: false,
+      invalidateAdminDashboardCache: true,
+      moderationAudit: true,
+      ownerNotification: 'POST_RESOLVED_BY_ADMIN',
       closeOpenPostReports: false,
       terminatePendingInteractions: true,
     }),

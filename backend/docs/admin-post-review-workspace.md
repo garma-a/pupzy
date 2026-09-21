@@ -31,7 +31,21 @@ Opening one Post shows, in this order:
    `Open` or `Reviewed` (with the recorded review outcome where one exists) and linked to the existing
    report review screens.
 5. **Action history** — administrator actions recorded for the Post and its Comments, newest first,
-   with action label, target type, actor, time and reason.
+   with action label, target type, actor, time and reason. A recorded resolution reads
+   `Post marked <outcome>` from its audit metadata.
+
+## Resolution actions
+
+The workspace exposes only the type-specific resolution actions valid for the current record, alongside
+the existing moderation actions:
+
+- `markRescued` for an active rescue; `markReunited` for an active lost/found case; `markResolved` for an
+  active mating listing or found stray; `markAdopted` for an active adoption; `markSold` for an active
+  product listing. A recorded outcome, removal or expiry exposes none of them.
+- The confirmation page states the consequence, requires an internal reason, and uses a primary
+  (non-destructive) button so resolution is visibly distinct from **Remove Post**.
+- The action commits the outcome, audit row, localized owner notification and pending-interaction
+  cleanup together; see `admin-case-resolution-contract.md`.
 
 ## Discussion pagination API
 
@@ -73,9 +87,9 @@ GET /admin/api/resources/posts/records/:recordId/postReviewDiscussion?page=:page
 
 ## Out of scope for this workspace
 
-Recording a resolution, reopening a resolved case, and administrative outcome editing remain the
-administrative case-resolution work (tickets 08 and 09); this workspace deliberately exposes no new
-state-changing action. Queue navigation and cross-screen polish remain tickets 05 and 21.
+Reopening a recorded outcome and administrative outcome editing remain the later correction work
+(ticket 09); unrestricted status editing is not exposed. Queue navigation and cross-screen polish remain
+tickets 05 and 21.
 
 ## Verification
 
@@ -90,6 +104,8 @@ npm run format:check
 
 `test/post-review-workspace.test.js` exercises the authenticated admin HTTP boundary against a real
 database (workspace payload, pagination, permissions, retention, missing media, cross-Post isolation).
+`test/admin-case-resolution.test.js` covers the authenticated resolution actions, type-specific action
+lists, reason enforcement, audit/notification/cleanup atomicity and concurrency.
 `test/post-review-workspace-browser.test.js` drives the real AdminJS UI in Chrome (aligned thumbnails,
-full-image previews preserving aspect ratio, keyboard focus return, reduced motion, narrow screens and a
-plain `ADMIN` session).
+full-image previews preserving aspect ratio, keyboard focus return, reduced motion, narrow screens, a
+plain `ADMIN` session and the resolution confirmation/result journey).

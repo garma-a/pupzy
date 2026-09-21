@@ -21,6 +21,7 @@ import { TestDatabaseHelper, insertPost, seedPrincipals } from './test-database.
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const database = new TestDatabaseHelper();
 const EVIDENCE_DIR = process.env.BWG06_EVIDENCE_DIR || '/tmp/opencode/bwg-06-evidence';
+const RESOLUTION_EVIDENCE_DIR = process.env.BWG08_EVIDENCE_DIR || '/tmp/opencode/bwg-08-evidence';
 
 const BUSINESS_TABLES = `
   post_media, rescue_posts, lost_posts, adoption_posts, product_posts, mating_posts,
@@ -54,6 +55,13 @@ function findChromePath() {
 async function recordEvidence(page, name, { fullPage = false } = {}) {
   fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
   const file = path.join(EVIDENCE_DIR, `${name}.png`);
+  await page.screenshot({ path: file, fullPage });
+  return file;
+}
+
+async function recordResolutionEvidence(page, name, { fullPage = false } = {}) {
+  fs.mkdirSync(RESOLUTION_EVIDENCE_DIR, { recursive: true });
+  const file = path.join(RESOLUTION_EVIDENCE_DIR, `${name}.png`);
   await page.screenshot({ path: file, fullPage });
   return file;
 }
@@ -794,6 +802,195 @@ describe('Post review workspace real browser suite', { timeout: 120000 }, () => 
         `[bwg-06 evidence] existing remove action ${await recordEvidence(page, '05-existing-remove-action')}`,
       );
 
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('resolves a found-stray case with a required reason, audit history and localized owner notification', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource.*404/]);
+    try {
+      await database.pool.query(
+        `INSERT INTO contact_requests (post_id, requester_id, message)
+         VALUES ($1, $2, 'Please share the owner contact')`,
+        [fixture.postId, fixture.commenterId],
+      );
+
+      await loginAsAdmin(page, baseUrl, 'staff@example.com', 'staff secure password');
+      await openWorkspace(page);
+
+      const offered = await page.evaluate(() =>
+        ['markRescued', 'markReunited', 'markResolved', 'markAdopted', 'markSold', 'removePost'].filter(
+          (name) => document.querySelector(`[data-testid="action-${name}"]`) !== null,
+        ),
+      );
+      assert.deepEqual(offered, ['markReunited', 'markResolved', 'removePost']);
+
+      const stillActive = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [fixture.postId]))
+        .rows[0];
+      assert.equal(stillActive.status, 'ACTIVE', 'inspecting a case never forces an outcome');
+
+      await page.click('[data-testid="action-markResolved"]');
+      await page.waitForSelector('#moderation-reason', { timeout: 30000 });
+
+      const confirmation = await page.evaluate(() => {
+        const submit = document.querySelector('[data-testid="moderation-action-submit"]');
+        return {
+          heading: document.querySelector('h3')?.innerText ?? '',
+          consequence: document.querySelector('#moderation-action-consequence')?.innerText ?? '',
+          submitLabel: submit?.innerText ?? '',
+          submitVariant: submit?.dataset.variant ?? '',
+          submitDisabled: submit?.disabled ?? null,
+          describedBy: document.querySelector('#moderation-reason')?.getAttribute('aria-describedby'),
+        };
+      });
+      assert.match(confirmation.heading, /Mark resolved/);
+      assert.match(confirmation.consequence, /Records this case as resolved/);
+      assert.match(confirmation.consequence, /notifies the owner/);
+      assert.match(confirmation.consequence, /not removed/);
+      assert.equal(confirmation.submitVariant, 'primary', 'resolution is not styled as a destructive removal');
+      assert.equal(confirmation.submitDisabled, true, 'the reason is required before the outcome can be recorded');
+      assert.equal(confirmation.describedBy, 'moderation-action-consequence');
+      console.log(
+        `[bwg-08 evidence] resolution confirmation ${await recordResolutionEvidence(page, '01-resolution-confirmation')}`,
+      );
+
+      await page.type('#moderation-reason', 'Animal safely reunited with its owner');
+      await page.waitForFunction(
+        () => document.querySelector('[data-testid="moderation-action-submit"]')?.disabled === false,
+      );
+      await page.click('[data-testid="moderation-action-submit"]');
+
+      await page.waitForFunction(() => document.body.innerText.includes('Post marked resolved'), {
+        timeout: 60000,
+      });
+      const resultText = await page.$eval('body', (element) => element.innerText);
+      assert.match(resultText, /Animal safely reunited with its owner/);
+      console.log(
+        `[bwg-08 evidence] resolution result ${await recordResolutionEvidence(page, '02-resolution-result', {
+          fullPage: true,
+        })}`,
+      );
+
+      const post = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [fixture.postId])).rows[0];
+      assert.equal(post.status, 'RESOLVED');
+      const audit = (
+        await database.pool.query(
+          `SELECT action_type, admin_user_id, reason, metadata FROM moderation_actions
+           WHERE target_id = $1 AND action_type = 'POST_RESOLVED'`,
+          [fixture.postId],
+        )
+      ).rows[0];
+      assert.equal(audit.reason, 'Animal safely reunited with its owner');
+      assert.equal(audit.metadata.outcome, 'RESOLVED');
+      assert.ok(audit.admin_user_id);
+      const notifications = (
+        await database.pool.query(
+          `SELECT type, recipient_id, related_post_id, title, body, title_arabic, body_arabic
+           FROM notifications WHERE related_post_id = $1`,
+          [fixture.postId],
+        )
+      ).rows;
+      assert.equal(notifications.length, 1);
+      assert.equal(notifications[0].type, 'POST_RESOLVED_BY_ADMIN');
+      assert.equal(notifications[0].recipient_id, fixture.ownerId);
+      assert.equal(notifications[0].title, 'Post outcome recorded');
+      assert.equal(
+        notifications[0].body,
+        'An administrator marked your post "Found stray near the market" as resolved.',
+      );
+      assert.equal(notifications[0].title_arabic, 'تم تسجيل نتيجة المنشور');
+      assert.ok(notifications[0].body_arabic.length > 0);
+      const contactRequest = (
+        await database.pool.query(`SELECT status, responded_at FROM contact_requests WHERE post_id = $1`, [
+          fixture.postId,
+        ])
+      ).rows[0];
+      assert.equal(contactRequest.status, 'REJECTED');
+      assert.ok(contactRequest.responded_at);
+
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('offers only valid outcome actions per type and keeps resolution visually distinct from removal', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource.*404/]);
+    try {
+      const productId = await insertPost(database.pool, {
+        userId: fixture.ownerId,
+        cityId: principals.cityId,
+        postType: 'PRODUCT',
+        title: 'Product listing awaiting a buyer',
+        marketCategory: 'FOOD',
+      });
+      const lostPetId = await insertPost(database.pool, {
+        userId: fixture.ownerId,
+        cityId: principals.cityId,
+        postType: 'LOST',
+        title: 'Lost pet case',
+      });
+      await database.pool.query(
+        `INSERT INTO lost_posts (post_id, report_type, species, pet_name, date_last_seen)
+         VALUES ($1, 'LOST_PET', 'DOG', 'Rex', '2026-08-20')`,
+        [lostPetId],
+      );
+
+      await loginAsAdmin(page, baseUrl);
+
+      await page.goto(`${baseUrl}/admin/resources/posts/records/${productId}/show`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector('[data-testid="pupzy-review-workspace"]');
+      const productActions = await page.evaluate(() =>
+        ['markRescued', 'markReunited', 'markResolved', 'markAdopted', 'markSold'].filter(
+          (name) => document.querySelector(`[data-testid="action-${name}"]`) !== null,
+        ),
+      );
+      assert.deepEqual(productActions, ['markSold'], 'a product listing only offers its sold outcome');
+
+      await page.click('[data-testid="action-markSold"]');
+      await page.waitForSelector('#moderation-reason', { timeout: 30000 });
+      const soldDialog = await page.evaluate(() => ({
+        heading: document.querySelector('h3')?.innerText ?? '',
+        consequence: document.querySelector('#moderation-action-consequence')?.innerText ?? '',
+        submitVariant: document.querySelector('[data-testid="moderation-action-submit"]')?.dataset.variant,
+      }));
+      assert.match(soldDialog.heading, /Mark sold/);
+      assert.match(soldDialog.consequence, /Records this listing as sold/);
+      assert.equal(soldDialog.submitVariant, 'primary');
+      console.log(
+        `[bwg-08 evidence] product outcome confirmation ${await recordResolutionEvidence(
+          page,
+          '03-product-outcome-confirmation',
+        )}`,
+      );
+
+      await page.goto(`${baseUrl}/admin/resources/posts/records/${lostPetId}/show`, { waitUntil: 'networkidle0' });
+      await page.waitForSelector('[data-testid="pupzy-review-workspace"]');
+      const lostPetActions = await page.evaluate(() =>
+        ['markRescued', 'markReunited', 'markResolved', 'markAdopted', 'markSold'].filter(
+          (name) => document.querySelector(`[data-testid="action-${name}"]`) !== null,
+        ),
+      );
+      assert.deepEqual(lostPetActions, ['markReunited'], 'a lost pet only offers its reunited outcome');
+
+      await page.click('[data-testid="action-removePost"]');
+      await page.waitForSelector('#moderation-reason', { timeout: 30000 });
+      const removalDialog = await page.evaluate(() => ({
+        heading: document.querySelector('h3')?.innerText ?? '',
+        consequence: document.querySelector('#moderation-action-consequence')?.innerText ?? '',
+        submitVariant: document.querySelector('[data-testid="moderation-action-submit"]')?.dataset.variant,
+      }));
+      assert.match(removalDialog.heading, /Remove Post/);
+      assert.match(removalDialog.consequence, /Removes the Post from discovery/);
+      assert.equal(removalDialog.submitVariant, 'danger', 'removal stays a distinct destructive action');
+      console.log(
+        `[bwg-08 evidence] removal confirmation ${await recordResolutionEvidence(page, '04-removal-confirmation')}`,
+      );
+
+      const lostPet = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [lostPetId])).rows[0];
+      assert.equal(lostPet.status, 'ACTIVE', 'opening a confirmation never records an outcome');
       assert.deepEqual(errors, []);
     } finally {
       await page.close();

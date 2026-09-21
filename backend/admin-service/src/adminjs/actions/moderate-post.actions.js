@@ -1,12 +1,19 @@
 import {
   actionResponse,
   closeOpenPostReports,
+  findLostReportType,
   lockPostDiscussion,
   readModerationReason,
   runModerationAction,
+  terminatePendingInteractions,
 } from './helpers.js';
-import { canAdminRemove, canAdminRestore } from '../../../../src/common/contracts/post-lifecycle.contract.ts';
+import {
+  canAdminRemove,
+  canAdminResolve,
+  canAdminRestore,
+} from '../../../../src/common/contracts/post-lifecycle.contract.ts';
 import { buildNotificationContent } from '../../../../src/notifications/notification-templates.ts';
+import { attachLostSubtype } from '../review/post-review.js';
 import { isAnyAdmin } from '../rbac.js';
 
 function getRecordProperty(record, property) {
@@ -58,8 +65,120 @@ function buildPostAction(pool, component, definition, cache) {
   };
 }
 
+/**
+ * Type-specific Post Resolution actions. Each action targets exactly one
+ * successful outcome and is only visible while the Post is `ACTIVE` and its
+ * type (and, for LOST, direction) allows that outcome, so staff can never
+ * choose an invalid transition. The outcome is revalidated under the row lock
+ * against the shared lifecycle contract before anything is written.
+ */
+const POST_RESOLUTION_ACTIONS = Object.freeze({
+  markRescued: Object.freeze({
+    outcome: 'RESOLVED',
+    icon: 'CheckCircle',
+    guard: 'Record this rescue as resolved?',
+    appliesTo: (postType) => postType === 'RESCUE',
+  }),
+  markReunited: Object.freeze({
+    outcome: 'REUNITED',
+    icon: 'Heart',
+    guard: 'Record this lost/found case as reunited?',
+    appliesTo: (postType) => postType === 'LOST',
+  }),
+  markResolved: Object.freeze({
+    outcome: 'RESOLVED',
+    icon: 'CheckSquare',
+    guard: 'Record this case as resolved?',
+    appliesTo: (postType, reportType) => postType === 'MATING' || (postType === 'LOST' && reportType === 'FOUND_STRAY'),
+  }),
+  markAdopted: Object.freeze({
+    outcome: 'ADOPTED',
+    icon: 'Home',
+    guard: 'Record this adoption as adopted?',
+    appliesTo: (postType) => postType === 'ADOPTION',
+  }),
+  markSold: Object.freeze({
+    outcome: 'SOLD',
+    icon: 'ShoppingCart',
+    guard: 'Record this listing as sold?',
+    appliesTo: (postType) => postType === 'PRODUCT',
+  }),
+});
+
+function buildResolutionAction(pool, component, cache, definition) {
+  const action = buildPostAction(
+    pool,
+    component,
+    {
+      actionType: 'POST_RESOLVED',
+      icon: definition.icon,
+      guard: definition.guard,
+      requiresForm: true,
+      reasonRequired: true,
+      successMessage: 'Post resolution recorded.',
+      isVisible: (context) => {
+        const record = context?.record;
+        if (!record) return false;
+        const postType = getRecordProperty(record, 'post_type');
+        const reportType = getRecordProperty(record, 'report_type');
+        return (
+          definition.appliesTo(postType, reportType) &&
+          canAdminResolve(postType, getRecordProperty(record, 'status'), definition.outcome, reportType)
+        );
+      },
+      validate: async (row, client) => {
+        if (row.status !== 'ACTIVE') {
+          return 'Only active posts can be resolved.';
+        }
+        const lostReportType = row.post_type === 'LOST' ? await findLostReportType(client, row.id) : null;
+        if (
+          !definition.appliesTo(row.post_type, lostReportType) ||
+          !canAdminResolve(row.post_type, row.status, definition.outcome, lostReportType)
+        ) {
+          return `A "${row.post_type}" post cannot be resolved as ${definition.outcome}.`;
+        }
+        return null;
+      },
+      mutate: async (client, row) => {
+        await client.query(`UPDATE posts SET status = $2, updated_at = now() WHERE id = $1`, [
+          row.id,
+          definition.outcome,
+        ]);
+        const content = buildNotificationContent('POST_RESOLVED_BY_ADMIN', {
+          postTitle: row.title,
+          outcome: definition.outcome,
+        });
+        await client.query(
+          `INSERT INTO notifications
+             (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
+           VALUES ($1, 'POST_RESOLVED_BY_ADMIN', $2, $3, $4, $5, $6, false)`,
+          [row.creator_id, content.title, content.body, content.titleArabic, content.bodyArabic, row.id],
+        );
+        const termination = await terminatePendingInteractions(client, row.id);
+        return { outcome: definition.outcome, ...termination };
+      },
+    },
+    cache,
+  );
+
+  // The action page loads the record through this action, so the LOST
+  // discriminator must be attached here too; otherwise `markResolved` would be
+  // filtered out of the action page's own record actions for a FOUND_STRAY.
+  return { ...action, before: attachLostSubtype(pool) };
+}
+
+function buildResolutionActions(pool, component, cache) {
+  return Object.fromEntries(
+    Object.entries(POST_RESOLUTION_ACTIONS).map(([name, definition]) => [
+      name,
+      buildResolutionAction(pool, component, cache, definition),
+    ]),
+  );
+}
+
 export function buildPostActions(pool, component, cache) {
   return {
+    ...buildResolutionActions(pool, component, cache),
     approvePost: buildPostAction(
       pool,
       component,

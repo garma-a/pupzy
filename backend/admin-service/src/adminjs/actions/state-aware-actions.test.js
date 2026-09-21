@@ -25,6 +25,16 @@ describe('State-Aware Action Visibility Matrix', () => {
     get: (key) => ({ id: 'test-user-id', is_banned })[key],
   });
 
+  const createTypedPostRecord = (post_type, status, report_type = null) => {
+    const params = { id: 'test-post-id', post_type, status, report_type, moderation_status: 'CLEAN' };
+    return { id: () => 'test-post-id', params, get: (key) => params[key] };
+  };
+
+  const resolutionActionNames = ['markRescued', 'markReunited', 'markResolved', 'markAdopted', 'markSold'];
+
+  const visibleResolutionActions = (record) =>
+    resolutionActionNames.filter((name) => postActions[name].isVisible({ record }));
+
   describe('Post Actions', () => {
     it('shows Flag and Remove but not Approve or Restore on an active clean post', () => {
       const record = createPostRecord('ACTIVE', 'CLEAN');
@@ -82,6 +92,49 @@ describe('State-Aware Action Visibility Matrix', () => {
           true,
           `restorePost should be visible for REMOVED / ${moderationStatus}`,
         );
+      }
+    });
+
+    it('offers only the type-specific resolution action for each active Post type', () => {
+      assert.deepEqual(visibleResolutionActions(createTypedPostRecord('RESCUE', 'ACTIVE')), ['markRescued']);
+      assert.deepEqual(visibleResolutionActions(createTypedPostRecord('LOST', 'ACTIVE', 'LOST_PET')), ['markReunited']);
+      assert.deepEqual(visibleResolutionActions(createTypedPostRecord('LOST', 'ACTIVE', 'FOUND_STRAY')), [
+        'markReunited',
+        'markResolved',
+      ]);
+      assert.deepEqual(visibleResolutionActions(createTypedPostRecord('ADOPTION', 'ACTIVE')), ['markAdopted']);
+      assert.deepEqual(visibleResolutionActions(createTypedPostRecord('PRODUCT', 'ACTIVE')), ['markSold']);
+      assert.deepEqual(visibleResolutionActions(createTypedPostRecord('MATING', 'ACTIVE')), ['markResolved']);
+    });
+
+    it('keeps the conservative reunited-only rule when a LOST subtype is unknown', () => {
+      assert.deepEqual(visibleResolutionActions(createTypedPostRecord('LOST', 'ACTIVE', null)), ['markReunited']);
+      assert.deepEqual(visibleResolutionActions(createTypedPostRecord('LOST', 'ACTIVE', 'UNKNOWN')), ['markReunited']);
+    });
+
+    it('hides every resolution action once an outcome, removal or expiry is recorded', () => {
+      for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'REMOVED', 'EXPIRED']) {
+        for (const [postType, reportType] of [
+          ['RESCUE', null],
+          ['LOST', 'FOUND_STRAY'],
+          ['ADOPTION', null],
+          ['PRODUCT', null],
+          ['MATING', null],
+        ]) {
+          assert.deepEqual(
+            visibleResolutionActions(createTypedPostRecord(postType, status, reportType)),
+            [],
+            `${postType} resolution actions must be hidden for ${status}`,
+          );
+        }
+      }
+    });
+
+    it('hides every resolution action for unknown types and missing context', () => {
+      assert.deepEqual(visibleResolutionActions(createTypedPostRecord('UNKNOWN', 'ACTIVE')), []);
+      for (const name of resolutionActionNames) {
+        assert.equal(postActions[name].isVisible({}), false);
+        assert.equal(postActions[name].isVisible(null), false);
       }
     });
 

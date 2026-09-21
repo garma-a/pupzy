@@ -23,6 +23,7 @@ import { notificationTypeEnum } from './enums';
  * | ADOPTION_APPLICATION_APPROVED     | Service layer on adoption_applications UPDATE (status → APPROVED) |
  * | ADOPTION_APPLICATION_REJECTED     | Service layer on adoption_applications UPDATE (status → REJECTED) |
  * | POST_REMOVED_BY_ADMIN             | AdminJS `after` hook on post status update → REMOVED              |
+ * | POST_RESOLVED_BY_ADMIN            | AdminJS type-specific Post Resolution actions (ticket 08)         |
  * | POST_INACTIVITY_NUDGE             | Auto-removal cron (fires before removing the post)               |
  * | SYSTEM_ANNOUNCEMENT               | Service layer when a new post matches a saved search alert        |
  *

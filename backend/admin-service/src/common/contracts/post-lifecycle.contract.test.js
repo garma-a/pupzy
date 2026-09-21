@@ -14,6 +14,7 @@ import {
   canOwnerRenew,
   canExpirePost,
   canAdminRemove,
+  canAdminResolve,
   canAdminRestore,
 } from '../../../../src/common/contracts/post-lifecycle.contract.ts';
 
@@ -49,7 +50,29 @@ describe('AdminJS Post Lifecycle Contract (shared with the API)', () => {
     assert.equal(canAdminRestore('ACTIVE'), false);
   });
 
+  it('agrees with the API on type-specific administrator resolution targets', () => {
+    assert.equal(canAdminResolve('RESCUE', 'ACTIVE', 'RESOLVED'), true);
+    assert.equal(canAdminResolve('LOST', 'ACTIVE', 'REUNITED', 'LOST_PET'), true);
+    assert.equal(canAdminResolve('LOST', 'ACTIVE', 'RESOLVED', 'FOUND_STRAY'), true);
+    assert.equal(canAdminResolve('LOST', 'ACTIVE', 'RESOLVED', 'LOST_PET'), false);
+    assert.equal(canAdminResolve('ADOPTION', 'ACTIVE', 'ADOPTED'), true);
+    assert.equal(canAdminResolve('PRODUCT', 'ACTIVE', 'SOLD'), true);
+    assert.equal(canAdminResolve('MATING', 'ACTIVE', 'RESOLVED'), true);
+    assert.equal(canAdminResolve('PRODUCT', 'ACTIVE', 'RESOLVED'), false);
+    assert.equal(canAdminResolve('RESCUE', 'RESOLVED', 'RESOLVED'), false);
+    assert.equal(canAdminResolve('PRODUCT', 'EXPIRED', 'SOLD'), false);
+  });
+
   it('declares the administrative audit, report-closure and notification side effects', () => {
+    assert.deepEqual(POST_LIFECYCLE_SIDE_EFFECTS.ADMIN_RESOLVE, {
+      userPostCountDelta: 'NONE',
+      invalidateOwnerUserCache: false,
+      invalidateAdminDashboardCache: true,
+      moderationAudit: true,
+      ownerNotification: 'POST_RESOLVED_BY_ADMIN',
+      closeOpenPostReports: false,
+      terminatePendingInteractions: true,
+    });
     assert.deepEqual(POST_LIFECYCLE_SIDE_EFFECTS.ADMIN_REMOVE, {
       userPostCountDelta: 'DECREMENT',
       invalidateOwnerUserCache: false,
