@@ -269,7 +269,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     );
     const maadiCityId = maadiCityRes.rows[0].id;
 
-    // 3. Create users, posts, saved searches, and vet clinics referencing these cities before release migration
+    // 3. Create users, posts, and vet clinics referencing these cities before release migration
     const userRes = await pool.query<{ id: string }>(`
       INSERT INTO users (firebase_user_id, email, full_name, home_city_id)
       VALUES ('fb-user-rel-1', 'release-user@example.com', 'Release User', '${recodedCityId}')
@@ -309,15 +309,6 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
       [userId, maadiCityId],
     );
     const postMaadiId = postMaadiRes.rows[0].id;
-
-    // Saved search referencing recoded city
-    const savedSearchRes = await pool.query<{ id: string }>(
-      `INSERT INTO saved_searches (user_id, post_type, city_id, label)
-       VALUES ($1, 'ADOPTION', $2, 'Alert in Recoded City')
-       RETURNING id`,
-      [userId, recodedCityId],
-    );
-    const savedSearchId = savedSearchRes.rows[0].id;
 
     // Vet clinics referencing recoded and retiring cities
     const clinicRecodedRes = await pool.query<{ id: string }>(
@@ -396,12 +387,6 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     );
     expect(postRecodedAfter.rows[0].city_id).toBe(recodedCityId);
     expect(postRecodedAfter.rows[0].governorate).toBe('Cairo');
-
-    // Saved search referencing recoded city remains valid with same UUID
-    const savedSearchAfter = await pool.query<{ city_id: string }>(`SELECT city_id FROM saved_searches WHERE id = $1`, [
-      savedSearchId,
-    ]);
-    expect(savedSearchAfter.rows[0].city_id).toBe(recodedCityId);
 
     // Vet clinic referencing recoded city remains valid with same UUID
     const clinicRecodedAfter = await pool.query<{ city_id: string }>(`SELECT city_id FROM vet_clinics WHERE id = $1`, [

@@ -1,0 +1,13 @@
+-- Ticket 19 — contract the retired saved-search storage.
+--
+-- The saved-search alert feature was never finished. Ticket 18 retired its
+-- GraphQL type, generated definitions, AdminJS resource and runtime readers;
+-- this forward migration drops the remaining table once deployment ordering
+-- guarantees no running API or admin revision still queries it. See
+-- docs/adr/0007-retire-saved-search-runtime-before-storage-contraction.md.
+--
+-- Historical migrations (0000, 0003) stay byte-for-byte intact so clean
+-- installs and upgrades from any earlier revision apply the same history.
+-- The SYSTEM_ANNOUNCEMENT notification enum value and any historical inbox
+-- rows are retained: they are notification history, not saved-search storage.
+DROP TABLE IF EXISTS "saved_searches";
