@@ -17,6 +17,7 @@ import type * as schema from '../database/schema';
 
 import { ForbiddenError } from '../common/errors/app.errors';
 import { excludeIsolatedAccounts } from '../blocks/account-isolation.sql';
+import { buildFeedSearchCondition } from '../posts/feed-search.sql';
 export type NewMatingDetailsInput = Omit<NewMatingPostRow, 'postId'>;
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
@@ -102,7 +103,11 @@ export class MatingRepository {
     return row;
   }
 
-  /** Keyset feed: posts (MATING + ACTIVE) INNER JOIN mating_posts, newest first. */
+  /**
+   * Keyset feed: posts (MATING + ACTIVE) INNER JOIN mating_posts, newest first.
+   * Optional `searchPattern` adds the shared normalized search filter without
+   * changing the ordering, the mating filters or the cursor shape.
+   */
   async findFeed(params: {
     filter: {
       species?: string | null;
@@ -112,11 +117,14 @@ export class MatingRepository {
     };
     limit: number;
     cursor: { createdAt: string; id: string } | null;
+    searchPattern?: string | null;
     viewerId?: string | null;
   }): Promise<{ rows: Post[]; hasNextPage: boolean }> {
-    const { filter, limit, cursor, viewerId } = params;
+    const { filter, limit, cursor, searchPattern, viewerId } = params;
     // Escape LIKE wildcards so user input can't scan the whole table
     const escapeLike = (s: string) => s.replace(/[\\%_]/g, (m) => '\\' + m);
+
+    const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
 
     const rows = await this.db
       .select({ post: posts })
@@ -131,6 +139,7 @@ export class MatingRepository {
           filter.gender ? eq(matingPosts.gender, filter.gender as never) : undefined,
           filter.cityId ? eq(posts.cityId, filter.cityId) : undefined,
           filter.breed ? sql`${matingPosts.breed} ILIKE ${'%' + escapeLike(filter.breed) + '%'}` : undefined,
+          searchCondition,
           cursor
             ? or(
                 lt(posts.createdAt, new Date(cursor.createdAt)),

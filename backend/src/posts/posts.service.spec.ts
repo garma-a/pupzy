@@ -893,6 +893,53 @@ describe('PostsService', () => {
       expect(mockPostsRepo.findHelpFeed).not.toHaveBeenCalled();
     });
 
+    it('getAdoptFeed and getMarketFeed pass the normalized search pattern to the repository', async () => {
+      const mockPost = { id: validPostId, effectiveScore: 1, createdAt: new Date() } as unknown as Post;
+      mockPostsRepo.findAdoptFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+      mockPostsRepo.findMarketFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+
+      await service.getAdoptFeed({ search: '  PUPPY   home ' });
+      expect(mockPostsRepo.findAdoptFeed).toHaveBeenCalledWith(
+        expect.objectContaining({ searchPattern: '%puppy home%' }),
+      );
+
+      await service.getMarketFeed({ category: 'FOOD', search: 'قطه' });
+      expect(mockPostsRepo.findMarketFeed).toHaveBeenCalledWith(
+        expect.objectContaining({ category: 'FOOD', searchPattern: '%قطه%' }),
+      );
+    });
+
+    it('getAdoptFeed and getMarketFeed treat an empty search as no search', async () => {
+      const mockPost = { id: validPostId, effectiveScore: 1, createdAt: new Date() } as unknown as Post;
+      mockPostsRepo.findAdoptFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+      mockPostsRepo.findMarketFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+
+      await service.getAdoptFeed({ search: '   ' });
+      expect(mockPostsRepo.findAdoptFeed).toHaveBeenCalledWith(expect.objectContaining({ searchPattern: null }));
+
+      await service.getMarketFeed({ search: '' });
+      expect(mockPostsRepo.findMarketFeed).toHaveBeenCalledWith(expect.objectContaining({ searchPattern: null }));
+    });
+
+    it('getAdoptFeed and getMarketFeed reject short and oversize searches without querying the repository', async () => {
+      await expect(service.getAdoptFeed({ search: 'x' })).rejects.toThrow(ValidationError);
+      await expect(service.getMarketFeed({ search: 'a'.repeat(101) })).rejects.toThrow(ValidationError);
+      expect(mockPostsRepo.findAdoptFeed).not.toHaveBeenCalled();
+      expect(mockPostsRepo.findMarketFeed).not.toHaveBeenCalled();
+    });
+
     it('getPostsSavedByCurrentUser encodes savedAt from join', async () => {
       const savedDate = new Date('2026-08-10T15:00:00Z');
       const mockPost = {

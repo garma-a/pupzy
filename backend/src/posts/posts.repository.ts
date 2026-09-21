@@ -51,6 +51,7 @@ import {
 } from '../moderation-reports/moderation-report-quota.manager';
 import { excludeIsolatedAccounts } from '../blocks/account-isolation.sql';
 import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
+import { buildFeedSearchCondition } from './feed-search.sql';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -1351,53 +1352,6 @@ export class PostsRepository {
   }
 
   /**
-   * Builds the optional server-side search condition shared by the Home Feed
-   * and help discovery (and reusable by the other searchable feeds).
-   *
-   * The submitted `searchPattern` is already normalized and LIKE-escaped by
-   * `buildFeedSearchPattern`. It is matched against the same normalized
-   * search document that `idx_posts_search_document_trgm` indexes — title,
-   * description, market category and area name — so stored and query text use
-   * one normalization.
-   *
-   * City names live on `cities`, which is a separate relation, so matching
-   * Cities are resolved first through their own normalized trigram indexes and
-   * applied as an indexable `city_id = ANY(...)` branch. That keeps the whole
-   * predicate eligible for a BitmapOr instead of forcing a sequential scan.
-   *
-   * The condition is a pure filter: callers keep their own ordering, cursor
-   * and lifecycle/isolation predicates, so search never re-ranks a feed.
-   */
-  private async buildFeedSearchCondition(searchPattern: string | null | undefined): Promise<SQL | undefined> {
-    if (!searchPattern) return undefined;
-
-    const matchingCities = await this.db
-      .select({ id: cities.id })
-      .from(cities)
-      .where(
-        or(
-          sql`pupzy_search_normalize(${cities.nameEnglish}) LIKE ${searchPattern}`,
-          sql`pupzy_search_normalize(${cities.nameArabic}) LIKE ${searchPattern}`,
-        ),
-      );
-
-    const documentMatch = sql`pupzy_search_normalize(
-      ${posts.title} || ' ' || ${posts.description} || ' ' || COALESCE(${posts.areaName}, '') || ' ' ||
-      COALESCE(pupzy_search_enum_text(${posts.marketCategory}), '')
-    ) LIKE ${searchPattern}`;
-
-    return or(
-      documentMatch,
-      matchingCities.length > 0
-        ? inArray(
-            posts.cityId,
-            matchingCities.map((city) => city.id),
-          )
-        : undefined,
-    )!;
-  }
-
-  /**
    * Applies the limit+1 "has next page" trick to an already-typed array of
    * feed rows coming straight from the query builder (posts columns plus a
    * computed distanceKm column) and splits each row back into the
@@ -1441,7 +1395,7 @@ export class PostsRepository {
     const locationCondition = centerPointAsEwkt
       ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
       : this.buildLocationFilterCondition(governorate, cityId);
-    const searchCondition = await this.buildFeedSearchCondition(searchPattern);
+    const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
 
     const cursorCondition = cursor
       ? or(
@@ -1478,6 +1432,8 @@ export class PostsRepository {
    * Adopt Feed — ADOPTION posts sorted by effective_score (HOT) or newest.
    * Index (HOT): idx_posts_adopt_score (city_id, effective_score DESC, created_at DESC)
    * Index (NEWEST): primary key (UUIDv7 id is time-ordered)
+   * Optional `searchPattern` adds the shared normalized search filter without
+   * changing the ordering or the cursor shape.
    */
   async findAdoptFeed(parameters: {
     governorate: string | null | undefined;
@@ -1487,15 +1443,17 @@ export class PostsRepository {
     sort: 'HOT' | 'NEWEST';
     limit: number;
     cursor: { score?: number; createdAt?: string; id: string } | null;
+    searchPattern?: string | null;
     viewerId?: string | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, sort, limit, cursor, viewerId } = parameters;
+    const { governorate, cityId, viewerLocation, radiusKm, sort, limit, cursor, searchPattern, viewerId } = parameters;
     const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
     const locationCondition = centerPointAsEwkt
       ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
       : this.buildLocationFilterCondition(governorate, cityId);
+    const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
     const cursorCondition = this.buildScoredFeedCursorCondition(sort, cursor);
     const orderByClauses =
       sort === 'HOT' ? [desc(posts.effectiveScore), desc(posts.createdAt), desc(posts.id)] : [desc(posts.id)];
@@ -1512,6 +1470,7 @@ export class PostsRepository {
           eq(posts.postType, 'ADOPTION'),
           excludeIsolatedAccounts(viewerId, posts.creatorId),
           locationCondition,
+          searchCondition,
           cursorCondition,
         ),
       )
@@ -1527,6 +1486,8 @@ export class PostsRepository {
    * Index (HOT, no category): idx_posts_market_score
    * Index (HOT, with category): idx_posts_market_category
    * Index (NEWEST): primary key (UUIDv7 id is time-ordered)
+   * Optional `searchPattern` adds the shared normalized search filter without
+   * changing the ordering, category filter or cursor shape.
    */
   async findMarketFeed(parameters: {
     governorate: string | null | undefined;
@@ -1537,15 +1498,18 @@ export class PostsRepository {
     category: Post['marketCategory'] | null | undefined;
     limit: number;
     cursor: { score?: number; createdAt?: string; id: string } | null;
+    searchPattern?: string | null;
     viewerId?: string | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, sort, category, limit, cursor, viewerId } = parameters;
+    const { governorate, cityId, viewerLocation, radiusKm, sort, category, limit, cursor, searchPattern, viewerId } =
+      parameters;
     const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
     const locationCondition = centerPointAsEwkt
       ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
       : this.buildLocationFilterCondition(governorate, cityId);
+    const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
     const cursorCondition = this.buildScoredFeedCursorCondition(sort, cursor);
     const orderByClauses =
       sort === 'HOT' ? [desc(posts.effectiveScore), desc(posts.createdAt), desc(posts.id)] : [desc(posts.id)];
@@ -1563,6 +1527,7 @@ export class PostsRepository {
           excludeIsolatedAccounts(viewerId, posts.creatorId),
           locationCondition,
           category ? eq(posts.marketCategory, category) : undefined,
+          searchCondition,
           cursorCondition,
         ),
       )
@@ -1595,7 +1560,7 @@ export class PostsRepository {
     const locationCondition = centerPointAsEwkt
       ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
       : this.buildLocationFilterCondition(governorate, cityId);
-    const searchCondition = await this.buildFeedSearchCondition(searchPattern);
+    const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
 
     const rows = await this.db
       .select({ ...getTableColumns(posts), distanceKm: this.buildDistanceInKilometersExpression(centerPointAsEwkt) })

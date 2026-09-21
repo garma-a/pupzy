@@ -387,6 +387,7 @@ export interface IQuery {
     filter?: Nullable<MatingFeedFilter>,
     first?: Nullable<number>,
     after?: Nullable<string>,
+    search?: Nullable<string>,
   ): MatingPostConnection | Promise<MatingPostConnection>;
   matingPostDetail(postId: string): Nullable<MatingDetails> | Promise<Nullable<MatingDetails>>;
   myNotifications(
@@ -416,6 +417,7 @@ export interface IQuery {
     sort?: Nullable<AdoptFeedSort>,
     first?: Nullable<number>,
     after?: Nullable<string>,
+    search?: Nullable<string>,
   ): PostConnection | Promise<PostConnection>;
   marketFeed(
     governorate?: Nullable<string>,
@@ -426,6 +428,7 @@ export interface IQuery {
     sort?: Nullable<MarketFeedSort>,
     first?: Nullable<number>,
     after?: Nullable<string>,
+    search?: Nullable<string>,
   ): PostConnection | Promise<PostConnection>;
   homeFeed(
     governorate?: Nullable<string>,

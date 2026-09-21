@@ -8,11 +8,14 @@ import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import DataLoader from 'dataloader';
 import { TestDatabaseHelper } from '../../test/test-database.helper';
-import { blocks, cities, posts, users, type City, type Post, type User } from '../database/schema';
+import { blocks, cities, matingPosts, posts, users, type City, type Post, type User } from '../database/schema';
 import * as schema from '../database/schema';
 import { PostsRepository } from './posts.repository';
 import { PostsService } from './posts.service';
 import { PostsResolver } from './posts.resolver';
+import { MatingRepository } from '../mating/mating.repository';
+import { MatingService } from '../mating/mating.service';
+import { MatingResolver } from '../mating/mating.resolver';
 import { CitiesRepository } from '../cities/cities.repository';
 import { UsersRepository } from '../users/users.repository';
 import { AccountDeletionRepository } from '../users/account-deletion.repository';
@@ -27,6 +30,8 @@ import type { GqlContext } from '../common/types/gql-context.type';
 
 type PostType = 'RESCUE' | 'LOST' | 'ADOPTION' | 'PRODUCT' | 'MATING';
 type Urgency = 'CRITICAL' | 'URGENT' | 'MODERATE';
+type Species = 'DOG' | 'CAT' | 'BIRD' | 'RABBIT' | 'OTHER';
+type Gender = 'MALE' | 'FEMALE';
 
 interface FeedPage {
   edges: Array<{ node: { id: string }; cursor: string }>;
@@ -88,6 +93,78 @@ const HELP_FEED = `query HelpFeed(
   }
 }`;
 
+const ADOPT_FEED = `query AdoptFeed(
+  $cityId: ID
+  $governorate: String
+  $viewerLocation: ViewerLocationInput
+  $radiusKm: Float
+  $sort: AdoptFeedSort
+  $search: String
+  $first: Int
+  $after: String
+) {
+  adoptFeed(
+    cityId: $cityId
+    governorate: $governorate
+    viewerLocation: $viewerLocation
+    radiusKm: $radiusKm
+    sort: $sort
+    search: $search
+    first: $first
+    after: $after
+  ) {
+    edges { node { id } cursor }
+    pageInfo { hasNextPage endCursor }
+  }
+}`;
+
+const MARKET_FEED = `query MarketFeed(
+  $cityId: ID
+  $governorate: String
+  $viewerLocation: ViewerLocationInput
+  $radiusKm: Float
+  $category: ProductCategory
+  $sort: MarketFeedSort
+  $search: String
+  $first: Int
+  $after: String
+) {
+  marketFeed(
+    cityId: $cityId
+    governorate: $governorate
+    viewerLocation: $viewerLocation
+    radiusKm: $radiusKm
+    category: $category
+    sort: $sort
+    search: $search
+    first: $first
+    after: $after
+  ) {
+    edges { node { id } cursor }
+    pageInfo { hasNextPage endCursor }
+  }
+}`;
+
+const MATING_FEED = `query MatingFeed(
+  $cityId: ID
+  $species: SpeciesType
+  $gender: GenderType
+  $breed: String
+  $search: String
+  $first: Int
+  $after: String
+) {
+  matingFeed(
+    filter: { cityId: $cityId, species: $species, gender: $gender, breed: $breed }
+    search: $search
+    first: $first
+    after: $after
+  ) {
+    edges { node { id } cursor }
+    pageInfo { hasNextPage endCursor }
+  }
+}`;
+
 describe('Server-side feed search (Ticket 15)', () => {
   jest.setTimeout(300_000);
 
@@ -96,6 +173,8 @@ describe('Server-side feed search (Ticket 15)', () => {
   let postsRepository: PostsRepository;
   let postsService: PostsService;
   let postsResolver: PostsResolver;
+  let matingService: MatingService;
+  let matingResolver: MatingResolver;
   let citiesService: CitiesService;
   let usersService: UsersService;
   let uploadService: UploadService;
@@ -172,6 +251,9 @@ describe('Server-side feed search (Ticket 15)', () => {
     );
     postsResolver = new PostsResolver(postsService);
 
+    matingService = new MatingService(new MatingRepository(dbHelper.db), citiesService, uploadService);
+    matingResolver = new MatingResolver(matingService);
+
     const schemaFiles = [
       'src/common/graphql/enums.graphql',
       'src/users/users.graphql',
@@ -197,8 +279,22 @@ describe('Server-side feed search (Ticket 15)', () => {
           post: (_root: unknown, args: { id: string }, ctx: GqlContext) => postsResolver.post(args.id, ctx),
           helpFeed: (_root: unknown, args: Record<string, unknown>, ctx: GqlContext) =>
             postsResolver.helpFeed(args, ctx),
+          adoptFeed: (_root: unknown, args: Record<string, unknown>, ctx: GqlContext) =>
+            postsResolver.adoptFeed(args, ctx),
+          marketFeed: (_root: unknown, args: Record<string, unknown>, ctx: GqlContext) =>
+            postsResolver.marketFeed(args, ctx),
           homeFeed: (_root: unknown, args: Record<string, unknown>, ctx: GqlContext) =>
             postsResolver.homeFeed(args, ctx),
+          matingFeed: (
+            _root: unknown,
+            args: {
+              filter?: Record<string, unknown> | null;
+              first?: number;
+              after?: string;
+              search?: string;
+            },
+            ctx: GqlContext,
+          ) => matingResolver.matingFeed(args.filter ?? undefined, args.first, args.after, args.search, ctx),
         },
         Post: {
           coordinates: (root: Post) => postsResolver.coordinates(root),
@@ -272,7 +368,11 @@ describe('Server-side feed search (Ticket 15)', () => {
     marketCategory?: 'FOOD' | 'CARE' | 'ACCESSORIES';
     cityId?: string;
     createdAt?: Date;
+    effectiveScore?: number;
     coordinates?: { latitude: number; longitude: number };
+    species?: Species;
+    gender?: Gender;
+    breed?: string;
   }): Promise<Post> {
     const id = nextPostId();
     const isUrgencyType = params.postType === 'RESCUE' || params.postType === 'LOST';
@@ -295,10 +395,23 @@ describe('Server-side feed search (Ticket 15)', () => {
         governorate: city.governorate,
         areaName: params.areaName ?? null,
         coordinates: sql`ST_SetSRID(ST_MakePoint(${coordinates.longitude}, ${coordinates.latitude}), 4326)`,
-        effectiveScore: 0,
+        effectiveScore: params.effectiveScore ?? 0,
         ...(params.createdAt ? { createdAt: params.createdAt } : {}),
       })
       .returning();
+
+    if (params.postType === 'MATING') {
+      await dbHelper.db.insert(matingPosts).values({
+        postId: post.id,
+        petName: `Search pet ${id.slice(-4)}`,
+        species: params.species ?? 'DOG',
+        breed: params.breed ?? 'Mixed',
+        gender: params.gender ?? 'MALE',
+        ageValue: 2,
+        ageUnit: 'YEARS',
+      });
+    }
+
     return post;
   }
 
@@ -683,6 +796,459 @@ describe('Server-side feed search (Ticket 15)', () => {
     }
   });
 
+  it('adopt, market and mating search find English/Arabic matches beyond the first page with their own ordering and cursors', async () => {
+    const feeds: Array<{
+      source: string;
+      field: string;
+      postType: PostType;
+      variables: Record<string, unknown>;
+      seedExtras: (index: number) => Record<string, unknown>;
+    }> = [
+      {
+        source: ADOPT_FEED,
+        field: 'adoptFeed',
+        postType: 'ADOPTION',
+        variables: { cityId: cairo.id, sort: 'NEWEST' },
+        seedExtras: () => ({}),
+      },
+      {
+        source: MARKET_FEED,
+        field: 'marketFeed',
+        postType: 'PRODUCT',
+        variables: { cityId: cairo.id, sort: 'NEWEST' },
+        seedExtras: (index) => ({ marketCategory: index % 2 === 0 ? 'FOOD' : 'ACCESSORIES' }),
+      },
+      {
+        source: MATING_FEED,
+        field: 'matingFeed',
+        postType: 'MATING',
+        variables: { cityId: cairo.id },
+        seedExtras: (index) => ({
+          species: index % 2 === 0 ? 'DOG' : 'CAT',
+          gender: index % 2 === 0 ? 'MALE' : 'FEMALE',
+          breed: `Search breed ${index}`,
+        }),
+      },
+    ];
+
+    const expectedByField = new Map<string, string[]>();
+    for (const feed of feeds) {
+      for (let i = 0; i < 2; i += 1) {
+        await seedPost({
+          creatorId: other.id,
+          postType: feed.postType,
+          title: `Ordinary older ${i}`,
+          ...feed.seedExtras(i),
+        });
+      }
+      const matching: Post[] = [];
+      for (let i = 0; i < 12; i += 1) {
+        matching.push(
+          await seedPost({
+            creatorId: other.id,
+            postType: feed.postType,
+            title: `Searchable zebra قطة ${i}`,
+            createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, i)),
+            ...feed.seedExtras(i),
+          }),
+        );
+      }
+      for (let i = 0; i < 5; i += 1) {
+        await seedPost({
+          creatorId: other.id,
+          postType: feed.postType,
+          title: `Ordinary newer ${i}`,
+          ...feed.seedExtras(i),
+        });
+      }
+      expectedByField.set(feed.field, matching.map((post) => post.id).reverse());
+    }
+
+    for (const feed of feeds) {
+      const expected = expectedByField.get(feed.field)!;
+
+      // English and Arabic variants both page through the same matching set.
+      for (const search of ['ZEBRA', 'قطه']) {
+        const pages = await collectSearchPages(feed.source, feed.field, { ...feed.variables, search }, viewer, 5);
+        expect({ field: feed.field, search, pageFlags: pages.map((page) => page.pageInfo.hasNextPage) }).toEqual({
+          field: feed.field,
+          search,
+          pageFlags: [true, true, false],
+        });
+        const collected = pages.flatMap(ids);
+        expect({ field: feed.field, search, ids: collected }).toEqual({ field: feed.field, search, ids: expected });
+        expect(new Set(collected).size).toBe(12);
+      }
+
+      // The newest unfiltered page holds no matches, so the matches would
+      // never appear by filtering an already-loaded client page.
+      const unfiltered = await runFeed(feed.source, feed.field, { ...feed.variables, first: 5 }, viewer);
+      const matchingIds = new Set(expected);
+      expect({ field: feed.field, leaked: ids(unfiltered).filter((id) => matchingIds.has(id)) }).toEqual({
+        field: feed.field,
+        leaked: [],
+      });
+    }
+  });
+
+  it("specialist feed search composes with each feed's category, species and location filters and keeps its sorting", async () => {
+    // Adopt — HOT ranks by score then newest; NEWEST ranks by id.
+    const adoptHighNewest = await seedPost({
+      creatorId: other.id,
+      postType: 'ADOPTION',
+      title: 'Zebra adopt high newest',
+      effectiveScore: 9,
+      createdAt: new Date('2026-02-03T00:00:00Z'),
+    });
+    const adoptHighOlder = await seedPost({
+      creatorId: other.id,
+      postType: 'ADOPTION',
+      title: 'Zebra adopt high older',
+      effectiveScore: 9,
+      createdAt: new Date('2026-02-02T00:00:00Z'),
+    });
+    const adoptLowOldest = await seedPost({
+      creatorId: other.id,
+      postType: 'ADOPTION',
+      title: 'Zebra adopt low oldest',
+      effectiveScore: 1,
+      createdAt: new Date('2026-02-01T00:00:00Z'),
+    });
+
+    const adoptHot = await runFeed(
+      ADOPT_FEED,
+      'adoptFeed',
+      { cityId: cairo.id, sort: 'HOT', search: 'zebra', first: 10 },
+      viewer,
+    );
+    expect(ids(adoptHot)).toEqual([adoptHighNewest.id, adoptHighOlder.id, adoptLowOldest.id]);
+
+    const adoptHotPages = await collectSearchPages(
+      ADOPT_FEED,
+      'adoptFeed',
+      { cityId: cairo.id, sort: 'HOT', search: 'zebra' },
+      viewer,
+      1,
+    );
+    expect(adoptHotPages.flatMap(ids)).toEqual([adoptHighNewest.id, adoptHighOlder.id, adoptLowOldest.id]);
+    expect(adoptHotPages.map((page) => page.pageInfo.hasNextPage)).toEqual([true, true, false]);
+
+    const adoptNewest = await runFeed(
+      ADOPT_FEED,
+      'adoptFeed',
+      { cityId: cairo.id, sort: 'NEWEST', search: 'zebra', first: 10 },
+      viewer,
+    );
+    expect(ids(adoptNewest)).toEqual([adoptLowOldest.id, adoptHighOlder.id, adoptHighNewest.id]);
+
+    // Market — the category filter still narrows the search results.
+    const marketFood = await seedPost({
+      creatorId: other.id,
+      postType: 'PRODUCT',
+      title: 'Zebra food bowl',
+      marketCategory: 'FOOD',
+    });
+    const marketAccessory = await seedPost({
+      creatorId: other.id,
+      postType: 'PRODUCT',
+      title: 'Zebra leash',
+      marketCategory: 'ACCESSORIES',
+    });
+    const marketCare = await seedPost({
+      creatorId: other.id,
+      postType: 'PRODUCT',
+      title: 'Zebra shampoo',
+      marketCategory: 'CARE',
+    });
+    const marketGiza = await seedPost({
+      creatorId: other.id,
+      postType: 'PRODUCT',
+      title: 'Zebra giza shop',
+      marketCategory: 'FOOD',
+      cityId: giza.id,
+    });
+
+    const food = await runFeed(
+      MARKET_FEED,
+      'marketFeed',
+      { governorate: 'Cairo', category: 'FOOD', search: 'zebra', first: 10 },
+      viewer,
+    );
+    expect(ids(food)).toEqual([marketFood.id]);
+
+    const accessories = await runFeed(
+      MARKET_FEED,
+      'marketFeed',
+      { governorate: 'Cairo', category: 'ACCESSORIES', search: 'zebra', first: 10 },
+      viewer,
+    );
+    expect(ids(accessories)).toEqual([marketAccessory.id]);
+
+    const allMarketCairo = await runFeed(
+      MARKET_FEED,
+      'marketFeed',
+      { governorate: 'Cairo', search: 'zebra', first: 10 },
+      viewer,
+    );
+    expect(new Set(ids(allMarketCairo))).toEqual(new Set([marketCare.id, marketAccessory.id, marketFood.id]));
+
+    // cityId scopes by radius around the city centre; 5 km keeps Giza out.
+    const marketGizaOnly = await runFeed(
+      MARKET_FEED,
+      'marketFeed',
+      { cityId: giza.id, radiusKm: 5, search: 'zebra', first: 10 },
+      viewer,
+    );
+    expect(ids(marketGizaOnly)).toEqual([marketGiza.id]);
+
+    const marketByGovernorate = await runFeed(
+      MARKET_FEED,
+      'marketFeed',
+      { governorate: 'Cairo', search: 'zebra', first: 20 },
+      viewer,
+    );
+    expect(ids(marketByGovernorate)).not.toContain(marketGiza.id);
+
+    // Mating — species, gender, breed and city filters compose with search.
+    const matingDogMale = await seedPost({
+      creatorId: other.id,
+      postType: 'MATING',
+      title: 'Zebra stud dog',
+      species: 'DOG',
+      gender: 'MALE',
+      breed: 'Golden Retriever',
+    });
+    const matingDogFemale = await seedPost({
+      creatorId: other.id,
+      postType: 'MATING',
+      title: 'Zebra dam dog',
+      species: 'DOG',
+      gender: 'FEMALE',
+      breed: 'Golden Retriever',
+    });
+    const matingCatFemale = await seedPost({
+      creatorId: other.id,
+      postType: 'MATING',
+      title: 'Zebra cat bride',
+      species: 'CAT',
+      gender: 'FEMALE',
+      breed: 'Persian',
+    });
+    const matingGiza = await seedPost({
+      creatorId: other.id,
+      postType: 'MATING',
+      title: 'Zebra giza mating',
+      species: 'DOG',
+      gender: 'MALE',
+      breed: 'Mixed',
+      cityId: giza.id,
+    });
+
+    const dogFemale = await runFeed(
+      MATING_FEED,
+      'matingFeed',
+      { cityId: cairo.id, radiusKm: 5, species: 'DOG', gender: 'FEMALE', search: 'zebra', first: 10 },
+      viewer,
+    );
+    expect(ids(dogFemale)).toEqual([matingDogFemale.id]);
+
+    const cats = await runFeed(
+      MATING_FEED,
+      'matingFeed',
+      { cityId: cairo.id, radiusKm: 5, species: 'CAT', search: 'zebra', first: 10 },
+      viewer,
+    );
+    expect(ids(cats)).toEqual([matingCatFemale.id]);
+
+    const retrievers = await runFeed(
+      MATING_FEED,
+      'matingFeed',
+      { cityId: cairo.id, radiusKm: 5, breed: 'retriever', search: 'zebra', first: 10 },
+      viewer,
+    );
+    expect(ids(retrievers)).toEqual([matingDogFemale.id, matingDogMale.id]);
+
+    const persian = await runFeed(
+      MATING_FEED,
+      'matingFeed',
+      { cityId: cairo.id, radiusKm: 5, breed: 'persian', search: 'zebra', first: 10 },
+      viewer,
+    );
+    expect(ids(persian)).toEqual([matingCatFemale.id]);
+
+    const matingGizaOnly = await runFeed(
+      MATING_FEED,
+      'matingFeed',
+      { cityId: giza.id, radiusKm: 5, search: 'zebra', first: 10 },
+      viewer,
+    );
+    expect(ids(matingGizaOnly)).toEqual([matingGiza.id]);
+  });
+
+  it('specialist feed search excludes isolated creators in either Block direction and non-ACTIVE Posts', async () => {
+    const authorAdopt = await seedPost({ creatorId: author.id, postType: 'ADOPTION', title: 'Zebra adopt author' });
+    const otherAdopt = await seedPost({ creatorId: other.id, postType: 'ADOPTION', title: 'Zebra adopt other' });
+    await seedPost({ creatorId: other.id, postType: 'ADOPTION', title: 'Zebra adopted', status: 'ADOPTED' });
+    await seedPost({ creatorId: other.id, postType: 'ADOPTION', title: 'Zebra expired', status: 'EXPIRED' });
+    await seedPost({ creatorId: other.id, postType: 'ADOPTION', title: 'Zebra removed', status: 'REMOVED' });
+
+    const authorProduct = await seedPost({ creatorId: author.id, postType: 'PRODUCT', title: 'Zebra product author' });
+    const otherProduct = await seedPost({ creatorId: other.id, postType: 'PRODUCT', title: 'Zebra product other' });
+    await seedPost({ creatorId: other.id, postType: 'PRODUCT', title: 'Zebra sold', status: 'SOLD' });
+    await seedPost({ creatorId: other.id, postType: 'PRODUCT', title: 'Zebra product expired', status: 'EXPIRED' });
+    await seedPost({ creatorId: other.id, postType: 'PRODUCT', title: 'Zebra product removed', status: 'REMOVED' });
+
+    const authorMating = await seedPost({ creatorId: author.id, postType: 'MATING', title: 'Zebra mating author' });
+    const otherMating = await seedPost({ creatorId: other.id, postType: 'MATING', title: 'Zebra mating other' });
+    await seedPost({ creatorId: other.id, postType: 'MATING', title: 'Zebra resolved', status: 'RESOLVED' });
+    await seedPost({ creatorId: other.id, postType: 'MATING', title: 'Zebra mating removed', status: 'REMOVED' });
+
+    const feeds: Array<{
+      source: string;
+      field: string;
+      variables: Record<string, unknown>;
+      visibleWhenBlocked: string;
+      visibleWhenOpen: string[];
+    }> = [
+      {
+        source: ADOPT_FEED,
+        field: 'adoptFeed',
+        variables: { cityId: cairo.id, sort: 'NEWEST' },
+        visibleWhenBlocked: otherAdopt.id,
+        visibleWhenOpen: [otherAdopt.id, authorAdopt.id],
+      },
+      {
+        source: MARKET_FEED,
+        field: 'marketFeed',
+        variables: { cityId: cairo.id, sort: 'NEWEST' },
+        visibleWhenBlocked: otherProduct.id,
+        visibleWhenOpen: [otherProduct.id, authorProduct.id],
+      },
+      {
+        source: MATING_FEED,
+        field: 'matingFeed',
+        variables: { cityId: cairo.id },
+        visibleWhenBlocked: otherMating.id,
+        visibleWhenOpen: [otherMating.id, authorMating.id],
+      },
+    ];
+
+    for (const direction of ['viewer-blocks', 'author-blocks'] as const) {
+      if (direction === 'viewer-blocks') {
+        await setBlock(viewer, author);
+      } else {
+        await setBlock(author, viewer);
+      }
+
+      for (const feed of feeds) {
+        const page = await runFeed(feed.source, feed.field, { ...feed.variables, search: 'zebra', first: 20 }, viewer);
+        expect({ field: feed.field, direction, ids: ids(page) }).toEqual({
+          field: feed.field,
+          direction,
+          ids: [feed.visibleWhenBlocked],
+        });
+      }
+    }
+
+    await dbHelper.db.delete(blocks);
+    for (const feed of feeds) {
+      const page = await runFeed(feed.source, feed.field, { ...feed.variables, search: 'zebra', first: 20 }, viewer);
+      expect({ field: feed.field, ids: ids(page) }).toEqual({ field: feed.field, ids: feed.visibleWhenOpen });
+    }
+  });
+
+  it('empty and normalized-empty search keeps each specialist feed unfiltered while short and oversize search are rejected', async () => {
+    await seedPost({ creatorId: other.id, postType: 'ADOPTION', title: 'Zebra adopt' });
+    await seedPost({ creatorId: other.id, postType: 'PRODUCT', title: 'Zebra product' });
+    await seedPost({ creatorId: other.id, postType: 'MATING', title: 'Zebra mating' });
+
+    const feeds: Array<[string, string, Record<string, unknown>]> = [
+      [ADOPT_FEED, 'adoptFeed', { cityId: cairo.id, sort: 'NEWEST' }],
+      [MARKET_FEED, 'marketFeed', { cityId: cairo.id, sort: 'NEWEST' }],
+      [MATING_FEED, 'matingFeed', { cityId: cairo.id }],
+    ];
+
+    for (const [source, field, variables] of feeds) {
+      const baseline = ids(await runFeed(source, field, { ...variables, first: 20 }, viewer));
+      expect({ field, empty: baseline.length === 0 }).toEqual({ field, empty: false });
+
+      for (const search of [null, '', '   ', 'ًَ']) {
+        const page = await runFeed(source, field, { ...variables, search, first: 20 }, viewer);
+        expect({ field, search, ids: ids(page) }).toEqual({ field, search, ids: baseline });
+      }
+
+      const short = await runGql<Record<string, unknown>>(source, { ...variables, search: 'x' }, viewer);
+      expect(short.errors).toHaveLength(1);
+      expect(short.errors![0].message).toContain('search must be at least 2 characters');
+
+      const oversize = await runGql<Record<string, unknown>>(source, { ...variables, search: 'a'.repeat(101) }, viewer);
+      expect(oversize.errors).toHaveLength(1);
+      expect(oversize.errors![0].message).toContain('search must be at most 100 characters');
+    }
+  });
+
+  it('all five searchable feeds embed the one shared normalized search condition', async () => {
+    const captured: Array<{ sql: string; params: unknown[] }> = [];
+    const capturingDb: NodePgDatabase<typeof schema> = drizzle(dbHelper.pool, {
+      schema,
+      logger: {
+        logQuery(query: string, params: unknown[]) {
+          captured.push({ sql: query, params: [...params] });
+        },
+      },
+    });
+    const sharedPostsService = new PostsService(
+      new PostsRepository(capturingDb),
+      citiesService,
+      uploadService,
+      viewFlushCron,
+      usersService,
+      notificationsService,
+      mockCache,
+    );
+    const sharedMatingService = new MatingService(new MatingRepository(capturingDb), citiesService, uploadService);
+
+    function searchDocumentFragment(sqlText: string): string {
+      const start = sqlText.indexOf('pupzy_search_normalize(');
+      expect(start).toBeGreaterThanOrEqual(0);
+      const end = sqlText.indexOf(') LIKE', start);
+      expect(end).toBeGreaterThan(start);
+      return sqlText.slice(start, end + 1);
+    }
+
+    const fragments = new Map<string, string>();
+
+    captured.length = 0;
+    await sharedPostsService.getHomeFeed({ cityId: cairo.id, search: 'zebra', first: 5 }, viewer.id);
+    fragments.set('homeFeed', searchDocumentFragment(captured[captured.length - 1].sql));
+
+    captured.length = 0;
+    await sharedPostsService.getHelpFeed({ cityId: cairo.id, search: 'zebra', first: 5 }, viewer.id);
+    fragments.set('helpFeed', searchDocumentFragment(captured[captured.length - 1].sql));
+
+    captured.length = 0;
+    await sharedPostsService.getAdoptFeed({ cityId: cairo.id, search: 'zebra', first: 5 }, viewer.id);
+    fragments.set('adoptFeed', searchDocumentFragment(captured[captured.length - 1].sql));
+
+    captured.length = 0;
+    await sharedPostsService.getMarketFeed({ cityId: cairo.id, search: 'zebra', first: 5 }, viewer.id);
+    fragments.set('marketFeed', searchDocumentFragment(captured[captured.length - 1].sql));
+
+    captured.length = 0;
+    await sharedMatingService.matingFeed(null, 5, null, 'zebra', viewer.id);
+    fragments.set('matingFeed', searchDocumentFragment(captured[captured.length - 1].sql));
+
+    const reference = fragments.get('homeFeed')!;
+    for (const [field, fragment] of fragments) {
+      expect({ field, sameAsSharedExpression: fragment === reference }).toEqual({
+        field,
+        sameAsSharedExpression: true,
+      });
+      expect(fragment).toContain('pupzy_search_enum_text');
+      expect(fragment).toContain('COALESCE');
+    }
+  });
+
   it('query-plan evidence: search filters in SQL through the normalized trigram index with dense pages', async () => {
     const captured: Array<{ sql: string; params: unknown[] }> = [];
     const capturingDb: NodePgDatabase<typeof schema> = drizzle(dbHelper.pool, {
@@ -772,5 +1338,82 @@ describe('Server-side feed search (Ticket 15)', () => {
     const helpNodes = flatten(helpPlan);
     expect(helpNodes.find((node) => node['Node Type'] === 'Limit')).toBeDefined();
     expect(helpNodes.find((node) => node['Index Name'] === 'idx_posts_search_document_trgm')).toBeDefined();
+
+    // The specialist feeds share the same condition and the same partial
+    // index. Seed dense per-type matches so each plan receives a full page.
+    const specialistTypes: PostType[] = ['ADOPTION', 'PRODUCT', 'MATING'];
+    const specialistRows = Array.from({ length: 90 }, (_, index) => {
+      const type = specialistTypes[index % specialistTypes.length];
+      return {
+        creatorId: other.id,
+        postType: type,
+        title: `Plan specialist zzsearchtoken ${index}`,
+        description: 'Plan specialist description',
+        status: 'ACTIVE' as const,
+        urgency: undefined,
+        marketCategory: type === 'PRODUCT' ? ('FOOD' as const) : undefined,
+        cityId: cairo.id,
+        governorate: cairo.governorate,
+        coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+        effectiveScore: 0,
+      };
+    });
+    const insertedSpecialists = await dbHelper.db
+      .insert(posts)
+      .values(specialistRows)
+      .returning({ id: posts.id, postType: posts.postType });
+    await dbHelper.db.insert(matingPosts).values(
+      insertedSpecialists
+        .filter((row) => row.postType === 'MATING')
+        .map((row) => ({
+          postId: row.id,
+          petName: 'Plan specialist pet',
+          species: 'DOG' as const,
+          breed: 'Plan specialist breed',
+          gender: 'MALE' as const,
+          ageValue: 2,
+          ageUnit: 'YEARS' as const,
+        })),
+    );
+    await dbHelper.pool.query('VACUUM (ANALYZE) posts');
+    await dbHelper.pool.query('VACUUM (ANALYZE) mating_posts');
+
+    const planMatingService = new MatingService(new MatingRepository(capturingDb), citiesService, uploadService);
+
+    captured.length = 0;
+    await planService.getAdoptFeed({ governorate: cairo.governorate, first: 20, search: 'zzsearchtoken' }, viewer.id);
+    expect(captured).toHaveLength(2);
+    const adoptSearchSql = captured[captured.length - 1];
+    expect(adoptSearchSql.sql).toContain('pupzy_search_normalize');
+    const adoptPlan = await explain(adoptSearchSql);
+    console.log('### Adopt Feed search plan');
+    console.log(JSON.stringify(adoptPlan, null, 2));
+    const adoptNodes = flatten(adoptPlan);
+    expect(adoptNodes.find((node) => node['Node Type'] === 'Limit')?.['Actual Rows']).toBe(21);
+    expect(adoptNodes.find((node) => node['Index Name'] === 'idx_posts_search_document_trgm')).toBeDefined();
+
+    captured.length = 0;
+    await planService.getMarketFeed({ governorate: cairo.governorate, first: 20, search: 'zzsearchtoken' }, viewer.id);
+    expect(captured).toHaveLength(2);
+    const marketSearchSql = captured[captured.length - 1];
+    expect(marketSearchSql.sql).toContain('pupzy_search_normalize');
+    const marketPlan = await explain(marketSearchSql);
+    console.log('### Market Feed search plan');
+    console.log(JSON.stringify(marketPlan, null, 2));
+    const marketNodes = flatten(marketPlan);
+    expect(marketNodes.find((node) => node['Node Type'] === 'Limit')?.['Actual Rows']).toBe(21);
+    expect(marketNodes.find((node) => node['Index Name'] === 'idx_posts_search_document_trgm')).toBeDefined();
+
+    captured.length = 0;
+    await planMatingService.matingFeed(null, 20, null, 'zzsearchtoken', viewer.id);
+    expect(captured).toHaveLength(2);
+    const matingSearchSql = captured[captured.length - 1];
+    expect(matingSearchSql.sql).toContain('pupzy_search_normalize');
+    const matingPlan = await explain(matingSearchSql);
+    console.log('### Mating Feed search plan');
+    console.log(JSON.stringify(matingPlan, null, 2));
+    const matingNodes = flatten(matingPlan);
+    expect(matingNodes.find((node) => node['Node Type'] === 'Limit')?.['Actual Rows']).toBe(21);
+    expect(matingNodes.find((node) => node['Index Name'] === 'idx_posts_search_document_trgm')).toBeDefined();
   });
 });

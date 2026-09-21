@@ -201,7 +201,25 @@ describe('MatingService', () => {
 
     it('throws ValidationError on malformed cursor', async () => {
       const badCursor = Buffer.from('bad json').toString('base64url');
-      await expect(service.matingFeed(null, 10, badCursor)).rejects.toThrow(ValidationError);
+      await expect(service.matingFeed(null, 10, badCursor, null)).rejects.toThrow(ValidationError);
+    });
+
+    it('passes the normalized search pattern to the repository', async () => {
+      await service.matingFeed(null, 10, null, '  GOLDEN   Retriever ');
+      expect(mockMatingRepo.findFeed).toHaveBeenCalledWith(
+        expect.objectContaining({ searchPattern: '%golden retriever%' }),
+      );
+    });
+
+    it('treats an empty search as no search', async () => {
+      await service.matingFeed(null, 10, null, '   ');
+      expect(mockMatingRepo.findFeed).toHaveBeenCalledWith(expect.objectContaining({ searchPattern: null }));
+    });
+
+    it('rejects short and oversize searches without querying the repository', async () => {
+      await expect(service.matingFeed(null, 10, null, 'x')).rejects.toThrow(ValidationError);
+      await expect(service.matingFeed(null, 10, null, 'a'.repeat(101))).rejects.toThrow(ValidationError);
+      expect(mockMatingRepo.findFeed).not.toHaveBeenCalled();
     });
   });
 
