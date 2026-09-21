@@ -26,6 +26,7 @@ import {
 import { NotFoundError, ConflictError, ForbiddenError, ValidationError, AppError } from '../common/errors/app.errors';
 import { CommentCursorPayload, CommentSortOrder } from './dto/comments-query.input';
 import { getCommentMediaPurgeUrls } from '../upload/media-delivery.util';
+import { assertImageCommentAllowed } from './comment-image-eligibility';
 import { CommentsQuotaManager, QuotaReservation } from './comments-quota.manager';
 import {
   ModerationReportQuotaManager,
@@ -249,6 +250,9 @@ export class CommentsRepository {
           // The Post is always locked before discussion rows or counters.
           const post = await this.lockDiscussionPost(tx, postId);
           if (post.status === 'REMOVED') throw new NotFoundError('Post', postId);
+          if (itemsToInsert.length > 0) {
+            assertImageCommentAllowed(post.postType);
+          }
 
           // 1. Insert the comment
           const [newComment] = await tx
