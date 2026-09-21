@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import AdminJS, { ComponentLoader } from 'adminjs';
-import { Database, Resource } from '@adminjs/sql';
+import { Database } from '@adminjs/sql';
 
 import { DashboardStatsCache } from './dashboard/dashboard-cache.js';
 import { buildDashboardHandler } from './dashboard/dashboard-handler.js';
@@ -25,14 +25,14 @@ import { buildPostsResource } from './resources/posts.resource.js';
 import { buildProductPostsResource } from './resources/product-posts.resource.js';
 import { buildRescuePostsResource } from './resources/rescue-posts.resource.js';
 import { attachCacheInvalidation } from './resources/resource-helpers.js';
-import { buildAdminSqlDatabase } from './sql-adapter.js';
+import { QueueAwareSqlResource, buildAdminSqlDatabase } from './sql-adapter.js';
 import { buildSavedSearchesResource } from './resources/saved-searches.resource.js';
 import { buildUsersResource } from './resources/users.resource.js';
 import { buildVetClinicsResource } from './resources/vet-clinics.resource.js';
 import { buildVetClinicLocationAuditsResource } from './resources/vet-clinic-location-audits.resource.js';
 import { buildCommentsResource } from './resources/comments.resource.js';
 
-AdminJS.registerAdapter({ Database, Resource });
+AdminJS.registerAdapter({ Database, Resource: QueueAwareSqlResource });
 
 export const ADMIN_RESOURCE_TABLES = Object.freeze([
   'users',

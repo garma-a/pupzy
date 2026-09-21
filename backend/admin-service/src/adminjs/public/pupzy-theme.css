@@ -697,6 +697,123 @@ svg[data-css*='Loader'] {
 }
 
 /* ==========================================================================
+   Work Queues
+   ========================================================================== */
+.pupzy-queue-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  max-width: 100%;
+}
+
+.pupzy-queue-group {
+  min-width: 0;
+}
+
+.pupzy-queue-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  max-width: 100%;
+}
+
+.pupzy-queue-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  min-height: 44px;
+  padding: 10px 14px !important;
+  background-color: var(--pupzy-surface) !important;
+  border: 1px solid var(--pupzy-border) !important;
+  border-radius: var(--pupzy-radius-input) !important;
+  color: var(--pupzy-text) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease !important;
+}
+
+.pupzy-queue-button:hover {
+  background-color: var(--pupzy-bg) !important;
+  border-color: var(--pupzy-primary) !important;
+  box-shadow: var(--pupzy-shadow-card-hover);
+  color: var(--pupzy-primary-hover) !important;
+}
+
+.pupzy-queue-button:active {
+  transform: translateY(1px);
+  background-color: var(--pupzy-surface-warm) !important;
+}
+
+.pupzy-queue-button[data-alert='true'] {
+  border-color: var(--pupzy-error) !important;
+  background-color: var(--pupzy-error-light) !important;
+  color: var(--pupzy-error-dark) !important;
+}
+
+.pupzy-queue-button[data-alert='true']:hover {
+  border-color: var(--pupzy-error-dark) !important;
+  background-color: #f6d7da !important;
+}
+
+.pupzy-queue-button-inline {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.pupzy-queue-button-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pupzy-queue-button-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.pupzy-queue-button-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  padding: 2px 8px;
+  border-radius: var(--pupzy-radius-pill);
+  background-color: var(--pupzy-surface-warm);
+  color: var(--pupzy-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pupzy-queue-button[data-alert='true'] .pupzy-queue-button-count {
+  background-color: #ffffff;
+  color: var(--pupzy-error-dark);
+}
+
+.pupzy-queue-button-arrow {
+  color: var(--pupzy-text-muted);
+  font-size: 15px;
+}
+
+.pupzy-queue-button:hover .pupzy-queue-button-arrow {
+  color: var(--pupzy-primary);
+}
+
+@media (max-width: 575px) {
+  .pupzy-queue-groups,
+  .pupzy-queue-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
    Post Review Workspace
    ========================================================================== */
 .pupzy-post-review {
@@ -912,5 +1029,11 @@ svg[data-css*='Loader'] {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .pupzy-queue-button,
+  .pupzy-queue-button:active {
+    transition-duration: 0.01ms !important;
+    transform: none !important;
   }
 }

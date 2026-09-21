@@ -86,6 +86,21 @@ describe('AdminJS Post Reports Resource Configuration', () => {
     assert.equal(cleaned.record.populated.reporter_id.params.password_hash, undefined);
   });
 
+  it('exposes an open/reviewed queue filter distinct from the reviewed_at range filter', () => {
+    const resource = buildPostReportsResource(db);
+    assert.ok(resource.options.filterProperties.includes('review_state'));
+    assert.deepEqual(
+      resource.options.properties.review_state.availableValues.map(({ value }) => value),
+      ['OPEN', 'REVIEWED'],
+    );
+    assert.deepEqual(resource.options.properties.review_state.isVisible, {
+      list: false,
+      show: false,
+      edit: false,
+      filter: true,
+    });
+  });
+
   it('transcribes report reason enum values exactly', () => {
     const resource = buildPostReportsResource(db);
     const available = resource.options.properties.reason.availableValues.map((v) => v.value);

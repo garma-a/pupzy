@@ -37,6 +37,27 @@ describe('AdminJS Posts Resource Configuration & City/Governorate Contracts', ()
     assert.ok(resource.options.filterProperties.includes('city_id'));
   });
 
+  it('exposes the lost/found subtype and completed-history queue filters', () => {
+    const props = resource.options.properties;
+    assert.ok(resource.options.filterProperties.includes('report_type'));
+    assert.ok(resource.options.filterProperties.includes('queue'));
+    assert.deepEqual(
+      props.report_type.availableValues.map(({ value }) => value),
+      ['LOST_PET', 'FOUND_STRAY'],
+    );
+    assert.deepEqual(
+      props.queue.availableValues.map(({ value }) => value),
+      ['completed'],
+    );
+    for (const name of ['report_type', 'queue']) {
+      assert.deepEqual(
+        props[name].isVisible,
+        { list: false, show: false, edit: false, filter: true },
+        `${name} must only be visible as a filter`,
+      );
+    }
+  });
+
   it('declares concise intentional listProperties and full showProperties', () => {
     assert.deepEqual(resource.options.listProperties, [
       'id',
