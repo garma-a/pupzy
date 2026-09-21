@@ -34,7 +34,7 @@ If step 4 runs before step 2 completes, an old instance performing Account Delet
 
 ### 4. Verification
 
-- `node scripts/graphql-schema-compat.mjs d46e024 HEAD` from `backend/` must report exactly one incompatible entry — `REMOVED_TYPE SavedSearch` — with every other change additive or absent. That single entry is the authorized exception; any additional incompatibility is a defect.
+- `node scripts/graphql-schema-compat.mjs d46e024 HEAD` from `backend/` was run on commit `b4dfb93` and reported exactly one incompatible entry — `REMOVED_TYPE SavedSearch` — with zero additive changes. That single entry is the authorized exception; any additional incompatibility is a defect.
 - The backend retirement spec (`src/posts/saved-search-retirement.spec.ts`) locks the SDL, generated definitions and resolver/service/repository removal while proving the saved-post surface and the transitional Account Deletion cleanup survive.
 - The storage-transition spec (`src/database/saved-search-storage-transition.spec.ts`) proves the historical migrations are untouched and no migration contracts the table during this slice.
 - Account Deletion integration coverage seeds a retained saved-search row and proves cleanup still removes it while a surviving account's row is preserved.
