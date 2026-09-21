@@ -3,6 +3,7 @@ import {
   POST_LIFECYCLE_LOCK_ORDER,
   POST_LIFECYCLE_SIDE_EFFECTS,
   OWNER_CLOSURE_TRANSITIONS,
+  LOST_SUBTYPE_CLOSURE_TRANSITIONS,
   ownerClosureTargets,
   canOwnerClose,
   canOwnerRemove,
@@ -28,11 +29,20 @@ describe('Post lifecycle transition contract', () => {
       expect(OWNER_CLOSURE_TRANSITIONS.LOST).toEqual(['REUNITED']);
       expect(OWNER_CLOSURE_TRANSITIONS.ADOPTION).toEqual(['ADOPTED']);
       expect(OWNER_CLOSURE_TRANSITIONS.PRODUCT).toEqual(['SOLD']);
+      expect(OWNER_CLOSURE_TRANSITIONS.MATING).toEqual(['RESOLVED']);
     });
 
-    it('keeps MATING closed to owner closure in this preparatory contract', () => {
-      expect(OWNER_CLOSURE_TRANSITIONS.MATING).toEqual([]);
-      expect(ownerClosureTargets('MATING')).toEqual([]);
+    it('splits LOST closure targets by direction discriminator', () => {
+      expect(LOST_SUBTYPE_CLOSURE_TRANSITIONS.LOST_PET).toEqual(['REUNITED']);
+      expect(LOST_SUBTYPE_CLOSURE_TRANSITIONS.FOUND_STRAY).toEqual(['RESOLVED', 'REUNITED']);
+      expect(ownerClosureTargets('LOST', 'LOST_PET')).toEqual(['REUNITED']);
+      expect(ownerClosureTargets('LOST', 'FOUND_STRAY')).toEqual(['RESOLVED', 'REUNITED']);
+    });
+
+    it('keeps the conservative REUNITED-only default when no LOST discriminator is available', () => {
+      expect(ownerClosureTargets('LOST')).toEqual(['REUNITED']);
+      expect(ownerClosureTargets('LOST', null)).toEqual(['REUNITED']);
+      expect(ownerClosureTargets('LOST', 'UNKNOWN')).toEqual(['REUNITED']);
     });
 
     it('falls back to no targets for unknown Post types', () => {
@@ -42,15 +52,20 @@ describe('Post lifecycle transition contract', () => {
 
     it('accepts only the ACTIVE-to-type-outcome transition', () => {
       expect(canOwnerClose('RESCUE', 'ACTIVE', 'RESOLVED')).toBe(true);
-      expect(canOwnerClose('LOST', 'ACTIVE', 'REUNITED')).toBe(true);
+      expect(canOwnerClose('LOST', 'ACTIVE', 'REUNITED', 'LOST_PET')).toBe(true);
+      expect(canOwnerClose('LOST', 'ACTIVE', 'RESOLVED', 'FOUND_STRAY')).toBe(true);
+      expect(canOwnerClose('LOST', 'ACTIVE', 'REUNITED', 'FOUND_STRAY')).toBe(true);
       expect(canOwnerClose('ADOPTION', 'ACTIVE', 'ADOPTED')).toBe(true);
       expect(canOwnerClose('PRODUCT', 'ACTIVE', 'SOLD')).toBe(true);
+      expect(canOwnerClose('MATING', 'ACTIVE', 'RESOLVED')).toBe(true);
     });
 
     it('rejects cross-type targets, successful states and unknown types', () => {
       expect(canOwnerClose('RESCUE', 'ACTIVE', 'SOLD')).toBe(false);
       expect(canOwnerClose('PRODUCT', 'ACTIVE', 'RESOLVED')).toBe(false);
-      expect(canOwnerClose('MATING', 'ACTIVE', 'RESOLVED')).toBe(false);
+      expect(canOwnerClose('MATING', 'ACTIVE', 'REUNITED')).toBe(false);
+      expect(canOwnerClose('LOST', 'ACTIVE', 'RESOLVED', 'LOST_PET')).toBe(false);
+      expect(canOwnerClose('LOST', 'ACTIVE', 'SOLD', 'FOUND_STRAY')).toBe(false);
       expect(canOwnerClose('UNKNOWN', 'ACTIVE', 'RESOLVED')).toBe(false);
     });
 
@@ -58,6 +73,7 @@ describe('Post lifecycle transition contract', () => {
       expect(canOwnerClose('RESCUE', 'RESOLVED', 'RESOLVED')).toBe(false);
       expect(canOwnerClose('RESCUE', 'REMOVED', 'RESOLVED')).toBe(false);
       expect(canOwnerClose('LOST', 'REUNITED', 'REUNITED')).toBe(false);
+      expect(canOwnerClose('MATING', 'RESOLVED', 'RESOLVED')).toBe(false);
     });
   });
 
@@ -95,7 +111,7 @@ describe('Post lifecycle transition contract', () => {
       expect(Object.isFrozen(POST_LIFECYCLE_SIDE_EFFECTS)).toBe(true);
     });
 
-    it('keeps owner actions limited to cache invalidation after commit', () => {
+    it('keeps owner actions limited to cache invalidation and closure cleanup', () => {
       for (const transition of ['OWNER_CLOSE', 'OWNER_REMOVE'] as const) {
         expect(POST_LIFECYCLE_SIDE_EFFECTS[transition]).toMatchObject({
           invalidateOwnerUserCache: true,
@@ -106,10 +122,12 @@ describe('Post lifecycle transition contract', () => {
         });
       }
       expect(POST_LIFECYCLE_SIDE_EFFECTS.OWNER_CLOSE.userPostCountDelta).toBe('NONE');
+      expect(POST_LIFECYCLE_SIDE_EFFECTS.OWNER_CLOSE.terminatePendingInteractions).toBe(true);
       expect(POST_LIFECYCLE_SIDE_EFFECTS.OWNER_REMOVE.userPostCountDelta).toBe('DECREMENT');
+      expect(POST_LIFECYCLE_SIDE_EFFECTS.OWNER_REMOVE.terminatePendingInteractions).toBe(false);
     });
 
-    it('keeps administrative removal audited, notified and report-closing', () => {
+    it('keeps administrative removal audited, notified and report-closing without touching pending interactions', () => {
       expect(POST_LIFECYCLE_SIDE_EFFECTS.ADMIN_REMOVE).toEqual({
         userPostCountDelta: 'DECREMENT',
         invalidateOwnerUserCache: false,
@@ -117,6 +135,7 @@ describe('Post lifecycle transition contract', () => {
         moderationAudit: true,
         ownerNotification: 'POST_REMOVED_BY_ADMIN',
         closeOpenPostReports: true,
+        terminatePendingInteractions: false,
       });
     });
 
@@ -128,6 +147,7 @@ describe('Post lifecycle transition contract', () => {
         moderationAudit: true,
         ownerNotification: null,
         closeOpenPostReports: true,
+        terminatePendingInteractions: false,
       });
     });
   });

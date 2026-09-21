@@ -15,6 +15,8 @@ import {
   postUpvotes,
   postSaves,
   postReports,
+  contactRequests,
+  adoptionApplications,
   type Post,
   type PostMedia,
   type NewPost,
@@ -461,6 +463,11 @@ export class PostsRepository {
    * The DB trigger `trg_sync_user_post_counts` handles counter adjustments.
    * The DB trigger `trg_posts_updated_at` handles updated_at automatically.
    *
+   * The status write commits together with the termination of every still
+   * pending Contact Request and Adoption Application targeting the Post
+   * (`POST_LIFECYCLE_SIDE_EFFECTS.OWNER_CLOSE`). Approved interactions are
+   * never touched, so previously approved contact access is retained.
+   *
    * @returns The updated post row, or undefined when it is no longer ACTIVE
    *          or no longer belongs to the caller.
    */
@@ -468,11 +475,9 @@ export class PostsRepository {
     return withDbRetry(() =>
       this.db.transaction(async (tx) => {
         const lockedPost = await this.lockDiscussionPost(tx, postId);
-        if (
-          !lockedPost ||
-          lockedPost.creatorId !== creatorId ||
-          !canOwnerClose(lockedPost.postType, lockedPost.status, status)
-        ) {
+        if (!lockedPost || lockedPost.creatorId !== creatorId) return undefined;
+        const lostReportType = lockedPost.postType === 'LOST' ? await this.findLostReportType(postId, tx) : null;
+        if (!canOwnerClose(lockedPost.postType, lockedPost.status, status, lostReportType)) {
           return undefined;
         }
         const [post] = await tx
@@ -480,9 +485,59 @@ export class PostsRepository {
           .set({ status: status as Post['status'] })
           .where(eq(posts.id, postId))
           .returning();
+        if (post) {
+          await this.terminatePendingInteractions(tx, postId);
+        }
         return post;
       }),
     );
+  }
+
+  /**
+   * Reads a LOST Post's direction discriminator (`LOST_PET` / `FOUND_STRAY`).
+   * Returns null when the Post has no extension row.
+   */
+  async findLostReportType(
+    postId: string,
+    executor: NodePgDatabase<typeof schema> | DbTransaction = this.db,
+  ): Promise<string | null> {
+    const [row] = await executor
+      .select({ reportType: lostPosts.reportType })
+      .from(lostPosts)
+      .where(eq(lostPosts.postId, postId))
+      .limit(1);
+    return row?.reportType ?? null;
+  }
+
+  /**
+   * Re-reads a Post under a share lock inside a caller-owned transaction.
+   *
+   * Direct-interaction creation already rechecked the Post before opening its
+   * transaction. Holding `FOR SHARE` here makes that read conflict with the
+   * lifecycle transitions' `FOR UPDATE`, so a request, application, closure
+   * and Block settle in exactly one serial order and a closed listing can
+   * never gain a new pending interaction.
+   */
+  async lockPostForInteraction(tx: DbTransaction, postId: string): Promise<Post | undefined> {
+    const [post] = await tx.select().from(posts).where(eq(posts.id, postId)).for('share');
+    return post;
+  }
+
+  /**
+   * Moves every still-PENDING Contact Request and Adoption Application
+   * targeting the Post to the established terminal `REJECTED` state, without
+   * deleting rows. Must run inside the lifecycle transaction so the status
+   * change and the terminations commit atomically.
+   */
+  private async terminatePendingInteractions(tx: DbTransaction, postId: string): Promise<void> {
+    await tx
+      .update(contactRequests)
+      .set({ status: 'REJECTED', respondedAt: sql`now()` })
+      .where(and(eq(contactRequests.postId, postId), eq(contactRequests.status, 'PENDING')));
+    await tx
+      .update(adoptionApplications)
+      .set({ status: 'REJECTED', respondedAt: sql`now()` })
+      .where(and(eq(adoptionApplications.targetPostId, postId), eq(adoptionApplications.status, 'PENDING')));
   }
 
   /**

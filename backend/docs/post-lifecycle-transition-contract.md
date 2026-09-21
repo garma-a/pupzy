@@ -2,30 +2,31 @@
 
 This document is the authoritative contract for every Post lifecycle status change made by the NestJS GraphQL API and the AdminJS service. The machine-readable half of the contract lives in `src/common/contracts/post-lifecycle.contract.ts`, which both services import, so the transition rules and lock namespace cannot drift between them.
 
-This slice is deliberately preparatory and behavior-preserving. It introduces **no new statuses and no new cleanup behavior**; it names the boundary that later owner-closure, administrative outcome, reopening and expiry work extends.
+This document covers the existing lifecycle statuses only: it introduces **no new status values**. Earlier slices were preparatory; owner closure (ticket 03) now adds MATING and FOUND_STRAY outcomes and terminates pending direct interactions when a listing closes. Administrative outcome/reopening and inactivity expiry remain for the tickets that build on this boundary.
 
 ---
 
 ## 1. Actors and entry points
 
-| Transition | Actor | Entry point | Allowed type/status |
-| --- | --- | --- | --- |
-| `OWNER_CLOSE` | Post owner | GraphQL `updatePostStatus` | `ACTIVE` → the successful outcome of the Post's type |
-| `OWNER_REMOVE` | Post owner | GraphQL `deletePost` | any non-Removed status → `REMOVED` |
-| `ADMIN_REMOVE` | Administrator (`ADMIN`/`SUPER_ADMIN`) | AdminJS `removePost`, ban Post cascade | `ACTIVE` → `REMOVED` |
-| `ADMIN_RESTORE` | Administrator (`ADMIN`/`SUPER_ADMIN`) | AdminJS `restorePost` | `REMOVED` → `ACTIVE` |
+| Transition      | Actor                                 | Entry point                            | Allowed type/status                                  |
+| --------------- | ------------------------------------- | -------------------------------------- | ---------------------------------------------------- |
+| `OWNER_CLOSE`   | Post owner                            | GraphQL `updatePostStatus`             | `ACTIVE` → the successful outcome of the Post's type |
+| `OWNER_REMOVE`  | Post owner                            | GraphQL `deletePost`                   | any non-Removed status → `REMOVED`                   |
+| `ADMIN_REMOVE`  | Administrator (`ADMIN`/`SUPER_ADMIN`) | AdminJS `removePost`, ban Post cascade | `ACTIVE` → `REMOVED`                                 |
+| `ADMIN_RESTORE` | Administrator (`ADMIN`/`SUPER_ADMIN`) | AdminJS `restorePost`                  | `REMOVED` → `ACTIVE`                                 |
 
-Owner closure targets (`OWNER_CLOSURE_TRANSITIONS` in the contract):
+Owner closure targets (`OWNER_CLOSURE_TRANSITIONS` and, for LOST Posts, `LOST_SUBTYPE_CLOSURE_TRANSITIONS` in the contract):
 
-| Post type | Owner closure outcome |
-| --- | --- |
-| `RESCUE` | `RESOLVED` |
-| `LOST` | `REUNITED` |
-| `ADOPTION` | `ADOPTED` |
-| `PRODUCT` | `SOLD` |
-| `MATING` | none in this slice |
+| Post type  | Direction (`report_type`) | Owner closure outcomes |
+| ---------- | ------------------------- | ---------------------- |
+| `RESCUE`   | —                         | `RESOLVED`             |
+| `LOST`     | `LOST_PET`                | `REUNITED`             |
+| `LOST`     | `FOUND_STRAY`             | `RESOLVED`, `REUNITED` |
+| `ADOPTION` | —                         | `ADOPTED`              |
+| `PRODUCT`  | —                         | `SOLD`                 |
+| `MATING`   | —                         | `RESOLVED`             |
 
-A Post owner can close only their own `ACTIVE` Post and only into its own outcome; every other target returns a `VALIDATION_ERROR`. A Post already in a successful outcome returns the same invalid-transition error. A non-owner receives `FORBIDDEN`, and a missing or Removed Post resolves to `NOT_FOUND`.
+A Post owner can close only their own `ACTIVE` Post and only into an outcome that belongs to its type (and, for LOST, its direction); every other target returns a `VALIDATION_ERROR`. FOUND_STRAY retains `REUNITED` so existing clients that already send it keep working. A Post already in a successful outcome returns the same invalid-transition error. A non-owner receives `FORBIDDEN`, and a missing or Removed Post resolves to `NOT_FOUND`.
 
 Administrative removal applies only to `ACTIVE` Posts. It can never overwrite a recorded successful outcome; administrators who need to take down a closed Post will use the explicit outcome controls introduced by later lifecycle work rather than an unrestricted status edit.
 
@@ -49,22 +50,27 @@ The Post row is re-read and revalidated after both locks. This is the same order
 
 The status write commits together with its database-side effects; cache invalidation and other external effects run only after commit.
 
-| Side effect | `OWNER_CLOSE` | `OWNER_REMOVE` | `ADMIN_REMOVE` | `ADMIN_RESTORE` |
-| --- | --- | --- | --- | --- |
-| `trg_sync_user_post_counts` delta | none | decrement | decrement | increment |
-| API `user_resolve` cache invalidated | yes | yes | no | no |
-| AdminJS dashboard cache invalidated | no | no | yes | yes |
-| `moderation_actions` audit row | no | no | yes | yes |
-| Owner notification | none | none | `POST_REMOVED_BY_ADMIN` | none |
-| Open Post Reports closed | no | no | yes | yes |
-| Media, discussion and engagement rows | retained | retained | retained | unchanged |
+| Side effect                                      | `OWNER_CLOSE`                              | `OWNER_REMOVE` | `ADMIN_REMOVE`          | `ADMIN_RESTORE` |
+| ------------------------------------------------ | ------------------------------------------ | -------------- | ----------------------- | --------------- |
+| `trg_sync_user_post_counts` delta                | none                                       | decrement      | decrement               | increment       |
+| Pending Contact Requests / Adoption Applications | terminated (`REJECTED`, records preserved) | unchanged      | unchanged               | unchanged       |
+| API `user_resolve` cache invalidated             | yes                                        | yes            | no                      | no              |
+| AdminJS dashboard cache invalidated              | no                                         | no             | yes                     | yes             |
+| `moderation_actions` audit row                   | no                                         | no             | yes                     | yes             |
+| Owner notification                               | none                                       | none           | `POST_REMOVED_BY_ADMIN` | none            |
+| Open Post Reports closed                         | no                                         | no             | yes                     | yes             |
+| Media, discussion and engagement rows            | retained                                   | retained       | retained                | unchanged       |
 
 Notes:
 
+- Closing a listing (`OWNER_CLOSE`, the successful outcome) moves every still-PENDING Contact Request and Adoption Application targeting that Post to the established terminal `REJECTED` state with `responded_at` set, inside the same transaction as the status write. Rows are preserved, never deleted, and the existing uniqueness rules still prevent the participant from re-applying to the same Post.
+- Previously **approved** Contact Requests and Adoption Applications are never touched by a closure. Their existing account-availability, visibility and Block restrictions continue to apply, and the approved participant can still retrieve the owner's WhatsApp link for a Post that is no longer Active (the link is only lost when the Post is Removed).
+- Owner removal keeps its established behavior: it does not terminate pending interactions, and approved disclosure is denied because the Post is Removed. Administrative removal, restoration, Account Deletion and bans also keep their existing (stronger) access and cleanup behavior; the contract records them as not terminating pending interactions in this slice.
 - The counter delta is applied by the existing `trg_sync_user_post_counts` database trigger, not by application code. A closure from `ACTIVE` to a successful outcome does not change the owner's counters; removal decrements them and restoration restores them.
 - Administrative removal records the actor and reason, closes every still-open Post Report in the same transaction, and inserts the owner notification. Restoration preserves the prior `moderation_status` (Clean, Flagged or Pending auto review).
 - Removal is not destructive: Post media rows, discussion Comments, and upvote/save relationships are retained. Restoration makes them reachable again. Media finalization, deletion and compensation keep their existing durable Staged Upload behavior and are untouched by this contract.
 - Owner actions never write moderation audit rows or owner notifications; the API invalidates the owner's cached profile after the transaction commits so the refreshed Post counters are served.
+- New direct interactions cannot be created after a closure: the creation transaction re-reads the Post under a share lock, so a request or application racing an owner closure settles in exactly one serial order and never leaves a PENDING row on a closed listing. An approval racing a closure likewise settles in one order: approved-before-closure is retained, and a closure that wins leaves the row REJECTED and the approval fails with the established conflict error.
 
 ## 4. Isolation and access behavior
 
@@ -75,18 +81,19 @@ The contract preserves the established directional Block isolation:
 - Administrators retain their moderation visibility and may remove or restore a Post regardless of personal Blocks.
 - Owner actions remain owner-only; isolation never grants a third party lifecycle authority.
 
-## 5. What this slice deliberately does not do
+## 5. What this contract deliberately does not do
 
 The following remain for the tickets that depend on this boundary and must extend the contract rather than duplicate it:
 
-- MATING and FOUND_STRAY owner closure, and termination of pending Contact Requests / Adoption Applications when a listing closes (ticket 03).
-- Administrator resolution, reopening and owner outcome notifications with localized delivery (tickets 08–09).
-- `EXPIRED` persistence, reminders, renewal cooldown and the inactivity jobs for ADOPTION/PRODUCT/RESCUE/LOST (tickets 12–14).
+- Administrator resolution, reopening and owner outcome notifications with localized delivery (tickets 08–09). Administrative removal/restoration keep their existing behavior and do not terminate pending interactions in this slice.
+- `EXPIRED` persistence, reminders, renewal cooldown and the inactivity jobs for ADOPTION/PRODUCT/RESCUE/LOST (tickets 12–14). Expiry will need to terminate pending interactions at its own boundary.
+- Termination of pending interactions on owner removal, Account Deletion or bans: those paths keep their existing (stronger) access and cleanup behavior.
 
 ## 6. Verification
 
-| Boundary | Evidence |
-| --- | --- |
-| Contract rules and lock namespace | `src/common/contracts/post-lifecycle.contract.spec.ts` (API) and `admin-service/src/common/contracts/post-lifecycle.contract.test.js` (AdminJS loads the same module) |
-| Owner closure, owner removal, counters, cache and isolation through the executable GraphQL schema on real Postgres | `src/posts/post-lifecycle.integration.spec.ts` |
-| Administrator removal/restoration through real authenticated AdminJS HTTP actions | `admin-service/test/admin-http.test.js` (`removes and restores a Post over authenticated AdminJS HTTP with audited, notified, counter-synced lifecycle effects`), supported by the handler-level state, audit and notification assertions in `admin-service/test/moderation-actions.test.js` and the cache invalidation assertions in `admin-service/test/dashboard-http.test.js` |
+| Boundary                                                                                                                                                                                                                            | Evidence                                                                                                                                                                                                                                                                                                                                                                          |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Contract rules and lock namespace                                                                                                                                                                                                   | `src/common/contracts/post-lifecycle.contract.spec.ts` (API) and `admin-service/src/common/contracts/post-lifecycle.contract.test.js` (AdminJS loads the same module)                                                                                                                                                                                                             |
+| Owner closure, owner removal, counters, cache and isolation through the executable GraphQL schema on real Postgres                                                                                                                  | `src/posts/post-lifecycle.integration.spec.ts`                                                                                                                                                                                                                                                                                                                                    |
+| MATING and FOUND_STRAY closure, mating owner history, pending-interaction termination, approved-access retention, roles, Block directions and closure/request/approval races through the executable GraphQL schema on real Postgres | `src/posts/owner-post-closure.integration.spec.ts`                                                                                                                                                                                                                                                                                                                                |
+| Administrator removal/restoration through real authenticated AdminJS HTTP actions                                                                                                                                                   | `admin-service/test/admin-http.test.js` (`removes and restores a Post over authenticated AdminJS HTTP with audited, notified, counter-synced lifecycle effects`), supported by the handler-level state, audit and notification assertions in `admin-service/test/moderation-actions.test.js` and the cache invalidation assertions in `admin-service/test/dashboard-http.test.js` |

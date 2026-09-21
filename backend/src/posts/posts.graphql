@@ -717,7 +717,7 @@ extend type Query {
   """
   myPosts(
     """
-    The vertical section to view: RESCUE, LOST, ADOPTION, or PRODUCT.
+    The vertical section to view: RESCUE, LOST, ADOPTION, PRODUCT, or MATING.
     """
     postType: PostType!
     first: Int
@@ -774,9 +774,13 @@ extend type Mutation {
   Update a post's lifecycle status.
   Allowed transitions depend on post type:
     RESCUE  → RESOLVED
-    LOST    → REUNITED
+    LOST    → LOST_PET closes as REUNITED; FOUND_STRAY accepts RESOLVED
+              and retains REUNITED
     ADOPTION → ADOPTED
     PRODUCT  → SOLD
+    MATING   → RESOLVED
+  Closing a Post also terminates its still-pending Contact Requests and
+  Adoption Applications; approved contact access is retained.
   Only the post creator can change their own post's status.
   """
   updatePostStatus(postId: ID!, status: PostStatus!): Post!

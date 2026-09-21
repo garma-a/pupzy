@@ -69,7 +69,7 @@ const homeFeedSchema = locationFilterSchema.and(paginationSchema);
 
 const mySavedPostsSchema = paginationSchema;
 
-const POST_TYPES = ['RESCUE', 'LOST', 'ADOPTION', 'PRODUCT'] as const;
+const POST_TYPES = ['RESCUE', 'LOST', 'ADOPTION', 'PRODUCT', 'MATING'] as const;
 
 const myPostsSchema = paginationSchema.and(
   z.object({

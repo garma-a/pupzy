@@ -66,6 +66,7 @@ describe('AdoptionsService', () => {
 
     mockPostsRepo = {
       findById: jest.fn().mockResolvedValue(mockPost),
+      lockPostForInteraction: jest.fn().mockResolvedValue(mockPost),
     };
 
     mockUsersService = {
@@ -135,6 +136,18 @@ describe('AdoptionsService', () => {
     it('throws ValidationError if target post is not ACTIVE', async () => {
       mockPostsRepo.findById = jest.fn().mockResolvedValue({ ...mockPost, status: 'ADOPTED' });
       await expect(service.submitApplication(validApplicantId, input)).rejects.toThrow(ValidationError);
+    });
+
+    it('rejects an application when the Post closes before the transaction commits', async () => {
+      mockPostsRepo.lockPostForInteraction = jest.fn().mockResolvedValue({ ...mockPost, status: 'ADOPTED' });
+      await expect(service.submitApplication(validApplicantId, input)).rejects.toThrow(ValidationError);
+      expect(mockAdoptionsRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('treats a Post removed before the transaction commits as not found', async () => {
+      mockPostsRepo.lockPostForInteraction = jest.fn().mockResolvedValue({ ...mockPost, status: 'REMOVED' });
+      await expect(service.submitApplication(validApplicantId, input)).rejects.toThrow(NotFoundError);
+      expect(mockAdoptionsRepo.create).not.toHaveBeenCalled();
     });
 
     it('throws ForbiddenError if applicant is the post creator', async () => {

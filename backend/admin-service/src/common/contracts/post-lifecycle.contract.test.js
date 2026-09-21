@@ -5,6 +5,7 @@ import {
   POST_LIFECYCLE_LOCK_ORDER,
   POST_LIFECYCLE_SIDE_EFFECTS,
   OWNER_CLOSURE_TRANSITIONS,
+  LOST_SUBTYPE_CLOSURE_TRANSITIONS,
   ownerClosureTargets,
   canOwnerClose,
   canOwnerRemove,
@@ -23,10 +24,16 @@ describe('AdminJS Post Lifecycle Contract (shared with the API)', () => {
     assert.deepEqual(OWNER_CLOSURE_TRANSITIONS.LOST, ['REUNITED']);
     assert.deepEqual(OWNER_CLOSURE_TRANSITIONS.ADOPTION, ['ADOPTED']);
     assert.deepEqual(OWNER_CLOSURE_TRANSITIONS.PRODUCT, ['SOLD']);
-    assert.deepEqual(OWNER_CLOSURE_TRANSITIONS.MATING, []);
-    assert.deepEqual(ownerClosureTargets('MATING'), []);
+    assert.deepEqual(OWNER_CLOSURE_TRANSITIONS.MATING, ['RESOLVED']);
+    assert.deepEqual(LOST_SUBTYPE_CLOSURE_TRANSITIONS.LOST_PET, ['REUNITED']);
+    assert.deepEqual(LOST_SUBTYPE_CLOSURE_TRANSITIONS.FOUND_STRAY, ['RESOLVED', 'REUNITED']);
+    assert.deepEqual(ownerClosureTargets('MATING'), ['RESOLVED']);
+    assert.deepEqual(ownerClosureTargets('LOST', 'FOUND_STRAY'), ['RESOLVED', 'REUNITED']);
     assert.equal(canOwnerClose('PRODUCT', 'ACTIVE', 'SOLD'), true);
     assert.equal(canOwnerClose('PRODUCT', 'ACTIVE', 'RESOLVED'), false);
+    assert.equal(canOwnerClose('MATING', 'ACTIVE', 'RESOLVED'), true);
+    assert.equal(canOwnerClose('LOST', 'ACTIVE', 'RESOLVED', 'LOST_PET'), false);
+    assert.equal(canOwnerClose('LOST', 'ACTIVE', 'RESOLVED', 'FOUND_STRAY'), true);
     assert.equal(canOwnerRemove('REMOVED'), false);
   });
 
@@ -46,6 +53,7 @@ describe('AdminJS Post Lifecycle Contract (shared with the API)', () => {
       moderationAudit: true,
       ownerNotification: 'POST_REMOVED_BY_ADMIN',
       closeOpenPostReports: true,
+      terminatePendingInteractions: false,
     });
     assert.deepEqual(POST_LIFECYCLE_SIDE_EFFECTS.ADMIN_RESTORE, {
       userPostCountDelta: 'INCREMENT',
@@ -54,6 +62,8 @@ describe('AdminJS Post Lifecycle Contract (shared with the API)', () => {
       moderationAudit: true,
       ownerNotification: null,
       closeOpenPostReports: true,
+      terminatePendingInteractions: false,
     });
+    assert.equal(POST_LIFECYCLE_SIDE_EFFECTS.OWNER_CLOSE.terminatePendingInteractions, true);
   });
 });

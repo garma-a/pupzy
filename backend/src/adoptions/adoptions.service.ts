@@ -86,17 +86,33 @@ export class AdoptionsService {
       throw new ConflictError('You have already submitted an application for this post');
     }
 
-    const application = await this.db.transaction(async (tx) => {
+    const outcome = await this.db.transaction(async (tx) => {
       // Pair lock before the insert: a Block committing first makes this fail
       // neutrally, and a Block committing second rejects the pending row.
       if (await this.isolationPolicy.lockPairAndRecheck(tx, applicantId, post.creatorId)) {
-        return null;
+        return { kind: 'unavailable' as const };
       }
-      return this.adoptionsRepository.create({ targetPostId, applicantId, ...questionnaire }, tx);
+      // Re-read under a share lock so an owner closure committing after the
+      // preflight above cannot leave a PENDING application on a closed listing.
+      const lockedPost = await this.postsRepository.lockPostForInteraction(tx, targetPostId);
+      if (!lockedPost || lockedPost.status === 'REMOVED') {
+        return { kind: 'unavailable' as const };
+      }
+      if (lockedPost.status !== 'ACTIVE') {
+        return { kind: 'inactive' as const };
+      }
+      return {
+        kind: 'created' as const,
+        application: await this.adoptionsRepository.create({ targetPostId, applicantId, ...questionnaire }, tx),
+      };
     });
-    if (!application) {
+    if (outcome.kind === 'unavailable') {
       throw new NotFoundError('Post', targetPostId);
     }
+    if (outcome.kind === 'inactive') {
+      throw new ValidationError('Cannot apply to an inactive adoption listing');
+    }
+    const application = outcome.application;
 
     // Fire notification to post owner (non-blocking)
     const applicant = await this.usersService.findById(applicantId);

@@ -37,6 +37,11 @@ describe('feed-query.input', () => {
       expect(result.first).toBe(10);
     });
 
+    it('validates MATING for owner history', () => {
+      const result = validateMyPostsInput({ postType: 'MATING' });
+      expect(result.postType).toBe('MATING');
+    });
+
     it('rejects missing postType', () => {
       expect(() => validateMyPostsInput({})).toThrow(ValidationError);
     });
