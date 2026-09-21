@@ -33,6 +33,7 @@ import type { CreateAdoptionPostInput } from './dto/create-adoption-post.input';
 import type { CreateProductPostInput } from './dto/create-product-post.input';
 import type { ReportPostInput } from './dto/report-post.input';
 import type { FeedResult } from './posts.repository';
+import { buildFeedSearchPattern } from './search-query.util';
 import type {
   HelpFeedInput,
   AdoptFeedInput,
@@ -680,6 +681,7 @@ export class PostsService {
       radiusKm: input.radiusKm ?? 25,
       limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor(input.after, isHelpFeedCursor),
+      searchPattern: buildFeedSearchPattern(input.search),
       viewerId,
     });
     return this.mapFeedResultToConnection(result, (post) => ({
@@ -736,6 +738,7 @@ export class PostsService {
       radiusKm: input.radiusKm ?? 25,
       limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor(input.after, isIdCursor),
+      searchPattern: buildFeedSearchPattern(input.search),
       viewerId,
     });
     return this.mapFeedResultToConnection(result, (post) => ({ id: post.id }));

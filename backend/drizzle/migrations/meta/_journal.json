@@ -365,6 +365,13 @@
       "when": 1791483200000,
       "tag": "0051_add_admin_post_reopen",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1791569600000,
+      "tag": "0052_add_normalized_feed_search",
+      "breakpoints": true
     }
   ]
 }

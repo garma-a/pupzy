@@ -839,6 +839,60 @@ describe('PostsService', () => {
       expect(result.edges[0].node.postType).toBe('MATING');
     });
 
+    it('getHomeFeed and getHelpFeed pass the normalized search pattern to the repository', async () => {
+      const mockPost = {
+        id: validPostId,
+        createdAt: new Date(),
+        urgency: 'URGENT',
+        status: 'ACTIVE',
+      } as unknown as Post;
+      mockPostsRepo.findHomeFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+      mockPostsRepo.findHelpFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+
+      await service.getHomeFeed({ search: '  LOST   Dog ' });
+      expect(mockPostsRepo.findHomeFeed).toHaveBeenCalledWith(expect.objectContaining({ searchPattern: '%lost dog%' }));
+
+      await service.getHelpFeed({ search: 'احمد' });
+      expect(mockPostsRepo.findHelpFeed).toHaveBeenCalledWith(expect.objectContaining({ searchPattern: '%احمد%' }));
+    });
+
+    it('getHomeFeed and getHelpFeed treat an empty search as no search', async () => {
+      const mockPost = {
+        id: validPostId,
+        createdAt: new Date(),
+        urgency: 'URGENT',
+        status: 'ACTIVE',
+      } as unknown as Post;
+      mockPostsRepo.findHomeFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+      mockPostsRepo.findHelpFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+
+      await service.getHomeFeed({ search: '   ' });
+      expect(mockPostsRepo.findHomeFeed).toHaveBeenCalledWith(expect.objectContaining({ searchPattern: null }));
+
+      await service.getHelpFeed({ search: '' });
+      expect(mockPostsRepo.findHelpFeed).toHaveBeenCalledWith(expect.objectContaining({ searchPattern: null }));
+    });
+
+    it('getHomeFeed rejects short and oversize searches without querying the repository', async () => {
+      await expect(service.getHomeFeed({ search: 'x' })).rejects.toThrow(ValidationError);
+      await expect(service.getHomeFeed({ search: 'a'.repeat(101) })).rejects.toThrow(ValidationError);
+      await expect(service.getHelpFeed({ search: 'x' })).rejects.toThrow(ValidationError);
+      expect(mockPostsRepo.findHomeFeed).not.toHaveBeenCalled();
+      expect(mockPostsRepo.findHelpFeed).not.toHaveBeenCalled();
+    });
+
     it('getPostsSavedByCurrentUser encodes savedAt from join', async () => {
       const savedDate = new Date('2026-08-10T15:00:00Z');
       const mockPost = {

@@ -38,9 +38,21 @@ const paginationSchema = z.object({
   after: z.string().nullish(),
 });
 
+/**
+ * Optional server-side search schema.
+ * - search: Free text matched against title, description, category, area and
+ *   City names (English and Arabic) after shared normalization. Omitted,
+ *   empty or whitespace-only text means no search; text shorter than two
+ *   characters or longer than 100 is rejected. See
+ *   `search-query.util.ts` for the full documented behavior.
+ */
+const feedSearchSchema = z.object({
+  search: z.string().nullish(),
+});
+
 // ─── Feed-specific schemas ──────────────────────────────────────────────────
 
-const helpFeedSchema = locationFilterSchema.and(paginationSchema);
+const helpFeedSchema = locationFilterSchema.and(paginationSchema).and(feedSearchSchema);
 
 const adoptFeedSchema = locationFilterSchema.and(paginationSchema).and(
   z.object({
@@ -65,7 +77,7 @@ const marketFeedSchema = locationFilterSchema.and(paginationSchema).and(
   }),
 );
 
-const homeFeedSchema = locationFilterSchema.and(paginationSchema);
+const homeFeedSchema = locationFilterSchema.and(paginationSchema).and(feedSearchSchema);
 
 const mySavedPostsSchema = paginationSchema;
 
