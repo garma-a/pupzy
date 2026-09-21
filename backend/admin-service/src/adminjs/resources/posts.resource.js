@@ -4,6 +4,7 @@ import { buildPostActions } from '../actions/moderate-post.actions.js';
 import {
   POST_REVIEW_WORKSPACE_PARAM,
   attachLostSubtype,
+  attachOwnerBanStatus,
   attachPostReviewData,
   buildPostReviewActions,
 } from '../review/post-review.js';
@@ -168,7 +169,7 @@ export function buildPostsResource(db, pool, components, cache) {
         new: { isAccessible: false },
         list: { after: stripPopulatedPasswordHashes },
         show: {
-          before: attachLostSubtype(pool),
+          before: [attachLostSubtype(pool), attachOwnerBanStatus(pool)],
           after: [stripPopulatedPasswordHashes, attachPostReviewData(pool)],
         },
         edit: {

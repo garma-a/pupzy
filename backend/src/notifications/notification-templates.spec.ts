@@ -20,6 +20,7 @@ const SAMPLE_PARAMS: NotificationTemplateParamsMap = {
   ADOPTION_APPLICATION_REJECTED: { postTitle: 'Missing cat' },
   POST_REMOVED_BY_ADMIN: { reason: 'Policy violation' },
   POST_RESOLVED_BY_ADMIN: { postTitle: 'Missing cat', outcome: 'ADOPTED' },
+  POST_REOPENED_BY_ADMIN: { postTitle: 'Missing cat' },
   POST_INACTIVITY_NUDGE: { postTitle: 'Missing cat' },
   SYSTEM_ANNOUNCEMENT: { postTitle: 'Missing cat' },
   NEW_COMMENT: { actorName: 'Ahmed', postTitle: 'Missing cat' },
@@ -124,6 +125,15 @@ describe('notification templates', () => {
       expect(content.bodyArabic).toContain('Missing cat');
       expect(content.bodyArabic.trim().length).toBeGreaterThan(0);
     }
+  });
+
+  it('renders the administrator reopening correction in both languages without the internal reason', () => {
+    const content = buildNotificationContent('POST_REOPENED_BY_ADMIN', { postTitle: 'Missing cat' });
+    expect(content.title).toBe('Post reopened');
+    expect(content.body).toBe('An administrator reopened your post "Missing cat".');
+    expect(content.titleArabic).toBe('تمت إعادة فتح المنشور');
+    expect(content.bodyArabic).toContain('Missing cat');
+    expect(content.bodyArabic.trim().length).toBeGreaterThan(0);
   });
 
   it('preserves both account-ban cascade copy variants', () => {

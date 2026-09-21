@@ -14,7 +14,9 @@ import {
   postExpiryPolicy,
   canAdminRemove,
   canAdminResolve,
+  canAdminReopen,
   canAdminRestore,
+  COMPLETED_POST_OUTCOMES,
 } from './post-lifecycle.contract';
 
 describe('Post lifecycle transition contract', () => {
@@ -139,6 +141,34 @@ describe('Post lifecycle transition contract', () => {
     });
   });
 
+  describe('administrator reopening transitions', () => {
+    it('corrects exactly the completed outcomes back to Active', () => {
+      expect(COMPLETED_POST_OUTCOMES).toEqual(['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD']);
+      expect(Object.isFrozen(COMPLETED_POST_OUTCOMES)).toBe(true);
+      for (const status of COMPLETED_POST_OUTCOMES) {
+        expect(canAdminReopen(status)).toBe(true);
+      }
+    });
+
+    it('never reopens active, removed, expired or unknown state', () => {
+      for (const status of ['ACTIVE', 'REMOVED', 'EXPIRED', 'UNKNOWN', '']) {
+        expect(canAdminReopen(status)).toBe(false);
+      }
+    });
+
+    it('gives owners no reopening path: completed sources stay invalid for owner closure', () => {
+      for (const status of COMPLETED_POST_OUTCOMES) {
+        expect(canOwnerClose('RESCUE', status, 'RESOLVED')).toBe(false);
+        expect(canOwnerClose('LOST', status, 'REUNITED', 'LOST_PET')).toBe(false);
+        expect(canOwnerClose('ADOPTION', status, 'ADOPTED')).toBe(false);
+        expect(canOwnerClose('PRODUCT', status, 'SOLD')).toBe(false);
+        expect(canOwnerClose('MATING', status, 'RESOLVED')).toBe(false);
+        expect(canOwnerRenew('PRODUCT', status)).toBe(false);
+        expect(canOwnerRenew('ADOPTION', status)).toBe(false);
+      }
+    });
+  });
+
   describe('inactivity expiry policy', () => {
     it('enables the PRODUCT and ADOPTION windows in this slice', () => {
       expect(POST_EXPIRY_POLICIES.PRODUCT).toEqual({
@@ -209,6 +239,7 @@ describe('Post lifecycle transition contract', () => {
     it('covers exactly the named transitions', () => {
       expect(Object.keys(POST_LIFECYCLE_SIDE_EFFECTS).sort()).toEqual([
         'ADMIN_REMOVE',
+        'ADMIN_REOPEN',
         'ADMIN_RESOLVE',
         'ADMIN_RESTORE',
         'EXPIRE',
@@ -268,6 +299,18 @@ describe('Post lifecycle transition contract', () => {
         ownerNotification: 'POST_RESOLVED_BY_ADMIN',
         closeOpenPostReports: false,
         terminatePendingInteractions: true,
+      });
+    });
+
+    it('keeps administrative reopening audited and notified without reviving interactions or reports', () => {
+      expect(POST_LIFECYCLE_SIDE_EFFECTS.ADMIN_REOPEN).toEqual({
+        userPostCountDelta: 'NONE',
+        invalidateOwnerUserCache: false,
+        invalidateAdminDashboardCache: true,
+        moderationAudit: true,
+        ownerNotification: 'POST_REOPENED_BY_ADMIN',
+        closeOpenPostReports: false,
+        terminatePendingInteractions: false,
       });
     });
 

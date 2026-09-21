@@ -135,9 +135,9 @@ For an Arabic recipient, a new comment notification returns:
 
 ### 3.1 Existing notification types covered
 
-Every type persisted by the `notification_type` enum has English and Arabic definitions: `NEW_UPVOTE`, `POST_SAVED`, `CONTACT_REQUEST_RECEIVED`, `CONTACT_REQUEST_APPROVED`, `CONTACT_REQUEST_REJECTED`, `ADOPTION_APPLICATION_RECEIVED`, `ADOPTION_APPLICATION_APPROVED`, `ADOPTION_APPLICATION_REJECTED`, `POST_REMOVED_BY_ADMIN` (single-post and account-ban cascade variants), `POST_RESOLVED_BY_ADMIN`, `POST_INACTIVITY_NUDGE`, `SYSTEM_ANNOUNCEMENT`, `NEW_COMMENT`, `NEW_REPLY`, `COMMENT_BOOSTED`, `COMMENT_PINNED`.
+Every type persisted by the `notification_type` enum has English and Arabic definitions: `NEW_UPVOTE`, `POST_SAVED`, `CONTACT_REQUEST_RECEIVED`, `CONTACT_REQUEST_APPROVED`, `CONTACT_REQUEST_REJECTED`, `ADOPTION_APPLICATION_RECEIVED`, `ADOPTION_APPLICATION_APPROVED`, `ADOPTION_APPLICATION_REJECTED`, `POST_REMOVED_BY_ADMIN` (single-post and account-ban cascade variants), `POST_RESOLVED_BY_ADMIN`, `POST_REOPENED_BY_ADMIN`, `POST_INACTIVITY_NUDGE`, `SYSTEM_ANNOUNCEMENT`, `NEW_COMMENT`, `NEW_REPLY`, `COMMENT_BOOSTED`, `COMMENT_PINNED`.
 
-Administrative notifications written directly by the AdminJS service (`POST_REMOVED_BY_ADMIN`, and `POST_RESOLVED_BY_ADMIN` from the administrator case-resolution work) now carry both languages. Rows that predate this work keep the English fallback. `POST_RESOLVED_BY_ADMIN` routes through `related_post_id` and states the recorded outcome (`RESOLVED`, `REUNITED`, `ADOPTED` or `SOLD`); the administrator's internal reason is not disclosed in the notification.
+Administrative notifications written directly by the AdminJS service (`POST_REMOVED_BY_ADMIN`, `POST_RESOLVED_BY_ADMIN` from the administrator case-resolution work and `POST_REOPENED_BY_ADMIN` from the administrator reopening correction) now carry both languages. Rows that predate this work keep the English fallback. `POST_RESOLVED_BY_ADMIN` routes through `related_post_id` and states the recorded outcome (`RESOLVED`, `REUNITED`, `ADOPTED` or `SOLD`); `POST_REOPENED_BY_ADMIN` routes through `related_post_id` and states that the Post was reopened to Active. In both cases the administrator's internal reason is not disclosed in the notification.
 
 ---
 

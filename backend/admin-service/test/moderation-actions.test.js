@@ -1873,3 +1873,278 @@ describe('administrator post resolution', () => {
     assert.equal(invalidations, 1);
   });
 });
+
+describe('administrator post reopening', () => {
+  async function insertCompletedPost({ status, postType = 'RESCUE', reportType = null, title }) {
+    let postId;
+    if (postType === 'LOST') {
+      postId = await insertLostPost({ ownerId: principals.userId, reportType });
+    } else {
+      postId = await insertPost(database.pool, {
+        ...principals,
+        postType,
+        title: title ?? `${postType} ${status} reopening`,
+      });
+    }
+    await database.pool.query(`UPDATE posts SET status = $2 WHERE id = $1`, [postId, status]);
+    return postId;
+  }
+
+  it('reopens every completed outcome to Active with one audited correction and localized owner notification', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const cases = [
+      { status: 'RESOLVED', postType: 'RESCUE', reportType: null },
+      { status: 'REUNITED', postType: 'LOST', reportType: 'LOST_PET' },
+      { status: 'RESOLVED', postType: 'MATING', reportType: null },
+      { status: 'ADOPTED', postType: 'ADOPTION', reportType: null },
+      { status: 'SOLD', postType: 'PRODUCT', reportType: null },
+    ];
+
+    for (const testCase of cases) {
+      const postId = await insertCompletedPost(testCase);
+      await database.pool.query(
+        `UPDATE posts SET moderation_status = 'FLAGGED', moderation_reason = 'Under review' WHERE id = $1`,
+        [postId],
+      );
+      const reason = `Correcting the mistaken ${testCase.status.toLowerCase()} outcome`;
+      const before = (await database.pool.query(`SELECT post_count FROM users WHERE id = $1`, [principals.userId]))
+        .rows[0].post_count;
+
+      const response = await call(actions.reopenPost, postId, { reason });
+      assert.equal(response.notice.type, 'success', `${testCase.status}: ${response.notice.message}`);
+      assert.equal(response.notice.message, 'Post reopened.');
+
+      const post = (
+        await database.pool.query(
+          `SELECT status, title, moderation_status, moderation_reason, moderated_by_admin_id
+           FROM posts WHERE id = $1`,
+          [postId],
+        )
+      ).rows[0];
+      assert.equal(post.status, 'ACTIVE', `${testCase.status} must return to ACTIVE`);
+      assert.equal(post.moderation_status, 'FLAGGED', 'reopening leaves moderation state untouched');
+      assert.equal(post.moderation_reason, 'Under review');
+      assert.equal(post.moderated_by_admin_id, null);
+
+      const after = (await database.pool.query(`SELECT post_count FROM users WHERE id = $1`, [principals.userId]))
+        .rows[0].post_count;
+      assert.equal(after, before, 'reopening never changes the owner post counters');
+
+      const audits = (
+        await database.pool.query(
+          `SELECT action_type, admin_user_id, target_type, reason, metadata
+           FROM moderation_actions WHERE target_id = $1`,
+          [postId],
+        )
+      ).rows;
+      assert.equal(audits.length, 1);
+      assert.equal(audits[0].action_type, 'POST_REOPENED');
+      assert.equal(audits[0].target_type, 'POST');
+      assert.equal(audits[0].admin_user_id, principals.adminId);
+      assert.equal(audits[0].reason, reason);
+      assert.equal(audits[0].metadata.previousOutcome, testCase.status);
+
+      const notifications = (
+        await database.pool.query(
+          `SELECT type, recipient_id, related_post_id, title, body, title_arabic, body_arabic, is_read
+           FROM notifications WHERE related_post_id = $1`,
+          [postId],
+        )
+      ).rows;
+      assert.equal(notifications.length, 1);
+      assert.equal(notifications[0].type, 'POST_REOPENED_BY_ADMIN');
+      assert.equal(notifications[0].recipient_id, principals.userId);
+      assert.equal(notifications[0].is_read, false);
+      assert.equal(notifications[0].title, 'Post reopened');
+      assert.equal(notifications[0].body, `An administrator reopened your post "${post.title}".`);
+      assert.equal(notifications[0].title_arabic, 'تمت إعادة فتح المنشور');
+      assert.ok(notifications[0].body_arabic.includes(post.title));
+      assert.equal(notifications[0].body.includes(reason), false, 'the internal reason is not disclosed to the owner');
+    }
+  });
+
+  it('leaves closed and approved interactions, open reports and media untouched', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const postId = await insertCompletedPost({ status: 'ADOPTED', postType: 'ADOPTION', title: 'Mistaken adoption' });
+    const pendingRequesterId = await insertUser('reopen-pending-requester');
+    const approvedRequesterId = await insertUser('reopen-approved-requester');
+    const pendingApplicantId = await insertUser('reopen-pending-applicant');
+    const approvedApplicantId = await insertUser('reopen-approved-applicant');
+    const reporterId = await insertUser('reopen-reporter');
+
+    const pendingContact = await insertContactRequest({ postId, requesterId: pendingRequesterId });
+    const approvedContact = await insertContactRequest({
+      postId,
+      requesterId: approvedRequesterId,
+      status: 'APPROVED',
+    });
+    const pendingApplication = await insertAdoptionApplication({ postId, applicantId: pendingApplicantId });
+    const approvedApplication = await insertAdoptionApplication({
+      postId,
+      applicantId: approvedApplicantId,
+      status: 'APPROVED',
+    });
+    const reportId = (
+      await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason, details)
+         VALUES ($1, $2, 'SPAM', 'Open report stays open through a correction')
+         RETURNING id`,
+        [postId, reporterId],
+      )
+    ).rows[0].id;
+    await database.pool.query(
+      `INSERT INTO post_media
+         (post_id, public_url, cloudflare_storage_key, display_order, width, height, file_content_type, file_size_bytes)
+       VALUES ($1, 'https://cdn.pupzy.net/posts/keep.webp', 'posts/keep.webp', 0, 10, 10, 'image/webp', 100)`,
+      [postId],
+    );
+
+    const response = await call(actions.reopenPost, postId, { reason: 'Adoption outcome was recorded by mistake' });
+    assert.equal(response.notice.type, 'success');
+
+    const rows = (table, id) =>
+      database.pool
+        .query(`SELECT status, responded_at FROM ${table} WHERE id = $1`, [id])
+        .then((result) => result.rows[0]);
+    assert.equal((await rows('contact_requests', pendingContact)).status, 'PENDING');
+    assert.equal((await rows('contact_requests', approvedContact)).status, 'APPROVED');
+    assert.equal((await rows('adoption_applications', pendingApplication)).status, 'PENDING');
+    assert.equal((await rows('adoption_applications', approvedApplication)).status, 'APPROVED');
+
+    const report = (
+      await database.pool.query(`SELECT reviewed_at, review_outcome FROM post_reports WHERE id = $1`, [reportId])
+    ).rows[0];
+    assert.equal(report.reviewed_at, null, 'reopening is not a moderation review: open reports stay open');
+    assert.equal(report.review_outcome, null);
+
+    const media = await database.pool.query(`SELECT count(*)::int AS count FROM post_media WHERE post_id = $1`, [
+      postId,
+    ]);
+    assert.equal(media.rows[0].count, 1, 'media is retained');
+
+    const audit = (await database.pool.query(`SELECT metadata FROM moderation_actions WHERE target_id = $1`, [postId]))
+      .rows[0];
+    assert.equal(audit.metadata.previousOutcome, 'ADOPTED');
+    assert.equal('terminatedContactRequestCount' in audit.metadata, false);
+    assert.equal('terminatedAdoptionApplicationCount' in audit.metadata, false);
+  });
+
+  it('rejects missing reasons, invalid states and banned owners without any writes', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const activeId = await insertPost(database.pool, { ...principals, postType: 'RESCUE', title: 'Active guard' });
+    const removedId = await insertPost(database.pool, {
+      ...principals,
+      postType: 'ADOPTION',
+      title: 'Removed guard',
+      status: 'REMOVED',
+    });
+    const expiredId = await insertPost(database.pool, {
+      ...principals,
+      postType: 'PRODUCT',
+      title: 'Expired guard',
+      status: 'EXPIRED',
+    });
+    const resolvedId = await insertCompletedPost({ status: 'RESOLVED', postType: 'RESCUE', title: 'Reason guard' });
+
+    const bannedOwnerId = await insertUser('banned-owner');
+    await database.pool.query(`UPDATE users SET is_banned = true WHERE id = $1`, [bannedOwnerId]);
+    const bannedOwnerPostId = await insertPost(database.pool, {
+      userId: bannedOwnerId,
+      cityId: principals.cityId,
+      postType: 'RESCUE',
+      title: 'Banned owner guard',
+      status: 'RESOLVED',
+    });
+
+    const invalidAttempts = [
+      [activeId, { reason: 'Reopen active' }, /only a completed post/i],
+      [removedId, { reason: 'Reopen removed' }, /only a completed post/i],
+      [expiredId, { reason: 'Reopen expired' }, /only a completed post/i],
+      [resolvedId, {}, /reason is required/i],
+      [resolvedId, { reason: '   ' }, /reason is required/i],
+      [bannedOwnerPostId, { reason: 'Reopen banned owner' }, /banned account/i],
+      ['00000000-0000-7000-8000-000000000000', { reason: 'Missing post' }, /not found/i],
+    ];
+
+    for (const [postId, payload, expectedMessage] of invalidAttempts) {
+      const response = await call(actions.reopenPost, postId, payload);
+      assert.equal(response.notice.type, 'error', `${payload.reason} on ${postId} must be rejected`);
+      assert.match(response.notice.message, expectedMessage);
+    }
+
+    const audits = await database.pool.query(`SELECT count(*)::int AS count FROM moderation_actions`);
+    assert.equal(audits.rows[0].count, 0, 'no rejected attempt writes an audit row');
+    const notifications = await database.pool.query(`SELECT count(*)::int AS count FROM notifications`);
+    assert.equal(notifications.rows[0].count, 0);
+    const statuses = await database.pool.query(
+      `SELECT id, status FROM posts WHERE id = ANY($1::uuid[]) ORDER BY status`,
+      [[activeId, removedId, expiredId, resolvedId, bannedOwnerPostId]],
+    );
+    assert.deepEqual(statuses.rows.map((row) => row.status).sort(), [
+      'ACTIVE',
+      'EXPIRED',
+      'REMOVED',
+      'RESOLVED',
+      'RESOLVED',
+    ]);
+  });
+
+  it('serializes concurrent reopens so only one correction succeeds with one audit row and notification', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const postId = await insertCompletedPost({ status: 'SOLD', postType: 'PRODUCT', title: 'Reopen race' });
+
+    const responses = await Promise.all([
+      call(actions.reopenPost, postId, { reason: 'First reviewer' }),
+      call(actions.reopenPost, postId, { reason: 'Second reviewer' }),
+    ]);
+    assert.deepEqual(responses.map((item) => item.notice.type).sort(), ['error', 'success']);
+
+    const audits = await database.pool.query(
+      `SELECT count(*)::int AS count FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_REOPENED'`,
+      [postId],
+    );
+    assert.equal(audits.rows[0].count, 1);
+    const notifications = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE related_post_id = $1`,
+      [postId],
+    );
+    assert.equal(notifications.rows[0].count, 1);
+    const post = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0];
+    assert.equal(post.status, 'ACTIVE');
+  });
+
+  it('rolls back the reopened state, audit and notification together when the notification insert fails', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const postId = await insertCompletedPost({ status: 'RESOLVED', postType: 'RESCUE', title: 'Atomic reopen' });
+
+    await withFailureTrigger({ table: 'notifications', event: 'INSERT', suffix: 'reopen_notification' }, async () => {
+      await assert.rejects(call(actions.reopenPost, postId, { reason: 'Atomicity check' }));
+    });
+
+    const post = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0];
+    assert.equal(post.status, 'RESOLVED');
+    const audits = await database.pool.query(`SELECT count(*)::int AS count FROM moderation_actions`);
+    assert.equal(audits.rows[0].count, 0);
+    const notifications = await database.pool.query(`SELECT count(*)::int AS count FROM notifications`);
+    assert.equal(notifications.rows[0].count, 0);
+  });
+
+  it('invalidates the dashboard cache after a successful reopening but not on a rejected retry', async () => {
+    let invalidations = 0;
+    const cache = {
+      invalidate: () => {
+        invalidations += 1;
+      },
+    };
+    const actions = buildPostActions(database.pool, 'ModerationAction', cache);
+    const postId = await insertCompletedPost({ status: 'REUNITED', postType: 'LOST', reportType: 'LOST_PET' });
+
+    const success = await call(actions.reopenPost, postId, { reason: 'Reunion was recorded by mistake' });
+    assert.equal(success.notice.type, 'success');
+    assert.equal(invalidations, 1);
+
+    const retry = await call(actions.reopenPost, postId, { reason: 'Second attempt' });
+    assert.equal(retry.notice.type, 'error');
+    assert.equal(invalidations, 1);
+  });
+});

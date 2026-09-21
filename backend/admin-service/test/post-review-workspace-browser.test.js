@@ -22,6 +22,7 @@ const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const database = new TestDatabaseHelper();
 const EVIDENCE_DIR = process.env.BWG06_EVIDENCE_DIR || '/tmp/opencode/bwg-06-evidence';
 const RESOLUTION_EVIDENCE_DIR = process.env.BWG08_EVIDENCE_DIR || '/tmp/opencode/bwg-08-evidence';
+const REOPEN_EVIDENCE_DIR = process.env.BWG09_EVIDENCE_DIR || '/tmp/opencode/bwg-09-evidence';
 
 const BUSINESS_TABLES = `
   post_media, rescue_posts, lost_posts, adoption_posts, product_posts, mating_posts,
@@ -62,6 +63,13 @@ async function recordEvidence(page, name, { fullPage = false } = {}) {
 async function recordResolutionEvidence(page, name, { fullPage = false } = {}) {
   fs.mkdirSync(RESOLUTION_EVIDENCE_DIR, { recursive: true });
   const file = path.join(RESOLUTION_EVIDENCE_DIR, `${name}.png`);
+  await page.screenshot({ path: file, fullPage });
+  return file;
+}
+
+async function recordReopenEvidence(page, name, { fullPage = false } = {}) {
+  fs.mkdirSync(REOPEN_EVIDENCE_DIR, { recursive: true });
+  const file = path.join(REOPEN_EVIDENCE_DIR, `${name}.png`);
   await page.screenshot({ path: file, fullPage });
   return file;
 }
@@ -991,6 +999,160 @@ describe('Post review workspace real browser suite', { timeout: 120000 }, () => 
 
       const lostPet = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [lostPetId])).rows[0];
       assert.equal(lostPet.status, 'ACTIVE', 'opening a confirmation never records an outcome');
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('corrects a mistaken resolution through Reopen with a required reason, audited history and owner notification', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource.*404/]);
+    try {
+      await database.pool.query(
+        `INSERT INTO contact_requests (post_id, requester_id, message)
+         VALUES ($1, $2, 'Please share the owner contact')`,
+        [fixture.postId, fixture.commenterId],
+      );
+
+      await loginAsAdmin(page, baseUrl, 'staff@example.com', 'staff secure password');
+      await openWorkspace(page);
+
+      await page.click('[data-testid="action-markResolved"]');
+      await page.waitForSelector('#moderation-reason', { timeout: 30000 });
+      await page.type('#moderation-reason', 'Animal recovered, case is resolved');
+      await page.waitForFunction(
+        () => document.querySelector('[data-testid="moderation-action-submit"]')?.disabled === false,
+      );
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 60000 }),
+        page.click('[data-testid="moderation-action-submit"]'),
+      ]);
+      await page.waitForFunction(() => document.body.innerText.includes('Post marked resolved'), {
+        timeout: 60000,
+      });
+
+      await page.waitForSelector('[data-testid="action-reopenPost"]', { timeout: 60000 });
+      const lifecycleActions = await page.evaluate(() =>
+        [
+          'markRescued',
+          'markReunited',
+          'markResolved',
+          'markAdopted',
+          'markSold',
+          'removePost',
+          'restorePost',
+          'reopenPost',
+        ].filter((name) => document.querySelector(`[data-testid="action-${name}"]`) !== null),
+      );
+      assert.deepEqual(
+        lifecycleActions,
+        ['reopenPost'],
+        'a recorded outcome offers only the Reopen correction, never removal, restoration or a second outcome',
+      );
+
+      await page.click('[data-testid="action-reopenPost"]');
+      await page.waitForSelector('#moderation-reason', { timeout: 30000 });
+      const confirmation = await page.evaluate(() => {
+        const submit = document.querySelector('[data-testid="moderation-action-submit"]');
+        return {
+          heading: document.querySelector('h3')?.innerText ?? '',
+          consequence: document.querySelector('#moderation-action-consequence')?.innerText ?? '',
+          submitLabel: submit?.innerText ?? '',
+          submitVariant: submit?.dataset.variant ?? '',
+          submitDisabled: submit?.disabled ?? null,
+        };
+      });
+      assert.match(confirmation.heading, /Reopen Post/);
+      assert.match(confirmation.consequence, /Closed contact requests and adoption applications stay closed/);
+      assert.match(confirmation.consequence, /removed content is not restored/i);
+      assert.match(confirmation.consequence, /notifies the owner|owner is notified/i);
+      assert.equal(confirmation.submitVariant, 'primary', 'a correction is not styled as a destructive removal');
+      assert.equal(confirmation.submitDisabled, true, 'the reason is required before the correction can be recorded');
+      console.log(
+        `[bwg-09 evidence] reopen confirmation ${await recordReopenEvidence(page, '01-reopen-confirmation')}`,
+      );
+
+      await page.type('#moderation-reason', 'Resolution was recorded by mistake');
+      await page.waitForFunction(
+        () => document.querySelector('[data-testid="moderation-action-submit"]')?.disabled === false,
+      );
+      await page.click('[data-testid="moderation-action-submit"]');
+      await page.waitForFunction(
+        () => {
+          const text = document.body.innerText;
+          return text.includes('Post reopened.') || text.includes('Post reopened (was resolved)');
+        },
+        { timeout: 60000 },
+      );
+      await page.waitForSelector('[data-testid="pupzy-review-workspace"]', { timeout: 60000 });
+      console.log(
+        `[bwg-09 evidence] reopen result ${await recordReopenEvidence(page, '02-reopen-result', { fullPage: true })}`,
+      );
+
+      const post = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [fixture.postId])).rows[0];
+      assert.equal(post.status, 'ACTIVE', 'the corrected Post returns to discovery as Active');
+      const audits = (
+        await database.pool.query(
+          `SELECT action_type, admin_user_id, reason, metadata FROM moderation_actions
+           WHERE target_id = $1 AND action_type IN ('POST_RESOLVED', 'POST_REOPENED')
+           ORDER BY created_at, action_type`,
+          [fixture.postId],
+        )
+      ).rows;
+      assert.deepEqual(audits.map((row) => row.action_type).sort(), ['POST_REOPENED', 'POST_RESOLVED']);
+      const reopenAudit = audits.find((row) => row.action_type === 'POST_REOPENED');
+      assert.equal(reopenAudit.reason, 'Resolution was recorded by mistake');
+      assert.equal(reopenAudit.metadata.previousOutcome, 'RESOLVED');
+      assert.ok(reopenAudit.admin_user_id);
+
+      const notifications = (
+        await database.pool.query(
+          `SELECT type, recipient_id, related_post_id, title, body, title_arabic, body_arabic
+           FROM notifications WHERE related_post_id = $1 ORDER BY created_at, type`,
+          [fixture.postId],
+        )
+      ).rows;
+      assert.deepEqual(notifications.map((row) => row.type).sort(), [
+        'POST_REOPENED_BY_ADMIN',
+        'POST_RESOLVED_BY_ADMIN',
+      ]);
+      const reopenNotification = notifications.find((row) => row.type === 'POST_REOPENED_BY_ADMIN');
+      assert.equal(reopenNotification.recipient_id, fixture.ownerId);
+      assert.equal(reopenNotification.title, 'Post reopened');
+      assert.equal(reopenNotification.body, 'An administrator reopened your post "Found stray near the market".');
+      assert.equal(reopenNotification.title_arabic, 'تمت إعادة فتح المنشور');
+      assert.ok(reopenNotification.body_arabic.includes('Found stray near the market'));
+
+      const contactRequest = (
+        await database.pool.query(`SELECT status, responded_at FROM contact_requests WHERE post_id = $1`, [
+          fixture.postId,
+        ])
+      ).rows[0];
+      assert.equal(contactRequest.status, 'REJECTED', 'reopening never revives a closed request');
+      assert.ok(contactRequest.responded_at);
+
+      await page.reload({ waitUntil: 'networkidle0' });
+      await page.waitForSelector('[data-testid="pupzy-review-workspace"]', { timeout: 60000 });
+      const historyText = await page.$eval('[data-testid="pupzy-action-history"]', (element) => element.innerText);
+      assert.match(historyText, /Post reopened \(was resolved\)/);
+      assert.match(historyText, /Resolution was recorded by mistake/);
+      assert.match(historyText, /Post marked resolved/);
+      const activeActions = await page.evaluate(() =>
+        ['markRescued', 'markReunited', 'markResolved', 'markAdopted', 'markSold', 'reopenPost'].filter(
+          (name) => document.querySelector(`[data-testid="action-${name}"]`) !== null,
+        ),
+      );
+      assert.deepEqual(
+        activeActions,
+        ['markReunited', 'markResolved'],
+        'the corrected case is resolvable again and no longer offers reopening',
+      );
+      console.log(
+        `[bwg-09 evidence] reopened history ${await recordReopenEvidence(page, '03-reopen-history', {
+          fullPage: true,
+        })}`,
+      );
+
       assert.deepEqual(errors, []);
     } finally {
       await page.close();

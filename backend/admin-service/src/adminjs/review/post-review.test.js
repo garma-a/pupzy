@@ -98,6 +98,18 @@ describe('Post review workspace labels and media URLs', () => {
     assert.equal(moderationActionHistoryLabel('POST_REMOVED', { outcome: 'ADOPTED' }), 'Post removed');
   });
 
+  it('renders the corrected outcome in a reopening history row', () => {
+    assert.equal(
+      moderationActionHistoryLabel('POST_REOPENED', { previousOutcome: 'ADOPTED' }),
+      'Post reopened (was adopted)',
+    );
+    assert.equal(
+      moderationActionHistoryLabel('POST_REOPENED', { previousOutcome: 'RESOLVED' }),
+      'Post reopened (was resolved)',
+    );
+    assert.equal(moderationActionHistoryLabel('POST_REOPENED', null), 'Post reopened');
+  });
+
   it('normalizes invalid or non-positive discussion pages to page 1', () => {
     assert.equal(normalizeDiscussionPage(undefined), 1);
     assert.equal(normalizeDiscussionPage(''), 1);

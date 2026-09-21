@@ -173,6 +173,11 @@ describe('Database Migration Runner Integration', () => {
     `);
     expect(notificationTypeEnumRes.rows.map((row) => row.enumlabel)).toContain('POST_RESOLVED_BY_ADMIN');
 
+    // Verify the administrator-reopening correction (migration 0051): the
+    // audit and owner notification types accept the correction values.
+    expect(moderationActionEnumRes.rows.map((row) => row.enumlabel)).toContain('POST_REOPENED');
+    expect(notificationTypeEnumRes.rows.map((row) => row.enumlabel)).toContain('POST_REOPENED_BY_ADMIN');
+
     // Verify staged_uploads schema and non-null constraints
     const stagedColsRes = await pool.query<{ column_name: string; is_nullable: string }>(`
       SELECT column_name, is_nullable

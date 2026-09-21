@@ -9,11 +9,12 @@ import {
 } from './helpers.js';
 import {
   canAdminRemove,
+  canAdminReopen,
   canAdminResolve,
   canAdminRestore,
 } from '../../../../src/common/contracts/post-lifecycle.contract.ts';
 import { buildNotificationContent } from '../../../../src/notifications/notification-templates.ts';
-import { attachLostSubtype } from '../review/post-review.js';
+import { attachLostSubtype, attachOwnerBanStatus } from '../review/post-review.js';
 import { isAnyAdmin } from '../rbac.js';
 
 function getRecordProperty(record, property) {
@@ -176,9 +177,68 @@ function buildResolutionActions(pool, component, cache) {
   );
 }
 
+/**
+ * Administrator-only correction for a mistaken Post Resolution. It is offered
+ * only for a completed outcome whose owner is not banned, requires an internal
+ * reason, returns the Post to `ACTIVE` and records the corrected outcome in the
+ * audit row. It deliberately leaves moderation fields, open Post Reports and
+ * every terminated or approved interaction untouched: reopening never revives
+ * closed requests or applications, and it never bypasses removal, moderation,
+ * bans or the separate restoration/renewal paths.
+ */
+function buildReopenAction(pool, component, cache) {
+  const action = buildPostAction(
+    pool,
+    component,
+    {
+      actionType: 'POST_REOPENED',
+      icon: 'CornerUpLeft',
+      requiresForm: true,
+      reasonRequired: true,
+      successMessage: 'Post reopened.',
+      isVisible: (context) => {
+        const record = context?.record;
+        if (!record) return false;
+        return (
+          canAdminReopen(getRecordProperty(record, 'status')) && getRecordProperty(record, 'owner_is_banned') !== true
+        );
+      },
+      validate: async (row, client) => {
+        if (!canAdminReopen(row.status)) {
+          return 'Only a completed post can be reopened.';
+        }
+        const { rows } = await client.query(`SELECT is_banned FROM users WHERE id = $1 FOR SHARE`, [row.creator_id]);
+        if (!rows[0] || rows[0].is_banned) {
+          return 'A post owned by a banned account cannot be reopened.';
+        }
+        return null;
+      },
+      mutate: async (client, row) => {
+        const previousOutcome = row.status;
+        await client.query(`UPDATE posts SET status = 'ACTIVE', updated_at = now() WHERE id = $1`, [row.id]);
+        const content = buildNotificationContent('POST_REOPENED_BY_ADMIN', { postTitle: row.title });
+        await client.query(
+          `INSERT INTO notifications
+             (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
+           VALUES ($1, 'POST_REOPENED_BY_ADMIN', $2, $3, $4, $5, $6, false)`,
+          [row.creator_id, content.title, content.body, content.titleArabic, content.bodyArabic, row.id],
+        );
+        return { previousOutcome };
+      },
+    },
+    cache,
+  );
+
+  // The action page loads the record through this action, so the owner ban
+  // state must be attached here too; otherwise `reopenPost` would be filtered
+  // out of the action page's own record actions for a banned owner.
+  return { ...action, before: attachOwnerBanStatus(pool) };
+}
+
 export function buildPostActions(pool, component, cache) {
   return {
     ...buildResolutionActions(pool, component, cache),
+    reopenPost: buildReopenAction(pool, component, cache),
     approvePost: buildPostAction(
       pool,
       component,
