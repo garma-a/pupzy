@@ -3,9 +3,11 @@
 Status: implemented (ticket 08 — Resolve a case from the admin workspace).
 
 This document is the authoritative staff-facing contract for recording a Post Resolution from the AdminJS
-Post review workspace. It is an internal admin contract; it does not change any client-facing GraphQL
-operation. The shared transition rules and lock order live in
-`src/common/contracts/post-lifecycle.contract.ts` and `post-lifecycle-transition-contract.md`.
+Post review workspace. It is an internal admin contract; it adds no client-facing GraphQL operation or
+argument. The owner's inbox is the one client-visible surface: `myNotifications` can now return the
+additive `POST_RESOLVED_BY_ADMIN` enum value (see
+`notification-language-flutter-integration-contract.md`). The shared transition rules and lock order live
+in `src/common/contracts/post-lifecycle.contract.ts` and `post-lifecycle-transition-contract.md`.
 
 ---
 
@@ -106,7 +108,9 @@ and the action history shows the recorded outcome, actor and reason.
 - Reopening a recorded outcome (ticket 09) and owner reopening (not planned).
 - Unrestricted status editing, a case-assignment product and Arabic admin localization.
 - Queue navigation, cross-screen polish and the remaining admin experience work (tickets 05 and 21).
-- Any client-facing GraphQL change: owners keep `updatePostStatus`, `deletePost` and `renewPost` as before.
+- Any client-facing GraphQL operation change: owners keep `updatePostStatus`, `deletePost` and `renewPost`
+  as before. The only client-visible addition is the `POST_RESOLVED_BY_ADMIN` value now served by
+  `myNotifications`; no operation, argument or output field changes.
 
 ## 8. Verification
 
@@ -127,3 +131,5 @@ npm run format:check
 | Real browser confirmation, result state, type-specific action bar and resolution/removal contrast  | `admin-service/test/post-review-workspace-browser.test.js` (evidence in `BWG08_EVIDENCE_DIR`)                                                                                                                                 |
 | Migration 0049 enum values                                                                        | `backend/src/database/migrate.integration.spec.ts`                                                                                                                                                                            |
 | Notification template completeness and bilingual copy                                             | `backend/src/notifications/notification-templates.spec.ts`                                                                                                                                                                    |
+| Client-visible `NotificationType` enum covers every persisted value                               | `backend/src/common/graphql/notification-type-enum-consistency.spec.ts`                                                                                                                                                        |
+| Owner inbox serializes and localizes the persisted admin notification through the executable schema | `backend/src/notifications/notification-language.integration.spec.ts`                                                                                                                                                          |

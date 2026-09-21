@@ -525,6 +525,50 @@ describe('Notification language synchronization (Ticket 07)', () => {
     );
   });
 
+  it('serves the administrator Post Resolution notification the admin service persists in the recipient language', async () => {
+    const arabicContent = buildNotificationContent('POST_RESOLVED_BY_ADMIN', {
+      postTitle: adoptionPost.title,
+      outcome: 'ADOPTED',
+    });
+    await notificationsRepository.create({
+      recipientId: owner.id,
+      type: 'POST_RESOLVED_BY_ADMIN',
+      ...arabicContent,
+      relatedPostId: adoptionPost.id,
+    });
+
+    const englishContent = buildNotificationContent('POST_RESOLVED_BY_ADMIN', {
+      postTitle: rescuePost.title,
+      outcome: 'RESOLVED',
+    });
+    await notificationsRepository.create({
+      recipientId: unsyncedOwner.id,
+      type: 'POST_RESOLVED_BY_ADMIN',
+      ...englishContent,
+      relatedPostId: rescuePost.id,
+    });
+
+    const arabicInbox = await inboxFor(owner);
+    expect(arabicInbox).toHaveLength(1);
+    expect(arabicInbox[0]).toMatchObject({
+      type: 'POST_RESOLVED_BY_ADMIN',
+      title: 'تم تسجيل نتيجة المنشور',
+      relatedPostId: adoptionPost.id,
+      isRead: false,
+    });
+    expect(arabicInbox[0].body).toContain(adoptionPost.title);
+    expect(arabicInbox[0].body).toContain('تم التبني');
+
+    const englishInbox = await inboxFor(unsyncedOwner);
+    expect(englishInbox).toHaveLength(1);
+    expect(englishInbox[0]).toMatchObject({
+      type: 'POST_RESOLVED_BY_ADMIN',
+      title: 'Post outcome recorded',
+      relatedPostId: rescuePost.id,
+    });
+    expect(englishInbox[0].body).toBe(`An administrator marked your post "${rescuePost.title}" as resolved.`);
+  });
+
   it('renders every durable discussion notification type bilingually and marks reads in the chosen language', async () => {
     const commenter = await insertUser('Arabic Commenter', 'ar');
 
