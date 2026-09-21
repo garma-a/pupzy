@@ -7,6 +7,7 @@ import { validateCompleteProfileInput } from './dto/complete-profile.input';
 import { validateUpdateProfileInput } from './dto/update-profile.input';
 import { validateGeoLocationInput } from './dto/geo-location.input';
 import { validateLanguagePreferenceInput } from './dto/language-preference.input';
+import { validateNotificationsEnabledInput } from './dto/notification-preferences.input';
 import { validateDeleteMyAccountInput } from './dto/delete-my-account.input';
 import type { User, City } from '../database/schema';
 import type { GqlContext } from '../common/types/gql-context.type';
@@ -118,6 +119,19 @@ export class UsersResolver {
   ): Promise<User> {
     const validated = validateLanguagePreferenceInput(languagePreference);
     return this.usersService.updateLanguagePreference(context.user!.id, validated);
+  }
+
+  /**
+   * Updates the explicit push notification preference. Disabling push keeps
+   * the in-app inbox and history intact.
+   */
+  @Mutation('updateMyNotificationPreferences')
+  async updateMyNotificationPreferences(
+    @Args('notificationsEnabled') notificationsEnabled: unknown,
+    @Context() context: GqlContext,
+  ): Promise<User> {
+    const validated = validateNotificationsEnabledInput(notificationsEnabled);
+    return this.usersService.updateNotificationPreferences(context.user!.id, validated);
   }
 
   /**

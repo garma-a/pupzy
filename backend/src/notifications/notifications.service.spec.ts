@@ -37,6 +37,7 @@ describe('NotificationsService', () => {
       expect(mockRepo.createIfNotIsolated).toHaveBeenCalledWith(
         expect.objectContaining({ recipientId: validUserId, type: 'NEW_UPVOTE' }),
         actorId,
+        { enqueuePush: false },
       );
     });
 
@@ -64,6 +65,7 @@ describe('NotificationsService', () => {
           relatedCommentId: commentId,
         }),
         otherUser,
+        { enqueuePush: false },
       );
 
       service.fireNotification(
@@ -85,6 +87,7 @@ describe('NotificationsService', () => {
           relatedCommentId: commentId,
         }),
         otherUser,
+        { enqueuePush: false },
       );
 
       service.fireNotification(
@@ -106,6 +109,7 @@ describe('NotificationsService', () => {
           relatedCommentId: commentId,
         }),
         otherUser,
+        { enqueuePush: false },
       );
 
       service.fireNotification(
@@ -127,6 +131,27 @@ describe('NotificationsService', () => {
           relatedCommentId: commentId,
         }),
         otherUser,
+        { enqueuePush: false },
+      );
+    });
+
+    it('enqueues durable push intent only for push-enabled notification types (Ticket 11)', () => {
+      const actorId = '01916327-0000-7000-8000-000000000009';
+
+      service.fireNotification(
+        {
+          recipientId: validUserId,
+          type: 'ADOPTION_APPLICATION_APPROVED',
+          title: 'Adoption application approved!',
+          body: 'Your adoption application was approved.',
+        },
+        actorId,
+      );
+
+      expect(mockRepo.createIfNotIsolated).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'ADOPTION_APPLICATION_APPROVED' }),
+        actorId,
+        { enqueuePush: true },
       );
     });
 

@@ -11,6 +11,7 @@ docs/adr/*
 !docs/adoption-contact-flutter-integration-contract.md
 !docs/notification-language-flutter-integration-contract.md
 !docs/admin-post-review-workspace.md
+!docs/device-push-delivery-flutter-integration-contract.md
 !docs/ugc-reporting-and-account-blocking-flutter-integration-contract.md
 !docs/ugc-reporting-and-account-blocking-release-evidence.md
 !docs/deployment/

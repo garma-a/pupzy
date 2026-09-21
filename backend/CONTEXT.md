@@ -12,6 +12,14 @@ _Avoid_: Apple account, Firebase account
 Permanent removal of a Pupzy Account, its owned Posts and uploaded photos, and associated personal information, subject to established retention obligations. This includes unresolved rescue and lost-pet Posts and is distinct from a reversible administrative takedown.
 _Avoid_: Deactivation, suspension
 
+**Device Registration**:
+A provider push token recorded as owned by one Pupzy Account for push delivery. A token is owned by at most one account at a time; a later registration transfers ownership and ends the previous account's queued delivery for that device.
+_Avoid_: FCM token row, push token record
+
+**Push Delivery Intent**:
+A durable record that one notification should be sent to one registered device. It is created in the same transaction as its notification, rechecked for preference, account state and isolation before sending, and its failure or suppression never removes the in-app notification.
+_Avoid_: Push job, notification send
+
 **City**:
 An authoritative selectable Egyptian ADM2 area (Markaz, Kism, or new urban community) across Egypt's 27 governorates, managed through reviewed local dataset releases. Each City maintains canonical English and Arabic names, an internal source identity, an explicit lifecycle state (`official`, `legacy`, or `retired`), and an approximate WGS84 representative point for distance-based discovery.
 _Avoid_: City record, location entry, custom city creation, operator-created city

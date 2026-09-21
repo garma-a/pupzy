@@ -169,4 +169,32 @@ describe('UsersService', () => {
       expect(mockUsersRepo.update).toHaveBeenCalledWith(userId, { languagePreference: 'en' });
     });
   });
+
+  describe('push preference synchronization', () => {
+    const userId = '01916327-0000-7000-8000-000000000001';
+    const updatedUser = {
+      id: userId,
+      firebaseUserId: 'fb-push-user',
+      phoneNumber: null,
+      notificationsEnabled: false,
+    } as unknown as User;
+
+    it('updates only the push preference — the inbox is not touched', async () => {
+      mockUsersRepo.update.mockResolvedValue(updatedUser);
+
+      const result = await service.updateNotificationPreferences(userId, false);
+
+      expect(mockUsersRepo.update).toHaveBeenCalledWith(userId, { notificationsEnabled: false });
+      expect(result).toBe(updatedUser);
+      expect(mockCacheManager.del).toHaveBeenCalledWith('user_resolve:fb-push-user');
+    });
+
+    it('accepts re-enabling push', async () => {
+      mockUsersRepo.update.mockResolvedValue({ ...updatedUser, notificationsEnabled: true });
+
+      await service.updateNotificationPreferences(userId, true);
+
+      expect(mockUsersRepo.update).toHaveBeenCalledWith(userId, { notificationsEnabled: true });
+    });
+  });
 });

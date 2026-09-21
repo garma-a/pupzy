@@ -138,6 +138,11 @@ export enum Language {
   en = 'en',
 }
 
+export enum DevicePlatform {
+  ANDROID = 'ANDROID',
+  IOS = 'IOS',
+}
+
 export enum PersonalityTag {
   PLAYFUL = 'PLAYFUL',
   GENTLE = 'GENTLE',
@@ -472,6 +477,11 @@ export interface DeleteMyAccountInput {
   progressToken?: Nullable<string>;
 }
 
+export interface RegisterDeviceInput {
+  token: string;
+  platform: DevicePlatform;
+}
+
 export interface IMutation {
   createComment(input: CreateCommentInput): Comment | Promise<Comment>;
   createReply(input: CreateReplyInput): Comment | Promise<Comment>;
@@ -485,6 +495,8 @@ export interface IMutation {
   createMatingPost(input: CreateMatingPostInput): Post | Promise<Post>;
   markNotificationRead(notificationId: string): Notification | Promise<Notification>;
   markAllNotificationsRead(): number | Promise<number>;
+  registerDevice(input: RegisterDeviceInput): DeviceRegistration | Promise<DeviceRegistration>;
+  unregisterDevice(token: string): boolean | Promise<boolean>;
   createRescuePost(input: CreateRescuePostInput): Post | Promise<Post>;
   createLostPost(input: CreateLostPostInput): Post | Promise<Post>;
   createAdoptionPost(input: CreateAdoptionPostInput): Post | Promise<Post>;
@@ -500,6 +512,7 @@ export interface IMutation {
   updateProfile(input: UpdateProfileInput): User | Promise<User>;
   updateMyLocation(location: GeoLocationInput): User | Promise<User>;
   updateMyLanguagePreference(languagePreference: Language): User | Promise<User>;
+  updateMyNotificationPreferences(notificationsEnabled: boolean): User | Promise<User>;
   deleteMyAccount(input: DeleteMyAccountInput): AccountDeletionPayload | Promise<AccountDeletionPayload>;
 }
 
@@ -725,6 +738,13 @@ export interface Notification {
   relatedPostId?: Nullable<string>;
   isRead: boolean;
   createdAt: DateTime;
+}
+
+export interface DeviceRegistration {
+  id: string;
+  platform: DevicePlatform;
+  createdAt: DateTime;
+  updatedAt: DateTime;
 }
 
 export interface SavedSearch {

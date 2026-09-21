@@ -3,6 +3,12 @@ import { NotificationsResolver } from './notifications.resolver';
 import { NotificationsService } from './notifications.service';
 import { NotificationsRepository } from './notifications.repository';
 import { DiscussionNotificationProcessor } from './discussion-notification.processor';
+import { DeviceRegistrationsRepository } from './device-registrations.repository';
+import { DeviceRegistrationsResolver } from './device-registrations.resolver';
+import { DeviceRegistrationsService } from './device-registrations.service';
+import { PushDeliveryRepository } from './push-delivery.repository';
+import { PushDeliveryProcessor } from './push-delivery.processor';
+import { FirebasePushProvider, PUSH_PROVIDER } from './push.provider';
 import { AccountIsolationModule } from '../blocks/account-isolation.module';
 
 /**
@@ -15,11 +21,25 @@ import { AccountIsolationModule } from '../blocks/account-isolation.module';
  * ## Dependencies
  * - `DatabaseModule` — global, provides DATABASE_TOKEN for Drizzle.
  * - `AccountIsolationModule` — provides the Block pair lock/recheck seam used
- *   to suppress immediate and delayed notifications across a Block.
+ *   to suppress immediate and delayed notifications across a Block, including
+ *   the push worker's send-time recheck.
+ * - `FirebaseModule` — global, provides the Firebase app used by the FCM
+ *   push provider.
  */
 @Module({
   imports: [AccountIsolationModule],
-  providers: [NotificationsResolver, NotificationsService, NotificationsRepository, DiscussionNotificationProcessor],
+  providers: [
+    NotificationsResolver,
+    NotificationsService,
+    NotificationsRepository,
+    DiscussionNotificationProcessor,
+    DeviceRegistrationsResolver,
+    DeviceRegistrationsService,
+    DeviceRegistrationsRepository,
+    PushDeliveryRepository,
+    PushDeliveryProcessor,
+    { provide: PUSH_PROVIDER, useClass: FirebasePushProvider },
+  ],
   exports: [NotificationsService],
 })
 export class NotificationsModule {}
