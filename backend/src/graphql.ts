@@ -406,6 +406,7 @@ export interface IQuery {
     radiusKm?: Nullable<number>,
     first?: Nullable<number>,
     after?: Nullable<string>,
+    search?: Nullable<string>,
   ): PostConnection | Promise<PostConnection>;
   adoptFeed(
     governorate?: Nullable<string>,
@@ -433,6 +434,7 @@ export interface IQuery {
     radiusKm?: Nullable<number>,
     first?: Nullable<number>,
     after?: Nullable<string>,
+    search?: Nullable<string>,
   ): PostConnection | Promise<PostConnection>;
   mySavedPosts(first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
   myPosts(
