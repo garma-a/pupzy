@@ -17,6 +17,7 @@ export class NotificationsResolver {
   /**
    * Returns the current user's notification inbox, newest first.
    * Supports cursor-based pagination for infinite scroll.
+   * Nodes are rendered in the user's explicitly synchronized language.
    */
   @Query('myNotifications')
   async myNotifications(
@@ -24,7 +25,7 @@ export class NotificationsResolver {
     @Args('after') after: string | undefined,
     @Context() ctx: GqlContext,
   ) {
-    return this.notificationsService.getMyNotifications(ctx.user!.id, first, after);
+    return this.notificationsService.getMyNotifications(ctx.user!.id, first, after, ctx.user!.languagePreference);
   }
 
   /**
@@ -37,14 +38,14 @@ export class NotificationsResolver {
 
   /**
    * Marks a single notification as read.
-   * Returns the updated notification.
+   * Returns the updated notification in the user's synchronized language.
    */
   @Mutation('markNotificationRead')
   async markNotificationRead(
     @Args('notificationId') notificationId: string,
     @Context() ctx: GqlContext,
   ): Promise<Notification> {
-    return this.notificationsService.markRead(notificationId, ctx.user!.id);
+    return this.notificationsService.markRead(notificationId, ctx.user!.id, ctx.user!.languagePreference);
   }
 
   /**

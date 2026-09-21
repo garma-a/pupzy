@@ -347,11 +347,13 @@ describe('moderation actions', () => {
     await runUserBanPostCascade(database.pool, pending.action_id);
     const posts = await database.pool.query(`SELECT title, status FROM posts ORDER BY title`);
     assert.equal(posts.rows.filter((row) => row.status === 'REMOVED').length, 102);
-    const notifications = await database.pool.query(`SELECT type FROM notifications`);
+    const notifications = await database.pool.query(`SELECT type, title_arabic, body_arabic FROM notifications`);
     assert.deepEqual(
       notifications.rows.map((row) => row.type),
       ['POST_REMOVED_BY_ADMIN'],
     );
+    assert.equal(notifications.rows[0].title_arabic, 'تمت إزالة منشوراتك');
+    assert.equal(notifications.rows[0].body_arabic, 'تم حظر حسابك (Coordinated spam) وتمت إزالة منشوراتك النشطة.');
     const audit = await database.pool.query(`SELECT metadata FROM moderation_actions`);
     assert.equal(audit.rows[0].metadata.cascadedPostCount, 101);
     assert.equal(audit.rows[0].metadata.postCascade.state, 'COMPLETED');
@@ -557,16 +559,20 @@ describe('moderation actions', () => {
     );
   });
 
-  it('removePost inserts one correctly linked notification', async () => {
+  it('removePost inserts one correctly linked bilingual notification', async () => {
     const postId = await insertPost(database.pool, principals);
     await call(buildPostActions(database.pool, 'ModerationAction').removePost, postId, { reason: 'Spam' });
     const notifications = await database.pool.query(
-      `SELECT type, related_post_id FROM notifications WHERE recipient_id = $1`,
+      `SELECT type, related_post_id, title, body, title_arabic, body_arabic FROM notifications WHERE recipient_id = $1`,
       [principals.userId],
     );
     assert.equal(notifications.rows.length, 1);
     assert.equal(notifications.rows[0].type, 'POST_REMOVED_BY_ADMIN');
     assert.equal(notifications.rows[0].related_post_id, postId);
+    assert.equal(notifications.rows[0].title, 'Your post was removed');
+    assert.equal(notifications.rows[0].body, 'Spam');
+    assert.equal(notifications.rows[0].title_arabic, 'تمت إزالة منشورك');
+    assert.equal(notifications.rows[0].body_arabic, 'Spam');
   });
 
   it('stores SQL injection text literally without executing it', async () => {

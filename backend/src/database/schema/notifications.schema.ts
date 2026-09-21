@@ -57,6 +57,18 @@ export const notifications = pgTable(
     body: text('body').notNull(),
 
     /**
+     * Arabic headline produced by the centralized template contract.
+     * NULL on legacy English-only rows; readers fall back to `title`.
+     */
+    titleArabic: varchar('title_arabic', { length: 200 }),
+
+    /**
+     * Arabic body produced by the centralized template contract.
+     * NULL on legacy English-only rows; readers fall back to `body`.
+     */
+    bodyArabic: text('body_arabic'),
+
+    /**
      * Optional link to the related post.
      * SET NULL if the post is later deleted.
      */

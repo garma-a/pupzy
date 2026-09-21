@@ -160,6 +160,8 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
             type: current.type,
             title: current.title,
             body: current.body,
+            titleArabic: current.titleArabic,
+            bodyArabic: current.bodyArabic,
             relatedPostId: current.relatedPostId,
             relatedCommentId: current.relatedCommentId,
             discussionEventId: current.id,

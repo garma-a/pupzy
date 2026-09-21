@@ -11,6 +11,7 @@ import { canOwnerRemove, ownerClosureTargets } from '../common/contracts/post-li
 import { assertUuid } from '../common/utils/validate-uuid';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { buildNotificationContent } from '../notifications/notification-templates';
 import {
   computeRescueUrgency,
   computeLostPetUrgency,
@@ -549,8 +550,10 @@ export class PostsService {
         {
           recipientId: post.creatorId,
           type: 'NEW_UPVOTE',
-          title: 'New upvote',
-          body: `${voter?.fullName ?? 'Someone'} upvoted your post "${post.title}"`,
+          ...buildNotificationContent('NEW_UPVOTE', {
+            actorName: voter?.fullName ?? 'Someone',
+            postTitle: post.title,
+          }),
           relatedPostId: postId,
         },
         userId,
@@ -586,8 +589,10 @@ export class PostsService {
         {
           recipientId: post.creatorId,
           type: 'POST_SAVED',
-          title: 'Post saved',
-          body: `${saver?.fullName ?? 'Someone'} saved your post "${post.title}"`,
+          ...buildNotificationContent('POST_SAVED', {
+            actorName: saver?.fullName ?? 'Someone',
+            postTitle: post.title,
+          }),
           relatedPostId: postId,
         },
         userId,

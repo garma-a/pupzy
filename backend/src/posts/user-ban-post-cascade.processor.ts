@@ -5,6 +5,7 @@ import { sql } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import type * as schema from '../database/schema';
 import { POST_DISCUSSION_LOCK_NAMESPACE } from '../common/contracts/post-lifecycle.contract';
+import { buildNotificationContent } from '../notifications/notification-templates';
 import { withDbRetry } from '../common/utils/db-retry.util';
 
 const USER_BAN_POST_CASCADE_BATCH_SIZE = 100;
@@ -201,13 +202,19 @@ export class UserBanPostCascadeProcessor implements OnApplicationBootstrap {
 
         if (postIds.length === 0) {
           if (previousCount > 0 && !cascade.notification_sent_at) {
+            const content = buildNotificationContent('POST_REMOVED_BY_ADMIN', {
+              reason: cascade.reason,
+              removedAll: true,
+            });
             await tx.execute(sql`
-              INSERT INTO notifications (recipient_id, type, title, body, is_read)
+              INSERT INTO notifications (recipient_id, type, title, body, title_arabic, body_arabic, is_read)
               VALUES (
                 ${cascade.user_id},
                 'POST_REMOVED_BY_ADMIN',
-                'Your posts were removed',
-                ${`Your account was banned (${cascade.reason}) and your active posts were removed.`},
+                ${content.title},
+                ${content.body},
+                ${content.titleArabic},
+                ${content.bodyArabic},
                 false
               )
             `);

@@ -690,6 +690,8 @@ describe('Account Deletion Feature Integration', () => {
           type: 'NEW_UPVOTE',
           title: 'Ahmed Farouk upvoted your post',
           body: 'Ahmed Farouk (+201011112222, populated@example.com) loved your Persian Kitten!',
+          titleArabic: 'أعجب Ahmed Farouk بمنشورك',
+          bodyArabic: 'أعجب Ahmed Farouk (+201011112222, populated@example.com) بقطتك الفارسية!',
         })
         .returning();
 
@@ -770,6 +772,13 @@ describe('Account Deletion Feature Integration', () => {
       expect(redactedNotif.body).not.toContain('+201011112222');
       expect(redactedNotif.body).not.toContain('populated@example.com');
       expect(redactedNotif.body).toContain('[deleted]');
+      // The Arabic columns must be redacted by the same cleanup guarantees.
+      expect(redactedNotif.titleArabic).not.toContain('Ahmed Farouk');
+      expect(redactedNotif.titleArabic).toContain('Someone');
+      expect(redactedNotif.bodyArabic).not.toContain('Ahmed Farouk');
+      expect(redactedNotif.bodyArabic).not.toContain('+201011112222');
+      expect(redactedNotif.bodyArabic).not.toContain('populated@example.com');
+      expect(redactedNotif.bodyArabic).toContain('[deleted]');
 
       // 10. Verify moderation actions are redacted
       const [redactedUserMod] = await dbHelper.db

@@ -132,6 +132,11 @@ export enum NotificationType {
   SYSTEM_ANNOUNCEMENT = 'SYSTEM_ANNOUNCEMENT',
 }
 
+export enum Language {
+  ar = 'ar',
+  en = 'en',
+}
+
 export enum PersonalityTag {
   PLAYFUL = 'PLAYFUL',
   GENTLE = 'GENTLE',
@@ -307,6 +312,7 @@ export interface CompleteProfileInput {
   phoneNumber: string;
   cityId?: Nullable<string>;
   location?: Nullable<GeoLocationInput>;
+  languagePreference?: Nullable<Language>;
 }
 
 export interface GeoLocationInput {
@@ -491,6 +497,7 @@ export interface IMutation {
   completeProfile(input: CompleteProfileInput): User | Promise<User>;
   updateProfile(input: UpdateProfileInput): User | Promise<User>;
   updateMyLocation(location: GeoLocationInput): User | Promise<User>;
+  updateMyLanguagePreference(languagePreference: Language): User | Promise<User>;
   deleteMyAccount(input: DeleteMyAccountInput): AccountDeletionPayload | Promise<AccountDeletionPayload>;
 }
 

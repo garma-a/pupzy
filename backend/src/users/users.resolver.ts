@@ -6,6 +6,7 @@ import { AccountDeletionService, type AccountDeletionPayload } from './account-d
 import { validateCompleteProfileInput } from './dto/complete-profile.input';
 import { validateUpdateProfileInput } from './dto/update-profile.input';
 import { validateGeoLocationInput } from './dto/geo-location.input';
+import { validateLanguagePreferenceInput } from './dto/language-preference.input';
 import { validateDeleteMyAccountInput } from './dto/delete-my-account.input';
 import type { User, City } from '../database/schema';
 import type { GqlContext } from '../common/types/gql-context.type';
@@ -104,6 +105,19 @@ export class UsersResolver {
   async updateMyLocation(@Args('location') location: unknown, @Context() context: GqlContext): Promise<User> {
     const validated = validateGeoLocationInput(location);
     return this.usersService.updateMyLocation(context.user!.id, validated);
+  }
+
+  /**
+   * Explicitly synchronizes the notification language preference.
+   * Requires only the chosen language — no unrelated profile resubmission.
+   */
+  @Mutation('updateMyLanguagePreference')
+  async updateMyLanguagePreference(
+    @Args('languagePreference') languagePreference: unknown,
+    @Context() context: GqlContext,
+  ): Promise<User> {
+    const validated = validateLanguagePreferenceInput(languagePreference);
+    return this.usersService.updateLanguagePreference(context.user!.id, validated);
   }
 
   /**

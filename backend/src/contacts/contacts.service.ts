@@ -4,6 +4,7 @@ import { ContactsRepository } from './contacts.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { buildNotificationContent } from '../notifications/notification-templates';
 import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../common/errors/app.errors';
 import { assertUuid } from '../common/utils/validate-uuid';
 import { clampFirst } from '../common/utils/pagination.util';
@@ -117,8 +118,10 @@ export class ContactsService {
       {
         recipientId: post.creatorId,
         type: 'CONTACT_REQUEST_RECEIVED',
-        title: 'New contact request',
-        body: `${requester?.fullName ?? 'Someone'} wants to contact you about "${post.title}"`,
+        ...buildNotificationContent('CONTACT_REQUEST_RECEIVED', {
+          actorName: requester?.fullName ?? 'Someone',
+          postTitle: post.title,
+        }),
         relatedPostId: postId,
         relatedContactRequestId: contactRequest.id,
       },
@@ -191,8 +194,7 @@ export class ContactsService {
       {
         recipientId: request.requesterId,
         type: 'CONTACT_REQUEST_APPROVED',
-        title: 'Contact request approved',
-        body: `You can now contact the owner via WhatsApp about "${post.title}"`,
+        ...buildNotificationContent('CONTACT_REQUEST_APPROVED', { postTitle: post.title }),
         relatedPostId: request.postId,
         relatedContactRequestId: requestId,
       },
@@ -233,8 +235,7 @@ export class ContactsService {
       {
         recipientId: request.requesterId,
         type: 'CONTACT_REQUEST_REJECTED',
-        title: 'Contact request update',
-        body: `Your contact request about "${post.title}" was not approved`,
+        ...buildNotificationContent('CONTACT_REQUEST_REJECTED', { postTitle: post.title }),
         relatedPostId: request.postId,
         relatedContactRequestId: requestId,
       },

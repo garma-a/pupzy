@@ -55,7 +55,9 @@ type User {
   """
   productPostCount: Int!
   """
-  Preferred interface language. Default 'ar' (Arabic-first for Egypt).
+  Preferred notification language, explicitly synchronized by the user.
+  Null until the user makes an explicit ar/en choice; clients treat null as
+  English, because the historic Arabic database default was never a decision.
   """
   languagePreference: String
   """
@@ -92,6 +94,21 @@ input CompleteProfileInput {
   GPS coordinates to auto-resolve the nearest city. Optional if cityId is provided.
   """
   location: GeoLocationInput
+
+  """
+  Explicit notification language synchronized during onboarding.
+  Optional: omitting it leaves the account unsynchronized and English-speaking
+  until an explicit choice is made.
+  """
+  languagePreference: Language
+}
+
+"""
+Notification language explicitly synchronized by a user.
+"""
+enum Language {
+  ar
+  en
 }
 
 """
@@ -191,6 +208,13 @@ type Mutation {
   Requires authentication.
   """
   updateMyLocation(location: GeoLocationInput!): User!
+
+  """
+  Explicitly synchronizes the authenticated user's notification language.
+  Requires only the chosen language — no unrelated profile field is required.
+  Requires authentication.
+  """
+  updateMyLanguagePreference(languagePreference: Language!): User!
 
   """
   Permanently deletes the authenticated user's Pupzy Account and all associated data.

@@ -1,6 +1,7 @@
 import { validateCompleteProfileInput } from './complete-profile.input';
 import { validateUpdateProfileInput } from './update-profile.input';
 import { validateGeoLocationInput } from './geo-location.input';
+import { validateLanguagePreferenceInput } from './language-preference.input';
 import { ValidationError } from '../../common/errors/app.errors';
 
 describe('User DTO Validations', () => {
@@ -42,6 +43,58 @@ describe('User DTO Validations', () => {
           cityId: '01916327-0000-7000-8000-000000000001',
         }),
       ).toThrow(ValidationError);
+    });
+
+    it('keeps onboarding compatible when no language is synchronized', () => {
+      const result = validateCompleteProfileInput({
+        fullName: 'Ahmed Ali',
+        phoneNumber: '+201012345678',
+        cityId: '01916327-0000-7000-8000-000000000001',
+      });
+      expect(result.languagePreference).toBeUndefined();
+    });
+
+    it('accepts an explicit ar or en language preference', () => {
+      expect(
+        validateCompleteProfileInput({
+          fullName: 'Ahmed Ali',
+          phoneNumber: '+201012345678',
+          cityId: '01916327-0000-7000-8000-000000000001',
+          languagePreference: 'ar',
+        }).languagePreference,
+      ).toBe('ar');
+      expect(
+        validateCompleteProfileInput({
+          fullName: 'Ahmed Ali',
+          phoneNumber: '+201012345678',
+          cityId: '01916327-0000-7000-8000-000000000001',
+          languagePreference: 'en',
+        }).languagePreference,
+      ).toBe('en');
+    });
+
+    it('rejects an unknown language preference', () => {
+      expect(() =>
+        validateCompleteProfileInput({
+          fullName: 'Ahmed Ali',
+          phoneNumber: '+201012345678',
+          cityId: '01916327-0000-7000-8000-000000000001',
+          languagePreference: 'fr',
+        }),
+      ).toThrow(ValidationError);
+    });
+  });
+
+  describe('validateLanguagePreferenceInput', () => {
+    it('accepts only ar and en', () => {
+      expect(validateLanguagePreferenceInput('ar')).toBe('ar');
+      expect(validateLanguagePreferenceInput('en')).toBe('en');
+    });
+
+    it('rejects unknown, missing and non-string values', () => {
+      for (const value of ['fr', 'AR', '', null, undefined, 42, {}]) {
+        expect(() => validateLanguagePreferenceInput(value)).toThrow(ValidationError);
+      }
     });
   });
 

@@ -526,14 +526,20 @@ export class AccountDeletionService {
       await tx.delete(notifications).where(eq(notifications.recipientId, userId));
 
       if (user) {
-        // Redact user's name from surviving notifications received by others
+        // Redact user's name from surviving notifications received by others,
+        // including the Arabic columns produced by the bilingual templates.
         if (user.fullName && user.fullName.trim().length > 0) {
           await tx.execute(sql`
             UPDATE "notifications"
             SET
               "title" = REPLACE("title", ${user.fullName}, 'Someone'),
-              "body" = REPLACE("body", ${user.fullName}, 'Someone')
-            WHERE "title" LIKE ${'%' + user.fullName + '%'} OR "body" LIKE ${'%' + user.fullName + '%'};
+              "body" = REPLACE("body", ${user.fullName}, 'Someone'),
+              "title_arabic" = REPLACE("title_arabic", ${user.fullName}, 'Someone'),
+              "body_arabic" = REPLACE("body_arabic", ${user.fullName}, 'Someone')
+            WHERE "title" LIKE ${'%' + user.fullName + '%'}
+              OR "body" LIKE ${'%' + user.fullName + '%'}
+              OR "title_arabic" LIKE ${'%' + user.fullName + '%'}
+              OR "body_arabic" LIKE ${'%' + user.fullName + '%'};
           `);
         }
         if (user.fullNameArabic && user.fullNameArabic.trim().length > 0) {
@@ -541,24 +547,31 @@ export class AccountDeletionService {
             UPDATE "notifications"
             SET
               "title" = REPLACE("title", ${user.fullNameArabic}, 'مستخدم'),
-              "body" = REPLACE("body", ${user.fullNameArabic}, 'مستخدم')
-            WHERE "title" LIKE ${'%' + user.fullNameArabic + '%'} OR "body" LIKE ${'%' + user.fullNameArabic + '%'};
+              "body" = REPLACE("body", ${user.fullNameArabic}, 'مستخدم'),
+              "title_arabic" = REPLACE("title_arabic", ${user.fullNameArabic}, 'مستخدم'),
+              "body_arabic" = REPLACE("body_arabic", ${user.fullNameArabic}, 'مستخدم')
+            WHERE "title" LIKE ${'%' + user.fullNameArabic + '%'}
+              OR "body" LIKE ${'%' + user.fullNameArabic + '%'}
+              OR "title_arabic" LIKE ${'%' + user.fullNameArabic + '%'}
+              OR "body_arabic" LIKE ${'%' + user.fullNameArabic + '%'};
           `);
         }
         if (user.email && user.email.trim().length > 0) {
           await tx.execute(sql`
             UPDATE "notifications"
             SET
-              "body" = REPLACE("body", ${user.email}, '[deleted]')
-            WHERE "body" LIKE ${'%' + user.email + '%'};
+              "body" = REPLACE("body", ${user.email}, '[deleted]'),
+              "body_arabic" = REPLACE("body_arabic", ${user.email}, '[deleted]')
+            WHERE "body" LIKE ${'%' + user.email + '%'} OR "body_arabic" LIKE ${'%' + user.email + '%'};
           `);
         }
         if (user.phoneNumber && user.phoneNumber.trim().length > 0) {
           await tx.execute(sql`
             UPDATE "notifications"
             SET
-              "body" = REPLACE("body", ${user.phoneNumber}, '[deleted]')
-            WHERE "body" LIKE ${'%' + user.phoneNumber + '%'};
+              "body" = REPLACE("body", ${user.phoneNumber}, '[deleted]'),
+              "body_arabic" = REPLACE("body_arabic", ${user.phoneNumber}, '[deleted]')
+            WHERE "body" LIKE ${'%' + user.phoneNumber + '%'} OR "body_arabic" LIKE ${'%' + user.phoneNumber + '%'};
           `);
         }
       }

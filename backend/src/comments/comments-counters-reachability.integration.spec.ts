@@ -1298,6 +1298,17 @@ describe('Comments Reachability, Counters, and Engagement Integration (Ticket 09
     );
     expect(Number(notifications.rows[0].count)).toBe(1);
 
+    // The API-side ban cascade writes the centralized bilingual content.
+    const banNotification = await dbHelper.pool.query<{ title_arabic: string | null; body_arabic: string | null }>(
+      `SELECT title_arabic, body_arabic FROM notifications
+       WHERE recipient_id = $1 AND type = 'POST_REMOVED_BY_ADMIN'`,
+      [authorUser.id],
+    );
+    expect(banNotification.rows[0].title_arabic).toBe('تمت إزالة منشوراتك');
+    expect(banNotification.rows[0].body_arabic).toBe(
+      'تم حظر حسابك (Durable recovery test) وتمت إزالة منشوراتك النشطة.',
+    );
+
     // Reports on Posts removed by resumed scheduler pages close in the same
     // page transaction and correlate into the ban audit metadata.
     const closedReports = await dbHelper.pool.query<{

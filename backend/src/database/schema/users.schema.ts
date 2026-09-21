@@ -115,8 +115,13 @@ export const users = pgTable(
     productPostCount: integer('product_post_count').notNull().default(0),
 
     // ── Preferences ───────────────────────────────────────────────────────────
-    /** Preferred interface language. Arabic default for Egypt. */
-    languagePreference: varchar('language_preference', { length: 10 }).notNull().default('ar'),
+    /**
+     * Explicitly synchronized notification language (`ar` or `en`).
+     * NULL until the account synchronizes a choice: the historic `ar` database
+     * default was never a user decision, so unsynchronized accounts and legacy
+     * rows resolve to English instead.
+     */
+    languagePreference: varchar('language_preference', { length: 10 }),
 
     /** Whether push notifications are enabled. */
     notificationsEnabled: boolean('notifications_enabled').notNull().default(true),

@@ -6,6 +6,7 @@ import {
   runModerationAction,
   runModerationTransaction,
 } from './helpers.js';
+import { buildNotificationContent } from '../../../../src/notifications/notification-templates.ts';
 import { isAnyAdmin } from '../rbac.js';
 
 export const USER_BAN_POST_CASCADE_BATCH_SIZE = 100;
@@ -145,10 +146,14 @@ export async function processUserBanPostCascadeBatch(pool, actionId) {
     if (postIds.length === 0) {
       const cascadedPostCount = Number(cascade.cascaded_post_count);
       if (cascadedPostCount > 0 && !cascade.notification_sent_at) {
+        const content = buildNotificationContent('POST_REMOVED_BY_ADMIN', {
+          reason: cascade.reason,
+          removedAll: true,
+        });
         await client.query(
-          `INSERT INTO notifications (recipient_id, type, title, body, is_read)
-           VALUES ($1, 'POST_REMOVED_BY_ADMIN', 'Your posts were removed', $2, false)`,
-          [cascade.user_id, `Your account was banned (${cascade.reason}) and your active posts were removed.`],
+          `INSERT INTO notifications (recipient_id, type, title, body, title_arabic, body_arabic, is_read)
+           VALUES ($1, 'POST_REMOVED_BY_ADMIN', $2, $3, $4, $5, false)`,
+          [cascade.user_id, content.title, content.body, content.titleArabic, content.bodyArabic],
         );
       }
       await client.query(
