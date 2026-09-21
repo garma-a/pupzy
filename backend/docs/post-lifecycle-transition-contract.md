@@ -2,7 +2,7 @@
 
 This document is the authoritative contract for every Post lifecycle status change made by the NestJS GraphQL API and the AdminJS service. The machine-readable half of the contract lives in `src/common/contracts/post-lifecycle.contract.ts`, which both services import, so the transition rules and lock namespace cannot drift between them.
 
-This document covers the shared lifecycle statuses. Earlier slices were preparatory; owner closure (ticket 03) adds MATING and FOUND_STRAY outcomes and terminates pending direct interactions when a listing closes, and ticket 12 adds `EXPIRED` plus explicit owner renewal. Administrative outcome/reopening remain for the tickets that build on this boundary. Inactivity expiry has its own authoritative contract: `post-expiry-and-renewal-contract.md`.
+This document covers the shared lifecycle statuses. Earlier slices were preparatory; owner closure (ticket 03) adds MATING and FOUND_STRAY outcomes and terminates pending direct interactions when a listing closes, and ticket 12 adds `EXPIRED` plus explicit owner renewal (ticket 13 extends both to ADOPTION). Administrative outcome/reopening remain for the tickets that build on this boundary. Inactivity expiry has its own authoritative contract: `post-expiry-and-renewal-contract.md`.
 
 ---
 
@@ -86,7 +86,7 @@ The contract preserves the established directional Block isolation:
 The following remain for the tickets that depend on this boundary and must extend the contract rather than duplicate it:
 
 - Administrator resolution, reopening and owner outcome notifications with localized delivery (tickets 08–09). Administrative removal/restoration keep their existing behavior and do not terminate pending interactions in this slice.
-- The ADOPTION inactivity window and the RESCUE/LOST inactivity reminder (tickets 13–14). Ticket 12 ships the shared machinery with those policy entries disabled; those tickets only enable policy data and add tests.
+- The RESCUE/LOST inactivity reminder (ticket 14). Ticket 13 enabled the ADOPTION 30/27-day window on the same machinery; ticket 14 only enables its policy data and adds tests.
 - Termination of pending interactions on owner removal, Account Deletion or bans: those paths keep their existing (stronger) access and cleanup behavior.
 
 ## 6. Verification

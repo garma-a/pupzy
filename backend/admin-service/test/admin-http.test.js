@@ -595,6 +595,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.equal(showRes.status, 200);
     const showData = await showRes.json();
     assert.equal(showData.record.params.status, 'EXPIRED');
+    assert.equal(showData.record.params.post_type, 'ADOPTION', 'the adoption expiry state must be staff-visible');
     assert.ok('renewed_at' in showData.record.params, 'renewal state must be visible on the record');
     assert.ok('reminder_sent_at' in showData.record.params, 'reminder state must be visible on the record');
   });

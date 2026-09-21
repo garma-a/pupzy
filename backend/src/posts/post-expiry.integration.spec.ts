@@ -10,6 +10,7 @@ import { TestDatabaseHelper } from '../../test/test-database.helper';
 import {
   adoptionApplications,
   adoptionPosts,
+  blocks,
   cities,
   contactRequests,
   notifications,
@@ -22,6 +23,7 @@ import {
   type Post,
   type User,
 } from '../database/schema';
+import { encryptString } from '../common/utils/crypto.util';
 import { PostsRepository } from './posts.repository';
 import { PostsService } from './posts.service';
 import { PostsResolver } from './posts.resolver';
@@ -67,6 +69,10 @@ const MARKET_FEED = `query Market($cityId: ID) {
   marketFeed(cityId: $cityId, first: 20) { edges { node { id status } } }
 }`;
 
+const ADOPT_FEED = `query Adopt($cityId: ID) {
+  adoptFeed(cityId: $cityId, first: 20) { edges { node { id status } } }
+}`;
+
 const HOME_FEED = `query Home($cityId: ID) {
   homeFeed(cityId: $cityId, first: 20) { edges { node { id status } } }
 }`;
@@ -77,6 +83,14 @@ const MY_POSTS = `query Mine($postType: PostType!) {
 
 const PRODUCT_DETAIL = `query ProductDetail($postId: ID!) {
   productPostDetail(postId: $postId) { postId category condition isFree }
+}`;
+
+const ADOPTION_DETAIL = `query AdoptionDetail($postId: ID!) {
+  adoptionPostDetail(postId: $postId) { postId petName }
+}`;
+
+const TOGGLE_UPVOTE = `mutation ToggleUpvote($postId: ID!) {
+  toggleUpvote(postId: $postId) { id status }
 }`;
 
 const CREATE_COMMENT = `mutation CreateComment($input: CreateCommentInput!) {
@@ -101,6 +115,14 @@ const PRODUCT_SELLER_CONTACT = `query SellerContact($postId: ID!) {
 
 const SUBMIT_APPLICATION = `mutation SubmitApplication($input: SubmitAdoptionApplicationInput!) {
   submitAdoptionApplication(input: $input) { id status }
+}`;
+
+const APPROVE_APPLICATION = `mutation ApproveApplication($applicationId: ID!) {
+  approveAdoptionApplication(applicationId: $applicationId) { id status }
+}`;
+
+const ADOPTION_WHATSAPP_LINK = `query AdoptionWhatsAppLink($applicationId: ID!) {
+  getAdoptionWhatsAppLink(applicationId: $applicationId)
 }`;
 
 const RECORD_VIEW = `mutation RecordView($postId: ID!) {
@@ -147,7 +169,7 @@ interface CommentConnectionData {
   edges: Array<{ node: CommentNode }>;
 }
 
-describe('Post inactivity expiry, reminders and renewal (Ticket 12)', () => {
+describe('Post inactivity expiry, reminders and renewal (Tickets 12–13)', () => {
   jest.setTimeout(240_000);
 
   let dbHelper: TestDatabaseHelper;
@@ -287,11 +309,17 @@ describe('Post inactivity expiry, reminders and renewal (Ticket 12)', () => {
           post: (_root: unknown, args: { id: string }, ctx: GqlContext) => postsResolver.post(args.id, ctx),
           marketFeed: (_root: unknown, args: Record<string, unknown>, ctx: GqlContext) =>
             postsResolver.marketFeed(args, ctx),
+          adoptFeed: (_root: unknown, args: Record<string, unknown>, ctx: GqlContext) =>
+            postsResolver.adoptFeed(args, ctx),
           homeFeed: (_root: unknown, args: Record<string, unknown>, ctx: GqlContext) =>
             postsResolver.homeFeed(args, ctx),
           myPosts: (_root: unknown, args: Record<string, unknown>, ctx: GqlContext) => postsResolver.myPosts(args, ctx),
           productPostDetail: (_root: unknown, args: { postId: string }, ctx: GqlContext) =>
             postsResolver.productPostDetail(args.postId, ctx),
+          adoptionPostDetail: (_root: unknown, args: { postId: string }, ctx: GqlContext) =>
+            postsResolver.adoptionPostDetail(args.postId, ctx),
+          getAdoptionWhatsAppLink: (_root: unknown, args: { applicationId: string }, ctx: GqlContext) =>
+            adoptionsResolver.getAdoptionWhatsAppLink(args.applicationId, ctx),
           comments: (
             _root: unknown,
             args: { postId: string; sort?: string; first?: number; after?: string },
@@ -313,6 +341,10 @@ describe('Post inactivity expiry, reminders and renewal (Ticket 12)', () => {
             contactsResolver.approveContactRequest(args.requestId, ctx),
           submitAdoptionApplication: (_root: unknown, args: { input: unknown }, ctx: GqlContext) =>
             adoptionsResolver.submitAdoptionApplication(args.input, ctx),
+          approveAdoptionApplication: (_root: unknown, args: { applicationId: string }, ctx: GqlContext) =>
+            adoptionsResolver.approveAdoptionApplication(args.applicationId, ctx),
+          toggleUpvote: (_root: unknown, args: { postId: string }, ctx: GqlContext) =>
+            postsResolver.toggleUpvote(args.postId, ctx),
           recordView: (_root: unknown, args: { postId: string }, ctx: GqlContext) =>
             postsResolver.recordView(args.postId, ctx),
         },
@@ -346,18 +378,19 @@ describe('Post inactivity expiry, reminders and renewal (Ticket 12)', () => {
       .returning();
     testCity = city;
 
-    owner = await insertUser('owner');
+    owner = await insertUser('owner', '+201000000001');
     requester = await insertUser('requester');
     other = await insertUser('other');
   });
 
-  async function insertUser(label: string): Promise<User> {
+  async function insertUser(label: string, phone?: string): Promise<User> {
     const [user] = await dbHelper.db
       .insert(users)
       .values({
         firebaseUserId: `fb-${label}-${generateUuidV7()}`,
         email: `${label}-${generateUuidV7()}@pupzy.dev`,
         fullName: `Expiry ${label}`,
+        phoneNumber: phone ? encryptString(phone, PHONE_KEY) : null,
       })
       .returning();
     return user;
@@ -428,11 +461,19 @@ describe('Post inactivity expiry, reminders and renewal (Ticket 12)', () => {
     return post;
   }
 
-  async function seedAdoption(params: { status?: Post['status']; inactiveMinutes?: number }): Promise<Post> {
+  async function seedAdoption(params: {
+    status?: Post['status'];
+    creatorId?: string;
+    inactiveMinutes?: number;
+    title?: string;
+    withMedia?: boolean;
+  }): Promise<Post> {
     const post = await seedPost({
       postType: 'ADOPTION',
       status: params.status,
+      creatorId: params.creatorId,
       inactiveMinutes: params.inactiveMinutes,
+      title: params.title,
     });
     await dbHelper.db.insert(adoptionPosts).values({
       postId: post.id,
@@ -444,6 +485,14 @@ describe('Post inactivity expiry, reminders and renewal (Ticket 12)', () => {
       priorPetExperienceRequired: false,
       personalityTags: [],
     });
+    if (params.withMedia) {
+      await dbHelper.db.insert(postMedia).values({
+        postId: post.id,
+        publicUrl: `https://cdn.pupzy.net/posts/${post.id}/main.webp`,
+        cloudflareStorageKey: `posts/${post.id}/main.webp`,
+        displayOrder: 0,
+      });
+    }
     return post;
   }
 
@@ -497,16 +546,14 @@ describe('Post inactivity expiry, reminders and renewal (Ticket 12)', () => {
   }
 
   async function feedIds(source: string, user: User): Promise<string[]> {
-    const result = await runGql<{ marketFeed: PostConnectionData; homeFeed: PostConnectionData }>(
-      source,
-      { cityId: testCity.id },
-      user,
-    );
+    const result = await runGql<Record<string, PostConnectionData>>(source, { cityId: testCity.id }, user);
     expect(result.errors).toBeUndefined();
-    const connection = (result.data as unknown as Record<string, PostConnectionData>)[
-      source.includes('marketFeed') ? 'marketFeed' : 'homeFeed'
-    ];
-    return connection.edges.map((edge) => edge.node.id);
+    const field = source.includes('marketFeed')
+      ? 'marketFeed'
+      : source.includes('adoptFeed')
+        ? 'adoptFeed'
+        : 'homeFeed';
+    return result.data![field].edges.map((edge) => edge.node.id);
   }
 
   async function renewPost(post: Post, user: User = owner) {
@@ -591,6 +638,112 @@ describe('Post inactivity expiry, reminders and renewal (Ticket 12)', () => {
         expect((await storedPost(post.id))?.reminderSentAt).toBeNull();
       }
       expect(await nudgeNotifications()).toHaveLength(0);
+    });
+  });
+
+  // ─── Adoption window ────────────────────────────────────────────────────
+
+  describe('ADOPTION inactivity window', () => {
+    it('expires at 30 inactive days: leaves adoption discovery but keeps direct detail, media, discussion and owner history', async () => {
+      const post = await seedAdoption({ inactiveMinutes: 30 * DAY_MINUTES + 60, withMedia: true });
+      await commentOnPost(post);
+
+      expect(await feedIds(ADOPT_FEED, other)).toContain(post.id);
+      expect(await feedIds(HOME_FEED, other)).toContain(post.id);
+
+      const result = await processor.processPendingExpiry();
+      expect(result).toEqual({ expired: 1, reminded: 0 });
+
+      const stored = await storedPost(post.id);
+      expect(stored?.status).toBe('EXPIRED');
+      // Past the reminder window, so the expiry never sends a late nudge.
+      expect(stored?.reminderSentAt).toBeNull();
+      expect(await nudgeNotifications()).toHaveLength(0);
+
+      // Discovery excludes the expired adoption listing.
+      expect(await feedIds(ADOPT_FEED, other)).not.toContain(post.id);
+      expect(await feedIds(HOME_FEED, other)).not.toContain(post.id);
+
+      // Direct detail, adoption detail and discussion remain readable.
+      const detail = await runGql<{ post: PostNode }>(POST_DETAIL, { id: post.id }, other);
+      expect(detail.errors).toBeUndefined();
+      expect(detail.data?.post).toMatchObject({ id: post.id, status: 'EXPIRED' });
+      expect(detail.data?.post.media).toHaveLength(1);
+
+      const adoptionDetail = await runGql<{ adoptionPostDetail: { postId: string; petName: string } }>(
+        ADOPTION_DETAIL,
+        { postId: post.id },
+        other,
+      );
+      expect(adoptionDetail.errors).toBeUndefined();
+      expect(adoptionDetail.data?.adoptionPostDetail).toMatchObject({ postId: post.id, petName: 'Luna' });
+
+      const discussion = await runGql<{ comments: CommentConnectionData }>(COMMENTS, { postId: post.id }, other);
+      expect(discussion.errors).toBeUndefined();
+      expect(discussion.data?.comments.edges).toHaveLength(1);
+
+      // Owner history keeps the listing and the owner's counters are unchanged.
+      const mine = await runGql<{ myPosts: PostConnectionData }>(MY_POSTS, { postType: 'ADOPTION' }, owner);
+      expect(mine.errors).toBeUndefined();
+      expect(mine.data?.myPosts.edges.map((edge) => edge.node.status)).toContain('EXPIRED');
+
+      const [ownerRow] = await dbHelper.db.select().from(users).where(eq(users.id, owner.id));
+      expect(ownerRow.adoptionPostCount).toBe(1);
+    });
+
+    it('does not expire an adoption listing still inside the 30-day window', async () => {
+      const post = await seedAdoption({ inactiveMinutes: 30 * DAY_MINUTES - 60 });
+
+      const result = await processor.processPendingExpiry();
+
+      expect(result.expired).toBe(0);
+      expect((await storedPost(post.id))?.status).toBe('ACTIVE');
+      expect(await feedIds(ADOPT_FEED, other)).toContain(post.id);
+    });
+
+    it('reminds the ADOPTION owner once at 27 inactive days with bilingual content', async () => {
+      const post = await seedAdoption({ inactiveMinutes: 27 * DAY_MINUTES + 1 });
+
+      const result = await processor.processPendingExpiry();
+      expect(result.reminded).toBe(1);
+
+      const rows = await nudgeNotifications();
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({ recipientId: owner.id, relatedPostId: post.id, isRead: false });
+      expect(rows[0].body).toContain(post.title);
+      expect(rows[0].titleArabic).toBeTruthy();
+      expect(rows[0].bodyArabic).toBeTruthy();
+      expect((await storedPost(post.id))?.status).toBe('ACTIVE');
+      expect((await storedPost(post.id))?.reminderSentAt).not.toBeNull();
+
+      // Repeated runs never duplicate the same cycle's reminder.
+      const repeated = await processor.processPendingExpiry();
+      expect(repeated.reminded).toBe(0);
+      expect(await nudgeNotifications()).toHaveLength(1);
+    });
+
+    it('does not remind before the 27-day mark', async () => {
+      await seedAdoption({ inactiveMinutes: 27 * DAY_MINUTES - 60 });
+
+      const result = await processor.processPendingExpiry();
+
+      expect(result).toEqual({ expired: 0, reminded: 0 });
+      expect(await nudgeNotifications()).toHaveLength(0);
+    });
+
+    it('lets new activity reset the adoption inactivity window', async () => {
+      const post = await seedAdoption({ inactiveMinutes: 29 * DAY_MINUTES });
+
+      // Upvote is an ADOPTION activity signal, so the window restarts now.
+      const upvote = await runGql(TOGGLE_UPVOTE, { postId: post.id }, other);
+      expect(upvote.errors).toBeUndefined();
+
+      const result = await processor.processPendingExpiry();
+
+      expect(result).toEqual({ expired: 0, reminded: 0 });
+      const stored = (await storedPost(post.id))!;
+      expect(stored.status).toBe('ACTIVE');
+      expect(Date.now() - stored.lastEngagedAt.getTime()).toBeLessThan(60_000);
     });
   });
 
@@ -753,10 +906,10 @@ describe('Post inactivity expiry, reminders and renewal (Ticket 12)', () => {
       expect(soldResult.errors?.[0].message).toContain('cannot be renewed');
       expect((await storedPost(sold.id))?.status).toBe('SOLD');
 
-      const adoption = await seedAdoption({ inactiveMinutes: 40 * DAY_MINUTES });
+      const adoption = await seedAdoption({ status: 'ADOPTED', inactiveMinutes: 40 * DAY_MINUTES });
       const adoptionResult = await renewPost(adoption);
       expect(errorCode(adoptionResult)).toBe('VALIDATION_ERROR');
-      expect((await storedPost(adoption.id))?.status).toBe('ACTIVE');
+      expect((await storedPost(adoption.id))?.status).toBe('ADOPTED');
 
       const rescue = await seedPost({ postType: 'RESCUE', inactiveMinutes: 90 * DAY_MINUTES });
       expect(errorCode(await renewPost(rescue))).toBe('VALIDATION_ERROR');
@@ -852,6 +1005,193 @@ describe('Post inactivity expiry, reminders and renewal (Ticket 12)', () => {
       expect(
         await dbHelper.db.select().from(adoptionApplications).where(eq(adoptionApplications.targetPostId, post.id)),
       ).toHaveLength(1);
+    });
+  });
+
+  // ─── Adoption renewal and cleanup ───────────────────────────────────────
+
+  describe('ADOPTION renewal, application cleanup and races', () => {
+    async function submitApplication(post: Post, user: User) {
+      return runGql<{ submitAdoptionApplication: { id: string; status: string } }>(
+        SUBMIT_APPLICATION,
+        { input: { ...APPLICATION_INPUT, targetPostId: post.id } },
+        user,
+      );
+    }
+
+    async function applicationsOn(post: Post) {
+      return dbHelper.db.select().from(adoptionApplications).where(eq(adoptionApplications.targetPostId, post.id));
+    }
+
+    it('renews an expired adoption listing back into discovery while retaining media and discussion', async () => {
+      const post = await seedAdoption({ inactiveMinutes: 31 * DAY_MINUTES, withMedia: true });
+      await commentOnPost(post);
+      expect((await processor.processPendingExpiry()).expired).toBe(1);
+      expect((await storedPost(post.id))?.status).toBe('EXPIRED');
+      const expiredAt = (await storedPost(post.id))!.lastEngagedAt;
+
+      const result = await renewPost(post);
+      expect(result.errors).toBeUndefined();
+      expect(result.data?.renewPost).toMatchObject({ id: post.id, status: 'ACTIVE' });
+
+      const stored = (await storedPost(post.id))!;
+      expect(stored.status).toBe('ACTIVE');
+      expect(stored.renewedAt).not.toBeNull();
+      expect(stored.lastEngagedAt.getTime()).toBeGreaterThan(expiredAt.getTime());
+
+      expect(await feedIds(ADOPT_FEED, other)).toContain(post.id);
+      expect(await dbHelper.db.select().from(postMedia).where(eq(postMedia.postId, post.id))).toHaveLength(1);
+      const discussion = await runGql<{ comments: CommentConnectionData }>(COMMENTS, { postId: post.id }, other);
+      expect(discussion.data?.comments.edges).toHaveLength(1);
+    });
+
+    it('does not let new engagement revive an expired adoption listing', async () => {
+      const post = await seedAdoption({ inactiveMinutes: 31 * DAY_MINUTES });
+      expect((await processor.processPendingExpiry()).expired).toBe(1);
+
+      // Upvote is an activity signal, but only an explicit renewal reactivates.
+      const upvote = await runGql(TOGGLE_UPVOTE, { postId: post.id }, other);
+      expect(upvote.errors).toBeUndefined();
+
+      expect((await storedPost(post.id))?.status).toBe('EXPIRED');
+      expect(await feedIds(ADOPT_FEED, other)).not.toContain(post.id);
+    });
+
+    it('expires pending applications atomically, keeps them closed through renewal and preserves application uniqueness', async () => {
+      const post = await seedAdoption({ inactiveMinutes: 31 * DAY_MINUTES });
+      const application = await submitApplication(post, requester);
+      expect(application.errors).toBeUndefined();
+      expect(application.data?.submitAdoptionApplication.status).toBe('PENDING');
+
+      // Expiry terminates the still-pending application in the same transaction.
+      const result = await processor.processPendingExpiry();
+      expect(result.expired).toBe(1);
+
+      const [terminated] = await dbHelper.db
+        .select()
+        .from(adoptionApplications)
+        .where(eq(adoptionApplications.id, application.data!.submitAdoptionApplication.id));
+      expect(terminated.status).toBe('REJECTED');
+      expect(terminated.respondedAt).not.toBeNull();
+
+      // Renewal reactivates the listing but never revives the terminated application.
+      expect((await renewPost(post)).errors).toBeUndefined();
+      expect((await storedPost(post.id))?.status).toBe('ACTIVE');
+
+      const [afterRenewal] = await dbHelper.db
+        .select()
+        .from(adoptionApplications)
+        .where(eq(adoptionApplications.id, terminated.id));
+      expect(afterRenewal.status).toBe('REJECTED');
+      expect(afterRenewal.respondedAt?.getTime()).toBe(terminated.respondedAt?.getTime());
+
+      // Existing uniqueness rules still reject the same applicant...
+      const reapply = await submitApplication(post, requester);
+      expect(errorCode(reapply)).toBe('CONFLICT');
+      expect((await applicationsOn(post)).filter((row) => row.status === 'PENDING')).toHaveLength(0);
+
+      // ...while a fresh applicant can still apply to the renewed listing.
+      const fresh = await submitApplication(post, other);
+      expect(fresh.errors).toBeUndefined();
+      expect(fresh.data?.submitAdoptionApplication.status).toBe('PENDING');
+      expect((await applicationsOn(post)).filter((row) => row.status === 'PENDING')).toHaveLength(1);
+    });
+
+    it('keeps approved adoption contact retrievable through expiry and renewal while denying unapproved and Blocked callers', async () => {
+      const post = await seedAdoption({ inactiveMinutes: 31 * DAY_MINUTES });
+      const application = await submitApplication(post, requester);
+      expect(application.errors).toBeUndefined();
+      const applicationId = application.data!.submitAdoptionApplication.id;
+
+      const approval = await runGql<{ approveAdoptionApplication: { id: string; status: string } }>(
+        APPROVE_APPLICATION,
+        { applicationId },
+        owner,
+      );
+      expect(approval.errors).toBeUndefined();
+      expect(approval.data?.approveAdoptionApplication.status).toBe('APPROVED');
+
+      const unapproved = await runGql(ADOPTION_WHATSAPP_LINK, { applicationId }, other);
+      expect(errorCode(unapproved)).toBe('FORBIDDEN');
+
+      expect((await processor.processPendingExpiry()).expired).toBe(1);
+      const expiredLink = await runGql<{ getAdoptionWhatsAppLink: string }>(
+        ADOPTION_WHATSAPP_LINK,
+        { applicationId },
+        requester,
+      );
+      expect(expiredLink.errors).toBeUndefined();
+      expect(expiredLink.data?.getAdoptionWhatsAppLink).toContain('wa.me');
+
+      expect((await renewPost(post)).errors).toBeUndefined();
+      const renewedLink = await runGql<{ getAdoptionWhatsAppLink: string }>(
+        ADOPTION_WHATSAPP_LINK,
+        { applicationId },
+        requester,
+      );
+      expect(renewedLink.errors).toBeUndefined();
+      expect(renewedLink.data?.getAdoptionWhatsAppLink).toContain('wa.me');
+
+      // The established Block restriction still applies after renewal.
+      await dbHelper.db.insert(blocks).values({ blockerId: owner.id, blockedId: requester.id });
+      const blockedLink = await runGql(ADOPTION_WHATSAPP_LINK, { applicationId }, requester);
+      expect(errorCode(blockedLink)).toBe('NOT_FOUND');
+    });
+
+    it('never leaves a pending application on an expired adoption listing when an application races expiry', async () => {
+      const post = await seedAdoption({ inactiveMinutes: 31 * DAY_MINUTES });
+
+      const [expiryResult, application] = await Promise.all([
+        processor.processPendingExpiry(),
+        submitApplication(post, requester),
+      ]);
+
+      expect(expiryResult.expired).toBe(1);
+      expect((await storedPost(post.id))?.status).toBe('EXPIRED');
+
+      const rows = await applicationsOn(post);
+      expect(rows.filter((row) => row.status === 'PENDING')).toHaveLength(0);
+      if (application.errors) {
+        // Expiry committed first, so the application was rejected as inactive.
+        expect(errorCode(application)).toBe('VALIDATION_ERROR');
+        expect(rows).toHaveLength(0);
+      } else {
+        // The application committed first and expiry terminated it atomically.
+        expect(rows).toHaveLength(1);
+        expect(rows[0].status).toBe('REJECTED');
+        expect(rows[0].respondedAt).not.toBeNull();
+      }
+    });
+
+    it('lets a renewal and a concurrent application settle in one serial order', async () => {
+      const post = await seedAdoption({ inactiveMinutes: 31 * DAY_MINUTES });
+      expect((await processor.processPendingExpiry()).expired).toBe(1);
+      expect((await storedPost(post.id))?.status).toBe('EXPIRED');
+
+      const [renewal, application] = await Promise.all([renewPost(post), submitApplication(post, requester)]);
+
+      expect(renewal.errors).toBeUndefined();
+      expect((await storedPost(post.id))?.status).toBe('ACTIVE');
+
+      const pending = (await applicationsOn(post)).filter((row) => row.status === 'PENDING');
+      if (application.errors) {
+        expect(errorCode(application)).toBe('VALIDATION_ERROR');
+        expect(pending).toHaveLength(0);
+      } else {
+        expect(pending).toHaveLength(1);
+      }
+    });
+
+    it('never lets concurrent expiry defeat an adoption renewal', async () => {
+      const post = await seedAdoption({ inactiveMinutes: 31 * DAY_MINUTES });
+
+      const [renewal, expiryResult] = await Promise.all([renewPost(post), processor.processPendingExpiry()]);
+
+      expect(renewal.errors).toBeUndefined();
+      expect(expiryResult.expired).toBeLessThanOrEqual(1);
+      const stored = (await storedPost(post.id))!;
+      expect(stored.status).toBe('ACTIVE');
+      expect(stored.renewedAt).not.toBeNull();
     });
   });
 

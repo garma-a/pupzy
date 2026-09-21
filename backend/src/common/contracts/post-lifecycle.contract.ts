@@ -171,10 +171,14 @@ export const RENEWAL_COOLDOWN_DAYS = 7;
  * - `renewable` allows the owner to explicitly renew an `ACTIVE` or `EXPIRED`
  *   listing of this type (subject to `RENEWAL_COOLDOWN_DAYS`).
  *
- * Ticket 12 ships the PRODUCT window and the shared machinery. Ticket 13 fills
- * the ADOPTION entry with its 30/27-day window and ticket 14 fills the
- * RESCUE/LOST reminder entries; the processor already honours every enabled
+ * Ticket 12 shipped the PRODUCT window and the shared machinery; ticket 13
+ * filled the ADOPTION entry with its 30/27-day window, and ticket 14 will fill
+ * the RESCUE/LOST reminder entries. The processor already honours every enabled
  * entry, so those tickets change policy data and tests, not transition rules.
+ *
+ * ADOPTION and PRODUCT are the renewable types. An expired adoption listing
+ * keeps its pending applications terminated exactly like a product listing:
+ * the expiry boundary is type-independent.
  */
 export interface PostExpiryPolicy {
   readonly expiryAfterDays: number | null;
@@ -192,7 +196,7 @@ export interface PostExpiryPolicy {
 export const POST_EXPIRY_POLICIES: Readonly<Record<PostLifecyclePostType, PostExpiryPolicy>> = Object.freeze({
   RESCUE: Object.freeze({ expiryAfterDays: null, reminderAfterDays: null, renewable: false }),
   LOST: Object.freeze({ expiryAfterDays: null, reminderAfterDays: null, renewable: false }),
-  ADOPTION: Object.freeze({ expiryAfterDays: null, reminderAfterDays: null, renewable: false }),
+  ADOPTION: Object.freeze({ expiryAfterDays: 30, reminderAfterDays: 27, renewable: true }),
   PRODUCT: Object.freeze({ expiryAfterDays: 14, reminderAfterDays: 11, renewable: true }),
   MATING: Object.freeze({ expiryAfterDays: null, reminderAfterDays: null, renewable: false }),
 });

@@ -111,13 +111,18 @@ describe('Post lifecycle transition contract', () => {
   });
 
   describe('inactivity expiry policy', () => {
-    it('enables only the PRODUCT window in this slice', () => {
+    it('enables the PRODUCT and ADOPTION windows in this slice', () => {
       expect(POST_EXPIRY_POLICIES.PRODUCT).toEqual({
         expiryAfterDays: 14,
         reminderAfterDays: 11,
         renewable: true,
       });
-      for (const postType of ['RESCUE', 'LOST', 'ADOPTION', 'MATING'] as const) {
+      expect(POST_EXPIRY_POLICIES.ADOPTION).toEqual({
+        expiryAfterDays: 30,
+        reminderAfterDays: 27,
+        renewable: true,
+      });
+      for (const postType of ['RESCUE', 'LOST', 'MATING'] as const) {
         expect(POST_EXPIRY_POLICIES[postType]).toEqual({
           expiryAfterDays: null,
           reminderAfterDays: null,
@@ -127,33 +132,42 @@ describe('Post lifecycle transition contract', () => {
       expect(Object.isFrozen(POST_EXPIRY_POLICIES)).toBe(true);
     });
 
-    it('reminds three days before the PRODUCT expiry window', () => {
-      expect(POST_EXPIRY_POLICIES.PRODUCT.expiryAfterDays! - POST_EXPIRY_POLICIES.PRODUCT.reminderAfterDays!).toBe(3);
+    it('reminds three days before each enabled expiry window', () => {
+      for (const postType of ['PRODUCT', 'ADOPTION'] as const) {
+        expect(
+          POST_EXPIRY_POLICIES[postType].expiryAfterDays! - POST_EXPIRY_POLICIES[postType].reminderAfterDays!,
+        ).toBe(3);
+      }
     });
 
     it('allows automatic expiry only for Active posts of an enabled type', () => {
-      expect(canExpirePost('PRODUCT', 'ACTIVE')).toBe(true);
-      for (const status of ['RESOLVED', 'ADOPTED', 'SOLD', 'REMOVED', 'EXPIRED']) {
-        expect(canExpirePost('PRODUCT', status)).toBe(false);
+      for (const postType of ['PRODUCT', 'ADOPTION'] as const) {
+        expect(canExpirePost(postType, 'ACTIVE')).toBe(true);
+        for (const status of ['RESOLVED', 'ADOPTED', 'SOLD', 'REMOVED', 'EXPIRED']) {
+          expect(canExpirePost(postType, status)).toBe(false);
+        }
       }
-      for (const postType of ['RESCUE', 'LOST', 'ADOPTION', 'MATING', 'UNKNOWN']) {
+      for (const postType of ['RESCUE', 'LOST', 'MATING', 'UNKNOWN']) {
         expect(canExpirePost(postType, 'ACTIVE')).toBe(false);
       }
     });
 
     it('allows owner renewal only for renewable types from ACTIVE or EXPIRED', () => {
-      expect(canOwnerRenew('PRODUCT', 'ACTIVE')).toBe(true);
-      expect(canOwnerRenew('PRODUCT', 'EXPIRED')).toBe(true);
-      for (const status of ['SOLD', 'RESOLVED', 'REUNITED', 'ADOPTED', 'REMOVED']) {
-        expect(canOwnerRenew('PRODUCT', status)).toBe(false);
+      for (const postType of ['PRODUCT', 'ADOPTION'] as const) {
+        expect(canOwnerRenew(postType, 'ACTIVE')).toBe(true);
+        expect(canOwnerRenew(postType, 'EXPIRED')).toBe(true);
+        for (const status of ['SOLD', 'RESOLVED', 'REUNITED', 'ADOPTED', 'REMOVED']) {
+          expect(canOwnerRenew(postType, status)).toBe(false);
+        }
       }
-      for (const postType of ['RESCUE', 'LOST', 'ADOPTION', 'MATING', 'UNKNOWN']) {
+      for (const postType of ['RESCUE', 'LOST', 'MATING', 'UNKNOWN']) {
         expect(canOwnerRenew(postType, 'ACTIVE')).toBe(false);
       }
     });
 
     it('resolves policies per type and rejects unknown types', () => {
       expect(postExpiryPolicy('PRODUCT')?.expiryAfterDays).toBe(14);
+      expect(postExpiryPolicy('ADOPTION')?.expiryAfterDays).toBe(30);
       expect(postExpiryPolicy('UNKNOWN')).toBeNull();
     });
 
