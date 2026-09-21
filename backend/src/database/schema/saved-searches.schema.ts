@@ -5,25 +5,19 @@ import { cities } from './cities.schema';
 import { postTypeEnum, speciesTypeEnum, productCategoryEnum } from './enums';
 
 /**
- * `saved_searches` — user alert system for new matching posts.
+ * `saved_searches` — retired saved-search storage, retained temporarily.
  *
- * ## Purpose
- * When a new ADOPTION or PRODUCT post is created, the service queries this
- * table for matching alerts and fires `SYSTEM_ANNOUNCEMENT` notifications
- * to those users.
+ * ## Status (ticket 18)
+ * The saved-search feature was never finished and is retired: no GraphQL type,
+ * admin resource or runtime code reads or writes it. This table and export stay
+ * only so old deployed code can finish accessing it during deployment overlap.
+ * Account Deletion still removes retained rows, and ticket 19 owns the forward
+ * migration that contracts (drops) this storage after old callers are retired.
  *
- * ## Scope
- * Only ADOPTION and PRODUCT are supported.
- * RESCUE and LOST are real-time emergencies that use push notifications directly
- * and are not suitable for alert-based discovery.
- *
- * ## Implementation status
- * Schema defined. Matching logic deferred to a future iteration.
- *
- * ## Match query pattern
- * The post-creation hook queries this table using idx_saved_searches_match
- * (post_type, city_id, species) to find all matching alert subscriptions
- * efficiently before firing notifications.
+ * ## Historical purpose
+ * When a new ADOPTION or PRODUCT post was created, the intended service would
+ * query this table for matching alerts and fire `SYSTEM_ANNOUNCEMENT`
+ * notifications. That matching logic never shipped.
  *
  * ## City scoping
  * `city_id = NULL` means "watch all cities nationwide" — a broader alert.

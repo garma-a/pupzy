@@ -2405,75 +2405,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.equal(userRow.phone_number, 'ENC_PHONE');
     assert.equal(userRow.last_seen_at, null);
 
-    // 8. Saved Searches Historical & Official City Labels
-    // 8a. Saved search with official city
-    const savedSearchOfficial = await database.pool.query(
-      `INSERT INTO saved_searches (user_id, label, post_type, city_id, species)
-       VALUES ($1, 'Zamalek Dogs', 'ADOPTION', $2, 'DOG')
-       RETURNING id`,
-      [principals.userId, zamalekId],
-    );
-    const ssOfficialId = savedSearchOfficial.rows[0].id;
-
-    // 8b. Saved search with historical legacy city
-    const savedSearchLegacy = await database.pool.query(
-      `INSERT INTO saved_searches (user_id, label, post_type, city_id, species)
-       VALUES ($1, 'Legacy Area Cats', 'ADOPTION', $2, 'CAT')
-       RETURNING id`,
-      [principals.userId, legacyCityId],
-    );
-    const ssLegacyId = savedSearchLegacy.rows[0].id;
-
-    // 8c. Saved search with historical retired city
-    const savedSearchRetired = await database.pool.query(
-      `INSERT INTO saved_searches (user_id, label, post_type, city_id, species)
-       VALUES ($1, 'Retired District Birds', 'LOST', $2, 'BIRD')
-       RETURNING id`,
-      [principals.userId, retiredCityId],
-    );
-    const ssRetiredId = savedSearchRetired.rows[0].id;
-
-    // Show view for official saved search
-    const ssOfficialShow = await fetch(`${baseUrl}/admin/api/resources/saved_searches/records/${ssOfficialId}/show`, {
-      headers: { cookie: superCookie },
-    });
-    assert.equal(ssOfficialShow.status, 200);
-    const ssOffData = await ssOfficialShow.json();
-    assert.ok(ssOffData.record.populated.city_id);
-    assert.equal(ssOffData.record.populated.city_id.title, 'Zamalek / الزمالك (Cairo)');
-
-    // Show view for historical legacy saved search -> displays readable label
-    const ssLegacyShow = await fetch(`${baseUrl}/admin/api/resources/saved_searches/records/${ssLegacyId}/show`, {
-      headers: { cookie: superCookie },
-    });
-    assert.equal(ssLegacyShow.status, 200);
-    const ssLegData = await ssLegacyShow.json();
-    assert.ok(ssLegData.record.populated.city_id);
-    assert.equal(ssLegData.record.populated.city_id.title, 'Ancient Village / قرية قديمة متقادمة (Giza)');
-
-    // Show view for historical retired saved search -> displays readable label
-    const ssRetiredShow = await fetch(`${baseUrl}/admin/api/resources/saved_searches/records/${ssRetiredId}/show`, {
-      headers: { cookie: superCookie },
-    });
-    assert.equal(ssRetiredShow.status, 200);
-    const ssRetData = await ssRetiredShow.json();
-    assert.ok(ssRetData.record.populated.city_id);
-    assert.equal(ssRetData.record.populated.city_id.title, 'Retired District / حي ملغي (Suez)');
-
-    // List view includes all three with populated bilingual titles
-    const ssListRes = await fetch(`${baseUrl}/admin/api/resources/saved_searches/actions/list`, {
-      headers: { cookie: superCookie },
-    });
-    assert.equal(ssListRes.status, 200);
-    const ssListData = await ssListRes.json();
-    const recOff = ssListData.records.find((r) => r.id === ssOfficialId);
-    const recLeg = ssListData.records.find((r) => r.id === ssLegacyId);
-    const recRet = ssListData.records.find((r) => r.id === ssRetiredId);
-    assert.equal(recOff.populated.city_id.title, 'Zamalek / الزمالك (Cairo)');
-    assert.equal(recLeg.populated.city_id.title, 'Ancient Village / قرية قديمة متقادمة (Giza)');
-    assert.equal(recRet.populated.city_id.title, 'Retired District / حي ملغي (Suez)');
-
-    // 9. Vet Clinic Location Audits with historical cities
+    // 8. Vet Clinic Location Audits with historical cities
     const auditRes = await database.pool.query(
       `INSERT INTO vet_clinic_location_audits (vet_clinic_id, admin_user_id, selected_city_id, nearest_city_id, coordinates, discrepancy_details, reason)
        VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint(31.20, 29.98), 4326), '{"discrepant":true}', 'Historical location audit check')

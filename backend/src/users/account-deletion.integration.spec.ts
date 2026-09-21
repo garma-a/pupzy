@@ -37,6 +37,7 @@ import {
   productPosts,
   matingPosts,
   moderationActions,
+  savedSearches,
   cities,
   accountDeletions,
   mediaFinalizations,
@@ -681,6 +682,30 @@ describe('Account Deletion Feature Integration', () => {
         whyAdopt: 'Loving home ready for a puppy',
       });
 
+      // 3b. Seed retired saved-search rows: one owned by the deleting user
+      // (must be cleaned up during the ticket 18 storage transition) and one
+      // owned by a surviving user (must be preserved).
+      const [deletedUserSavedSearch] = await dbHelper.db
+        .insert(savedSearches)
+        .values({
+          userId: user.id,
+          label: 'Persian cats in Cairo',
+          postType: 'ADOPTION',
+          cityId,
+          species: 'CAT',
+        })
+        .returning();
+      const [survivingUserSavedSearch] = await dbHelper.db
+        .insert(savedSearches)
+        .values({
+          userId: otherUser.id,
+          label: 'Dog accessories',
+          postType: 'PRODUCT',
+          cityId,
+          marketCategory: 'ACCESSORIES',
+        })
+        .returning();
+
       // 4. Seed notifications
       // A) Surviving notification received by otherUser mentioning deleting user's name
       const [survivingNotif] = await dbHelper.db
@@ -760,6 +785,15 @@ describe('Account Deletion Feature Integration', () => {
       expect(updatedSurviving.saveCount).toBe(2); // 3 - 1
       expect(updatedSurviving.reportCount).toBe(0); // 0 + trigger insert - trigger delete
       expect(updatedSurviving.effectiveScore).toBeLessThan(10.5);
+
+      // 8b. Verify the ticket 18 transitional saved-search cleanup: retained
+      // rows of the deleted account are removed while a surviving account's
+      // rows stay untouched (storage contraction is owned by ticket 19).
+      const remainingSavedSearches = await dbHelper.db
+        .select()
+        .from(savedSearches)
+        .where(inArray(savedSearches.id, [deletedUserSavedSearch.id, survivingUserSavedSearch.id]));
+      expect(remainingSavedSearches.map((row) => row.id)).toEqual([survivingUserSavedSearch.id]);
 
       // 9. Verify surviving notifications are redacted
       const [redactedNotif] = await dbHelper.db
