@@ -26,7 +26,6 @@ import { buildProductPostsResource } from './resources/product-posts.resource.js
 import { buildRescuePostsResource } from './resources/rescue-posts.resource.js';
 import { attachCacheInvalidation } from './resources/resource-helpers.js';
 import { QueueAwareSqlResource, buildAdminSqlDatabase } from './sql-adapter.js';
-import { buildSavedSearchesResource } from './resources/saved-searches.resource.js';
 import { buildUsersResource } from './resources/users.resource.js';
 import { buildVetClinicsResource } from './resources/vet-clinics.resource.js';
 import { buildVetClinicLocationAuditsResource } from './resources/vet-clinic-location-audits.resource.js';
@@ -51,7 +50,6 @@ export const ADMIN_RESOURCE_TABLES = Object.freeze([
   'comments',
   'contact_requests',
   'adoption_applications',
-  'saved_searches',
   'notifications',
   'cities',
   'vet_clinics',
@@ -125,7 +123,6 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     buildCommentsResource(db, pool, components, cache),
     buildContactRequestsResource(db, components),
     buildAdoptionApplicationsResource(db, components),
-    buildSavedSearchesResource(db, components),
     buildNotificationsResource(db, components),
     buildCitiesResource(db, components),
     buildVetClinicsResource(db, pool, components, cache),

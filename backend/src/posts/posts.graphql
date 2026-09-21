@@ -293,26 +293,6 @@ type Notification {
   createdAt: DateTime!
 }
 
-"""
-A saved search alert that fires SYSTEM_ANNOUNCEMENT notifications
-when a new matching post is created.
-Only ADOPTION and PRODUCT post types are supported.
-"""
-type SavedSearch {
-  id: ID!
-  label: String
-  postType: PostType!
-  cityId: ID
-  species: SpeciesType
-  breed: String
-  marketCategory: ProductCategory
-  """
-  Maximum price filter. Null means no price ceiling.
-  """
-  maxPrice: Float
-  createdAt: DateTime!
-}
-
 # ─── Create Mutation Inputs ──────────────────────────────────────────────────
 
 """

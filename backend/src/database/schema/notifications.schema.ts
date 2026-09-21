@@ -25,7 +25,7 @@ import { notificationTypeEnum } from './enums';
  * | POST_REMOVED_BY_ADMIN             | AdminJS `after` hook on post status update → REMOVED              |
  * | POST_RESOLVED_BY_ADMIN            | AdminJS type-specific Post Resolution actions (ticket 08)         |
  * | POST_INACTIVITY_NUDGE             | Auto-removal cron (fires before removing the post)               |
- * | SYSTEM_ANNOUNCEMENT               | Service layer when a new post matches a saved search alert        |
+ * | SYSTEM_ANNOUNCEMENT               | Retired saved-search alert — retained for historical rows, no creation site |
  *
  * ## Related entity FKs
  * All three FK columns are nullable. SET NULL on delete so historical

@@ -749,18 +749,6 @@ export interface DeviceRegistration {
   updatedAt: DateTime;
 }
 
-export interface SavedSearch {
-  id: string;
-  label?: Nullable<string>;
-  postType: PostType;
-  cityId?: Nullable<string>;
-  species?: Nullable<SpeciesType>;
-  breed?: Nullable<string>;
-  marketCategory?: Nullable<ProductCategory>;
-  maxPrice?: Nullable<number>;
-  createdAt: DateTime;
-}
-
 export interface PageInfo {
   endCursor?: Nullable<string>;
   hasNextPage: boolean;

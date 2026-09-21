@@ -5,6 +5,7 @@ docs/*
 docs/adr/*
 !docs/adr/0005-durable-staged-uploads.md
 !docs/adr/0006-directional-blocks-create-mutual-isolation.md
+!docs/adr/0007-retire-saved-search-runtime-before-storage-contraction.md
 !docs/comments-flutter-integration-contract.md
 !docs/post-lifecycle-transition-contract.md
 !docs/post-expiry-and-renewal-contract.md

@@ -9,7 +9,6 @@ import { buildUsersResource } from './users.resource.js';
 import { buildPostReportsResource } from './post-reports.resource.js';
 import { buildContactRequestsResource } from './contact-requests.resource.js';
 import { buildAdoptionApplicationsResource } from './adoption-applications.resource.js';
-import { buildSavedSearchesResource } from './saved-searches.resource.js';
 import { buildNotificationsResource } from './notifications.resource.js';
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
@@ -156,23 +155,6 @@ describe('Moderation and Activity Tables Curation & Layout Rules (Task 10)', () 
       assert.equal(adoptRes.options.properties.applicant_id.components.list, 'ShortUuidMock');
     });
 
-    it('saved_searches resource uses intentional columns, readable City and ShortUuid', () => {
-      const savedRes = buildSavedSearchesResource(db, components);
-      assert.deepEqual(savedRes.options.listProperties, [
-        'id',
-        'user_id',
-        'label',
-        'post_type',
-        'city_id',
-        'species',
-        'created_at',
-      ]);
-      assert.ok(savedRes.options.showProperties.includes('breed'));
-      assert.ok(savedRes.options.showProperties.includes('market_category'));
-      assert.equal(savedRes.options.properties.id.components.list, 'ShortUuidMock');
-      assert.equal(savedRes.options.properties.user_id.components.list, 'ShortUuidMock');
-    });
-
     it('notifications resource uses intentional columns and ShortUuid', () => {
       const notifRes = buildNotificationsResource(db, components);
       assert.deepEqual(notifRes.options.listProperties, [
@@ -197,7 +179,6 @@ describe('Moderation and Activity Tables Curation & Layout Rules (Task 10)', () 
       buildPostReportsResource(db, components),
       buildContactRequestsResource(db, components),
       buildAdoptionApplicationsResource(db, components),
-      buildSavedSearchesResource(db, components),
       buildNotificationsResource(db, components),
     ];
 

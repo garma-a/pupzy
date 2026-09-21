@@ -49,7 +49,7 @@ export const adoptionPosts = pgTable(
     /** Animal species. */
     species: speciesTypeEnum('species').notNull(),
 
-    /** Breed, if known. Used for filtered browsing and saved-search alerts. */
+    /** Breed, if known. Used for filtered browsing. */
     breed: varchar('breed', { length: 100 }),
 
     /**
