@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationsRepository } from './notifications.repository';
 import { localizeNotification } from './notification-templates';
+import { isPushDeliveryEnabled } from './push-delivery.constants';
 import { NotFoundError, ValidationError } from '../common/errors/app.errors';
 import { assertUuid } from '../common/utils/validate-uuid';
 import { clampFirst } from '../common/utils/pagination.util';
@@ -32,17 +33,24 @@ export class NotificationsService {
    * Persistence rechecks mutual isolation between actor and recipient under
    * the canonical account-pair lock, so an active Block — including one that
    * commits concurrently — suppresses the notification before it is stored.
+   *
+   * ## Durable push intent
+   * Push-enabled types persist their delivery intents in the same transaction
+   * as the notification; the push worker sends only after that commit and
+   * rechecks preference, account state and isolation again.
    */
   fireNotification(data: NewNotification, actorId?: string): void {
     // Don't notify yourself
     if (actorId && data.recipientId === actorId) return;
 
-    this.notificationsRepository.createIfNotIsolated(data, actorId).catch((err) => {
-      this.logger.error(
-        `Failed to create notification type=${data.type} for recipient=${data.recipientId}`,
-        err instanceof Error ? err.stack : String(err),
-      );
-    });
+    this.notificationsRepository
+      .createIfNotIsolated(data, actorId, { enqueuePush: isPushDeliveryEnabled(data.type) })
+      .catch((err) => {
+        this.logger.error(
+          `Failed to create notification type=${data.type} for recipient=${data.recipientId}`,
+          err instanceof Error ? err.stack : String(err),
+        );
+      });
   }
 
   /**

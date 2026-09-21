@@ -344,6 +344,13 @@
       "when": 1791224000000,
       "tag": "0048_add_post_status_filter_operators",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1791310400000,
+      "tag": "0049_add_device_push_delivery",
+      "breakpoints": true
     }
   ]
 }

@@ -221,6 +221,19 @@ export class UsersService {
   }
 
   /**
+   * Updates the explicit push notification preference.
+   *
+   * Only the preference is written. Disabling push suppresses provider
+   * delivery at send time while the in-app notification inbox and history
+   * remain intact, so an opt-out never removes read or unread notifications.
+   */
+  async updateNotificationPreferences(userId: string, notificationsEnabled: boolean): Promise<User> {
+    const updatedUser = await this.usersRepository.update(userId, { notificationsEnabled });
+    await this.invalidateUserCache(updatedUser.firebaseUserId);
+    return this.decryptUserPhone(updatedUser);
+  }
+
+  /**
    * Updates the user's location and nearest city based on GPS coordinates.
    */
   async updateMyLocation(userId: string, location: { latitude: number; longitude: number }): Promise<User> {

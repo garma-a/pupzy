@@ -5,6 +5,7 @@ import { DATABASE_TOKEN } from '../database/database.provider';
 import * as schema from '../database/schema';
 import { notifications, type Notification, type NewNotification } from '../database/schema';
 import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
+import { PushDeliveryRepository } from './push-delivery.repository';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -32,6 +33,9 @@ export class NotificationsRepository {
     @Optional()
     @Inject(AccountIsolationPolicy)
     isolationPolicy?: AccountIsolationPolicy,
+    @Optional()
+    @Inject(PushDeliveryRepository)
+    private readonly pushDeliveryRepository?: PushDeliveryRepository,
   ) {
     this.isolationPolicy = isolationPolicy ?? new AccountIsolationPolicy(this.db);
   }
@@ -54,17 +58,28 @@ export class NotificationsRepository {
    * entirely, while one that commits after this insert leaves ordinary
    * pre-Block history behind. Returns undefined when suppressed.
    *
-   * Notifications without an actor (administrative and system-generated rows)
-   * keep their existing persistence rules and are inserted directly.
+   * When `enqueuePush` is set, the durable push intents for the recipient's
+   * registered devices are written in the same transaction as the notification,
+   * so a push can never describe a notification that did not commit. The
+   * worker still rechecks preference, account state and isolation at send time.
    */
-  async createIfNotIsolated(data: NewNotification, actorId?: string): Promise<Notification | undefined> {
-    if (!actorId) return this.create(data);
+  async createIfNotIsolated(
+    data: NewNotification,
+    actorId?: string,
+    options?: { enqueuePush?: boolean },
+  ): Promise<Notification | undefined> {
+    const shouldEnqueuePush = Boolean(options?.enqueuePush && this.pushDeliveryRepository);
+    if (!actorId && !shouldEnqueuePush) return this.create(data);
 
     return this.db.transaction(async (tx) => {
-      if (await this.isolationPolicy.lockPairAndRecheck(tx, actorId, data.recipientId)) {
+      if (actorId && (await this.isolationPolicy.lockPairAndRecheck(tx, actorId, data.recipientId))) {
         return undefined;
       }
-      return this.create(data, tx);
+      const notification = await this.create(data, tx);
+      if (shouldEnqueuePush) {
+        await this.pushDeliveryRepository!.enqueueForNotification(notification, actorId, tx);
+      }
+      return notification;
     });
   }
 
