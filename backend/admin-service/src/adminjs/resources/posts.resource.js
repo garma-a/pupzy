@@ -1,6 +1,7 @@
 import { ValidationError } from 'adminjs';
 import { ENUMS } from '../enums.js';
 import { buildPostActions } from '../actions/moderate-post.actions.js';
+import { POST_REVIEW_WORKSPACE_PARAM, attachPostReviewData, buildPostReviewActions } from '../review/post-review.js';
 import { attachShortUuid, enumProperty, noDeleteActions, stripPopulatedPasswordHashes } from './resource-helpers.js';
 
 export const PROTECTED_POST_FIELDS = [
@@ -140,6 +141,18 @@ export function buildPostsResource(db, pool, components, cache) {
   attachShortUuid(properties, ['id'], components, ['list', 'show']);
   attachShortUuid(properties, ['creator_id', 'moderated_by_admin_id'], components, ['show']);
 
+  // The review workspace is a virtual read-only property rendered by a custom
+  // component. Without the component (unit tests, reduced builds) the virtual
+  // property is omitted entirely and the default record fields remain.
+  const hasReviewWorkspace = Boolean(components?.PostReviewWorkspace);
+  if (hasReviewWorkspace) {
+    properties[POST_REVIEW_WORKSPACE_PARAM] = {
+      isVisible: { list: false, show: true, edit: false, filter: false },
+      isDisabled: true,
+      components: { show: components.PostReviewWorkspace },
+    };
+  }
+
   return {
     resource: db.table('posts'),
     options: {
@@ -149,15 +162,17 @@ export function buildPostsResource(db, pool, components, cache) {
         ...noDeleteActions,
         new: { isAccessible: false },
         list: { after: stripPopulatedPasswordHashes },
-        show: { after: stripPopulatedPasswordHashes },
+        show: { after: [stripPopulatedPasswordHashes, attachPostReviewData(pool)] },
         edit: {
           before: preparePostEditPayload,
           after: stripPopulatedPasswordHashes,
         },
         ...buildPostActions(pool, components?.ModerationAction, cache),
+        ...buildPostReviewActions(pool),
       },
       listProperties: ['id', 'title', 'post_type', 'status', 'moderation_status', 'report_count', 'created_at'],
       showProperties: [
+        ...(hasReviewWorkspace ? [POST_REVIEW_WORKSPACE_PARAM] : []),
         'id',
         'title',
         'description',

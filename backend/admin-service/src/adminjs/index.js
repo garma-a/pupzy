@@ -90,6 +90,10 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       'MappedLocationShow',
       path.join(currentDirectory, 'components', 'mapped-location-show-component.jsx'),
     ),
+    PostReviewWorkspace: componentLoader.add(
+      'PostReviewWorkspace',
+      path.join(currentDirectory, 'components', 'post-review-workspace-component.jsx'),
+    ),
   };
 
   const { db, sqlAdapterPool } = await buildAdminSqlDatabase(
