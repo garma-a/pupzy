@@ -23,6 +23,9 @@ enum PostType {
 
 """
 Lifecycle state of a post.
+EXPIRED is the inactivity state for renewable ADOPTION/PRODUCT listings:
+the listing leaves active discovery but keeps its detail, media and discussion
+until its owner renews it.
 """
 enum PostStatus {
   ACTIVE
@@ -31,6 +34,7 @@ enum PostStatus {
   ADOPTED
   SOLD
   REMOVED
+  EXPIRED
 }
 
 """

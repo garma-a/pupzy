@@ -782,8 +782,19 @@ extend type Mutation {
   Closing a Post also terminates its still-pending Contact Requests and
   Adoption Applications; approved contact access is retained.
   Only the post creator can change their own post's status.
+  EXPIRED is never a valid update target: it is applied by the inactivity
+  boundary and can only be left through `renewPost`.
   """
   updatePostStatus(postId: ID!, status: PostStatus!): Post!
+
+  """
+  Explicitly renew an ACTIVE or EXPIRED product listing. Renewal resets the
+  inactivity window, returns an EXPIRED listing to ACTIVE, and is limited to
+  once every seven days per Post. Completed (SOLD) and Removed Posts cannot be
+  renewed, and renewal never revives interactions terminated by expiry.
+  Only the post creator can renew their own post.
+  """
+  renewPost(postId: ID!): Post!
 
   """
   Records a view on a post. Deduplicated per user per hour.

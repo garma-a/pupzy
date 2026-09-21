@@ -15,6 +15,7 @@ import {
   postUpvotes,
   postSaves,
   postReports,
+  notifications,
   contactRequests,
   adoptionApplications,
   type Post,
@@ -32,13 +33,16 @@ import {
   type ReportReason,
 } from '../database/schema';
 import type * as schema from '../database/schema';
-import { ConflictError, ForbiddenError, NotFoundError } from '../common/errors/app.errors';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../common/errors/app.errors';
 import {
   POST_DISCUSSION_LOCK_NAMESPACE,
+  RENEWAL_COOLDOWN_DAYS,
   canOwnerClose,
   canOwnerRemove,
+  canOwnerRenew,
 } from '../common/contracts/post-lifecycle.contract';
 import { withDbRetry } from '../common/utils/db-retry.util';
+import type { NotificationContentColumns } from '../notifications/notification-templates';
 import {
   ModerationReportQuotaManager,
   ReportQuotaReservation,
@@ -488,6 +492,147 @@ export class PostsRepository {
         if (post) {
           await this.terminatePendingInteractions(tx, postId);
         }
+        return post;
+      }),
+    );
+  }
+
+  /**
+   * Explicitly renews an ACTIVE or EXPIRED listing for its owner.
+   *
+   * Runs inside one transaction under the shared lifecycle locks, re-reads the
+   * Post, then applies the renewal only while the stored `renewed_at` is older
+   * than the seven-day cooldown. Renewal resets the inactivity window,
+   * reactivates an EXPIRED listing and leaves every direct interaction
+   * untouched, so interactions terminated by expiry stay terminated.
+   *
+   * @throws {NotFoundError} when the Post no longer exists.
+   * @throws {ForbiddenError} when the caller does not own the Post.
+   * @throws {ValidationError} for non-renewable types or statuses.
+   * @throws {ConflictError} with code RENEWAL_COOLDOWN inside the cooldown.
+   */
+  async renewPost(postId: string, creatorId: string): Promise<Post> {
+    return withDbRetry(() =>
+      this.db.transaction(async (tx) => {
+        const lockedPost = await this.lockDiscussionPost(tx, postId);
+        if (!lockedPost) throw new NotFoundError('Post', postId);
+        if (lockedPost.creatorId !== creatorId) {
+          throw new ForbiddenError('You can only renew your own posts');
+        }
+        if (!canOwnerRenew(lockedPost.postType, lockedPost.status)) {
+          throw new ValidationError(
+            `A "${lockedPost.postType}" post in "${lockedPost.status}" status cannot be renewed`,
+          );
+        }
+
+        const [post] = await tx
+          .update(posts)
+          .set({ status: 'ACTIVE', lastEngagedAt: sql`now()`, renewedAt: sql`now()` })
+          .where(
+            and(
+              eq(posts.id, postId),
+              sql`(${posts.renewedAt} IS NULL OR ${posts.renewedAt} <= now() - make_interval(days => ${RENEWAL_COOLDOWN_DAYS}::int))`,
+            ),
+          )
+          .returning();
+        if (!post) {
+          throw new ConflictError('This listing was renewed within the last seven days', 'RENEWAL_COOLDOWN');
+        }
+        return post;
+      }),
+    );
+  }
+
+  /**
+   * Applies the inactivity expiry to one candidate Post.
+   *
+   * The Post row is re-read under the shared lifecycle locks and the window is
+   * rechecked inside the UPDATE, so a stale job candidate can never expire a
+   * Post that was renewed, closed or removed after the candidate was selected.
+   * Every still-pending direct interaction is terminated in the same
+   * transaction; rows are preserved and approved interactions are untouched.
+   *
+   * @returns The expired Post, or undefined when the candidate is no longer eligible.
+   */
+  async expireInactivePost(
+    postId: string,
+    postType: Post['postType'],
+    inactivityDays: number,
+  ): Promise<Post | undefined> {
+    return withDbRetry(() =>
+      this.db.transaction(async (tx) => {
+        const lockedPost = await this.lockDiscussionPost(tx, postId);
+        if (!lockedPost || lockedPost.status !== 'ACTIVE' || lockedPost.postType !== postType) return undefined;
+
+        const [post] = await tx
+          .update(posts)
+          .set({ status: 'EXPIRED' })
+          .where(
+            and(
+              eq(posts.id, postId),
+              eq(posts.status, 'ACTIVE'),
+              sql`${posts.lastEngagedAt} <= now() - make_interval(days => ${inactivityDays}::int)`,
+            ),
+          )
+          .returning();
+        if (!post) return undefined;
+
+        await this.terminatePendingInteractions(tx, postId);
+        return post;
+      }),
+    );
+  }
+
+  /**
+   * Persists one inactivity reminder and its durable state atomically.
+   *
+   * The Post row is re-read under the shared lifecycle locks and the whole
+   * reminder window is rechecked, so two workers racing the same candidate
+   * create exactly one inbox row per inactivity cycle, and a Post that gained
+   * activity, expired or closed is never reminded by stale work.
+   *
+   * @returns The Post whose `reminder_sent_at` was set, or undefined when the
+   *          candidate is no longer eligible.
+   */
+  async recordInactivityReminder(params: {
+    postId: string;
+    postType: Post['postType'];
+    reminderAfterDays: number;
+    expiryAfterDays: number | null;
+    content: NotificationContentColumns;
+  }): Promise<Post | undefined> {
+    const { postId, postType, reminderAfterDays, expiryAfterDays, content } = params;
+    return withDbRetry(() =>
+      this.db.transaction(async (tx) => {
+        const lockedPost = await this.lockDiscussionPost(tx, postId);
+        if (!lockedPost || lockedPost.status !== 'ACTIVE' || lockedPost.postType !== postType) return undefined;
+
+        const eligibility = await tx.execute<{ eligible: boolean }>(sql`
+          SELECT (
+            last_engaged_at <= now() - make_interval(days => ${reminderAfterDays}::int)
+            AND (${expiryAfterDays}::int IS NULL OR last_engaged_at > now() - make_interval(days => ${expiryAfterDays}::int))
+            AND (reminder_sent_at IS NULL OR reminder_sent_at < last_engaged_at)
+          ) AS eligible
+          FROM posts
+          WHERE id = ${postId}
+        `);
+        if (!eligibility.rows[0]?.eligible) return undefined;
+
+        await tx.insert(notifications).values({
+          recipientId: lockedPost.creatorId,
+          type: 'POST_INACTIVITY_NUDGE',
+          title: content.title,
+          body: content.body,
+          titleArabic: content.titleArabic,
+          bodyArabic: content.bodyArabic,
+          relatedPostId: postId,
+        });
+
+        const [post] = await tx
+          .update(posts)
+          .set({ reminderSentAt: sql`now()` })
+          .where(eq(posts.id, postId))
+          .returning();
         return post;
       }),
     );

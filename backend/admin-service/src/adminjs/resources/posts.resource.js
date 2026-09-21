@@ -25,6 +25,8 @@ export const PROTECTED_POST_FIELDS = [
   'coordinates.latitude',
   'coordinates.longitude',
   'last_engaged_at',
+  'renewed_at',
+  'reminder_sent_at',
   'created_at',
   'updated_at',
 ];
@@ -129,6 +131,8 @@ export function buildPostsResource(db, pool, components, cache) {
       isVisible: { list: false, show: true, edit: false, filter: false },
     },
     last_engaged_at: { isDisabled: true },
+    renewed_at: { isDisabled: true },
+    reminder_sent_at: { isDisabled: true },
     created_at: { isDisabled: true },
     updated_at: { isDisabled: true },
   };
@@ -176,6 +180,8 @@ export function buildPostsResource(db, pool, components, cache) {
         'moderated_by_admin_id',
         'effective_score',
         'last_engaged_at',
+        'renewed_at',
+        'reminder_sent_at',
         'created_at',
         'updated_at',
       ],

@@ -27,6 +27,7 @@ export enum PostStatus {
   ADOPTED = 'ADOPTED',
   SOLD = 'SOLD',
   REMOVED = 'REMOVED',
+  EXPIRED = 'EXPIRED',
 }
 
 export enum ModerationStatus {
@@ -492,6 +493,7 @@ export interface IMutation {
   toggleUpvote(postId: string): Post | Promise<Post>;
   toggleSave(postId: string): Post | Promise<Post>;
   updatePostStatus(postId: string, status: PostStatus): Post | Promise<Post>;
+  renewPost(postId: string): Post | Promise<Post>;
   recordView(postId: string): boolean | Promise<boolean>;
   requestMediaUploadUrl(input: RequestMediaUploadInput): MediaUploadResponse | Promise<MediaUploadResponse>;
   completeProfile(input: CompleteProfileInput): User | Promise<User>;

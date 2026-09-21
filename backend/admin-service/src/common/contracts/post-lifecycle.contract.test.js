@@ -4,11 +4,15 @@ import {
   POST_DISCUSSION_LOCK_NAMESPACE,
   POST_LIFECYCLE_LOCK_ORDER,
   POST_LIFECYCLE_SIDE_EFFECTS,
+  POST_EXPIRY_POLICIES,
+  RENEWAL_COOLDOWN_DAYS,
   OWNER_CLOSURE_TRANSITIONS,
   LOST_SUBTYPE_CLOSURE_TRANSITIONS,
   ownerClosureTargets,
   canOwnerClose,
   canOwnerRemove,
+  canOwnerRenew,
+  canExpirePost,
   canAdminRemove,
   canAdminRestore,
 } from '../../../../src/common/contracts/post-lifecycle.contract.ts';
@@ -65,5 +69,38 @@ describe('AdminJS Post Lifecycle Contract (shared with the API)', () => {
       terminatePendingInteractions: false,
     });
     assert.equal(POST_LIFECYCLE_SIDE_EFFECTS.OWNER_CLOSE.terminatePendingInteractions, true);
+  });
+
+  it('agrees with the API on the inactivity policy and the EXPIRED lifecycle', () => {
+    assert.deepEqual(POST_EXPIRY_POLICIES.PRODUCT, {
+      expiryAfterDays: 14,
+      reminderAfterDays: 11,
+      renewable: true,
+    });
+    assert.equal(POST_EXPIRY_POLICIES.MATING.expiryAfterDays, null);
+    assert.equal(RENEWAL_COOLDOWN_DAYS, 7);
+    assert.equal(canExpirePost('PRODUCT', 'ACTIVE'), true);
+    assert.equal(canExpirePost('MATING', 'ACTIVE'), false);
+    assert.equal(canOwnerRenew('PRODUCT', 'EXPIRED'), true);
+    assert.equal(canOwnerRenew('PRODUCT', 'SOLD'), false);
+    assert.equal(canOwnerRenew('ADOPTION', 'ACTIVE'), false);
+    assert.deepEqual(POST_LIFECYCLE_SIDE_EFFECTS.EXPIRE, {
+      userPostCountDelta: 'NONE',
+      invalidateOwnerUserCache: false,
+      invalidateAdminDashboardCache: false,
+      moderationAudit: false,
+      ownerNotification: null,
+      closeOpenPostReports: false,
+      terminatePendingInteractions: true,
+    });
+    assert.deepEqual(POST_LIFECYCLE_SIDE_EFFECTS.OWNER_RENEW, {
+      userPostCountDelta: 'NONE',
+      invalidateOwnerUserCache: true,
+      invalidateAdminDashboardCache: false,
+      moderationAudit: false,
+      ownerNotification: null,
+      closeOpenPostReports: false,
+      terminatePendingInteractions: false,
+    });
   });
 });

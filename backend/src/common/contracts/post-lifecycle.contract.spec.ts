@@ -2,11 +2,16 @@ import {
   POST_DISCUSSION_LOCK_NAMESPACE,
   POST_LIFECYCLE_LOCK_ORDER,
   POST_LIFECYCLE_SIDE_EFFECTS,
+  POST_EXPIRY_POLICIES,
+  RENEWAL_COOLDOWN_DAYS,
   OWNER_CLOSURE_TRANSITIONS,
   LOST_SUBTYPE_CLOSURE_TRANSITIONS,
   ownerClosureTargets,
   canOwnerClose,
   canOwnerRemove,
+  canOwnerRenew,
+  canExpirePost,
+  postExpiryPolicy,
   canAdminRemove,
   canAdminRestore,
 } from './post-lifecycle.contract';
@@ -75,6 +80,11 @@ describe('Post lifecycle transition contract', () => {
       expect(canOwnerClose('LOST', 'REUNITED', 'REUNITED')).toBe(false);
       expect(canOwnerClose('MATING', 'RESOLVED', 'RESOLVED')).toBe(false);
     });
+
+    it('rejects EXPIRED as an owner closure target', () => {
+      expect(canOwnerClose('PRODUCT', 'ACTIVE', 'EXPIRED')).toBe(false);
+      expect(canOwnerClose('PRODUCT', 'EXPIRED', 'SOLD')).toBe(false);
+    });
   });
 
   describe('removal transitions', () => {
@@ -100,15 +110,93 @@ describe('Post lifecycle transition contract', () => {
     });
   });
 
+  describe('inactivity expiry policy', () => {
+    it('enables only the PRODUCT window in this slice', () => {
+      expect(POST_EXPIRY_POLICIES.PRODUCT).toEqual({
+        expiryAfterDays: 14,
+        reminderAfterDays: 11,
+        renewable: true,
+      });
+      for (const postType of ['RESCUE', 'LOST', 'ADOPTION', 'MATING'] as const) {
+        expect(POST_EXPIRY_POLICIES[postType]).toEqual({
+          expiryAfterDays: null,
+          reminderAfterDays: null,
+          renewable: false,
+        });
+      }
+      expect(Object.isFrozen(POST_EXPIRY_POLICIES)).toBe(true);
+    });
+
+    it('reminds three days before the PRODUCT expiry window', () => {
+      expect(POST_EXPIRY_POLICIES.PRODUCT.expiryAfterDays! - POST_EXPIRY_POLICIES.PRODUCT.reminderAfterDays!).toBe(3);
+    });
+
+    it('allows automatic expiry only for Active posts of an enabled type', () => {
+      expect(canExpirePost('PRODUCT', 'ACTIVE')).toBe(true);
+      for (const status of ['RESOLVED', 'ADOPTED', 'SOLD', 'REMOVED', 'EXPIRED']) {
+        expect(canExpirePost('PRODUCT', status)).toBe(false);
+      }
+      for (const postType of ['RESCUE', 'LOST', 'ADOPTION', 'MATING', 'UNKNOWN']) {
+        expect(canExpirePost(postType, 'ACTIVE')).toBe(false);
+      }
+    });
+
+    it('allows owner renewal only for renewable types from ACTIVE or EXPIRED', () => {
+      expect(canOwnerRenew('PRODUCT', 'ACTIVE')).toBe(true);
+      expect(canOwnerRenew('PRODUCT', 'EXPIRED')).toBe(true);
+      for (const status of ['SOLD', 'RESOLVED', 'REUNITED', 'ADOPTED', 'REMOVED']) {
+        expect(canOwnerRenew('PRODUCT', status)).toBe(false);
+      }
+      for (const postType of ['RESCUE', 'LOST', 'ADOPTION', 'MATING', 'UNKNOWN']) {
+        expect(canOwnerRenew(postType, 'ACTIVE')).toBe(false);
+      }
+    });
+
+    it('resolves policies per type and rejects unknown types', () => {
+      expect(postExpiryPolicy('PRODUCT')?.expiryAfterDays).toBe(14);
+      expect(postExpiryPolicy('UNKNOWN')).toBeNull();
+    });
+
+    it('sets the renewal cooldown to seven days', () => {
+      expect(RENEWAL_COOLDOWN_DAYS).toBe(7);
+    });
+  });
+
   describe('side-effect contract', () => {
     it('covers exactly the named transitions', () => {
       expect(Object.keys(POST_LIFECYCLE_SIDE_EFFECTS).sort()).toEqual([
         'ADMIN_REMOVE',
         'ADMIN_RESTORE',
+        'EXPIRE',
         'OWNER_CLOSE',
         'OWNER_REMOVE',
+        'OWNER_RENEW',
       ]);
       expect(Object.isFrozen(POST_LIFECYCLE_SIDE_EFFECTS)).toBe(true);
+    });
+
+    it('keeps expiry non-moderation, non-destructive and interaction-terminating', () => {
+      expect(POST_LIFECYCLE_SIDE_EFFECTS.EXPIRE).toEqual({
+        userPostCountDelta: 'NONE',
+        invalidateOwnerUserCache: false,
+        invalidateAdminDashboardCache: false,
+        moderationAudit: false,
+        ownerNotification: null,
+        closeOpenPostReports: false,
+        terminatePendingInteractions: true,
+      });
+    });
+
+    it('keeps renewal limited to cache invalidation and window reset', () => {
+      expect(POST_LIFECYCLE_SIDE_EFFECTS.OWNER_RENEW).toEqual({
+        userPostCountDelta: 'NONE',
+        invalidateOwnerUserCache: true,
+        invalidateAdminDashboardCache: false,
+        moderationAudit: false,
+        ownerNotification: null,
+        closeOpenPostReports: false,
+        terminatePendingInteractions: false,
+      });
     });
 
     it('keeps owner actions limited to cache invalidation and closure cleanup', () => {

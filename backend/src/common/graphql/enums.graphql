@@ -33,6 +33,8 @@ enum PostStatus {
   SOLD
   "Admin or creator removed the post."
   REMOVED
+  "Listing expired through inactivity. Readable and renewable, but not discoverable."
+  EXPIRED
 }
 
 "AI / admin moderation pipeline state."
