@@ -353,10 +353,7 @@ describe('moderation actions', () => {
       ['POST_REMOVED_BY_ADMIN'],
     );
     assert.equal(notifications.rows[0].title_arabic, 'تمت إزالة منشوراتك');
-    assert.equal(
-      notifications.rows[0].body_arabic,
-      'تم حظر حسابك (Coordinated spam) وتمت إزالة منشوراتك النشطة.',
-    );
+    assert.equal(notifications.rows[0].body_arabic, 'تم حظر حسابك (Coordinated spam) وتمت إزالة منشوراتك النشطة.');
     const audit = await database.pool.query(`SELECT metadata FROM moderation_actions`);
     assert.equal(audit.rows[0].metadata.cascadedPostCount, 101);
     assert.equal(audit.rows[0].metadata.postCascade.state, 'COMPLETED');
