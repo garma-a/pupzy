@@ -153,6 +153,26 @@ describe('Database Migration Runner Integration', () => {
       expect(row.column_default).toBeNull();
     }
 
+    // Verify the administrator-resolution lifecycle (migration 0049): the
+    // append-only audit and the owner notification types accept the new values.
+    const moderationActionEnumRes = await pool.query<{ enumlabel: string }>(`
+      SELECT enumlabel
+      FROM pg_enum
+      JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+      WHERE pg_type.typname = 'moderation_action_type'
+      ORDER BY enumsortorder
+    `);
+    expect(moderationActionEnumRes.rows.map((row) => row.enumlabel)).toContain('POST_RESOLVED');
+
+    const notificationTypeEnumRes = await pool.query<{ enumlabel: string }>(`
+      SELECT enumlabel
+      FROM pg_enum
+      JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+      WHERE pg_type.typname = 'notification_type'
+      ORDER BY enumsortorder
+    `);
+    expect(notificationTypeEnumRes.rows.map((row) => row.enumlabel)).toContain('POST_RESOLVED_BY_ADMIN');
+
     // Verify staged_uploads schema and non-null constraints
     const stagedColsRes = await pool.query<{ column_name: string; is_nullable: string }>(`
       SELECT column_name, is_nullable

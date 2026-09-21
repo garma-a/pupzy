@@ -46,6 +46,7 @@ const COMMENT_STATUS_LABELS = {
 const MODERATION_ACTION_LABELS = {
   POST_APPROVED: 'Post approved',
   POST_FLAGGED: 'Post flagged',
+  POST_RESOLVED: 'Post resolution recorded',
   POST_REMOVED: 'Post removed',
   POST_RESTORED: 'Post restored',
   USER_BANNED: 'User banned',
@@ -92,6 +93,18 @@ export const postStatusLabel = (value) => labelFrom(POST_STATUS_LABELS, value);
 export const moderationStatusLabel = (value) => labelFrom(MODERATION_STATUS_LABELS, value);
 export const commentStatusLabel = (value) => labelFrom(COMMENT_STATUS_LABELS, value);
 export const moderationActionLabel = (value) => labelFrom(MODERATION_ACTION_LABELS, value);
+
+/**
+ * Readable history label for one audit row. Administrator resolutions carry
+ * their recorded outcome in metadata, so the history reads "Post marked
+ * adopted" instead of a generic "Post resolution recorded".
+ */
+export function moderationActionHistoryLabel(actionType, metadata) {
+  if (actionType === 'POST_RESOLVED' && metadata?.outcome) {
+    return `Post marked ${postStatusLabel(metadata.outcome).toLowerCase()}`;
+  }
+  return moderationActionLabel(actionType);
+}
 export const reportReasonLabel = (value) => labelFrom(REPORT_REASON_LABELS, value);
 export const reviewOutcomeLabel = (value) => labelFrom(REVIEW_OUTCOME_LABELS, value);
 
@@ -336,7 +349,7 @@ export async function loadHistory(pool, postId) {
   return rows.map((row) => ({
     id: row.id,
     actionType: row.action_type,
-    actionLabel: moderationActionLabel(row.action_type),
+    actionLabel: moderationActionHistoryLabel(row.action_type, row.metadata),
     targetType: row.target_type,
     targetId: row.target_id,
     reason: row.reason ?? null,
@@ -423,6 +436,31 @@ export async function loadPostReview(pool, postId, options = {}) {
     discussion,
     reports,
     history,
+  };
+}
+
+/**
+ * `show` before hook: attaches the LOST direction discriminator to the loaded
+ * record so the type-specific resolution actions can offer only valid outcomes
+ * (`LOST_PET` resolves as reunited; `FOUND_STRAY` as resolved or reunited).
+ * The show handler serializes the record after this hook, so the value is
+ * present when AdminJS computes the visible record actions. A lookup failure
+ * leaves the discriminator unset and keeps the conservative REUNITED-only rule
+ * instead of breaking the record page.
+ */
+export function attachLostSubtype(pool) {
+  return async function attachLostSubtypeBeforeHook(request, context) {
+    const record = context?.record;
+    if (!record?.params || record.params.post_type !== 'LOST') return request;
+    const recordId = typeof record.id === 'function' ? record.id() : record.params.id;
+    if (!recordId || !pool || typeof pool.query !== 'function') return request;
+    try {
+      const { rows } = await pool.query(`SELECT report_type FROM lost_posts WHERE post_id = $1`, [recordId]);
+      record.params.report_type = rows[0]?.report_type ?? null;
+    } catch {
+      // Leave the discriminator unset; the conservative default still applies.
+    }
+    return request;
   };
 }
 

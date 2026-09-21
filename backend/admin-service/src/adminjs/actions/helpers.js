@@ -129,7 +129,10 @@ export async function runModerationAction(pool, params) {
         return { ok: false, error: params.table + ' row ' + params.id + ' not found' };
       }
 
-      const validationError = params.validate?.(row);
+      // Validation runs under the target row lock. It may inspect related rows
+      // through the same client so type-specific rules (for example a LOST
+      // Post's direction discriminator) are rechecked transactionally.
+      const validationError = await params.validate?.(row, client);
       if (validationError) {
         await client.query('ROLLBACK');
         return { ok: false, error: validationError };
@@ -178,6 +181,45 @@ export async function runModerationAction(pool, params) {
       client.release();
     }
   }
+}
+
+/**
+ * Moves every still-PENDING Contact Request and Adoption Application
+ * targeting the Post to the established terminal `REJECTED` state with
+ * `responded_at` set. Rows are preserved and previously approved interactions
+ * are never touched, matching the API's owner-closure and expiry behavior.
+ * Must run inside the action's own transaction so the status change and the
+ * terminations commit atomically.
+ */
+export async function terminatePendingInteractions(client, postId) {
+  const { rows: contactRequestRows } = await client.query(
+    `UPDATE contact_requests
+     SET status = 'REJECTED', responded_at = now()
+     WHERE post_id = $1 AND status = 'PENDING'
+     RETURNING id`,
+    [postId],
+  );
+  const { rows: adoptionApplicationRows } = await client.query(
+    `UPDATE adoption_applications
+     SET status = 'REJECTED', responded_at = now()
+     WHERE target_post_id = $1 AND status = 'PENDING'
+     RETURNING id`,
+    [postId],
+  );
+  return {
+    terminatedContactRequestCount: contactRequestRows.length,
+    terminatedAdoptionApplicationCount: adoptionApplicationRows.length,
+  };
+}
+
+/**
+ * Reads a LOST Post's direction discriminator (`LOST_PET` / `FOUND_STRAY`).
+ * Returns null when the Post has no extension row, so callers keep the
+ * conservative REUNITED-only rule.
+ */
+export async function findLostReportType(client, postId) {
+  const { rows } = await client.query(`SELECT report_type FROM lost_posts WHERE post_id = $1`, [postId]);
+  return rows[0]?.report_type ?? null;
 }
 
 /**

@@ -19,6 +19,7 @@ const SAMPLE_PARAMS: NotificationTemplateParamsMap = {
   ADOPTION_APPLICATION_APPROVED: { postTitle: 'Missing cat' },
   ADOPTION_APPLICATION_REJECTED: { postTitle: 'Missing cat' },
   POST_REMOVED_BY_ADMIN: { reason: 'Policy violation' },
+  POST_RESOLVED_BY_ADMIN: { postTitle: 'Missing cat', outcome: 'ADOPTED' },
   POST_INACTIVITY_NUDGE: { postTitle: 'Missing cat' },
   SYSTEM_ANNOUNCEMENT: { postTitle: 'Missing cat' },
   NEW_COMMENT: { actorName: 'Ahmed', postTitle: 'Missing cat' },
@@ -104,6 +105,25 @@ describe('notification templates', () => {
       title: 'Comment pinned',
       body: 'Your comment was pinned on "Missing cat"',
     });
+  });
+
+  it('renders the administrator resolution outcome in both languages without the internal reason', () => {
+    for (const [outcome, label] of [
+      ['RESOLVED', 'resolved'],
+      ['REUNITED', 'reunited'],
+      ['ADOPTED', 'adopted'],
+      ['SOLD', 'sold'],
+    ] as const) {
+      const content = buildNotificationContent('POST_RESOLVED_BY_ADMIN', {
+        postTitle: 'Missing cat',
+        outcome,
+      });
+      expect(content.title).toBe('Post outcome recorded');
+      expect(content.body).toBe(`An administrator marked your post "Missing cat" as ${label}.`);
+      expect(content.titleArabic).toBe('تم تسجيل نتيجة المنشور');
+      expect(content.bodyArabic).toContain('Missing cat');
+      expect(content.bodyArabic.trim().length).toBeGreaterThan(0);
+    }
   });
 
   it('preserves both account-ban cascade copy variants', () => {

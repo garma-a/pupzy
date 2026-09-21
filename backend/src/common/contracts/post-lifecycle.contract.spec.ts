@@ -13,6 +13,7 @@ import {
   canExpirePost,
   postExpiryPolicy,
   canAdminRemove,
+  canAdminResolve,
   canAdminRestore,
 } from './post-lifecycle.contract';
 
@@ -110,6 +111,34 @@ describe('Post lifecycle transition contract', () => {
     });
   });
 
+  describe('administrator resolution transitions', () => {
+    it('mirrors the type-specific successful outcome from ACTIVE only', () => {
+      expect(canAdminResolve('RESCUE', 'ACTIVE', 'RESOLVED')).toBe(true);
+      expect(canAdminResolve('LOST', 'ACTIVE', 'REUNITED', 'LOST_PET')).toBe(true);
+      expect(canAdminResolve('LOST', 'ACTIVE', 'RESOLVED', 'FOUND_STRAY')).toBe(true);
+      expect(canAdminResolve('LOST', 'ACTIVE', 'REUNITED', 'FOUND_STRAY')).toBe(true);
+      expect(canAdminResolve('ADOPTION', 'ACTIVE', 'ADOPTED')).toBe(true);
+      expect(canAdminResolve('PRODUCT', 'ACTIVE', 'SOLD')).toBe(true);
+      expect(canAdminResolve('MATING', 'ACTIVE', 'RESOLVED')).toBe(true);
+    });
+
+    it('rejects cross-type outcomes, unknown types and LOST_PET resolved', () => {
+      expect(canAdminResolve('RESCUE', 'ACTIVE', 'SOLD')).toBe(false);
+      expect(canAdminResolve('PRODUCT', 'ACTIVE', 'RESOLVED')).toBe(false);
+      expect(canAdminResolve('MATING', 'ACTIVE', 'REUNITED')).toBe(false);
+      expect(canAdminResolve('LOST', 'ACTIVE', 'RESOLVED', 'LOST_PET')).toBe(false);
+      expect(canAdminResolve('LOST', 'ACTIVE', 'SOLD', 'FOUND_STRAY')).toBe(false);
+      expect(canAdminResolve('UNKNOWN', 'ACTIVE', 'RESOLVED')).toBe(false);
+    });
+
+    it('rejects resolving anything that is not ACTIVE so outcomes are never overwritten', () => {
+      for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'REMOVED', 'EXPIRED']) {
+        expect(canAdminResolve('RESCUE', status, 'RESOLVED')).toBe(false);
+        expect(canAdminResolve('PRODUCT', status, 'SOLD')).toBe(false);
+      }
+    });
+  });
+
   describe('inactivity expiry policy', () => {
     it('enables only the PRODUCT window in this slice', () => {
       expect(POST_EXPIRY_POLICIES.PRODUCT).toEqual({
@@ -166,6 +195,7 @@ describe('Post lifecycle transition contract', () => {
     it('covers exactly the named transitions', () => {
       expect(Object.keys(POST_LIFECYCLE_SIDE_EFFECTS).sort()).toEqual([
         'ADMIN_REMOVE',
+        'ADMIN_RESOLVE',
         'ADMIN_RESTORE',
         'EXPIRE',
         'OWNER_CLOSE',
@@ -213,6 +243,18 @@ describe('Post lifecycle transition contract', () => {
       expect(POST_LIFECYCLE_SIDE_EFFECTS.OWNER_CLOSE.terminatePendingInteractions).toBe(true);
       expect(POST_LIFECYCLE_SIDE_EFFECTS.OWNER_REMOVE.userPostCountDelta).toBe('DECREMENT');
       expect(POST_LIFECYCLE_SIDE_EFFECTS.OWNER_REMOVE.terminatePendingInteractions).toBe(false);
+    });
+
+    it('keeps administrative resolution audited, notified and interaction-terminating without closing reports', () => {
+      expect(POST_LIFECYCLE_SIDE_EFFECTS.ADMIN_RESOLVE).toEqual({
+        userPostCountDelta: 'NONE',
+        invalidateOwnerUserCache: false,
+        invalidateAdminDashboardCache: true,
+        moderationAudit: true,
+        ownerNotification: 'POST_RESOLVED_BY_ADMIN',
+        closeOpenPostReports: false,
+        terminatePendingInteractions: true,
+      });
     });
 
     it('keeps administrative removal audited, notified and report-closing without touching pending interactions', () => {

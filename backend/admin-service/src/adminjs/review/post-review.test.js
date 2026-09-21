@@ -13,6 +13,7 @@ import {
   loadHistory,
   loadPostReview,
   lostSubtypeLabel,
+  moderationActionHistoryLabel,
   moderationActionLabel,
   moderationStatusLabel,
   normalizeDiscussionPage,
@@ -88,6 +89,13 @@ describe('Post review workspace labels and media URLs', () => {
     );
     assert.equal(postStatusLabel('EXPIRED'), 'Expired');
     assert.equal(postStatusLabel(null), 'Unknown');
+  });
+
+  it('renders the recorded administrator resolution outcome in the action history', () => {
+    assert.equal(moderationActionHistoryLabel('POST_RESOLVED', { outcome: 'ADOPTED' }), 'Post marked adopted');
+    assert.equal(moderationActionHistoryLabel('POST_RESOLVED', { outcome: 'REUNITED' }), 'Post marked reunited');
+    assert.equal(moderationActionHistoryLabel('POST_RESOLVED', null), 'Post resolution recorded');
+    assert.equal(moderationActionHistoryLabel('POST_REMOVED', { outcome: 'ADOPTED' }), 'Post removed');
   });
 
   it('normalizes invalid or non-positive discussion pages to page 1', () => {

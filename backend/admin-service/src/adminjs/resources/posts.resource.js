@@ -1,7 +1,12 @@
 import { ValidationError } from 'adminjs';
 import { ENUMS } from '../enums.js';
 import { buildPostActions } from '../actions/moderate-post.actions.js';
-import { POST_REVIEW_WORKSPACE_PARAM, attachPostReviewData, buildPostReviewActions } from '../review/post-review.js';
+import {
+  POST_REVIEW_WORKSPACE_PARAM,
+  attachLostSubtype,
+  attachPostReviewData,
+  buildPostReviewActions,
+} from '../review/post-review.js';
 import { attachShortUuid, enumProperty, noDeleteActions, stripPopulatedPasswordHashes } from './resource-helpers.js';
 
 export const PROTECTED_POST_FIELDS = [
@@ -162,7 +167,10 @@ export function buildPostsResource(db, pool, components, cache) {
         ...noDeleteActions,
         new: { isAccessible: false },
         list: { after: stripPopulatedPasswordHashes },
-        show: { after: [stripPopulatedPasswordHashes, attachPostReviewData(pool)] },
+        show: {
+          before: attachLostSubtype(pool),
+          after: [stripPopulatedPasswordHashes, attachPostReviewData(pool)],
+        },
         edit: {
           before: preparePostEditPayload,
           after: stripPopulatedPasswordHashes,
