@@ -20,7 +20,6 @@ import {
   comments,
   commentReports,
   notifications,
-  savedSearches,
   contactRequests,
   adoptionApplications,
   rescuePosts,
@@ -338,7 +337,7 @@ export class AccountDeletionService {
    * Cleans all database data in an isolated transaction:
    * - Captures permanent and staged media keys into account_deletions before deletion
    * - Reconciles saves, upvotes, and reports on other users' surviving posts
-   * - Removes dependent applications, contact requests, saved searches
+   * - Removes dependent applications and contact requests
    * - Redacts surviving notifications and moderation records
    * - Permanently removes owned posts (all types, including unresolved rescue/lost)
    * - Deletes the user row from `users`
@@ -513,7 +512,6 @@ export class AccountDeletionService {
       }
 
       // 6. Delete applications & contact requests
-      await tx.delete(savedSearches).where(eq(savedSearches.userId, userId));
       await tx.delete(adoptionApplications).where(eq(adoptionApplications.applicantId, userId));
       await tx.delete(contactRequests).where(eq(contactRequests.requesterId, userId));
 

@@ -49,7 +49,6 @@ export class TestDatabaseHelper {
         discussion_notification_events,
         push_deliveries,
         device_registrations,
-        saved_searches,
         moderation_actions,
         media_finalizations,
         posts,

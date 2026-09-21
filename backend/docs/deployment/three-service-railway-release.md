@@ -121,6 +121,8 @@ Because the Main API and AdminJS deploy independently, and rolling releases may 
 3. **Phase 3 — Contract (Cleanup):**
    - Once all services are running the new code and no old replicas remain, deploy a follow-up migration to remove deprecated columns or temporary backwards-compatibility constraints.
 
+The retired saved-search storage is the first completed instance of this pattern. Its runtime surfaces (GraphQL type, generated definitions, AdminJS resource, Account Deletion cleanup) were removed first; after the API and admin rolling deployments drained, migration `0053_drop_saved_searches` contracts the table. Do not apply that migration before the retired runtime is deployed everywhere, because a previous API or admin revision still queries `saved_searches`. See [`docs/adr/0007-retire-saved-search-runtime-before-storage-contraction.md`](../adr/0007-retire-saved-search-runtime-before-storage-contraction.md).
+
 ---
 
 ## 5. Health Checks & Verification

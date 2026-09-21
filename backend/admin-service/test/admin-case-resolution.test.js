@@ -28,7 +28,7 @@ let staffId;
 const BUSINESS_TABLES = `
   post_media, rescue_posts, lost_posts, adoption_posts, product_posts, mating_posts,
   post_upvotes, post_saves, contact_requests, adoption_applications, post_reports, comment_reports, account_reports,
-  notifications, saved_searches, moderation_actions, posts, users,
+  notifications, moderation_actions, posts, users,
   comments, comment_media, post_pins, comment_boosts, comment_idempotency,
   media_deletion_work, blocked_media_hashes, blocks, account_deletions
 `;

@@ -372,6 +372,13 @@
       "when": 1791569600000,
       "tag": "0052_add_normalized_feed_search",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1791656000000,
+      "tag": "0053_drop_saved_searches",
+      "breakpoints": true
     }
   ]
 }

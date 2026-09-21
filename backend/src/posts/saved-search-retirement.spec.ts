@@ -6,10 +6,10 @@ import { Kind, ObjectTypeDefinitionNode, ObjectTypeExtensionNode, parse, visit }
  * Ticket 18: retire saved-search runtime surfaces.
  *
  * The unfinished saved-search alert feature must disappear from every exposed
- * runtime surface (SDL, generated definitions, resolvers/services/repositories)
- * while the `saved_searches` storage contract stays temporarily compatible for
- * deployment overlap. Ticket 19 owns the storage contraction; this spec must
- * not be read as permission to drop the table or its transitional cleanup.
+ * runtime surface (SDL, generated definitions, resolvers/services/repositories).
+ * Ticket 19 completed the storage contraction, so no transitional runtime
+ * exception remains: the historical migrations are the only saved-search
+ * references left in the backend.
  */
 
 const SRC_DIR = path.resolve(__dirname, '..');
@@ -82,15 +82,7 @@ describe('Saved-search runtime retirement (ticket 18)', () => {
           !name.endsWith('.spec.ts')),
     );
 
-    // `users/account-deletion.service.ts` is the one documented transitional
-    // exception: it keeps deleting retained rows until ticket 19 contracts
-    // storage. Nothing else may read or write saved searches.
-    const transitionCleanup = path.join('users', 'account-deletion.service.ts');
-    const offenders = runtimeFiles.filter((file) => {
-      const relative = path.relative(SRC_DIR, file);
-      if (relative === transitionCleanup) return false;
-      return /saved.?search/i.test(fs.readFileSync(file, 'utf8'));
-    });
+    const offenders = runtimeFiles.filter((file) => /saved.?search/i.test(fs.readFileSync(file, 'utf8')));
 
     expect(offenders.map((file) => path.relative(SRC_DIR, file))).toEqual([]);
   });

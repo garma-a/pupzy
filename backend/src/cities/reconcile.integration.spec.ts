@@ -223,15 +223,6 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
     );
     const clinicId = clinicRes.rows[0].id;
 
-    // Create saved search referencing legacy Maadi
-    const searchRes = await pool.query<{ id: string }>(
-      `INSERT INTO saved_searches (user_id, label, city_id, post_type)
-       VALUES ($1, 'My Maadi Search', $2, 'ADOPTION')
-       RETURNING id`,
-      [userId, maadiId],
-    );
-    const searchId = searchRes.rows[0].id;
-
     // Apply migration 0011
     const migration0011Path = path.resolve(__dirname, '../../drizzle/migrations/0011_reconcile_city_catalog.sql');
     await runSqlFile(migration0011Path);
@@ -272,16 +263,11 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
     ]);
     expect(postUnmappedAfter.rows[0].city_id).toBe(unmappedObsoleteId);
 
-    // Verify vet clinic and saved search relations remain intact
+    // Verify the vet clinic relation remains intact
     const clinicAfter = await pool.query<{ city_id: string }>(`SELECT city_id FROM vet_clinics WHERE id = $1`, [
       clinicId,
     ]);
     expect(clinicAfter.rows[0].city_id).toBe(maadiId);
-
-    const searchAfter = await pool.query<{ city_id: string }>(`SELECT city_id FROM saved_searches WHERE id = $1`, [
-      searchId,
-    ]);
-    expect(searchAfter.rows[0].city_id).toBe(maadiId);
 
     // Verify total counts: exactly 351 official across 27 governorates + 35 legacy
     const totalStats = await pool.query<{ official_count: string; gov_count: string; legacy_count: string }>(`
