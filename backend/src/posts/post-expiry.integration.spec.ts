@@ -12,6 +12,7 @@ import {
   adoptionPosts,
   cities,
   contactRequests,
+  lostPosts,
   notifications,
   postMedia,
   posts,
@@ -26,6 +27,7 @@ import { PostsRepository } from './posts.repository';
 import { PostsService } from './posts.service';
 import { PostsResolver } from './posts.resolver';
 import { PostExpiryProcessor, POST_EXPIRY_CANDIDATE_BATCH_SIZE } from './post-expiry.processor';
+import { buildNotificationContent } from '../notifications/notification-templates';
 import { ViewFlushCron } from './view-flush.cron';
 import { CommentsRepository } from '../comments/comments.repository';
 import { CommentsService } from '../comments/comments.service';
@@ -447,6 +449,19 @@ describe('Post inactivity expiry, reminders and renewal (Ticket 12)', () => {
     return post;
   }
 
+  async function seedLost(params: { reportType: 'LOST_PET' | 'FOUND_STRAY'; inactiveMinutes?: number }): Promise<Post> {
+    const post = await seedPost({ postType: 'LOST', inactiveMinutes: params.inactiveMinutes });
+    await dbHelper.db.insert(lostPosts).values({
+      postId: post.id,
+      reportType: params.reportType,
+      species: 'DOG',
+      ...(params.reportType === 'LOST_PET'
+        ? { dateLastSeen: '2026-08-01' }
+        : { currentCondition: 'HEALTHY', isCurrentlySafeWithReporter: true, dateFound: '2026-08-02' }),
+    });
+    return post;
+  }
+
   function createContext(user: User): GqlContext {
     const userLoader = new DataLoader<string, User | null>(async (ids: readonly string[]) => {
       const rows = await dbHelper.db.select().from(users).where(eq(users.id, ids[0]));
@@ -523,6 +538,16 @@ describe('Post inactivity expiry, reminders and renewal (Ticket 12)', () => {
     return result.data!.createComment;
   }
 
+  async function reminderWorkFor(post: Post, postType: PostType) {
+    return postsRepository.recordInactivityReminder({
+      postId: post.id,
+      postType,
+      reminderAfterDays: 60,
+      expiryAfterDays: null,
+      content: buildNotificationContent('POST_INACTIVITY_NUDGE', { postTitle: post.title }),
+    });
+  }
+
   // ─── Expiry window ──────────────────────────────────────────────────────
 
   describe('PRODUCT inactivity window', () => {
@@ -578,19 +603,25 @@ describe('Post inactivity expiry, reminders and renewal (Ticket 12)', () => {
       expect(await feedIds(MARKET_FEED, other)).toContain(post.id);
     });
 
-    it('never expires RESCUE, LOST or MATING listings, however old', async () => {
+    it('never expires RESCUE, LOST or MATING listings, however old, and only reminds RESCUE/LOST', async () => {
       const rescue = await seedPost({ postType: 'RESCUE', inactiveMinutes: 400 * DAY_MINUTES });
-      const lost = await seedPost({ postType: 'LOST', inactiveMinutes: 400 * DAY_MINUTES });
+      const lost = await seedLost({ reportType: 'LOST_PET', inactiveMinutes: 400 * DAY_MINUTES });
       const mating = await seedPost({ postType: 'MATING', inactiveMinutes: 400 * DAY_MINUTES });
 
       const result = await processor.processPendingExpiry();
 
-      expect(result).toEqual({ expired: 0, reminded: 0 });
+      // Ticket 14: RESCUE and LOST receive their single stand-alone reminder;
+      // none of the three types ever receives an automatic expiry.
+      expect(result).toEqual({ expired: 0, reminded: 2 });
       for (const post of [rescue, lost, mating]) {
         expect((await storedPost(post.id))?.status).toBe('ACTIVE');
-        expect((await storedPost(post.id))?.reminderSentAt).toBeNull();
       }
-      expect(await nudgeNotifications()).toHaveLength(0);
+      expect((await storedPost(rescue.id))?.reminderSentAt).not.toBeNull();
+      expect((await storedPost(lost.id))?.reminderSentAt).not.toBeNull();
+      expect((await storedPost(mating.id))?.reminderSentAt).toBeNull();
+
+      const rows = await nudgeNotifications();
+      expect(rows.map((row) => row.relatedPostId).sort()).toEqual([rescue.id, lost.id].sort());
     });
   });
 
@@ -684,6 +715,181 @@ describe('Post inactivity expiry, reminders and renewal (Ticket 12)', () => {
 
       expect(result).toEqual({ expired: 1, reminded: 0 });
       expect((await storedPost(post.id))?.status).toBe('EXPIRED');
+      expect(await nudgeNotifications()).toHaveLength(0);
+    });
+  });
+
+  // ─── RESCUE / LOST stand-alone reminder (Ticket 14) ─────────────────────
+
+  describe('RESCUE and LOST stand-alone reminder', () => {
+    it('reminds a RESCUE owner once after 60 inactive days without expiring the case', async () => {
+      const post = await seedPost({ postType: 'RESCUE', inactiveMinutes: 60 * DAY_MINUTES + 1 });
+      await dbHelper.db.insert(postMedia).values({
+        postId: post.id,
+        publicUrl: `https://cdn.pupzy.net/posts/${post.id}/main.webp`,
+        cloudflareStorageKey: `posts/${post.id}/main.webp`,
+        displayOrder: 0,
+      });
+      const comment = await commentOnPost(post);
+
+      const result = await processor.processPendingExpiry();
+      expect(result).toEqual({ expired: 0, reminded: 1 });
+
+      const stored = await storedPost(post.id);
+      expect(stored?.status).toBe('ACTIVE');
+      expect(stored?.reminderSentAt).not.toBeNull();
+
+      const rows = await nudgeNotifications();
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({ recipientId: owner.id, relatedPostId: post.id, isRead: false });
+      expect(rows[0].title).toBe('Is your post still active?');
+      expect(rows[0].body).toContain(post.title);
+      expect(rows[0].titleArabic).toBeTruthy();
+      expect(rows[0].bodyArabic).toBeTruthy();
+
+      // A reminder is not an expiry: media and discussion stay reachable.
+      expect(await dbHelper.db.select().from(postMedia).where(eq(postMedia.postId, post.id))).toHaveLength(1);
+      const discussion = await runGql<{ comments: CommentConnectionData }>(COMMENTS, { postId: post.id }, other);
+      expect(discussion.errors).toBeUndefined();
+      expect(discussion.data?.comments.edges.map((edge) => edge.node.id)).toContain(comment.id);
+
+      // Repeated runs never duplicate the same cycle's reminder.
+      expect((await processor.processPendingExpiry()).reminded).toBe(0);
+      expect(await nudgeNotifications()).toHaveLength(1);
+    });
+
+    it('reminds LOST_PET and FOUND_STRAY owners after 60 inactive days', async () => {
+      const lostPet = await seedLost({ reportType: 'LOST_PET', inactiveMinutes: 60 * DAY_MINUTES + 1 });
+      const stray = await seedLost({ reportType: 'FOUND_STRAY', inactiveMinutes: 60 * DAY_MINUTES + 1 });
+
+      const result = await processor.processPendingExpiry();
+
+      expect(result).toEqual({ expired: 0, reminded: 2 });
+      for (const post of [lostPet, stray]) {
+        const stored = await storedPost(post.id);
+        expect(stored?.status).toBe('ACTIVE');
+        expect(stored?.reminderSentAt).not.toBeNull();
+      }
+      const rows = await nudgeNotifications();
+      expect(rows.map((row) => row.relatedPostId).sort()).toEqual([lostPet.id, stray.id].sort());
+    });
+
+    it('does not remind RESCUE or LOST before the 60-day mark', async () => {
+      await seedPost({ postType: 'RESCUE', inactiveMinutes: 60 * DAY_MINUTES - 1 });
+      await seedLost({ reportType: 'LOST_PET', inactiveMinutes: 60 * DAY_MINUTES - 1 });
+
+      const result = await processor.processPendingExpiry();
+
+      expect(result).toEqual({ expired: 0, reminded: 0 });
+      expect(await nudgeNotifications()).toHaveLength(0);
+    });
+
+    it('lets concurrent workers race RESCUE and LOST candidates without duplicating reminders', async () => {
+      const rescue = await seedPost({ postType: 'RESCUE', inactiveMinutes: 61 * DAY_MINUTES });
+      const lost = await seedLost({ reportType: 'FOUND_STRAY', inactiveMinutes: 61 * DAY_MINUTES });
+      const secondWorker = new PostExpiryProcessor(postsRepository, dbHelper.db);
+
+      const [first, second] = await Promise.all([
+        processor.processPendingExpiry(),
+        secondWorker.processPendingExpiry(),
+      ]);
+
+      expect(first.reminded + second.reminded).toBe(2);
+      expect(await nudgeNotifications()).toHaveLength(2);
+      expect((await storedPost(rescue.id))?.reminderSentAt).not.toBeNull();
+      expect((await storedPost(lost.id))?.reminderSentAt).not.toBeNull();
+    });
+
+    it('starts a new RESCUE reminder cycle only after new activity', async () => {
+      const post = await seedPost({ postType: 'RESCUE', inactiveMinutes: 61 * DAY_MINUTES });
+      expect((await processor.processPendingExpiry()).reminded).toBe(1);
+      expect(await nudgeNotifications()).toHaveLength(1);
+
+      // A comment is discussion, not an activity signal: it does not reset
+      // last_engaged_at, so the case stays in its already-reminded cycle.
+      await commentOnPost(post);
+      const afterComment = (await storedPost(post.id))!;
+      expect(Date.now() - afterComment.lastEngagedAt.getTime()).toBeGreaterThan(60 * DAY_MINUTES * 60_000);
+      expect((await processor.processPendingExpiry()).reminded).toBe(0);
+
+      // A real upvote moves last_engaged_at past the stored reminder and opens
+      // a new inactivity cycle that is not yet due.
+      const afterUpvote = (await postsRepository.toggleUpvote(post.id, other.id)).updatedPost;
+      expect(afterUpvote.lastEngagedAt.getTime()).toBeGreaterThan(afterComment.lastEngagedAt.getTime());
+      const cycle = await dbHelper.db.execute<{ newCycle: boolean }>(
+        sql`SELECT (reminder_sent_at < last_engaged_at) AS "newCycle" FROM posts WHERE id = ${post.id}`,
+      );
+      expect(cycle.rows[0].newCycle).toBe(true);
+      expect((await processor.processPendingExpiry()).reminded).toBe(0);
+      expect(await nudgeNotifications()).toHaveLength(1);
+
+      // The new cycle is itself 60 days old: exactly one more reminder is due.
+      await dbHelper.db
+        .update(posts)
+        .set({
+          lastEngagedAt: inactiveTimestamp(61 * DAY_MINUTES),
+          reminderSentAt: inactiveTimestamp(120 * DAY_MINUTES),
+        })
+        .where(eq(posts.id, post.id));
+      expect((await processor.processPendingExpiry()).reminded).toBe(1);
+      expect(await nudgeNotifications()).toHaveLength(2);
+    });
+
+    it('never reminds a closed or removed RESCUE/LOST case', async () => {
+      const rescue = await seedPost({ postType: 'RESCUE', inactiveMinutes: 61 * DAY_MINUTES });
+      const resolved = await runGql(UPDATE_POST_STATUS, { postId: rescue.id, status: 'RESOLVED' }, owner);
+      expect(resolved.errors).toBeUndefined();
+
+      const lostPet = await seedLost({ reportType: 'LOST_PET', inactiveMinutes: 61 * DAY_MINUTES });
+      const reunited = await runGql(UPDATE_POST_STATUS, { postId: lostPet.id, status: 'REUNITED' }, owner);
+      expect(reunited.errors).toBeUndefined();
+
+      const stray = await seedLost({ reportType: 'FOUND_STRAY', inactiveMinutes: 61 * DAY_MINUTES });
+      const strayResolved = await runGql(UPDATE_POST_STATUS, { postId: stray.id, status: 'RESOLVED' }, owner);
+      expect(strayResolved.errors).toBeUndefined();
+
+      const removed = await seedPost({ postType: 'RESCUE', inactiveMinutes: 61 * DAY_MINUTES });
+      expect((await postsRepository.softDelete(removed.id, owner.id))?.status).toBe('REMOVED');
+
+      const result = await processor.processPendingExpiry();
+
+      expect(result).toEqual({ expired: 0, reminded: 0 });
+      expect(await nudgeNotifications()).toHaveLength(0);
+    });
+
+    it('does not re-remind or change a case closed or removed after its reminder', async () => {
+      const rescue = await seedPost({ postType: 'RESCUE', inactiveMinutes: 61 * DAY_MINUTES });
+      const lost = await seedLost({ reportType: 'LOST_PET', inactiveMinutes: 61 * DAY_MINUTES });
+      expect((await processor.processPendingExpiry()).reminded).toBe(2);
+
+      const closed = await runGql(UPDATE_POST_STATUS, { postId: rescue.id, status: 'RESOLVED' }, owner);
+      expect(closed.errors).toBeUndefined();
+      expect((await postsRepository.softDelete(lost.id, owner.id))?.status).toBe('REMOVED');
+
+      const repeated = await processor.processPendingExpiry();
+      expect(repeated).toEqual({ expired: 0, reminded: 0 });
+      expect((await storedPost(rescue.id))?.status).toBe('RESOLVED');
+      expect((await storedPost(lost.id))?.status).toBe('REMOVED');
+      expect(await nudgeNotifications()).toHaveLength(2);
+    });
+
+    it('never lets delayed reminder work touch a re-engaged, closed or removed case', async () => {
+      const reengaged = await seedPost({ postType: 'RESCUE', inactiveMinutes: 61 * DAY_MINUTES });
+      await dbHelper.db
+        .update(posts)
+        .set({ lastEngagedAt: sql`now()` })
+        .where(eq(posts.id, reengaged.id));
+      expect(await reminderWorkFor(reengaged, 'RESCUE')).toBeUndefined();
+
+      const closed = await seedLost({ reportType: 'LOST_PET', inactiveMinutes: 61 * DAY_MINUTES });
+      const closure = await runGql(UPDATE_POST_STATUS, { postId: closed.id, status: 'REUNITED' }, owner);
+      expect(closure.errors).toBeUndefined();
+      expect(await reminderWorkFor(closed, 'LOST')).toBeUndefined();
+
+      const removed = await seedPost({ postType: 'RESCUE', inactiveMinutes: 61 * DAY_MINUTES });
+      await postsRepository.softDelete(removed.id, owner.id);
+      expect(await reminderWorkFor(removed, 'RESCUE')).toBeUndefined();
+
       expect(await nudgeNotifications()).toHaveLength(0);
     });
   });

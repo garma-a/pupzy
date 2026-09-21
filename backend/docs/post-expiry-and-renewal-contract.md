@@ -1,8 +1,8 @@
 # Post Expiry and Renewal Contract
 
-This document is the authoritative client, admin and deployment contract for the `EXPIRED` lifecycle state and explicit owner renewal introduced by ticket 12. The machine-readable transition tables live in `src/common/contracts/post-lifecycle.contract.ts`, which the API, the expiry processor and the AdminJS service all import. Ticket 13 (ADOPTION window) and ticket 14 (RESCUE/LOST reminder) reuse the same machinery; they change policy data and tests only.
+This document is the authoritative client, admin and deployment contract for the `EXPIRED` lifecycle state, explicit owner renewal and the inactivity reminders introduced by tickets 12 and 14. The machine-readable transition tables live in `src/common/contracts/post-lifecycle.contract.ts`, which the API, the expiry processor and the AdminJS service all import. Ticket 13 (ADOPTION window) reuses the same machinery and changes policy data and tests only.
 
-Ticket 12 enables the PRODUCT policy only. ADOPTION, RESCUE, LOST and MATING policy entries already exist but are disabled (`expiryAfterDays: null`, `reminderAfterDays: null`), so those types keep their established behavior until their tickets land.
+Ticket 12 enables the PRODUCT window and the shared machinery; ticket 14 enables the stand-alone 60-day reminder for RESCUE and LOST. ADOPTION and MATING policy entries already exist but remain disabled (`expiryAfterDays: null`, `reminderAfterDays: null`): ADOPTION waits for ticket 13's 30/27-day window and MATING expiry deliberately stays off.
 
 ---
 
@@ -28,19 +28,20 @@ Ticket 12 enables the PRODUCT policy only. ADOPTION, RESCUE, LOST and MATING pol
 
 Source of truth: `POST_EXPIRY_POLICIES` in `src/common/contracts/post-lifecycle.contract.ts`.
 
-| Post type  | Expiry after | Reminder after | Renewable | Ticket 12 behavior                                   |
+| Post type  | Expiry after | Reminder after | Renewable | Behavior                                             |
 | ---------- | ------------ | -------------- | --------- | ---------------------------------------------------- |
-| `PRODUCT`  | 14 days      | 11 days        | yes       | Enabled.                                             |
+| `PRODUCT`  | 14 days      | 11 days        | yes       | Enabled: reminder three days before expiry.          |
 | `ADOPTION` | disabled     | disabled       | no        | Machinery ready; ticket 13 enables 30/27 days.       |
-| `RESCUE`   | never        | disabled       | no        | Reserved for ticket 14's 60-day reminder.            |
-| `LOST`     | never        | disabled       | no        | Reserved for ticket 14's 60-day reminder.            |
-| `MATING`   | never        | disabled       | no        | Expiry deliberately stays disabled.                  |
+| `RESCUE`   | never        | 60 days        | no        | Enabled: one stand-alone reminder, **never** expires. |
+| `LOST`     | never        | 60 days        | no        | Enabled for both subtypes, **never** expires.        |
+| `MATING`   | never        | none           | no        | Expiry and reminders deliberately stay disabled.     |
 
 "Inactivity" is measured from `posts.last_engaged_at`, preserving the existing activity signals: owner creating the Post, upvotes, saves, and (for PRODUCT) viewed flushes. Comments and views on non-PRODUCT types never reset the window.
 
 - A reminder is sent once per inactivity cycle: a new reminder requires activity that moves `last_engaged_at` past the stored `posts.reminder_sent_at`.
 - A Post already past its expiry window is expired without a late reminder.
 - Renewal sets `last_engaged_at = now()` and `renewed_at = now()`, starting a fresh window and reminder cycle.
+- RESCUE and LOST have no expiry window (`expiryAfterDays: null`), so their 60-day reminder is stand-alone: it notifies the owner and persists `reminder_sent_at`, and never changes the Post status, discovery eligibility, media or discussion. A second reminder needs new upvote/save activity that opens a new inactivity cycle. MATING receives neither expiry nor a reminder.
 
 ## 3. Owner renewal operation
 
@@ -82,6 +83,7 @@ Entry point: `PostsRepository.expireInactivePost` / `PostsRepository.recordInact
   - Retries and multiple API instances create at most one reminder per inactivity cycle, and exactly one expiry.
   - Expiry terminates still-`PENDING` Contact Requests and Adoption Applications (`REJECTED`, `responded_at` set, rows preserved) in the same transaction as the status change. Approved interactions are untouched.
   - Expiry writes no moderation audit row, closes no Post Reports, sends no notification (the pre-expiry reminder is the owner notice) and leaves the owner's Post counters unchanged.
+- RESCUE and LOST candidates use the same reminder path with `reminderAfterDays = 60` and no expiry window: the reminder commits its notification and `reminder_sent_at`, and leaves status, discovery, media and discussion untouched. Closed (`RESOLVED`/`REUNITED`), `REMOVED` and `EXPIRED` Posts are never reminder candidates, and delayed work re-checks these conditions inside the transaction.
 - The reminder notification is `POST_INACTIVITY_NUDGE`, persisted through the centralized bilingual templates (`notification-templates.ts`) with English and Arabic columns. It follows the recipient's explicit language preference at read time (ticket 07 contract: `notification-language-flutter-integration-contract.md`).
 
 ## 5. Admin behavior
@@ -98,6 +100,7 @@ Entry point: `PostsRepository.expireInactivePost` / `PostsRepository.recordInact
 4. Offer explicit renewal for `ACTIVE` and `EXPIRED` product listings. Do not offer it for `SOLD`/`REMOVED` or non-product types.
 5. Surface `RENEWAL_COOLDOWN` as a friendly "try again later" state; no renewal timestamp is currently exposed.
 6. Renewal does not restore previously closed interactions; do not optimistically reopen old contact requests/applications in the UI.
+7. RESCUE and LOST cases never become `EXPIRED` and are never renewable. Their owners receive a single `POST_INACTIVITY_NUDGE` after 60 inactive days (and one more only if new upvote/save activity starts another inactivity cycle); no new client operation or label is required, and the existing inbox/push handling covers it.
 
 ## 7. Migration and rollout ordering
 
@@ -110,13 +113,13 @@ Entry point: `PostsRepository.expireInactivePost` / `PostsRepository.recordInact
 | 5     | AdminJS with `EXPIRED` enum support                                    | Required for staff to see and filter expired listings.                                                                          |
 | 6     | Flutter handles `EXPIRED` and offers renewal                           | Required before the feature is user-visible; an unhandled enum value breaks affected responses.                                    |
 
-No data backfill is performed: listings only become `EXPIRED` when the processor observes their inactivity window. Rollback of the application code is safe (expired rows remain readable), but the `post_status` enum value cannot be removed in place.
+No data backfill is performed: listings only become `EXPIRED` when the processor observes their inactivity window. Rollback of the application code is safe (expired rows remain readable), but the `post_status` enum value cannot be removed in place. Ticket 14 adds no migration: the 60-day RESCUE/LOST reminder reuses `reminder_sent_at` from migration 0047 and is pure policy data, so it can be deployed with the API version that enables it and rolled back by restoring the previous policy values.
 
 ## 8. Verification
 
 | Boundary                                                                                                       | Evidence                                                                                     |
 | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | Policy, renewal predicate, transition side effects                                                             | `src/common/contracts/post-lifecycle.contract.spec.ts`, `admin-service/src/common/contracts/post-lifecycle.contract.test.js` |
-| 14-day expiry, 11-day reminder, boundaries, durable reminder state, multi-worker runs, renewal cooldown/race, reactivation, media/discussion retention, interaction cleanup, exempt types and stale-candidate rechecks | `src/posts/post-expiry.integration.spec.ts`                                                   |
+| 14-day expiry, 11-day reminder, 60-day RESCUE/LOST reminder (both LOST subtypes), boundaries, durable reminder state, multi-worker runs, changed activity, closure/deletion/delayed work, renewal cooldown/race, reactivation, media/discussion retention, interaction cleanup, exempt types and stale-candidate rechecks | `src/posts/post-expiry.integration.spec.ts`                                                   |
 | Admin expired filtering over authenticated AdminJS HTTP                                                        | `admin-service/test/admin-http.test.js`                                                       |
 | Enum value and columns created by migrations                                                                   | `src/database/migrate.integration.spec.ts`                                                    |

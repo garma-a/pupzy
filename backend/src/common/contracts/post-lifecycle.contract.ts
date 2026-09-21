@@ -185,15 +185,16 @@ export const RENEWAL_COOLDOWN_DAYS = 7;
  *   automatically.
  * - `reminderAfterDays` is the inactive window after which the owner receives
  *   one `POST_INACTIVITY_NUDGE`. With expiry enabled it is the three-days-
- *   before marker; without expiry it is a stand-alone inactivity reminder.
- *   `null` means no inactivity reminder.
+ *   before marker; without expiry it is a stand-alone inactivity reminder that
+ *   never removes the Post from discovery. `null` means no inactivity reminder.
  * - `renewable` allows the owner to explicitly renew an `ACTIVE` or `EXPIRED`
  *   listing of this type (subject to `RENEWAL_COOLDOWN_DAYS`).
  *
- * Ticket 12 ships the PRODUCT window and the shared machinery. Ticket 13 fills
- * the ADOPTION entry with its 30/27-day window and ticket 14 fills the
- * RESCUE/LOST reminder entries; the processor already honours every enabled
- * entry, so those tickets change policy data and tests, not transition rules.
+ * Ticket 12 ships the PRODUCT window and the shared machinery, ticket 13 fills
+ * the ADOPTION entry with its 30/27-day window and ticket 14 enables the
+ * stand-alone 60-day reminder for RESCUE and LOST. The processor already
+ * honours every enabled entry, so enabling a type changes policy data and
+ * tests, not transition rules.
  */
 export interface PostExpiryPolicy {
   readonly expiryAfterDays: number | null;
@@ -206,11 +207,12 @@ export interface PostExpiryPolicy {
  * expires" and "not renewable" are contract statements rather than missing
  * configuration. `MATING` expiry stays disabled, matching the agreed product
  * model that rescue, lost/found and mating cases end by owner or administrator
- * decision, not by clock.
+ * decision, not by clock. RESCUE and LOST additionally receive one stand-alone
+ * reminder after 60 inactive days; that reminder never changes their status.
  */
 export const POST_EXPIRY_POLICIES: Readonly<Record<PostLifecyclePostType, PostExpiryPolicy>> = Object.freeze({
-  RESCUE: Object.freeze({ expiryAfterDays: null, reminderAfterDays: null, renewable: false }),
-  LOST: Object.freeze({ expiryAfterDays: null, reminderAfterDays: null, renewable: false }),
+  RESCUE: Object.freeze({ expiryAfterDays: null, reminderAfterDays: 60, renewable: false }),
+  LOST: Object.freeze({ expiryAfterDays: null, reminderAfterDays: 60, renewable: false }),
   ADOPTION: Object.freeze({ expiryAfterDays: null, reminderAfterDays: null, renewable: false }),
   PRODUCT: Object.freeze({ expiryAfterDays: 14, reminderAfterDays: 11, renewable: true }),
   MATING: Object.freeze({ expiryAfterDays: null, reminderAfterDays: null, renewable: false }),

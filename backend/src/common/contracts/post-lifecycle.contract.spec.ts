@@ -140,13 +140,23 @@ describe('Post lifecycle transition contract', () => {
   });
 
   describe('inactivity expiry policy', () => {
-    it('enables only the PRODUCT window in this slice', () => {
+    it('enables the PRODUCT expiry window and the RESCUE/LOST 60-day reminder', () => {
       expect(POST_EXPIRY_POLICIES.PRODUCT).toEqual({
         expiryAfterDays: 14,
         reminderAfterDays: 11,
         renewable: true,
       });
-      for (const postType of ['RESCUE', 'LOST', 'ADOPTION', 'MATING'] as const) {
+      expect(POST_EXPIRY_POLICIES.RESCUE).toEqual({
+        expiryAfterDays: null,
+        reminderAfterDays: 60,
+        renewable: false,
+      });
+      expect(POST_EXPIRY_POLICIES.LOST).toEqual({
+        expiryAfterDays: null,
+        reminderAfterDays: 60,
+        renewable: false,
+      });
+      for (const postType of ['ADOPTION', 'MATING'] as const) {
         expect(POST_EXPIRY_POLICIES[postType]).toEqual({
           expiryAfterDays: null,
           reminderAfterDays: null,
@@ -158,6 +168,15 @@ describe('Post lifecycle transition contract', () => {
 
     it('reminds three days before the PRODUCT expiry window', () => {
       expect(POST_EXPIRY_POLICIES.PRODUCT.expiryAfterDays! - POST_EXPIRY_POLICIES.PRODUCT.reminderAfterDays!).toBe(3);
+    });
+
+    it('sends the RESCUE/LOST reminder after 60 inactive days without enabling expiry', () => {
+      for (const postType of ['RESCUE', 'LOST'] as const) {
+        expect(POST_EXPIRY_POLICIES[postType].reminderAfterDays).toBe(60);
+        expect(POST_EXPIRY_POLICIES[postType].expiryAfterDays).toBeNull();
+        expect(canExpirePost(postType, 'ACTIVE')).toBe(false);
+        expect(canOwnerRenew(postType, 'ACTIVE')).toBe(false);
+      }
     });
 
     it('allows automatic expiry only for Active posts of an enabled type', () => {

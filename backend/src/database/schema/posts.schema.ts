@@ -175,9 +175,11 @@ export const posts = pgTable(
      * Initialized to created_at on INSERT. Updated differently per type:
      *   PRODUCT  → views and saves. A view means a buyer looked. Expires after 14 inactive days.
      *   ADOPTION → upvotes and saves only (views alone too passive). Expires after 30 inactive days (ticket 13).
-     *   RESCUE / LOST → never updated. Never expire automatically (ticket 14 sends one inactivity reminder).
-     *   MATING → never updated. Expiry disabled.
-     * The expiry job sends POST_INACTIVITY_NUDGE three days before the window closes.
+     *   RESCUE / LOST → upvotes and saves only. Never expire automatically; receive one
+     *     stand-alone reminder after 60 inactive days (ticket 14).
+     *   MATING → never updated. Expiry and reminders disabled.
+     * The expiry job sends POST_INACTIVITY_NUDGE three days before a renewable
+     * listing's window closes, or after 60 inactive days for RESCUE/LOST.
      */
     lastEngagedAt: timestamp('last_engaged_at', { withTimezone: true }).notNull().defaultNow(),
 
