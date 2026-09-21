@@ -249,10 +249,10 @@ The Flutter app is responsible for requesting notification permission, listening
 
 Automated backend tests use a **controlled provider** at the external boundary with a real PostgreSQL database. They prove registration/unregistration ownership, takeovers, opt-out with inbox preservation, sign-out, Account Deletion cleanup, send-time Block/account/ownership suppression, retry bounds, dead-token cleanup, per-invocation bounds, deduplication, lease recovery and localized payload construction.
 
-For every push-enabled workflow type they additionally prove, through real workflow entry points (contact requests, the durable discussion outbox, the inactivity-expiry worker, the ban cascade, administrator AdminJS actions and engagement toggles), that:
+Across the push-enabled workflows they additionally prove, through real workflow entry points (contact requests, the durable discussion outbox, the inactivity-expiry worker, the ban cascade, administrator AdminJS actions and engagement toggles), that:
 
-- the durable intent commits in the same transaction as its notification and carries the correct recipient, source actor and routing identifiers;
-- the provider receives the type-specific payload documented in Section 5.2, localized from the same stored columns as the inbox;
+- **every** push-enabled type enqueues its durable intent in the same transaction as its notification, carrying the correct recipient, source actor and routing identifiers;
+- for representative types across the covered workflows the provider receives the type-specific payload documented in Section 5.2, localized from the same stored columns as the inbox;
 - queued work is terminally suppressed after opt-out, a Block, a ban, Account Deletion or token reassignment, without removing the inbox row;
 - repeated worker runs never duplicate an intent or a send.
 
