@@ -672,6 +672,11 @@ describe('Administrator case reopening HTTP boundary', () => {
     const ownerId = await insertUser('reopen-flow-owner');
     const requesterId = await insertUser('reopen-flow-requester');
     const reporterId = await insertUser('reopen-flow-reporter');
+    await database.pool.query(
+      `INSERT INTO device_registrations (user_id, token, platform)
+       VALUES ($1, 'ticket20-resolution-owner-token', 'ANDROID')`,
+      [ownerId],
+    );
     const postId = await insertTypedPost({ ownerId, postType: 'ADOPTION', title: 'Correction journey case' });
     const contactRequestId = await insertContactRequest({ postId, requesterId });
     const reportId = (
@@ -744,6 +749,23 @@ describe('Administrator case reopening HTTP boundary', () => {
     assert.equal(reopenNotification.title_arabic, 'تمت إعادة فتح المنشور');
     assert.ok(reopenNotification.body_arabic.includes('Correction journey case'));
     assert.equal(reopenNotification.body.includes('recorded by mistake'), false);
+
+    const deliveries = (
+      await database.pool.query(
+        `SELECT pd.status, pd.recipient_id, pd.actor_id, n.type
+         FROM push_deliveries pd
+         JOIN notifications n ON n.id = pd.notification_id
+         ORDER BY n.created_at, n.type`,
+      )
+    ).rows;
+    assert.deepEqual(
+      deliveries.map((row) => row.type).sort(),
+      ['POST_REOPENED_BY_ADMIN', 'POST_RESOLVED_BY_ADMIN'],
+      'resolution and reopening each write one durable push intent',
+    );
+    assert.ok(
+      deliveries.every((row) => row.status === 'PENDING' && row.recipient_id === ownerId && row.actor_id === null),
+    );
 
     const stillClosed = (
       await database.pool.query(`SELECT status, responded_at FROM contact_requests WHERE id = $1`, [contactRequestId])

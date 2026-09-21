@@ -560,7 +560,7 @@ describe('Durable adoption-approval push delivery (Ticket 11)', () => {
     expect(provider.attempted).toBe(1);
   });
 
-  it('only enqueues push for push-enabled notification types', async () => {
+  it('enqueues durable push for every adoption workflow notification (Ticket 20)', async () => {
     await registerDevice(owner, `fcm-token-${generateUuidV7()}`);
     await registerDevice(applicant, `fcm-token-${generateUuidV7()}`);
 
@@ -570,15 +570,21 @@ describe('Durable adoption-approval push delivery (Ticket 11)', () => {
       ...APPLICATION_INPUT,
     });
     await waitForNotificationCount(1);
+    await waitForDeliveries(owner.id, 1);
 
     const [received] = await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, owner.id));
     expect(received.type).toBe('ADOPTION_APPLICATION_RECEIVED');
-    expect(await deliveryCount(owner.id)).toBe(0);
+    const [ownerDelivery] = await dbHelper.db
+      .select()
+      .from(pushDeliveries)
+      .where(eq(pushDeliveries.recipientId, owner.id));
+    expect(ownerDelivery.notificationId).toBe(received.id);
+    expect(ownerDelivery.actorId).toBe(applicant.id);
 
-    // The push-enabled approval type does enqueue for its recipient.
+    // The approval enqueues for its recipient without duplicating the owner's.
     await adoptionsService.approveApplication(owner.id, submitted.id);
     await waitForDeliveries(applicant.id, 1);
-    expect(await deliveryCount(owner.id)).toBe(0);
+    expect(await deliveryCount(owner.id)).toBe(1);
   });
 
   it('respects opt-out by suppressing push while preserving the inbox', async () => {

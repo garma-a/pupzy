@@ -30,7 +30,7 @@ export class PushDeliveryRepository {
    * notification remains inbox-only.
    */
   async enqueueForNotification(
-    notification: Notification,
+    notification: Pick<Notification, 'id' | 'recipientId'>,
     actorId: string | null | undefined,
     executor: PushDeliveryExecutor = this.db,
   ): Promise<number> {

@@ -37,7 +37,7 @@ describe('NotificationsService', () => {
       expect(mockRepo.createIfNotIsolated).toHaveBeenCalledWith(
         expect.objectContaining({ recipientId: validUserId, type: 'NEW_UPVOTE' }),
         actorId,
-        { enqueuePush: false },
+        { enqueuePush: true },
       );
     });
 
@@ -65,7 +65,7 @@ describe('NotificationsService', () => {
           relatedCommentId: commentId,
         }),
         otherUser,
-        { enqueuePush: false },
+        { enqueuePush: true },
       );
 
       service.fireNotification(
@@ -87,7 +87,7 @@ describe('NotificationsService', () => {
           relatedCommentId: commentId,
         }),
         otherUser,
-        { enqueuePush: false },
+        { enqueuePush: true },
       );
 
       service.fireNotification(
@@ -109,7 +109,7 @@ describe('NotificationsService', () => {
           relatedCommentId: commentId,
         }),
         otherUser,
-        { enqueuePush: false },
+        { enqueuePush: true },
       );
 
       service.fireNotification(
@@ -131,7 +131,7 @@ describe('NotificationsService', () => {
           relatedCommentId: commentId,
         }),
         otherUser,
-        { enqueuePush: false },
+        { enqueuePush: true },
       );
     });
 

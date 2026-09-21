@@ -1,6 +1,7 @@
 import {
   actionResponse,
   closeOpenAccountReports,
+  enqueuePushDeliveries,
   lockDiscussionPosts,
   readModerationReason,
   runModerationAction,
@@ -150,11 +151,17 @@ export async function processUserBanPostCascadeBatch(pool, actionId) {
           reason: cascade.reason,
           removedAll: true,
         });
-        await client.query(
+        const { rows: notificationRows } = await client.query(
           `INSERT INTO notifications (recipient_id, type, title, body, title_arabic, body_arabic, is_read)
-           VALUES ($1, 'POST_REMOVED_BY_ADMIN', $2, $3, $4, $5, false)`,
+           VALUES ($1, 'POST_REMOVED_BY_ADMIN', $2, $3, $4, $5, false)
+           RETURNING id`,
           [cascade.user_id, content.title, content.body, content.titleArabic, content.bodyArabic],
         );
+        await enqueuePushDeliveries(client, {
+          id: notificationRows[0].id,
+          recipientId: cascade.user_id,
+          type: 'POST_REMOVED_BY_ADMIN',
+        });
       }
       await client.query(
         `UPDATE user_ban_post_cascades
