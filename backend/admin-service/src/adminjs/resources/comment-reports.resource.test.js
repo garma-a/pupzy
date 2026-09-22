@@ -73,6 +73,15 @@ describe('AdminJS Comment Reports Resource Configuration', () => {
     assert.equal(cleaned.record.populated.reporter_id.params.password_hash, undefined);
   });
 
+  it('exposes an open/reviewed queue filter distinct from the reviewed_at range filter', () => {
+    const resource = buildCommentReportsResource(db);
+    assert.ok(resource.options.filterProperties.includes('review_state'));
+    assert.deepEqual(
+      resource.options.properties.review_state.availableValues.map(({ value }) => value),
+      ['OPEN', 'REVIEWED'],
+    );
+  });
+
   it('transcribes report reason enum values exactly', () => {
     const resource = buildCommentReportsResource(db);
     const available = resource.options.properties.reason.availableValues.map((v) => v.value);

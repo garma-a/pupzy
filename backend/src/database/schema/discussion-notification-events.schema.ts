@@ -26,6 +26,12 @@ export const discussionNotificationEvents = pgTable(
     type: notificationTypeEnum('type').notNull(),
     title: varchar('title', { length: 200 }).notNull(),
     body: text('body').notNull(),
+    /**
+     * Arabic content produced by the same centralized template definitions as
+     * the English columns. NULL on legacy events; delivery falls back to English.
+     */
+    titleArabic: varchar('title_arabic', { length: 200 }),
+    bodyArabic: text('body_arabic'),
     relatedPostId: uuid('related_post_id').references(() => posts.id, { onDelete: 'set null' }),
     relatedCommentId: uuid('related_comment_id').references(() => comments.id, { onDelete: 'set null' }),
     /**

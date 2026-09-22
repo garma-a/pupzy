@@ -6,6 +6,8 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { UsersRepository } from './users.repository';
 import { AccountDeletionRepository } from './account-deletion.repository';
 import { CitiesService } from '../cities/cities.service';
+import { UploadService } from '../upload/upload.service';
+import { ConflictError } from '../common/errors/app.errors';
 import type { AccountDeletion, User } from '../database/schema';
 
 describe('UsersService', () => {
@@ -15,20 +17,34 @@ describe('UsersService', () => {
     findByFirebaseUserId: jest.Mock;
     findByEmail: jest.Mock;
     create: jest.Mock;
+    update: jest.Mock;
+    linkFirebaseUserId: jest.Mock;
+    findById: jest.Mock;
+    findActiveById: jest.Mock;
+    activateProfilePhoto: jest.Mock;
   };
+  let mockCitiesService: { findById: jest.Mock; findNearest: jest.Mock };
+  let mockCacheManager: { del: jest.Mock };
 
   beforeEach(async () => {
     mockUsersRepo = {
       findByFirebaseUserId: jest.fn(),
       findByEmail: jest.fn(),
       create: jest.fn(),
+      update: jest.fn(),
+      linkFirebaseUserId: jest.fn(),
+      findById: jest.fn().mockResolvedValue(undefined),
+      findActiveById: jest.fn(),
+      activateProfilePhoto: jest.fn(),
     };
+    mockCitiesService = { findById: jest.fn(), findNearest: jest.fn() };
+    mockCacheManager = { del: jest.fn().mockResolvedValue(undefined) };
 
     testingModule = await Test.createTestingModule({
       providers: [
         UsersService,
         { provide: UsersRepository, useValue: mockUsersRepo },
-        { provide: CitiesService, useValue: {} },
+        { provide: CitiesService, useValue: mockCitiesService },
         {
           provide: AccountDeletionRepository,
           useValue: {
@@ -40,7 +56,19 @@ describe('UsersService', () => {
           provide: ConfigService,
           useValue: { get: jest.fn().mockReturnValue('MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=') },
         },
-        { provide: CACHE_MANAGER, useValue: {} },
+        { provide: CACHE_MANAGER, useValue: mockCacheManager },
+        {
+          provide: UploadService,
+          useValue: {
+            getProfilePhotoStorageKey: jest.fn(
+              (userId: string, mediaId: string) => `avatars/${userId}/${mediaId}.webp`,
+            ),
+            finalizeProfilePhoto: jest.fn(),
+            deleteObject: jest.fn().mockResolvedValue(undefined),
+            queueMediaDeletion: jest.fn().mockResolvedValue(undefined),
+            markMediaFailed: jest.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
 
@@ -78,6 +106,70 @@ describe('UsersService', () => {
       expect(res.id).toBe('new-user-id');
       expect(mockUsersRepo.create).toHaveBeenCalled();
     });
+
+    it('synchronizes a provider picture while the account has never made an avatar choice', async () => {
+      const existing = {
+        id: 'link-user-id',
+        firebaseUserId: 'fb-old-uid',
+        email: 'link@example.com',
+        profilePictureUrl: 'https://provider.example/old.png',
+        profilePhotoChangedAt: null,
+        phoneNumber: null,
+      } as unknown as User;
+      mockUsersRepo.findByFirebaseUserId.mockResolvedValue(undefined);
+      mockUsersRepo.findByEmail.mockResolvedValue(existing);
+      mockUsersRepo.linkFirebaseUserId.mockResolvedValue({
+        ...existing,
+        firebaseUserId: 'fb-new-uid',
+        profilePictureUrl: 'https://provider.example/new.png',
+      });
+
+      const res = await service.findOrCreate({
+        firebaseUserId: 'fb-new-uid',
+        email: 'link@example.com',
+        photoUrl: 'https://provider.example/new.png',
+        emailVerified: true,
+      });
+
+      expect(mockUsersRepo.linkFirebaseUserId).toHaveBeenCalledWith(
+        'link-user-id',
+        'fb-new-uid',
+        'https://provider.example/new.png',
+      );
+      expect(mockUsersRepo.update).not.toHaveBeenCalled();
+      expect(res.profilePictureUrl).toBe('https://provider.example/new.png');
+    });
+
+    it('delegates the avatar-choice guard to the atomic link write after the user chose a photo', async () => {
+      const existing = {
+        id: 'owned-user-id',
+        firebaseUserId: 'fb-old-uid',
+        email: 'owned@example.com',
+        profilePictureUrl: null,
+        profilePhotoChangedAt: new Date(),
+        phoneNumber: null,
+      } as unknown as User;
+      mockUsersRepo.findByFirebaseUserId.mockResolvedValue(undefined);
+      mockUsersRepo.findByEmail.mockResolvedValue(existing);
+      // The repository evaluates `profile_photo_changed_at` in the same
+      // statement, so the stored decision survives even when a provider URL
+      // is supplied.
+      mockUsersRepo.linkFirebaseUserId.mockResolvedValue({ ...existing, firebaseUserId: 'fb-new-uid' });
+
+      const res = await service.findOrCreate({
+        firebaseUserId: 'fb-new-uid',
+        email: 'owned@example.com',
+        photoUrl: 'https://provider.example/restored.png',
+        emailVerified: true,
+      });
+
+      expect(mockUsersRepo.linkFirebaseUserId).toHaveBeenCalledWith(
+        'owned-user-id',
+        'fb-new-uid',
+        'https://provider.example/restored.png',
+      );
+      expect(res.profilePictureUrl).toBeNull();
+    });
   });
 
   describe('findActiveById', () => {
@@ -103,6 +195,196 @@ describe('UsersService', () => {
 
       const res = await service.findActiveById('active-user-id');
       expect(res).toEqual(mockUser);
+    });
+  });
+
+  describe('language synchronization', () => {
+    const userId = '01916327-0000-7000-8000-000000000001';
+    const cityId = '01916327-0000-7000-8000-000000000002';
+    const updatedUser = {
+      id: userId,
+      firebaseUserId: 'fb-language-user',
+      phoneNumber: null,
+      homeCityId: cityId,
+      languagePreference: 'ar',
+    } as unknown as User;
+
+    beforeEach(() => {
+      mockUsersRepo.update.mockResolvedValue(updatedUser);
+      mockCitiesService.findById.mockResolvedValue({ id: cityId });
+    });
+
+    it('persists an explicit onboarding language without changing other inputs', async () => {
+      await service.completeProfile(userId, {
+        fullName: 'Ahmed Ali',
+        phoneNumber: '+201012345678',
+        cityId,
+        languagePreference: 'ar',
+      });
+
+      expect(mockUsersRepo.update).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({ languagePreference: 'ar', homeCityId: cityId }),
+      );
+    });
+
+    it('leaves the preference unsynchronized when onboarding omits it', async () => {
+      await service.completeProfile(userId, {
+        fullName: 'Ahmed Ali',
+        phoneNumber: '+201012345678',
+        cityId,
+      });
+
+      const updateCalls = mockUsersRepo.update.mock.calls as unknown as Array<[string, Record<string, unknown>]>;
+      expect(updateCalls[0][1]).not.toHaveProperty('languagePreference');
+    });
+
+    it('updates only the language preference — no unrelated field is required', async () => {
+      const result = await service.updateLanguagePreference(userId, 'ar');
+
+      expect(mockUsersRepo.update).toHaveBeenCalledWith(userId, { languagePreference: 'ar' });
+      expect(result).toBe(updatedUser);
+      expect(mockCacheManager.del).toHaveBeenCalledWith('user_resolve:fb-language-user');
+    });
+
+    it('accepts switching back to English', async () => {
+      mockUsersRepo.update.mockResolvedValue({ ...updatedUser, languagePreference: 'en' });
+
+      await service.updateLanguagePreference(userId, 'en');
+
+      expect(mockUsersRepo.update).toHaveBeenCalledWith(userId, { languagePreference: 'en' });
+    });
+  });
+
+  describe('push preference synchronization', () => {
+    const userId = '01916327-0000-7000-8000-000000000001';
+    const updatedUser = {
+      id: userId,
+      firebaseUserId: 'fb-push-user',
+      phoneNumber: null,
+      notificationsEnabled: false,
+    } as unknown as User;
+
+    it('updates only the push preference — the inbox is not touched', async () => {
+      mockUsersRepo.update.mockResolvedValue(updatedUser);
+
+      const result = await service.updateNotificationPreferences(userId, false);
+
+      expect(mockUsersRepo.update).toHaveBeenCalledWith(userId, { notificationsEnabled: false });
+      expect(result).toBe(updatedUser);
+      expect(mockCacheManager.del).toHaveBeenCalledWith('user_resolve:fb-push-user');
+    });
+
+    it('accepts re-enabling push', async () => {
+      mockUsersRepo.update.mockResolvedValue({ ...updatedUser, notificationsEnabled: true });
+
+      await service.updateNotificationPreferences(userId, true);
+
+      expect(mockUsersRepo.update).toHaveBeenCalledWith(userId, { notificationsEnabled: true });
+    });
+  });
+
+  describe('setProfilePhoto', () => {
+    const userId = '01916327-0000-7000-8000-000000000010';
+    const mediaId = '01916327-0000-7000-8000-000000000011';
+    const storageKey = `avatars/${userId}/${mediaId}.webp`;
+    const changedAt = new Date('2026-01-02T03:04:05.678Z');
+
+    function baseUser(overrides: Partial<User> = {}): User {
+      return {
+        id: userId,
+        firebaseUserId: 'fb-photo-user',
+        phoneNumber: null,
+        isBanned: false,
+        profilePictureUrl: 'https://provider.example/initial.png',
+        profilePhotoStorageKey: null,
+        profilePhotoChangedAt: changedAt,
+        ...overrides,
+      } as unknown as User;
+    }
+
+    function uploadServiceMock(): {
+      finalizeProfilePhoto: jest.Mock;
+      deleteObject: jest.Mock;
+      markMediaFailed: jest.Mock;
+    } {
+      return testingModule.get<UploadService>(UploadService) as unknown as {
+        finalizeProfilePhoto: jest.Mock;
+        deleteObject: jest.Mock;
+        markMediaFailed: jest.Mock;
+      };
+    }
+
+    function mockFinalize(): void {
+      uploadServiceMock().finalizeProfilePhoto.mockResolvedValue({
+        mediaId,
+        stagingKey: `staging/${userId}/${mediaId}.webp`,
+        storageKey,
+        publicUrl: `https://cdn.pupzy.net/${storageKey}`,
+      });
+    }
+
+    it('forwards the change marker observed before finalization to the activation guard', async () => {
+      mockUsersRepo.findActiveById.mockResolvedValue(baseUser());
+      mockUsersRepo.activateProfilePhoto.mockResolvedValue(
+        baseUser({ profilePhotoStorageKey: storageKey, profilePictureUrl: `https://cdn.pupzy.net/${storageKey}` }),
+      );
+      mockFinalize();
+
+      await service.setProfilePhoto(userId, mediaId);
+
+      expect(mockUsersRepo.activateProfilePhoto).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({
+          stagedUploadId: mediaId,
+          expectedStorageKey: null,
+          expectedChangedAt: changedAt,
+          storageKey,
+          publicUrl: `https://cdn.pupzy.net/${storageKey}`,
+        }),
+      );
+    });
+
+    it('surfaces PROFILE_PHOTO_REPLACED and compensates the finalized object when the marker changed', async () => {
+      mockUsersRepo.findActiveById.mockResolvedValue(baseUser());
+      mockUsersRepo.activateProfilePhoto.mockRejectedValue(
+        new ConflictError(
+          'The profile photo was changed by another request. Refresh and try again.',
+          'PROFILE_PHOTO_REPLACED',
+        ),
+      );
+      mockFinalize();
+      const uploadService = uploadServiceMock();
+
+      await expect(service.setProfilePhoto(userId, mediaId)).rejects.toMatchObject({
+        code: 'PROFILE_PHOTO_REPLACED',
+      });
+
+      expect(mockUsersRepo.activateProfilePhoto).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({ expectedChangedAt: changedAt }),
+      );
+      expect(uploadService.deleteObject).toHaveBeenCalledWith(storageKey);
+      expect(uploadService.markMediaFailed).toHaveBeenCalledWith(
+        [mediaId],
+        expect.stringContaining('Profile photo activation failed'),
+      );
+      expect(mockCacheManager.del).not.toHaveBeenCalled();
+    });
+
+    it('returns early for an idempotent retry of the winning mediaId', async () => {
+      const active = baseUser({
+        profilePhotoStorageKey: storageKey,
+        profilePictureUrl: `https://cdn.pupzy.net/${storageKey}`,
+      });
+      mockUsersRepo.findActiveById.mockResolvedValue(active);
+      const uploadService = uploadServiceMock();
+
+      const result = await service.setProfilePhoto(userId, mediaId);
+
+      expect(result).toBe(active);
+      expect(mockUsersRepo.activateProfilePhoto).not.toHaveBeenCalled();
+      expect(uploadService.finalizeProfilePhoto).not.toHaveBeenCalled();
     });
   });
 });

@@ -73,6 +73,11 @@ describe('Database Migration Runner Integration', () => {
     expect(tableNames).toContain('account_reports');
     expect(tableNames).toContain('blocked_media_hashes');
 
+    // Ticket 19 contracted the retired saved-search storage. A clean install
+    // replays the historical create/evolve migrations and then the forward
+    // drop, so the table must not survive installation.
+    expect(tableNames).not.toContain('saved_searches');
+
     // Verify comment_count column on posts table
     const postColsRes = await pool.query<{ column_name: string; column_default: string }>(`
       SELECT column_name, column_default
@@ -90,6 +95,93 @@ describe('Database Migration Runner Integration', () => {
     `);
     expect(notifColsRes.rows.length).toBe(1);
     expect(notifColsRes.rows[0].is_nullable).toBe('YES');
+
+    // Verify explicit language synchronization schema (migration 0045):
+    // no historic default and nullable so unsynchronized accounts stay NULL.
+    const languageColRes = await pool.query<{ is_nullable: string; column_default: string | null }>(`
+      SELECT is_nullable, column_default
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'language_preference'
+    `);
+    expect(languageColRes.rows.length).toBe(1);
+    expect(languageColRes.rows[0].is_nullable).toBe('YES');
+    expect(languageColRes.rows[0].column_default).toBeNull();
+
+    // Bilingual notification content columns are nullable so legacy
+    // English-only rows remain valid and fall back safely.
+    const bilingualColRes = await pool.query<{ table_name: string; column_name: string; is_nullable: string }>(`
+      SELECT table_name, column_name, is_nullable
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name IN ('notifications', 'discussion_notification_events')
+        AND column_name IN ('title_arabic', 'body_arabic')
+    `);
+    expect(bilingualColRes.rows).toHaveLength(4);
+    for (const row of bilingualColRes.rows) {
+      expect(row.is_nullable).toBe('YES');
+    }
+
+    // Verify the inactivity-expiry lifecycle (migrations 0046-0047):
+    // EXPIRED is appended to post_status and the renewal/reminder state is
+    // nullable with no default so existing Posts keep their behavior.
+    const postStatusEnumRes = await pool.query<{ enumlabel: string }>(`
+      SELECT enumlabel
+      FROM pg_enum
+      JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+      WHERE pg_type.typname = 'post_status'
+      ORDER BY enumsortorder
+    `);
+    expect(postStatusEnumRes.rows.map((row) => row.enumlabel)).toEqual([
+      'ACTIVE',
+      'RESOLVED',
+      'REUNITED',
+      'ADOPTED',
+      'SOLD',
+      'REMOVED',
+      'EXPIRED',
+    ]);
+
+    const expiryColRes = await pool.query<{
+      column_name: string;
+      is_nullable: string;
+      column_default: string | null;
+    }>(`
+      SELECT column_name, is_nullable, column_default
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'posts'
+        AND column_name IN ('renewed_at', 'reminder_sent_at')
+      ORDER BY column_name
+    `);
+    expect(expiryColRes.rows.map((row) => row.column_name)).toEqual(['reminder_sent_at', 'renewed_at']);
+    for (const row of expiryColRes.rows) {
+      expect(row.is_nullable).toBe('YES');
+      expect(row.column_default).toBeNull();
+    }
+
+    // Verify the administrator-resolution lifecycle (migration 0050): the
+    // append-only audit and the owner notification types accept the new values.
+    const moderationActionEnumRes = await pool.query<{ enumlabel: string }>(`
+      SELECT enumlabel
+      FROM pg_enum
+      JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+      WHERE pg_type.typname = 'moderation_action_type'
+      ORDER BY enumsortorder
+    `);
+    expect(moderationActionEnumRes.rows.map((row) => row.enumlabel)).toContain('POST_RESOLVED');
+
+    const notificationTypeEnumRes = await pool.query<{ enumlabel: string }>(`
+      SELECT enumlabel
+      FROM pg_enum
+      JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+      WHERE pg_type.typname = 'notification_type'
+      ORDER BY enumsortorder
+    `);
+    expect(notificationTypeEnumRes.rows.map((row) => row.enumlabel)).toContain('POST_RESOLVED_BY_ADMIN');
+
+    // Verify the administrator-reopening correction (migration 0051): the
+    // audit and owner notification types accept the correction values.
+    expect(moderationActionEnumRes.rows.map((row) => row.enumlabel)).toContain('POST_REOPENED');
+    expect(notificationTypeEnumRes.rows.map((row) => row.enumlabel)).toContain('POST_REOPENED_BY_ADMIN');
 
     // Verify staged_uploads schema and non-null constraints
     const stagedColsRes = await pool.query<{ column_name: string; is_nullable: string }>(`
@@ -167,6 +259,27 @@ describe('Database Migration Runner Integration', () => {
     const functionNames = functionRes.rows.map((r) => r.proname);
     expect(functionNames).toContain('city_lifecycle_status_ilike');
     expect(functionNames).toContain('city_lifecycle_status_like');
+
+    // Verify the post_status filter operators from migration 0048 so the
+    // AdminJS lifecycle filter can reach EXPIRED listings.
+    const postStatusOperatorRes = await pool.query<{ oprname: string }>(`
+      SELECT oprname
+      FROM pg_operator
+      WHERE oprleft = 'post_status'::regtype
+        AND oprright = 'text'::regtype
+    `);
+    const postStatusOperatorNames = postStatusOperatorRes.rows.map((r) => r.oprname);
+    expect(postStatusOperatorNames).toContain('~~*');
+    expect(postStatusOperatorNames).toContain('~~');
+
+    const postStatusFunctionRes = await pool.query<{ proname: string }>(`
+      SELECT proname
+      FROM pg_proc
+      WHERE proname IN ('post_status_ilike', 'post_status_like')
+    `);
+    const postStatusFunctionNames = postStatusFunctionRes.rows.map((r) => r.proname);
+    expect(postStatusFunctionNames).toContain('post_status_ilike');
+    expect(postStatusFunctionNames).toContain('post_status_like');
   });
 
   it('proves city lifecycle status filtering via ~~* and ~~ operators functions properly', async () => {
@@ -617,6 +730,145 @@ describe('Database Migration Runner Integration', () => {
       await upgradePool.end();
       fs.rmSync(tempBaselineDir, { recursive: true, force: true });
       await pool.query('DROP DATABASE IF EXISTS pupzy_baseline_upgrade_test;');
+    }
+  });
+
+  it('proves the saved-search contraction drops only retired storage on upgrade from the pre-contraction schema', async () => {
+    await pool.query('CREATE DATABASE pupzy_saved_search_contraction_test;');
+    const contractionConnStr = connectionString.replace(
+      '/pupzy_migration_test',
+      '/pupzy_saved_search_contraction_test',
+    );
+    const contractionPool = new Pool({ connectionString: contractionConnStr });
+
+    const tempBaselineDir = fs.mkdtempSync(path.join(os.tmpdir(), 'drizzle-saved-search-baseline-'));
+    const tempMetaDir = path.join(tempBaselineDir, 'meta');
+    fs.mkdirSync(tempMetaDir, { recursive: true });
+
+    interface JournalEntry {
+      idx: number;
+      version: string;
+      when: number;
+      tag: string;
+      breakpoints: boolean;
+    }
+    interface JournalData {
+      version: string;
+      dialect: string;
+      entries: JournalEntry[];
+    }
+
+    try {
+      await contractionPool.query('CREATE EXTENSION IF NOT EXISTS postgis;');
+      await contractionPool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto;');
+      await contractionPool.query(`
+        CREATE OR REPLACE FUNCTION uuidv7() RETURNS uuid AS $$
+          SELECT (
+            lpad(to_hex(floor(extract(epoch FROM clock_timestamp()) * 1000)::bigint), 12, '0') ||
+            '7' || substr(encode(gen_random_bytes(2), 'hex'), 2, 3) ||
+            '8' || substr(encode(gen_random_bytes(2), 'hex'), 2, 3) ||
+            encode(gen_random_bytes(6), 'hex')
+          )::uuid;
+        $$ LANGUAGE sql VOLATILE;
+      `);
+
+      // Reproduce the schema immediately before the contraction migration (0000..0052).
+      const fullJournalPath = path.resolve(__dirname, '../../drizzle/migrations/meta/_journal.json');
+      const journalData = JSON.parse(fs.readFileSync(fullJournalPath, 'utf8')) as JournalData;
+      const baselineEntries = journalData.entries.filter((entry) => entry.idx <= 52);
+      fs.writeFileSync(
+        path.join(tempMetaDir, '_journal.json'),
+        JSON.stringify({ ...journalData, entries: baselineEntries }, null, 2),
+      );
+      for (const entry of baselineEntries) {
+        fs.copyFileSync(
+          path.resolve(__dirname, '../../drizzle/migrations', `${entry.tag}.sql`),
+          path.join(tempBaselineDir, `${entry.tag}.sql`),
+        );
+      }
+
+      await migrate(drizzle(contractionPool), { migrationsFolder: tempBaselineDir });
+
+      // The pre-contraction schema still has the retired table and can hold rows.
+      const baselineTable = await contractionPool.query<{ regclass: string | null }>(
+        `SELECT to_regclass('public.saved_searches')::text AS regclass`,
+      );
+      expect(baselineTable.rows[0].regclass).toBe('saved_searches');
+
+      const cityId = (
+        await contractionPool.query<{ id: string }>(`SELECT id FROM cities WHERE name_english = 'Maadi' LIMIT 1`)
+      ).rows[0].id;
+      const userId = (
+        await contractionPool.query<{ id: string }>(`
+          INSERT INTO users (firebase_user_id, email, full_name)
+          VALUES ('fb-saved-search-upgrade', 'saved-search-upgrade@example.com', 'Saved Search Upgrade')
+          RETURNING id
+        `)
+      ).rows[0].id;
+
+      await contractionPool.query(
+        `INSERT INTO saved_searches (user_id, label, city_id, post_type)
+         VALUES ($1, 'Persian cats in Cairo', $2, 'ADOPTION')`,
+        [userId, cityId],
+      );
+      const notificationId = (
+        await contractionPool.query<{ id: string }>(
+          `INSERT INTO notifications (recipient_id, type, title, body)
+           VALUES ($1, 'SYSTEM_ANNOUNCEMENT', 'New match for your saved search', 'A new post matches your saved search.')
+           RETURNING id`,
+          [userId],
+        )
+      ).rows[0].id;
+
+      // Upgrade applies the contraction migration (0053) plus the repeatable custom SQL.
+      await runMigrations({
+        pool: contractionPool,
+        migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+        customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
+      });
+
+      const contractedTable = await contractionPool.query<{ absent: boolean }>(
+        `SELECT (to_regclass('public.saved_searches') IS NULL) AS absent`,
+      );
+      expect(contractedTable.rows[0].absent).toBe(true);
+
+      // Unrelated schema, the account and retained notification history survive.
+      const preservedUser = await contractionPool.query<{ email: string }>(`SELECT email FROM users WHERE id = $1`, [
+        userId,
+      ]);
+      expect(preservedUser.rows).toEqual([{ email: 'saved-search-upgrade@example.com' }]);
+
+      const savedPostsTable = await contractionPool.query<{ absent: boolean }>(
+        `SELECT (to_regclass('public.post_saves') IS NULL) AS absent`,
+      );
+      expect(savedPostsTable.rows[0].absent).toBe(false);
+
+      const retainedNotification = await contractionPool.query<{ id: string; type: string }>(
+        `SELECT id, type FROM notifications WHERE id = $1`,
+        [notificationId],
+      );
+      expect(retainedNotification.rows).toEqual([{ id: notificationId, type: 'SYSTEM_ANNOUNCEMENT' }]);
+
+      const notificationEnum = await contractionPool.query<{ enumlabel: string }>(`
+        SELECT enumlabel
+        FROM pg_enum
+        JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+        WHERE pg_type.typname = 'notification_type'
+      `);
+      expect(notificationEnum.rows.map((row) => row.enumlabel)).toContain('SYSTEM_ANNOUNCEMENT');
+
+      // Re-running the full migration operation stays idempotent after contraction.
+      await expect(
+        runMigrations({
+          pool: contractionPool,
+          migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+          customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
+        }),
+      ).resolves.not.toThrow();
+    } finally {
+      await contractionPool.end();
+      fs.rmSync(tempBaselineDir, { recursive: true, force: true });
+      await pool.query('DROP DATABASE IF EXISTS pupzy_saved_search_contraction_test;');
     }
   });
 });

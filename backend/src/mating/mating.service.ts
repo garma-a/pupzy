@@ -7,6 +7,7 @@ import { clampFirst } from '../common/utils/pagination.util';
 import { assertUuid } from '../common/utils/validate-uuid';
 import { shouldFlagContent } from '../common/utils/moderation.util';
 import { ValidationError, NotFoundError } from '../common/errors/app.errors';
+import { buildFeedSearchPattern } from '../posts/search-query.util';
 import { validateCreateMatingPostInput } from './validate-create-mating-post.input';
 import type { Post, NewPost, NewPostMedia } from '../database/schema';
 
@@ -119,6 +120,7 @@ export class MatingService {
     filter: MatingFeedFilterInput | null,
     first: number | null | undefined,
     after: string | null | undefined,
+    search: string | null | undefined,
     viewerId?: string | null,
   ) {
     const f = filter ?? {};
@@ -127,8 +129,11 @@ export class MatingService {
 
     const limit = clampFirst(first);
     const cursor = this.decodeCursor(after);
+    // Validates bounds and rejects short/oversize text before the repository
+    // is reached, exactly like the other searchable feeds.
+    const searchPattern = buildFeedSearchPattern(search);
 
-    const result = await this.matingRepository.findFeed({ filter: f, limit, cursor, viewerId });
+    const result = await this.matingRepository.findFeed({ filter: f, limit, cursor, searchPattern, viewerId });
 
     return {
       edges: result.rows.map((post) => ({ node: post, cursor: this.encodeCursor(post) })),

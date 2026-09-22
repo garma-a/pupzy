@@ -296,6 +296,26 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.equal('password_hash' in record.populated.banned_by_admin_id.params, false);
   });
 
+  it('exposes versioned Terms Acceptance on the user record for admin inspection', async () => {
+    const acceptedAt = new Date('2026-09-01T10:30:00.000Z');
+    const seeded = await database.pool.query(
+      `INSERT INTO users (firebase_user_id, email, full_name, terms_accepted_version, terms_accepted_at)
+       VALUES ('firebase-terms-user', 'terms@example.com', 'Terms User', '2026-09-01', $1)
+       RETURNING id`,
+      [acceptedAt],
+    );
+    const termsUserId = seeded.rows[0].id;
+
+    const response = await fetch(`${baseUrl}/admin/api/resources/users/records/${termsUserId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(response.status, 200);
+
+    const { record } = await response.json();
+    assert.equal(record.params.terms_accepted_version, '2026-09-01');
+    assert.equal(new Date(record.params.terms_accepted_at).toISOString(), acceptedAt.toISOString());
+  });
+
   it('relies on PostgreSQL enums to reject invalid values', async () => {
     await assert.rejects(
       database.pool.query(`UPDATE admin_users SET role = 'ROOT' WHERE id = $1`, [principals.adminId]),
@@ -550,6 +570,180 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.equal(removedActionNames.includes('approvePost'), false);
     assert.equal(removedActionNames.includes('flagPost'), false);
     assert.equal(removedActionNames.includes('removePost'), false);
+  });
+
+  it('filters the Posts list by the EXPIRED lifecycle status over authenticated AdminJS HTTP', async () => {
+    const expiredTitle = `Expired listing ${Date.now()}`;
+    const expiredPostId = await insertPost(database.pool, {
+      ...principals,
+      title: expiredTitle,
+      moderationStatus: 'CLEAN',
+      status: 'EXPIRED',
+    });
+    const activePostId = await insertPost(database.pool, {
+      ...principals,
+      title: `Active listing ${Date.now()}`,
+      moderationStatus: 'CLEAN',
+      status: 'ACTIVE',
+    });
+
+    const listRes = await fetch(
+      `${baseUrl}/admin/api/resources/posts/actions/list?filters.status=EXPIRED&filters.title=${encodeURIComponent(expiredTitle)}`,
+      { headers: { cookie: superCookie } },
+    );
+    const listBody = await listRes.text();
+    assert.equal(listRes.status, 200, listBody);
+    const listData = JSON.parse(listBody);
+    assert.ok(
+      listData.records.some((record) => record.id === expiredPostId),
+      'expired Post must be reachable through the status filter',
+    );
+    assert.equal(
+      listData.records.every((record) => record.params.status === 'EXPIRED'),
+      true,
+      'status filter must only return expired Posts',
+    );
+    assert.equal(
+      listData.records.some((record) => record.id === activePostId),
+      false,
+      'active Posts must not appear under the expired filter',
+    );
+
+    const showRes = await fetch(`${baseUrl}/admin/api/resources/posts/records/${expiredPostId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(showRes.status, 200);
+    const showData = await showRes.json();
+    assert.equal(showData.record.params.status, 'EXPIRED');
+    assert.equal(showData.record.params.post_type, 'ADOPTION', 'the adoption expiry state must be staff-visible');
+    assert.ok('renewed_at' in showData.record.params, 'renewal state must be visible on the record');
+    assert.ok('reminder_sent_at' in showData.record.params, 'reminder state must be visible on the record');
+  });
+
+  it('removes and restores a Post over authenticated AdminJS HTTP with audited, notified, counter-synced lifecycle effects', async () => {
+    const postId = await insertPost(database.pool, {
+      ...principals,
+      title: 'Ticket 01 lifecycle HTTP post',
+      moderationStatus: 'FLAGGED',
+      status: 'ACTIVE',
+    });
+
+    // Retained media and an open Post Report prove removal is not destructive.
+    await database.pool.query(
+      `INSERT INTO post_media (post_id, public_url, cloudflare_storage_key, display_order)
+       VALUES ($1, 'https://cdn.pupzy.net/posts/ticket01-lifecycle.webp', $2, 0)`,
+      [postId, `posts/${postId}/ticket01-lifecycle.webp`],
+    );
+    const reportId = (
+      await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason)
+         VALUES ($1, $2, 'SPAM')
+         RETURNING id`,
+        [postId, principals.userId],
+      )
+    ).rows[0].id;
+
+    const postAction = (path, payload, cookie, csrf) =>
+      fetch(`${baseUrl}${path}`, {
+        method: 'POST',
+        headers: {
+          cookie: `${cookie}; ${csrf.cookie}`,
+          origin: baseUrl,
+          'x-xsrf-token': csrf.token,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+    const beforeCount = (await database.pool.query(`SELECT post_count FROM users WHERE id = $1`, [principals.userId]))
+      .rows[0].post_count;
+
+    // An ADMIN (not only SUPER_ADMIN) performs the removal through the real route.
+    const removeResponse = await postAction(
+      `/admin/api/resources/posts/records/${postId}/removePost`,
+      { reason: 'Ticket 01 lifecycle takedown' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(removeResponse.status, 200);
+    const removeResult = await removeResponse.json();
+    assert.equal(removeResult.notice?.type, 'success');
+
+    const removed = (
+      await database.pool.query(
+        `SELECT status, moderation_status, moderation_reason, moderated_by_admin_id
+         FROM posts WHERE id = $1`,
+        [postId],
+      )
+    ).rows[0];
+    assert.equal(removed.status, 'REMOVED');
+    assert.equal(removed.moderation_status, 'FLAGGED');
+    assert.equal(removed.moderation_reason, 'Ticket 01 lifecycle takedown');
+    assert.equal(removed.moderated_by_admin_id, staffId);
+
+    const afterRemovalCount = (
+      await database.pool.query(`SELECT post_count FROM users WHERE id = $1`, [principals.userId])
+    ).rows[0].post_count;
+    assert.equal(Number(afterRemovalCount), Number(beforeCount) - 1);
+
+    const removalAudit = await database.pool.query(
+      `SELECT admin_user_id, metadata FROM moderation_actions
+       WHERE target_id = $1 AND action_type = 'POST_REMOVED'`,
+      [postId],
+    );
+    assert.equal(removalAudit.rows.length, 1);
+    assert.equal(removalAudit.rows[0].admin_user_id, staffId);
+    assert.deepEqual(removalAudit.rows[0].metadata.closedPostReportIds, [reportId]);
+
+    const notifications = await database.pool.query(
+      `SELECT type, related_post_id FROM notifications WHERE related_post_id = $1`,
+      [postId],
+    );
+    assert.deepEqual(notifications.rows, [{ type: 'POST_REMOVED_BY_ADMIN', related_post_id: postId }]);
+
+    const closedReport = (
+      await database.pool.query(
+        `SELECT reviewed_at, reviewed_by_admin_id, review_outcome FROM post_reports WHERE id = $1`,
+        [reportId],
+      )
+    ).rows[0];
+    assert.ok(closedReport.reviewed_at);
+    assert.equal(closedReport.reviewed_by_admin_id, staffId);
+    assert.equal(closedReport.review_outcome, 'ACTION_TAKEN');
+
+    const retainedMedia = await database.pool.query(
+      `SELECT count(*)::int AS count FROM post_media WHERE post_id = $1`,
+      [postId],
+    );
+    assert.equal(retainedMedia.rows[0].count, 1);
+
+    // A SUPER_ADMIN restores the Post; its moderation status and counters survive.
+    const restoreResponse = await postAction(
+      `/admin/api/resources/posts/records/${postId}/restorePost`,
+      {},
+      superCookie,
+      superCsrf,
+    );
+    assert.equal(restoreResponse.status, 200);
+    const restoreResult = await restoreResponse.json();
+    assert.equal(restoreResult.notice?.type, 'success');
+
+    const restored = (await database.pool.query(`SELECT status, moderation_status FROM posts WHERE id = $1`, [postId]))
+      .rows[0];
+    assert.equal(restored.status, 'ACTIVE');
+    assert.equal(restored.moderation_status, 'FLAGGED');
+
+    const afterRestoreCount = (
+      await database.pool.query(`SELECT post_count FROM users WHERE id = $1`, [principals.userId])
+    ).rows[0].post_count;
+    assert.equal(Number(afterRestoreCount), Number(beforeCount));
+
+    const restoreAudit = await database.pool.query(
+      `SELECT count(*)::int AS count FROM moderation_actions
+       WHERE target_id = $1 AND action_type = 'POST_RESTORED'`,
+      [postId],
+    );
+    assert.equal(restoreAudit.rows[0].count, 1);
   });
 
   it('cities search action returns only official cities with bilingual titles and filters out legacy/retired', async () => {
@@ -2231,75 +2425,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.equal(userRow.phone_number, 'ENC_PHONE');
     assert.equal(userRow.last_seen_at, null);
 
-    // 8. Saved Searches Historical & Official City Labels
-    // 8a. Saved search with official city
-    const savedSearchOfficial = await database.pool.query(
-      `INSERT INTO saved_searches (user_id, label, post_type, city_id, species)
-       VALUES ($1, 'Zamalek Dogs', 'ADOPTION', $2, 'DOG')
-       RETURNING id`,
-      [principals.userId, zamalekId],
-    );
-    const ssOfficialId = savedSearchOfficial.rows[0].id;
-
-    // 8b. Saved search with historical legacy city
-    const savedSearchLegacy = await database.pool.query(
-      `INSERT INTO saved_searches (user_id, label, post_type, city_id, species)
-       VALUES ($1, 'Legacy Area Cats', 'ADOPTION', $2, 'CAT')
-       RETURNING id`,
-      [principals.userId, legacyCityId],
-    );
-    const ssLegacyId = savedSearchLegacy.rows[0].id;
-
-    // 8c. Saved search with historical retired city
-    const savedSearchRetired = await database.pool.query(
-      `INSERT INTO saved_searches (user_id, label, post_type, city_id, species)
-       VALUES ($1, 'Retired District Birds', 'LOST', $2, 'BIRD')
-       RETURNING id`,
-      [principals.userId, retiredCityId],
-    );
-    const ssRetiredId = savedSearchRetired.rows[0].id;
-
-    // Show view for official saved search
-    const ssOfficialShow = await fetch(`${baseUrl}/admin/api/resources/saved_searches/records/${ssOfficialId}/show`, {
-      headers: { cookie: superCookie },
-    });
-    assert.equal(ssOfficialShow.status, 200);
-    const ssOffData = await ssOfficialShow.json();
-    assert.ok(ssOffData.record.populated.city_id);
-    assert.equal(ssOffData.record.populated.city_id.title, 'Zamalek / الزمالك (Cairo)');
-
-    // Show view for historical legacy saved search -> displays readable label
-    const ssLegacyShow = await fetch(`${baseUrl}/admin/api/resources/saved_searches/records/${ssLegacyId}/show`, {
-      headers: { cookie: superCookie },
-    });
-    assert.equal(ssLegacyShow.status, 200);
-    const ssLegData = await ssLegacyShow.json();
-    assert.ok(ssLegData.record.populated.city_id);
-    assert.equal(ssLegData.record.populated.city_id.title, 'Ancient Village / قرية قديمة متقادمة (Giza)');
-
-    // Show view for historical retired saved search -> displays readable label
-    const ssRetiredShow = await fetch(`${baseUrl}/admin/api/resources/saved_searches/records/${ssRetiredId}/show`, {
-      headers: { cookie: superCookie },
-    });
-    assert.equal(ssRetiredShow.status, 200);
-    const ssRetData = await ssRetiredShow.json();
-    assert.ok(ssRetData.record.populated.city_id);
-    assert.equal(ssRetData.record.populated.city_id.title, 'Retired District / حي ملغي (Suez)');
-
-    // List view includes all three with populated bilingual titles
-    const ssListRes = await fetch(`${baseUrl}/admin/api/resources/saved_searches/actions/list`, {
-      headers: { cookie: superCookie },
-    });
-    assert.equal(ssListRes.status, 200);
-    const ssListData = await ssListRes.json();
-    const recOff = ssListData.records.find((r) => r.id === ssOfficialId);
-    const recLeg = ssListData.records.find((r) => r.id === ssLegacyId);
-    const recRet = ssListData.records.find((r) => r.id === ssRetiredId);
-    assert.equal(recOff.populated.city_id.title, 'Zamalek / الزمالك (Cairo)');
-    assert.equal(recLeg.populated.city_id.title, 'Ancient Village / قرية قديمة متقادمة (Giza)');
-    assert.equal(recRet.populated.city_id.title, 'Retired District / حي ملغي (Suez)');
-
-    // 9. Vet Clinic Location Audits with historical cities
+    // 8. Vet Clinic Location Audits with historical cities
     const auditRes = await database.pool.query(
       `INSERT INTO vet_clinic_location_audits (vet_clinic_id, admin_user_id, selected_city_id, nearest_city_id, coordinates, discrepancy_details, reason)
        VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint(31.20, 29.98), 4326), '{"discrepant":true}', 'Historical location audit check')

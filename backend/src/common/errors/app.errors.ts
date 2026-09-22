@@ -72,3 +72,34 @@ export class ConflictError extends AppError {
     super(message, code);
   }
 }
+
+/**
+ * Thrown when an account attempts a protected publication or submission
+ * before accepting the currently published Terms version.
+ *
+ * Maps to GraphQL extensions.code = 'TERMS_ACCEPTANCE_REQUIRED' and carries
+ * the version the client must accept plus its public document URL.
+ */
+export class TermsAcceptanceRequiredError extends AppError {
+  constructor(currentVersion: string, termsUrl?: string) {
+    super('You must accept the current Terms before publishing or submitting.', 'TERMS_ACCEPTANCE_REQUIRED', {
+      currentVersion,
+      ...(termsUrl ? { termsUrl } : {}),
+    });
+  }
+}
+
+/**
+ * Thrown when an acceptance request submits an unknown or stale version.
+ *
+ * Maps to GraphQL extensions.code = 'TERMS_VERSION_MISMATCH' and carries the
+ * version the client should accept instead plus its public document URL.
+ */
+export class TermsVersionMismatchError extends AppError {
+  constructor(currentVersion: string, termsUrl?: string) {
+    super(`Terms version is no longer current. Accept version "${currentVersion}" instead.`, 'TERMS_VERSION_MISMATCH', {
+      currentVersion,
+      ...(termsUrl ? { termsUrl } : {}),
+    });
+  }
+}

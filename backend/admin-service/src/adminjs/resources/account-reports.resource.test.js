@@ -46,6 +46,11 @@ describe('AdminJS Account Reports Resource Configuration', () => {
     const resource = buildAccountReportsResource(db);
     assert.ok(resource.options.filterProperties.includes('reviewed_at'));
     assert.ok(resource.options.filterProperties.includes('source_type'));
+    assert.ok(resource.options.filterProperties.includes('review_state'));
+    assert.deepEqual(
+      resource.options.properties.review_state.availableValues.map(({ value }) => value),
+      ['OPEN', 'REVIEWED'],
+    );
   });
 
   it('attaches ShortUuid custom component to ID and relation fields when provided', () => {

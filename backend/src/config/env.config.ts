@@ -62,6 +62,34 @@ const envSchema = z.object({
   // ─── Feature Flags ──────────────────────────────────────────────────────
   /** Feature toggle for account deletion. Defaults to true in dev/test. */
   ACCOUNT_DELETION_ENABLED: z.coerce.boolean().default(true),
+
+  // ─── Terms Acceptance ───────────────────────────────────────────────────
+  /**
+   * Public URL of the currently published Terms.
+   * Configure together with TERMS_VERSION. While both are unset the terms
+   * acceptance gate is inactive because no published document exists; when
+   * both are set every protected publication/submission operation requires
+   * acceptance of this exact version.
+   */
+  TERMS_URL: z.string().url({ message: 'TERMS_URL must be a valid URL' }).optional(),
+  /**
+   * Version identifier of the currently published Terms.
+   * Never invented by the backend: the release owner supplies the actual
+   * published version together with TERMS_URL.
+   */
+  TERMS_VERSION: z.string().min(1).max(64).optional(),
+});
+
+/**
+ * Environment schema with cross-field rules.
+ *
+ * Terms Acceptance is configured as a pair: `TERMS_URL` and `TERMS_VERSION`
+ * must be set together or left unset together, so a half-configured release
+ * can never run with a partially active gate.
+ */
+const validatedEnvSchema = envSchema.refine((env) => (env.TERMS_VERSION ? Boolean(env.TERMS_URL) : !env.TERMS_URL), {
+  message: 'TERMS_URL and TERMS_VERSION must be configured together (set both or neither)',
+  path: ['TERMS_URL'],
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -74,7 +102,7 @@ export type Env = z.infer<typeof envSchema>;
  * @returns Parsed, type-safe environment object
  */
 export function validateEnv(config: Record<string, unknown>): Env {
-  const result = envSchema.safeParse(config);
+  const result = validatedEnvSchema.safeParse(config);
   if (!result.success) {
     throw new Error(
       `❌ Environment validation failed:\n${result.error.issues

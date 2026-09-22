@@ -293,26 +293,6 @@ type Notification {
   createdAt: DateTime!
 }
 
-"""
-A saved search alert that fires SYSTEM_ANNOUNCEMENT notifications
-when a new matching post is created.
-Only ADOPTION and PRODUCT post types are supported.
-"""
-type SavedSearch {
-  id: ID!
-  label: String
-  postType: PostType!
-  cityId: ID
-  species: SpeciesType
-  breed: String
-  marketCategory: ProductCategory
-  """
-  Maximum price filter. Null means no price ceiling.
-  """
-  maxPrice: Float
-  createdAt: DateTime!
-}
-
 # ─── Create Mutation Inputs ──────────────────────────────────────────────────
 
 """
@@ -627,6 +607,8 @@ extend type Query {
   """
   Help Feed — RESCUE and LOST posts sorted by urgency (CRITICAL first), then newest.
   Filtered by governorate and optional city. Optional radius proximity filter.
+  Optional server-side search finds Posts that have not loaded on the client,
+  keeping this feed's ordering, filters and cursor pagination.
   """
   helpFeed(
     """
@@ -653,10 +635,20 @@ extend type Query {
     Cursor from previous page's endCursor.
     """
     after: String
+    """
+    Optional. Case-, diacritic- and Arabic-variant-insensitive search over
+    title, description, category, area and City names (English and Arabic).
+    Empty or whitespace-only text means no search. Minimum 2 characters,
+    maximum 100; shorter or longer text is rejected with VALIDATION_ERROR.
+    The feed's own filters, ordering and cursor pagination are unchanged.
+    """
+    search: String
   ): PostConnection!
 
   """
   Adopt Feed — ADOPTION posts ranked by engagement score (HOT) or newest.
+  Optional server-side search finds Posts that have not loaded on the client,
+  keeping this feed's ordering, filters and cursor pagination.
   """
   adoptFeed(
     governorate: String
@@ -669,11 +661,21 @@ extend type Query {
     sort: AdoptFeedSort
     first: Int
     after: String
+    """
+    Optional. Case-, diacritic- and Arabic-variant-insensitive search over
+    title, description, category, area and City names (English and Arabic).
+    Empty or whitespace-only text means no search. Minimum 2 characters,
+    maximum 100; shorter or longer text is rejected with VALIDATION_ERROR.
+    The feed's own filters, ordering and cursor pagination are unchanged.
+    """
+    search: String
   ): PostConnection!
 
   """
   Market Feed — PRODUCT posts ranked by engagement score or newest.
   Supports optional category filtering without joining product_posts.
+  Optional server-side search composes with the category filter and keeps the
+  feed's ordering and cursor pagination.
   """
   marketFeed(
     governorate: String
@@ -690,11 +692,21 @@ extend type Query {
     sort: MarketFeedSort
     first: Int
     after: String
+    """
+    Optional. Case-, diacritic- and Arabic-variant-insensitive search over
+    title, description, category, area and City names (English and Arabic).
+    Empty or whitespace-only text means no search. Minimum 2 characters,
+    maximum 100; shorter or longer text is rejected with VALIDATION_ERROR.
+    The feed's own filters, ordering and cursor pagination are unchanged.
+    """
+    search: String
   ): PostConnection!
 
   """
   Home Feed — All post types combined, sorted by newest first.
   The main landing screen combining RESCUE, LOST, ADOPTION, PRODUCT, and MATING posts.
+  Optional server-side search finds Posts that have not loaded on the client,
+  keeping this feed's ordering, filters and cursor pagination.
   """
   homeFeed(
     governorate: String
@@ -703,6 +715,14 @@ extend type Query {
     radiusKm: Float
     first: Int
     after: String
+    """
+    Optional. Case-, diacritic- and Arabic-variant-insensitive search over
+    title, description, category, area and City names (English and Arabic).
+    Empty or whitespace-only text means no search. Minimum 2 characters,
+    maximum 100; shorter or longer text is rejected with VALIDATION_ERROR.
+    The feed's own filters, ordering and cursor pagination are unchanged.
+    """
+    search: String
   ): PostConnection!
 
   """
@@ -717,7 +737,7 @@ extend type Query {
   """
   myPosts(
     """
-    The vertical section to view: RESCUE, LOST, ADOPTION, or PRODUCT.
+    The vertical section to view: RESCUE, LOST, ADOPTION, PRODUCT, or MATING.
     """
     postType: PostType!
     first: Int
@@ -774,12 +794,27 @@ extend type Mutation {
   Update a post's lifecycle status.
   Allowed transitions depend on post type:
     RESCUE  → RESOLVED
-    LOST    → REUNITED
+    LOST    → LOST_PET closes as REUNITED; FOUND_STRAY accepts RESOLVED
+              and retains REUNITED
     ADOPTION → ADOPTED
     PRODUCT  → SOLD
+    MATING   → RESOLVED
+  Closing a Post also terminates its still-pending Contact Requests and
+  Adoption Applications; approved contact access is retained.
   Only the post creator can change their own post's status.
+  EXPIRED is never a valid update target: it is applied by the inactivity
+  boundary and can only be left through `renewPost`.
   """
   updatePostStatus(postId: ID!, status: PostStatus!): Post!
+
+  """
+  Explicitly renew an ACTIVE or EXPIRED product or adoption listing. Renewal
+  resets the inactivity window, returns an EXPIRED listing to ACTIVE, and is
+  limited to once every seven days per Post. Completed (SOLD/ADOPTED) and
+  Removed Posts cannot be renewed, and renewal never revives interactions
+  terminated by expiry. Only the post creator can renew their own post.
+  """
+  renewPost(postId: ID!): Post!
 
   """
   Records a view on a post. Deduplicated per user per hour.

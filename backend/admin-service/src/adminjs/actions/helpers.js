@@ -1,3 +1,6 @@
+import { POST_DISCUSSION_LOCK_NAMESPACE } from '../../../../src/common/contracts/post-lifecycle.contract.ts';
+import { isPushDeliveryEnabled } from '../../../../src/notifications/push-delivery.constants.ts';
+
 const MODERATION_TABLES = new Set(['users', 'posts', 'comments']);
 
 const RETRYABLE_SQLSTATES = new Set(['40P01', '40001']);
@@ -30,7 +33,8 @@ export async function lockCommentDiscussion(client, commentId) {
   const target = targets[0];
   if (!target) return null;
 
-  await client.query("SELECT pg_advisory_xact_lock(hashtextextended('comment_discussion:' || $1, 0))", [
+  await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1 || $2, 0))', [
+    POST_DISCUSSION_LOCK_NAMESPACE,
     target.post_id,
   ]);
   const { rows: posts } = await client.query('SELECT * FROM posts WHERE id = $1 FOR UPDATE', [target.post_id]);
@@ -48,7 +52,10 @@ export async function lockCommentDiscussion(client, commentId) {
  * as discussion writes. The generic target lock follows this call.
  */
 export async function lockPostDiscussion(client, postId) {
-  await client.query("SELECT pg_advisory_xact_lock(hashtextextended('comment_discussion:' || $1, 0))", [postId]);
+  await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1 || $2, 0))', [
+    POST_DISCUSSION_LOCK_NAMESPACE,
+    postId,
+  ]);
   return true;
 }
 
@@ -123,7 +130,10 @@ export async function runModerationAction(pool, params) {
         return { ok: false, error: params.table + ' row ' + params.id + ' not found' };
       }
 
-      const validationError = params.validate?.(row);
+      // Validation runs under the target row lock. It may inspect related rows
+      // through the same client so type-specific rules (for example a LOST
+      // Post's direction discriminator) are rechecked transactionally.
+      const validationError = await params.validate?.(row, client);
       if (validationError) {
         await client.query('ROLLBACK');
         return { ok: false, error: validationError };
@@ -175,6 +185,45 @@ export async function runModerationAction(pool, params) {
 }
 
 /**
+ * Moves every still-PENDING Contact Request and Adoption Application
+ * targeting the Post to the established terminal `REJECTED` state with
+ * `responded_at` set. Rows are preserved and previously approved interactions
+ * are never touched, matching the API's owner-closure and expiry behavior.
+ * Must run inside the action's own transaction so the status change and the
+ * terminations commit atomically.
+ */
+export async function terminatePendingInteractions(client, postId) {
+  const { rows: contactRequestRows } = await client.query(
+    `UPDATE contact_requests
+     SET status = 'REJECTED', responded_at = now()
+     WHERE post_id = $1 AND status = 'PENDING'
+     RETURNING id`,
+    [postId],
+  );
+  const { rows: adoptionApplicationRows } = await client.query(
+    `UPDATE adoption_applications
+     SET status = 'REJECTED', responded_at = now()
+     WHERE target_post_id = $1 AND status = 'PENDING'
+     RETURNING id`,
+    [postId],
+  );
+  return {
+    terminatedContactRequestCount: contactRequestRows.length,
+    terminatedAdoptionApplicationCount: adoptionApplicationRows.length,
+  };
+}
+
+/**
+ * Reads a LOST Post's direction discriminator (`LOST_PET` / `FOUND_STRAY`).
+ * Returns null when the Post has no extension row, so callers keep the
+ * conservative REUNITED-only rule.
+ */
+export async function findLostReportType(client, postId) {
+  const { rows } = await client.query(`SELECT report_type FROM lost_posts WHERE post_id = $1`, [postId]);
+  return rows[0]?.report_type ?? null;
+}
+
+/**
  * Atomically closes every open Post Report for a moderated Post and returns
  * the closed report ids so the caller can correlate them in the append-only
  * moderation audit metadata. Must run inside the action's own transaction.
@@ -218,6 +267,25 @@ export async function closeOpenCommentReports(client, commentId) {
     [commentId],
   );
   return rows.map((row) => row.id);
+}
+
+/**
+ * Writes one durable push intent per device registered to the notification's
+ * recipient, inside the same transaction as the notification insert. This
+ * mirrors the Nest API's push-delivery outbox and shares its type allowlist;
+ * `ON CONFLICT` makes a repeated enqueue harmless. Admin-triggered
+ * notifications have no acting user, so no Block actor is recorded.
+ */
+export async function enqueuePushDeliveries(client, { id, recipientId, type }) {
+  if (!isPushDeliveryEnabled(type)) return;
+  await client.query(
+    `INSERT INTO push_deliveries (notification_id, recipient_id, actor_id, device_id)
+     SELECT $1::uuid, $2::uuid, NULL, d.id
+     FROM device_registrations d
+     WHERE d.user_id = $2::uuid
+     ON CONFLICT (notification_id, device_id) DO NOTHING`,
+    [id, recipientId],
+  );
 }
 
 export function actionResponse(record, currentAdmin, result, successMessage) {

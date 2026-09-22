@@ -6,7 +6,7 @@ import { ViewFlushCron } from './view-flush.cron';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Cache } from 'cache-manager';
-import { ValidationError, NotFoundError, ForbiddenError } from '../common/errors/app.errors';
+import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../common/errors/app.errors';
 import type { Post } from '../database/schema';
 
 describe('PostsService', () => {
@@ -48,7 +48,9 @@ describe('PostsService', () => {
       findLostDetail: jest.fn(),
       findAdoptionDetail: jest.fn(),
       findProductDetail: jest.fn(),
+      findLostReportType: jest.fn().mockResolvedValue(null),
       updateStatus: jest.fn(),
+      renewPost: jest.fn(),
       softDelete: jest.fn(),
       toggleUpvote: jest.fn(),
       toggleSave: jest.fn(),
@@ -512,6 +514,170 @@ describe('PostsService', () => {
         .mockResolvedValue({ id: validPostId, creatorId: validUserId, status: 'ACTIVE', postType: 'RESCUE' });
       await expect(service.updatePostStatus(validPostId, validUserId, 'SOLD')).rejects.toThrow(ValidationError);
     });
+
+    it('closes a MATING post as RESOLVED without reading a LOST discriminator', async () => {
+      const mockPost = {
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'MATING',
+        status: 'ACTIVE',
+      } as unknown as Post;
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(mockPost);
+      mockPostsRepo.updateStatus = jest.fn().mockResolvedValue({ ...mockPost, status: 'RESOLVED' });
+
+      const result = await service.updatePostStatus(validPostId, validUserId, 'RESOLVED');
+      expect(result.status).toBe('RESOLVED');
+      expect(mockPostsRepo.findLostReportType).not.toHaveBeenCalled();
+    });
+
+    it('closes a FOUND_STRAY LOST post as RESOLVED using its direction discriminator', async () => {
+      const mockPost = {
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'LOST',
+        status: 'ACTIVE',
+      } as unknown as Post;
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(mockPost);
+      mockPostsRepo.findLostReportType = jest.fn().mockResolvedValue('FOUND_STRAY');
+      mockPostsRepo.updateStatus = jest.fn().mockResolvedValue({ ...mockPost, status: 'RESOLVED' });
+
+      const result = await service.updatePostStatus(validPostId, validUserId, 'RESOLVED');
+      expect(result.status).toBe('RESOLVED');
+      expect(mockPostsRepo.findLostReportType).toHaveBeenCalledWith(validPostId);
+    });
+
+    it('rejects RESOLVED for a LOST_PET while retaining REUNITED', async () => {
+      const mockPost = {
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'LOST',
+        status: 'ACTIVE',
+      } as unknown as Post;
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(mockPost);
+      mockPostsRepo.findLostReportType = jest.fn().mockResolvedValue('LOST_PET');
+
+      await expect(service.updatePostStatus(validPostId, validUserId, 'RESOLVED')).rejects.toThrow(ValidationError);
+      expect(mockPostsRepo.updateStatus).not.toHaveBeenCalled();
+
+      mockPostsRepo.updateStatus = jest.fn().mockResolvedValue({ ...mockPost, status: 'REUNITED' });
+      const reunited = await service.updatePostStatus(validPostId, validUserId, 'REUNITED');
+      expect(reunited.status).toBe('REUNITED');
+    });
+  });
+
+  describe('renewPost', () => {
+    it('renews an EXPIRED PRODUCT listing for its owner and invalidates the cached profile', async () => {
+      const expiredProduct = {
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'PRODUCT',
+        status: 'EXPIRED',
+      } as unknown as Post;
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(expiredProduct);
+      mockPostsRepo.renewPost = jest.fn().mockResolvedValue({ ...expiredProduct, status: 'ACTIVE' });
+
+      const result = await service.renewPost(validPostId, validUserId);
+
+      expect(result.status).toBe('ACTIVE');
+      expect(mockPostsRepo.renewPost).toHaveBeenCalledWith(validPostId, validUserId);
+      expect(mockUsersService.invalidateUserCacheById).toHaveBeenCalledWith(validUserId);
+    });
+
+    it('renews an ACTIVE PRODUCT listing to reset its inactivity window', async () => {
+      const activeProduct = {
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'PRODUCT',
+        status: 'ACTIVE',
+      } as unknown as Post;
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(activeProduct);
+      mockPostsRepo.renewPost = jest.fn().mockResolvedValue({ ...activeProduct, status: 'ACTIVE' });
+
+      await expect(service.renewPost(validPostId, validUserId)).resolves.toMatchObject({ status: 'ACTIVE' });
+    });
+
+    it('rejects renewal by anyone but the owner', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({
+        id: validPostId,
+        creatorId: otherUserId,
+        postType: 'PRODUCT',
+        status: 'ACTIVE',
+      });
+
+      await expect(service.renewPost(validPostId, validUserId)).rejects.toThrow(ForbiddenError);
+      expect(mockPostsRepo.renewPost).not.toHaveBeenCalled();
+    });
+
+    it('treats missing and Removed listings as not found', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(undefined);
+      await expect(service.renewPost(validPostId, validUserId)).rejects.toThrow(NotFoundError);
+
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'PRODUCT',
+        status: 'REMOVED',
+      });
+      await expect(service.renewPost(validPostId, validUserId)).rejects.toThrow(NotFoundError);
+      expect(mockPostsRepo.renewPost).not.toHaveBeenCalled();
+    });
+
+    it('renews an EXPIRED ADOPTION listing for its owner', async () => {
+      const expiredAdoption = {
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'ADOPTION',
+        status: 'EXPIRED',
+      } as unknown as Post;
+      mockPostsRepo.findById = jest.fn().mockResolvedValue(expiredAdoption);
+      mockPostsRepo.renewPost = jest.fn().mockResolvedValue({ ...expiredAdoption, status: 'ACTIVE' });
+
+      await expect(service.renewPost(validPostId, validUserId)).resolves.toMatchObject({ status: 'ACTIVE' });
+      expect(mockPostsRepo.renewPost).toHaveBeenCalledWith(validPostId, validUserId);
+    });
+
+    it('rejects completed and non-renewable listings', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'PRODUCT',
+        status: 'SOLD',
+      });
+      await expect(service.renewPost(validPostId, validUserId)).rejects.toThrow(ValidationError);
+
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'ADOPTION',
+        status: 'ADOPTED',
+      });
+      await expect(service.renewPost(validPostId, validUserId)).rejects.toThrow(ValidationError);
+
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'MATING',
+        status: 'ACTIVE',
+      });
+      await expect(service.renewPost(validPostId, validUserId)).rejects.toThrow(ValidationError);
+      expect(mockPostsRepo.renewPost).not.toHaveBeenCalled();
+    });
+
+    it('surfaces the renewal cooldown conflict raised inside the transaction', async () => {
+      mockPostsRepo.findById = jest.fn().mockResolvedValue({
+        id: validPostId,
+        creatorId: validUserId,
+        postType: 'PRODUCT',
+        status: 'ACTIVE',
+      });
+      mockPostsRepo.renewPost = jest
+        .fn()
+        .mockRejectedValue(
+          new ConflictError('This listing was renewed within the last seven days', 'RENEWAL_COOLDOWN'),
+        );
+
+      await expect(service.renewPost(validPostId, validUserId)).rejects.toMatchObject({ code: 'RENEWAL_COOLDOWN' });
+    });
   });
 
   describe('toggleUpvote', () => {
@@ -532,6 +698,9 @@ describe('PostsService', () => {
         expect.objectContaining({
           recipientId: otherUserId,
           type: 'NEW_UPVOTE',
+          title: 'New upvote',
+          titleArabic: 'إعجاب جديد',
+          bodyArabic: 'أعجب Test User بمنشورك "Puppy"',
         }),
         validUserId,
       );
@@ -580,6 +749,9 @@ describe('PostsService', () => {
         expect.objectContaining({
           recipientId: otherUserId,
           type: 'POST_SAVED',
+          title: 'Post saved',
+          titleArabic: 'تم حفظ المنشور',
+          bodyArabic: 'حفظ Test User منشورك "Crate"',
         }),
         validUserId,
       );
@@ -665,6 +837,107 @@ describe('PostsService', () => {
       const result = await service.getHomeFeed({});
       expect(result.edges).toHaveLength(1);
       expect(result.edges[0].node.postType).toBe('MATING');
+    });
+
+    it('getHomeFeed and getHelpFeed pass the normalized search pattern to the repository', async () => {
+      const mockPost = {
+        id: validPostId,
+        createdAt: new Date(),
+        urgency: 'URGENT',
+        status: 'ACTIVE',
+      } as unknown as Post;
+      mockPostsRepo.findHomeFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+      mockPostsRepo.findHelpFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+
+      await service.getHomeFeed({ search: '  LOST   Dog ' });
+      expect(mockPostsRepo.findHomeFeed).toHaveBeenCalledWith(expect.objectContaining({ searchPattern: '%lost dog%' }));
+
+      await service.getHelpFeed({ search: 'احمد' });
+      expect(mockPostsRepo.findHelpFeed).toHaveBeenCalledWith(expect.objectContaining({ searchPattern: '%احمد%' }));
+    });
+
+    it('getHomeFeed and getHelpFeed treat an empty search as no search', async () => {
+      const mockPost = {
+        id: validPostId,
+        createdAt: new Date(),
+        urgency: 'URGENT',
+        status: 'ACTIVE',
+      } as unknown as Post;
+      mockPostsRepo.findHomeFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+      mockPostsRepo.findHelpFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+
+      await service.getHomeFeed({ search: '   ' });
+      expect(mockPostsRepo.findHomeFeed).toHaveBeenCalledWith(expect.objectContaining({ searchPattern: null }));
+
+      await service.getHelpFeed({ search: '' });
+      expect(mockPostsRepo.findHelpFeed).toHaveBeenCalledWith(expect.objectContaining({ searchPattern: null }));
+    });
+
+    it('getHomeFeed rejects short and oversize searches without querying the repository', async () => {
+      await expect(service.getHomeFeed({ search: 'x' })).rejects.toThrow(ValidationError);
+      await expect(service.getHomeFeed({ search: 'a'.repeat(101) })).rejects.toThrow(ValidationError);
+      await expect(service.getHelpFeed({ search: 'x' })).rejects.toThrow(ValidationError);
+      expect(mockPostsRepo.findHomeFeed).not.toHaveBeenCalled();
+      expect(mockPostsRepo.findHelpFeed).not.toHaveBeenCalled();
+    });
+
+    it('getAdoptFeed and getMarketFeed pass the normalized search pattern to the repository', async () => {
+      const mockPost = { id: validPostId, effectiveScore: 1, createdAt: new Date() } as unknown as Post;
+      mockPostsRepo.findAdoptFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+      mockPostsRepo.findMarketFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+
+      await service.getAdoptFeed({ search: '  PUPPY   home ' });
+      expect(mockPostsRepo.findAdoptFeed).toHaveBeenCalledWith(
+        expect.objectContaining({ searchPattern: '%puppy home%' }),
+      );
+
+      await service.getMarketFeed({ category: 'FOOD', search: 'قطه' });
+      expect(mockPostsRepo.findMarketFeed).toHaveBeenCalledWith(
+        expect.objectContaining({ category: 'FOOD', searchPattern: '%قطه%' }),
+      );
+    });
+
+    it('getAdoptFeed and getMarketFeed treat an empty search as no search', async () => {
+      const mockPost = { id: validPostId, effectiveScore: 1, createdAt: new Date() } as unknown as Post;
+      mockPostsRepo.findAdoptFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+      mockPostsRepo.findMarketFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: false,
+      });
+
+      await service.getAdoptFeed({ search: '   ' });
+      expect(mockPostsRepo.findAdoptFeed).toHaveBeenCalledWith(expect.objectContaining({ searchPattern: null }));
+
+      await service.getMarketFeed({ search: '' });
+      expect(mockPostsRepo.findMarketFeed).toHaveBeenCalledWith(expect.objectContaining({ searchPattern: null }));
+    });
+
+    it('getAdoptFeed and getMarketFeed reject short and oversize searches without querying the repository', async () => {
+      await expect(service.getAdoptFeed({ search: 'x' })).rejects.toThrow(ValidationError);
+      await expect(service.getMarketFeed({ search: 'a'.repeat(101) })).rejects.toThrow(ValidationError);
+      expect(mockPostsRepo.findAdoptFeed).not.toHaveBeenCalled();
+      expect(mockPostsRepo.findMarketFeed).not.toHaveBeenCalled();
     });
 
     it('getPostsSavedByCurrentUser encodes savedAt from join', async () => {

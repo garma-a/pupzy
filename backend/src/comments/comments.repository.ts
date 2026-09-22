@@ -26,6 +26,7 @@ import {
 import { NotFoundError, ConflictError, ForbiddenError, ValidationError, AppError } from '../common/errors/app.errors';
 import { CommentCursorPayload, CommentSortOrder } from './dto/comments-query.input';
 import { getCommentMediaPurgeUrls } from '../upload/media-delivery.util';
+import { assertImageCommentAllowed } from './comment-image-eligibility';
 import { CommentsQuotaManager, QuotaReservation } from './comments-quota.manager';
 import {
   ModerationReportQuotaManager,
@@ -35,6 +36,7 @@ import { withDbRetry } from '../common/utils/db-retry.util';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { excludeIsolatedAccounts } from '../blocks/account-isolation.sql';
 import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
+import { buildNotificationContent } from '../notifications/notification-templates';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 type DbExecutor = NodePgDatabase<typeof schema> | DbTransaction;
@@ -139,6 +141,8 @@ export class CommentsRepository {
       type: DiscussionNotificationType;
       title: string;
       body: string;
+      titleArabic: string;
+      bodyArabic: string;
       relatedPostId: string;
       relatedCommentId: string;
     },
@@ -246,6 +250,9 @@ export class CommentsRepository {
           // The Post is always locked before discussion rows or counters.
           const post = await this.lockDiscussionPost(tx, postId);
           if (post.status === 'REMOVED') throw new NotFoundError('Post', postId);
+          if (itemsToInsert.length > 0) {
+            assertImageCommentAllowed(post.postType);
+          }
 
           // 1. Insert the comment
           const [newComment] = await tx
@@ -312,8 +319,7 @@ export class CommentsRepository {
             recipientId: post.creatorId,
             actorId: authorId,
             type: 'NEW_COMMENT',
-            title: 'New comment',
-            body: `${actorName} commented on your post "${post.title}"`,
+            ...buildNotificationContent('NEW_COMMENT', { actorName, postTitle: post.title }),
             relatedPostId: post.id,
             relatedCommentId: newComment.id,
           });
@@ -861,8 +867,7 @@ export class CommentsRepository {
             recipientId: parent.authorId,
             actorId: authorId,
             type: 'NEW_REPLY',
-            title: 'New reply',
-            body: `${actorName} replied to your comment`,
+            ...buildNotificationContent('NEW_REPLY', { actorName }),
             relatedPostId: post.id,
             relatedCommentId: newReply.id,
           });
@@ -1165,8 +1170,10 @@ export class CommentsRepository {
           recipientId: comment.authorId,
           actorId: userId,
           type: 'COMMENT_BOOSTED',
-          title: 'Comment boosted',
-          body: `${actorName} boosted your ${comment.parentId ? 'reply' : 'comment'}`,
+          ...buildNotificationContent('COMMENT_BOOSTED', {
+            actorName,
+            target: comment.parentId ? 'reply' : 'comment',
+          }),
           relatedPostId: post.id,
           relatedCommentId: comment.id,
         });
@@ -1319,8 +1326,7 @@ export class CommentsRepository {
             recipientId: comment.authorId,
             actorId: userId,
             type: 'COMMENT_PINNED',
-            title: 'Comment pinned',
-            body: `Your comment was pinned on "${post.title}"`,
+            ...buildNotificationContent('COMMENT_PINNED', { postTitle: post.title }),
             relatedPostId: post.id,
             relatedCommentId: comment.id,
           });

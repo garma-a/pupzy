@@ -4,6 +4,7 @@ import { AdoptionsRepository } from './adoptions.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { buildNotificationContent } from '../notifications/notification-templates';
 import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../common/errors/app.errors';
 import { assertUuid } from '../common/utils/validate-uuid';
 import { clampFirst } from '../common/utils/pagination.util';
@@ -86,17 +87,33 @@ export class AdoptionsService {
       throw new ConflictError('You have already submitted an application for this post');
     }
 
-    const application = await this.db.transaction(async (tx) => {
+    const outcome = await this.db.transaction(async (tx) => {
       // Pair lock before the insert: a Block committing first makes this fail
       // neutrally, and a Block committing second rejects the pending row.
       if (await this.isolationPolicy.lockPairAndRecheck(tx, applicantId, post.creatorId)) {
-        return null;
+        return { kind: 'unavailable' as const };
       }
-      return this.adoptionsRepository.create({ targetPostId, applicantId, ...questionnaire }, tx);
+      // Re-read under a share lock so an owner closure committing after the
+      // preflight above cannot leave a PENDING application on a closed listing.
+      const lockedPost = await this.postsRepository.lockPostForInteraction(tx, targetPostId);
+      if (!lockedPost || lockedPost.status === 'REMOVED') {
+        return { kind: 'unavailable' as const };
+      }
+      if (lockedPost.status !== 'ACTIVE') {
+        return { kind: 'inactive' as const };
+      }
+      return {
+        kind: 'created' as const,
+        application: await this.adoptionsRepository.create({ targetPostId, applicantId, ...questionnaire }, tx),
+      };
     });
-    if (!application) {
+    if (outcome.kind === 'unavailable') {
       throw new NotFoundError('Post', targetPostId);
     }
+    if (outcome.kind === 'inactive') {
+      throw new ValidationError('Cannot apply to an inactive adoption listing');
+    }
+    const application = outcome.application;
 
     // Fire notification to post owner (non-blocking)
     const applicant = await this.usersService.findById(applicantId);
@@ -104,8 +121,10 @@ export class AdoptionsService {
       {
         recipientId: post.creatorId,
         type: 'ADOPTION_APPLICATION_RECEIVED',
-        title: 'New adoption application',
-        body: `${applicant?.fullName ?? 'Someone'} applied to adopt from "${post.title}"`,
+        ...buildNotificationContent('ADOPTION_APPLICATION_RECEIVED', {
+          actorName: applicant?.fullName ?? 'Someone',
+          postTitle: post.title,
+        }),
         relatedPostId: targetPostId,
         relatedApplicationId: application.id,
       },
@@ -181,8 +200,7 @@ export class AdoptionsService {
       {
         recipientId: application.applicantId,
         type: 'ADOPTION_APPLICATION_APPROVED',
-        title: 'Adoption application approved!',
-        body: `Your adoption application for "${post.title}" has been approved. You can now contact the owner.`,
+        ...buildNotificationContent('ADOPTION_APPLICATION_APPROVED', { postTitle: post.title }),
         relatedPostId: application.targetPostId,
         relatedApplicationId: applicationId,
       },
@@ -226,8 +244,7 @@ export class AdoptionsService {
       {
         recipientId: application.applicantId,
         type: 'ADOPTION_APPLICATION_REJECTED',
-        title: 'Adoption application update',
-        body: `Your adoption application for "${post.title}" was not approved at this time`,
+        ...buildNotificationContent('ADOPTION_APPLICATION_REJECTED', { postTitle: post.title }),
         relatedPostId: application.targetPostId,
         relatedApplicationId: applicationId,
       },
@@ -235,6 +252,46 @@ export class AdoptionsService {
     );
 
     return updated;
+  }
+
+  /**
+   * Re-fetches the owner's WhatsApp link for an already-approved adoption application.
+   * Only the original applicant can call this.
+   *
+   * Isolation is rechecked under the canonical account-pair lock, and the
+   * owner phone is read inside the same transaction so no disclosure can be
+   * ordered after a Block. Across a Block the application resolves as unknown
+   * and no phone or WhatsApp link is returned.
+   */
+  async getAdoptionWhatsAppLink(callerId: string, applicationId: string): Promise<string> {
+    assertUuid(applicationId, 'applicationId');
+
+    const application = await this.adoptionsRepository.findById(applicationId);
+    if (!application) throw new NotFoundError('AdoptionApplication', applicationId);
+    if (application.applicantId !== callerId) {
+      throw new ForbiddenError('You can only view your own approved applications');
+    }
+    if (application.status !== 'APPROVED') {
+      throw new ValidationError('Adoption application has not been approved yet');
+    }
+
+    const post = await this.postsRepository.findById(application.targetPostId);
+    if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Post', application.targetPostId);
+    }
+
+    return this.db.transaction(async (tx) => {
+      if (await this.isolationPolicy.lockPairAndRecheck(tx, callerId, post.creatorId)) {
+        throw new NotFoundError('AdoptionApplication', applicationId);
+      }
+
+      const owner = await this.usersService.findActiveById(post.creatorId, tx);
+      if (!owner || owner.isBanned || !owner.phoneNumber) {
+        throw new NotFoundError('Owner contact information is not available');
+      }
+
+      return `https://wa.me/${owner.phoneNumber.replace(/\D/g, '')}`;
+    });
   }
 
   /**

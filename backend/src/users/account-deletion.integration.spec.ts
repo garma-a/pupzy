@@ -469,6 +469,36 @@ describe('Account Deletion Feature Integration', () => {
       // New UID is not blocked
       expect(await accountDeletionService.isDeletedOrPending('fb-new-fresh-uid')).toBe(false);
     });
+
+    it('removes recorded Terms Acceptance with the account and never requires acceptance to delete', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-terms-accepted-1',
+          email: 'terms-accepted@example.com',
+          fullName: 'Terms Accepted User',
+          homeCityId: cityId,
+          termsAcceptedVersion: '2026-09-01',
+          termsAcceptedAt: new Date('2026-09-01T10:00:00.000Z'),
+        })
+        .returning();
+
+      // Deletion proceeds even though the account has recorded consent and
+      // the gate is configured: deletion must stay usable without (or with)
+      // current acceptance.
+      const authTime = Math.floor(Date.now() / 1000) - 10;
+      const payload = await accountDeletionService.initiateDeletion(user, authTime);
+
+      expect(payload.status).toBe('COMPLETED');
+      // The users row owns the acceptance, so deleting the account removes it.
+      expect(await usersRepo.findById(user.id)).toBeUndefined();
+
+      const remainingUsers = await dbHelper.db.execute(
+        sql`SELECT count(*)::int AS count FROM users WHERE id = ${user.id}`,
+      );
+      expect((remainingUsers.rows[0] as { count: number }).count).toBe(0);
+    });
   });
 
   // ─── TICKET 02: Populated Account Deletion Journey ──────────────────────────
@@ -690,6 +720,8 @@ describe('Account Deletion Feature Integration', () => {
           type: 'NEW_UPVOTE',
           title: 'Ahmed Farouk upvoted your post',
           body: 'Ahmed Farouk (+201011112222, populated@example.com) loved your Persian Kitten!',
+          titleArabic: 'أعجب Ahmed Farouk بمنشورك',
+          bodyArabic: 'أعجب Ahmed Farouk (+201011112222, populated@example.com) بقطتك الفارسية!',
         })
         .returning();
 
@@ -770,6 +802,13 @@ describe('Account Deletion Feature Integration', () => {
       expect(redactedNotif.body).not.toContain('+201011112222');
       expect(redactedNotif.body).not.toContain('populated@example.com');
       expect(redactedNotif.body).toContain('[deleted]');
+      // The Arabic columns must be redacted by the same cleanup guarantees.
+      expect(redactedNotif.titleArabic).not.toContain('Ahmed Farouk');
+      expect(redactedNotif.titleArabic).toContain('Someone');
+      expect(redactedNotif.bodyArabic).not.toContain('Ahmed Farouk');
+      expect(redactedNotif.bodyArabic).not.toContain('+201011112222');
+      expect(redactedNotif.bodyArabic).not.toContain('populated@example.com');
+      expect(redactedNotif.bodyArabic).toContain('[deleted]');
 
       // 10. Verify moderation actions are redacted
       const [redactedUserMod] = await dbHelper.db
@@ -1003,6 +1042,53 @@ describe('Account Deletion Feature Integration', () => {
       // Progress now reports completed
       const finalProgress = await accountDeletionService.getProgress(initial.deletionId, initial.progressToken!);
       expect(finalProgress.status).toBe('COMPLETED');
+    });
+
+    it('captures owned avatar media and never treats a provider picture URL as an owned object', async () => {
+      const cityId = await seedCity();
+      const ownedKey = 'avatars/01916327-0000-7000-8000-0000000000aa/01916327-0000-7000-8000-0000000000bb.webp';
+      const [ownedAvatarUser] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-avatar-owned-1',
+          email: 'owned-avatar@example.com',
+          fullName: 'Owned Avatar',
+          homeCityId: cityId,
+          profilePictureUrl: `https://cdn.pupzy.net/${ownedKey}`,
+          profilePhotoStorageKey: ownedKey,
+          profilePhotoChangedAt: new Date(),
+        })
+        .returning();
+
+      const authTime = Math.floor(Date.now() / 1000) - 10;
+      const ownedDeletion = await accountDeletionService.initiateDeletion(ownedAvatarUser, authTime);
+
+      expect(ownedDeletion.status).toBe('COMPLETED');
+      expect(mockUploadService.deleteObjects).toHaveBeenCalledWith([ownedKey]);
+      expect(mockUploadService.deletePrefix).toHaveBeenCalledWith(`staging/${ownedAvatarUser.id}/`);
+
+      mockUploadService.deleteObjects.mockClear();
+      mockUploadService.deletePrefix.mockClear();
+
+      // A provider-only picture is never treated as owned media.
+      const [providerUser] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-avatar-provider-1',
+          email: 'provider-avatar@example.com',
+          fullName: 'Provider Avatar',
+          homeCityId: cityId,
+          profilePictureUrl: 'https://lh3.googleusercontent.com/provider-photo.png',
+          profilePhotoStorageKey: null,
+          profilePhotoChangedAt: null,
+        })
+        .returning();
+
+      const providerDeletion = await accountDeletionService.initiateDeletion(providerUser, authTime);
+
+      expect(providerDeletion.status).toBe('COMPLETED');
+      expect(mockUploadService.deleteObjects).not.toHaveBeenCalled();
+      expect(mockUploadService.deletePrefix).toHaveBeenCalledWith(`staging/${providerUser.id}/`);
     });
 
     it('resumes from failure when storage or Firebase errors transiently', async () => {

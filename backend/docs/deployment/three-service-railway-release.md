@@ -60,7 +60,11 @@ Both application services consume PostgreSQL strictly over **Railway private net
 | `R2_BUCKET_NAME` | Yes | `pupzy-media` | R2 Media Bucket |
 | `R2_PUBLIC_URL` | Yes | `https://pub-xxx.r2.dev` | Public CDN URL for media |
 | `ALLOWED_ORIGINS` | No | `""` (or comma-separated) | CORS allowed origins |
+| `TERMS_URL` | Paired | `https://pupzy.net/terms` (published path) | Public Terms document URL; see below |
+| `TERMS_VERSION` | Paired | (published version identifier) | Published Terms version; see below |
 | `NODE_OPTIONS` | No | `--max-old-space-size=150` | V8 heap ceiling (150 MB) |
+
+**Terms Acceptance release dependency:** `TERMS_URL` and `TERMS_VERSION` must be set together or left unset together. While unset, the versioned Terms gate is inactive. Set both only after the Flutter-authored Terms document is actually published and the client supports acceptance. Changing `TERMS_VERSION` immediately makes earlier acceptances insufficient. See `docs/terms-acceptance-flutter-integration-contract.md`.
 
 ### AdminJS Service (`admin-service`)
 | Variable | Required | Default / Example | Purpose |
@@ -120,6 +124,14 @@ Because the Main API and AdminJS deploy independently, and rolling releases may 
    - Deploy Main API and AdminJS versions that write to both new/old fields or transition to new fields.
 3. **Phase 3 — Contract (Cleanup):**
    - Once all services are running the new code and no old replicas remain, deploy a follow-up migration to remove deprecated columns or temporary backwards-compatibility constraints.
+
+The retired saved-search storage is the first instance of this pattern, contracted stop-the-world rather than by a rolling deploy. Its runtime surfaces (GraphQL type, generated definitions, AdminJS resource, Account Deletion cleanup) were removed in the same release that ships migration `0053_drop_saved_searches`, so a plain rolling deploy is unsafe: the new revision's pre-deploy would drop the table while a pre-19 API revision (whose Account Deletion cleanup still queries `saved_searches`) or a pre-18 AdminJS revision (which registers the resource) can still be serving. Apply the contraction for this artifact as an explicit stop-the-world step:
+
+1. **Stop the world.** Scale the Main API and AdminJS services to zero so no running revision can query `saved_searches`.
+2. **Contract from the sole migration owner.** With no containers serving, apply `0053` through the new Main API revision's pre-deploy (`node dist/database/migrate.js`) or a one-off `node dist/database/migrate.js`. AdminJS never runs migrations.
+3. **Start the new revision.** Scale/deploy the Main API and AdminJS revisions from this release and wait for health checks.
+
+The zero-downtime alternative requires an intermediate release that contains the runtime removal without `0053`, fully drained before the drop; this release does not provide that intermediate artifact. See [`docs/adr/0007-retire-saved-search-runtime-before-storage-contraction.md`](../adr/0007-retire-saved-search-runtime-before-storage-contraction.md) and the full sequence in [`docs/integrated-mvp-frontend-handoff.md`](../integrated-mvp-frontend-handoff.md) §6.
 
 ---
 

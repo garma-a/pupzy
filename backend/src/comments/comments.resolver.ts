@@ -5,6 +5,7 @@ import { validateCreateReplyInput } from './dto/create-reply.input';
 import { validateCommentsQueryInput, validateRepliesQueryInput } from './dto/comments-query.input';
 import { validateRequestCommentImageUploadInput } from './dto/request-comment-image-upload.input';
 import { validateReportCommentInput } from './dto/report-comment.input';
+import { RequiresTermsAcceptance } from '../terms/requires-terms-acceptance.decorator';
 import { assertUuid } from '../common/utils/validate-uuid';
 import type { Comment, CommentMedia } from '../database/schema';
 import type { GqlContext } from '../common/types/gql-context.type';
@@ -17,6 +18,7 @@ export class CommentsResolver {
    * Publishes a text-only top-level Comment beneath a Post.
    * Requires authenticated user and durable clientRequestId.
    */
+  @RequiresTermsAcceptance()
   @Mutation('createComment')
   async createComment(@Args('input') rawInput: unknown, @Context() ctx: GqlContext): Promise<Comment> {
     const input = validateCreateCommentInput(rawInput);
@@ -27,6 +29,7 @@ export class CommentsResolver {
    * Publishes a text-only Reply beneath a top-level Comment.
    * Requires authenticated user and durable clientRequestId.
    */
+  @RequiresTermsAcceptance()
   @Mutation('createReply')
   async createReply(@Args('input') rawInput: unknown, @Context() ctx: GqlContext): Promise<Comment> {
     const input = validateCreateReplyInput(rawInput);

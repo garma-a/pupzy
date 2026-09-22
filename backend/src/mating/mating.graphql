@@ -65,8 +65,10 @@ input CreateMatingPostInput {
 extend type Query {
   """
   Feed of ACTIVE mating posts, newest first, keyset-paginated.
+  Optional server-side search composes with the filter's species, gender,
+  breed and city predicates and keeps the feed's ordering and cursor.
   """
-  matingFeed(filter: MatingFeedFilter, first: Int, after: String): MatingPostConnection!
+  matingFeed(filter: MatingFeedFilter, first: Int, after: String, search: String): MatingPostConnection!
 
   """
   Fetches MATING extension data for the single-post detail screen.

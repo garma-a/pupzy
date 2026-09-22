@@ -1,8 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
-import { users, type User, type NewUser } from '../database/schema';
+import { users, stagedUploads, mediaDeletionWork, type User, type NewUser } from '../database/schema';
+import { ConflictError, ForbiddenError } from '../common/errors/app.errors';
 import type * as schema from '../database/schema';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
@@ -76,5 +77,165 @@ export class UsersRepository {
   async delete(id: string): Promise<boolean> {
     const result = await this.db.delete(users).where(eq(users.id, id)).returning({ id: users.id });
     return result.length > 0;
+  }
+
+  /**
+   * Re-links an account to a new Firebase UID and optionally seeds the
+   * provider picture.
+   *
+   * The avatar-choice guard is evaluated in the same SQL statement as the
+   * write: the provider picture is applied only while
+   * `profile_photo_changed_at IS NULL`. A concurrent set/removal therefore
+   * can never be overwritten by a stale read of the avatar decision.
+   */
+  async linkFirebaseUserId(id: string, firebaseUserId: string, photoUrl?: string | null): Promise<User> {
+    const [user] = await this.db
+      .update(users)
+      .set({
+        firebaseUserId,
+        ...(photoUrl !== undefined
+          ? {
+              profilePictureUrl: sql`CASE WHEN ${users.profilePhotoChangedAt} IS NULL THEN ${photoUrl} ELSE ${users.profilePictureUrl} END`,
+            }
+          : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  /**
+   * Activates a finalized owned profile photo.
+   *
+   * Locks the user row so the previous-avatar comparison, the ticket
+   * re-verification, the user update and the obsolete-media enqueue commit
+   * atomically. `expectedStorageKey` and `expectedChangedAt` are the values
+   * observed before finalization: when another replacement or an explicit
+   * removal won the race, this throws `PROFILE_PHOTO_REPLACED` instead of
+   * overwriting a decision that was never observed. The change marker is
+   * compared as well as the storage key, so a removal wins even when the
+   * previous picture was provider-owned (no owned key) and the key stays
+   * `NULL` on both sides. The caller compensates the losing finalized object.
+   *
+   * The same row lock serializes activation with reconciliation: a recovery
+   * pass reclaims an unreferenced avatar by locking this row and marking its
+   * ticket terminal, so a delayed activation observes a non-`FINALIZED`
+   * ticket and loses with `PROFILE_PHOTO_REPLACED` rather than installing
+   * bytes that are queued for deletion.
+   *
+   * Provider URLs are never enqueued: only a previously owned storage key
+   * becomes deletion work.
+   */
+  async activateProfilePhoto(
+    userId: string,
+    input: {
+      stagedUploadId: string;
+      expectedStorageKey: string | null;
+      expectedChangedAt: Date | null;
+      storageKey: string;
+      publicUrl: string;
+    },
+  ): Promise<User> {
+    return this.db.transaction(async (tx) => {
+      const [user] = await tx.select().from(users).where(eq(users.id, userId)).for('update');
+      if (!user || user.isBanned) {
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+
+      const [ticket] = await tx
+        .select({ status: stagedUploads.status, finalStorageKey: stagedUploads.finalStorageKey })
+        .from(stagedUploads)
+        .where(
+          and(
+            eq(stagedUploads.id, input.stagedUploadId),
+            eq(stagedUploads.userId, userId),
+            eq(stagedUploads.purpose, 'PROFILE_PHOTO'),
+          ),
+        )
+        .limit(1);
+
+      if (!ticket || ticket.status !== 'FINALIZED' || ticket.finalStorageKey !== input.storageKey) {
+        throw new ConflictError(
+          'The profile photo was changed by another request. Refresh and try again.',
+          'PROFILE_PHOTO_REPLACED',
+        );
+      }
+
+      const currentStorageKey = user.profilePhotoStorageKey ?? null;
+      const currentChangedAt = user.profilePhotoChangedAt ?? null;
+      const expectedChangedAt = input.expectedChangedAt ?? null;
+      if (
+        currentStorageKey !== (input.expectedStorageKey ?? null) ||
+        (currentChangedAt?.getTime() ?? null) !== (expectedChangedAt?.getTime() ?? null)
+      ) {
+        throw new ConflictError(
+          'The profile photo was changed by another request. Refresh and try again.',
+          'PROFILE_PHOTO_REPLACED',
+        );
+      }
+
+      if (currentStorageKey && currentStorageKey !== input.storageKey) {
+        await tx.insert(mediaDeletionWork).values({
+          storageKey: currentStorageKey,
+          cdnUrl: '',
+          status: 'PENDING',
+          attempts: 0,
+        });
+      }
+
+      const [updated] = await tx
+        .update(users)
+        .set({
+          profilePictureUrl: input.publicUrl,
+          profilePhotoStorageKey: input.storageKey,
+          profilePhotoChangedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      return updated;
+    });
+  }
+
+  /**
+   * Clears the user's profile picture explicitly.
+   *
+   * The row lock makes removal atomic with the decision marker, so a
+   * concurrent replacement can only win before or after the removal, never
+   * silently undo it. The previously owned key is enqueued for deletion in
+   * the same transaction; a provider URL is never treated as owned media.
+   * Idempotent: repeating removal queues nothing.
+   */
+  async clearProfilePhoto(userId: string): Promise<User> {
+    return this.db.transaction(async (tx) => {
+      const [user] = await tx.select().from(users).where(eq(users.id, userId)).for('update');
+      if (!user) {
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+
+      if (user.profilePhotoStorageKey) {
+        await tx.insert(mediaDeletionWork).values({
+          storageKey: user.profilePhotoStorageKey,
+          cdnUrl: '',
+          status: 'PENDING',
+          attempts: 0,
+        });
+      }
+
+      const [updated] = await tx
+        .update(users)
+        .set({
+          profilePictureUrl: null,
+          profilePhotoStorageKey: null,
+          profilePhotoChangedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      return updated;
+    });
   }
 }

@@ -1,9 +1,13 @@
-import { Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnApplicationBootstrap, Optional } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import type * as schema from '../database/schema';
+import { POST_DISCUSSION_LOCK_NAMESPACE } from '../common/contracts/post-lifecycle.contract';
+import { buildNotificationContent } from '../notifications/notification-templates';
+import { PushDeliveryRepository } from '../notifications/push-delivery.repository';
+import { isPushDeliveryEnabled } from '../notifications/push-delivery.constants';
 import { withDbRetry } from '../common/utils/db-retry.util';
 
 const USER_BAN_POST_CASCADE_BATCH_SIZE = 100;
@@ -28,12 +32,18 @@ interface CascadeOutcome {
 @Injectable()
 export class UserBanPostCascadeProcessor implements OnApplicationBootstrap {
   private readonly logger = new Logger(UserBanPostCascadeProcessor.name);
+  private readonly pushDeliveryRepository: PushDeliveryRepository;
   private isProcessing = false;
 
   constructor(
     @Inject(DATABASE_TOKEN)
     private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+    @Optional()
+    @Inject(PushDeliveryRepository)
+    pushDeliveryRepository?: PushDeliveryRepository,
+  ) {
+    this.pushDeliveryRepository = pushDeliveryRepository ?? new PushDeliveryRepository(this.db);
+  }
 
   async onApplicationBootstrap(): Promise<void> {
     try {
@@ -174,7 +184,7 @@ export class UserBanPostCascadeProcessor implements OnApplicationBootstrap {
         // The active-Post trigger used by restorePost also takes Post -> User.
         for (const postId of postIds) {
           await tx.execute(sql`
-            SELECT pg_advisory_xact_lock(hashtextextended('comment_discussion:' || ${postId}, 0))
+            SELECT pg_advisory_xact_lock(hashtextextended(${POST_DISCUSSION_LOCK_NAMESPACE} || ${postId}, 0))
           `);
           await tx.execute(sql`SELECT id FROM posts WHERE id = ${postId} FOR UPDATE`);
         }
@@ -200,16 +210,33 @@ export class UserBanPostCascadeProcessor implements OnApplicationBootstrap {
 
         if (postIds.length === 0) {
           if (previousCount > 0 && !cascade.notification_sent_at) {
-            await tx.execute(sql`
-              INSERT INTO notifications (recipient_id, type, title, body, is_read)
+            const content = buildNotificationContent('POST_REMOVED_BY_ADMIN', {
+              reason: cascade.reason,
+              removedAll: true,
+            });
+            const notificationResult = await tx.execute<{ id: string; recipient_id: string }>(sql`
+              INSERT INTO notifications (recipient_id, type, title, body, title_arabic, body_arabic, is_read)
               VALUES (
                 ${cascade.user_id},
                 'POST_REMOVED_BY_ADMIN',
-                'Your posts were removed',
-                ${`Your account was banned (${cascade.reason}) and your active posts were removed.`},
+                ${content.title},
+                ${content.body},
+                ${content.titleArabic},
+                ${content.bodyArabic},
                 false
               )
+              RETURNING id, recipient_id
             `);
+            const notification = notificationResult.rows[0];
+            // The ban cascade has no acting user; the durable push intents
+            // commit with the owner's notification.
+            if (notification && isPushDeliveryEnabled('POST_REMOVED_BY_ADMIN')) {
+              await this.pushDeliveryRepository.enqueueForNotification(
+                { id: notification.id, recipientId: notification.recipient_id },
+                null,
+                tx,
+              );
+            }
           }
           await tx.execute(sql`
             UPDATE user_ban_post_cascades

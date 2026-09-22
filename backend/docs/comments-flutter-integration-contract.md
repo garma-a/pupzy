@@ -7,6 +7,7 @@ This document specifies the authoritative client-facing contract for integrating
 ## 1. Overview & Architectural Principles
 
 - **Durable Client Request IDs:** All mutating operations (`createComment`, `createReply`) require a client-generated UUID `clientRequestId`. Identical retries return the original canonical Comment without duplicate database rows or duplicate notifications.
+- **Community Evidence attachment restriction:** Image Comments are published only beneath `RESCUE` and `LOST` Posts (both `LOST_PET` and `FOUND_STRAY`). Text Comments remain available on every otherwise accessible Post type. Existing image Comments are never purged when this restriction is enforced.
 - **Direct-to-Storage Staged Uploads:** The mobile client never sends binary image payloads through the NestJS API GraphQL endpoint. Instead, the client requests an upload ticket, uploads directly to Cloudflare R2 via presigned HTTPS PUT, and provides the returned `mediaId` to `createComment`.
 - **Zero-Key Handoff:** Public media URLs are served from Cloudflare CDN (`https://cdn.pupzy.net` or configured override).
 - **Graceful Failure & Tombstones:** Discussions preserve conversational context using neutral tombstones (`[Deleted]`, `[Hidden]`, `[Removed]`) with `author: null` when comments with replies are deleted or moderated.
@@ -57,6 +58,8 @@ mutation CreateComment($input: CreateCommentInput!) {
 ```
 
 ### 2.2 Image Comment Creation (1 or 2 Images)
+
+> **Post type restriction.** Only hide/enable the attachment action for `RESCUE` and `LOST` Posts. The backend rejects disallowed image publication with the stable `COMMENT_MEDIA_NOT_ALLOWED` error before any staged upload is finalized, so the rejected `mediaId` stays retryable until ticket expiry. `requestCommentImageUploadUrl` itself has no Post context and is not restricted; eligibility is enforced when the ticket is attached by `createComment`. Text Comments keep working everywhere.
 
 1. User selects 1 or 2 images from the device gallery.
 2. For each image:
@@ -118,6 +121,7 @@ mutation CreateCommentWithMedia($input: CreateCommentInput!) {
 | Dimension | Constraint | Client Action on Breach |
 |---|---|---|
 | **Text Length** | 1 to 1,000 Unicode characters (Comments)<br>1 to 500 Unicode characters (Replies) | Trim whitespace; enforce local character counter in UI |
+| **Post Type** | Image attachments only on `RESCUE` and `LOST` Posts | Hide the attachment action on `ADOPTION`, `PRODUCT` and `MATING` discussions; text Comments stay available |
 | **Image Count** | Maximum 2 images per Comment (Replies cannot have images) | Disable add-image button when 2 images are attached |
 | **Image Format** | Static WebP (`image/webp`) only | Convert all client selections to WebP; reject GIFs / animations |
 | **File Size** | <= 100,000 bytes per image | Downsample quality locally; if still > 100 KB, prompt user to choose another image |
@@ -125,6 +129,19 @@ mutation CreateCommentWithMedia($input: CreateCommentInput!) {
 | **Metadata** | Zero EXIF, XMP, or ICC profiles | Strip metadata during local transcoding |
 | **Animation** | Single frame only (no animated WebP) | Enforce static encoding |
 | **Ticket Expiry** | Presigned PUT: 10 minutes<br>Durable ticket: 15 minutes | If upload fails due to expiry, request a fresh upload ticket |
+
+### 3.1 Post Type Eligibility Matrix
+
+| Post Type | Text Comments | Image Comments | Notes |
+|---|---|---|---|
+| `RESCUE` | Supported | Supported | Community Evidence; Post never expires automatically |
+| `LOST` (`LOST_PET`) | Supported | Supported | Community Evidence; Post never expires automatically |
+| `LOST` (`FOUND_STRAY`) | Supported | Supported | Community Evidence; Post never expires automatically |
+| `ADOPTION` | Supported | Rejected with `COMMENT_MEDIA_NOT_ALLOWED` | Text discussion remains available |
+| `PRODUCT` | Supported | Rejected with `COMMENT_MEDIA_NOT_ALLOWED` | Text discussion remains available on an `EXPIRED` listing too |
+| `MATING` | Supported | Rejected with `COMMENT_MEDIA_NOT_ALLOWED` | Text discussion remains available |
+
+Completed and `EXPIRED` Posts keep their existing discussion rules: text Comments stay available while the Post is not `REMOVED`. The restriction is applied when publishing new images only; historical image Comments (including on now-restricted Post types) remain readable and replayable.
 
 ---
 
@@ -138,10 +155,14 @@ The backend returns standardized `extensions.code` values. Flutter maps these to
 | `COMMENT_MEDIA_TOO_LARGE` | Uploaded byte length exceeds 100,000 bytes | "Image exceeds the 100 KB limit. Compressing..." |
 | `COMMENT_MEDIA_DIMENSIONS_EXCEEDED` | Dimensions exceed 480x480 pixels | "Image dimensions exceed 480x480 pixels." |
 | `COMMENT_MEDIA_METADATA_FORBIDDEN` | EXIF or XMP metadata detected | "Image contains embedded metadata. Please re-select." |
-| `COMMENT_MEDIA_NOT_READY` | R2 upload not completed before calling `createComment` | Retry after short backoff or notify user to wait for upload |
-| `COMMENT_MEDIA_BLOCKED` | Image SHA-256 hash matches administrative blocklist | "This image cannot be uploaded as it violates platform guidelines." |
-| `COMMENT_MEDIA_CLAIM_CONFLICT` | Staged upload belongs to another user or wrong purpose | "Upload ticket is invalid. Please select the image again." |
+| `COMMENT_MEDIA_NOT_AVAILABLE` | Staged ticket is missing, expired, owned by another account, has the wrong purpose, or its staging object no longer exists | Request a fresh upload ticket and upload the image again; do not retry the same `mediaId` |
+| `COMMENT_MEDIA_ALREADY_USED` | Staged ticket was already finalized or claimed by another publication | Request a fresh upload ticket; the consumed `mediaId` cannot be reused |
+| `COMMENT_MEDIA_PROCESSING_FAILED` | Provider read, integrity check, staging re-verification or finalization failed (`extensions.retryable: true`) | Retry the same `createComment` call with backoff; request a fresh ticket if the failure persists |
+| `COMMENT_MEDIA_NOT_READY` | Documented name only — no code path returns it. An incomplete staging upload returns `COMMENT_MEDIA_NOT_AVAILABLE` | Treat as `COMMENT_MEDIA_NOT_AVAILABLE` |
+| `COMMENT_MEDIA_BLOCKED` | Documented name only — no code path returns it. A denylisted image returns `COMMENT_MEDIA_INVALID_FORMAT` without moderation details | Treat as `COMMENT_MEDIA_INVALID_FORMAT` |
+| `COMMENT_MEDIA_CLAIM_CONFLICT` | Documented name only — no code path returns it. An ownership/purpose mismatch returns `COMMENT_MEDIA_NOT_AVAILABLE` | Treat as `COMMENT_MEDIA_NOT_AVAILABLE` |
 | `COMMENT_IMAGES_DISABLED` | Operational kill-switch active (`COMMENT_IMAGES_ENABLED=false`) | "Image attachments are temporarily disabled. You can still post text comments." |
+| `COMMENT_MEDIA_NOT_ALLOWED` | Image publication attempted beneath a Post type other than `RESCUE`/`LOST`, or a concurrent commit recheck found the Post ineligible | "Photos can only be added to rescue and lost/found posts. You can still comment without a photo." The staged upload is not finalized and remains retryable until ticket expiry |
 | `CONFLICT` | Reusing `clientRequestId` with different parameters | Generate a new `clientRequestId` for distinct comments |
 | `RATE_LIMITED` | Exceeded 10 creations/min or 100/day | "You are commenting too fast. Please wait a moment." |
 

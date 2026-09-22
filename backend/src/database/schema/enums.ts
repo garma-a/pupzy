@@ -25,9 +25,19 @@ export const lostFoundTypeEnum = pgEnum('lost_found_type', ['LOST_PET', 'FOUND_S
 /**
  * Lifecycle state of a post.
  * ADOPTED and SOLD hide posts from feeds instantly but keep them in
- * the creator's post history. REMOVED is a soft delete.
+ * the creator's post history. REMOVED is a soft delete. EXPIRED is the
+ * inactivity state for renewable listings: it also leaves active discovery
+ * but keeps direct detail, history, media and discussion for explicit renewal.
  */
-export const postStatusEnum = pgEnum('post_status', ['ACTIVE', 'RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'REMOVED']);
+export const postStatusEnum = pgEnum('post_status', [
+  'ACTIVE',
+  'RESOLVED',
+  'REUNITED',
+  'ADOPTED',
+  'SOLD',
+  'REMOVED',
+  'EXPIRED',
+]);
 
 /**
  * AI / admin moderation lifecycle.
@@ -122,6 +132,8 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'ADOPTION_APPLICATION_APPROVED',
   'ADOPTION_APPLICATION_REJECTED',
   'POST_REMOVED_BY_ADMIN',
+  'POST_RESOLVED_BY_ADMIN',
+  'POST_REOPENED_BY_ADMIN',
   'POST_INACTIVITY_NUDGE',
   'SYSTEM_ANNOUNCEMENT',
   'NEW_COMMENT',
@@ -212,7 +224,11 @@ export type MediaFinalizationStatus = (typeof mediaFinalizationStatusEnum.enumVa
  * Purpose of an upload ticket.
  * Binds the media to a specific vertical/domain to prevent purpose confusion.
  */
-export const stagedUploadPurposeEnum = pgEnum('staged_upload_purpose', ['POST_MEDIA', 'COMMENT_IMAGE']);
+export const stagedUploadPurposeEnum = pgEnum('staged_upload_purpose', [
+  'POST_MEDIA',
+  'COMMENT_IMAGE',
+  'PROFILE_PHOTO',
+]);
 
 export type StagedUploadPurpose = (typeof stagedUploadPurposeEnum.enumValues)[number];
 

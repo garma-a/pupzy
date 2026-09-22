@@ -1,7 +1,7 @@
 export const ENUMS = {
   postType: ['RESCUE', 'LOST', 'ADOPTION', 'PRODUCT', 'MATING'],
   lostFoundType: ['LOST_PET', 'FOUND_STRAY'],
-  postStatus: ['ACTIVE', 'RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'REMOVED'],
+  postStatus: ['ACTIVE', 'RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'REMOVED', 'EXPIRED'],
   moderationStatus: ['PENDING_AUTO_REVIEW', 'CLEAN', 'FLAGGED'],
   urgencyTier: ['CRITICAL', 'URGENT', 'MODERATE'],
   speciesType: ['DOG', 'CAT', 'BIRD', 'RABBIT', 'OTHER'],
@@ -37,6 +37,8 @@ export const ENUMS = {
     'ADOPTION_APPLICATION_APPROVED',
     'ADOPTION_APPLICATION_REJECTED',
     'POST_REMOVED_BY_ADMIN',
+    'POST_RESOLVED_BY_ADMIN',
+    'POST_REOPENED_BY_ADMIN',
     'POST_INACTIVITY_NUDGE',
     'SYSTEM_ANNOUNCEMENT',
     'NEW_COMMENT',
@@ -50,6 +52,8 @@ export const ENUMS = {
   moderationActionType: [
     'POST_APPROVED',
     'POST_FLAGGED',
+    'POST_RESOLVED',
+    'POST_REOPENED',
     'POST_REMOVED',
     'POST_RESTORED',
     'USER_BANNED',

@@ -31,6 +31,8 @@ import { NotFoundError, ForbiddenError, AppError } from '../common/errors/app.er
 import {
   validateCommentImage,
   MAX_COMMENT_IMAGE_BYTES,
+  MAX_COMMENT_IMAGE_WIDTH,
+  MAX_COMMENT_IMAGE_HEIGHT,
   ValidatedCommentImage,
 } from '../comments/validators/comment-image.validator';
 import { FinalizedCommentMedia } from '../comments/comments.repository';
@@ -39,6 +41,31 @@ import { MediaFinalizationRepository } from './media-finalization.repository';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 type DbExecutor = NodePgDatabase<typeof schema> | DbTransaction;
+
+/** Verified owned profile photo published to its permanent `avatars/` key. */
+export interface FinalizedProfilePhoto {
+  mediaId: string;
+  stagingKey: string;
+  storageKey: string;
+  publicUrl: string;
+  width: number;
+  height: number;
+  fileSizeBytes: number;
+  fileContentType: string;
+  sha256: string;
+}
+
+/** Presigned upload ticket plus the client-facing profile photo constraints. */
+export interface ProfilePhotoUploadTicket {
+  mediaId: string;
+  uploadUrl: string;
+  expiresAt: Date;
+  stagingKey: string;
+  maxSizeBytes: number;
+  maxWidth: number;
+  maxHeight: number;
+  allowedContentType: string;
+}
 
 /**
  * UploadService — manages media uploads to Cloudflare R2 via presigned URLs.
@@ -1369,6 +1396,361 @@ export class UploadService {
   ): Promise<FinalizedCommentMedia> {
     const results = await this.finalizeCommentImages([mediaId], userId, commentId, options);
     return results[0];
+  }
+
+  /**
+   * Permanent storage key for a user's owned profile photo. Immutable per
+   * media ticket, so a replaced avatar can never overwrite the new one.
+   */
+  getProfilePhotoStorageKey(userId: string, mediaId: string): string {
+    return `avatars/${userId}/${mediaId}.webp`;
+  }
+
+  /**
+   * Issues a durable presigned upload ticket for an owned profile photo.
+   *
+   * Reuses the established Staged Upload issuance (durable ticket committed
+   * before the URL is returned, account-deletion serialized) under the
+   * dedicated `PROFILE_PHOTO` purpose, so Post and Comment tickets can never
+   * be attached as an avatar. Constraints mirror the verified comment image
+   * protections: static WebP, at most 100,000 bytes, at most 480x480.
+   */
+  async requestProfilePhotoUploadUrl(
+    userId: string,
+    input: { contentType: string; fileSizeBytes: number },
+  ): Promise<ProfilePhotoUploadTicket> {
+    if (input.contentType !== 'image/webp') {
+      throw new AppError('Only static WebP images are allowed', 'PROFILE_PHOTO_INVALID_FORMAT');
+    }
+    if (input.fileSizeBytes > MAX_COMMENT_IMAGE_BYTES) {
+      throw new AppError('File size exceeds 100,000 bytes', 'PROFILE_PHOTO_TOO_LARGE');
+    }
+
+    const ticket = await this.generatePresignedUrl(userId, 'image/webp', input.fileSizeBytes, 'PROFILE_PHOTO');
+
+    return {
+      ...ticket,
+      maxSizeBytes: MAX_COMMENT_IMAGE_BYTES,
+      maxWidth: MAX_COMMENT_IMAGE_WIDTH,
+      maxHeight: MAX_COMMENT_IMAGE_HEIGHT,
+      allowedContentType: 'image/webp',
+    };
+  }
+
+  /**
+   * Validates and finalizes one owned profile photo upload.
+   *
+   * Mirrors the established comment image publication guarantees:
+   * 1. Ownership/purpose/single-use/expiry are checked without leaking facts.
+   * 2. Bounded bytes are downloaded and strictly validated (static WebP,
+   *    <=100,000 bytes, <=480x480, stripped metadata) and checked against the
+   *    blocked-media hash denylist before any permanent object is created.
+   * 3. The ticket is claimed atomically, then the exact verified bytes are
+   *    republished to `avatars/{userId}/{mediaId}.webp` after confirming the
+   *    staging object was not replaced between download and publication.
+   * 4. The ticket becomes FINALIZED only after the permanent object exists;
+   *    invalid or transient failures either mark the ticket FAILED (with the
+   *    staging object removed/queued) or reset it to ISSUED for a safe retry.
+   *    If the ticket left CLAIMED while the object was published, the object
+   *    is discarded/queued and a retryable processing error is thrown.
+   *
+   * The caller owns the profile row update and its compensation: if the
+   * activation transaction fails, it must discard the finalized object.
+   */
+  async finalizeProfilePhoto(mediaId: string, userId: string): Promise<FinalizedProfilePhoto> {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(mediaId)) {
+      throw new AppError('Media is not available', 'PROFILE_PHOTO_NOT_AVAILABLE');
+    }
+
+    const [ticket] = await this.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId)).limit(1);
+
+    if (!ticket || ticket.userId !== userId || ticket.purpose !== 'PROFILE_PHOTO') {
+      throw new AppError('Media is not available', 'PROFILE_PHOTO_NOT_AVAILABLE');
+    }
+
+    if (ticket.status === 'FINALIZED' || ticket.status === 'CLAIMED') {
+      throw new AppError('Media has already been used', 'PROFILE_PHOTO_ALREADY_USED');
+    }
+
+    if (ticket.status === 'FAILED' || ticket.status === 'EXPIRED' || ticket.expiresAt.getTime() <= Date.now()) {
+      throw new AppError('Media is not available', 'PROFILE_PHOTO_NOT_AVAILABLE');
+    }
+
+    // Step 1: bounded download from staging.
+    let objectBytes: Buffer;
+    let downloadETag: string | undefined;
+    try {
+      const response = await this.s3Client.send(
+        new GetObjectCommand({
+          Bucket: this.bucketName,
+          Key: ticket.stagingKey,
+        }),
+      );
+      downloadETag = response.ETag;
+
+      if (response.ContentLength && response.ContentLength > MAX_COMMENT_IMAGE_BYTES) {
+        await this.failProfilePhotoTicket(mediaId, ticket.stagingKey, 'File size exceeds 100,000 bytes');
+        throw new AppError('File size exceeds 100,000 bytes', 'PROFILE_PHOTO_TOO_LARGE', {
+          retryable: false,
+        });
+      }
+
+      if (!response.Body) {
+        throw new AppError('Media is not available in staging', 'PROFILE_PHOTO_NOT_AVAILABLE', {
+          retryable: false,
+        });
+      }
+
+      const byteArray = await response.Body.transformToByteArray();
+      if (byteArray.length > MAX_COMMENT_IMAGE_BYTES) {
+        await this.failProfilePhotoTicket(mediaId, ticket.stagingKey, 'File size exceeds 100,000 bytes');
+        throw new AppError('File size exceeds 100,000 bytes', 'PROFILE_PHOTO_TOO_LARGE', {
+          retryable: false,
+        });
+      }
+      objectBytes = Buffer.from(byteArray);
+    } catch (err: unknown) {
+      if (err instanceof AppError) throw err;
+      const errObj = typeof err === 'object' && err !== null ? (err as Record<string, unknown>) : null;
+      const metadata =
+        errObj && typeof errObj.$metadata === 'object' && errObj.$metadata !== null
+          ? (errObj.$metadata as Record<string, unknown>)
+          : null;
+      if (errObj?.name === 'NoSuchKey' || errObj?.name === 'NotFound' || metadata?.httpStatusCode === 404) {
+        await this.markMediaFailed([mediaId], 'Staged file missing in storage');
+        throw new AppError('Media is not available in staging', 'PROFILE_PHOTO_NOT_AVAILABLE', {
+          retryable: false,
+        });
+      }
+      throw new AppError('Failed to retrieve media from storage', 'PROFILE_PHOTO_PROCESSING_FAILED', {
+        retryable: true,
+      });
+    }
+
+    // Step 2: strict WebP validation and metadata/type/size protections.
+    let validated: ValidatedCommentImage;
+    try {
+      validated = await validateCommentImage(objectBytes);
+    } catch (err) {
+      await this.failProfilePhotoTicket(mediaId, ticket.stagingKey, err instanceof Error ? err.message : String(err));
+      throw this.toProfilePhotoError(err);
+    }
+
+    // Step 3: blocked-media hash denylist (never fails open).
+    let blockedRows: Array<{ sha256: string }>;
+    try {
+      blockedRows = await this.db
+        .select({ sha256: schema.blockedMediaHashes.sha256 })
+        .from(schema.blockedMediaHashes)
+        .where(eq(schema.blockedMediaHashes.sha256, validated.sha256));
+    } catch (err) {
+      if (err instanceof AppError) throw err;
+      this.logger.error(`Database failure checking blocked media hashes for profile photo: ${err}`);
+      throw new AppError('Failed to verify media integrity', 'PROFILE_PHOTO_PROCESSING_FAILED', {
+        retryable: true,
+      });
+    }
+
+    if (blockedRows.length > 0) {
+      await this.failProfilePhotoTicket(mediaId, ticket.stagingKey, 'Invalid image format');
+      throw new AppError('Invalid image format', 'PROFILE_PHOTO_INVALID_FORMAT', {
+        retryable: false,
+      });
+    }
+
+    // Step 4: single-use atomic claim with the intended permanent key.
+    const storageKey = this.getProfilePhotoStorageKey(userId, mediaId);
+    const [claimed] = await this.db
+      .update(stagedUploads)
+      .set({
+        status: 'CLAIMED',
+        finalStorageKey: storageKey,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(stagedUploads.id, mediaId),
+          eq(stagedUploads.userId, userId),
+          eq(stagedUploads.purpose, 'PROFILE_PHOTO'),
+          eq(stagedUploads.status, 'ISSUED'),
+          gt(stagedUploads.expiresAt, new Date()),
+        ),
+      )
+      .returning();
+
+    if (!claimed) {
+      throw new AppError('Media has already been used', 'PROFILE_PHOTO_ALREADY_USED', {
+        retryable: false,
+      });
+    }
+
+    // Step 5: staging must not have been replaced between download and publish.
+    try {
+      const head = await this.s3Client.send(
+        new HeadObjectCommand({
+          Bucket: this.bucketName,
+          Key: ticket.stagingKey,
+        }),
+      );
+      if (downloadETag && head.ETag && head.ETag !== downloadETag) {
+        await this.resetProfilePhotoClaim(mediaId);
+        throw new AppError('Staged media was modified during processing', 'PROFILE_PHOTO_PROCESSING_FAILED', {
+          retryable: true,
+        });
+      }
+    } catch (err) {
+      if (err instanceof AppError) throw err;
+      await this.resetProfilePhotoClaim(mediaId);
+      throw new AppError('Failed to verify staged object state', 'PROFILE_PHOTO_PROCESSING_FAILED', {
+        retryable: true,
+      });
+    }
+
+    // Step 6: publish the exact verified bytes to the permanent key.
+    try {
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.bucketName,
+          Key: storageKey,
+          Body: objectBytes,
+          ContentType: 'image/webp',
+          ContentLength: objectBytes.length,
+        }),
+      );
+    } catch (err) {
+      await this.resetProfilePhotoClaim(mediaId);
+      try {
+        await this.deleteObject(storageKey);
+      } catch {
+        await this.queueMediaDeletion(storageKey);
+      }
+      this.logger.error(
+        `Transient error publishing profile photo to ${storageKey}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      throw new AppError('Failed to finalize media in storage', 'PROFILE_PHOTO_PROCESSING_FAILED', {
+        retryable: true,
+      });
+    }
+
+    // Step 7: durably record finalization before the owning row is updated.
+    let finalizedRows: Array<{ id: string }> = [];
+    try {
+      finalizedRows = await this.db
+        .update(stagedUploads)
+        .set({
+          status: 'FINALIZED',
+          finalStorageKey: storageKey,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(stagedUploads.id, mediaId), eq(stagedUploads.status, 'CLAIMED')))
+        .returning({ id: stagedUploads.id });
+    } catch (err) {
+      this.logger.error(
+        `Failed to record profile photo finalization for ${mediaId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      // The object exists but is not durably committed; remove or queue it.
+      try {
+        await this.deleteObject(storageKey);
+      } catch {
+        await this.queueMediaDeletion(storageKey);
+      }
+      await this.markMediaFailed([mediaId], 'Failed to record profile photo finalization').catch((markErr) => {
+        this.logger.error(
+          `Failed to mark profile photo ticket ${mediaId} as failed: ${markErr instanceof Error ? markErr.message : String(markErr)}`,
+        );
+      });
+      throw new AppError('Failed to finalize media in storage', 'PROFILE_PHOTO_PROCESSING_FAILED', {
+        retryable: true,
+      });
+    }
+
+    if (finalizedRows.length === 0) {
+      // The ticket left CLAIMED between the atomic claim and this update
+      // (recovery reclaimed the unreferenced avatar, or expired-staging
+      // cleanup terminalized it) while the object was being published. The
+      // object is now unreferenced and its terminal ticket is never
+      // rescanned, so discard it durably instead of leaving it behind.
+      this.logger.warn(
+        `Profile photo ticket ${mediaId} left CLAIMED before finalization could be recorded; discarding ${storageKey}`,
+      );
+      try {
+        await this.deleteObject(storageKey);
+      } catch {
+        await this.queueMediaDeletion(storageKey);
+      }
+      throw new AppError('Failed to finalize media in storage', 'PROFILE_PHOTO_PROCESSING_FAILED', {
+        retryable: true,
+      });
+    }
+
+    // Step 8: staging is no longer needed; remove it best-effort so no
+    // leftover staging object survives a successful finalization.
+    try {
+      await this.deleteObject(ticket.stagingKey);
+    } catch {
+      await this.queueMediaDeletion(ticket.stagingKey);
+    }
+
+    return {
+      mediaId,
+      stagingKey: ticket.stagingKey,
+      storageKey,
+      publicUrl: `${this.publicUrl}/${storageKey}`,
+      width: validated.width,
+      height: validated.height,
+      fileSizeBytes: validated.fileSizeBytes,
+      fileContentType: 'image/webp',
+      sha256: validated.sha256,
+    };
+  }
+
+  /** Maps shared comment-image validation codes to the avatar error surface. */
+  private toProfilePhotoError(err: unknown): AppError {
+    if (err instanceof AppError) {
+      return new AppError(err.message, err.code.replace(/^COMMENT_MEDIA_/, 'PROFILE_PHOTO_'), {
+        retryable: false,
+      });
+    }
+    return new AppError('Invalid image format', 'PROFILE_PHOTO_INVALID_FORMAT', { retryable: false });
+  }
+
+  /** Marks a profile photo ticket FAILED and removes its staging object. */
+  private async failProfilePhotoTicket(mediaId: string, stagingKey: string, errorMessage: string): Promise<void> {
+    try {
+      await this.deleteObject(stagingKey);
+    } catch {
+      await this.queueMediaDeletion(stagingKey);
+    }
+    await this.db
+      .update(stagedUploads)
+      .set({
+        status: 'FAILED',
+        errorMessage,
+        updatedAt: new Date(),
+      })
+      .where(eq(stagedUploads.id, mediaId));
+  }
+
+  /**
+   * Returns a claimed-but-unpublished profile photo ticket to a retryable
+   * state. Best-effort: a failure here leaves the durable ticket reconcilable
+   * by expiry cleanup instead of masking the original storage error.
+   */
+  private async resetProfilePhotoClaim(mediaId: string): Promise<void> {
+    try {
+      await this.db
+        .update(stagedUploads)
+        .set({
+          status: 'ISSUED',
+          finalStorageKey: null,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(stagedUploads.id, mediaId), eq(stagedUploads.status, 'CLAIMED')));
+    } catch (err) {
+      this.logger.warn(
+        `Failed to reset profile photo ticket ${mediaId} after a transient failure: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 
   /**

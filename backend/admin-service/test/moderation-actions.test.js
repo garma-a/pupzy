@@ -61,6 +61,54 @@ async function insertCommentReport({ commentId, reporterId, reason = 'SPAM', det
   return rows[0].id;
 }
 
+async function insertLostPost({ ownerId, reportType }) {
+  const postId = await insertPost(database.pool, {
+    userId: ownerId,
+    cityId: principals.cityId,
+    postType: 'LOST',
+    title: `Lost case ${reportType}`,
+  });
+  if (reportType === 'LOST_PET') {
+    await database.pool.query(
+      `INSERT INTO lost_posts (post_id, report_type, species, pet_name, date_last_seen)
+       VALUES ($1, 'LOST_PET', 'DOG', 'Rex', '2026-08-20')`,
+      [postId],
+    );
+  } else {
+    await database.pool.query(
+      `INSERT INTO lost_posts
+         (post_id, report_type, species, current_condition, is_currently_safe_with_reporter, date_found)
+       VALUES ($1, 'FOUND_STRAY', 'DOG', 'HEALTHY', true, '2026-08-20')`,
+      [postId],
+    );
+  }
+  return postId;
+}
+
+async function insertContactRequest({ postId, requesterId, status = 'PENDING' }) {
+  const { rows } = await database.pool.query(
+    `INSERT INTO contact_requests (post_id, requester_id, message, status, responded_at)
+     VALUES ($1, $2, 'Please share the owner contact', $3::request_status,
+             CASE WHEN $3::text = 'PENDING' THEN NULL ELSE now() END)
+     RETURNING id`,
+    [postId, requesterId, status],
+  );
+  return rows[0].id;
+}
+
+async function insertAdoptionApplication({ postId, applicantId, status = 'PENDING' }) {
+  const { rows } = await database.pool.query(
+    `INSERT INTO adoption_applications
+       (target_post_id, applicant_id, living_situation, has_outdoor_access, has_other_pets_at_home,
+        has_children_at_home, why_adopt, status, responded_at)
+     VALUES ($1, $2, 'APARTMENT', true, false, false, 'A loving home for the animal', $3::request_status,
+             CASE WHEN $3::text = 'PENDING' THEN NULL ELSE now() END)
+     RETURNING id`,
+    [postId, applicantId, status],
+  );
+  return rows[0].id;
+}
+
 async function markReportReviewed(table, reportId, adminId, outcome) {
   await database.pool.query(
     `UPDATE ${table}
@@ -305,6 +353,11 @@ describe('moderation actions', () => {
   });
 
   it('durably pages a user ban cascade and emits one notification after completion', async () => {
+    await database.pool.query(
+      `INSERT INTO device_registrations (user_id, token, platform)
+       VALUES ($1, 'ticket20-ban-cascade-token', 'ANDROID')`,
+      [principals.userId],
+    );
     for (let index = 0; index < 101; index += 1) {
       await insertPost(database.pool, {
         ...principals,
@@ -347,11 +400,25 @@ describe('moderation actions', () => {
     await runUserBanPostCascade(database.pool, pending.action_id);
     const posts = await database.pool.query(`SELECT title, status FROM posts ORDER BY title`);
     assert.equal(posts.rows.filter((row) => row.status === 'REMOVED').length, 102);
-    const notifications = await database.pool.query(`SELECT type FROM notifications`);
+    const notifications = await database.pool.query(`SELECT type, title_arabic, body_arabic FROM notifications`);
     assert.deepEqual(
       notifications.rows.map((row) => row.type),
       ['POST_REMOVED_BY_ADMIN'],
     );
+    assert.equal(notifications.rows[0].title_arabic, 'تمت إزالة منشوراتك');
+    assert.equal(notifications.rows[0].body_arabic, 'تم حظر حسابك (Coordinated spam) وتمت إزالة منشوراتك النشطة.');
+    const deliveries = await database.pool.query(
+      `SELECT pd.status, pd.recipient_id, pd.actor_id, n.type
+       FROM push_deliveries pd
+       JOIN notifications n ON n.id = pd.notification_id`,
+    );
+    assert.deepEqual(
+      deliveries.rows.map((row) => row.type),
+      ['POST_REMOVED_BY_ADMIN'],
+      'the ban cascade writes its durable push intent with the notification',
+    );
+    assert.equal(deliveries.rows[0].recipient_id, principals.userId);
+    assert.equal(deliveries.rows[0].actor_id, null);
     const audit = await database.pool.query(`SELECT metadata FROM moderation_actions`);
     assert.equal(audit.rows[0].metadata.cascadedPostCount, 101);
     assert.equal(audit.rows[0].metadata.postCascade.state, 'COMPLETED');
@@ -557,16 +624,35 @@ describe('moderation actions', () => {
     );
   });
 
-  it('removePost inserts one correctly linked notification', async () => {
+  it('removePost inserts one correctly linked bilingual notification', async () => {
+    await database.pool.query(
+      `INSERT INTO device_registrations (user_id, token, platform)
+       VALUES ($1, 'ticket20-remove-post-token', 'IOS')`,
+      [principals.userId],
+    );
     const postId = await insertPost(database.pool, principals);
     await call(buildPostActions(database.pool, 'ModerationAction').removePost, postId, { reason: 'Spam' });
     const notifications = await database.pool.query(
-      `SELECT type, related_post_id FROM notifications WHERE recipient_id = $1`,
+      `SELECT type, related_post_id, title, body, title_arabic, body_arabic FROM notifications WHERE recipient_id = $1`,
       [principals.userId],
     );
     assert.equal(notifications.rows.length, 1);
     assert.equal(notifications.rows[0].type, 'POST_REMOVED_BY_ADMIN');
     assert.equal(notifications.rows[0].related_post_id, postId);
+    assert.equal(notifications.rows[0].title, 'Your post was removed');
+    assert.equal(notifications.rows[0].body, 'Spam');
+    assert.equal(notifications.rows[0].title_arabic, 'تمت إزالة منشورك');
+    assert.equal(notifications.rows[0].body_arabic, 'Spam');
+    const deliveries = await database.pool.query(
+      `SELECT pd.status, pd.recipient_id, pd.actor_id, n.related_post_id
+       FROM push_deliveries pd
+       JOIN notifications n ON n.id = pd.notification_id`,
+    );
+    assert.equal(deliveries.rows.length, 1, 'removal writes its durable push intent with the notification');
+    assert.equal(deliveries.rows[0].status, 'PENDING');
+    assert.equal(deliveries.rows[0].recipient_id, principals.userId);
+    assert.equal(deliveries.rows[0].related_post_id, postId);
+    assert.equal(deliveries.rows[0].actor_id, null);
   });
 
   it('stores SQL injection text literally without executing it', async () => {
@@ -1536,5 +1622,561 @@ describe('dashboard queries', () => {
       assert.equal(audits.rows.filter((row) => row.action_type === 'COMMENT_REMOVED').length, 1);
       assert.equal(audits.rows.length >= 1 && audits.rows.length <= 2, true);
     });
+  });
+});
+
+describe('administrator post resolution', () => {
+  it('records every Post type into its type-specific outcome with one audited resolution', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const cases = [
+      { label: 'rescue', postType: 'RESCUE', reportType: null, action: 'markRescued', outcome: 'RESOLVED' },
+      { label: 'lost pet', postType: 'LOST', reportType: 'LOST_PET', action: 'markReunited', outcome: 'REUNITED' },
+      {
+        label: 'found stray resolved',
+        postType: 'LOST',
+        reportType: 'FOUND_STRAY',
+        action: 'markResolved',
+        outcome: 'RESOLVED',
+      },
+      {
+        label: 'found stray reunited',
+        postType: 'LOST',
+        reportType: 'FOUND_STRAY',
+        action: 'markReunited',
+        outcome: 'REUNITED',
+      },
+      { label: 'adoption', postType: 'ADOPTION', reportType: null, action: 'markAdopted', outcome: 'ADOPTED' },
+      { label: 'product', postType: 'PRODUCT', reportType: null, action: 'markSold', outcome: 'SOLD' },
+      { label: 'mating', postType: 'MATING', reportType: null, action: 'markResolved', outcome: 'RESOLVED' },
+    ];
+
+    for (const testCase of cases) {
+      const postId =
+        testCase.postType === 'LOST'
+          ? await insertLostPost({ ownerId: principals.userId, reportType: testCase.reportType })
+          : await insertPost(database.pool, {
+              ...principals,
+              postType: testCase.postType,
+              title: `${testCase.label} resolution`,
+            });
+      const reason = `Justified ${testCase.label} outcome`;
+
+      const response = await call(actions[testCase.action], postId, { reason });
+      assert.equal(response.notice.type, 'success', `${testCase.label}: ${response.notice.message}`);
+
+      const post = (
+        await database.pool.query(`SELECT status, moderation_status, moderation_reason FROM posts WHERE id = $1`, [
+          postId,
+        ])
+      ).rows[0];
+      assert.equal(post.status, testCase.outcome, `${testCase.label} must reach ${testCase.outcome}`);
+      assert.equal(post.moderation_status, 'PENDING_AUTO_REVIEW');
+      assert.equal(post.moderation_reason, null);
+
+      const audits = (
+        await database.pool.query(
+          `SELECT action_type, admin_user_id, reason, metadata FROM moderation_actions WHERE target_id = $1`,
+          [postId],
+        )
+      ).rows;
+      assert.equal(audits.length, 1);
+      assert.equal(audits[0].action_type, 'POST_RESOLVED');
+      assert.equal(audits[0].admin_user_id, principals.adminId);
+      assert.equal(audits[0].reason, reason);
+      assert.equal(audits[0].metadata.outcome, testCase.outcome);
+
+      const notifications = (
+        await database.pool.query(
+          `SELECT type, recipient_id, related_post_id, title, body, title_arabic, body_arabic, is_read
+           FROM notifications WHERE related_post_id = $1`,
+          [postId],
+        )
+      ).rows;
+      assert.equal(notifications.length, 1);
+      assert.equal(notifications[0].type, 'POST_RESOLVED_BY_ADMIN');
+      assert.equal(notifications[0].recipient_id, principals.userId);
+      assert.equal(notifications[0].is_read, false);
+      assert.equal(notifications[0].title, 'Post outcome recorded');
+      assert.match(notifications[0].body, /administrator marked your post/);
+      assert.equal(notifications[0].title_arabic, 'تم تسجيل نتيجة المنشور');
+      assert.ok(notifications[0].body_arabic.length > 0);
+      assert.equal(notifications[0].body.includes(reason), false, 'the internal reason is not disclosed to the owner');
+    }
+  });
+
+  it('terminates pending contact requests and adoption applications while retaining approved ones', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const postId = await insertPost(database.pool, { ...principals, postType: 'ADOPTION', title: 'Adoption cleanup' });
+    const pendingRequesterId = await insertUser('pending-requester');
+    const approvedRequesterId = await insertUser('approved-requester');
+    const pendingApplicantId = await insertUser('pending-applicant');
+    const approvedApplicantId = await insertUser('approved-applicant');
+
+    const pendingContact = await insertContactRequest({ postId, requesterId: pendingRequesterId });
+    const approvedContact = await insertContactRequest({
+      postId,
+      requesterId: approvedRequesterId,
+      status: 'APPROVED',
+    });
+    const pendingApplication = await insertAdoptionApplication({ postId, applicantId: pendingApplicantId });
+    const approvedApplication = await insertAdoptionApplication({
+      postId,
+      applicantId: approvedApplicantId,
+      status: 'APPROVED',
+    });
+
+    const response = await call(actions.markAdopted, postId, { reason: 'Adoption completed' });
+    assert.equal(response.notice.type, 'success');
+
+    const pendingContactRow = (
+      await database.pool.query(`SELECT status, responded_at FROM contact_requests WHERE id = $1`, [pendingContact])
+    ).rows[0];
+    assert.equal(pendingContactRow.status, 'REJECTED');
+    assert.ok(pendingContactRow.responded_at);
+
+    const pendingApplicationRow = (
+      await database.pool.query(`SELECT status, responded_at FROM adoption_applications WHERE id = $1`, [
+        pendingApplication,
+      ])
+    ).rows[0];
+    assert.equal(pendingApplicationRow.status, 'REJECTED');
+    assert.ok(pendingApplicationRow.responded_at);
+
+    const approvedContactRow = (
+      await database.pool.query(`SELECT status, responded_at FROM contact_requests WHERE id = $1`, [approvedContact])
+    ).rows[0];
+    assert.equal(approvedContactRow.status, 'APPROVED');
+    const approvedApplicationRow = (
+      await database.pool.query(`SELECT status, responded_at FROM adoption_applications WHERE id = $1`, [
+        approvedApplication,
+      ])
+    ).rows[0];
+    assert.equal(approvedApplicationRow.status, 'APPROVED');
+
+    const audit = (await database.pool.query(`SELECT metadata FROM moderation_actions WHERE target_id = $1`, [postId]))
+      .rows[0];
+    assert.equal(audit.metadata.terminatedContactRequestCount, 1);
+    assert.equal(audit.metadata.terminatedAdoptionApplicationCount, 1);
+  });
+
+  it('leaves moderation fields and open Post Reports untouched: resolution is not removal', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const postId = await insertPost(database.pool, {
+      ...principals,
+      postType: 'RESCUE',
+      title: 'Flagged rescue resolution',
+      moderationStatus: 'FLAGGED',
+    });
+    await database.pool.query(`UPDATE posts SET moderation_reason = 'Under review' WHERE id = $1`, [postId]);
+    const reportId = await insertPostReport({ postId, reporterId: principals.userId, details: 'Suspicious post' });
+
+    const response = await call(actions.markRescued, postId, { reason: 'Animal rescued safely' });
+    assert.equal(response.notice.type, 'success');
+
+    const post = (
+      await database.pool.query(`SELECT status, moderation_status, moderation_reason FROM posts WHERE id = $1`, [
+        postId,
+      ])
+    ).rows[0];
+    assert.equal(post.status, 'RESOLVED');
+    assert.equal(post.moderation_status, 'FLAGGED');
+    assert.equal(post.moderation_reason, 'Under review');
+
+    const report = (
+      await database.pool.query(`SELECT reviewed_at, review_outcome FROM post_reports WHERE id = $1`, [reportId])
+    ).rows[0];
+    assert.equal(report.reviewed_at, null);
+    assert.equal(report.review_outcome, null);
+
+    const removalNotification = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE type = 'POST_REMOVED_BY_ADMIN'`,
+    );
+    assert.equal(removalNotification.rows[0].count, 0);
+  });
+
+  it('rejects invalid outcomes, non-active states and missing reasons without any writes', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const lostPetId = await insertLostPost({ ownerId: principals.userId, reportType: 'LOST_PET' });
+    const rescueId = await insertPost(database.pool, { ...principals, postType: 'RESCUE', title: 'Rescue guard' });
+    const resolvedId = await insertPost(database.pool, {
+      ...principals,
+      postType: 'MATING',
+      title: 'Already resolved',
+      status: 'RESOLVED',
+    });
+    const removedId = await insertPost(database.pool, {
+      ...principals,
+      postType: 'ADOPTION',
+      title: 'Removed guard',
+      status: 'REMOVED',
+    });
+
+    const invalidAttempts = [
+      [actions.markResolved, lostPetId, { reason: 'Wrong target' }, /cannot be resolved/i],
+      [actions.markRescued, rescueId, { reason: '' }, /reason is required/i],
+      [actions.markRescued, rescueId, { reason: '   ' }, /reason is required/i],
+      [actions.markRescued, resolvedId, { reason: 'Second outcome' }, /only active/i],
+      [actions.markAdopted, removedId, { reason: 'Resolve removed' }, /only active/i],
+      [actions.markReunited, rescueId, { reason: 'Wrong type' }, /cannot be resolved/i],
+      [actions.markSold, rescueId, { reason: 'Wrong type' }, /cannot be resolved/i],
+    ];
+
+    for (const [action, postId, payload, expectedMessage] of invalidAttempts) {
+      const response = await call(action, postId, payload);
+      assert.equal(response.notice.type, 'error', `${payload.reason} on ${postId} must be rejected`);
+      assert.match(response.notice.message, expectedMessage);
+    }
+
+    const audits = await database.pool.query(`SELECT count(*)::int AS count FROM moderation_actions`);
+    assert.equal(audits.rows[0].count, 0);
+    const notifications = await database.pool.query(`SELECT count(*)::int AS count FROM notifications`);
+    assert.equal(notifications.rows[0].count, 0);
+    const lostPet = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [lostPetId])).rows[0];
+    assert.equal(lostPet.status, 'ACTIVE', 'an uncertain case may remain active');
+    const resolved = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [resolvedId])).rows[0];
+    assert.equal(resolved.status, 'RESOLVED');
+  });
+
+  it('serializes concurrent resolutions so only one succeeds with one audit row and notification', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const postId = await insertPost(database.pool, { ...principals, postType: 'MATING', title: 'Resolution race' });
+
+    const responses = await Promise.all([
+      call(actions.markResolved, postId, { reason: 'First reviewer' }),
+      call(actions.markResolved, postId, { reason: 'Second reviewer' }),
+    ]);
+    assert.deepEqual(responses.map((item) => item.notice.type).sort(), ['error', 'success']);
+
+    const audits = await database.pool.query(
+      `SELECT count(*)::int AS count FROM moderation_actions
+       WHERE target_id = $1 AND action_type = 'POST_RESOLVED'`,
+      [postId],
+    );
+    assert.equal(audits.rows[0].count, 1);
+    const notifications = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE related_post_id = $1`,
+      [postId],
+    );
+    assert.equal(notifications.rows[0].count, 1);
+  });
+
+  it('rolls back the outcome, audit, notification and cleanup together when the notification insert fails', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const postId = await insertPost(database.pool, { ...principals, postType: 'ADOPTION', title: 'Atomic resolution' });
+    const requesterId = await insertUser('atomic-requester');
+    const contactRequestId = await insertContactRequest({ postId, requesterId });
+
+    await withFailureTrigger(
+      { table: 'notifications', event: 'INSERT', suffix: 'resolution_notification' },
+      async () => {
+        await assert.rejects(call(actions.markAdopted, postId, { reason: 'Atomicity check' }));
+      },
+    );
+
+    const post = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0];
+    assert.equal(post.status, 'ACTIVE');
+    const audits = await database.pool.query(`SELECT count(*)::int AS count FROM moderation_actions`);
+    assert.equal(audits.rows[0].count, 0);
+    const notifications = await database.pool.query(`SELECT count(*)::int AS count FROM notifications`);
+    assert.equal(notifications.rows[0].count, 0);
+    const contactRequest = (
+      await database.pool.query(`SELECT status, responded_at FROM contact_requests WHERE id = $1`, [contactRequestId])
+    ).rows[0];
+    assert.equal(contactRequest.status, 'PENDING');
+    assert.equal(contactRequest.responded_at, null);
+  });
+
+  it('invalidates the dashboard cache after a successful resolution but not on a rejected retry', async () => {
+    let invalidations = 0;
+    const cache = {
+      invalidate: () => {
+        invalidations += 1;
+      },
+    };
+    const actions = buildPostActions(database.pool, 'ModerationAction', cache);
+    const postId = await insertPost(database.pool, { ...principals, postType: 'PRODUCT', title: 'Cache resolution' });
+
+    const success = await call(actions.markSold, postId, { reason: 'Sold offline' });
+    assert.equal(success.notice.type, 'success');
+    assert.equal(invalidations, 1);
+
+    const retry = await call(actions.markSold, postId, { reason: 'Second attempt' });
+    assert.equal(retry.notice.type, 'error');
+    assert.equal(invalidations, 1);
+  });
+});
+
+describe('administrator post reopening', () => {
+  async function insertCompletedPost({ status, postType = 'RESCUE', reportType = null, title }) {
+    let postId;
+    if (postType === 'LOST') {
+      postId = await insertLostPost({ ownerId: principals.userId, reportType });
+    } else {
+      postId = await insertPost(database.pool, {
+        ...principals,
+        postType,
+        title: title ?? `${postType} ${status} reopening`,
+      });
+    }
+    await database.pool.query(`UPDATE posts SET status = $2 WHERE id = $1`, [postId, status]);
+    return postId;
+  }
+
+  it('reopens every completed outcome to Active with one audited correction and localized owner notification', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const cases = [
+      { status: 'RESOLVED', postType: 'RESCUE', reportType: null },
+      { status: 'REUNITED', postType: 'LOST', reportType: 'LOST_PET' },
+      { status: 'RESOLVED', postType: 'MATING', reportType: null },
+      { status: 'ADOPTED', postType: 'ADOPTION', reportType: null },
+      { status: 'SOLD', postType: 'PRODUCT', reportType: null },
+    ];
+
+    for (const testCase of cases) {
+      const postId = await insertCompletedPost(testCase);
+      await database.pool.query(
+        `UPDATE posts SET moderation_status = 'FLAGGED', moderation_reason = 'Under review' WHERE id = $1`,
+        [postId],
+      );
+      const reason = `Correcting the mistaken ${testCase.status.toLowerCase()} outcome`;
+      const before = (await database.pool.query(`SELECT post_count FROM users WHERE id = $1`, [principals.userId]))
+        .rows[0].post_count;
+
+      const response = await call(actions.reopenPost, postId, { reason });
+      assert.equal(response.notice.type, 'success', `${testCase.status}: ${response.notice.message}`);
+      assert.equal(response.notice.message, 'Post reopened.');
+
+      const post = (
+        await database.pool.query(
+          `SELECT status, title, moderation_status, moderation_reason, moderated_by_admin_id
+           FROM posts WHERE id = $1`,
+          [postId],
+        )
+      ).rows[0];
+      assert.equal(post.status, 'ACTIVE', `${testCase.status} must return to ACTIVE`);
+      assert.equal(post.moderation_status, 'FLAGGED', 'reopening leaves moderation state untouched');
+      assert.equal(post.moderation_reason, 'Under review');
+      assert.equal(post.moderated_by_admin_id, null);
+
+      const after = (await database.pool.query(`SELECT post_count FROM users WHERE id = $1`, [principals.userId]))
+        .rows[0].post_count;
+      assert.equal(after, before, 'reopening never changes the owner post counters');
+
+      const audits = (
+        await database.pool.query(
+          `SELECT action_type, admin_user_id, target_type, reason, metadata
+           FROM moderation_actions WHERE target_id = $1`,
+          [postId],
+        )
+      ).rows;
+      assert.equal(audits.length, 1);
+      assert.equal(audits[0].action_type, 'POST_REOPENED');
+      assert.equal(audits[0].target_type, 'POST');
+      assert.equal(audits[0].admin_user_id, principals.adminId);
+      assert.equal(audits[0].reason, reason);
+      assert.equal(audits[0].metadata.previousOutcome, testCase.status);
+
+      const notifications = (
+        await database.pool.query(
+          `SELECT type, recipient_id, related_post_id, title, body, title_arabic, body_arabic, is_read
+           FROM notifications WHERE related_post_id = $1`,
+          [postId],
+        )
+      ).rows;
+      assert.equal(notifications.length, 1);
+      assert.equal(notifications[0].type, 'POST_REOPENED_BY_ADMIN');
+      assert.equal(notifications[0].recipient_id, principals.userId);
+      assert.equal(notifications[0].is_read, false);
+      assert.equal(notifications[0].title, 'Post reopened');
+      assert.equal(notifications[0].body, `An administrator reopened your post "${post.title}".`);
+      assert.equal(notifications[0].title_arabic, 'تمت إعادة فتح المنشور');
+      assert.ok(notifications[0].body_arabic.includes(post.title));
+      assert.equal(notifications[0].body.includes(reason), false, 'the internal reason is not disclosed to the owner');
+    }
+  });
+
+  it('leaves closed and approved interactions, open reports and media untouched', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const postId = await insertCompletedPost({ status: 'ADOPTED', postType: 'ADOPTION', title: 'Mistaken adoption' });
+    const pendingRequesterId = await insertUser('reopen-pending-requester');
+    const approvedRequesterId = await insertUser('reopen-approved-requester');
+    const pendingApplicantId = await insertUser('reopen-pending-applicant');
+    const approvedApplicantId = await insertUser('reopen-approved-applicant');
+    const reporterId = await insertUser('reopen-reporter');
+
+    const pendingContact = await insertContactRequest({ postId, requesterId: pendingRequesterId });
+    const approvedContact = await insertContactRequest({
+      postId,
+      requesterId: approvedRequesterId,
+      status: 'APPROVED',
+    });
+    const pendingApplication = await insertAdoptionApplication({ postId, applicantId: pendingApplicantId });
+    const approvedApplication = await insertAdoptionApplication({
+      postId,
+      applicantId: approvedApplicantId,
+      status: 'APPROVED',
+    });
+    const reportId = (
+      await database.pool.query(
+        `INSERT INTO post_reports (post_id, reporter_id, reason, details)
+         VALUES ($1, $2, 'SPAM', 'Open report stays open through a correction')
+         RETURNING id`,
+        [postId, reporterId],
+      )
+    ).rows[0].id;
+    await database.pool.query(
+      `INSERT INTO post_media
+         (post_id, public_url, cloudflare_storage_key, display_order, width, height, file_content_type, file_size_bytes)
+       VALUES ($1, 'https://cdn.pupzy.net/posts/keep.webp', 'posts/keep.webp', 0, 10, 10, 'image/webp', 100)`,
+      [postId],
+    );
+
+    const response = await call(actions.reopenPost, postId, { reason: 'Adoption outcome was recorded by mistake' });
+    assert.equal(response.notice.type, 'success');
+
+    const rows = (table, id) =>
+      database.pool
+        .query(`SELECT status, responded_at FROM ${table} WHERE id = $1`, [id])
+        .then((result) => result.rows[0]);
+    assert.equal((await rows('contact_requests', pendingContact)).status, 'PENDING');
+    assert.equal((await rows('contact_requests', approvedContact)).status, 'APPROVED');
+    assert.equal((await rows('adoption_applications', pendingApplication)).status, 'PENDING');
+    assert.equal((await rows('adoption_applications', approvedApplication)).status, 'APPROVED');
+
+    const report = (
+      await database.pool.query(`SELECT reviewed_at, review_outcome FROM post_reports WHERE id = $1`, [reportId])
+    ).rows[0];
+    assert.equal(report.reviewed_at, null, 'reopening is not a moderation review: open reports stay open');
+    assert.equal(report.review_outcome, null);
+
+    const media = await database.pool.query(`SELECT count(*)::int AS count FROM post_media WHERE post_id = $1`, [
+      postId,
+    ]);
+    assert.equal(media.rows[0].count, 1, 'media is retained');
+
+    const audit = (await database.pool.query(`SELECT metadata FROM moderation_actions WHERE target_id = $1`, [postId]))
+      .rows[0];
+    assert.equal(audit.metadata.previousOutcome, 'ADOPTED');
+    assert.equal('terminatedContactRequestCount' in audit.metadata, false);
+    assert.equal('terminatedAdoptionApplicationCount' in audit.metadata, false);
+  });
+
+  it('rejects missing reasons, invalid states and banned owners without any writes', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const activeId = await insertPost(database.pool, { ...principals, postType: 'RESCUE', title: 'Active guard' });
+    const removedId = await insertPost(database.pool, {
+      ...principals,
+      postType: 'ADOPTION',
+      title: 'Removed guard',
+      status: 'REMOVED',
+    });
+    const expiredId = await insertPost(database.pool, {
+      ...principals,
+      postType: 'PRODUCT',
+      title: 'Expired guard',
+      status: 'EXPIRED',
+    });
+    const resolvedId = await insertCompletedPost({ status: 'RESOLVED', postType: 'RESCUE', title: 'Reason guard' });
+
+    const bannedOwnerId = await insertUser('banned-owner');
+    await database.pool.query(`UPDATE users SET is_banned = true WHERE id = $1`, [bannedOwnerId]);
+    const bannedOwnerPostId = await insertPost(database.pool, {
+      userId: bannedOwnerId,
+      cityId: principals.cityId,
+      postType: 'RESCUE',
+      title: 'Banned owner guard',
+      status: 'RESOLVED',
+    });
+
+    const invalidAttempts = [
+      [activeId, { reason: 'Reopen active' }, /only a completed post/i],
+      [removedId, { reason: 'Reopen removed' }, /only a completed post/i],
+      [expiredId, { reason: 'Reopen expired' }, /only a completed post/i],
+      [resolvedId, {}, /reason is required/i],
+      [resolvedId, { reason: '   ' }, /reason is required/i],
+      [bannedOwnerPostId, { reason: 'Reopen banned owner' }, /banned account/i],
+      ['00000000-0000-7000-8000-000000000000', { reason: 'Missing post' }, /not found/i],
+    ];
+
+    for (const [postId, payload, expectedMessage] of invalidAttempts) {
+      const response = await call(actions.reopenPost, postId, payload);
+      assert.equal(response.notice.type, 'error', `${payload.reason} on ${postId} must be rejected`);
+      assert.match(response.notice.message, expectedMessage);
+    }
+
+    const audits = await database.pool.query(`SELECT count(*)::int AS count FROM moderation_actions`);
+    assert.equal(audits.rows[0].count, 0, 'no rejected attempt writes an audit row');
+    const notifications = await database.pool.query(`SELECT count(*)::int AS count FROM notifications`);
+    assert.equal(notifications.rows[0].count, 0);
+    const statuses = await database.pool.query(
+      `SELECT id, status FROM posts WHERE id = ANY($1::uuid[]) ORDER BY status`,
+      [[activeId, removedId, expiredId, resolvedId, bannedOwnerPostId]],
+    );
+    assert.deepEqual(statuses.rows.map((row) => row.status).sort(), [
+      'ACTIVE',
+      'EXPIRED',
+      'REMOVED',
+      'RESOLVED',
+      'RESOLVED',
+    ]);
+  });
+
+  it('serializes concurrent reopens so only one correction succeeds with one audit row and notification', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const postId = await insertCompletedPost({ status: 'SOLD', postType: 'PRODUCT', title: 'Reopen race' });
+
+    const responses = await Promise.all([
+      call(actions.reopenPost, postId, { reason: 'First reviewer' }),
+      call(actions.reopenPost, postId, { reason: 'Second reviewer' }),
+    ]);
+    assert.deepEqual(responses.map((item) => item.notice.type).sort(), ['error', 'success']);
+
+    const audits = await database.pool.query(
+      `SELECT count(*)::int AS count FROM moderation_actions WHERE target_id = $1 AND action_type = 'POST_REOPENED'`,
+      [postId],
+    );
+    assert.equal(audits.rows[0].count, 1);
+    const notifications = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE related_post_id = $1`,
+      [postId],
+    );
+    assert.equal(notifications.rows[0].count, 1);
+    const post = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0];
+    assert.equal(post.status, 'ACTIVE');
+  });
+
+  it('rolls back the reopened state, audit and notification together when the notification insert fails', async () => {
+    const actions = buildPostActions(database.pool, 'ModerationAction');
+    const postId = await insertCompletedPost({ status: 'RESOLVED', postType: 'RESCUE', title: 'Atomic reopen' });
+
+    await withFailureTrigger({ table: 'notifications', event: 'INSERT', suffix: 'reopen_notification' }, async () => {
+      await assert.rejects(call(actions.reopenPost, postId, { reason: 'Atomicity check' }));
+    });
+
+    const post = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0];
+    assert.equal(post.status, 'RESOLVED');
+    const audits = await database.pool.query(`SELECT count(*)::int AS count FROM moderation_actions`);
+    assert.equal(audits.rows[0].count, 0);
+    const notifications = await database.pool.query(`SELECT count(*)::int AS count FROM notifications`);
+    assert.equal(notifications.rows[0].count, 0);
+  });
+
+  it('invalidates the dashboard cache after a successful reopening but not on a rejected retry', async () => {
+    let invalidations = 0;
+    const cache = {
+      invalidate: () => {
+        invalidations += 1;
+      },
+    };
+    const actions = buildPostActions(database.pool, 'ModerationAction', cache);
+    const postId = await insertCompletedPost({ status: 'REUNITED', postType: 'LOST', reportType: 'LOST_PET' });
+
+    const success = await call(actions.reopenPost, postId, { reason: 'Reunion was recorded by mistake' });
+    assert.equal(success.notice.type, 'success');
+    assert.equal(invalidations, 1);
+
+    const retry = await call(actions.reopenPost, postId, { reason: 'Second attempt' });
+    assert.equal(retry.notice.type, 'error');
+    assert.equal(invalidations, 1);
   });
 });

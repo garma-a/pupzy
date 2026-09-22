@@ -55,7 +55,9 @@ type User {
   """
   productPostCount: Int!
   """
-  Preferred interface language. Default 'ar' (Arabic-first for Egypt).
+  Preferred notification language, explicitly synchronized by the user.
+  Null until the user makes an explicit ar/en choice; clients treat null as
+  English, because the historic Arabic database default was never a decision.
   """
   languagePreference: String
   """
@@ -92,6 +94,21 @@ input CompleteProfileInput {
   GPS coordinates to auto-resolve the nearest city. Optional if cityId is provided.
   """
   location: GeoLocationInput
+
+  """
+  Explicit notification language synchronized during onboarding.
+  Optional: omitting it leaves the account unsynchronized and English-speaking
+  until an explicit choice is made.
+  """
+  languagePreference: Language
+}
+
+"""
+Notification language explicitly synchronized by a user.
+"""
+enum Language {
+  ar
+  en
 }
 
 """
@@ -191,6 +208,39 @@ type Mutation {
   Requires authentication.
   """
   updateMyLocation(location: GeoLocationInput!): User!
+
+  """
+  Sets or replaces the authenticated user's profile photo with an owned upload.
+  The `mediaId` must come from `requestProfilePhotoUploadUrl` and may be used
+  only once. Replacing queues the previous owned photo for deletion; retrying
+  the currently active `mediaId` is idempotent. Provider-owned pictures are
+  never deleted as owned objects.
+  Requires authentication.
+  """
+  setProfilePhoto(mediaId: ID!): User!
+
+  """
+  Explicitly removes the authenticated user's profile picture.
+  Returns the user with no picture, so clients render initials; provider
+  synchronization never restores a removed picture. Idempotent.
+  Requires authentication.
+  """
+  removeProfilePhoto: User!
+
+  """
+  Explicitly synchronizes the authenticated user's notification language.
+  Requires only the chosen language — no unrelated profile field is required.
+  Requires authentication.
+  """
+  updateMyLanguagePreference(languagePreference: Language!): User!
+
+  """
+  Updates the authenticated user's push notification preference.
+  Disabling push suppresses provider delivery while keeping the in-app inbox
+  and notification history intact. Requires only the boolean.
+  Requires authentication.
+  """
+  updateMyNotificationPreferences(notificationsEnabled: Boolean!): User!
 
   """
   Permanently deletes the authenticated user's Pupzy Account and all associated data.

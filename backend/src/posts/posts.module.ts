@@ -10,6 +10,7 @@ import { PostsService } from './posts.service';
 import { PostsRepository } from './posts.repository';
 import { ViewFlushCron } from './view-flush.cron';
 import { UserBanPostCascadeProcessor } from './user-ban-post-cascade.processor';
+import { PostExpiryProcessor } from './post-expiry.processor';
 
 /**
  * PostsModule — encapsulates all post CRUD, feed queries, and view tracking.
@@ -26,6 +27,7 @@ import { UserBanPostCascadeProcessor } from './user-ban-post-cascade.processor';
  * - `PostsService` — business logic orchestration (feeds, CRUD, engagement)
  * - `PostsRepository` — atomic transactional inserts/updates to Postgres
  * - `ViewFlushCron` — buffers views in-memory, flushes to Postgres every 3 minutes
+ * - `PostExpiryProcessor` — applies the shared inactivity policy in bounded batches
  */
 @Module({
   imports: [
@@ -36,7 +38,14 @@ import { UserBanPostCascadeProcessor } from './user-ban-post-cascade.processor';
     ModerationReportsModule,
     AccountIsolationModule,
   ],
-  providers: [PostsResolver, PostsService, PostsRepository, ViewFlushCron, UserBanPostCascadeProcessor],
+  providers: [
+    PostsResolver,
+    PostsService,
+    PostsRepository,
+    ViewFlushCron,
+    UserBanPostCascadeProcessor,
+    PostExpiryProcessor,
+  ],
   exports: [PostsService, PostsRepository, ViewFlushCron],
 })
 export class PostsModule {}

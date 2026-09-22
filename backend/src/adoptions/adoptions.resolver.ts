@@ -2,6 +2,7 @@ import { Resolver, Query, Mutation, Args, Context, ResolveField, Parent } from '
 import { Throttle } from '@nestjs/throttler';
 import { AdoptionsService } from './adoptions.service';
 import { validateSubmitAdoptionApplicationInput } from './dto/submit-adoption-application.input';
+import { RequiresTermsAcceptance } from '../terms/requires-terms-acceptance.decorator';
 import type { GqlContext } from '../common/types/gql-context.type';
 import type { AdoptionApplication, User } from '../database/schema';
 
@@ -41,9 +42,18 @@ export class AdoptionsResolver {
     return this.adoptionsService.getPostApplications(ctx.user!.id, postId, status, first, after);
   }
 
+  @Query('getAdoptionWhatsAppLink')
+  async getAdoptionWhatsAppLink(
+    @Args('applicationId') applicationId: string,
+    @Context() ctx: GqlContext,
+  ): Promise<string> {
+    return this.adoptionsService.getAdoptionWhatsAppLink(ctx.user!.id, applicationId);
+  }
+
   // ─── Mutations ──────────────────────────────────────────────────────
 
   /** Anti-spam: 10 applications per hour per IP (see AUD-15 re: true per-user limiting). */
+  @RequiresTermsAcceptance()
   @Throttle({ default: { limit: 10, ttl: 3_600_000 } })
   @Mutation('submitAdoptionApplication')
   async submitAdoptionApplication(

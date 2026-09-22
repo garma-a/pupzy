@@ -1,10 +1,21 @@
 import {
   actionResponse,
   closeOpenPostReports,
+  enqueuePushDeliveries,
+  findLostReportType,
   lockPostDiscussion,
   readModerationReason,
   runModerationAction,
+  terminatePendingInteractions,
 } from './helpers.js';
+import {
+  canAdminRemove,
+  canAdminReopen,
+  canAdminResolve,
+  canAdminRestore,
+} from '../../../../src/common/contracts/post-lifecycle.contract.ts';
+import { buildNotificationContent } from '../../../../src/notifications/notification-templates.ts';
+import { attachLostSubtype, attachOwnerBanStatus } from '../review/post-review.js';
 import { isAnyAdmin } from '../rbac.js';
 
 function getRecordProperty(record, property) {
@@ -56,8 +67,191 @@ function buildPostAction(pool, component, definition, cache) {
   };
 }
 
+/**
+ * Type-specific Post Resolution actions. Each action targets exactly one
+ * successful outcome and is only visible while the Post is `ACTIVE` and its
+ * type (and, for LOST, direction) allows that outcome, so staff can never
+ * choose an invalid transition. The outcome is revalidated under the row lock
+ * against the shared lifecycle contract before anything is written.
+ */
+const POST_RESOLUTION_ACTIONS = Object.freeze({
+  markRescued: Object.freeze({
+    outcome: 'RESOLVED',
+    icon: 'CheckCircle',
+    guard: 'Record this rescue as resolved?',
+    appliesTo: (postType) => postType === 'RESCUE',
+  }),
+  markReunited: Object.freeze({
+    outcome: 'REUNITED',
+    icon: 'Heart',
+    guard: 'Record this lost/found case as reunited?',
+    appliesTo: (postType) => postType === 'LOST',
+  }),
+  markResolved: Object.freeze({
+    outcome: 'RESOLVED',
+    icon: 'CheckSquare',
+    guard: 'Record this case as resolved?',
+    appliesTo: (postType, reportType) => postType === 'MATING' || (postType === 'LOST' && reportType === 'FOUND_STRAY'),
+  }),
+  markAdopted: Object.freeze({
+    outcome: 'ADOPTED',
+    icon: 'Home',
+    guard: 'Record this adoption as adopted?',
+    appliesTo: (postType) => postType === 'ADOPTION',
+  }),
+  markSold: Object.freeze({
+    outcome: 'SOLD',
+    icon: 'ShoppingCart',
+    guard: 'Record this listing as sold?',
+    appliesTo: (postType) => postType === 'PRODUCT',
+  }),
+});
+
+function buildResolutionAction(pool, component, cache, definition) {
+  const action = buildPostAction(
+    pool,
+    component,
+    {
+      actionType: 'POST_RESOLVED',
+      icon: definition.icon,
+      guard: definition.guard,
+      requiresForm: true,
+      reasonRequired: true,
+      successMessage: 'Post resolution recorded.',
+      isVisible: (context) => {
+        const record = context?.record;
+        if (!record) return false;
+        const postType = getRecordProperty(record, 'post_type');
+        const reportType = getRecordProperty(record, 'report_type');
+        return (
+          definition.appliesTo(postType, reportType) &&
+          canAdminResolve(postType, getRecordProperty(record, 'status'), definition.outcome, reportType)
+        );
+      },
+      validate: async (row, client) => {
+        if (row.status !== 'ACTIVE') {
+          return 'Only active posts can be resolved.';
+        }
+        const lostReportType = row.post_type === 'LOST' ? await findLostReportType(client, row.id) : null;
+        if (
+          !definition.appliesTo(row.post_type, lostReportType) ||
+          !canAdminResolve(row.post_type, row.status, definition.outcome, lostReportType)
+        ) {
+          return `A "${row.post_type}" post cannot be resolved as ${definition.outcome}.`;
+        }
+        return null;
+      },
+      mutate: async (client, row) => {
+        await client.query(`UPDATE posts SET status = $2, updated_at = now() WHERE id = $1`, [
+          row.id,
+          definition.outcome,
+        ]);
+        const content = buildNotificationContent('POST_RESOLVED_BY_ADMIN', {
+          postTitle: row.title,
+          outcome: definition.outcome,
+        });
+        const { rows: notificationRows } = await client.query(
+          `INSERT INTO notifications
+             (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
+           VALUES ($1, 'POST_RESOLVED_BY_ADMIN', $2, $3, $4, $5, $6, false)
+           RETURNING id`,
+          [row.creator_id, content.title, content.body, content.titleArabic, content.bodyArabic, row.id],
+        );
+        await enqueuePushDeliveries(client, {
+          id: notificationRows[0].id,
+          recipientId: row.creator_id,
+          type: 'POST_RESOLVED_BY_ADMIN',
+        });
+        const termination = await terminatePendingInteractions(client, row.id);
+        return { outcome: definition.outcome, ...termination };
+      },
+    },
+    cache,
+  );
+
+  // The action page loads the record through this action, so the LOST
+  // discriminator must be attached here too; otherwise `markResolved` would be
+  // filtered out of the action page's own record actions for a FOUND_STRAY.
+  return { ...action, before: attachLostSubtype(pool) };
+}
+
+function buildResolutionActions(pool, component, cache) {
+  return Object.fromEntries(
+    Object.entries(POST_RESOLUTION_ACTIONS).map(([name, definition]) => [
+      name,
+      buildResolutionAction(pool, component, cache, definition),
+    ]),
+  );
+}
+
+/**
+ * Administrator-only correction for a mistaken Post Resolution. It is offered
+ * only for a completed outcome whose owner is not banned, requires an internal
+ * reason, returns the Post to `ACTIVE` and records the corrected outcome in the
+ * audit row. It deliberately leaves moderation fields, open Post Reports and
+ * every terminated or approved interaction untouched: reopening never revives
+ * closed requests or applications, and it never bypasses removal, moderation,
+ * bans or the separate restoration/renewal paths.
+ */
+function buildReopenAction(pool, component, cache) {
+  const action = buildPostAction(
+    pool,
+    component,
+    {
+      actionType: 'POST_REOPENED',
+      icon: 'CornerUpLeft',
+      requiresForm: true,
+      reasonRequired: true,
+      successMessage: 'Post reopened.',
+      isVisible: (context) => {
+        const record = context?.record;
+        if (!record) return false;
+        return (
+          canAdminReopen(getRecordProperty(record, 'status')) && getRecordProperty(record, 'owner_is_banned') !== true
+        );
+      },
+      validate: async (row, client) => {
+        if (!canAdminReopen(row.status)) {
+          return 'Only a completed post can be reopened.';
+        }
+        const { rows } = await client.query(`SELECT is_banned FROM users WHERE id = $1 FOR SHARE`, [row.creator_id]);
+        if (!rows[0] || rows[0].is_banned) {
+          return 'A post owned by a banned account cannot be reopened.';
+        }
+        return null;
+      },
+      mutate: async (client, row) => {
+        const previousOutcome = row.status;
+        await client.query(`UPDATE posts SET status = 'ACTIVE', updated_at = now() WHERE id = $1`, [row.id]);
+        const content = buildNotificationContent('POST_REOPENED_BY_ADMIN', { postTitle: row.title });
+        const { rows: notificationRows } = await client.query(
+          `INSERT INTO notifications
+             (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
+           VALUES ($1, 'POST_REOPENED_BY_ADMIN', $2, $3, $4, $5, $6, false)
+           RETURNING id`,
+          [row.creator_id, content.title, content.body, content.titleArabic, content.bodyArabic, row.id],
+        );
+        await enqueuePushDeliveries(client, {
+          id: notificationRows[0].id,
+          recipientId: row.creator_id,
+          type: 'POST_REOPENED_BY_ADMIN',
+        });
+        return { previousOutcome };
+      },
+    },
+    cache,
+  );
+
+  // The action page loads the record through this action, so the owner ban
+  // state must be attached here too; otherwise `reopenPost` would be filtered
+  // out of the action page's own record actions for a banned owner.
+  return { ...action, before: attachOwnerBanStatus(pool) };
+}
+
 export function buildPostActions(pool, component, cache) {
   return {
+    ...buildResolutionActions(pool, component, cache),
+    reopenPost: buildReopenAction(pool, component, cache),
     approvePost: buildPostAction(
       pool,
       component,
@@ -151,9 +345,9 @@ export function buildPostActions(pool, component, cache) {
           const record = context?.record;
           if (!record) return false;
           const status = getRecordProperty(record, 'status');
-          return status === 'ACTIVE';
+          return canAdminRemove(status);
         },
-        validate: (row) => (row.status === 'ACTIVE' ? null : 'Only active posts can be removed.'),
+        validate: (row) => (canAdminRemove(row.status) ? null : 'Only active posts can be removed.'),
         mutate: async (client, row, adminId, reason) => {
           await client.query(
             `UPDATE posts
@@ -162,12 +356,19 @@ export function buildPostActions(pool, component, cache) {
              WHERE id = $1`,
             [row.id, reason, adminId],
           );
-          await client.query(
+          const content = buildNotificationContent('POST_REMOVED_BY_ADMIN', { reason });
+          const { rows: notificationRows } = await client.query(
             `INSERT INTO notifications
-               (recipient_id, type, title, body, related_post_id, is_read)
-             VALUES ($1, 'POST_REMOVED_BY_ADMIN', 'Your post was removed', $2, $3, false)`,
-            [row.creator_id, reason, row.id],
+               (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
+             VALUES ($1, 'POST_REMOVED_BY_ADMIN', $2, $3, $4, $5, $6, false)
+             RETURNING id`,
+            [row.creator_id, content.title, content.body, content.titleArabic, content.bodyArabic, row.id],
           );
+          await enqueuePushDeliveries(client, {
+            id: notificationRows[0].id,
+            recipientId: row.creator_id,
+            type: 'POST_REMOVED_BY_ADMIN',
+          });
           const closedPostReportIds = await closeOpenPostReports(client, row.id, adminId);
           return { closedPostReportIds };
         },
@@ -186,9 +387,9 @@ export function buildPostActions(pool, component, cache) {
           const record = context?.record;
           if (!record) return false;
           const status = getRecordProperty(record, 'status');
-          return status === 'REMOVED';
+          return canAdminRestore(status);
         },
-        validate: (row) => (row.status === 'REMOVED' ? null : 'Only removed posts can be restored.'),
+        validate: (row) => (canAdminRestore(row.status) ? null : 'Only removed posts can be restored.'),
         mutate: async (client, row, adminId) => {
           await client.query(
             `UPDATE posts

@@ -8,6 +8,8 @@ import { discussionNotificationEvents, notifications, type DiscussionNotificatio
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { withDbRetry } from '../common/utils/db-retry.util';
 import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
+import { PushDeliveryRepository } from './push-delivery.repository';
+import { isPushDeliveryEnabled } from './push-delivery.constants';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -17,8 +19,10 @@ const MAX_RETRY_DELAY_MS = 5 * 60_000;
 
 /**
  * Delivers the durable discussion-notification outbox in the existing NestJS
- * API. No external provider is involved: delivery is the atomic creation of
- * the user's existing in-app notification row.
+ * API. Delivery is the atomic creation of the user's existing in-app
+ * notification row plus, for push-enabled discussion types, one durable push
+ * intent per registered device. The external provider is called later by the
+ * push worker, never here.
  *
  * A Block committed before delivery is a terminal suppression: the event is
  * marked SUPPRESSED without an inbox row, so it never retries. The canonical
@@ -28,6 +32,7 @@ const MAX_RETRY_DELAY_MS = 5 * 60_000;
 export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
   private readonly logger = new Logger(DiscussionNotificationProcessor.name);
   private readonly isolationPolicy: AccountIsolationPolicy;
+  private readonly pushDeliveryRepository: PushDeliveryRepository;
   private isProcessing = false;
 
   constructor(
@@ -36,8 +41,12 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
     @Optional()
     @Inject(AccountIsolationPolicy)
     isolationPolicy?: AccountIsolationPolicy,
+    @Optional()
+    @Inject(PushDeliveryRepository)
+    pushDeliveryRepository?: PushDeliveryRepository,
   ) {
     this.isolationPolicy = isolationPolicy ?? new AccountIsolationPolicy(this.db);
+    this.pushDeliveryRepository = pushDeliveryRepository ?? new PushDeliveryRepository(this.db);
   }
 
   async onApplicationBootstrap(): Promise<void> {
@@ -153,18 +162,28 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
         // This insert and the DELIVERED transition share one transaction. A
         // crash yields either neither effect or both; the unique event key also
         // makes recovery harmless if a delivery attempt is repeated.
-        await tx
+        const [notification] = await tx
           .insert(notifications)
           .values({
             recipientId: current.recipientId,
             type: current.type,
             title: current.title,
             body: current.body,
+            titleArabic: current.titleArabic,
+            bodyArabic: current.bodyArabic,
             relatedPostId: current.relatedPostId,
             relatedCommentId: current.relatedCommentId,
             discussionEventId: current.id,
           })
-          .onConflictDoNothing();
+          .onConflictDoNothing()
+          .returning({ id: notifications.id, recipientId: notifications.recipientId });
+
+        // Durable push intents commit with the inbox row. A conflict means the
+        // notification (and therefore its intents) already committed, so there
+        // is nothing new to enqueue.
+        if (notification && isPushDeliveryEnabled(current.type)) {
+          await this.pushDeliveryRepository.enqueueForNotification(notification, current.actorId, tx);
+        }
 
         const [delivered] = await tx
           .update(discussionNotificationEvents)

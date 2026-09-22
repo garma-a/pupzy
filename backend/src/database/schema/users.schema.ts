@@ -64,10 +64,28 @@ export const users = pgTable(
     fullNameArabic: varchar('full_name_arabic', { length: 120 }),
 
     /**
-     * Profile picture URL synced from Firebase Auth on first sign-in.
-     * User can override via `updateProfile`.
+     * Effective profile picture URL shown to clients. Initially synced from
+     * Firebase Auth on first sign-in, then either a provider URL or an owned
+     * avatar URL after the user sets one. NULL means "no photo" (initials).
      */
     profilePictureUrl: text('profile_picture_url'),
+
+    /**
+     * R2 storage key of the user's owned avatar, e.g.
+     * `avatars/{userId}/{mediaId}.webp`. NULL while the profile uses a
+     * provider-synced picture or no picture at all. Only this owned key is
+     * ever queued for deletion; third-party provider URLs are never treated
+     * as owned objects.
+     */
+    profilePhotoStorageKey: text('profile_photo_storage_key'),
+
+    /**
+     * When the user explicitly set or removed their profile picture.
+     * NULL means the account has never made an avatar choice, so an initial
+     * provider picture remains eligible for provider synchronization. Once
+     * set, provider synchronization never overrides the user's decision.
+     */
+    profilePhotoChangedAt: timestamp('profile_photo_changed_at', { withTimezone: true }),
 
     /**
      * Trust badge. Set to `true` after the user completes at least one
@@ -115,11 +133,30 @@ export const users = pgTable(
     productPostCount: integer('product_post_count').notNull().default(0),
 
     // ── Preferences ───────────────────────────────────────────────────────────
-    /** Preferred interface language. Arabic default for Egypt. */
-    languagePreference: varchar('language_preference', { length: 10 }).notNull().default('ar'),
+    /**
+     * Explicitly synchronized notification language (`ar` or `en`).
+     * NULL until the account synchronizes a choice: the historic `ar` database
+     * default was never a user decision, so unsynchronized accounts and legacy
+     * rows resolve to English instead.
+     */
+    languagePreference: varchar('language_preference', { length: 10 }),
 
     /** Whether push notifications are enabled. */
     notificationsEnabled: boolean('notifications_enabled').notNull().default(true),
+
+    /**
+     * Version of the Terms this account most recently accepted.
+     * NULL until the account explicitly accepts a published version; the
+     * backend never fabricates consent, so legacy rows stay NULL.
+     */
+    termsAcceptedVersion: varchar('terms_accepted_version', { length: 64 }),
+
+    /**
+     * When {@link termsAcceptedVersion} was accepted.
+     * Re-accepting the same version preserves this timestamp; accepting a new
+     * version replaces it. NULL whenever no acceptance is recorded.
+     */
+    termsAcceptedAt: timestamp('terms_accepted_at', { withTimezone: true }),
 
     // ── Moderation (admin panel) ─────────────────────────────────────────────
     /** Set by an admin. Banned users are rejected by FirebaseAuthGuard. */

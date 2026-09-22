@@ -6,6 +6,7 @@ import { validateCreateAdoptionPostInput } from './dto/create-adoption-post.inpu
 import { validateCreateProductPostInput } from './dto/create-product-post.input';
 import { validateUpdatePostStatusInput } from './dto/update-post-status.input';
 import { validateReportPostInput } from './dto/report-post.input';
+import { RequiresTermsAcceptance } from '../terms/requires-terms-acceptance.decorator';
 import {
   validateHelpFeedInput,
   validateAdoptFeedInput,
@@ -149,6 +150,7 @@ export class PostsResolver {
    * Creates a RESCUE post.
    * Urgency is required. Coordinates visible to clients.
    */
+  @RequiresTermsAcceptance()
   @Mutation('createRescuePost')
   async createRescuePost(@Args('input') input: unknown, @Context() ctx: GqlContext): Promise<Post> {
     const validated = validateCreateRescuePostInput(input);
@@ -159,6 +161,7 @@ export class PostsResolver {
    * Creates a LOST post (LOST_PET or FOUND_STRAY).
    * Urgency is required. Coordinates visible to clients.
    */
+  @RequiresTermsAcceptance()
   @Mutation('createLostPost')
   async createLostPost(@Args('input') input: unknown, @Context() ctx: GqlContext): Promise<Post> {
     const validated = validateCreateLostPostInput(input);
@@ -169,6 +172,7 @@ export class PostsResolver {
    * Creates an ADOPTION post.
    * No urgency. Coordinates hidden from clients.
    */
+  @RequiresTermsAcceptance()
   @Mutation('createAdoptionPost')
   async createAdoptionPost(@Args('input') input: unknown, @Context() ctx: GqlContext): Promise<Post> {
     const validated = validateCreateAdoptionPostInput(input);
@@ -179,6 +183,7 @@ export class PostsResolver {
    * Creates a PRODUCT post.
    * No urgency. Coordinates hidden from clients.
    */
+  @RequiresTermsAcceptance()
   @Mutation('createProductPost')
   async createProductPost(@Args('input') input: unknown, @Context() ctx: GqlContext): Promise<Post> {
     const validated = validateCreateProductPostInput(input);
@@ -240,6 +245,16 @@ export class PostsResolver {
   ): Promise<Post> {
     const validated = validateUpdatePostStatusInput({ postId, status });
     return this.postsService.updatePostStatus(validated.postId, ctx.user!.id, validated.status);
+  }
+
+  /**
+   * Explicitly renews an ACTIVE or EXPIRED product listing owned by the caller.
+   * Resets the inactivity window, reactivates an expired listing and respects
+   * the seven-day renewal cooldown.
+   */
+  @Mutation('renewPost')
+  async renewPost(@Args('postId') postId: string, @Context() ctx: GqlContext): Promise<Post> {
+    return this.postsService.renewPost(postId, ctx.user!.id);
   }
 
   // ─── View Tracking ──────────────────────────────────────────────────────

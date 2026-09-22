@@ -27,6 +27,7 @@ export enum PostStatus {
   ADOPTED = 'ADOPTED',
   SOLD = 'SOLD',
   REMOVED = 'REMOVED',
+  EXPIRED = 'EXPIRED',
 }
 
 export enum ModerationStatus {
@@ -128,8 +129,20 @@ export enum NotificationType {
   ADOPTION_APPLICATION_APPROVED = 'ADOPTION_APPLICATION_APPROVED',
   ADOPTION_APPLICATION_REJECTED = 'ADOPTION_APPLICATION_REJECTED',
   POST_REMOVED_BY_ADMIN = 'POST_REMOVED_BY_ADMIN',
+  POST_RESOLVED_BY_ADMIN = 'POST_RESOLVED_BY_ADMIN',
+  POST_REOPENED_BY_ADMIN = 'POST_REOPENED_BY_ADMIN',
   POST_INACTIVITY_NUDGE = 'POST_INACTIVITY_NUDGE',
   SYSTEM_ANNOUNCEMENT = 'SYSTEM_ANNOUNCEMENT',
+}
+
+export enum Language {
+  ar = 'ar',
+  en = 'en',
+}
+
+export enum DevicePlatform {
+  ANDROID = 'ANDROID',
+  IOS = 'IOS',
 }
 
 export enum PersonalityTag {
@@ -302,11 +315,17 @@ export interface RequestMediaUploadInput {
   fileSizeBytes: number;
 }
 
+export interface RequestProfilePhotoUploadInput {
+  contentType: string;
+  fileSizeBytes: number;
+}
+
 export interface CompleteProfileInput {
   fullName: string;
   phoneNumber: string;
   cityId?: Nullable<string>;
   location?: Nullable<GeoLocationInput>;
+  languagePreference?: Nullable<Language>;
 }
 
 export interface GeoLocationInput {
@@ -353,6 +372,7 @@ export interface IQuery {
     first?: Nullable<number>,
     after?: Nullable<string>,
   ): AdoptionApplicationConnection | Promise<AdoptionApplicationConnection>;
+  getAdoptionWhatsAppLink(applicationId: string): string | Promise<string>;
   cities(): City[] | Promise<City[]>;
   myContactRequests(
     postId?: Nullable<string>,
@@ -372,6 +392,7 @@ export interface IQuery {
     filter?: Nullable<MatingFeedFilter>,
     first?: Nullable<number>,
     after?: Nullable<string>,
+    search?: Nullable<string>,
   ): MatingPostConnection | Promise<MatingPostConnection>;
   matingPostDetail(postId: string): Nullable<MatingDetails> | Promise<Nullable<MatingDetails>>;
   myNotifications(
@@ -391,6 +412,7 @@ export interface IQuery {
     radiusKm?: Nullable<number>,
     first?: Nullable<number>,
     after?: Nullable<string>,
+    search?: Nullable<string>,
   ): PostConnection | Promise<PostConnection>;
   adoptFeed(
     governorate?: Nullable<string>,
@@ -400,6 +422,7 @@ export interface IQuery {
     sort?: Nullable<AdoptFeedSort>,
     first?: Nullable<number>,
     after?: Nullable<string>,
+    search?: Nullable<string>,
   ): PostConnection | Promise<PostConnection>;
   marketFeed(
     governorate?: Nullable<string>,
@@ -410,6 +433,7 @@ export interface IQuery {
     sort?: Nullable<MarketFeedSort>,
     first?: Nullable<number>,
     after?: Nullable<string>,
+    search?: Nullable<string>,
   ): PostConnection | Promise<PostConnection>;
   homeFeed(
     governorate?: Nullable<string>,
@@ -418,6 +442,7 @@ export interface IQuery {
     radiusKm?: Nullable<number>,
     first?: Nullable<number>,
     after?: Nullable<string>,
+    search?: Nullable<string>,
   ): PostConnection | Promise<PostConnection>;
   mySavedPosts(first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
   myPosts(
@@ -426,6 +451,7 @@ export interface IQuery {
     after?: Nullable<string>,
   ): PostConnection | Promise<PostConnection>;
   me(): User | Promise<User>;
+  terms(): TermsInfo | Promise<TermsInfo>;
   accountDeletionProgress(
     deletionId: string,
     progressToken: string,
@@ -459,9 +485,26 @@ export interface AccountDeletionPayload {
   completedAt?: Nullable<Date>;
 }
 
+export interface TermsInfo {
+  currentVersion?: Nullable<string>;
+  termsUrl?: Nullable<string>;
+  acceptedVersion?: Nullable<string>;
+  acceptedAt?: Nullable<DateTime>;
+  acceptanceRequired: boolean;
+}
+
 export interface DeleteMyAccountInput {
   confirm: boolean;
   progressToken?: Nullable<string>;
+}
+
+export interface AcceptTermsInput {
+  version: string;
+}
+
+export interface RegisterDeviceInput {
+  token: string;
+  platform: DevicePlatform;
 }
 
 export interface IMutation {
@@ -477,6 +520,8 @@ export interface IMutation {
   createMatingPost(input: CreateMatingPostInput): Post | Promise<Post>;
   markNotificationRead(notificationId: string): Notification | Promise<Notification>;
   markAllNotificationsRead(): number | Promise<number>;
+  registerDevice(input: RegisterDeviceInput): DeviceRegistration | Promise<DeviceRegistration>;
+  unregisterDevice(token: string): boolean | Promise<boolean>;
   createRescuePost(input: CreateRescuePostInput): Post | Promise<Post>;
   createLostPost(input: CreateLostPostInput): Post | Promise<Post>;
   createAdoptionPost(input: CreateAdoptionPostInput): Post | Promise<Post>;
@@ -485,12 +530,21 @@ export interface IMutation {
   toggleUpvote(postId: string): Post | Promise<Post>;
   toggleSave(postId: string): Post | Promise<Post>;
   updatePostStatus(postId: string, status: PostStatus): Post | Promise<Post>;
+  renewPost(postId: string): Post | Promise<Post>;
   recordView(postId: string): boolean | Promise<boolean>;
   requestMediaUploadUrl(input: RequestMediaUploadInput): MediaUploadResponse | Promise<MediaUploadResponse>;
+  requestProfilePhotoUploadUrl(
+    input: RequestProfilePhotoUploadInput,
+  ): ProfilePhotoUploadTicket | Promise<ProfilePhotoUploadTicket>;
   completeProfile(input: CompleteProfileInput): User | Promise<User>;
   updateProfile(input: UpdateProfileInput): User | Promise<User>;
   updateMyLocation(location: GeoLocationInput): User | Promise<User>;
+  setProfilePhoto(mediaId: string): User | Promise<User>;
+  removeProfilePhoto(): User | Promise<User>;
+  updateMyLanguagePreference(languagePreference: Language): User | Promise<User>;
+  updateMyNotificationPreferences(notificationsEnabled: boolean): User | Promise<User>;
   deleteMyAccount(input: DeleteMyAccountInput): AccountDeletionPayload | Promise<AccountDeletionPayload>;
+  acceptTerms(input: AcceptTermsInput): TermsInfo | Promise<TermsInfo>;
 }
 
 export interface City {
@@ -717,16 +771,11 @@ export interface Notification {
   createdAt: DateTime;
 }
 
-export interface SavedSearch {
+export interface DeviceRegistration {
   id: string;
-  label?: Nullable<string>;
-  postType: PostType;
-  cityId?: Nullable<string>;
-  species?: Nullable<SpeciesType>;
-  breed?: Nullable<string>;
-  marketCategory?: Nullable<ProductCategory>;
-  maxPrice?: Nullable<number>;
+  platform: DevicePlatform;
   createdAt: DateTime;
+  updatedAt: DateTime;
 }
 
 export interface PageInfo {
@@ -749,6 +798,16 @@ export interface MediaUploadResponse {
   mediaId: string;
   uploadUrl: string;
   expiresAt: DateTime;
+}
+
+export interface ProfilePhotoUploadTicket {
+  mediaId: string;
+  uploadUrl: string;
+  expiresAt: DateTime;
+  maxSizeBytes: number;
+  maxWidth: number;
+  maxHeight: number;
+  allowedContentType: string;
 }
 
 export interface User {

@@ -12,6 +12,14 @@ _Avoid_: Apple account, Firebase account
 Permanent removal of a Pupzy Account, its owned Posts and uploaded photos, and associated personal information, subject to established retention obligations. This includes unresolved rescue and lost-pet Posts and is distinct from a reversible administrative takedown.
 _Avoid_: Deactivation, suspension
 
+**Device Registration**:
+A provider push token recorded as owned by one Pupzy Account for push delivery. A token is owned by at most one account at a time; a later registration transfers ownership and ends the previous account's queued delivery for that device.
+_Avoid_: FCM token row, push token record
+
+**Push Delivery Intent**:
+A durable record that one notification should be sent to one registered device. It is created in the same transaction as its notification, rechecked for preference, account state and isolation before sending, and its failure or suppression never removes the in-app notification.
+_Avoid_: Push job, notification send
+
 **City**:
 An authoritative selectable Egyptian ADM2 area (Markaz, Kism, or new urban community) across Egypt's 27 governorates, managed through reviewed local dataset releases. Each City maintains canonical English and Arabic names, an internal source identity, an explicit lifecycle state (`official`, `legacy`, or `retired`), and an approximate WGS84 representative point for distance-based discovery.
 _Avoid_: City record, location entry, custom city creation, operator-created city
@@ -38,7 +46,7 @@ _Avoid_: Hidden Post, deleted Post, permanently removed Post
 A media object that has been uploaded for later attachment to a Post but has not yet been finalized as that Post's media. A Staged Upload may be attached only by its owner.
 
 **Comment**:
-A user-created contribution published beneath a Post to participate in its discussion. A top-level Comment requires trimmed plain text (1 to 1,000 Unicode characters) and belongs to one Post and one User. A Comment may later support attached images, Replies, Boosts, and moderation actions. Comments are allowed on every non-Removed Post type, but a Removed Post exposes no discussion and rejects new Comment creation.
+A user-created contribution published beneath a Post to participate in its discussion. A top-level Comment requires trimmed plain text (1 to 1,000 Unicode characters) and belongs to one Post and one User. A Comment may include attached images only when its Post is a rescue or lost/found listing; text Comments are supported on every Post type. Comments may have Replies, Boosts, and moderation actions. Comments are allowed on every non-Removed Post type, but a Removed Post exposes no discussion and rejects new Comment creation.
 
 **Reply**:
 A user-created plain text contribution (1 to 500 Unicode characters) published directly beneath an active top-level Comment. Unlike a top-level Comment, a Reply cannot attach media, cannot receive further Replies (limiting discussion threads to one level of nesting), and belongs to the parent Comment's Post discussion thread. A Reply cannot be created beneath inaccessible, deleted, or administratively removed content. Deleting a Reply transactionally decrements both its parent Comment's reply count and the Post's comment count.
@@ -64,3 +72,19 @@ _Avoid_: User report, account flag, Post Report
 A reversible, directional safety relationship initiated and owned by one Pupzy Account that creates mutual visibility and interaction isolation between it and another Pupzy Account. Only the initiating Pupzy Account can remove the Block.
 _Avoid_: Ban, suspension, mute, one-way hide
 
+
+**Terms Acceptance**:
+A Pupzy Account holder's recorded agreement to a specific published version of Pupzy's terms, including when they accepted it. Agreement to an earlier version does not constitute acceptance of a later version.
+
+**Community Evidence**:
+Photos and discussion shared in Comments on a rescue or lost/found Post to help assess what happened to the animal. Community Evidence informs owner or administrator decisions but does not automatically resolve a Post or constitute independent verification by Pupzy.
+_Avoid_: Rescue Proof application, resolution vote
+
+**Post Resolution**:
+An owner or administrator decision that the outcome of a Post has been reached, informed where appropriate by Community Evidence. A Post Resolution is distinct from removal for moderation, owner deletion, or expiry through inactivity.
+
+**Administrative reopening**:
+An administrator-only correction that returns a completed Post (resolved, reunited, adopted or sold) to Active. It is not a new resolution, never revives terminated interactions, never restores removed content or renews an expired listing, and cannot put a banned account's content back into active discovery.
+
+**Expired Post**:
+An adoption or product Post taken out of active discovery because of inactivity, with its photos retained so its owner can renew it. Expiry does not mean the Post was successfully resolved or removed for a moderation violation.

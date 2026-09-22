@@ -20,7 +20,6 @@ import {
   comments,
   commentReports,
   notifications,
-  savedSearches,
   contactRequests,
   adoptionApplications,
   rescuePosts,
@@ -338,7 +337,7 @@ export class AccountDeletionService {
    * Cleans all database data in an isolated transaction:
    * - Captures permanent and staged media keys into account_deletions before deletion
    * - Reconciles saves, upvotes, and reports on other users' surviving posts
-   * - Removes dependent applications, contact requests, saved searches
+   * - Removes dependent applications and contact requests
    * - Redacts surviving notifications and moderation records
    * - Permanently removes owned posts (all types, including unresolved rescue/lost)
    * - Deletes the user row from `users`
@@ -364,6 +363,11 @@ export class AccountDeletionService {
         return;
       }
 
+      // Lock the account row so a concurrent avatar replacement either commits
+      // before this capture (and its object is deleted below) or waits on the
+      // row lock and then finds the account gone, compensating its own object.
+      const [lockedUser] = await tx.select().from(users).where(eq(users.id, userId)).for('update');
+
       // 1. Fetch all posts owned by this user
       const userPosts = await tx.select({ id: posts.id }).from(posts).where(eq(posts.creatorId, userId));
 
@@ -385,6 +389,13 @@ export class AccountDeletionService {
         for (const m of mediaRows) {
           if (m.key) mediaKeys.push(m.key);
         }
+      }
+
+      // Owned avatar media is captured even when post media was preserved from
+      // an earlier attempt. Only the owned storage key is an object to delete;
+      // a third-party provider picture URL is never treated as owned media.
+      if (lockedUser?.profilePhotoStorageKey && !mediaKeys.includes(lockedUser.profilePhotoStorageKey)) {
+        mediaKeys.push(lockedUser.profilePhotoStorageKey);
       }
 
       // Persist captured media scope and checkpoint step: 'DATA_CLEANED' atomically in the SAME transaction
@@ -513,7 +524,6 @@ export class AccountDeletionService {
       }
 
       // 6. Delete applications & contact requests
-      await tx.delete(savedSearches).where(eq(savedSearches.userId, userId));
       await tx.delete(adoptionApplications).where(eq(adoptionApplications.applicantId, userId));
       await tx.delete(contactRequests).where(eq(contactRequests.requesterId, userId));
 
@@ -526,14 +536,20 @@ export class AccountDeletionService {
       await tx.delete(notifications).where(eq(notifications.recipientId, userId));
 
       if (user) {
-        // Redact user's name from surviving notifications received by others
+        // Redact user's name from surviving notifications received by others,
+        // including the Arabic columns produced by the bilingual templates.
         if (user.fullName && user.fullName.trim().length > 0) {
           await tx.execute(sql`
             UPDATE "notifications"
             SET
               "title" = REPLACE("title", ${user.fullName}, 'Someone'),
-              "body" = REPLACE("body", ${user.fullName}, 'Someone')
-            WHERE "title" LIKE ${'%' + user.fullName + '%'} OR "body" LIKE ${'%' + user.fullName + '%'};
+              "body" = REPLACE("body", ${user.fullName}, 'Someone'),
+              "title_arabic" = REPLACE("title_arabic", ${user.fullName}, 'Someone'),
+              "body_arabic" = REPLACE("body_arabic", ${user.fullName}, 'Someone')
+            WHERE "title" LIKE ${'%' + user.fullName + '%'}
+              OR "body" LIKE ${'%' + user.fullName + '%'}
+              OR "title_arabic" LIKE ${'%' + user.fullName + '%'}
+              OR "body_arabic" LIKE ${'%' + user.fullName + '%'};
           `);
         }
         if (user.fullNameArabic && user.fullNameArabic.trim().length > 0) {
@@ -541,24 +557,31 @@ export class AccountDeletionService {
             UPDATE "notifications"
             SET
               "title" = REPLACE("title", ${user.fullNameArabic}, 'مستخدم'),
-              "body" = REPLACE("body", ${user.fullNameArabic}, 'مستخدم')
-            WHERE "title" LIKE ${'%' + user.fullNameArabic + '%'} OR "body" LIKE ${'%' + user.fullNameArabic + '%'};
+              "body" = REPLACE("body", ${user.fullNameArabic}, 'مستخدم'),
+              "title_arabic" = REPLACE("title_arabic", ${user.fullNameArabic}, 'مستخدم'),
+              "body_arabic" = REPLACE("body_arabic", ${user.fullNameArabic}, 'مستخدم')
+            WHERE "title" LIKE ${'%' + user.fullNameArabic + '%'}
+              OR "body" LIKE ${'%' + user.fullNameArabic + '%'}
+              OR "title_arabic" LIKE ${'%' + user.fullNameArabic + '%'}
+              OR "body_arabic" LIKE ${'%' + user.fullNameArabic + '%'};
           `);
         }
         if (user.email && user.email.trim().length > 0) {
           await tx.execute(sql`
             UPDATE "notifications"
             SET
-              "body" = REPLACE("body", ${user.email}, '[deleted]')
-            WHERE "body" LIKE ${'%' + user.email + '%'};
+              "body" = REPLACE("body", ${user.email}, '[deleted]'),
+              "body_arabic" = REPLACE("body_arabic", ${user.email}, '[deleted]')
+            WHERE "body" LIKE ${'%' + user.email + '%'} OR "body_arabic" LIKE ${'%' + user.email + '%'};
           `);
         }
         if (user.phoneNumber && user.phoneNumber.trim().length > 0) {
           await tx.execute(sql`
             UPDATE "notifications"
             SET
-              "body" = REPLACE("body", ${user.phoneNumber}, '[deleted]')
-            WHERE "body" LIKE ${'%' + user.phoneNumber + '%'};
+              "body" = REPLACE("body", ${user.phoneNumber}, '[deleted]'),
+              "body_arabic" = REPLACE("body_arabic", ${user.phoneNumber}, '[deleted]')
+            WHERE "body" LIKE ${'%' + user.phoneNumber + '%'} OR "body_arabic" LIKE ${'%' + user.phoneNumber + '%'};
           `);
         }
       }

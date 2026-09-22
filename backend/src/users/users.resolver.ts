@@ -6,6 +6,8 @@ import { AccountDeletionService, type AccountDeletionPayload } from './account-d
 import { validateCompleteProfileInput } from './dto/complete-profile.input';
 import { validateUpdateProfileInput } from './dto/update-profile.input';
 import { validateGeoLocationInput } from './dto/geo-location.input';
+import { validateLanguagePreferenceInput } from './dto/language-preference.input';
+import { validateNotificationsEnabledInput } from './dto/notification-preferences.input';
 import { validateDeleteMyAccountInput } from './dto/delete-my-account.input';
 import type { User, City } from '../database/schema';
 import type { GqlContext } from '../common/types/gql-context.type';
@@ -104,6 +106,50 @@ export class UsersResolver {
   async updateMyLocation(@Args('location') location: unknown, @Context() context: GqlContext): Promise<User> {
     const validated = validateGeoLocationInput(location);
     return this.usersService.updateMyLocation(context.user!.id, validated);
+  }
+
+  /**
+   * Sets or replaces the authenticated user's owned profile photo from a
+   * durable, single-use staged upload ticket.
+   */
+  @Mutation('setProfilePhoto')
+  async setProfilePhoto(@Args('mediaId') mediaId: string, @Context() context: GqlContext): Promise<User> {
+    return this.usersService.setProfilePhoto(context.user!.id, mediaId);
+  }
+
+  /**
+   * Explicitly removes the authenticated user's profile picture. Returns the
+   * user with no picture; provider synchronization never undoes this choice.
+   */
+  @Mutation('removeProfilePhoto')
+  async removeProfilePhoto(@Context() context: GqlContext): Promise<User> {
+    return this.usersService.removeProfilePhoto(context.user!.id);
+  }
+
+  /**
+   * Explicitly synchronizes the notification language preference.
+   * Requires only the chosen language — no unrelated profile resubmission.
+   */
+  @Mutation('updateMyLanguagePreference')
+  async updateMyLanguagePreference(
+    @Args('languagePreference') languagePreference: unknown,
+    @Context() context: GqlContext,
+  ): Promise<User> {
+    const validated = validateLanguagePreferenceInput(languagePreference);
+    return this.usersService.updateLanguagePreference(context.user!.id, validated);
+  }
+
+  /**
+   * Updates the explicit push notification preference. Disabling push keeps
+   * the in-app inbox and history intact.
+   */
+  @Mutation('updateMyNotificationPreferences')
+  async updateMyNotificationPreferences(
+    @Args('notificationsEnabled') notificationsEnabled: unknown,
+    @Context() context: GqlContext,
+  ): Promise<User> {
+    const validated = validateNotificationsEnabledInput(notificationsEnabled);
+    return this.usersService.updateNotificationPreferences(context.user!.id, validated);
   }
 
   /**

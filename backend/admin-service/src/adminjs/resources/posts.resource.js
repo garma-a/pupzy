@@ -1,6 +1,14 @@
 import { ValidationError } from 'adminjs';
 import { ENUMS } from '../enums.js';
 import { buildPostActions } from '../actions/moderate-post.actions.js';
+import {
+  POST_REVIEW_WORKSPACE_PARAM,
+  attachLostSubtype,
+  attachOwnerBanStatus,
+  attachPostReviewData,
+  buildPostReviewActions,
+} from '../review/post-review.js';
+import { virtualFilterOptions } from '../queue-filters.js';
 import { attachShortUuid, enumProperty, noDeleteActions, stripPopulatedPasswordHashes } from './resource-helpers.js';
 
 export const PROTECTED_POST_FIELDS = [
@@ -25,6 +33,8 @@ export const PROTECTED_POST_FIELDS = [
   'coordinates.latitude',
   'coordinates.longitude',
   'last_engaged_at',
+  'renewed_at',
+  'reminder_sent_at',
   'created_at',
   'updated_at',
 ];
@@ -129,12 +139,27 @@ export function buildPostsResource(db, pool, components, cache) {
       isVisible: { list: false, show: true, edit: false, filter: false },
     },
     last_engaged_at: { isDisabled: true },
+    renewed_at: { isDisabled: true },
+    reminder_sent_at: { isDisabled: true },
     created_at: { isDisabled: true },
     updated_at: { isDisabled: true },
+    ...virtualFilterOptions('posts'),
   };
 
   attachShortUuid(properties, ['id'], components, ['list', 'show']);
   attachShortUuid(properties, ['creator_id', 'moderated_by_admin_id'], components, ['show']);
+
+  // The review workspace is a virtual read-only property rendered by a custom
+  // component. Without the component (unit tests, reduced builds) the virtual
+  // property is omitted entirely and the default record fields remain.
+  const hasReviewWorkspace = Boolean(components?.PostReviewWorkspace);
+  if (hasReviewWorkspace) {
+    properties[POST_REVIEW_WORKSPACE_PARAM] = {
+      isVisible: { list: false, show: true, edit: false, filter: false },
+      isDisabled: true,
+      components: { show: components.PostReviewWorkspace },
+    };
+  }
 
   return {
     resource: db.table('posts'),
@@ -145,15 +170,20 @@ export function buildPostsResource(db, pool, components, cache) {
         ...noDeleteActions,
         new: { isAccessible: false },
         list: { after: stripPopulatedPasswordHashes },
-        show: { after: stripPopulatedPasswordHashes },
+        show: {
+          before: [attachLostSubtype(pool), attachOwnerBanStatus(pool)],
+          after: [stripPopulatedPasswordHashes, attachPostReviewData(pool)],
+        },
         edit: {
           before: preparePostEditPayload,
           after: stripPopulatedPasswordHashes,
         },
         ...buildPostActions(pool, components?.ModerationAction, cache),
+        ...buildPostReviewActions(pool),
       },
       listProperties: ['id', 'title', 'post_type', 'status', 'moderation_status', 'report_count', 'created_at'],
       showProperties: [
+        ...(hasReviewWorkspace ? [POST_REVIEW_WORKSPACE_PARAM] : []),
         'id',
         'title',
         'description',
@@ -176,6 +206,8 @@ export function buildPostsResource(db, pool, components, cache) {
         'moderated_by_admin_id',
         'effective_score',
         'last_engaged_at',
+        'renewed_at',
+        'reminder_sent_at',
         'created_at',
         'updated_at',
       ],
@@ -188,6 +220,8 @@ export function buildPostsResource(db, pool, components, cache) {
         'urgency',
         'city_id',
         'created_at',
+        'report_type',
+        'queue',
       ],
       sort: { sortBy: 'created_at', direction: 'desc' },
     },

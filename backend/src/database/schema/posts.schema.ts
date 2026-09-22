@@ -173,12 +173,29 @@ export const posts = pgTable(
 
     /**
      * Initialized to created_at on INSERT. Updated differently per type:
-     *   ADOPTION → upvotes and saves only (views alone too passive). Auto-removed after 30 days.
-     *   PRODUCT  → views and saves. A view means a buyer looked. Auto-removed after 14 days.
-     *   RESCUE / LOST → never updated. Never auto-removed.
-     * Before the cron removes a post, POST_INACTIVITY_NUDGE is sent to the creator.
+     *   PRODUCT  → views and saves. A view means a buyer looked. Expires after 14 inactive days.
+     *   ADOPTION → upvotes and saves only (views alone too passive). Expires after 30 inactive days (ticket 13).
+     *   RESCUE / LOST → upvotes and saves only. Never expire automatically; receive one
+     *     stand-alone reminder after 60 inactive days (ticket 14).
+     *   MATING → never updated. Expiry and reminders disabled.
+     * The expiry job sends POST_INACTIVITY_NUDGE three days before a renewable
+     * listing's window closes, or after 60 inactive days for RESCUE/LOST.
      */
     lastEngagedAt: timestamp('last_engaged_at', { withTimezone: true }).notNull().defaultNow(),
+
+    /**
+     * When the owner last explicitly renewed this listing. Null until the first
+     * renewal. The expiry boundary allows one renewal per seven days.
+     */
+    renewedAt: timestamp('renewed_at', { withTimezone: true }),
+
+    /**
+     * When the inactivity reminder for the current inactivity cycle was
+     * persisted. A reminder is eligible again only after new activity moves
+     * `last_engaged_at` past this value, so retries and competing workers can
+     * never duplicate a cycle's reminder.
+     */
+    reminderSentAt: timestamp('reminder_sent_at', { withTimezone: true }),
 
     /** Row creation timestamp. */
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -211,7 +228,7 @@ export const posts = pgTable(
      *   idx_posts_market_score    — (city_id, effective_score, created_at) WHERE status='ACTIVE' AND post_type='PRODUCT'
      *   idx_posts_market_category — (city_id, market_category, effective_score) WHERE status='ACTIVE' AND post_type='PRODUCT'
      *   idx_posts_needs_review    — (report_count, created_at) WHERE moderation_status IN ('PENDING_AUTO_REVIEW','FLAGGED') AND status='ACTIVE'
-     *   idx_posts_last_engaged    — (post_type, last_engaged_at) WHERE status='ACTIVE' AND post_type IN ('ADOPTION','PRODUCT')
+     *   idx_posts_last_engaged    — (post_type, last_engaged_at) WHERE status='ACTIVE' AND post_type IN ('ADOPTION','PRODUCT','RESCUE','LOST') (widened by 0056)
      */
   }),
 );

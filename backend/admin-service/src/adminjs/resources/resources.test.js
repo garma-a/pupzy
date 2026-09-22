@@ -21,7 +21,6 @@ import { buildPostUpvotesResource } from './post-upvotes.resource.js';
 import { buildPostsResource } from './posts.resource.js';
 import { buildProductPostsResource } from './product-posts.resource.js';
 import { buildRescuePostsResource } from './rescue-posts.resource.js';
-import { buildSavedSearchesResource } from './saved-searches.resource.js';
 import { buildUsersResource } from './users.resource.js';
 import { buildCommentsResource } from './comments.resource.js';
 import { buildVetClinicsResource } from './vet-clinics.resource.js';
@@ -53,7 +52,6 @@ function resources() {
     buildCommentsResource(db, pool, components),
     buildContactRequestsResource(db, components),
     buildAdoptionApplicationsResource(db, components),
-    buildSavedSearchesResource(db, components),
     buildNotificationsResource(db, components),
     buildCitiesResource(db, components),
     buildVetClinicsResource(db, pool, components),
@@ -64,11 +62,20 @@ function resources() {
 }
 
 describe('AdminJS resource configuration', () => {
-  it('includes all 23 registered domain tables', () => {
+  it('includes all 22 registered domain tables', () => {
     const list = resources();
-    assert.equal(list.length, 23);
+    assert.equal(list.length, 22);
     const names = list.map((r) => r.resource.name);
     assert.deepEqual(names, [...ADMIN_RESOURCE_TABLES]);
+  });
+
+  it('does not register the retired saved_searches table', async () => {
+    assert.equal(ADMIN_RESOURCE_TABLES.includes('saved_searches'), false);
+    assert.equal(
+      resources().some((r) => r.resource.name === 'saved_searches'),
+      false,
+    );
+    await assert.rejects(import('./saved-searches.resource.js'));
   });
 
   it('transcribes every enum-backed property exactly', () => {
@@ -104,9 +111,6 @@ describe('AdminJS resource configuration', () => {
       ['adoption_applications', 'species_preference', ENUMS.speciesType],
       ['adoption_applications', 'gender_preference', ENUMS.genderType],
       ['adoption_applications', 'living_situation', ENUMS.livingSituation],
-      ['saved_searches', 'post_type', ENUMS.postType],
-      ['saved_searches', 'species', ENUMS.speciesType],
-      ['saved_searches', 'market_category', ENUMS.productCategory],
       ['notifications', 'type', ENUMS.notificationType],
       ['cities', 'status', ENUMS.cityLifecycleStatus],
       ['vet_clinics', 'source', ENUMS.vetClinicSource],

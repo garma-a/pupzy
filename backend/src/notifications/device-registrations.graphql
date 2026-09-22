@@ -1,0 +1,49 @@
+"""
+Mobile platform a push token belongs to.
+"""
+enum DevicePlatform {
+  ANDROID
+  IOS
+}
+
+"""
+A provider push token owned by the authenticated account.
+The token value is never returned; clients keep the token they registered.
+"""
+type DeviceRegistration {
+  id: ID!
+  platform: DevicePlatform!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Input for registering a push device token.
+"""
+input RegisterDeviceInput {
+  """
+  Opaque provider token (FCM registration token). 1 to 512 characters.
+  """
+  token: String!
+  """
+  Platform that issued the token.
+  """
+  platform: DevicePlatform!
+}
+
+extend type Mutation {
+  """
+  Registers the authenticated account's push token. Idempotent for the same
+  owner; registering a token already owned by another account transfers it to
+  the caller and cancels that account's queued pushes for the device.
+  Also used to refresh rotated tokens.
+  """
+  registerDevice(input: RegisterDeviceInput!): DeviceRegistration!
+
+  """
+  Removes the authenticated account's own registration for a token. Call on
+  sign-out. Returns false when the caller has no registration for the token;
+  another account's registration is never changed.
+  """
+  unregisterDevice(token: String!): Boolean!
+}

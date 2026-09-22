@@ -7,9 +7,11 @@ import { CitiesService } from '../cities/cities.service';
 import { UploadService } from '../upload/upload.service';
 import { shouldFlagContent } from '../common/utils/moderation.util';
 import { ValidationError, NotFoundError, ForbiddenError } from '../common/errors/app.errors';
+import { canOwnerRemove, canOwnerRenew, ownerClosureTargets } from '../common/contracts/post-lifecycle.contract';
 import { assertUuid } from '../common/utils/validate-uuid';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { buildNotificationContent } from '../notifications/notification-templates';
 import {
   computeRescueUrgency,
   computeLostPetUrgency,
@@ -31,6 +33,7 @@ import type { CreateAdoptionPostInput } from './dto/create-adoption-post.input';
 import type { CreateProductPostInput } from './dto/create-product-post.input';
 import type { ReportPostInput } from './dto/report-post.input';
 import type { FeedResult } from './posts.repository';
+import { buildFeedSearchPattern } from './search-query.util';
 import type {
   HelpFeedInput,
   AdoptFeedInput,
@@ -433,7 +436,7 @@ export class PostsService {
   async deletePost(postId: string, userId: string): Promise<void> {
     assertUuid(postId, 'postId');
     const post = await this.postsRepository.findById(postId);
-    if (!post || post.status === 'REMOVED') {
+    if (!post || !canOwnerRemove(post.status)) {
       throw new NotFoundError('Post', postId);
     }
     if (post.creatorId !== userId) {
@@ -473,24 +476,13 @@ export class PostsService {
   // ─── Status Update ──────────────────────────────────────────────────────
 
   /**
-   * Valid status transitions per post type.
-   * - RESCUE  → RESOLVED (animal was helped)
-   * - LOST    → REUNITED (pet was found)
-   * - ADOPTION → ADOPTED (pet was adopted)
-   * - PRODUCT  → SOLD (item was sold)
-   *
-   * All transitions are from ACTIVE to a terminal state.
-   * REMOVED is handled by `deletePost`, not this method.
-   */
-  private static readonly ALLOWED_TRANSITIONS: Record<string, string[]> = {
-    RESCUE: ['RESOLVED'],
-    LOST: ['REUNITED'],
-    ADOPTION: ['ADOPTED'],
-    PRODUCT: ['SOLD'],
-  };
-
-  /**
    * Updates a post's lifecycle status with transition validation.
+   *
+   * The allowed owner transitions come from the shared Post lifecycle
+   * contract (`post-lifecycle.contract.ts`), so the API and admin services
+   * apply one definition of which owner closure is valid. LOST Posts use
+   * their direction discriminator: LOST_PET closes as REUNITED while
+   * FOUND_STRAY accepts RESOLVED and retains REUNITED.
    *
    * @throws {NotFoundError} if the post does not exist or is REMOVED.
    * @throws {ForbiddenError} if the caller is not the post creator.
@@ -499,7 +491,7 @@ export class PostsService {
   async updatePostStatus(postId: string, userId: string, status: string): Promise<Post> {
     assertUuid(postId, 'postId');
     const post = await this.postsRepository.findById(postId);
-    if (!post || post.status === 'REMOVED') {
+    if (!post || !canOwnerRemove(post.status)) {
       throw new NotFoundError('Post', postId);
     }
     if (post.creatorId !== userId) {
@@ -509,8 +501,9 @@ export class PostsService {
       throw new ValidationError(`Post is already in "${post.status}" status and cannot be changed`);
     }
 
-    const allowed = PostsService.ALLOWED_TRANSITIONS[post.postType] ?? [];
-    if (!allowed.includes(status)) {
+    const lostReportType = post.postType === 'LOST' ? await this.postsRepository.findLostReportType(postId) : null;
+    const allowed = ownerClosureTargets(post.postType, lostReportType);
+    if (!allowed.includes(status as (typeof allowed)[number])) {
       throw new ValidationError(
         `${post.postType} posts can only transition to: ${allowed.join(', ')}. Got: "${status}"`,
       );
@@ -520,6 +513,37 @@ export class PostsService {
     if (!updatedPost) throw new NotFoundError('Post', postId);
     await this.usersService.invalidateUserCacheById(post.creatorId).catch(() => {});
     return updatedPost;
+  }
+
+  /**
+   * Explicitly renews an ACTIVE or EXPIRED listing owned by the caller.
+   *
+   * Renewal is the only way an Expired Post leaves `EXPIRED`, and the only way
+   * a listing's inactivity window is reset by hand. It is limited to once per
+   * seven days per Post and never revives interactions terminated by expiry or
+   * closure. Which types may be renewed comes from the shared expiry policy.
+   *
+   * @throws {NotFoundError} if the post does not exist or is REMOVED.
+   * @throws {ForbiddenError} if the caller is not the post creator.
+   * @throws {ValidationError} if the type/status combination is not renewable.
+   * @throws {ConflictError} with code RENEWAL_COOLDOWN inside the cooldown.
+   */
+  async renewPost(postId: string, userId: string): Promise<Post> {
+    assertUuid(postId, 'postId');
+    const post = await this.postsRepository.findById(postId);
+    if (!post || post.status === 'REMOVED') {
+      throw new NotFoundError('Post', postId);
+    }
+    if (post.creatorId !== userId) {
+      throw new ForbiddenError('You can only renew your own posts');
+    }
+    if (!canOwnerRenew(post.postType, post.status)) {
+      throw new ValidationError(`A "${post.postType}" post in "${post.status}" status cannot be renewed`);
+    }
+
+    const renewedPost = await this.postsRepository.renewPost(postId, userId);
+    await this.usersService.invalidateUserCacheById(post.creatorId).catch(() => {});
+    return renewedPost;
   }
 
   // ─── Engagement Toggles ─────────────────────────────────────────────────
@@ -558,8 +582,10 @@ export class PostsService {
         {
           recipientId: post.creatorId,
           type: 'NEW_UPVOTE',
-          title: 'New upvote',
-          body: `${voter?.fullName ?? 'Someone'} upvoted your post "${post.title}"`,
+          ...buildNotificationContent('NEW_UPVOTE', {
+            actorName: voter?.fullName ?? 'Someone',
+            postTitle: post.title,
+          }),
           relatedPostId: postId,
         },
         userId,
@@ -595,8 +621,10 @@ export class PostsService {
         {
           recipientId: post.creatorId,
           type: 'POST_SAVED',
-          title: 'Post saved',
-          body: `${saver?.fullName ?? 'Someone'} saved your post "${post.title}"`,
+          ...buildNotificationContent('POST_SAVED', {
+            actorName: saver?.fullName ?? 'Someone',
+            postTitle: post.title,
+          }),
           relatedPostId: postId,
         },
         userId,
@@ -653,6 +681,7 @@ export class PostsService {
       radiusKm: input.radiusKm ?? 25,
       limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor(input.after, isHelpFeedCursor),
+      searchPattern: buildFeedSearchPattern(input.search),
       viewerId,
     });
     return this.mapFeedResultToConnection(result, (post) => ({
@@ -672,6 +701,7 @@ export class PostsService {
       sort,
       limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor(input.after, (cursor): cursor is ScoredFeedCursor => isScoredFeedCursor(cursor, sort)),
+      searchPattern: buildFeedSearchPattern(input.search),
       viewerId,
     });
     return this.mapFeedResultToConnection(result, (post) =>
@@ -692,6 +722,7 @@ export class PostsService {
       category: input.category,
       limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor(input.after, (cursor): cursor is ScoredFeedCursor => isScoredFeedCursor(cursor, sort)),
+      searchPattern: buildFeedSearchPattern(input.search),
       viewerId,
     });
     return this.mapFeedResultToConnection(result, (post) =>
@@ -709,6 +740,7 @@ export class PostsService {
       radiusKm: input.radiusKm ?? 25,
       limit: Math.min(input.first ?? 20, 50),
       cursor: this.decodeCursor(input.after, isIdCursor),
+      searchPattern: buildFeedSearchPattern(input.search),
       viewerId,
     });
     return this.mapFeedResultToConnection(result, (post) => ({ id: post.id }));

@@ -15,6 +15,9 @@ import {
   postUpvotes,
   postSaves,
   postReports,
+  notifications,
+  contactRequests,
+  adoptionApplications,
   type Post,
   type PostMedia,
   type NewPost,
@@ -30,14 +33,25 @@ import {
   type ReportReason,
 } from '../database/schema';
 import type * as schema from '../database/schema';
-import { ConflictError, ForbiddenError, NotFoundError } from '../common/errors/app.errors';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../common/errors/app.errors';
+import {
+  POST_DISCUSSION_LOCK_NAMESPACE,
+  RENEWAL_COOLDOWN_DAYS,
+  canOwnerClose,
+  canOwnerRemove,
+  canOwnerRenew,
+} from '../common/contracts/post-lifecycle.contract';
 import { withDbRetry } from '../common/utils/db-retry.util';
+import type { NotificationContentColumns } from '../notifications/notification-templates';
+import { PushDeliveryRepository } from '../notifications/push-delivery.repository';
+import { isPushDeliveryEnabled } from '../notifications/push-delivery.constants';
 import {
   ModerationReportQuotaManager,
   ReportQuotaReservation,
 } from '../moderation-reports/moderation-report-quota.manager';
 import { excludeIsolatedAccounts } from '../blocks/account-isolation.sql';
 import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
+import { buildFeedSearchCondition } from './feed-search.sql';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -115,6 +129,7 @@ function isUniqueViolation(err: unknown): boolean {
 export class PostsRepository {
   private readonly reportQuotaManager: ModerationReportQuotaManager;
   private readonly isolationPolicy: AccountIsolationPolicy;
+  private readonly pushDeliveryRepository: PushDeliveryRepository;
 
   constructor(
     @Inject(DATABASE_TOKEN)
@@ -125,9 +140,13 @@ export class PostsRepository {
     @Optional()
     @Inject(AccountIsolationPolicy)
     isolationPolicy?: AccountIsolationPolicy,
+    @Optional()
+    @Inject(PushDeliveryRepository)
+    pushDeliveryRepository?: PushDeliveryRepository,
   ) {
     this.reportQuotaManager = reportQuotaManager ?? new ModerationReportQuotaManager(this.db);
     this.isolationPolicy = isolationPolicy ?? new AccountIsolationPolicy(this.db);
+    this.pushDeliveryRepository = pushDeliveryRepository ?? new PushDeliveryRepository(this.db);
   }
 
   /**
@@ -140,7 +159,7 @@ export class PostsRepository {
    */
   private async lockDiscussionPost(tx: DbTransaction, postId: string): Promise<Post | undefined> {
     await tx.execute(sql`
-      SELECT pg_advisory_xact_lock(hashtextextended('comment_discussion:' || ${postId}, 0))
+      SELECT pg_advisory_xact_lock(hashtextextended(${POST_DISCUSSION_LOCK_NAMESPACE} || ${postId}, 0))
     `);
     const [post] = await tx.select().from(posts).where(eq(posts.id, postId)).for('update');
 
@@ -456,6 +475,11 @@ export class PostsRepository {
    * The DB trigger `trg_sync_user_post_counts` handles counter adjustments.
    * The DB trigger `trg_posts_updated_at` handles updated_at automatically.
    *
+   * The status write commits together with the termination of every still
+   * pending Contact Request and Adoption Application targeting the Post
+   * (`POST_LIFECYCLE_SIDE_EFFECTS.OWNER_CLOSE`). Approved interactions are
+   * never touched, so previously approved contact access is retained.
+   *
    * @returns The updated post row, or undefined when it is no longer ACTIVE
    *          or no longer belongs to the caller.
    */
@@ -463,15 +487,219 @@ export class PostsRepository {
     return withDbRetry(() =>
       this.db.transaction(async (tx) => {
         const lockedPost = await this.lockDiscussionPost(tx, postId);
-        if (!lockedPost || lockedPost.creatorId !== creatorId || lockedPost.status !== 'ACTIVE') return undefined;
+        if (!lockedPost || lockedPost.creatorId !== creatorId) return undefined;
+        const lostReportType = lockedPost.postType === 'LOST' ? await this.findLostReportType(postId, tx) : null;
+        if (!canOwnerClose(lockedPost.postType, lockedPost.status, status, lostReportType)) {
+          return undefined;
+        }
         const [post] = await tx
           .update(posts)
           .set({ status: status as Post['status'] })
           .where(eq(posts.id, postId))
           .returning();
+        if (post) {
+          await this.terminatePendingInteractions(tx, postId);
+        }
         return post;
       }),
     );
+  }
+
+  /**
+   * Explicitly renews an ACTIVE or EXPIRED listing for its owner.
+   *
+   * Runs inside one transaction under the shared lifecycle locks, re-reads the
+   * Post, then applies the renewal only while the stored `renewed_at` is older
+   * than the seven-day cooldown. Renewal resets the inactivity window,
+   * reactivates an EXPIRED listing and leaves every direct interaction
+   * untouched, so interactions terminated by expiry stay terminated.
+   *
+   * @throws {NotFoundError} when the Post no longer exists.
+   * @throws {ForbiddenError} when the caller does not own the Post.
+   * @throws {ValidationError} for non-renewable types or statuses.
+   * @throws {ConflictError} with code RENEWAL_COOLDOWN inside the cooldown.
+   */
+  async renewPost(postId: string, creatorId: string): Promise<Post> {
+    return withDbRetry(() =>
+      this.db.transaction(async (tx) => {
+        const lockedPost = await this.lockDiscussionPost(tx, postId);
+        if (!lockedPost) throw new NotFoundError('Post', postId);
+        if (lockedPost.creatorId !== creatorId) {
+          throw new ForbiddenError('You can only renew your own posts');
+        }
+        if (!canOwnerRenew(lockedPost.postType, lockedPost.status)) {
+          throw new ValidationError(
+            `A "${lockedPost.postType}" post in "${lockedPost.status}" status cannot be renewed`,
+          );
+        }
+
+        const [post] = await tx
+          .update(posts)
+          .set({ status: 'ACTIVE', lastEngagedAt: sql`now()`, renewedAt: sql`now()` })
+          .where(
+            and(
+              eq(posts.id, postId),
+              sql`(${posts.renewedAt} IS NULL OR ${posts.renewedAt} <= now() - make_interval(days => ${RENEWAL_COOLDOWN_DAYS}::int))`,
+            ),
+          )
+          .returning();
+        if (!post) {
+          throw new ConflictError('This listing was renewed within the last seven days', 'RENEWAL_COOLDOWN');
+        }
+        return post;
+      }),
+    );
+  }
+
+  /**
+   * Applies the inactivity expiry to one candidate Post.
+   *
+   * The Post row is re-read under the shared lifecycle locks and the window is
+   * rechecked inside the UPDATE, so a stale job candidate can never expire a
+   * Post that was renewed, closed or removed after the candidate was selected.
+   * Every still-pending direct interaction is terminated in the same
+   * transaction; rows are preserved and approved interactions are untouched.
+   *
+   * @returns The expired Post, or undefined when the candidate is no longer eligible.
+   */
+  async expireInactivePost(
+    postId: string,
+    postType: Post['postType'],
+    inactivityDays: number,
+  ): Promise<Post | undefined> {
+    return withDbRetry(() =>
+      this.db.transaction(async (tx) => {
+        const lockedPost = await this.lockDiscussionPost(tx, postId);
+        if (!lockedPost || lockedPost.status !== 'ACTIVE' || lockedPost.postType !== postType) return undefined;
+
+        const [post] = await tx
+          .update(posts)
+          .set({ status: 'EXPIRED' })
+          .where(
+            and(
+              eq(posts.id, postId),
+              eq(posts.status, 'ACTIVE'),
+              sql`${posts.lastEngagedAt} <= now() - make_interval(days => ${inactivityDays}::int)`,
+            ),
+          )
+          .returning();
+        if (!post) return undefined;
+
+        await this.terminatePendingInteractions(tx, postId);
+        return post;
+      }),
+    );
+  }
+
+  /**
+   * Persists one inactivity reminder and its durable state atomically.
+   *
+   * The Post row is re-read under the shared lifecycle locks and the whole
+   * reminder window is rechecked, so two workers racing the same candidate
+   * create exactly one inbox row per inactivity cycle, and a Post that gained
+   * activity, expired or closed is never reminded by stale work.
+   *
+   * @returns The Post whose `reminder_sent_at` was set, or undefined when the
+   *          candidate is no longer eligible.
+   */
+  async recordInactivityReminder(params: {
+    postId: string;
+    postType: Post['postType'];
+    reminderAfterDays: number;
+    expiryAfterDays: number | null;
+    content: NotificationContentColumns;
+  }): Promise<Post | undefined> {
+    const { postId, postType, reminderAfterDays, expiryAfterDays, content } = params;
+    return withDbRetry(() =>
+      this.db.transaction(async (tx) => {
+        const lockedPost = await this.lockDiscussionPost(tx, postId);
+        if (!lockedPost || lockedPost.status !== 'ACTIVE' || lockedPost.postType !== postType) return undefined;
+
+        const eligibility = await tx.execute<{ eligible: boolean }>(sql`
+          SELECT (
+            last_engaged_at <= now() - make_interval(days => ${reminderAfterDays}::int)
+            AND (${expiryAfterDays}::int IS NULL OR last_engaged_at > now() - make_interval(days => ${expiryAfterDays}::int))
+            AND (reminder_sent_at IS NULL OR reminder_sent_at < last_engaged_at)
+          ) AS eligible
+          FROM posts
+          WHERE id = ${postId}
+        `);
+        if (!eligibility.rows[0]?.eligible) return undefined;
+
+        const [notification] = await tx
+          .insert(notifications)
+          .values({
+            recipientId: lockedPost.creatorId,
+            type: 'POST_INACTIVITY_NUDGE',
+            title: content.title,
+            body: content.body,
+            titleArabic: content.titleArabic,
+            bodyArabic: content.bodyArabic,
+            relatedPostId: postId,
+          })
+          .returning();
+
+        // The durable push intents commit with the reminder notification;
+        // there is no acting user behind an inactivity reminder.
+        if (isPushDeliveryEnabled('POST_INACTIVITY_NUDGE')) {
+          await this.pushDeliveryRepository.enqueueForNotification(notification, null, tx);
+        }
+
+        const [post] = await tx
+          .update(posts)
+          .set({ reminderSentAt: sql`now()` })
+          .where(eq(posts.id, postId))
+          .returning();
+        return post;
+      }),
+    );
+  }
+
+  /**
+   * Reads a LOST Post's direction discriminator (`LOST_PET` / `FOUND_STRAY`).
+   * Returns null when the Post has no extension row.
+   */
+  async findLostReportType(
+    postId: string,
+    executor: NodePgDatabase<typeof schema> | DbTransaction = this.db,
+  ): Promise<string | null> {
+    const [row] = await executor
+      .select({ reportType: lostPosts.reportType })
+      .from(lostPosts)
+      .where(eq(lostPosts.postId, postId))
+      .limit(1);
+    return row?.reportType ?? null;
+  }
+
+  /**
+   * Re-reads a Post under a share lock inside a caller-owned transaction.
+   *
+   * Direct-interaction creation already rechecked the Post before opening its
+   * transaction. Holding `FOR SHARE` here makes that read conflict with the
+   * lifecycle transitions' `FOR UPDATE`, so a request, application, closure
+   * and Block settle in exactly one serial order and a closed listing can
+   * never gain a new pending interaction.
+   */
+  async lockPostForInteraction(tx: DbTransaction, postId: string): Promise<Post | undefined> {
+    const [post] = await tx.select().from(posts).where(eq(posts.id, postId)).for('share');
+    return post;
+  }
+
+  /**
+   * Moves every still-PENDING Contact Request and Adoption Application
+   * targeting the Post to the established terminal `REJECTED` state, without
+   * deleting rows. Must run inside the lifecycle transaction so the status
+   * change and the terminations commit atomically.
+   */
+  private async terminatePendingInteractions(tx: DbTransaction, postId: string): Promise<void> {
+    await tx
+      .update(contactRequests)
+      .set({ status: 'REJECTED', respondedAt: sql`now()` })
+      .where(and(eq(contactRequests.postId, postId), eq(contactRequests.status, 'PENDING')));
+    await tx
+      .update(adoptionApplications)
+      .set({ status: 'REJECTED', respondedAt: sql`now()` })
+      .where(and(eq(adoptionApplications.targetPostId, postId), eq(adoptionApplications.status, 'PENDING')));
   }
 
   /**
@@ -482,7 +710,7 @@ export class PostsRepository {
     return withDbRetry(() =>
       this.db.transaction(async (tx) => {
         const lockedPost = await this.lockDiscussionPost(tx, postId);
-        if (!lockedPost || lockedPost.creatorId !== creatorId || lockedPost.status === 'REMOVED') return undefined;
+        if (!lockedPost || lockedPost.creatorId !== creatorId || !canOwnerRemove(lockedPost.status)) return undefined;
         const [post] = await tx.update(posts).set({ status: 'REMOVED' }).where(eq(posts.id, postId)).returning();
         return post;
       }),
@@ -1147,6 +1375,8 @@ export class PostsRepository {
    * Help Feed — RESCUE + LOST posts sorted by urgency ASC, then newest.
    * Index: idx_posts_help_feed (city_id, post_type, urgency ASC, created_at DESC)
    *   WHERE status='ACTIVE' AND post_type IN ('RESCUE','LOST')
+   * Optional `searchPattern` adds the shared normalized search filter without
+   * changing the ordering or the cursor shape.
    */
   async findHelpFeed(parameters: {
     governorate: string | null | undefined;
@@ -1155,15 +1385,17 @@ export class PostsRepository {
     radiusKm: number;
     limit: number;
     cursor: { urgency: NonNullable<Post['urgency']>; createdAt: string; id: string } | null;
+    searchPattern?: string | null;
     viewerId?: string | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor, viewerId } = parameters;
+    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor, searchPattern, viewerId } = parameters;
     const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
     const locationCondition = centerPointAsEwkt
       ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
       : this.buildLocationFilterCondition(governorate, cityId);
+    const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
 
     const cursorCondition = cursor
       ? or(
@@ -1186,6 +1418,7 @@ export class PostsRepository {
           inArray(posts.postType, ['RESCUE', 'LOST']),
           excludeIsolatedAccounts(viewerId, posts.creatorId),
           locationCondition,
+          searchCondition,
           cursorCondition,
         ),
       )
@@ -1199,6 +1432,8 @@ export class PostsRepository {
    * Adopt Feed — ADOPTION posts sorted by effective_score (HOT) or newest.
    * Index (HOT): idx_posts_adopt_score (city_id, effective_score DESC, created_at DESC)
    * Index (NEWEST): primary key (UUIDv7 id is time-ordered)
+   * Optional `searchPattern` adds the shared normalized search filter without
+   * changing the ordering or the cursor shape.
    */
   async findAdoptFeed(parameters: {
     governorate: string | null | undefined;
@@ -1208,15 +1443,17 @@ export class PostsRepository {
     sort: 'HOT' | 'NEWEST';
     limit: number;
     cursor: { score?: number; createdAt?: string; id: string } | null;
+    searchPattern?: string | null;
     viewerId?: string | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, sort, limit, cursor, viewerId } = parameters;
+    const { governorate, cityId, viewerLocation, radiusKm, sort, limit, cursor, searchPattern, viewerId } = parameters;
     const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
     const locationCondition = centerPointAsEwkt
       ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
       : this.buildLocationFilterCondition(governorate, cityId);
+    const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
     const cursorCondition = this.buildScoredFeedCursorCondition(sort, cursor);
     const orderByClauses =
       sort === 'HOT' ? [desc(posts.effectiveScore), desc(posts.createdAt), desc(posts.id)] : [desc(posts.id)];
@@ -1233,6 +1470,7 @@ export class PostsRepository {
           eq(posts.postType, 'ADOPTION'),
           excludeIsolatedAccounts(viewerId, posts.creatorId),
           locationCondition,
+          searchCondition,
           cursorCondition,
         ),
       )
@@ -1248,6 +1486,8 @@ export class PostsRepository {
    * Index (HOT, no category): idx_posts_market_score
    * Index (HOT, with category): idx_posts_market_category
    * Index (NEWEST): primary key (UUIDv7 id is time-ordered)
+   * Optional `searchPattern` adds the shared normalized search filter without
+   * changing the ordering, category filter or cursor shape.
    */
   async findMarketFeed(parameters: {
     governorate: string | null | undefined;
@@ -1258,15 +1498,18 @@ export class PostsRepository {
     category: Post['marketCategory'] | null | undefined;
     limit: number;
     cursor: { score?: number; createdAt?: string; id: string } | null;
+    searchPattern?: string | null;
     viewerId?: string | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, sort, category, limit, cursor, viewerId } = parameters;
+    const { governorate, cityId, viewerLocation, radiusKm, sort, category, limit, cursor, searchPattern, viewerId } =
+      parameters;
     const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
     const locationCondition = centerPointAsEwkt
       ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
       : this.buildLocationFilterCondition(governorate, cityId);
+    const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
     const cursorCondition = this.buildScoredFeedCursorCondition(sort, cursor);
     const orderByClauses =
       sort === 'HOT' ? [desc(posts.effectiveScore), desc(posts.createdAt), desc(posts.id)] : [desc(posts.id)];
@@ -1284,6 +1527,7 @@ export class PostsRepository {
           excludeIsolatedAccounts(viewerId, posts.creatorId),
           locationCondition,
           category ? eq(posts.marketCategory, category) : undefined,
+          searchCondition,
           cursorCondition,
         ),
       )
@@ -1296,6 +1540,8 @@ export class PostsRepository {
   /**
    * Home Feed — all post types combined, sorted by newest (UUIDv7 id DESC).
    * Cursor: plain id — no composite needed, single-column sort.
+   * Optional `searchPattern` adds the shared normalized search filter without
+   * changing the ordering or the cursor shape.
    */
   async findHomeFeed(parameters: {
     governorate: string | null | undefined;
@@ -1304,15 +1550,17 @@ export class PostsRepository {
     radiusKm: number;
     limit: number;
     cursor: { id: string } | null;
+    searchPattern?: string | null;
     viewerId?: string | null;
   }): Promise<FeedResult> {
-    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor, viewerId } = parameters;
+    const { governorate, cityId, viewerLocation, radiusKm, limit, cursor, searchPattern, viewerId } = parameters;
     const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
     const locationCondition = centerPointAsEwkt
       ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
       : this.buildLocationFilterCondition(governorate, cityId);
+    const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
 
     const rows = await this.db
       .select({ ...getTableColumns(posts), distanceKm: this.buildDistanceInKilometersExpression(centerPointAsEwkt) })
@@ -1322,6 +1570,7 @@ export class PostsRepository {
           eq(posts.status, 'ACTIVE'),
           excludeIsolatedAccounts(viewerId, posts.creatorId),
           locationCondition,
+          searchCondition,
           cursor ? lt(posts.id, cursor.id) : undefined,
         ),
       )

@@ -4,6 +4,7 @@ import { ContactsRepository } from './contacts.repository';
 import { PostsRepository } from '../posts/posts.repository';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { buildNotificationContent } from '../notifications/notification-templates';
 import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../common/errors/app.errors';
 import { assertUuid } from '../common/utils/validate-uuid';
 import { clampFirst } from '../common/utils/pagination.util';
@@ -83,17 +84,33 @@ export class ContactsService {
       throw new ConflictError('You have already sent a contact request for this post');
     }
 
-    const contactRequest = await this.db.transaction(async (tx) => {
+    const outcome = await this.db.transaction(async (tx) => {
       // Pair lock before the insert: a Block committing first makes this fail
       // neutrally, and a Block committing second rejects the pending row.
       if (await this.isolationPolicy.lockPairAndRecheck(tx, requesterId, post.creatorId)) {
-        return null;
+        return { kind: 'unavailable' as const };
       }
-      return this.contactsRepository.create({ postId, requesterId, message: message.trim() }, tx);
+      // Re-read under a share lock so an owner closure committing after the
+      // preflight above cannot leave a PENDING request on a closed listing.
+      const lockedPost = await this.postsRepository.lockPostForInteraction(tx, postId);
+      if (!lockedPost || lockedPost.status === 'REMOVED') {
+        return { kind: 'unavailable' as const };
+      }
+      if (lockedPost.status !== 'ACTIVE') {
+        return { kind: 'inactive' as const };
+      }
+      return {
+        kind: 'created' as const,
+        request: await this.contactsRepository.create({ postId, requesterId, message: message.trim() }, tx),
+      };
     });
-    if (!contactRequest) {
+    if (outcome.kind === 'unavailable') {
       throw new NotFoundError('Post', postId);
     }
+    if (outcome.kind === 'inactive') {
+      throw new ValidationError('Cannot request contact on an inactive post');
+    }
+    const contactRequest = outcome.request;
 
     // Fire notification to post owner (non-blocking)
     const requester = await this.usersService.findById(requesterId);
@@ -101,8 +118,10 @@ export class ContactsService {
       {
         recipientId: post.creatorId,
         type: 'CONTACT_REQUEST_RECEIVED',
-        title: 'New contact request',
-        body: `${requester?.fullName ?? 'Someone'} wants to contact you about "${post.title}"`,
+        ...buildNotificationContent('CONTACT_REQUEST_RECEIVED', {
+          actorName: requester?.fullName ?? 'Someone',
+          postTitle: post.title,
+        }),
         relatedPostId: postId,
         relatedContactRequestId: contactRequest.id,
       },
@@ -175,8 +194,7 @@ export class ContactsService {
       {
         recipientId: request.requesterId,
         type: 'CONTACT_REQUEST_APPROVED',
-        title: 'Contact request approved',
-        body: `You can now contact the owner via WhatsApp about "${post.title}"`,
+        ...buildNotificationContent('CONTACT_REQUEST_APPROVED', { postTitle: post.title }),
         relatedPostId: request.postId,
         relatedContactRequestId: requestId,
       },
@@ -217,8 +235,7 @@ export class ContactsService {
       {
         recipientId: request.requesterId,
         type: 'CONTACT_REQUEST_REJECTED',
-        title: 'Contact request update',
-        body: `Your contact request about "${post.title}" was not approved`,
+        ...buildNotificationContent('CONTACT_REQUEST_REJECTED', { postTitle: post.title }),
         relatedPostId: request.postId,
         relatedContactRequestId: requestId,
       },

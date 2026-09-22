@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import AdminJS, { ComponentLoader } from 'adminjs';
-import { Database, Resource } from '@adminjs/sql';
+import { Database } from '@adminjs/sql';
 
 import { DashboardStatsCache } from './dashboard/dashboard-cache.js';
 import { buildDashboardHandler } from './dashboard/dashboard-handler.js';
@@ -25,14 +25,13 @@ import { buildPostsResource } from './resources/posts.resource.js';
 import { buildProductPostsResource } from './resources/product-posts.resource.js';
 import { buildRescuePostsResource } from './resources/rescue-posts.resource.js';
 import { attachCacheInvalidation } from './resources/resource-helpers.js';
-import { buildAdminSqlDatabase } from './sql-adapter.js';
-import { buildSavedSearchesResource } from './resources/saved-searches.resource.js';
+import { QueueAwareSqlResource, buildAdminSqlDatabase } from './sql-adapter.js';
 import { buildUsersResource } from './resources/users.resource.js';
 import { buildVetClinicsResource } from './resources/vet-clinics.resource.js';
 import { buildVetClinicLocationAuditsResource } from './resources/vet-clinic-location-audits.resource.js';
 import { buildCommentsResource } from './resources/comments.resource.js';
 
-AdminJS.registerAdapter({ Database, Resource });
+AdminJS.registerAdapter({ Database, Resource: QueueAwareSqlResource });
 
 export const ADMIN_RESOURCE_TABLES = Object.freeze([
   'users',
@@ -51,7 +50,6 @@ export const ADMIN_RESOURCE_TABLES = Object.freeze([
   'comments',
   'contact_requests',
   'adoption_applications',
-  'saved_searches',
   'notifications',
   'cities',
   'vet_clinics',
@@ -90,6 +88,10 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       'MappedLocationShow',
       path.join(currentDirectory, 'components', 'mapped-location-show-component.jsx'),
     ),
+    PostReviewWorkspace: componentLoader.add(
+      'PostReviewWorkspace',
+      path.join(currentDirectory, 'components', 'post-review-workspace-component.jsx'),
+    ),
   };
 
   const { db, sqlAdapterPool } = await buildAdminSqlDatabase(
@@ -121,7 +123,6 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     buildCommentsResource(db, pool, components, cache),
     buildContactRequestsResource(db, components),
     buildAdoptionApplicationsResource(db, components),
-    buildSavedSearchesResource(db, components),
     buildNotificationsResource(db, components),
     buildCitiesResource(db, components),
     buildVetClinicsResource(db, pool, components, cache),

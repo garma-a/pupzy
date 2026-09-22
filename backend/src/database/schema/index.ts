@@ -50,9 +50,8 @@ export * from './post-reports.schema';
 export * from './account-reports.schema';
 export * from './notifications.schema';
 export * from './discussion-notification-events.schema';
-
-// Alert system
-export * from './saved-searches.schema';
+export * from './device-registrations.schema';
+export * from './push-deliveries.schema';
 
 // Vet clinics — proximity lookup for RESCUE/LOST/ADOPTION post detail screens
 export * from './vet-clinics.schema';

@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationsRepository } from './notifications.repository';
+import { localizeNotification } from './notification-templates';
+import { isPushDeliveryEnabled } from './push-delivery.constants';
 import { NotFoundError, ValidationError } from '../common/errors/app.errors';
 import { assertUuid } from '../common/utils/validate-uuid';
 import { clampFirst } from '../common/utils/pagination.util';
@@ -31,24 +33,39 @@ export class NotificationsService {
    * Persistence rechecks mutual isolation between actor and recipient under
    * the canonical account-pair lock, so an active Block — including one that
    * commits concurrently — suppresses the notification before it is stored.
+   *
+   * ## Durable push intent
+   * Push-enabled types persist their delivery intents in the same transaction
+   * as the notification; the push worker sends only after that commit and
+   * rechecks preference, account state and isolation again.
    */
   fireNotification(data: NewNotification, actorId?: string): void {
     // Don't notify yourself
     if (actorId && data.recipientId === actorId) return;
 
-    this.notificationsRepository.createIfNotIsolated(data, actorId).catch((err) => {
-      this.logger.error(
-        `Failed to create notification type=${data.type} for recipient=${data.recipientId}`,
-        err instanceof Error ? err.stack : String(err),
-      );
-    });
+    this.notificationsRepository
+      .createIfNotIsolated(data, actorId, { enqueuePush: isPushDeliveryEnabled(data.type) })
+      .catch((err) => {
+        this.logger.error(
+          `Failed to create notification type=${data.type} for recipient=${data.recipientId}`,
+          err instanceof Error ? err.stack : String(err),
+        );
+      });
   }
 
   /**
    * Returns paginated notifications for the current user, newest first.
    * Also includes the total unread count for the badge indicator.
+   *
+   * Each node is rendered in the recipient's explicitly synchronized language.
+   * Legacy rows without Arabic content keep their stored English text.
    */
-  async getMyNotifications(userId: string, first: number | null | undefined, afterCursor: string | null | undefined) {
+  async getMyNotifications(
+    userId: string,
+    first: number | null | undefined,
+    afterCursor: string | null | undefined,
+    languagePreference?: string | null,
+  ) {
     const limit = clampFirst(first);
     const cursor = this.decodeCursor(afterCursor);
 
@@ -63,7 +80,7 @@ export class NotificationsService {
 
     return {
       edges: result.rows.map((notification) => ({
-        node: notification,
+        node: localizeNotification(notification, languagePreference),
         cursor: this.encodeCursor(notification),
       })),
       pageInfo: {
@@ -83,16 +100,17 @@ export class NotificationsService {
 
   /**
    * Marks a single notification as read.
+   * Renders the returned node in the recipient's synchronized language.
    * @throws {NotFoundError} if the notification doesn't exist or doesn't belong to the user.
    */
-  async markRead(notificationId: string, userId: string): Promise<Notification> {
+  async markRead(notificationId: string, userId: string, languagePreference?: string | null): Promise<Notification> {
     assertUuid(notificationId, 'notificationId');
 
     const updated = await this.notificationsRepository.markRead(notificationId, userId);
     if (!updated) {
       throw new NotFoundError('Notification', notificationId);
     }
-    return updated;
+    return localizeNotification(updated, languagePreference);
   }
 
   /**

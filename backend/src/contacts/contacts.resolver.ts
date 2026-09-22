@@ -2,6 +2,7 @@ import { Resolver, Query, Mutation, Args, Context, ResolveField, Parent } from '
 import { Throttle } from '@nestjs/throttler';
 import { ContactsService } from './contacts.service';
 import { validateRequestContactInput } from './dto/request-contact.input';
+import { RequiresTermsAcceptance } from '../terms/requires-terms-acceptance.decorator';
 import type { GqlContext } from '../common/types/gql-context.type';
 import type { ContactRequest } from '../database/schema';
 import type { User } from '../database/schema';
@@ -63,6 +64,7 @@ export class ContactsResolver {
   // ─── Mutations ──────────────────────────────────────────────────────
 
   /** Anti-spam: 20 contact requests per hour per IP (see AUD-15 re: true per-user limiting). */
+  @RequiresTermsAcceptance()
   @Throttle({ default: { limit: 20, ttl: 3_600_000 } })
   @Mutation('requestContact')
   async requestContact(

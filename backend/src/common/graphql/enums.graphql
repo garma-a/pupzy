@@ -33,6 +33,8 @@ enum PostStatus {
   SOLD
   "Admin or creator removed the post."
   REMOVED
+  "Listing expired through inactivity. Readable and renewable, but not discoverable."
+  EXPIRED
 }
 
 "AI / admin moderation pipeline state."
@@ -151,6 +153,8 @@ enum NotificationType {
   ADOPTION_APPLICATION_APPROVED
   ADOPTION_APPLICATION_REJECTED
   POST_REMOVED_BY_ADMIN
+  POST_RESOLVED_BY_ADMIN
+  POST_REOPENED_BY_ADMIN
   POST_INACTIVITY_NUDGE
   SYSTEM_ANNOUNCEMENT
   NEW_COMMENT
