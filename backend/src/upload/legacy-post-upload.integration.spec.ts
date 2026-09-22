@@ -106,8 +106,11 @@ class ControllableR2Adapter {
   public objects = new Map<string, Buffer>();
   public shouldFailCopy = false;
   public shouldFailHead = false;
+  public shouldFailDelete = false;
   /** Fires after copied bytes land, so a racing cleanup sees the new object. */
   public onCopyObject?: (key: string) => void | Promise<void>;
+  /** Fires before a delete lands, so a test can observe persisted state first. */
+  public onDeleteObject?: (key: string) => void | Promise<void>;
 
   putObject(key: string, content: Buffer = Buffer.from('test-image-content')): void {
     this.objects.set(key, content);
@@ -121,7 +124,9 @@ class ControllableR2Adapter {
     this.objects.clear();
     this.shouldFailCopy = false;
     this.shouldFailHead = false;
+    this.shouldFailDelete = false;
     this.onCopyObject = undefined;
+    this.onDeleteObject = undefined;
   }
 
   async send(command: S3CommandLike): Promise<Record<string, unknown>> {
@@ -154,6 +159,14 @@ class ControllableR2Adapter {
     }
 
     if (cmdName === 'DeleteObjectCommand' || command instanceof DeleteObjectCommand) {
+      if (this.onDeleteObject) {
+        await this.onDeleteObject(key);
+      }
+      if (this.shouldFailDelete) {
+        const err = new Error(`Simulated R2 delete failure for ${key}`) as R2Error;
+        err.name = 'StorageServiceException';
+        return Promise.reject(err);
+      }
       this.objects.delete(key);
       return Promise.resolve({});
     }
@@ -1364,6 +1377,198 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       expect(obligations).toHaveLength(0);
     });
 
+    it('skips the real no-key in-flight post-media candidate while its finalization obligation is fresh', async () => {
+      const { mediaId, stagingKey } = await stageMedia(testUser1, 'image/jpeg');
+
+      let finalKey: string | undefined;
+      let cleanupRan = false;
+
+      r2Adapter.onCopyObject = async (key) => {
+        if (cleanupRan) return;
+        cleanupRan = true;
+        finalKey = key;
+
+        // The real production in-flight state: `claimMedia` wrote only
+        // status/postId, so there is no `finalStorageKey` for the
+        // reclaim-candidate guard to coordinate on. The ticket has just
+        // passed expiry while the copy is mid-flight.
+        await dbHelper.db
+          .update(stagedUploads)
+          .set({ expiresAt: new Date(Date.now() - 1000), updatedAt: new Date() })
+          .where(eq(stagedUploads.id, mediaId));
+
+        const [beforeCleanup] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+        expect(beforeCleanup.status).toBe('CLAIMED');
+        expect(beforeCleanup.finalStorageKey).toBeNull();
+
+        await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+
+        // The fresh obligation keeps the ticket and both objects live; the
+        // candidate stays untouched and re-selectable.
+        const [candidate] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+        expect(candidate.status).toBe('CLAIMED');
+        expect(candidate.finalStorageKey).toBeNull();
+        expect(candidate.stagingKey).toBe(stagingKey);
+        expect(r2Adapter.hasObject(stagingKey)).toBe(true);
+        expect(r2Adapter.hasObject(key)).toBe(true);
+
+        const queued = await dbHelper.db.select().from(mediaDeletionWork).where(eq(mediaDeletionWork.storageKey, key));
+        expect(queued).toHaveLength(0);
+      };
+
+      const res = await publishRescue(mediaId, 'Real in-flight no-key cleanup post');
+      r2Adapter.onCopyObject = undefined;
+
+      expect(cleanupRan).toBe(true);
+      expect(res.errors).toBeUndefined();
+
+      const post = res.data!.createRescuePost!;
+      const key = finalKey!;
+
+      // The finalization won the race and the post committed against live bytes.
+      expect(r2Adapter.hasObject(key)).toBe(true);
+      expect(r2Adapter.hasObject(stagingKey)).toBe(false);
+
+      const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(ticket.status).toBe('FINALIZED');
+      expect(ticket.finalStorageKey).toBe(key);
+
+      const mediaRows = await dbHelper.db.select().from(postMedia).where(eq(postMedia.postId, post.id));
+      expect(mediaRows).toHaveLength(1);
+      expect(mediaRows[0].cloudflareStorageKey).toBe(key);
+
+      const obligations = await dbHelper.db
+        .select()
+        .from(mediaFinalizations)
+        .where(eq(mediaFinalizations.mediaId, mediaId));
+      expect(obligations).toHaveLength(0);
+    });
+
+    it('re-selects and terminalizes the no-key candidate once its finalization obligation settles', async () => {
+      const { mediaId, stagingKey } = await stageMedia(testUser1, 'image/jpeg');
+      const finalKey = `posts/${generateUuidV7()}/${mediaId}.jpg`;
+
+      await dbHelper.db
+        .update(stagedUploads)
+        .set({
+          status: 'CLAIMED',
+          finalStorageKey: null,
+          postId: generateUuidV7(),
+          expiresAt: new Date(Date.now() - 1000),
+          updatedAt: new Date(),
+        })
+        .where(eq(stagedUploads.id, mediaId));
+      r2Adapter.putObject(finalKey, Buffer.alloc(64, 0x44));
+
+      await dbHelper.db.insert(mediaFinalizations).values({
+        userId: testUser1.id,
+        mediaId,
+        stagingKey,
+        finalKey,
+        status: 'IN_FLIGHT',
+      });
+
+      const cleaned = await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+      expect(cleaned).toBeGreaterThanOrEqual(1);
+
+      // Fresh obligation: the candidate is skipped untouched.
+      let [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(ticket.status).toBe('CLAIMED');
+      expect(ticket.finalStorageKey).toBeNull();
+      expect(ticket.stagingKey).toBe(stagingKey);
+      expect(r2Adapter.hasObject(stagingKey)).toBe(true);
+      expect(r2Adapter.hasObject(finalKey)).toBe(true);
+
+      const queuedBefore = await dbHelper.db
+        .select()
+        .from(mediaDeletionWork)
+        .where(eq(mediaDeletionWork.storageKey, finalKey));
+      expect(queuedBefore).toHaveLength(0);
+
+      // Once the obligation settles (its finalization resolved without
+      // consuming the ticket), the candidate becomes reclaimable again.
+      await dbHelper.db.delete(mediaFinalizations).where(eq(mediaFinalizations.mediaId, mediaId));
+
+      await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+
+      [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(ticket.status).toBe('EXPIRED');
+      expect(ticket.stagingKey).toBe(`cleaned/${stagingKey}`);
+      expect(r2Adapter.hasObject(stagingKey)).toBe(false);
+    });
+
+    it('latches a discarded no-key post-media key so the stale-FAILED scan can reclaim it', async () => {
+      const { mediaId, stagingKey } = await stageMedia(testUser1, 'image/jpeg');
+
+      let finalKey: string | undefined;
+      let cleanupRan = false;
+      let latchedAtDelete: { status: string; finalStorageKey: string | null } | undefined;
+
+      r2Adapter.onDeleteObject = async (key) => {
+        if (key !== finalKey) return;
+        const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+        latchedAtDelete = { status: ticket.status, finalStorageKey: ticket.finalStorageKey };
+      };
+
+      r2Adapter.onCopyObject = async (key) => {
+        if (cleanupRan) return;
+        cleanupRan = true;
+        finalKey = key;
+
+        // The real in-flight state: CLAIMED with no finalStorageKey.
+        await dbHelper.db
+          .update(stagedUploads)
+          .set({ expiresAt: new Date(Date.now() - 1000), updatedAt: new Date() })
+          .where(eq(stagedUploads.id, mediaId));
+
+        // The copy stalls past its lease, so cleanup terminalizes the
+        // candidate before the finalization records its transition.
+        await dbHelper.db
+          .update(mediaFinalizations)
+          .set({ updatedAt: new Date(Date.now() - MEDIA_FINALIZATION_LEASE_MS - 60_000) })
+          .where(eq(mediaFinalizations.mediaId, mediaId));
+        await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+
+        // Keep the copied object alive so the crash window is observable:
+        // the discard delete fails and the key must be durably queued.
+        r2Adapter.shouldFailDelete = true;
+      };
+
+      const res = await publishRescue(mediaId, 'Lost no-key post media finalization');
+      r2Adapter.onCopyObject = undefined;
+      r2Adapter.onDeleteObject = undefined;
+      r2Adapter.shouldFailDelete = false;
+
+      expect(cleanupRan).toBe(true);
+      expect(res.errors).toBeDefined();
+      const appError = res.errors![0].originalError as
+        { code?: string; extensions?: { retryable?: boolean } } | undefined;
+      expect(appError?.code).toBe('POST_MEDIA_PROCESSING_FAILED');
+      expect(appError?.extensions?.retryable).toBe(true);
+
+      // The latch was durable before any storage I/O.
+      expect(latchedAtDelete).toEqual({ status: 'FAILED', finalStorageKey: finalKey });
+
+      const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(ticket.status).toBe('FAILED');
+      expect(ticket.finalStorageKey).toBe(finalKey);
+      expect(ticket.stagingKey).toBe(stagingKey);
+
+      // The immediate delete failed, so the object is durably queued.
+      const key = finalKey!;
+      expect(r2Adapter.hasObject(key)).toBe(true);
+      const queued = await dbHelper.db.select().from(mediaDeletionWork).where(eq(mediaDeletionWork.storageKey, key));
+      expect(queued.length).toBeGreaterThanOrEqual(1);
+
+      // The stale-FAILED scan re-selects the latched ticket and reclaims the
+      // object, proving a crash before the delete/queue cannot orphan it.
+      await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+
+      expect(r2Adapter.hasObject(key)).toBe(false);
+      const [reclaimed] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(reclaimed.stagingKey).toBe(`cleaned/${stagingKey}`);
+    });
+
     it('discards a copied post image and fails retryably when cleanup reclaimed the ticket first', async () => {
       const { mediaId, stagingKey } = await stageMedia(testUser1, 'image/jpeg');
 
@@ -1404,7 +1609,10 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       expect(r2Adapter.hasObject(stagingKey)).toBe(false);
 
       const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
-      expect(ticket.status).toBe('EXPIRED');
+      // The lost transition latched the discarded key onto the terminal
+      // ticket so the stale-FAILED scan can reclaim it after a crash.
+      expect(ticket.status).toBe('FAILED');
+      expect(ticket.finalStorageKey).toBe(key);
 
       expect(await dbHelper.db.select().from(posts)).toHaveLength(0);
       expect(await dbHelper.db.select().from(postMedia)).toHaveLength(0);

@@ -384,9 +384,11 @@ export class UploadService {
    *
    * The final `CLAIMED → FINALIZED` transition is conditional: if an
    * expired-staging cleanup or recovery pass terminalized the ticket while the
-   * copy was in flight, the copied object is discarded/queued, the durable
-   * finalization obligation is settled and a stable retryable error is thrown
-   * so no post can reference reclaimed bytes.
+   * copy was in flight, the copied key is latched onto that terminal ticket,
+   * the object is discarded/queued, the durable finalization obligation is
+   * settled and a stable retryable error is thrown so no post can reference
+   * reclaimed bytes. The latch keeps a crash between the lost transition and
+   * the discard from orphaning the copied object.
    */
   async finalizeMedia(
     mediaId: string,
@@ -537,6 +539,12 @@ export class UploadService {
       // obligation and fail retryably so the caller can request a fresh
       // ticket instead of committing a post against reclaimed bytes.
       this.logger.warn(`Post media finalization for ${mediaId} lost its CLAIMED transition; discarding ${finalKey}`);
+      // Latch the discarded key before settling the obligation or touching
+      // storage: a crash between the lost transition and the delete/queue
+      // would otherwise leave the copied object with no ticket reference
+      // (cleanup excludes `EXPIRED` and reconciliation has no `POST_MEDIA`
+      // pass). The stale-`FAILED` cleanup scan reclaims the latched key.
+      await this.latchDiscardedFinalKey(mediaId, stagingKey, finalKey);
       const accountBlocked = await this.settleFinalizationObligation(obligationId, finalKey, userId);
       if (!accountBlocked) {
         try {
@@ -559,6 +567,42 @@ export class UploadService {
       publicUrl: `${this.publicUrl}/${finalKey}`,
       cloudflareStorageKey: finalKey,
     };
+  }
+
+  /**
+   * Durably latches a discarded permanent key onto its terminal ticket.
+   *
+   * A lost `CLAIMED → FINALIZED` transition means an expired-staging cleanup
+   * or recovery pass terminalized the ticket while the copy was in flight; the
+   * real in-flight state carries no `finalStorageKey`. If the process crashed
+   * before the object was deleted or queued, nothing would reference it:
+   * cleanup excludes `EXPIRED` and reconciliation has no `POST_MEDIA` pass.
+   * Writing the key onto the `FAILED` ticket lets the stale-`FAILED` cleanup
+   * scan reclaim the object later. The conditional update leaves a ticket that
+   * another flow already finalized untouched, and re-points `stagingKey` at
+   * the original staging object (the terminalizing pass may have marked it
+   * `cleaned/`) so the scan can select the row; the scan re-marks it cleaned
+   * once the object is reclaimed. Failures are logged, never fatal: the caller
+   * still deletes or queues the object.
+   */
+  private async latchDiscardedFinalKey(mediaId: string, stagingKey: string, finalKey: string): Promise<void> {
+    try {
+      await this.db
+        .update(stagedUploads)
+        .set({
+          status: 'FAILED',
+          finalStorageKey: finalKey,
+          stagingKey,
+          errorMessage: 'Finalization lost its claim; permanent object discarded',
+          updatedAt: new Date(),
+        })
+        .where(and(eq(stagedUploads.id, mediaId), inArray(stagedUploads.status, ['EXPIRED', 'FAILED'])))
+        .returning({ id: stagedUploads.id });
+    } catch (err) {
+      this.logger.error(
+        `Failed to latch discarded permanent key ${finalKey} onto ticket ${mediaId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 
   /**

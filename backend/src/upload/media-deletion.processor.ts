@@ -215,10 +215,13 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
   /**
    * Hourly cleanup of expired unconsumed staged uploads.
    *
-   * The staging object is always safe to remove for a selected candidate: an
-   * expired ticket can no longer be claimed, and an in-flight finalization
+   * The staging object is safe to remove for a selected candidate: an expired
+   * ticket can no longer be claimed, and an in-flight finalization
    * republishes bytes it already downloaded, so a leftover staging object can
-   * never be the only copy of a consumed object. Permanent objects are only
+   * never be the only copy of a consumed object. The one exception is a
+   * no-key `POST_MEDIA` candidate with a fresh finalization obligation: its
+   * server-side copy may still be reading that staging object, so the whole
+   * candidate is skipped before any storage I/O. Permanent objects are only
    * reclaimed through `reclaimCandidate`, which re-checks the ticket's current
    * state and the committed reference inside one transaction before any
    * storage I/O. A ticket that was finalized/activated between the candidate
@@ -260,12 +263,26 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
   /**
    * Processes one candidate selected by `cleanupExpiredStaging`.
    *
-   * The staging object is removed best-effort first (durable fallback on
-   * provider failure). A candidate with a permanent object is then coordinated
-   * through `reclaimCandidate`, which re-checks the ticket's current state
-   * before any terminal transition or storage deletion.
+   * A no-key `POST_MEDIA` candidate guarded by a fresh finalization obligation
+   * is skipped before any storage I/O (see `hasFreshFinalizationObligation`).
+   * For every other candidate the staging object is removed best-effort first
+   * (durable fallback on provider failure), and a candidate with a permanent
+   * object is coordinated through `reclaimCandidate`, which re-checks the
+   * ticket's current state before any terminal transition or storage deletion.
    */
   private async cleanupExpiredCandidate(row: StagedUpload): Promise<void> {
+    // Production never sets `finalStorageKey` while a `POST_MEDIA` ticket is
+    // still `CLAIMED`: `claimMedia` writes only status/postId and the key is
+    // recorded together with `FINALIZED`. The real in-flight race therefore
+    // has no key for `reclaimCandidate` to coordinate on, so consult the
+    // durable obligation here, before deleting the staging source the copy may
+    // still be reading. The ticket stays untouched and re-selectable, so a
+    // later pass reclaims it once the obligation settles or its lease lapses.
+    if (!row.finalStorageKey && row.purpose === 'POST_MEDIA' && (await this.hasFreshFinalizationObligation(row))) {
+      this.logger.warn(`Skipped expired staging cleanup for ${row.id}: a post media finalization is still in flight`);
+      return;
+    }
+
     try {
       await this.uploadService.deleteObject(row.stagingKey);
     } catch (err) {
@@ -319,6 +336,35 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
         `Skipped expired staging cleanup for ${row.id}: the ticket changed state before it was processed`,
       );
     }
+  }
+
+  /**
+   * True when a fresh `IN_FLIGHT` finalization obligation still guards this
+   * post-media ticket.
+   *
+   * The obligation is keyed by media ID and owner — the same identity the
+   * ticket carries — and freshness uses the lease account deletion trusts. A
+   * stale obligation (crash, paused process) no longer proves a live copy, so
+   * cleanup may terminalize the candidate; a finalization that then loses its
+   * transition latches its copied key onto the ticket for the stale-`FAILED`
+   * scan to reclaim.
+   */
+  private async hasFreshFinalizationObligation(row: StagedUpload): Promise<boolean> {
+    const freshObligationSince = new Date(Date.now() - MEDIA_FINALIZATION_LEASE_MS);
+    const [inFlight] = await this.db
+      .select({ id: mediaFinalizations.id })
+      .from(mediaFinalizations)
+      .where(
+        and(
+          eq(mediaFinalizations.mediaId, row.id),
+          eq(mediaFinalizations.userId, row.userId),
+          eq(mediaFinalizations.status, 'IN_FLIGHT'),
+          gte(mediaFinalizations.updatedAt, freshObligationSince),
+        ),
+      )
+      .limit(1);
+
+    return !!inFlight;
   }
 
   /** Marks a candidate's staging key as cleaned once the caller handled it. */
