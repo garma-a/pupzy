@@ -15,7 +15,7 @@ const REPO_ROOT = path.resolve(PACKAGE_ROOT, '..');
 const SOURCE_ROOT = path.join(PACKAGE_ROOT, 'src');
 const DOCKERFILE = path.join(PACKAGE_ROOT, 'Dockerfile');
 
-const RELATIVE_IMPORT = /(?:from\s*|import\s*\(\s*)['"](\.[^'"]+)['"]/g;
+const RELATIVE_IMPORT = /(?:from\s*|import\s*\(\s*|import\s+)['"](\.[^'"]+)['"]/g;
 
 function sourceFiles(dir) {
   const files = [];
