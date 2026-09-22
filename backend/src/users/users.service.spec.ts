@@ -6,6 +6,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { UsersRepository } from './users.repository';
 import { AccountDeletionRepository } from './account-deletion.repository';
 import { CitiesService } from '../cities/cities.service';
+import { UploadService } from '../upload/upload.service';
 import type { AccountDeletion, User } from '../database/schema';
 
 describe('UsersService', () => {
@@ -16,6 +17,7 @@ describe('UsersService', () => {
     findByEmail: jest.Mock;
     create: jest.Mock;
     update: jest.Mock;
+    linkFirebaseUserId: jest.Mock;
   };
   let mockCitiesService: { findById: jest.Mock; findNearest: jest.Mock };
   let mockCacheManager: { del: jest.Mock };
@@ -26,6 +28,7 @@ describe('UsersService', () => {
       findByEmail: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      linkFirebaseUserId: jest.fn(),
     };
     mockCitiesService = { findById: jest.fn(), findNearest: jest.fn() };
     mockCacheManager = { del: jest.fn().mockResolvedValue(undefined) };
@@ -47,6 +50,18 @@ describe('UsersService', () => {
           useValue: { get: jest.fn().mockReturnValue('MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=') },
         },
         { provide: CACHE_MANAGER, useValue: mockCacheManager },
+        {
+          provide: UploadService,
+          useValue: {
+            getProfilePhotoStorageKey: jest.fn(
+              (userId: string, mediaId: string) => `avatars/${userId}/${mediaId}.webp`,
+            ),
+            finalizeProfilePhoto: jest.fn(),
+            deleteObject: jest.fn().mockResolvedValue(undefined),
+            queueMediaDeletion: jest.fn().mockResolvedValue(undefined),
+            markMediaFailed: jest.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
 
@@ -83,6 +98,70 @@ describe('UsersService', () => {
       const res = await service.findOrCreate({ firebaseUserId: 'fb-fresh-user', email: 'fresh@example.com' });
       expect(res.id).toBe('new-user-id');
       expect(mockUsersRepo.create).toHaveBeenCalled();
+    });
+
+    it('synchronizes a provider picture while the account has never made an avatar choice', async () => {
+      const existing = {
+        id: 'link-user-id',
+        firebaseUserId: 'fb-old-uid',
+        email: 'link@example.com',
+        profilePictureUrl: 'https://provider.example/old.png',
+        profilePhotoChangedAt: null,
+        phoneNumber: null,
+      } as unknown as User;
+      mockUsersRepo.findByFirebaseUserId.mockResolvedValue(undefined);
+      mockUsersRepo.findByEmail.mockResolvedValue(existing);
+      mockUsersRepo.linkFirebaseUserId.mockResolvedValue({
+        ...existing,
+        firebaseUserId: 'fb-new-uid',
+        profilePictureUrl: 'https://provider.example/new.png',
+      });
+
+      const res = await service.findOrCreate({
+        firebaseUserId: 'fb-new-uid',
+        email: 'link@example.com',
+        photoUrl: 'https://provider.example/new.png',
+        emailVerified: true,
+      });
+
+      expect(mockUsersRepo.linkFirebaseUserId).toHaveBeenCalledWith(
+        'link-user-id',
+        'fb-new-uid',
+        'https://provider.example/new.png',
+      );
+      expect(mockUsersRepo.update).not.toHaveBeenCalled();
+      expect(res.profilePictureUrl).toBe('https://provider.example/new.png');
+    });
+
+    it('delegates the avatar-choice guard to the atomic link write after the user chose a photo', async () => {
+      const existing = {
+        id: 'owned-user-id',
+        firebaseUserId: 'fb-old-uid',
+        email: 'owned@example.com',
+        profilePictureUrl: null,
+        profilePhotoChangedAt: new Date(),
+        phoneNumber: null,
+      } as unknown as User;
+      mockUsersRepo.findByFirebaseUserId.mockResolvedValue(undefined);
+      mockUsersRepo.findByEmail.mockResolvedValue(existing);
+      // The repository evaluates `profile_photo_changed_at` in the same
+      // statement, so the stored decision survives even when a provider URL
+      // is supplied.
+      mockUsersRepo.linkFirebaseUserId.mockResolvedValue({ ...existing, firebaseUserId: 'fb-new-uid' });
+
+      const res = await service.findOrCreate({
+        firebaseUserId: 'fb-new-uid',
+        email: 'owned@example.com',
+        photoUrl: 'https://provider.example/restored.png',
+        emailVerified: true,
+      });
+
+      expect(mockUsersRepo.linkFirebaseUserId).toHaveBeenCalledWith(
+        'owned-user-id',
+        'fb-new-uid',
+        'https://provider.example/restored.png',
+      );
+      expect(res.profilePictureUrl).toBeNull();
     });
   });
 

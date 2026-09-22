@@ -315,6 +315,11 @@ export interface RequestMediaUploadInput {
   fileSizeBytes: number;
 }
 
+export interface RequestProfilePhotoUploadInput {
+  contentType: string;
+  fileSizeBytes: number;
+}
+
 export interface CompleteProfileInput {
   fullName: string;
   phoneNumber: string;
@@ -528,9 +533,14 @@ export interface IMutation {
   renewPost(postId: string): Post | Promise<Post>;
   recordView(postId: string): boolean | Promise<boolean>;
   requestMediaUploadUrl(input: RequestMediaUploadInput): MediaUploadResponse | Promise<MediaUploadResponse>;
+  requestProfilePhotoUploadUrl(
+    input: RequestProfilePhotoUploadInput,
+  ): ProfilePhotoUploadTicket | Promise<ProfilePhotoUploadTicket>;
   completeProfile(input: CompleteProfileInput): User | Promise<User>;
   updateProfile(input: UpdateProfileInput): User | Promise<User>;
   updateMyLocation(location: GeoLocationInput): User | Promise<User>;
+  setProfilePhoto(mediaId: string): User | Promise<User>;
+  removeProfilePhoto(): User | Promise<User>;
   updateMyLanguagePreference(languagePreference: Language): User | Promise<User>;
   updateMyNotificationPreferences(notificationsEnabled: boolean): User | Promise<User>;
   deleteMyAccount(input: DeleteMyAccountInput): AccountDeletionPayload | Promise<AccountDeletionPayload>;
@@ -788,6 +798,16 @@ export interface MediaUploadResponse {
   mediaId: string;
   uploadUrl: string;
   expiresAt: DateTime;
+}
+
+export interface ProfilePhotoUploadTicket {
+  mediaId: string;
+  uploadUrl: string;
+  expiresAt: DateTime;
+  maxSizeBytes: number;
+  maxWidth: number;
+  maxHeight: number;
+  allowedContentType: string;
 }
 
 export interface User {

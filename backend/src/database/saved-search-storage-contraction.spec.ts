@@ -85,6 +85,7 @@ describe('Saved-search storage contraction (ticket 19)', () => {
     // existed when it shipped; later unrelated migrations may follow it.
     const contractionIndex = entries.findIndex((entry) => entry.tag === CONTRACTION_TAG);
     expect(entries[contractionIndex - 1]?.tag).toBe('0052_add_normalized_feed_search');
+    expect(entries[contractionIndex].idx).toBe(contractionIndex);
     expect(entries.every((entry, index) => entry.idx === index)).toBe(true);
     expect(new Set(tags).size).toBe(tags.length);
   });

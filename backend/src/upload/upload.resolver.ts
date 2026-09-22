@@ -1,6 +1,7 @@
 import { Resolver, Mutation, Args, Context } from '@nestjs/graphql';
 import { UploadService } from './upload.service';
 import { validateRequestMediaUploadInput } from './dto/request-media-upload.input';
+import { validateRequestProfilePhotoUploadInput } from './dto/request-profile-photo-upload.input';
 import type { GqlContext } from '../common/types/gql-context.type';
 
 /**
@@ -31,5 +32,15 @@ export class UploadResolver {
   async requestMediaUploadUrl(@Args('input') input: unknown, @Context() context: GqlContext) {
     const validated = validateRequestMediaUploadInput(input);
     return this.uploadService.generatePresignedUrl(context.user!.id, validated.contentType, validated.fileSizeBytes);
+  }
+
+  /**
+   * Generates a presigned upload ticket for the authenticated user's profile
+   * photo under the dedicated `PROFILE_PHOTO` purpose.
+   */
+  @Mutation('requestProfilePhotoUploadUrl')
+  async requestProfilePhotoUploadUrl(@Args('input') input: unknown, @Context() context: GqlContext) {
+    const validated = validateRequestProfilePhotoUploadInput(input);
+    return this.uploadService.requestProfilePhotoUploadUrl(context.user!.id, validated);
   }
 }

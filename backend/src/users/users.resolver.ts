@@ -109,6 +109,24 @@ export class UsersResolver {
   }
 
   /**
+   * Sets or replaces the authenticated user's owned profile photo from a
+   * durable, single-use staged upload ticket.
+   */
+  @Mutation('setProfilePhoto')
+  async setProfilePhoto(@Args('mediaId') mediaId: string, @Context() context: GqlContext): Promise<User> {
+    return this.usersService.setProfilePhoto(context.user!.id, mediaId);
+  }
+
+  /**
+   * Explicitly removes the authenticated user's profile picture. Returns the
+   * user with no picture; provider synchronization never undoes this choice.
+   */
+  @Mutation('removeProfilePhoto')
+  async removeProfilePhoto(@Context() context: GqlContext): Promise<User> {
+    return this.usersService.removeProfilePhoto(context.user!.id);
+  }
+
+  /**
    * Explicitly synchronizes the notification language preference.
    * Requires only the chosen language — no unrelated profile resubmission.
    */

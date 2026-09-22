@@ -1044,6 +1044,53 @@ describe('Account Deletion Feature Integration', () => {
       expect(finalProgress.status).toBe('COMPLETED');
     });
 
+    it('captures owned avatar media and never treats a provider picture URL as an owned object', async () => {
+      const cityId = await seedCity();
+      const ownedKey = 'avatars/01916327-0000-7000-8000-0000000000aa/01916327-0000-7000-8000-0000000000bb.webp';
+      const [ownedAvatarUser] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-avatar-owned-1',
+          email: 'owned-avatar@example.com',
+          fullName: 'Owned Avatar',
+          homeCityId: cityId,
+          profilePictureUrl: `https://cdn.pupzy.net/${ownedKey}`,
+          profilePhotoStorageKey: ownedKey,
+          profilePhotoChangedAt: new Date(),
+        })
+        .returning();
+
+      const authTime = Math.floor(Date.now() / 1000) - 10;
+      const ownedDeletion = await accountDeletionService.initiateDeletion(ownedAvatarUser, authTime);
+
+      expect(ownedDeletion.status).toBe('COMPLETED');
+      expect(mockUploadService.deleteObjects).toHaveBeenCalledWith([ownedKey]);
+      expect(mockUploadService.deletePrefix).toHaveBeenCalledWith(`staging/${ownedAvatarUser.id}/`);
+
+      mockUploadService.deleteObjects.mockClear();
+      mockUploadService.deletePrefix.mockClear();
+
+      // A provider-only picture is never treated as owned media.
+      const [providerUser] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-avatar-provider-1',
+          email: 'provider-avatar@example.com',
+          fullName: 'Provider Avatar',
+          homeCityId: cityId,
+          profilePictureUrl: 'https://lh3.googleusercontent.com/provider-photo.png',
+          profilePhotoStorageKey: null,
+          profilePhotoChangedAt: null,
+        })
+        .returning();
+
+      const providerDeletion = await accountDeletionService.initiateDeletion(providerUser, authTime);
+
+      expect(providerDeletion.status).toBe('COMPLETED');
+      expect(mockUploadService.deleteObjects).not.toHaveBeenCalled();
+      expect(mockUploadService.deletePrefix).toHaveBeenCalledWith(`staging/${providerUser.id}/`);
+    });
+
     it('resumes from failure when storage or Firebase errors transiently', async () => {
       const cityId = await seedCity();
       const [user] = await dbHelper.db
