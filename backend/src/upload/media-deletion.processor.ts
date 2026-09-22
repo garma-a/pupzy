@@ -4,7 +4,14 @@ import { eq, or, and, lt, inArray, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import * as schema from '../database/schema';
-import { mediaDeletionWork, stagedUploads, commentMedia, users, type StagedUpload } from '../database/schema';
+import {
+  mediaDeletionWork,
+  stagedUploads,
+  commentMedia,
+  users,
+  type StagedUpload,
+  type StagedUploadStatus,
+} from '../database/schema';
 import { UploadService } from './upload.service';
 
 /**
@@ -204,7 +211,15 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
 
   /**
    * Hourly cleanup of expired unconsumed staged uploads.
-   * Deletes staging objects from R2 and marks status = 'EXPIRED'.
+   *
+   * The staging object is always safe to remove for a selected candidate: an
+   * expired ticket can no longer be claimed, and an in-flight finalization
+   * republishes bytes it already downloaded, so a leftover staging object can
+   * never be the only copy of a consumed object. Permanent objects are only
+   * reclaimed through `reclaimCandidate`, which re-checks the ticket's current
+   * state and the committed reference inside one transaction before any
+   * storage I/O. A ticket that was finalized/activated between the candidate
+   * scan and processing is therefore never deleted or marked `EXPIRED`.
    */
   @Cron(CronExpression.EVERY_HOUR)
   async cleanupExpiredStaging(options?: { olderThanMs?: number }): Promise<number> {
@@ -232,45 +247,81 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
     let cleanedCount = 0;
 
     for (const row of expiredRows) {
-      // Delete staging object from R2
-      try {
-        await this.uploadService.deleteObject(row.stagingKey);
-      } catch (err) {
-        this.logger.warn(`Failed to delete expired staging object ${row.stagingKey}: ${err}`);
-        await this.uploadService.queueMediaDeletion(row.stagingKey).catch(() => {});
-      }
-
-      // If it had a finalStorageKey that was never finalized in comment_media, queue it or delete it
-      if (row.finalStorageKey) {
-        const [exists] = await this.db
-          .select({ id: commentMedia.id })
-          .from(commentMedia)
-          .where(eq(commentMedia.storageKey, row.finalStorageKey))
-          .limit(1);
-
-        if (!exists) {
-          try {
-            await this.uploadService.deleteObject(row.finalStorageKey);
-          } catch {
-            await this.uploadService.queueMediaDeletion(row.finalStorageKey).catch(() => {});
-          }
-        }
-      }
-
-      const nextStatus = row.status === 'FAILED' ? 'FAILED' : 'EXPIRED';
-      await this.db
-        .update(stagedUploads)
-        .set({
-          status: nextStatus,
-          stagingKey: `cleaned/${row.stagingKey}`,
-          updatedAt: new Date(),
-        })
-        .where(eq(stagedUploads.id, row.id));
-
+      await this.cleanupExpiredCandidate(row);
       cleanedCount++;
     }
 
     return cleanedCount;
+  }
+
+  /**
+   * Processes one candidate selected by `cleanupExpiredStaging`.
+   *
+   * The staging object is removed best-effort first (durable fallback on
+   * provider failure). A candidate with a permanent object is then coordinated
+   * through `reclaimCandidate`, which re-checks the ticket's current state
+   * before any terminal transition or storage deletion.
+   */
+  private async cleanupExpiredCandidate(row: StagedUpload): Promise<void> {
+    try {
+      await this.uploadService.deleteObject(row.stagingKey);
+    } catch (err) {
+      this.logger.warn(`Failed to delete expired staging object ${row.stagingKey}: ${err}`);
+      await this.uploadService.queueMediaDeletion(row.stagingKey).catch(() => {});
+    }
+
+    if (row.finalStorageKey) {
+      const outcome = await this.reclaimCandidate(row, 'EXPIRED_CLEANUP');
+
+      if (outcome === 'SKIPPED') {
+        // The ticket was consumed (FINALIZED) between the candidate scan and
+        // this pass; the consuming flow owns the ticket and its object.
+        this.logger.warn(
+          `Skipped expired staging cleanup for ${row.id}: the ticket left the selected state before it was processed`,
+        );
+        return;
+      }
+
+      // RECLAIMED (terminal ticket, deletion work queued) or REFERENCED (live
+      // object kept); in both cases the leftover staging key is now handled.
+      await this.markStagingKeyCleaned(row);
+      return;
+    }
+
+    // No permanent object: terminalize conditionally so a ticket consumed
+    // between the scan and now is never marked EXPIRED.
+    const nextStatus: StagedUploadStatus = row.status === 'FAILED' ? 'FAILED' : 'EXPIRED';
+    const [terminalized] = await this.db
+      .update(stagedUploads)
+      .set({
+        status: nextStatus,
+        stagingKey: `cleaned/${row.stagingKey}`,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(stagedUploads.id, row.id),
+          eq(stagedUploads.userId, row.userId),
+          eq(stagedUploads.purpose, row.purpose),
+          inArray(stagedUploads.status, ['ISSUED', 'CLAIMED', 'FAILED']),
+        ),
+      )
+      .returning({ id: stagedUploads.id });
+
+    if (!terminalized) {
+      this.logger.warn(
+        `Skipped expired staging cleanup for ${row.id}: the ticket changed state before it was processed`,
+      );
+    }
+  }
+
+  /** Marks a candidate's staging key as cleaned once the caller handled it. */
+  private async markStagingKeyCleaned(row: StagedUpload): Promise<void> {
+    if (row.stagingKey.startsWith('cleaned/')) return;
+    await this.db
+      .update(stagedUploads)
+      .set({ stagingKey: `cleaned/${row.stagingKey}`, updatedAt: new Date() })
+      .where(and(eq(stagedUploads.id, row.id), eq(stagedUploads.stagingKey, row.stagingKey)));
   }
 
   /**
@@ -489,91 +540,147 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
   }
 
   /**
-   * Coordinates reclaiming one finalized-but-unreferenced avatar with profile
-   * activation. The owner row is locked with the same `FOR UPDATE` lock
-   * `activateProfilePhoto` takes, so the reference re-check, the terminal
-   * ticket transition and the durable deletion-work enqueue commit as one
-   * snapshot: an activation either commits before this transaction (the
-   * avatar reads as referenced and only its leftover staging is cleaned) or
+   * Reclaims one finalized-but-unreferenced avatar through the shared
+   * coordination (orphan-recovery mode also accepts FINALIZED tickets).
+   */
+  private async reclaimOrphanedProfilePhoto(orphan: StagedUpload): Promise<'RECLAIMED' | 'REFERENCED' | 'SKIPPED'> {
+    return this.reclaimCandidate(orphan, 'ORPHAN_RECOVERY');
+  }
+
+  /**
+   * Coordinates terminalizing one staged-upload candidate with every path
+   * that can still consume or activate its permanent object, then durably
+   * enqueues deletion work for that object and any leftover staging object.
+   *
+   * `PROFILE_PHOTO` candidates are coordinated with activation by locking the
+   * owner `users` row — the same `FOR UPDATE` lock `activateProfilePhoto`
+   * takes — and re-checking `profile_photo_storage_key`, so the reference
+   * re-check, the terminal ticket transition and the durable enqueue commit as
+   * one snapshot. An activation that committed first reads as referenced and
+   * only the staging object is cleaned; an activation that arrives afterwards
    * observes the terminal ticket and is rejected instead of installing bytes
    * that are already queued for deletion. When the owner row is already gone
    * (cascaded account deletion), both the permanent and any leftover staging
    * key are enqueued in the same transaction instead of being skipped.
    *
+   * Other purposes are coordinated through the ticket row. The conditional
+   * terminal update below makes the consuming request lose its
+   * `CLAIMED → FINALIZED` transition, and `finalizeCommentImages` discards its
+   * published object when it loses that transition instead of letting a
+   * comment commit against bytes that are queued for deletion. A committed
+   * comment image (`comment_media` row) is re-checked inside this transaction
+   * before any terminal transition, and an already-`FINALIZED` ticket makes
+   * the conditional update match nothing so its object is left alone.
+   *
    * Storage deletion happens only after the transaction commits; the queued
-   * `media_deletion_work` row remains the durable retry path.
+   * `media_deletion_work` rows remain the durable retry path.
    */
-  private async reclaimOrphanedProfilePhoto(orphan: StagedUpload): Promise<'RECLAIMED' | 'REFERENCED' | 'SKIPPED'> {
-    const finalStorageKey = orphan.finalStorageKey;
+  private async reclaimCandidate(
+    candidate: StagedUpload,
+    mode: 'EXPIRED_CLEANUP' | 'ORPHAN_RECOVERY',
+  ): Promise<'RECLAIMED' | 'REFERENCED' | 'SKIPPED'> {
+    const finalStorageKey = candidate.finalStorageKey;
     if (!finalStorageKey) return 'SKIPPED';
 
-    const outcome = await this.db.transaction(async (tx) => {
-      const enqueueAvatarDeletion = async (storageKey: string): Promise<void> => {
-        // Avatars have no CDN purge policy: one storage-only deletion row,
-        // deduplicated against any row already queued for the same key.
-        const [alreadyQueued] = await tx
-          .select({ id: mediaDeletionWork.id })
-          .from(mediaDeletionWork)
-          .where(and(eq(mediaDeletionWork.storageKey, storageKey), eq(mediaDeletionWork.cdnUrl, '')))
-          .limit(1);
+    // Orphan recovery also reclaims FINALIZED-but-never-activated avatars;
+    // expired cleanup must never touch a ticket that reached a consuming state.
+    const terminalizableStatuses: StagedUploadStatus[] =
+      mode === 'ORPHAN_RECOVERY' ? ['CLAIMED', 'FINALIZED', 'FAILED'] : ['ISSUED', 'CLAIMED', 'FAILED'];
 
-        if (!alreadyQueued) {
-          await tx.insert(mediaDeletionWork).values({
-            storageKey,
-            cdnUrl: '',
-            status: 'PENDING',
-            attempts: 0,
-          });
+    const outcome = await this.db.transaction(async (tx) => {
+      const enqueueDeletionWork = async (storageKey: string): Promise<void> => {
+        // Avatars and post media carry no CDN purge policy (a single
+        // storage-only row); comment media purges every configured domain.
+        // Deduplicate against any existing row for the same key and URL.
+        const purgeUrls = storageKey.startsWith('comments/')
+          ? this.uploadService.getPurgeCdnUrls
+            ? this.uploadService.getPurgeCdnUrls(storageKey)
+            : [this.uploadService.getPublicCdnUrl(storageKey)]
+          : [''];
+
+        for (const cdnUrl of purgeUrls) {
+          const [alreadyQueued] = await tx
+            .select({ id: mediaDeletionWork.id })
+            .from(mediaDeletionWork)
+            .where(and(eq(mediaDeletionWork.storageKey, storageKey), eq(mediaDeletionWork.cdnUrl, cdnUrl)))
+            .limit(1);
+
+          if (!alreadyQueued) {
+            await tx.insert(mediaDeletionWork).values({
+              storageKey,
+              cdnUrl,
+              status: 'PENDING',
+              attempts: 0,
+            });
+          }
         }
       };
 
-      const [owner] = await tx
-        .select({ id: users.id, profilePhotoStorageKey: users.profilePhotoStorageKey })
-        .from(users)
-        .where(eq(users.id, orphan.userId))
-        .for('update');
+      if (candidate.purpose === 'PROFILE_PHOTO') {
+        const [owner] = await tx
+          .select({ id: users.id, profilePhotoStorageKey: users.profilePhotoStorageKey })
+          .from(users)
+          .where(eq(users.id, candidate.userId))
+          .for('update');
 
-      if (!owner) {
-        // The owner row cascaded away with the account between the candidate
-        // scan and this reclaim (its ticket row cascaded with it). No row can
-        // reference the permanent object and the terminal ticket can no longer
-        // be re-selected, so queue both the permanent and any leftover staging
-        // object durably instead of leaking them.
-        await enqueueAvatarDeletion(finalStorageKey);
-        if (orphan.stagingKey && !orphan.stagingKey.startsWith('cleaned/')) {
-          await enqueueAvatarDeletion(orphan.stagingKey);
+        if (!owner) {
+          // The owner row cascaded away with the account between the candidate
+          // scan and this reclaim (its ticket row cascaded with it). No row can
+          // reference the permanent object and the ticket can no longer be
+          // re-selected, so queue both the permanent and any leftover staging
+          // object durably instead of leaking them.
+          await enqueueDeletionWork(finalStorageKey);
+          if (candidate.stagingKey && !candidate.stagingKey.startsWith('cleaned/')) {
+            await enqueueDeletionWork(candidate.stagingKey);
+          }
+          return 'RECLAIMED' as const;
         }
-        return 'RECLAIMED' as const;
+
+        if (owner.profilePhotoStorageKey === finalStorageKey) return 'REFERENCED' as const;
+      } else if (candidate.purpose === 'COMMENT_IMAGE') {
+        // A committed comment image is live even when its ticket looks stale.
+        // The reference check runs inside this transaction, and the conditional
+        // ticket update below keeps a still-in-flight finalization from
+        // committing after this transaction wins.
+        const [committed] = await tx
+          .select({ id: commentMedia.id })
+          .from(commentMedia)
+          .where(eq(commentMedia.storageKey, finalStorageKey))
+          .limit(1);
+
+        if (committed) return 'REFERENCED' as const;
       }
 
-      if (owner.profilePhotoStorageKey === finalStorageKey) return 'REFERENCED' as const;
+      const terminalStatus: StagedUploadStatus =
+        mode === 'ORPHAN_RECOVERY' || candidate.status !== 'FAILED' ? 'EXPIRED' : 'FAILED';
 
       const [reclaimed] = await tx
         .update(stagedUploads)
         .set({
-          status: 'EXPIRED',
-          errorMessage: 'Reclaimed orphaned profile photo',
+          status: terminalStatus,
+          errorMessage:
+            mode === 'ORPHAN_RECOVERY' ? 'Reclaimed orphaned profile photo' : 'Reclaimed expired staged upload',
           updatedAt: new Date(),
         })
         .where(
           and(
-            eq(stagedUploads.id, orphan.id),
-            eq(stagedUploads.userId, orphan.userId),
-            eq(stagedUploads.purpose, 'PROFILE_PHOTO'),
+            eq(stagedUploads.id, candidate.id),
+            eq(stagedUploads.userId, candidate.userId),
+            eq(stagedUploads.purpose, candidate.purpose),
             eq(stagedUploads.finalStorageKey, finalStorageKey),
-            inArray(stagedUploads.status, ['CLAIMED', 'FINALIZED', 'FAILED']),
+            inArray(stagedUploads.status, terminalizableStatuses),
           ),
         )
         .returning({ id: stagedUploads.id });
 
       if (!reclaimed) return 'SKIPPED' as const;
 
-      await enqueueAvatarDeletion(finalStorageKey);
+      await enqueueDeletionWork(finalStorageKey);
 
       // The ticket is now terminal, so it can no longer be re-selected to
       // clean leftover staging; queue it durably in the same transaction.
-      if (orphan.stagingKey && !orphan.stagingKey.startsWith('cleaned/')) {
-        await enqueueAvatarDeletion(orphan.stagingKey);
+      if (candidate.stagingKey && !candidate.stagingKey.startsWith('cleaned/')) {
+        await enqueueDeletionWork(candidate.stagingKey);
       }
 
       return 'RECLAIMED' as const;

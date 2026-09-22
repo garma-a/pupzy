@@ -1370,16 +1370,56 @@ export class UploadService {
       });
     }
 
-    // Mark all claimed tickets as FINALIZED in DB
+    // Mark all claimed tickets as FINALIZED in DB. The transition is
+    // conditional on the ticket still being CLAIMED: an expired-staging
+    // cleanup or recovery pass that terminalized the ticket after the claim
+    // wins the race, so the published objects must be discarded instead of
+    // letting a comment commit against bytes that are queued for deletion.
+    const supersededItems: FinalizedCommentMedia[] = [];
     for (const item of results) {
-      await this.db
+      const [finalized] = await this.db
         .update(stagedUploads)
         .set({
           status: 'FINALIZED',
           finalStorageKey: item.storageKey,
           updatedAt: new Date(),
         })
-        .where(and(eq(stagedUploads.id, item.id), eq(stagedUploads.status, 'CLAIMED')));
+        .where(and(eq(stagedUploads.id, item.id), eq(stagedUploads.status, 'CLAIMED')))
+        .returning({ id: stagedUploads.id });
+
+      if (!finalized) {
+        supersededItems.push(item);
+      }
+    }
+
+    if (supersededItems.length > 0) {
+      // The ticket left CLAIMED before finalization could be recorded (an
+      // expired-staging cleanup or recovery pass terminalized it) while the
+      // object was being published. No comment may commit now: discard every
+      // object published by this submission and fail retryably.
+      this.logger.warn(
+        `Comment media finalization was superseded for ticket(s) ${supersededItems
+          .map((item) => item.id)
+          .join(', ')}; discarding published objects`,
+      );
+
+      for (const item of results) {
+        try {
+          await this.deleteObject(item.storageKey);
+        } catch {
+          await this.queueMediaDeletion(item.storageKey);
+        }
+      }
+
+      await this.markMediaFailed(
+        results.map((item) => item.id),
+        'Finalization superseded by ticket cleanup',
+      );
+
+      throw new AppError('Failed to finalize media in storage', 'COMMENT_MEDIA_PROCESSING_FAILED', {
+        mediaPosition: supersededItems[0].displayOrder,
+        retryable: true,
+      });
     }
 
     return results;

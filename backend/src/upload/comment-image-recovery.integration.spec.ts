@@ -996,4 +996,153 @@ describe('Comment Image Publishing Interruption Recovery Integration (Ticket 04)
     expect(r2Adapter.hasObject(finalKeyA)).toBe(false);
     expect(r2Adapter.hasObject(finalKeyB)).toBe(false);
   });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Expired-staging cleanup coordination: a stale candidate can never delete a
+  // comment image that finalization is about to commit, nor one already committed.
+  // ───────────────────────────────────────────────────────────────────────────
+  describe('Expired-staging cleanup coordination with comment commit', () => {
+    it('never deletes bytes for a comment that finalization would have committed', async () => {
+      const ticket = await seedStagedImage(testUser.id, validWebp1);
+
+      let cleanedDuringPut = false;
+      let finalKey: string | undefined;
+      r2Adapter.onAfterPut = async (key: string) => {
+        if (cleanedDuringPut || !key.startsWith('comments/') || !key.endsWith(`/${ticket.id}.webp`)) return;
+        cleanedDuringPut = true;
+        finalKey = key;
+        // The ticket was claimed just before expiry: cleanup selects it as an
+        // expired CLAIMED candidate while finalization is still in flight.
+        await dbHelper.db
+          .update(stagedUploads)
+          .set({ expiresAt: new Date(Date.now() - 1000), updatedAt: new Date() })
+          .where(eq(stagedUploads.id, ticket.id));
+        await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+      };
+
+      await expect(
+        commentsService.createComment(testUser.id, {
+          clientRequestId: 'req-cleanup-race',
+          postId: testPost.id,
+          text: 'Racing commit',
+          mediaIds: [ticket.id],
+        }),
+      ).rejects.toMatchObject({
+        code: 'COMMENT_MEDIA_PROCESSING_FAILED',
+      });
+      r2Adapter.onAfterPut = undefined;
+
+      expect(cleanedDuringPut).toBe(true);
+      expect(finalKey).toBeDefined();
+
+      // No comment row ever commits against reclaimed bytes.
+      const committed = await dbHelper.db.select().from(commentMedia).where(eq(commentMedia.storageKey, finalKey!));
+      expect(committed).toHaveLength(0);
+      const commentsForPost = await dbHelper.db.select().from(comments).where(eq(comments.postId, testPost.id));
+      expect(commentsForPost).toHaveLength(0);
+      expect(r2Adapter.hasObject(finalKey!)).toBe(false);
+
+      const [after] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, ticket.id));
+      expect(['EXPIRED', 'FAILED']).toContain(after.status);
+
+      // The reclaimed object remains durably tracked for deletion and purge.
+      const queued = await dbHelper.db
+        .select()
+        .from(mediaDeletionWork)
+        .where(eq(mediaDeletionWork.storageKey, finalKey!));
+      expect(queued.length).toBeGreaterThanOrEqual(1);
+      expect(queued.some((row) => row.cdnUrl.includes(finalKey!))).toBe(true);
+    });
+
+    it('keeps an already committed comment image when a stale cleanup pass processes its ticket', async () => {
+      const mediaId = generateUuidV7();
+      const commentId = generateUuidV7();
+      const finalKey = `comments/${commentId}/${mediaId}.webp`;
+      const stagingKey = `staging/${testUser.id}/${mediaId}.webp`;
+      r2Adapter.putObject(finalKey, validWebp1);
+      r2Adapter.putObject(stagingKey, validWebp1);
+
+      const [comment] = await dbHelper.db
+        .insert(comments)
+        .values({
+          id: commentId,
+          postId: testPost.id,
+          authorId: testUser.id,
+          text: 'Committed comment',
+          status: 'ACTIVE',
+        })
+        .returning();
+      await dbHelper.db.insert(commentMedia).values({
+        id: generateUuidV7(),
+        commentId: comment.id,
+        storageKey: finalKey,
+        sha256: crypto.createHash('sha256').update(validWebp1).digest('hex'),
+        width: 320,
+        height: 240,
+        fileSizeBytes: validWebp1.length,
+        fileContentType: 'image/webp',
+        displayOrder: 0,
+      });
+
+      // The stale candidate state: the ticket still looks claimable-expired
+      // even though its image is already committed.
+      await dbHelper.db.insert(stagedUploads).values({
+        id: mediaId,
+        userId: testUser.id,
+        purpose: 'COMMENT_IMAGE',
+        stagingKey,
+        declaredContentType: 'image/webp',
+        declaredFileSizeBytes: validWebp1.length,
+        status: 'CLAIMED',
+        finalStorageKey: finalKey,
+        expiresAt: new Date(Date.now() - 1000),
+      });
+
+      await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+
+      // The committed bytes survive and are never queued for deletion; only
+      // the unreferenced staging object is cleaned.
+      expect(r2Adapter.hasObject(finalKey)).toBe(true);
+      expect(r2Adapter.hasObject(stagingKey)).toBe(false);
+      const [after] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(after.status).not.toBe('EXPIRED');
+      const queued = await dbHelper.db
+        .select()
+        .from(mediaDeletionWork)
+        .where(eq(mediaDeletionWork.storageKey, finalKey));
+      expect(queued).toHaveLength(0);
+    });
+
+    it('cleans an expired unconsumed comment upload and durably queues its unreferenced final object for purge', async () => {
+      const ticket = await seedStagedImage(testUser.id, validWebp1);
+      const finalKey = `comments/c-expired/${ticket.id}.webp`;
+      await dbHelper.db
+        .update(stagedUploads)
+        .set({
+          status: 'CLAIMED',
+          finalStorageKey: finalKey,
+          expiresAt: new Date(Date.now() - 1000),
+          updatedAt: new Date(),
+        })
+        .where(eq(stagedUploads.id, ticket.id));
+      r2Adapter.putObject(finalKey, validWebp1);
+
+      const cleaned = await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+      expect(cleaned).toBeGreaterThanOrEqual(1);
+
+      expect(r2Adapter.hasObject(ticket.stagingKey)).toBe(false);
+      expect(r2Adapter.hasObject(finalKey)).toBe(false);
+
+      const [after] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, ticket.id));
+      expect(after.status).toBe('EXPIRED');
+      expect(after.stagingKey).toBe(`cleaned/${ticket.stagingKey}`);
+
+      const queued = await dbHelper.db
+        .select()
+        .from(mediaDeletionWork)
+        .where(eq(mediaDeletionWork.storageKey, finalKey));
+      expect(queued.length).toBeGreaterThanOrEqual(1);
+      expect(queued.some((row) => row.cdnUrl.includes(finalKey))).toBe(true);
+    });
+  });
 });
