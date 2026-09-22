@@ -6,6 +6,7 @@ This document records reproducible evidence that the integrated backend and Admi
 - **Schema/compatibility baseline:** `9c568213afe325e17c308be0fd73a6aee9d66bbf` (merge-base with `origin/main`; the integration branch point before the 21 product tickets)
 - **Code candidate under test:** `3d011fa5b32cd94d403930dd802986f2106e6155` (`test(release): verify terms gate and community evidence media as one release (ticket 22)`). The parent commit `78e1052` contains all product tickets; `3d011fa` adds only one integration test file and changes no SDL, resolver, service or client.
 - **Companion document commit:** the commit containing this document adds only `docs/` files and `.gitignore` exceptions; it changes no product code and was not part of the tested candidate.
+- **Final integrated candidate:** `19d4aa4` (integration branch tip after merging the whole-diff standards-review fixes: admin-image COPY + guard, migration `0056` reminder index, outcome-allowlist single-sourcing). Re-verified by the standalone suite runs in §14.
 - **Evidence date:** 2026-09-22
 - **Environment:** Linux, Node.js `v24.4.0`, Docker `29.6.1` (rootless context `unix:///run/user/1000/docker.sock`), test database image `postgis/postgis:16-3.4-alpine`, Chromium/Chrome `150.0.7871.46`.
 - **Related documents:** `docs/integrated-mvp-frontend-handoff.md`, all per-feature contracts listed there, `docs/adr/0007-retire-saved-search-runtime-before-storage-contraction.md`, and the prior campaign's `docs/ugc-reporting-and-account-blocking-release-evidence.md`.
@@ -333,3 +334,29 @@ npm run verify:release
 # No-Flutter-change check
 git diff --name-only 9c56821...HEAD -- frontend/ | wc -l    # expected: 0
 ```
+
+---
+
+## 14. Final integrated re-verification after standards fixes (EXECUTED)
+
+A whole-diff standards review of the integrated branch found one blocking and two major cross-cutting issues; all were fixed and independently reviewed on `task/bwg-fix` and merged into the integration branch:
+
+| Fix | Commit | What changed |
+|---|---|---|
+| Admin production image could not boot | `8ca9092`, `07c32c5` | `admin-service/Dockerfile` now copies the runtime-imported `src/notifications/push-delivery.constants.ts`; a new guard test fails if any runtime relative import into `src/**` lacks a Dockerfile COPY line. |
+| No index served the RESCUE/LOST reminder query | `3fa5bb3` | Migration `0056_cover_reminder_post_types.sql` widens the `idx_posts_last_engaged` predicate to ADOPTION/PRODUCT/RESCUE/LOST; `src/posts/post-expiry-index.integration.spec.ts` proves index usage with EXPLAIN plans captured from the real processor query. |
+| Completed-outcome allowlist duplicated three ways | `7d54c5c` | `COMPLETED_POST_OUTCOMES` is the single frozen source; notification labels are compile-time exhaustive and the AdminJS queue constants derive from it. |
+
+**Final-tip standalone results (`19d4aa4`, sequential runs, no concurrent load):**
+
+| Command | Result |
+|---|---|
+| `npm run test:integration` (backend) | 41 suites, **583/583 tests PASS**, exit 0 |
+| `cd admin-service && npm run test:integration` | 23 suites, **174/174 tests PASS**, exit 0 |
+| `cd admin-service && npm run test:browser` | 4 suites, **27/27 tests PASS**, exit 0 |
+| `npm run test:unit` (backend) | 75 suites, **1023/1023 tests PASS** |
+| `npm run test:unit` (admin) | 94 suites, **417/417 tests PASS** (includes the new Dockerfile guard) |
+| Migration verification (clean, repeat, upgrade) | **8/8 PASS** (applies 0056 on clean install and upgrade) |
+| Reset safety verification | **23/23 PASS** |
+
+**Gate flake note (honest reporting):** two full `verify:release` runs on the final tip each observed **all tests passing** (583/583 integration tests, 0 test failures) but exited non-zero because one suite's disposable Postgres container was terminated mid-run ("terminating connection due to administrator command") under host memory pressure — this host keeps a resident Supabase stack and has ~1 GB free RAM, and the failing suite differed between runs. Each affected suite passed on isolated re-run, and the complete standalone suite sequence above is green on the final tip. The `e2e-root` production container smoke remains **UNAVAILABLE** for the same environmental reason documented in §10 (rootless Docker and a symlinked `admin-service/node_modules` build context); it is not claimed as passing and must run on a clean CI runner before launch.

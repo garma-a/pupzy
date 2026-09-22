@@ -281,6 +281,9 @@ Apply migrations only through the Main API pre-deploy step (`node dist/database/
 | `0053_drop_saved_searches` | **destructive** saved-search storage contraction | **NO — see below** |
 | `0054_add_terms_acceptance` | nullable `terms_accepted_version`/`terms_accepted_at`, no backfill | yes |
 | `0055_add_profile_photo_lifecycle` | `PROFILE_PHOTO` upload purpose + owned avatar columns | yes |
+| `0056_cover_reminder_post_types` | widens `idx_posts_last_engaged` to RESCUE/LOST reminder types | yes (rebuilds one index; see note) |
+
+**Note on `0056`:** the migration drops and recreates `idx_posts_last_engaged` non-concurrently (the repository's migration convention), which holds an `ACCESS EXCLUSIVE` lock on `posts` for the duration of the index build. Schedule the release for a low-traffic window on large tables.
 
 **Release sequence:**
 
