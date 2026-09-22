@@ -155,9 +155,12 @@ The backend returns standardized `extensions.code` values. Flutter maps these to
 | `COMMENT_MEDIA_TOO_LARGE` | Uploaded byte length exceeds 100,000 bytes | "Image exceeds the 100 KB limit. Compressing..." |
 | `COMMENT_MEDIA_DIMENSIONS_EXCEEDED` | Dimensions exceed 480x480 pixels | "Image dimensions exceed 480x480 pixels." |
 | `COMMENT_MEDIA_METADATA_FORBIDDEN` | EXIF or XMP metadata detected | "Image contains embedded metadata. Please re-select." |
-| `COMMENT_MEDIA_NOT_READY` | R2 upload not completed before calling `createComment` | Retry after short backoff or notify user to wait for upload |
-| `COMMENT_MEDIA_BLOCKED` | Image SHA-256 hash matches administrative blocklist | "This image cannot be uploaded as it violates platform guidelines." |
-| `COMMENT_MEDIA_CLAIM_CONFLICT` | Staged upload belongs to another user or wrong purpose | "Upload ticket is invalid. Please select the image again." |
+| `COMMENT_MEDIA_NOT_AVAILABLE` | Staged ticket is missing, expired, owned by another account, has the wrong purpose, or its staging object no longer exists | Request a fresh upload ticket and upload the image again; do not retry the same `mediaId` |
+| `COMMENT_MEDIA_ALREADY_USED` | Staged ticket was already finalized or claimed by another publication | Request a fresh upload ticket; the consumed `mediaId` cannot be reused |
+| `COMMENT_MEDIA_PROCESSING_FAILED` | Provider read, integrity check, staging re-verification or finalization failed (`extensions.retryable: true`) | Retry the same `createComment` call with backoff; request a fresh ticket if the failure persists |
+| `COMMENT_MEDIA_NOT_READY` | Documented name only — no code path returns it. An incomplete staging upload returns `COMMENT_MEDIA_NOT_AVAILABLE` | Treat as `COMMENT_MEDIA_NOT_AVAILABLE` |
+| `COMMENT_MEDIA_BLOCKED` | Documented name only — no code path returns it. A denylisted image returns `COMMENT_MEDIA_INVALID_FORMAT` without moderation details | Treat as `COMMENT_MEDIA_INVALID_FORMAT` |
+| `COMMENT_MEDIA_CLAIM_CONFLICT` | Documented name only — no code path returns it. An ownership/purpose mismatch returns `COMMENT_MEDIA_NOT_AVAILABLE` | Treat as `COMMENT_MEDIA_NOT_AVAILABLE` |
 | `COMMENT_IMAGES_DISABLED` | Operational kill-switch active (`COMMENT_IMAGES_ENABLED=false`) | "Image attachments are temporarily disabled. You can still post text comments." |
 | `COMMENT_MEDIA_NOT_ALLOWED` | Image publication attempted beneath a Post type other than `RESCUE`/`LOST`, or a concurrent commit recheck found the Post ineligible | "Photos can only be added to rescue and lost/found posts. You can still comment without a photo." The staged upload is not finalized and remains retryable until ticket expiry |
 | `CONFLICT` | Reusing `clientRequestId` with different parameters | Generate a new `clientRequestId` for distinct comments |
