@@ -275,6 +275,7 @@ export class UsersService {
     let updated: User;
     try {
       updated = await this.usersRepository.activateProfilePhoto(userId, {
+        stagedUploadId: finalized.mediaId,
         expectedStorageKey,
         expectedChangedAt,
         storageKey: finalized.storageKey,

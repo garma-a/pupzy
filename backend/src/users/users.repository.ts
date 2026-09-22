@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
-import { users, mediaDeletionWork, type User, type NewUser } from '../database/schema';
+import { users, stagedUploads, mediaDeletionWork, type User, type NewUser } from '../database/schema';
 import { ConflictError, ForbiddenError } from '../common/errors/app.errors';
 import type * as schema from '../database/schema';
 
@@ -108,15 +108,21 @@ export class UsersRepository {
   /**
    * Activates a finalized owned profile photo.
    *
-   * Locks the user row so the previous-avatar comparison, the user update and
-   * the obsolete-media enqueue commit atomically. `expectedStorageKey` and
-   * `expectedChangedAt` are the values observed before finalization: when
-   * another replacement or an explicit removal won the race, this throws
-   * `PROFILE_PHOTO_REPLACED` instead of overwriting a decision that was never
-   * observed. The change marker is compared as well as the storage key, so a
-   * removal wins even when the previous picture was provider-owned (no owned
-   * key) and the key stays `NULL` on both sides. The caller compensates the
-   * losing finalized object.
+   * Locks the user row so the previous-avatar comparison, the ticket
+   * re-verification, the user update and the obsolete-media enqueue commit
+   * atomically. `expectedStorageKey` and `expectedChangedAt` are the values
+   * observed before finalization: when another replacement or an explicit
+   * removal won the race, this throws `PROFILE_PHOTO_REPLACED` instead of
+   * overwriting a decision that was never observed. The change marker is
+   * compared as well as the storage key, so a removal wins even when the
+   * previous picture was provider-owned (no owned key) and the key stays
+   * `NULL` on both sides. The caller compensates the losing finalized object.
+   *
+   * The same row lock serializes activation with reconciliation: a recovery
+   * pass reclaims an unreferenced avatar by locking this row and marking its
+   * ticket terminal, so a delayed activation observes a non-`FINALIZED`
+   * ticket and loses with `PROFILE_PHOTO_REPLACED` rather than installing
+   * bytes that are queued for deletion.
    *
    * Provider URLs are never enqueued: only a previously owned storage key
    * becomes deletion work.
@@ -124,6 +130,7 @@ export class UsersRepository {
   async activateProfilePhoto(
     userId: string,
     input: {
+      stagedUploadId: string;
       expectedStorageKey: string | null;
       expectedChangedAt: Date | null;
       storageKey: string;
@@ -134,6 +141,19 @@ export class UsersRepository {
       const [user] = await tx.select().from(users).where(eq(users.id, userId)).for('update');
       if (!user || user.isBanned) {
         throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+
+      const [ticket] = await tx
+        .select({ status: stagedUploads.status, finalStorageKey: stagedUploads.finalStorageKey })
+        .from(stagedUploads)
+        .where(and(eq(stagedUploads.id, input.stagedUploadId), eq(stagedUploads.userId, userId)))
+        .limit(1);
+
+      if (!ticket || ticket.status !== 'FINALIZED' || ticket.finalStorageKey !== input.storageKey) {
+        throw new ConflictError(
+          'The profile photo was changed by another request. Refresh and try again.',
+          'PROFILE_PHOTO_REPLACED',
+        );
       }
 
       const currentStorageKey = user.profilePhotoStorageKey ?? null;

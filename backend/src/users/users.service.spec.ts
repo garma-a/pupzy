@@ -336,6 +336,7 @@ describe('UsersService', () => {
       expect(mockUsersRepo.activateProfilePhoto).toHaveBeenCalledWith(
         userId,
         expect.objectContaining({
+          stagedUploadId: mediaId,
           expectedStorageKey: null,
           expectedChangedAt: changedAt,
           storageKey,

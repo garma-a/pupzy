@@ -21,6 +21,7 @@ import {
   blockedMediaHashes,
   type User,
   type City,
+  type StagedUpload,
 } from '../database/schema';
 import { UsersRepository } from './users.repository';
 import { AccountDeletionRepository } from './account-deletion.repository';
@@ -720,8 +721,21 @@ describe('Profile Photo Lifecycle Integration (Ticket 17)', () => {
     // before its activation transaction runs.
     await usersRepo.clearProfilePhoto(providerUser.id);
 
-    const contestedKey = `avatars/${providerUser.id}/${generateUuidV7()}.webp`;
+    const contestedMediaId = generateUuidV7();
+    const contestedKey = `avatars/${providerUser.id}/${contestedMediaId}.webp`;
+    await dbHelper.db.insert(stagedUploads).values({
+      id: contestedMediaId,
+      userId: providerUser.id,
+      purpose: 'PROFILE_PHOTO',
+      stagingKey: `staging/${providerUser.id}/${contestedMediaId}.webp`,
+      declaredContentType: 'image/webp',
+      declaredFileSizeBytes: validWebp.length,
+      status: 'FINALIZED',
+      finalStorageKey: contestedKey,
+      expiresAt: new Date(Date.now() + 900_000),
+    });
     const activationInput = {
+      stagedUploadId: contestedMediaId,
       expectedStorageKey,
       expectedChangedAt,
       storageKey: contestedKey,
@@ -933,5 +947,127 @@ describe('Profile Photo Lifecycle Integration (Ticket 17)', () => {
     expect(r2Adapter.hasObject(activeKey)).toBe(true);
     const finalUser = await currentUser(user.id);
     expect(finalUser.profilePhotoStorageKey).toBe(activeKey);
+
+    // The reclaimed ticket is terminal and its durable deletion work survives.
+    const [orphanTicket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, orphanMediaId));
+    expect(orphanTicket.status).toBe('EXPIRED');
+    const orphanWork = await dbHelper.db
+      .select()
+      .from(mediaDeletionWork)
+      .where(eq(mediaDeletionWork.storageKey, orphanKey));
+    expect(orphanWork).toHaveLength(1);
+    expect(orphanWork[0].cdnUrl).toBe('');
+
+    // The active avatar stays finalized and is never enqueued for deletion.
+    const [activeTicket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, active.mediaId));
+    expect(activeTicket.status).toBe('FINALIZED');
+    const activeWork = await dbHelper.db
+      .select()
+      .from(mediaDeletionWork)
+      .where(eq(mediaDeletionWork.storageKey, activeKey));
+    expect(activeWork).toHaveLength(0);
+  });
+
+  it('cleans only the staging object of an avatar that is still active', async () => {
+    const { mediaId, stagingKey } = await stageProfilePhoto(validWebp);
+    await setPhotoViaGql(mediaId);
+    const finalKey = `avatars/${user.id}/${mediaId}.webp`;
+
+    // Simulate a crash that left the staging object behind after publication.
+    r2Adapter.putObject(stagingKey, validWebp);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+
+    const report = await mediaDeletionProcessor.reconcile({ olderThanMs: 0 });
+
+    expect(report.orphanedProfilePhotosRecovered).toBe(0);
+    expect(r2Adapter.hasObject(finalKey)).toBe(true);
+    expect(r2Adapter.hasObject(stagingKey)).toBe(false);
+
+    const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+    expect(ticket.status).toBe('FINALIZED');
+    expect(ticket.stagingKey).toBe(`cleaned/${stagingKey}`);
+    const queued = await dbHelper.db.select().from(mediaDeletionWork);
+    expect(queued.map((row) => row.storageKey)).not.toContain(finalKey);
+  });
+
+  it('re-checks the active reference inside its transaction when activation commits after the scan', async () => {
+    const { mediaId } = await stageProfilePhoto(validWebp);
+    const finalized = await uploadService.finalizeProfilePhoto(mediaId, user.id);
+    const finalKey = finalized.storageKey;
+
+    const observed = await currentUser(user.id);
+    const expectedStorageKey = observed.profilePhotoStorageKey ?? null;
+    const expectedChangedAt = observed.profilePhotoChangedAt ?? null;
+
+    const internals = mediaDeletionProcessor as unknown as {
+      reclaimOrphanedProfilePhoto: (orphan: StagedUpload) => Promise<'RECLAIMED' | 'REFERENCED' | 'SKIPPED'>;
+    };
+    const realReclaim = internals.reclaimOrphanedProfilePhoto.bind(mediaDeletionProcessor);
+    let activated = false;
+    const reclaimSpy = jest
+      .spyOn(internals, 'reclaimOrphanedProfilePhoto')
+      .mockImplementation(async (orphan: StagedUpload) => {
+        if (!activated) {
+          activated = true;
+          // Activation commits after the recovery scan selected the ticket but
+          // before recovery's coordination transaction runs.
+          await usersRepo.activateProfilePhoto(user.id, {
+            stagedUploadId: orphan.id,
+            expectedStorageKey,
+            expectedChangedAt,
+            storageKey: orphan.finalStorageKey!,
+            publicUrl: `https://cdn.pupzy.net/${orphan.finalStorageKey}`,
+          });
+        }
+        return realReclaim(orphan);
+      });
+
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const report = await mediaDeletionProcessor.reconcile({ olderThanMs: 0 });
+    reclaimSpy.mockRestore();
+
+    expect(activated).toBe(true);
+    expect(report.orphanedProfilePhotosRecovered).toBe(0);
+
+    const after = await currentUser(user.id);
+    expect(after.profilePhotoStorageKey).toBe(finalKey);
+    expect(after.profilePictureUrl).toBe(`https://cdn.pupzy.net/${finalKey}`);
+    expect(r2Adapter.hasObject(finalKey)).toBe(true);
+
+    const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+    expect(ticket.status).toBe('FINALIZED');
+    const queued = await dbHelper.db.select().from(mediaDeletionWork);
+    expect(queued.map((row) => row.storageKey)).not.toContain(finalKey);
+  });
+
+  it('rejects a delayed activation after recovery reclaimed the ticket and compensates its object', async () => {
+    const { mediaId } = await stageProfilePhoto(validWebp);
+    const finalKey = `avatars/${user.id}/${mediaId}.webp`;
+
+    const realFinalize = uploadService.finalizeProfilePhoto.bind(uploadService);
+    const finalizeSpy = jest
+      .spyOn(uploadService, 'finalizeProfilePhoto')
+      .mockImplementation(async (stagedMediaId: string, ownerId: string) => {
+        const finalized = await realFinalize(stagedMediaId, ownerId);
+        // Recovery reclaims the finalized-but-unactivated avatar before the
+        // caller's activation transaction runs.
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        await mediaDeletionProcessor.reconcile({ olderThanMs: 0 });
+        return finalized;
+      });
+
+    const res = await setPhotoViaGql(mediaId);
+    finalizeSpy.mockRestore();
+
+    expect(gqlErrorCode(res)).toBe('PROFILE_PHOTO_REPLACED');
+
+    // The profile never references deleted bytes; the losing request is
+    // compensated and its ticket terminal.
+    const after = await currentUser(user.id);
+    expect(after.profilePictureUrl).toBeNull();
+    expect(after.profilePhotoStorageKey).toBeNull();
+    expect(r2Adapter.hasObject(finalKey)).toBe(false);
+    const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+    expect(ticket.status).toBe('FAILED');
   });
 });

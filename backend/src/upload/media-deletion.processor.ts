@@ -4,7 +4,7 @@ import { eq, or, and, lt, inArray, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import * as schema from '../database/schema';
-import { mediaDeletionWork, stagedUploads, commentMedia, users } from '../database/schema';
+import { mediaDeletionWork, stagedUploads, commentMedia, users, type StagedUpload } from '../database/schema';
 import { UploadService } from './upload.service';
 
 /**
@@ -438,8 +438,10 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
 
     // 3. Owned profile-photo recovery: a finalized avatar the account no
     // longer references (crash between object publication and the owning row
-    // update, or a compensated replacement) is reclaimed. A referenced avatar
-    // is never deleted; only its leftover staging object is cleaned.
+    // update, or a compensated replacement) is reclaimed. The reference is
+    // re-checked under the owner row lock and the ticket is made terminal
+    // before any storage deletion, so a referenced avatar is never deleted;
+    // only its leftover staging object is cleaned.
     const potentiallyOrphanedAvatars = await this.db
       .select()
       .from(stagedUploads)
@@ -457,41 +459,8 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
     for (const orphan of potentiallyOrphanedAvatars) {
       if (!orphan.finalStorageKey) continue;
 
-      const [referenced] = await this.db
-        .select({ id: users.id })
-        .from(users)
-        .where(eq(users.profilePhotoStorageKey, orphan.finalStorageKey))
-        .limit(1);
-
-      if (referenced) {
-        // Active avatar: clean only the staging object it no longer needs.
-        if (orphan.stagingKey && !orphan.stagingKey.startsWith('cleaned/')) {
-          await this.uploadService.deleteObject(orphan.stagingKey).catch(() => {});
-          await this.db
-            .update(stagedUploads)
-            .set({ stagingKey: `cleaned/${orphan.stagingKey}`, updatedAt: new Date() })
-            .where(eq(stagedUploads.id, orphan.id));
-        }
-        continue;
-      }
-
-      await this.uploadService.deleteObject(orphan.finalStorageKey).catch(() => {});
-
-      // Avatars have no CDN purge policy: one storage-only deletion row.
-      const [alreadyQueued] = await this.db
-        .select({ id: mediaDeletionWork.id })
-        .from(mediaDeletionWork)
-        .where(and(eq(mediaDeletionWork.storageKey, orphan.finalStorageKey), eq(mediaDeletionWork.cdnUrl, '')))
-        .limit(1);
-
-      if (!alreadyQueued) {
-        await this.db.insert(mediaDeletionWork).values({
-          storageKey: orphan.finalStorageKey,
-          cdnUrl: '',
-          status: 'PENDING',
-          attempts: 0,
-        });
-      }
+      const outcome = await this.reclaimOrphanedProfilePhoto(orphan);
+      if (outcome === 'SKIPPED') continue;
 
       if (orphan.stagingKey && !orphan.stagingKey.startsWith('cleaned/')) {
         await this.uploadService.deleteObject(orphan.stagingKey).catch(() => {});
@@ -501,7 +470,9 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
           .where(eq(stagedUploads.id, orphan.id));
       }
 
-      orphanedProfilePhotosRecovered++;
+      if (outcome === 'RECLAIMED') {
+        orphanedProfilePhotosRecovered++;
+      }
     }
 
     // Process pending deletion work
@@ -515,5 +486,97 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
       committedCleaned,
       orphanedProfilePhotosRecovered,
     };
+  }
+
+  /**
+   * Coordinates reclaiming one finalized-but-unreferenced avatar with profile
+   * activation. The owner row is locked with the same `FOR UPDATE` lock
+   * `activateProfilePhoto` takes, so the reference re-check, the terminal
+   * ticket transition and the durable deletion-work enqueue commit as one
+   * snapshot: an activation either commits before this transaction (the
+   * avatar reads as referenced and only its leftover staging is cleaned) or
+   * observes the terminal ticket and is rejected instead of installing bytes
+   * that are already queued for deletion.
+   *
+   * Storage deletion happens only after the transaction commits; the queued
+   * `media_deletion_work` row remains the durable retry path.
+   */
+  private async reclaimOrphanedProfilePhoto(orphan: StagedUpload): Promise<'RECLAIMED' | 'REFERENCED' | 'SKIPPED'> {
+    const finalStorageKey = orphan.finalStorageKey;
+    if (!finalStorageKey) return 'SKIPPED';
+
+    const outcome = await this.db.transaction(async (tx) => {
+      const [owner] = await tx
+        .select({ id: users.id, profilePhotoStorageKey: users.profilePhotoStorageKey })
+        .from(users)
+        .where(eq(users.id, orphan.userId))
+        .for('update');
+
+      if (!owner) return 'SKIPPED' as const;
+      if (owner.profilePhotoStorageKey === finalStorageKey) return 'REFERENCED' as const;
+
+      const [reclaimed] = await tx
+        .update(stagedUploads)
+        .set({
+          status: 'EXPIRED',
+          errorMessage: 'Reclaimed orphaned profile photo',
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(stagedUploads.id, orphan.id),
+            eq(stagedUploads.userId, orphan.userId),
+            eq(stagedUploads.purpose, 'PROFILE_PHOTO'),
+            eq(stagedUploads.finalStorageKey, finalStorageKey),
+            inArray(stagedUploads.status, ['CLAIMED', 'FINALIZED', 'FAILED']),
+          ),
+        )
+        .returning({ id: stagedUploads.id });
+
+      if (!reclaimed) return 'SKIPPED' as const;
+
+      // Avatars have no CDN purge policy: one storage-only deletion row.
+      const [alreadyQueued] = await tx
+        .select({ id: mediaDeletionWork.id })
+        .from(mediaDeletionWork)
+        .where(and(eq(mediaDeletionWork.storageKey, finalStorageKey), eq(mediaDeletionWork.cdnUrl, '')))
+        .limit(1);
+
+      if (!alreadyQueued) {
+        await tx.insert(mediaDeletionWork).values({
+          storageKey: finalStorageKey,
+          cdnUrl: '',
+          status: 'PENDING',
+          attempts: 0,
+        });
+      }
+
+      // The ticket is now terminal, so it can no longer be re-selected to
+      // clean leftover staging; queue it durably in the same transaction.
+      if (orphan.stagingKey && !orphan.stagingKey.startsWith('cleaned/')) {
+        const [stagingQueued] = await tx
+          .select({ id: mediaDeletionWork.id })
+          .from(mediaDeletionWork)
+          .where(and(eq(mediaDeletionWork.storageKey, orphan.stagingKey), eq(mediaDeletionWork.cdnUrl, '')))
+          .limit(1);
+
+        if (!stagingQueued) {
+          await tx.insert(mediaDeletionWork).values({
+            storageKey: orphan.stagingKey,
+            cdnUrl: '',
+            status: 'PENDING',
+            attempts: 0,
+          });
+        }
+      }
+
+      return 'RECLAIMED' as const;
+    });
+
+    if (outcome === 'RECLAIMED') {
+      await this.uploadService.deleteObject(finalStorageKey).catch(() => {});
+    }
+
+    return outcome;
   }
 }
