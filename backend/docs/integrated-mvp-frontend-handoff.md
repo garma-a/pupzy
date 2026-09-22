@@ -60,10 +60,12 @@ Errors arrive as standard GraphQL `errors[]` entries with the stable machine cod
 | `TERMS_ACCEPTANCE_REQUIRED` | Protected operation without current acceptance; extensions carry `currentVersion`, `termsUrl` | Prompt for acceptance, then retry once |
 | `TERMS_VERSION_MISMATCH` | `acceptTerms` submitted a non-current version; extensions carry `currentVersion`, `termsUrl` | Re-read the version and re-present |
 | `COMMENT_MEDIA_NOT_ALLOWED` | Image Comment attempted on a Post type other than RESCUE/LOST | Keep text commenting; the staged upload stays retryable |
-| `COMMENT_MEDIA_INVALID_FORMAT`, `COMMENT_MEDIA_TOO_LARGE`, `COMMENT_MEDIA_DIMENSIONS_EXCEEDED`, `COMMENT_MEDIA_METADATA_FORBIDDEN`, `COMMENT_MEDIA_NOT_READY`, `COMMENT_MEDIA_BLOCKED`, `COMMENT_MEDIA_CLAIM_CONFLICT`, `COMMENT_IMAGES_DISABLED` | Comment image pipeline failures/operational switch | See `docs/comments-flutter-integration-contract.md` §4 |
+| `COMMENT_MEDIA_INVALID_FORMAT`, `COMMENT_MEDIA_TOO_LARGE`, `COMMENT_MEDIA_DIMENSIONS_EXCEEDED`, `COMMENT_MEDIA_METADATA_FORBIDDEN`, `COMMENT_MEDIA_NOT_AVAILABLE`, `COMMENT_MEDIA_ALREADY_USED`, `COMMENT_MEDIA_PROCESSING_FAILED`, `COMMENT_IMAGES_DISABLED` | Comment image pipeline failures/operational switch (`NOT_AVAILABLE`/`ALREADY_USED` are non-retryable; `PROCESSING_FAILED` is retryable) | See `docs/comments-flutter-integration-contract.md` §4 |
 | `PROFILE_PHOTO_INVALID_FORMAT`, `PROFILE_PHOTO_TOO_LARGE`, `PROFILE_PHOTO_DIMENSIONS_EXCEEDED`, `PROFILE_PHOTO_METADATA_FORBIDDEN`, `PROFILE_PHOTO_NOT_AVAILABLE`, `PROFILE_PHOTO_ALREADY_USED`, `PROFILE_PHOTO_PROCESSING_FAILED`, `PROFILE_PHOTO_REPLACED` | Profile photo pipeline failures/races | See §3.9 and the profile photo contract §4 |
 | `RENEWAL_COOLDOWN` | Same listing renewed within the last 7 days | Show “try again later”; no timestamp is exposed |
 | `ACCOUNT_DELETED` | Account is banned or deletion is pending/completed | Sign-out state |
+
+The comment-image contract §4 also records `COMMENT_MEDIA_NOT_READY`, `COMMENT_MEDIA_BLOCKED` and `COMMENT_MEDIA_CLAIM_CONFLICT` as documented names that no code path emits; if one of them is ever observed, treat it as `COMMENT_MEDIA_NOT_AVAILABLE`, `COMMENT_MEDIA_INVALID_FORMAT` and `COMMENT_MEDIA_NOT_AVAILABLE` respectively.
 
 ### 2.3 New enum values the client must decode
 
@@ -186,7 +188,7 @@ mutation AcceptTerms($input: AcceptTermsInput!) {
 
 - Additive `PostStatus.EXPIRED`: leaves active discovery (feeds and search), keeps direct detail, owner history, media, engagement and discussion, and rejects new contact/application/seller-contact submissions. Viewing and commenting do not reactivate it.
 - Policy: `PRODUCT` expires after 14 inactive days with a reminder at 11; `ADOPTION` after 30 with a reminder at 27; `RESCUE`/`LOST` never expire and receive one stand-alone reminder after 60 inactive days; `MATING` expiry and reminders stay disabled.
-- `renewPost(postId: ID!): Post!` — owner-only; `ACTIVE`/`EXPIRED` product/adoption listings; at most once per 7 days (`RENEWAL_COOLDOWN`); returns the listing to `ACTIVE` with a fresh inactivity window. `SOLD`/`ADOPTED`/`REMOVED` and non-renewable types → `VALIDATION_ERROR`; missing/removed → `NOT_FOUND`; non-owner → `FORBIDDEN`. Renewal never reopens terminated interactions.
+- `renewPost(postId: ID!): Post!` — owner-only; `ACTIVE`/`EXPIRED` product/adoption listings; at most once per 7 days (`RENEWAL_COOLDOWN`); returns the listing to `ACTIVE` with a fresh inactivity window. `SOLD`/`ADOPTED` and non-renewable types (RESCUE, LOST, MATING) → `VALIDATION_ERROR`; missing or `REMOVED` → `NOT_FOUND`; non-owner of an existing non-removed listing → `FORBIDDEN`. Renewal never reopens terminated interactions.
 - The reminder is `POST_INACTIVITY_NUDGE` (inbox + push), localized through §3.5.
 
 ### 3.8 Server-side feed search
@@ -204,7 +206,7 @@ query HomeFeed($governorate: String, $cityId: ID, $viewerLocation: ViewerLocatio
 }
 ```
 
-- Matches title, description, market category, area and City names (English and Arabic) with one normalization (lowercase; Arabic diacritics/tatweel removed; alef/yeh/teh-marbuta variants unified; whitespace collapsed). `%`, `_`, `\` match literally.
+- Matches title, description, market category, area and City names (English and Arabic) with one normalization (lowercase; Arabic diacritics/tatweel removed; alef/yeh/waw-hamza/teh-marbuta variants unified; whitespace collapsed). `%`, `_`, `\` match literally.
 - Omitted/null/blank/whitespace-only text means no search; a query normalizing to fewer than 2 characters or exceeding 100 characters after trimming returns `VALIDATION_ERROR`. Existing filters, ordering, cursors, `ACTIVE`-only discovery and Block isolation are retained; there is no new relevance ranking.
 
 ### 3.9 Profile photo lifecycle
@@ -245,7 +247,7 @@ Delivered previously and unchanged; see `docs/ugc-reporting-and-account-blocking
 | `POST_INACTIVITY_NUDGE` | Expiry worker reminder | Post owner | `relatedPostId` | `Is your post still active?` / `Your post "${postTitle}" has had no recent activity. Review it to keep it active.` |
 | `NEW_COMMENT` | Comment on a Post | Post owner | `relatedPostId`, `relatedCommentId` | `New comment` / `${actorName} commented on your post "${postTitle}"` |
 | `NEW_REPLY` | Reply to a Comment | Parent author | `relatedPostId`, `relatedCommentId` | `New reply` / `${actorName} replied to your comment` |
-| `COMMENT_BOOSTED` | Comment/Reply boosted | Author | `relatedPostId`, `relatedCommentId` | `Comment boosted` / `${actorName} boosted your comment` |
+| `COMMENT_BOOSTED` | Comment/Reply boosted | Author | `relatedPostId`, `relatedCommentId` | `Comment boosted` / `${actorName} boosted your comment` (reply: `${actorName} boosted your reply`) |
 | `COMMENT_PINNED` | Comment pinned | Comment author | `relatedPostId`, `relatedCommentId` | `Comment pinned` / `Your comment was pinned on "${postTitle}"` |
 
 `SYSTEM_ANNOUNCEMENT` (retired saved-search alert) is inbox-only with no creation site. No nearby-rescue broadcast type exists.
