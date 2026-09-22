@@ -8,6 +8,9 @@ COPY --chown=node:node admin-service/ .
 COPY --chown=node:node src/common/contracts/google-maps-handoff.contract.ts /src/common/contracts/google-maps-handoff.contract.ts
 COPY --chown=node:node src/common/contracts/post-lifecycle.contract.ts /src/common/contracts/post-lifecycle.contract.ts
 COPY --chown=node:node src/notifications/notification-templates.ts /src/notifications/notification-templates.ts
+# The backend push allowlist is imported by the AdminJS moderation helpers, so
+# the runtime image must carry it beside the shared templates.
+COPY --chown=node:node src/notifications/push-delivery.constants.ts /src/notifications/push-delivery.constants.ts
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=256"
 ENV ADMIN_JS_TMP_DIR=/tmp/adminjs
