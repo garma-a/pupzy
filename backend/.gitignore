@@ -20,6 +20,8 @@ docs/adr/*
 !docs/admin-work-queues.md
 !docs/ugc-reporting-and-account-blocking-flutter-integration-contract.md
 !docs/ugc-reporting-and-account-blocking-release-evidence.md
+!docs/integrated-mvp-frontend-handoff.md
+!docs/integrated-mvp-release-evidence.md
 !docs/deployment/
 !docs/deployment/comments-operations-runbook.md
 pupzy-app-5f707-firebase-adminsdk-fbsvc-44ac11fd5b.json
