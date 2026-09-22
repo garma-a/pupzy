@@ -126,6 +126,30 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
           continue;
         }
 
+        // Safety guard: never delete the profile photo an account currently
+        // references. Replacement/removal queue only the superseded key, so a
+        // referenced key here means the work row is stale or wrong.
+        const [activeAvatar] = await this.db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.profilePhotoStorageKey, claimed.storageKey))
+          .limit(1);
+
+        if (activeAvatar) {
+          this.logger.warn(
+            `Safety guard: skipping deletion of ${claimed.storageKey} because it is the active profile photo`,
+          );
+          await this.db
+            .update(mediaDeletionWork)
+            .set({
+              status: 'COMPLETED',
+              lastError: 'Skipped: media is the active profile photo',
+              updatedAt: new Date(),
+            })
+            .where(and(eq(mediaDeletionWork.id, claimed.id), eq(mediaDeletionWork.status, 'PROCESSING')));
+          continue;
+        }
+
         // Step 1: Delete from R2 (idempotent)
         await this.uploadService.deleteObject(claimed.storageKey);
 

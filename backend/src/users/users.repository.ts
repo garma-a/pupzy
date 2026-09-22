@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import { users, mediaDeletionWork, type User, type NewUser } from '../database/schema';
@@ -77,6 +77,32 @@ export class UsersRepository {
   async delete(id: string): Promise<boolean> {
     const result = await this.db.delete(users).where(eq(users.id, id)).returning({ id: users.id });
     return result.length > 0;
+  }
+
+  /**
+   * Re-links an account to a new Firebase UID and optionally seeds the
+   * provider picture.
+   *
+   * The avatar-choice guard is evaluated in the same SQL statement as the
+   * write: the provider picture is applied only while
+   * `profile_photo_changed_at IS NULL`. A concurrent set/removal therefore
+   * can never be overwritten by a stale read of the avatar decision.
+   */
+  async linkFirebaseUserId(id: string, firebaseUserId: string, photoUrl?: string | null): Promise<User> {
+    const [user] = await this.db
+      .update(users)
+      .set({
+        firebaseUserId,
+        ...(photoUrl !== undefined
+          ? {
+              profilePictureUrl: sql`CASE WHEN ${users.profilePhotoChangedAt} IS NULL THEN ${photoUrl} ELSE ${users.profilePictureUrl} END`,
+            }
+          : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
   }
 
   /**

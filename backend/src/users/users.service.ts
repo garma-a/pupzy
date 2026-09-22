@@ -81,13 +81,15 @@ export class UsersService {
         this.logger.log(
           `Firebase UID changed for ${input.email}, updating from ${existingByEmail.firebaseUserId} to ${input.firebaseUserId}`,
         );
-        const updated = await this.usersRepository.update(existingByEmail.id, {
-          firebaseUserId: input.firebaseUserId,
-          // Provider synchronization may seed the picture only while the
-          // account has never made an explicit avatar choice. Once the user
-          // set or removed a photo, re-linking providers must not restore it.
-          ...(existingByEmail.profilePhotoChangedAt === null ? { profilePictureUrl: input.photoUrl } : {}),
-        });
+        // Provider synchronization may seed the picture only while the
+        // account has never made an explicit avatar choice. The guard is
+        // evaluated atomically with the write, so a concurrent set/removal
+        // can never be overwritten by a stale read.
+        const updated = await this.usersRepository.linkFirebaseUserId(
+          existingByEmail.id,
+          input.firebaseUserId,
+          input.photoUrl,
+        );
         await this.invalidateUserCache(updated.firebaseUserId);
         return this.decryptUserPhone(updated);
       }
@@ -266,18 +268,23 @@ export class UsersService {
 
     const finalized = await this.uploadService.finalizeProfilePhoto(mediaId, userId);
 
+    let updated: User;
     try {
-      const updated = await this.usersRepository.activateProfilePhoto(userId, {
+      updated = await this.usersRepository.activateProfilePhoto(userId, {
         expectedStorageKey,
         storageKey: finalized.storageKey,
         publicUrl: finalized.publicUrl,
       });
-      await this.invalidateUserCacheById(userId);
-      return this.decryptUserPhone(updated);
     } catch (err) {
       await this.compensateProfilePhoto(finalized, err);
       throw err;
     }
+
+    // Cache invalidation runs only after the activation transaction has
+    // committed: a failure here must never compensate away the now-active
+    // avatar object.
+    await this.invalidateUserCacheById(userId);
+    return this.decryptUserPhone(updated);
   }
 
   /**
