@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../config/feature_flags.dart';
 import '../localization/lang_provider.dart';
 import '../models/contact_request.dart';
 import '../models/post_detail.dart';
+import '../models/rescue_proof.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/animated_boost_chip.dart';
@@ -17,7 +19,10 @@ import '../widgets/contact_request_sheet.dart';
 import '../widgets/contact_requests_owner_section.dart';
 import '../widgets/image_with_fallback.dart';
 import '../widgets/nearby_vets_section.dart';
+import '../widgets/owner_post_actions.dart';
 import '../widgets/pet_carousel.dart';
+import '../widgets/rescue_proof_entry.dart';
+import '../widgets/rescue_proofs_owner_section.dart';
 import '../widgets/safety_actions.dart';
 import '../widgets/skeleton_loader.dart';
 
@@ -37,11 +42,26 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
   RescuePostExtension? _rescueExt;
   LostPostExtension? _lostExt;
   bool _revealed = false;
-  bool _reportedFound = false;
   String? _myUserId;
   ContactRequest? _myContactRequest;
+  List<RescueProof> _myProofs = [];
 
   bool get _isOwner => _myUserId != null && _post != null && _post!.creator.id == _myUserId;
+
+  /// Which proof this post accepts (rescuer / finder), or null when it accepts
+  /// none — e.g. a FOUND_STRAY report.
+  ProofPostKind? get _proofKind {
+    final post = _post;
+    if (post == null) return null;
+    return ProofPostKind.forPost(postType: post.postType, lostReportType: _lostExt?.reportType);
+  }
+
+  Future<void> _loadMyProofs() async {
+    if (!kRescueProofEnabled || _isOwner || _proofKind == null) return;
+    final (proofs, _) = await context.read<GraphQLService>().fetchMyRescueProofs(postId: _post!.id);
+    if (!mounted) return;
+    setState(() => _myProofs = proofs);
+  }
 
   @override
   void initState() {
@@ -93,6 +113,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
         _errorMessage = ext == null ? extError : null;
       });
     }
+    await _loadMyProofs();
   }
 
   Future<bool> _toggleBoost() async {
@@ -119,32 +140,6 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
     }
     setState(() => _post = _post!.copyWith(saveCount: count, isSavedByMe: saved));
     return true;
-  }
-
-  Future<void> _reportFound() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.background,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
-        title: Text(t(ctx, 'Report this animal as found?', 'الإبلاغ عن العثور على هذا الحيوان؟')),
-        content: Text(
-          t(
-            ctx,
-            'This lets the community know the animal has been rescued or is no longer in distress.',
-            'هذا يُعلم المجتمع أن الحيوان تم إنقاذه أو لم يعد في محنة.',
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(t(ctx, 'Cancel', 'إلغاء'))),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(t(ctx, 'Report Found', 'الإبلاغ عن العثور عليه'))),
-        ],
-      ),
-    );
-    if (confirmed == true && mounted) {
-      setState(() => _reportedFound = true);
-      Fluttertoast.showToast(msg: t(context, 'Found report submitted', 'تم إرسال بلاغ العثور'));
-    }
   }
 
   Future<void> _contactRescue() async {
@@ -428,6 +423,14 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                       if (_isOwner) ...[
                         const SizedBox(height: AppSpacing.lg),
                         ContactRequestsOwnerSection(postId: post.id),
+                        if (_proofKind != null) ...[
+                          const SizedBox(height: AppSpacing.lg),
+                          RescueProofsOwnerSection(
+                            postId: post.id,
+                            kind: _proofKind!,
+                            onPostClosed: (status) => setState(() => _post = _post!.copyWith(status: status)),
+                          ),
+                        ],
                       ],
                       const SizedBox(height: 96),
                     ],
@@ -441,29 +444,37 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _reportedFound ? null : _reportFound,
-                  child: Text(
-                    _reportedFound
-                        ? t(context, 'Reported ✓', 'تم الإبلاغ ✓')
-                        : t(context, 'Report Found', 'الإبلاغ عن العثور عليه'),
-                  ),
+          child: _isOwner
+              ? OwnerPostActions(
+                  postId: post.id,
+                  close: post.postType == 'RESCUE' ? OwnerCloseAction.rescue : OwnerCloseAction.lost,
+                  isClosed: post.status != 'ACTIVE',
+                  onClosed: (status) => setState(() => _post = _post!.copyWith(status: status)),
+                  onDeleted: () => Navigator.of(context).pop(),
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (kRescueProofEnabled && _proofKind != null) ...[
+                      RescueProofEntry(
+                        postId: post.id,
+                        kind: _proofKind!,
+                        defaultArea: post.areaName,
+                        myProofs: _myProofs,
+                        postIsActive: post.status == 'ACTIVE',
+                        onSubmitted: (proof) => setState(() => _myProofs = [proof, ..._myProofs]),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                    ],
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _myContactRequest?.status == 'PENDING' || _myContactRequest?.status == 'REJECTED' ? null : _contactRescue,
+                        child: Text(_contactButtonLabel(context)),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              if (!_isOwner) ...[
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _myContactRequest?.status == 'PENDING' || _myContactRequest?.status == 'REJECTED' ? null : _contactRescue,
-                    child: Text(_contactButtonLabel(context)),
-                  ),
-                ),
-              ],
-            ],
-          ),
         ),
       ),
     );

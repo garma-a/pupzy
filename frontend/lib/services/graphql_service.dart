@@ -12,6 +12,7 @@ import '../models/contact_request.dart';
 import '../models/feed_post.dart';
 import '../models/mating_detail.dart';
 import '../models/post_detail.dart';
+import '../models/rescue_proof.dart';
 import '../models/safety.dart';
 import '../models/vet_clinic.dart';
 import '../screens/account_deletion_in_progress_screen.dart';
@@ -2247,5 +2248,151 @@ class GraphQLService {
       pageInfo?['hasNextPage'] as bool? ?? false,
       null,
     );
+  }
+
+  // ── Rescue / found proof ────────────────────────────────────────────────────
+  // A rescuer (RESCUE post) or finder (LOST_PET post) proves the outcome with
+  // photos + details; the post owner confirms or rejects. Confirming closes the
+  // post and lets the owner reach the rescuer on WhatsApp. These operations are
+  // NOT in the backend yet — see [kRescueProofEnabled].
+
+  static const String _rescueProofFields = r'''
+    id postId status happenedAt areaName condition whereabouts story respondedAt createdAt
+    submitter { id fullName fullNameArabic profilePictureUrl }
+    media { id publicUrl }
+  ''';
+
+  static final String submitRescueProofMutation = '''
+    mutation SubmitRescueProof(\$input: SubmitRescueProofInput!) {
+      submitRescueProof(input: \$input) { $_rescueProofFields }
+    }
+  ''';
+
+  static final String confirmRescueProofMutation = '''
+    mutation ConfirmRescueProof(\$proofId: ID!) {
+      confirmRescueProof(proofId: \$proofId) { $_rescueProofFields }
+    }
+  ''';
+
+  static final String rejectRescueProofMutation = '''
+    mutation RejectRescueProof(\$proofId: ID!) {
+      rejectRescueProof(proofId: \$proofId) { $_rescueProofFields }
+    }
+  ''';
+
+  static final String myRescueProofsQuery = '''
+    query MyRescueProofs(\$postId: ID!, \$first: Int) {
+      myRescueProofs(postId: \$postId, first: \$first) {
+        edges { node { $_rescueProofFields } }
+      }
+    }
+  ''';
+
+  static final String postRescueProofsQuery = '''
+    query PostRescueProofs(\$postId: ID!, \$first: Int) {
+      postRescueProofs(postId: \$postId, first: \$first) {
+        edges { node { $_rescueProofFields } }
+      }
+    }
+  ''';
+
+  static const String rescueProofWhatsAppLinkQuery = r'''
+    query RescueProofWhatsAppLink($proofId: ID!) {
+      getRescueProofWhatsAppLink(proofId: $proofId)
+    }
+  ''';
+
+  /// Submits a proof. `mediaIds` come from `requestMediaUploadUrl` uploads
+  /// (1–4). Returns the created proof, or the error code + message.
+  Future<(RescueProof? proof, String? errorCode, String? errorMessage)> submitRescueProof({
+    required String postId,
+    required List<String> mediaIds,
+    required DateTime happenedAt,
+    required String areaName,
+    required String condition,
+    required String whereabouts,
+    required String story,
+  }) async {
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(submitRescueProofMutation),
+        variables: {
+          'input': {
+            'postId': postId,
+            'mediaIds': mediaIds,
+            'happenedAt': happenedAt.toUtc().toIso8601String(),
+            'areaName': areaName,
+            'condition': condition,
+            'whereabouts': whereabouts,
+            'story': story,
+            'shareContactConsent': true,
+          },
+        },
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _errorCode(result.exception), _serverErrorMessage(result.exception));
+    }
+    final node = result.data?['submitRescueProof'] as Map<String, dynamic>?;
+    return (node != null ? RescueProof.fromJson(node) : null, null, null);
+  }
+
+  Future<(RescueProof? proof, String? errorCode, String? errorMessage)> _reviewRescueProof(
+    String document,
+    String field,
+    String proofId,
+  ) async {
+    final result = await client.value.mutate(MutationOptions(document: gql(document), variables: {'proofId': proofId}));
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _errorCode(result.exception), _serverErrorMessage(result.exception));
+    }
+    final node = result.data?[field] as Map<String, dynamic>?;
+    return (node != null ? RescueProof.fromJson(node) : null, null, null);
+  }
+
+  /// Owner accepts a proof: the post is closed (RESOLVED / REUNITED) and the
+  /// owner may then fetch the rescuer's WhatsApp link.
+  Future<(RescueProof? proof, String? errorCode, String? errorMessage)> confirmRescueProof(String proofId) {
+    return _reviewRescueProof(confirmRescueProofMutation, 'confirmRescueProof', proofId);
+  }
+
+  Future<(RescueProof? proof, String? errorCode, String? errorMessage)> rejectRescueProof(String proofId) {
+    return _reviewRescueProof(rejectRescueProofMutation, 'rejectRescueProof', proofId);
+  }
+
+  Future<(List<RescueProof> proofs, String? errorMessage)> _fetchRescueProofs(String document, String field, String postId) async {
+    final result = await client.value.query(
+      QueryOptions(document: gql(document), variables: {'postId': postId, 'first': 20}, fetchPolicy: FetchPolicy.networkOnly),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (<RescueProof>[], _serverErrorMessage(result.exception));
+    }
+    final edges = (result.data?[field]?['edges'] as List<dynamic>? ?? const []).cast<Map<String, dynamic>>();
+    return (edges.map((e) => RescueProof.fromJson(e['node'] as Map<String, dynamic>)).toList(), null);
+  }
+
+  /// The signed-in user's own proofs for one post, newest first.
+  Future<(List<RescueProof> proofs, String? errorMessage)> fetchMyRescueProofs({required String postId}) {
+    return _fetchRescueProofs(myRescueProofsQuery, 'myRescueProofs', postId);
+  }
+
+  /// Every proof submitted on a post the signed-in user owns (owner only).
+  Future<(List<RescueProof> proofs, String? errorMessage)> fetchPostRescueProofs({required String postId}) {
+    return _fetchRescueProofs(postRescueProofsQuery, 'postRescueProofs', postId);
+  }
+
+  /// The confirmed rescuer's WhatsApp link — post owner only, CONFIRMED only.
+  Future<(String? link, String? errorMessage)> fetchRescueProofWhatsAppLink(String proofId) async {
+    final result = await client.value.query(
+      QueryOptions(document: gql(rescueProofWhatsAppLinkQuery), variables: {'proofId': proofId}, fetchPolicy: FetchPolicy.networkOnly),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _serverErrorMessage(result.exception));
+    }
+    return (result.data?['getRescueProofWhatsAppLink'] as String?, null);
   }
 }

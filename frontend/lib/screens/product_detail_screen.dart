@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../localization/lang_provider.dart';
 import '../models/post_detail.dart';
 import '../services/graphql_service.dart';
+import '../services/safety_events.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
 import '../widgets/animated_favorite_icon.dart';
@@ -166,6 +167,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       Fluttertoast.showToast(msg: error ?? t(context, 'Could not update listing. Try again.', 'تعذر تحديث الإعلان. حاول مرة أخرى.'));
       return;
     }
+    context.read<SafetyEvents>().postsChanged();
     setState(() => _post = _post!.copyWith(status: 'SOLD'));
     Fluttertoast.showToast(msg: t(context, 'Listing marked as sold', 'تم تحديد الإعلان كمباع'));
   }
@@ -195,6 +197,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       Fluttertoast.showToast(msg: error ?? t(context, 'Could not delete listing. Try again.', 'تعذر حذف الإعلان. حاول مرة أخرى.'));
       return;
     }
+    context.read<SafetyEvents>().postsChanged();
     Navigator.of(context).pop();
     Fluttertoast.showToast(msg: t(context, 'Listing deleted', 'تم حذف الإعلان'));
   }

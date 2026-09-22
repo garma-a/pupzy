@@ -1,10 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
@@ -33,7 +30,6 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   bool _submitting = false;
   bool _showCityError = false;
   Position? _position;
-  XFile? _pickedPhoto;
 
   @override
   void initState() {
@@ -57,16 +53,6 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     _phoneController.dispose();
     _citySearchController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickPhoto() async {
-    final picked = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 800,
-      maxHeight: 800,
-      imageQuality: 85,
-    );
-    if (picked != null) setState(() => _pickedPhoto = picked);
   }
 
   Future<void> _loadCities() async {
@@ -206,50 +192,20 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                 Center(
                   child: Column(
                     children: [
+                      // The profile photo comes from the sign-in provider (Google/
+                      // Apple). There is no photo-upload API, so this is display
+                      // only — it is not tappable.
                       Builder(builder: (context) {
-                        ImageProvider? avatarImage;
-                        if (_pickedPhoto != null) {
-                          avatarImage = FileImage(File(_pickedPhoto!.path));
-                        } else if (user?.photoURL != null) {
-                          avatarImage = NetworkImage(user!.photoURL!);
-                        }
+                        final photoUrl = user?.photoURL;
                         final initial = _nameController.text.trim().isNotEmpty
                             ? _nameController.text.trim()[0].toUpperCase()
                             : '?';
-                        return GestureDetector(
-                          onTap: _pickPhoto,
-                          child: Stack(
-                            children: [
-                              CircleAvatar(
-                                radius: 40,
-                                backgroundImage: avatarImage,
-                                child: avatarImage == null
-                                    ? Text(initial, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold))
-                                    : null,
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: Container(
-                                  width: 28,
-                                  height: 28,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: AppColors.background, width: 2),
-                                  ),
-                                  child: const Icon(Icons.camera_alt, color: Colors.white, size: 14),
-                                ),
-                              ),
-                            ],
-                          ),
+                        return CircleAvatar(
+                          radius: 40,
+                          backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
+                          child: photoUrl == null ? Text(initial, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)) : null,
                         );
                       }),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        t(context, 'Tap to add a photo (optional)', 'اضغط لإضافة صورة (اختياري)'),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
                       const SizedBox(height: AppSpacing.lg),
                       Text(
                         t(context, 'Complete your profile', 'أكمل ملفك الشخصي'),

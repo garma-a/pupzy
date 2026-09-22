@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
@@ -42,6 +43,12 @@ IconData _iconForType(String type) {
       return Icons.arrow_upward;
     case 'COMMENT_PINNED':
       return Icons.push_pin_outlined;
+    case 'RESCUE_PROOF_RECEIVED':
+      return Icons.photo_camera_outlined;
+    case 'RESCUE_PROOF_CONFIRMED':
+      return Icons.verified_outlined;
+    case 'RESCUE_PROOF_REJECTED':
+      return Icons.cancel_outlined;
     default:
       return Icons.notifications_none;
   }
@@ -92,8 +99,15 @@ class _NotificationsPanelState extends State<NotificationsPanel> {
     }
     final postId = n.relatedPostId;
     if (postId == null) return;
-    final (post, _) = await graphql.fetchPostDetail(postId);
-    if (!mounted || post == null) return;
+    final unavailableCopy = t(context, "This content isn't available.", 'هذا المحتوى غير متاح.');
+    final (post, error) = await graphql.fetchPostDetail(postId);
+    if (!mounted) return;
+    if (post == null) {
+      // The post was removed, or the viewer can no longer reach it (for
+      // example after a Block) — say so instead of silently doing nothing.
+      Fluttertoast.showToast(msg: error ?? unavailableCopy);
+      return;
+    }
     Navigator.of(context).pop();
     // Comment-related notifications open the post's detail screen and then
     // pop the comments sheet straight open, since that's the content the

@@ -132,6 +132,20 @@ class _MyPostsListState extends State<_MyPostsList> with AutomaticKeepAliveClien
     });
   }
 
+  /// Re-fetches the first page in place (no spinner) so a post that was just
+  /// closed or deleted from its detail screen shows its new status or leaves
+  /// the list as soon as the user comes back.
+  Future<void> _refreshQuietly() async {
+    final graphql = context.read<GraphQLService>();
+    final (posts, endCursor, hasNextPage, error) = await graphql.fetchMyPosts(postType: widget.postType, first: 20);
+    if (!mounted || error != null) return;
+    setState(() {
+      _posts = posts;
+      _endCursor = endCursor;
+      _hasNextPage = hasNextPage;
+    });
+  }
+
   Future<void> _loadMore() async {
     if (_loadingMore || !_hasNextPage) return;
     setState(() => _loadingMore = true);
@@ -210,7 +224,7 @@ class _MyPostsListState extends State<_MyPostsList> with AutomaticKeepAliveClien
                             child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
                           );
                         }
-                        return _MyPostTile(key: ValueKey(_posts[i].id), post: _posts[i]);
+                        return _MyPostTile(key: ValueKey(_posts[i].id), post: _posts[i], onReturn: _refreshQuietly);
                       },
                     ),
     );
@@ -219,7 +233,8 @@ class _MyPostsListState extends State<_MyPostsList> with AutomaticKeepAliveClien
 
 class _MyPostTile extends StatelessWidget {
   final FeedPost post;
-  const _MyPostTile({super.key, required this.post});
+  final VoidCallback onReturn;
+  const _MyPostTile({super.key, required this.post, required this.onReturn});
 
   Color _statusColor() {
     switch (post.status) {
@@ -227,6 +242,7 @@ class _MyPostTile extends StatelessWidget {
         return AppColors.sectionLineGreen;
       case 'SOLD':
       case 'RESOLVED':
+      case 'REUNITED':
       case 'ADOPTED':
         return AppColors.textMuted;
       default:
@@ -242,6 +258,8 @@ class _MyPostTile extends StatelessWidget {
         return t(context, 'Sold', 'مباع');
       case 'RESOLVED':
         return t(context, 'Resolved', 'تم الحل');
+      case 'REUNITED':
+        return t(context, 'Reunited', 'تم لمّ الشمل');
       case 'ADOPTED':
         return t(context, 'Adopted', 'تم التبني');
       default:
@@ -255,7 +273,7 @@ class _MyPostTile extends StatelessWidget {
       'PRODUCT' => ProductDetailScreen(postId: post.id),
       _ => RescueDetailScreen(postId: post.id),
     };
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen)).then((_) => onReturn());
   }
 
   @override

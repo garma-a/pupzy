@@ -45,7 +45,6 @@ class _HelpScreenState extends State<HelpScreen> with RouteAware {
   double? _lastRadius;
   Object? _lastBrowseCityId;
   int? _lastSafetyVersion;
-  final Set<String> _helpingIds = {};
   String? _governorate;
   String? _cityId;
   String? _endCursor;
@@ -218,22 +217,6 @@ class _HelpScreenState extends State<HelpScreen> with RouteAware {
     return true;
   }
 
-  void _toggleHelping(FeedPost post) {
-    final nowHelping = !_helpingIds.contains(post.id);
-    setState(() {
-      if (nowHelping) {
-        _helpingIds.add(post.id);
-      } else {
-        _helpingIds.remove(post.id);
-      }
-    });
-    Fluttertoast.showToast(
-      msg: nowHelping
-          ? t(context, "Marked as helping — visible only to you for now", 'تم التسجيل كمساعد — مرئي لك فقط حاليًا')
-          : t(context, "You're no longer marked as helping", 'لم تعد مُسجّلًا كمساعد'),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final maxDist = DistanceProvider.of(context).maxDistance;
@@ -301,20 +284,16 @@ class _HelpScreenState extends State<HelpScreen> with RouteAware {
                                 _HelpFeedList(
                                   posts: _posts.where((p) => p.postType == 'RESCUE').toList(),
                                   query: _query,
-                                  helpingIds: _helpingIds,
                                   onBoost: _toggleUpvote,
                                   onSave: _toggleSave,
-                                  onToggleHelping: _toggleHelping,
                                   onLoadMore: _loadMore,
                                   loadingMore: _loadingMore,
                                 ),
                                 _HelpFeedList(
                                   posts: _posts.where((p) => p.postType == 'LOST').toList(),
                                   query: _query,
-                                  helpingIds: _helpingIds,
                                   onBoost: _toggleUpvote,
                                   onSave: _toggleSave,
-                                  onToggleHelping: _toggleHelping,
                                   onLoadMore: _loadMore,
                                   loadingMore: _loadingMore,
                                 ),
@@ -358,19 +337,15 @@ class _HelpFeedError extends StatelessWidget {
 class _HelpFeedList extends StatelessWidget {
   final List<FeedPost> posts;
   final String query;
-  final Set<String> helpingIds;
   final Future<bool> Function(FeedPost) onBoost;
   final Future<bool> Function(FeedPost) onSave;
-  final ValueChanged<FeedPost> onToggleHelping;
   final VoidCallback onLoadMore;
   final bool loadingMore;
   const _HelpFeedList({
     required this.posts,
     required this.query,
-    required this.helpingIds,
     required this.onBoost,
     required this.onSave,
-    required this.onToggleHelping,
     required this.onLoadMore,
     required this.loadingMore,
   });
@@ -420,10 +395,8 @@ class _HelpFeedList extends StatelessWidget {
           return _HelpFeedCard(
             key: ValueKey(items[i].id),
             post: items[i],
-            helping: helpingIds.contains(items[i].id),
             onBoost: () => onBoost(items[i]),
             onSave: () => onSave(items[i]),
-            onToggleHelping: () => onToggleHelping(items[i]),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => RescueDetailScreen(postId: items[i].id)),
             ),
@@ -436,18 +409,14 @@ class _HelpFeedList extends StatelessWidget {
 
 class _HelpFeedCard extends StatelessWidget {
   final FeedPost post;
-  final bool helping;
   final Future<bool> Function() onBoost;
   final Future<bool> Function() onSave;
-  final VoidCallback onToggleHelping;
   final VoidCallback onTap;
   const _HelpFeedCard({
     super.key,
     required this.post,
-    required this.helping,
     required this.onBoost,
     required this.onSave,
-    required this.onToggleHelping,
     required this.onTap,
   });
 
@@ -558,16 +527,18 @@ class _HelpFeedCard extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
+            // Opens the post, where the real "Contact" flow lives (send a
+            // contact request; the owner approves and shares WhatsApp).
             child: ElevatedButton(
-              onPressed: onToggleHelping,
+              onPressed: onTap,
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 48),
-                backgroundColor: helping ? AppColors.primary : AppColors.primary.withValues(alpha: 0.12),
-                foregroundColor: helping ? Colors.white : AppColors.primary,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+                foregroundColor: AppColors.primary,
                 elevation: 0,
                 shape: const StadiumBorder(),
               ),
-              child: Text(helping ? t(context, "You're Helping ✓", 'أنت تساعد ✓') : t(context, 'I Can Help →', 'يمكنني المساعدة ←')),
+              child: Text(t(context, 'I Can Help →', 'يمكنني المساعدة ←')),
             ),
           ),
         ],
