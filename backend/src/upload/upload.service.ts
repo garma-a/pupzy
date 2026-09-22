@@ -381,6 +381,12 @@ export class UploadService {
    * 2. **Copy** — `CopyObjectCommand` copies object to permanent location.
    * 3. **Delete** — `DeleteObjectCommand` removes original staging object.
    * 4. **Update DB** — durably records finalization state.
+   *
+   * The final `CLAIMED → FINALIZED` transition is conditional: if an
+   * expired-staging cleanup or recovery pass terminalized the ticket while the
+   * copy was in flight, the copied object is discarded/queued, the durable
+   * finalization obligation is settled and a stable retryable error is thrown
+   * so no post can reference reclaimed bytes.
    */
   async finalizeMedia(
     mediaId: string,
@@ -430,6 +436,7 @@ export class UploadService {
     const finalKey = `posts/${postId}/${mediaId}${ext}`;
 
     let obligationId: string | null = null;
+    let transitionLost = false;
     try {
       obligationId = await this.beginFinalizationObligation(userId, mediaId, stagingKey, finalKey);
     } catch (err) {
@@ -494,14 +501,23 @@ export class UploadService {
         this.logger.warn(`Failed to delete staging object ${stagingKey} after copy: ${err}`);
       }
 
-      await this.db
+      // The transition is conditional on the ticket still being CLAIMED for
+      // this post: an expired-staging cleanup or recovery pass may have
+      // terminalized it while the copy was in flight, in which case its
+      // permanent key is queued for deletion and no post may reference it.
+      const [finalized] = await this.db
         .update(stagedUploads)
         .set({
           status: 'FINALIZED',
           finalStorageKey: finalKey,
           updatedAt: new Date(),
         })
-        .where(eq(stagedUploads.id, mediaId));
+        .where(
+          and(eq(stagedUploads.id, mediaId), eq(stagedUploads.status, 'CLAIMED'), eq(stagedUploads.postId, postId)),
+        )
+        .returning({ id: stagedUploads.id });
+
+      transitionLost = !finalized;
 
       await Promise.all([
         this.cacheManager.del(`media_ct:${mediaId}`),
@@ -512,6 +528,26 @@ export class UploadService {
     } catch (err) {
       await this.settleFinalizationObligation(obligationId, finalKey, userId);
       throw err;
+    }
+
+    if (transitionLost) {
+      // The ticket left CLAIMED while the copy was in flight (expired-staging
+      // cleanup or recovery terminalized it), so the copied object must not
+      // survive behind a terminal ticket. Discard/queue it, settle the
+      // obligation and fail retryably so the caller can request a fresh
+      // ticket instead of committing a post against reclaimed bytes.
+      this.logger.warn(`Post media finalization for ${mediaId} lost its CLAIMED transition; discarding ${finalKey}`);
+      const accountBlocked = await this.settleFinalizationObligation(obligationId, finalKey, userId);
+      if (!accountBlocked) {
+        try {
+          await this.deleteObject(finalKey);
+        } catch {
+          await this.queueMediaDeletion(finalKey);
+        }
+      }
+      throw new AppError('Failed to finalize media in storage', 'POST_MEDIA_PROCESSING_FAILED', {
+        retryable: true,
+      });
     }
 
     const accountBlocked = await this.settleFinalizationObligation(obligationId, finalKey, userId);

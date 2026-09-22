@@ -17,6 +17,8 @@ import {
   adoptionPosts,
   productPosts,
   matingPosts,
+  mediaDeletionWork,
+  mediaFinalizations,
   type User,
   type City,
 } from '../database/schema';
@@ -27,6 +29,8 @@ import { UsersRepository } from '../users/users.repository';
 import { CitiesService } from '../cities/cities.service';
 import { UsersService } from '../users/users.service';
 import { UploadService } from './upload.service';
+import { MEDIA_FINALIZATION_LEASE_MS, MediaFinalizationRepository } from './media-finalization.repository';
+import { MediaDeletionProcessor } from './media-deletion.processor';
 import { ViewFlushCron } from '../posts/view-flush.cron';
 import { PostsService } from '../posts/posts.service';
 import { MatingService } from '../mating/mating.service';
@@ -102,6 +106,8 @@ class ControllableR2Adapter {
   public objects = new Map<string, Buffer>();
   public shouldFailCopy = false;
   public shouldFailHead = false;
+  /** Fires after copied bytes land, so a racing cleanup sees the new object. */
+  public onCopyObject?: (key: string) => void | Promise<void>;
 
   putObject(key: string, content: Buffer = Buffer.from('test-image-content')): void {
     this.objects.set(key, content);
@@ -115,9 +121,10 @@ class ControllableR2Adapter {
     this.objects.clear();
     this.shouldFailCopy = false;
     this.shouldFailHead = false;
+    this.onCopyObject = undefined;
   }
 
-  send(command: S3CommandLike): Promise<Record<string, unknown>> {
+  async send(command: S3CommandLike): Promise<Record<string, unknown>> {
     const cmdName = command.constructor?.name ?? command.name;
     const key = command.input?.Key ?? '';
 
@@ -140,6 +147,9 @@ class ControllableR2Adapter {
       const sourceKey = slashIdx >= 0 ? copySource.substring(slashIdx + 1) : copySource;
       const content = this.objects.get(sourceKey) ?? Buffer.from('staged-image-bytes');
       this.objects.set(key, content);
+      if (this.onCopyObject) {
+        await this.onCopyObject(key);
+      }
       return Promise.resolve({});
     }
 
@@ -186,6 +196,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
   let uploadService: UploadService;
   let postsService: PostsService;
   let matingService: MatingService;
+  let mediaDeletionProcessor: MediaDeletionProcessor;
 
   let postsResolver: PostsResolver;
   let uploadResolver: UploadResolver;
@@ -275,7 +286,8 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
 
     citiesService = new CitiesService(citiesRepo, mockCache);
     usersService = new UsersService(usersRepo, citiesService, mockConfig, mockCache);
-    uploadService = new UploadService(mockConfig, mockCache, dbHelper.db);
+    uploadService = new UploadService(mockConfig, mockCache, dbHelper.db, new MediaFinalizationRepository(dbHelper.db));
+    mediaDeletionProcessor = new MediaDeletionProcessor(dbHelper.db, uploadService);
 
     // Wire controllable R2 adapter into uploadService's S3Client
     (uploadService as unknown as S3ClientHolder).s3Client.send = jest.fn((cmd: unknown) =>
@@ -1264,6 +1276,201 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
 
       expect(res.errors).toBeDefined();
       expect(res.errors![0].message).toContain('Duplicate media IDs are not allowed');
+    });
+  });
+
+  // ─── 8. Expired-staging cleanup coordination with post media finalization ─────
+
+  describe('Expired-staging cleanup coordination with post media finalization', () => {
+    const createRescueMutation = `
+      mutation CreateRescue($input: CreateRescuePostInput!) {
+        createRescuePost(input: $input) { id media { id publicUrl } }
+      }
+    `;
+
+    function publishRescue(mediaId: string, title: string) {
+      return executeGql<PostMutationResponse>(
+        createRescueMutation,
+        { input: makeValidRescueInput([mediaId], { title }) },
+        testUser1,
+      );
+    }
+
+    /**
+     * Marks an in-flight copy's ticket as the expired CLAIMED candidate the
+     * hourly cleanup selects, with the intended permanent key already recorded
+     * (the state a reclaimable post-media candidate carries).
+     */
+    async function markCandidateExpired(mediaId: string, finalKey: string, postId: string): Promise<void> {
+      await dbHelper.db
+        .update(stagedUploads)
+        .set({
+          status: 'CLAIMED',
+          finalStorageKey: finalKey,
+          postId,
+          expiresAt: new Date(Date.now() - 1000),
+          updatedAt: new Date(),
+        })
+        .where(eq(stagedUploads.id, mediaId));
+    }
+
+    it('keeps a post’s media live when expired-staging cleanup selects its in-flight ticket', async () => {
+      const { mediaId, stagingKey } = await stageMedia(testUser1, 'image/jpeg');
+
+      let finalKey: string | undefined;
+      let cleanupRan = false;
+      r2Adapter.onCopyObject = async (key) => {
+        if (cleanupRan) return;
+        cleanupRan = true;
+        finalKey = key;
+
+        // The ticket was claimed just before expiry and the durable candidate
+        // already records its permanent key (the key embeds the intended post).
+        // Cleanup selects it while the copy's finalization obligation is fresh.
+        await markCandidateExpired(mediaId, key, key.split('/')[1]);
+        await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+      };
+
+      const res = await publishRescue(mediaId, 'In-flight cleanup post');
+      r2Adapter.onCopyObject = undefined;
+
+      expect(cleanupRan).toBe(true);
+      expect(res.errors).toBeUndefined();
+
+      const post = res.data!.createRescuePost!;
+      const key = finalKey!;
+
+      // The post committed against live bytes: the copied object survives and
+      // no deletion work was queued for it.
+      expect(r2Adapter.hasObject(key)).toBe(true);
+      expect(r2Adapter.hasObject(stagingKey)).toBe(false);
+      const queued = await dbHelper.db.select().from(mediaDeletionWork).where(eq(mediaDeletionWork.storageKey, key));
+      expect(queued).toHaveLength(0);
+
+      const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(ticket.status).toBe('FINALIZED');
+      expect(ticket.finalStorageKey).toBe(key);
+
+      const mediaRows = await dbHelper.db.select().from(postMedia).where(eq(postMedia.postId, post.id));
+      expect(mediaRows).toHaveLength(1);
+      expect(mediaRows[0].cloudflareStorageKey).toBe(key);
+      expect(post.media[0].publicUrl).toBe(`https://cdn.pupzy.com/${key}`);
+
+      // The successful finalization settled its durable obligation.
+      const obligations = await dbHelper.db
+        .select()
+        .from(mediaFinalizations)
+        .where(eq(mediaFinalizations.mediaId, mediaId));
+      expect(obligations).toHaveLength(0);
+    });
+
+    it('discards a copied post image and fails retryably when cleanup reclaimed the ticket first', async () => {
+      const { mediaId, stagingKey } = await stageMedia(testUser1, 'image/jpeg');
+
+      let finalKey: string | undefined;
+      let cleanupRan = false;
+      r2Adapter.onCopyObject = async (key) => {
+        if (cleanupRan) return;
+        cleanupRan = true;
+        finalKey = key;
+
+        await markCandidateExpired(mediaId, key, key.split('/')[1]);
+
+        // The copy stalled past its finalization lease, so the obligation no
+        // longer proves a live copy and the cleanup reclaims the candidate
+        // before the finalization records its transition.
+        await dbHelper.db
+          .update(mediaFinalizations)
+          .set({ updatedAt: new Date(Date.now() - MEDIA_FINALIZATION_LEASE_MS - 60_000) })
+          .where(eq(mediaFinalizations.mediaId, mediaId));
+        await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+      };
+
+      const res = await publishRescue(mediaId, 'Lost post media finalization race');
+      r2Adapter.onCopyObject = undefined;
+
+      expect(cleanupRan).toBe(true);
+
+      // The post is never created against reclaimed bytes; the copied object
+      // is discarded/queued and the caller gets a stable retryable error.
+      expect(res.errors).toBeDefined();
+      const appError = res.errors![0].originalError as
+        { code?: string; extensions?: { retryable?: boolean } } | undefined;
+      expect(appError?.code).toBe('POST_MEDIA_PROCESSING_FAILED');
+      expect(appError?.extensions?.retryable).toBe(true);
+
+      const key = finalKey!;
+      expect(r2Adapter.hasObject(key)).toBe(false);
+      expect(r2Adapter.hasObject(stagingKey)).toBe(false);
+
+      const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(ticket.status).toBe('EXPIRED');
+
+      expect(await dbHelper.db.select().from(posts)).toHaveLength(0);
+      expect(await dbHelper.db.select().from(postMedia)).toHaveLength(0);
+
+      // The reclaimed key stays durably tracked for deletion.
+      const queued = await dbHelper.db.select().from(mediaDeletionWork).where(eq(mediaDeletionWork.storageKey, key));
+      expect(queued.length).toBeGreaterThanOrEqual(1);
+
+      // The lost transition also settled its obligation instead of leaking it.
+      const obligations = await dbHelper.db
+        .select()
+        .from(mediaFinalizations)
+        .where(eq(mediaFinalizations.mediaId, mediaId));
+      expect(obligations).toHaveLength(0);
+    });
+
+    it('never deletes post media referenced by a committed post when a stale candidate is processed', async () => {
+      const { mediaId } = await stageMedia(testUser1, 'image/jpeg');
+
+      const res = await publishRescue(mediaId, 'Committed media reference');
+      expect(res.errors).toBeUndefined();
+      const post = res.data!.createRescuePost!;
+      const [mediaRow] = await dbHelper.db.select().from(postMedia).where(eq(postMedia.postId, post.id));
+      const finalKey = mediaRow.cloudflareStorageKey;
+      expect(r2Adapter.hasObject(finalKey)).toBe(true);
+
+      // The candidate scan saw the ticket while it still looked reclaimable;
+      // by processing time the committed post references its final key.
+      await markCandidateExpired(mediaId, finalKey, post.id);
+
+      await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+
+      // The referenced bytes survive and the ticket is never terminalized.
+      expect(r2Adapter.hasObject(finalKey)).toBe(true);
+      const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(ticket.status).toBe('CLAIMED');
+      const queued = await dbHelper.db
+        .select()
+        .from(mediaDeletionWork)
+        .where(eq(mediaDeletionWork.storageKey, finalKey));
+      expect(queued).toHaveLength(0);
+    });
+
+    it('cleans an expired unconsumed post upload and durably queues its unreferenced final object', async () => {
+      const { mediaId, stagingKey } = await stageMedia(testUser1, 'image/jpeg');
+      const finalKey = `posts/${generateUuidV7()}/${mediaId}.jpg`;
+
+      await markCandidateExpired(mediaId, finalKey, generateUuidV7());
+      r2Adapter.putObject(finalKey, Buffer.alloc(1024, 0x33));
+
+      const cleaned = await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+      expect(cleaned).toBeGreaterThanOrEqual(1);
+
+      expect(r2Adapter.hasObject(stagingKey)).toBe(false);
+      expect(r2Adapter.hasObject(finalKey)).toBe(false);
+
+      const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(ticket.status).toBe('EXPIRED');
+      expect(ticket.stagingKey).toBe(`cleaned/${stagingKey}`);
+
+      const queued = await dbHelper.db
+        .select()
+        .from(mediaDeletionWork)
+        .where(eq(mediaDeletionWork.storageKey, finalKey));
+      expect(queued).toHaveLength(1);
+      expect(queued[0].cdnUrl).toBe('');
     });
   });
 });

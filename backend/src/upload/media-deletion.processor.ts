@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { eq, or, and, lt, inArray, sql } from 'drizzle-orm';
+import { eq, or, and, gte, lt, inArray, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import * as schema from '../database/schema';
@@ -8,11 +8,14 @@ import {
   mediaDeletionWork,
   stagedUploads,
   commentMedia,
+  postMedia,
+  mediaFinalizations,
   users,
   type StagedUpload,
   type StagedUploadStatus,
 } from '../database/schema';
 import { UploadService } from './upload.service';
+import { MEDIA_FINALIZATION_LEASE_MS } from './media-finalization.repository';
 
 /**
  * MediaDeletionProcessor — handles durable outbox processing for media deletion
@@ -275,9 +278,12 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
 
       if (outcome === 'SKIPPED') {
         // The ticket was consumed (FINALIZED) between the candidate scan and
-        // this pass; the consuming flow owns the ticket and its object.
+        // this pass, or a finalization for its permanent key is still in
+        // flight; the consuming flow owns the ticket and its object. The row
+        // stays re-selectable so a later pass can reclaim it if that flow
+        // fails.
         this.logger.warn(
-          `Skipped expired staging cleanup for ${row.id}: the ticket left the selected state before it was processed`,
+          `Skipped expired staging cleanup for ${row.id}: the ticket is still live (consumed or finalization in flight)`,
         );
         return;
       }
@@ -565,12 +571,17 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
    *
    * Other purposes are coordinated through the ticket row. The conditional
    * terminal update below makes the consuming request lose its
-   * `CLAIMED → FINALIZED` transition, and `finalizeCommentImages` discards its
-   * published object when it loses that transition instead of letting a
-   * comment commit against bytes that are queued for deletion. A committed
-   * comment image (`comment_media` row) is re-checked inside this transaction
-   * before any terminal transition, and an already-`FINALIZED` ticket makes
-   * the conditional update match nothing so its object is left alone.
+   * `CLAIMED → FINALIZED` transition, and `finalizeCommentImages` /
+   * `finalizeMedia` discard their published object when they lose that
+   * transition instead of letting a comment or post commit against bytes
+   * that are queued for deletion. A committed comment image (`comment_media`
+   * row) or post media object (`post_media` row) is re-checked inside this
+   * transaction before any terminal transition, and an already-`FINALIZED`
+   * ticket makes the conditional update match nothing so its object is left
+   * alone. For `POST_MEDIA` a fresh `IN_FLIGHT` finalization obligation
+   * (`media_finalizations`, the same lease account deletion trusts) also
+   * keeps the candidate live, because the copy may still be publishing the
+   * exact key this reclaim would delete.
    *
    * Storage deletion happens only after the transaction commits; the queued
    * `media_deletion_work` rows remain the durable retry path.
@@ -649,6 +660,37 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
           .limit(1);
 
         if (committed) return 'REFERENCED' as const;
+      } else if (candidate.purpose === 'POST_MEDIA') {
+        // A media object referenced by a committed post is live even when its
+        // ticket looks stale; never reclaim it.
+        const [committed] = await tx
+          .select({ id: postMedia.id })
+          .from(postMedia)
+          .where(eq(postMedia.cloudflareStorageKey, finalStorageKey))
+          .limit(1);
+
+        if (committed) return 'REFERENCED' as const;
+
+        // A fresh in-flight finalization obligation means a live copy may
+        // still publish this exact key. Reclaiming now would terminalize the
+        // ticket underneath that copy; `finalizeMedia` would then lose its
+        // conditional transition and discard its object. Wait for the
+        // obligation to settle and re-select the still-live ticket instead.
+        // Staleness uses the same lease account deletion trusts.
+        const freshObligationSince = new Date(Date.now() - MEDIA_FINALIZATION_LEASE_MS);
+        const [inFlight] = await tx
+          .select({ id: mediaFinalizations.id })
+          .from(mediaFinalizations)
+          .where(
+            and(
+              eq(mediaFinalizations.finalKey, finalStorageKey),
+              eq(mediaFinalizations.status, 'IN_FLIGHT'),
+              gte(mediaFinalizations.updatedAt, freshObligationSince),
+            ),
+          )
+          .limit(1);
+
+        if (inFlight) return 'SKIPPED' as const;
       }
 
       const terminalStatus: StagedUploadStatus =
