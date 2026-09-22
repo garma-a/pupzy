@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { eq, or, and, gte, lt, inArray, sql } from 'drizzle-orm';
+import { eq, or, and, gte, isNull, lt, inArray, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import * as schema from '../database/schema';
@@ -312,7 +312,11 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
     }
 
     // No permanent object: terminalize conditionally so a ticket consumed
-    // between the scan and now is never marked EXPIRED.
+    // between the scan and now is never marked EXPIRED. The `finalStorageKey`
+    // re-check is also required: a slow pass can still hold a pre-latch
+    // snapshot of a ticket that a lost finalization has since latched with its
+    // discarded permanent key, and this branch must never clobber that latch
+    // into an unscannable `EXPIRED` row that orphans the object.
     const nextStatus: StagedUploadStatus = row.status === 'FAILED' ? 'FAILED' : 'EXPIRED';
     const [terminalized] = await this.db
       .update(stagedUploads)
@@ -327,6 +331,7 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
           eq(stagedUploads.userId, row.userId),
           eq(stagedUploads.purpose, row.purpose),
           inArray(stagedUploads.status, ['ISSUED', 'CLAIMED', 'FAILED']),
+          isNull(stagedUploads.finalStorageKey),
         ),
       )
       .returning({ id: stagedUploads.id });

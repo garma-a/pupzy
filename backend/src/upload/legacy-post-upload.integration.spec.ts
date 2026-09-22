@@ -21,6 +21,7 @@ import {
   mediaFinalizations,
   type User,
   type City,
+  type StagedUpload,
 } from '../database/schema';
 import { PostsRepository } from '../posts/posts.repository';
 import { MatingRepository } from '../mating/mating.repository';
@@ -1562,6 +1563,77 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
 
       // The stale-FAILED scan re-selects the latched ticket and reclaims the
       // object, proving a crash before the delete/queue cannot orphan it.
+      await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+
+      expect(r2Adapter.hasObject(key)).toBe(false);
+      const [reclaimed] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(reclaimed.stagingKey).toBe(`cleaned/${stagingKey}`);
+    });
+
+    it('keeps a latched discarded key reclaimable when a slow cleanup pass still holds the pre-latch snapshot', async () => {
+      const { mediaId, stagingKey } = await stageMedia(testUser1, 'image/jpeg');
+
+      let finalKey: string | undefined;
+      let cleanupRan = false;
+      let staleSnapshot: StagedUpload | undefined;
+
+      r2Adapter.onCopyObject = async (key) => {
+        if (cleanupRan) return;
+        cleanupRan = true;
+        finalKey = key;
+
+        await dbHelper.db
+          .update(stagedUploads)
+          .set({ expiresAt: new Date(Date.now() - 1000), updatedAt: new Date() })
+          .where(eq(stagedUploads.id, mediaId));
+
+        // A concurrent cleanup pass scanned the candidate while it still read
+        // CLAIMED with no permanent key, then stalled before processing it.
+        [staleSnapshot] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+
+        // The copy stalls past its lease, so cleanup terminalizes the
+        // candidate; the finalization then loses its transition and latches.
+        await dbHelper.db
+          .update(mediaFinalizations)
+          .set({ updatedAt: new Date(Date.now() - MEDIA_FINALIZATION_LEASE_MS - 60_000) })
+          .where(eq(mediaFinalizations.mediaId, mediaId));
+        await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+
+        // The discard delete fails, so the latched key (and not the immediate
+        // delete) is the durable way back to the copied object.
+        r2Adapter.shouldFailDelete = true;
+      };
+
+      const res = await publishRescue(mediaId, 'Stale snapshot cleanup pass');
+      r2Adapter.onCopyObject = undefined;
+      r2Adapter.shouldFailDelete = false;
+
+      expect(cleanupRan).toBe(true);
+      expect(res.errors).toBeDefined();
+
+      const key = finalKey!;
+      let [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(ticket.status).toBe('FAILED');
+      expect(ticket.finalStorageKey).toBe(key);
+
+      // Simulate the crash window: neither the immediate delete nor the queued
+      // fallback survived, so the latched ticket is the only reclaim path.
+      await dbHelper.db.delete(mediaDeletionWork);
+
+      // The stalled pass now processes its pre-latch snapshot. It must not
+      // clobber the latch; otherwise the stale-FAILED scan can never select
+      // the row again and the copied object is orphaned.
+      const processor = mediaDeletionProcessor as unknown as {
+        cleanupExpiredCandidate(row: StagedUpload): Promise<void>;
+      };
+      await processor.cleanupExpiredCandidate(staleSnapshot!);
+
+      [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(ticket.status).toBe('FAILED');
+      expect(ticket.finalStorageKey).toBe(key);
+      expect(ticket.stagingKey).toBe(stagingKey);
+
+      // A later pass must still reclaim the latched object.
       await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
 
       expect(r2Adapter.hasObject(key)).toBe(false);
