@@ -105,9 +105,9 @@ mutation {
 
 ## 5. Replacement, concurrency and compensation
 
-- Setting or removing takes a row lock on the account. The current owned key is compared against the value observed before finalization:
+- Setting or removing takes a row lock on the account. Both the current owned storage key and the current change marker (`profile_photo_changed_at`) are compared against the values observed before finalization:
   - Sequential replacement succeeds and queues the previous owned object for deletion.
-  - A concurrent replacement or an explicit removal wins: the losing request receives `PROFILE_PHOTO_REPLACED`, its newly finalized object is deleted (or queued for the deletion worker) and its ticket is marked `FAILED`. No orphaned finalized media or dangling reference survives.
+  - A concurrent replacement or an explicit removal wins: the losing request receives `PROFILE_PHOTO_REPLACED`, its newly finalized object is deleted (or queued for the deletion worker) and its ticket is marked `FAILED`. No orphaned finalized media or dangling reference survives. Because the change marker is compared too, an explicit removal wins even when the previous picture was provider-owned or empty and the owned key stays `NULL` on both sides.
 - If permanent publication fails, the ticket returns to a retryable state and no profile change occurs. If the account update fails after publication, the finalized object is compensated away durably.
 - Periodic reconciliation reclaims a finalized avatar whose account no longer references it (for example after a crash between publication and the account update) and never deletes the active avatar. Staging objects are removed after successful publication.
 

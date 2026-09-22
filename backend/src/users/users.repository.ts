@@ -109,18 +109,26 @@ export class UsersRepository {
    * Activates a finalized owned profile photo.
    *
    * Locks the user row so the previous-avatar comparison, the user update and
-   * the obsolete-media enqueue commit atomically. `expectedStorageKey` is the
-   * owned key observed before finalization: when another replacement (or an
-   * explicit removal) won the race, this throws `PROFILE_PHOTO_REPLACED`
-   * instead of overwriting a decision that was never observed. The caller
-   * compensates the losing finalized object.
+   * the obsolete-media enqueue commit atomically. `expectedStorageKey` and
+   * `expectedChangedAt` are the values observed before finalization: when
+   * another replacement or an explicit removal won the race, this throws
+   * `PROFILE_PHOTO_REPLACED` instead of overwriting a decision that was never
+   * observed. The change marker is compared as well as the storage key, so a
+   * removal wins even when the previous picture was provider-owned (no owned
+   * key) and the key stays `NULL` on both sides. The caller compensates the
+   * losing finalized object.
    *
    * Provider URLs are never enqueued: only a previously owned storage key
    * becomes deletion work.
    */
   async activateProfilePhoto(
     userId: string,
-    input: { expectedStorageKey: string | null; storageKey: string; publicUrl: string },
+    input: {
+      expectedStorageKey: string | null;
+      expectedChangedAt: Date | null;
+      storageKey: string;
+      publicUrl: string;
+    },
   ): Promise<User> {
     return this.db.transaction(async (tx) => {
       const [user] = await tx.select().from(users).where(eq(users.id, userId)).for('update');
@@ -129,7 +137,12 @@ export class UsersRepository {
       }
 
       const currentStorageKey = user.profilePhotoStorageKey ?? null;
-      if (currentStorageKey !== (input.expectedStorageKey ?? null)) {
+      const currentChangedAt = user.profilePhotoChangedAt ?? null;
+      const expectedChangedAt = input.expectedChangedAt ?? null;
+      if (
+        currentStorageKey !== (input.expectedStorageKey ?? null) ||
+        (currentChangedAt?.getTime() ?? null) !== (expectedChangedAt?.getTime() ?? null)
+      ) {
         throw new ConflictError(
           'The profile photo was changed by another request. Refresh and try again.',
           'PROFILE_PHOTO_REPLACED',

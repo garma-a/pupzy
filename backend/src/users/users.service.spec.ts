@@ -7,6 +7,7 @@ import { UsersRepository } from './users.repository';
 import { AccountDeletionRepository } from './account-deletion.repository';
 import { CitiesService } from '../cities/cities.service';
 import { UploadService } from '../upload/upload.service';
+import { ConflictError } from '../common/errors/app.errors';
 import type { AccountDeletion, User } from '../database/schema';
 
 describe('UsersService', () => {
@@ -18,6 +19,9 @@ describe('UsersService', () => {
     create: jest.Mock;
     update: jest.Mock;
     linkFirebaseUserId: jest.Mock;
+    findById: jest.Mock;
+    findActiveById: jest.Mock;
+    activateProfilePhoto: jest.Mock;
   };
   let mockCitiesService: { findById: jest.Mock; findNearest: jest.Mock };
   let mockCacheManager: { del: jest.Mock };
@@ -29,6 +33,9 @@ describe('UsersService', () => {
       create: jest.fn(),
       update: jest.fn(),
       linkFirebaseUserId: jest.fn(),
+      findById: jest.fn().mockResolvedValue(undefined),
+      findActiveById: jest.fn(),
+      activateProfilePhoto: jest.fn(),
     };
     mockCitiesService = { findById: jest.fn(), findNearest: jest.fn() };
     mockCacheManager = { del: jest.fn().mockResolvedValue(undefined) };
@@ -274,6 +281,109 @@ describe('UsersService', () => {
       await service.updateNotificationPreferences(userId, true);
 
       expect(mockUsersRepo.update).toHaveBeenCalledWith(userId, { notificationsEnabled: true });
+    });
+  });
+
+  describe('setProfilePhoto', () => {
+    const userId = '01916327-0000-7000-8000-000000000010';
+    const mediaId = '01916327-0000-7000-8000-000000000011';
+    const storageKey = `avatars/${userId}/${mediaId}.webp`;
+    const changedAt = new Date('2026-01-02T03:04:05.678Z');
+
+    function baseUser(overrides: Partial<User> = {}): User {
+      return {
+        id: userId,
+        firebaseUserId: 'fb-photo-user',
+        phoneNumber: null,
+        isBanned: false,
+        profilePictureUrl: 'https://provider.example/initial.png',
+        profilePhotoStorageKey: null,
+        profilePhotoChangedAt: changedAt,
+        ...overrides,
+      } as unknown as User;
+    }
+
+    function uploadServiceMock(): {
+      finalizeProfilePhoto: jest.Mock;
+      deleteObject: jest.Mock;
+      markMediaFailed: jest.Mock;
+    } {
+      return testingModule.get<UploadService>(UploadService) as unknown as {
+        finalizeProfilePhoto: jest.Mock;
+        deleteObject: jest.Mock;
+        markMediaFailed: jest.Mock;
+      };
+    }
+
+    function mockFinalize(): void {
+      uploadServiceMock().finalizeProfilePhoto.mockResolvedValue({
+        mediaId,
+        stagingKey: `staging/${userId}/${mediaId}.webp`,
+        storageKey,
+        publicUrl: `https://cdn.pupzy.net/${storageKey}`,
+      });
+    }
+
+    it('forwards the change marker observed before finalization to the activation guard', async () => {
+      mockUsersRepo.findActiveById.mockResolvedValue(baseUser());
+      mockUsersRepo.activateProfilePhoto.mockResolvedValue(
+        baseUser({ profilePhotoStorageKey: storageKey, profilePictureUrl: `https://cdn.pupzy.net/${storageKey}` }),
+      );
+      mockFinalize();
+
+      await service.setProfilePhoto(userId, mediaId);
+
+      expect(mockUsersRepo.activateProfilePhoto).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({
+          expectedStorageKey: null,
+          expectedChangedAt: changedAt,
+          storageKey,
+          publicUrl: `https://cdn.pupzy.net/${storageKey}`,
+        }),
+      );
+    });
+
+    it('surfaces PROFILE_PHOTO_REPLACED and compensates the finalized object when the marker changed', async () => {
+      mockUsersRepo.findActiveById.mockResolvedValue(baseUser());
+      mockUsersRepo.activateProfilePhoto.mockRejectedValue(
+        new ConflictError(
+          'The profile photo was changed by another request. Refresh and try again.',
+          'PROFILE_PHOTO_REPLACED',
+        ),
+      );
+      mockFinalize();
+      const uploadService = uploadServiceMock();
+
+      await expect(service.setProfilePhoto(userId, mediaId)).rejects.toMatchObject({
+        code: 'PROFILE_PHOTO_REPLACED',
+      });
+
+      expect(mockUsersRepo.activateProfilePhoto).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({ expectedChangedAt: changedAt }),
+      );
+      expect(uploadService.deleteObject).toHaveBeenCalledWith(storageKey);
+      expect(uploadService.markMediaFailed).toHaveBeenCalledWith(
+        [mediaId],
+        expect.stringContaining('Profile photo activation failed'),
+      );
+      expect(mockCacheManager.del).not.toHaveBeenCalled();
+    });
+
+    it('returns early for an idempotent retry of the winning mediaId', async () => {
+      const active = baseUser({
+        profilePhotoStorageKey: storageKey,
+        profilePictureUrl: `https://cdn.pupzy.net/${storageKey}`,
+      });
+      mockUsersRepo.findActiveById.mockResolvedValue(active);
+      const uploadService = uploadServiceMock();
+
+      const result = await service.setProfilePhoto(userId, mediaId);
+
+      expect(result).toBe(active);
+      expect(mockUsersRepo.activateProfilePhoto).not.toHaveBeenCalled();
+      expect(uploadService.finalizeProfilePhoto).not.toHaveBeenCalled();
     });
   });
 });

@@ -22,6 +22,7 @@ export const MAX_PUSH_DELIVERY_ATTEMPTS = 5;
 const PUSH_DELIVERY_LEASE_MS = 60_000;
 const MAX_RETRY_DELAY_MS = 5 * 60_000;
 const MAX_LAST_ERROR_LENGTH = 500;
+const EXPIRED_LEASE_FAILURE_MESSAGE = 'Push delivery lease expired after the maximum number of attempts';
 
 /** A claimed intent whose send-time rechecks all passed. */
 interface ResolvedPushDelivery {
@@ -130,15 +131,31 @@ export class PushDeliveryProcessor implements OnApplicationBootstrap {
 
   private async claimNextDelivery(): Promise<PushDelivery | undefined> {
     return this.db.transaction(async (tx) => {
+      // An interrupted intent whose attempts are already exhausted is terminal:
+      // reclaiming it after lease expiry would send beyond the attempt bound.
+      await tx.execute(sql`
+        UPDATE push_deliveries
+        SET status = 'FAILED',
+            last_error = ${EXPIRED_LEASE_FAILURE_MESSAGE},
+            lease_token = NULL,
+            lease_expires_at = NULL,
+            updated_at = now()
+        WHERE status = 'PROCESSING'
+          AND (lease_expires_at IS NULL OR lease_expires_at < now())
+          AND attempts >= ${MAX_PUSH_DELIVERY_ATTEMPTS}
+      `);
+
       const candidateResult = await tx.execute<{ id: string }>(sql`
         SELECT id
         FROM push_deliveries
         WHERE (
           status = 'PENDING'
           AND next_attempt_at <= now()
+          AND attempts < ${MAX_PUSH_DELIVERY_ATTEMPTS}
         ) OR (
           status = 'PROCESSING'
           AND (lease_expires_at IS NULL OR lease_expires_at < now())
+          AND attempts < ${MAX_PUSH_DELIVERY_ATTEMPTS}
         )
         ORDER BY next_attempt_at ASC, created_at ASC, id ASC
         FOR UPDATE SKIP LOCKED
