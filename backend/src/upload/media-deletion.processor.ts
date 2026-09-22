@@ -496,7 +496,9 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
    * snapshot: an activation either commits before this transaction (the
    * avatar reads as referenced and only its leftover staging is cleaned) or
    * observes the terminal ticket and is rejected instead of installing bytes
-   * that are already queued for deletion.
+   * that are already queued for deletion. When the owner row is already gone
+   * (cascaded account deletion), both the permanent and any leftover staging
+   * key are enqueued in the same transaction instead of being skipped.
    *
    * Storage deletion happens only after the transaction commits; the queued
    * `media_deletion_work` row remains the durable retry path.
@@ -506,13 +508,44 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
     if (!finalStorageKey) return 'SKIPPED';
 
     const outcome = await this.db.transaction(async (tx) => {
+      const enqueueAvatarDeletion = async (storageKey: string): Promise<void> => {
+        // Avatars have no CDN purge policy: one storage-only deletion row,
+        // deduplicated against any row already queued for the same key.
+        const [alreadyQueued] = await tx
+          .select({ id: mediaDeletionWork.id })
+          .from(mediaDeletionWork)
+          .where(and(eq(mediaDeletionWork.storageKey, storageKey), eq(mediaDeletionWork.cdnUrl, '')))
+          .limit(1);
+
+        if (!alreadyQueued) {
+          await tx.insert(mediaDeletionWork).values({
+            storageKey,
+            cdnUrl: '',
+            status: 'PENDING',
+            attempts: 0,
+          });
+        }
+      };
+
       const [owner] = await tx
         .select({ id: users.id, profilePhotoStorageKey: users.profilePhotoStorageKey })
         .from(users)
         .where(eq(users.id, orphan.userId))
         .for('update');
 
-      if (!owner) return 'SKIPPED' as const;
+      if (!owner) {
+        // The owner row cascaded away with the account between the candidate
+        // scan and this reclaim (its ticket row cascaded with it). No row can
+        // reference the permanent object and the terminal ticket can no longer
+        // be re-selected, so queue both the permanent and any leftover staging
+        // object durably instead of leaking them.
+        await enqueueAvatarDeletion(finalStorageKey);
+        if (orphan.stagingKey && !orphan.stagingKey.startsWith('cleaned/')) {
+          await enqueueAvatarDeletion(orphan.stagingKey);
+        }
+        return 'RECLAIMED' as const;
+      }
+
       if (owner.profilePhotoStorageKey === finalStorageKey) return 'REFERENCED' as const;
 
       const [reclaimed] = await tx
@@ -535,39 +568,12 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
 
       if (!reclaimed) return 'SKIPPED' as const;
 
-      // Avatars have no CDN purge policy: one storage-only deletion row.
-      const [alreadyQueued] = await tx
-        .select({ id: mediaDeletionWork.id })
-        .from(mediaDeletionWork)
-        .where(and(eq(mediaDeletionWork.storageKey, finalStorageKey), eq(mediaDeletionWork.cdnUrl, '')))
-        .limit(1);
-
-      if (!alreadyQueued) {
-        await tx.insert(mediaDeletionWork).values({
-          storageKey: finalStorageKey,
-          cdnUrl: '',
-          status: 'PENDING',
-          attempts: 0,
-        });
-      }
+      await enqueueAvatarDeletion(finalStorageKey);
 
       // The ticket is now terminal, so it can no longer be re-selected to
       // clean leftover staging; queue it durably in the same transaction.
       if (orphan.stagingKey && !orphan.stagingKey.startsWith('cleaned/')) {
-        const [stagingQueued] = await tx
-          .select({ id: mediaDeletionWork.id })
-          .from(mediaDeletionWork)
-          .where(and(eq(mediaDeletionWork.storageKey, orphan.stagingKey), eq(mediaDeletionWork.cdnUrl, '')))
-          .limit(1);
-
-        if (!stagingQueued) {
-          await tx.insert(mediaDeletionWork).values({
-            storageKey: orphan.stagingKey,
-            cdnUrl: '',
-            status: 'PENDING',
-            attempts: 0,
-          });
-        }
+        await enqueueAvatarDeletion(orphan.stagingKey);
       }
 
       return 'RECLAIMED' as const;

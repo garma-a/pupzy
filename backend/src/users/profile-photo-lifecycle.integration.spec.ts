@@ -94,6 +94,7 @@ class ControllableR2Adapter {
   public objects = new Map<string, R2Object>();
   public shouldFailPut = false;
   public onGetObject?: (key: string) => void;
+  public onPutObject?: (key: string) => void | Promise<void>;
 
   putObject(key: string, bytes: Buffer, etag?: string): void {
     const computedEtag = etag ?? `"${crypto.createHash('md5').update(bytes).digest('hex')}"`;
@@ -116,9 +117,10 @@ class ControllableR2Adapter {
     this.objects.clear();
     this.shouldFailPut = false;
     this.onGetObject = undefined;
+    this.onPutObject = undefined;
   }
 
-  send(command: S3CommandLike): Promise<Record<string, unknown>> {
+  async send(command: S3CommandLike): Promise<Record<string, unknown>> {
     const cmdName = command.constructor?.name ?? command.name;
     const key = command.input?.Key ?? '';
 
@@ -156,6 +158,10 @@ class ControllableR2Adapter {
     if (cmdName === 'PutObjectCommand' || command instanceof PutObjectCommand) {
       if (this.shouldFailPut) {
         return Promise.reject(new Error('Simulated R2 PutObject transient failure'));
+      }
+      if (this.onPutObject) {
+        // Fires before the bytes land so a racing recovery can delete first.
+        await this.onPutObject(key);
       }
       const body = command.input?.Body;
       const bytes = Buffer.isBuffer(body) ? body : typeof body === 'string' ? Buffer.from(body) : Buffer.from('');
@@ -1069,5 +1075,117 @@ describe('Profile Photo Lifecycle Integration (Ticket 17)', () => {
     expect(r2Adapter.hasObject(finalKey)).toBe(false);
     const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
     expect(ticket.status).toBe('FAILED');
+  });
+
+  // ── Recovery leak corners ───────────────────────────────────────────────────
+
+  it('durably queues the final and staging keys when the owner row vanished before reclaim', async () => {
+    // The scan selects the orphan candidate, then the owner cascades away
+    // (account deletion) before recovery's coordination transaction runs. Its
+    // ticket cascades with the user, so nothing can ever re-select the object;
+    // recovery must queue both keys instead of skipping silently.
+    const orphanMediaId = generateUuidV7();
+    const orphanKey = `avatars/${user.id}/${orphanMediaId}.webp`;
+    const orphanStagingKey = `staging/${user.id}/${orphanMediaId}.webp`;
+    const [orphanTicket] = await dbHelper.db
+      .insert(stagedUploads)
+      .values({
+        id: orphanMediaId,
+        userId: user.id,
+        purpose: 'PROFILE_PHOTO',
+        stagingKey: orphanStagingKey,
+        declaredContentType: 'image/webp',
+        declaredFileSizeBytes: validWebp.length,
+        status: 'FINALIZED',
+        finalStorageKey: orphanKey,
+        expiresAt: new Date(Date.now() + 900_000),
+      })
+      .returning();
+    r2Adapter.putObject(orphanKey, validWebp);
+    r2Adapter.putObject(orphanStagingKey, validWebp);
+
+    const internals = mediaDeletionProcessor as unknown as {
+      reclaimOrphanedProfilePhoto: (orphan: StagedUpload) => Promise<'RECLAIMED' | 'REFERENCED' | 'SKIPPED'>;
+    };
+    const realReclaim = internals.reclaimOrphanedProfilePhoto.bind(mediaDeletionProcessor);
+    let ownerVanished = false;
+    const reclaimSpy = jest
+      .spyOn(internals, 'reclaimOrphanedProfilePhoto')
+      .mockImplementation(async (orphan: StagedUpload) => {
+        if (!ownerVanished) {
+          ownerVanished = true;
+          await dbHelper.db.delete(users).where(eq(users.id, orphan.userId));
+        }
+        return realReclaim(orphan);
+      });
+
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const report = await mediaDeletionProcessor.reconcile({ olderThanMs: 0 });
+    reclaimSpy.mockRestore();
+
+    expect(ownerVanished).toBe(true);
+    expect(report.orphanedProfilePhotosRecovered).toBe(1);
+
+    // Both keys are durably queued storage-only rather than silently skipped.
+    const finalWork = await dbHelper.db
+      .select()
+      .from(mediaDeletionWork)
+      .where(eq(mediaDeletionWork.storageKey, orphanKey));
+    expect(finalWork).toHaveLength(1);
+    expect(finalWork[0].cdnUrl).toBe('');
+    const stagingWork = await dbHelper.db
+      .select()
+      .from(mediaDeletionWork)
+      .where(eq(mediaDeletionWork.storageKey, orphanStagingKey));
+    expect(stagingWork).toHaveLength(1);
+    expect(stagingWork[0].cdnUrl).toBe('');
+
+    // Reclaiming is idempotent: re-running on the same stale candidate does
+    // not enqueue duplicate work rows.
+    await expect(internals.reclaimOrphanedProfilePhoto(orphanTicket)).resolves.toBe('RECLAIMED');
+    const afterRetry = await dbHelper.db.select().from(mediaDeletionWork);
+    expect(afterRetry.filter((row) => row.storageKey === orphanKey)).toHaveLength(1);
+    expect(afterRetry.filter((row) => row.storageKey === orphanStagingKey)).toHaveLength(1);
+
+    // No live object survives the recovery pass.
+    expect(r2Adapter.hasObject(orphanKey)).toBe(false);
+    expect(r2Adapter.hasObject(orphanStagingKey)).toBe(false);
+  });
+
+  it('discards a published avatar when the ticket left CLAIMED before finalization was recorded', async () => {
+    const { mediaId, stagingKey } = await stageProfilePhoto(validWebp);
+    const finalKey = `avatars/${user.id}/${mediaId}.webp`;
+
+    // Recovery reclaims the CLAIMED ticket while the PutObject is in flight,
+    // after recovery's storage delete already ran: the late PutObject would
+    // otherwise land behind a terminal EXPIRED ticket that is never rescanned.
+    let reclaimed = false;
+    r2Adapter.onPutObject = async (key) => {
+      if (key !== finalKey || reclaimed) return;
+      reclaimed = true;
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      await mediaDeletionProcessor.reconcile({ olderThanMs: 0 });
+    };
+
+    await expect(uploadService.finalizeProfilePhoto(mediaId, user.id)).rejects.toMatchObject({
+      code: 'PROFILE_PHOTO_PROCESSING_FAILED',
+      extensions: { retryable: true },
+    });
+    r2Adapter.onPutObject = undefined;
+
+    expect(reclaimed).toBe(true);
+    const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+    expect(ticket.status).toBe('EXPIRED');
+
+    // The late object is deleted/queued, never left behind a terminal ticket.
+    expect(r2Adapter.hasObject(finalKey)).toBe(false);
+    expect(r2Adapter.hasObject(stagingKey)).toBe(false);
+    const queued = await dbHelper.db.select().from(mediaDeletionWork).where(eq(mediaDeletionWork.storageKey, finalKey));
+    expect(queued.every((row) => row.cdnUrl === '')).toBe(true);
+
+    // The profile stays untouched.
+    const after = await currentUser(user.id);
+    expect(after.profilePictureUrl).toBeNull();
+    expect(after.profilePhotoStorageKey).toBeNull();
   });
 });

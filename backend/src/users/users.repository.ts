@@ -146,7 +146,13 @@ export class UsersRepository {
       const [ticket] = await tx
         .select({ status: stagedUploads.status, finalStorageKey: stagedUploads.finalStorageKey })
         .from(stagedUploads)
-        .where(and(eq(stagedUploads.id, input.stagedUploadId), eq(stagedUploads.userId, userId)))
+        .where(
+          and(
+            eq(stagedUploads.id, input.stagedUploadId),
+            eq(stagedUploads.userId, userId),
+            eq(stagedUploads.purpose, 'PROFILE_PHOTO'),
+          ),
+        )
         .limit(1);
 
       if (!ticket || ticket.status !== 'FINALIZED' || ticket.finalStorageKey !== input.storageKey) {
