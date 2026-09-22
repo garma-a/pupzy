@@ -2,7 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, inArray } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
-import { users, type User, type NewUser } from '../database/schema';
+import { users, mediaDeletionWork, type User, type NewUser } from '../database/schema';
+import { ConflictError, ForbiddenError } from '../common/errors/app.errors';
 import type * as schema from '../database/schema';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
@@ -76,5 +77,100 @@ export class UsersRepository {
   async delete(id: string): Promise<boolean> {
     const result = await this.db.delete(users).where(eq(users.id, id)).returning({ id: users.id });
     return result.length > 0;
+  }
+
+  /**
+   * Activates a finalized owned profile photo.
+   *
+   * Locks the user row so the previous-avatar comparison, the user update and
+   * the obsolete-media enqueue commit atomically. `expectedStorageKey` is the
+   * owned key observed before finalization: when another replacement (or an
+   * explicit removal) won the race, this throws `PROFILE_PHOTO_REPLACED`
+   * instead of overwriting a decision that was never observed. The caller
+   * compensates the losing finalized object.
+   *
+   * Provider URLs are never enqueued: only a previously owned storage key
+   * becomes deletion work.
+   */
+  async activateProfilePhoto(
+    userId: string,
+    input: { expectedStorageKey: string | null; storageKey: string; publicUrl: string },
+  ): Promise<User> {
+    return this.db.transaction(async (tx) => {
+      const [user] = await tx.select().from(users).where(eq(users.id, userId)).for('update');
+      if (!user || user.isBanned) {
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+
+      const currentStorageKey = user.profilePhotoStorageKey ?? null;
+      if (currentStorageKey !== (input.expectedStorageKey ?? null)) {
+        throw new ConflictError(
+          'The profile photo was changed by another request. Refresh and try again.',
+          'PROFILE_PHOTO_REPLACED',
+        );
+      }
+
+      if (currentStorageKey && currentStorageKey !== input.storageKey) {
+        await tx.insert(mediaDeletionWork).values({
+          storageKey: currentStorageKey,
+          cdnUrl: '',
+          status: 'PENDING',
+          attempts: 0,
+        });
+      }
+
+      const [updated] = await tx
+        .update(users)
+        .set({
+          profilePictureUrl: input.publicUrl,
+          profilePhotoStorageKey: input.storageKey,
+          profilePhotoChangedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      return updated;
+    });
+  }
+
+  /**
+   * Clears the user's profile picture explicitly.
+   *
+   * The row lock makes removal atomic with the decision marker, so a
+   * concurrent replacement can only win before or after the removal, never
+   * silently undo it. The previously owned key is enqueued for deletion in
+   * the same transaction; a provider URL is never treated as owned media.
+   * Idempotent: repeating removal queues nothing.
+   */
+  async clearProfilePhoto(userId: string): Promise<User> {
+    return this.db.transaction(async (tx) => {
+      const [user] = await tx.select().from(users).where(eq(users.id, userId)).for('update');
+      if (!user) {
+        throw new ForbiddenError('ACCOUNT_DELETED');
+      }
+
+      if (user.profilePhotoStorageKey) {
+        await tx.insert(mediaDeletionWork).values({
+          storageKey: user.profilePhotoStorageKey,
+          cdnUrl: '',
+          status: 'PENDING',
+          attempts: 0,
+        });
+      }
+
+      const [updated] = await tx
+        .update(users)
+        .set({
+          profilePictureUrl: null,
+          profilePhotoStorageKey: null,
+          profilePhotoChangedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      return updated;
+    });
   }
 }

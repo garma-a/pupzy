@@ -80,8 +80,13 @@ describe('Saved-search storage contraction (ticket 19)', () => {
     const tags = entries.map((entry) => entry.tag);
 
     expect(tags.filter((tag) => tag === CONTRACTION_TAG)).toHaveLength(1);
-    expect(tags[tags.length - 1]).toBe(CONTRACTION_TAG);
-    expect(entries[entries.length - 1].idx).toBe(entries.length - 1);
+    const contractionIndex = tags.indexOf(CONTRACTION_TAG);
+    // Every migration that existed when the contraction was authored precedes
+    // it, and it keeps its recorded slot even as later campaign migrations
+    // (such as the profile-photo lifecycle) are appended after it.
+    expect(tags[contractionIndex - 1]).toBe('0052_add_normalized_feed_search');
+    expect(entries[contractionIndex].idx).toBe(contractionIndex);
+    expect(entries.every((entry, index) => entry.idx === index)).toBe(true);
     expect(new Set(tags).size).toBe(tags.length);
   });
 

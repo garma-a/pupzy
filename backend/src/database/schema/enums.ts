@@ -224,7 +224,11 @@ export type MediaFinalizationStatus = (typeof mediaFinalizationStatusEnum.enumVa
  * Purpose of an upload ticket.
  * Binds the media to a specific vertical/domain to prevent purpose confusion.
  */
-export const stagedUploadPurposeEnum = pgEnum('staged_upload_purpose', ['POST_MEDIA', 'COMMENT_IMAGE']);
+export const stagedUploadPurposeEnum = pgEnum('staged_upload_purpose', [
+  'POST_MEDIA',
+  'COMMENT_IMAGE',
+  'PROFILE_PHOTO',
+]);
 
 export type StagedUploadPurpose = (typeof stagedUploadPurposeEnum.enumValues)[number];
 

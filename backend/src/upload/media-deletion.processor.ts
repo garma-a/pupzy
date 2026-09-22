@@ -4,7 +4,7 @@ import { eq, or, and, lt, inArray, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import * as schema from '../database/schema';
-import { mediaDeletionWork, stagedUploads, commentMedia } from '../database/schema';
+import { mediaDeletionWork, stagedUploads, commentMedia, users } from '../database/schema';
 import { UploadService } from './upload.service';
 
 /**
@@ -261,6 +261,7 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
     orphanedCompensated: number;
     uncommittedRecovered: number;
     committedCleaned: number;
+    orphanedProfilePhotosRecovered: number;
   }> {
     const cleanedStaging = await this.cleanupExpiredStaging(options);
 
@@ -411,6 +412,74 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
       }
     }
 
+    // 3. Owned profile-photo recovery: a finalized avatar the account no
+    // longer references (crash between object publication and the owning row
+    // update, or a compensated replacement) is reclaimed. A referenced avatar
+    // is never deleted; only its leftover staging object is cleaned.
+    const potentiallyOrphanedAvatars = await this.db
+      .select()
+      .from(stagedUploads)
+      .where(
+        and(
+          eq(stagedUploads.purpose, 'PROFILE_PHOTO'),
+          inArray(stagedUploads.status, ['CLAIMED', 'FINALIZED', 'FAILED']),
+          lt(stagedUploads.updatedAt, cutoffDate),
+          sql`${stagedUploads.finalStorageKey} IS NOT NULL`,
+        ),
+      );
+
+    let orphanedProfilePhotosRecovered = 0;
+
+    for (const orphan of potentiallyOrphanedAvatars) {
+      if (!orphan.finalStorageKey) continue;
+
+      const [referenced] = await this.db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.profilePhotoStorageKey, orphan.finalStorageKey))
+        .limit(1);
+
+      if (referenced) {
+        // Active avatar: clean only the staging object it no longer needs.
+        if (orphan.stagingKey && !orphan.stagingKey.startsWith('cleaned/')) {
+          await this.uploadService.deleteObject(orphan.stagingKey).catch(() => {});
+          await this.db
+            .update(stagedUploads)
+            .set({ stagingKey: `cleaned/${orphan.stagingKey}`, updatedAt: new Date() })
+            .where(eq(stagedUploads.id, orphan.id));
+        }
+        continue;
+      }
+
+      await this.uploadService.deleteObject(orphan.finalStorageKey).catch(() => {});
+
+      // Avatars have no CDN purge policy: one storage-only deletion row.
+      const [alreadyQueued] = await this.db
+        .select({ id: mediaDeletionWork.id })
+        .from(mediaDeletionWork)
+        .where(and(eq(mediaDeletionWork.storageKey, orphan.finalStorageKey), eq(mediaDeletionWork.cdnUrl, '')))
+        .limit(1);
+
+      if (!alreadyQueued) {
+        await this.db.insert(mediaDeletionWork).values({
+          storageKey: orphan.finalStorageKey,
+          cdnUrl: '',
+          status: 'PENDING',
+          attempts: 0,
+        });
+      }
+
+      if (orphan.stagingKey && !orphan.stagingKey.startsWith('cleaned/')) {
+        await this.uploadService.deleteObject(orphan.stagingKey).catch(() => {});
+        await this.db
+          .update(stagedUploads)
+          .set({ stagingKey: `cleaned/${orphan.stagingKey}`, updatedAt: new Date() })
+          .where(eq(stagedUploads.id, orphan.id));
+      }
+
+      orphanedProfilePhotosRecovered++;
+    }
+
     // Process pending deletion work
     const processedDeletionWork = await this.processPendingWork();
 
@@ -420,6 +489,7 @@ export class MediaDeletionProcessor implements OnApplicationBootstrap {
       orphanedCompensated: uncommittedRecovered,
       uncommittedRecovered,
       committedCleaned,
+      orphanedProfilePhotosRecovered,
     };
   }
 }

@@ -7,6 +7,7 @@ import type { Cache } from 'cache-manager';
 import { UsersRepository, type UsersExecutor } from './users.repository';
 import { AccountDeletionRepository } from './account-deletion.repository';
 import { CitiesService } from '../cities/cities.service';
+import { UploadService, type FinalizedProfilePhoto } from '../upload/upload.service';
 import { encryptString, decryptString } from '../common/utils/crypto.util';
 import { ForbiddenError, NotFoundError, ValidationError } from '../common/errors/app.errors';
 import { isAccountDeletionBlockedStatus, type User } from '../database/schema';
@@ -29,6 +30,7 @@ export class UsersService {
     private readonly accountDeletionRepository: AccountDeletionRepository,
     config: ConfigService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly uploadService: UploadService,
   ) {
     this.phoneEncryptionKey = config.get<string>('PHONE_ENCRYPTION_KEY')!;
   }
@@ -81,7 +83,10 @@ export class UsersService {
         );
         const updated = await this.usersRepository.update(existingByEmail.id, {
           firebaseUserId: input.firebaseUserId,
-          profilePictureUrl: input.photoUrl,
+          // Provider synchronization may seed the picture only while the
+          // account has never made an explicit avatar choice. Once the user
+          // set or removed a photo, re-linking providers must not restore it.
+          ...(existingByEmail.profilePhotoChangedAt === null ? { profilePictureUrl: input.photoUrl } : {}),
         });
         await this.invalidateUserCache(updated.firebaseUserId);
         return this.decryptUserPhone(updated);
@@ -231,6 +236,88 @@ export class UsersService {
     const updatedUser = await this.usersRepository.update(userId, { notificationsEnabled });
     await this.invalidateUserCache(updatedUser.firebaseUserId);
     return this.decryptUserPhone(updatedUser);
+  }
+
+  /**
+   * Sets or replaces the authenticated user's owned profile photo.
+   *
+   * The durable Staged Upload ticket (purpose `PROFILE_PHOTO`) is validated
+   * and finalized into `avatars/{userId}/{mediaId}.webp`, then the user row is
+   * updated in a transaction that also queues the previous owned object for
+   * deletion. Only media owned by the caller and never consumed can be used.
+   *
+   * A concurrent replacement or removal wins the row lock: the losing request
+   * is rejected with `PROFILE_PHOTO_REPLACED` and its finalized object is
+   * compensated away so no orphaned media survives. Retrying the winning
+   * mediaId is idempotent.
+   */
+  async setProfilePhoto(userId: string, mediaId: string): Promise<User> {
+    const user = await this.findActiveById(userId);
+    if (!user) {
+      throw new ForbiddenError('ACCOUNT_DELETED');
+    }
+
+    const expectedStorageKey = user.profilePhotoStorageKey ?? null;
+    const idempotentKey = this.uploadService.getProfilePhotoStorageKey(userId, mediaId);
+    if (expectedStorageKey === idempotentKey) {
+      // Retry of an already-successful set; `user` is already decrypted.
+      return user;
+    }
+
+    const finalized = await this.uploadService.finalizeProfilePhoto(mediaId, userId);
+
+    try {
+      const updated = await this.usersRepository.activateProfilePhoto(userId, {
+        expectedStorageKey,
+        storageKey: finalized.storageKey,
+        publicUrl: finalized.publicUrl,
+      });
+      await this.invalidateUserCacheById(userId);
+      return this.decryptUserPhone(updated);
+    } catch (err) {
+      await this.compensateProfilePhoto(finalized, err);
+      throw err;
+    }
+  }
+
+  /**
+   * Explicitly removes the authenticated user's profile picture.
+   *
+   * The result is no picture (clients render initials) and the change marker
+   * suppresses later provider synchronization. Any owned object is queued for
+   * deletion in the same transaction; a provider URL is never deleted as an
+   * owned object. Idempotent.
+   */
+  async removeProfilePhoto(userId: string): Promise<User> {
+    const user = await this.findActiveById(userId);
+    if (!user) {
+      throw new ForbiddenError('ACCOUNT_DELETED');
+    }
+
+    const updated = await this.usersRepository.clearProfilePhoto(userId);
+    await this.invalidateUserCacheById(userId);
+    return this.decryptUserPhone(updated);
+  }
+
+  /**
+   * Durable compensation for a profile photo whose activation transaction
+   * failed after the object was finalized: the object is deleted immediately
+   * (or queued for the deletion worker) and its ticket is marked FAILED.
+   */
+  private async compensateProfilePhoto(finalized: FinalizedProfilePhoto, err: unknown): Promise<void> {
+    const reason = err instanceof Error ? err.message : String(err);
+    try {
+      await this.uploadService.deleteObject(finalized.storageKey);
+    } catch {
+      await this.uploadService.queueMediaDeletion(finalized.storageKey);
+    }
+    await this.uploadService
+      .markMediaFailed([finalized.mediaId], `Profile photo activation failed: ${reason}`)
+      .catch((markErr) => {
+        this.logger.warn(
+          `Failed to mark profile photo ticket ${finalized.mediaId} as failed: ${markErr instanceof Error ? markErr.message : String(markErr)}`,
+        );
+      });
   }
 
   /**

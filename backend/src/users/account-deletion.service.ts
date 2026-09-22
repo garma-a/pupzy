@@ -363,6 +363,11 @@ export class AccountDeletionService {
         return;
       }
 
+      // Lock the account row so a concurrent avatar replacement either commits
+      // before this capture (and its object is deleted below) or waits on the
+      // row lock and then finds the account gone, compensating its own object.
+      const [lockedUser] = await tx.select().from(users).where(eq(users.id, userId)).for('update');
+
       // 1. Fetch all posts owned by this user
       const userPosts = await tx.select({ id: posts.id }).from(posts).where(eq(posts.creatorId, userId));
 
@@ -384,6 +389,13 @@ export class AccountDeletionService {
         for (const m of mediaRows) {
           if (m.key) mediaKeys.push(m.key);
         }
+      }
+
+      // Owned avatar media is captured even when post media was preserved from
+      // an earlier attempt. Only the owned storage key is an object to delete;
+      // a third-party provider picture URL is never treated as owned media.
+      if (lockedUser?.profilePhotoStorageKey && !mediaKeys.includes(lockedUser.profilePhotoStorageKey)) {
+        mediaKeys.push(lockedUser.profilePhotoStorageKey);
       }
 
       // Persist captured media scope and checkpoint step: 'DATA_CLEANED' atomically in the SAME transaction

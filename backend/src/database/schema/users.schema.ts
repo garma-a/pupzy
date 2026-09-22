@@ -64,10 +64,28 @@ export const users = pgTable(
     fullNameArabic: varchar('full_name_arabic', { length: 120 }),
 
     /**
-     * Profile picture URL synced from Firebase Auth on first sign-in.
-     * User can override via `updateProfile`.
+     * Effective profile picture URL shown to clients. Initially synced from
+     * Firebase Auth on first sign-in, then either a provider URL or an owned
+     * avatar URL after the user sets one. NULL means "no photo" (initials).
      */
     profilePictureUrl: text('profile_picture_url'),
+
+    /**
+     * R2 storage key of the user's owned avatar, e.g.
+     * `avatars/{userId}/{mediaId}.webp`. NULL while the profile uses a
+     * provider-synced picture or no picture at all. Only this owned key is
+     * ever queued for deletion; third-party provider URLs are never treated
+     * as owned objects.
+     */
+    profilePhotoStorageKey: text('profile_photo_storage_key'),
+
+    /**
+     * When the user explicitly set or removed their profile picture.
+     * NULL means the account has never made an avatar choice, so an initial
+     * provider picture remains eligible for provider synchronization. Once
+     * set, provider synchronization never overrides the user's decision.
+     */
+    profilePhotoChangedAt: timestamp('profile_photo_changed_at', { withTimezone: true }),
 
     /**
      * Trust badge. Set to `true` after the user completes at least one

@@ -24,6 +24,55 @@ type MediaUploadResponse {
   expiresAt: DateTime!
 }
 
+"""
+Input for requesting a durable profile photo upload ticket.
+Profile photos are static WebP images of at most 100,000 bytes.
+"""
+input RequestProfilePhotoUploadInput {
+  """
+  MIME type of the file. Must be `image/webp`.
+  """
+  contentType: String!
+  """
+  Exact file size in bytes. Maximum 100,000 bytes.
+  """
+  fileSizeBytes: Int!
+}
+
+"""
+Presigned direct upload ticket for an owned profile photo.
+"""
+type ProfilePhotoUploadTicket {
+  """
+  UUID to pass to `setProfilePhoto` after the bytes are uploaded.
+  """
+  mediaId: ID!
+  """
+  Presigned PUT URL — upload the WebP bytes here via HTTP PUT.
+  """
+  uploadUrl: String!
+  """
+  URL expiry timestamp. Upload must complete before this time.
+  """
+  expiresAt: DateTime!
+  """
+  Maximum accepted file size in bytes.
+  """
+  maxSizeBytes: Int!
+  """
+  Maximum accepted width in pixels.
+  """
+  maxWidth: Int!
+  """
+  Maximum accepted height in pixels.
+  """
+  maxHeight: Int!
+  """
+  Only accepted content type.
+  """
+  allowedContentType: String!
+}
+
 extend type Mutation {
   """
   Generate a presigned Cloudflare R2 upload URL.
@@ -33,4 +82,11 @@ extend type Mutation {
   Maximum 4 images per post (enforced at post creation time).
   """
   requestMediaUploadUrl(input: RequestMediaUploadInput!): MediaUploadResponse!
+
+  """
+  Request a presigned direct upload ticket for the authenticated user's
+  profile photo. Upload the WebP bytes to `uploadUrl`, then call
+  `setProfilePhoto(mediaId)`. Tickets are single-use and expire.
+  """
+  requestProfilePhotoUploadUrl(input: RequestProfilePhotoUploadInput!): ProfilePhotoUploadTicket!
 }

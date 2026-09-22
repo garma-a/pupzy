@@ -14,6 +14,7 @@ docs/adr/*
 !docs/feed-search-flutter-integration-contract.md
 !docs/admin-post-review-workspace.md
 !docs/device-push-delivery-flutter-integration-contract.md
+!docs/profile-photo-flutter-integration-contract.md
 !docs/admin-case-resolution-contract.md
 !docs/admin-work-queues.md
 !docs/ugc-reporting-and-account-blocking-flutter-integration-contract.md
