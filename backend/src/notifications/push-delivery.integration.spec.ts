@@ -791,6 +791,121 @@ describe('Durable adoption-approval push delivery (Ticket 11)', () => {
     expect((await dbHelper.db.select().from(pushDeliveries))[0].status).toBe('DELIVERED');
   });
 
+  it('terminalizes an interrupted delivery that exhausted its attempt bound without sending again', async () => {
+    const token = `fcm-token-${generateUuidV7()}`;
+    await registerDevice(applicant, token);
+    await approveAndQueuePush();
+
+    const [queued] = await dbHelper.db.select().from(pushDeliveries);
+    await dbHelper.db
+      .update(pushDeliveries)
+      .set({
+        status: 'PROCESSING',
+        attempts: MAX_PUSH_DELIVERY_ATTEMPTS,
+        leaseToken: generateUuidV7(),
+        leaseExpiresAt: new Date(Date.now() - 60_000),
+        lastError: 'provider down',
+      })
+      .where(eq(pushDeliveries.id, queued.id));
+
+    expect(await processor.processPendingDeliveries()).toBe(0);
+    expect(provider.attempted).toBe(0);
+
+    const [failed] = await dbHelper.db.select().from(pushDeliveries).where(eq(pushDeliveries.id, queued.id));
+    expect(failed.status).toBe('FAILED');
+    expect(failed.attempts).toBe(MAX_PUSH_DELIVERY_ATTEMPTS);
+    expect(failed.leaseToken).toBeNull();
+    expect(failed.leaseExpiresAt).toBeNull();
+    expect(failed.lastError).toContain('lease expired');
+
+    // The terminal intent never wakes up again.
+    expect(await processor.processPendingDeliveries()).toBe(0);
+    expect(provider.attempted).toBe(0);
+  });
+
+  it('reclaims an interrupted delivery while attempts remain and increments to the bound', async () => {
+    const token = `fcm-token-${generateUuidV7()}`;
+    await registerDevice(applicant, token);
+    await approveAndQueuePush();
+
+    const [queued] = await dbHelper.db.select().from(pushDeliveries);
+    await dbHelper.db
+      .update(pushDeliveries)
+      .set({
+        status: 'PROCESSING',
+        attempts: MAX_PUSH_DELIVERY_ATTEMPTS - 1,
+        leaseToken: generateUuidV7(),
+        leaseExpiresAt: new Date(Date.now() - 60_000),
+      })
+      .where(eq(pushDeliveries.id, queued.id));
+
+    expect(await processor.processPendingDeliveries()).toBe(1);
+    expect(provider.attempted).toBe(1);
+
+    const [delivered] = await dbHelper.db.select().from(pushDeliveries).where(eq(pushDeliveries.id, queued.id));
+    expect(delivered.status).toBe('DELIVERED');
+    expect(delivered.attempts).toBe(MAX_PUSH_DELIVERY_ATTEMPTS);
+  });
+
+  it('leaves unexpired interrupted and pending intents outside the exhausted-lease sweep', async () => {
+    const token = `fcm-token-${generateUuidV7()}`;
+    await registerDevice(applicant, token);
+    await approveAndQueuePush();
+
+    const [interrupted] = await dbHelper.db.select().from(pushDeliveries);
+    const liveLeaseToken = generateUuidV7();
+    await dbHelper.db
+      .update(pushDeliveries)
+      .set({
+        status: 'PROCESSING',
+        attempts: MAX_PUSH_DELIVERY_ATTEMPTS,
+        leaseToken: liveLeaseToken,
+        leaseExpiresAt: new Date(Date.now() + 5 * 60_000),
+      })
+      .where(eq(pushDeliveries.id, interrupted.id));
+
+    // A second, normal pending intent still flows in the same invocation.
+    const secondPost = await insertPost(owner, 'Lease sweep isolation listing');
+    const secondApplication = await insertApplication(secondPost, applicant);
+    await adoptionsService.approveApplication(owner.id, secondApplication.id);
+    await waitForDeliveries(applicant.id, 2);
+
+    expect(await processor.processPendingDeliveries()).toBe(1);
+    expect(provider.attempted).toBe(1);
+
+    const [stillInterrupted] = await dbHelper.db
+      .select()
+      .from(pushDeliveries)
+      .where(eq(pushDeliveries.id, interrupted.id));
+    expect(stillInterrupted.status).toBe('PROCESSING');
+    expect(stillInterrupted.attempts).toBe(MAX_PUSH_DELIVERY_ATTEMPTS);
+    expect(stillInterrupted.leaseToken).toBe(liveLeaseToken);
+    expect(stillInterrupted.lastError).toBeNull();
+
+    const delivered = (await dbHelper.db.select().from(pushDeliveries)).filter((row) => row.id !== interrupted.id);
+    expect(delivered).toHaveLength(1);
+    expect(delivered[0].status).toBe('DELIVERED');
+  });
+
+  it('never claims a pending intent that already reached the attempt bound', async () => {
+    const token = `fcm-token-${generateUuidV7()}`;
+    await registerDevice(applicant, token);
+    await approveAndQueuePush();
+
+    const [queued] = await dbHelper.db.select().from(pushDeliveries);
+    await dbHelper.db
+      .update(pushDeliveries)
+      .set({ attempts: MAX_PUSH_DELIVERY_ATTEMPTS, nextAttemptAt: new Date(Date.now() - 60_000) })
+      .where(eq(pushDeliveries.id, queued.id));
+
+    expect(await processor.processPendingDeliveries()).toBe(0);
+    expect(provider.attempted).toBe(0);
+
+    const [untouched] = await dbHelper.db.select().from(pushDeliveries).where(eq(pushDeliveries.id, queued.id));
+    expect(untouched.status).toBe('PENDING');
+    expect(untouched.attempts).toBe(MAX_PUSH_DELIVERY_ATTEMPTS);
+  });
+
   it('bounds one invocation to PUSH_DELIVERY_BATCH_SIZE delivers', async () => {
     const devices = Array.from({ length: PUSH_DELIVERY_BATCH_SIZE + 1 }, (_, index) => ({
       userId: applicant.id,
