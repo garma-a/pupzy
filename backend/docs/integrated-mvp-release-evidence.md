@@ -360,3 +360,16 @@ A whole-diff standards review of the integrated branch found one blocking and tw
 | Reset safety verification | **23/23 PASS** |
 
 **Gate flake note (honest reporting):** two full `verify:release` runs on the final tip each observed **all tests passing** (583/583 integration tests, 0 test failures) but exited non-zero because one suite's disposable Postgres container was terminated mid-run ("terminating connection due to administrator command") under host memory pressure — this host keeps a resident Supabase stack and has ~1 GB free RAM, and the failing suite differed between runs. Each affected suite passed on isolated re-run, and the complete standalone suite sequence above is green on the final tip. The `e2e-root` production container smoke remains **UNAVAILABLE** for the same environmental reason documented in §10 (rootless Docker and a symlinked `admin-service/node_modules` build context); it is not claimed as passing and must run on a clean CI runner before launch.
+
+---
+
+## 15. Post-review fixes (PR review of `43ecfc1`)
+
+Two confirmed P2 findings from the PR review were fixed on `task/bwg-fix2` and merged (`0bcdc90`); both were independently reproduced red/green by a separate reviewer against real PostgreSQL.
+
+| Finding | Fix commits | Regression evidence |
+|---|---|---|
+| A delayed avatar set could undo an explicit removal for provider-owned/empty profiles (activation compared only the storage key, which stays `NULL` after removal) | `f05db72` | `activateProfilePhoto` now compares the `profile_photo_changed_at` revision marker as well and rejects stale requests with `PROFILE_PHOTO_REPLACED`; new repo-level and service-level interleaving tests in `src/users/profile-photo-lifecycle.integration.spec.ts` plus unit coverage. Pre-fix, the stale activation **resolved and installed the photo**; post-fix it rejects and compensates. |
+| An interrupted push delivery at the attempt bound could be reclaimed and sent a sixth time (expired-lease reclaim ignored `attempts`) | `935016c` | `claimNextDelivery` now terminalizes exhausted expired-lease `PROCESSING` deliveries as `FAILED` and never claims rows at/over `MAX_PUSH_DELIVERY_ATTEMPTS`; four new regression tests in `src/notifications/push-delivery.integration.spec.ts`. Pre-fix, `processPendingDeliveries()` returned 1 (a sixth send); post-fix it returns 0 and the row is terminal. |
+
+**Re-verification on the merge (`0bcdc90`):** backend unit **1026/1026 PASS**; `profile-photo-lifecycle` + `push-delivery` integration **39/39 PASS**. The per-feature contracts (`profile-photo-flutter-integration-contract.md`, `device-push-delivery-flutter-integration-contract.md`) were updated to match the fixed behavior.
