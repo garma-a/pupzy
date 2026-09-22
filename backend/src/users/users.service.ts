@@ -248,8 +248,11 @@ export class UsersService {
    * updated in a transaction that also queues the previous owned object for
    * deletion. Only media owned by the caller and never consumed can be used.
    *
-   * A concurrent replacement or removal wins the row lock: the losing request
-   * is rejected with `PROFILE_PHOTO_REPLACED` and its finalized object is
+   * A concurrent replacement or removal wins the row lock: the observed owned
+   * storage key and the observed change marker are both re-checked at
+   * activation, so a removal wins even when the previous picture was
+   * provider-owned or empty (no owned key to compare). The losing request is
+   * rejected with `PROFILE_PHOTO_REPLACED` and its finalized object is
    * compensated away so no orphaned media survives. Retrying the winning
    * mediaId is idempotent.
    */
@@ -260,6 +263,7 @@ export class UsersService {
     }
 
     const expectedStorageKey = user.profilePhotoStorageKey ?? null;
+    const expectedChangedAt = user.profilePhotoChangedAt ?? null;
     const idempotentKey = this.uploadService.getProfilePhotoStorageKey(userId, mediaId);
     if (expectedStorageKey === idempotentKey) {
       // Retry of an already-successful set; `user` is already decrypted.
@@ -272,6 +276,7 @@ export class UsersService {
     try {
       updated = await this.usersRepository.activateProfilePhoto(userId, {
         expectedStorageKey,
+        expectedChangedAt,
         storageKey: finalized.storageKey,
         publicUrl: finalized.publicUrl,
       });

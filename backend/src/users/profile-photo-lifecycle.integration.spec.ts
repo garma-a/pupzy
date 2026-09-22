@@ -697,6 +697,95 @@ describe('Profile Photo Lifecycle Integration (Ticket 17)', () => {
     expect(queued.map((row) => row.storageKey)).not.toContain(winnerKey);
   });
 
+  // ── Delayed set versus explicit removal ─────────────────────────────────────
+
+  it('keeps an explicit removal when the observed change marker changed before activation', async () => {
+    // The account's only picture is provider-owned, so the owned storage key is
+    // NULL both before and after removal. The change marker is the only value
+    // that can tell the stale set apart from the removal.
+    const providerUser = await seedUser({
+      profilePictureUrl: 'https://provider.example/initial.png',
+      profilePhotoStorageKey: null,
+      profilePhotoChangedAt: null,
+    });
+
+    const observed = await usersService.findActiveById(providerUser.id);
+    expect(observed).toBeDefined();
+    const expectedStorageKey = observed!.profilePhotoStorageKey ?? null;
+    const expectedChangedAt = observed!.profilePhotoChangedAt ?? null;
+    expect(expectedStorageKey).toBeNull();
+    expect(expectedChangedAt).toBeNull();
+
+    // An explicit removal commits after the set request observed the row but
+    // before its activation transaction runs.
+    await usersRepo.clearProfilePhoto(providerUser.id);
+
+    const contestedKey = `avatars/${providerUser.id}/${generateUuidV7()}.webp`;
+    const activationInput = {
+      expectedStorageKey,
+      expectedChangedAt,
+      storageKey: contestedKey,
+      publicUrl: `https://cdn.pupzy.net/${contestedKey}`,
+    };
+    await expect(usersRepo.activateProfilePhoto(providerUser.id, activationInput)).rejects.toMatchObject({
+      code: 'PROFILE_PHOTO_REPLACED',
+    });
+
+    const after = await currentUser(providerUser.id);
+    expect(after.profilePictureUrl).toBeNull();
+    expect(after.profilePhotoStorageKey).toBeNull();
+    expect(after.profilePhotoChangedAt).toBeInstanceOf(Date);
+    expect(r2Adapter.avatarKeys()).toHaveLength(0);
+  });
+
+  it('compensates a delayed set that loses to an explicit removal and preserves the removal', async () => {
+    const initialStates: Array<{ profilePictureUrl: string | null }> = [
+      { profilePictureUrl: 'https://provider.example/initial.png' },
+      { profilePictureUrl: null },
+    ];
+
+    for (const initialState of initialStates) {
+      const target = await seedUser({
+        ...initialState,
+        profilePhotoStorageKey: null,
+        profilePhotoChangedAt: null,
+      });
+      const { mediaId } = await stageProfilePhoto(validWebp, target);
+
+      const realFinalize = uploadService.finalizeProfilePhoto.bind(uploadService);
+      const finalizeSpy = jest
+        .spyOn(uploadService, 'finalizeProfilePhoto')
+        .mockImplementation(async (stagedMediaId: string, ownerId: string) => {
+          const finalized = await realFinalize(stagedMediaId, ownerId);
+          // The explicit removal commits mid-flight, after finalization but
+          // before the activation transaction observes the row.
+          await usersRepo.clearProfilePhoto(ownerId);
+          return finalized;
+        });
+
+      const res = await setPhotoViaGql(mediaId, target);
+      finalizeSpy.mockRestore();
+
+      expect(gqlErrorCode(res)).toBe('PROFILE_PHOTO_REPLACED');
+
+      const finalizedKey = `avatars/${target.id}/${mediaId}.webp`;
+      // The losing request is compensated: finalized object deleted and its
+      // ticket terminal FAILED.
+      expect(r2Adapter.hasObject(finalizedKey)).toBe(false);
+      const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(ticket.status).toBe('FAILED');
+
+      // The removal survives and no owned object is referenced or queued.
+      const after = await currentUser(target.id);
+      expect(after.profilePictureUrl).toBeNull();
+      expect(after.profilePhotoStorageKey).toBeNull();
+      expect(after.profilePhotoChangedAt).toBeInstanceOf(Date);
+      const queued = await dbHelper.db.select().from(mediaDeletionWork);
+      expect(queued.map((row) => row.storageKey)).not.toContain(finalizedKey);
+      expect(r2Adapter.avatarKeys()).toHaveLength(0);
+    }
+  });
+
   // ── Upload/finalization failure compensation ────────────────────────────────
 
   it('rejects invalid image bytes without publishing or changing the profile', async () => {
