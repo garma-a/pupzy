@@ -1188,4 +1188,102 @@ describe('Profile Photo Lifecycle Integration (Ticket 17)', () => {
     expect(after.profilePictureUrl).toBeNull();
     expect(after.profilePhotoStorageKey).toBeNull();
   });
+
+  // ── Expired-staging cleanup coordination ───────────────────────────────────
+
+  it('never deletes an avatar activated after the expired-cleanup scan selected its ticket', async () => {
+    const { mediaId, stagingKey } = await stageProfilePhoto(validWebp);
+    const finalKey = `avatars/${user.id}/${mediaId}.webp`;
+
+    // The upload was claimed just before expiry, so hourly cleanup selects the
+    // ticket as an expired CLAIMED candidate while the set request is still in
+    // flight. Finalization and activation then complete from the stale
+    // candidate list's point of view.
+    await dbHelper.db
+      .update(stagedUploads)
+      .set({
+        status: 'CLAIMED',
+        finalStorageKey: finalKey,
+        expiresAt: new Date(Date.now() - 1000),
+        updatedAt: new Date(),
+      })
+      .where(eq(stagedUploads.id, mediaId));
+    r2Adapter.putObject(stagingKey, validWebp);
+
+    const realDelete = uploadService.deleteObject.bind(uploadService);
+    let activated = false;
+    const deleteSpy = jest.spyOn(uploadService, 'deleteObject').mockImplementation(async (key: string) => {
+      if (!activated && key === stagingKey) {
+        activated = true;
+        // Finalization publishes the exact bytes and records FINALIZED, then
+        // activation installs the key on the owner row — all after the cleanup
+        // candidate was selected but before it is processed.
+        r2Adapter.putObject(finalKey, validWebp);
+        await dbHelper.db
+          .update(stagedUploads)
+          .set({ status: 'FINALIZED', finalStorageKey: finalKey, updatedAt: new Date() })
+          .where(eq(stagedUploads.id, mediaId));
+        await usersRepo.activateProfilePhoto(user.id, {
+          stagedUploadId: mediaId,
+          expectedStorageKey: null,
+          expectedChangedAt: null,
+          storageKey: finalKey,
+          publicUrl: `https://cdn.pupzy.net/${finalKey}`,
+        });
+      }
+      return realDelete(key);
+    });
+
+    await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+    deleteSpy.mockRestore();
+
+    expect(activated).toBe(true);
+
+    // The active bytes survive, the ticket is never marked EXPIRED, and the
+    // profile still references live bytes.
+    expect(r2Adapter.hasObject(finalKey)).toBe(true);
+    expect(r2Adapter.hasObject(stagingKey)).toBe(false);
+    const after = await currentUser(user.id);
+    expect(after.profilePhotoStorageKey).toBe(finalKey);
+    expect(after.profilePictureUrl).toBe(`https://cdn.pupzy.net/${finalKey}`);
+
+    const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+    expect(ticket.status).toBe('FINALIZED');
+    const queued = await dbHelper.db.select().from(mediaDeletionWork).where(eq(mediaDeletionWork.storageKey, finalKey));
+    expect(queued).toHaveLength(0);
+  });
+
+  it('cleans an expired unconsumed avatar and durably queues its unreferenced final object', async () => {
+    const { mediaId, stagingKey } = await stageProfilePhoto(validWebp);
+    const finalKey = `avatars/${user.id}/${mediaId}.webp`;
+
+    await dbHelper.db
+      .update(stagedUploads)
+      .set({
+        status: 'CLAIMED',
+        finalStorageKey: finalKey,
+        expiresAt: new Date(Date.now() - 1000),
+        updatedAt: new Date(),
+      })
+      .where(eq(stagedUploads.id, mediaId));
+    r2Adapter.putObject(stagingKey, validWebp);
+    r2Adapter.putObject(finalKey, validWebp);
+
+    const cleaned = await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+    expect(cleaned).toBeGreaterThanOrEqual(1);
+
+    expect(r2Adapter.hasObject(stagingKey)).toBe(false);
+    expect(r2Adapter.hasObject(finalKey)).toBe(false);
+
+    const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+    expect(ticket.status).toBe('EXPIRED');
+    expect(ticket.stagingKey).toBe(`cleaned/${stagingKey}`);
+
+    const queued = await dbHelper.db.select().from(mediaDeletionWork).where(eq(mediaDeletionWork.storageKey, finalKey));
+    expect(queued).toHaveLength(1);
+    expect(queued[0].cdnUrl).toBe('');
+
+    const after = await currentUser(user.id);
+    expect(after.profilePhotoStorageKey).toBeNull();
+  });
 });
