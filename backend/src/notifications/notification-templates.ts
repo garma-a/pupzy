@@ -1,3 +1,4 @@
+import type { PostLifecycleCompletedOutcome } from '../common/contracts/post-lifecycle.contract';
 import type { notificationTypeEnum } from '../database/schema/enums';
 
 /** Every notification type persisted by the `notification_type` enum. */
@@ -15,10 +16,10 @@ export const DEFAULT_NOTIFICATION_LANGUAGE: NotificationLanguage = 'en';
 
 /**
  * The successful outcomes an administrator can record as a Post Resolution.
- * Mirrors the type-specific targets in the shared lifecycle contract.
+ * Derived from the shared lifecycle contract, so the notification templates and
+ * the AdminJS queue predicates cannot drift from the one outcome list.
  */
-export const POST_RESOLUTION_OUTCOMES = ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD'] as const;
-export type PostResolutionOutcome = (typeof POST_RESOLUTION_OUTCOMES)[number];
+export type PostResolutionOutcome = PostLifecycleCompletedOutcome;
 
 /**
  * Parameters each notification type interpolates into its English and Arabic

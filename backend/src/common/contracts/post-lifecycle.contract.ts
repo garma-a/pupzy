@@ -168,14 +168,19 @@ export function canAdminResolve(
 /**
  * The successful outcomes a Post Resolution can record. These are the only
  * statuses an administrator may correct through reopening; `ACTIVE`, `REMOVED`
- * and `EXPIRED` are deliberately absent.
+ * and `EXPIRED` are deliberately absent. This is the one outcome list: the
+ * AdminJS queue predicates, the reopening rule and the notification templates
+ * all derive from it, so adding an outcome cannot ship in one service only.
  */
-export const COMPLETED_POST_OUTCOMES: readonly PostLifecycleStatus[] = Object.freeze([
+export const COMPLETED_POST_OUTCOMES = Object.freeze([
   'RESOLVED',
   'REUNITED',
   'ADOPTED',
   'SOLD',
-] as const);
+] as const satisfies readonly PostLifecycleStatus[]);
+
+/** A completed Post outcome: one of `COMPLETED_POST_OUTCOMES`. */
+export type PostLifecycleCompletedOutcome = (typeof COMPLETED_POST_OUTCOMES)[number];
 
 /**
  * True when an administrator may reopen this Post.
@@ -188,7 +193,7 @@ export const COMPLETED_POST_OUTCOMES: readonly PostLifecycleStatus[] = Object.fr
  * owner renewal. Owners have no reopening path in any case.
  */
 export function canAdminReopen(currentStatus: string): boolean {
-  return COMPLETED_POST_OUTCOMES.includes(currentStatus as PostLifecycleStatus);
+  return COMPLETED_POST_OUTCOMES.includes(currentStatus as PostLifecycleCompletedOutcome);
 }
 
 /**
