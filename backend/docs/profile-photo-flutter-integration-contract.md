@@ -100,7 +100,7 @@ mutation {
 | `PROFILE_PHOTO_NOT_AVAILABLE` | Ticket missing, not owned by the caller, wrong purpose, expired, or object absent from staging. | no |
 | `PROFILE_PHOTO_ALREADY_USED` | Ticket already consumed by a successful finalization. | no |
 | `PROFILE_PHOTO_PROCESSING_FAILED` | Transient storage or verification failure; the ticket stays retryable. | yes |
-| `PROFILE_PHOTO_REPLACED` | A concurrent set or removal won the race; refresh and retry. | yes (with the new state) |
+| `PROFILE_PHOTO_REPLACED` | A concurrent set or removal won the race, or reconciliation reclaimed the finalized ticket; refresh and retry. | yes (with the new state) |
 | `ACCOUNT_DELETED` | Account is banned or deletion is pending/completed. | no |
 
 ## 5. Replacement, concurrency and compensation
@@ -109,7 +109,8 @@ mutation {
   - Sequential replacement succeeds and queues the previous owned object for deletion.
   - A concurrent replacement or an explicit removal wins: the losing request receives `PROFILE_PHOTO_REPLACED`, its newly finalized object is deleted (or queued for the deletion worker) and its ticket is marked `FAILED`. No orphaned finalized media or dangling reference survives. Because the change marker is compared too, an explicit removal wins even when the previous picture was provider-owned or empty and the owned key stays `NULL` on both sides.
 - If permanent publication fails, the ticket returns to a retryable state and no profile change occurs. If the account update fails after publication, the finalized object is compensated away durably.
-- Periodic reconciliation reclaims a finalized avatar whose account no longer references it (for example after a crash between publication and the account update) and never deletes the active avatar. Staging objects are removed after successful publication.
+- Periodic reconciliation reclaims a finalized avatar whose account no longer references it (for example after a crash between publication and the account update) and never deletes the active avatar. Recovery locks the account row with the same lock activation takes and, in that transaction, re-checks the owned key and marks the ticket terminal (`EXPIRED`) before any storage deletion; the permanent object is deleted only after that commit, with a durable `media_deletion_work` row as the retry path. An activation that was still in flight when the ticket was reclaimed is rejected with `PROFILE_PHOTO_REPLACED` and compensates its object, so the profile can never reference deleted bytes. Staging objects are removed after successful publication.
+- Activation re-verifies, under the account row lock, that its staged-upload ticket is still `FINALIZED` with the same permanent key; otherwise it loses with `PROFILE_PHOTO_REPLACED`.
 
 ## 6. Account Deletion
 

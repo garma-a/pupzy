@@ -1451,6 +1451,8 @@ export class UploadService {
    * 4. The ticket becomes FINALIZED only after the permanent object exists;
    *    invalid or transient failures either mark the ticket FAILED (with the
    *    staging object removed/queued) or reset it to ISSUED for a safe retry.
+   *    If the ticket left CLAIMED while the object was published, the object
+   *    is discarded/queued and a retryable processing error is thrown.
    *
    * The caller owns the profile row update and its compensation: if the
    * activation transaction fails, it must discard the finalized object.
@@ -1631,15 +1633,17 @@ export class UploadService {
     }
 
     // Step 7: durably record finalization before the owning row is updated.
+    let finalizedRows: Array<{ id: string }> = [];
     try {
-      await this.db
+      finalizedRows = await this.db
         .update(stagedUploads)
         .set({
           status: 'FINALIZED',
           finalStorageKey: storageKey,
           updatedAt: new Date(),
         })
-        .where(and(eq(stagedUploads.id, mediaId), eq(stagedUploads.status, 'CLAIMED')));
+        .where(and(eq(stagedUploads.id, mediaId), eq(stagedUploads.status, 'CLAIMED')))
+        .returning({ id: stagedUploads.id });
     } catch (err) {
       this.logger.error(
         `Failed to record profile photo finalization for ${mediaId}: ${err instanceof Error ? err.message : String(err)}`,
@@ -1655,6 +1659,25 @@ export class UploadService {
           `Failed to mark profile photo ticket ${mediaId} as failed: ${markErr instanceof Error ? markErr.message : String(markErr)}`,
         );
       });
+      throw new AppError('Failed to finalize media in storage', 'PROFILE_PHOTO_PROCESSING_FAILED', {
+        retryable: true,
+      });
+    }
+
+    if (finalizedRows.length === 0) {
+      // The ticket left CLAIMED between the atomic claim and this update
+      // (recovery reclaimed the unreferenced avatar, or expired-staging
+      // cleanup terminalized it) while the object was being published. The
+      // object is now unreferenced and its terminal ticket is never
+      // rescanned, so discard it durably instead of leaving it behind.
+      this.logger.warn(
+        `Profile photo ticket ${mediaId} left CLAIMED before finalization could be recorded; discarding ${storageKey}`,
+      );
+      try {
+        await this.deleteObject(storageKey);
+      } catch {
+        await this.queueMediaDeletion(storageKey);
+      }
       throw new AppError('Failed to finalize media in storage', 'PROFILE_PHOTO_PROCESSING_FAILED', {
         retryable: true,
       });

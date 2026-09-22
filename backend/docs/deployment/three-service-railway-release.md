@@ -125,7 +125,13 @@ Because the Main API and AdminJS deploy independently, and rolling releases may 
 3. **Phase 3 — Contract (Cleanup):**
    - Once all services are running the new code and no old replicas remain, deploy a follow-up migration to remove deprecated columns or temporary backwards-compatibility constraints.
 
-The retired saved-search storage is the first completed instance of this pattern. Its runtime surfaces (GraphQL type, generated definitions, AdminJS resource, Account Deletion cleanup) were removed first; after the API and admin rolling deployments drained, migration `0053_drop_saved_searches` contracts the table. Do not apply that migration before the retired runtime is deployed everywhere, because a previous API or admin revision still queries `saved_searches`. See [`docs/adr/0007-retire-saved-search-runtime-before-storage-contraction.md`](../adr/0007-retire-saved-search-runtime-before-storage-contraction.md).
+The retired saved-search storage is the first instance of this pattern, contracted stop-the-world rather than by a rolling deploy. Its runtime surfaces (GraphQL type, generated definitions, AdminJS resource, Account Deletion cleanup) were removed in the same release that ships migration `0053_drop_saved_searches`, so a plain rolling deploy is unsafe: the new revision's pre-deploy would drop the table while a pre-19 API revision (whose Account Deletion cleanup still queries `saved_searches`) or a pre-18 AdminJS revision (which registers the resource) can still be serving. Apply the contraction for this artifact as an explicit stop-the-world step:
+
+1. **Stop the world.** Scale the Main API and AdminJS services to zero so no running revision can query `saved_searches`.
+2. **Contract from the sole migration owner.** With no containers serving, apply `0053` through the new Main API revision's pre-deploy (`node dist/database/migrate.js`) or a one-off `node dist/database/migrate.js`. AdminJS never runs migrations.
+3. **Start the new revision.** Scale/deploy the Main API and AdminJS revisions from this release and wait for health checks.
+
+The zero-downtime alternative requires an intermediate release that contains the runtime removal without `0053`, fully drained before the drop; this release does not provide that intermediate artifact. See [`docs/adr/0007-retire-saved-search-runtime-before-storage-contraction.md`](../adr/0007-retire-saved-search-runtime-before-storage-contraction.md) and the full sequence in [`docs/integrated-mvp-frontend-handoff.md`](../integrated-mvp-frontend-handoff.md) §6.
 
 ---
 

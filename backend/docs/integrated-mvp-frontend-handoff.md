@@ -285,13 +285,18 @@ Apply migrations only through the Main API pre-deploy step (`node dist/database/
 
 **Note on `0056`:** the migration drops and recreates `idx_posts_last_engaged` non-concurrently (the repository's migration convention), which holds an `ACCESS EXCLUSIVE` lock on `posts` for the duration of the index build. Schedule the release for a low-traffic window on large tables.
 
-**Release sequence:**
+**Release sequence (this artifact).** This release ships the retired saved-search runtime and the destructive migration `0053_drop_saved_searches` in the same revision, so a rolling deploy is unsafe: the new revision's pre-deploy would drop `saved_searches` while a pre-19 API revision (whose Account Deletion cleanup still queries the table) or a pre-18 AdminJS revision (which registers the resource) can still be serving. Execute an explicit stop-the-world/drain sequence instead:
 
-1. Deploy the retired saved-search runtime (ticket 18) to the API and admin service.
-2. Confirm the rolling deployment has fully drained — no previous API/admin revision still queries `saved_searches`.
-3. Apply `0053_drop_saved_searches` from the sole migration owner (Main API pre-deploy).
-4. Deploy the API/admin code for this release; then set `TERMS_URL`/`TERMS_VERSION` only when the actual Terms document is published and the client acceptance UI ships.
-5. Enable push only after FCM credentials and the Flutter device integration are in place.
+1. **Stop the world.** Scale both the Main API and the AdminJS service to zero (paused/zero replicas) so no running revision can query `saved_searches`.
+2. **Apply the contraction from the sole migration owner.** With both services stopped, run `node dist/database/migrate.js` against production, or deploy the new Main API revision and let its pre-deploy command apply the migration while no containers serve. AdminJS never runs migrations.
+3. **Start the new revision.** Scale the Main API and AdminJS revisions from this release back up and wait for their health checks.
+4. **Verify against the contracted schema** (Account Deletion, AdminJS startup, saved-search surface removal).
+5. Set `TERMS_URL`/`TERMS_VERSION` only when the actual Terms document is published and the client acceptance UI ships.
+6. Enable push only after FCM credentials and the Flutter device integration are in place.
+
+The stopped window also satisfies the `0056` note above: no traffic is served while the index is rebuilt.
+
+**Zero-downtime alternative (not provided by this artifact).** A rolling deploy is only safe with an intermediate release that contains this release's runtime removal (Account Deletion cleanup, AdminJS resource, schema/export and test references) **without** migration `0053`. Deploy that intermediate revision to the API and admin service, confirm the rolling deployment has fully drained — no previous API/admin revision still queries `saved_searches` — then apply `0053_drop_saved_searches` from the Main API pre-deploy and finally release the revision that includes the migration. This PR does not itself ship that intermediate artifact, so with this artifact only the stop-the-world sequence above is executable.
 
 ---
 
@@ -312,7 +317,7 @@ These are **not** backend-automated checks; they require another teammate or pla
 
 1. **Actual Terms document and client acceptance readiness.** The Flutter developer writes the Terms and the team publishes them under `https://pupzy.net/`; the exact public path/version is not confirmed by this repository. `TERMS_URL` and `TERMS_VERSION` must be set together only after publication and after the client can display/accept them. Until then the gate stays inactive by design. Changing `TERMS_VERSION` immediately makes earlier acceptances insufficient. Backend acceptance recording, gating and admin inspection are implemented and verified; the URL/version values and published text are not.
 2. **Flutter, APNs/FCM and device integration.** The app must request notification permission, register/unregister tokens, handle foreground/background messages and route taps from the `data` identifiers in §4. FCM credentials (`FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`) and the APNs configuration in the Firebase project are platform work. **Real-device receipt and tap routing are not proven by automated tests** (which use a controlled provider); iOS/Android permission and delivery evidence is required on real devices.
-3. **Deployment ordering for the destructive saved-search migration.** `0053_drop_saved_searches` must not run before the retired runtime is deployed everywhere and the rolling deployment has drained; a previous revision still querying the dropped table would fail.
+3. **Deployment ordering for the destructive saved-search migration.** This release ships the retired saved-search runtime and `0053_drop_saved_searches` in the same revision, so a rolling deploy is unsafe: the drop can run while a pre-19 revision (whose Account Deletion cleanup still queries `saved_searches`) or a pre-18 AdminJS revision is serving. Either stop both the Main API and the AdminJS service and apply the migration with no revision serving, or cut the runtime-only intermediate release described in §6. The executable sequence is in §6.
 4. **Client media encoding work.** Comment and avatar uploads require client-side static-WebP conversion ≤100 KB and ≤480 px with metadata stripped before using the existing direct-to-R2 upload tickets.
 5. **Legal/compliance review** of the published Terms and store UGC compliance remains outside backend code; acceptance records and admin inspection do not by themselves certify them.
 

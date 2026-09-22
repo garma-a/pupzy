@@ -2,7 +2,7 @@
 
 - **Status:** Accepted — runtime retirement (ticket 18) and storage contraction (ticket 19) both landed
 - **Date:** 2026-09-21
-- **Context:** Pupzy's saved-search alert feature was designed but never finished: the `saved_searches` table, Drizzle export, `SYSTEM_ANNOUNCEMENT` notification type, an AdminJS `User Activity` resource and a `SavedSearch` GraphQL type were shipped as scaffolding, while no resolver, service, post-creation hook or admin action ever read or wrote the feature. The parent specification's only authorized schema-removal exception is "Saved-search removal": the unfinished feature must stop being advertised in the schema and admin, but the storage drop must be ordered against running services, so a destructive migration cannot ship in the same slice as the runtime retirement.
+- **Context:** Pupzy's saved-search alert feature was designed but never finished: the `saved_searches` table, Drizzle export, `SYSTEM_ANNOUNCEMENT` notification type, an AdminJS `User Activity` resource and a `SavedSearch` GraphQL type were shipped as scaffolding, while no resolver, service, post-creation hook or admin action ever read or wrote the feature. The parent specification's only authorized schema-removal exception is "Saved-search removal": the unfinished feature must stop being advertised in the schema and admin, and the destructive storage drop must be explicitly ordered against the running services rather than shipped as an ordinary rolling migration.
 
 ---
 
@@ -23,14 +23,16 @@
 
 ### 3. Contraction prerequisite and rollout ordering (ticket 19)
 
-The destructive migration must not run while any deployed code still queries the table. Required order:
+The destructive migration must not run while any deployed code still queries the table. Runtime retirement (ticket 18) and storage contraction (ticket 19) ship in the same release revision, and the ticket-18 runtime still deleted retained rows during Account Deletion; therefore a rolling deploy of this artifact is unsafe — the new revision's pre-deploy would apply `0053` while a pre-19 API revision (whose Account Deletion cleanup queries `saved_searches`) or a pre-18 AdminJS revision (which registers the resource) can still be serving.
 
-1. Merge and deploy the retired runtime (ticket 18) to the API and admin services.
-2. Confirm the rolling deployment has fully drained: no instance of the previous API or admin revision is still serving (old admin builds register the resource; old API builds expose the type, though neither writes rows).
-3. Remove the transitional Account Deletion cleanup, the Drizzle schema/export, and the remaining test/truncate references (ticket 19).
-4. Only then apply the forward migration `0053_drop_saved_searches`; re-run clean-install and upgrade migration checks plus Account Deletion after contraction.
+The executable sequence for this artifact is stop-the-world:
 
-If step 4 runs before step 2 completes, an old instance performing Account Deletion (or admin introspection) would query a dropped table and fail. The migration is written and verified locally in this slice; no hosted/production migration is executed by ticket publication.
+1. Stop/scale the Main API and AdminJS services to zero so no running revision can query `saved_searches`.
+2. Apply `0053_drop_saved_searches` from the sole migration owner with no containers serving: the new Main API revision's pre-deploy (`node dist/database/migrate.js`) or a one-off `node dist/database/migrate.js`. AdminJS never runs migrations.
+3. Start/deploy the Main API and AdminJS revisions from this release and wait for health checks.
+4. Re-run clean-install and upgrade migration checks plus Account Deletion against the contracted schema.
+
+A zero-downtime rollout requires an intermediate release that contains ticket 19's runtime changes (Account Deletion cleanup, Drizzle schema/export, test/truncate references) **without** migration `0053`, fully drained before the drop; this release does not provide that intermediate artifact. If the drop runs before the pre-19 runtime has stopped, an old instance performing Account Deletion (or old admin introspection) would query a dropped table and fail. The migration is written and verified locally in this slice; no hosted/production migration is executed by ticket publication.
 
 ### 4. Verification (ticket 18)
 
@@ -43,7 +45,7 @@ If step 4 runs before step 2 completes, an old instance performing Account Delet
 - Forward migration `0053_drop_saved_searches` drops `saved_searches` and is the only migration that contracts it. Migrations `0000` and `0003` remain byte-for-byte intact, so clean installs replay the same create/evolve history before dropping.
 - Removed with the contraction: `src/database/schema/saved-searches.schema.ts` and its schema-barrel export, the transitional `savedSearches` delete in `src/users/account-deletion.service.ts`, the `saved_searches` entries in the backend and admin test TRUNCATE/cleanup lists, and the saved-search rows in the city reconcile/release integration fixtures. Admin registration was already removed in ticket 18 and its absence assertions remain.
 - `SYSTEM_ANNOUNCEMENT` is intentionally retained: the enum value, bilingual templates and historical inbox rows are notification history, not saved-search storage. Removing the enum value would break existing rows and persisted client state, so it stays with no creation site.
-- Rollout ordering is unchanged and operationally binding: deploy the retired runtime, confirm the rolling deployment has drained, then let the Main API's sole pre-deploy migration owner apply `0053`. AdminJS never runs migrations. The expand/contract phase is recorded in `docs/deployment/three-service-railway-release.md` §4.
+- Rollout ordering is unchanged and operationally binding: this revision ships the runtime retirement and `0053` together, so either stop both the Main API and AdminJS services and apply the migration with no revision serving, or cut a runtime-only intermediate release and drain it before the drop. AdminJS never runs migrations. The stop-the-world sequence and the zero-downtime alternative are recorded in `docs/integrated-mvp-frontend-handoff.md` §6 and `docs/deployment/three-service-railway-release.md` §4.
 
 ### 6. Contraction verification
 
