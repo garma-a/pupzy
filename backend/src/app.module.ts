@@ -34,6 +34,8 @@ import { CommentsModule } from './comments/comments.module';
 import { CommentsRepository } from './comments/comments.repository';
 import { AccountReportsModule } from './account-reports/account-reports.module';
 import { BlocksModule } from './blocks/blocks.module';
+import { TermsModule } from './terms/terms.module';
+import { TermsAcceptanceGuard } from './terms/terms-acceptance.guard';
 import { GqlExceptionFilter } from './common/filters/gql-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
@@ -67,6 +69,7 @@ import type { GqlContext } from './common/types/gql-context.type';
  * |-------------------|----------------------|---------------------------------------|
  * | APP_GUARD (1)     | ThrottlerGuard       | Rate limiting — runs first            |
  * | APP_GUARD (2)     | FirebaseAuthGuard    | Firebase token verification + user DI |
+ * | APP_GUARD (3)     | TermsAcceptanceGuard | Versioned Terms gate on protected ops |
  * | APP_FILTER        | GqlExceptionFilter   | Sanitized error responses             |
  * | APP_INTERCEPTOR   | LoggingInterceptor   | Request/response logging + requestId  |
  * | APP_INTERCEPTOR   | IdempotencyInterceptor| Idempotency key deduplication         |
@@ -225,6 +228,7 @@ import type { GqlContext } from './common/types/gql-context.type';
     CommentsModule,
     AccountReportsModule,
     BlocksModule,
+    TermsModule,
     CacheModule.register({
       /**
        * Max cached items across all namespaces (auth, view dedup, idempotency).
@@ -253,6 +257,17 @@ import type { GqlContext } from './common/types/gql-context.type';
     {
       provide: APP_GUARD,
       useClass: FirebaseAuthGuard,
+    },
+
+    /**
+     * Terms Acceptance guard — enforces the published Terms version on
+     * protected publication/submission resolvers decorated with
+     * @RequiresTermsAcceptance(). Registered after FirebaseAuthGuard so the
+     * authenticated account is already on the GraphQL context.
+     */
+    {
+      provide: APP_GUARD,
+      useClass: TermsAcceptanceGuard,
     },
 
     // ── Global exception filter — sanitized GraphQL error responses ───────

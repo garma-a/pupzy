@@ -1,0 +1,57 @@
+"""
+Version and public URL of the currently published Terms together with the
+authenticated account's acceptance state.
+"""
+type TermsInfo {
+  """
+  Version identifier of the currently published Terms.
+  Null when this deployment has no published terms configured.
+  """
+  currentVersion: String
+  """
+  Public URL where the current Terms can be read.
+  Null when this deployment has no published terms configured.
+  """
+  termsUrl: String
+  """
+  Version of the Terms this account accepted, or null when it never accepted.
+  """
+  acceptedVersion: String
+  """
+  When this account accepted its recorded version, or null when it never accepted.
+  """
+  acceptedAt: DateTime
+  """
+  True when the account must accept the current version before protected
+  publication and submission operations.
+  """
+  acceptanceRequired: Boolean!
+}
+
+"""
+Input for recording acceptance of the currently published Terms.
+"""
+input AcceptTermsInput {
+  """
+  Version the client displayed and the account is accepting. Must equal the
+  currently published version; unknown or stale versions are rejected.
+  """
+  version: String!
+}
+
+extend type Query {
+  """
+  Returns the currently published Terms version and public URL together with
+  the authenticated account's acceptance state.
+  """
+  terms: TermsInfo!
+}
+
+extend type Mutation {
+  """
+  Records the authenticated account's acceptance of the currently published
+  Terms version. Idempotent: re-accepting the same version preserves the
+  original acceptance time, while accepting a new version stamps a new time.
+  """
+  acceptTerms(input: AcceptTermsInput!): TermsInfo!
+}

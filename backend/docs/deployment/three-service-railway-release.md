@@ -60,7 +60,11 @@ Both application services consume PostgreSQL strictly over **Railway private net
 | `R2_BUCKET_NAME` | Yes | `pupzy-media` | R2 Media Bucket |
 | `R2_PUBLIC_URL` | Yes | `https://pub-xxx.r2.dev` | Public CDN URL for media |
 | `ALLOWED_ORIGINS` | No | `""` (or comma-separated) | CORS allowed origins |
+| `TERMS_URL` | Paired | `https://pupzy.net/terms` (published path) | Public Terms document URL; see below |
+| `TERMS_VERSION` | Paired | (published version identifier) | Published Terms version; see below |
 | `NODE_OPTIONS` | No | `--max-old-space-size=150` | V8 heap ceiling (150 MB) |
+
+**Terms Acceptance release dependency:** `TERMS_URL` and `TERMS_VERSION` must be set together or left unset together. While unset, the versioned Terms gate is inactive. Set both only after the Flutter-authored Terms document is actually published and the client supports acceptance. Changing `TERMS_VERSION` immediately makes earlier acceptances insufficient. See `docs/terms-acceptance-flutter-integration-contract.md`.
 
 ### AdminJS Service (`admin-service`)
 | Variable | Required | Default / Example | Purpose |

@@ -469,6 +469,36 @@ describe('Account Deletion Feature Integration', () => {
       // New UID is not blocked
       expect(await accountDeletionService.isDeletedOrPending('fb-new-fresh-uid')).toBe(false);
     });
+
+    it('removes recorded Terms Acceptance with the account and never requires acceptance to delete', async () => {
+      const cityId = await seedCity();
+      const [user] = await dbHelper.db
+        .insert(users)
+        .values({
+          firebaseUserId: 'fb-terms-accepted-1',
+          email: 'terms-accepted@example.com',
+          fullName: 'Terms Accepted User',
+          homeCityId: cityId,
+          termsAcceptedVersion: '2026-09-01',
+          termsAcceptedAt: new Date('2026-09-01T10:00:00.000Z'),
+        })
+        .returning();
+
+      // Deletion proceeds even though the account has recorded consent and
+      // the gate is configured: deletion must stay usable without (or with)
+      // current acceptance.
+      const authTime = Math.floor(Date.now() / 1000) - 10;
+      const payload = await accountDeletionService.initiateDeletion(user, authTime);
+
+      expect(payload.status).toBe('COMPLETED');
+      // The users row owns the acceptance, so deleting the account removes it.
+      expect(await usersRepo.findById(user.id)).toBeUndefined();
+
+      const remainingUsers = await dbHelper.db.execute(
+        sql`SELECT count(*)::int AS count FROM users WHERE id = ${user.id}`,
+      );
+      expect((remainingUsers.rows[0] as { count: number }).count).toBe(0);
+    });
   });
 
   // ─── TICKET 02: Populated Account Deletion Journey ──────────────────────────

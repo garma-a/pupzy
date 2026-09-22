@@ -75,13 +75,17 @@ describe('Saved-search storage contraction (ticket 19)', () => {
     expect(droppingMigrations).toEqual([`${CONTRACTION_TAG}.sql`]);
   });
 
-  it('registers the contraction migration once, after every historical migration', () => {
+  it('registers the contraction migration once, after every earlier migration', () => {
     const { entries } = journal();
     const tags = entries.map((entry) => entry.tag);
 
     expect(tags.filter((tag) => tag === CONTRACTION_TAG)).toHaveLength(1);
-    expect(tags[tags.length - 1]).toBe(CONTRACTION_TAG);
-    expect(entries[entries.length - 1].idx).toBe(entries.length - 1);
+
+    // The contraction was introduced after the historical migrations that
+    // existed when it shipped; later unrelated migrations may follow it.
+    const contractionIndex = entries.findIndex((entry) => entry.tag === CONTRACTION_TAG);
+    expect(entries[contractionIndex - 1]?.tag).toBe('0052_add_normalized_feed_search');
+    expect(entries.every((entry, index) => entry.idx === index)).toBe(true);
     expect(new Set(tags).size).toBe(tags.length);
   });
 
