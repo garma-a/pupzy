@@ -228,7 +228,7 @@ export const posts = pgTable(
      *   idx_posts_market_score    — (city_id, effective_score, created_at) WHERE status='ACTIVE' AND post_type='PRODUCT'
      *   idx_posts_market_category — (city_id, market_category, effective_score) WHERE status='ACTIVE' AND post_type='PRODUCT'
      *   idx_posts_needs_review    — (report_count, created_at) WHERE moderation_status IN ('PENDING_AUTO_REVIEW','FLAGGED') AND status='ACTIVE'
-     *   idx_posts_last_engaged    — (post_type, last_engaged_at) WHERE status='ACTIVE' AND post_type IN ('ADOPTION','PRODUCT')
+     *   idx_posts_last_engaged    — (post_type, last_engaged_at) WHERE status='ACTIVE' AND post_type IN ('ADOPTION','PRODUCT','RESCUE','LOST') (widened by 0056)
      */
   }),
 );
