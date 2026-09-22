@@ -126,6 +126,20 @@ export const users = pgTable(
     /** Whether push notifications are enabled. */
     notificationsEnabled: boolean('notifications_enabled').notNull().default(true),
 
+    /**
+     * Version of the Terms this account most recently accepted.
+     * NULL until the account explicitly accepts a published version; the
+     * backend never fabricates consent, so legacy rows stay NULL.
+     */
+    termsAcceptedVersion: varchar('terms_accepted_version', { length: 64 }),
+
+    /**
+     * When {@link termsAcceptedVersion} was accepted.
+     * Re-accepting the same version preserves this timestamp; accepting a new
+     * version replaces it. NULL whenever no acceptance is recorded.
+     */
+    termsAcceptedAt: timestamp('terms_accepted_at', { withTimezone: true }),
+
     // ── Moderation (admin panel) ─────────────────────────────────────────────
     /** Set by an admin. Banned users are rejected by FirebaseAuthGuard. */
     isBanned: boolean('is_banned').notNull().default(false),

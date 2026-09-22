@@ -41,6 +41,8 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
     assert.ok(resource.options.showProperties.includes('firebase_user_id'));
     assert.ok(resource.options.showProperties.includes('full_name_arabic'));
     assert.ok(resource.options.showProperties.includes('rescue_post_count'));
+    assert.ok(resource.options.showProperties.includes('terms_accepted_version'));
+    assert.ok(resource.options.showProperties.includes('terms_accepted_at'));
 
     // editProperties must match ALLOWED_USER_EDIT_FIELDS
     assert.deepEqual(resource.options.editProperties, [
@@ -72,6 +74,8 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
     assert.equal(props.lost_post_count.isDisabled, true);
     assert.equal(props.adoption_post_count.isDisabled, true);
     assert.equal(props.product_post_count.isDisabled, true);
+    assert.equal(props.terms_accepted_version.isDisabled, true);
+    assert.equal(props.terms_accepted_at.isDisabled, true);
     assert.equal(props.is_banned.isDisabled, true);
     assert.equal(props.banned_at.isDisabled, true);
     assert.equal(props.ban_reason.isDisabled, true);
@@ -151,6 +155,10 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
       adoption_count: 200,
       product_count: 300,
       mating_count: 400,
+
+      // Terms acceptance (system-recorded consent)
+      terms_accepted_version: '2026-09-01',
+      terms_accepted_at: new Date().toISOString(),
 
       // Timestamps & state
       last_seen_at: new Date().toISOString(),

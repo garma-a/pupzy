@@ -296,6 +296,26 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.equal('password_hash' in record.populated.banned_by_admin_id.params, false);
   });
 
+  it('exposes versioned Terms Acceptance on the user record for admin inspection', async () => {
+    const acceptedAt = new Date('2026-09-01T10:30:00.000Z');
+    const seeded = await database.pool.query(
+      `INSERT INTO users (firebase_user_id, email, full_name, terms_accepted_version, terms_accepted_at)
+       VALUES ('firebase-terms-user', 'terms@example.com', 'Terms User', '2026-09-01', $1)
+       RETURNING id`,
+      [acceptedAt],
+    );
+    const termsUserId = seeded.rows[0].id;
+
+    const response = await fetch(`${baseUrl}/admin/api/resources/users/records/${termsUserId}/show`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(response.status, 200);
+
+    const { record } = await response.json();
+    assert.equal(record.params.terms_accepted_version, '2026-09-01');
+    assert.equal(new Date(record.params.terms_accepted_at).toISOString(), acceptedAt.toISOString());
+  });
+
   it('relies on PostgreSQL enums to reject invalid values', async () => {
     await assert.rejects(
       database.pool.query(`UPDATE admin_users SET role = 'ROOT' WHERE id = $1`, [principals.adminId]),

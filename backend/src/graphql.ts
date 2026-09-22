@@ -446,6 +446,7 @@ export interface IQuery {
     after?: Nullable<string>,
   ): PostConnection | Promise<PostConnection>;
   me(): User | Promise<User>;
+  terms(): TermsInfo | Promise<TermsInfo>;
   accountDeletionProgress(
     deletionId: string,
     progressToken: string,
@@ -479,9 +480,21 @@ export interface AccountDeletionPayload {
   completedAt?: Nullable<Date>;
 }
 
+export interface TermsInfo {
+  currentVersion?: Nullable<string>;
+  termsUrl?: Nullable<string>;
+  acceptedVersion?: Nullable<string>;
+  acceptedAt?: Nullable<DateTime>;
+  acceptanceRequired: boolean;
+}
+
 export interface DeleteMyAccountInput {
   confirm: boolean;
   progressToken?: Nullable<string>;
+}
+
+export interface AcceptTermsInput {
+  version: string;
 }
 
 export interface RegisterDeviceInput {
@@ -521,6 +534,7 @@ export interface IMutation {
   updateMyLanguagePreference(languagePreference: Language): User | Promise<User>;
   updateMyNotificationPreferences(notificationsEnabled: boolean): User | Promise<User>;
   deleteMyAccount(input: DeleteMyAccountInput): AccountDeletionPayload | Promise<AccountDeletionPayload>;
+  acceptTerms(input: AcceptTermsInput): TermsInfo | Promise<TermsInfo>;
 }
 
 export interface City {

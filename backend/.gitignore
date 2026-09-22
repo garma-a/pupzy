@@ -12,6 +12,7 @@ docs/adr/*
 !docs/adoption-contact-flutter-integration-contract.md
 !docs/notification-language-flutter-integration-contract.md
 !docs/feed-search-flutter-integration-contract.md
+!docs/terms-acceptance-flutter-integration-contract.md
 !docs/admin-post-review-workspace.md
 !docs/device-push-delivery-flutter-integration-contract.md
 !docs/admin-case-resolution-contract.md

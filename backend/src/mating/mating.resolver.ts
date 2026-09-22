@@ -1,6 +1,7 @@
 import { Resolver, Query, Mutation, Args, Context } from '@nestjs/graphql';
 import { Throttle } from '@nestjs/throttler';
 import { MatingService } from './mating.service';
+import { RequiresTermsAcceptance } from '../terms/requires-terms-acceptance.decorator';
 import type { GqlContext } from '../common/types/gql-context.type';
 import type { Post } from '../database/schema';
 import type { MatingFeedFilterInput } from './mating.service';
@@ -29,6 +30,7 @@ export class MatingResolver {
    * Anti-spam: 5 mating posts per hour per IP (see plan §0.3 decision 9 re:
    * IP- vs user-scoping — AUD-15 has an optional per-user alternative).
    */
+  @RequiresTermsAcceptance()
   @Throttle({ default: { limit: 5, ttl: 3_600_000 } })
   @Mutation('createMatingPost')
   async createMatingPost(@Args('input') input: Record<string, unknown>, @Context() ctx: GqlContext): Promise<Post> {
