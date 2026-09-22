@@ -12,6 +12,7 @@ import '../widgets/animated_favorite_icon.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/adoption_applications_owner_section.dart';
 import '../widgets/nearby_vets_section.dart';
+import '../widgets/owner_post_actions.dart';
 import '../widgets/pet_carousel.dart';
 import '../widgets/safety_actions.dart';
 import '../widgets/skeleton_loader.dart';
@@ -309,7 +310,18 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
         ],
       ),
       bottomNavigationBar: _isOwner
-          ? null
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: OwnerPostActions(
+                  postId: post.id,
+                  close: OwnerCloseAction.adoption,
+                  isClosed: post.status != 'ACTIVE',
+                  onClosed: (status) => setState(() => _post = _post!.copyWith(status: status)),
+                  onDeleted: () => Navigator.of(context).pop(),
+                ),
+              ),
+            )
           : SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
