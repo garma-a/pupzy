@@ -917,8 +917,10 @@ describe('Owner Post closure and pending interactions (Ticket 03)', () => {
         expect(persisted?.status).toBe('APPROVED');
       } else {
         // The closure serialized first; the approval lost the race and no
-        // pending interaction survived.
-        expect(firstError(approval)).toMatch(/already REJECTED/);
+        // pending interaction survived. Depending on when the approval read
+        // the post, the loss surfaces as the closed-post preflight or as the
+        // already-terminal request check.
+        expect(firstError(approval)).toMatch(/no longer active|already REJECTED/);
         expect(persisted?.status).toBe('REJECTED');
       }
       expect(persisted?.status).not.toBe('PENDING');
