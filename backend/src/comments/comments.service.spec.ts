@@ -418,6 +418,80 @@ describe('CommentsService', () => {
       );
       expect(mockUploadService.markMediaFailed).toHaveBeenCalledWith([mediaId1], 'Database transaction failed');
     });
+
+    it('rejects image publication on ADOPTION, PRODUCT and MATING before quota or staged-media finalization', async () => {
+      const mediaId = '01916327-0000-7000-8000-000000000051';
+
+      for (const postType of ['ADOPTION', 'PRODUCT', 'MATING'] as const) {
+        mockPostsRepo.findById.mockResolvedValueOnce({ ...mockPost, postType });
+
+        let caught: AppError | undefined;
+        try {
+          await service.createComment(userId, {
+            clientRequestId: `req-image-${postType}`,
+            postId,
+            text: 'Photo evidence on a restricted type',
+            mediaIds: [mediaId],
+          });
+        } catch (err) {
+          caught = err as AppError;
+        }
+
+        expect(caught?.code).toBe('COMMENT_MEDIA_NOT_ALLOWED');
+      }
+
+      expect(mockUploadService.finalizeCommentImages).not.toHaveBeenCalled();
+      expect(mockCommentsRepo.countRecentCreationsByAuthor).not.toHaveBeenCalled();
+      expect(mockCommentsRepo.createCommentWithCounter).not.toHaveBeenCalled();
+    });
+
+    it('allows image publication on RESCUE and LOST', async () => {
+      const mediaId = '01916327-0000-7000-8000-000000000051';
+      const finalizedItem = {
+        id: mediaId,
+        commentId: 'comment-1',
+        storageKey: `comments/comment-1/${mediaId}.webp`,
+        stagingKey: `staging/${userId}/${mediaId}`,
+        sha256: 'hash1',
+        width: 320,
+        height: 240,
+        fileSizeBytes: 45000,
+        fileContentType: 'image/webp',
+        displayOrder: 0,
+      };
+
+      for (const postType of ['RESCUE', 'LOST'] as const) {
+        mockPostsRepo.findById.mockResolvedValueOnce({ ...mockPost, postType });
+        mockUploadService.finalizeCommentImages.mockResolvedValueOnce([finalizedItem]);
+
+        const result = await service.createComment(userId, {
+          clientRequestId: `req-image-${postType}`,
+          postId,
+          text: 'Photo evidence',
+          mediaIds: [mediaId],
+        });
+
+        expect(result).toBeDefined();
+      }
+
+      expect(mockUploadService.finalizeCommentImages).toHaveBeenCalledTimes(2);
+    });
+
+    it('keeps text Comments available on ADOPTION, PRODUCT and MATING', async () => {
+      for (const postType of ['ADOPTION', 'PRODUCT', 'MATING'] as const) {
+        mockPostsRepo.findById.mockResolvedValueOnce({ ...mockPost, postType });
+
+        const result = await service.createComment(userId, {
+          clientRequestId: `req-text-${postType}`,
+          postId,
+          text: 'Text comment on a restricted Post type',
+        });
+
+        expect(result).toBeDefined();
+      }
+
+      expect(mockUploadService.finalizeCommentImages).not.toHaveBeenCalled();
+    });
   });
 
   describe('getComments', () => {

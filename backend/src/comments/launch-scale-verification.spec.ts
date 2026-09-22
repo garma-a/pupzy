@@ -139,6 +139,9 @@ describe('Ticket 11: Launch-Scale Verification & Compatibility Gate', () => {
       expect(content).toContain('COMMENT_MEDIA_METADATA_FORBIDDEN');
       expect(content).toContain('COMMENT_MEDIA_BLOCKED');
       expect(content).toContain('COMMENT_IMAGES_DISABLED');
+      expect(content).toContain('COMMENT_MEDIA_NOT_ALLOWED');
+      expect(content).toContain('LOST_PET');
+      expect(content).toContain('FOUND_STRAY');
       expect(content).toContain('TOP');
       expect(content).toContain('NEWEST');
       expect(content).toContain('[Deleted]');

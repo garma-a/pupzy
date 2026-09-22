@@ -21,6 +21,7 @@ import { ConfigService } from '@nestjs/config';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { RequestCommentImageUploadDto } from './dto/request-comment-image-upload.input';
 import { ReportCommentInput } from './dto/report-comment.input';
+import { assertImageCommentAllowed } from './comment-image-eligibility';
 import { NotificationsService } from '../notifications/notifications.service';
 import { UsersService } from '../users/users.service';
 
@@ -154,6 +155,9 @@ export class CommentsService {
    * ## Post Eligibility
    * - Post must exist and must NOT have status = 'REMOVED'.
    * - Allowed for all non-Removed business statuses (ACTIVE, RESOLVED, REUNITED, ADOPTED, SOLD).
+   * - Image attachments (`mediaIds`) are allowed only beneath RESCUE and LOST
+   *   Posts; disallowed image publication is rejected here before quota or
+   *   staged-media finalization and rechecked inside the committing transaction.
    */
   async createComment(userId: string, input: CreateCommentDto): Promise<Comment> {
     const { postId, text, clientRequestId } = input;
@@ -180,6 +184,10 @@ export class CommentsService {
     }
     if (await this.isViewerIsolated(userId, post.creatorId)) {
       throw new NotFoundError('Post', postId);
+    }
+
+    if (input.mediaIds && input.mediaIds.length > 0) {
+      assertImageCommentAllowed(post.postType);
     }
 
     // 4. Per-user atomic rate limiting (10/min, 100/day)

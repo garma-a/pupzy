@@ -67,6 +67,21 @@ describe('Comments GraphQL Schema Contract (Additive & Backward Compatibility)',
     expect(isPinnedField!.type.kind).toBe(Kind.NON_NULL_TYPE);
   });
 
+  it('does not expose phone disclosure, proof-workflow, or resolution-voting fields on Comment', () => {
+    const source = fs.readFileSync(COMMENTS_GRAPHQL_FILE, 'utf8');
+    const doc = parse(source);
+
+    const commentType = doc.definitions.find(
+      (d): d is ObjectTypeDefinitionNode => d.kind === Kind.OBJECT_TYPE_DEFINITION && d.name.value === 'Comment',
+    );
+    expect(commentType).toBeDefined();
+
+    const fieldNames = commentType!.fields?.map((f) => f.name.value) ?? [];
+    for (const forbidden of ['phoneNumber', 'phone', 'proof', 'resolutionVote', 'evidenceProof', 'unlockPhone']) {
+      expect(fieldNames).not.toContain(forbidden);
+    }
+  });
+
   it('verifies ToggleCommentBoostPayload has commentId, isBoostedByMe, and boostCount', () => {
     const source = fs.readFileSync(COMMENTS_GRAPHQL_FILE, 'utf8');
     const doc = parse(source);
