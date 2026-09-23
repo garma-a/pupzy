@@ -54,9 +54,7 @@ describe('Rescue Discussion & Creator Closure Authority (Ticket 01)', () => {
           (d.kind === Kind.OBJECT_TYPE_DEFINITION || d.kind === Kind.OBJECT_TYPE_EXTENSION) &&
           d.name.value === 'Mutation',
       );
-      const updateField = mutationTypes
-        .flatMap((t) => t.fields ?? [])
-        .find((f) => f.name.value === 'updatePostStatus');
+      const updateField = mutationTypes.flatMap((t) => t.fields ?? []).find((f) => f.name.value === 'updatePostStatus');
       expect(updateField).toBeDefined();
     });
   });
