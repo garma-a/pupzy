@@ -1,10 +1,12 @@
 import {
   actionResponse,
+  capturePostCompletion,
   closeOpenPostReports,
   enqueuePushDeliveries,
   findLostReportType,
   lockPostDiscussion,
   readModerationReason,
+  reopenPostCompletion,
   runModerationAction,
   terminatePendingInteractions,
 } from './helpers.js';
@@ -141,7 +143,7 @@ function buildResolutionAction(pool, component, cache, definition) {
         }
         return null;
       },
-      mutate: async (client, row) => {
+      mutate: async (client, row, adminUserId) => {
         await client.query(`UPDATE posts SET status = $2, updated_at = now() WHERE id = $1`, [
           row.id,
           definition.outcome,
@@ -163,6 +165,16 @@ function buildResolutionAction(pool, component, cache, definition) {
           type: 'POST_RESOLVED_BY_ADMIN',
         });
         const termination = await terminatePendingInteractions(client, row.id);
+        if (row.post_type === 'RESCUE' && definition.outcome === 'RESOLVED') {
+          await capturePostCompletion(client, {
+            postId: row.id,
+            postType: row.post_type,
+            outcome: definition.outcome,
+            closingActorId: adminUserId,
+            title: row.title,
+            creatorId: row.creator_id,
+          });
+        }
         return { outcome: definition.outcome, ...termination };
       },
     },
@@ -235,6 +247,10 @@ function buildReopenAction(pool, component, cache) {
           id: notificationRows[0].id,
           recipientId: row.creator_id,
           type: 'POST_REOPENED_BY_ADMIN',
+        });
+        await reopenPostCompletion(client, {
+          postId: row.id,
+          postTitle: row.title,
         });
         return { previousOutcome };
       },

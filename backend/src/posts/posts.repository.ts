@@ -45,6 +45,7 @@ import { withDbRetry } from '../common/utils/db-retry.util';
 import type { NotificationContentColumns } from '../notifications/notification-templates';
 import { PushDeliveryRepository } from '../notifications/push-delivery.repository';
 import { isPushDeliveryEnabled } from '../notifications/push-delivery.constants';
+import { PostCompletionNotificationRepository } from '../notifications/post-completion-notification.repository';
 import {
   ModerationReportQuotaManager,
   ReportQuotaReservation,
@@ -130,6 +131,7 @@ export class PostsRepository {
   private readonly reportQuotaManager: ModerationReportQuotaManager;
   private readonly isolationPolicy: AccountIsolationPolicy;
   private readonly pushDeliveryRepository: PushDeliveryRepository;
+  private readonly postCompletionRepository: PostCompletionNotificationRepository;
 
   constructor(
     @Inject(DATABASE_TOKEN)
@@ -143,10 +145,15 @@ export class PostsRepository {
     @Optional()
     @Inject(PushDeliveryRepository)
     pushDeliveryRepository?: PushDeliveryRepository,
+    @Optional()
+    @Inject(PostCompletionNotificationRepository)
+    postCompletionRepository?: PostCompletionNotificationRepository,
   ) {
     this.reportQuotaManager = reportQuotaManager ?? new ModerationReportQuotaManager(this.db);
     this.isolationPolicy = isolationPolicy ?? new AccountIsolationPolicy(this.db);
     this.pushDeliveryRepository = pushDeliveryRepository ?? new PushDeliveryRepository(this.db);
+    this.postCompletionRepository =
+      postCompletionRepository ?? new PostCompletionNotificationRepository(this.db, this.pushDeliveryRepository);
   }
 
   /**
@@ -499,6 +506,16 @@ export class PostsRepository {
           .returning();
         if (post) {
           await this.terminatePendingInteractions(tx, postId);
+          if (lockedPost.postType === 'RESCUE' && status === 'RESOLVED') {
+            await this.postCompletionRepository.captureCompletionEvent(tx, {
+              postId: post.id,
+              postType: post.postType,
+              outcome: status,
+              closingActorId: creatorId,
+              title: post.title,
+              creatorId: post.creatorId,
+            });
+          }
         }
         return post;
       }),

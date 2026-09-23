@@ -27,6 +27,10 @@ const SAMPLE_PARAMS: NotificationTemplateParamsMap = {
   NEW_REPLY: { actorName: 'Ahmed' },
   COMMENT_BOOSTED: { actorName: 'Ahmed', target: 'comment' },
   COMMENT_PINNED: { postTitle: 'Missing cat' },
+  POST_COMPLETED: { postTitle: 'Missing cat' },
+  POST_REOPENED: { postTitle: 'Missing cat' },
+  RESCUE_COMPLETED: { postTitle: 'Injured puppy' },
+  RESCUE_REOPENED: { postTitle: 'Injured puppy' },
 };
 
 describe('notification templates', () => {
@@ -134,6 +138,20 @@ describe('notification templates', () => {
     expect(content.titleArabic).toBe('تمت إعادة فتح المنشور');
     expect(content.bodyArabic).toContain('Missing cat');
     expect(content.bodyArabic.trim().length).toBeGreaterThan(0);
+  });
+
+  it('renders rescue completion and reopening correction messages in both languages', () => {
+    const closure = buildNotificationContent('RESCUE_COMPLETED', { postTitle: 'Injured puppy' });
+    expect(closure.title).toBe('Rescue resolved');
+    expect(closure.body).toBe('The rescue "Injured puppy" was marked as rescued.');
+    expect(closure.titleArabic).toBe('تم حل حالة الإنقاذ');
+    expect(closure.bodyArabic).toContain('Injured puppy');
+
+    const correction = buildNotificationContent('RESCUE_REOPENED', { postTitle: 'Injured puppy' });
+    expect(correction.title).toBe('Rescue reopened');
+    expect(correction.body).toBe('The rescue "Injured puppy" was reopened.');
+    expect(correction.titleArabic).toBe('تمت إعادة فتح حالة الإنقاذ');
+    expect(correction.bodyArabic).toContain('Injured puppy');
   });
 
   it('preserves both account-ban cascade copy variants', () => {
