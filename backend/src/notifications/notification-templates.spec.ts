@@ -154,6 +154,38 @@ describe('notification templates', () => {
     expect(correction.bodyArabic).toContain('Injured puppy');
   });
 
+  it('renders outcome-specific completion messages for non-rescue posts in both languages', () => {
+    const reunited = buildNotificationContent('POST_COMPLETED', { postTitle: 'Lost Dog', outcome: 'REUNITED' });
+    expect(reunited.title).toBe('Pet reunited');
+    expect(reunited.body).toBe('The post "Lost Dog" was marked as reunited.');
+    expect(reunited.titleArabic).toBe('تم لمّ الشمل');
+    expect(reunited.bodyArabic).toContain('Lost Dog');
+    expect(reunited.bodyArabic).toContain('تم لمّ الشمل');
+
+    const sold = buildNotificationContent('POST_COMPLETED', { postTitle: 'Dog Crate', outcome: 'SOLD' });
+    expect(sold.title).toBe('Item sold');
+    expect(sold.body).toBe('The post "Dog Crate" was marked as sold.');
+    expect(sold.titleArabic).toBe('تم البيع');
+    expect(sold.bodyArabic).toContain('Dog Crate');
+    expect(sold.bodyArabic).toContain('تم البيع');
+
+    const resolved = buildNotificationContent('POST_COMPLETED', { postTitle: 'Mating Pair', outcome: 'RESOLVED' });
+    expect(resolved.title).toBe('Post resolved');
+    expect(resolved.body).toBe('The post "Mating Pair" was marked as resolved.');
+    expect(resolved.titleArabic).toBe('تم حل المنشور');
+    expect(resolved.bodyArabic).toContain('Mating Pair');
+
+    // The default (no outcome) copy stays byte-for-byte the historic resolved copy.
+    const defaulted = buildNotificationContent('POST_COMPLETED', { postTitle: 'Mating Pair' });
+    expect(defaulted).toEqual(resolved);
+
+    const reopened = buildNotificationContent('POST_REOPENED', { postTitle: 'Lost Dog' });
+    expect(reopened.title).toBe('Post reopened');
+    expect(reopened.body).toBe('The post "Lost Dog" was reopened.');
+    expect(reopened.titleArabic).toBe('تمت إعادة فتح المنشور');
+    expect(reopened.bodyArabic).toContain('Lost Dog');
+  });
+
   it('preserves both account-ban cascade copy variants', () => {
     expect(buildNotificationContent('POST_REMOVED_BY_ADMIN', { reason: 'Spam', removedAll: true })).toMatchObject({
       title: 'Your posts were removed',

@@ -49,7 +49,7 @@ export interface NotificationTemplateParamsMap {
   NEW_REPLY: { actorName: string };
   COMMENT_BOOSTED: { actorName: string; target: 'comment' | 'reply' };
   COMMENT_PINNED: { postTitle: string };
-  POST_COMPLETED: { postTitle: string };
+  POST_COMPLETED: { postTitle: string; outcome?: string };
   POST_REOPENED: { postTitle: string };
   RESCUE_COMPLETED: { postTitle: string };
   RESCUE_REOPENED: { postTitle: string };
@@ -270,14 +270,42 @@ const NOTIFICATION_TEMPLATES: NotificationTemplateRegistry = {
     }),
   },
   POST_COMPLETED: {
-    en: ({ postTitle }) => ({
-      title: 'Post resolved',
-      body: `The post "${postTitle}" was marked as resolved.`,
-    }),
-    ar: ({ postTitle }) => ({
-      title: 'تم حل المنشور',
-      body: `تم تسجيل نتيجة المنشور "${postTitle}".`,
-    }),
+    en: ({ postTitle, outcome }) => {
+      if (outcome === 'REUNITED') {
+        return {
+          title: 'Pet reunited',
+          body: `The post "${postTitle}" was marked as reunited.`,
+        };
+      }
+      if (outcome === 'SOLD') {
+        return {
+          title: 'Item sold',
+          body: `The post "${postTitle}" was marked as sold.`,
+        };
+      }
+      return {
+        title: 'Post resolved',
+        body: `The post "${postTitle}" was marked as resolved.`,
+      };
+    },
+    ar: ({ postTitle, outcome }) => {
+      if (outcome === 'REUNITED') {
+        return {
+          title: 'تم لمّ الشمل',
+          body: `تم تسجيل نتيجة المنشور "${postTitle}": تم لمّ الشمل.`,
+        };
+      }
+      if (outcome === 'SOLD') {
+        return {
+          title: 'تم البيع',
+          body: `تم تسجيل نتيجة المنشور "${postTitle}": تم البيع.`,
+        };
+      }
+      return {
+        title: 'تم حل المنشور',
+        body: `تم تسجيل نتيجة المنشور "${postTitle}".`,
+      };
+    },
   },
   POST_REOPENED: {
     en: ({ postTitle }) => ({

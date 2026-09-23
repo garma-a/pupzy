@@ -42,7 +42,8 @@ export interface BatchProcessingResult {
  * without an arbitrary cap. Supports > 500 recipients across multiple batches,
  * handles rollback, retries, and interrupted batches.
  *
- * Rechecks access, blocks, account availability, and push preferences at delivery time.
+ * Rechecks access, creator/closing-actor blocks, account availability, and push
+ * preferences at delivery time.
  */
 @Injectable()
 export class PostCompletionNotificationProcessor implements OnApplicationBootstrap {
@@ -191,10 +192,14 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
           return 'SUPPRESSED';
         }
 
-        // Recheck mutual account isolation (Blocks)
+        // Recheck mutual account isolation (Blocks) against both the Post
+        // creator and the closing actor, so a recipient isolated from the
+        // creator never receives a completion notification even when an
+        // administrator (not the creator) recorded the outcome.
         if (
-          event.closingActorId &&
-          (await this.isolationPolicy.lockPairAndRecheck(tx, event.closingActorId, currentRecipient.recipientId))
+          (await this.isolationPolicy.lockPairAndRecheck(tx, post.creatorId, currentRecipient.recipientId)) ||
+          (event.closingActorId &&
+            (await this.isolationPolicy.lockPairAndRecheck(tx, event.closingActorId, currentRecipient.recipientId)))
         ) {
           await this.markSuppressed(tx, currentRecipient.id, recipient.leaseToken!, 'BLOCKED');
           return 'SUPPRESSED';
@@ -217,8 +222,11 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
         // Push preferences recheck:
         // "disabled push retains inbox and does not resurrect later"
         // If push is disabled for this user, do NOT enqueue push deliveries.
+        // The intent records the Post creator as its actor so the push worker's
+        // send-time Block recheck closes even for an administrator-recorded
+        // outcome, where the closing actor has no app-user identity.
         if (user.notificationsEnabled && isPushDeliveryEnabled(event.type)) {
-          await this.pushDeliveryRepository.enqueueForNotification(notification, event.closingActorId, tx);
+          await this.pushDeliveryRepository.enqueueForNotification(notification, post.creatorId, tx);
         }
 
         // Mark recipient DELIVERED

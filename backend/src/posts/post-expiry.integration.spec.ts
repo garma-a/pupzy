@@ -15,6 +15,7 @@ import {
   contactRequests,
   lostPosts,
   notifications,
+  postCompletionNotificationEvents,
   postMedia,
   posts,
   productPosts,
@@ -1183,6 +1184,13 @@ describe('Post inactivity expiry, reminders and renewal (Tickets 12–13)', () =
       // Expiry terminates the still-pending interactions and preserves every row.
       const expired = await postsRepository.expireInactivePost(post.id, 'ADOPTION', 30);
       expect(expired?.status).toBe('EXPIRED');
+
+      // Expiry is not a completion: no participant completion event is captured.
+      const completionEvents = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.postId, post.id));
+      expect(completionEvents).toHaveLength(0);
 
       const [pendingRow] = await dbHelper.db
         .select()

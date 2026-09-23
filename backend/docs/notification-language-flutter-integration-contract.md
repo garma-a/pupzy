@@ -139,6 +139,19 @@ Every type persisted by the `notification_type` enum has English and Arabic defi
 
 Administrative notifications written directly by the AdminJS service (`POST_REMOVED_BY_ADMIN`, `POST_RESOLVED_BY_ADMIN` from the administrator case-resolution work and `POST_REOPENED_BY_ADMIN` from the administrator reopening correction) now carry both languages. Rows that predate this work keep the English fallback. `POST_RESOLVED_BY_ADMIN` routes through `related_post_id` and states the recorded outcome (`RESOLVED`, `REUNITED`, `ADOPTED` or `SOLD`); `POST_REOPENED_BY_ADMIN` routes through `related_post_id` and states that the Post was reopened to Active. In both cases the administrator's internal reason is not disclosed in the notification.
 
+### 3.2 Participant completion notifications
+
+Closure-time participants (Boost/save, Comment/Reply and Contact Request participation) receive the durable completion notification types as bilingual rows routed through `related_post_id`; `related_comment_id` is null. The copy is outcome-specific:
+
+| Type | Outcome | English | Arabic |
+|---|---|---|---|
+| `POST_COMPLETED` | `REUNITED` | "Pet reunited" — `The post "…" was marked as reunited.` | "تم لمّ الشمل" |
+| `POST_COMPLETED` | `SOLD` | "Item sold" — `The post "…" was marked as sold.` | "تم البيع" |
+| `POST_COMPLETED` | `RESOLVED` | "Post resolved" — `The post "…" was marked as resolved.` | "تم حل المنشور" |
+| `RESCUE_COMPLETED` | `RESOLVED` | "Rescue resolved" — `The rescue "…" was marked as rescued.` | "تم حل حالة الإنقاذ" |
+
+A re-opened outcome sends the correction `POST_REOPENED` ("Post reopened") or `RESCUE_REOPENED` ("Rescue reopened") through the same `related_post_id`. Removal, moderation takedown and inactivity expiry never send a completion or correction notification.
+
 ---
 
 ## 4. Template Contract for Later Notification Features

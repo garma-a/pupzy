@@ -28,7 +28,8 @@ let staffId;
 const BUSINESS_TABLES = `
   post_media, rescue_posts, lost_posts, adoption_posts, product_posts, mating_posts,
   post_upvotes, post_saves, contact_requests, adoption_applications, post_reports, comment_reports, account_reports,
-  notifications, moderation_actions, posts, users,
+  notifications, post_completion_recipients, post_completion_notification_events,
+  moderation_actions, posts, users,
   comments, comment_media, post_pins, comment_boosts, comment_idempotency,
   media_deletion_work, blocked_media_hashes, blocks, account_deletions
 `;
@@ -414,6 +415,64 @@ describe('Administrator case resolution HTTP boundary', () => {
     assert.equal(actionsAfter.names.includes('removePost'), false, 'removal is hidden once an outcome is recorded');
   });
 
+  it('captures and localizes the participant completion event for a non-rescue outcome, and never on removal', async () => {
+    const ownerId = await insertUser('sold-owner');
+    const buyerId = await insertUser('sold-buyer');
+    const otherBuyerId = await insertUser('sold-other-buyer');
+    const productId = await insertTypedPost({ ownerId, postType: 'PRODUCT', title: 'Sold product case' });
+
+    await database.pool.query(`INSERT INTO post_saves (post_id, user_id) VALUES ($1, $2), ($1, $3)`, [
+      productId,
+      buyerId,
+      otherBuyerId,
+    ]);
+
+    const response = await postAction('markSold', productId, { reason: 'Sold in person' }, staffCookie, staffCsrf);
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.notice?.type, 'success');
+
+    const event = (
+      await database.pool.query(
+        `SELECT type, outcome, post_type, closing_actor_id, title, body, title_arabic, body_arabic, status, total_recipients
+         FROM post_completion_notification_events WHERE post_id = $1`,
+        [productId],
+      )
+    ).rows[0];
+    assert.equal(event.type, 'POST_COMPLETED');
+    assert.equal(event.post_type, 'PRODUCT');
+    assert.equal(event.outcome, 'SOLD');
+    assert.equal(
+      event.closing_actor_id,
+      null,
+      'AdminJS actors are not app users, so the event stores no closing user; the audit row names the admin',
+    );
+    assert.equal(event.title, 'Item sold');
+    assert.equal(event.body, 'The post "Sold product case" was marked as sold.');
+    assert.equal(event.title_arabic, 'تم البيع');
+    assert.ok(event.body_arabic.includes('Sold product case'));
+    assert.ok(event.body_arabic.includes('تم البيع'));
+    assert.equal(event.total_recipients, 2);
+    assert.equal(event.status, 'PENDING');
+
+    const recipients = (
+      await database.pool.query(`SELECT recipient_id FROM post_completion_recipients WHERE post_id = $1`, [productId])
+    ).rows.map((row) => row.recipient_id);
+    assert.deepEqual(recipients.sort(), [buyerId, otherBuyerId].sort());
+    assert.equal(recipients.includes(ownerId), false, 'the creator is never a completion audience member');
+
+    // Administrator removal is a moderation takedown, not a completion.
+    const removedId = await insertTypedPost({ ownerId, postType: 'PRODUCT', title: 'Removed product case' });
+    await database.pool.query(`INSERT INTO post_saves (post_id, user_id) VALUES ($1, $2)`, [removedId, buyerId]);
+    const removal = await postAction('removePost', removedId, { reason: 'Policy violation' }, staffCookie, staffCsrf);
+    assert.equal((await removal.json()).notice?.type, 'success');
+    const removalEvents = await database.pool.query(
+      `SELECT count(*)::int AS count FROM post_completion_notification_events WHERE post_id = $1`,
+      [removedId],
+    );
+    assert.equal(removalEvents.rows[0].count, 0, 'removal never emits a completion event');
+  });
+
   it('requires an internal reason and rejects invalid, repeated or removed-state resolutions without writes', async () => {
     const ownerId = await insertUser('guard-owner');
     const adoptionId = await insertTypedPost({ ownerId, postType: 'ADOPTION', title: 'Guard adoption' });
@@ -781,6 +840,123 @@ describe('Administrator case reopening HTTP boundary', () => {
     const view = await fetchRecordActions(postId);
     assert.ok(view.names.includes('markAdopted'), 'the corrected case can be resolved again if justified');
     assert.equal(view.names.includes(REOPEN_ACTION_NAME), false, 'an active case offers no reopening');
+  });
+
+  it('corrects a delivered non-rescue participant, suppresses pending ones, and leaves the owner notification unchanged', async () => {
+    const ownerId = await insertUser('participant-owner');
+    const deliveredParticipantId = await insertUser('participant-delivered');
+    const pendingParticipantId = await insertUser('participant-pending');
+    const productId = await insertTypedPost({ ownerId, postType: 'PRODUCT', title: 'Participant correction case' });
+
+    // Record the SOLD outcome through the authenticated boundary first.
+    const resolution = await postAction('markSold', productId, { reason: 'Sold offline' }, staffCookie, staffCsrf);
+    assert.equal(resolution.status, 200);
+    assert.equal((await resolution.json()).notice?.type, 'success');
+
+    const event = (
+      await database.pool.query(`SELECT id, type FROM post_completion_notification_events WHERE post_id = $1`, [
+        productId,
+      ])
+    ).rows[0];
+    assert.equal(event.type, 'POST_COMPLETED');
+
+    // Seed the participant audience the API worker would normally consume: one
+    // participant already delivered a committed closure inbox row, one still
+    // pending.
+    const deliveredNotification = (
+      await database.pool.query(
+        `INSERT INTO notifications
+           (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
+         VALUES ($1, 'POST_COMPLETED', 'Item sold',
+                 'The post "Participant correction case" was marked as sold.',
+                 'تم البيع', 'تم تسجيل نتيجة المنشور "Participant correction case": تم البيع.', $2, false)
+         RETURNING id`,
+        [deliveredParticipantId, productId],
+      )
+    ).rows[0];
+    const deliveredRecipient = (
+      await database.pool.query(
+        `INSERT INTO post_completion_recipients
+           (event_id, post_id, recipient_id, status, notification_id, delivered_at, attempts)
+         VALUES ($1, $2, $3, 'DELIVERED', $4, now(), 1)
+         RETURNING id`,
+        [event.id, productId, deliveredParticipantId, deliveredNotification.id],
+      )
+    ).rows[0];
+    const pendingRecipient = (
+      await database.pool.query(
+        `INSERT INTO post_completion_recipients (event_id, post_id, recipient_id, status)
+         VALUES ($1, $2, $3, 'PENDING')
+         RETURNING id`,
+        [event.id, productId, pendingParticipantId],
+      )
+    ).rows[0];
+    await database.pool.query(
+      `UPDATE post_completion_notification_events SET total_recipients = 2, status = 'PENDING' WHERE id = $1`,
+      [event.id],
+    );
+
+    const response = await postAction(
+      REOPEN_ACTION_NAME,
+      productId,
+      { reason: 'The sale was recorded by mistake' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).notice?.type, 'success');
+
+    // (a) The delivered participant is corrected with localized copy and routing.
+    const correctedRecipient = (
+      await database.pool.query(`SELECT status, notification_id FROM post_completion_recipients WHERE id = $1`, [
+        deliveredRecipient.id,
+      ])
+    ).rows[0];
+    assert.equal(correctedRecipient.status, 'CORRECTED');
+    assert.equal(correctedRecipient.notification_id, deliveredNotification.id, 'the original inbox row is kept');
+    const corrections = (
+      await database.pool.query(
+        `SELECT type, related_post_id, title, body, title_arabic, body_arabic
+         FROM notifications WHERE recipient_id = $1 AND type = 'POST_REOPENED'`,
+        [deliveredParticipantId],
+      )
+    ).rows;
+    assert.equal(corrections.length, 1);
+    assert.equal(corrections[0].related_post_id, productId);
+    assert.equal(corrections[0].title, 'Post reopened');
+    assert.equal(corrections[0].body, 'The post "Participant correction case" was reopened.');
+    assert.equal(corrections[0].title_arabic, 'تمت إعادة فتح المنشور');
+    assert.ok(corrections[0].body_arabic.includes('Participant correction case'));
+
+    // (b) Still-pending recipients are suppressed and never delivered.
+    const pendingRow = (
+      await database.pool.query(`SELECT status FROM post_completion_recipients WHERE id = $1`, [pendingRecipient.id])
+    ).rows[0];
+    assert.equal(pendingRow.status, 'SUPPRESSED');
+    const eventRow = (
+      await database.pool.query(`SELECT status FROM post_completion_notification_events WHERE id = $1`, [event.id])
+    ).rows[0];
+    assert.equal(eventRow.status, 'SUPERSEDED');
+    const pendingNotifications = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE recipient_id = $1`,
+      [pendingParticipantId],
+    );
+    assert.equal(pendingNotifications.rows[0].count, 0, 'a suppressed closure recipient never receives a notification');
+
+    // (c) The owner's POST_REOPENED_BY_ADMIN behavior is unchanged.
+    const ownerCorrections = (
+      await database.pool.query(
+        `SELECT type, related_post_id, title, body, title_arabic, body_arabic
+         FROM notifications WHERE recipient_id = $1 AND type = 'POST_REOPENED_BY_ADMIN'`,
+        [ownerId],
+      )
+    ).rows;
+    assert.equal(ownerCorrections.length, 1);
+    assert.equal(ownerCorrections[0].related_post_id, productId);
+    assert.equal(ownerCorrections[0].title, 'Post reopened');
+    assert.equal(ownerCorrections[0].body, 'An administrator reopened your post "Participant correction case".');
+    assert.equal(ownerCorrections[0].title_arabic, 'تمت إعادة فتح المنشور');
+    assert.ok(ownerCorrections[0].body_arabic.includes('Participant correction case'));
   });
 
   it('requires an internal reason and rejects repeated, removed or expired reopening without writes', async () => {

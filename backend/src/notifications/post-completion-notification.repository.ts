@@ -79,7 +79,7 @@ export class PostCompletionNotificationRepository {
     const { postId, postType, outcome, closingActorId, title, creatorId } = params;
 
     const notificationType = postType === 'RESCUE' ? 'RESCUE_COMPLETED' : 'POST_COMPLETED';
-    const content = buildNotificationContent(notificationType, { postTitle: title });
+    const content = buildNotificationContent(notificationType, { postTitle: title, outcome });
 
     const [event] = await tx
       .insert(postCompletionNotificationEvents)

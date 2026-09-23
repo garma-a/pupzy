@@ -307,12 +307,17 @@ export function readModerationReason(value) {
 }
 
 /**
- * Atomically captures a post completion event and audience snapshot for rescue closure.
- * Excludes the closing admin and the post creator (creator already receives POST_RESOLVED_BY_ADMIN).
+ * Atomically captures a post completion event and audience snapshot for a
+ * completed Post outcome. Excludes the closing actor and the post creator
+ * (the creator already receives POST_RESOLVED_BY_ADMIN).
+ *
+ * `closingActorId` must be a `users.id`, never an `admin_users.id`: the column
+ * has a foreign key to `users`. Administrator actions record no app-user
+ * closing actor because the append-only audit row already names the admin.
  */
 export async function capturePostCompletion(client, { postId, postType, outcome, closingActorId, title, creatorId }) {
   const notificationType = postType === 'RESCUE' ? 'RESCUE_COMPLETED' : 'POST_COMPLETED';
-  const content = buildNotificationContent(notificationType, { postTitle: title });
+  const content = buildNotificationContent(notificationType, { postTitle: title, outcome });
 
   const { rows: eventRows } = await client.query(
     `INSERT INTO post_completion_notification_events

@@ -92,6 +92,16 @@ Every resolution runs inside one database transaction using the shared lifecycle
    established terminal `REJECTED` state with `responded_at` set. Rows are preserved and previously
    **approved** interactions are never touched, so approved contact access keeps its existing account,
    visibility and Block restrictions.
+5. A durable participant completion event is captured for **every** recorded outcome, not only RESCUE:
+   `POST_COMPLETED` for LOST/ADOPTION/PRODUCT/MATING and `RESCUE_COMPLETED` for RESCUE. The event
+   snapshots the closure-time audience (Boost/save, active Comment/Reply, Contact Request participation)
+   with outcome-specific English/Arabic copy; the Post creator is always excluded. AdminJS administrators
+   are `admin_users` rows with no application-user identity, while the event's `closing_actor_id`
+   references `users`, so an administrator-recorded event stores no closing actor and the
+   `moderation_actions` audit row names the administrator instead. Delivery happens later through the
+   API's bounded completion worker, which rechecks the Post state, account availability and Blocks
+   against the Post creator (and the stored closing actor when one exists); its push intents carry the
+   Post creator as the send-time isolation actor.
 
 Deliberately untouched: open Post Reports stay open (a Post Resolution is not a moderation review),
 media and discussion are retained, and engagement rows are unchanged. After commit, the AdminJS
@@ -107,6 +117,10 @@ Reopening uses the same transaction boundary and locks, and commits together:
    internal reason and metadata (`previousOutcome`, the corrected outcome).
 3. One `notifications` row (`POST_REOPENED_BY_ADMIN`) is inserted for the Post owner with both language
    columns, committed with the state change so notification intent cannot be lost.
+4. Pending participant completion events for the Post are superseded, and already-delivered
+   participants receive the localized `POST_REOPENED` (or `RESCUE_REOPENED` for RESCUE) correction
+   through `reopenPostCompletion`, the AdminJS duplicate that mirrors the API repository's supersession
+   and correction behavior over the same durable tables.
 
 Deliberately untouched: every Contact Request and Adoption Application row keeps its current status
 (closed stays closed, approved stays approved), open Post Reports stay open, and media, discussion and
@@ -127,6 +141,22 @@ Examples (English):
 
 - Resolution: `An administrator marked your post "Found stray near the market" as resolved.`
 - Reopening: `An administrator reopened your post "Found stray near the market".`
+
+### Participant completion notification
+
+The closure-time audience (always excluding the Post creator) receives the durable completion event; it
+is delivered through the API's bounded worker, not by the AdminJS service. An administrator-recorded
+event stores no closing actor (AdminJS administrators have no application-user identity) and the audit
+row names the administrator; the worker's push intents carry the Post creator as the send-time
+isolation actor.
+
+| Property   | Value                                                                                                    |
+| ---------- | -------------------------------------------------------------------------------------------------------- |
+| Type       | `POST_COMPLETED` for LOST/ADOPTION/PRODUCT/MATING, `RESCUE_COMPLETED` for RESCUE                           |
+| Outcome    | The recorded outcome; copy is outcome-specific: `REUNITED` → "Pet reunited" / "تم لمّ الشمل", `SOLD` → "Item sold" / "تم البيع", `RESOLVED` → "Post resolved" / "تم حل المنشور" |
+| Correction | `POST_REOPENED` (or `RESCUE_REOPENED`) on a later reopening, delivered to already-notified participants  |
+| Routing    | `related_post_id` = the Post; `related_comment_id` is null                                                |
+| Content    | English and Arabic `title`/`body` from the centralized template registry                                  |
 
 ## 6. Errors and transport behavior
 
@@ -172,6 +202,8 @@ npm run format:check
 | Resolution action visibility matrix, audit, notification, pending cleanup, atomicity, cache and concurrency | `admin-service/test/moderation-actions.test.js` (`administrator post resolution`)                                                                                                                                      |
 | Reopening visibility, banned-owner rejection, preserved closed interactions, audit, notification, atomicity and concurrency | `admin-service/test/moderation-actions.test.js` (`administrator post reopening`)                                                                                                                            |
 | Authenticated AdminJS HTTP actions, type-specific action lists, roles, reason enforcement and races | `admin-service/test/admin-case-resolution.test.js` (`Administrator case resolution HTTP boundary` and `Administrator case reopening HTTP boundary`)                                                                        |
+| Participant completion event capture, outcome/audience/localized copy and no event on removal through authenticated AdminJS HTTP actions | `admin-service/test/admin-case-resolution.test.js` (`captures and localizes the participant completion event for a non-rescue outcome, and never on removal`) |
+| Participant completion delivery for every successful outcome, reopen corrections, stale-event suppression and creator-isolation recheck on real Postgres | `backend/src/notifications/post-completion-notification.integration.spec.ts` |
 | Real browser resolution and reopening correction journey, result state, action bar and history      | `admin-service/test/post-review-workspace-browser.test.js` (evidence in `BWG08_EVIDENCE_DIR` and `BWG09_EVIDENCE_DIR`)                                                                                                        |
 | Migration enum values (resolution 0050, reopening 0051)                                            | `backend/src/database/migrate.integration.spec.ts`                                                                                                                                                                            |
 | Notification template completeness and bilingual copy                                             | `backend/src/notifications/notification-templates.spec.ts`                                                                                                                                                                    |
