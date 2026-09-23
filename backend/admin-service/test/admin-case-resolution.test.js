@@ -842,6 +842,123 @@ describe('Administrator case reopening HTTP boundary', () => {
     assert.equal(view.names.includes(REOPEN_ACTION_NAME), false, 'an active case offers no reopening');
   });
 
+  it('corrects a delivered non-rescue participant, suppresses pending ones, and leaves the owner notification unchanged', async () => {
+    const ownerId = await insertUser('participant-owner');
+    const deliveredParticipantId = await insertUser('participant-delivered');
+    const pendingParticipantId = await insertUser('participant-pending');
+    const productId = await insertTypedPost({ ownerId, postType: 'PRODUCT', title: 'Participant correction case' });
+
+    // Record the SOLD outcome through the authenticated boundary first.
+    const resolution = await postAction('markSold', productId, { reason: 'Sold offline' }, staffCookie, staffCsrf);
+    assert.equal(resolution.status, 200);
+    assert.equal((await resolution.json()).notice?.type, 'success');
+
+    const event = (
+      await database.pool.query(`SELECT id, type FROM post_completion_notification_events WHERE post_id = $1`, [
+        productId,
+      ])
+    ).rows[0];
+    assert.equal(event.type, 'POST_COMPLETED');
+
+    // Seed the participant audience the API worker would normally consume: one
+    // participant already delivered a committed closure inbox row, one still
+    // pending.
+    const deliveredNotification = (
+      await database.pool.query(
+        `INSERT INTO notifications
+           (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
+         VALUES ($1, 'POST_COMPLETED', 'Item sold',
+                 'The post "Participant correction case" was marked as sold.',
+                 'تم البيع', 'تم تسجيل نتيجة المنشور "Participant correction case": تم البيع.', $2, false)
+         RETURNING id`,
+        [deliveredParticipantId, productId],
+      )
+    ).rows[0];
+    const deliveredRecipient = (
+      await database.pool.query(
+        `INSERT INTO post_completion_recipients
+           (event_id, post_id, recipient_id, status, notification_id, delivered_at, attempts)
+         VALUES ($1, $2, $3, 'DELIVERED', $4, now(), 1)
+         RETURNING id`,
+        [event.id, productId, deliveredParticipantId, deliveredNotification.id],
+      )
+    ).rows[0];
+    const pendingRecipient = (
+      await database.pool.query(
+        `INSERT INTO post_completion_recipients (event_id, post_id, recipient_id, status)
+         VALUES ($1, $2, $3, 'PENDING')
+         RETURNING id`,
+        [event.id, productId, pendingParticipantId],
+      )
+    ).rows[0];
+    await database.pool.query(
+      `UPDATE post_completion_notification_events SET total_recipients = 2, status = 'PENDING' WHERE id = $1`,
+      [event.id],
+    );
+
+    const response = await postAction(
+      REOPEN_ACTION_NAME,
+      productId,
+      { reason: 'The sale was recorded by mistake' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).notice?.type, 'success');
+
+    // (a) The delivered participant is corrected with localized copy and routing.
+    const correctedRecipient = (
+      await database.pool.query(`SELECT status, notification_id FROM post_completion_recipients WHERE id = $1`, [
+        deliveredRecipient.id,
+      ])
+    ).rows[0];
+    assert.equal(correctedRecipient.status, 'CORRECTED');
+    assert.equal(correctedRecipient.notification_id, deliveredNotification.id, 'the original inbox row is kept');
+    const corrections = (
+      await database.pool.query(
+        `SELECT type, related_post_id, title, body, title_arabic, body_arabic
+         FROM notifications WHERE recipient_id = $1 AND type = 'POST_REOPENED'`,
+        [deliveredParticipantId],
+      )
+    ).rows;
+    assert.equal(corrections.length, 1);
+    assert.equal(corrections[0].related_post_id, productId);
+    assert.equal(corrections[0].title, 'Post reopened');
+    assert.equal(corrections[0].body, 'The post "Participant correction case" was reopened.');
+    assert.equal(corrections[0].title_arabic, 'تمت إعادة فتح المنشور');
+    assert.ok(corrections[0].body_arabic.includes('Participant correction case'));
+
+    // (b) Still-pending recipients are suppressed and never delivered.
+    const pendingRow = (
+      await database.pool.query(`SELECT status FROM post_completion_recipients WHERE id = $1`, [pendingRecipient.id])
+    ).rows[0];
+    assert.equal(pendingRow.status, 'SUPPRESSED');
+    const eventRow = (
+      await database.pool.query(`SELECT status FROM post_completion_notification_events WHERE id = $1`, [event.id])
+    ).rows[0];
+    assert.equal(eventRow.status, 'SUPERSEDED');
+    const pendingNotifications = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE recipient_id = $1`,
+      [pendingParticipantId],
+    );
+    assert.equal(pendingNotifications.rows[0].count, 0, 'a suppressed closure recipient never receives a notification');
+
+    // (c) The owner's POST_REOPENED_BY_ADMIN behavior is unchanged.
+    const ownerCorrections = (
+      await database.pool.query(
+        `SELECT type, related_post_id, title, body, title_arabic, body_arabic
+         FROM notifications WHERE recipient_id = $1 AND type = 'POST_REOPENED_BY_ADMIN'`,
+        [ownerId],
+      )
+    ).rows;
+    assert.equal(ownerCorrections.length, 1);
+    assert.equal(ownerCorrections[0].related_post_id, productId);
+    assert.equal(ownerCorrections[0].title, 'Post reopened');
+    assert.equal(ownerCorrections[0].body, 'An administrator reopened your post "Participant correction case".');
+    assert.equal(ownerCorrections[0].title_arabic, 'تمت إعادة فتح المنشور');
+    assert.ok(ownerCorrections[0].body_arabic.includes('Participant correction case'));
+  });
+
   it('requires an internal reason and rejects repeated, removed or expired reopening without writes', async () => {
     const ownerId = await insertUser('reopen-guard-owner');
     const completedId = await insertCompletedPost({

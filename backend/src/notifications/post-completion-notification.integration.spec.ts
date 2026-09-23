@@ -26,6 +26,8 @@ import { PostsRepository } from '../posts/posts.repository';
 import { PostCompletionNotificationRepository } from './post-completion-notification.repository';
 import { PostCompletionNotificationProcessor } from './post-completion-notification.processor';
 import { PushDeliveryRepository } from './push-delivery.repository';
+import { PushDeliveryProcessor } from './push-delivery.processor';
+import type { PushDeliveryMessage, PushProvider } from './push.provider';
 import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 
@@ -1072,6 +1074,69 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
 
       const buyerNotifs = await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, buyer.id));
       expect(buyerNotifs).toHaveLength(0);
+    });
+
+    it('rechecks creator isolation when sending a push for an administrator-closed post', async () => {
+      const creator = await createUser({ name: 'AdminCloseCreator' });
+      const post = await createProductPost(creator.id, 'Admin Closed Product');
+      const buyer = await createUser({ name: 'AdminCloseBuyer' });
+
+      await dbHelper.db.insert(deviceRegistrations).values({
+        id: generateUuidV7(),
+        userId: buyer.id,
+        token: 'token_admin_closure_push',
+        platform: 'ANDROID',
+      });
+      await dbHelper.db.insert(postSaves).values({ postId: post.id, userId: buyer.id });
+
+      // Administrator closure records no app-user closing actor, exactly like
+      // the AdminJS boundary.
+      await dbHelper.db.transaction(async (tx) => {
+        await tx.execute(sql`UPDATE posts SET status = 'SOLD' WHERE id = ${post.id}::uuid`);
+        await postCompletionRepo.captureCompletionEvent(tx, {
+          postId: post.id,
+          postType: 'PRODUCT',
+          outcome: 'SOLD',
+          closingActorId: null,
+          title: post.title,
+          creatorId: creator.id,
+        });
+      });
+
+      const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(1);
+
+      const [pushIntent] = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.recipientId, buyer.id));
+      expect(pushIntent).toBeDefined();
+      expect(pushIntent.actorId).toBe(creator.id);
+
+      // A Block committed after the inbox row is queued but before the push is
+      // sent must terminate the push while the inbox row survives.
+      await dbHelper.db.insert(blocks).values({ blockerId: creator.id, blockedId: buyer.id });
+
+      const sentMessages: PushDeliveryMessage[] = [];
+      const provider: PushProvider = {
+        send: (message) => {
+          sentMessages.push(message);
+          return Promise.resolve();
+        },
+      };
+      const pushProcessor = new PushDeliveryProcessor(dbHelper.db, provider, isolationPolicy);
+
+      expect(await pushProcessor.processPendingDeliveries()).toBe(0);
+      expect(sentMessages).toHaveLength(0);
+
+      const [suppressedIntent] = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.id, pushIntent.id));
+      expect(suppressedIntent.status).toBe('SUPPRESSED');
+
+      const buyerNotifs = await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, buyer.id));
+      expect(buyerNotifs).toHaveLength(1);
     });
 
     it('does not emit a completion event when the owner removes the post', async () => {

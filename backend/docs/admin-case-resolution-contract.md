@@ -94,13 +94,14 @@ Every resolution runs inside one database transaction using the shared lifecycle
    visibility and Block restrictions.
 5. A durable participant completion event is captured for **every** recorded outcome, not only RESCUE:
    `POST_COMPLETED` for LOST/ADOPTION/PRODUCT/MATING and `RESCUE_COMPLETED` for RESCUE. The event
-   snapshots the closure-time audience (Boost/save, active Comment/Reply, Contact Request participation;
-   the creator and the acting administrator are excluded) with outcome-specific English/Arabic copy.
-   Because AdminJS administrators are `admin_users` rows and the event's `closing_actor_id` references
-   `users`, an administrator-recorded event stores no app-user closing actor; the `moderation_actions`
-   audit row names the administrator. Delivery happens later through the API's bounded completion
-   worker, which rechecks the Post state, account availability and Blocks against the Post creator and
-   the closing actor.
+   snapshots the closure-time audience (Boost/save, active Comment/Reply, Contact Request participation)
+   with outcome-specific English/Arabic copy; the Post creator is always excluded. AdminJS administrators
+   are `admin_users` rows with no application-user identity, while the event's `closing_actor_id`
+   references `users`, so an administrator-recorded event stores no closing actor and the
+   `moderation_actions` audit row names the administrator instead. Delivery happens later through the
+   API's bounded completion worker, which rechecks the Post state, account availability and Blocks
+   against the Post creator (and the stored closing actor when one exists); its push intents carry the
+   Post creator as the send-time isolation actor.
 
 Deliberately untouched: open Post Reports stay open (a Post Resolution is not a moderation review),
 media and discussion are retained, and engagement rows are unchanged. After commit, the AdminJS
@@ -118,7 +119,8 @@ Reopening uses the same transaction boundary and locks, and commits together:
    columns, committed with the state change so notification intent cannot be lost.
 4. Pending participant completion events for the Post are superseded, and already-delivered
    participants receive the localized `POST_REOPENED` (or `RESCUE_REOPENED` for RESCUE) correction
-   through the same shared mechanism used by the API and owner closures.
+   through `reopenPostCompletion`, the AdminJS duplicate that mirrors the API repository's supersession
+   and correction behavior over the same durable tables.
 
 Deliberately untouched: every Contact Request and Adoption Application row keeps its current status
 (closed stays closed, approved stays approved), open Post Reports stay open, and media, discussion and
@@ -142,8 +144,11 @@ Examples (English):
 
 ### Participant completion notification
 
-The closure-time audience (excluding the creator and the acting administrator) receives the durable
-completion event; it is delivered through the API's bounded worker, not by the AdminJS service.
+The closure-time audience (always excluding the Post creator) receives the durable completion event; it
+is delivered through the API's bounded worker, not by the AdminJS service. An administrator-recorded
+event stores no closing actor (AdminJS administrators have no application-user identity) and the audit
+row names the administrator; the worker's push intents carry the Post creator as the send-time
+isolation actor.
 
 | Property   | Value                                                                                                    |
 | ---------- | -------------------------------------------------------------------------------------------------------- |
