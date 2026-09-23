@@ -191,10 +191,14 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
           return 'SUPPRESSED';
         }
 
-        // Recheck mutual account isolation (Blocks)
+        // Recheck mutual account isolation (Blocks) against both the Post
+        // creator and the closing actor, so a recipient isolated from the
+        // creator never receives a completion notification even when an
+        // administrator (not the creator) recorded the outcome.
         if (
-          event.closingActorId &&
-          (await this.isolationPolicy.lockPairAndRecheck(tx, event.closingActorId, currentRecipient.recipientId))
+          (await this.isolationPolicy.lockPairAndRecheck(tx, post.creatorId, currentRecipient.recipientId)) ||
+          (event.closingActorId &&
+            (await this.isolationPolicy.lockPairAndRecheck(tx, event.closingActorId, currentRecipient.recipientId)))
         ) {
           await this.markSuppressed(tx, currentRecipient.id, recipient.leaseToken!, 'BLOCKED');
           return 'SUPPRESSED';

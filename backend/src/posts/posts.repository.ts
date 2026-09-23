@@ -35,11 +35,13 @@ import {
 import type * as schema from '../database/schema';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../common/errors/app.errors';
 import {
+  COMPLETED_POST_OUTCOMES,
   POST_DISCUSSION_LOCK_NAMESPACE,
   RENEWAL_COOLDOWN_DAYS,
   canOwnerClose,
   canOwnerRemove,
   canOwnerRenew,
+  type PostLifecycleCompletedOutcome,
 } from '../common/contracts/post-lifecycle.contract';
 import { withDbRetry } from '../common/utils/db-retry.util';
 import type { NotificationContentColumns } from '../notifications/notification-templates';
@@ -484,7 +486,8 @@ export class PostsRepository {
    *
    * The status write commits together with the termination of every still
    * pending Contact Request and Adoption Application targeting the Post
-   * (`POST_LIFECYCLE_SIDE_EFFECTS.OWNER_CLOSE`). Approved interactions are
+   * (`POST_LIFECYCLE_SIDE_EFFECTS.OWNER_CLOSE`) and the durable participant
+   * completion event for any successful outcome. Approved interactions are
    * never touched, so previously approved contact access is retained.
    *
    * @returns The updated post row, or undefined when it is no longer ACTIVE
@@ -506,7 +509,7 @@ export class PostsRepository {
           .returning();
         if (post) {
           await this.terminatePendingInteractions(tx, postId);
-          if (lockedPost.postType === 'RESCUE' && status === 'RESOLVED') {
+          if (COMPLETED_POST_OUTCOMES.includes(status as PostLifecycleCompletedOutcome)) {
             await this.postCompletionRepository.captureCompletionEvent(tx, {
               postId: post.id,
               postType: post.postType,

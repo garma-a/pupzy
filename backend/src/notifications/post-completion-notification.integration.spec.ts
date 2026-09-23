@@ -5,6 +5,9 @@ import {
   users,
   posts,
   rescuePosts,
+  lostPosts,
+  productPosts,
+  matingPosts,
   postUpvotes,
   postSaves,
   comments,
@@ -116,6 +119,102 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       canAnimalMoveOrEscape: true,
     });
 
+    return post;
+  }
+
+  async function createLostPost(
+    creatorId: string,
+    reportType: 'LOST_PET' | 'FOUND_STRAY' = 'LOST_PET',
+    title = 'Missing Golden Retriever',
+  ): Promise<Post> {
+    const postId = generateUuidV7();
+    const [post] = await dbHelper.db
+      .insert(posts)
+      .values({
+        id: postId,
+        creatorId,
+        title,
+        description: 'Lost near the market yesterday',
+        postType: 'LOST',
+        cityId: defaultCity.id,
+        status: 'ACTIVE',
+        urgency: 'URGENT',
+        coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+      })
+      .returning();
+
+    if (reportType === 'LOST_PET') {
+      await dbHelper.db.insert(lostPosts).values({
+        postId: post.id,
+        reportType: 'LOST_PET',
+        species: 'DOG',
+        petName: 'Rex',
+        dateLastSeen: '2026-08-20',
+      });
+    } else {
+      await dbHelper.db.insert(lostPosts).values({
+        postId: post.id,
+        reportType: 'FOUND_STRAY',
+        species: 'DOG',
+        currentCondition: 'HEALTHY',
+        isCurrentlySafeWithReporter: true,
+        dateFound: '2026-08-20',
+      });
+    }
+    return post;
+  }
+
+  async function createProductPost(creatorId: string, title = 'Dog Carrier'): Promise<Post> {
+    const postId = generateUuidV7();
+    const [post] = await dbHelper.db
+      .insert(posts)
+      .values({
+        id: postId,
+        creatorId,
+        title,
+        description: 'Brand new dog carrier',
+        postType: 'PRODUCT',
+        cityId: defaultCity.id,
+        status: 'ACTIVE',
+        marketCategory: 'ACCESSORIES',
+        coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+      })
+      .returning();
+
+    await dbHelper.db.insert(productPosts).values({
+      postId: post.id,
+      category: 'ACCESSORIES',
+      condition: 'NEW',
+      isFree: true,
+    });
+    return post;
+  }
+
+  async function createMatingPost(creatorId: string, title = 'Husky Mating Partner'): Promise<Post> {
+    const postId = generateUuidV7();
+    const [post] = await dbHelper.db
+      .insert(posts)
+      .values({
+        id: postId,
+        creatorId,
+        title,
+        description: 'Looking for a compatible female husky',
+        postType: 'MATING',
+        cityId: defaultCity.id,
+        status: 'ACTIVE',
+        coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+      })
+      .returning();
+
+    await dbHelper.db.insert(matingPosts).values({
+      postId: post.id,
+      petName: 'Rocky',
+      species: 'DOG',
+      breed: 'Siberian Husky',
+      gender: 'MALE',
+      ageValue: 3,
+      ageUnit: 'YEARS',
+    });
     return post;
   }
 
@@ -739,6 +838,266 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(notifs).toHaveLength(3);
       expect(notifs.filter((n) => n.type === 'RESCUE_COMPLETED')).toHaveLength(2);
       expect(notifs.filter((n) => n.type === 'RESCUE_REOPENED')).toHaveLength(1);
+    });
+  });
+
+  describe('Ticket 04: Other Post Completion Notifications (Lost/Found, Product, Mating)', () => {
+    it('notifies closure-time participants when a LOST_PET post is closed as REUNITED', async () => {
+      const creator = await createUser({ name: 'LostPetOwner' });
+      const post = await createLostPost(creator.id, 'LOST_PET', 'Lost Golden Dog');
+      const booster = await createUser({ name: 'LostBooster' });
+      const commenter = await createUser({ name: 'LostCommenter' });
+
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: booster.id });
+      await dbHelper.db.insert(comments).values({
+        id: generateUuidV7(),
+        postId: post.id,
+        authorId: commenter.id,
+        text: 'I think I saw this dog!',
+        status: 'ACTIVE',
+      });
+
+      const updated = await postsRepo.updateStatus(post.id, creator.id, 'REUNITED');
+      expect(updated?.status).toBe('REUNITED');
+
+      const events = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.postId, post.id));
+      expect(events).toHaveLength(1);
+      const event = events[0];
+      expect(event.postType).toBe('LOST');
+      expect(event.type).toBe('POST_COMPLETED');
+      expect(event.outcome).toBe('REUNITED');
+      expect(event.title).toBe('Pet reunited');
+      expect(event.body).toBe('The post "Lost Golden Dog" was marked as reunited.');
+      expect(event.titleArabic).toBe('تم لمّ الشمل');
+      expect(event.bodyArabic).toContain('Lost Golden Dog');
+      expect(event.totalRecipients).toBe(2);
+
+      const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(2);
+
+      for (const recipient of [booster, commenter]) {
+        const notifs = await dbHelper.db
+          .select()
+          .from(notifications)
+          .where(eq(notifications.recipientId, recipient.id));
+        expect(notifs).toHaveLength(1);
+        expect(notifs[0].type).toBe('POST_COMPLETED');
+        expect(notifs[0].title).toBe('Pet reunited');
+        expect(notifs[0].relatedPostId).toBe(post.id);
+      }
+    });
+
+    it('notifies participants when a FOUND_STRAY post is closed as RESOLVED or REUNITED', async () => {
+      for (const [outcome, expectedTitle] of [
+        ['RESOLVED', 'Post resolved'],
+        ['REUNITED', 'Pet reunited'],
+      ] as const) {
+        const creator = await createUser({ name: `FoundOwner_${outcome}` });
+        const post = await createLostPost(creator.id, 'FOUND_STRAY', `Found Stray ${outcome}`);
+        const saver = await createUser({ name: `FoundSaver_${outcome}` });
+
+        await dbHelper.db.insert(postSaves).values({ postId: post.id, userId: saver.id });
+
+        const updated = await postsRepo.updateStatus(post.id, creator.id, outcome);
+        expect(updated?.status).toBe(outcome);
+
+        const [event] = await dbHelper.db
+          .select()
+          .from(postCompletionNotificationEvents)
+          .where(eq(postCompletionNotificationEvents.postId, post.id));
+        expect(event.postType).toBe('LOST');
+        expect(event.type).toBe('POST_COMPLETED');
+        expect(event.outcome).toBe(outcome);
+        expect(event.title).toBe(expectedTitle);
+        expect(event.totalRecipients).toBe(1);
+
+        const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+        expect(batchRes.delivered).toBe(1);
+
+        const [notif] = await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, saver.id));
+        expect(notif.type).toBe('POST_COMPLETED');
+        expect(notif.title).toBe(expectedTitle);
+        expect(notif.relatedPostId).toBe(post.id);
+      }
+    });
+
+    it('notifies participants when a PRODUCT post is closed as SOLD and corrects them on reopening', async () => {
+      const seller = await createUser({ name: 'Seller' });
+      const post = await createProductPost(seller.id, 'Dog Crate Small');
+      const buyer = await createUser({ name: 'Buyer' });
+
+      await dbHelper.db.insert(postSaves).values({ postId: post.id, userId: buyer.id });
+
+      await postsRepo.updateStatus(post.id, seller.id, 'SOLD');
+
+      const [event] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.postId, post.id));
+      expect(event.postType).toBe('PRODUCT');
+      expect(event.type).toBe('POST_COMPLETED');
+      expect(event.outcome).toBe('SOLD');
+      expect(event.title).toBe('Item sold');
+      expect(event.body).toBe('The post "Dog Crate Small" was marked as sold.');
+      expect(event.totalRecipients).toBe(1);
+
+      const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(1);
+
+      // Administrator reopening correction through the shared repository
+      await dbHelper.db.transaction(async (tx) => {
+        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
+        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
+      });
+
+      // The fully delivered event stays COMPLETED; its delivered recipients are
+      // corrected rather than superseded, and it holds no pending delivery.
+      const [reopenedEvent] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.id, event.id));
+      expect(reopenedEvent.status).toBe('COMPLETED');
+
+      const buyerNotifs = await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, buyer.id));
+      expect(buyerNotifs).toHaveLength(2);
+      const correction = buyerNotifs.find((n) => n.type === 'POST_REOPENED');
+      expect(correction).toBeDefined();
+      expect(correction?.title).toBe('Post reopened');
+      expect(correction?.body).toContain('Dog Crate Small');
+      expect(correction?.relatedPostId).toBe(post.id);
+    });
+
+    it('suppresses a stale non-rescue completion delivery when the outcome is corrected first', async () => {
+      const seller = await createUser({ name: 'StaleSeller' });
+      const post = await createProductPost(seller.id, 'Stale Product');
+      const buyer = await createUser({ name: 'StaleBuyer' });
+
+      await dbHelper.db.insert(postSaves).values({ postId: post.id, userId: buyer.id });
+      await postsRepo.updateStatus(post.id, seller.id, 'SOLD');
+
+      // Reopening commits before the worker delivers the queued audience.
+      await dbHelper.db.transaction(async (tx) => {
+        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
+        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
+      });
+
+      const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(0);
+      expect(batchRes.batchesProcessed).toBe(0);
+
+      const [recipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.recipientId, buyer.id));
+      expect(recipient.status).toBe('SUPPRESSED');
+
+      const buyerNotifs = await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, buyer.id));
+      expect(buyerNotifs).toHaveLength(0);
+    });
+
+    it('notifies participants when a MATING post is closed as RESOLVED', async () => {
+      const creator = await createUser({ name: 'MatingOwner' });
+      const post = await createMatingPost(creator.id, 'Husky Partner Search');
+      const participant = await createUser({ name: 'MatingParticipant' });
+
+      await dbHelper.db.insert(comments).values({
+        id: generateUuidV7(),
+        postId: post.id,
+        authorId: participant.id,
+        text: 'I have a compatible husky!',
+        status: 'ACTIVE',
+      });
+
+      await postsRepo.updateStatus(post.id, creator.id, 'RESOLVED');
+
+      const [event] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.postId, post.id));
+      expect(event.postType).toBe('MATING');
+      expect(event.type).toBe('POST_COMPLETED');
+      expect(event.outcome).toBe('RESOLVED');
+      expect(event.title).toBe('Post resolved');
+      expect(event.body).toBe('The post "Husky Partner Search" was marked as resolved.');
+      expect(event.totalRecipients).toBe(1);
+
+      const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(1);
+
+      const [notif] = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, participant.id));
+      expect(notif.type).toBe('POST_COMPLETED');
+      expect(notif.title).toBe('Post resolved');
+      expect(notif.relatedPostId).toBe(post.id);
+    });
+
+    it('suppresses delivery when the recipient is isolated from the post creator even when an administrator closed it', async () => {
+      const creator = await createUser({ name: 'IsolatedCreator' });
+      const admin = await createUser({ name: 'IsolatingAdmin' });
+      const post = await createProductPost(creator.id, 'Isolated Product');
+      const buyer = await createUser({ name: 'IsolatedBuyer' });
+
+      await dbHelper.db.insert(postSaves).values({ postId: post.id, userId: buyer.id });
+
+      // Administrator records the outcome, so the closing actor is not the creator.
+      await dbHelper.db.transaction(async (tx) => {
+        await tx.execute(sql`UPDATE posts SET status = 'SOLD' WHERE id = ${post.id}::uuid`);
+        await postCompletionRepo.captureCompletionEvent(tx, {
+          postId: post.id,
+          postType: 'PRODUCT',
+          outcome: 'SOLD',
+          closingActorId: admin.id,
+          title: post.title,
+          creatorId: creator.id,
+        });
+      });
+
+      // The creator blocks the buyer after the outcome was recorded.
+      await dbHelper.db.insert(blocks).values({ blockerId: creator.id, blockedId: buyer.id });
+
+      const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(0);
+      expect(batchRes.suppressed).toBe(1);
+
+      const [recipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.recipientId, buyer.id));
+      expect(recipient.status).toBe('BLOCKED');
+
+      const buyerNotifs = await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, buyer.id));
+      expect(buyerNotifs).toHaveLength(0);
+    });
+
+    it('does not emit a completion event when the owner removes the post', async () => {
+      const creator = await createUser({ name: 'DeleteOwner' });
+      const post = await createLostPost(creator.id, 'LOST_PET', 'Cat To Delete');
+      const participant = await createUser({ name: 'DeleteParticipant' });
+
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: participant.id });
+
+      const removed = await postsRepo.softDelete(post.id, creator.id);
+      expect(removed?.status).toBe('REMOVED');
+
+      const events = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.postId, post.id));
+      expect(events).toHaveLength(0);
+
+      const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(0);
+
+      const notifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, participant.id));
+      expect(notifs).toHaveLength(0);
     });
   });
 });

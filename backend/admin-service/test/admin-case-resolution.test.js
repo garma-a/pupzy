@@ -28,7 +28,8 @@ let staffId;
 const BUSINESS_TABLES = `
   post_media, rescue_posts, lost_posts, adoption_posts, product_posts, mating_posts,
   post_upvotes, post_saves, contact_requests, adoption_applications, post_reports, comment_reports, account_reports,
-  notifications, moderation_actions, posts, users,
+  notifications, post_completion_recipients, post_completion_notification_events,
+  moderation_actions, posts, users,
   comments, comment_media, post_pins, comment_boosts, comment_idempotency,
   media_deletion_work, blocked_media_hashes, blocks, account_deletions
 `;
@@ -412,6 +413,64 @@ describe('Administrator case resolution HTTP boundary', () => {
     const resolutionActions = RESOLUTION_ACTION_NAMES.filter((name) => actionsAfter.names.includes(name));
     assert.deepEqual(resolutionActions, [], 'a recorded outcome cannot be resolved twice');
     assert.equal(actionsAfter.names.includes('removePost'), false, 'removal is hidden once an outcome is recorded');
+  });
+
+  it('captures and localizes the participant completion event for a non-rescue outcome, and never on removal', async () => {
+    const ownerId = await insertUser('sold-owner');
+    const buyerId = await insertUser('sold-buyer');
+    const otherBuyerId = await insertUser('sold-other-buyer');
+    const productId = await insertTypedPost({ ownerId, postType: 'PRODUCT', title: 'Sold product case' });
+
+    await database.pool.query(`INSERT INTO post_saves (post_id, user_id) VALUES ($1, $2), ($1, $3)`, [
+      productId,
+      buyerId,
+      otherBuyerId,
+    ]);
+
+    const response = await postAction('markSold', productId, { reason: 'Sold in person' }, staffCookie, staffCsrf);
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.notice?.type, 'success');
+
+    const event = (
+      await database.pool.query(
+        `SELECT type, outcome, post_type, closing_actor_id, title, body, title_arabic, body_arabic, status, total_recipients
+         FROM post_completion_notification_events WHERE post_id = $1`,
+        [productId],
+      )
+    ).rows[0];
+    assert.equal(event.type, 'POST_COMPLETED');
+    assert.equal(event.post_type, 'PRODUCT');
+    assert.equal(event.outcome, 'SOLD');
+    assert.equal(
+      event.closing_actor_id,
+      null,
+      'AdminJS actors are not app users, so the event stores no closing user; the audit row names the admin',
+    );
+    assert.equal(event.title, 'Item sold');
+    assert.equal(event.body, 'The post "Sold product case" was marked as sold.');
+    assert.equal(event.title_arabic, 'تم البيع');
+    assert.ok(event.body_arabic.includes('Sold product case'));
+    assert.ok(event.body_arabic.includes('تم البيع'));
+    assert.equal(event.total_recipients, 2);
+    assert.equal(event.status, 'PENDING');
+
+    const recipients = (
+      await database.pool.query(`SELECT recipient_id FROM post_completion_recipients WHERE post_id = $1`, [productId])
+    ).rows.map((row) => row.recipient_id);
+    assert.deepEqual(recipients.sort(), [buyerId, otherBuyerId].sort());
+    assert.equal(recipients.includes(ownerId), false, 'the creator is never a completion audience member');
+
+    // Administrator removal is a moderation takedown, not a completion.
+    const removedId = await insertTypedPost({ ownerId, postType: 'PRODUCT', title: 'Removed product case' });
+    await database.pool.query(`INSERT INTO post_saves (post_id, user_id) VALUES ($1, $2)`, [removedId, buyerId]);
+    const removal = await postAction('removePost', removedId, { reason: 'Policy violation' }, staffCookie, staffCsrf);
+    assert.equal((await removal.json()).notice?.type, 'success');
+    const removalEvents = await database.pool.query(
+      `SELECT count(*)::int AS count FROM post_completion_notification_events WHERE post_id = $1`,
+      [removedId],
+    );
+    assert.equal(removalEvents.rows[0].count, 0, 'removal never emits a completion event');
   });
 
   it('requires an internal reason and rejects invalid, repeated or removed-state resolutions without writes', async () => {

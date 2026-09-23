@@ -143,7 +143,7 @@ function buildResolutionAction(pool, component, cache, definition) {
         }
         return null;
       },
-      mutate: async (client, row, adminUserId) => {
+      mutate: async (client, row) => {
         await client.query(`UPDATE posts SET status = $2, updated_at = now() WHERE id = $1`, [
           row.id,
           definition.outcome,
@@ -165,16 +165,18 @@ function buildResolutionAction(pool, component, cache, definition) {
           type: 'POST_RESOLVED_BY_ADMIN',
         });
         const termination = await terminatePendingInteractions(client, row.id);
-        if (row.post_type === 'RESCUE' && definition.outcome === 'RESOLVED') {
-          await capturePostCompletion(client, {
-            postId: row.id,
-            postType: row.post_type,
-            outcome: definition.outcome,
-            closingActorId: adminUserId,
-            title: row.title,
-            creatorId: row.creator_id,
-          });
-        }
+        await capturePostCompletion(client, {
+          postId: row.id,
+          postType: row.post_type,
+          outcome: definition.outcome,
+          // AdminJS administrators are `admin_users` rows while the completion
+          // event's `closing_actor_id` references `users`. The append-only
+          // moderation audit row records the acting administrator, so an
+          // administrator-recorded outcome stores no app-user closing actor.
+          closingActorId: null,
+          title: row.title,
+          creatorId: row.creator_id,
+        });
         return { outcome: definition.outcome, ...termination };
       },
     },
