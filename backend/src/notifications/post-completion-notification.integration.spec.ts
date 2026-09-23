@@ -235,6 +235,32 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(recipients).toHaveLength(1);
       expect(recipients[0].recipientId).toBe(activeUser.id);
     });
+
+    it('completes an event with an empty audience and leaves nothing for the worker', async () => {
+      const owner = await createUser({ name: 'Owner' });
+      const post = await createRescuePost(owner.id);
+
+      // Nobody interacted with the rescue, so the captured audience is empty.
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+
+      const events = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.postId, post.id));
+      expect(events).toHaveLength(1);
+      expect(events[0].totalRecipients).toBe(0);
+      expect(events[0].status).toBe('COMPLETED');
+
+      const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(0);
+      expect(batchRes.batchesProcessed).toBe(0);
+
+      const recipients = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.postId, post.id));
+      expect(recipients).toHaveLength(0);
+    });
   });
 
   describe('Bounded Batch Delivery (>500 recipients supported)', () => {
@@ -349,6 +375,103 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
         .where(eq(postCompletionRecipients.postId, post.id));
 
       expect(recipient.status).toBe('DELIVERED');
+    });
+
+    it('rolls back a failed delivery attempt and retries it without duplicating the inbox notification', async () => {
+      const owner = await createUser({ name: 'Owner' });
+      const post = await createRescuePost(owner.id);
+      const recipientUser = await createUser({ name: 'RetryRecipient' });
+
+      await dbHelper.db.insert(deviceRegistrations).values({
+        id: generateUuidV7(),
+        userId: recipientUser.id,
+        token: 'token_retry_recipient',
+        platform: 'ANDROID',
+      });
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: recipientUser.id });
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+
+      // Fault injection: fail the first enqueue inside the delivery transaction,
+      // after the inbox row insert, then delegate to the real outbox. The plain
+      // Error carries no retryable SQLSTATE, so withDbRetry rethrows it at once
+      // and the failure reaches the processor's requeue path deterministically.
+      let enqueueAttempts = 0;
+      const flakyPushRepo = {
+        enqueueForNotification: async (...args: Parameters<PushDeliveryRepository['enqueueForNotification']>) => {
+          enqueueAttempts++;
+          if (enqueueAttempts === 1) throw new Error('injected push enqueue failure');
+          return pushDeliveryRepo.enqueueForNotification(...args);
+        },
+      } as unknown as PushDeliveryRepository;
+
+      const faultProcessor = new PostCompletionNotificationProcessor(
+        dbHelper.db,
+        postCompletionRepo,
+        isolationPolicy,
+        flakyPushRepo,
+      );
+
+      const failedPass = await faultProcessor.processPendingBatches({ batchSize: 10 });
+      expect(failedPass.delivered).toBe(0);
+      expect(failedPass.failed).toBe(1);
+
+      // The delivery transaction rolled back: the inbox row and push intent it
+      // had written are gone, so a retry cannot produce a duplicate.
+      const notifsAfterFailure = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, recipientUser.id));
+      expect(notifsAfterFailure).toHaveLength(0);
+
+      const pushesAfterFailure = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.recipientId, recipientUser.id));
+      expect(pushesAfterFailure).toHaveLength(0);
+
+      const [failedRecipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.recipientId, recipientUser.id));
+      expect(failedRecipient.status).toBe('PENDING');
+      expect(failedRecipient.notificationId).toBeNull();
+      expect(failedRecipient.attempts).toBe(1);
+      expect(failedRecipient.lastError).toContain('injected push enqueue failure');
+      // The requeue path scheduled a backoff instead of leaving the recipient
+      // immediately claimable.
+      expect(failedRecipient.nextAttemptAt.getTime()).toBeGreaterThan(failedRecipient.updatedAt.getTime());
+
+      // Expire the recorded backoff explicitly instead of sleeping, so the
+      // retry pass is deterministic and clock-skew independent.
+      await dbHelper.db.execute(sql`
+        UPDATE post_completion_recipients
+        SET next_attempt_at = now() - interval '1 second'
+        WHERE id = ${failedRecipient.id}::uuid
+      `);
+      const retryPass = await faultProcessor.processPendingBatches({ batchSize: 10 });
+      expect(retryPass.delivered).toBe(1);
+      expect(enqueueAttempts).toBe(2);
+
+      const notifsAfterRetry = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, recipientUser.id));
+      expect(notifsAfterRetry).toHaveLength(1);
+
+      const pushesAfterRetry = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.recipientId, recipientUser.id));
+      expect(pushesAfterRetry).toHaveLength(1);
+      expect(pushesAfterRetry[0].notificationId).toBe(notifsAfterRetry[0].id);
+
+      const [deliveredRecipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.recipientId, recipientUser.id));
+      expect(deliveredRecipient.status).toBe('DELIVERED');
+      expect(deliveredRecipient.notificationId).toBe(notifsAfterRetry[0].id);
+      expect(deliveredRecipient.lastError).toBeNull();
     });
   });
 

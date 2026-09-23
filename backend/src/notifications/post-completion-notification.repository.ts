@@ -118,14 +118,17 @@ export class PostCompletionNotificationRepository {
     `);
 
     const totalRecipients = insertResult.rowCount ?? 0;
+    // An event with no audience has nothing to deliver, so it must not stay
+    // PENDING forever waiting for a worker that will never find work.
+    const status = totalRecipients === 0 ? 'COMPLETED' : 'PENDING';
 
     await tx.execute(sql`
       UPDATE post_completion_notification_events
-      SET total_recipients = ${totalRecipients}, updated_at = now()
+      SET total_recipients = ${totalRecipients}, status = ${status}, updated_at = now()
       WHERE id = ${event.id}::uuid
     `);
 
-    return { event: { ...event, totalRecipients }, totalRecipients };
+    return { event: { ...event, totalRecipients, status }, totalRecipients };
   }
 
   /**
