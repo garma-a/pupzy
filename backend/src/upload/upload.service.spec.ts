@@ -44,12 +44,15 @@ function ticketSelectResult(ticket: StagedUpload) {
 /**
  * Builds a database mock for `finalizeMedia`: the start transaction allows the
  * creator, and the post-copy account check reports the account as blocked or
- * not based on `blockedAtSettle`.
+ * not based on `blockedAtSettle`. `finalizationTransition` controls whether
+ * the conditional `CLAIMED → FINALIZED` update matches its row.
  */
 function createFinalizationDbMock({
   blockedAtSettle,
+  finalizationTransition = true,
 }: {
   blockedAtSettle: boolean;
+  finalizationTransition?: boolean;
 }): NodePgDatabase<Record<string, unknown>> {
   let topLevelSelectCount = 0;
 
@@ -101,7 +104,10 @@ function createFinalizationDbMock({
     }),
     update: jest.fn().mockReturnValue({
       set: jest.fn().mockReturnValue({
-        where: jest.fn().mockResolvedValue([]),
+        where: jest.fn().mockReturnValue({
+          returning: jest.fn().mockResolvedValue(finalizationTransition ? [{ id: 'media-1' }] : []),
+          then: (resolve: any, reject: any) => Promise.resolve([]).then(resolve, reject),
+        }),
       }),
     }),
   } as unknown as NodePgDatabase<Record<string, unknown>>;
@@ -524,6 +530,34 @@ describe('UploadService', () => {
       const result = await service.finalizeMedia('media-1', 'user-1', 'post-1');
       expect(result.publicUrl).toBe('https://cdn.pupzy.com/posts/post-1/media-1.jpg');
       expect(result.cloudflareStorageKey).toBe('posts/post-1/media-1.jpg');
+    });
+
+    it('discards the copied object and fails retryably when the ticket left CLAIMED before finalization was recorded', async () => {
+      const sentKeys: Array<string | undefined> = [];
+      const mockSend = jest.fn().mockImplementation((command: { input?: { Key?: string } }) => {
+        sentKeys.push(command.input?.Key);
+        return Promise.resolve({});
+      });
+      const serviceWithDb = new UploadService(
+        mockConfig as ConfigService,
+        mockCache as Cache,
+        createFinalizationDbMock({ blockedAtSettle: false, finalizationTransition: false }),
+      );
+      (serviceWithDb as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockSend;
+
+      await expect(serviceWithDb.finalizeMedia('media-1', 'user-1', 'post-1')).rejects.toMatchObject({
+        code: 'POST_MEDIA_PROCESSING_FAILED',
+        extensions: { retryable: true },
+      });
+
+      // Head (staging), copy (permanent), staging delete, then the discard of
+      // the superseded permanent object.
+      expect(sentKeys).toEqual([
+        'staging/user-1/media-1.jpg',
+        'posts/post-1/media-1.jpg',
+        'staging/user-1/media-1.jpg',
+        'posts/post-1/media-1.jpg',
+      ]);
     });
   });
 
@@ -1344,7 +1378,10 @@ describe('UploadService', () => {
           }),
         update: jest.fn().mockReturnValue({
           set: jest.fn().mockReturnValue({
-            where: jest.fn().mockResolvedValue([]),
+            where: jest.fn().mockReturnValue({
+              returning: jest.fn().mockResolvedValue([{ id: 'media-1' }]),
+              then: (resolve: any, reject: any) => Promise.resolve([]).then(resolve, reject),
+            }),
           }),
         }),
       };
@@ -1505,7 +1542,10 @@ describe('UploadService', () => {
           }),
         update: jest.fn().mockReturnValue({
           set: jest.fn().mockReturnValue({
-            where: jest.fn().mockResolvedValue([]),
+            where: jest.fn().mockReturnValue({
+              returning: jest.fn().mockResolvedValue([{ id: 'media-1' }]),
+              then: (resolve: any, reject: any) => Promise.resolve([]).then(resolve, reject),
+            }),
           }),
         }),
       };

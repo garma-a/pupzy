@@ -381,6 +381,14 @@ export class UploadService {
    * 2. **Copy** — `CopyObjectCommand` copies object to permanent location.
    * 3. **Delete** — `DeleteObjectCommand` removes original staging object.
    * 4. **Update DB** — durably records finalization state.
+   *
+   * The final `CLAIMED → FINALIZED` transition is conditional: if an
+   * expired-staging cleanup or recovery pass terminalized the ticket while the
+   * copy was in flight, the copied key is latched onto that terminal ticket,
+   * the object is discarded/queued, the durable finalization obligation is
+   * settled and a stable retryable error is thrown so no post can reference
+   * reclaimed bytes. The latch keeps a crash between the lost transition and
+   * the discard from orphaning the copied object.
    */
   async finalizeMedia(
     mediaId: string,
@@ -430,6 +438,7 @@ export class UploadService {
     const finalKey = `posts/${postId}/${mediaId}${ext}`;
 
     let obligationId: string | null = null;
+    let transitionLost = false;
     try {
       obligationId = await this.beginFinalizationObligation(userId, mediaId, stagingKey, finalKey);
     } catch (err) {
@@ -494,14 +503,23 @@ export class UploadService {
         this.logger.warn(`Failed to delete staging object ${stagingKey} after copy: ${err}`);
       }
 
-      await this.db
+      // The transition is conditional on the ticket still being CLAIMED for
+      // this post: an expired-staging cleanup or recovery pass may have
+      // terminalized it while the copy was in flight, in which case its
+      // permanent key is queued for deletion and no post may reference it.
+      const [finalized] = await this.db
         .update(stagedUploads)
         .set({
           status: 'FINALIZED',
           finalStorageKey: finalKey,
           updatedAt: new Date(),
         })
-        .where(eq(stagedUploads.id, mediaId));
+        .where(
+          and(eq(stagedUploads.id, mediaId), eq(stagedUploads.status, 'CLAIMED'), eq(stagedUploads.postId, postId)),
+        )
+        .returning({ id: stagedUploads.id });
+
+      transitionLost = !finalized;
 
       await Promise.all([
         this.cacheManager.del(`media_ct:${mediaId}`),
@@ -514,6 +532,32 @@ export class UploadService {
       throw err;
     }
 
+    if (transitionLost) {
+      // The ticket left CLAIMED while the copy was in flight (expired-staging
+      // cleanup or recovery terminalized it), so the copied object must not
+      // survive behind a terminal ticket. Discard/queue it, settle the
+      // obligation and fail retryably so the caller can request a fresh
+      // ticket instead of committing a post against reclaimed bytes.
+      this.logger.warn(`Post media finalization for ${mediaId} lost its CLAIMED transition; discarding ${finalKey}`);
+      // Latch the discarded key before settling the obligation or touching
+      // storage: a crash between the lost transition and the delete/queue
+      // would otherwise leave the copied object with no ticket reference
+      // (cleanup excludes `EXPIRED` and reconciliation has no `POST_MEDIA`
+      // pass). The stale-`FAILED` cleanup scan reclaims the latched key.
+      await this.latchDiscardedFinalKey(mediaId, stagingKey, finalKey);
+      const accountBlocked = await this.settleFinalizationObligation(obligationId, finalKey, userId);
+      if (!accountBlocked) {
+        try {
+          await this.deleteObject(finalKey);
+        } catch {
+          await this.queueMediaDeletion(finalKey);
+        }
+      }
+      throw new AppError('Failed to finalize media in storage', 'POST_MEDIA_PROCESSING_FAILED', {
+        retryable: true,
+      });
+    }
+
     const accountBlocked = await this.settleFinalizationObligation(obligationId, finalKey, userId);
     if (accountBlocked) {
       throw new ForbiddenError('ACCOUNT_DELETED');
@@ -523,6 +567,42 @@ export class UploadService {
       publicUrl: `${this.publicUrl}/${finalKey}`,
       cloudflareStorageKey: finalKey,
     };
+  }
+
+  /**
+   * Durably latches a discarded permanent key onto its terminal ticket.
+   *
+   * A lost `CLAIMED → FINALIZED` transition means an expired-staging cleanup
+   * or recovery pass terminalized the ticket while the copy was in flight; the
+   * real in-flight state carries no `finalStorageKey`. If the process crashed
+   * before the object was deleted or queued, nothing would reference it:
+   * cleanup excludes `EXPIRED` and reconciliation has no `POST_MEDIA` pass.
+   * Writing the key onto the `FAILED` ticket lets the stale-`FAILED` cleanup
+   * scan reclaim the object later. The conditional update leaves a ticket that
+   * another flow already finalized untouched, and re-points `stagingKey` at
+   * the original staging object (the terminalizing pass may have marked it
+   * `cleaned/`) so the scan can select the row; the scan re-marks it cleaned
+   * once the object is reclaimed. Failures are logged, never fatal: the caller
+   * still deletes or queues the object.
+   */
+  private async latchDiscardedFinalKey(mediaId: string, stagingKey: string, finalKey: string): Promise<void> {
+    try {
+      await this.db
+        .update(stagedUploads)
+        .set({
+          status: 'FAILED',
+          finalStorageKey: finalKey,
+          stagingKey,
+          errorMessage: 'Finalization lost its claim; permanent object discarded',
+          updatedAt: new Date(),
+        })
+        .where(and(eq(stagedUploads.id, mediaId), inArray(stagedUploads.status, ['EXPIRED', 'FAILED'])))
+        .returning({ id: stagedUploads.id });
+    } catch (err) {
+      this.logger.error(
+        `Failed to latch discarded permanent key ${finalKey} onto ticket ${mediaId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 
   /**
@@ -1370,16 +1450,56 @@ export class UploadService {
       });
     }
 
-    // Mark all claimed tickets as FINALIZED in DB
+    // Mark all claimed tickets as FINALIZED in DB. The transition is
+    // conditional on the ticket still being CLAIMED: an expired-staging
+    // cleanup or recovery pass that terminalized the ticket after the claim
+    // wins the race, so the published objects must be discarded instead of
+    // letting a comment commit against bytes that are queued for deletion.
+    const supersededItems: FinalizedCommentMedia[] = [];
     for (const item of results) {
-      await this.db
+      const [finalized] = await this.db
         .update(stagedUploads)
         .set({
           status: 'FINALIZED',
           finalStorageKey: item.storageKey,
           updatedAt: new Date(),
         })
-        .where(and(eq(stagedUploads.id, item.id), eq(stagedUploads.status, 'CLAIMED')));
+        .where(and(eq(stagedUploads.id, item.id), eq(stagedUploads.status, 'CLAIMED')))
+        .returning({ id: stagedUploads.id });
+
+      if (!finalized) {
+        supersededItems.push(item);
+      }
+    }
+
+    if (supersededItems.length > 0) {
+      // The ticket left CLAIMED before finalization could be recorded (an
+      // expired-staging cleanup or recovery pass terminalized it) while the
+      // object was being published. No comment may commit now: discard every
+      // object published by this submission and fail retryably.
+      this.logger.warn(
+        `Comment media finalization was superseded for ticket(s) ${supersededItems
+          .map((item) => item.id)
+          .join(', ')}; discarding published objects`,
+      );
+
+      for (const item of results) {
+        try {
+          await this.deleteObject(item.storageKey);
+        } catch {
+          await this.queueMediaDeletion(item.storageKey);
+        }
+      }
+
+      await this.markMediaFailed(
+        results.map((item) => item.id),
+        'Finalization superseded by ticket cleanup',
+      );
+
+      throw new AppError('Failed to finalize media in storage', 'COMMENT_MEDIA_PROCESSING_FAILED', {
+        mediaPosition: supersededItems[0].displayOrder,
+        retryable: true,
+      });
     }
 
     return results;

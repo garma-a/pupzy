@@ -208,7 +208,10 @@ describe('MediaDeletionProcessor', () => {
         set: jest.fn().mockImplementation((setValues: any) => ({
           where: jest.fn().mockImplementation(() => {
             Object.assign(expiredStaging, setValues);
-            return Promise.resolve([expiredStaging]);
+            return {
+              returning: jest.fn().mockResolvedValue([expiredStaging]),
+              then: (resolve: any) => Promise.resolve([expiredStaging]).then(resolve),
+            };
           }),
         })),
       }));
@@ -218,6 +221,41 @@ describe('MediaDeletionProcessor', () => {
       expect(cleanedCount).toBe(1);
       expect(mockUploadService.deleteObject).toHaveBeenCalledWith('staging/user-1/staged-expired-1.webp');
       expect(expiredStaging.status).toBe('EXPIRED');
+    });
+
+    it('never marks a ticket EXPIRED when it left the selected state before processing', async () => {
+      const stale: StagedUpload = {
+        id: 'staged-superseded-1',
+        userId: 'user-1',
+        purpose: 'COMMENT_IMAGE',
+        stagingKey: 'staging/user-1/staged-superseded-1.webp',
+        declaredContentType: 'image/webp',
+        declaredFileSizeBytes: 50000,
+        status: 'ISSUED',
+        expiresAt: new Date(Date.now() - 3600_000),
+        postId: null,
+        finalStorageKey: null,
+        errorMessage: null,
+        createdAt: new Date(Date.now() - 3600_000),
+        updatedAt: new Date(Date.now() - 3600_000),
+      };
+      stagingStore.set('staged-superseded-1', stale);
+
+      // The conditional terminal update matches nothing: the ticket was
+      // consumed (FINALIZED) between the candidate scan and this pass.
+      mockDb.update = jest.fn().mockImplementation(() => ({
+        set: jest.fn().mockImplementation(() => ({
+          where: jest.fn().mockImplementation(() => ({
+            returning: jest.fn().mockResolvedValue([]),
+            then: (resolve: any) => Promise.resolve([]).then(resolve),
+          })),
+        })),
+      }));
+
+      await processor.cleanupExpiredStaging();
+
+      expect(stale.status).toBe('ISSUED');
+      expect(stale.stagingKey).toBe('staging/user-1/staged-superseded-1.webp');
     });
   });
 
