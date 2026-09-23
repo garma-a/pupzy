@@ -9,6 +9,7 @@ import { DeviceRegistrationsService } from './device-registrations.service';
 import { PushDeliveryRepository } from './push-delivery.repository';
 import { PushDeliveryProcessor } from './push-delivery.processor';
 import { FirebasePushProvider, PUSH_PROVIDER } from './push.provider';
+import { AccountIsolationModule } from '../blocks/account-isolation.module';
 import { PostCompletionNotificationRepository } from './post-completion-notification.repository';
 import { PostCompletionNotificationProcessor } from './post-completion-notification.processor';
 
