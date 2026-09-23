@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { parse, Kind, ObjectTypeDefinitionNode } from 'graphql';
+import { parse, Kind, ObjectTypeDefinitionNode, ObjectTypeExtensionNode } from 'graphql';
 import { PostsService } from './posts.service';
 import { PostsRepository } from './posts.repository';
 import { CitiesService } from '../cities/cities.service';
@@ -31,12 +31,14 @@ describe('Rescue Discussion & Creator Closure Authority (Ticket 01)', () => {
       expect(typeNames).not.toContain('RescueProofMedia');
       expect(typeNames).not.toContain('RescueProofSubmitter');
 
-      const mutationType = doc.definitions.find(
-        (d): d is ObjectTypeDefinitionNode => d.kind === Kind.OBJECT_TYPE_DEFINITION && d.name.value === 'Mutation',
+      const mutationTypes = doc.definitions.filter(
+        (d): d is ObjectTypeDefinitionNode | ObjectTypeExtensionNode =>
+          (d.kind === Kind.OBJECT_TYPE_DEFINITION || d.kind === Kind.OBJECT_TYPE_EXTENSION) &&
+          d.name.value === 'Mutation',
       );
-      expect(mutationType).toBeDefined();
+      expect(mutationTypes.length).toBeGreaterThan(0);
 
-      const mutationFieldNames = mutationType?.fields?.map((f) => f.name.value) ?? [];
+      const mutationFieldNames = mutationTypes.flatMap((t) => t.fields?.map((f) => f.name.value) ?? []);
       expect(mutationFieldNames).not.toContain('submitRescueProof');
       expect(mutationFieldNames).not.toContain('confirmRescueProof');
       expect(mutationFieldNames).not.toContain('rejectRescueProof');
@@ -47,10 +49,14 @@ describe('Rescue Discussion & Creator Closure Authority (Ticket 01)', () => {
       const postsGql = fs.readFileSync(POSTS_GRAPHQL_FILE, 'utf8');
       const doc = parse(postsGql);
 
-      const mutationType = doc.definitions.find(
-        (d): d is ObjectTypeDefinitionNode => d.kind === Kind.OBJECT_TYPE_DEFINITION && d.name.value === 'Mutation',
+      const mutationTypes = doc.definitions.filter(
+        (d): d is ObjectTypeDefinitionNode | ObjectTypeExtensionNode =>
+          (d.kind === Kind.OBJECT_TYPE_DEFINITION || d.kind === Kind.OBJECT_TYPE_EXTENSION) &&
+          d.name.value === 'Mutation',
       );
-      const updateField = mutationType?.fields?.find((f) => f.name.value === 'updatePostStatus');
+      const updateField = mutationTypes
+        .flatMap((t) => t.fields ?? [])
+        .find((f) => f.name.value === 'updatePostStatus');
       expect(updateField).toBeDefined();
     });
   });
@@ -111,7 +117,7 @@ describe('Rescue Discussion & Creator Closure Authority (Ticket 01)', () => {
       mockCitiesService = {};
       mockUploadService = {};
       mockViewFlushCron = {};
-      mockUsersService = {};
+      mockUsersService = { invalidateUserCacheById: jest.fn().mockResolvedValue(undefined) };
       mockNotificationsService = {};
       mockCacheManager = {};
 
