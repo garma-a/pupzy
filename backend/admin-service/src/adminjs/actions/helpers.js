@@ -353,9 +353,13 @@ export async function capturePostCompletion(client, { postId, postType, outcome,
   );
 
   const totalRecipients = insertResult.rowCount ?? 0;
+  // An event with no audience has nothing to deliver, so it must not stay
+  // PENDING forever waiting for a worker that will never find work.
   await client.query(
     `UPDATE post_completion_notification_events
-     SET total_recipients = $2, updated_at = now()
+     SET total_recipients = $2,
+         status = CASE WHEN $2::int = 0 THEN 'COMPLETED' ELSE status END,
+         updated_at = now()
      WHERE id = $1`,
     [eventId, totalRecipients],
   );
@@ -413,10 +417,9 @@ export async function reopenPostCompletion(client, { postId, postTitle }) {
       [row.recipient_id, correctionType, content.title, content.body, content.titleArabic, content.bodyArabic, postId],
     );
 
-    const { rows: userRows } = await client.query(
-      `SELECT notifications_enabled FROM users WHERE id = $1::uuid`,
-      [row.recipient_id],
-    );
+    const { rows: userRows } = await client.query(`SELECT notifications_enabled FROM users WHERE id = $1::uuid`, [
+      row.recipient_id,
+    ]);
     if (userRows[0]?.notifications_enabled && isPushDeliveryEnabled(correctionType)) {
       await enqueuePushDeliveries(client, {
         id: notifRows[0].id,

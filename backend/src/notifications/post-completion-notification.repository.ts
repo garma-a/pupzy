@@ -118,14 +118,17 @@ export class PostCompletionNotificationRepository {
     `);
 
     const totalRecipients = insertResult.rowCount ?? 0;
+    // An event with no audience has nothing to deliver, so it must not stay
+    // PENDING forever waiting for a worker that will never find work.
+    const status = totalRecipients === 0 ? 'COMPLETED' : 'PENDING';
 
     await tx.execute(sql`
       UPDATE post_completion_notification_events
-      SET total_recipients = ${totalRecipients}, updated_at = now()
+      SET total_recipients = ${totalRecipients}, status = ${status}, updated_at = now()
       WHERE id = ${event.id}::uuid
     `);
 
-    return { event: { ...event, totalRecipients }, totalRecipients };
+    return { event: { ...event, totalRecipients, status }, totalRecipients };
   }
 
   /**
@@ -209,6 +212,30 @@ export class PostCompletionNotificationRepository {
   }
 
   /**
+   * Marks completion events COMPLETED once every captured recipient has reached
+   * a terminal state. Restartable delivery passes call this after each batch, so
+   * an interrupted worker leaves the event PENDING while work remains and the
+   * pass that terminates the last recipient completes it.
+   */
+  async completeFinishedEvents(eventIds: string[]): Promise<void> {
+    if (eventIds.length === 0) return;
+    await this.db.execute(sql`
+      UPDATE post_completion_notification_events
+      SET status = 'COMPLETED', updated_at = now()
+      WHERE id = ANY(ARRAY[${sql.join(
+        eventIds.map((id) => sql`${id}::uuid`),
+        sql`, `,
+      )}])
+        AND status IN ('PENDING', 'PROCESSING')
+        AND NOT EXISTS (
+          SELECT 1 FROM post_completion_recipients r
+          WHERE r.event_id = post_completion_notification_events.id
+            AND r.status IN ('PENDING', 'PROCESSING')
+        )
+    `);
+  }
+
+  /**
    * Claims up to batchSize recipients for delivery under a database lease.
    */
   async claimNextBatch(tx: DbTransaction, batchSize: number, leaseMs: number): Promise<ClaimedRecipientWithEvent[]> {
@@ -245,7 +272,10 @@ export class PostCompletionNotificationRepository {
           lease_token = ${leaseToken}::uuid,
           lease_expires_at = ${leaseExpiresAt},
           updated_at = ${now}
-      WHERE id = ANY(${ids}::uuid[])
+      WHERE id = ANY(ARRAY[${sql.join(
+        ids.map((id) => sql`${id}::uuid`),
+        sql`, `,
+      )}])
     `);
 
     const claimed = await tx.query.postCompletionRecipients.findMany({

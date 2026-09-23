@@ -127,6 +127,8 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
             );
           }
         }
+
+        await this.repository.completeFinishedEvents([...new Set(batch.map((item) => item.event.id))]);
       }
 
       return { batchesProcessed, delivered, suppressed, failed };
@@ -185,7 +187,7 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
         const [user] = await tx.select().from(users).where(eq(users.id, currentRecipient.recipientId)).limit(1);
 
         if (!user || user.isBanned) {
-          await this.markSuppressed(tx, currentRecipient.id, recipient.leaseToken!);
+          await this.markSuppressed(tx, currentRecipient.id, recipient.leaseToken!, 'CANCELLED');
           return 'SUPPRESSED';
         }
 
@@ -194,7 +196,7 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
           event.closingActorId &&
           (await this.isolationPolicy.lockPairAndRecheck(tx, event.closingActorId, currentRecipient.recipientId))
         ) {
-          await this.markSuppressed(tx, currentRecipient.id, recipient.leaseToken!);
+          await this.markSuppressed(tx, currentRecipient.id, recipient.leaseToken!, 'BLOCKED');
           return 'SUPPRESSED';
         }
 
@@ -244,11 +246,16 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
     );
   }
 
-  private async markSuppressed(tx: DbTransaction, recipientId: string, leaseToken: string): Promise<void> {
+  private async markSuppressed(
+    tx: DbTransaction,
+    recipientId: string,
+    leaseToken: string,
+    status: 'SUPPRESSED' | 'CANCELLED' | 'BLOCKED' = 'SUPPRESSED',
+  ): Promise<void> {
     await tx
       .update(postCompletionRecipients)
       .set({
-        status: 'SUPPRESSED',
+        status,
         leaseToken: null,
         leaseExpiresAt: null,
         lastError: null,

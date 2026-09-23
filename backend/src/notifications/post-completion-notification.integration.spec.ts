@@ -1,4 +1,4 @@
-import { eq, inArray, sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { TestDatabaseHelper } from '../../test/test-database.helper';
 import {
   cities,
@@ -38,16 +38,22 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
   let defaultCity: City;
 
   beforeAll(async () => {
-    dbHelper = await TestDatabaseHelper.setup();
+    dbHelper = new TestDatabaseHelper();
+    await dbHelper.start();
     pushDeliveryRepo = new PushDeliveryRepository(dbHelper.db);
     postCompletionRepo = new PostCompletionNotificationRepository(dbHelper.db, pushDeliveryRepo);
     isolationPolicy = new AccountIsolationPolicy(dbHelper.db);
-    processor = new PostCompletionNotificationProcessor(dbHelper.db, postCompletionRepo, isolationPolicy, pushDeliveryRepo);
+    processor = new PostCompletionNotificationProcessor(
+      dbHelper.db,
+      postCompletionRepo,
+      isolationPolicy,
+      pushDeliveryRepo,
+    );
     postsRepo = new PostsRepository(dbHelper.db, undefined, isolationPolicy, pushDeliveryRepo, postCompletionRepo);
   });
 
   afterAll(async () => {
-    await dbHelper.teardown();
+    await dbHelper.stop();
   });
 
   beforeEach(async () => {
@@ -55,30 +61,28 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
     const [city] = await dbHelper.db
       .insert(cities)
       .values({
-        name: 'Cairo',
+        nameEnglish: 'Cairo',
         nameArabic: 'القاهرة',
-        country: 'Egypt',
-        countryArabic: 'مصر',
-        latitude: '30.0444',
-        longitude: '31.2357',
+        governorate: 'Cairo',
+        centerPoint: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
       })
       .returning();
     defaultCity = city;
   });
 
-  async function createUser(overrides: Partial<typeof users.$inferInsert> = {}): Promise<User> {
+  async function createUser(overrides: Partial<typeof users.$inferInsert> & { name?: string } = {}): Promise<User> {
+    const { name, ...rest } = overrides;
     const id = generateUuidV7();
-    const phone = `+201${Math.floor(10000000 + Math.random() * 90000000)}`;
     const [user] = await dbHelper.db
       .insert(users)
       .values({
         id,
-        phone,
-        phoneHash: `hash_${id}`,
-        name: overrides.name ?? `User_${id.substring(0, 6)}`,
-        notificationsEnabled: overrides.notificationsEnabled ?? true,
-        isBanned: overrides.isBanned ?? false,
-        ...overrides,
+        firebaseUserId: `firebase_${id}`,
+        email: `${id}@example.com`,
+        fullName: name ?? `User_${id.substring(0, 6)}`,
+        notificationsEnabled: true,
+        isBanned: false,
+        ...rest,
       })
       .returning();
     return user;
@@ -96,6 +100,8 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
         postType: 'RESCUE',
         cityId: defaultCity.id,
         status: 'ACTIVE',
+        urgency: 'MODERATE',
+        coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
       })
       .returning();
 
@@ -103,7 +109,11 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       postId: post.id,
       species: 'DOG',
       conditionSummary: 'Broken leg, needs vet care',
-      reporterRole: 'STREET_FINDER',
+      reporterRole: 'REPORTING',
+      isLifeThreatening: false,
+      hasVisibleSeriousInjury: true,
+      isInDangerousLocation: false,
+      canAnimalMoveOrEscape: true,
     });
 
     return post;
@@ -129,7 +139,7 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
         id: generateUuidV7(),
         postId: post.id,
         authorId: commenter.id,
-        content: 'I can help transport!',
+        text: 'I can help transport!',
         status: 'ACTIVE',
       });
       // Add deleted comment (should be excluded)
@@ -137,7 +147,7 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
         id: generateUuidV7(),
         postId: post.id,
         authorId: deletedCommenter.id,
-        content: 'Nevermind',
+        text: 'Nevermind',
         status: 'DELETED',
       });
       // Add contact request
@@ -167,8 +177,8 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(event.closingActorId).toBe(owner.id);
       expect(event.status).toBe('PENDING');
       expect(event.totalRecipients).toBe(4);
-      expect(event.title).toContain(post.title);
-      expect(event.titleArabic).toContain(post.title);
+      expect(event.body).toContain(post.title);
+      expect(event.bodyArabic).toContain(post.title);
 
       // Check recipients
       const recipients = await dbHelper.db
@@ -204,7 +214,7 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
         id: generateUuidV7(),
         postId: post.id,
         authorId: activeUser.id,
-        content: 'I want to help!',
+        text: 'I want to help!',
         status: 'ACTIVE',
       });
       await dbHelper.db.insert(contactRequests).values({
@@ -225,6 +235,32 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(recipients).toHaveLength(1);
       expect(recipients[0].recipientId).toBe(activeUser.id);
     });
+
+    it('completes an event with an empty audience and leaves nothing for the worker', async () => {
+      const owner = await createUser({ name: 'Owner' });
+      const post = await createRescuePost(owner.id);
+
+      // Nobody interacted with the rescue, so the captured audience is empty.
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+
+      const events = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.postId, post.id));
+      expect(events).toHaveLength(1);
+      expect(events[0].totalRecipients).toBe(0);
+      expect(events[0].status).toBe('COMPLETED');
+
+      const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(0);
+      expect(batchRes.batchesProcessed).toBe(0);
+
+      const recipients = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.postId, post.id));
+      expect(recipients).toHaveLength(0);
+    });
   });
 
   describe('Bounded Batch Delivery (>500 recipients supported)', () => {
@@ -243,9 +279,9 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
         userIds.push(id);
         userValues.push({
           id,
-          phone: `+201${String(i).padStart(8, '0')}`,
-          phoneHash: `hash_${id}`,
-          name: `User_${i}`,
+          firebaseUserId: `firebase_${id}`,
+          email: `${id}@example.com`,
+          fullName: `User_${i}`,
           notificationsEnabled: true,
           isBanned: false,
         });
@@ -278,7 +314,7 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
         const batchRes = await processor.processPendingBatches({ batchSize: 100 });
         totalDelivered += batchRes.delivered;
         iterations++;
-        if (batchRes.processed === 0) break;
+        if (batchRes.batchesProcessed === 0) break;
       }
 
       expect(totalDelivered).toBe(550);
@@ -296,15 +332,12 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       }
 
       // Verify 550 inbox notifications exist with relatedPostId matching post.id
-      const notifs = await dbHelper.db
-        .select()
-        .from(notifications)
-        .where(eq(notifications.relatedPostId, post.id));
+      const notifs = await dbHelper.db.select().from(notifications).where(eq(notifications.relatedPostId, post.id));
 
       expect(notifs).toHaveLength(550);
       for (const n of notifs) {
         expect(n.type).toBe('RESCUE_COMPLETED');
-        expect(n.title).toContain(post.title);
+        expect(n.body).toContain(post.title);
       }
 
       // Verify event is COMPLETED
@@ -343,6 +376,103 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
 
       expect(recipient.status).toBe('DELIVERED');
     });
+
+    it('rolls back a failed delivery attempt and retries it without duplicating the inbox notification', async () => {
+      const owner = await createUser({ name: 'Owner' });
+      const post = await createRescuePost(owner.id);
+      const recipientUser = await createUser({ name: 'RetryRecipient' });
+
+      await dbHelper.db.insert(deviceRegistrations).values({
+        id: generateUuidV7(),
+        userId: recipientUser.id,
+        token: 'token_retry_recipient',
+        platform: 'ANDROID',
+      });
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: recipientUser.id });
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+
+      // Fault injection: fail the first enqueue inside the delivery transaction,
+      // after the inbox row insert, then delegate to the real outbox. The plain
+      // Error carries no retryable SQLSTATE, so withDbRetry rethrows it at once
+      // and the failure reaches the processor's requeue path deterministically.
+      let enqueueAttempts = 0;
+      const flakyPushRepo = {
+        enqueueForNotification: async (...args: Parameters<PushDeliveryRepository['enqueueForNotification']>) => {
+          enqueueAttempts++;
+          if (enqueueAttempts === 1) throw new Error('injected push enqueue failure');
+          return pushDeliveryRepo.enqueueForNotification(...args);
+        },
+      } as unknown as PushDeliveryRepository;
+
+      const faultProcessor = new PostCompletionNotificationProcessor(
+        dbHelper.db,
+        postCompletionRepo,
+        isolationPolicy,
+        flakyPushRepo,
+      );
+
+      const failedPass = await faultProcessor.processPendingBatches({ batchSize: 10 });
+      expect(failedPass.delivered).toBe(0);
+      expect(failedPass.failed).toBe(1);
+
+      // The delivery transaction rolled back: the inbox row and push intent it
+      // had written are gone, so a retry cannot produce a duplicate.
+      const notifsAfterFailure = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, recipientUser.id));
+      expect(notifsAfterFailure).toHaveLength(0);
+
+      const pushesAfterFailure = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.recipientId, recipientUser.id));
+      expect(pushesAfterFailure).toHaveLength(0);
+
+      const [failedRecipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.recipientId, recipientUser.id));
+      expect(failedRecipient.status).toBe('PENDING');
+      expect(failedRecipient.notificationId).toBeNull();
+      expect(failedRecipient.attempts).toBe(1);
+      expect(failedRecipient.lastError).toContain('injected push enqueue failure');
+      // The requeue path scheduled a backoff instead of leaving the recipient
+      // immediately claimable.
+      expect(failedRecipient.nextAttemptAt.getTime()).toBeGreaterThan(failedRecipient.updatedAt.getTime());
+
+      // Expire the recorded backoff explicitly instead of sleeping, so the
+      // retry pass is deterministic and clock-skew independent.
+      await dbHelper.db.execute(sql`
+        UPDATE post_completion_recipients
+        SET next_attempt_at = now() - interval '1 second'
+        WHERE id = ${failedRecipient.id}::uuid
+      `);
+      const retryPass = await faultProcessor.processPendingBatches({ batchSize: 10 });
+      expect(retryPass.delivered).toBe(1);
+      expect(enqueueAttempts).toBe(2);
+
+      const notifsAfterRetry = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, recipientUser.id));
+      expect(notifsAfterRetry).toHaveLength(1);
+
+      const pushesAfterRetry = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.recipientId, recipientUser.id));
+      expect(pushesAfterRetry).toHaveLength(1);
+      expect(pushesAfterRetry[0].notificationId).toBe(notifsAfterRetry[0].id);
+
+      const [deliveredRecipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.recipientId, recipientUser.id));
+      expect(deliveredRecipient.status).toBe('DELIVERED');
+      expect(deliveredRecipient.notificationId).toBe(notifsAfterRetry[0].id);
+      expect(deliveredRecipient.lastError).toBeNull();
+    });
   });
 
   describe('Recheck Account Availability, Blocks, and Push Preferences', () => {
@@ -368,10 +498,7 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(recipient.status).toBe('CANCELLED');
 
       // No notification should be inserted
-      const notifs = await dbHelper.db
-        .select()
-        .from(notifications)
-        .where(eq(notifications.recipientId, bannedUser.id));
+      const notifs = await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, bannedUser.id));
       expect(notifs).toHaveLength(0);
     });
 
@@ -415,8 +542,8 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       await dbHelper.db.insert(deviceRegistrations).values({
         id: generateUuidV7(),
         userId: user.id,
-        fcmToken: 'token_123',
-        platform: 'android',
+        token: 'token_123',
+        platform: 'ANDROID',
       });
 
       await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: user.id });
@@ -426,17 +553,11 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(batchRes.delivered).toBe(1);
 
       // Inbox notification delivered
-      const notifs = await dbHelper.db
-        .select()
-        .from(notifications)
-        .where(eq(notifications.recipientId, user.id));
+      const notifs = await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, user.id));
       expect(notifs).toHaveLength(1);
 
       // Push deliveries NOT enqueued
-      const pushes = await dbHelper.db
-        .select()
-        .from(pushDeliveries)
-        .where(eq(pushDeliveries.recipientId, user.id));
+      const pushes = await dbHelper.db.select().from(pushDeliveries).where(eq(pushDeliveries.recipientId, user.id));
       expect(pushes).toHaveLength(0);
     });
 
@@ -448,8 +569,8 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       await dbHelper.db.insert(deviceRegistrations).values({
         id: generateUuidV7(),
         userId: user.id,
-        fcmToken: 'token_push_enabled',
-        platform: 'ios',
+        token: 'token_push_enabled',
+        platform: 'IOS',
       });
 
       await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: user.id });
@@ -457,16 +578,10 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
 
       await processor.processPendingBatches({ batchSize: 10 });
 
-      const notifs = await dbHelper.db
-        .select()
-        .from(notifications)
-        .where(eq(notifications.recipientId, user.id));
+      const notifs = await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, user.id));
       expect(notifs).toHaveLength(1);
 
-      const pushes = await dbHelper.db
-        .select()
-        .from(pushDeliveries)
-        .where(eq(pushDeliveries.recipientId, user.id));
+      const pushes = await dbHelper.db.select().from(pushDeliveries).where(eq(pushDeliveries.recipientId, user.id));
       expect(pushes).toHaveLength(1);
       expect(pushes[0].notificationId).toBe(notifs[0].id);
     });
@@ -515,20 +630,15 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(recipientIds).not.toContain(creator.id);
       expect(recipientIds).not.toContain(admin.id);
 
-      // Deliver only participantA (leave participantB PENDING)
-      const claimResult = await dbHelper.db.transaction(async (tx) => {
-        return postCompletionRepo.claimNextBatch(tx, 1, 30_000);
-      });
-      expect(claimResult).toHaveLength(1);
-      const claimed = claimResult[0];
+      // Deliver only one participant (leave the other PENDING)
+      const deliveryBatch = await processor.processPendingBatches({ maxBatches: 1, batchSize: 1 });
+      expect(deliveryBatch.delivered).toBe(1);
 
-      await processor.deliverClaimedRecipient(claimed.recipient, claimed.event);
-
-      const [recipA] = await dbHelper.db
+      const [claimedRecipient] = await dbHelper.db
         .select()
         .from(postCompletionRecipients)
-        .where(eq(postCompletionRecipients.id, claimed.recipient.id));
-      expect(recipA.status).toBe('DELIVERED');
+        .where(eq(postCompletionRecipients.status, 'DELIVERED'));
+      expect(claimedRecipient).toBeDefined();
 
       // Now Administrator reopens the post
       await dbHelper.db.transaction(async (tx) => {
@@ -551,7 +661,7 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
         .select()
         .from(postCompletionRecipients)
         .where(
-          sql`${postCompletionRecipients.postId} = ${post.id}::uuid AND ${postCompletionRecipients.id} <> ${claimed.recipient.id}::uuid`,
+          sql`${postCompletionRecipients.postId} = ${post.id}::uuid AND ${postCompletionRecipients.id} <> ${claimedRecipient.id}::uuid`,
         );
       expect(otherRecipients[0].status).toBe('SUPPRESSED');
 
@@ -559,21 +669,21 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       const [recipACorrected] = await dbHelper.db
         .select()
         .from(postCompletionRecipients)
-        .where(eq(postCompletionRecipients.id, claimed.recipient.id));
+        .where(eq(postCompletionRecipients.id, claimedRecipient.id));
       expect(recipACorrected.status).toBe('CORRECTED');
 
       // 4. Check that participantA received RESCUE_REOPENED notification
       const participantANotifs = await dbHelper.db
         .select()
         .from(notifications)
-        .where(eq(notifications.recipientId, claimed.recipient.recipientId));
+        .where(eq(notifications.recipientId, claimedRecipient.recipientId));
 
       expect(participantANotifs).toHaveLength(2); // 1 RESCUE_COMPLETED, 1 RESCUE_REOPENED
       const correctionNotif = participantANotifs.find((n) => n.type === 'RESCUE_REOPENED');
       expect(correctionNotif).toBeDefined();
       expect(correctionNotif?.relatedPostId).toBe(post.id);
-      expect(correctionNotif?.title).toContain(post.title);
-      expect(correctionNotif?.titleArabic).toContain(post.title);
+      expect(correctionNotif?.body).toContain(post.title);
+      expect(correctionNotif?.bodyArabic).toContain(post.title);
       // Ensure no internal admin reasons exposed
       expect(correctionNotif?.body).not.toContain('admin');
       expect(correctionNotif?.bodyArabic).not.toContain('admin');
@@ -587,7 +697,7 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
 
       // 6. Running batch processor now does nothing
       const postReopenBatchRes = await processor.processPendingBatches({ batchSize: 10 });
-      expect(postReopenBatchRes.processed).toBe(0);
+      expect(postReopenBatchRes.batchesProcessed).toBe(0);
       expect(postReopenBatchRes.delivered).toBe(0);
     });
 
