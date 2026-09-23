@@ -1,5 +1,6 @@
 import { POST_DISCUSSION_LOCK_NAMESPACE } from '../../../../src/common/contracts/post-lifecycle.contract.ts';
 import { isPushDeliveryEnabled } from '../../../../src/notifications/push-delivery.constants.ts';
+import { buildNotificationContent } from '../../../../src/notifications/notification-templates.ts';
 
 const MODERATION_TABLES = new Set(['users', 'posts', 'comments']);
 
@@ -303,4 +304,128 @@ export function readModerationReason(value) {
     return { error: 'A reason must be at most 500 characters.' };
   }
   return { reason };
+}
+
+/**
+ * Atomically captures a post completion event and audience snapshot for rescue closure.
+ * Excludes the closing admin and the post creator (creator already receives POST_RESOLVED_BY_ADMIN).
+ */
+export async function capturePostCompletion(client, { postId, postType, outcome, closingActorId, title, creatorId }) {
+  const notificationType = postType === 'RESCUE' ? 'RESCUE_COMPLETED' : 'POST_COMPLETED';
+  const content = buildNotificationContent(notificationType, { postTitle: title });
+
+  const { rows: eventRows } = await client.query(
+    `INSERT INTO post_completion_notification_events
+       (post_id, post_type, outcome, closing_actor_id, type, title, body, title_arabic, body_arabic, status, total_recipients)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'PENDING', 0)
+     RETURNING id`,
+    [
+      postId,
+      postType,
+      outcome,
+      closingActorId,
+      notificationType,
+      content.title,
+      content.body,
+      content.titleArabic,
+      content.bodyArabic,
+    ],
+  );
+  const eventId = eventRows[0].id;
+
+  const insertResult = await client.query(
+    `INSERT INTO post_completion_recipients (event_id, post_id, recipient_id, status)
+     SELECT $1::uuid, $2::uuid, sub.recipient_id, 'PENDING'
+     FROM (
+       SELECT user_id AS recipient_id FROM post_upvotes WHERE post_id = $2::uuid
+       UNION
+       SELECT user_id AS recipient_id FROM post_saves WHERE post_id = $2::uuid
+       UNION
+       SELECT author_id AS recipient_id FROM comments WHERE post_id = $2::uuid AND status NOT IN ('DELETED', 'REMOVED')
+       UNION
+       SELECT requester_id AS recipient_id FROM contact_requests WHERE post_id = $2::uuid
+     ) sub
+     WHERE sub.recipient_id IS NOT NULL
+       AND ($3::uuid IS NULL OR sub.recipient_id <> $3::uuid)
+       AND ($4::uuid IS NULL OR sub.recipient_id <> $4::uuid)
+     ON CONFLICT (event_id, recipient_id) DO NOTHING`,
+    [eventId, postId, closingActorId, creatorId],
+  );
+
+  const totalRecipients = insertResult.rowCount ?? 0;
+  await client.query(
+    `UPDATE post_completion_notification_events
+     SET total_recipients = $2, updated_at = now()
+     WHERE id = $1`,
+    [eventId, totalRecipients],
+  );
+
+  return { eventId, totalRecipients };
+}
+
+/**
+ * Handles post reopening by an administrator:
+ * 1. Supersedes active completion events.
+ * 2. Suppresses obsolete pending/processing recipients.
+ * 3. Delivers correction notifications for recipients who already received closure inbox messages.
+ */
+export async function reopenPostCompletion(client, { postId, postTitle }) {
+  await client.query(
+    `UPDATE post_completion_notification_events
+     SET status = 'SUPERSEDED', updated_at = now()
+     WHERE post_id = $1::uuid AND status IN ('PENDING', 'PROCESSING')`,
+    [postId],
+  );
+
+  await client.query(
+    `UPDATE post_completion_recipients
+     SET status = 'SUPPRESSED', updated_at = now()
+     WHERE post_id = $1::uuid AND status IN ('PENDING', 'PROCESSING')`,
+    [postId],
+  );
+
+  const { rows: deliveredRows } = await client.query(
+    `SELECT r.id, r.recipient_id, e.type AS event_type
+     FROM post_completion_recipients r
+     JOIN post_completion_notification_events e ON e.id = r.event_id
+     WHERE r.post_id = $1::uuid AND r.status = 'DELIVERED'`,
+    [postId],
+  );
+
+  let correctedCount = 0;
+  for (const row of deliveredRows) {
+    const markRes = await client.query(
+      `UPDATE post_completion_recipients
+       SET status = 'CORRECTED', updated_at = now()
+       WHERE id = $1::uuid AND status = 'DELIVERED'`,
+      [row.id],
+    );
+    if ((markRes.rowCount ?? 0) === 0) continue;
+
+    const correctionType = row.event_type === 'POST_COMPLETED' ? 'POST_REOPENED' : 'RESCUE_REOPENED';
+    const content = buildNotificationContent(correctionType, { postTitle });
+
+    const { rows: notifRows } = await client.query(
+      `INSERT INTO notifications
+         (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, false)
+       RETURNING id`,
+      [row.recipient_id, correctionType, content.title, content.body, content.titleArabic, content.bodyArabic, postId],
+    );
+
+    const { rows: userRows } = await client.query(
+      `SELECT notifications_enabled FROM users WHERE id = $1::uuid`,
+      [row.recipient_id],
+    );
+    if (userRows[0]?.notifications_enabled && isPushDeliveryEnabled(correctionType)) {
+      await enqueuePushDeliveries(client, {
+        id: notifRows[0].id,
+        recipientId: row.recipient_id,
+        type: correctionType,
+      });
+    }
+    correctedCount++;
+  }
+
+  return { correctedCount };
 }

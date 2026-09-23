@@ -140,6 +140,10 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'NEW_REPLY',
   'COMMENT_BOOSTED',
   'COMMENT_PINNED',
+  'POST_COMPLETED',
+  'POST_REOPENED',
+  'RESCUE_COMPLETED',
+  'RESCUE_REOPENED',
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────

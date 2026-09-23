@@ -49,6 +49,10 @@ export interface NotificationTemplateParamsMap {
   NEW_REPLY: { actorName: string };
   COMMENT_BOOSTED: { actorName: string; target: 'comment' | 'reply' };
   COMMENT_PINNED: { postTitle: string };
+  POST_COMPLETED: { postTitle: string };
+  POST_REOPENED: { postTitle: string };
+  RESCUE_COMPLETED: { postTitle: string };
+  RESCUE_REOPENED: { postTitle: string };
 }
 
 /** Rendered text for one language. */
@@ -263,6 +267,46 @@ const NOTIFICATION_TEMPLATES: NotificationTemplateRegistry = {
     ar: ({ postTitle }) => ({
       title: 'تم تثبيت التعليق',
       body: `تم تثبيت تعليقك على "${postTitle}"`,
+    }),
+  },
+  POST_COMPLETED: {
+    en: ({ postTitle }) => ({
+      title: 'Post resolved',
+      body: `The post "${postTitle}" was marked as resolved.`,
+    }),
+    ar: ({ postTitle }) => ({
+      title: 'تم حل المنشور',
+      body: `تم تسجيل نتيجة المنشور "${postTitle}".`,
+    }),
+  },
+  POST_REOPENED: {
+    en: ({ postTitle }) => ({
+      title: 'Post reopened',
+      body: `The post "${postTitle}" was reopened.`,
+    }),
+    ar: ({ postTitle }) => ({
+      title: 'تمت إعادة فتح المنشور',
+      body: `تمت إعادة فتح المنشور "${postTitle}".`,
+    }),
+  },
+  RESCUE_COMPLETED: {
+    en: ({ postTitle }) => ({
+      title: 'Rescue resolved',
+      body: `The rescue "${postTitle}" was marked as rescued.`,
+    }),
+    ar: ({ postTitle }) => ({
+      title: 'تم حل حالة الإنقاذ',
+      body: `تم تعليم حالة الإنقاذ "${postTitle}" بأنها تم إنقاذها.`,
+    }),
+  },
+  RESCUE_REOPENED: {
+    en: ({ postTitle }) => ({
+      title: 'Rescue reopened',
+      body: `The rescue "${postTitle}" was reopened.`,
+    }),
+    ar: ({ postTitle }) => ({
+      title: 'تمت إعادة فتح حالة الإنقاذ',
+      body: `تمت إعادة فتح حالة الإنقاذ "${postTitle}".`,
     }),
   },
 };

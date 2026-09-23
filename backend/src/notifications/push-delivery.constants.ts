@@ -38,6 +38,10 @@ export const PUSH_ENABLED_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = ne
   'NEW_REPLY',
   'COMMENT_BOOSTED',
   'COMMENT_PINNED',
+  'POST_COMPLETED',
+  'POST_REOPENED',
+  'RESCUE_COMPLETED',
+  'RESCUE_REOPENED',
 ]);
 
 /** True when a notification type should enqueue durable push delivery intents. */

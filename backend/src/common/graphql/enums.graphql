@@ -161,6 +161,10 @@ enum NotificationType {
   NEW_REPLY
   COMMENT_BOOSTED
   COMMENT_PINNED
+  POST_COMPLETED
+  POST_REOPENED
+  RESCUE_COMPLETED
+  RESCUE_REOPENED
 }
 
 "Personality trait tag for an adoption pet."
