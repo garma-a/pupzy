@@ -30,3 +30,12 @@ Severity: Critical / High / Medium / Low / Info. Status: FIXED (commit) / PROPOS
 | F-24 | Low | Frontend / UX | "Complete all required fields to post" stays visible above an enabled submit button on Find a Mate | screenshot `mate-03-filled-form.png` | PROPOSED |
 | F-25 | Info | Frontend | A background request fires right after sign-out and gets 401 (no token) — harmless noise | backend log after sign-out | INFO |
 | F-26 | Medium | Release | No crash reporting: `_reportError` in `main.dart` only `debugPrint`s, so release crashes are invisible | `main.dart:_reportError` | PROPOSED |
+| F-27 | High | Frontend / store | Profile sheet was a fixed Column: Sign Out and Delete Account clipped at 360×780 dp (33 px) and further with large text | device run at 360 dp | FIXED b433cb0 |
+| F-28 | Medium | Frontend / layout | Overflows at 360 dp + 130 % text: rescue action row 37 px, "+" sheet 27 px, Home carousels 7 px | device runs | FIXED 706bbb2 |
+| F-29 | Low | Android | Launcher label "pupzy" vs iOS "Pupzy" | release APK badging | FIXED 8e5a68a |
+| F-30 | High | Store compliance | Login legal text not tappable; no privacy-policy link in the app | `login_screen.dart:612`, `release-01-launch.png` | PROPOSED |
+| F-32 | Medium | iOS | `NSPrivacyCollectedDataTypes` empty in PrivacyInfo.xcprivacy | `ios/Runner/PrivacyInfo.xcprivacy` | PROPOSED |
+| F-34 | Info | Frontend | Light theme only; ignores system dark mode | `main.dart` (no `darkTheme`) | INFO |
+| F-35 | Medium | Release | `google_sign_in` 6.x uses the deprecated legacy Android Google Sign-In API | `pubspec.yaml` | PROPOSED |
+| F-36 | Low | Frontend / UX | With the API unreachable, sign-in spins 20–35 s before its error toast | `backend_down_test.dart` | PROPOSED |
+| F-37 | Low | Privacy | `google_fonts` downloads fonts from Google at runtime (IP disclosure, offline fallback) | no bundled fonts, default `allowRuntimeFetching` | PROPOSED |
