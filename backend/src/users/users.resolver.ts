@@ -12,6 +12,10 @@ import { validateDeleteMyAccountInput } from './dto/delete-my-account.input';
 import type { User, City } from '../database/schema';
 import type { GqlContext } from '../common/types/gql-context.type';
 
+function isViewerSelf(user: User, ctx: GqlContext): boolean {
+  return ctx.user?.id !== undefined && ctx.user.id === user.id;
+}
+
 /**
  * UsersResolver — GraphQL resolver for all User-related operations.
  *
@@ -76,8 +80,45 @@ export class UsersResolver {
    */
   @ResolveField('city')
   city(@Root() user: User, @Context() ctx: GqlContext): Promise<City | null> {
-    if (!user.homeCityId) return Promise.resolve(null);
+    if (!isViewerSelf(user, ctx) || !user.homeCityId) return Promise.resolve(null);
     return ctx.loaders.cityById.load(user.homeCityId);
+  }
+
+  // ── Account-private fields ────────────────────────────────────────────────
+  // `User` is also what Post.creator, comment authors, contact requesters and
+  // adoption applicants resolve to. Without these guards any signed-in user
+  // could read any poster's email, phone ciphertext, home city and activity —
+  // bypassing the contact-request model, which reveals a phone only after the
+  // owner approves. Only the account itself sees them.
+
+  @ResolveField('email')
+  email(@Root() user: User, @Context() ctx: GqlContext): string | null {
+    return isViewerSelf(user, ctx) ? user.email : null;
+  }
+
+  @ResolveField('phoneNumber')
+  phoneNumber(@Root() user: User, @Context() ctx: GqlContext): string | null {
+    return isViewerSelf(user, ctx) ? user.phoneNumber : null;
+  }
+
+  @ResolveField('homeCityId')
+  homeCityId(@Root() user: User, @Context() ctx: GqlContext): string | null {
+    return isViewerSelf(user, ctx) ? user.homeCityId : null;
+  }
+
+  @ResolveField('languagePreference')
+  languagePreference(@Root() user: User, @Context() ctx: GqlContext): string | null {
+    return isViewerSelf(user, ctx) ? user.languagePreference : null;
+  }
+
+  @ResolveField('notificationsEnabled')
+  notificationsEnabled(@Root() user: User, @Context() ctx: GqlContext): boolean | null {
+    return isViewerSelf(user, ctx) ? user.notificationsEnabled : null;
+  }
+
+  @ResolveField('lastSeenAt')
+  lastSeenAt(@Root() user: User, @Context() ctx: GqlContext): Date | null {
+    return isViewerSelf(user, ctx) ? user.lastSeenAt : null;
   }
 
   /**

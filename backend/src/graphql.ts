@@ -812,7 +812,7 @@ export interface ProfilePhotoUploadTicket {
 
 export interface User {
   id: string;
-  email: string;
+  email?: Nullable<string>;
   fullName?: Nullable<string>;
   fullNameArabic?: Nullable<string>;
   profilePictureUrl?: Nullable<string>;
@@ -827,7 +827,7 @@ export interface User {
   adoptionPostCount: number;
   productPostCount: number;
   languagePreference?: Nullable<string>;
-  notificationsEnabled: boolean;
+  notificationsEnabled?: Nullable<boolean>;
   lastSeenAt?: Nullable<DateTime>;
   createdAt: DateTime;
   updatedAt: DateTime;
