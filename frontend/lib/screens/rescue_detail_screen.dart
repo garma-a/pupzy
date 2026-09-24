@@ -327,6 +327,14 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                       const SizedBox(height: AppSpacing.lg),
                       Row(
                         children: [
+                          // Wraps onto a second line on narrow phones or with a large
+                          // accessibility font instead of pushing the comment and save
+                          // buttons off-screen (overflowed 37 px at 360 dp, 130 % text).
+                          Expanded(
+                            child: Wrap(
+                              spacing: AppSpacing.sm,
+                              runSpacing: AppSpacing.sm,
+                              children: [
                           if (_isOwner)
                             Tooltip(
                               message: t(context, "You can't raise your own post", 'لا يمكنك تعزيز منشورك الخاص'),
@@ -360,8 +368,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                               activeColor: AppColors.primary,
                               inactiveColor: AppColors.textMuted,
                             ),
-                          if (post.latitude != null && post.longitude != null) ...[
-                            const SizedBox(width: AppSpacing.sm),
+                          if (post.latitude != null && post.longitude != null)
                             Material(
                               color: Colors.transparent,
                               child: InkWell(
@@ -388,8 +395,9 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                                 ),
                               ),
                             ),
-                          ],
-                          const Spacer(),
+                              ],
+                            ),
+                          ),
                           Material(
                             color: Colors.transparent,
                             child: InkWell(
