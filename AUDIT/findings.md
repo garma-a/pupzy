@@ -1,0 +1,24 @@
+# Findings log (working file — consolidated into REPORT.md)
+
+Severity: Critical / High / Medium / Low / Info. Status: FIXED (commit) / PROPOSED / BLOCKED / INFO.
+
+| ID | Sev | Area | Finding | Evidence | Status |
+|---|---|---|---|---|---|
+| F-01 | Critical | Backend / privacy | Any signed-in user could read any poster's **email**, phone ciphertext, home city, language, notification setting and last-seen via `post { creator { … } }` (also comment authors, requesters, applicants). Bypassed the contact-request model. | Live probe as viewer on pupzy_e2e returned `owner@pupzy.test` + phone ciphertext on MATING/ADOPTION/PRODUCT/RESCUE | FIXED 7076ecb |
+| F-02 | Medium | Backend / config | `ACCOUNT_DELETION_ENABLED=false` parsed as `true` (`z.coerce.boolean`) — kill-switch could not be turned off | `z.coerce.boolean().parse('false') === true` | FIXED 7b0d3e3 |
+| F-03 | High | Product gap | No edit/update operation exists for any post type; owners must delete and re-create (losing comments, saves, upvotes, requests) | 74-op inventory, no `update*Post` | PROPOSED |
+| F-04 | Low | Backend tooling | City catalog publish/refresh tools `fsync` a directory — `EPERM` on Windows (21 unit failures). Linux CI unaffected | `src/cities/publish.spec.ts`, `refresh.spec.ts` | INFO |
+| F-05 | Info | Tests | Integration tests pin PG16 error codes; PostgreSQL 18 reports RESTRICT FK violations as `23001` not `23503`. No production code depends on either code | `admin-schema.integration.spec.ts` (4) | INFO |
+| F-06 | Low | Backend / privacy | A user viewing their *own* post's `creator.phoneNumber` gets the ciphertext (loader rows are not decrypted); `me` is correct. App never reads it | Live probe after F-01 fix | PROPOSED |
+| F-07 | Low | Frontend hygiene | `lib/firebase_options.dart` is an unreferenced older copy of `lib/config/firebase_options.dart` | `main.dart:10` imports config copy | PROPOSED |
+| F-08 | High | Backend / uploads + privacy | Post media is copied from staging to public storage **without inspecting the bytes**: a text file or a PNG declared `image/jpeg` is published. No EXIF stripping server-side, so GPS metadata in phone photos can reach ADOPTION/PRODUCT/MATING posts, whose design promises city-only location (app-side stripping verified in Phase 5). Comment images, by contrast, are fully validated | `api-edges.live-spec.ts` (2 × `it.failing`) | PROPOSED |
+| F-09 | Medium | Backend / privacy | Deleted posts' photos stay publicly downloadable indefinitely: OWNER_REMOVE retains media by contract and enqueues no deletion work (`media_deletion_work` empty) | `post-matrix.live-spec.ts` `it.failing` (polled 120 s, still HTTP 200) | PROPOSED |
+| F-10 | High | Backend / availability | All rate limits key on client IP only (throttler runs before auth): global 100 req/min, createMatingPost 5/h, requestContact 5/min, submitAdoptionApplication 10/h. Users behind carrier CGNAT share one bucket | `gql-throttler.guard.ts` (no `getTracker`), `@Throttle` in mating/contacts/adoptions resolvers | PROPOSED |
+| F-11 | High | Backend / DB | `posts.coordinates` had no SRID on any DB built from migrations; API inserts landed SRID 0 and every city/location-filtered feed (help/home/adopt/market) crashed "mixed SRID". Fixtures used ST_SetSRID and hid it | fresh `pupzy_e2e`: `geometry(Point)`, all rows SRID 0 | FIXED fc1994d |
+| F-12 | Low | Backend / API consistency | Out-of-range `first` is rejected by post feeds (1..50) but silently clamped by `matingFeed` | `api-edges.live-spec.ts` | PROPOSED |
+| F-13 | Low | Backend / product consistency | Backend still accepts `requestContact` on RESCUE (product decision: no contact flow) and on ADOPTION (parallel to adoption applications); the app never offers either | behaviour probe | PROPOSED |
+| F-14 | Info | Backend / errors | In development, unexpected errors return raw SQL + params to the client; production masks them (`gql-exception.filter.ts`) | helpFeed crash response | INFO |
+| F-15 | Low | Backend / performance | `Post.nearestVetClinics` runs one geo query per post with no DataLoader; harmless on detail (the only app use) but a client can request it across a 50-post feed | `vet-clinics.resolver.ts:88` | PROPOSED |
+| F-16 | Medium | Backend / performance | Radius feeds gather and sort every matching post inside 25 km to return 20. At 200 k posts: help 177 ms, home 98 ms, adopt/market ~61 ms DB time (Cairo). Grows linearly with density | EXPLAIN ANALYZE on `pupzy_perf` | PROPOSED |
+| F-17 | Low | Backend / robustness | No process-level `unhandledRejection` handler; idempotency interceptor fires cache writes without `.catch` (in-memory store, low risk) | `idempotency.interceptor.ts:86,97` | PROPOSED |
+| F-18 | Info | Backend / scaling | Token, user-resolve and idempotency caches are in-memory per instance; horizontal scaling would diverge (e.g. ban propagation) | `CacheModule.register` in `app.module.ts` | INFO |

@@ -15,16 +15,16 @@ Java 17, Node 24, local Postgres at localhost:5432 (`pupzy`). **No Docker, no ma
 - [x] 2.2 Test DB: migrations applied, seed 3+ users (owner / viewer / blocked), posts of every PostType, products, cities
 - [x] 2.3 Start backend, confirm GraphQL endpoint responds
 - [x] 2.4 Baseline: backend lint/typecheck/unit/integration; frontend analyze + tests — record before changing anything
-- [ ] 2.5 Commit
+- [x] 2.5 Commit
 
 ## Phase 3 — Backend tests
-- [ ] 3.1 Determine how existing e2e/integration tests authenticate + reach a DB
-- [ ] 3.2 Post-type × role e2e (owner / viewer / logged-out / blocked) for all 5 PostTypes
-- [ ] 3.3 Auth/IDOR, validation, pagination edges, empty results, duplicates
-- [ ] 3.4 Upload validation (wrong type, oversize, missing)
-- [ ] 3.5 Mating: create, feed, city filter, edit, delete, ownership
-- [ ] 3.6 Static checks: N+1, indexes, unhandled rejections, secrets, CORS, rate limiting, depth/complexity, introspection
-- [ ] 3.7 Commit
+- [x] 3.1 Determine how existing e2e/integration tests authenticate + reach a DB
+- [x] 3.2 Post-type × role e2e (test/live/post-matrix.live-spec.ts: 144 pass, 6 todo) (owner / viewer / logged-out / blocked) for all 5 PostTypes
+- [x] 3.3 Auth/IDOR, validation, pagination edges, empty results, duplicates
+- [x] 3.4 Upload validation (wrong type, oversize, missing)
+- [x] 3.5 Mating: create, feed, city filter, edit (N/A — F-03), delete, ownership
+- [x] 3.6 Static checks: N+1, indexes, unhandled rejections, secrets, CORS, rate limiting, depth/complexity, introspection
+- [x] 3.7 Commit
 
 ## Phase 4 — Frontend tests
 - [ ] 4.1 Widget tests for screens/forms (validation, loading, error, empty)
@@ -37,7 +37,7 @@ Java 17, Node 24, local Postgres at localhost:5432 (`pupzy`). **No Docker, no ma
 - [ ] 5.2 Log UX issues with screenshots
 
 ## Phase 6 — Post type × owner / viewer / logged-out / blocked
-- [ ] 6.1 Backend matrix (covered by 3.2)
+- [x] 6.1 Backend matrix (covered by 3.2)
 - [ ] 6.2 Flutter UI matrix
 - [ ] 6.3 Hang / timeout / retry audit of every upload, create, edit, delete
 - [ ] 6.4 Commit
