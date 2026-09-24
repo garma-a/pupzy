@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -15,6 +14,7 @@ import '../theme/app_theme.dart';
 import '../widgets/city_picker_sheet.dart';
 import '../utils/age_parser.dart';
 import '../utils/photo_privacy.dart';
+import '../utils/presigned_upload.dart';
 
 /// A fixed-choice option: (canonical value sent to the backend, English label, Arabic label).
 /// The canonical value is what state/logic keys off of — never the translated label.
@@ -389,13 +389,9 @@ class _PostFormScreenState extends State<PostFormScreen> {
           fileSizeBytes: bytes.length,
         );
         if (uploadInfo == null) continue;
-        final response = await http.put(
-          Uri.parse(uploadInfo['uploadUrl'] as String),
-          headers: {'Content-Type': contentType},
-          body: bytes,
-        );
+        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
         if (!mounted) return;
-        if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (uploaded) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
           Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
@@ -458,13 +454,9 @@ class _PostFormScreenState extends State<PostFormScreen> {
           fileSizeBytes: bytes.length,
         );
         if (uploadInfo == null) continue;
-        final response = await http.put(
-          Uri.parse(uploadInfo['uploadUrl'] as String),
-          headers: {'Content-Type': contentType},
-          body: bytes,
-        );
+        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
         if (!mounted) return;
-        if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (uploaded) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
           Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
@@ -531,13 +523,9 @@ class _PostFormScreenState extends State<PostFormScreen> {
           fileSizeBytes: bytes.length,
         );
         if (uploadInfo == null) continue;
-        final response = await http.put(
-          Uri.parse(uploadInfo['uploadUrl'] as String),
-          headers: {'Content-Type': contentType},
-          body: bytes,
-        );
+        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
         if (!mounted) return;
-        if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (uploaded) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
           Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
@@ -606,13 +594,9 @@ class _PostFormScreenState extends State<PostFormScreen> {
           fileSizeBytes: bytes.length,
         );
         if (uploadInfo == null) continue;
-        final response = await http.put(
-          Uri.parse(uploadInfo['uploadUrl'] as String),
-          headers: {'Content-Type': contentType},
-          body: bytes,
-        );
+        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
         if (!mounted) return;
-        if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (uploaded) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
           Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
@@ -678,13 +662,9 @@ class _PostFormScreenState extends State<PostFormScreen> {
           fileSizeBytes: bytes.length,
         );
         if (uploadInfo == null) continue;
-        final response = await http.put(
-          Uri.parse(uploadInfo['uploadUrl'] as String),
-          headers: {'Content-Type': contentType},
-          body: bytes,
-        );
+        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
         if (!mounted) return;
-        if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (uploaded) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
           Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
@@ -769,13 +749,9 @@ class _PostFormScreenState extends State<PostFormScreen> {
           fileSizeBytes: bytes.length,
         );
         if (uploadInfo == null) continue;
-        final response = await http.put(
-          Uri.parse(uploadInfo['uploadUrl'] as String),
-          headers: {'Content-Type': contentType},
-          body: bytes,
-        );
+        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
         if (!mounted) return;
-        if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (uploaded) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
           Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));

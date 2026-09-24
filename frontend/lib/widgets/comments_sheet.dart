@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -15,6 +14,7 @@ import '../theme/app_theme.dart';
 import '../utils/client_request_id.dart';
 import '../utils/time_format.dart';
 import '../utils/webp_compress.dart';
+import '../utils/presigned_upload.dart';
 import 'safety_actions.dart';
 
 String _authorName(BuildContext context, CommentAuthor? author) {
@@ -144,13 +144,9 @@ class _CommentsSheetState extends State<CommentsSheet> {
         if (uploadInfo == null) {
           Fluttertoast.showToast(msg: ticket.$2 ?? t(context, 'Could not upload image. Posting without it.', 'تعذر رفع الصورة. سيتم النشر بدونها.'));
         } else {
-          final response = await http.put(
-            Uri.parse(uploadInfo['uploadUrl'] as String),
-            headers: {'Content-Type': 'image/webp'},
-            body: webpBytes,
-          );
+          final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, webpBytes, 'image/webp');
           if (!mounted) return;
-          if (response.statusCode >= 200 && response.statusCode < 300) {
+          if (uploaded) {
             mediaIds = [uploadInfo['mediaId'] as String];
           } else {
             Fluttertoast.showToast(msg: t(context, 'Image upload failed. Posting without it.', 'فشل رفع الصورة. سيتم النشر بدونها.'));

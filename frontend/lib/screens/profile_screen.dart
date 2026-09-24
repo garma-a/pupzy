@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -15,6 +14,7 @@ import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
 import '../utils/webp_compress.dart';
 import '../widgets/language_toggle.dart';
+import '../utils/presigned_upload.dart';
 import 'blocked_accounts_screen.dart';
 import 'contact_requests_screen.dart';
 import 'delete_account_screen.dart';
@@ -237,13 +237,9 @@ class _ProfileSheetState extends State<ProfileSheet> {
       Fluttertoast.showToast(msg: ticketError ?? t(context, 'Could not upload photo. Try again.', 'تعذر رفع الصورة. حاول مرة أخرى.'));
       return;
     }
-    final response = await http.put(
-      Uri.parse(ticket['uploadUrl'] as String),
-      headers: {'Content-Type': 'image/webp'},
-      body: webpBytes,
-    );
+    final uploaded = await putToPresignedUrl(ticket['uploadUrl'] as String, webpBytes, 'image/webp');
     if (!mounted) return;
-    if (response.statusCode < 200 || response.statusCode >= 300) {
+    if (!uploaded) {
       Fluttertoast.showToast(msg: t(context, 'Could not upload photo. Try again.', 'تعذر رفع الصورة. حاول مرة أخرى.'));
       return;
     }
