@@ -60,6 +60,9 @@ class NewPostSheet extends StatelessWidget {
             ),
             child: SafeArea(
         top: false,
+        // Scrolls when the options don't fit (small phones, large text), so
+        // the last option — List a Product — is never cut off.
+        child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,6 +139,7 @@ class NewPostSheet extends StatelessWidget {
               onTap: () => _openForm(context, PostType.product),
             ),
           ],
+            ),
             ),
           ),
         ),
