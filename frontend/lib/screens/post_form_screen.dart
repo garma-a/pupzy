@@ -13,6 +13,7 @@ import '../services/graphql_service.dart';
 import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
 import '../widgets/city_picker_sheet.dart';
+import '../utils/age_parser.dart';
 
 /// A fixed-choice option: (canonical value sent to the backend, English label, Arabic label).
 /// The canonical value is what state/logic keys off of — never the translated label.
@@ -351,27 +352,6 @@ class _PostFormScreenState extends State<PostFormScreen> {
         _petNameController.text.trim().isNotEmpty &&
         _species != null &&
         _gender != null;
-  }
-
-  (int, String)? _parseAge(String text) {
-    final match = RegExp(r'(\d+)').firstMatch(text);
-    if (match == null) return null;
-    final value = int.tryParse(match.group(1)!);
-    if (value == null || value <= 0) return null;
-    final lower = text.toLowerCase();
-    String unit;
-    if (lower.contains('year')) {
-      unit = 'YEARS';
-    } else if (lower.contains('month')) {
-      unit = 'MONTHS';
-    } else if (lower.contains('week')) {
-      unit = 'WEEKS';
-    } else if (lower.contains('day')) {
-      unit = 'DAYS';
-    } else {
-      unit = 'YEARS';
-    }
-    return (value, unit);
   }
 
   String _ageUnitLabel(String unit) {
@@ -732,7 +712,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       final breed = _breedController.text.trim();
       final speciesLabel = _labelFor(_adoptionSpeciesOptions, _species!);
       final genderLabel = _labelFor(_genderOptions, _gender!);
-      final agePair = _parseAge(_ageController.text.trim());
+      final agePair = parseAge(_ageController.text.trim());
       final ageText = agePair != null ? '${agePair.$1} ${_ageUnitLabel(agePair.$2)} ' : '';
       final breedText = breed.isEmpty ? '' : ' ($breed)';
 
@@ -785,7 +765,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         _species != null &&
         _breedController.text.trim().isNotEmpty &&
         _gender != null &&
-        _parseAge(_ageController.text.trim()) != null &&
+        parseAge(_ageController.text.trim()) != null &&
         _selectedCity != null;
   }
 
@@ -828,7 +808,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         return;
       }
 
-      final agePair = _parseAge(_ageController.text.trim())!;
+      final agePair = parseAge(_ageController.text.trim())!;
 
       final (result, errorMessage) = await graphql.createMatingPost(
         cityId: _selectedCity!['id'] as String,
