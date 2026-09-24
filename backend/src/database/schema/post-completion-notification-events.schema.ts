@@ -42,8 +42,8 @@ export const postCompletionNotificationEvents = pgTable(
 /**
  * `post_completion_recipients` — stable audience snapshot for a completion event.
  *
- * Captures deduplicated boosters, savers, comment/reply authors, and contact requesters
- * at closure time. Processed in bounded restartable batches.
+ * Captures deduplicated boosters, savers, comment/reply authors, contact requesters
+ * and adoption applicants at closure time. Processed in bounded restartable batches.
  */
 export const postCompletionRecipients = pgTable(
   'post_completion_recipients',
