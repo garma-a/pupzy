@@ -94,8 +94,9 @@ Every resolution runs inside one database transaction using the shared lifecycle
    visibility and Block restrictions.
 5. A durable participant completion event is captured for **every** recorded outcome, not only RESCUE:
    `POST_COMPLETED` for LOST/ADOPTION/PRODUCT/MATING and `RESCUE_COMPLETED` for RESCUE. The event
-   snapshots the closure-time audience (Boost/save, active Comment/Reply, Contact Request participation)
-   with outcome-specific English/Arabic copy; the Post creator is always excluded. AdminJS administrators
+   snapshots the closure-time audience (Boost/save, active Comment/Reply, Contact Request and Adoption
+   Application participation, every application status, deduplicated) with outcome-specific English/Arabic
+   copy; the Post creator is always excluded. AdminJS administrators
    are `admin_users` rows with no application-user identity, while the event's `closing_actor_id`
    references `users`, so an administrator-recorded event stores no closing actor and the
    `moderation_actions` audit row names the administrator instead. Delivery happens later through the
@@ -145,15 +146,16 @@ Examples (English):
 ### Participant completion notification
 
 The closure-time audience (always excluding the Post creator) receives the durable completion event; it
-is delivered through the API's bounded worker, not by the AdminJS service. An administrator-recorded
-event stores no closing actor (AdminJS administrators have no application-user identity) and the audit
-row names the administrator; the worker's push intents carry the Post creator as the send-time
-isolation actor.
+is delivered through the API's bounded worker, not by the AdminJS service. The audience is the union of
+Boost/save, active Comment/Reply, Contact Request and Adoption Application participation (every
+application status), deduplicated. An administrator-recorded event stores no closing actor (AdminJS
+administrators have no application-user identity) and the audit row names the administrator; the worker's
+push intents carry the Post creator as the send-time isolation actor.
 
 | Property   | Value                                                                                                    |
 | ---------- | -------------------------------------------------------------------------------------------------------- |
 | Type       | `POST_COMPLETED` for LOST/ADOPTION/PRODUCT/MATING, `RESCUE_COMPLETED` for RESCUE                           |
-| Outcome    | The recorded outcome; copy is outcome-specific: `REUNITED` → "Pet reunited" / "تم لمّ الشمل", `SOLD` → "Item sold" / "تم البيع", `RESOLVED` → "Post resolved" / "تم حل المنشور" |
+| Outcome    | The recorded outcome; copy is outcome-specific: `REUNITED` → "Pet reunited" / "تم لمّ الشمل", `ADOPTED` → "Pet adopted" / "تم التبني", `SOLD` → "Item sold" / "تم البيع", `RESOLVED` → "Post resolved" / "تم حل المنشور" |
 | Correction | `POST_REOPENED` (or `RESCUE_REOPENED`) on a later reopening, delivered to already-notified participants  |
 | Routing    | `related_post_id` = the Post; `related_comment_id` is null                                                |
 | Content    | English and Arabic `title`/`body` from the centralized template registry                                  |
@@ -202,7 +204,7 @@ npm run format:check
 | Resolution action visibility matrix, audit, notification, pending cleanup, atomicity, cache and concurrency | `admin-service/test/moderation-actions.test.js` (`administrator post resolution`)                                                                                                                                      |
 | Reopening visibility, banned-owner rejection, preserved closed interactions, audit, notification, atomicity and concurrency | `admin-service/test/moderation-actions.test.js` (`administrator post reopening`)                                                                                                                            |
 | Authenticated AdminJS HTTP actions, type-specific action lists, roles, reason enforcement and races | `admin-service/test/admin-case-resolution.test.js` (`Administrator case resolution HTTP boundary` and `Administrator case reopening HTTP boundary`)                                                                        |
-| Participant completion event capture, outcome/audience/localized copy and no event on removal through authenticated AdminJS HTTP actions | `admin-service/test/admin-case-resolution.test.js` (`captures and localizes the participant completion event for a non-rescue outcome, and never on removal`) |
+| Participant completion event capture, outcome/audience/localized copy and no event on removal through authenticated AdminJS HTTP actions | `admin-service/test/admin-case-resolution.test.js` (`captures and localizes the participant completion event for a non-rescue outcome, and never on removal`; `captures adoption applicants of every status in the ADOPTED completion audience over authenticated HTTP`) |
 | Participant completion delivery for every successful outcome, reopen corrections, stale-event suppression and creator-isolation recheck on real Postgres | `backend/src/notifications/post-completion-notification.integration.spec.ts` |
 | Real browser resolution and reopening correction journey, result state, action bar and history      | `admin-service/test/post-review-workspace-browser.test.js` (evidence in `BWG08_EVIDENCE_DIR` and `BWG09_EVIDENCE_DIR`)                                                                                                        |
 | Migration enum values (resolution 0050, reopening 0051)                                            | `backend/src/database/migrate.integration.spec.ts`                                                                                                                                                                            |

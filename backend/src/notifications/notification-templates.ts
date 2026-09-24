@@ -277,6 +277,12 @@ const NOTIFICATION_TEMPLATES: NotificationTemplateRegistry = {
           body: `The post "${postTitle}" was marked as reunited.`,
         };
       }
+      if (outcome === 'ADOPTED') {
+        return {
+          title: 'Pet adopted',
+          body: `The post "${postTitle}" was marked as adopted.`,
+        };
+      }
       if (outcome === 'SOLD') {
         return {
           title: 'Item sold',
@@ -293,6 +299,12 @@ const NOTIFICATION_TEMPLATES: NotificationTemplateRegistry = {
         return {
           title: 'تم لمّ الشمل',
           body: `تم تسجيل نتيجة المنشور "${postTitle}": تم لمّ الشمل.`,
+        };
+      }
+      if (outcome === 'ADOPTED') {
+        return {
+          title: 'تم التبني',
+          body: `تم تسجيل نتيجة المنشور "${postTitle}": تم التبني.`,
         };
       }
       if (outcome === 'SOLD') {

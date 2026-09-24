@@ -66,6 +66,7 @@ export class PostCompletionNotificationRepository {
    * - current post savers (post_saves)
    * - existing comment and reply authors (comments with status NOT IN ('DELETED', 'REMOVED'))
    * - contact requesters of any status (contact_requests)
+   * - adoption applicants of any status (adoption_applications)
    *
    * Excludes:
    * - the closing actor (closingActorId)
@@ -110,6 +111,8 @@ export class PostCompletionNotificationRepository {
         SELECT author_id AS recipient_id FROM comments WHERE post_id = ${postId}::uuid AND status NOT IN ('DELETED', 'REMOVED')
         UNION
         SELECT requester_id AS recipient_id FROM contact_requests WHERE post_id = ${postId}::uuid
+        UNION
+        SELECT applicant_id AS recipient_id FROM adoption_applications WHERE target_post_id = ${postId}::uuid
       ) sub
       WHERE sub.recipient_id IS NOT NULL
         AND (${closingActorId}::uuid IS NULL OR sub.recipient_id <> ${closingActorId}::uuid)

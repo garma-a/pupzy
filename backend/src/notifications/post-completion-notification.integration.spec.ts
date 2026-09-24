@@ -6,6 +6,8 @@ import {
   posts,
   rescuePosts,
   lostPosts,
+  adoptionPosts,
+  adoptionApplications,
   productPosts,
   matingPosts,
   postUpvotes,
@@ -122,6 +124,49 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
     });
 
     return post;
+  }
+
+  async function createAdoptionPost(creatorId: string, title = 'Fluffy Cat For Adoption'): Promise<Post> {
+    const postId = generateUuidV7();
+    const [post] = await dbHelper.db
+      .insert(posts)
+      .values({
+        id: postId,
+        creatorId,
+        title,
+        description: 'Friendly cat needs a loving home',
+        postType: 'ADOPTION',
+        cityId: defaultCity.id,
+        status: 'ACTIVE',
+        coordinates: sql`ST_SetSRID(ST_MakePoint(31.2357, 30.0444), 4326)`,
+      })
+      .returning();
+
+    await dbHelper.db.insert(adoptionPosts).values({
+      postId: post.id,
+      petName: 'Mochi',
+      species: 'CAT',
+      gender: 'FEMALE',
+    });
+    return post;
+  }
+
+  function adoptionApplicationValues(
+    targetPostId: string,
+    applicantId: string,
+    status: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING',
+  ) {
+    return {
+      id: generateUuidV7(),
+      targetPostId,
+      applicantId,
+      status,
+      livingSituation: 'APARTMENT' as const,
+      hasOutdoorAccess: true,
+      hasOtherPetsAtHome: false,
+      hasChildrenAtHome: false,
+      whyAdopt: 'A loving home for the animal',
+    };
   }
 
   async function createLostPost(
@@ -1163,6 +1208,166 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
         .from(notifications)
         .where(eq(notifications.recipientId, participant.id));
       expect(notifs).toHaveLength(0);
+    });
+  });
+
+  describe('Ticket 05: Adoption Post Completion Notifications (including Applicants)', () => {
+    it('captures applicants of every status alongside savers and commenters, deduplicated', async () => {
+      const creator = await createUser({ name: 'AdoptionCreator' });
+      const post = await createAdoptionPost(creator.id, 'Playful Kitten Adoption');
+
+      const pendingApplicant = await createUser({ name: 'PendingApplicant' });
+      const approvedApplicant = await createUser({ name: 'ApprovedApplicant' });
+      const rejectedApplicant = await createUser({ name: 'RejectedApplicant' });
+      const overlappingUser = await createUser({ name: 'OverlappingUser' });
+      const saver = await createUser({ name: 'AdoptionSaver' });
+
+      // Applicants of every status are part of the closure-time audience; the
+      // overlapping applicant is also a saver and a commenter.
+      await dbHelper.db
+        .insert(adoptionApplications)
+        .values([
+          adoptionApplicationValues(post.id, pendingApplicant.id, 'PENDING'),
+          adoptionApplicationValues(post.id, approvedApplicant.id, 'APPROVED'),
+          adoptionApplicationValues(post.id, rejectedApplicant.id, 'REJECTED'),
+          adoptionApplicationValues(post.id, overlappingUser.id, 'PENDING'),
+        ]);
+      await dbHelper.db.insert(postSaves).values({ postId: post.id, userId: overlappingUser.id });
+      await dbHelper.db.insert(comments).values({
+        id: generateUuidV7(),
+        postId: post.id,
+        authorId: overlappingUser.id,
+        text: 'Applied and commented!',
+        status: 'ACTIVE',
+      });
+      await dbHelper.db.insert(postSaves).values({ postId: post.id, userId: saver.id });
+
+      const updated = await postsRepo.updateStatus(post.id, creator.id, 'ADOPTED');
+      expect(updated?.status).toBe('ADOPTED');
+
+      const [event] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.postId, post.id));
+      expect(event).toBeDefined();
+      expect(event.postType).toBe('ADOPTION');
+      expect(event.type).toBe('POST_COMPLETED');
+      expect(event.outcome).toBe('ADOPTED');
+      expect(event.title).toBe('Pet adopted');
+      expect(event.body).toBe('The post "Playful Kitten Adoption" was marked as adopted.');
+      expect(event.titleArabic).toBe('تم التبني');
+      expect(event.bodyArabic).toContain('Playful Kitten Adoption');
+      expect(event.totalRecipients).toBe(5);
+
+      const recipients = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.eventId, event.id));
+      const recipientUserIds = recipients.map((r) => r.recipientId);
+      expect(recipientUserIds).toContain(pendingApplicant.id);
+      expect(recipientUserIds).toContain(approvedApplicant.id);
+      expect(recipientUserIds).toContain(rejectedApplicant.id);
+      expect(recipientUserIds).toContain(overlappingUser.id);
+      expect(recipientUserIds).toContain(saver.id);
+      expect(recipientUserIds).not.toContain(creator.id);
+
+      // Overlapping applicant/comment/save membership stays a single recipient.
+      expect(recipients.filter((r) => r.recipientId === overlappingUser.id)).toHaveLength(1);
+
+      const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(5);
+
+      for (const userId of [
+        pendingApplicant.id,
+        approvedApplicant.id,
+        rejectedApplicant.id,
+        overlappingUser.id,
+        saver.id,
+      ]) {
+        const notifs = await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, userId));
+        expect(notifs).toHaveLength(1);
+        expect(notifs[0].type).toBe('POST_COMPLETED');
+        expect(notifs[0].title).toBe('Pet adopted');
+        expect(notifs[0].relatedPostId).toBe(post.id);
+      }
+    });
+
+    it('suppresses the completion notification when the creator has blocked an applicant', async () => {
+      const creator = await createUser({ name: 'BlockCreator' });
+      const post = await createAdoptionPost(creator.id, 'Block Test Adoption');
+      const applicant = await createUser({ name: 'BlockedApplicant' });
+
+      await dbHelper.db
+        .insert(adoptionApplications)
+        .values(adoptionApplicationValues(post.id, applicant.id, 'PENDING'));
+
+      await postsRepo.updateStatus(post.id, creator.id, 'ADOPTED');
+
+      // The creator blocks the applicant after the outcome was recorded.
+      await dbHelper.db.insert(blocks).values({ blockerId: creator.id, blockedId: applicant.id });
+
+      const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(0);
+      expect(batchRes.suppressed).toBe(1);
+
+      const [recipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.recipientId, applicant.id));
+      expect(recipient.status).toBe('BLOCKED');
+
+      const applicantNotifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, applicant.id));
+      expect(applicantNotifs).toHaveLength(0);
+    });
+
+    it('does not revive terminated applications or re-notify a completion on reopening', async () => {
+      const creator = await createUser({ name: 'ReopenAdoptionCreator' });
+      const post = await createAdoptionPost(creator.id, 'Reopened Adoption Listing');
+      const applicant = await createUser({ name: 'ReopenApplicant' });
+
+      const applicationId = generateUuidV7();
+      await dbHelper.db.insert(adoptionApplications).values({
+        ...adoptionApplicationValues(post.id, applicant.id, 'PENDING'),
+        id: applicationId,
+      });
+
+      await postsRepo.updateStatus(post.id, creator.id, 'ADOPTED');
+
+      const [terminated] = await dbHelper.db
+        .select()
+        .from(adoptionApplications)
+        .where(eq(adoptionApplications.id, applicationId));
+      expect(terminated.status).toBe('REJECTED');
+      expect(terminated.respondedAt).not.toBeNull();
+
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
+
+      // Administrator reopens the mistaken outcome.
+      await dbHelper.db.transaction(async (tx) => {
+        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
+        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
+      });
+
+      // Closed stays closed: reopening never revives a terminated application.
+      const [afterReopen] = await dbHelper.db
+        .select()
+        .from(adoptionApplications)
+        .where(eq(adoptionApplications.id, applicationId));
+      expect(afterReopen.status).toBe('REJECTED');
+      expect(afterReopen.respondedAt).not.toBeNull();
+
+      // The delivered applicant is corrected exactly once and never receives a
+      // second completion notification.
+      const notifs = await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, applicant.id));
+      expect(notifs.filter((n) => n.type === 'POST_COMPLETED')).toHaveLength(1);
+      expect(notifs.filter((n) => n.type === 'POST_REOPENED')).toHaveLength(1);
+
+      const afterReopenBatch = await processor.processPendingBatches({ batchSize: 10 });
+      expect(afterReopenBatch.delivered).toBe(0);
+      expect(afterReopenBatch.batchesProcessed).toBe(0);
     });
   });
 });
