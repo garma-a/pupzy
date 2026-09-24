@@ -28,7 +28,7 @@ Java 17, Node 24, local Postgres at localhost:5432 (`pupzy`). **No Docker, no ma
 
 ## Phase 4 — Frontend tests
 - [ ] 4.1 Widget tests for screens/forms (validation, loading, error, empty)
-- [ ] 4.2 integration_test flows on emulator against local backend
+- [x] 4.2 integration_test flows on emulator against local backend (explore, Find a Mate owner/viewer/blocked/delete + GPS, upload stall)
 - [ ] 4.3 Checks: null-safety, GraphQL errors, back stack, small-screen overflow, dark mode, offline/slow, image failures
 - [ ] 4.4 Commit
 
@@ -39,14 +39,14 @@ Java 17, Node 24, local Postgres at localhost:5432 (`pupzy`). **No Docker, no ma
 ## Phase 6 — Post type × owner / viewer / logged-out / blocked
 - [x] 6.1 Backend matrix (covered by 3.2)
 - [ ] 6.2 Flutter UI matrix
-- [ ] 6.3 Hang / timeout / retry audit of every upload, create, edit, delete
+- [x] 6.3 Hang / timeout / retry audit (8 uploads had no timeout → fixed; GraphQL client has 30 s timeout)
 - [ ] 6.4 Commit
 
 ## Phase 7 — Release readiness
 - [ ] 7.1 Android: appbundle + apk release builds
 - [ ] 7.2 Android: applicationId, versions, SDK levels, signing, R8/ProGuard, manifest, icons, deep links
 - [ ] 7.3 Android: install release APK on emulator and run main flows
-- [ ] 7.4 iOS: static audit (no macOS) — bundle id, versions, Info.plist, PrivacyInfo, ATS, Podfile, icons, Sign in with Apple
+- [x] 7.4 iOS: static audit (no macOS) — bundle id, versions, Info.plist, PrivacyInfo, ATS, Podfile, icons, Sign in with Apple
 - [ ] 7.5 Both: prod API URL, debug leaks, crash reporting, Firebase config, account deletion, UGC report/block, privacy policy + data inventory, plugin versions
 - [ ] 7.6 Commit
 
