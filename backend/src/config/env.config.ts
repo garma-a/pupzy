@@ -66,8 +66,13 @@ const envSchema = z.object({
   THROTTLE_TTL_MS: z.coerce.number().positive().default(60_000),
 
   // ─── Feature Flags ──────────────────────────────────────────────────────
-  /** Feature toggle for account deletion. Defaults to true in dev/test. */
-  ACCOUNT_DELETION_ENABLED: z.coerce.boolean().default(true),
+  /**
+   * Feature toggle for account deletion. Defaults to true in dev/test.
+   * `stringbool`, not `coerce.boolean`: coercion is `Boolean(value)`, which
+   * turns the string "false" into true and made this kill-switch impossible
+   * to switch off from the environment.
+   */
+  ACCOUNT_DELETION_ENABLED: z.stringbool().default(true),
 
   // ─── Terms Acceptance ───────────────────────────────────────────────────
   /**
