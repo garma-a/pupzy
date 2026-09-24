@@ -24,7 +24,17 @@ Future<Finder> openAndFillMatingForm(
       // Scroll back to the top, then down until [f] is built and on screen.
       await tester.drag(formList, const Offset(0, 4000));
       await tester.pump(const Duration(milliseconds: 300));
-      for (var i = 0; i < 40 && f.hitTestable().evaluate().isEmpty; i++) {
+      // A `.first` finder throws (rather than matching nothing) while its
+      // target isn't built yet, so treat that as "not visible yet".
+      bool visible() {
+        try {
+          return f.hitTestable().evaluate().isNotEmpty;
+        } on StateError {
+          return false;
+        }
+      }
+
+      for (var i = 0; i < 40 && !visible(); i++) {
         await tester.drag(formList, const Offset(0, -250));
         await tester.pump(const Duration(milliseconds: 200));
       }
