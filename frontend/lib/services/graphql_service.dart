@@ -12,8 +12,8 @@ import '../models/contact_request.dart';
 import '../models/feed_post.dart';
 import '../models/mating_detail.dart';
 import '../models/post_detail.dart';
-import '../models/rescue_proof.dart';
 import '../models/safety.dart';
+import '../models/terms_info.dart';
 import '../models/vet_clinic.dart';
 import '../screens/account_deletion_in_progress_screen.dart';
 import '../screens/account_suspended_screen.dart';
@@ -243,32 +243,32 @@ class GraphQLService {
   ''';
 
   static final String homeFeedQuery = '''
-    query HomeFeed(\$governorate: String!, \$cityId: ID, \$viewerLocation: ViewerLocationInput, \$radiusKm: Float, \$first: Int, \$after: String) {
-      homeFeed(governorate: \$governorate, cityId: \$cityId, viewerLocation: \$viewerLocation, radiusKm: \$radiusKm, first: \$first, after: \$after) {
+    query HomeFeed(\$governorate: String!, \$cityId: ID, \$viewerLocation: ViewerLocationInput, \$radiusKm: Float, \$search: String, \$first: Int, \$after: String) {
+      homeFeed(governorate: \$governorate, cityId: \$cityId, viewerLocation: \$viewerLocation, radiusKm: \$radiusKm, search: \$search, first: \$first, after: \$after) {
         $_feedConnectionFields
       }
     }
   ''';
 
   static final String helpFeedQuery = '''
-    query HelpFeed(\$governorate: String!, \$cityId: ID, \$viewerLocation: ViewerLocationInput, \$radiusKm: Float, \$first: Int, \$after: String) {
-      helpFeed(governorate: \$governorate, cityId: \$cityId, viewerLocation: \$viewerLocation, radiusKm: \$radiusKm, first: \$first, after: \$after) {
+    query HelpFeed(\$governorate: String!, \$cityId: ID, \$viewerLocation: ViewerLocationInput, \$radiusKm: Float, \$search: String, \$first: Int, \$after: String) {
+      helpFeed(governorate: \$governorate, cityId: \$cityId, viewerLocation: \$viewerLocation, radiusKm: \$radiusKm, search: \$search, first: \$first, after: \$after) {
         $_feedConnectionFields
       }
     }
   ''';
 
   static final String adoptFeedQuery = '''
-    query AdoptFeed(\$governorate: String!, \$cityId: ID, \$viewerLocation: ViewerLocationInput, \$radiusKm: Float, \$sort: AdoptFeedSort, \$first: Int, \$after: String) {
-      adoptFeed(governorate: \$governorate, cityId: \$cityId, viewerLocation: \$viewerLocation, radiusKm: \$radiusKm, sort: \$sort, first: \$first, after: \$after) {
+    query AdoptFeed(\$governorate: String!, \$cityId: ID, \$viewerLocation: ViewerLocationInput, \$radiusKm: Float, \$sort: AdoptFeedSort, \$search: String, \$first: Int, \$after: String) {
+      adoptFeed(governorate: \$governorate, cityId: \$cityId, viewerLocation: \$viewerLocation, radiusKm: \$radiusKm, sort: \$sort, search: \$search, first: \$first, after: \$after) {
         $_feedConnectionFields
       }
     }
   ''';
 
   static final String marketFeedQuery = '''
-    query MarketFeed(\$governorate: String!, \$cityId: ID, \$viewerLocation: ViewerLocationInput, \$radiusKm: Float, \$category: ProductCategory, \$sort: MarketFeedSort, \$first: Int, \$after: String) {
-      marketFeed(governorate: \$governorate, cityId: \$cityId, viewerLocation: \$viewerLocation, radiusKm: \$radiusKm, category: \$category, sort: \$sort, first: \$first, after: \$after) {
+    query MarketFeed(\$governorate: String!, \$cityId: ID, \$viewerLocation: ViewerLocationInput, \$radiusKm: Float, \$category: ProductCategory, \$sort: MarketFeedSort, \$search: String, \$first: Int, \$after: String) {
+      marketFeed(governorate: \$governorate, cityId: \$cityId, viewerLocation: \$viewerLocation, radiusKm: \$radiusKm, category: \$category, sort: \$sort, search: \$search, first: \$first, after: \$after) {
         $_feedConnectionFields
       }
     }
@@ -314,8 +314,8 @@ class GraphQLService {
   ''';
 
   static final String matingFeedQuery = '''
-    query MatingFeed(\$filter: MatingFeedFilter, \$first: Int, \$after: String) {
-      matingFeed(filter: \$filter, first: \$first, after: \$after) {
+    query MatingFeed(\$filter: MatingFeedFilter, \$search: String, \$first: Int, \$after: String) {
+      matingFeed(filter: \$filter, search: \$search, first: \$first, after: \$after) {
         $_matingConnectionFields
       }
     }
@@ -824,6 +824,7 @@ class GraphQLService {
     required String cityId,
     double? latitude,
     double? longitude,
+    String? languagePreference,
   }) async {
     final input = <String, dynamic>{
       'fullName': fullName,
@@ -835,6 +836,9 @@ class GraphQLService {
         'latitude': latitude,
         'longitude': longitude,
       };
+    }
+    if (languagePreference != null) {
+      input['languagePreference'] = languagePreference;
     }
     final result = await client.value.mutate(
       MutationOptions(
@@ -975,6 +979,7 @@ class GraphQLService {
     String? colorAndMarkings,
     bool? hasCollarWithIdentificationTag,
     String? circumstances,
+    // LOST_PET-only — omit entirely for FOUND_STRAY.
     String? petName,
     String? dateLastSeen,
     // Required for LOST_PET reports — used by the backend to compute
@@ -982,6 +987,10 @@ class GraphQLService {
     bool? hasMedicalNeeds,
     bool? isElderlyOrVeryYoung,
     bool? lastSeenNearHazard,
+    // FOUND_STRAY-only — required for FOUND_STRAY, must be omitted for LOST_PET.
+    String? currentCondition,
+    bool? isCurrentlySafeWithReporter,
+    String? dateFound,
     List<String>? mediaIds,
   }) async {
     final input = <String, dynamic>{
@@ -1003,6 +1012,9 @@ class GraphQLService {
     if (hasMedicalNeeds != null) input['hasMedicalNeeds'] = hasMedicalNeeds;
     if (isElderlyOrVeryYoung != null) input['isElderlyOrVeryYoung'] = isElderlyOrVeryYoung;
     if (lastSeenNearHazard != null) input['lastSeenNearHazard'] = lastSeenNearHazard;
+    if (currentCondition != null) input['currentCondition'] = currentCondition;
+    if (isCurrentlySafeWithReporter != null) input['isCurrentlySafeWithReporter'] = isCurrentlySafeWithReporter;
+    if (dateFound != null && dateFound.isNotEmpty) input['dateFound'] = dateFound;
     if (mediaIds != null && mediaIds.isNotEmpty) input['mediaIds'] = mediaIds;
 
     final result = await client.value.mutate(
@@ -1162,6 +1174,7 @@ class GraphQLService {
     double? latitude,
     double? longitude,
     double? radiusKm,
+    String? search,
     int first = 20,
     String? after,
   }) {
@@ -1169,6 +1182,7 @@ class GraphQLService {
       'governorate': governorate,
       'cityId': cityId,
       'radiusKm': radiusKm,
+      'search': search,
       'first': first,
       'after': after,
     };
@@ -1186,6 +1200,7 @@ class GraphQLService {
     double? latitude,
     double? longitude,
     double? radiusKm,
+    String? search,
     int first = 20,
     String? after,
   }) {
@@ -1193,6 +1208,7 @@ class GraphQLService {
       'governorate': governorate,
       'cityId': cityId,
       'radiusKm': radiusKm,
+      'search': search,
       'first': first,
       'after': after,
     };
@@ -1212,6 +1228,7 @@ class GraphQLService {
     double? longitude,
     double? radiusKm,
     String? sort,
+    String? search,
     int first = 20,
     String? after,
   }) {
@@ -1220,6 +1237,7 @@ class GraphQLService {
       'cityId': cityId,
       'radiusKm': radiusKm,
       'sort': sort,
+      'search': search,
       'first': first,
       'after': after,
     };
@@ -1241,6 +1259,7 @@ class GraphQLService {
     double? radiusKm,
     String? category,
     String? sort,
+    String? search,
     int first = 20,
     String? after,
   }) {
@@ -1250,6 +1269,7 @@ class GraphQLService {
       'radiusKm': radiusKm,
       'category': category,
       'sort': sort,
+      'search': search,
       'first': first,
       'after': after,
     };
@@ -1267,6 +1287,7 @@ class GraphQLService {
     String? species,
     String? gender,
     String? breed,
+    String? search,
     int first = 20,
     String? after,
   }) {
@@ -1277,6 +1298,7 @@ class GraphQLService {
     if (breed != null) filter['breed'] = breed;
     final variables = <String, dynamic>{
       'filter': filter.isEmpty ? null : filter,
+      'search': search,
       'first': first,
       'after': after,
     };
@@ -2250,149 +2272,279 @@ class GraphQLService {
     );
   }
 
-  // ── Rescue / found proof ────────────────────────────────────────────────────
-  // A rescuer (RESCUE post) or finder (LOST_PET post) proves the outcome with
-  // photos + details; the post owner confirms or rejects. Confirming closes the
-  // post and lets the owner reach the rescuer on WhatsApp. These operations are
-  // NOT in the backend yet — see [kRescueProofEnabled].
+  // ── Approved adoption contact ───────────────────────────────────────────────
 
-  static const String _rescueProofFields = r'''
-    id postId status happenedAt areaName condition whereabouts story respondedAt createdAt
-    submitter { id fullName fullNameArabic profilePictureUrl }
-    media { id publicUrl }
-  ''';
-
-  static final String submitRescueProofMutation = '''
-    mutation SubmitRescueProof(\$input: SubmitRescueProofInput!) {
-      submitRescueProof(input: \$input) { $_rescueProofFields }
+  static const String getAdoptionWhatsAppLinkQuery = r'''
+    query GetAdoptionWhatsApp($applicationId: ID!) {
+      getAdoptionWhatsAppLink(applicationId: $applicationId)
     }
   ''';
 
-  static final String confirmRescueProofMutation = '''
-    mutation ConfirmRescueProof(\$proofId: ID!) {
-      confirmRescueProof(proofId: \$proofId) { $_rescueProofFields }
+  /// The owner's current WhatsApp link for the caller's own APPROVED
+  /// application. Call on demand (not cached long-term): the owner's phone
+  /// may change. `NOT_FOUND` covers Block isolation, a removed Post or an
+  /// owner with no available contact — render the neutral unavailable state.
+  Future<(String? link, String? errorMessage)> getAdoptionWhatsAppLink(String applicationId) async {
+    final result = await client.value.query(
+      QueryOptions(document: gql(getAdoptionWhatsAppLinkQuery), variables: {'applicationId': applicationId}, fetchPolicy: FetchPolicy.networkOnly),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _serverErrorMessage(result.exception));
+    }
+    return (result.data?['getAdoptionWhatsAppLink'] as String?, null);
+  }
+
+  // ── Versioned Terms Acceptance ──────────────────────────────────────────────
+
+  static const String _termsInfoFields = r'''
+    currentVersion termsUrl acceptedVersion acceptedAt acceptanceRequired
+  ''';
+
+  static final String termsQuery = '''
+    query Terms {
+      terms { $_termsInfoFields }
     }
   ''';
 
-  static final String rejectRescueProofMutation = '''
-    mutation RejectRescueProof(\$proofId: ID!) {
-      rejectRescueProof(proofId: \$proofId) { $_rescueProofFields }
+  static final String acceptTermsMutation = '''
+    mutation AcceptTerms(\$input: AcceptTermsInput!) {
+      acceptTerms(input: \$input) { $_termsInfoFields }
     }
   ''';
 
-  static final String myRescueProofsQuery = '''
-    query MyRescueProofs(\$postId: ID!, \$first: Int) {
-      myRescueProofs(postId: \$postId, first: \$first) {
-        edges { node { $_rescueProofFields } }
+  /// Never gated — safe to call before checking anything else. Returns null
+  /// only on a network/server failure; a deployment with no Terms configured
+  /// still returns a `TermsInfo` (with null version/url).
+  Future<TermsInfo?> fetchTerms() async {
+    final result = await client.value.query(
+      QueryOptions(document: gql(termsQuery), fetchPolicy: FetchPolicy.networkOnly),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      if (result.exception != null) _checkForAccountLockout(result.exception!);
+      return null;
+    }
+    final node = result.data?['terms'] as Map<String, dynamic>?;
+    return node != null ? TermsInfo.fromJson(node) : null;
+  }
+
+  /// Idempotent for a repeat of the same version. On `TERMS_VERSION_MISMATCH`
+  /// the caller should re-read [fetchTerms] rather than retry blindly — the
+  /// published version may have changed since it was last read.
+  Future<(TermsInfo? info, String? errorCode, String? errorMessage)> acceptTerms(String version) async {
+    final result = await client.value.mutate(
+      MutationOptions(document: gql(acceptTermsMutation), variables: {'input': {'version': version}}),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (null, _errorCode(result.exception), _serverErrorMessage(result.exception));
+    }
+    final node = result.data?['acceptTerms'] as Map<String, dynamic>?;
+    return (node != null ? TermsInfo.fromJson(node) : null, null, null);
+  }
+
+  // ── Notification language ───────────────────────────────────────────────────
+
+  static const String updateMyLanguagePreferenceMutation = r'''
+    mutation UpdateMyLanguagePreference($languagePreference: Language!) {
+      updateMyLanguagePreference(languagePreference: $languagePreference) {
+        id
+        languagePreference
       }
     }
   ''';
 
-  static final String postRescueProofsQuery = '''
-    query PostRescueProofs(\$postId: ID!, \$first: Int) {
-      postRescueProofs(postId: \$postId, first: \$first) {
-        edges { node { $_rescueProofFields } }
+  /// Synchronizes the account's explicit `ar`/`en` preference so in-app and
+  /// push notification text render in that language server-side. [lang] is
+  /// `'ar'` or `'en'`. Fire-and-forget from the UI's perspective: the local
+  /// display language (LangProvider) already switched instantly: this just
+  /// keeps the backend's copy from staying "unsynchronized" (null → English).
+  Future<bool> updateMyLanguagePreference(String lang) async {
+    final result = await client.value.mutate(
+      MutationOptions(document: gql(updateMyLanguagePreferenceMutation), variables: {'languagePreference': lang}),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      if (result.exception != null) _checkForAccountLockout(result.exception!);
+      return false;
+    }
+    return true;
+  }
+
+  // ── Device push delivery ────────────────────────────────────────────────────
+
+  static const String registerDeviceMutation = r'''
+    mutation RegisterDevice($input: RegisterDeviceInput!) {
+      registerDevice(input: $input) {
+        id
+        platform
       }
     }
   ''';
 
-  static const String rescueProofWhatsAppLinkQuery = r'''
-    query RescueProofWhatsAppLink($proofId: ID!) {
-      getRescueProofWhatsAppLink(proofId: $proofId)
+  static const String unregisterDeviceMutation = r'''
+    mutation UnregisterDevice($token: String!) {
+      unregisterDevice(token: $token)
     }
   ''';
 
-  /// Submits a proof. `mediaIds` come from `requestMediaUploadUrl` uploads
-  /// (1–4). Returns the created proof, or the error code + message.
-  Future<(RescueProof? proof, String? errorCode, String? errorMessage)> submitRescueProof({
-    required String postId,
-    required List<String> mediaIds,
-    required DateTime happenedAt,
-    required String areaName,
-    required String condition,
-    required String whereabouts,
-    required String story,
+  static const String updateMyNotificationPreferencesMutation = r'''
+    mutation UpdateMyNotificationPreferences($notificationsEnabled: Boolean!) {
+      updateMyNotificationPreferences(notificationsEnabled: $notificationsEnabled) {
+        id
+        notificationsEnabled
+      }
+    }
+  ''';
+
+  /// Registers/refreshes this device's FCM token for push delivery. Call on
+  /// every authenticated launch and whenever the token rotates.
+  Future<bool> registerDevice({required String token, required String platform}) async {
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(registerDeviceMutation),
+        variables: {'input': {'token': token, 'platform': platform}},
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return false;
+    }
+    return true;
+  }
+
+  /// Call on sign-out so this device stops receiving push for the signed-out
+  /// account. `false` is a safe, idempotent outcome (already removed, or the
+  /// token was never registered here) — never treat it as an error.
+  Future<bool> unregisterDevice(String token) async {
+    final result = await client.value.mutate(
+      MutationOptions(document: gql(unregisterDeviceMutation), variables: {'token': token}),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return false;
+    }
+    return result.data?['unregisterDevice'] as bool? ?? false;
+  }
+
+  /// Push opt-in/out. The in-app inbox is unaffected either way.
+  Future<bool> updateMyNotificationPreferences(bool notificationsEnabled) async {
+    final result = await client.value.mutate(
+      MutationOptions(
+        document: gql(updateMyNotificationPreferencesMutation),
+        variables: {'notificationsEnabled': notificationsEnabled},
+      ),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      if (result.exception != null) _checkForAccountLockout(result.exception!);
+      return false;
+    }
+    return true;
+  }
+
+  // ── Expiry and renewal ──────────────────────────────────────────────────────
+
+  static const String renewPostMutation = r'''
+    mutation RenewPost($postId: ID!) {
+      renewPost(postId: $postId) {
+        id
+        status
+      }
+    }
+  ''';
+
+  /// Owner-only. Returns the listing to ACTIVE with a fresh inactivity
+  /// window; only ACTIVE/EXPIRED PRODUCT and ADOPTION listings qualify, and
+  /// at most once per 7 days (`RENEWAL_COOLDOWN`).
+  Future<(bool success, String? errorMessage)> renewPost(String postId) async {
+    final result = await client.value.mutate(
+      MutationOptions(document: gql(renewPostMutation), variables: {'postId': postId}),
+    );
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return (false, _serverErrorMessage(result.exception));
+    }
+    return (true, null);
+  }
+
+  // ── Profile photo lifecycle ─────────────────────────────────────────────────
+
+  static const String requestProfilePhotoUploadUrlMutation = r'''
+    mutation RequestProfilePhotoUploadUrl($input: RequestProfilePhotoUploadInput!) {
+      requestProfilePhotoUploadUrl(input: $input) {
+        mediaId
+        uploadUrl
+        expiresAt
+        maxSizeBytes
+        maxWidth
+        maxHeight
+        allowedContentType
+      }
+    }
+  ''';
+
+  static const String setProfilePhotoMutation = r'''
+    mutation SetProfilePhoto($mediaId: ID!) {
+      setProfilePhoto(mediaId: $mediaId) {
+        id
+        profilePictureUrl
+      }
+    }
+  ''';
+
+  static const String removeProfilePhotoMutation = r'''
+    mutation RemoveProfilePhoto {
+      removeProfilePhoto {
+        id
+        profilePictureUrl
+      }
+    }
+  ''';
+
+  /// Requests a presigned direct-upload ticket for a new avatar. The caller
+  /// must already have a static WebP ≤100,000 bytes / ≤480×480 with no
+  /// metadata ready to PUT to the returned `uploadUrl`.
+  Future<(Map<String, dynamic>? ticket, String? errorCode, String? errorMessage)> requestProfilePhotoUploadUrl({
+    required int fileSizeBytes,
   }) async {
     final result = await client.value.mutate(
       MutationOptions(
-        document: gql(submitRescueProofMutation),
-        variables: {
-          'input': {
-            'postId': postId,
-            'mediaIds': mediaIds,
-            'happenedAt': happenedAt.toUtc().toIso8601String(),
-            'areaName': areaName,
-            'condition': condition,
-            'whereabouts': whereabouts,
-            'story': story,
-            'shareContactConsent': true,
-          },
-        },
+        document: gql(requestProfilePhotoUploadUrlMutation),
+        variables: {'input': {'contentType': 'image/webp', 'fileSizeBytes': fileSizeBytes}},
       ),
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _errorCode(result.exception), _serverErrorMessage(result.exception));
     }
-    final node = result.data?['submitRescueProof'] as Map<String, dynamic>?;
-    return (node != null ? RescueProof.fromJson(node) : null, null, null);
+    return (result.data?['requestProfilePhotoUploadUrl'] as Map<String, dynamic>?, null, null);
   }
 
-  Future<(RescueProof? proof, String? errorCode, String? errorMessage)> _reviewRescueProof(
-    String document,
-    String field,
-    String proofId,
-  ) async {
-    final result = await client.value.mutate(MutationOptions(document: gql(document), variables: {'proofId': proofId}));
+  /// Finalizes an uploaded avatar. On `PROFILE_PHOTO_REPLACED` (a lost race
+  /// with a concurrent set/remove) the caller should refresh `me` and retry
+  /// with a fresh ticket.
+  Future<(String? profilePictureUrl, String? errorCode, String? errorMessage)> setProfilePhoto(String mediaId) async {
+    final result = await client.value.mutate(
+      MutationOptions(document: gql(setProfilePhotoMutation), variables: {'mediaId': mediaId}),
+    );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
       return (null, _errorCode(result.exception), _serverErrorMessage(result.exception));
     }
-    final node = result.data?[field] as Map<String, dynamic>?;
-    return (node != null ? RescueProof.fromJson(node) : null, null, null);
+    final user = result.data?['setProfilePhoto'] as Map<String, dynamic>?;
+    return (user?['profilePictureUrl'] as String?, null, null);
   }
 
-  /// Owner accepts a proof: the post is closed (RESOLVED / REUNITED) and the
-  /// owner may then fetch the rescuer's WhatsApp link.
-  Future<(RescueProof? proof, String? errorCode, String? errorMessage)> confirmRescueProof(String proofId) {
-    return _reviewRescueProof(confirmRescueProofMutation, 'confirmRescueProof', proofId);
-  }
-
-  Future<(RescueProof? proof, String? errorCode, String? errorMessage)> rejectRescueProof(String proofId) {
-    return _reviewRescueProof(rejectRescueProofMutation, 'rejectRescueProof', proofId);
-  }
-
-  Future<(List<RescueProof> proofs, String? errorMessage)> _fetchRescueProofs(String document, String field, String postId) async {
-    final result = await client.value.query(
-      QueryOptions(document: gql(document), variables: {'postId': postId, 'first': 20}, fetchPolicy: FetchPolicy.networkOnly),
-    );
+  /// Removes the current avatar. `profilePictureUrl` comes back null on
+  /// success — render initials, never a cached provider picture.
+  Future<(bool success, String? errorMessage)> removeProfilePhoto() async {
+    final result = await client.value.mutate(MutationOptions(document: gql(removeProfilePhotoMutation)));
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (<RescueProof>[], _serverErrorMessage(result.exception));
+      return (false, _serverErrorMessage(result.exception));
     }
-    final edges = (result.data?[field]?['edges'] as List<dynamic>? ?? const []).cast<Map<String, dynamic>>();
-    return (edges.map((e) => RescueProof.fromJson(e['node'] as Map<String, dynamic>)).toList(), null);
-  }
-
-  /// The signed-in user's own proofs for one post, newest first.
-  Future<(List<RescueProof> proofs, String? errorMessage)> fetchMyRescueProofs({required String postId}) {
-    return _fetchRescueProofs(myRescueProofsQuery, 'myRescueProofs', postId);
-  }
-
-  /// Every proof submitted on a post the signed-in user owns (owner only).
-  Future<(List<RescueProof> proofs, String? errorMessage)> fetchPostRescueProofs({required String postId}) {
-    return _fetchRescueProofs(postRescueProofsQuery, 'postRescueProofs', postId);
-  }
-
-  /// The confirmed rescuer's WhatsApp link — post owner only, CONFIRMED only.
-  Future<(String? link, String? errorMessage)> fetchRescueProofWhatsAppLink(String proofId) async {
-    final result = await client.value.query(
-      QueryOptions(document: gql(rescueProofWhatsAppLinkQuery), variables: {'proofId': proofId}, fetchPolicy: FetchPolicy.networkOnly),
-    );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (null, _serverErrorMessage(result.exception));
-    }
-    return (result.data?['getRescueProofWhatsAppLink'] as String?, null);
+    return (true, null);
   }
 }

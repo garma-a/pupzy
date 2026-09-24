@@ -12,6 +12,7 @@ class NewPostSheet extends StatelessWidget {
   const NewPostSheet({super.key});
 
   static const Color _lostPetAccent = Color(0xFFE08A2E);
+  static const Color _foundStrayAccent = Color(0xFFC97B3F);
   static const Color _adoptionAccent = Color(0xFFB08C3A);
   static const Color _productAccent = Color(0xFF5B8DEF);
   static const Color _matingAccent = Color(0xFFD1608A);
@@ -101,6 +102,15 @@ class NewPostSheet extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             _TypeOption(
               index: 2,
+              icon: Icons.pets_outlined,
+              accent: _foundStrayAccent,
+              title: t(context, 'Found a Pet', 'تم العثور على حيوان'),
+              subtitle: t(context, "I found a stray, trying to find its owner", 'وجدت حيوانًا ضالًا وأحاول إيجاد مالكه'),
+              onTap: () => _openForm(context, PostType.rescue, initialCategory: 'FOUND'),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _TypeOption(
+              index: 3,
               icon: Icons.home_outlined,
               accent: _adoptionAccent,
               title: t(context, 'Adoption', 'تبني'),
@@ -109,7 +119,7 @@ class NewPostSheet extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             _TypeOption(
-              index: 3,
+              index: 4,
               icon: Icons.favorite_border,
               accent: _matingAccent,
               title: t(context, 'Find a Mate', 'البحث عن شريك'),
@@ -118,7 +128,7 @@ class NewPostSheet extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             _TypeOption(
-              index: 4,
+              index: 5,
               icon: Icons.shopping_bag_outlined,
               accent: _productAccent,
               title: t(context, 'List a Product', 'إضافة منتج'),

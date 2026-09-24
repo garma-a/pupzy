@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
 import '../services/graphql_service.dart';
+import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
 
 /// Compose sheet for `requestContact` — sends a message to a RESCUE/LOST/
@@ -30,6 +31,8 @@ class _ContactRequestSheetState extends State<ContactRequestSheet> {
   Future<void> _send() async {
     final message = _controller.text.trim();
     if (message.isEmpty || _sending) return;
+    if (!await ensureTermsAccepted(context)) return;
+    if (!mounted) return;
     setState(() => _sending = true);
     final graphql = context.read<GraphQLService>();
     final (request, error) = await graphql.requestContact(postId: widget.postId, message: message);

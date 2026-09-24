@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import '../localization/lang_provider.dart';
 import '../models/post.dart';
 import '../services/graphql_service.dart';
+import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
 import '../widgets/city_picker_sheet.dart';
 
@@ -64,6 +65,10 @@ class _PostFormScreenState extends State<PostFormScreen> {
   bool _openToOffers = false;
   bool _hasCollarWithIdTag = false;
   DateTime? _dateLastSeen;
+  // FOUND_STRAY-only state.
+  DateTime? _dateFound;
+  String? _foundStrayCondition;
+  bool _foundStraySafeWithReporter = true;
   // RESCUE urgency signals — the server computes posts.urgency from these
   // rather than trusting a client-picked severity tier.
   bool _isLifeThreatening = false;
@@ -80,7 +85,6 @@ class _PostFormScreenState extends State<PostFormScreen> {
   final Set<String> _personalityTags = {};
   String? _spaceRequirement;
   bool _priorPetExperienceRequired = false;
-  String? _contactPrivacy;
   bool _submitting = false;
 
   static const List<Choice> _speciesOptions = [
@@ -96,6 +100,12 @@ class _PostFormScreenState extends State<PostFormScreen> {
   ];
 
   static const Color _lostPetAccent = Color(0xFFE08A2E);
+
+  static const List<Choice> _foundStrayConditionOptions = [
+    ('HEALTHY', 'Healthy', 'بصحة جيدة'),
+    ('INJURED', 'Injured', 'مصاب'),
+    ('UNKNOWN', 'Not sure', 'غير متأكد'),
+  ];
 
   static const List<Choice> _adoptionSpeciesOptions = [
     ('CAT', 'Cat', 'قطة'),
@@ -125,11 +135,6 @@ class _PostFormScreenState extends State<PostFormScreen> {
     ('APARTMENT_OK', 'Apartment OK', 'شقة مناسبة'),
     ('NEEDS_YARD', 'Needs outdoor access', 'يحتاج مساحة خارجية'),
     ('NEEDS_FARM_OR_LARGE_SPACE', 'Large garden required', 'يتطلب حديقة كبيرة'),
-  ];
-
-  static const List<Choice> _contactPrivacyOptions = [
-    ('PUBLIC', 'Show my phone number publicly', 'إظهار رقم هاتفي للجميع'),
-    ('PRIVATE', 'Keep private — receive contact requests', 'إبقاؤه خاصًا — استلام طلبات تواصل'),
   ];
 
   static const List<Choice> _conditionOptions = [
@@ -321,6 +326,26 @@ class _PostFormScreenState extends State<PostFormScreen> {
     if (picked != null) setState(() => _dateLastSeen = picked);
   }
 
+  bool get _foundStrayFormValid {
+    return _images.isNotEmpty &&
+        _species != null &&
+        _approximateAreaController.text.trim().isNotEmpty &&
+        _circumstancesController.text.trim().length >= 10 &&
+        _foundStrayCondition != null &&
+        _dateFound != null;
+  }
+
+  Future<void> _pickDateFound() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dateFound ?? now,
+      firstDate: DateTime(now.year - 5),
+      lastDate: now,
+    );
+    if (picked != null) setState(() => _dateFound = picked);
+  }
+
   bool get _adoptionFormValid {
     return _images.isNotEmpty &&
         _petNameController.text.trim().isNotEmpty &&
@@ -376,6 +401,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
   Future<void> _submitProduct() async {
     if (!_productFormValid || _submitting) return;
+    if (!await ensureTermsAccepted(context)) return;
+    if (!mounted) return;
     setState(() => _submitting = true);
 
     try {
@@ -444,6 +471,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
   Future<void> _submitRescue() async {
     if (!_rescueFormValid || _submitting) return;
+    if (!await ensureTermsAccepted(context)) return;
+    if (!mounted) return;
     setState(() => _submitting = true);
 
     try {
@@ -516,6 +545,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
   Future<void> _submitLostPet() async {
     if (!_lostPetFormValid || _submitting) return;
+    if (!await ensureTermsAccepted(context)) return;
+    if (!mounted) return;
     setState(() => _submitting = true);
 
     try {
@@ -588,8 +619,83 @@ class _PostFormScreenState extends State<PostFormScreen> {
     }
   }
 
+  Future<void> _submitFoundStray() async {
+    if (!_foundStrayFormValid || _submitting) return;
+    if (!await ensureTermsAccepted(context)) return;
+    if (!mounted) return;
+    setState(() => _submitting = true);
+
+    try {
+      Fluttertoast.showToast(msg: t(context, 'Getting your location...', 'جارٍ تحديد موقعك...'));
+      final position = await _getCurrentPosition();
+      if (position == null) return;
+      if (!mounted) return;
+
+      final graphql = context.read<GraphQLService>();
+
+      final mediaIds = <String>[];
+      for (final image in _images) {
+        final bytes = await image.readAsBytes();
+        final contentType = _mimeTypeFor(image);
+        final uploadInfo = await graphql.requestMediaUploadUrl(
+          contentType: contentType,
+          fileSizeBytes: bytes.length,
+        );
+        if (uploadInfo == null) continue;
+        final response = await http.put(
+          Uri.parse(uploadInfo['uploadUrl'] as String),
+          headers: {'Content-Type': contentType},
+          body: bytes,
+        );
+        if (!mounted) return;
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          mediaIds.add(uploadInfo['mediaId'] as String);
+        } else {
+          Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
+        }
+      }
+
+      final speciesLabel = _labelFor(_speciesOptions, _species!);
+      final circumstances = _circumstancesController.text.trim();
+
+      final (result, errorMessage) = await graphql.createLostPost(
+        title: '${t(context, 'Found', 'تم العثور على')} $speciesLabel',
+        description: circumstances,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        areaName: _approximateAreaController.text.trim(),
+        reportType: 'FOUND_STRAY',
+        species: _species!,
+        breed: _breedController.text.trim(),
+        colorAndMarkings: _colorMarkingsController.text.trim(),
+        hasCollarWithIdentificationTag: _hasCollarWithIdTag,
+        circumstances: circumstances,
+        currentCondition: _foundStrayCondition!,
+        isCurrentlySafeWithReporter: _foundStraySafeWithReporter,
+        dateFound: _isoDate(_dateFound!),
+        mediaIds: mediaIds,
+      );
+      if (!mounted) return;
+
+      if (result != null) {
+        Fluttertoast.showToast(msg: t(context, 'Found pet report posted!', 'تم نشر بلاغ الحيوان الذي تم العثور عليه!'));
+        if (mounted) Navigator.of(context).pop();
+      } else {
+        Fluttertoast.showToast(
+          msg: errorMessage ?? t(context, 'Failed to post report', 'فشل نشر البلاغ'),
+          backgroundColor: AppColors.critical,
+          textColor: Colors.white,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
   Future<void> _submitAdoption() async {
     if (!_adoptionFormValid || _submitting) return;
+    if (!await ensureTermsAccepted(context)) return;
+    if (!mounted) return;
     setState(() => _submitting = true);
 
     try {
@@ -685,6 +791,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
   Future<void> _submitMating() async {
     if (!_matingFormValid || _submitting) return;
+    if (!await ensureTermsAccepted(context)) return;
+    if (!mounted) return;
     setState(() => _submitting = true);
 
     try {
@@ -785,6 +893,9 @@ class _PostFormScreenState extends State<PostFormScreen> {
     if (widget.type == PostType.rescue && widget.initialCategory == 'LOST') {
       return _buildLostPetForm(context);
     }
+    if (widget.type == PostType.rescue && widget.initialCategory == 'FOUND') {
+      return _buildFoundStrayForm(context);
+    }
     if (widget.type == PostType.rescue) {
       return _buildRescueForm(context);
     }
@@ -797,8 +908,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
     if (widget.type == PostType.mating) {
       return _buildMatingForm(context);
     }
-    // Every PostType value is handled above (rescue/LOST, rescue, product,
-    // adoption, mating) — PostFormScreen is never constructed with PostType.general.
+    // Every PostType value is handled above (rescue/LOST, rescue/FOUND, rescue,
+    // product, adoption, mating) — PostFormScreen is never constructed with PostType.general.
     throw StateError('Unhandled PostType: ${widget.type}');
   }
 
@@ -1294,6 +1405,251 @@ class _PostFormScreenState extends State<PostFormScreen> {
     );
   }
 
+  Widget _buildFoundStrayForm(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
+              child: Row(
+                children: [
+                  _BackCircle(onTap: () => Navigator.of(context).pop()),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(t(context, 'Report a Found Pet', 'الإبلاغ عن حيوان تم العثور عليه'), style: Theme.of(context).textTheme.headlineMedium),
+                        Text(
+                          t(context, 'Help this animal find its way home', 'ساعد هذا الحيوان في العودة إلى منزله'),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Divider(height: 1, color: AppColors.border),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
+                children: [
+                  _SectionLabel(t(context, 'ANIMAL DETAILS', 'تفاصيل الحيوان')),
+                  const SizedBox(height: AppSpacing.sm),
+                  InkWell(
+                    onTap: _pickImage,
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceWarm,
+                        borderRadius: BorderRadius.circular(AppRadius.card),
+                        border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+                      ),
+                      child: Column(
+                        children: [
+                          if (_images.isEmpty) ...[
+                            const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(
+                              t(context, 'Add photos of the animal', 'أضف صورًا للحيوان'),
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              t(context, 'Clear photos help the owner recognize it', 'الصور الواضحة تساعد المالك على التعرف عليه'),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ] else
+                            SizedBox(
+                              height: 90,
+                              child: ListView(
+                                scrollDirection: Axis.horizontal,
+                                children: [
+                                  ..._images.map(
+                                    (img) => Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
+                                      ),
+                                    ),
+                                  ),
+                                  if (_images.length < 4)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                      child: Container(
+                                        width: 90,
+                                        height: 90,
+                                        decoration: BoxDecoration(
+                                          border: Border.all(color: AppColors.border),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(t(context, 'Species', 'النوع'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    children: _speciesOptions.map((s) {
+                      return _PillChoice(
+                        label: t(context, s.$2, s.$3),
+                        selected: _species == s.$1,
+                        onTap: () => setState(() => _species = s.$1),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(t(context, 'Breed (if known)', 'السلالة (إن عُرفت)'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: _breedController,
+                    decoration: _fieldDecoration(t(context, 'e.g. Golden Retriever', 'مثال: جولدن ريتريفر')),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(t(context, 'Color & markings', 'اللون والعلامات المميزة'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: _colorMarkingsController,
+                    decoration: _fieldDecoration(
+                      t(context, 'e.g. tan and white, spot on left ear', 'مثال: بني وأبيض، بقعة على الأذن اليسرى'),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(t(context, 'Has collar with ID tag', 'يرتدي طوقًا يحمل بطاقة تعريف')),
+                    value: _hasCollarWithIdTag,
+                    onChanged: (v) => setState(() => _hasCollarWithIdTag = v),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  _SectionLabel(t(context, 'WHEN & WHERE FOUND', 'متى وأين تم العثور عليه')),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(t(context, 'Date found', 'تاريخ العثور عليه'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  InkWell(
+                    onTap: _pickDateFound,
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceWarm,
+                        borderRadius: BorderRadius.circular(AppRadius.card),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today_outlined, size: 18, color: AppColors.textMuted),
+                          const SizedBox(width: AppSpacing.sm),
+                          Text(
+                            _dateFound != null ? _displayDate(_dateFound!) : t(context, 'Select date', 'اختر التاريخ'),
+                            style: TextStyle(
+                              color: _dateFound != null ? AppColors.textPrimary : AppColors.textMuted,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(t(context, 'Area found', 'المنطقة التي تم العثور عليه فيها'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: _approximateAreaController,
+                    onChanged: (_) => setState(() {}),
+                    decoration: _fieldDecoration(t(context, 'e.g. 7th Circle area', 'مثال: منطقة الدائرة السابعة')),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(t(context, 'Circumstances', 'الظروف'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: _circumstancesController,
+                    maxLines: 3,
+                    onChanged: (_) => setState(() {}),
+                    decoration: _fieldDecoration(
+                      t(context, 'Describe where and how you found the animal...', 'صف أين وكيف عثرت على الحيوان...'),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  _SectionLabel(t(context, 'CURRENT CONDITION', 'الحالة الحالية')),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(t(context, 'Condition', 'الحالة'), style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppSpacing.sm),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    children: _foundStrayConditionOptions.map((c) {
+                      return _PillChoice(
+                        label: t(context, c.$2, c.$3),
+                        selected: _foundStrayCondition == c.$1,
+                        onTap: () => setState(() => _foundStrayCondition = c.$1),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(t(context, 'Currently safe with me', 'حاليًا بأمان معي')),
+                    subtitle: Text(
+                      t(context, 'Off if it ran off or you no longer have it', 'أطفئه إذا هرب الحيوان أو لم يعد معك'),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    value: _foundStraySafeWithReporter,
+                    onChanged: (v) => setState(() => _foundStraySafeWithReporter = v),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  Center(
+                    child: Text(
+                      t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر'),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: (_foundStrayFormValid && !_submitting) ? _submitFoundStray : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _lostPetAccent,
+                        disabledBackgroundColor: _lostPetAccent.withValues(alpha: 0.35),
+                      ),
+                      child: _submitting
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                            )
+                          : Text(t(context, 'Post Found Pet Report', 'نشر بلاغ الحيوان الذي تم العثور عليه')),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAdoptionForm(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -1526,20 +1882,10 @@ class _PostFormScreenState extends State<PostFormScreen> {
                   const SizedBox(height: AppSpacing.xl),
                   const Text('CONTACT PRIVACY  ·  خصوصية التواصل', style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 0.5, fontSize: 12, color: AppColors.textMuted)),
                   const SizedBox(height: AppSpacing.md),
-                  Text(t(context, 'How can adopters reach you?', 'كيف يمكن للمتبنين التواصل معك؟'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Column(
-                    children: _contactPrivacyOptions.map((c) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                        child: _RoleChoice(
-                          label: t(context, c.$2, c.$3),
-                          selected: _contactPrivacy == c.$1,
-                          onTap: () => setState(() => _contactPrivacy = c.$1),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                  // Adoption contact is request-only on the server: a number is
+                  // released solely through an approved Adoption Application.
+                  // There is no per-post privacy setting to send, so this states
+                  // the rule instead of offering a choice nothing can honour.
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -1547,13 +1893,22 @@ class _PostFormScreenState extends State<PostFormScreen> {
                       color: AppColors.surfaceWarm,
                       borderRadius: BorderRadius.circular(AppRadius.card),
                     ),
-                    child: Text(
-                      t(
-                        context,
-                        'If you keep your number private, interested adopters send you a message request. You decide whether to accept or decline before your number is shared.',
-                        'إذا أبقيت رقمك خاصًا، سيرسل لك المتبنون المهتمون طلب تواصل. أنت من يقرر القبول أو الرفض قبل مشاركة رقمك.',
-                      ),
-                      style: Theme.of(context).textTheme.bodySmall,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.lock_outline, size: 18, color: AppColors.primary),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Text(
+                            t(
+                              context,
+                              'Your phone number stays private. Interested adopters send you a request, and your number is shared only with the ones you approve.',
+                              'رقم هاتفك يبقى خاصًا. يرسل لك المتبنون المهتمون طلبًا، ولا تتم مشاركة رقمك إلا مع من توافق عليهم.',
+                            ),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),

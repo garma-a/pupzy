@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
@@ -67,6 +69,20 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
   bool _hasNextPage = false;
   bool _loadingMore = false;
   final _scrollController = ScrollController();
+  Timer? _searchDebounce;
+
+  /// The server-side search term, or null under the backend's 2-character
+  /// minimum (feed-search-flutter-integration-contract.md §4).
+  String? get _activeSearch {
+    final trimmed = _query.trim();
+    return trimmed.length >= 2 ? trimmed : null;
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() => _query = value);
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), _loadFeed);
+  }
 
   @override
   void initState() {
@@ -79,11 +95,12 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
     routeObserver.unsubscribe(this);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
   }
 
   void _onScroll() {
-    if (_loading || _loadingMore || !_hasNextPage || _query.trim().isNotEmpty) return;
+    if (_loading || _loadingMore || !_hasNextPage) return;
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 400) {
       _loadMore();
     }
@@ -108,6 +125,7 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
       radiusKm: maxDist.isFinite ? maxDist : null,
       category: _category == 'ALL' ? null : _category,
       sort: _sort == _SortOption.hot ? 'HOT' : 'NEWEST',
+      search: _activeSearch,
     );
     if (!mounted || error != null) return;
     final byId = {for (final p in posts) p.id: p};
@@ -186,6 +204,7 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
       radiusKm: maxDist.isFinite ? maxDist : null,
       category: _category == 'ALL' ? null : _category,
       sort: _sort == _SortOption.hot ? 'HOT' : 'NEWEST',
+      search: _activeSearch,
     );
     if (!mounted) return;
     setState(() {
@@ -213,6 +232,7 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
       radiusKm: maxDist.isFinite ? maxDist : null,
       category: _category == 'ALL' ? null : _category,
       sort: _sort == _SortOption.hot ? 'HOT' : 'NEWEST',
+      search: _activeSearch,
       after: _endCursor,
     );
     if (!mounted) return;
@@ -250,7 +270,9 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
     _loadFeed();
   }
 
-  List<FeedPost> get _filtered => _posts.where((p) => p.matchesQuery(_query)).toList();
+  // Pre-filtered server-side when a search is active (_activeSearch is sent
+  // to fetchMarketFeed).
+  List<FeedPost> get _filtered => _posts;
 
   String _sortLabel(BuildContext context, _SortOption o) {
     switch (o) {
@@ -276,7 +298,7 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: AdaptiveSearchBar(
                 hintText: t(context, 'Search listings...', 'ابحث في الإعلانات...'),
-                onChanged: (v) => setState(() => _query = v),
+                onChanged: _onSearchChanged,
               ),
             ),
             const SizedBox(height: AppSpacing.md),

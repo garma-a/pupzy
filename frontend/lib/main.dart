@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -13,6 +14,7 @@ import 'services/auth_service.dart';
 import 'services/browse_location_service.dart';
 import 'services/graphql_service.dart';
 import 'services/location_service.dart';
+import 'services/push_service.dart';
 import 'services/safety_events.dart';
 import 'theme/app_theme.dart';
 import 'utils/navigation.dart';
@@ -45,6 +47,7 @@ void main() {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     runApp(const PupzyApp());
   }, (error, stack) {
     _reportError(error, stack);
@@ -70,6 +73,7 @@ class PupzyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LocationService()),
         ChangeNotifierProvider(create: (_) => BrowseLocationService()),
         ChangeNotifierProvider(create: (_) => SafetyEvents()),
+        Provider(create: (_) => PushService()),
         ProxyProvider<AuthService, GraphQLService>(
           update: (_, auth, prev) => GraphQLService(auth),
         ),

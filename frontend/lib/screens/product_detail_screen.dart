@@ -13,6 +13,7 @@ import '../utils/time_format.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/pet_carousel.dart';
+import '../widgets/renew_post_button.dart';
 import '../widgets/safety_actions.dart';
 import '../widgets/skeleton_loader.dart';
 
@@ -61,6 +62,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   bool get _isOwner => _myUserId != null && _post != null && _post!.creator.id == _myUserId;
   bool get _isSold => _post?.status == 'SOLD';
+  bool get _isExpired => _post?.status == 'EXPIRED';
+  bool get _isRenewable => _post?.status == 'ACTIVE' || _isExpired;
 
   @override
   void initState() {
@@ -249,7 +252,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 Stack(
                   children: [
                     PetCarousel(imageUrls: images, height: 300),
-                    if (_isSold)
+                    if (_isSold || _isExpired)
                       Positioned.fill(
                         child: Container(
                           color: Colors.black.withValues(alpha: 0.35),
@@ -261,7 +264,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 borderRadius: BorderRadius.circular(AppRadius.chip),
                               ),
                               child: Text(
-                                t(context, 'SOLD', 'مباع'),
+                                _isSold ? t(context, 'SOLD', 'مباع') : t(context, 'EXPIRED', 'منتهي'),
                                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 1.2),
                               ),
                             ),
@@ -338,7 +341,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 context: context,
                                 isScrollControlled: true,
                                 backgroundColor: Colors.transparent,
-                                builder: (_) => CommentsSheet(postId: post.id, isPostOwner: _isOwner),
+                                builder: (_) => CommentsSheet(postId: post.id, isPostOwner: _isOwner, allowImages: false),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -382,13 +385,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildBuyerActions(PostDetail post) {
+    final unavailable = _isSold || _isExpired;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
-            _IconAction(icon: Icons.call_outlined, label: t(context, 'Call', 'اتصال'), onTap: _isSold ? null : _handleCall),
-            _IconAction(icon: Icons.chat, label: t(context, 'WhatsApp', 'واتساب'), color: AppColors.sectionLineGreen, onTap: _isSold ? null : _handleMessage),
+            _IconAction(icon: Icons.call_outlined, label: t(context, 'Call', 'اتصال'), onTap: unavailable ? null : _handleCall),
+            _IconAction(icon: Icons.chat, label: t(context, 'WhatsApp', 'واتساب'), color: AppColors.sectionLineGreen, onTap: unavailable ? null : _handleMessage),
             _SaveIconAction(
               isSaved: post.isSavedByMe,
               onToggle: _toggleSave,
@@ -403,9 +407,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: _isSold ? null : _handleMessage,
-            icon: _isSold ? null : const Icon(Icons.chat, size: 18),
-            label: Text(_isSold ? t(context, 'Sold', 'مباع') : t(context, 'Message Seller', 'راسل البائع')),
+            onPressed: unavailable ? null : _handleMessage,
+            icon: unavailable ? null : const Icon(Icons.chat, size: 18),
+            label: Text(_isSold
+                ? t(context, 'Sold', 'مباع')
+                : _isExpired
+                    ? t(context, 'Expired', 'منتهي')
+                    : t(context, 'Message Seller', 'راسل البائع')),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.sectionLineGreen,
               disabledBackgroundColor: AppColors.sectionLineGreen.withValues(alpha: 0.35),
@@ -417,22 +425,37 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildOwnerActions() {
-    return Row(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: OutlinedButton(
-            onPressed: _busy ? null : _deleteListing,
-            style: OutlinedButton.styleFrom(foregroundColor: AppColors.critical, side: const BorderSide(color: AppColors.critical)),
-            child: Text(t(context, 'Delete', 'حذف')),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: _busy ? null : _deleteListing,
+                style: OutlinedButton.styleFrom(foregroundColor: AppColors.critical, side: const BorderSide(color: AppColors.critical)),
+                child: Text(t(context, 'Delete', 'حذف')),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _busy || _isSold ? null : _markSold,
+                child: Text(_isSold ? t(context, 'Sold', 'مباع') : t(context, 'Mark Sold', 'تحديد كمباع')),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _busy || _isSold ? null : _markSold,
-            child: Text(_isSold ? t(context, 'Sold', 'مباع') : t(context, 'Mark Sold', 'تحديد كمباع')),
+        if (_isRenewable) ...[
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            width: double.infinity,
+            child: RenewPostButton(
+              postId: _post!.id,
+              onRenewed: (status) => setState(() => _post = _post!.copyWith(status: status)),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

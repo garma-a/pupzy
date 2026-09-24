@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -72,6 +73,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   List<FeedPost> _savedPosts = [];
   bool _savedLoading = true;
 
+  Timer? _searchDebounce;
+  int _searchRequestId = 0;
+  List<FeedPost> _searchResults = [];
+  bool _searchLoading = false;
+  String? _searchError;
+
   @override
   void initState() {
     super.initState();
@@ -124,7 +131,56 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     routeObserver.unsubscribe(this);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
+  }
+
+  /// Server-side search (feed-search-flutter-integration-contract.md):
+  /// matches title/description/city/area across the whole feed, not just
+  /// the page already loaded on-device. Debounced, and mirrors the backend's
+  /// own bounds — under 2 trimmed characters never calls the server.
+  void _onSearchChanged(String value) {
+    setState(() => _query = value);
+    _searchDebounce?.cancel();
+    final trimmed = value.trim();
+    if (trimmed.length < 2) {
+      setState(() {
+        _searchResults = [];
+        _searchLoading = false;
+        _searchError = null;
+      });
+      return;
+    }
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () => _runSearch(trimmed));
+  }
+
+  Future<void> _runSearch(String query) async {
+    if (_governorate == null) return;
+    final requestId = ++_searchRequestId;
+    setState(() {
+      _searchLoading = true;
+      _searchError = null;
+    });
+    final graphql = context.read<GraphQLService>();
+    final maxDist = DistanceProvider.of(context).maxDistance;
+    final (posts, _, _, error) = await graphql.fetchHomeFeed(
+      governorate: _governorate!,
+      cityId: _cityId,
+      latitude: _position?.latitude,
+      longitude: _position?.longitude,
+      radiusKm: maxDist.isFinite ? maxDist : null,
+      search: query,
+      first: 30,
+    );
+    if (!mounted || requestId != _searchRequestId) return;
+    setState(() {
+      _searchLoading = false;
+      if (error != null) {
+        _searchError = error;
+      } else {
+        _searchResults = posts;
+      }
+    });
   }
 
   void _onScroll() {
@@ -327,7 +383,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   Expanded(
                     child: AdaptiveSearchBar(
                       hintText: t(context, 'Search pets, posts, listings...', 'ابحث عن حيوانات، منشورات، إعلانات...'),
-                      onChanged: (v) => setState(() => _query = v),
+                      onChanged: _onSearchChanged,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -387,7 +443,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                             ],
                           )
                         : _query.trim().isNotEmpty
-                            ? _HomeSearchResults(query: _query, posts: _posts)
+                            ? _HomeSearchResults(
+                                query: _query,
+                                posts: _searchResults,
+                                loading: _searchLoading,
+                                errorMessage: _searchError,
+                              )
                             : ListView(
                             controller: _scrollController,
                             padding: const EdgeInsets.only(bottom: 100),
@@ -653,11 +714,29 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 class _HomeSearchResults extends StatelessWidget {
   final String query;
   final List<FeedPost> posts;
-  const _HomeSearchResults({required this.query, required this.posts});
+  final bool loading;
+  final String? errorMessage;
+  const _HomeSearchResults({required this.query, required this.posts, this.loading = false, this.errorMessage});
 
   @override
   Widget build(BuildContext context) {
-    final results = posts.where((p) => p.matchesQuery(query)).toList();
+    if (query.trim().length < 2) {
+      return Center(
+        child: Text(
+          t(context, 'Keep typing to search', 'أكمل الكتابة للبحث'),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+        ),
+      );
+    }
+    if (loading) {
+      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+    }
+    if (errorMessage != null) {
+      return Center(
+        child: Text(errorMessage!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted), textAlign: TextAlign.center),
+      );
+    }
+    final results = posts;
     if (results.isEmpty) {
       return ListView(
         padding: const EdgeInsets.only(bottom: 100),

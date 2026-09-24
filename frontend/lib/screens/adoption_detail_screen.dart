@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../localization/lang_provider.dart';
 import '../models/adoption_application.dart';
@@ -14,6 +15,7 @@ import '../widgets/adoption_applications_owner_section.dart';
 import '../widgets/nearby_vets_section.dart';
 import '../widgets/owner_post_actions.dart';
 import '../widgets/pet_carousel.dart';
+import '../widgets/renew_post_button.dart';
 import '../widgets/safety_actions.dart';
 import '../widgets/skeleton_loader.dart';
 
@@ -35,6 +37,9 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
   AdoptionApplication? _myApplication;
 
   bool get _isOwner => _myUserId != null && _post != null && _post!.creator.id == _myUserId;
+  bool get _isExpired => _post?.status == 'EXPIRED';
+  bool get _isRenewable => _post?.status == 'ACTIVE' || _isExpired;
+  bool _openingWhatsApp = false;
 
   @override
   void initState() {
@@ -77,7 +82,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
   }
 
   Future<void> _adopt() async {
-    if (_myApplication != null) return;
+    if (_myApplication != null || _isExpired) return;
     final submitted = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -91,6 +96,27 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
     setState(() {
       _myApplication = mine.where((a) => a.targetPostId == widget.postId).isEmpty ? null : mine.firstWhere((a) => a.targetPostId == widget.postId);
     });
+  }
+
+  /// The applicant's action once their application is APPROVED — retrieves
+  /// the owner's current WhatsApp link on demand (never cached) and opens
+  /// it. See adoption-contact-flutter-integration-contract.md.
+  Future<void> _messageOwner() async {
+    final application = _myApplication;
+    if (application == null || _openingWhatsApp) return;
+    setState(() => _openingWhatsApp = true);
+    final graphql = context.read<GraphQLService>();
+    final (link, error) = await graphql.getAdoptionWhatsAppLink(application.id);
+    if (!mounted) return;
+    setState(() => _openingWhatsApp = false);
+    if (link == null) {
+      Fluttertoast.showToast(msg: error ?? t(context, "This content isn't available.", 'هذا المحتوى غير متاح.'));
+      return;
+    }
+    final opened = await launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      Fluttertoast.showToast(msg: t(context, 'Could not open WhatsApp', 'تعذر فتح واتساب'));
+    }
   }
 
   Future<bool> _toggleSave() async {
@@ -111,11 +137,11 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
       case 'PENDING':
         return t(context, 'Application Sent ✓', 'تم إرسال الطلب ✓');
       case 'APPROVED':
-        return t(context, 'Application Approved ✓', 'تمت الموافقة على الطلب ✓');
+        return t(context, 'Message Owner on WhatsApp', 'راسل المالك على واتساب');
       case 'REJECTED':
         return t(context, 'Application Declined', 'تم رفض الطلب');
       default:
-        return t(context, 'Ask to adopt', 'اطلب التبني');
+        return _isExpired ? t(context, 'Listing expired', 'انتهى الإعلان') : t(context, 'Ask to adopt', 'اطلب التبني');
     }
   }
 
@@ -233,7 +259,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                                 context: context,
                                 isScrollControlled: true,
                                 backgroundColor: Colors.transparent,
-                                builder: (_) => CommentsSheet(postId: post.id, isPostOwner: _isOwner),
+                                builder: (_) => CommentsSheet(postId: post.id, isPostOwner: _isOwner, allowImages: false),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -313,12 +339,27 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
           ? SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
-                child: OwnerPostActions(
-                  postId: post.id,
-                  close: OwnerCloseAction.adoption,
-                  isClosed: post.status != 'ACTIVE',
-                  onClosed: (status) => setState(() => _post = _post!.copyWith(status: status)),
-                  onDeleted: () => Navigator.of(context).pop(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    OwnerPostActions(
+                      postId: post.id,
+                      close: OwnerCloseAction.adoption,
+                      isClosed: post.status == 'ADOPTED',
+                      onClosed: (status) => setState(() => _post = _post!.copyWith(status: status)),
+                      onDeleted: () => Navigator.of(context).pop(),
+                    ),
+                    if (_isRenewable) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      SizedBox(
+                        width: double.infinity,
+                        child: RenewPostButton(
+                          postId: post.id,
+                          onRenewed: (status) => setState(() => _post = _post!.copyWith(status: status)),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             )
@@ -328,7 +369,9 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _myApplication == null ? _adopt : null,
+                    onPressed: _myApplication?.status == 'APPROVED'
+                        ? (_openingWhatsApp ? null : _messageOwner)
+                        : (_myApplication == null && !_isExpired ? _adopt : null),
                     child: Text(_applyButtonLabel(context)),
                   ),
                 ),

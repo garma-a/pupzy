@@ -9,13 +9,40 @@ import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import 'city_picker_sheet.dart';
 
-class PupzyTopBar extends StatelessWidget {
+class PupzyTopBar extends StatefulWidget {
   const PupzyTopBar({super.key});
+
+  @override
+  State<PupzyTopBar> createState() => _PupzyTopBarState();
+}
+
+class _PupzyTopBarState extends State<PupzyTopBar> {
+  // The backend's picture is authoritative — including an explicit null
+  // after removal, which must render initials rather than falling back to a
+  // cached Firebase provider photo (profile-photo contract §8.3). Firebase's
+  // own photo is only a placeholder until this resolves.
+  bool _profileLoaded = false;
+  String? _profilePictureUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfilePicture();
+  }
+
+  Future<void> _loadProfilePicture() async {
+    final me = await context.read<GraphQLService>().fetchMe();
+    if (!mounted || me == null) return;
+    setState(() {
+      _profileLoaded = true;
+      _profilePictureUrl = me['profilePictureUrl'] as String?;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthService>().currentUser;
-    final photoUrl = user?.photoURL;
+    final photoUrl = _profileLoaded ? _profilePictureUrl : user?.photoURL;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -46,13 +73,15 @@ class PupzyTopBar extends StatelessWidget {
                 button: true,
                 label: t(context, 'Open profile', 'فتح الملف الشخصي'),
                 child: GestureDetector(
-                  onTap: () {
-                    showModalBottomSheet(
+                  onTap: () async {
+                    await showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
                       builder: (_) => const ProfileSheet(),
                     );
+                    // The avatar can be changed or removed in there.
+                    _loadProfilePicture();
                   },
                   child: CircleAvatar(
                     radius: 20,

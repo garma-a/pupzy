@@ -9,6 +9,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'safety_test_support.dart';
 
+AppNotification _unread(String id, String title) => AppNotification(
+      id: id,
+      type: 'NEW_COMMENT',
+      title: title,
+      body: 'Someone commented.',
+      relatedPostId: null,
+      isRead: false,
+      createdAt: DateTime.utc(2026, 9, 18, 12),
+    );
+
 AppNotification _notification({String? postId}) => AppNotification(
       id: 'n1',
       type: 'POST_REMOVED_BY_ADMIN',
@@ -86,5 +96,43 @@ void main() {
 
     expect(toasts.messages, isEmpty);
     expect(graphql.calls.where((c) => c.startsWith('fetchPostDetail')), isEmpty);
+  });
+
+  group('mark all as read', () {
+    testWidgets('the action appears only while something is unread', (tester) async {
+      graphql.notifications = [_unread('a', 'First'), _unread('b', 'Second')];
+      await pumpPanel(tester);
+
+      expect(find.text('Mark all read'), findsOneWidget);
+
+      await tester.tap(find.text('Mark all read'));
+      await tester.pumpAndSettle();
+
+      expect(graphql.markAllReadCalls, 1);
+      expect(find.text('Mark all read'), findsNothing,
+          reason: 'with nothing left unread the action has no purpose');
+      expect(find.text('First'), findsOneWidget, reason: 'the list itself stays put');
+    });
+
+    testWidgets('a failed call puts the unread state back and says why', (tester) async {
+      graphql.notifications = [_unread('a', 'First')];
+      graphql.markAllReadError = 'Could not reach the server';
+      await pumpPanel(tester);
+
+      await tester.tap(find.text('Mark all read'));
+      await tester.pumpAndSettle();
+
+      expect(toasts.messages, ['Could not reach the server']);
+      expect(find.text('Mark all read'), findsOneWidget,
+          reason: 'the optimistic update must roll back so the user can retry');
+    });
+
+    testWidgets('an all-read inbox never offers the action', (tester) async {
+      graphql.notifications = [_unread('a', 'First').copyWith(isRead: true)];
+      await pumpPanel(tester);
+
+      expect(find.text('Mark all read'), findsNothing);
+      expect(graphql.markAllReadCalls, 0);
+    });
   });
 }

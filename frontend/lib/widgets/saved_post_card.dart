@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../localization/lang_provider.dart';
 import '../models/feed_post.dart';
 import '../screens/adoption_detail_screen.dart';
+import '../screens/mating_detail_screen.dart';
 import '../screens/product_detail_screen.dart';
 import '../screens/rescue_detail_screen.dart';
 import '../theme/app_theme.dart';
@@ -22,6 +23,7 @@ class SavedPostCard extends StatelessWidget {
     final Widget screen = switch (post.postType) {
       'ADOPTION' => AdoptionDetailScreen(postId: post.id),
       'PRODUCT' => ProductDetailScreen(postId: post.id),
+      'MATING' => MatingDetailScreen(postId: post.id),
       _ => RescueDetailScreen(postId: post.id),
     };
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
