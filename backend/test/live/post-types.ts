@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment -- GraphQL responses are untyped JSON */
 import { gql, ok } from './harness';
 
 export type Interaction = 'contactRequest' | 'adoptionApplication' | 'sellerContact' | 'none';
@@ -32,7 +33,9 @@ async function idsFrom(token: string, query: string, field: string, variables: R
 }
 
 const helpFeed = (token: string, city: string) =>
-  idsFrom(token, `query($c: ID) { helpFeed(cityId: $c, first: 50) { edges { node { id } } } }`, 'helpFeed', { c: city });
+  idsFrom(token, `query($c: ID) { helpFeed(cityId: $c, first: 50) { edges { node { id } } } }`, 'helpFeed', {
+    c: city,
+  });
 
 async function detailCall(token: string, field: string, id: string) {
   const r = await gql(token, `query($id: ID!) { ${field}(postId: $id) { __typename } }`, { id });
@@ -40,7 +43,11 @@ async function detailCall(token: string, field: string, id: string) {
 }
 
 const createPost = async (token: string, mutation: string, input: Record<string, unknown>) => {
-  const data = await ok<Record<string, { id: string }>>(token, `mutation($i: ${mutation[0].toUpperCase()}${mutation.slice(1)}Input!) { ${mutation}(input: $i) { id } }`, { i: input });
+  const data = await ok<Record<string, { id: string }>>(
+    token,
+    `mutation($i: ${mutation[0].toUpperCase()}${mutation.slice(1)}Input!) { ${mutation}(input: $i) { id } }`,
+    { i: input },
+  );
   return data[mutation].id;
 };
 
@@ -157,11 +164,19 @@ export const POST_TYPES: PostTypeCase[] = [
         priorPetExperienceRequired: false,
         ...(minimal
           ? {}
-          : { breed: 'Mixed', ageValue: 2, ageUnit: 'YEARS', personalityTags: ['GENTLE', 'INDOOR'], healthNotes: 'Healthy' }),
+          : {
+              breed: 'Mixed',
+              ageValue: 2,
+              ageUnit: 'YEARS',
+              personalityTags: ['GENTLE', 'INDOOR'],
+              healthNotes: 'Healthy',
+            }),
         ...(mediaIds.length ? { mediaIds } : {}),
       }),
     feedIds: (t, city) =>
-      idsFrom(t, `query($c: ID) { adoptFeed(cityId: $c, first: 50) { edges { node { id } } } }`, 'adoptFeed', { c: city }),
+      idsFrom(t, `query($c: ID) { adoptFeed(cityId: $c, first: 50) { edges { node { id } } } }`, 'adoptFeed', {
+        c: city,
+      }),
     detail: (t, id) => detailCall(t, 'adoptionPostDetail', id),
   },
   {
@@ -187,7 +202,9 @@ export const POST_TYPES: PostTypeCase[] = [
         ...(mediaIds.length ? { mediaIds } : {}),
       }),
     feedIds: (t, city) =>
-      idsFrom(t, `query($c: ID) { marketFeed(cityId: $c, first: 50) { edges { node { id } } } }`, 'marketFeed', { c: city }),
+      idsFrom(t, `query($c: ID) { marketFeed(cityId: $c, first: 50) { edges { node { id } } } }`, 'marketFeed', {
+        c: city,
+      }),
     detail: (t, id) => detailCall(t, 'productPostDetail', id),
   },
   {

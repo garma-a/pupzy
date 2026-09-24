@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- GraphQL responses are untyped JSON */
 /**
  * Harness for the live end-to-end suite. Talks HTTP to a running backend that
  * verifies tokens against the Firebase Auth Emulator and stores media in a
@@ -90,12 +91,20 @@ export interface Account {
 }
 
 /** Signs up a fresh emulator account, verifies its email, completes the profile and accepts the Terms. */
-export async function createAccount(label: string, cityId: string, opts: { completeProfile?: boolean } = {}): Promise<Account> {
+export async function createAccount(
+  label: string,
+  cityId: string,
+  opts: { completeProfile?: boolean } = {},
+): Promise<Account> {
   const email = `${label}-${RUN_ID}@pupzy.test`;
   const signUp = await authPost('accounts:signUp?key=fake', { email, password: PASSWORD, returnSecureToken: true });
   if (!signUp.localId) throw new Error(`emulator sign-up failed: ${JSON.stringify(signUp)}`);
   await authPost(`projects/${PROJECT}/accounts:update`, { localId: signUp.localId, emailVerified: true }, true);
-  const session = await authPost('accounts:signInWithPassword?key=fake', { email, password: PASSWORD, returnSecureToken: true });
+  const session = await authPost('accounts:signInWithPassword?key=fake', {
+    email,
+    password: PASSWORD,
+    returnSecureToken: true,
+  });
   const token = session.idToken as string;
   clientIpByToken.set(token, `${allocateIp()}`);
   const { me } = await ok<{ me: { id: string } }>(token, `{ me { id } }`);
@@ -157,7 +166,10 @@ export async function uploads(token: string, n: number): Promise<string[]> {
 }
 
 export async function cityId(name: string): Promise<string> {
-  const { cities } = await ok<{ cities: Array<{ id: string; nameEnglish: string }> }>(null, `{ cities { id nameEnglish } }`);
+  const { cities } = await ok<{ cities: Array<{ id: string; nameEnglish: string }> }>(
+    null,
+    `{ cities { id nameEnglish } }`,
+  );
   const hit = cities.find((c) => c.nameEnglish === name);
   if (!hit) throw new Error(`city ${name} not seeded — run db:seed against the e2e database`);
   return hit.id;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return -- GraphQL responses are untyped JSON */
 /**
  * Cross-cutting API edges, end to end: upload validation, ownership of media,
  * IDOR on contact/adoption links, pagination and id validation, auth failures.
@@ -10,6 +11,8 @@ import { POST_TYPES } from './post-types';
 const RESCUE = POST_TYPES.find((t) => t.key === 'RESCUE')!;
 const MATING = POST_TYPES.find((t) => t.key === 'MATING')!;
 const codeOf = (e: unknown) => String((e as Error).message).match(/"code":"(\w+)"/)?.[1] ?? 'UNKNOWN';
+/** Resolves to 'OK' or the GraphQL error code a create attempt failed with. */
+const outcome = (attempt: Promise<unknown>) => attempt.then(() => 'OK', codeOf);
 
 let home: string;
 let owner: Account;
@@ -39,7 +42,10 @@ describe('upload tickets', () => {
   });
 
   it('requires a signed-in user', async () => {
-    const r = await gql(null, `mutation { requestMediaUploadUrl(input: { contentType: "image/jpeg", fileSizeBytes: 1000 }) { mediaId } }`);
+    const r = await gql(
+      null,
+      `mutation { requestMediaUploadUrl(input: { contentType: "image/jpeg", fileSizeBytes: 1000 }) { mediaId } }`,
+    );
     expect(r.code).toBe('UNAUTHENTICATED');
   });
 });
@@ -47,24 +53,24 @@ describe('upload tickets', () => {
 describe('attaching media to a post', () => {
   it("rejects another user's upload", async () => {
     const theirs = await upload(other.token);
-    await expect(RESCUE.create(owner.token, home, [theirs]).catch((e) => Promise.reject(codeOf(e)))).rejects.toBe('NOT_FOUND');
+    await expect(outcome(RESCUE.create(owner.token, home, [theirs]))).resolves.toBe('NOT_FOUND');
   });
 
   it('rejects an upload that was already used by another post', async () => {
     const once = await upload(owner.token);
     await RESCUE.create(owner.token, home, [once]);
-    await expect(RESCUE.create(owner.token, home, [once]).catch((e) => Promise.reject(codeOf(e)))).rejects.toBe('NOT_FOUND');
+    await expect(outcome(RESCUE.create(owner.token, home, [once]))).resolves.toBe('NOT_FOUND');
   });
 
   it('rejects a ticket whose file was never uploaded', async () => {
     const never = (await requestUpload(owner.token, 'image/jpeg', 1_000)).data!.requestMediaUploadUrl.mediaId;
-    await expect(RESCUE.create(owner.token, home, [never]).catch((e) => Promise.reject(codeOf(e)))).rejects.toBe('NOT_FOUND');
+    await expect(outcome(RESCUE.create(owner.token, home, [never]))).resolves.toBe('NOT_FOUND');
   });
 
   it('rejects duplicate and malformed media ids', async () => {
     const m = await upload(owner.token);
-    await expect(RESCUE.create(owner.token, home, [m, m]).catch((e) => Promise.reject(codeOf(e)))).rejects.toBe('VALIDATION_ERROR');
-    await expect(RESCUE.create(owner.token, home, ['not-a-uuid']).catch((e) => Promise.reject(codeOf(e)))).rejects.toBe('VALIDATION_ERROR');
+    await expect(outcome(RESCUE.create(owner.token, home, [m, m]))).resolves.toBe('VALIDATION_ERROR');
+    await expect(outcome(RESCUE.create(owner.token, home, ['not-a-uuid']))).resolves.toBe('VALIDATION_ERROR');
   });
 
   // Finding F-08: post media is copied from staging to public storage without
@@ -72,13 +78,15 @@ describe('attaching media to a post', () => {
   it.failing('rejects a non-image uploaded as image/jpeg', async () => {
     const text = Buffer.from('plain text pretending to be a photograph, not an image at all');
     const id = await upload(owner.token, text, 'image/jpeg');
-    await expect(RESCUE.create(owner.token, home, [id]).catch((e) => Promise.reject(codeOf(e)))).rejects.toBe('VALIDATION_ERROR');
+    await expect(outcome(RESCUE.create(owner.token, home, [id]))).resolves.toBe('VALIDATION_ERROR');
   });
 
   it.failing('rejects a PNG declared as image/jpeg', async () => {
-    const png = await sharp({ create: { width: 8, height: 8, channels: 3, background: '#000' } }).png().toBuffer();
+    const png = await sharp({ create: { width: 8, height: 8, channels: 3, background: '#000' } })
+      .png()
+      .toBuffer();
     const id = await upload(owner.token, png, 'image/jpeg');
-    await expect(RESCUE.create(owner.token, home, [id]).catch((e) => Promise.reject(codeOf(e)))).rejects.toBe('VALIDATION_ERROR');
+    await expect(outcome(RESCUE.create(owner.token, home, [id]))).resolves.toBe('VALIDATION_ERROR');
   });
 });
 
@@ -91,29 +99,45 @@ describe('ownership of contact and adoption links (IDOR)', () => {
     requester = await createAccount('edge-requester', home);
     postId = await MATING.create(owner.token, home, [await upload(owner.token)]);
     requestId = (
-      await ok<any>(requester.token, `mutation($p: ID!) { requestContact(postId: $p, message: "Hello, is Duke available?") { id } }`, {
-        p: postId,
-      })
+      await ok<any>(
+        requester.token,
+        `mutation($p: ID!) { requestContact(postId: $p, message: "Hello, is Duke available?") { id } }`,
+        {
+          p: postId,
+        },
+      )
     ).requestContact.id;
   });
 
   it("a third party cannot fetch someone else's WhatsApp link", async () => {
     await ok(owner.token, `mutation($r: ID!) { approveContactRequest(requestId: $r) { id } }`, { r: requestId });
-    expect((await gql(other.token, `query($r: ID!) { getWhatsAppLink(requestId: $r) }`, { r: requestId })).code).toBe('FORBIDDEN');
+    expect((await gql(other.token, `query($r: ID!) { getWhatsAppLink(requestId: $r) }`, { r: requestId })).code).toBe(
+      'FORBIDDEN',
+    );
   });
 
   it('a requester cannot approve or reject their own request', async () => {
     const second = await createAccount('edge-self-approve', home);
-    const r = await ok<any>(second.token, `mutation($p: ID!) { requestContact(postId: $p, message: "Hi, still looking for a match?") { id } }`, {
-      p: postId,
-    });
+    const r = await ok<any>(
+      second.token,
+      `mutation($p: ID!) { requestContact(postId: $p, message: "Hi, still looking for a match?") { id } }`,
+      {
+        p: postId,
+      },
+    );
     const id = r.requestContact.id;
-    expect((await gql(second.token, `mutation($r: ID!) { approveContactRequest(requestId: $r) { id } }`, { r: id })).code).toBe('FORBIDDEN');
-    expect((await gql(second.token, `mutation($r: ID!) { rejectContactRequest(requestId: $r) { id } }`, { r: id })).code).toBe('FORBIDDEN');
+    expect(
+      (await gql(second.token, `mutation($r: ID!) { approveContactRequest(requestId: $r) { id } }`, { r: id })).code,
+    ).toBe('FORBIDDEN');
+    expect(
+      (await gql(second.token, `mutation($r: ID!) { rejectContactRequest(requestId: $r) { id } }`, { r: id })).code,
+    ).toBe('FORBIDDEN');
   });
 
   it('only the owner can list the requests on a post', async () => {
-    const r = await gql(other.token, `query($p: ID!) { postContactRequests(postId: $p) { edges { node { id } } } }`, { p: postId });
+    const r = await gql(other.token, `query($p: ID!) { postContactRequests(postId: $p) { edges { node { id } } } }`, {
+      p: postId,
+    });
     expect(r.code).toBe('FORBIDDEN');
   });
 });
@@ -127,14 +151,24 @@ describe('pagination and identifiers', () => {
     [-1, 1],
     [1000, 50],
   ])('first: %p — helpFeed rejects it, matingFeed clamps it to %p', async (first, max) => {
-    const help = await gql(owner.token, `query($f: Int, $c: ID) { helpFeed(cityId: $c, first: $f) { edges { node { id } } } }`, { f: first, c: home });
+    const help = await gql(
+      owner.token,
+      `query($f: Int, $c: ID) { helpFeed(cityId: $c, first: $f) { edges { node { id } } } }`,
+      { f: first, c: home },
+    );
     expect(help.code).toBe('VALIDATION_ERROR');
-    const mating = await ok<any>(owner.token, `query($f: Int) { matingFeed(first: $f) { edges { node { id } } } }`, { f: first });
+    const mating = await ok<any>(owner.token, `query($f: Int) { matingFeed(first: $f) { edges { node { id } } } }`, {
+      f: first,
+    });
     expect(mating.matingFeed.edges.length).toBeLessThanOrEqual(max);
   });
 
   it('rejects a malformed cursor with a validation error, never a crash', async () => {
-    const help = await gql(owner.token, `query($c: ID) { helpFeed(cityId: $c, first: 5, after: "garbage") { edges { node { id } } } }`, { c: home });
+    const help = await gql(
+      owner.token,
+      `query($c: ID) { helpFeed(cityId: $c, first: 5, after: "garbage") { edges { node { id } } } }`,
+      { c: home },
+    );
     const mating = await gql(owner.token, `{ matingFeed(first: 5, after: "garbage") { edges { node { id } } } }`);
     expect([help.code, mating.code]).toEqual(['VALIDATION_ERROR', 'VALIDATION_ERROR']);
   });
@@ -150,10 +184,14 @@ describe('pagination and identifiers', () => {
     const seen: string[] = [];
     let after: string | null = null;
     for (let page = 0; page < 50; page++) {
-      const d: any = await ok(author.token, `query($a: String, $c: ID) { helpFeed(cityId: $c, first: 2, after: $a) { edges { node { id } } pageInfo { hasNextPage endCursor } } }`, {
-        a: after,
-        c: home,
-      });
+      const d: any = await ok(
+        author.token,
+        `query($a: String, $c: ID) { helpFeed(cityId: $c, first: 2, after: $a) { edges { node { id } } pageInfo { hasNextPage endCursor } } }`,
+        {
+          a: after,
+          c: home,
+        },
+      );
       seen.push(...d.helpFeed.edges.map((e: any) => e.node.id));
       if (!d.helpFeed.pageInfo.hasNextPage) break;
       after = d.helpFeed.pageInfo.endCursor;
@@ -163,7 +201,11 @@ describe('pagination and identifiers', () => {
   });
 
   it('returns an empty page (not an error) when nothing matches', async () => {
-    const d = await ok<any>(owner.token, `query($c: ID) { helpFeed(cityId: $c, first: 5, search: "zzqq-no-such-post-anywhere") { edges { node { id } } pageInfo { hasNextPage } } }`, { c: home });
+    const d = await ok<any>(
+      owner.token,
+      `query($c: ID) { helpFeed(cityId: $c, first: 5, search: "zzqq-no-such-post-anywhere") { edges { node { id } } pageInfo { hasNextPage } } }`,
+      { c: home },
+    );
     expect(d.helpFeed).toEqual({ edges: [], pageInfo: { hasNextPage: false } });
   });
 

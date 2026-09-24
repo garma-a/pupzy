@@ -23,7 +23,10 @@ describe('UsersResolver account-private fields', () => {
   } as unknown as User;
   const cityLoader = jest.fn().mockResolvedValue({ id: 'city-1' });
   const ctxFor = (viewerId: string | undefined) =>
-    ({ user: viewerId ? { id: viewerId } : undefined, loaders: { cityById: { load: cityLoader } } }) as unknown as GqlContext;
+    ({
+      user: viewerId ? { id: viewerId } : undefined,
+      loaders: { cityById: { load: cityLoader } },
+    }) as unknown as GqlContext;
 
   beforeEach(() => cityLoader.mockClear());
 

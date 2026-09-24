@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return -- GraphQL responses are untyped JSON */
 /**
  * Post type × role matrix, end to end over HTTP.
  *
@@ -12,7 +13,7 @@
  * fails because of a known, reported defect — it keeps the suite green while
  * documenting the bug, and turns red once the bug is fixed so it can be flipped.
  */
-import { Account, cityId, createAccount, gql, ok, sleep, upload, uploads } from './harness';
+import { Account, cityId, createAccount, gql, ok, sleep, uploads } from './harness';
 import { POST_TYPES, PostTypeCase } from './post-types';
 
 const HOME = 'Qasr Al-Nile';
@@ -36,9 +37,13 @@ const POST_Q = `query($p: ID!) {
 }`;
 
 async function myPostIds(a: Account, t: PostTypeCase) {
-  const d = await ok<any>(a.token, `query($t: PostType!) { myPosts(postType: $t, first: 50) { edges { node { id } } } }`, {
-    t: t.postType,
-  });
+  const d = await ok<any>(
+    a.token,
+    `query($t: PostType!) { myPosts(postType: $t, first: 50) { edges { node { id } } } }`,
+    {
+      t: t.postType,
+    },
+  );
   return d.myPosts.edges.map((e: any) => e.node.id as string);
 }
 
@@ -132,7 +137,8 @@ describe.each(POST_TYPES)('$key', (t) => {
 
     it(t.coordinatesPublic ? 'sees the exact location' : 'never sees the exact location (city only)', async () => {
       const { post } = await ok<any>(viewer.token, POST_Q, { p: postId });
-      if (t.coordinatesPublic) expect(post.coordinates).toEqual({ latitude: expect.any(Number), longitude: expect.any(Number) });
+      if (t.coordinatesPublic)
+        expect(post.coordinates).toEqual({ latitude: expect.any(Number), longitude: expect.any(Number) });
       else expect(post.coordinates).toBeNull();
     });
 
@@ -149,40 +155,78 @@ describe.each(POST_TYPES)('$key', (t) => {
       });
     } else {
       it('upvotes and un-upvotes it', async () => {
-        const on = await ok<any>(viewer.token, `mutation($p: ID!) { toggleUpvote(postId: $p) { isUpvotedByMe upvoteCount } }`, { p: postId });
+        const on = await ok<any>(
+          viewer.token,
+          `mutation($p: ID!) { toggleUpvote(postId: $p) { isUpvotedByMe upvoteCount } }`,
+          { p: postId },
+        );
         expect(on.toggleUpvote).toEqual({ isUpvotedByMe: true, upvoteCount: 1 });
-        const off = await ok<any>(viewer.token, `mutation($p: ID!) { toggleUpvote(postId: $p) { isUpvotedByMe upvoteCount } }`, { p: postId });
+        const off = await ok<any>(
+          viewer.token,
+          `mutation($p: ID!) { toggleUpvote(postId: $p) { isUpvotedByMe upvoteCount } }`,
+          { p: postId },
+        );
         expect(off.toggleUpvote).toEqual({ isUpvotedByMe: false, upvoteCount: 0 });
       });
     }
 
     it('saves it and finds it in Saved', async () => {
-      const r = await ok<any>(viewer.token, `mutation($p: ID!) { toggleSave(postId: $p) { isSavedByMe } }`, { p: postId });
+      const r = await ok<any>(viewer.token, `mutation($p: ID!) { toggleSave(postId: $p) { isSavedByMe } }`, {
+        p: postId,
+      });
       expect(r.toggleSave.isSavedByMe).toBe(true);
       expect(await savedIds(viewer)).toContain(postId);
     });
 
     it('comments, and a retried submission returns the same comment', async () => {
       const input = { clientRequestId: `c-${t.key}-${Date.now()}`, postId, text: 'Is this still available?' };
-      const first = await ok<any>(viewer.token, `mutation($i: CreateCommentInput!) { createComment(input: $i) { id } }`, { i: input });
-      const retry = await ok<any>(viewer.token, `mutation($i: CreateCommentInput!) { createComment(input: $i) { id } }`, { i: input });
+      const first = await ok<any>(
+        viewer.token,
+        `mutation($i: CreateCommentInput!) { createComment(input: $i) { id } }`,
+        { i: input },
+      );
+      const retry = await ok<any>(
+        viewer.token,
+        `mutation($i: CreateCommentInput!) { createComment(input: $i) { id } }`,
+        { i: input },
+      );
       expect(retry.createComment.id).toBe(first.createComment.id);
-      const list = await ok<any>(owner.token, `query($p: ID!) { comments(postId: $p) { edges { node { id } } } }`, { p: postId });
+      const list = await ok<any>(owner.token, `query($p: ID!) { comments(postId: $p) { edges { node { id } } } }`, {
+        p: postId,
+      });
       expect(list.comments.edges.map((e: any) => e.node.id)).toContain(first.createComment.id);
     });
 
     if (t.interaction === 'contactRequest') {
       it('requests contact; the owner sees and approves it; the viewer gets the WhatsApp link', async () => {
-        const req = await ok<any>(viewer.token, `mutation($p: ID!) { requestContact(postId: $p, message: "Hello! Is this still open?") { id status } }`, { p: postId });
+        const req = await ok<any>(
+          viewer.token,
+          `mutation($p: ID!) { requestContact(postId: $p, message: "Hello! Is this still open?") { id status } }`,
+          { p: postId },
+        );
         expect(req.requestContact.status).toBe('PENDING');
-        const dup = await gql(viewer.token, `mutation($p: ID!) { requestContact(postId: $p, message: "Hello again, second try.") { id } }`, { p: postId });
+        const dup = await gql(
+          viewer.token,
+          `mutation($p: ID!) { requestContact(postId: $p, message: "Hello again, second try.") { id } }`,
+          { p: postId },
+        );
         expect(dup.code).toBe('CONFLICT');
-        const early = await gql(viewer.token, `query($r: ID!) { getWhatsAppLink(requestId: $r) }`, { r: req.requestContact.id });
+        const early = await gql(viewer.token, `query($r: ID!) { getWhatsAppLink(requestId: $r) }`, {
+          r: req.requestContact.id,
+        });
         expect(early.errors).toBeDefined();
-        const list = await ok<any>(owner.token, `query($p: ID!) { postContactRequests(postId: $p) { edges { node { id } } } }`, { p: postId });
+        const list = await ok<any>(
+          owner.token,
+          `query($p: ID!) { postContactRequests(postId: $p) { edges { node { id } } } }`,
+          { p: postId },
+        );
         expect(list.postContactRequests.edges.map((e: any) => e.node.id)).toContain(req.requestContact.id);
-        await ok(owner.token, `mutation($r: ID!) { approveContactRequest(requestId: $r) { id } }`, { r: req.requestContact.id });
-        const link = await ok<any>(viewer.token, `query($r: ID!) { getWhatsAppLink(requestId: $r) }`, { r: req.requestContact.id });
+        await ok(owner.token, `mutation($r: ID!) { approveContactRequest(requestId: $r) { id } }`, {
+          r: req.requestContact.id,
+        });
+        const link = await ok<any>(viewer.token, `query($r: ID!) { getWhatsAppLink(requestId: $r) }`, {
+          r: req.requestContact.id,
+        });
         expect(link.getWhatsAppLink).toMatch(/^https:\/\/wa\.me\/\d+/);
       });
     }
@@ -206,10 +250,20 @@ describe.each(POST_TYPES)('$key', (t) => {
           },
         );
         expect(app.submitAdoptionApplication.status).toBe('PENDING');
-        const list = await ok<any>(owner.token, `query($p: ID!) { postAdoptionApplications(postId: $p) { edges { node { id } } } }`, { p: postId });
-        expect(list.postAdoptionApplications.edges.map((e: any) => e.node.id)).toContain(app.submitAdoptionApplication.id);
-        await ok(owner.token, `mutation($a: ID!) { approveAdoptionApplication(applicationId: $a) { id } }`, { a: app.submitAdoptionApplication.id });
-        const link = await ok<any>(viewer.token, `query($a: ID!) { getAdoptionWhatsAppLink(applicationId: $a) }`, { a: app.submitAdoptionApplication.id });
+        const list = await ok<any>(
+          owner.token,
+          `query($p: ID!) { postAdoptionApplications(postId: $p) { edges { node { id } } } }`,
+          { p: postId },
+        );
+        expect(list.postAdoptionApplications.edges.map((e: any) => e.node.id)).toContain(
+          app.submitAdoptionApplication.id,
+        );
+        await ok(owner.token, `mutation($a: ID!) { approveAdoptionApplication(applicationId: $a) { id } }`, {
+          a: app.submitAdoptionApplication.id,
+        });
+        const link = await ok<any>(viewer.token, `query($a: ID!) { getAdoptionWhatsAppLink(applicationId: $a) }`, {
+          a: app.submitAdoptionApplication.id,
+        });
         expect(link.getAdoptionWhatsAppLink).toMatch(/^https:\/\/wa\.me\/\d+/);
       });
     }
@@ -222,9 +276,15 @@ describe.each(POST_TYPES)('$key', (t) => {
     }
 
     it('reports it once; a second report says it is already reported', async () => {
-      const first = await ok<any>(viewer.token, `mutation($p: ID!) { reportPost(input: { postId: $p, reason: SPAM }) }`, { p: postId });
+      const first = await ok<any>(
+        viewer.token,
+        `mutation($p: ID!) { reportPost(input: { postId: $p, reason: SPAM }) }`,
+        { p: postId },
+      );
       expect(first.reportPost).toBe(true);
-      const again = await gql(viewer.token, `mutation($p: ID!) { reportPost(input: { postId: $p, reason: SPAM }) }`, { p: postId });
+      const again = await gql(viewer.token, `mutation($p: ID!) { reportPost(input: { postId: $p, reason: SPAM }) }`, {
+        p: postId,
+      });
       expect(again.code).toBe('POST_ALREADY_REPORTED');
     });
 
@@ -233,11 +293,17 @@ describe.each(POST_TYPES)('$key', (t) => {
         gql(viewer.token, closeMutation, { p: postId, s: t.closeTo }),
         gql(viewer.token, `mutation($p: ID!) { deletePost(postId: $p) }`, { p: postId }),
         gql(viewer.token, `mutation($p: ID!) { renewPost(postId: $p) { id } }`, { p: postId }),
-        gql(viewer.token, `query($p: ID!) { postContactRequests(postId: $p) { edges { node { id } } } }`, { p: postId }),
+        gql(viewer.token, `query($p: ID!) { postContactRequests(postId: $p) { edges { node { id } } } }`, {
+          p: postId,
+        }),
       ];
       for (const r of await Promise.all(attempts)) expect(r.code).toBe('FORBIDDEN');
       if (t.interaction === 'adoptionApplication') {
-        const apps = await gql(viewer.token, `query($p: ID!) { postAdoptionApplications(postId: $p) { edges { node { id } } } }`, { p: postId });
+        const apps = await gql(
+          viewer.token,
+          `query($p: ID!) { postAdoptionApplications(postId: $p) { edges { node { id } } } }`,
+          { p: postId },
+        );
         expect(apps.code).toBe('FORBIDDEN');
       }
       const { post } = await ok<any>(owner.token, POST_Q, { p: postId });
@@ -273,13 +339,17 @@ describe.each(POST_TYPES)('$key', (t) => {
         gql(blocked.token, `mutation($i: CreateCommentInput!) { createComment(input: $i) { id } }`, {
           i: { clientRequestId: `blk-${t.key}-${Date.now()}`, postId, text: 'hello from a blocked account' },
         }),
-        gql(blocked.token, `mutation($p: ID!) { requestContact(postId: $p, message: "Hi, are you still around?") { id } }`, { p: postId }),
+        gql(
+          blocked.token,
+          `mutation($p: ID!) { requestContact(postId: $p, message: "Hi, are you still around?") { id } }`,
+          { p: postId },
+        ),
       ]);
       for (const r of results) expect(r.code).toMatch(/NOT_FOUND|VALIDATION_ERROR/);
       expect(results[0].code).toBe('NOT_FOUND');
     });
 
-    it("is hidden from the owner in the other direction too", async () => {
+    it('is hidden from the owner in the other direction too', async () => {
       const theirs = await t.create(blocked.token, home, await uploads(blocked.token, 1));
       expect(await t.feedIds(owner.token, home)).not.toContain(theirs);
       const byId = await gql<any>(owner.token, POST_Q, { p: theirs });
@@ -306,7 +376,9 @@ describe.each(POST_TYPES)('$key', (t) => {
     it('deletes a post: gone from feeds, My Posts, Saved and detail; a second delete is NOT_FOUND', async () => {
       const doomed = await t.create(owner.token, home, await uploads(owner.token, 1));
       await ok(viewer.token, `mutation($p: ID!) { toggleSave(postId: $p) { id } }`, { p: doomed });
-      expect((await ok<any>(owner.token, `mutation($p: ID!) { deletePost(postId: $p) }`, { p: doomed })).deletePost).toBe(true);
+      expect(
+        (await ok<any>(owner.token, `mutation($p: ID!) { deletePost(postId: $p) }`, { p: doomed })).deletePost,
+      ).toBe(true);
       expect(await t.feedIds(viewer.token, home)).not.toContain(doomed);
       expect(await myPostIds(owner, t)).not.toContain(doomed);
       expect(await savedIds(viewer)).not.toContain(doomed);
@@ -315,7 +387,9 @@ describe.each(POST_TYPES)('$key', (t) => {
       expect(stale.code).toBeNull();
       expect(stale.data?.post).toBeNull();
       expect((await t.detail(viewer.token, doomed)).code).toBe('NOT_FOUND');
-      expect((await gql(owner.token, `mutation($p: ID!) { deletePost(postId: $p) }`, { p: doomed })).code).toBe('NOT_FOUND');
+      expect((await gql(owner.token, `mutation($p: ID!) { deletePost(postId: $p) }`, { p: doomed })).code).toBe(
+        'NOT_FOUND',
+      );
     });
   });
 });
@@ -323,20 +397,24 @@ describe.each(POST_TYPES)('$key', (t) => {
 describe('deleted post photos', () => {
   // Finding F-09: OWNER_REMOVE retains media by contract, and no deletion work
   // is enqueued, so a deleted post's photo stays publicly downloadable.
-  it.failing('become unreachable within two minutes of deletion', async () => {
-    const author = await createAccount('photo-cleanup', home);
-    const RESCUE = POST_TYPES[0];
-    const id = await RESCUE.create(author.token, home, await uploads(author.token, 1));
-    const { post } = await ok<any>(author.token, POST_Q, { p: id });
-    const url: string = post.media[0].publicUrl;
-    expect((await fetch(url)).status).toBe(200);
-    await ok(author.token, `mutation($p: ID!) { deletePost(postId: $p) }`, { p: id });
-    const deadline = Date.now() + 120_000;
-    let status = 200;
-    while (Date.now() < deadline && status === 200) {
-      await sleep(10_000);
-      status = (await fetch(url)).status;
-    }
-    expect(status).not.toBe(200);
-  }, 180_000);
+  it.failing(
+    'become unreachable within two minutes of deletion',
+    async () => {
+      const author = await createAccount('photo-cleanup', home);
+      const RESCUE = POST_TYPES[0];
+      const id = await RESCUE.create(author.token, home, await uploads(author.token, 1));
+      const { post } = await ok<any>(author.token, POST_Q, { p: id });
+      const url: string = post.media[0].publicUrl;
+      expect((await fetch(url)).status).toBe(200);
+      await ok(author.token, `mutation($p: ID!) { deletePost(postId: $p) }`, { p: id });
+      const deadline = Date.now() + 120_000;
+      let status = 200;
+      while (Date.now() < deadline && status === 200) {
+        await sleep(10_000);
+        status = (await fetch(url)).status;
+      }
+      expect(status).not.toBe(200);
+    },
+    180_000,
+  );
 });
