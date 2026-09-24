@@ -394,9 +394,9 @@ describe.each(POST_TYPES)('$key', (t) => {
   });
 });
 
-describe('deleted post photos', () => {
+describe('photos of an owner-removed post', () => {
   // Finding F-09: OWNER_REMOVE retains media by contract, and no deletion work
-  // is enqueued, so a deleted post's photo stays publicly downloadable.
+  // is enqueued, so a removed post's photo stays publicly downloadable.
   it.failing(
     'become unreachable within two minutes of deletion',
     async () => {
