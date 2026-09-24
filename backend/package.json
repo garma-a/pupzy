@@ -22,6 +22,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:integration": "jest --testRegex=\".*\\.integration\\.spec\\.ts$\" --runInBand",
+    "test:live": "jest --config ./test/jest-live.json --runInBand",
     "verify:release": "node scripts/verify-release.mjs",
     "db:migrate": "ts-node -r tsconfig-paths/register src/database/migrate.ts",
     "db:migrate:prod": "node dist/database/migrate.js",
