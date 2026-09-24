@@ -40,6 +40,12 @@ const envSchema = z.object({
   R2_BUCKET_NAME: z.string().min(1),
   /** Public URL for the R2 bucket, e.g. 'https://pub-xxx.r2.dev'. */
   R2_PUBLIC_URL: z.string().url({ message: 'R2_PUBLIC_URL must be a valid URL' }),
+  /**
+   * Optional S3 endpoint override for local end-to-end runs against an
+   * S3-compatible fake. Unset in every real deployment, which keeps the
+   * derived `https://<account>.r2.cloudflarestorage.com` endpoint.
+   */
+  R2_ENDPOINT: z.string().url({ message: 'R2_ENDPOINT must be a valid URL' }).optional(),
 
   // ─── Application ─────────────────────────────────────────────────────────
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
