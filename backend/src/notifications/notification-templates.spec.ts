@@ -162,6 +162,13 @@ describe('notification templates', () => {
     expect(reunited.bodyArabic).toContain('Lost Dog');
     expect(reunited.bodyArabic).toContain('تم لمّ الشمل');
 
+    const adopted = buildNotificationContent('POST_COMPLETED', { postTitle: 'Cute Kitten', outcome: 'ADOPTED' });
+    expect(adopted.title).toBe('Pet adopted');
+    expect(adopted.body).toBe('The post "Cute Kitten" was marked as adopted.');
+    expect(adopted.titleArabic).toBe('تم التبني');
+    expect(adopted.bodyArabic).toContain('Cute Kitten');
+    expect(adopted.bodyArabic).toContain('تم التبني');
+
     const sold = buildNotificationContent('POST_COMPLETED', { postTitle: 'Dog Crate', outcome: 'SOLD' });
     expect(sold.title).toBe('Item sold');
     expect(sold.body).toBe('The post "Dog Crate" was marked as sold.');

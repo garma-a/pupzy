@@ -141,16 +141,17 @@ Administrative notifications written directly by the AdminJS service (`POST_REMO
 
 ### 3.2 Participant completion notifications
 
-Closure-time participants (Boost/save, Comment/Reply and Contact Request participation) receive the durable completion notification types as bilingual rows routed through `related_post_id`; `related_comment_id` is null. The copy is outcome-specific:
+Closure-time participants (Boost/save, Comment/Reply, Contact Request and Adoption Application participation) receive the durable completion notification types as bilingual rows routed through `related_post_id`; `related_comment_id` is null. Every adoption applicant counts regardless of application status (`PENDING`, `APPROVED`, `REJECTED`), and overlapping membership across participation types produces one recipient. The copy is outcome-specific:
 
 | Type | Outcome | English | Arabic |
 |---|---|---|---|
 | `POST_COMPLETED` | `REUNITED` | "Pet reunited" — `The post "…" was marked as reunited.` | "تم لمّ الشمل" |
+| `POST_COMPLETED` | `ADOPTED` | "Pet adopted" — `The post "…" was marked as adopted.` | "تم التبني" |
 | `POST_COMPLETED` | `SOLD` | "Item sold" — `The post "…" was marked as sold.` | "تم البيع" |
 | `POST_COMPLETED` | `RESOLVED` | "Post resolved" — `The post "…" was marked as resolved.` | "تم حل المنشور" |
 | `RESCUE_COMPLETED` | `RESOLVED` | "Rescue resolved" — `The rescue "…" was marked as rescued.` | "تم حل حالة الإنقاذ" |
 
-A re-opened outcome sends the correction `POST_REOPENED` ("Post reopened") or `RESCUE_REOPENED` ("Rescue reopened") through the same `related_post_id`. Removal, moderation takedown and inactivity expiry never send a completion or correction notification.
+The completion row for an adoption (`POST_COMPLETED`/`ADOPTED`) carries the same `relatedPostId` routing: opening it navigates to the adoption Post detail screen exactly like every other completed outcome. Implementing that navigation in Flutter is a separate effort; this backend contract only guarantees the routing identifier, the bilingual copy and the notification type. A re-opened outcome sends the correction `POST_REOPENED` ("Post reopened") or `RESCUE_REOPENED` ("Rescue reopened") through the same `related_post_id`. Removal, moderation takedown and inactivity expiry never send a completion or correction notification.
 
 ---
 

@@ -473,6 +473,72 @@ describe('Administrator case resolution HTTP boundary', () => {
     assert.equal(removalEvents.rows[0].count, 0, 'removal never emits a completion event');
   });
 
+  it('captures adoption applicants of every status in the ADOPTED completion audience over authenticated HTTP', async () => {
+    const ownerId = await insertUser('adopted-audience-owner');
+    const pendingApplicantId = await insertUser('adopted-audience-pending');
+    const approvedApplicantId = await insertUser('adopted-audience-approved');
+    const rejectedApplicantId = await insertUser('adopted-audience-rejected');
+    const overlappingApplicantId = await insertUser('adopted-audience-overlapping');
+    const saverId = await insertUser('adopted-audience-saver');
+    const postId = await insertTypedPost({ ownerId, postType: 'ADOPTION', title: 'Adopted audience case' });
+
+    await insertAdoptionApplication({ postId, applicantId: pendingApplicantId });
+    await insertAdoptionApplication({ postId, applicantId: approvedApplicantId, status: 'APPROVED' });
+    await insertAdoptionApplication({ postId, applicantId: rejectedApplicantId, status: 'REJECTED' });
+    await insertAdoptionApplication({ postId, applicantId: overlappingApplicantId });
+
+    // The overlapping applicant is also a saver and a commenter, and one user
+    // saves without applying, so the audience union is exercised end to end.
+    await database.pool.query(`INSERT INTO post_saves (post_id, user_id) VALUES ($1, $2), ($1, $3)`, [
+      postId,
+      overlappingApplicantId,
+      saverId,
+    ]);
+    await database.pool.query(
+      `INSERT INTO comments (post_id, author_id, text, status)
+       VALUES ($1, $2, 'Applied and commented!', 'ACTIVE')`,
+      [postId, overlappingApplicantId],
+    );
+
+    const response = await postAction('markAdopted', postId, { reason: 'Adoption completed' }, staffCookie, staffCsrf);
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.notice?.type, 'success');
+
+    const event = (
+      await database.pool.query(
+        `SELECT type, outcome, post_type, closing_actor_id, title, body, title_arabic, body_arabic, status, total_recipients
+         FROM post_completion_notification_events WHERE post_id = $1`,
+        [postId],
+      )
+    ).rows[0];
+    assert.equal(event.type, 'POST_COMPLETED');
+    assert.equal(event.outcome, 'ADOPTED');
+    assert.equal(event.post_type, 'ADOPTION');
+    assert.equal(event.closing_actor_id, null);
+    assert.equal(event.title, 'Pet adopted');
+    assert.equal(event.body, 'The post "Adopted audience case" was marked as adopted.');
+    assert.equal(event.title_arabic, 'تم التبني');
+    assert.ok(event.body_arabic.includes('Adopted audience case'));
+    assert.ok(event.body_arabic.includes('تم التبني'));
+    assert.equal(event.total_recipients, 5);
+    assert.equal(event.status, 'PENDING');
+
+    const recipients = (
+      await database.pool.query(`SELECT recipient_id FROM post_completion_recipients WHERE post_id = $1`, [postId])
+    ).rows.map((row) => row.recipient_id);
+    assert.deepEqual(
+      recipients.sort(),
+      [pendingApplicantId, approvedApplicantId, rejectedApplicantId, overlappingApplicantId, saverId].sort(),
+    );
+    assert.equal(recipients.includes(ownerId), false, 'the creator is never a completion audience member');
+    assert.equal(
+      recipients.filter((id) => id === overlappingApplicantId).length,
+      1,
+      'overlapping applicant/comment/save membership produces exactly one recipient row',
+    );
+  });
+
   it('requires an internal reason and rejects invalid, repeated or removed-state resolutions without writes', async () => {
     const ownerId = await insertUser('guard-owner');
     const adoptionId = await insertTypedPost({ ownerId, postType: 'ADOPTION', title: 'Guard adoption' });
@@ -730,6 +796,7 @@ describe('Administrator case reopening HTTP boundary', () => {
   it('corrects a mistaken resolution over authenticated HTTP while closed interactions stay closed', async () => {
     const ownerId = await insertUser('reopen-flow-owner');
     const requesterId = await insertUser('reopen-flow-requester');
+    const applicantId = await insertUser('reopen-flow-applicant');
     const reporterId = await insertUser('reopen-flow-reporter');
     await database.pool.query(
       `INSERT INTO device_registrations (user_id, token, platform)
@@ -738,6 +805,7 @@ describe('Administrator case reopening HTTP boundary', () => {
     );
     const postId = await insertTypedPost({ ownerId, postType: 'ADOPTION', title: 'Correction journey case' });
     const contactRequestId = await insertContactRequest({ postId, requesterId });
+    const applicationId = await insertAdoptionApplication({ postId, applicantId });
     const reportId = (
       await database.pool.query(
         `INSERT INTO post_reports (post_id, reporter_id, reason)
@@ -761,6 +829,11 @@ describe('Administrator case reopening HTTP boundary', () => {
       await database.pool.query(`SELECT status, responded_at FROM contact_requests WHERE id = $1`, [contactRequestId])
     ).rows[0];
     assert.equal(closedRequest.status, 'REJECTED');
+    const closedApplication = (
+      await database.pool.query(`SELECT status, responded_at FROM adoption_applications WHERE id = $1`, [applicationId])
+    ).rows[0];
+    assert.equal(closedApplication.status, 'REJECTED');
+    assert.ok(closedApplication.responded_at);
 
     const reopened = await postAction(
       REOPEN_ACTION_NAME,
@@ -831,6 +904,16 @@ describe('Administrator case reopening HTTP boundary', () => {
     ).rows[0];
     assert.equal(stillClosed.status, 'REJECTED', 'reopening never revives a closed request');
     assert.ok(stillClosed.responded_at);
+    const stillClosedApplication = (
+      await database.pool.query(`SELECT status, responded_at FROM adoption_applications WHERE id = $1`, [applicationId])
+    ).rows[0];
+    assert.equal(stillClosedApplication.status, 'REJECTED', 'reopening never revives a terminated application');
+    assert.ok(stillClosedApplication.responded_at);
+    const completionNotifications = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE recipient_id = $1 AND type = 'POST_COMPLETED'`,
+      [applicantId],
+    );
+    assert.equal(completionNotifications.rows[0].count, 0, 'reopening never re-notifies the recorded completion');
 
     const report = (
       await database.pool.query(`SELECT reviewed_at, review_outcome FROM post_reports WHERE id = $1`, [reportId])

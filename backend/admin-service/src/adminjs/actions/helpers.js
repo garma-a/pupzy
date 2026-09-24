@@ -308,7 +308,9 @@ export function readModerationReason(value) {
 
 /**
  * Atomically captures a post completion event and audience snapshot for a
- * completed Post outcome. Excludes the closing actor and the post creator
+ * completed Post outcome. The audience is the closure-time union of Boost/save,
+ * active Comment/Reply, Contact Request and Adoption Application participation,
+ * deduplicated. Excludes the closing actor and the post creator
  * (the creator already receives POST_RESOLVED_BY_ADMIN).
  *
  * `closingActorId` must be a `users.id`, never an `admin_users.id`: the column
@@ -349,6 +351,8 @@ export async function capturePostCompletion(client, { postId, postType, outcome,
        SELECT author_id AS recipient_id FROM comments WHERE post_id = $2::uuid AND status NOT IN ('DELETED', 'REMOVED')
        UNION
        SELECT requester_id AS recipient_id FROM contact_requests WHERE post_id = $2::uuid
+       UNION
+       SELECT applicant_id AS recipient_id FROM adoption_applications WHERE target_post_id = $2::uuid
      ) sub
      WHERE sub.recipient_id IS NOT NULL
        AND ($3::uuid IS NULL OR sub.recipient_id <> $3::uuid)
