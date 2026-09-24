@@ -309,7 +309,11 @@ class _ProfileSheetState extends State<ProfileSheet> {
         color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
       ),
-      child: Column(
+      // Scrolls so Sign Out and Delete Account (a store requirement) stay
+      // reachable when the sheet is taller than the screen — small phones or
+      // a large accessibility font size. It overflowed by 33 px at 360×780 dp.
+      child: SingleChildScrollView(
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 12),
@@ -528,6 +532,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
           ),
           const SizedBox(height: AppSpacing.xl),
         ],
+      ),
       ),
     );
   }

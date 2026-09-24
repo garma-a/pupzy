@@ -19,5 +19,13 @@ void main() {
       await tester.pump(const Duration(seconds: 8));
       await shoot(tester, 'explore-0${i + 2}-${tab.toLowerCase()}');
     }
+    // Rescue detail: its action row (raise / directions / comments / save) is
+    // the widest row in the app — the one most likely to overflow narrow phones.
+    await tester.tap(find.text('Help').last);
+    await pumpUntil(tester, find.text('Injured dog near Tahrir Square'), timeout: const Duration(seconds: 20));
+    await tester.tap(find.text('Injured dog near Tahrir Square').first);
+    await pumpUntil(tester, find.text('Get Directions'), timeout: const Duration(seconds: 20));
+    await tester.pump(const Duration(seconds: 3));
+    await shoot(tester, 'explore-05-rescue-detail');
   });
 }
