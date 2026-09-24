@@ -14,6 +14,7 @@ import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
 import '../widgets/city_picker_sheet.dart';
 import '../utils/age_parser.dart';
+import '../utils/photo_privacy.dart';
 
 /// A fixed-choice option: (canonical value sent to the backend, English label, Arabic label).
 /// The canonical value is what state/logic keys off of — never the translated label.
@@ -253,19 +254,6 @@ class _PostFormScreenState extends State<PostFormScreen> {
         _role != null;
   }
 
-  String _mimeTypeFor(XFile file) {
-    final mime = file.mimeType;
-    if (mime != null) return mime;
-    switch (file.path.split('.').last.toLowerCase()) {
-      case 'png':
-        return 'image/png';
-      case 'webp':
-        return 'image/webp';
-      default:
-        return 'image/jpeg';
-    }
-  }
-
   Future<Position?> _getCurrentPosition() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!mounted) return null;
@@ -395,8 +383,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final mediaIds = <String>[];
       for (final image in _images) {
-        final bytes = await image.readAsBytes();
-        final contentType = _mimeTypeFor(image);
+        final (bytes, contentType) = await photoForUpload(image);
         final uploadInfo = await graphql.requestMediaUploadUrl(
           contentType: contentType,
           fileSizeBytes: bytes.length,
@@ -465,8 +452,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final mediaIds = <String>[];
       for (final image in _images) {
-        final bytes = await image.readAsBytes();
-        final contentType = _mimeTypeFor(image);
+        final (bytes, contentType) = await photoForUpload(image);
         final uploadInfo = await graphql.requestMediaUploadUrl(
           contentType: contentType,
           fileSizeBytes: bytes.length,
@@ -539,8 +525,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final mediaIds = <String>[];
       for (final image in _images) {
-        final bytes = await image.readAsBytes();
-        final contentType = _mimeTypeFor(image);
+        final (bytes, contentType) = await photoForUpload(image);
         final uploadInfo = await graphql.requestMediaUploadUrl(
           contentType: contentType,
           fileSizeBytes: bytes.length,
@@ -615,8 +600,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final mediaIds = <String>[];
       for (final image in _images) {
-        final bytes = await image.readAsBytes();
-        final contentType = _mimeTypeFor(image);
+        final (bytes, contentType) = await photoForUpload(image);
         final uploadInfo = await graphql.requestMediaUploadUrl(
           contentType: contentType,
           fileSizeBytes: bytes.length,
@@ -688,8 +672,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final mediaIds = <String>[];
       for (final image in _images) {
-        final bytes = await image.readAsBytes();
-        final contentType = _mimeTypeFor(image);
+        final (bytes, contentType) = await photoForUpload(image);
         final uploadInfo = await graphql.requestMediaUploadUrl(
           contentType: contentType,
           fileSizeBytes: bytes.length,
@@ -780,8 +763,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final mediaIds = <String>[];
       for (final image in _images) {
-        final bytes = await image.readAsBytes();
-        final contentType = _mimeTypeFor(image);
+        final (bytes, contentType) = await photoForUpload(image);
         final uploadInfo = await graphql.requestMediaUploadUrl(
           contentType: contentType,
           fileSizeBytes: bytes.length,
