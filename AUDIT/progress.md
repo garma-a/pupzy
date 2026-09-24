@@ -11,10 +11,10 @@ Java 17, Node 24, local Postgres at localhost:5432 (`pupzy`). **No Docker, no ma
 - [x] 1.3 Commit
 
 ## Phase 2 — Get it running
-- [ ] 2.1 Install deps (backend npm, frontend pub)
-- [ ] 2.2 Test DB: migrations applied, seed 3+ users (owner / viewer / blocked), posts of every PostType, products, cities
-- [ ] 2.3 Start backend, confirm GraphQL endpoint responds
-- [ ] 2.4 Baseline: backend lint/typecheck/unit/integration; frontend analyze + tests — record before changing anything
+- [x] 2.1 Install deps (backend npm, frontend pub)
+- [x] 2.2 Test DB: migrations applied, seed 3+ users (owner / viewer / blocked), posts of every PostType, products, cities
+- [x] 2.3 Start backend, confirm GraphQL endpoint responds
+- [x] 2.4 Baseline: backend lint/typecheck/unit/integration; frontend analyze + tests — record before changing anything
 - [ ] 2.5 Commit
 
 ## Phase 3 — Backend tests
