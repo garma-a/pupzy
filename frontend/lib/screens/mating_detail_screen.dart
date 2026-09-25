@@ -16,6 +16,7 @@ import '../widgets/contact_request_sheet.dart';
 import '../widgets/contact_requests_owner_section.dart';
 import '../widgets/nearby_vets_section.dart';
 import '../widgets/owner_post_actions.dart';
+import '../utils/post_status_labels.dart';
 import '../widgets/pet_carousel.dart';
 import '../widgets/safety_actions.dart';
 import '../widgets/skeleton_loader.dart';
@@ -109,16 +110,33 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
     return true;
   }
 
+  /// New contact requests are only accepted while the Post is ACTIVE. An
+  /// already-approved requester keeps WhatsApp access after it closes.
+  bool get _acceptsNewRequests => _post?.status == 'ACTIVE';
+
+  /// Re-reads the Post's status after a request didn't go through — it may
+  /// have closed while this screen was open, and the button should say so.
+  Future<void> _refreshStatus() async {
+    final (fresh, _) = await context.read<GraphQLService>().fetchPostDetail(widget.postId);
+    if (!mounted || fresh == null || _post == null || fresh.status == _post!.status) return;
+    setState(() => _post = _post!.copyWith(status: fresh.status));
+  }
+
   Future<void> _contactOwner() async {
     final existing = _myContactRequest;
     if (existing == null) {
+      if (!_acceptsNewRequests) return;
       final sent = await showModalBottomSheet<bool>(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
         builder: (_) => ContactRequestSheet(postId: widget.postId),
       );
-      if (sent != true || !mounted) return;
+      if (!mounted) return;
+      if (sent != true) {
+        await _refreshStatus();
+        return;
+      }
       final graphql = context.read<GraphQLService>();
       final (mine, _) = await graphql.fetchMyContactRequests(postId: widget.postId, first: 1);
       if (!mounted) return;
@@ -152,7 +170,9 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
       case 'REJECTED':
         return t(context, 'Request Declined', 'تم رفض الطلب');
       default:
-        return t(context, 'Contact Owner', 'تواصل مع المالك');
+        return _acceptsNewRequests
+            ? t(context, 'Contact Owner', 'تواصل مع المالك')
+            : closedToNewRequestsLabel(context, _post!.status);
     }
   }
 
@@ -394,7 +414,11 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _myContactRequest?.status == 'PENDING' || _myContactRequest?.status == 'REJECTED' ? null : _contactOwner,
+                    onPressed: switch (_myContactRequest?.status) {
+                      'APPROVED' => _contactOwner,
+                      null => _acceptsNewRequests ? _contactOwner : null,
+                      _ => null,
+                    },
                     child: Text(_contactButtonLabel(context)),
                   ),
                 ),
