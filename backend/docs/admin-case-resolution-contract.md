@@ -31,7 +31,7 @@ closed because the animal died.
 | Action              | Label                | Visible when                                              | Recorded outcome  |
 | ------------------- | -------------------- | --------------------------------------------------------- | ----------------- |
 | `markRescued`       | Mark rescued         | `RESCUE` + `ACTIVE`                                       | `RESOLVED`        |
-| `markAnimalDeceased`| Mark animal deceased | `RESCUE` + `ACTIVE`                                       | `ANIMAL_DECEASED` |
+| `markAnimalDeceased` | Mark animal deceased | `RESCUE` + `ACTIVE`                                       | `ANIMAL_DECEASED` |
 | `markReunited`      | Mark reunited        | `LOST` + `ACTIVE` (`LOST_PET`, `FOUND_STRAY` or unknown)  | `REUNITED`        |
 | `markResolved`      | Mark resolved        | `MATING` + `ACTIVE`, or `LOST`/`FOUND_STRAY` + `ACTIVE`   | `RESOLVED`        |
 | `markAdopted`       | Mark adopted         | `ADOPTION` + `ACTIVE`                                     | `ADOPTED`         |

@@ -2,48 +2,9 @@ import React, { useState } from 'react';
 import { ApiClient, useNotice } from 'adminjs';
 import { Box, Button, CheckBox, FormGroup, H3, Label, Text, TextArea } from '@adminjs/design-system';
 
+import { ACTION_CONSEQUENCES, POST_CORRECTION_ACTIONS, POST_RESOLUTION_ACTIONS } from './moderation-action-messages.js';
+
 const api = new ApiClient();
-
-const POST_RESOLUTION_ACTIONS = {
-  markRescued: {
-    label: 'Mark rescued',
-    consequence:
-      'Records this rescue as resolved, closes its pending contact requests and adoption applications, and notifies the owner. The Post stays readable and is not removed.',
-  },
-  markReunited: {
-    label: 'Mark reunited',
-    consequence:
-      'Records this case as reunited, closes its pending contact requests and adoption applications, and notifies the owner. The Post stays readable and is not removed.',
-  },
-  markResolved: {
-    label: 'Mark resolved',
-    consequence:
-      'Records this case as resolved, closes its pending contact requests and adoption applications, and notifies the owner. The Post stays readable and is not removed.',
-  },
-  markAdopted: {
-    label: 'Mark adopted',
-    consequence:
-      'Records this listing as adopted, closes its pending adoption applications and contact requests, and notifies the owner. The Post stays readable and is not removed.',
-  },
-  markSold: {
-    label: 'Mark sold',
-    consequence:
-      'Records this listing as sold, closes its pending contact requests and adoption applications, and notifies the owner. The Post stays readable and is not removed.',
-  },
-};
-
-const ACTION_CONSEQUENCES = {
-  removePost:
-    'Removes the Post from discovery and notifies the owner with this reason. Media and discussion are retained, and an administrator can restore the Post later.',
-};
-
-const POST_CORRECTION_ACTIONS = {
-  reopenPost: {
-    label: 'Reopen Post',
-    consequence:
-      'Returns this completed Post to Active so the community can keep helping. Closed contact requests and adoption applications stay closed, removed content is not restored, and the owner is notified.',
-  },
-};
 
 export default function ModerationAction({ action, resource, record }) {
   const addNotice = useNotice();

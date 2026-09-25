@@ -119,6 +119,9 @@ Ticket 06 audited every backend and AdminJS consumer of the Post status values. 
 | AdminJS status enum, resource property and `POST_STATUS_LABELS`             | Include the value; the review workspace renders "Animal deceased" and the action history reads "Post marked animal deceased".                          |
 | AdminJS resolution actions                                                  | `markAnimalDeceased` is offered only for an `ACTIVE` RESCUE and revalidated under the row lock via `canAdminResolve`.                                  |
 | AdminJS queue predicates (`work-queues.js`, `queue-filters.js`)             | Derive from `COMPLETED_POST_OUTCOMES`; the Completed queue includes the value automatically.                                                           |
+| Comment eligibility (`comments.service.ts`)                                  | The Post must exist and not be `REMOVED`: text Comments remain allowed on a deceased rescue, and its media and discussion stay readable. Image Comments keep the existing RESCUE/LOST-only rule, which a RESCUE outcome satisfies. |
+| New contact-request / adoption-application creation (`contacts.service.ts`, `adoptions.service.ts`) | Reject any Post that is not `status = 'ACTIVE'`, so a deceased rescue accepts no new interactions; earlier approved access keeps its existing availability rules. |
+| Push-notification allowlist (`push-delivery.constants.ts`)                  | No new `NotificationType` is involved: `RESCUE_COMPLETED`/`RESCUE_REOPENED` are already allowlisted, so inbox and push delivery use the stored outcome-specific copy. |
 | `post-expiry-and-renewal-contract.md`                                       | Expiry/renewal is unaffected: a completed outcome is never renewable and never expires.                                                                |
 
 ### Additive rollout compatibility
