@@ -1,3 +1,9 @@
 {
-    "cmake.sourceDirectory": "D:/pupzy/frontend/linux"
+    "cmake.sourceDirectory": "D:/pupzy/frontend/linux",
+    // The Gradle extensions can't load android/ on this machine: the project is
+    // on D: and the pub cache (plugin sources) on C:, and Gradle refuses test
+    // sources on another drive ("this and base files have different roots").
+    // `flutter build` / `flutter run` are unaffected, so skip the IDE import.
+    "gradle.autoDetect": "off",
+    "java.import.gradle.enabled": false
 }
