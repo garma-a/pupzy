@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- Tint of the status-bar paw icon on notifications (AppColors.primary). -->
+    <color name="notification_accent">#C4622D</color>
 </resources>

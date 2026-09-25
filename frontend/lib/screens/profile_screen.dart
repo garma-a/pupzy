@@ -266,9 +266,24 @@ class _ProfileSheetState extends State<ProfileSheet> {
   Future<void> _toggleNotifications() async {
     final current = _user?['notificationsEnabled'] == true;
     final graphql = context.read<GraphQLService>();
+    final push = context.read<PushService>();
+    final failedCopy = t(context, 'Could not update notifications. Try again.', 'تعذر تحديث الإشعارات. حاول مرة أخرى.');
+    final blockedCopy = t(
+      context,
+      'Notifications are on, but your phone is blocking them for Pupzy. Allow them in your phone settings to get alerts.',
+      'الإشعارات مفعّلة، لكن هاتفك يمنعها عن بابزي. اسمح بها من إعدادات الهاتف لتصلك التنبيهات.',
+    );
     final ok = await graphql.updateMyNotificationPreferences(!current);
-    if (!mounted || !ok) return;
+    if (!mounted) return;
+    if (!ok) {
+      Fluttertoast.showToast(msg: failedCopy);
+      return;
+    }
     setState(() => _user = {...?_user, 'notificationsEnabled': !current});
+    // Turning them on only helps if the phone lets the app show them.
+    if (!current && !await push.requestPermission()) {
+      Fluttertoast.showToast(msg: blockedCopy, toastLength: Toast.LENGTH_LONG);
+    }
   }
 
   Future<void> _signOut() async {

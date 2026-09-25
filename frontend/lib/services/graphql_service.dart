@@ -1687,18 +1687,27 @@ class GraphQLService {
 
   // ─── Notifications ─────────────────────────────────────────────────────
 
-  Future<(List<AppNotification> notifications, int unreadCount, String? errorMessage)> fetchMyNotifications({int first = 30}) async {
+  Future<NotificationPage> fetchMyNotifications({int first = 30, String? after}) async {
     final result = await client.value.query(
-      QueryOptions(document: gql(myNotificationsQuery), variables: {'first': first}, fetchPolicy: FetchPolicy.networkOnly),
+      QueryOptions(
+        document: gql(myNotificationsQuery),
+        variables: {'first': first, 'after': after},
+        fetchPolicy: FetchPolicy.networkOnly,
+      ),
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (<AppNotification>[], 0, _serverErrorMessage(result.exception));
+      return NotificationPage(errorMessage: _serverErrorMessage(result.exception));
     }
     final data = result.data?['myNotifications'] as Map<String, dynamic>?;
     final edges = data?['edges'] as List<dynamic>? ?? [];
-    final notifications = edges.map((e) => AppNotification.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>)).toList();
-    return (notifications, data?['unreadCount'] as int? ?? 0, null);
+    final pageInfo = data?['pageInfo'] as Map<String, dynamic>?;
+    return NotificationPage(
+      notifications: edges.map((e) => AppNotification.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>)).toList(),
+      unreadCount: data?['unreadCount'] as int? ?? 0,
+      endCursor: pageInfo?['endCursor'] as String?,
+      hasNextPage: pageInfo?['hasNextPage'] as bool? ?? false,
+    );
   }
 
   Future<(int? count, String? errorMessage)> fetchMyUnreadNotificationCount() async {

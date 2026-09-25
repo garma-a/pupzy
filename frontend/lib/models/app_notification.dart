@@ -44,3 +44,24 @@ class AppNotification {
         createdAt: createdAt,
       );
 }
+
+/// One page of the notifications inbox, newest first.
+class NotificationPage {
+  final List<AppNotification> notifications;
+
+  /// Total unread count across the whole inbox, not just this page.
+  final int unreadCount;
+
+  /// Pass as `after` to fetch the next (older) page.
+  final String? endCursor;
+  final bool hasNextPage;
+  final String? errorMessage;
+
+  const NotificationPage({
+    this.notifications = const [],
+    this.unreadCount = 0,
+    this.endCursor,
+    this.hasNextPage = false,
+    this.errorMessage,
+  });
+}
