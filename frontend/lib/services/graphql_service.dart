@@ -2008,7 +2008,7 @@ class GraphQLService {
   /// Requests a presigned upload ticket for a comment image. Returns the
   /// raw ticket map (mediaId/uploadUrl/...) — the caller PUTs the image
   /// bytes to `uploadUrl` directly, same pattern as post media uploads.
-  Future<(Map<String, dynamic>? ticket, String? errorMessage)> requestCommentImageUploadUrl({
+  Future<(Map<String, dynamic>? ticket, String? errorCode, String? errorMessage)> requestCommentImageUploadUrl({
     required String contentType,
     required int fileSizeBytes,
   }) async {
@@ -2022,12 +2022,28 @@ class GraphQLService {
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (null, _serverErrorMessage(result.exception));
+      return (null, _errorCode(result.exception), _serverErrorMessage(result.exception));
     }
-    return (result.data?['requestCommentImageUploadUrl'] as Map<String, dynamic>?, null);
+    return (result.data?['requestCommentImageUploadUrl'] as Map<String, dynamic>?, null, null);
   }
 
-  Future<(Comment? comment, String? errorMessage)> createComment({
+  /// Folds a create-Comment/Reply response into a [CommentMutationResult]:
+  /// the canonical Comment, or the error code/message, or — when no answer
+  /// reached the app at all — an unknown outcome the caller must retry with
+  /// the same `clientRequestId`.
+  CommentMutationResult _commentMutationResult(QueryResult result, String field) {
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return CommentMutationResult(
+        errorCode: _errorCode(result.exception),
+        errorMessage: _serverErrorMessage(result.exception),
+      );
+    }
+    final node = result.data?[field] as Map<String, dynamic>?;
+    return CommentMutationResult(comment: node != null ? Comment.fromJson(node) : null);
+  }
+
+  Future<CommentMutationResult> createComment({
     required String clientRequestId,
     required String postId,
     required String text,
@@ -2042,15 +2058,10 @@ class GraphQLService {
     final result = await client.value.mutate(
       MutationOptions(document: gql(createCommentMutation), variables: {'input': input}),
     );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (null, _serverErrorMessage(result.exception));
-    }
-    final node = result.data?['createComment'] as Map<String, dynamic>?;
-    return (node != null ? Comment.fromJson(node) : null, null);
+    return _commentMutationResult(result, 'createComment');
   }
 
-  Future<(Comment? reply, String? errorMessage)> createReply({
+  Future<CommentMutationResult> createReply({
     required String clientRequestId,
     required String commentId,
     required String text,
@@ -2063,12 +2074,7 @@ class GraphQLService {
         },
       ),
     );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (null, _serverErrorMessage(result.exception));
-    }
-    final node = result.data?['createReply'] as Map<String, dynamic>?;
-    return (node != null ? Comment.fromJson(node) : null, null);
+    return _commentMutationResult(result, 'createReply');
   }
 
   Future<(bool success, String? errorMessage)> deleteComment(String id) async {
