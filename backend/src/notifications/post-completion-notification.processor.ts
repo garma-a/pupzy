@@ -75,7 +75,7 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
     pushDeliveryRepository?: PushDeliveryRepository,
   ) {
     this.pushDeliveryRepository = pushDeliveryRepository ?? new PushDeliveryRepository(this.db);
-    this.repository = repository ?? new PostCompletionNotificationRepository(this.db, this.pushDeliveryRepository);
+    this.repository = repository ?? new PostCompletionNotificationRepository(this.db);
     this.isolationPolicy = isolationPolicy ?? new AccountIsolationPolicy(this.db);
   }
 
@@ -215,10 +215,13 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
           return 'SUPPRESSED';
         }
 
-        // Recheck post state (if post is no longer in a completed state, e.g. reopened or removed)
+        // Recheck post state. A closure delivery is valid while the Post still
+        // records the captured outcome; a reopening correction is valid while
+        // the Post is ACTIVE, so a re-closed or removed Post suppresses it.
         const [post] = await tx.select().from(posts).where(eq(posts.id, event.postId)).for('update');
 
-        if (!post || post.status !== event.outcome) {
+        const isCorrectionEvent = event.type === 'POST_REOPENED' || event.type === 'RESCUE_REOPENED';
+        if (!post || (isCorrectionEvent ? post.status !== 'ACTIVE' : post.status !== event.outcome)) {
           await this.markSuppressed(tx, currentRecipient.id, recipient.leaseToken!);
           return 'SUPPRESSED';
         }

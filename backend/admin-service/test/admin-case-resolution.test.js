@@ -1114,7 +1114,9 @@ describe('Administrator case reopening HTTP boundary', () => {
     assert.equal(response.status, 200);
     assert.equal((await response.json()).notice?.type, 'success');
 
-    // (a) The delivered participant is corrected with localized copy and routing.
+    // (a) The delivered participant's closure row is CORRECTED and queued into
+    // ONE durable correction event. No inbox row is written synchronously: the
+    // API completion worker delivers the correction in bounded batches.
     const correctedRecipient = (
       await database.pool.query(`SELECT status, notification_id FROM post_completion_recipients WHERE id = $1`, [
         deliveredRecipient.id,
@@ -1122,19 +1124,44 @@ describe('Administrator case reopening HTTP boundary', () => {
     ).rows[0];
     assert.equal(correctedRecipient.status, 'CORRECTED');
     assert.equal(correctedRecipient.notification_id, deliveredNotification.id, 'the original inbox row is kept');
-    const corrections = (
+
+    const correctionEvents = (
       await database.pool.query(
-        `SELECT type, related_post_id, title, body, title_arabic, body_arabic
-         FROM notifications WHERE recipient_id = $1 AND type = 'POST_REOPENED'`,
-        [deliveredParticipantId],
+        `SELECT id, type, post_type, outcome, corrects_event_id, status, total_recipients,
+                title, body, title_arabic, body_arabic
+         FROM post_completion_notification_events
+         WHERE post_id = $1 AND type = 'POST_REOPENED'`,
+        [productId],
       )
     ).rows;
-    assert.equal(corrections.length, 1);
-    assert.equal(corrections[0].related_post_id, productId);
-    assert.equal(corrections[0].title, 'Post reopened');
-    assert.equal(corrections[0].body, 'The post "Participant correction case" was reopened.');
-    assert.equal(corrections[0].title_arabic, 'تمت إعادة فتح المنشور');
-    assert.ok(corrections[0].body_arabic.includes('Participant correction case'));
+    assert.equal(correctionEvents.length, 1);
+    assert.equal(correctionEvents[0].post_type, 'PRODUCT');
+    assert.equal(correctionEvents[0].outcome, 'SOLD');
+    assert.equal(correctionEvents[0].corrects_event_id, event.id);
+    assert.equal(correctionEvents[0].status, 'PENDING');
+    assert.equal(correctionEvents[0].total_recipients, 1);
+    assert.equal(correctionEvents[0].title, 'Post reopened');
+    assert.equal(correctionEvents[0].body, 'The post "Participant correction case" was reopened.');
+    assert.equal(correctionEvents[0].title_arabic, 'تمت إعادة فتح المنشور');
+    assert.ok(correctionEvents[0].body_arabic.includes('Participant correction case'));
+
+    const queuedCorrectionRecipients = (
+      await database.pool.query(
+        `SELECT recipient_id, status, notification_id
+         FROM post_completion_recipients WHERE event_id = $1`,
+        [correctionEvents[0].id],
+      )
+    ).rows;
+    assert.equal(queuedCorrectionRecipients.length, 1);
+    assert.equal(queuedCorrectionRecipients[0].recipient_id, deliveredParticipantId);
+    assert.equal(queuedCorrectionRecipients[0].status, 'PENDING');
+    assert.equal(queuedCorrectionRecipients[0].notification_id, null);
+
+    const synchronousCorrections = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE recipient_id = $1 AND type = 'POST_REOPENED'`,
+      [deliveredParticipantId],
+    );
+    assert.equal(synchronousCorrections.rows[0].count, 0, 'corrections are delivered by the API worker');
 
     // (b) Still-pending recipients are suppressed and never delivered.
     const pendingRow = (
@@ -1236,30 +1263,48 @@ describe('Administrator case reopening HTTP boundary', () => {
     ).rows[0];
     assert.equal(suppressedClosure.status, 'SUPPRESSED');
 
-    // The correction keeps its own PENDING intent with the creator as actor.
-    const corrections = (
+    // The correction is queued as ONE durable event with a PENDING recipient.
+    // No inbox row or push intent exists until the API worker delivers it.
+    const correctionEvents = (
       await database.pool.query(
-        `SELECT n.id, n.type, pd.status, pd.actor_id
-         FROM notifications n
-         LEFT JOIN push_deliveries pd ON pd.notification_id = n.id
-         WHERE n.recipient_id = $1 AND n.type = 'POST_REOPENED'`,
-        [participantId],
+        `SELECT id, type, outcome, corrects_event_id, status, total_recipients
+         FROM post_completion_notification_events
+         WHERE post_id = $1 AND type = 'POST_REOPENED'`,
+        [productId],
       )
     ).rows;
-    assert.equal(corrections.length, 1);
-    assert.equal(corrections[0].status, 'PENDING');
-    assert.equal(corrections[0].actor_id, ownerId);
+    assert.equal(correctionEvents.length, 1);
+    assert.equal(correctionEvents[0].outcome, 'SOLD');
+    assert.equal(correctionEvents[0].corrects_event_id, event.id);
+    assert.equal(correctionEvents[0].status, 'PENDING');
+    assert.equal(correctionEvents[0].total_recipients, 1);
 
-    // Only the correction remains dispatchable.
+    const correctionRecipients = (
+      await database.pool.query(`SELECT recipient_id, status FROM post_completion_recipients WHERE event_id = $1`, [
+        correctionEvents[0].id,
+      ])
+    ).rows;
+    assert.equal(correctionRecipients.length, 1);
+    assert.equal(correctionRecipients[0].recipient_id, participantId);
+    assert.equal(correctionRecipients[0].status, 'PENDING');
+
+    const correctionNotifications = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE recipient_id = $1 AND type = 'POST_REOPENED'`,
+      [participantId],
+    );
+    assert.equal(correctionNotifications.rows[0].count, 0, 'the correction is materialized by the API worker');
+
+    // Nothing is dispatchable yet: the closure was suppressed and the correction
+    // push intent is created only when the worker delivers the correction.
     const dispatchable = (
       await database.pool.query(
         `SELECT count(*)::int AS count FROM push_deliveries WHERE status IN ('PENDING', 'PROCESSING')`,
       )
     ).rows[0];
-    assert.equal(dispatchable.count, 1);
+    assert.equal(dispatchable.count, 0);
   });
 
-  it('applies current access checks to corrections and stores the creator as the correction push actor', async () => {
+  it('queues corrections for every delivered participant and leaves access checks to delivery', async () => {
     const ownerId = await insertUser('reopen-access-owner');
     const blockedRecipientId = await insertUser('reopen-access-blocked');
     const eligibleRecipientId = await insertUser('reopen-access-eligible');
@@ -1328,53 +1373,61 @@ describe('Administrator case reopening HTTP boundary', () => {
     assert.equal(response.status, 200);
     assert.equal((await response.json()).notice?.type, 'success');
 
-    // The isolated participant keeps the delivered history, with no correction
-    // inbox row and no correction push intent.
-    const blockedRecipient = (
+    // The administrative transaction queues a correction for every delivered
+    // participant; neither later Blocks nor bans filter here, because the API
+    // completion worker rechecks access under pair locks at delivery time
+    // (covered by the API integration suite).
+    const correctionEvents = (
       await database.pool.query(
-        `SELECT status, notification_id FROM post_completion_recipients WHERE event_id = $1 AND recipient_id = $2`,
-        [event.id, blockedRecipientId],
-      )
-    ).rows[0];
-    assert.equal(blockedRecipient.status, 'DELIVERED');
-    assert.equal(blockedRecipient.notification_id, deliveredNotifications.get(blockedRecipientId));
-    const blockedCorrections = await database.pool.query(
-      `SELECT count(*)::int AS count FROM notifications WHERE recipient_id = $1 AND type = 'POST_REOPENED'`,
-      [blockedRecipientId],
-    );
-    assert.equal(blockedCorrections.rows[0].count, 0, 'a blocked participant never receives a correction');
-    const blockedPushIntents = await database.pool.query(
-      `SELECT count(*)::int AS count FROM push_deliveries WHERE recipient_id = $1`,
-      [blockedRecipientId],
-    );
-    assert.equal(blockedPushIntents.rows[0].count, 0, 'a blocked participant never gets a correction push intent');
-
-    // The eligible participant is corrected, and the correction push intent
-    // records the Post creator as the send-time Block actor.
-    const eligibleRecipient = (
-      await database.pool.query(
-        `SELECT status, notification_id FROM post_completion_recipients WHERE event_id = $1 AND recipient_id = $2`,
-        [event.id, eligibleRecipientId],
-      )
-    ).rows[0];
-    assert.equal(eligibleRecipient.status, 'CORRECTED');
-    assert.equal(eligibleRecipient.notification_id, deliveredNotifications.get(eligibleRecipientId));
-    const eligibleCorrections = (
-      await database.pool.query(
-        `SELECT n.id, n.type, n.related_post_id, n.title, n.body, n.title_arabic, n.body_arabic,
-                pd.actor_id, pd.recipient_id AS push_recipient_id
-         FROM notifications n
-         LEFT JOIN push_deliveries pd ON pd.notification_id = n.id
-         WHERE n.recipient_id = $1 AND n.type = 'POST_REOPENED'`,
-        [eligibleRecipientId],
+        `SELECT id, type, corrects_event_id, status, total_recipients
+         FROM post_completion_notification_events
+         WHERE post_id = $1 AND type = 'POST_REOPENED'`,
+        [postId],
       )
     ).rows;
-    assert.equal(eligibleCorrections.length, 1);
-    assert.equal(eligibleCorrections[0].related_post_id, postId);
-    assert.equal(eligibleCorrections[0].title, 'Post reopened');
-    assert.equal(eligibleCorrections[0].body, 'The post "Access-checked correction case" was reopened.');
-    assert.equal(eligibleCorrections[0].push_recipient_id, eligibleRecipientId);
-    assert.equal(eligibleCorrections[0].actor_id, ownerId, 'the push intent carries the creator as its actor');
+    assert.equal(correctionEvents.length, 1);
+    assert.equal(correctionEvents[0].corrects_event_id, event.id);
+    assert.equal(correctionEvents[0].status, 'PENDING');
+    assert.equal(correctionEvents[0].total_recipients, 2);
+
+    const queuedRecipients = (
+      await database.pool.query(
+        `SELECT recipient_id, status, notification_id FROM post_completion_recipients WHERE event_id = $1`,
+        [correctionEvents[0].id],
+      )
+    ).rows;
+    assert.equal(queuedRecipients.length, 2);
+    assert.ok(queuedRecipients.every((row) => row.status === 'PENDING'));
+    assert.deepEqual(
+      [...new Set(queuedRecipients.map((row) => row.recipient_id))].sort(),
+      [blockedRecipientId, eligibleRecipientId].sort(),
+    );
+
+    for (const recipientId of [blockedRecipientId, eligibleRecipientId]) {
+      const closureRecipient = (
+        await database.pool.query(
+          `SELECT status, notification_id FROM post_completion_recipients WHERE event_id = $1 AND recipient_id = $2`,
+          [event.id, recipientId],
+        )
+      ).rows[0];
+      assert.equal(closureRecipient.status, 'CORRECTED');
+      assert.equal(closureRecipient.notification_id, deliveredNotifications.get(recipientId));
+    }
+
+    const correctionNotifications = await database.pool.query(
+      `SELECT count(*)::int AS count
+       FROM notifications
+       WHERE type = 'POST_REOPENED' AND recipient_id = ANY($1::uuid[])`,
+      [[blockedRecipientId, eligibleRecipientId]],
+    );
+    assert.equal(correctionNotifications.rows[0].count, 0, 'no correction is written synchronously');
+    const correctionPushIntents = await database.pool.query(
+      `SELECT count(*)::int AS count
+       FROM push_deliveries
+       WHERE recipient_id = ANY($1::uuid[])`,
+      [[blockedRecipientId, eligibleRecipientId]],
+    );
+    assert.equal(correctionPushIntents.rows[0].count, 0, 'no correction push intent is queued synchronously');
 
     // Existing admin-triggered owner push intents keep their null actor.
     const ownerPushIntents = (

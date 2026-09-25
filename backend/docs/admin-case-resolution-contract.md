@@ -126,13 +126,17 @@ Reopening uses the same transaction boundary and locks, and commits together:
    internal reason and metadata (`previousOutcome`, the corrected outcome).
 3. One `notifications` row (`POST_REOPENED_BY_ADMIN`) is inserted for the Post owner with both language
    columns, committed with the state change so notification intent cannot be lost.
-4. Pending participant completion events for the Post are superseded, and already-delivered
-   participants receive the localized `POST_REOPENED` (or `RESCUE_REOPENED` for RESCUE) correction
-   through `reopenPostCompletion`, the AdminJS duplicate that mirrors the API repository's supersession
-   and correction behavior over the same durable tables. Corrections apply the same current access
-   checks as delivery: a recipient whose account is banned, or who is isolated from the Post creator by
-   an active Block in either direction, keeps the delivered closure row and is not corrected, and the
-   correction push intents store the Post creator as their send-time Block actor.
+4. Pending participant completion events for the Post are superseded, and ONE durable localized
+   `POST_REOPENED` (or `RESCUE_REOPENED` for RESCUE) correction event is queued for the already-delivered
+   participants through `reopenPostCompletion`, the AdminJS duplicate that mirrors the API repository's
+   supersession and correction queueing over the same durable tables. The correction event stores the
+   distinct delivered audience as `PENDING` recipients, is linked to the corrected closure event through
+   `corrects_event_id`, and is delivered later by the API's bounded restartable completion worker, not
+   inside the administrative transaction. The worker applies account-availability, Block and
+   push-preference checks under the canonical pair locks at delivery time, so the correction cannot race a
+   concurrently committing Block, and the correction push intents store the Post creator as their
+   send-time actor. An old delivered closure row keeps its inbox history and is marked `CORRECTED`; an
+   undelivered correction is superseded by a later reopening.
 
 Deliberately untouched: every Contact Request and Adoption Application row keeps its current status
 (closed stays closed, approved stays approved), open Post Reports stay open, and media, discussion and
@@ -169,7 +173,7 @@ the administrator; the worker's push intents carry the Post creator as the send-
 | ---------- | -------------------------------------------------------------------------------------------------------- |
 | Type       | `POST_COMPLETED` for LOST/ADOPTION/PRODUCT/MATING, `RESCUE_COMPLETED` for RESCUE                           |
 | Outcome    | The recorded outcome; copy is outcome-specific: `REUNITED` → "Pet reunited" / "تم لمّ الشمل", `ADOPTED` → "Pet adopted" / "تم التبني", `SOLD` → "Item sold" / "تم البيع", `RESOLVED` → "Post resolved" / "تم حل المنشور", `ANIMAL_DECEASED` → "Rescue closed" / "تم إغلاق حالة الإنقاذ" with the death stated in both bodies and never the word "rescued" |
-| Correction | `POST_REOPENED` (or `RESCUE_REOPENED`) on a later reopening, delivered to already-notified participants  |
+| Correction | `POST_REOPENED` (or `RESCUE_REOPENED`) queued as one durable event per reopening for the already-notified delivered participants, then delivered by the API completion worker in bounded restartable batches |
 | Routing    | `related_post_id` = the Post; `related_comment_id` is null                                                |
 | Content    | English and Arabic `title`/`body` from the centralized template registry                                  |
 
@@ -218,9 +222,9 @@ npm run format:check
 | Reopening visibility, banned-owner rejection (including the `ANIMAL_DECEASED` outcome), preserved closed interactions, audit, notification, atomicity and concurrency | `admin-service/test/moderation-actions.test.js` (`administrator post reopening`)                                                                                                                            |
 | Authenticated AdminJS HTTP actions, type-specific action lists, roles, reason enforcement and races | `admin-service/test/admin-case-resolution.test.js` (`Administrator case resolution HTTP boundary` and `Administrator case reopening HTTP boundary`)                                                                        |
 | Participant completion event capture, outcome/audience/localized copy (including the deceased copy that never says "rescued") and no event on removal through authenticated AdminJS HTTP actions | `admin-service/test/admin-case-resolution.test.js` (`records an audited animal-deceased resolution for an ACTIVE RESCUE only and never labels it as rescued`; `captures and localizes the participant completion event for a non-rescue outcome, and never on removal`; `captures adoption applicants of every status in the ADOPTED completion audience over authenticated HTTP`) |
-| Participant completion delivery for every completed outcome, reopen corrections, stale-event suppression and creator-isolation recheck on real Postgres | `backend/src/notifications/post-completion-notification.integration.spec.ts` |
+| Participant completion delivery for every completed outcome, durable batched reopen corrections, correction supersession, stale-event suppression and creator-isolation recheck on real Postgres | `backend/src/notifications/post-completion-notification.integration.spec.ts` |
 | Real browser resolution and reopening correction journey, result state, action bar and history      | `admin-service/test/post-review-workspace-browser.test.js` (evidence in `BWG08_EVIDENCE_DIR` and `BWG09_EVIDENCE_DIR`)                                                                                                        |
-| Migration enum values (resolution 0050, reopening 0051, animal deceased 0058)                      | `backend/src/database/migrate.integration.spec.ts`                                                                                                                                                                            |
+| Migration enum values and schema links (resolution 0050, reopening 0051, animal deceased 0058, correction link 0059 `corrects_event_id`) | `backend/src/database/migrate.integration.spec.ts`                                                                                                                                                                            |
 | Notification template completeness and bilingual copy                                             | `backend/src/notifications/notification-templates.spec.ts`                                                                                                                                                                    |
 | Client-visible `NotificationType` enum covers every persisted value                               | `backend/src/common/graphql/notification-type-enum-consistency.spec.ts`                                                                                                                                                        |
 | Owner inbox serializes and localizes the persisted admin notifications through the executable schema | `backend/src/notifications/notification-language.integration.spec.ts`                                                                                                                                                         |

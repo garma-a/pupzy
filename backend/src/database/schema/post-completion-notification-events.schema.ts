@@ -1,5 +1,15 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, text, integer, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  integer,
+  timestamp,
+  index,
+  uniqueIndex,
+  type AnyPgColumn,
+} from 'drizzle-orm/pg-core';
 import { users } from './users.schema';
 import { posts } from './posts.schema';
 import { notifications } from './notifications.schema';
@@ -31,6 +41,13 @@ export const postCompletionNotificationEvents = pgTable(
     bodyArabic: text('body_arabic').notNull(),
     status: varchar('status', { length: 20 }).notNull().default('PENDING'),
     totalRecipients: integer('total_recipients').notNull().default(0),
+    /**
+     * The closure event this reopening correction corrects. Null for closure
+     * events; set for `POST_REOPENED`/`RESCUE_REOPENED` correction events.
+     */
+    correctsEventId: uuid('corrects_event_id').references((): AnyPgColumn => postCompletionNotificationEvents.id, {
+      onDelete: 'set null',
+    }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
