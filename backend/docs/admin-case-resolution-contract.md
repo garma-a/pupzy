@@ -1,7 +1,7 @@
 # Administrator Post Resolution contract
 
 Status: implemented (ticket 08 — Resolve a case from the admin workspace; ticket 09 — Correct a mistaken
-resolution).
+resolution; ticket 06 — Animal deceased rescue outcome).
 
 This document is the authoritative staff-facing contract for recording and correcting a Post Resolution
 from the AdminJS Post review workspace. It is an internal admin contract; it adds no client-facing
@@ -23,17 +23,24 @@ in `src/common/contracts/post-lifecycle.contract.ts` and `post-lifecycle-transit
 
 ## 2. Actions
 
-Only the successful outcome of the Post's type (and, for LOST, direction) is offered, and only while the
+Only the completed outcomes of the Post's type (and, for LOST, direction) are offered, and only while the
 Post is `ACTIVE`. An uncertain case can simply be left alone: nothing forces a decision, so a flagged or
-pending Post stays active.
+pending Post stays active. RESCUE is the one type with two outcomes: a successful rescue and a rescue
+closed because the animal died.
 
-| Action         | Label          | Visible when                                              | Recorded outcome |
-| -------------- | -------------- | --------------------------------------------------------- | ---------------- |
-| `markRescued`  | Mark rescued   | `RESCUE` + `ACTIVE`                                       | `RESOLVED`       |
-| `markReunited` | Mark reunited  | `LOST` + `ACTIVE` (`LOST_PET`, `FOUND_STRAY` or unknown)  | `REUNITED`       |
-| `markResolved` | Mark resolved  | `MATING` + `ACTIVE`, or `LOST`/`FOUND_STRAY` + `ACTIVE`   | `RESOLVED`       |
-| `markAdopted`  | Mark adopted   | `ADOPTION` + `ACTIVE`                                     | `ADOPTED`        |
-| `markSold`     | Mark sold      | `PRODUCT` + `ACTIVE`                                      | `SOLD`           |
+| Action              | Label                | Visible when                                              | Recorded outcome  |
+| ------------------- | -------------------- | --------------------------------------------------------- | ----------------- |
+| `markRescued`       | Mark rescued         | `RESCUE` + `ACTIVE`                                       | `RESOLVED`        |
+| `markAnimalDeceased`| Mark animal deceased | `RESCUE` + `ACTIVE`                                       | `ANIMAL_DECEASED` |
+| `markReunited`      | Mark reunited        | `LOST` + `ACTIVE` (`LOST_PET`, `FOUND_STRAY` or unknown)  | `REUNITED`        |
+| `markResolved`      | Mark resolved        | `MATING` + `ACTIVE`, or `LOST`/`FOUND_STRAY` + `ACTIVE`   | `RESOLVED`        |
+| `markAdopted`       | Mark adopted         | `ADOPTION` + `ACTIVE`                                     | `ADOPTED`         |
+| `markSold`          | Mark sold            | `PRODUCT` + `ACTIVE`                                      | `SOLD`            |
+
+- `markAnimalDeceased` records a completed outcome, not a success. Its guard reads "Close this rescue
+  because the animal died?", and every notification and label for the outcome states the death explicitly
+  and never says "rescued" (English or Arabic). Only RESCUE permits the outcome; every other type rejects a
+  direct attempt with the usual cross-type error and no writes.
 
 - A LOST Post's direction discriminator is read server-side before the action list is rendered. A missing
   discriminator keeps the conservative reunited-only rule, exactly like owner closure.
@@ -46,9 +53,9 @@ pending Post stays active.
 
 ### Reopening a mistaken resolution
 
-| Action       | Label       | Visible when                                                              | Recorded change     |
-| ------------ | ----------- | ------------------------------------------------------------------------- | ------------------- |
-| `reopenPost` | Reopen Post | `RESOLVED`, `REUNITED`, `ADOPTED` or `SOLD`, and the owner is not banned   | `ACTIVE`            |
+| Action       | Label       | Visible when                                                                              | Recorded change     |
+| ------------ | ----------- | ----------------------------------------------------------------------------------------- | ------------------- |
+| `reopenPost` | Reopen Post | `RESOLVED`, `REUNITED`, `ADOPTED`, `SOLD` or `ANIMAL_DECEASED`, and the owner is not banned | `ACTIVE`            |
 
 - Reopening is the administrator-only correction of a completed outcome. `ACTIVE`, `REMOVED`, `EXPIRED`
   and unknown states offer no Reopen action, so it can never overwrite an active case, bypass the
@@ -79,10 +86,10 @@ Every resolution runs inside one database transaction using the shared lifecycle
 (`comment_discussion:<postId>` advisory key, then the `posts` row `FOR UPDATE`) and the existing
 `runModerationAction` retry policy. The following commit together:
 
-1. `posts.status` moves to the type-specific successful outcome. The counter trigger delta is `NONE`:
-   the owner's Post counters are unchanged, and `moderation_status`, `moderation_reason`,
-   `moderated_at` and `moderated_by_admin_id` are untouched because a resolution is not a moderation
-   decision.
+1. `posts.status` moves to the type-specific completed outcome (`ANIMAL_DECEASED` for a rescue whose
+   animal died). The counter trigger delta is `NONE`: the owner's Post counters are unchanged, and
+   `moderation_status`, `moderation_reason`, `moderated_at` and `moderated_by_admin_id` are untouched
+   because a resolution is not a moderation decision.
 2. One append-only `moderation_actions` row (`action_type = POST_RESOLVED`) records the actor, the
    internal reason and metadata (`outcome`, terminated Contact Request count and terminated Adoption
    Application count).
@@ -141,6 +148,7 @@ queue counts reflect the Post's return to active discovery.
 Examples (English):
 
 - Resolution: `An administrator marked your post "Found stray near the market" as resolved.`
+- Resolution (animal deceased): `An administrator marked your post "Injured puppy" as closed (animal deceased).`
 - Reopening: `An administrator reopened your post "Found stray near the market".`
 
 ### Participant completion notification
@@ -155,7 +163,7 @@ push intents carry the Post creator as the send-time isolation actor.
 | Property   | Value                                                                                                    |
 | ---------- | -------------------------------------------------------------------------------------------------------- |
 | Type       | `POST_COMPLETED` for LOST/ADOPTION/PRODUCT/MATING, `RESCUE_COMPLETED` for RESCUE                           |
-| Outcome    | The recorded outcome; copy is outcome-specific: `REUNITED` → "Pet reunited" / "تم لمّ الشمل", `ADOPTED` → "Pet adopted" / "تم التبني", `SOLD` → "Item sold" / "تم البيع", `RESOLVED` → "Post resolved" / "تم حل المنشور" |
+| Outcome    | The recorded outcome; copy is outcome-specific: `REUNITED` → "Pet reunited" / "تم لمّ الشمل", `ADOPTED` → "Pet adopted" / "تم التبني", `SOLD` → "Item sold" / "تم البيع", `RESOLVED` → "Post resolved" / "تم حل المنشور", `ANIMAL_DECEASED` → "Rescue closed" / "تم إغلاق حالة الإنقاذ" with the death stated in both bodies and never the word "rescued" |
 | Correction | `POST_REOPENED` (or `RESCUE_REOPENED`) on a later reopening, delivered to already-notified participants  |
 | Routing    | `related_post_id` = the Post; `related_comment_id` is null                                                |
 | Content    | English and Arabic `title`/`body` from the centralized template registry                                  |
@@ -202,12 +210,12 @@ npm run format:check
 | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Contract rules (type-specific targets, ACTIVE-only source, completed-outcome-only reopening, side effects) | `backend/src/common/contracts/post-lifecycle.contract.spec.ts` and `admin-service/src/common/contracts/post-lifecycle.contract.test.js`                                                                                |
 | Resolution action visibility matrix, audit, notification, pending cleanup, atomicity, cache and concurrency | `admin-service/test/moderation-actions.test.js` (`administrator post resolution`)                                                                                                                                      |
-| Reopening visibility, banned-owner rejection, preserved closed interactions, audit, notification, atomicity and concurrency | `admin-service/test/moderation-actions.test.js` (`administrator post reopening`)                                                                                                                            |
+| Reopening visibility, banned-owner rejection (including the `ANIMAL_DECEASED` outcome), preserved closed interactions, audit, notification, atomicity and concurrency | `admin-service/test/moderation-actions.test.js` (`administrator post reopening`)                                                                                                                            |
 | Authenticated AdminJS HTTP actions, type-specific action lists, roles, reason enforcement and races | `admin-service/test/admin-case-resolution.test.js` (`Administrator case resolution HTTP boundary` and `Administrator case reopening HTTP boundary`)                                                                        |
-| Participant completion event capture, outcome/audience/localized copy and no event on removal through authenticated AdminJS HTTP actions | `admin-service/test/admin-case-resolution.test.js` (`captures and localizes the participant completion event for a non-rescue outcome, and never on removal`; `captures adoption applicants of every status in the ADOPTED completion audience over authenticated HTTP`) |
-| Participant completion delivery for every successful outcome, reopen corrections, stale-event suppression and creator-isolation recheck on real Postgres | `backend/src/notifications/post-completion-notification.integration.spec.ts` |
+| Participant completion event capture, outcome/audience/localized copy (including the deceased copy that never says "rescued") and no event on removal through authenticated AdminJS HTTP actions | `admin-service/test/admin-case-resolution.test.js` (`records an audited animal-deceased resolution for an ACTIVE RESCUE only and never labels it as rescued`; `captures and localizes the participant completion event for a non-rescue outcome, and never on removal`; `captures adoption applicants of every status in the ADOPTED completion audience over authenticated HTTP`) |
+| Participant completion delivery for every completed outcome, reopen corrections, stale-event suppression and creator-isolation recheck on real Postgres | `backend/src/notifications/post-completion-notification.integration.spec.ts` |
 | Real browser resolution and reopening correction journey, result state, action bar and history      | `admin-service/test/post-review-workspace-browser.test.js` (evidence in `BWG08_EVIDENCE_DIR` and `BWG09_EVIDENCE_DIR`)                                                                                                        |
-| Migration enum values (resolution 0050, reopening 0051)                                            | `backend/src/database/migrate.integration.spec.ts`                                                                                                                                                                            |
+| Migration enum values (resolution 0050, reopening 0051, animal deceased 0058)                      | `backend/src/database/migrate.integration.spec.ts`                                                                                                                                                                            |
 | Notification template completeness and bilingual copy                                             | `backend/src/notifications/notification-templates.spec.ts`                                                                                                                                                                    |
 | Client-visible `NotificationType` enum covers every persisted value                               | `backend/src/common/graphql/notification-type-enum-consistency.spec.ts`                                                                                                                                                        |
 | Owner inbox serializes and localizes the persisted admin notifications through the executable schema | `backend/src/notifications/notification-language.integration.spec.ts`                                                                                                                                                         |

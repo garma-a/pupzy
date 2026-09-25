@@ -35,6 +35,8 @@ enum PostStatus {
   REMOVED
   "Listing expired through inactivity. Readable and renewable, but not discoverable."
   EXPIRED
+  "RESCUE: the animal died. Closes the rescue without describing it as Rescued; only RESCUE permits this outcome."
+  ANIMAL_DECEASED
 }
 
 "AI / admin moderation pipeline state."

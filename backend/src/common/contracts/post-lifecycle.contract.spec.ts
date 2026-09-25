@@ -32,12 +32,22 @@ describe('Post lifecycle transition contract', () => {
   });
 
   describe('owner closure transitions', () => {
-    it('maps each Post type to its successful outcome only', () => {
-      expect(OWNER_CLOSURE_TRANSITIONS.RESCUE).toEqual(['RESOLVED']);
+    it('maps each Post type to its completed outcomes only', () => {
+      expect(OWNER_CLOSURE_TRANSITIONS.RESCUE).toEqual(['RESOLVED', 'ANIMAL_DECEASED']);
       expect(OWNER_CLOSURE_TRANSITIONS.LOST).toEqual(['REUNITED']);
       expect(OWNER_CLOSURE_TRANSITIONS.ADOPTION).toEqual(['ADOPTED']);
       expect(OWNER_CLOSURE_TRANSITIONS.PRODUCT).toEqual(['SOLD']);
       expect(OWNER_CLOSURE_TRANSITIONS.MATING).toEqual(['RESOLVED']);
+    });
+
+    it('permits ANIMAL_DECEASED for RESCUE only, as a non-successful completed outcome', () => {
+      expect(canOwnerClose('RESCUE', 'ACTIVE', 'ANIMAL_DECEASED')).toBe(true);
+      expect(canOwnerClose('LOST', 'ACTIVE', 'ANIMAL_DECEASED', 'LOST_PET')).toBe(false);
+      expect(canOwnerClose('LOST', 'ACTIVE', 'ANIMAL_DECEASED', 'FOUND_STRAY')).toBe(false);
+      expect(canOwnerClose('ADOPTION', 'ACTIVE', 'ANIMAL_DECEASED')).toBe(false);
+      expect(canOwnerClose('PRODUCT', 'ACTIVE', 'ANIMAL_DECEASED')).toBe(false);
+      expect(canOwnerClose('MATING', 'ACTIVE', 'ANIMAL_DECEASED')).toBe(false);
+      expect(canOwnerClose('UNKNOWN', 'ACTIVE', 'ANIMAL_DECEASED')).toBe(false);
     });
 
     it('splits LOST closure targets by direction discriminator', () => {
@@ -60,6 +70,7 @@ describe('Post lifecycle transition contract', () => {
 
     it('accepts only the ACTIVE-to-type-outcome transition', () => {
       expect(canOwnerClose('RESCUE', 'ACTIVE', 'RESOLVED')).toBe(true);
+      expect(canOwnerClose('RESCUE', 'ACTIVE', 'ANIMAL_DECEASED')).toBe(true);
       expect(canOwnerClose('LOST', 'ACTIVE', 'REUNITED', 'LOST_PET')).toBe(true);
       expect(canOwnerClose('LOST', 'ACTIVE', 'RESOLVED', 'FOUND_STRAY')).toBe(true);
       expect(canOwnerClose('LOST', 'ACTIVE', 'REUNITED', 'FOUND_STRAY')).toBe(true);
@@ -79,6 +90,8 @@ describe('Post lifecycle transition contract', () => {
 
     it('rejects closing anything that is not ACTIVE', () => {
       expect(canOwnerClose('RESCUE', 'RESOLVED', 'RESOLVED')).toBe(false);
+      expect(canOwnerClose('RESCUE', 'ANIMAL_DECEASED', 'RESOLVED')).toBe(false);
+      expect(canOwnerClose('RESCUE', 'ANIMAL_DECEASED', 'ANIMAL_DECEASED')).toBe(false);
       expect(canOwnerClose('RESCUE', 'REMOVED', 'RESOLVED')).toBe(false);
       expect(canOwnerClose('LOST', 'REUNITED', 'REUNITED')).toBe(false);
       expect(canOwnerClose('MATING', 'RESOLVED', 'RESOLVED')).toBe(false);
@@ -92,7 +105,7 @@ describe('Post lifecycle transition contract', () => {
 
   describe('removal transitions', () => {
     it('lets owners remove every non-Removed Post, including recorded outcomes', () => {
-      for (const status of ['ACTIVE', 'RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD']) {
+      for (const status of ['ACTIVE', 'RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'ANIMAL_DECEASED']) {
         expect(canOwnerRemove(status)).toBe(true);
       }
       expect(canOwnerRemove('REMOVED')).toBe(false);
@@ -100,22 +113,23 @@ describe('Post lifecycle transition contract', () => {
 
     it('lets administrators remove only Active Posts so outcomes are never overwritten', () => {
       expect(canAdminRemove('ACTIVE')).toBe(true);
-      for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'REMOVED']) {
+      for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'ANIMAL_DECEASED', 'REMOVED']) {
         expect(canAdminRemove(status)).toBe(false);
       }
     });
 
     it('lets administrators restore only Removed Posts', () => {
       expect(canAdminRestore('REMOVED')).toBe(true);
-      for (const status of ['ACTIVE', 'RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD']) {
+      for (const status of ['ACTIVE', 'RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'ANIMAL_DECEASED']) {
         expect(canAdminRestore(status)).toBe(false);
       }
     });
   });
 
   describe('administrator resolution transitions', () => {
-    it('mirrors the type-specific successful outcome from ACTIVE only', () => {
+    it('mirrors the type-specific completed outcome from ACTIVE only', () => {
       expect(canAdminResolve('RESCUE', 'ACTIVE', 'RESOLVED')).toBe(true);
+      expect(canAdminResolve('RESCUE', 'ACTIVE', 'ANIMAL_DECEASED')).toBe(true);
       expect(canAdminResolve('LOST', 'ACTIVE', 'REUNITED', 'LOST_PET')).toBe(true);
       expect(canAdminResolve('LOST', 'ACTIVE', 'RESOLVED', 'FOUND_STRAY')).toBe(true);
       expect(canAdminResolve('LOST', 'ACTIVE', 'REUNITED', 'FOUND_STRAY')).toBe(true);
@@ -124,8 +138,13 @@ describe('Post lifecycle transition contract', () => {
       expect(canAdminResolve('MATING', 'ACTIVE', 'RESOLVED')).toBe(true);
     });
 
-    it('rejects cross-type outcomes, unknown types and LOST_PET resolved', () => {
+    it('rejects cross-type outcomes, ANIMAL_DECEASED outside RESCUE, unknown types and LOST_PET resolved', () => {
       expect(canAdminResolve('RESCUE', 'ACTIVE', 'SOLD')).toBe(false);
+      expect(canAdminResolve('LOST', 'ACTIVE', 'ANIMAL_DECEASED', 'LOST_PET')).toBe(false);
+      expect(canAdminResolve('LOST', 'ACTIVE', 'ANIMAL_DECEASED', 'FOUND_STRAY')).toBe(false);
+      expect(canAdminResolve('ADOPTION', 'ACTIVE', 'ANIMAL_DECEASED')).toBe(false);
+      expect(canAdminResolve('PRODUCT', 'ACTIVE', 'ANIMAL_DECEASED')).toBe(false);
+      expect(canAdminResolve('MATING', 'ACTIVE', 'ANIMAL_DECEASED')).toBe(false);
       expect(canAdminResolve('PRODUCT', 'ACTIVE', 'RESOLVED')).toBe(false);
       expect(canAdminResolve('MATING', 'ACTIVE', 'REUNITED')).toBe(false);
       expect(canAdminResolve('LOST', 'ACTIVE', 'RESOLVED', 'LOST_PET')).toBe(false);
@@ -134,17 +153,19 @@ describe('Post lifecycle transition contract', () => {
     });
 
     it('rejects resolving anything that is not ACTIVE so outcomes are never overwritten', () => {
-      for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'REMOVED', 'EXPIRED']) {
+      for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'ANIMAL_DECEASED', 'REMOVED', 'EXPIRED']) {
         expect(canAdminResolve('RESCUE', status, 'RESOLVED')).toBe(false);
+        expect(canAdminResolve('RESCUE', status, 'ANIMAL_DECEASED')).toBe(false);
         expect(canAdminResolve('PRODUCT', status, 'SOLD')).toBe(false);
       }
     });
   });
 
   describe('administrator reopening transitions', () => {
-    it('corrects exactly the completed outcomes back to Active', () => {
-      expect(COMPLETED_POST_OUTCOMES).toEqual(['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD']);
+    it('corrects exactly the completed outcomes back to Active, including the non-successful ANIMAL_DECEASED', () => {
+      expect(COMPLETED_POST_OUTCOMES).toEqual(['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'ANIMAL_DECEASED']);
       expect(Object.isFrozen(COMPLETED_POST_OUTCOMES)).toBe(true);
+      expect(canAdminReopen('ANIMAL_DECEASED')).toBe(true);
       for (const status of COMPLETED_POST_OUTCOMES) {
         expect(canAdminReopen(status)).toBe(true);
       }
@@ -221,7 +242,7 @@ describe('Post lifecycle transition contract', () => {
     it('allows automatic expiry only for Active posts of an enabled type', () => {
       for (const postType of ['PRODUCT', 'ADOPTION'] as const) {
         expect(canExpirePost(postType, 'ACTIVE')).toBe(true);
-        for (const status of ['RESOLVED', 'ADOPTED', 'SOLD', 'REMOVED', 'EXPIRED']) {
+        for (const status of ['RESOLVED', 'ADOPTED', 'SOLD', 'ANIMAL_DECEASED', 'REMOVED', 'EXPIRED']) {
           expect(canExpirePost(postType, status)).toBe(false);
         }
       }
@@ -234,7 +255,7 @@ describe('Post lifecycle transition contract', () => {
       for (const postType of ['PRODUCT', 'ADOPTION'] as const) {
         expect(canOwnerRenew(postType, 'ACTIVE')).toBe(true);
         expect(canOwnerRenew(postType, 'EXPIRED')).toBe(true);
-        for (const status of ['SOLD', 'RESOLVED', 'REUNITED', 'ADOPTED', 'REMOVED']) {
+        for (const status of ['SOLD', 'RESOLVED', 'REUNITED', 'ADOPTED', 'ANIMAL_DECEASED', 'REMOVED']) {
           expect(canOwnerRenew(postType, status)).toBe(false);
         }
       }

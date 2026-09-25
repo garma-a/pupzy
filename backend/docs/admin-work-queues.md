@@ -21,23 +21,23 @@ existing type, lifecycle, moderation, urgency, City and date filters remain visi
 Counts are computed with the SQL predicate shown below; the filtered list page uses the equivalent
 AdminJS filter, so a queue's count and its result page always agree.
 
-| Group        | Entry                  | Resource        | AdminJS filter parameters                                    | Count predicate                                                           |
-| ------------ | ---------------------- | --------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| Needs review | Flagged — needs review | Posts           | `moderation_status=FLAGGED`, `status=ACTIVE`                 | `moderation_status = 'FLAGGED' AND status = 'ACTIVE'`                     |
-| Needs review | Pending moderation     | Posts           | `moderation_status=PENDING_AUTO_REVIEW`, `status=ACTIVE`     | `moderation_status = 'PENDING_AUTO_REVIEW' AND status = 'ACTIVE'`         |
-| Needs review | Open Post Reports      | Post Reports    | `review_state=OPEN`                                          | `reviewed_at IS NULL`                                                     |
-| Needs review | Open Comment Reports   | Comment Reports | `review_state=OPEN`                                          | `reviewed_at IS NULL`                                                     |
-| Needs review | Open Account Reports   | Account Reports | `review_state=OPEN`                                          | `reviewed_at IS NULL`                                                     |
-| Rescue       | Active rescue          | Posts           | `post_type=RESCUE`, `status=ACTIVE`                          | `post_type = 'RESCUE' AND status = 'ACTIVE'`                              |
-| Lost & found | All lost & found       | Posts           | `post_type=LOST`, `status=ACTIVE`                            | `post_type = 'LOST' AND status = 'ACTIVE'`                                |
-| Lost & found | Lost pet               | Posts           | `post_type=LOST`, `status=ACTIVE`, `report_type=LOST_PET`    | active `LOST` with a `lost_posts` row whose `report_type = 'LOST_PET'`    |
-| Lost & found | Found stray            | Posts           | `post_type=LOST`, `status=ACTIVE`, `report_type=FOUND_STRAY` | active `LOST` with a `lost_posts` row whose `report_type = 'FOUND_STRAY'` |
-| Listings     | Adoption               | Posts           | `post_type=ADOPTION`, `status=ACTIVE`                        | `post_type = 'ADOPTION' AND status = 'ACTIVE'`                            |
-| Listings     | Products               | Posts           | `post_type=PRODUCT`, `status=ACTIVE`                         | `post_type = 'PRODUCT' AND status = 'ACTIVE'`                             |
-| Listings     | Mating                 | Posts           | `post_type=MATING`, `status=ACTIVE`                          | `post_type = 'MATING' AND status = 'ACTIVE'`                              |
-| History      | Completed              | Posts           | `queue=completed`                                            | `status IN ('RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD')`                   |
-| History      | Expired                | Posts           | `status=EXPIRED`                                             | `status = 'EXPIRED'`                                                      |
-| History      | Removed                | Posts           | `status=REMOVED`                                             | `status = 'REMOVED'`                                                      |
+| Group        | Entry                  | Resource        | AdminJS filter parameters                                    | Count predicate                                                            |
+| ------------ | ---------------------- | --------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| Needs review | Flagged — needs review | Posts           | `moderation_status=FLAGGED`, `status=ACTIVE`                 | `moderation_status = 'FLAGGED' AND status = 'ACTIVE'`                      |
+| Needs review | Pending moderation     | Posts           | `moderation_status=PENDING_AUTO_REVIEW`, `status=ACTIVE`     | `moderation_status = 'PENDING_AUTO_REVIEW' AND status = 'ACTIVE'`          |
+| Needs review | Open Post Reports      | Post Reports    | `review_state=OPEN`                                          | `reviewed_at IS NULL`                                                      |
+| Needs review | Open Comment Reports   | Comment Reports | `review_state=OPEN`                                          | `reviewed_at IS NULL`                                                      |
+| Needs review | Open Account Reports   | Account Reports | `review_state=OPEN`                                          | `reviewed_at IS NULL`                                                      |
+| Rescue       | Active rescue          | Posts           | `post_type=RESCUE`, `status=ACTIVE`                          | `post_type = 'RESCUE' AND status = 'ACTIVE'`                               |
+| Lost & found | All lost & found       | Posts           | `post_type=LOST`, `status=ACTIVE`                            | `post_type = 'LOST' AND status = 'ACTIVE'`                                 |
+| Lost & found | Lost pet               | Posts           | `post_type=LOST`, `status=ACTIVE`, `report_type=LOST_PET`    | active `LOST` with a `lost_posts` row whose `report_type = 'LOST_PET'`     |
+| Lost & found | Found stray            | Posts           | `post_type=LOST`, `status=ACTIVE`, `report_type=FOUND_STRAY` | active `LOST` with a `lost_posts` row whose `report_type = 'FOUND_STRAY'`  |
+| Listings     | Adoption               | Posts           | `post_type=ADOPTION`, `status=ACTIVE`                        | `post_type = 'ADOPTION' AND status = 'ACTIVE'`                             |
+| Listings     | Products               | Posts           | `post_type=PRODUCT`, `status=ACTIVE`                         | `post_type = 'PRODUCT' AND status = 'ACTIVE'`                              |
+| Listings     | Mating                 | Posts           | `post_type=MATING`, `status=ACTIVE`                          | `post_type = 'MATING' AND status = 'ACTIVE'`                               |
+| History      | Completed              | Posts           | `queue=completed`                                            | `status IN ('RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'ANIMAL_DECEASED')` |
+| History      | Expired                | Posts           | `status=EXPIRED`                                             | `status = 'EXPIRED'`                                                       |
+| History      | Removed                | Posts           | `status=REMOVED`                                             | `status = 'REMOVED'`                                                       |
 
 ### Predicate notes
 
@@ -49,11 +49,13 @@ AdminJS filter, so a queue's count and its result page always agree.
 - **Open Reports use `reviewed_at IS NULL`,** never the historical `posts.report_count` counter. The
   dashboard review table shows the live unreviewed Report count per Post.
 - **A flagged Post that already reached an outcome** (`RESOLVED`, `REUNITED`, `ADOPTED`, `SOLD`,
-  `REMOVED`, `EXPIRED`) is not outstanding review work, matching the pre-existing dashboard
-  statistics predicate.
-- **History preserves meaning.** `Completed` is a recorded successful outcome, `Expired` is an
-  inactivity state of a renewable listing and `Removed` is an administrative takedown; they are never
-  merged.
+  `ANIMAL_DECEASED`, `REMOVED`, `EXPIRED`) is not outstanding review work, matching the pre-existing
+  dashboard statistics predicate.
+- **History preserves meaning.** `Completed` is a recorded outcome (including the RESCUE-only
+  `ANIMAL_DECEASED`, which is completed but not a success), `Expired` is an inactivity state of a
+  renewable listing and `Removed` is an administrative takedown; they are never merged. The queue
+  predicate derives from the shared `COMPLETED_POST_OUTCOMES` list, so adding an outcome cannot leave
+  this document's History view behind.
 - **Photo Comments alone** do not create a review queue. There is no claimed "disputed case" queue.
 
 ## Virtual filter properties

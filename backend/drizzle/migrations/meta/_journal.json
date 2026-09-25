@@ -407,6 +407,13 @@
       "when": 1792001600000,
       "tag": "0057_add_post_completion_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1792088000000,
+      "tag": "0058_add_animal_deceased_post_status",
+      "breakpoints": true
     }
   ]
 }

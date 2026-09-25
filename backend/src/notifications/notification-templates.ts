@@ -15,9 +15,10 @@ export type NotificationLanguage = (typeof NOTIFICATION_LANGUAGES)[number];
 export const DEFAULT_NOTIFICATION_LANGUAGE: NotificationLanguage = 'en';
 
 /**
- * The successful outcomes an administrator can record as a Post Resolution.
+ * The completed outcomes an administrator can record as a Post Resolution.
  * Derived from the shared lifecycle contract, so the notification templates and
- * the AdminJS queue predicates cannot drift from the one outcome list.
+ * the AdminJS queue predicates cannot drift from the one outcome list. This
+ * includes `ANIMAL_DECEASED`, which is a completed outcome but not a success.
  */
 export type PostResolutionOutcome = PostLifecycleCompletedOutcome;
 
@@ -51,7 +52,7 @@ export interface NotificationTemplateParamsMap {
   COMMENT_PINNED: { postTitle: string };
   POST_COMPLETED: { postTitle: string; outcome?: string };
   POST_REOPENED: { postTitle: string };
-  RESCUE_COMPLETED: { postTitle: string };
+  RESCUE_COMPLETED: { postTitle: string; outcome?: string };
   RESCUE_REOPENED: { postTitle: string };
 }
 
@@ -85,6 +86,7 @@ const POST_RESOLUTION_OUTCOME_LABELS: Readonly<Record<PostResolutionOutcome, { e
     REUNITED: Object.freeze({ en: 'reunited', ar: 'تم لمّ الشمل' }),
     ADOPTED: Object.freeze({ en: 'adopted', ar: 'تم التبني' }),
     SOLD: Object.freeze({ en: 'sold', ar: 'تم البيع' }),
+    ANIMAL_DECEASED: Object.freeze({ en: 'closed (animal deceased)', ar: 'تم الإغلاق (وفاة الحيوان)' }),
   });
 
 /**
@@ -330,14 +332,30 @@ const NOTIFICATION_TEMPLATES: NotificationTemplateRegistry = {
     }),
   },
   RESCUE_COMPLETED: {
-    en: ({ postTitle }) => ({
-      title: 'Rescue resolved',
-      body: `The rescue "${postTitle}" was marked as rescued.`,
-    }),
-    ar: ({ postTitle }) => ({
-      title: 'تم حل حالة الإنقاذ',
-      body: `تم تعليم حالة الإنقاذ "${postTitle}" بأنها تم إنقاذها.`,
-    }),
+    en: ({ postTitle, outcome }) => {
+      if (outcome === 'ANIMAL_DECEASED') {
+        return {
+          title: 'Rescue closed',
+          body: `The rescue "${postTitle}" was closed (animal deceased).`,
+        };
+      }
+      return {
+        title: 'Rescue resolved',
+        body: `The rescue "${postTitle}" was marked as rescued.`,
+      };
+    },
+    ar: ({ postTitle, outcome }) => {
+      if (outcome === 'ANIMAL_DECEASED') {
+        return {
+          title: 'تم إغلاق حالة الإنقاذ',
+          body: `تم إغلاق حالة الإنقاذ "${postTitle}" (وفاة الحيوان).`,
+        };
+      }
+      return {
+        title: 'تم حل حالة الإنقاذ',
+        body: `تم تعليم حالة الإنقاذ "${postTitle}" بأنها تم إنقاذها.`,
+      };
+    },
   },
   RESCUE_REOPENED: {
     en: ({ postTitle }) => ({

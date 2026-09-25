@@ -1370,4 +1370,198 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(afterReopenBatch.batchesProcessed).toBe(0);
     });
   });
+
+  describe('Ticket 06: Animal deceased rescue closure', () => {
+    it('closes a rescue as ANIMAL_DECEASED with deceased copy and delivers inbox and push with relatedPostId', async () => {
+      const owner = await createUser({ name: 'DeceasedOwner' });
+      const post = await createRescuePost(owner.id, 'Injured Stray Cat');
+      const participant = await createUser({ name: 'DeceasedParticipant' });
+
+      await dbHelper.db.insert(deviceRegistrations).values({
+        id: generateUuidV7(),
+        userId: participant.id,
+        token: 'token_animal_deceased',
+        platform: 'ANDROID',
+      });
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: participant.id });
+
+      const updated = await postsRepo.updateStatus(post.id, owner.id, 'ANIMAL_DECEASED');
+      expect(updated?.status).toBe('ANIMAL_DECEASED');
+
+      const [event] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.postId, post.id));
+      expect(event.type).toBe('RESCUE_COMPLETED');
+      expect(event.outcome).toBe('ANIMAL_DECEASED');
+      expect(event.title).toBe('Rescue closed');
+      expect(event.body).toBe('The rescue "Injured Stray Cat" was closed (animal deceased).');
+      expect(event.body).not.toContain('rescued');
+      expect(event.titleArabic).toBe('تم إغلاق حالة الإنقاذ');
+      expect(event.bodyArabic).toContain('وفاة الحيوان');
+      expect(event.bodyArabic).not.toContain('تم إنقاذها');
+
+      const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(1);
+
+      const [notification] = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, participant.id));
+      expect(notification.type).toBe('RESCUE_COMPLETED');
+      expect(notification.title).toBe('Rescue closed');
+      expect(notification.body).toBe('The rescue "Injured Stray Cat" was closed (animal deceased).');
+      expect(notification.body).not.toContain('rescued');
+      expect(notification.relatedPostId).toBe(post.id);
+
+      const [pushIntent] = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.recipientId, participant.id));
+      expect(pushIntent).toBeDefined();
+      expect(pushIntent.notificationId).toBe(notification.id);
+
+      const sentMessages: PushDeliveryMessage[] = [];
+      const provider: PushProvider = {
+        send: (message) => {
+          sentMessages.push(message);
+          return Promise.resolve();
+        },
+      };
+      const pushProcessor = new PushDeliveryProcessor(dbHelper.db, provider, isolationPolicy);
+      expect(await pushProcessor.processPendingDeliveries()).toBe(1);
+      expect(sentMessages).toHaveLength(1);
+      expect(sentMessages[0].title).toBe('Rescue closed');
+      expect(sentMessages[0].body).toBe('The rescue "Injured Stray Cat" was closed (animal deceased).');
+      expect(sentMessages[0].body).not.toContain('rescued');
+      expect(sentMessages[0].data.relatedPostId).toBe(post.id);
+    });
+
+    it('sends the RESCUE_REOPENED correction on reopening and suppresses a stale pending closure delivery', async () => {
+      const owner = await createUser({ name: 'DeceasedReopenOwner' });
+      const post = await createRescuePost(owner.id, 'Deceased Reopen Rescue');
+      const delivered = await createUser({ name: 'DeceasedDeliveredParticipant' });
+      const pending = await createUser({ name: 'DeceasedPendingParticipant' });
+
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: delivered.id });
+      await dbHelper.db.insert(postSaves).values({ postId: post.id, userId: pending.id });
+
+      await postsRepo.updateStatus(post.id, owner.id, 'ANIMAL_DECEASED');
+
+      // Deliver exactly one participant and leave the other PENDING.
+      const deliveryBatch = await processor.processPendingBatches({ maxBatches: 1, batchSize: 1 });
+      expect(deliveryBatch.delivered).toBe(1);
+      const [deliveredRecipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.status, 'DELIVERED'));
+      expect(deliveredRecipient).toBeDefined();
+
+      // Administrator reopens the mistaken deceased outcome.
+      await dbHelper.db.transaction(async (tx) => {
+        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
+        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
+      });
+
+      const [event] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.postId, post.id));
+      expect(event.status).toBe('SUPERSEDED');
+
+      const deliveredNotifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, deliveredRecipient.recipientId));
+      expect(deliveredNotifs.filter((n) => n.type === 'RESCUE_COMPLETED')).toHaveLength(1);
+      const correction = deliveredNotifs.find((n) => n.type === 'RESCUE_REOPENED');
+      expect(correction).toBeDefined();
+      expect(correction?.relatedPostId).toBe(post.id);
+      expect(correction?.body).toContain(post.title);
+
+      const [staleRecipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(
+          sql`${postCompletionRecipients.postId} = ${post.id}::uuid AND ${postCompletionRecipients.id} <> ${deliveredRecipient.id}::uuid`,
+        );
+      expect(staleRecipient.status).toBe('SUPPRESSED');
+
+      const staleNotifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, staleRecipient.recipientId));
+      expect(staleNotifs).toHaveLength(0);
+
+      const afterReopenBatch = await processor.processPendingBatches({ batchSize: 10 });
+      expect(afterReopenBatch.delivered).toBe(0);
+      expect(afterReopenBatch.batchesProcessed).toBe(0);
+    });
+
+    it('keeps deceased and successful rescue close/reopen/close cycles distinct', async () => {
+      const creator = await createUser({ name: 'DeceasedCycleCreator' });
+      const post = await createRescuePost(creator.id, 'Rescue Cycle Deceased');
+      const participant = await createUser({ name: 'DeceasedCycleParticipant' });
+
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: participant.id });
+
+      // Cycle 1: close as deceased.
+      await postsRepo.updateStatus(post.id, creator.id, 'ANIMAL_DECEASED');
+      let batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(1);
+
+      // Reopen the mistaken deceased outcome.
+      await dbHelper.db.transaction(async (tx) => {
+        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
+        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
+      });
+
+      // Cycle 2: close as a successful rescue.
+      await postsRepo.updateStatus(post.id, creator.id, 'RESOLVED');
+      batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(1);
+
+      const notifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, participant.id));
+      expect(notifs).toHaveLength(3);
+      const closures = notifs.filter((n) => n.type === 'RESCUE_COMPLETED');
+      expect(closures).toHaveLength(2);
+      expect(closures.map((n) => n.title).sort()).toEqual(['Rescue closed', 'Rescue resolved']);
+      expect(closures.find((n) => n.title === 'Rescue closed')?.body).toBe(
+        'The rescue "Rescue Cycle Deceased" was closed (animal deceased).',
+      );
+      expect(closures.find((n) => n.title === 'Rescue resolved')?.body).toBe(
+        'The rescue "Rescue Cycle Deceased" was marked as rescued.',
+      );
+      const corrections = notifs.filter((n) => n.type === 'RESCUE_REOPENED');
+      expect(corrections).toHaveLength(1);
+      expect(corrections[0].title).toBe('Rescue reopened');
+      expect(corrections[0].body).toBe('The rescue "Rescue Cycle Deceased" was reopened.');
+      expect(corrections[0].relatedPostId).toBe(post.id);
+
+      // The first (deceased) closure had already been delivered, so reopening
+      // marks its recipient CORRECTED rather than superseding the completed
+      // event; the second closure is delivered normally.
+      const recipients = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.postId, post.id))
+        .orderBy(postCompletionRecipients.createdAt);
+      expect(recipients).toHaveLength(2);
+      expect(recipients.map((r) => r.status)).toEqual(['CORRECTED', 'DELIVERED']);
+
+      const events = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.postId, post.id))
+        .orderBy(postCompletionNotificationEvents.createdAt);
+      expect(events).toHaveLength(2);
+      expect(events[0].outcome).toBe('ANIMAL_DECEASED');
+      expect(events[0].status).toBe('COMPLETED');
+      expect(events[1].outcome).toBe('RESOLVED');
+      expect(events[1].status).toBe('COMPLETED');
+    });
+  });
 });

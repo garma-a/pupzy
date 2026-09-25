@@ -30,7 +30,14 @@ describe('State-Aware Action Visibility Matrix', () => {
     return { id: () => 'test-post-id', params, get: (key) => params[key] };
   };
 
-  const resolutionActionNames = ['markRescued', 'markReunited', 'markResolved', 'markAdopted', 'markSold'];
+  const resolutionActionNames = [
+    'markRescued',
+    'markAnimalDeceased',
+    'markReunited',
+    'markResolved',
+    'markAdopted',
+    'markSold',
+  ];
 
   const visibleResolutionActions = (record) =>
     resolutionActionNames.filter((name) => postActions[name].isVisible({ record }));
@@ -96,7 +103,10 @@ describe('State-Aware Action Visibility Matrix', () => {
     });
 
     it('offers only the type-specific resolution action for each active Post type', () => {
-      assert.deepEqual(visibleResolutionActions(createTypedPostRecord('RESCUE', 'ACTIVE')), ['markRescued']);
+      assert.deepEqual(visibleResolutionActions(createTypedPostRecord('RESCUE', 'ACTIVE')), [
+        'markRescued',
+        'markAnimalDeceased',
+      ]);
       assert.deepEqual(visibleResolutionActions(createTypedPostRecord('LOST', 'ACTIVE', 'LOST_PET')), ['markReunited']);
       assert.deepEqual(visibleResolutionActions(createTypedPostRecord('LOST', 'ACTIVE', 'FOUND_STRAY')), [
         'markReunited',
@@ -113,7 +123,7 @@ describe('State-Aware Action Visibility Matrix', () => {
     });
 
     it('hides every resolution action once an outcome, removal or expiry is recorded', () => {
-      for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'REMOVED', 'EXPIRED']) {
+      for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'ANIMAL_DECEASED', 'REMOVED', 'EXPIRED']) {
         for (const [postType, reportType] of [
           ['RESCUE', null],
           ['LOST', 'FOUND_STRAY'],
@@ -139,7 +149,7 @@ describe('State-Aware Action Visibility Matrix', () => {
     });
 
     it('offers Reopen only to correct a completed outcome', () => {
-      for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD']) {
+      for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'ANIMAL_DECEASED']) {
         const context = { record: createTypedPostRecord('RESCUE', status) };
         assert.equal(postActions.reopenPost.isVisible(context), true, `Reopen must be offered for ${status}`);
       }

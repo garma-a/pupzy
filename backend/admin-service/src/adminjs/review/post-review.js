@@ -27,6 +27,8 @@ const POST_STATUS_LABELS = {
   ADOPTED: 'Adopted',
   SOLD: 'Sold',
   REMOVED: 'Removed',
+  EXPIRED: 'Expired',
+  ANIMAL_DECEASED: 'Animal deceased',
 };
 
 const MODERATION_STATUS_LABELS = {

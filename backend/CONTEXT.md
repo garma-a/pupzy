@@ -90,7 +90,7 @@ An animal whose immediate danger has been addressed and appropriate care secured
 A rescue closure outcome indicating that the animal has died. It ends the rescue request without representing a successful rescue.
 
 **Administrative reopening**:
-An administrator-only correction that returns a completed Post (resolved, reunited, adopted or sold) to Active. It is not a new resolution, never revives terminated interactions, never restores removed content or renews an expired listing, and cannot put a banned account's content back into active discovery.
+An administrator-only correction that returns a completed Post (resolved, reunited, adopted, sold, or closed because the animal died) to Active. It is not a new resolution, never revives terminated interactions, never restores removed content or renews an expired listing, and cannot put a banned account's content back into active discovery.
 
 **Expired Post**:
 An adoption or product Post taken out of active discovery because of inactivity, with its photos retained so its owner can renew it. Expiry does not mean the Post was successfully resolved or removed for a moderation violation.
