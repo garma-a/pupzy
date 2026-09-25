@@ -10,6 +10,7 @@ import '../services/graphql_service.dart';
 import '../services/safety_events.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
+import '../widgets/owner_post_actions.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/pet_carousel.dart';
@@ -428,6 +429,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // The backend only lets an ACTIVE listing be marked sold; say how to
+        // get there rather than offering a button that must fail.
+        if (_isExpired) ...[
+          BlockedActionNote(
+            t(context, 'Renew this listing before marking it sold.', 'جدّد هذا الإعلان قبل تحديده كمباع.'),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         Row(
           children: [
             Expanded(
@@ -440,7 +449,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: ElevatedButton(
-                onPressed: _busy || _isSold ? null : _markSold,
+                onPressed: _busy || _isSold || _isExpired ? null : _markSold,
                 child: Text(_isSold ? t(context, 'Sold', 'مباع') : t(context, 'Mark Sold', 'تحديد كمباع')),
               ),
             ),

@@ -26,6 +26,9 @@ class FakeDetailGraphQL extends FakeSafetyGraphQL {
   AdoptionPostExtension? adoption;
   ProductPostExtension? product;
   MatingDetails? mating;
+  List<AdoptionApplication> myApplications = [];
+  String? renewError;
+  int renewCalls = 0;
 
   @override
   Future<Map<String, dynamic>?> fetchMe() async => {'id': meId, 'fullName': 'Me', 'profileComplete': true};
@@ -42,7 +45,12 @@ class FakeDetailGraphQL extends FakeSafetyGraphQL {
   @override
   Future<(MatingDetails?, String?)> fetchMatingPostDetail(String postId) async => (mating, null);
   @override
-  Future<(List<AdoptionApplication>, String?)> fetchMyAdoptionApplications({int first = 20}) async => (<AdoptionApplication>[], null);
+  Future<(List<AdoptionApplication>, String?)> fetchMyAdoptionApplications({int first = 20}) async => (List.of(myApplications), null);
+  @override
+  Future<(bool, String?)> renewPost(String postId) async {
+    renewCalls++;
+    return (renewError == null, renewError);
+  }
   @override
   Future<(List<ContactRequest>, String?)> fetchPostContactRequests({required String postId, String? status, int first = 20}) async =>
       (<ContactRequest>[], null);
@@ -53,12 +61,12 @@ class FakeDetailGraphQL extends FakeSafetyGraphQL {
 
 const ownerId = 'owner-1';
 
-PostDetail post(String type) => PostDetail.fromJson({
+PostDetail post(String type, {String status = 'ACTIVE'}) => PostDetail.fromJson({
       'id': 'post-$type',
       'postType': type,
       'title': 'A $type post',
       'description': 'Description long enough to read.',
-      'status': 'ACTIVE',
+      'status': status,
       'urgency': type == 'RESCUE' || type == 'LOST' ? 'URGENT' : null,
       'city': {'id': 'c1', 'nameEnglish': 'Qasr Al-Nile', 'nameArabic': 'قصر النيل', 'governorate': 'Cairo'},
       'coordinates': type == 'RESCUE' || type == 'LOST' ? {'latitude': 30.04, 'longitude': 31.23} : null,
@@ -95,7 +103,7 @@ final cases = [
 void main() {
   late FakeDetailGraphQL graphql;
 
-  Future<void> pumpDetail(WidgetTester tester, Case c, {required bool asOwner}) async {
+  Future<void> pumpDetail(WidgetTester tester, Case c, {required bool asOwner, String status = 'ACTIVE', void Function(FakeDetailGraphQL)? setUp}) async {
     // Wide on purpose: the test font draws every glyph as a full em square,
     // so text is far wider than on a phone and would report false overflows.
     // Small-screen layout is checked on a real device instead.
@@ -104,7 +112,7 @@ void main() {
     addTearDown(tester.view.reset);
     graphql = FakeDetailGraphQL()
       ..meId = asOwner ? ownerId : 'viewer-1'
-      ..postDetailResult = post(c.type)
+      ..postDetailResult = post(c.type, status: status)
       ..rescue = const RescuePostExtension(species: 'DOG', conditionSummary: 'Limping but alert', reporterRole: 'REPORTING')
       ..lost = c.reportType == null
           ? null
@@ -123,6 +131,7 @@ void main() {
         'vaccinated': true,
         'dewormed': true,
       });
+    setUp?.call(graphql);
     await tester.pumpWidget(safetyTestApp(graphql: graphql, events: SafetyEvents(), child: c.screen('post-${c.type}')));
     await tester.pumpAndSettle();
   }
@@ -153,4 +162,127 @@ void main() {
       });
     });
   }
+
+  // ── Item 3: no new contact requests / applications on completed Posts ──
+
+  ElevatedButton buttonLabelled(WidgetTester tester, String label) =>
+      tester.widget<ElevatedButton>(find.ancestor(of: find.text(label), matching: find.byType(ElevatedButton)).first);
+
+  ContactRequest request(String status) => ContactRequest.fromJson({
+        'id': 'req-1',
+        'postId': 'p',
+        'message': 'Is the pet still here?',
+        'status': status,
+        'createdAt': '2026-09-21T10:00:00Z',
+      });
+
+  AdoptionApplication application(String status) => AdoptionApplication.fromJson({
+        'id': 'app-1',
+        'targetPostId': 'post-ADOPTION',
+        'status': status,
+        'livingSituation': 'APARTMENT',
+        'whyAdopt': 'We have room and time.',
+        'createdAt': '2026-09-21T10:00:00Z',
+      });
+
+  final contactCases = [
+    (cases[1], 'REUNITED', 'Reunited — no new requests'),
+    (cases[2], 'RESOLVED', 'Resolved — no new requests'),
+    (cases[5], 'RESOLVED', 'Resolved — no new requests'),
+  ];
+  for (final (c, status, closedLabel) in contactCases) {
+    group('${c.name} closed as $status', () {
+      testWidgets('a new visitor sees the outcome instead of a request button', (tester) async {
+        await pumpDetail(tester, c, asOwner: false, status: status);
+        expect(find.text(closedLabel), findsOneWidget);
+        expect(buttonLabelled(tester, closedLabel).onPressed, isNull);
+        expect(find.text(c.viewerAction), findsNothing);
+      });
+
+      testWidgets('an approved requester can still reach the owner on WhatsApp', (tester) async {
+        await pumpDetail(tester, c, asOwner: false, status: status, setUp: (g) => g.myContactRequests.add(request('APPROVED')));
+        expect(buttonLabelled(tester, 'Message on WhatsApp').onPressed, isNotNull);
+      });
+    });
+  }
+
+  testWidgets('a Post that closes while open updates its button after a request fails', (tester) async {
+    await pumpDetail(tester, cases[1], asOwner: false);
+    expect(buttonLabelled(tester, 'Contact').onPressed, isNotNull);
+
+    await tester.tap(find.text('Contact'));
+    await tester.pumpAndSettle();
+    // The owner closes the Post meanwhile; the request is rejected and the
+    // visitor closes the sheet.
+    graphql.postDetailResult = post('LOST', status: 'REUNITED');
+    Navigator.of(tester.element(find.byType(BottomSheet))).pop();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reunited — no new requests'), findsOneWidget);
+    expect(buttonLabelled(tester, 'Reunited — no new requests').onPressed, isNull);
+  });
+
+  group('ADOPTION closed', () {
+    testWidgets('an adopted listing takes no new applications', (tester) async {
+      await pumpDetail(tester, cases[3], asOwner: false, status: 'ADOPTED');
+      expect(buttonLabelled(tester, 'Adopted — no new applications').onPressed, isNull);
+      expect(find.text('Ask to adopt'), findsNothing);
+    });
+
+    testWidgets('an expired listing says so and takes no new applications', (tester) async {
+      await pumpDetail(tester, cases[3], asOwner: false, status: 'EXPIRED');
+      expect(buttonLabelled(tester, 'Listing expired').onPressed, isNull);
+    });
+
+    testWidgets('an approved applicant keeps WhatsApp after adoption', (tester) async {
+      await pumpDetail(tester, cases[3], asOwner: false, status: 'ADOPTED', setUp: (g) => g.myApplications.add(application('APPROVED')));
+      expect(buttonLabelled(tester, 'Message Owner on WhatsApp').onPressed, isNotNull);
+    });
+
+    testWidgets('a pending applicant still sees their application, not a closed label', (tester) async {
+      await pumpDetail(tester, cases[3], asOwner: false, status: 'ADOPTED', setUp: (g) => g.myApplications.add(application('PENDING')));
+      expect(buttonLabelled(tester, 'Application Sent ✓').onPressed, isNull);
+    });
+  });
+
+  // ── Item 4: expired listings must be renewed before closure ──
+
+  group('expired listings', () {
+    testWidgets('PRODUCT: Mark Sold waits for a successful renewal', (tester) async {
+      await pumpDetail(tester, cases[4], asOwner: true, status: 'EXPIRED');
+      expect(find.text('Renew this listing before marking it sold.'), findsOneWidget);
+      expect(buttonLabelled(tester, 'Mark Sold').onPressed, isNull);
+
+      graphql.renewError = 'RENEWAL_COOLDOWN';
+      await tester.tap(find.textContaining('Renew').last);
+      await tester.pumpAndSettle();
+      expect(graphql.renewCalls, 1);
+      expect(buttonLabelled(tester, 'Mark Sold').onPressed, isNull, reason: 'a failed renewal leaves it expired');
+
+      graphql.renewError = null;
+      await tester.tap(find.textContaining('Renew').last);
+      await tester.pumpAndSettle();
+      expect(buttonLabelled(tester, 'Mark Sold').onPressed, isNotNull);
+      expect(find.text('Renew this listing before marking it sold.'), findsNothing);
+    });
+
+    testWidgets('ADOPTION: Mark Adopted waits for a successful renewal', (tester) async {
+      await pumpDetail(tester, cases[3], asOwner: true, status: 'EXPIRED');
+      expect(find.text('Renew this listing before marking it adopted.'), findsOneWidget);
+      final closeButton = find.byKey(const Key('ownerCloseButton'));
+      expect(tester.widget<ElevatedButton>(closeButton).onPressed, isNull);
+      expect(find.text('Mark Adopted'), findsOneWidget, reason: 'expired is not shown as a completed outcome');
+
+      await tester.tap(find.textContaining('Renew').last);
+      await tester.pumpAndSettle();
+      expect(tester.widget<ElevatedButton>(closeButton).onPressed, isNotNull);
+      expect(find.text('Renew this listing before marking it adopted.'), findsNothing);
+    });
+
+    testWidgets('ACTIVE listings are unaffected', (tester) async {
+      await pumpDetail(tester, cases[4], asOwner: true);
+      expect(buttonLabelled(tester, 'Mark Sold').onPressed, isNotNull);
+      expect(find.textContaining('Renew this listing before'), findsNothing);
+    });
+  });
 }

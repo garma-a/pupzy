@@ -127,6 +127,11 @@ class OwnerPostActions extends StatefulWidget {
   /// an already-closed post.
   final String? currentStatus;
 
+  /// Why closing isn't possible right now although the post isn't closed —
+  /// e.g. an expired listing must be renewed first. Disables the close button
+  /// and shows this line above it. Null when closing is allowed.
+  final String? closeBlockedReason;
+
   /// Called with the new status after the post was closed.
   final ValueChanged<String> onClosed;
 
@@ -140,6 +145,7 @@ class OwnerPostActions extends StatefulWidget {
     this.alternateClose,
     required this.isClosed,
     this.currentStatus,
+    this.closeBlockedReason,
     required this.onClosed,
     required this.onDeleted,
   });
@@ -201,7 +207,7 @@ class _OwnerPostActionsState extends State<OwnerPostActions> {
   }
 
   Future<void> _closePost() async {
-    if (_busy || widget.isClosed) return;
+    if (_busy || widget.isClosed || widget.closeBlockedReason != null) return;
     final close = await _resolveCloseAction();
     if (close == null || !mounted) return;
     final confirmed = await _confirm(
@@ -270,7 +276,8 @@ class _OwnerPostActionsState extends State<OwnerPostActions> {
         : close != null
             ? t(context, close.actionEn, close.actionAr)
             : '';
-    return Row(
+    final blockedReason = widget.isClosed ? null : widget.closeBlockedReason;
+    final buttons = Row(
       children: [
         Expanded(
           child: OutlinedButton(
@@ -285,11 +292,38 @@ class _OwnerPostActionsState extends State<OwnerPostActions> {
           Expanded(
             child: ElevatedButton(
               key: const Key('ownerCloseButton'),
-              onPressed: _busy || widget.isClosed ? null : _closePost,
+              onPressed: _busy || widget.isClosed || blockedReason != null ? null : _closePost,
               child: Text(widget.isClosed && doneAction != null ? t(context, doneAction.doneEn, doneAction.doneAr) : actionLabel),
             ),
           ),
         ],
+      ],
+    );
+    if (close == null || blockedReason == null) return buttons;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        BlockedActionNote(blockedReason),
+        const SizedBox(height: AppSpacing.sm),
+        buttons,
+      ],
+    );
+  }
+}
+
+/// One muted line explaining why an owner action is unavailable right now.
+class BlockedActionNote extends StatelessWidget {
+  const BlockedActionNote(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Icon(Icons.info_outline, size: 16, color: AppColors.textSecondary),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(child: Text(text, style: Theme.of(context).textTheme.bodySmall)),
       ],
     );
   }
