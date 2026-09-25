@@ -2004,4 +2004,131 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(events[1].status).toBe('COMPLETED');
     });
   });
+
+  describe('Push worker Post lifecycle recheck (decision 19)', () => {
+    it('suppresses a queued closure push when the post is removed before the push worker runs', async () => {
+      const owner = await createUser({ name: 'LifecycleRemoveOwner' });
+      const post = await createRescuePost(owner.id, 'Lifecycle Remove Rescue');
+      const participant = await createUser({ name: 'LifecycleRemoveParticipant' });
+
+      await dbHelper.db.insert(deviceRegistrations).values({
+        id: generateUuidV7(),
+        userId: participant.id,
+        token: 'token_lifecycle_remove',
+        platform: 'ANDROID',
+      });
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: participant.id });
+
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
+
+      const [closureNotification] = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, participant.id));
+      expect(closureNotification.type).toBe('RESCUE_COMPLETED');
+
+      const [closurePush] = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.notificationId, closureNotification.id));
+      expect(closurePush.status).toBe('PENDING');
+
+      // The owner removes the post after the closure inbox row and push intent
+      // committed, but before the push worker sends.
+      const removed = await postsRepo.softDelete(post.id, owner.id);
+      expect(removed?.status).toBe('REMOVED');
+
+      const sentMessages: PushDeliveryMessage[] = [];
+      const provider: PushProvider = {
+        send: (message) => {
+          sentMessages.push(message);
+          return Promise.resolve();
+        },
+      };
+      const pushProcessor = new PushDeliveryProcessor(dbHelper.db, provider, isolationPolicy);
+
+      expect(await pushProcessor.processPendingDeliveries()).toBe(0);
+      expect(sentMessages).toHaveLength(0);
+
+      const [suppressedPush] = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.id, closurePush.id));
+      expect(suppressedPush.status).toBe('SUPPRESSED');
+
+      // Suppression terminates the push only; the inbox row survives.
+      const retainedNotifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, participant.id));
+      expect(retainedNotifs).toHaveLength(1);
+    });
+
+    it('suppresses a queued correction push when the post is re-closed before the push worker runs', async () => {
+      const owner = await createUser({ name: 'LifecycleRecloseOwner' });
+      const post = await createRescuePost(owner.id, 'Lifecycle Reclose Rescue');
+      const participant = await createUser({ name: 'LifecycleRecloseParticipant' });
+
+      await dbHelper.db.insert(deviceRegistrations).values({
+        id: generateUuidV7(),
+        userId: participant.id,
+        token: 'token_lifecycle_reclose',
+        platform: 'IOS',
+      });
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: participant.id });
+
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
+
+      // Administrator reopens, which queues the correction push.
+      await dbHelper.db.transaction(async (tx) => {
+        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
+        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
+      });
+
+      const [correction] = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(
+          sql`${notifications.recipientId} = ${participant.id}::uuid AND ${notifications.type} = 'RESCUE_REOPENED'`,
+        );
+      expect(correction).toBeDefined();
+
+      const [correctionPush] = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.notificationId, correction.id));
+      expect(correctionPush.status).toBe('PENDING');
+
+      // The owner closes the post again before the push worker sends, so the
+      // correction no longer describes the current lifecycle state.
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+
+      const sentMessages: PushDeliveryMessage[] = [];
+      const provider: PushProvider = {
+        send: (message) => {
+          sentMessages.push(message);
+          return Promise.resolve();
+        },
+      };
+      const pushProcessor = new PushDeliveryProcessor(dbHelper.db, provider, isolationPolicy);
+
+      expect(await pushProcessor.processPendingDeliveries()).toBe(0);
+      expect(sentMessages).toHaveLength(0);
+
+      const [suppressedPush] = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.id, correctionPush.id));
+      expect(suppressedPush.status).toBe('SUPPRESSED');
+
+      // Both committed inbox rows survive suppression.
+      const retainedNotifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, participant.id));
+      expect(retainedNotifs).toHaveLength(2);
+    });
+  });
 });
