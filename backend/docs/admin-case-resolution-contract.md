@@ -126,7 +126,7 @@ Reopening uses the same transaction boundary and locks, and commits together:
    internal reason and metadata (`previousOutcome`, the corrected outcome).
 3. One `notifications` row (`POST_REOPENED_BY_ADMIN`) is inserted for the Post owner with both language
    columns, committed with the state change so notification intent cannot be lost.
-4. Pending participant completion events for the Post are superseded, and ONE durable localized
+4. Pending closure events for the Post are superseded, and ONE durable localized
    `POST_REOPENED` (or `RESCUE_REOPENED` for RESCUE) correction event is queued for the already-delivered
    participants through `reopenPostCompletion`, the AdminJS duplicate that mirrors the API repository's
    supersession and correction queueing over the same durable tables. The correction event stores the
@@ -136,7 +136,8 @@ Reopening uses the same transaction boundary and locks, and commits together:
    push-preference checks under the canonical pair locks at delivery time, so the correction cannot race a
    concurrently committing Block, and the correction push intents store the Post creator as their
    send-time actor. An old delivered closure row keeps its inbox history and is marked `CORRECTED`; an
-   undelivered correction is superseded by a later reopening.
+   undelivered correction is owed history that survives a later reopening (and re-closure) and is
+   delivered once by the worker, while its push waits for the Post to be `ACTIVE`.
 
 Deliberately untouched: every Contact Request and Adoption Application row keeps its current status
 (closed stays closed, approved stays approved), open Post Reports stay open, and media, discussion and
