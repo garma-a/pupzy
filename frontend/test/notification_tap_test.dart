@@ -4,6 +4,7 @@ import 'package:pupzy/localization/lang_provider.dart';
 import 'package:pupzy/models/app_notification.dart';
 import 'package:pupzy/screens/notifications_panel.dart';
 import 'package:pupzy/screens/rescue_detail_screen.dart';
+import 'package:pupzy/services/notification_center.dart';
 import 'package:pupzy/services/safety_events.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -41,11 +42,17 @@ void main() {
 
   tearDown(() => toasts.uninstall());
 
-  Future<void> pumpPanel(WidgetTester tester, {LangProvider? lang}) async {
+  Future<void> pumpPanel(WidgetTester tester, {LangProvider? lang, NotificationCenter? center}) async {
     tester.view.physicalSize = const Size(800, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(safetyTestApp(graphql: graphql, events: SafetyEvents(), lang: lang, child: const NotificationsPanel()));
+    await tester.pumpWidget(safetyTestApp(
+      graphql: graphql,
+      events: SafetyEvents(),
+      lang: lang,
+      notificationCenter: center,
+      child: const NotificationsPanel(),
+    ));
     await tester.pumpAndSettle();
   }
 
@@ -134,5 +141,72 @@ void main() {
       expect(find.text('Mark all read'), findsNothing);
       expect(graphql.markAllReadCalls, 0);
     });
+  });
+
+  group('unread badge stays in step with the inbox', () {
+    testWidgets('opening the inbox corrects the badge to the server count', (tester) async {
+      final center = NotificationCenter()..setUnreadCount(9);
+      graphql.notifications = [_unread('a', 'First'), _unread('b', 'Second')];
+      await pumpPanel(tester, center: center);
+
+      expect(center.unreadCount, 2);
+    });
+
+    testWidgets('opening an unread notification lowers the badge at once', (tester) async {
+      final center = NotificationCenter();
+      graphql.notifications = [_unread('a', 'First'), _unread('b', 'Second')];
+      await pumpPanel(tester, center: center);
+
+      await tester.tap(find.text('First'));
+      await tester.pumpAndSettle();
+
+      expect(center.unreadCount, 1);
+      expect(graphql.readNotificationIds, ['a']);
+    });
+
+    testWidgets('mark all read clears the badge, and a failure restores it', (tester) async {
+      final center = NotificationCenter();
+      graphql.notifications = [_unread('a', 'First')];
+      await pumpPanel(tester, center: center);
+      await tester.tap(find.text('Mark all read'));
+      await tester.pumpAndSettle();
+      expect(center.unreadCount, 0);
+
+      graphql.markAllReadError = 'Could not reach the server';
+      // A new one arrives; this time the server rejects "mark all read".
+      graphql.notifications = [_unread('b', 'Second')];
+      graphql.unreadCount = 1;
+      center.pushArrived(graphql);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Mark all read'));
+      await tester.pumpAndSettle();
+      expect(center.unreadCount, 1);
+    });
+  });
+
+  testWidgets('a push arriving while the inbox is open shows up in it', (tester) async {
+    final center = NotificationCenter();
+    graphql.notifications = [_unread('a', 'First')];
+    await pumpPanel(tester, center: center);
+    expect(find.text('Someone replied'), findsNothing);
+
+    graphql.notifications = [_unread('b', 'Someone replied'), _unread('a', 'First')];
+    center.pushArrived(graphql);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Someone replied'), findsOneWidget);
+    expect(center.unreadCount, 2);
+  });
+
+  testWidgets('scrolling to the end loads older notifications', (tester) async {
+    graphql.notifications = [for (var i = 0; i < 45; i++) _unread('n$i', 'Notification $i')];
+    await pumpPanel(tester);
+    expect(find.text('Notification 44'), findsNothing);
+
+    await tester.scrollUntilVisible(find.text('Notification 44'), 400, scrollable: find.byType(Scrollable).last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Notification 44'), findsOneWidget);
+    expect(graphql.calls, contains('fetchMyNotifications(30)'));
   });
 }

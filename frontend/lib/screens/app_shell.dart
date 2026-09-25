@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
 import '../services/graphql_service.dart';
+import '../services/notification_center.dart';
 import '../services/push_service.dart';
 import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
@@ -23,7 +24,7 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   int _index = 0;
   // Home is visited immediately; the other 3 feed tabs only start fetching
   // once the user actually opens them, instead of all firing at launch.
@@ -41,6 +42,24 @@ class _AppShellState extends State<AppShell> {
     // post-frame callback so it runs after the first build has a BuildContext
     // with every provider (and a Navigator) available.
     WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrapSession());
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Back from the background: notifications may have arrived meanwhile
+  /// (the badge would otherwise stay stale), and the user may have allowed
+  /// notifications in the phone's settings.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    final graphql = context.read<GraphQLService>();
+    context.read<NotificationCenter>().refresh(graphql);
+    context.read<PushService>().ensureRegistered();
   }
 
   Future<void> _bootstrapSession() async {
@@ -65,7 +84,7 @@ class _AppShellState extends State<AppShell> {
     }
 
     if (!mounted) return;
-    context.read<PushService>().initialize(graphql);
+    context.read<PushService>().initialize(graphql, context.read<NotificationCenter>());
 
     if (!mounted) return;
     ensureTermsAccepted(context);

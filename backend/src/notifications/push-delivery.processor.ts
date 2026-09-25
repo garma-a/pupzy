@@ -60,6 +60,7 @@ export class PushDeliveryProcessor implements OnApplicationBootstrap {
   private readonly logger = new Logger(PushDeliveryProcessor.name);
   private readonly isolationPolicy: AccountIsolationPolicy;
   private isProcessing = false;
+  private immediateRunRequested = false;
 
   constructor(
     @Inject(DATABASE_TOKEN)
@@ -88,6 +89,23 @@ export class PushDeliveryProcessor implements OnApplicationBootstrap {
     } catch (error) {
       this.logger.error('Unable to deliver pending push notifications', error);
     }
+  }
+
+  /**
+   * Starts a drain now instead of waiting for the next cron tick, so a push
+   * reaches the device within seconds of its notification committing. Called
+   * after a write that enqueued intents; never throws. When a drain is already
+   * running (possibly already past the new intent) one more drain follows it.
+   * The cron remains the safety net for retries and other processes' work.
+   */
+  requestImmediateRun(): void {
+    if (this.isProcessing) {
+      this.immediateRunRequested = true;
+      return;
+    }
+    this.processPendingDeliveries().catch((error) => {
+      this.logger.error('Unable to deliver pending push notifications', error);
+    });
   }
 
   /**
@@ -126,6 +144,10 @@ export class PushDeliveryProcessor implements OnApplicationBootstrap {
       return delivered;
     } finally {
       this.isProcessing = false;
+      if (this.immediateRunRequested) {
+        this.immediateRunRequested = false;
+        this.requestImmediateRun();
+      }
     }
   }
 

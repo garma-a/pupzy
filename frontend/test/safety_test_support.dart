@@ -10,6 +10,7 @@ import 'package:pupzy/models/contact_request.dart';
 import 'package:pupzy/models/post_detail.dart';
 import 'package:pupzy/models/safety.dart';
 import 'package:pupzy/services/graphql_service.dart';
+import 'package:pupzy/services/notification_center.dart';
 import 'package:pupzy/services/safety_events.dart';
 
 /// Captures every Fluttertoast message shown during a test (the real plugin
@@ -158,10 +159,25 @@ class FakeSafetyGraphQL implements GraphQLService {
   String? postDetailError;
   final List<String> readNotificationIds = [];
 
+  /// Serves [notifications] in pages of `first`; the cursor is the index of
+  /// the next item.
   @override
-  Future<(List<AppNotification> notifications, int unreadCount, String? errorMessage)> fetchMyNotifications({int first = 30}) async {
-    return (notifications, notifications.where((n) => !n.isRead).length, null);
+  Future<NotificationPage> fetchMyNotifications({int first = 30, String? after}) async {
+    calls.add('fetchMyNotifications(${after ?? ''})');
+    final start = after == null ? 0 : int.parse(after);
+    final end = (start + first).clamp(0, notifications.length);
+    return NotificationPage(
+      notifications: notifications.sublist(start, end),
+      unreadCount: notifications.where((n) => !n.isRead).length,
+      endCursor: end < notifications.length ? '$end' : null,
+      hasNextPage: end < notifications.length,
+    );
   }
+
+  int unreadCount = 0;
+
+  @override
+  Future<(int? count, String? errorMessage)> fetchMyUnreadNotificationCount() async => (unreadCount, null);
 
   @override
   Future<(bool success, String? errorMessage)> markNotificationRead(String notificationId) async {
@@ -204,12 +220,14 @@ Widget safetyTestApp({
   required SafetyEvents events,
   required Widget child,
   LangProvider? lang,
+  NotificationCenter? notificationCenter,
 }) {
   return MultiProvider(
     providers: [
       ChangeNotifierProvider<LangProvider>.value(value: lang ?? LangProvider()),
       ChangeNotifierProvider<SafetyEvents>.value(value: events),
       Provider<GraphQLService>.value(value: graphql),
+      ChangeNotifierProvider<NotificationCenter>.value(value: notificationCenter ?? NotificationCenter()),
     ],
     child: Consumer<LangProvider>(
       builder: (context, l, _) => MaterialApp(

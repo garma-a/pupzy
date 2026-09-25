@@ -20,6 +20,8 @@ import { AccountIsolationModule } from '../blocks/account-isolation.module';
  * `PushDeliveryRepository` is exported so direct notification-insert sites
  * (inactivity reminders, the ban cascade) enqueue durable push intents in the
  * same transaction through the shared outbox.
+ * `DiscussionNotificationProcessor` is exported so discussion writes can
+ * start delivery immediately after their source event commits.
  *
  * ## Dependencies
  * - `DatabaseModule` — global, provides DATABASE_TOKEN for Drizzle.
@@ -43,6 +45,6 @@ import { AccountIsolationModule } from '../blocks/account-isolation.module';
     PushDeliveryProcessor,
     { provide: PUSH_PROVIDER, useClass: FirebasePushProvider },
   ],
-  exports: [NotificationsService, PushDeliveryRepository],
+  exports: [NotificationsService, PushDeliveryRepository, DiscussionNotificationProcessor],
 })
 export class NotificationsModule {}

@@ -28,6 +28,7 @@
     "db:migrate:prod": "node dist/database/migrate.js",
     "db:seed": "ts-node -r tsconfig-paths/register src/database/seed.ts",
     "db:seed:mock-mating": "ts-node -r tsconfig-paths/register scripts/seed-mock-mating.ts",
+    "notify:test": "ts-node -r tsconfig-paths/register scripts/send-test-notification.ts",
     "db:reset": "ts-node -r tsconfig-paths/register src/database/reset.ts",
     "db:custom": "ts-node -r tsconfig-paths/register src/database/migrate.ts",
     "admin:seed": "node admin-service/scripts/seed-first-admin.js",
