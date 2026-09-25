@@ -149,6 +149,27 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
 
     return withDbRetry(() =>
       this.db.transaction(async (tx) => {
+        // ADR 0006: cross-account operations acquire canonical account-pair
+        // locks before existing Post/discussion locks. Resolve the stable
+        // pair identifiers first (`creator_id` is immutable and the closing
+        // actor was snapshotted at capture time), take every pair lock, and
+        // only then take recipient/event/Post row locks, so this transaction
+        // cannot deadlock with a comment or Block commit.
+        const [postIdentity] = await tx
+          .select({ creatorId: posts.creatorId })
+          .from(posts)
+          .where(eq(posts.id, event.postId))
+          .limit(1);
+
+        const pairs: Array<readonly [string, string]> = [];
+        if (postIdentity) {
+          pairs.push([postIdentity.creatorId, recipient.recipientId]);
+        }
+        if (event.closingActorId && event.closingActorId !== postIdentity?.creatorId) {
+          pairs.push([event.closingActorId, recipient.recipientId]);
+        }
+        await this.isolationPolicy.lockPairs(tx, pairs);
+
         // Re-read recipient under row lock
         const [currentRecipient] = await tx
           .select()
@@ -195,11 +216,12 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
         // Recheck mutual account isolation (Blocks) against both the Post
         // creator and the closing actor, so a recipient isolated from the
         // creator never receives a completion notification even when an
-        // administrator (not the creator) recorded the outcome.
+        // administrator (not the creator) recorded the outcome. The pair
+        // locks are already held from above, so no further locks are needed.
         if (
-          (await this.isolationPolicy.lockPairAndRecheck(tx, post.creatorId, currentRecipient.recipientId)) ||
+          (await this.isolationPolicy.isIsolated(post.creatorId, currentRecipient.recipientId, tx)) ||
           (event.closingActorId &&
-            (await this.isolationPolicy.lockPairAndRecheck(tx, event.closingActorId, currentRecipient.recipientId)))
+            (await this.isolationPolicy.isIsolated(event.closingActorId, currentRecipient.recipientId, tx)))
         ) {
           await this.markSuppressed(tx, currentRecipient.id, recipient.leaseToken!, 'BLOCKED');
           return 'SUPPRESSED';
