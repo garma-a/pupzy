@@ -26,7 +26,7 @@ describe('AdminJS Post Lifecycle Contract (shared with the API)', () => {
   });
 
   it('agrees with the API owner closure table', () => {
-    assert.deepEqual(OWNER_CLOSURE_TRANSITIONS.RESCUE, ['RESOLVED']);
+    assert.deepEqual(OWNER_CLOSURE_TRANSITIONS.RESCUE, ['RESOLVED', 'ANIMAL_DECEASED']);
     assert.deepEqual(OWNER_CLOSURE_TRANSITIONS.LOST, ['REUNITED']);
     assert.deepEqual(OWNER_CLOSURE_TRANSITIONS.ADOPTION, ['ADOPTED']);
     assert.deepEqual(OWNER_CLOSURE_TRANSITIONS.PRODUCT, ['SOLD']);
@@ -40,6 +40,11 @@ describe('AdminJS Post Lifecycle Contract (shared with the API)', () => {
     assert.equal(canOwnerClose('MATING', 'ACTIVE', 'RESOLVED'), true);
     assert.equal(canOwnerClose('LOST', 'ACTIVE', 'RESOLVED', 'LOST_PET'), false);
     assert.equal(canOwnerClose('LOST', 'ACTIVE', 'RESOLVED', 'FOUND_STRAY'), true);
+    assert.equal(canOwnerClose('RESCUE', 'ACTIVE', 'ANIMAL_DECEASED'), true);
+    assert.equal(canOwnerClose('LOST', 'ACTIVE', 'ANIMAL_DECEASED', 'FOUND_STRAY'), false);
+    assert.equal(canOwnerClose('ADOPTION', 'ACTIVE', 'ANIMAL_DECEASED'), false);
+    assert.equal(canOwnerClose('PRODUCT', 'ACTIVE', 'ANIMAL_DECEASED'), false);
+    assert.equal(canOwnerClose('MATING', 'ACTIVE', 'ANIMAL_DECEASED'), false);
     assert.equal(canOwnerRemove('REMOVED'), false);
   });
 
@@ -53,19 +58,25 @@ describe('AdminJS Post Lifecycle Contract (shared with the API)', () => {
 
   it('agrees with the API on type-specific administrator resolution targets', () => {
     assert.equal(canAdminResolve('RESCUE', 'ACTIVE', 'RESOLVED'), true);
+    assert.equal(canAdminResolve('RESCUE', 'ACTIVE', 'ANIMAL_DECEASED'), true);
     assert.equal(canAdminResolve('LOST', 'ACTIVE', 'REUNITED', 'LOST_PET'), true);
     assert.equal(canAdminResolve('LOST', 'ACTIVE', 'RESOLVED', 'FOUND_STRAY'), true);
     assert.equal(canAdminResolve('LOST', 'ACTIVE', 'RESOLVED', 'LOST_PET'), false);
+    assert.equal(canAdminResolve('LOST', 'ACTIVE', 'ANIMAL_DECEASED', 'FOUND_STRAY'), false);
     assert.equal(canAdminResolve('ADOPTION', 'ACTIVE', 'ADOPTED'), true);
+    assert.equal(canAdminResolve('ADOPTION', 'ACTIVE', 'ANIMAL_DECEASED'), false);
     assert.equal(canAdminResolve('PRODUCT', 'ACTIVE', 'SOLD'), true);
+    assert.equal(canAdminResolve('PRODUCT', 'ACTIVE', 'ANIMAL_DECEASED'), false);
     assert.equal(canAdminResolve('MATING', 'ACTIVE', 'RESOLVED'), true);
+    assert.equal(canAdminResolve('MATING', 'ACTIVE', 'ANIMAL_DECEASED'), false);
     assert.equal(canAdminResolve('PRODUCT', 'ACTIVE', 'RESOLVED'), false);
     assert.equal(canAdminResolve('RESCUE', 'RESOLVED', 'RESOLVED'), false);
+    assert.equal(canAdminResolve('RESCUE', 'ANIMAL_DECEASED', 'ANIMAL_DECEASED'), false);
     assert.equal(canAdminResolve('PRODUCT', 'EXPIRED', 'SOLD'), false);
   });
 
   it('agrees with the API on the administrator reopening correction', () => {
-    for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD']) {
+    for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'ANIMAL_DECEASED']) {
       assert.equal(canAdminReopen(status), true);
     }
     for (const status of ['ACTIVE', 'REMOVED', 'EXPIRED']) {

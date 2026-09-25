@@ -71,16 +71,29 @@ function buildPostAction(pool, component, definition, cache) {
 
 /**
  * Type-specific Post Resolution actions. Each action targets exactly one
- * successful outcome and is only visible while the Post is `ACTIVE` and its
+ * completed outcome and is only visible while the Post is `ACTIVE` and its
  * type (and, for LOST, direction) allows that outcome, so staff can never
- * choose an invalid transition. The outcome is revalidated under the row lock
- * against the shared lifecycle contract before anything is written.
+ * choose an invalid transition. RESCUE has two outcomes: `markRescued`
+ * (`RESOLVED`) and `markAnimalDeceased` (`ANIMAL_DECEASED`, which closes the
+ * rescue because the animal died and is never described as rescued). The
+ * outcome is revalidated under the row lock against the shared lifecycle
+ * contract before anything is written.
+ *
+ * Exported so the confirmation-copy drift guard
+ * (`components/moderation-action-messages.test.js`) can prove every action has
+ * matching copy in the AdminJS action component.
  */
-const POST_RESOLUTION_ACTIONS = Object.freeze({
+export const POST_RESOLUTION_ACTIONS = Object.freeze({
   markRescued: Object.freeze({
     outcome: 'RESOLVED',
     icon: 'CheckCircle',
     guard: 'Record this rescue as resolved?',
+    appliesTo: (postType) => postType === 'RESCUE',
+  }),
+  markAnimalDeceased: Object.freeze({
+    outcome: 'ANIMAL_DECEASED',
+    icon: 'AlertCircle',
+    guard: 'Close this rescue because the animal died?',
     appliesTo: (postType) => postType === 'RESCUE',
   }),
   markReunited: Object.freeze({

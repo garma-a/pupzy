@@ -118,6 +118,7 @@ describe('notification templates', () => {
       ['REUNITED', 'reunited'],
       ['ADOPTED', 'adopted'],
       ['SOLD', 'sold'],
+      ['ANIMAL_DECEASED', 'closed (animal deceased)'],
     ] as const) {
       const content = buildNotificationContent('POST_RESOLVED_BY_ADMIN', {
         postTitle: 'Missing cat',
@@ -146,6 +147,18 @@ describe('notification templates', () => {
     expect(closure.body).toBe('The rescue "Injured puppy" was marked as rescued.');
     expect(closure.titleArabic).toBe('تم حل حالة الإنقاذ');
     expect(closure.bodyArabic).toContain('Injured puppy');
+
+    const deceasedClosure = buildNotificationContent('RESCUE_COMPLETED', {
+      postTitle: 'Injured puppy',
+      outcome: 'ANIMAL_DECEASED',
+    });
+    expect(deceasedClosure.title).toBe('Rescue closed');
+    expect(deceasedClosure.body).toBe('The rescue "Injured puppy" was closed (animal deceased).');
+    expect(deceasedClosure.body).not.toContain('rescued');
+    expect(deceasedClosure.titleArabic).toBe('تم إغلاق حالة الإنقاذ');
+    expect(deceasedClosure.bodyArabic).toContain('Injured puppy');
+    expect(deceasedClosure.bodyArabic).toContain('وفاة الحيوان');
+    expect(deceasedClosure.bodyArabic).not.toContain('تم إنقاذها');
 
     const correction = buildNotificationContent('RESCUE_REOPENED', { postTitle: 'Injured puppy' });
     expect(correction.title).toBe('Rescue reopened');

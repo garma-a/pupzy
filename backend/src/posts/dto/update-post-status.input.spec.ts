@@ -24,6 +24,11 @@ describe('validateUpdatePostStatusInput', () => {
       postId: validPostId,
       status: 'SOLD',
     });
+
+    expect(validateUpdatePostStatusInput({ postId: validPostId, status: 'ANIMAL_DECEASED' })).toEqual({
+      postId: validPostId,
+      status: 'ANIMAL_DECEASED',
+    });
   });
 
   it('throws ValidationError for invalid UUID postId', () => {

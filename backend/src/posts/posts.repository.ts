@@ -487,7 +487,7 @@ export class PostsRepository {
    * The status write commits together with the termination of every still
    * pending Contact Request and Adoption Application targeting the Post
    * (`POST_LIFECYCLE_SIDE_EFFECTS.OWNER_CLOSE`) and the durable participant
-   * completion event for any successful outcome. Approved interactions are
+   * completion event for any completed outcome. Approved interactions are
    * never touched, so previously approved contact access is retained.
    *
    * @returns The updated post row, or undefined when it is no longer ACTIVE

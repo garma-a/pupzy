@@ -124,6 +124,8 @@ describe('Database Migration Runner Integration', () => {
     // Verify the inactivity-expiry lifecycle (migrations 0046-0047):
     // EXPIRED is appended to post_status and the renewal/reminder state is
     // nullable with no default so existing Posts keep their behavior.
+    // Migration 0058 appends ANIMAL_DECEASED as the RESCUE-only closure
+    // outcome recorded when the animal died.
     const postStatusEnumRes = await pool.query<{ enumlabel: string }>(`
       SELECT enumlabel
       FROM pg_enum
@@ -139,6 +141,7 @@ describe('Database Migration Runner Integration', () => {
       'SOLD',
       'REMOVED',
       'EXPIRED',
+      'ANIMAL_DECEASED',
     ]);
 
     const expiryColRes = await pool.query<{

@@ -34,7 +34,14 @@ const BUSINESS_TABLES = `
   media_deletion_work, blocked_media_hashes, blocks, account_deletions
 `;
 
-const RESOLUTION_ACTION_NAMES = ['markRescued', 'markReunited', 'markResolved', 'markAdopted', 'markSold'];
+const RESOLUTION_ACTION_NAMES = [
+  'markRescued',
+  'markAnimalDeceased',
+  'markReunited',
+  'markResolved',
+  'markAdopted',
+  'markSold',
+];
 const REOPEN_ACTION_NAME = 'reopenPost';
 
 async function login(email, password) {
@@ -233,7 +240,7 @@ describe('Administrator case resolution HTTP boundary', () => {
   it('exposes only the valid type-specific resolution actions and leaves uncertain cases active', async () => {
     const ownerId = await insertUser('resolution-owner');
     const cases = [
-      { postType: 'RESCUE', reportType: null, expected: ['markRescued'] },
+      { postType: 'RESCUE', reportType: null, expected: ['markRescued', 'markAnimalDeceased'] },
       { postType: 'LOST', reportType: 'LOST_PET', expected: ['markReunited'] },
       { postType: 'LOST', reportType: 'FOUND_STRAY', expected: ['markReunited', 'markResolved'] },
       { postType: 'ADOPTION', reportType: null, expected: ['markAdopted'] },
@@ -413,6 +420,123 @@ describe('Administrator case resolution HTTP boundary', () => {
     const resolutionActions = RESOLUTION_ACTION_NAMES.filter((name) => actionsAfter.names.includes(name));
     assert.deepEqual(resolutionActions, [], 'a recorded outcome cannot be resolved twice');
     assert.equal(actionsAfter.names.includes('removePost'), false, 'removal is hidden once an outcome is recorded');
+  });
+
+  it('records an audited animal-deceased resolution for an ACTIVE RESCUE only and never labels it as rescued', async () => {
+    const ownerId = await insertUser('deceased-owner');
+    const participantId = await insertUser('deceased-participant');
+    const rescueId = await insertTypedPost({ ownerId, postType: 'RESCUE', title: 'Deceased rescue case' });
+    const pendingContact = await insertContactRequest({ postId: rescueId, requesterId: participantId });
+
+    // The action is only offered for an ACTIVE RESCUE; every other type rejects
+    // a direct attempt without any write.
+    for (const postType of ['LOST', 'ADOPTION', 'PRODUCT', 'MATING']) {
+      const otherId = await insertTypedPost({
+        ownerId,
+        postType,
+        reportType: postType === 'LOST' ? 'FOUND_STRAY' : null,
+        title: `${postType} cannot be deceased`,
+      });
+      const response = await postAction(
+        'markAnimalDeceased',
+        otherId,
+        { reason: 'Wrong type' },
+        staffCookie,
+        staffCsrf,
+      );
+      assert.equal(response.status, 200);
+      const result = await response.json();
+      assert.equal(result.notice?.type, 'error', `${postType} must reject markAnimalDeceased`);
+      assert.match(result.notice?.message ?? '', /cannot be resolved/i);
+      const row = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [otherId])).rows[0];
+      assert.equal(row.status, 'ACTIVE');
+    }
+
+    const response = await postAction(
+      'markAnimalDeceased',
+      rescueId,
+      { reason: 'Animal died at the vet' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.notice?.type, 'success');
+    assert.equal(result.notice?.message, 'Post resolution recorded.');
+
+    const post = (await database.pool.query(`SELECT status, moderation_status FROM posts WHERE id = $1`, [rescueId]))
+      .rows[0];
+    assert.equal(post.status, 'ANIMAL_DECEASED');
+    assert.equal(post.moderation_status, 'PENDING_AUTO_REVIEW', 'resolution is not a moderation decision');
+
+    const audit = (
+      await database.pool.query(
+        `SELECT admin_user_id, action_type, target_type, reason, metadata
+         FROM moderation_actions WHERE target_id = $1`,
+        [rescueId],
+      )
+    ).rows[0];
+    assert.equal(audit.admin_user_id, staffId);
+    assert.equal(audit.action_type, 'POST_RESOLVED');
+    assert.equal(audit.target_type, 'POST');
+    assert.equal(audit.reason, 'Animal died at the vet');
+    assert.equal(audit.metadata.outcome, 'ANIMAL_DECEASED');
+    assert.equal(audit.metadata.terminatedContactRequestCount, 1);
+
+    const notifications = (
+      await database.pool.query(
+        `SELECT type, recipient_id, related_post_id, title, body, title_arabic, body_arabic
+         FROM notifications WHERE related_post_id = $1`,
+        [rescueId],
+      )
+    ).rows;
+    assert.equal(notifications.length, 1);
+    assert.equal(notifications[0].type, 'POST_RESOLVED_BY_ADMIN');
+    assert.equal(notifications[0].recipient_id, ownerId);
+    assert.equal(
+      notifications[0].body,
+      'An administrator marked your post "Deceased rescue case" as closed (animal deceased).',
+    );
+    assert.equal(notifications[0].body.includes('rescued'), false, 'death is never labelled a successful rescue');
+    assert.equal(notifications[0].body_arabic.includes('تم إنقاذها'), false);
+    assert.ok(notifications[0].body_arabic.includes('وفاة الحيوان'));
+
+    const event = (
+      await database.pool.query(
+        `SELECT type, outcome, post_type, closing_actor_id, title, body, title_arabic, body_arabic, status, total_recipients
+         FROM post_completion_notification_events WHERE post_id = $1`,
+        [rescueId],
+      )
+    ).rows[0];
+    assert.equal(event.type, 'RESCUE_COMPLETED');
+    assert.equal(event.post_type, 'RESCUE');
+    assert.equal(event.outcome, 'ANIMAL_DECEASED');
+    assert.equal(event.closing_actor_id, null);
+    assert.equal(event.title, 'Rescue closed');
+    assert.equal(event.body, 'The rescue "Deceased rescue case" was closed (animal deceased).');
+    assert.equal(event.body.includes('rescued'), false);
+    assert.equal(event.status, 'PENDING');
+    assert.equal(event.total_recipients, 1);
+
+    const contact = (
+      await database.pool.query(`SELECT status, responded_at FROM contact_requests WHERE id = $1`, [pendingContact])
+    ).rows[0];
+    assert.equal(contact.status, 'REJECTED');
+    assert.ok(contact.responded_at);
+
+    const actionsAfter = await fetchRecordActions(rescueId);
+    assert.equal(actionsAfter.names.includes('markAnimalDeceased'), false);
+    assert.equal(actionsAfter.names.includes('markRescued'), false, 'a recorded outcome cannot be resolved twice');
+    assert.equal(actionsAfter.names.includes(REOPEN_ACTION_NAME), true, 'the deceased outcome stays reopenable');
+
+    const repeated = await postAction(
+      'markAnimalDeceased',
+      rescueId,
+      { reason: 'Repeat attempt' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal((await repeated.json()).notice?.type, 'error');
   });
 
   it('captures and localizes the participant completion event for a non-rescue outcome, and never on removal', async () => {
@@ -709,6 +833,7 @@ describe('Administrator case reopening HTTP boundary', () => {
     const ownerId = await insertUser('reopen-visibility-owner');
     const completedCases = [
       { postType: 'RESCUE', reportType: null, status: 'RESOLVED', title: 'Reopen rescue' },
+      { postType: 'RESCUE', reportType: null, status: 'ANIMAL_DECEASED', title: 'Reopen deceased rescue' },
       { postType: 'LOST', reportType: 'LOST_PET', status: 'REUNITED', title: 'Reopen lost pet' },
       { postType: 'LOST', reportType: 'FOUND_STRAY', status: 'RESOLVED', title: 'Reopen found stray' },
       { postType: 'ADOPTION', reportType: null, status: 'ADOPTED', title: 'Reopen adoption' },
@@ -1212,5 +1337,72 @@ describe('Administrator case reopening HTTP boundary', () => {
     assert.equal(audits.rows[0].count, 0);
     const notifications = await database.pool.query(`SELECT count(*)::int AS count FROM notifications`);
     assert.equal(notifications.rows[0].count, 0);
+  });
+
+  it('reopens an animal-deceased rescue and keeps a banned owner out of the correction', async () => {
+    const ownerId = await insertUser('deceased-reopen-owner');
+    const postId = await insertTypedPost({
+      ownerId,
+      postType: 'RESCUE',
+      title: 'Mistaken deceased rescue',
+      status: 'ANIMAL_DECEASED',
+    });
+
+    const response = await postAction(
+      REOPEN_ACTION_NAME,
+      postId,
+      { reason: 'The animal is alive' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.notice?.type, 'success');
+    assert.equal(result.notice?.message, 'Post reopened.');
+
+    const post = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0];
+    assert.equal(post.status, 'ACTIVE', 'the deceased outcome is corrected back to Active');
+
+    const audit = (
+      await database.pool.query(`SELECT action_type, metadata FROM moderation_actions WHERE target_id = $1`, [postId])
+    ).rows[0];
+    assert.equal(audit.action_type, 'POST_REOPENED');
+    assert.equal(audit.metadata.previousOutcome, 'ANIMAL_DECEASED');
+
+    const notifications = (
+      await database.pool.query(
+        `SELECT type, recipient_id, related_post_id, body FROM notifications WHERE related_post_id = $1`,
+        [postId],
+      )
+    ).rows;
+    assert.equal(notifications.length, 1);
+    assert.equal(notifications[0].type, 'POST_REOPENED_BY_ADMIN');
+    assert.equal(notifications[0].recipient_id, ownerId);
+    assert.equal(notifications[0].body, 'An administrator reopened your post "Mistaken deceased rescue".');
+
+    // A banned owner's deceased outcome is never offered and never corrected.
+    const bannedOwnerId = await insertUser('deceased-reopen-banned-owner');
+    await database.pool.query(`UPDATE users SET is_banned = true WHERE id = $1`, [bannedOwnerId]);
+    const bannedPostId = await insertTypedPost({
+      ownerId: bannedOwnerId,
+      postType: 'RESCUE',
+      title: 'Banned owner deceased rescue',
+      status: 'ANIMAL_DECEASED',
+    });
+    const bannedView = await fetchRecordActions(bannedPostId);
+    assert.equal(bannedView.names.includes(REOPEN_ACTION_NAME), false, 'a banned owner is not offered reopening');
+    const bannedAttempt = await postAction(
+      REOPEN_ACTION_NAME,
+      bannedPostId,
+      { reason: 'Direct banned-owner attempt' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(bannedAttempt.status, 200);
+    const bannedResult = await bannedAttempt.json();
+    assert.equal(bannedResult.notice?.type, 'error');
+    assert.match(bannedResult.notice?.message ?? '', /banned account/i);
+    const bannedPost = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [bannedPostId])).rows[0];
+    assert.equal(bannedPost.status, 'ANIMAL_DECEASED', 'a banned owner post never returns to Active');
   });
 });

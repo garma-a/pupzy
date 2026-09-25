@@ -28,6 +28,7 @@ export enum PostStatus {
   SOLD = 'SOLD',
   REMOVED = 'REMOVED',
   EXPIRED = 'EXPIRED',
+  ANIMAL_DECEASED = 'ANIMAL_DECEASED',
 }
 
 export enum ModerationStatus {

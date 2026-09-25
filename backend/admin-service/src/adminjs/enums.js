@@ -1,7 +1,7 @@
 export const ENUMS = {
   postType: ['RESCUE', 'LOST', 'ADOPTION', 'PRODUCT', 'MATING'],
   lostFoundType: ['LOST_PET', 'FOUND_STRAY'],
-  postStatus: ['ACTIVE', 'RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'REMOVED', 'EXPIRED'],
+  postStatus: ['ACTIVE', 'RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'REMOVED', 'EXPIRED', 'ANIMAL_DECEASED'],
   moderationStatus: ['PENDING_AUTO_REVIEW', 'CLEAN', 'FLAGGED'],
   urgencyTier: ['CRITICAL', 'URGENT', 'MODERATE'],
   speciesType: ['DOG', 'CAT', 'BIRD', 'RABBIT', 'OTHER'],

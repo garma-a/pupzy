@@ -137,7 +137,7 @@ For an Arabic recipient, a new comment notification returns:
 
 Every type persisted by the `notification_type` enum has English and Arabic definitions: `NEW_UPVOTE`, `POST_SAVED`, `CONTACT_REQUEST_RECEIVED`, `CONTACT_REQUEST_APPROVED`, `CONTACT_REQUEST_REJECTED`, `ADOPTION_APPLICATION_RECEIVED`, `ADOPTION_APPLICATION_APPROVED`, `ADOPTION_APPLICATION_REJECTED`, `POST_REMOVED_BY_ADMIN` (single-post and account-ban cascade variants), `POST_RESOLVED_BY_ADMIN`, `POST_REOPENED_BY_ADMIN`, `POST_INACTIVITY_NUDGE`, `SYSTEM_ANNOUNCEMENT`, `NEW_COMMENT`, `NEW_REPLY`, `COMMENT_BOOSTED`, `COMMENT_PINNED`.
 
-Administrative notifications written directly by the AdminJS service (`POST_REMOVED_BY_ADMIN`, `POST_RESOLVED_BY_ADMIN` from the administrator case-resolution work and `POST_REOPENED_BY_ADMIN` from the administrator reopening correction) now carry both languages. Rows that predate this work keep the English fallback. `POST_RESOLVED_BY_ADMIN` routes through `related_post_id` and states the recorded outcome (`RESOLVED`, `REUNITED`, `ADOPTED` or `SOLD`); `POST_REOPENED_BY_ADMIN` routes through `related_post_id` and states that the Post was reopened to Active. In both cases the administrator's internal reason is not disclosed in the notification.
+Administrative notifications written directly by the AdminJS service (`POST_REMOVED_BY_ADMIN`, `POST_RESOLVED_BY_ADMIN` from the administrator case-resolution work and `POST_REOPENED_BY_ADMIN` from the administrator reopening correction) now carry both languages. Rows that predate this work keep the English fallback. `POST_RESOLVED_BY_ADMIN` routes through `related_post_id` and states the recorded outcome (`RESOLVED`, `REUNITED`, `ADOPTED`, `SOLD` or `ANIMAL_DECEASED`, the last rendered as "closed (animal deceased)" / "تم الإغلاق (وفاة الحيوان)" and never as rescued); `POST_REOPENED_BY_ADMIN` routes through `related_post_id` and states that the Post was reopened to Active. In both cases the administrator's internal reason is not disclosed in the notification.
 
 ### 3.2 Participant completion notifications
 
@@ -150,6 +150,9 @@ Closure-time participants (Boost/save, Comment/Reply, Contact Request and Adopti
 | `POST_COMPLETED` | `SOLD` | "Item sold" — `The post "…" was marked as sold.` | "تم البيع" |
 | `POST_COMPLETED` | `RESOLVED` | "Post resolved" — `The post "…" was marked as resolved.` | "تم حل المنشور" |
 | `RESCUE_COMPLETED` | `RESOLVED` | "Rescue resolved" — `The rescue "…" was marked as rescued.` | "تم حل حالة الإنقاذ" |
+| `RESCUE_COMPLETED` | `ANIMAL_DECEASED` | "Rescue closed" — `The rescue "…" was closed (animal deceased).` | "تم إغلاق حالة الإنقاذ" — `تم إغلاق حالة الإنقاذ "…" (وفاة الحيوان).` |
+
+`ANIMAL_DECEASED` is a completed outcome but not a success: it closes a RESCUE whose animal died, so its English and Arabic copy states the death explicitly and never contains the successful-rescue wording ("rescued" / "تم إنقاذها"). Clients must not fall back to the `RESOLVED` copy for an unrecognized outcome; treat the outcome as deceased only when the stored status/outcome is `ANIMAL_DECEASED`, and otherwise render the stored notification text as-is (the durable row already carries the correct localized copy).
 
 The completion row for an adoption (`POST_COMPLETED`/`ADOPTED`) carries the same `relatedPostId` routing: opening it navigates to the adoption Post detail screen exactly like every other completed outcome. Implementing that navigation in Flutter is a separate effort; this backend contract only guarantees the routing identifier, the bilingual copy and the notification type. A re-opened outcome sends the correction `POST_REOPENED` ("Post reopened") or `RESCUE_REOPENED` ("Rescue reopened") through the same `related_post_id`. Removal, moderation takedown and inactivity expiry never send a completion or correction notification.
 
@@ -191,6 +194,21 @@ Rollout order:
 - Old API code that only reads `title`/`body` keeps working after the migration because the Arabic columns are nullable and the preference column accepts `NULL`.
 - The AdminJS image copies the shared template module (`admin-service/Dockerfile`), exactly as it already copies the shared Post lifecycle contract, so both services render from one definition.
 - No backfill of fabricated consent or language choices is performed. Accounts synchronize explicitly from the app.
+
+### Additive Post status rollout (ticket 06)
+
+Migration `0058_add_animal_deceased_post_status` appends the `ANIMAL_DECEASED` value to the `post_status`
+enum; it changes no existing row or outcome. Rollout order:
+
+1. Apply the migration and deploy the API/admin code that can record the outcome.
+2. The Flutter client adds `ANIMAL_DECEASED` to its local `PostStatus` mapping, its status labels and the
+   completed-outcome navigation, and treats `RESCUE_COMPLETED` rows as the durable localized copy already
+   stored on the notification (no client-side re-rendering is needed).
+3. Old clients that do not know the value keep working: it only ever appears on a RESCUE the viewer is
+   already entitled to read, and an unknown enum value must be ignored/rendered defensively rather than
+   mapped to `RESOLVED`/Rescued.
+4. Notification types did not change, so no notification-enum rollout is required; only the copy of the
+   existing `RESCUE_COMPLETED` type is outcome-specific.
 
 ---
 

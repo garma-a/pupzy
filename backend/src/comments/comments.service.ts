@@ -154,7 +154,7 @@ export class CommentsService {
    *
    * ## Post Eligibility
    * - Post must exist and must NOT have status = 'REMOVED'.
-   * - Allowed for all non-Removed business statuses (ACTIVE, RESOLVED, REUNITED, ADOPTED, SOLD).
+   * - Allowed for all non-Removed business statuses (ACTIVE, RESOLVED, REUNITED, ADOPTED, SOLD, ANIMAL_DECEASED).
    * - Image attachments (`mediaIds`) are allowed only beneath RESCUE and LOST
    *   Posts; disallowed image publication is rejected here before quota or
    *   staged-media finalization and rechecked inside the committing transaction.

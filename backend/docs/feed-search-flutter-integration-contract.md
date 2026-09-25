@@ -123,7 +123,7 @@ Shared guarantees:
 - **Ordering is unchanged by search.** Matches that would appear on later pages are found without loading earlier pages.
 - **Cursor pagination is unchanged.** `edges[].cursor` / `pageInfo.endCursor` remain opaque keyset cursors built from the same ordering columns.
 - **Existing filters are retained and compose with search.** A search request applies the feed's predicates first-class in SQL, never as a post-filter.
-- **Isolation and lifecycle are retained.** A viewer's Blocks hide matching Posts in either direction, and only `ACTIVE` Posts are discoverable: resolved/reunited/adopted/sold (`RESOLVED`, `REUNITED`, `ADOPTED`, `SOLD`), expiring (`EXPIRED`) and removed (`REMOVED`) Posts never appear in search results. `matingFeed` additionally requires its `mating_posts` extension row.
+- **Isolation and lifecycle are retained.** A viewer's Blocks hide matching Posts in either direction, and only `ACTIVE` Posts are discoverable: resolved/reunited/adopted/sold/animal-deceased (`RESOLVED`, `REUNITED`, `ADOPTED`, `SOLD`, `ANIMAL_DECEASED`), expiring (`EXPIRED`) and removed (`REMOVED`) Posts never appear in search results. `matingFeed` additionally requires its `mating_posts` extension row.
 - **No new relevance ranking.** Results are the feed's own ordered subset of matching Posts; boosts, recency and effective score are not used to rank search matches.
 
 ## 6. Errors

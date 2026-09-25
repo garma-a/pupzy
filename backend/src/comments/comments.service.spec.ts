@@ -154,8 +154,8 @@ describe('CommentsService', () => {
       );
     });
 
-    it('allows comment creation on resolved, reunited, adopted, and sold post statuses', async () => {
-      for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD'] as const) {
+    it('allows comment creation on resolved, reunited, adopted, sold and animal-deceased post statuses', async () => {
+      for (const status of ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'ANIMAL_DECEASED'] as const) {
         mockPostsRepo.findById.mockResolvedValueOnce({ ...mockPost, status });
         const result = await service.createComment(userId, {
           clientRequestId: `req-${status}`,
