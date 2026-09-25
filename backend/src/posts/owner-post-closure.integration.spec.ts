@@ -11,9 +11,13 @@ import {
   adoptionApplications,
   blocks,
   cities,
+  comments,
   contactRequests,
   lostPosts,
+  postCompletionNotificationEvents,
+  postCompletionRecipients,
   postMedia,
+  postUpvotes,
   posts,
   users,
   type AdoptionApplication,
@@ -511,6 +515,54 @@ describe('Owner Post closure and pending interactions (Ticket 03)', () => {
         expect(result.errors).toBeUndefined();
         expect(result.data?.updatePostStatus).toMatchObject({ id: post.id, status: outcome });
         expect((await storedPost(post.id))?.status).toBe(outcome);
+      },
+    );
+
+    it.each([
+      ['RESOLVED', 'Rescue resolved', 'The rescue "', 'was marked as rescued.'],
+      ['ANIMAL_DECEASED', 'Rescue closed', 'The rescue "', 'was closed (animal deceased).'],
+    ] as Array<[Post['status'], string, string, string]>)(
+      'captures the completion event and closure-time audience for a GraphQL RESCUE closure as %s',
+      async (outcome, expectedTitle, bodyPrefix, bodySuffix) => {
+        const rescue = await seedPost({ postType: 'RESCUE' });
+        const booster = await insertUser(`gql-event-${outcome}-booster`);
+        const commenter = await insertUser(`gql-event-${outcome}-commenter`);
+
+        await dbHelper.db.insert(postUpvotes).values({ postId: rescue.id, userId: booster.id });
+        await dbHelper.db.insert(comments).values({
+          id: generateUuidV7(),
+          postId: rescue.id,
+          authorId: commenter.id,
+          text: 'Discussion evidence for the closure',
+          status: 'ACTIVE',
+        });
+
+        const result = await closePost(rescue, outcome);
+        expect(result.errors).toBeUndefined();
+        expect(result.data?.updatePostStatus).toMatchObject({ id: rescue.id, status: outcome });
+
+        const [event] = await dbHelper.db
+          .select()
+          .from(postCompletionNotificationEvents)
+          .where(eq(postCompletionNotificationEvents.postId, rescue.id));
+        expect(event).toBeDefined();
+        expect(event.postType).toBe('RESCUE');
+        expect(event.type).toBe('RESCUE_COMPLETED');
+        expect(event.outcome).toBe(outcome);
+        expect(event.closingActorId).toBe(owner.id);
+        expect(event.title).toBe(expectedTitle);
+        expect(event.body).toBe(`${bodyPrefix}${rescue.title}" ${bodySuffix}`);
+        expect(event.body).not.toContain('admin');
+        expect(event.titleArabic).toBeDefined();
+        expect(event.bodyArabic).toContain(rescue.title);
+        expect(event.totalRecipients).toBe(2);
+
+        const recipients = await dbHelper.db
+          .select()
+          .from(postCompletionRecipients)
+          .where(eq(postCompletionRecipients.eventId, event.id));
+        expect(recipients.map((r) => r.recipientId).sort()).toEqual([booster.id, commenter.id].sort());
+        expect(recipients.map((r) => r.recipientId)).not.toContain(owner.id);
       },
     );
 
