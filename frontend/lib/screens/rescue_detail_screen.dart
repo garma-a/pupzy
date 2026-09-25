@@ -287,10 +287,15 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (post.status != 'ACTIVE') ...[
+                        PostOutcomeBanner(status: post.status, postType: post.postType),
+                        const SizedBox(height: AppSpacing.md),
+                      ],
                       Row(
                         children: [
                           Expanded(child: Text(post.title, style: Theme.of(context).textTheme.headlineLarge)),
-                          if (post.isUrgent)
+                          // Urgency describes an open call for help, not a closed one.
+                          if (post.isUrgent && post.status == 'ACTIVE')
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
                               decoration: BoxDecoration(
@@ -476,7 +481,11 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                       : _lostExt?.reportType == 'FOUND_STRAY'
                           ? OwnerCloseAction.foundResolved
                           : OwnerCloseAction.lost,
-                  alternateClose: _lostExt?.reportType == 'FOUND_STRAY' ? OwnerCloseAction.foundReunited : null,
+                  alternateClose: post.postType == 'RESCUE'
+                      ? OwnerCloseAction.animalDeceased
+                      : _lostExt?.reportType == 'FOUND_STRAY'
+                          ? OwnerCloseAction.foundReunited
+                          : null,
                   isClosed: post.status != 'ACTIVE',
                   currentStatus: post.status,
                   onClosed: (status) => setState(() => _post = _post!.copyWith(status: status)),
@@ -676,7 +685,9 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
       case 'REJECTED':
         return t(context, 'Request Declined', 'تم رفض الطلب');
       default:
-        return _acceptsNewRequests ? t(context, 'Contact', 'تواصل') : closedToNewRequestsLabel(context, _post!.status);
+        return _acceptsNewRequests
+            ? t(context, 'Contact', 'تواصل')
+            : closedToNewRequestsLabel(context, _post!.status, postType: _post!.postType);
     }
   }
 

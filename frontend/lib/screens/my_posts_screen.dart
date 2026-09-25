@@ -7,7 +7,8 @@ import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/blurred_thumbnail.dart';
 import '../widgets/image_with_fallback.dart';
-import '../widgets/skeleton_loader.dart';
+import '../widgets/skeleton_loader.dart';
+import '../utils/post_status_labels.dart';
 import 'adoption_detail_screen.dart';
 import 'mating_detail_screen.dart';
 import 'product_detail_screen.dart';
@@ -247,6 +248,7 @@ class _MyPostTile extends StatelessWidget {
       case 'RESOLVED':
       case 'REUNITED':
       case 'ADOPTED':
+      case 'ANIMAL_DECEASED':
         return AppColors.textMuted;
       case 'EXPIRED':
         return AppColors.critical;
@@ -255,24 +257,7 @@ class _MyPostTile extends StatelessWidget {
     }
   }
 
-  String _statusLabel(BuildContext context) {
-    switch (post.status) {
-      case 'ACTIVE':
-        return t(context, 'Active', 'نشط');
-      case 'SOLD':
-        return t(context, 'Sold', 'مباع');
-      case 'RESOLVED':
-        return t(context, 'Resolved', 'تم الحل');
-      case 'REUNITED':
-        return t(context, 'Reunited', 'تم لمّ الشمل');
-      case 'ADOPTED':
-        return t(context, 'Adopted', 'تم التبني');
-      case 'EXPIRED':
-        return t(context, 'Expired', 'منتهي');
-      default:
-        return post.status;
-    }
-  }
+  String _statusLabel(BuildContext context) => postOutcomeLabel(context, post.status, postType: post.postType);
 
   void _open(BuildContext context) {
     final Widget screen = switch (post.postType) {

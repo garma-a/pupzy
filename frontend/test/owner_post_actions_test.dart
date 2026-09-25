@@ -28,6 +28,8 @@ void main() {
   Future<void> pumpBar(
     WidgetTester tester, {
     OwnerCloseAction? close = OwnerCloseAction.rescue,
+    OwnerCloseAction? alternateClose,
+    String? currentStatus,
     bool isClosed = false,
     LangProvider? lang,
   }) async {
@@ -43,6 +45,8 @@ void main() {
           child: OwnerPostActions(
             postId: 'post-7',
             close: close,
+            alternateClose: alternateClose,
+            currentStatus: currentStatus,
             isClosed: isClosed,
             onClosed: closedWith.add,
             onDeleted: () => deleted++,
@@ -54,7 +58,7 @@ void main() {
 
   group('closing a post', () {
     for (final (name, action, expectedStatus, label) in [
-      ('rescue', OwnerCloseAction.rescue, 'RESOLVED', 'Mark Resolved'),
+      ('rescue', OwnerCloseAction.rescue, 'RESOLVED', 'Rescued'),
       ('lost', OwnerCloseAction.lost, 'REUNITED', 'Mark Reunited'),
       ('adoption', OwnerCloseAction.adoption, 'ADOPTED', 'Mark Adopted'),
     ]) {
@@ -105,7 +109,7 @@ void main() {
 
     testWidgets('an already-closed post shows its final state and cannot be closed again', (tester) async {
       await pumpBar(tester, isClosed: true);
-      expect(find.text('Resolved ✓'), findsOneWidget);
+      expect(find.text('Rescued ✓'), findsOneWidget);
       expect(tester.widget<ElevatedButton>(find.byKey(const Key('ownerCloseButton'))).onPressed, isNull);
     });
 
@@ -164,5 +168,63 @@ void main() {
     expect(find.text('تحديد كمُتبنّى'), findsOneWidget);
     expect(find.text('حذف'), findsOneWidget);
     expect(find.text('Mark Adopted'), findsNothing);
+  });
+
+  group('rescue outcomes', () {
+    Future<void> pumpRescue(WidgetTester tester, {String? currentStatus, bool isClosed = false, LangProvider? lang}) =>
+        pumpBar(
+          tester,
+          close: OwnerCloseAction.rescue,
+          alternateClose: OwnerCloseAction.animalDeceased,
+          currentStatus: currentStatus,
+          isClosed: isClosed,
+          lang: lang,
+        );
+
+    testWidgets('an active rescue offers Rescued and Animal deceased, each explained', (tester) async {
+      await pumpRescue(tester);
+      await tester.tap(find.byKey(const Key('ownerCloseButton')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Rescued'), findsOneWidget);
+      expect(find.text('Danger addressed and care secured — adoption not required'), findsOneWidget);
+      expect(find.text('Animal deceased'), findsOneWidget);
+      expect(find.text('The animal died — closes the rescue without marking it rescued'), findsOneWidget);
+    });
+
+    for (final (choice, status, toast) in [
+      ('Rescued', 'RESOLVED', 'Rescue marked as rescued'),
+      ('Animal deceased', 'ANIMAL_DECEASED', 'Rescue closed'),
+    ]) {
+      testWidgets('choosing $choice records $status', (tester) async {
+        await pumpRescue(tester);
+        await tester.tap(find.byKey(const Key('ownerCloseButton')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(choice));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Confirm'));
+        await tester.pumpAndSettle();
+
+        expect(graphql.statusCalls, [('post-7', status)]);
+        expect(closedWith, [status]);
+        expect(toasts.messages, [toast]);
+      });
+    }
+
+    testWidgets('a deceased rescue never reads as rescued or gets a tick', (tester) async {
+      await pumpRescue(tester, currentStatus: 'ANIMAL_DECEASED', isClosed: true);
+      expect(find.text('Animal deceased'), findsOneWidget);
+      expect(find.textContaining('Rescued'), findsNothing);
+      expect(find.textContaining('✓'), findsNothing);
+      expect(tester.widget<ElevatedButton>(find.byKey(const Key('ownerCloseButton'))).onPressed, isNull);
+    });
+
+    testWidgets('the Arabic copy is used in Arabic', (tester) async {
+      final lang = LangProvider();
+      await lang.setLang(Lang.ar);
+      await pumpRescue(tester, currentStatus: 'ANIMAL_DECEASED', isClosed: true, lang: lang);
+      expect(find.text('وفاة الحيوان'), findsOneWidget);
+      expect(find.textContaining('الإنقاذ'), findsNothing);
+    });
   });
 }

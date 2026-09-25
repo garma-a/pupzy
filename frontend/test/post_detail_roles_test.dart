@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pupzy/localization/lang_provider.dart';
 import 'package:pupzy/models/adoption_application.dart';
 import 'package:pupzy/models/contact_request.dart';
 import 'package:pupzy/models/mating_detail.dart';
@@ -11,7 +12,9 @@ import 'package:pupzy/screens/rescue_detail_screen.dart';
 import 'package:pupzy/services/safety_events.dart';
 import 'package:pupzy/widgets/owner_post_actions.dart';
 import 'package:pupzy/widgets/safety_actions.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'detail_test_support.dart';
 import 'safety_test_support.dart';
 
 /// UI half of the post type × role matrix (the API half is
@@ -19,66 +22,8 @@ import 'safety_test_support.dart';
 /// owner sees owner controls and no report/block menu; any other viewer sees
 /// report/block and the type's way of reaching the owner, and never owner
 /// controls.
-class FakeDetailGraphQL extends FakeSafetyGraphQL {
-  String meId = 'viewer-1';
-  RescuePostExtension? rescue;
-  LostPostExtension? lost;
-  AdoptionPostExtension? adoption;
-  ProductPostExtension? product;
-  MatingDetails? mating;
-  List<AdoptionApplication> myApplications = [];
-  String? renewError;
-  int renewCalls = 0;
-
-  @override
-  Future<Map<String, dynamic>?> fetchMe() async => {'id': meId, 'fullName': 'Me', 'profileComplete': true};
-  @override
-  Future<void> recordView(String postId) async {}
-  @override
-  Future<(RescuePostExtension?, String?)> fetchRescuePostDetail(String postId) async => (rescue, null);
-  @override
-  Future<(LostPostExtension?, String?)> fetchLostPostDetail(String postId) async => (lost, null);
-  @override
-  Future<(AdoptionPostExtension?, String?)> fetchAdoptionPostDetail(String postId) async => (adoption, null);
-  @override
-  Future<(ProductPostExtension?, String?)> fetchProductPostDetail(String postId) async => (product, null);
-  @override
-  Future<(MatingDetails?, String?)> fetchMatingPostDetail(String postId) async => (mating, null);
-  @override
-  Future<(List<AdoptionApplication>, String?)> fetchMyAdoptionApplications({int first = 20}) async => (List.of(myApplications), null);
-  @override
-  Future<(bool, String?)> renewPost(String postId) async {
-    renewCalls++;
-    return (renewError == null, renewError);
-  }
-  @override
-  Future<(List<ContactRequest>, String?)> fetchPostContactRequests({required String postId, String? status, int first = 20}) async =>
-      (<ContactRequest>[], null);
-  @override
-  Future<(List<AdoptionApplication>, String?)> fetchPostAdoptionApplications({required String postId, String? status, int first = 20}) async =>
-      (<AdoptionApplication>[], null);
-}
-
-const ownerId = 'owner-1';
-
-PostDetail post(String type, {String status = 'ACTIVE'}) => PostDetail.fromJson({
-      'id': 'post-$type',
-      'postType': type,
-      'title': 'A $type post',
-      'description': 'Description long enough to read.',
-      'status': status,
-      'urgency': type == 'RESCUE' || type == 'LOST' ? 'URGENT' : null,
-      'city': {'id': 'c1', 'nameEnglish': 'Qasr Al-Nile', 'nameArabic': 'قصر النيل', 'governorate': 'Cairo'},
-      'coordinates': type == 'RESCUE' || type == 'LOST' ? {'latitude': 30.04, 'longitude': 31.23} : null,
-      'media': <Object>[],
-      'creator': {'id': ownerId, 'fullName': 'Olivia Owner', 'createdAt': '2026-01-01T00:00:00Z'},
-      'upvoteCount': 0,
-      'saveCount': 0,
-      'viewCount': 0,
-      'commentCount': 0,
-      'createdAt': '2026-09-20T10:00:00Z',
-      'nearestVetClinics': <Object>[],
-    });
+//
+// FakeDetailGraphQL, ownerId and post() live in detail_test_support.dart.
 
 class Case {
   const Case(this.name, this.type, this.screen, this.viewerAction, {this.reportType, this.headline});
@@ -103,7 +48,14 @@ final cases = [
 void main() {
   late FakeDetailGraphQL graphql;
 
-  Future<void> pumpDetail(WidgetTester tester, Case c, {required bool asOwner, String status = 'ACTIVE', void Function(FakeDetailGraphQL)? setUp}) async {
+  Future<void> pumpDetail(
+    WidgetTester tester,
+    Case c, {
+    required bool asOwner,
+    String status = 'ACTIVE',
+    void Function(FakeDetailGraphQL)? setUp,
+    LangProvider? lang,
+  }) async {
     // Wide on purpose: the test font draws every glyph as a full em square,
     // so text is far wider than on a phone and would report false overflows.
     // Small-screen layout is checked on a real device instead.
@@ -132,7 +84,7 @@ void main() {
         'dewormed': true,
       });
     setUp?.call(graphql);
-    await tester.pumpWidget(safetyTestApp(graphql: graphql, events: SafetyEvents(), child: c.screen('post-${c.type}')));
+    await tester.pumpWidget(safetyTestApp(graphql: graphql, events: SafetyEvents(), lang: lang, child: c.screen('post-${c.type}')));
     await tester.pumpAndSettle();
   }
 
@@ -283,6 +235,56 @@ void main() {
       await pumpDetail(tester, cases[4], asOwner: true);
       expect(buttonLabelled(tester, 'Mark Sold').onPressed, isNotNull);
       expect(find.textContaining('Renew this listing before'), findsNothing);
+    });
+  });
+
+  // ── Item 1: rescue outcomes ──
+
+  group('rescue outcomes on the detail screen', () {
+    testWidgets('an active rescue owner can choose Animal deceased', (tester) async {
+      await pumpDetail(tester, cases[0], asOwner: true);
+      await tester.tap(find.byKey(const Key('ownerCloseButton')));
+      await tester.pumpAndSettle();
+      expect(find.text('Rescued'), findsOneWidget);
+      expect(find.text('Animal deceased'), findsOneWidget);
+    });
+
+    for (final c in [cases[1], cases[2], cases[3], cases[5]]) {
+      testWidgets('${c.name} never offers Animal deceased', (tester) async {
+        await pumpDetail(tester, c, asOwner: true);
+        await tester.tap(find.byKey(const Key('ownerCloseButton')));
+        await tester.pumpAndSettle();
+        expect(find.text('Animal deceased'), findsNothing);
+      });
+    }
+
+    for (final asOwner in [true, false]) {
+      testWidgets('a deceased rescue shows its outcome to the ${asOwner ? 'owner' : 'viewer'}, never as rescued', (tester) async {
+        await pumpDetail(tester, cases[0], asOwner: asOwner, status: 'ANIMAL_DECEASED');
+        expect(find.text('This rescue was closed because the animal died.'), findsOneWidget);
+        expect(find.textContaining('Rescued'), findsNothing);
+        expect(find.byIcon(Icons.check_circle_outline), findsNothing);
+        expect(find.text('URGENT'), findsNothing, reason: 'a closed rescue is not urgent');
+        if (asOwner) {
+          expect(tester.widget<ElevatedButton>(find.byKey(const Key('ownerCloseButton'))).onPressed, isNull);
+        }
+      });
+    }
+
+    testWidgets('a rescued rescue explains what Rescued means', (tester) async {
+      await pumpDetail(tester, cases[0], asOwner: false, status: 'RESOLVED');
+      expect(find.text('Rescued'), findsOneWidget);
+      expect(find.text('Immediate danger was addressed and appropriate care secured.'), findsOneWidget);
+    });
+
+    testWidgets('an Arabic viewer sees the deceased outcome in Arabic', (tester) async {
+      // LangProvider persists the choice; give it an in-memory store.
+      SharedPreferences.setMockInitialValues({});
+      final lang = LangProvider();
+      await lang.setLang(Lang.ar);
+      await pumpDetail(tester, cases[0], asOwner: false, status: 'ANIMAL_DECEASED', lang: lang);
+      expect(find.text('وفاة الحيوان'), findsOneWidget);
+      expect(find.text('أُغلقت حالة الإنقاذ هذه بسبب وفاة الحيوان.'), findsOneWidget);
     });
   });
 }
