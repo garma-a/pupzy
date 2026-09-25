@@ -6,6 +6,7 @@ import '../localization/lang_provider.dart';
 import '../services/graphql_service.dart';
 import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
+import 'yes_no_question.dart';
 
 /// Full adoption-questionnaire form for `submitAdoptionApplication` — the
 /// structured flow that differentiates Pupzy's adoption section from plain
@@ -130,21 +131,18 @@ class _AdoptionApplicationSheetState extends State<AdoptionApplicationSheet> {
               ),
               const SizedBox(height: AppSpacing.md),
 
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(t(context, 'Outdoor access at home', 'يتوفر وصول لمساحة خارجية')),
+              YesNoQuestion(
+                question: t(context, 'Do you have outdoor space at home?', 'هل لديك مساحة خارجية في المنزل؟'),
                 value: _hasOutdoorAccess,
                 onChanged: (v) => setState(() => _hasOutdoorAccess = v),
               ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(t(context, 'Other pets at home', 'يوجد حيوانات أليفة أخرى')),
+              YesNoQuestion(
+                question: t(context, 'Are there other pets at home?', 'هل توجد حيوانات أليفة أخرى في المنزل؟'),
                 value: _hasOtherPetsAtHome,
                 onChanged: (v) => setState(() => _hasOtherPetsAtHome = v),
               ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(t(context, 'Children at home', 'يوجد أطفال في المنزل')),
+              YesNoQuestion(
+                question: t(context, 'Are there children at home?', 'هل يوجد أطفال في المنزل؟'),
                 value: _hasChildrenAtHome,
                 onChanged: (v) => setState(() => _hasChildrenAtHome = v),
               ),
@@ -170,15 +168,13 @@ class _AdoptionApplicationSheetState extends State<AdoptionApplicationSheet> {
               ),
               const SizedBox(height: AppSpacing.sm),
 
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(t(context, 'I consent to a home visit', 'أوافق على زيارة منزلية')),
+              YesNoQuestion(
+                question: t(context, 'Do you agree to a home visit?', 'هل توافق على زيارة منزلية؟'),
                 value: _consentHomeVisit,
                 onChanged: (v) => setState(() => _consentHomeVisit = v),
               ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(t(context, 'I can provide a vet reference', 'يمكنني تقديم مرجع من طبيب بيطري')),
+              YesNoQuestion(
+                question: t(context, 'Can you provide a vet reference?', 'هل يمكنك تقديم مرجع من طبيب بيطري؟'),
                 value: _canProvideVetReference,
                 onChanged: (v) => setState(() => _canProvideVetReference = v),
               ),

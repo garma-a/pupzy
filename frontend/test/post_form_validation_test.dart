@@ -6,6 +6,7 @@ import 'package:image_picker_platform_interface/image_picker_platform_interface.
 import 'package:pupzy/models/post.dart';
 import 'package:pupzy/screens/post_form_screen.dart';
 import 'package:pupzy/services/safety_events.dart';
+import 'package:pupzy/widgets/yes_no_question.dart';
 
 import 'safety_test_support.dart';
 
@@ -84,5 +85,91 @@ void main() {
     await tester.tap(find.text('Add pet photos'));
     await tester.pumpAndSettle();
     expect((await submitButton(tester)).onPressed, isNotNull);
+  });
+
+  testWidgets('Rescue Alert: the situation questions start unanswered and must all be answered', (tester) async {
+    final photo = File('${Directory.systemTemp.path}/rescue-validation.jpg')..writeAsBytesSync([0xFF, 0xD8, 0xFF, 0xD9]);
+    ImagePickerPlatform.instance = OnePhotoPicker(photo.path);
+    await pumpForm(tester, PostType.rescue, 'URGENT');
+
+    Future<void> tapVisible(Finder finder) async {
+      await tester.ensureVisible(finder);
+      await tester.pumpAndSettle();
+      await tester.tap(finder);
+      await tester.pumpAndSettle();
+    }
+
+    await tapVisible(find.text('Add photos of the animal'));
+    await tapVisible(find.text('Dog').first);
+    await tester.enterText(find.widgetWithText(TextField, "Describe the animal's visible condition..."), 'Limping on its back leg');
+    await tester.enterText(find.widgetWithText(TextField, 'e.g. Maadi area'), 'Maadi');
+    await tapVisible(find.text("On-site — I'm with the animal"));
+
+    final questions = find.byType(YesNoQuestion);
+    expect(questions, findsNWidgets(4));
+    for (final q in tester.widgetList<YesNoQuestion>(questions)) {
+      expect(q.value, isNull, reason: '"${q.question}" must not be pre-answered');
+    }
+    expect(find.byIcon(Icons.check), findsNothing, reason: 'no answer looks chosen');
+
+    expect((await submitButton(tester)).onPressed, isNull, reason: 'situation not answered');
+    expect(find.text('Answer all 4 Situation check questions to post'), findsOneWidget);
+
+    // Answering three of four is still not enough.
+    for (var i = 0; i < 3; i++) {
+      await tapVisible(find.descendant(of: questions.at(i), matching: find.text('No')));
+    }
+    expect((await submitButton(tester)).onPressed, isNull, reason: 'one question left');
+
+    await tapVisible(find.descendant(of: questions.at(3), matching: find.text('Yes')));
+    expect((await submitButton(tester)).onPressed, isNotNull);
+    expect(find.text('Complete all required fields to post'), findsOneWidget);
+  });
+
+  testWidgets('Lost Pet: the situation questions start unanswered and must all be answered', (tester) async {
+    final photo = File('${Directory.systemTemp.path}/lost-validation.jpg')..writeAsBytesSync([0xFF, 0xD8, 0xFF, 0xD9]);
+    ImagePickerPlatform.instance = OnePhotoPicker(photo.path);
+    await pumpForm(tester, PostType.rescue, 'LOST');
+
+    Future<void> tapVisible(Finder finder) async {
+      await tester.ensureVisible(finder);
+      await tester.pumpAndSettle();
+      await tester.tap(finder);
+      await tester.pumpAndSettle();
+    }
+
+    await tapVisible(find.text('Add photos of your pet'));
+    await tapVisible(find.text('Dog').first);
+    await tester.enterText(find.widgetWithText(TextField, 'e.g. Max'), 'Luna');
+    await tapVisible(find.text('Select date'));
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'e.g. 7th Circle area'), 'Nasr City');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Describe when and how your pet went missing...'),
+      'Slipped out of the gate last night',
+    );
+    await tester.pump();
+
+    // The collar question is ordinary detail, not part of the situation
+    // check: it keeps its default and is not required.
+    final collar = find.byWidgetPredicate((w) => w is YesNoQuestion && w.question.contains('collar'));
+    expect(tester.widget<YesNoQuestion>(collar).value, isFalse);
+    final questions = find.byWidgetPredicate((w) => w is YesNoQuestion && !w.question.contains('collar'));
+    expect(questions, findsNWidgets(3));
+    for (final q in tester.widgetList<YesNoQuestion>(questions)) {
+      expect(q.value, isNull, reason: '"${q.question}" must not be pre-answered');
+    }
+    expect((await submitButton(tester)).onPressed, isNull, reason: 'situation not answered');
+    expect(find.text('Answer all 3 Situation check questions to post'), findsOneWidget);
+
+    for (var i = 0; i < 2; i++) {
+      await tapVisible(find.descendant(of: questions.at(i), matching: find.text('No')));
+    }
+    expect((await submitButton(tester)).onPressed, isNull, reason: 'one question left');
+
+    await tapVisible(find.descendant(of: questions.at(2), matching: find.text('Yes')));
+    expect((await submitButton(tester)).onPressed, isNotNull);
+    expect(find.text('Complete all required fields to post'), findsOneWidget);
   });
 }
