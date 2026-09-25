@@ -383,9 +383,9 @@ export async function capturePostCompletion(client, { postId, postType, outcome,
 /**
  * Handles post reopening by an administrator. Mirrors the API repository's
  * durable correction queueing in SQL:
- * 1. Supersedes active completion events, including an undelivered correction
- *    queued by an earlier reopening.
- * 2. Suppresses obsolete pending/processing recipients, and any queued
+ * 1. Supersedes active CLOSURE events. An undelivered correction queued by an
+ *    earlier reopening is owed history and is never superseded.
+ * 2. Suppresses obsolete pending/processing CLOSURE recipients, and any queued
  *    PENDING/PROCESSING push intents for their committed closure inbox rows.
  * 3. Queues ONE durable correction event (`POST_REOPENED`/`RESCUE_REOPENED`,
  *    linked to the latest delivered closure event through `corrects_event_id`)
@@ -401,14 +401,21 @@ export async function reopenPostCompletion(client, { postId, postTitle, postType
   await client.query(
     `UPDATE post_completion_notification_events
      SET status = 'SUPERSEDED', updated_at = now()
-     WHERE post_id = $1::uuid AND status IN ('PENDING', 'PROCESSING')`,
+     WHERE post_id = $1::uuid
+       AND status IN ('PENDING', 'PROCESSING')
+       AND type IN ('POST_COMPLETED', 'RESCUE_COMPLETED')`,
     [postId],
   );
 
   await client.query(
-    `UPDATE post_completion_recipients
+    `UPDATE post_completion_recipients r
      SET status = 'SUPPRESSED', updated_at = now()
-     WHERE post_id = $1::uuid AND status IN ('PENDING', 'PROCESSING')`,
+     WHERE r.post_id = $1::uuid
+       AND r.status IN ('PENDING', 'PROCESSING')
+       AND EXISTS (
+         SELECT 1 FROM post_completion_notification_events e
+         WHERE e.id = r.event_id AND e.type IN ('POST_COMPLETED', 'RESCUE_COMPLETED')
+       )`,
     [postId],
   );
 

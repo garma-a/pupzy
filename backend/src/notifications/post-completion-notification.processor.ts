@@ -216,12 +216,15 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
         }
 
         // Recheck post state. A closure delivery is valid while the Post still
-        // records the captured outcome; a reopening correction is valid while
-        // the Post is ACTIVE, so a re-closed or removed Post suppresses it.
+        // records the captured outcome. A reopening correction is owed for
+        // every committed closure inbox row, so its inbox delivery is only
+        // suppressed when the Post row is gone: re-closing before the worker
+        // runs must not discard the correction. Push relevance is decided
+        // separately below.
         const [post] = await tx.select().from(posts).where(eq(posts.id, event.postId)).for('update');
 
         const isCorrectionEvent = event.type === 'POST_REOPENED' || event.type === 'RESCUE_REOPENED';
-        if (!post || (isCorrectionEvent ? post.status !== 'ACTIVE' : post.status !== event.outcome)) {
+        if (!post || (!isCorrectionEvent && post.status !== event.outcome)) {
           await this.markSuppressed(tx, currentRecipient.id, recipient.leaseToken!);
           return 'SUPPRESSED';
         }
@@ -265,10 +268,16 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
         // Push preferences recheck:
         // "disabled push retains inbox and does not resurrect later"
         // If push is disabled for this user, do NOT enqueue push deliveries.
-        // The intent records the Post creator as its actor so the push worker's
-        // send-time Block recheck closes even for an administrator-recorded
-        // outcome, where the closing actor has no app-user identity.
-        if (user.notificationsEnabled && isPushDeliveryEnabled(event.type)) {
+        // A correction is also push-relevant only while the Post is still
+        // ACTIVE: once it was re-closed (or later removed or expired) the
+        // correction describes a lifecycle state that no longer holds, while
+        // its inbox row remains committed. The push worker rechecks the
+        // lifecycle again at send time as defence in depth. The intent records
+        // the Post creator as its actor so the push worker's send-time Block
+        // recheck closes even for an administrator-recorded outcome, where the
+        // closing actor has no app-user identity.
+        const pushRelevant = isCorrectionEvent ? post.status === 'ACTIVE' : true;
+        if (user.notificationsEnabled && pushRelevant && isPushDeliveryEnabled(event.type)) {
           await this.pushDeliveryRepository.enqueueForNotification(notification, post.creatorId, tx);
         }
 

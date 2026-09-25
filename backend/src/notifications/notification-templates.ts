@@ -23,6 +23,13 @@ export const DEFAULT_NOTIFICATION_LANGUAGE: NotificationLanguage = 'en';
 export type PostResolutionOutcome = PostLifecycleCompletedOutcome;
 
 /**
+ * The completed outcomes a RESCUE Post can hold: a successful rescue
+ * (`RESOLVED`) or a closure where the animal died (`ANIMAL_DECEASED`). Every
+ * other completed outcome belongs to a different Post type.
+ */
+export type RescueCompletedOutcome = Extract<PostLifecycleCompletedOutcome, 'RESOLVED' | 'ANIMAL_DECEASED'>;
+
+/**
  * Parameters each notification type interpolates into its English and Arabic
  * templates. Adding a notification type adds one key here and one entry in
  * `NOTIFICATION_TEMPLATES`; the mapped registry type refuses to compile until
@@ -50,9 +57,9 @@ export interface NotificationTemplateParamsMap {
   NEW_REPLY: { actorName: string };
   COMMENT_BOOSTED: { actorName: string; target: 'comment' | 'reply' };
   COMMENT_PINNED: { postTitle: string };
-  POST_COMPLETED: { postTitle: string; outcome?: string };
+  POST_COMPLETED: { postTitle: string; outcome?: PostLifecycleCompletedOutcome };
   POST_REOPENED: { postTitle: string };
-  RESCUE_COMPLETED: { postTitle: string; outcome?: string };
+  RESCUE_COMPLETED: { postTitle: string; outcome: RescueCompletedOutcome };
   RESCUE_REOPENED: { postTitle: string };
 }
 
@@ -333,28 +340,45 @@ const NOTIFICATION_TEMPLATES: NotificationTemplateRegistry = {
   },
   RESCUE_COMPLETED: {
     en: ({ postTitle, outcome }) => {
-      if (outcome === 'ANIMAL_DECEASED') {
-        return {
-          title: 'Rescue closed',
-          body: `The rescue "${postTitle}" was closed (animal deceased).`,
-        };
+      switch (outcome) {
+        case 'RESOLVED':
+          return {
+            title: 'Rescue resolved',
+            body: `The rescue "${postTitle}" was marked as rescued.`,
+          };
+        case 'ANIMAL_DECEASED':
+          return {
+            title: 'Rescue closed',
+            body: `The rescue "${postTitle}" was closed (animal deceased).`,
+          };
+        default:
+          // Out-of-band JavaScript callers can pass a value outside the
+          // narrowed rescue union; stay neutral and never claim the animal was
+          // rescued.
+          return {
+            title: 'Rescue closed',
+            body: `The rescue "${postTitle}" was closed.`,
+          };
       }
-      return {
-        title: 'Rescue resolved',
-        body: `The rescue "${postTitle}" was marked as rescued.`,
-      };
     },
     ar: ({ postTitle, outcome }) => {
-      if (outcome === 'ANIMAL_DECEASED') {
-        return {
-          title: 'تم إغلاق حالة الإنقاذ',
-          body: `تم إغلاق حالة الإنقاذ "${postTitle}" (وفاة الحيوان).`,
-        };
+      switch (outcome) {
+        case 'RESOLVED':
+          return {
+            title: 'تم حل حالة الإنقاذ',
+            body: `تم تعليم حالة الإنقاذ "${postTitle}" بأنها تم إنقاذها.`,
+          };
+        case 'ANIMAL_DECEASED':
+          return {
+            title: 'تم إغلاق حالة الإنقاذ',
+            body: `تم إغلاق حالة الإنقاذ "${postTitle}" (وفاة الحيوان).`,
+          };
+        default:
+          return {
+            title: 'تم إغلاق حالة الإنقاذ',
+            body: `تم إغلاق حالة الإنقاذ "${postTitle}".`,
+          };
       }
-      return {
-        title: 'تم حل حالة الإنقاذ',
-        body: `تم تعليم حالة الإنقاذ "${postTitle}" بأنها تم إنقاذها.`,
-      };
     },
   },
   RESCUE_REOPENED: {
