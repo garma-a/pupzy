@@ -6,6 +6,7 @@ import {
   localizeNotification,
   resolveNotificationLanguage,
   type NotificationTemplateParamsMap,
+  type RescueCompletedOutcome,
 } from './notification-templates';
 
 /** Representative parameters for every type — also proves the params contract. */
@@ -29,7 +30,7 @@ const SAMPLE_PARAMS: NotificationTemplateParamsMap = {
   COMMENT_PINNED: { postTitle: 'Missing cat' },
   POST_COMPLETED: { postTitle: 'Missing cat' },
   POST_REOPENED: { postTitle: 'Missing cat' },
-  RESCUE_COMPLETED: { postTitle: 'Injured puppy' },
+  RESCUE_COMPLETED: { postTitle: 'Injured puppy', outcome: 'RESOLVED' },
   RESCUE_REOPENED: { postTitle: 'Injured puppy' },
 };
 
@@ -142,11 +143,15 @@ describe('notification templates', () => {
   });
 
   it('renders rescue completion and reopening correction messages in both languages', () => {
-    const closure = buildNotificationContent('RESCUE_COMPLETED', { postTitle: 'Injured puppy' });
+    const closure = buildNotificationContent('RESCUE_COMPLETED', {
+      postTitle: 'Injured puppy',
+      outcome: 'RESOLVED',
+    });
     expect(closure.title).toBe('Rescue resolved');
     expect(closure.body).toBe('The rescue "Injured puppy" was marked as rescued.');
     expect(closure.titleArabic).toBe('تم حل حالة الإنقاذ');
     expect(closure.bodyArabic).toContain('Injured puppy');
+    expect(closure.bodyArabic).toContain('تم إنقاذها');
 
     const deceasedClosure = buildNotificationContent('RESCUE_COMPLETED', {
       postTitle: 'Injured puppy',
@@ -165,6 +170,19 @@ describe('notification templates', () => {
     expect(correction.body).toBe('The rescue "Injured puppy" was reopened.');
     expect(correction.titleArabic).toBe('تمت إعادة فتح حالة الإنقاذ');
     expect(correction.bodyArabic).toContain('Injured puppy');
+  });
+
+  it('renders a neutral rescue-closure fallback for out-of-band outcomes that never claims a rescue', () => {
+    const outOfBand = buildNotificationContent('RESCUE_COMPLETED', {
+      postTitle: 'Injured puppy',
+      outcome: 'SOLD' as unknown as RescueCompletedOutcome,
+    });
+    expect(outOfBand.title).toBe('Rescue closed');
+    expect(outOfBand.body).toBe('The rescue "Injured puppy" was closed.');
+    expect(outOfBand.body).not.toContain('rescued');
+    expect(outOfBand.titleArabic).toBe('تم إغلاق حالة الإنقاذ');
+    expect(outOfBand.bodyArabic).toContain('Injured puppy');
+    expect(outOfBand.bodyArabic).not.toContain('تم إنقاذها');
   });
 
   it('renders outcome-specific completion messages for non-rescue posts in both languages', () => {

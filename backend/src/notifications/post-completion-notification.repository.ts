@@ -9,7 +9,8 @@ import {
   type PostCompletionRecipient,
 } from '../database/schema';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
-import { buildNotificationContent } from './notification-templates';
+import type { PostLifecycleCompletedOutcome } from '../common/contracts/post-lifecycle.contract';
+import { buildNotificationContent, type RescueCompletedOutcome } from './notification-templates';
 import { MAX_COMPLETION_DELIVERY_ATTEMPTS } from './post-completion-notification.constants';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
@@ -20,7 +21,7 @@ const EXPIRED_MAX_ATTEMPT_LEASE_MESSAGE = 'Post completion delivery lease expire
 export interface CaptureCompletionEventParams {
   postId: string;
   postType: string;
-  outcome: string;
+  outcome: PostLifecycleCompletedOutcome;
   closingActorId: string | null;
   title: string;
   creatorId: string;
@@ -73,7 +74,14 @@ export class PostCompletionNotificationRepository {
     const { postId, postType, outcome, closingActorId, title, creatorId } = params;
 
     const notificationType = postType === 'RESCUE' ? 'RESCUE_COMPLETED' : 'POST_COMPLETED';
-    const content = buildNotificationContent(notificationType, { postTitle: title, outcome });
+    // Owner and administrator closure only admit type-valid outcomes, so a
+    // RESCUE always carries RESOLVED or ANIMAL_DECEASED. The cast preserves the
+    // stored value for any out-of-band caller instead of rewriting it to a
+    // successful rescue; the template renders that case neutrally.
+    const content =
+      notificationType === 'RESCUE_COMPLETED'
+        ? buildNotificationContent(notificationType, { postTitle: title, outcome: outcome as RescueCompletedOutcome })
+        : buildNotificationContent(notificationType, { postTitle: title, outcome });
 
     const [event] = await tx
       .insert(postCompletionNotificationEvents)
@@ -129,11 +137,13 @@ export class PostCompletionNotificationRepository {
 
   /**
    * Reopening correction queueing:
-   * 1. Marks obsolete active (PENDING / PROCESSING) completion events as
-   *    SUPERSEDED, including an undelivered correction from an earlier reopen.
-   * 2. Suppresses obsolete pending / processing recipients, and any queued
-   *    PENDING / PROCESSING push intents for committed closure inbox rows, so
-   *    neither is ever delivered.
+   * 1. Marks obsolete active (PENDING / PROCESSING) CLOSURE events as
+   *    SUPERSEDED. An undelivered correction from an earlier reopen is owed
+   *    history and is never superseded, so a later reopening cannot discard a
+   *    correction the audience is still waiting for.
+   * 2. Suppresses obsolete pending / processing CLOSURE recipients, and any
+   *    queued PENDING / PROCESSING push intents for committed closure inbox
+   *    rows, so neither is ever delivered.
    * 3. Queues ONE durable correction event (`POST_REOPENED`/`RESCUE_REOPENED`,
    *    linked to the latest delivered closure event through `corrects_event_id`)
    *    whose audience is the distinct set of already-delivered closure
@@ -150,20 +160,29 @@ export class PostCompletionNotificationRepository {
   ): Promise<{ supersededEventIds: string[]; correctedCount: number; correctionEventId: string | null }> {
     const { postId, postTitle } = params;
 
-    // 1. Mark active events as SUPERSEDED
+    // 1. Mark active CLOSURE events as SUPERSEDED. A queued correction is owed
+    //    to its audience and survives a later reopen (and reclosure).
     const supersededResult = await tx.execute<{ id: string }>(sql`
       UPDATE post_completion_notification_events
       SET status = 'SUPERSEDED', updated_at = now()
-      WHERE post_id = ${postId}::uuid AND status IN ('PENDING', 'PROCESSING')
+      WHERE post_id = ${postId}::uuid
+        AND status IN ('PENDING', 'PROCESSING')
+        AND type IN ('POST_COMPLETED', 'RESCUE_COMPLETED')
       RETURNING id
     `);
     const supersededEventIds = supersededResult.rows.map((r) => r.id);
 
-    // 2. Suppress obsolete pending closure messages
+    // 2. Suppress obsolete pending closure messages (and their events'
+    //    recipients' rows), never an owed correction's pending recipient.
     await tx.execute(sql`
-      UPDATE post_completion_recipients
+      UPDATE post_completion_recipients r
       SET status = 'SUPPRESSED', updated_at = now()
-      WHERE post_id = ${postId}::uuid AND status IN ('PENDING', 'PROCESSING')
+      WHERE r.post_id = ${postId}::uuid
+        AND r.status IN ('PENDING', 'PROCESSING')
+        AND EXISTS (
+          SELECT 1 FROM post_completion_notification_events e
+          WHERE e.id = r.event_id AND e.type IN ('POST_COMPLETED', 'RESCUE_COMPLETED')
+        )
     `);
 
     // 3. Find committed closure entries that need correction. Only closure

@@ -512,7 +512,7 @@ export class PostsRepository {
             await this.postCompletionRepository.captureCompletionEvent(tx, {
               postId: post.id,
               postType: post.postType,
-              outcome: status,
+              outcome: status as PostLifecycleCompletedOutcome,
               closingActorId: creatorId,
               title: post.title,
               creatorId: post.creatorId,
