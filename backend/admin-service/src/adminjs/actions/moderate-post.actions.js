@@ -266,6 +266,8 @@ function buildReopenAction(pool, component, cache) {
         await reopenPostCompletion(client, {
           postId: row.id,
           postTitle: row.title,
+          postType: row.post_type,
+          previousOutcome,
         });
         return { previousOutcome };
       },

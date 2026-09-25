@@ -154,8 +154,7 @@ export class PostsRepository {
     this.reportQuotaManager = reportQuotaManager ?? new ModerationReportQuotaManager(this.db);
     this.isolationPolicy = isolationPolicy ?? new AccountIsolationPolicy(this.db);
     this.pushDeliveryRepository = pushDeliveryRepository ?? new PushDeliveryRepository(this.db);
-    this.postCompletionRepository =
-      postCompletionRepository ?? new PostCompletionNotificationRepository(this.db, this.pushDeliveryRepository);
+    this.postCompletionRepository = postCompletionRepository ?? new PostCompletionNotificationRepository(this.db);
   }
 
   /**

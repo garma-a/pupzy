@@ -121,6 +121,29 @@ describe('Database Migration Runner Integration', () => {
       expect(row.is_nullable).toBe('YES');
     }
 
+    // Migration 0059 links a reopening correction event to the closure event it
+    // corrects. The column is nullable for closure events and its self-FK is
+    // ON DELETE SET NULL so a correction survives its closure event.
+    const correctionLinkColRes = await pool.query<{ is_nullable: string }>(`
+      SELECT is_nullable
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'post_completion_notification_events'
+        AND column_name = 'corrects_event_id'
+    `);
+    expect(correctionLinkColRes.rows.length).toBe(1);
+    expect(correctionLinkColRes.rows[0].is_nullable).toBe('YES');
+
+    const correctionLinkFkRes = await pool.query<{ confdeltype: string }>(`
+      SELECT confdeltype::text AS confdeltype
+      FROM pg_constraint
+      WHERE conrelid = 'post_completion_notification_events'::regclass
+        AND contype = 'f'
+        AND pg_get_constraintdef(oid) LIKE '%corrects_event_id%'
+    `);
+    expect(correctionLinkFkRes.rows.length).toBe(1);
+    expect(correctionLinkFkRes.rows[0].confdeltype).toBe('n'); // 'n' = SET NULL
+
     // Verify the inactivity-expiry lifecycle (migrations 0046-0047):
     // EXPIRED is appended to post_status and the renewal/reminder state is
     // nullable with no default so existing Posts keep their behavior.

@@ -17,16 +17,24 @@ import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
 import { PushDeliveryRepository } from './push-delivery.repository';
 import { isPushDeliveryEnabled } from './push-delivery.constants';
 import {
+  MAX_COMPLETION_DELIVERY_ATTEMPTS,
+  MAX_RETRY_DELAY_MS,
+  POST_COMPLETION_BATCH_SIZE,
+  POST_COMPLETION_LEASE_MS,
+} from './post-completion-notification.constants';
+import {
   PostCompletionNotificationRepository,
   type ClaimedRecipientWithEvent,
 } from './post-completion-notification.repository';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
-export const POST_COMPLETION_BATCH_SIZE = 50;
-export const POST_COMPLETION_LEASE_MS = 60_000;
-export const MAX_RETRY_DELAY_MS = 5 * 60_000;
-export const MAX_COMPLETION_DELIVERY_ATTEMPTS = 5;
+export {
+  MAX_COMPLETION_DELIVERY_ATTEMPTS,
+  MAX_RETRY_DELAY_MS,
+  POST_COMPLETION_BATCH_SIZE,
+  POST_COMPLETION_LEASE_MS,
+} from './post-completion-notification.constants';
 
 export interface BatchProcessingResult {
   batchesProcessed: number;
@@ -67,7 +75,7 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
     pushDeliveryRepository?: PushDeliveryRepository,
   ) {
     this.pushDeliveryRepository = pushDeliveryRepository ?? new PushDeliveryRepository(this.db);
-    this.repository = repository ?? new PostCompletionNotificationRepository(this.db, this.pushDeliveryRepository);
+    this.repository = repository ?? new PostCompletionNotificationRepository(this.db);
     this.isolationPolicy = isolationPolicy ?? new AccountIsolationPolicy(this.db);
   }
 
@@ -107,6 +115,13 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
     let failed = 0;
 
     try {
+      // A worker that crashed after its final claim leaves PROCESSING rows
+      // whose attempts are exhausted. Reclaiming them is forbidden (it would
+      // exceed the attempt bound), and no later claim matches them, so they
+      // must be terminated before the pass starts or their events stay
+      // PENDING forever.
+      await this.db.transaction((tx) => this.repository.recoverExpiredMaxAttemptLeases(tx));
+
       while (batchesProcessed < maxBatches) {
         const batch = await this.db.transaction((tx) =>
           this.repository.claimNextBatch(tx, batchSize, POST_COMPLETION_LEASE_MS),
@@ -128,9 +143,12 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
             );
           }
         }
-
-        await this.repository.completeFinishedEvents([...new Set(batch.map((item) => item.event.id))]);
       }
+
+      // Global completion sweep, so an event whose last recipient was
+      // terminated by the recovery sweep (and therefore never claimed) can
+      // still reach COMPLETED.
+      await this.repository.completeFinishedEvents();
 
       return { batchesProcessed, delivered, suppressed, failed };
     } finally {
@@ -149,6 +167,27 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
 
     return withDbRetry(() =>
       this.db.transaction(async (tx) => {
+        // ADR 0006: cross-account operations acquire canonical account-pair
+        // locks before existing Post/discussion locks. Resolve the stable
+        // pair identifiers first (`creator_id` is immutable and the closing
+        // actor was snapshotted at capture time), take every pair lock, and
+        // only then take recipient/event/Post row locks, so this transaction
+        // cannot deadlock with a comment or Block commit.
+        const [postIdentity] = await tx
+          .select({ creatorId: posts.creatorId })
+          .from(posts)
+          .where(eq(posts.id, event.postId))
+          .limit(1);
+
+        const pairs: Array<readonly [string, string]> = [];
+        if (postIdentity) {
+          pairs.push([postIdentity.creatorId, recipient.recipientId]);
+        }
+        if (event.closingActorId && event.closingActorId !== postIdentity?.creatorId) {
+          pairs.push([event.closingActorId, recipient.recipientId]);
+        }
+        await this.isolationPolicy.lockPairs(tx, pairs);
+
         // Re-read recipient under row lock
         const [currentRecipient] = await tx
           .select()
@@ -176,10 +215,13 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
           return 'SUPPRESSED';
         }
 
-        // Recheck post state (if post is no longer in a completed state, e.g. reopened or removed)
+        // Recheck post state. A closure delivery is valid while the Post still
+        // records the captured outcome; a reopening correction is valid while
+        // the Post is ACTIVE, so a re-closed or removed Post suppresses it.
         const [post] = await tx.select().from(posts).where(eq(posts.id, event.postId)).for('update');
 
-        if (!post || post.status !== event.outcome) {
+        const isCorrectionEvent = event.type === 'POST_REOPENED' || event.type === 'RESCUE_REOPENED';
+        if (!post || (isCorrectionEvent ? post.status !== 'ACTIVE' : post.status !== event.outcome)) {
           await this.markSuppressed(tx, currentRecipient.id, recipient.leaseToken!);
           return 'SUPPRESSED';
         }
@@ -195,11 +237,12 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
         // Recheck mutual account isolation (Blocks) against both the Post
         // creator and the closing actor, so a recipient isolated from the
         // creator never receives a completion notification even when an
-        // administrator (not the creator) recorded the outcome.
+        // administrator (not the creator) recorded the outcome. The pair
+        // locks are already held from above, so no further locks are needed.
         if (
-          (await this.isolationPolicy.lockPairAndRecheck(tx, post.creatorId, currentRecipient.recipientId)) ||
+          (await this.isolationPolicy.isIsolated(post.creatorId, currentRecipient.recipientId, tx)) ||
           (event.closingActorId &&
-            (await this.isolationPolicy.lockPairAndRecheck(tx, event.closingActorId, currentRecipient.recipientId)))
+            (await this.isolationPolicy.isIsolated(event.closingActorId, currentRecipient.recipientId, tx)))
         ) {
           await this.markSuppressed(tx, currentRecipient.id, recipient.leaseToken!, 'BLOCKED');
           return 'SUPPRESSED';

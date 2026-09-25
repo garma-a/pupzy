@@ -4,10 +4,22 @@ import { eq, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
 import * as schema from '../database/schema';
-import { deviceRegistrations, notifications, pushDeliveries, users, type PushDelivery } from '../database/schema';
+import {
+  deviceRegistrations,
+  notifications,
+  posts,
+  pushDeliveries,
+  users,
+  type Notification,
+  type PushDelivery,
+} from '../database/schema';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { withDbRetry } from '../common/utils/db-retry.util';
 import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
+import {
+  COMPLETED_POST_OUTCOMES,
+  type PostLifecycleCompletedOutcome,
+} from '../common/contracts/post-lifecycle.contract';
 import { buildPushMessage } from './push-payload';
 import { isDeadPushTokenError, PUSH_PROVIDER, type PushDeliveryMessage, type PushProvider } from './push.provider';
 
@@ -23,6 +35,19 @@ const PUSH_DELIVERY_LEASE_MS = 60_000;
 const MAX_RETRY_DELAY_MS = 5 * 60_000;
 const MAX_LAST_ERROR_LENGTH = 500;
 const EXPIRED_LEASE_FAILURE_MESSAGE = 'Push delivery lease expired after the maximum number of attempts';
+
+/**
+ * Completion notification types whose push may become stale if the Post
+ * lifecycle moves after the inbox row was queued.
+ */
+const COMPLETION_CLOSURE_PUSH_TYPES: ReadonlySet<Notification['type']> = new Set<Notification['type']>([
+  'POST_COMPLETED',
+  'RESCUE_COMPLETED',
+]);
+const COMPLETION_CORRECTION_PUSH_TYPES: ReadonlySet<Notification['type']> = new Set<Notification['type']>([
+  'POST_REOPENED',
+  'RESCUE_REOPENED',
+]);
 
 /** A claimed intent whose send-time rechecks all passed. */
 interface ResolvedPushDelivery {
@@ -239,6 +264,30 @@ export class PushDeliveryProcessor implements OnApplicationBootstrap {
         if (!notification) {
           await this.markSuppressed(tx, current.id, delivery.leaseToken);
           return null;
+        }
+
+        // Decision 19: recheck the Post lifecycle before sending a completion
+        // push. A closure push is stale once the Post is no longer in a
+        // completed outcome (removed, reopened or expired), and a reopening
+        // correction is stale once the Post is no longer ACTIVE (re-closed or
+        // removed). The inbox row is never touched by this suppression.
+        if (
+          notification.relatedPostId &&
+          (COMPLETION_CLOSURE_PUSH_TYPES.has(notification.type) ||
+            COMPLETION_CORRECTION_PUSH_TYPES.has(notification.type))
+        ) {
+          const [post] = await tx
+            .select({ status: posts.status })
+            .from(posts)
+            .where(eq(posts.id, notification.relatedPostId))
+            .limit(1);
+          const valid = COMPLETION_CLOSURE_PUSH_TYPES.has(notification.type)
+            ? !!post && COMPLETED_POST_OUTCOMES.includes(post.status as PostLifecycleCompletedOutcome)
+            : !!post && post.status === 'ACTIVE';
+          if (!valid) {
+            await this.markSuppressed(tx, current.id, delivery.leaseToken);
+            return null;
+          }
         }
 
         return {

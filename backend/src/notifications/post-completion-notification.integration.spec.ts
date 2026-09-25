@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { TestDatabaseHelper } from '../../test/test-database.helper';
 import {
   cities,
@@ -26,7 +26,10 @@ import {
 } from '../database/schema';
 import { PostsRepository } from '../posts/posts.repository';
 import { PostCompletionNotificationRepository } from './post-completion-notification.repository';
-import { PostCompletionNotificationProcessor } from './post-completion-notification.processor';
+import {
+  MAX_COMPLETION_DELIVERY_ATTEMPTS,
+  PostCompletionNotificationProcessor,
+} from './post-completion-notification.processor';
 import { PushDeliveryRepository } from './push-delivery.repository';
 import { PushDeliveryProcessor } from './push-delivery.processor';
 import type { PushDeliveryMessage, PushProvider } from './push.provider';
@@ -49,7 +52,7 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
     dbHelper = new TestDatabaseHelper();
     await dbHelper.start();
     pushDeliveryRepo = new PushDeliveryRepository(dbHelper.db);
-    postCompletionRepo = new PostCompletionNotificationRepository(dbHelper.db, pushDeliveryRepo);
+    postCompletionRepo = new PostCompletionNotificationRepository(dbHelper.db);
     isolationPolicy = new AccountIsolationPolicy(dbHelper.db);
     processor = new PostCompletionNotificationProcessor(
       dbHelper.db,
@@ -264,6 +267,27 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       ageUnit: 'YEARS',
     });
     return post;
+  }
+
+  async function reopenCompletion(post: Post): Promise<void> {
+    await dbHelper.db.transaction(async (tx) => {
+      await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
+      await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
+    });
+  }
+
+  async function notificationsFor(recipientId: string) {
+    return dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, recipientId));
+  }
+
+  async function completionEventsFor(
+    postId: string,
+    type: 'POST_COMPLETED' | 'RESCUE_COMPLETED' | 'POST_REOPENED' | 'RESCUE_REOPENED',
+  ) {
+    return dbHelper.db
+      .select()
+      .from(postCompletionNotificationEvents)
+      .where(and(eq(postCompletionNotificationEvents.postId, postId), eq(postCompletionNotificationEvents.type, type)));
   }
 
   describe('Audience Capture on Owner Closure', () => {
@@ -594,6 +618,180 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
         .where(eq(postCompletionRecipients.postId, post.id));
 
       expect(recipient.status).toBe('DELIVERED');
+    });
+
+    it('terminates a recipient stranded by an expired max-attempt lease and completes its event', async () => {
+      const owner = await createUser({ name: 'StrandedLeaseOwner' });
+      const post = await createRescuePost(owner.id, 'Stranded Lease Rescue');
+      const recipientUser = await createUser({ name: 'StrandedLeaseRecipient' });
+
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: recipientUser.id });
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+
+      // Simulate a worker that crashed after claiming the recipient for its
+      // final allowed attempt: the lease has expired and attempts is at the
+      // bound, so no later claim can ever match this row.
+      await dbHelper.db.execute(sql`
+        UPDATE post_completion_recipients
+        SET status = 'PROCESSING',
+            attempts = ${MAX_COMPLETION_DELIVERY_ATTEMPTS},
+            lease_token = ${generateUuidV7()}::uuid,
+            lease_expires_at = now() - interval '10 seconds'
+        WHERE post_id = ${post.id}::uuid
+      `);
+
+      const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(0);
+      expect(batchRes.batchesProcessed).toBe(0);
+
+      const [recipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.postId, post.id));
+      expect(recipient.status).toBe('FAILED');
+      expect(recipient.leaseToken).toBeNull();
+      expect(recipient.leaseExpiresAt).toBeNull();
+      expect(recipient.lastError).toContain('lease expired');
+
+      // The stranded recipient must not leave its event PENDING forever.
+      const [event] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.postId, post.id));
+      expect(event.status).toBe('COMPLETED');
+
+      const notifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, recipientUser.id));
+      expect(notifs).toHaveLength(0);
+    });
+
+    it('delivers reopening corrections in bounded restartable batches without an arbitrary cap', async () => {
+      const owner = await createUser({ name: 'CorrectionBatchOwner' });
+      const post = await createRescuePost(owner.id, 'Correction Batch Rescue');
+
+      const count = 120;
+      const userIds: string[] = [];
+      const userValues = [];
+      const upvoteValues = [];
+      for (let index = 0; index < count; index++) {
+        const id = generateUuidV7();
+        userIds.push(id);
+        userValues.push({
+          id,
+          firebaseUserId: `firebase_${id}`,
+          email: `${id}@example.com`,
+          fullName: `CorrectionUser_${index}`,
+          notificationsEnabled: true,
+          isBanned: false,
+        });
+        upvoteValues.push({ postId: post.id, userId: id });
+      }
+      for (let index = 0; index < userValues.length; index += 100) {
+        await dbHelper.db.insert(users).values(userValues.slice(index, index + 100));
+        await dbHelper.db.insert(postUpvotes).values(upvoteValues.slice(index, index + 100));
+      }
+
+      // Deliver the closure audience first, in bounded batches.
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+      let closureDelivered = 0;
+      while (closureDelivered < count) {
+        const res = await processor.processPendingBatches({ maxBatches: 1, batchSize: 50 });
+        if (res.batchesProcessed === 0) break;
+        closureDelivered += res.delivered;
+      }
+      expect(closureDelivered).toBe(count);
+
+      // Reopen queues one correction event with the whole delivered audience.
+      await reopenCompletion(post);
+      const [correctionEvent] = await completionEventsFor(post.id, 'RESCUE_REOPENED');
+      expect(correctionEvent.status).toBe('PENDING');
+      expect(correctionEvent.totalRecipients).toBe(count);
+
+      let corrected = 0;
+      let iterations = 0;
+      while (corrected < count && iterations < 20) {
+        const res = await processor.processPendingBatches({ maxBatches: 1, batchSize: 25 });
+        expect(res.delivered).toBeLessThanOrEqual(25);
+        corrected += res.delivered;
+        iterations++;
+        if (res.batchesProcessed === 0) break;
+      }
+      expect(corrected).toBe(count);
+
+      const correctionRecipients = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.eventId, correctionEvent.id));
+      expect(correctionRecipients).toHaveLength(count);
+      expect(correctionRecipients.every((recipient) => recipient.status === 'DELIVERED')).toBe(true);
+
+      const correctionNotifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(and(eq(notifications.relatedPostId, post.id), eq(notifications.type, 'RESCUE_REOPENED')));
+      expect(correctionNotifs).toHaveLength(count);
+      expect(new Set(correctionNotifs.map((notification) => notification.recipientId)).size).toBe(count);
+      for (const notification of correctionNotifs) {
+        expect(notification.recipientId).toBeTruthy();
+        expect(userIds).toContain(notification.recipientId);
+      }
+
+      const [completedCorrection] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.id, correctionEvent.id));
+      expect(completedCorrection.status).toBe('COMPLETED');
+    });
+
+    it('resumes a correction batch after an interrupted processing lease', async () => {
+      const owner = await createUser({ name: 'CorrectionRestartOwner' });
+      const post = await createRescuePost(owner.id, 'Correction Restart Rescue');
+      const first = await createUser({ name: 'CorrectionRestartFirst' });
+      const second = await createUser({ name: 'CorrectionRestartSecond' });
+
+      await dbHelper.db.insert(postUpvotes).values([
+        { postId: post.id, userId: first.id },
+        { postId: post.id, userId: second.id },
+      ]);
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(2);
+
+      await reopenCompletion(post);
+      const [correctionEvent] = await completionEventsFor(post.id, 'RESCUE_REOPENED');
+
+      // Simulate a worker that claimed a correction recipient and crashed: the
+      // row is left PROCESSING under an expired lease.
+      await dbHelper.db.execute(sql`
+        UPDATE post_completion_recipients
+        SET status = 'PROCESSING',
+            attempts = attempts + 1,
+            lease_token = ${generateUuidV7()}::uuid,
+            lease_expires_at = now() - interval '10 seconds'
+        WHERE event_id = ${correctionEvent.id}::uuid
+      `);
+
+      const resumed = await processor.processPendingBatches({ batchSize: 10 });
+      expect(resumed.delivered).toBe(2);
+
+      const correctionRecipients = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.eventId, correctionEvent.id));
+      expect(correctionRecipients).toHaveLength(2);
+      expect(correctionRecipients.every((recipient) => recipient.status === 'DELIVERED')).toBe(true);
+
+      const [completedCorrection] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.id, correctionEvent.id));
+      expect(completedCorrection.status).toBe('COMPLETED');
+
+      for (const user of [first, second]) {
+        const notifs = await notificationsFor(user.id);
+        expect(notifs.filter((n) => n.type === 'RESCUE_REOPENED')).toHaveLength(1);
+      }
     });
 
     it('rolls back a failed delivery attempt and retries it without duplicating the inbox notification', async () => {
@@ -934,44 +1132,67 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
         .where(eq(postCompletionRecipients.status, 'DELIVERED'));
       expect(claimedRecipient).toBeDefined();
 
-      // Now Administrator reopens the post
-      await dbHelper.db.transaction(async (tx) => {
-        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
-        await postCompletionRepo.handleReopen(tx, {
-          postId: post.id,
-          postTitle: post.title,
-        });
-      });
+      // Administrator reopens: the correction is queued, not delivered.
+      await reopenCompletion(post);
 
-      // 1. Check that event was SUPERSEDED
+      // 1. The closure event is SUPERSEDED and its pending recipient suppressed.
       const [reopenedEvent] = await dbHelper.db
         .select()
         .from(postCompletionNotificationEvents)
         .where(eq(postCompletionNotificationEvents.id, events[0].id));
       expect(reopenedEvent.status).toBe('SUPERSEDED');
 
-      // 2. Check that pending recipient (participantB) was SUPPRESSED
       const otherRecipients = await dbHelper.db
         .select()
         .from(postCompletionRecipients)
         .where(
-          sql`${postCompletionRecipients.postId} = ${post.id}::uuid AND ${postCompletionRecipients.id} <> ${claimedRecipient.id}::uuid`,
+          and(
+            eq(postCompletionRecipients.eventId, events[0].id),
+            sql`${postCompletionRecipients.id} <> ${claimedRecipient.id}::uuid`,
+          ),
         );
+      expect(otherRecipients).toHaveLength(1);
       expect(otherRecipients[0].status).toBe('SUPPRESSED');
 
-      // 3. Check that delivered recipient (participantA) was marked CORRECTED
-      const [recipACorrected] = await dbHelper.db
+      // 2. The delivered closure row keeps its inbox history and is CORRECTED.
+      const [correctedClosureRecipient] = await dbHelper.db
         .select()
         .from(postCompletionRecipients)
         .where(eq(postCompletionRecipients.id, claimedRecipient.id));
-      expect(recipACorrected.status).toBe('CORRECTED');
+      expect(correctedClosureRecipient.status).toBe('CORRECTED');
+      expect(correctedClosureRecipient.notificationId).toBe(claimedRecipient.notificationId);
 
-      // 4. Check that participantA received RESCUE_REOPENED notification
-      const participantANotifs = await dbHelper.db
+      // 3. ONE durable correction event is queued, linked to its closure event.
+      const correctionEvents = await completionEventsFor(post.id, 'RESCUE_REOPENED');
+      expect(correctionEvents).toHaveLength(1);
+      const correctionEvent = correctionEvents[0];
+      expect(correctionEvent).toMatchObject({
+        postType: 'RESCUE',
+        outcome: 'RESOLVED',
+        closingActorId: null,
+        status: 'PENDING',
+        totalRecipients: 1,
+        correctsEventId: events[0].id,
+      });
+      expect(correctionEvent.title).toBe('Rescue reopened');
+      expect(correctionEvent.body).toContain(post.title);
+
+      const correctionRecipients = await dbHelper.db
         .select()
-        .from(notifications)
-        .where(eq(notifications.recipientId, claimedRecipient.recipientId));
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.eventId, correctionEvent.id));
+      expect(correctionRecipients).toHaveLength(1);
+      expect(correctionRecipients[0].recipientId).toBe(claimedRecipient.recipientId);
+      expect(correctionRecipients[0].status).toBe('PENDING');
 
+      // 4. Nothing has been delivered for the correction yet.
+      expect(await notificationsFor(claimedRecipient.recipientId)).toHaveLength(1);
+
+      // 5. The worker delivers the queued correction in bounded batches.
+      const reopenBatch = await processor.processPendingBatches({ batchSize: 10 });
+      expect(reopenBatch.delivered).toBe(1);
+
+      const participantANotifs = await notificationsFor(claimedRecipient.recipientId);
       expect(participantANotifs).toHaveLength(2); // 1 RESCUE_COMPLETED, 1 RESCUE_REOPENED
       const correctionNotif = participantANotifs.find((n) => n.type === 'RESCUE_REOPENED');
       expect(correctionNotif).toBeDefined();
@@ -982,17 +1203,21 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(correctionNotif?.body).not.toContain('admin');
       expect(correctionNotif?.bodyArabic).not.toContain('admin');
 
-      // 5. Check that participantB received NO notifications
-      const participantBNotifs = await dbHelper.db
+      const [completedCorrection] = await dbHelper.db
         .select()
-        .from(notifications)
-        .where(eq(notifications.recipientId, otherRecipients[0].recipientId));
-      expect(participantBNotifs).toHaveLength(0);
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.id, correctionEvent.id));
+      expect(completedCorrection.status).toBe('COMPLETED');
 
-      // 6. Running batch processor now does nothing
-      const postReopenBatchRes = await processor.processPendingBatches({ batchSize: 10 });
-      expect(postReopenBatchRes.batchesProcessed).toBe(0);
-      expect(postReopenBatchRes.delivered).toBe(0);
+      const [deliveredCorrectionRecipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.eventId, correctionEvent.id));
+      expect(deliveredCorrectionRecipient.status).toBe('DELIVERED');
+      expect(deliveredCorrectionRecipient.notificationId).toBe(correctionNotif?.id);
+
+      // 6. The suppressed participant stays silent.
+      expect(await notificationsFor(otherRecipients[0].recipientId)).toHaveLength(0);
     });
 
     it('handles multiple close-reopen-close cycles cleanly without duplicate notifications', async () => {
@@ -1002,40 +1227,98 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
 
       await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: participant.id });
 
-      // Cycle 1: Close
+      // Cycle 1: Close and deliver the closure.
       await postsRepo.updateStatus(post.id, creator.id, 'RESOLVED');
+      const [closureOne] = await completionEventsFor(post.id, 'RESCUE_COMPLETED');
+      expect(closureOne).toBeDefined();
       let batchRes = await processor.processPendingBatches({ batchSize: 10 });
       expect(batchRes.delivered).toBe(1);
 
-      // Cycle 1: Reopen
-      await dbHelper.db.transaction(async (tx) => {
-        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
-        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
-      });
+      // Cycle 1: Reopen queues a durable correction, then the worker delivers it.
+      await reopenCompletion(post);
+      const [correctionOne] = await completionEventsFor(post.id, 'RESCUE_REOPENED');
+      expect(correctionOne.status).toBe('PENDING');
+      expect(correctionOne.correctsEventId).toBe(closureOne.id);
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
+      const [completedCorrectionOne] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.id, correctionOne.id));
+      expect(completedCorrectionOne.status).toBe('COMPLETED');
 
-      // Reopening again should be idempotent (no duplicate correction)
+      // A redundant reopening while the Post is ACTIVE and no closure is
+      // undelivered must not queue a duplicate correction.
       await dbHelper.db.transaction(async (tx) => {
         const res = await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
         expect(res.correctedCount).toBe(0);
+        expect(res.correctionEventId).toBeNull();
       });
+      expect(await completionEventsFor(post.id, 'RESCUE_REOPENED')).toHaveLength(1);
 
-      // Cycle 2: Close again
+      // Cycle 2: Close again, deliver the closure, then queue and deliver a
+      // second, distinct correction.
       await postsRepo.updateStatus(post.id, creator.id, 'RESOLVED');
       batchRes = await processor.processPendingBatches({ batchSize: 10 });
       expect(batchRes.delivered).toBe(1);
 
-      // Check total notifications for participant:
-      // 1st RESCUE_COMPLETED + 1st RESCUE_REOPENED + 2nd RESCUE_COMPLETED = 3
-      const notifs = await dbHelper.db
-        .select()
-        .from(notifications)
-        .where(eq(notifications.recipientId, participant.id));
-      expect(notifs).toHaveLength(3);
+      await reopenCompletion(post);
+      const correctionEvents = await completionEventsFor(post.id, 'RESCUE_REOPENED');
+      expect(correctionEvents).toHaveLength(2);
+      const correctionTwo = correctionEvents.find((event) => event.id !== correctionOne.id)!;
+      expect(correctionTwo.status).toBe('PENDING');
+      const closureEvents = await completionEventsFor(post.id, 'RESCUE_COMPLETED');
+      expect(closureEvents).toHaveLength(2);
+      const closureTwo = closureEvents.find((event) => event.id !== closureOne.id)!;
+      expect(correctionTwo.correctsEventId).toBe(closureTwo.id);
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
+
+      // 2 closures + 2 corrections, each delivered exactly once.
+      const notifs = await notificationsFor(participant.id);
+      expect(notifs).toHaveLength(4);
       expect(notifs.filter((n) => n.type === 'RESCUE_COMPLETED')).toHaveLength(2);
-      expect(notifs.filter((n) => n.type === 'RESCUE_REOPENED')).toHaveLength(1);
+      expect(notifs.filter((n) => n.type === 'RESCUE_REOPENED')).toHaveLength(2);
     });
 
-    it('applies current access checks to reopening corrections and records the creator as the push actor', async () => {
+    it('supersedes an undelivered correction when a later reopening is queued', async () => {
+      const creator = await createUser({ name: 'SupersedeCorrectionCreator' });
+      const post = await createRescuePost(creator.id, 'Supersede Correction Rescue');
+      const participant = await createUser({ name: 'SupersedeCorrectionParticipant' });
+
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: participant.id });
+      await postsRepo.updateStatus(post.id, creator.id, 'RESOLVED');
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
+
+      await reopenCompletion(post);
+      const [correctionOne] = await completionEventsFor(post.id, 'RESCUE_REOPENED');
+      expect(correctionOne.status).toBe('PENDING');
+      expect(await notificationsFor(participant.id)).toHaveLength(1);
+
+      // A later reopening supersedes the still-undelivered correction and
+      // queues no replacement because no new closure was delivered.
+      await dbHelper.db.transaction(async (tx) => {
+        const res = await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
+        expect(res.correctionEventId).toBeNull();
+        expect(res.supersededEventIds).toContain(correctionOne.id);
+      });
+
+      const [supersededCorrection] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.id, correctionOne.id));
+      expect(supersededCorrection.status).toBe('SUPERSEDED');
+      expect(await completionEventsFor(post.id, 'RESCUE_REOPENED')).toHaveLength(1);
+
+      const [correctionRecipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.eventId, correctionOne.id));
+      expect(correctionRecipient.status).toBe('SUPPRESSED');
+
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(0);
+      expect(await notificationsFor(participant.id)).toHaveLength(1);
+    });
+
+    it('applies access checks at delivery time and records the creator as the correction push actor', async () => {
       const creator = await createUser({ name: 'CorrectionAccessCreator' });
       const post = await createRescuePost(creator.id, 'Correction Access Rescue');
       const blocked = await createUser({ name: 'CorrectionAccessBlocked' });
@@ -1065,58 +1348,88 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       // committed but before the administrative reopening runs.
       await dbHelper.db.insert(blocks).values({ blockerId: creator.id, blockedId: blocked.id });
 
-      await dbHelper.db.transaction(async (tx) => {
-        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
-        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
-      });
+      await reopenCompletion(post);
 
-      // The isolated participant keeps the delivered closure row, is not marked
-      // CORRECTED, and receives no correction notification or push intent.
-      const [blockedRecipient] = await dbHelper.db
+      // Both closure rows become CORRECTED and enter the queued correction
+      // audience; access is decided by the worker at delivery time.
+      const correctionEvents = await completionEventsFor(post.id, 'RESCUE_REOPENED');
+      expect(correctionEvents).toHaveLength(1);
+      const correctionEvent = correctionEvents[0];
+      expect(correctionEvent.totalRecipients).toBe(2);
+      expect(correctionEvent.status).toBe('PENDING');
+
+      const queuedCorrections = await dbHelper.db
         .select()
         .from(postCompletionRecipients)
-        .where(eq(postCompletionRecipients.recipientId, blocked.id));
-      expect(blockedRecipient.status).toBe('DELIVERED');
-      expect(blockedRecipient.notificationId).not.toBeNull();
+        .where(eq(postCompletionRecipients.eventId, correctionEvent.id));
+      expect(queuedCorrections).toHaveLength(2);
+      expect(queuedCorrections.every((r) => r.status === 'PENDING')).toBe(true);
 
-      const blockedNotifs = await dbHelper.db
+      for (const user of [blocked, eligible]) {
+        const [closureRecipient] = await dbHelper.db
+          .select()
+          .from(postCompletionRecipients)
+          .where(
+            and(
+              eq(postCompletionRecipients.postId, post.id),
+              eq(postCompletionRecipients.recipientId, user.id),
+              sql`${postCompletionRecipients.eventId} <> ${correctionEvent.id}::uuid`,
+            ),
+          );
+        expect(closureRecipient.status).toBe('CORRECTED');
+        expect(closureRecipient.notificationId).not.toBeNull();
+
+        // The queued closure push is suppressed at reopen; the correction has
+        // not been delivered yet.
+        const pushes = await dbHelper.db.select().from(pushDeliveries).where(eq(pushDeliveries.recipientId, user.id));
+        expect(pushes).toHaveLength(1);
+        expect(pushes[0].status).toBe('SUPPRESSED');
+      }
+
+      // The worker suppresses the isolated participant and delivers the eligible one.
+      const correctionBatch = await processor.processPendingBatches({ batchSize: 10 });
+      expect(correctionBatch.delivered).toBe(1);
+      expect(correctionBatch.suppressed).toBe(1);
+
+      const [blockedCorrection] = await dbHelper.db
         .select()
-        .from(notifications)
-        .where(eq(notifications.recipientId, blocked.id));
+        .from(postCompletionRecipients)
+        .where(
+          sql`${postCompletionRecipients.eventId} = ${correctionEvent.id}::uuid AND ${postCompletionRecipients.recipientId} = ${blocked.id}::uuid`,
+        );
+      expect(blockedCorrection.status).toBe('BLOCKED');
+      expect(blockedCorrection.notificationId).toBeNull();
+
+      const blockedNotifs = await notificationsFor(blocked.id);
       expect(blockedNotifs.filter((n) => n.type === 'RESCUE_COMPLETED')).toHaveLength(1);
       expect(blockedNotifs.filter((n) => n.type === 'RESCUE_REOPENED')).toHaveLength(0);
 
-      const blockedPushes = await dbHelper.db
-        .select()
-        .from(pushDeliveries)
-        .where(eq(pushDeliveries.recipientId, blocked.id));
-      expect(blockedPushes).toHaveLength(1);
-      expect(blockedPushes[0].notificationId).toBe(blockedNotifs.find((n) => n.type === 'RESCUE_COMPLETED')!.id);
-
-      // The eligible participant is corrected, and the correction push intent
-      // records the Post creator for the send-time Block recheck.
-      const [eligibleRecipient] = await dbHelper.db
+      const [eligibleCorrection] = await dbHelper.db
         .select()
         .from(postCompletionRecipients)
-        .where(eq(postCompletionRecipients.recipientId, eligible.id));
-      expect(eligibleRecipient.status).toBe('CORRECTED');
+        .where(
+          sql`${postCompletionRecipients.eventId} = ${correctionEvent.id}::uuid AND ${postCompletionRecipients.recipientId} = ${eligible.id}::uuid`,
+        );
+      expect(eligibleCorrection.status).toBe('DELIVERED');
 
-      const eligibleNotifs = await dbHelper.db
-        .select()
-        .from(notifications)
-        .where(eq(notifications.recipientId, eligible.id));
+      const eligibleNotifs = await notificationsFor(eligible.id);
       const correction = eligibleNotifs.find((n) => n.type === 'RESCUE_REOPENED');
       expect(correction).toBeDefined();
+      expect(correction?.relatedPostId).toBe(post.id);
 
+      // The correction push intent records the Post creator for the send-time
+      // Block recheck; the blocked participant gets no correction push.
       const correctionPushes = await dbHelper.db
         .select()
         .from(pushDeliveries)
         .where(eq(pushDeliveries.notificationId, correction!.id));
       expect(correctionPushes).toHaveLength(1);
+      expect(correctionPushes[0].status).toBe('PENDING');
       expect(correctionPushes[0].actorId).toBe(creator.id);
+      expect(blockedNotifs.filter((n) => n.type === 'RESCUE_REOPENED')).toHaveLength(0);
     });
 
-    it('suppresses a queued closure push intent when reopening corrects the outcome', async () => {
+    it('suppresses a queued closure push intent when reopening queues the correction', async () => {
       const creator = await createUser({ name: 'QueuedClosureCreator' });
       const post = await createRescuePost(creator.id, 'Queued Closure Rescue');
       const participant = await createUser({ name: 'QueuedClosureParticipant' });
@@ -1134,10 +1447,7 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       // is queued PENDING for the push worker to send later.
       expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
 
-      const [closureNotification] = await dbHelper.db
-        .select()
-        .from(notifications)
-        .where(eq(notifications.recipientId, participant.id));
+      const [closureNotification] = await notificationsFor(participant.id);
       expect(closureNotification.type).toBe('RESCUE_COMPLETED');
 
       const [closurePush] = await dbHelper.db
@@ -1147,31 +1457,30 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(closurePush.status).toBe('PENDING');
 
       // The administrator reopens before the push worker sends the closure.
-      await dbHelper.db.transaction(async (tx) => {
-        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
-        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
-      });
+      await reopenCompletion(post);
 
-      // The obsolete closure intent is terminal, and the correction owns a new
-      // PENDING intent with the Post creator as its send-time actor.
+      // The obsolete closure intent is terminal. The correction is queued but
+      // owns no inbox row or push intent until the worker delivers it.
       const [suppressedClosurePush] = await dbHelper.db
         .select()
         .from(pushDeliveries)
         .where(eq(pushDeliveries.id, closurePush.id));
       expect(suppressedClosurePush.status).toBe('SUPPRESSED');
+      expect(await notificationsFor(participant.id)).toHaveLength(1);
+      expect(
+        await dbHelper.db.select().from(pushDeliveries).where(eq(pushDeliveries.recipientId, participant.id)),
+      ).toHaveLength(1);
 
-      const [correction] = await dbHelper.db
-        .select()
-        .from(notifications)
-        .where(
-          sql`${notifications.recipientId} = ${participant.id}::uuid AND ${notifications.type} = 'RESCUE_REOPENED'`,
-        );
+      // The completion worker materializes the correction and its push intent.
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
+
+      const correction = (await notificationsFor(participant.id)).find((n) => n.type === 'RESCUE_REOPENED');
       expect(correction).toBeDefined();
 
       const [correctionPush] = await dbHelper.db
         .select()
         .from(pushDeliveries)
-        .where(eq(pushDeliveries.notificationId, correction.id));
+        .where(eq(pushDeliveries.notificationId, correction!.id));
       expect(correctionPush.status).toBe('PENDING');
       expect(correctionPush.actorId).toBe(creator.id);
 
@@ -1187,7 +1496,7 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       const pushProcessor = new PushDeliveryProcessor(dbHelper.db, provider, isolationPolicy);
       expect(await pushProcessor.processPendingDeliveries()).toBe(1);
       expect(sentMessages).toHaveLength(1);
-      expect(sentMessages[0].data.notificationId).toBe(correction.id);
+      expect(sentMessages[0].data.notificationId).toBe(correction!.id);
       expect(sentMessages.filter((message) => message.data.notificationId === closureNotification.id)).toHaveLength(0);
     });
 
@@ -1217,63 +1526,88 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       ]);
       expect(batchResult.failed).toBe(0);
 
-      // Drain any lease the race left behind so the assertions see the settled
-      // serial order rather than an in-flight claim.
+      // Drain any lease the race left behind and the correction event the
+      // reopening queued, so the assertions see the settled serial order.
+      await processor.processPendingBatches({ batchSize: 10 });
       await processor.processPendingBatches({ batchSize: 10 });
 
-      const [event] = await dbHelper.db
+      const events = await dbHelper.db
         .select()
         .from(postCompletionNotificationEvents)
-        .where(eq(postCompletionNotificationEvents.postId, post.id));
-      expect(event).toBeDefined();
+        .where(eq(postCompletionNotificationEvents.postId, post.id))
+        .orderBy(postCompletionNotificationEvents.createdAt);
+      const closureEvents = events.filter((event) => event.type === 'RESCUE_COMPLETED');
+      const correctionEvents = events.filter((event) => event.type === 'RESCUE_REOPENED');
+      expect(closureEvents).toHaveLength(1);
+      const closureEvent = closureEvents[0];
 
-      const recipients = await dbHelper.db
+      const closureRecipients = await dbHelper.db
         .select()
         .from(postCompletionRecipients)
-        .where(eq(postCompletionRecipients.eventId, event.id));
-      expect(recipients).toHaveLength(2);
-      for (const recipient of recipients) {
-        expect(['SUPPRESSED', 'CORRECTED', 'DELIVERED']).toContain(recipient.status);
-      }
+        .where(eq(postCompletionRecipients.eventId, closureEvent.id));
+      expect(closureRecipients).toHaveLength(2);
 
-      const postNotifs = await dbHelper.db.select().from(notifications).where(eq(notifications.relatedPostId, post.id));
-      const recipientIds = recipients.map((r) => r.recipientId);
-      for (const notification of postNotifs) {
-        expect(recipientIds).toContain(notification.recipientId);
-      }
+      const closureNotifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(and(eq(notifications.relatedPostId, post.id), eq(notifications.type, 'RESCUE_COMPLETED')));
 
-      const closures = postNotifs.filter((n) => n.type === 'RESCUE_COMPLETED');
-      const corrections = postNotifs.filter((n) => n.type === 'RESCUE_REOPENED');
-
-      // Every committed closure inbox row corresponds to exactly one closure
-      // notification, and a superseded event can never keep an uncorrected
-      // closure inbox row.
-      const closureInboxRecipients = recipients.filter((r) => r.notificationId !== null);
-      expect(closures).toHaveLength(closureInboxRecipients.length);
-      for (const recipient of closureInboxRecipients) {
-        expect(closures.some((n) => n.id === recipient.notificationId && n.recipientId === recipient.recipientId)).toBe(
-          true,
-        );
-        if (event.status === 'SUPERSEDED') {
-          expect(recipient.status).toBe('CORRECTED');
-          expect(corrections.some((n) => n.recipientId === recipient.recipientId)).toBe(true);
+      if (reopenResult.correctionEventId === null) {
+        // The reopening won before any closure inbox row committed: there is
+        // nothing to correct and no closure message reached an inbox.
+        expect(correctionEvents).toHaveLength(0);
+        expect(closureNotifs).toHaveLength(0);
+        for (const recipient of closureRecipients) {
+          expect(recipient.status).toBe('SUPPRESSED');
+          expect(recipient.notificationId).toBeNull();
         }
+        return;
       }
 
-      // A correction can exist only for a recipient whose closure inbox row was
-      // committed, and every correction is unique per recipient.
-      expect(corrections).toHaveLength(reopenResult.correctedCount);
-      for (const correction of corrections) {
-        const recipient = recipients.find((r) => r.recipientId === correction.recipientId);
-        expect(recipient).toBeDefined();
-        expect(recipient!.notificationId).not.toBeNull();
-        expect(recipient!.status).toBe('CORRECTED');
-      }
-      expect(new Set(corrections.map((n) => n.recipientId)).size).toBe(corrections.length);
+      const correctionEvent = correctionEvents.find((event) => event.id === reopenResult.correctionEventId);
+      expect(correctionEvent).toBeDefined();
+      expect(correctionEvent!.correctsEventId).toBe(closureEvent.id);
+      expect(correctionEvent!.status).toBe('COMPLETED');
 
-      // Once superseded, no recipient is still deliverable.
-      if (event.status === 'SUPERSEDED') {
-        expect(recipients.filter((r) => r.status === 'PENDING' || r.status === 'PROCESSING')).toHaveLength(0);
+      // Every closure recipient whose inbox row committed before the reopening
+      // was corrected exactly once; the rest were suppressed.
+      const deliveredClosureRecipients = closureRecipients.filter((recipient) => recipient.notificationId !== null);
+      expect(deliveredClosureRecipients).toHaveLength(reopenResult.correctedCount);
+      expect(closureNotifs).toHaveLength(deliveredClosureRecipients.length);
+      for (const recipient of deliveredClosureRecipients) {
+        expect(recipient.status).toBe('CORRECTED');
+        expect(
+          closureNotifs.some(
+            (notification) =>
+              notification.id === recipient.notificationId && notification.recipientId === recipient.recipientId,
+          ),
+        ).toBe(true);
+      }
+      for (const recipient of closureRecipients.filter((recipient) => recipient.notificationId === null)) {
+        expect(recipient.status).toBe('SUPPRESSED');
+      }
+
+      // The correction audience is exactly the delivered closure audience, and
+      // every correction was delivered exactly once with correct routing.
+      const correctionRecipients = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.eventId, correctionEvent!.id));
+      expect(new Set(correctionRecipients.map((recipient) => recipient.recipientId))).toEqual(
+        new Set(deliveredClosureRecipients.map((recipient) => recipient.recipientId)),
+      );
+      for (const recipient of correctionRecipients) {
+        expect(recipient.status).toBe('DELIVERED');
+        expect(recipient.notificationId).not.toBeNull();
+      }
+
+      const correctionNotifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(and(eq(notifications.relatedPostId, post.id), eq(notifications.type, 'RESCUE_REOPENED')));
+      expect(correctionNotifs).toHaveLength(correctionRecipients.length);
+      for (const notification of correctionNotifs) {
+        expect(correctionRecipients.some((recipient) => recipient.recipientId === notification.recipientId)).toBe(true);
       }
     });
   });
@@ -1384,27 +1718,51 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       const batchRes = await processor.processPendingBatches({ batchSize: 10 });
       expect(batchRes.delivered).toBe(1);
 
-      // Administrator reopening correction through the shared repository
-      await dbHelper.db.transaction(async (tx) => {
-        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
-        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
-      });
+      // Administrator reopening queues a durable correction through the shared
+      // repository, delivered by the same bounded worker.
+      await reopenCompletion(post);
 
-      // The fully delivered event stays COMPLETED; its delivered recipients are
-      // corrected rather than superseded, and it holds no pending delivery.
+      // The fully delivered event stays COMPLETED and its delivered recipient
+      // is CORRECTED; the correction has not been delivered yet.
       const [reopenedEvent] = await dbHelper.db
         .select()
         .from(postCompletionNotificationEvents)
         .where(eq(postCompletionNotificationEvents.id, event.id));
       expect(reopenedEvent.status).toBe('COMPLETED');
 
-      const buyerNotifs = await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, buyer.id));
+      const [closureRecipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(and(eq(postCompletionRecipients.recipientId, buyer.id), eq(postCompletionRecipients.eventId, event.id)));
+      expect(closureRecipient.status).toBe('CORRECTED');
+      expect(await notificationsFor(buyer.id)).toHaveLength(1);
+
+      const [correctionEvent] = await completionEventsFor(post.id, 'POST_REOPENED');
+      expect(correctionEvent).toMatchObject({
+        postType: 'PRODUCT',
+        outcome: 'SOLD',
+        closingActorId: null,
+        status: 'PENDING',
+        totalRecipients: 1,
+        correctsEventId: event.id,
+      });
+
+      // The worker delivers the correction.
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
+
+      const buyerNotifs = await notificationsFor(buyer.id);
       expect(buyerNotifs).toHaveLength(2);
       const correction = buyerNotifs.find((n) => n.type === 'POST_REOPENED');
       expect(correction).toBeDefined();
       expect(correction?.title).toBe('Post reopened');
       expect(correction?.body).toContain('Dog Crate Small');
       expect(correction?.relatedPostId).toBe(post.id);
+
+      const [completedCorrectionEvent] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.id, correctionEvent.id));
+      expect(completedCorrectionEvent.status).toBe('COMPLETED');
     });
 
     it('suppresses a stale non-rescue completion delivery when the outcome is corrected first', async () => {
@@ -1415,11 +1773,10 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       await dbHelper.db.insert(postSaves).values({ postId: post.id, userId: buyer.id });
       await postsRepo.updateStatus(post.id, seller.id, 'SOLD');
 
-      // Reopening commits before the worker delivers the queued audience.
-      await dbHelper.db.transaction(async (tx) => {
-        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
-        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
-      });
+      // Reopening commits before the worker delivers the queued audience. No
+      // inbox row was committed, so there is nobody to correct.
+      await reopenCompletion(post);
+      expect(await completionEventsFor(post.id, 'POST_REOPENED')).toHaveLength(0);
 
       const batchRes = await processor.processPendingBatches({ batchSize: 10 });
       expect(batchRes.delivered).toBe(0);
@@ -1735,11 +2092,8 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
 
       expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
 
-      // Administrator reopens the mistaken outcome.
-      await dbHelper.db.transaction(async (tx) => {
-        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
-        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
-      });
+      // Administrator reopens the mistaken outcome; the correction is queued.
+      await reopenCompletion(post);
 
       // Closed stays closed: reopening never revives a terminated application.
       const [afterReopen] = await dbHelper.db
@@ -1751,10 +2105,23 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
 
       // The delivered applicant is corrected exactly once and never receives a
       // second completion notification.
-      const notifs = await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, applicant.id));
+      expect(await notificationsFor(applicant.id)).toHaveLength(1);
+      const [correctionEvent] = await completionEventsFor(post.id, 'POST_REOPENED');
+      expect(correctionEvent.correctsEventId).not.toBeNull();
+
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
+
+      const notifs = await notificationsFor(applicant.id);
       expect(notifs.filter((n) => n.type === 'POST_COMPLETED')).toHaveLength(1);
       expect(notifs.filter((n) => n.type === 'POST_REOPENED')).toHaveLength(1);
 
+      const [completedCorrection] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.id, correctionEvent.id));
+      expect(completedCorrection.status).toBe('COMPLETED');
+
+      // A further pass has nothing left to do.
       const afterReopenBatch = await processor.processPendingBatches({ batchSize: 10 });
       expect(afterReopenBatch.delivered).toBe(0);
       expect(afterReopenBatch.batchesProcessed).toBe(0);
@@ -1848,40 +2215,62 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(deliveredRecipient).toBeDefined();
 
       // Administrator reopens the mistaken deceased outcome.
-      await dbHelper.db.transaction(async (tx) => {
-        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
-        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
-      });
+      await reopenCompletion(post);
 
-      const [event] = await dbHelper.db
+      const [closureEvent] = await completionEventsFor(post.id, 'RESCUE_COMPLETED');
+      const [reopenedClosureEvent] = await dbHelper.db
         .select()
         .from(postCompletionNotificationEvents)
-        .where(eq(postCompletionNotificationEvents.postId, post.id));
-      expect(event.status).toBe('SUPERSEDED');
+        .where(eq(postCompletionNotificationEvents.id, closureEvent.id));
+      expect(reopenedClosureEvent.status).toBe('SUPERSEDED');
 
-      const deliveredNotifs = await dbHelper.db
+      // The correction is queued; the delivered participant is CORRECTED and
+      // has not received the correction yet.
+      const [correctionEvent] = await completionEventsFor(post.id, 'RESCUE_REOPENED');
+      expect(correctionEvent).toMatchObject({
+        postType: 'RESCUE',
+        outcome: 'ANIMAL_DECEASED',
+        status: 'PENDING',
+        totalRecipients: 1,
+        correctsEventId: closureEvent.id,
+      });
+
+      const deliveredNotifsBefore = await notificationsFor(deliveredRecipient.recipientId);
+      expect(deliveredNotifsBefore.filter((n) => n.type === 'RESCUE_COMPLETED')).toHaveLength(1);
+      expect(deliveredNotifsBefore.filter((n) => n.type === 'RESCUE_REOPENED')).toHaveLength(0);
+
+      const staleRecipients = await dbHelper.db
         .select()
-        .from(notifications)
-        .where(eq(notifications.recipientId, deliveredRecipient.recipientId));
-      expect(deliveredNotifs.filter((n) => n.type === 'RESCUE_COMPLETED')).toHaveLength(1);
+        .from(postCompletionRecipients)
+        .where(
+          and(
+            eq(postCompletionRecipients.eventId, closureEvent.id),
+            sql`${postCompletionRecipients.id} <> ${deliveredRecipient.id}::uuid`,
+          ),
+        );
+      expect(staleRecipients).toHaveLength(1);
+      const [staleRecipient] = staleRecipients;
+      expect(staleRecipient.status).toBe('SUPPRESSED');
+
+      const staleNotifs = await notificationsFor(staleRecipient.recipientId);
+      expect(staleNotifs).toHaveLength(0);
+
+      // The worker delivers the correction; the stale closure recipient stays silent.
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
+
+      const deliveredNotifs = await notificationsFor(deliveredRecipient.recipientId);
       const correction = deliveredNotifs.find((n) => n.type === 'RESCUE_REOPENED');
       expect(correction).toBeDefined();
       expect(correction?.relatedPostId).toBe(post.id);
       expect(correction?.body).toContain(post.title);
 
-      const [staleRecipient] = await dbHelper.db
+      const [completedCorrection] = await dbHelper.db
         .select()
-        .from(postCompletionRecipients)
-        .where(
-          sql`${postCompletionRecipients.postId} = ${post.id}::uuid AND ${postCompletionRecipients.id} <> ${deliveredRecipient.id}::uuid`,
-        );
-      expect(staleRecipient.status).toBe('SUPPRESSED');
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.id, correctionEvent.id));
+      expect(completedCorrection.status).toBe('COMPLETED');
 
-      const staleNotifs = await dbHelper.db
-        .select()
-        .from(notifications)
-        .where(eq(notifications.recipientId, staleRecipient.recipientId));
-      expect(staleNotifs).toHaveLength(0);
+      expect(await notificationsFor(staleRecipient.recipientId)).toHaveLength(0);
 
       const afterReopenBatch = await processor.processPendingBatches({ batchSize: 10 });
       expect(afterReopenBatch.delivered).toBe(0);
@@ -1900,21 +2289,21 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       let batchRes = await processor.processPendingBatches({ batchSize: 10 });
       expect(batchRes.delivered).toBe(1);
 
-      // Reopen the mistaken deceased outcome.
-      await dbHelper.db.transaction(async (tx) => {
-        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
-        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
-      });
+      // Reopen the mistaken deceased outcome: the correction is queued and
+      // then delivered by the worker while the Post is ACTIVE.
+      const [deceasedClosure] = await completionEventsFor(post.id, 'RESCUE_COMPLETED');
+      await reopenCompletion(post);
+      const [deceasedCorrection] = await completionEventsFor(post.id, 'RESCUE_REOPENED');
+      expect(deceasedCorrection.outcome).toBe('ANIMAL_DECEASED');
+      expect(deceasedCorrection.correctsEventId).toBe(deceasedClosure.id);
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
 
       // Cycle 2: close as a successful rescue.
       await postsRepo.updateStatus(post.id, creator.id, 'RESOLVED');
       batchRes = await processor.processPendingBatches({ batchSize: 10 });
       expect(batchRes.delivered).toBe(1);
 
-      const notifs = await dbHelper.db
-        .select()
-        .from(notifications)
-        .where(eq(notifications.recipientId, participant.id));
+      const notifs = await notificationsFor(participant.id);
       expect(notifs).toHaveLength(3);
       const closures = notifs.filter((n) => n.type === 'RESCUE_COMPLETED');
       expect(closures).toHaveLength(2);
@@ -1932,26 +2321,156 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(corrections[0].relatedPostId).toBe(post.id);
 
       // The first (deceased) closure had already been delivered, so reopening
-      // marks its recipient CORRECTED rather than superseding the completed
-      // event; the second closure is delivered normally.
+      // marks its closure recipient CORRECTED and its correction DELIVERED; the
+      // second closure is delivered normally.
       const recipients = await dbHelper.db
         .select()
         .from(postCompletionRecipients)
         .where(eq(postCompletionRecipients.postId, post.id))
         .orderBy(postCompletionRecipients.createdAt);
-      expect(recipients).toHaveLength(2);
-      expect(recipients.map((r) => r.status)).toEqual(['CORRECTED', 'DELIVERED']);
+      expect(recipients).toHaveLength(3);
+      expect(recipients.map((r) => r.status)).toEqual(['CORRECTED', 'DELIVERED', 'DELIVERED']);
 
       const events = await dbHelper.db
         .select()
         .from(postCompletionNotificationEvents)
         .where(eq(postCompletionNotificationEvents.postId, post.id))
         .orderBy(postCompletionNotificationEvents.createdAt);
-      expect(events).toHaveLength(2);
+      expect(events).toHaveLength(3);
       expect(events[0].outcome).toBe('ANIMAL_DECEASED');
       expect(events[0].status).toBe('COMPLETED');
-      expect(events[1].outcome).toBe('RESOLVED');
+      expect(events[1].type).toBe('RESCUE_REOPENED');
+      expect(events[1].outcome).toBe('ANIMAL_DECEASED');
+      expect(events[1].correctsEventId).toBe(events[0].id);
       expect(events[1].status).toBe('COMPLETED');
+      expect(events[2].outcome).toBe('RESOLVED');
+      expect(events[2].status).toBe('COMPLETED');
+    });
+  });
+
+  describe('Push worker Post lifecycle recheck (decision 19)', () => {
+    it('suppresses a queued closure push when the post is removed before the push worker runs', async () => {
+      const owner = await createUser({ name: 'LifecycleRemoveOwner' });
+      const post = await createRescuePost(owner.id, 'Lifecycle Remove Rescue');
+      const participant = await createUser({ name: 'LifecycleRemoveParticipant' });
+
+      await dbHelper.db.insert(deviceRegistrations).values({
+        id: generateUuidV7(),
+        userId: participant.id,
+        token: 'token_lifecycle_remove',
+        platform: 'ANDROID',
+      });
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: participant.id });
+
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
+
+      const [closureNotification] = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, participant.id));
+      expect(closureNotification.type).toBe('RESCUE_COMPLETED');
+
+      const [closurePush] = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.notificationId, closureNotification.id));
+      expect(closurePush.status).toBe('PENDING');
+
+      // The owner removes the post after the closure inbox row and push intent
+      // committed, but before the push worker sends.
+      const removed = await postsRepo.softDelete(post.id, owner.id);
+      expect(removed?.status).toBe('REMOVED');
+
+      const sentMessages: PushDeliveryMessage[] = [];
+      const provider: PushProvider = {
+        send: (message) => {
+          sentMessages.push(message);
+          return Promise.resolve();
+        },
+      };
+      const pushProcessor = new PushDeliveryProcessor(dbHelper.db, provider, isolationPolicy);
+
+      expect(await pushProcessor.processPendingDeliveries()).toBe(0);
+      expect(sentMessages).toHaveLength(0);
+
+      const [suppressedPush] = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.id, closurePush.id));
+      expect(suppressedPush.status).toBe('SUPPRESSED');
+
+      // Suppression terminates the push only; the inbox row survives.
+      const retainedNotifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, participant.id));
+      expect(retainedNotifs).toHaveLength(1);
+    });
+
+    it('suppresses a queued correction push when the post is re-closed before the push worker runs', async () => {
+      const owner = await createUser({ name: 'LifecycleRecloseOwner' });
+      const post = await createRescuePost(owner.id, 'Lifecycle Reclose Rescue');
+      const participant = await createUser({ name: 'LifecycleRecloseParticipant' });
+
+      await dbHelper.db.insert(deviceRegistrations).values({
+        id: generateUuidV7(),
+        userId: participant.id,
+        token: 'token_lifecycle_reclose',
+        platform: 'IOS',
+      });
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: participant.id });
+
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
+
+      // Administrator reopens, then the completion worker materializes the
+      // correction inbox row and its queued push intent.
+      await reopenCompletion(post);
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
+
+      const [correction] = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(
+          sql`${notifications.recipientId} = ${participant.id}::uuid AND ${notifications.type} = 'RESCUE_REOPENED'`,
+        );
+      expect(correction).toBeDefined();
+
+      const [correctionPush] = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.notificationId, correction.id));
+      expect(correctionPush.status).toBe('PENDING');
+
+      // The owner closes the post again before the push worker sends, so the
+      // correction no longer describes the current lifecycle state.
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+
+      const sentMessages: PushDeliveryMessage[] = [];
+      const provider: PushProvider = {
+        send: (message) => {
+          sentMessages.push(message);
+          return Promise.resolve();
+        },
+      };
+      const pushProcessor = new PushDeliveryProcessor(dbHelper.db, provider, isolationPolicy);
+
+      expect(await pushProcessor.processPendingDeliveries()).toBe(0);
+      expect(sentMessages).toHaveLength(0);
+
+      const [suppressedPush] = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.id, correctionPush.id));
+      expect(suppressedPush.status).toBe('SUPPRESSED');
+
+      // Both committed inbox rows survive suppression.
+      const retainedNotifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, participant.id));
+      expect(retainedNotifs).toHaveLength(2);
     });
   });
 });
