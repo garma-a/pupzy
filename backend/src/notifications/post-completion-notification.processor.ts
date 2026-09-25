@@ -17,16 +17,24 @@ import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
 import { PushDeliveryRepository } from './push-delivery.repository';
 import { isPushDeliveryEnabled } from './push-delivery.constants';
 import {
+  MAX_COMPLETION_DELIVERY_ATTEMPTS,
+  MAX_RETRY_DELAY_MS,
+  POST_COMPLETION_BATCH_SIZE,
+  POST_COMPLETION_LEASE_MS,
+} from './post-completion-notification.constants';
+import {
   PostCompletionNotificationRepository,
   type ClaimedRecipientWithEvent,
 } from './post-completion-notification.repository';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
-export const POST_COMPLETION_BATCH_SIZE = 50;
-export const POST_COMPLETION_LEASE_MS = 60_000;
-export const MAX_RETRY_DELAY_MS = 5 * 60_000;
-export const MAX_COMPLETION_DELIVERY_ATTEMPTS = 5;
+export {
+  MAX_COMPLETION_DELIVERY_ATTEMPTS,
+  MAX_RETRY_DELAY_MS,
+  POST_COMPLETION_BATCH_SIZE,
+  POST_COMPLETION_LEASE_MS,
+} from './post-completion-notification.constants';
 
 export interface BatchProcessingResult {
   batchesProcessed: number;
@@ -107,6 +115,13 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
     let failed = 0;
 
     try {
+      // A worker that crashed after its final claim leaves PROCESSING rows
+      // whose attempts are exhausted. Reclaiming them is forbidden (it would
+      // exceed the attempt bound), and no later claim matches them, so they
+      // must be terminated before the pass starts or their events stay
+      // PENDING forever.
+      await this.db.transaction((tx) => this.repository.recoverExpiredMaxAttemptLeases(tx));
+
       while (batchesProcessed < maxBatches) {
         const batch = await this.db.transaction((tx) =>
           this.repository.claimNextBatch(tx, batchSize, POST_COMPLETION_LEASE_MS),
@@ -128,9 +143,12 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
             );
           }
         }
-
-        await this.repository.completeFinishedEvents([...new Set(batch.map((item) => item.event.id))]);
       }
+
+      // Global completion sweep, so an event whose last recipient was
+      // terminated by the recovery sweep (and therefore never claimed) can
+      // still reach COMPLETED.
+      await this.repository.completeFinishedEvents();
 
       return { batchesProcessed, delivered, suppressed, failed };
     } finally {

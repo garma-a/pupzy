@@ -26,7 +26,10 @@ import {
 } from '../database/schema';
 import { PostsRepository } from '../posts/posts.repository';
 import { PostCompletionNotificationRepository } from './post-completion-notification.repository';
-import { PostCompletionNotificationProcessor } from './post-completion-notification.processor';
+import {
+  MAX_COMPLETION_DELIVERY_ATTEMPTS,
+  PostCompletionNotificationProcessor,
+} from './post-completion-notification.processor';
 import { PushDeliveryRepository } from './push-delivery.repository';
 import { PushDeliveryProcessor } from './push-delivery.processor';
 import type { PushDeliveryMessage, PushProvider } from './push.provider';
@@ -594,6 +597,53 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
         .where(eq(postCompletionRecipients.postId, post.id));
 
       expect(recipient.status).toBe('DELIVERED');
+    });
+
+    it('terminates a recipient stranded by an expired max-attempt lease and completes its event', async () => {
+      const owner = await createUser({ name: 'StrandedLeaseOwner' });
+      const post = await createRescuePost(owner.id, 'Stranded Lease Rescue');
+      const recipientUser = await createUser({ name: 'StrandedLeaseRecipient' });
+
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: recipientUser.id });
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+
+      // Simulate a worker that crashed after claiming the recipient for its
+      // final allowed attempt: the lease has expired and attempts is at the
+      // bound, so no later claim can ever match this row.
+      await dbHelper.db.execute(sql`
+        UPDATE post_completion_recipients
+        SET status = 'PROCESSING',
+            attempts = ${MAX_COMPLETION_DELIVERY_ATTEMPTS},
+            lease_token = ${generateUuidV7()}::uuid,
+            lease_expires_at = now() - interval '10 seconds'
+        WHERE post_id = ${post.id}::uuid
+      `);
+
+      const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(0);
+      expect(batchRes.batchesProcessed).toBe(0);
+
+      const [recipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.postId, post.id));
+      expect(recipient.status).toBe('FAILED');
+      expect(recipient.leaseToken).toBeNull();
+      expect(recipient.leaseExpiresAt).toBeNull();
+      expect(recipient.lastError).toContain('lease expired');
+
+      // The stranded recipient must not leave its event PENDING forever.
+      const [event] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.postId, post.id));
+      expect(event.status).toBe('COMPLETED');
+
+      const notifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, recipientUser.id));
+      expect(notifs).toHaveLength(0);
     });
 
     it('rolls back a failed delivery attempt and retries it without duplicating the inbox notification', async () => {

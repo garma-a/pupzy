@@ -13,9 +13,12 @@ import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 import { buildNotificationContent } from './notification-templates';
 import { PushDeliveryRepository } from './push-delivery.repository';
 import { isPushDeliveryEnabled } from './push-delivery.constants';
+import { MAX_COMPLETION_DELIVERY_ATTEMPTS } from './post-completion-notification.constants';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 export type PostCompletionExecutor = NodePgDatabase<typeof schema> | DbTransaction;
+
+const EXPIRED_MAX_ATTEMPT_LEASE_MESSAGE = 'Post completion delivery lease expired after the maximum number of attempts';
 
 export interface CaptureCompletionEventParams {
   postId: string;
@@ -273,21 +276,39 @@ export class PostCompletionNotificationRepository {
   }
 
   /**
-   * Marks completion events COMPLETED once every captured recipient has reached
-   * a terminal state. Restartable delivery passes call this after each batch, so
-   * an interrupted worker leaves the event PENDING while work remains and the
-   * pass that terminates the last recipient completes it.
+   * Recovers recipients stranded by a worker that crashed after exhausting its
+   * final claim: their lease has expired and `attempts` has reached the bound,
+   * so `claimNextBatch` will never match them again. They are terminally
+   * FAILED so their events can complete instead of staying PENDING forever.
+   *
+   * Runs in the caller's transaction before a delivery pass claims work.
    */
-  async completeFinishedEvents(eventIds: string[]): Promise<void> {
-    if (eventIds.length === 0) return;
+  async recoverExpiredMaxAttemptLeases(tx: DbTransaction): Promise<number> {
+    const result = await tx.execute(sql`
+      UPDATE post_completion_recipients
+      SET status = 'FAILED',
+          last_error = ${EXPIRED_MAX_ATTEMPT_LEASE_MESSAGE},
+          lease_token = NULL,
+          lease_expires_at = NULL,
+          updated_at = now()
+      WHERE status = 'PROCESSING'
+        AND (lease_expires_at IS NULL OR lease_expires_at < now())
+        AND attempts >= ${MAX_COMPLETION_DELIVERY_ATTEMPTS}
+    `);
+    return result.rowCount ?? 0;
+  }
+
+  /**
+   * Marks every completion event COMPLETED once all of its captured recipients
+   * have reached a terminal state. A global sweep at the end of each delivery
+   * pass also completes events whose last recipient was terminated by the
+   * recovery sweep and therefore never appeared in a claimed batch.
+   */
+  async completeFinishedEvents(): Promise<void> {
     await this.db.execute(sql`
       UPDATE post_completion_notification_events
       SET status = 'COMPLETED', updated_at = now()
-      WHERE id = ANY(ARRAY[${sql.join(
-        eventIds.map((id) => sql`${id}::uuid`),
-        sql`, `,
-      )}])
-        AND status IN ('PENDING', 'PROCESSING')
+      WHERE status IN ('PENDING', 'PROCESSING')
         AND NOT EXISTS (
           SELECT 1 FROM post_completion_recipients r
           WHERE r.event_id = post_completion_notification_events.id
@@ -311,7 +332,7 @@ export class PostCompletionNotificationRepository {
       ) OR (
         r.status = 'PROCESSING'
         AND (r.lease_expires_at IS NULL OR r.lease_expires_at < now())
-        AND r.attempts < 5
+        AND r.attempts < ${MAX_COMPLETION_DELIVERY_ATTEMPTS}
         AND e.status NOT IN ('SUPERSEDED')
       )
       ORDER BY r.next_attempt_at ASC, r.id ASC
