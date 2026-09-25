@@ -383,7 +383,8 @@ export async function capturePostCompletion(client, { postId, postType, outcome,
 /**
  * Handles post reopening by an administrator:
  * 1. Supersedes active completion events.
- * 2. Suppresses obsolete pending/processing recipients.
+ * 2. Suppresses obsolete pending/processing recipients, and any queued
+ *    PENDING/PROCESSING push intents for their committed closure inbox rows.
  * 3. Applies current access checks to every delivered recipient: the account
  *    must still exist and not be banned, and no active Block may isolate them
  *    from the Post creator in either direction. Recipients that fail keep their
@@ -411,12 +412,27 @@ export async function reopenPostCompletion(client, { postId, postTitle }) {
   const creatorId = creatorRows[0]?.creator_id ?? null;
 
   const { rows: deliveredRows } = await client.query(
-    `SELECT r.id, r.recipient_id, e.type AS event_type
+    `SELECT r.id, r.recipient_id, r.notification_id, e.type AS event_type
      FROM post_completion_recipients r
      JOIN post_completion_notification_events e ON e.id = r.event_id
      WHERE r.post_id = $1::uuid AND r.status = 'DELIVERED'`,
     [postId],
   );
+
+  // A committed closure inbox row may already have PENDING/PROCESSING push
+  // intents. The reopening makes that closure message obsolete, so suppress
+  // them while leaving terminal rows (DELIVERED/FAILED/SUPPRESSED) untouched.
+  // The correction push intents created below use different notification ids.
+  const closureNotificationIds = deliveredRows.map((row) => row.notification_id).filter(Boolean);
+  if (closureNotificationIds.length > 0) {
+    await client.query(
+      `UPDATE push_deliveries
+       SET status = 'SUPPRESSED', updated_at = now()
+       WHERE notification_id = ANY($1::uuid[])
+         AND status IN ('PENDING', 'PROCESSING')`,
+      [closureNotificationIds],
+    );
+  }
 
   let correctedCount = 0;
   for (const row of deliveredRows) {

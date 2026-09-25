@@ -137,7 +137,9 @@ export class PostCompletionNotificationRepository {
   /**
    * Reopening correction:
    * 1. Marks obsolete active (PENDING / PROCESSING) completion events as SUPERSEDED.
-   * 2. Suppresses obsolete pending / processing recipients so they are never delivered.
+   * 2. Suppresses obsolete pending / processing recipients, and any queued
+   *    PENDING / PROCESSING push intents for their committed closure inbox rows,
+   *    so neither is ever delivered.
    * 3. Applies current access checks to every recipient who had a closure inbox entry
    *    committed (DELIVERED): the account must still exist and not be banned, and no
    *    active Block may isolate them from the Post creator.
@@ -173,13 +175,34 @@ export class PostCompletionNotificationRepository {
     const deliveredResult = await tx.execute<{
       id: string;
       recipient_id: string;
+      notification_id: string | null;
       event_type: string;
     }>(sql`
-      SELECT r.id, r.recipient_id, e.type AS event_type
+      SELECT r.id, r.recipient_id, r.notification_id, e.type AS event_type
       FROM post_completion_recipients r
       JOIN post_completion_notification_events e ON e.id = r.event_id
       WHERE r.post_id = ${postId}::uuid AND r.status = 'DELIVERED'
     `);
+
+    // 3b. Suppress queued closure push intents. A committed closure inbox row
+    //     may already have PENDING/PROCESSING push intents; the reopening makes
+    //     that closure message obsolete, so they must never reach a device.
+    //     Terminal rows (DELIVERED/FAILED/SUPPRESSED) stay untouched, and the
+    //     correction push intents created below use different notification ids.
+    const closureNotificationIds = deliveredResult.rows
+      .map((row) => row.notification_id)
+      .filter((id): id is string => id !== null);
+    if (closureNotificationIds.length > 0) {
+      await tx.execute(sql`
+        UPDATE push_deliveries
+        SET status = 'SUPPRESSED', updated_at = now()
+        WHERE notification_id = ANY(ARRAY[${sql.join(
+          closureNotificationIds.map((id) => sql`${id}::uuid`),
+          sql`, `,
+        )}])
+          AND status IN ('PENDING', 'PROCESSING')
+      `);
+    }
 
     // 4. Apply current access and preference checks to corrections inside the
     //    same transaction. The recipient account must still exist and be

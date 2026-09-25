@@ -1116,6 +1116,81 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(correctionPushes[0].actorId).toBe(creator.id);
     });
 
+    it('suppresses a queued closure push intent when reopening corrects the outcome', async () => {
+      const creator = await createUser({ name: 'QueuedClosureCreator' });
+      const post = await createRescuePost(creator.id, 'Queued Closure Rescue');
+      const participant = await createUser({ name: 'QueuedClosureParticipant' });
+
+      await dbHelper.db.insert(deviceRegistrations).values({
+        id: generateUuidV7(),
+        userId: participant.id,
+        token: 'token_queued_closure',
+        platform: 'IOS',
+      });
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: participant.id });
+
+      await postsRepo.updateStatus(post.id, creator.id, 'RESOLVED');
+      // Materialize the closure: the inbox row is committed and its push intent
+      // is queued PENDING for the push worker to send later.
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(1);
+
+      const [closureNotification] = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, participant.id));
+      expect(closureNotification.type).toBe('RESCUE_COMPLETED');
+
+      const [closurePush] = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.notificationId, closureNotification.id));
+      expect(closurePush.status).toBe('PENDING');
+
+      // The administrator reopens before the push worker sends the closure.
+      await dbHelper.db.transaction(async (tx) => {
+        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
+        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
+      });
+
+      // The obsolete closure intent is terminal, and the correction owns a new
+      // PENDING intent with the Post creator as its send-time actor.
+      const [suppressedClosurePush] = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.id, closurePush.id));
+      expect(suppressedClosurePush.status).toBe('SUPPRESSED');
+
+      const [correction] = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(
+          sql`${notifications.recipientId} = ${participant.id}::uuid AND ${notifications.type} = 'RESCUE_REOPENED'`,
+        );
+      expect(correction).toBeDefined();
+
+      const [correctionPush] = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.notificationId, correction.id));
+      expect(correctionPush.status).toBe('PENDING');
+      expect(correctionPush.actorId).toBe(creator.id);
+
+      // The push processor never hands the suppressed closure intent to the
+      // provider: only the correction is sent.
+      const sentMessages: PushDeliveryMessage[] = [];
+      const provider: PushProvider = {
+        send: (message) => {
+          sentMessages.push(message);
+          return Promise.resolve();
+        },
+      };
+      const pushProcessor = new PushDeliveryProcessor(dbHelper.db, provider, isolationPolicy);
+      expect(await pushProcessor.processPendingDeliveries()).toBe(1);
+      expect(sentMessages).toHaveLength(1);
+      expect(sentMessages[0].data.notificationId).toBe(correction.id);
+      expect(sentMessages.filter((message) => message.data.notificationId === closureNotification.id)).toHaveLength(0);
+    });
+
     it('serializes a concurrent reopening against worker materialization without orphaned or misrouted notifications', async () => {
       const creator = await createUser({ name: 'RaceCreator' });
       const post = await createRescuePost(creator.id, 'Race Reopen Rescue');
