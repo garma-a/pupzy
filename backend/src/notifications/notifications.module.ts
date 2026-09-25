@@ -10,6 +10,8 @@ import { PushDeliveryRepository } from './push-delivery.repository';
 import { PushDeliveryProcessor } from './push-delivery.processor';
 import { FirebasePushProvider, PUSH_PROVIDER } from './push.provider';
 import { AccountIsolationModule } from '../blocks/account-isolation.module';
+import { PostCompletionNotificationRepository } from './post-completion-notification.repository';
+import { PostCompletionNotificationProcessor } from './post-completion-notification.processor';
 
 /**
  * NotificationsModule — owns the notification lifecycle.
@@ -22,6 +24,8 @@ import { AccountIsolationModule } from '../blocks/account-isolation.module';
  * same transaction through the shared outbox.
  * `DiscussionNotificationProcessor` is exported so discussion writes can
  * start delivery immediately after their source event commits.
+ * `PostCompletionNotificationRepository` and `PostCompletionNotificationProcessor`
+ * are exported to support post completion notification lifecycle and background batching.
  *
  * ## Dependencies
  * - `DatabaseModule` — global, provides DATABASE_TOKEN for Drizzle.
@@ -44,7 +48,15 @@ import { AccountIsolationModule } from '../blocks/account-isolation.module';
     PushDeliveryRepository,
     PushDeliveryProcessor,
     { provide: PUSH_PROVIDER, useClass: FirebasePushProvider },
+    PostCompletionNotificationRepository,
+    PostCompletionNotificationProcessor,
   ],
-  exports: [NotificationsService, PushDeliveryRepository, DiscussionNotificationProcessor],
+  exports: [
+    NotificationsService,
+    PushDeliveryRepository,
+    PostCompletionNotificationRepository,
+    PostCompletionNotificationProcessor,
+    DiscussionNotificationProcessor,
+  ],
 })
 export class NotificationsModule {}

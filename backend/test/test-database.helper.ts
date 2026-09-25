@@ -71,6 +71,8 @@ export class TestDatabaseHelper {
         post_reports,
         notifications,
         discussion_notification_events,
+        post_completion_recipients,
+        post_completion_notification_events,
         push_deliveries,
         device_registrations,
         moderation_actions,

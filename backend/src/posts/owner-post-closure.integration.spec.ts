@@ -11,9 +11,13 @@ import {
   adoptionApplications,
   blocks,
   cities,
+  comments,
   contactRequests,
   lostPosts,
+  postCompletionNotificationEvents,
+  postCompletionRecipients,
   postMedia,
+  postUpvotes,
   posts,
   users,
   type AdoptionApplication,
@@ -493,6 +497,7 @@ describe('Owner Post closure and pending interactions (Ticket 03)', () => {
   describe('owner closure outcomes', () => {
     it.each([
       ['RESCUE', 'RESOLVED'],
+      ['RESCUE', 'ANIMAL_DECEASED'],
       ['LOST_PET', 'REUNITED'],
       ['FOUND_STRAY', 'RESOLVED'],
       ['FOUND_STRAY', 'REUNITED'],
@@ -510,6 +515,54 @@ describe('Owner Post closure and pending interactions (Ticket 03)', () => {
         expect(result.errors).toBeUndefined();
         expect(result.data?.updatePostStatus).toMatchObject({ id: post.id, status: outcome });
         expect((await storedPost(post.id))?.status).toBe(outcome);
+      },
+    );
+
+    it.each([
+      ['RESOLVED', 'Rescue resolved', 'The rescue "', 'was marked as rescued.'],
+      ['ANIMAL_DECEASED', 'Rescue closed', 'The rescue "', 'was closed (animal deceased).'],
+    ] as Array<[Post['status'], string, string, string]>)(
+      'captures the completion event and closure-time audience for a GraphQL RESCUE closure as %s',
+      async (outcome, expectedTitle, bodyPrefix, bodySuffix) => {
+        const rescue = await seedPost({ postType: 'RESCUE' });
+        const booster = await insertUser(`gql-event-${outcome}-booster`);
+        const commenter = await insertUser(`gql-event-${outcome}-commenter`);
+
+        await dbHelper.db.insert(postUpvotes).values({ postId: rescue.id, userId: booster.id });
+        await dbHelper.db.insert(comments).values({
+          id: generateUuidV7(),
+          postId: rescue.id,
+          authorId: commenter.id,
+          text: 'Discussion evidence for the closure',
+          status: 'ACTIVE',
+        });
+
+        const result = await closePost(rescue, outcome);
+        expect(result.errors).toBeUndefined();
+        expect(result.data?.updatePostStatus).toMatchObject({ id: rescue.id, status: outcome });
+
+        const [event] = await dbHelper.db
+          .select()
+          .from(postCompletionNotificationEvents)
+          .where(eq(postCompletionNotificationEvents.postId, rescue.id));
+        expect(event).toBeDefined();
+        expect(event.postType).toBe('RESCUE');
+        expect(event.type).toBe('RESCUE_COMPLETED');
+        expect(event.outcome).toBe(outcome);
+        expect(event.closingActorId).toBe(owner.id);
+        expect(event.title).toBe(expectedTitle);
+        expect(event.body).toBe(`${bodyPrefix}${rescue.title}" ${bodySuffix}`);
+        expect(event.body).not.toContain('admin');
+        expect(event.titleArabic).toBeDefined();
+        expect(event.bodyArabic).toContain(rescue.title);
+        expect(event.totalRecipients).toBe(2);
+
+        const recipients = await dbHelper.db
+          .select()
+          .from(postCompletionRecipients)
+          .where(eq(postCompletionRecipients.eventId, event.id));
+        expect(recipients.map((r) => r.recipientId).sort()).toEqual([booster.id, commenter.id].sort());
+        expect(recipients.map((r) => r.recipientId)).not.toContain(owner.id);
       },
     );
 
@@ -537,6 +590,58 @@ describe('Owner Post closure and pending interactions (Ticket 03)', () => {
       expect(errorCode(await closePost(mating, 'REUNITED'))).toBe('VALIDATION_ERROR');
       expect((await storedPost(rescue.id))?.status).toBe('ACTIVE');
       expect((await storedPost(mating.id))?.status).toBe('ACTIVE');
+    });
+
+    it('closes a RESCUE as ANIMAL_DECEASED without evidence and rejects non-owner, cross-type and repeat attempts', async () => {
+      const rescue = await seedPost({ postType: 'RESCUE' });
+
+      // No comment, media or other evidence exists for this rescue: there is no
+      // evidence gate on either RESCUE outcome.
+      const nonOwner = await closePost(rescue, 'ANIMAL_DECEASED', other);
+      expect(errorCode(nonOwner)).toBe('FORBIDDEN');
+      expect((await storedPost(rescue.id))?.status).toBe('ACTIVE');
+
+      // ANIMAL_DECEASED is RESCUE-only: every other type rejects it.
+      const adoption = await seedPost({ postType: 'ADOPTION' });
+      const product = await seedPost({ postType: 'PRODUCT' });
+      const mating = await seedPost({ postType: 'MATING' });
+      const lost = await seedLostPost('FOUND_STRAY');
+      for (const post of [lost, adoption, product, mating]) {
+        const rejected = await closePost(post, 'ANIMAL_DECEASED');
+        expect(errorCode(rejected)).toBe('VALIDATION_ERROR');
+        expect((await storedPost(post.id))?.status).toBe('ACTIVE');
+      }
+
+      const closed = await closePost(rescue, 'ANIMAL_DECEASED');
+      expect(closed.errors).toBeUndefined();
+      expect(closed.data?.updatePostStatus).toMatchObject({ id: rescue.id, status: 'ANIMAL_DECEASED' });
+      expect((await storedPost(rescue.id))?.status).toBe('ANIMAL_DECEASED');
+
+      const repeated = await closePost(rescue, 'ANIMAL_DECEASED');
+      expect(errorCode(repeated)).toBe('VALIDATION_ERROR');
+      expect(repeated.errors?.[0].message).toContain('already in "ANIMAL_DECEASED" status');
+    });
+
+    it('terminates pending interactions and retains approved access when a RESCUE closes as ANIMAL_DECEASED', async () => {
+      const rescue = await seedPost({ postType: 'RESCUE' });
+      const pending = await requestContact(rescue);
+      const approved = await requestContact(rescue, other);
+      expect((await approveContact(approved, owner)).errors).toBeUndefined();
+
+      expect((await closePost(rescue, 'ANIMAL_DECEASED')).errors).toBeUndefined();
+
+      const pendingRow = await contactRow(pending);
+      expect(pendingRow?.status).toBe('REJECTED');
+      expect(pendingRow?.respondedAt).not.toBeNull();
+
+      const approvedRow = await contactRow(approved);
+      expect(approvedRow?.status).toBe('APPROVED');
+      const link = await runGql<{ getWhatsAppLink: string }>(GET_WHATSAPP, { requestId: approved }, other);
+      expect(link.errors).toBeUndefined();
+      expect(link.data?.getWhatsAppLink).toBe(OWNER_WA_LINK);
+
+      // Records are preserved, not deleted.
+      expect(await allContactRows(rescue.id)).toHaveLength(2);
     });
 
     it('rejects closure by anyone but the owner in either Block direction', async () => {
@@ -936,6 +1041,18 @@ describe('Owner Post closure and pending interactions (Ticket 03)', () => {
 
       const persisted = await storedPost(post.id);
       expect(['RESOLVED', 'REUNITED']).toContain(persisted?.status);
+    });
+
+    it('concurrent RESOLVED and ANIMAL_DECEASED RESCUE closures settle with exactly one committed outcome', async () => {
+      const post = await seedPost({ postType: 'RESCUE' });
+
+      const [rescued, deceased] = await Promise.all([closePost(post, 'RESOLVED'), closePost(post, 'ANIMAL_DECEASED')]);
+      const outcomes = [errorCode(rescued), errorCode(deceased)];
+      expect(outcomes.filter((code) => code === undefined)).toHaveLength(1);
+      expect(['VALIDATION_ERROR', 'NOT_FOUND']).toContain(outcomes.find((code) => code !== undefined));
+
+      const persisted = await storedPost(post.id);
+      expect(['RESOLVED', 'ANIMAL_DECEASED']).toContain(persisted?.status);
     });
   });
 });

@@ -15,11 +15,19 @@ export type NotificationLanguage = (typeof NOTIFICATION_LANGUAGES)[number];
 export const DEFAULT_NOTIFICATION_LANGUAGE: NotificationLanguage = 'en';
 
 /**
- * The successful outcomes an administrator can record as a Post Resolution.
+ * The completed outcomes an administrator can record as a Post Resolution.
  * Derived from the shared lifecycle contract, so the notification templates and
- * the AdminJS queue predicates cannot drift from the one outcome list.
+ * the AdminJS queue predicates cannot drift from the one outcome list. This
+ * includes `ANIMAL_DECEASED`, which is a completed outcome but not a success.
  */
 export type PostResolutionOutcome = PostLifecycleCompletedOutcome;
+
+/**
+ * The completed outcomes a RESCUE Post can hold: a successful rescue
+ * (`RESOLVED`) or a closure where the animal died (`ANIMAL_DECEASED`). Every
+ * other completed outcome belongs to a different Post type.
+ */
+export type RescueCompletedOutcome = Extract<PostLifecycleCompletedOutcome, 'RESOLVED' | 'ANIMAL_DECEASED'>;
 
 /**
  * Parameters each notification type interpolates into its English and Arabic
@@ -49,6 +57,10 @@ export interface NotificationTemplateParamsMap {
   NEW_REPLY: { actorName: string };
   COMMENT_BOOSTED: { actorName: string; target: 'comment' | 'reply' };
   COMMENT_PINNED: { postTitle: string };
+  POST_COMPLETED: { postTitle: string; outcome?: PostLifecycleCompletedOutcome };
+  POST_REOPENED: { postTitle: string };
+  RESCUE_COMPLETED: { postTitle: string; outcome: RescueCompletedOutcome };
+  RESCUE_REOPENED: { postTitle: string };
 }
 
 /** Rendered text for one language. */
@@ -81,6 +93,7 @@ const POST_RESOLUTION_OUTCOME_LABELS: Readonly<Record<PostResolutionOutcome, { e
     REUNITED: Object.freeze({ en: 'reunited', ar: 'تم لمّ الشمل' }),
     ADOPTED: Object.freeze({ en: 'adopted', ar: 'تم التبني' }),
     SOLD: Object.freeze({ en: 'sold', ar: 'تم البيع' }),
+    ANIMAL_DECEASED: Object.freeze({ en: 'closed (animal deceased)', ar: 'تم الإغلاق (وفاة الحيوان)' }),
   });
 
 /**
@@ -263,6 +276,119 @@ const NOTIFICATION_TEMPLATES: NotificationTemplateRegistry = {
     ar: ({ postTitle }) => ({
       title: 'تم تثبيت التعليق',
       body: `تم تثبيت تعليقك على "${postTitle}"`,
+    }),
+  },
+  POST_COMPLETED: {
+    en: ({ postTitle, outcome }) => {
+      if (outcome === 'REUNITED') {
+        return {
+          title: 'Pet reunited',
+          body: `The post "${postTitle}" was marked as reunited.`,
+        };
+      }
+      if (outcome === 'ADOPTED') {
+        return {
+          title: 'Pet adopted',
+          body: `The post "${postTitle}" was marked as adopted.`,
+        };
+      }
+      if (outcome === 'SOLD') {
+        return {
+          title: 'Item sold',
+          body: `The post "${postTitle}" was marked as sold.`,
+        };
+      }
+      return {
+        title: 'Post resolved',
+        body: `The post "${postTitle}" was marked as resolved.`,
+      };
+    },
+    ar: ({ postTitle, outcome }) => {
+      if (outcome === 'REUNITED') {
+        return {
+          title: 'تم لمّ الشمل',
+          body: `تم تسجيل نتيجة المنشور "${postTitle}": تم لمّ الشمل.`,
+        };
+      }
+      if (outcome === 'ADOPTED') {
+        return {
+          title: 'تم التبني',
+          body: `تم تسجيل نتيجة المنشور "${postTitle}": تم التبني.`,
+        };
+      }
+      if (outcome === 'SOLD') {
+        return {
+          title: 'تم البيع',
+          body: `تم تسجيل نتيجة المنشور "${postTitle}": تم البيع.`,
+        };
+      }
+      return {
+        title: 'تم حل المنشور',
+        body: `تم تسجيل نتيجة المنشور "${postTitle}".`,
+      };
+    },
+  },
+  POST_REOPENED: {
+    en: ({ postTitle }) => ({
+      title: 'Post reopened',
+      body: `The post "${postTitle}" was reopened.`,
+    }),
+    ar: ({ postTitle }) => ({
+      title: 'تمت إعادة فتح المنشور',
+      body: `تمت إعادة فتح المنشور "${postTitle}".`,
+    }),
+  },
+  RESCUE_COMPLETED: {
+    en: ({ postTitle, outcome }) => {
+      switch (outcome) {
+        case 'RESOLVED':
+          return {
+            title: 'Rescue resolved',
+            body: `The rescue "${postTitle}" was marked as rescued.`,
+          };
+        case 'ANIMAL_DECEASED':
+          return {
+            title: 'Rescue closed',
+            body: `The rescue "${postTitle}" was closed (animal deceased).`,
+          };
+        default:
+          // Out-of-band JavaScript callers can pass a value outside the
+          // narrowed rescue union; stay neutral and never claim the animal was
+          // rescued.
+          return {
+            title: 'Rescue closed',
+            body: `The rescue "${postTitle}" was closed.`,
+          };
+      }
+    },
+    ar: ({ postTitle, outcome }) => {
+      switch (outcome) {
+        case 'RESOLVED':
+          return {
+            title: 'تم حل حالة الإنقاذ',
+            body: `تم تعليم حالة الإنقاذ "${postTitle}" بأنها تم إنقاذها.`,
+          };
+        case 'ANIMAL_DECEASED':
+          return {
+            title: 'تم إغلاق حالة الإنقاذ',
+            body: `تم إغلاق حالة الإنقاذ "${postTitle}" (وفاة الحيوان).`,
+          };
+        default:
+          return {
+            title: 'تم إغلاق حالة الإنقاذ',
+            body: `تم إغلاق حالة الإنقاذ "${postTitle}".`,
+          };
+      }
+    },
+  },
+  RESCUE_REOPENED: {
+    en: ({ postTitle }) => ({
+      title: 'Rescue reopened',
+      body: `The rescue "${postTitle}" was reopened.`,
+    }),
+    ar: ({ postTitle }) => ({
+      title: 'تمت إعادة فتح حالة الإنقاذ',
+      body: `تمت إعادة فتح حالة الإنقاذ "${postTitle}".`,
     }),
   },
 };

@@ -6,6 +6,7 @@ import {
   localizeNotification,
   resolveNotificationLanguage,
   type NotificationTemplateParamsMap,
+  type RescueCompletedOutcome,
 } from './notification-templates';
 
 /** Representative parameters for every type — also proves the params contract. */
@@ -27,6 +28,10 @@ const SAMPLE_PARAMS: NotificationTemplateParamsMap = {
   NEW_REPLY: { actorName: 'Ahmed' },
   COMMENT_BOOSTED: { actorName: 'Ahmed', target: 'comment' },
   COMMENT_PINNED: { postTitle: 'Missing cat' },
+  POST_COMPLETED: { postTitle: 'Missing cat' },
+  POST_REOPENED: { postTitle: 'Missing cat' },
+  RESCUE_COMPLETED: { postTitle: 'Injured puppy', outcome: 'RESOLVED' },
+  RESCUE_REOPENED: { postTitle: 'Injured puppy' },
 };
 
 describe('notification templates', () => {
@@ -114,6 +119,7 @@ describe('notification templates', () => {
       ['REUNITED', 'reunited'],
       ['ADOPTED', 'adopted'],
       ['SOLD', 'sold'],
+      ['ANIMAL_DECEASED', 'closed (animal deceased)'],
     ] as const) {
       const content = buildNotificationContent('POST_RESOLVED_BY_ADMIN', {
         postTitle: 'Missing cat',
@@ -134,6 +140,88 @@ describe('notification templates', () => {
     expect(content.titleArabic).toBe('تمت إعادة فتح المنشور');
     expect(content.bodyArabic).toContain('Missing cat');
     expect(content.bodyArabic.trim().length).toBeGreaterThan(0);
+  });
+
+  it('renders rescue completion and reopening correction messages in both languages', () => {
+    const closure = buildNotificationContent('RESCUE_COMPLETED', {
+      postTitle: 'Injured puppy',
+      outcome: 'RESOLVED',
+    });
+    expect(closure.title).toBe('Rescue resolved');
+    expect(closure.body).toBe('The rescue "Injured puppy" was marked as rescued.');
+    expect(closure.titleArabic).toBe('تم حل حالة الإنقاذ');
+    expect(closure.bodyArabic).toContain('Injured puppy');
+    expect(closure.bodyArabic).toContain('تم إنقاذها');
+
+    const deceasedClosure = buildNotificationContent('RESCUE_COMPLETED', {
+      postTitle: 'Injured puppy',
+      outcome: 'ANIMAL_DECEASED',
+    });
+    expect(deceasedClosure.title).toBe('Rescue closed');
+    expect(deceasedClosure.body).toBe('The rescue "Injured puppy" was closed (animal deceased).');
+    expect(deceasedClosure.body).not.toContain('rescued');
+    expect(deceasedClosure.titleArabic).toBe('تم إغلاق حالة الإنقاذ');
+    expect(deceasedClosure.bodyArabic).toContain('Injured puppy');
+    expect(deceasedClosure.bodyArabic).toContain('وفاة الحيوان');
+    expect(deceasedClosure.bodyArabic).not.toContain('تم إنقاذها');
+
+    const correction = buildNotificationContent('RESCUE_REOPENED', { postTitle: 'Injured puppy' });
+    expect(correction.title).toBe('Rescue reopened');
+    expect(correction.body).toBe('The rescue "Injured puppy" was reopened.');
+    expect(correction.titleArabic).toBe('تمت إعادة فتح حالة الإنقاذ');
+    expect(correction.bodyArabic).toContain('Injured puppy');
+  });
+
+  it('renders a neutral rescue-closure fallback for out-of-band outcomes that never claims a rescue', () => {
+    const outOfBand = buildNotificationContent('RESCUE_COMPLETED', {
+      postTitle: 'Injured puppy',
+      outcome: 'SOLD' as unknown as RescueCompletedOutcome,
+    });
+    expect(outOfBand.title).toBe('Rescue closed');
+    expect(outOfBand.body).toBe('The rescue "Injured puppy" was closed.');
+    expect(outOfBand.body).not.toContain('rescued');
+    expect(outOfBand.titleArabic).toBe('تم إغلاق حالة الإنقاذ');
+    expect(outOfBand.bodyArabic).toContain('Injured puppy');
+    expect(outOfBand.bodyArabic).not.toContain('تم إنقاذها');
+  });
+
+  it('renders outcome-specific completion messages for non-rescue posts in both languages', () => {
+    const reunited = buildNotificationContent('POST_COMPLETED', { postTitle: 'Lost Dog', outcome: 'REUNITED' });
+    expect(reunited.title).toBe('Pet reunited');
+    expect(reunited.body).toBe('The post "Lost Dog" was marked as reunited.');
+    expect(reunited.titleArabic).toBe('تم لمّ الشمل');
+    expect(reunited.bodyArabic).toContain('Lost Dog');
+    expect(reunited.bodyArabic).toContain('تم لمّ الشمل');
+
+    const adopted = buildNotificationContent('POST_COMPLETED', { postTitle: 'Cute Kitten', outcome: 'ADOPTED' });
+    expect(adopted.title).toBe('Pet adopted');
+    expect(adopted.body).toBe('The post "Cute Kitten" was marked as adopted.');
+    expect(adopted.titleArabic).toBe('تم التبني');
+    expect(adopted.bodyArabic).toContain('Cute Kitten');
+    expect(adopted.bodyArabic).toContain('تم التبني');
+
+    const sold = buildNotificationContent('POST_COMPLETED', { postTitle: 'Dog Crate', outcome: 'SOLD' });
+    expect(sold.title).toBe('Item sold');
+    expect(sold.body).toBe('The post "Dog Crate" was marked as sold.');
+    expect(sold.titleArabic).toBe('تم البيع');
+    expect(sold.bodyArabic).toContain('Dog Crate');
+    expect(sold.bodyArabic).toContain('تم البيع');
+
+    const resolved = buildNotificationContent('POST_COMPLETED', { postTitle: 'Mating Pair', outcome: 'RESOLVED' });
+    expect(resolved.title).toBe('Post resolved');
+    expect(resolved.body).toBe('The post "Mating Pair" was marked as resolved.');
+    expect(resolved.titleArabic).toBe('تم حل المنشور');
+    expect(resolved.bodyArabic).toContain('Mating Pair');
+
+    // The default (no outcome) copy stays byte-for-byte the historic resolved copy.
+    const defaulted = buildNotificationContent('POST_COMPLETED', { postTitle: 'Mating Pair' });
+    expect(defaulted).toEqual(resolved);
+
+    const reopened = buildNotificationContent('POST_REOPENED', { postTitle: 'Lost Dog' });
+    expect(reopened.title).toBe('Post reopened');
+    expect(reopened.body).toBe('The post "Lost Dog" was reopened.');
+    expect(reopened.titleArabic).toBe('تمت إعادة فتح المنشور');
+    expect(reopened.bodyArabic).toContain('Lost Dog');
   });
 
   it('preserves both account-ban cascade copy variants', () => {

@@ -1,10 +1,12 @@
 import {
   actionResponse,
+  capturePostCompletion,
   closeOpenPostReports,
   enqueuePushDeliveries,
   findLostReportType,
   lockPostDiscussion,
   readModerationReason,
+  reopenPostCompletion,
   runModerationAction,
   terminatePendingInteractions,
 } from './helpers.js';
@@ -69,16 +71,29 @@ function buildPostAction(pool, component, definition, cache) {
 
 /**
  * Type-specific Post Resolution actions. Each action targets exactly one
- * successful outcome and is only visible while the Post is `ACTIVE` and its
+ * completed outcome and is only visible while the Post is `ACTIVE` and its
  * type (and, for LOST, direction) allows that outcome, so staff can never
- * choose an invalid transition. The outcome is revalidated under the row lock
- * against the shared lifecycle contract before anything is written.
+ * choose an invalid transition. RESCUE has two outcomes: `markRescued`
+ * (`RESOLVED`) and `markAnimalDeceased` (`ANIMAL_DECEASED`, which closes the
+ * rescue because the animal died and is never described as rescued). The
+ * outcome is revalidated under the row lock against the shared lifecycle
+ * contract before anything is written.
+ *
+ * Exported so the confirmation-copy drift guard
+ * (`components/moderation-action-messages.test.js`) can prove every action has
+ * matching copy in the AdminJS action component.
  */
-const POST_RESOLUTION_ACTIONS = Object.freeze({
+export const POST_RESOLUTION_ACTIONS = Object.freeze({
   markRescued: Object.freeze({
     outcome: 'RESOLVED',
     icon: 'CheckCircle',
     guard: 'Record this rescue as resolved?',
+    appliesTo: (postType) => postType === 'RESCUE',
+  }),
+  markAnimalDeceased: Object.freeze({
+    outcome: 'ANIMAL_DECEASED',
+    icon: 'AlertCircle',
+    guard: 'Close this rescue because the animal died?',
     appliesTo: (postType) => postType === 'RESCUE',
   }),
   markReunited: Object.freeze({
@@ -163,6 +178,18 @@ function buildResolutionAction(pool, component, cache, definition) {
           type: 'POST_RESOLVED_BY_ADMIN',
         });
         const termination = await terminatePendingInteractions(client, row.id);
+        await capturePostCompletion(client, {
+          postId: row.id,
+          postType: row.post_type,
+          outcome: definition.outcome,
+          // AdminJS administrators are `admin_users` rows while the completion
+          // event's `closing_actor_id` references `users`. The append-only
+          // moderation audit row records the acting administrator, so an
+          // administrator-recorded outcome stores no app-user closing actor.
+          closingActorId: null,
+          title: row.title,
+          creatorId: row.creator_id,
+        });
         return { outcome: definition.outcome, ...termination };
       },
     },
@@ -235,6 +262,12 @@ function buildReopenAction(pool, component, cache) {
           id: notificationRows[0].id,
           recipientId: row.creator_id,
           type: 'POST_REOPENED_BY_ADMIN',
+        });
+        await reopenPostCompletion(client, {
+          postId: row.id,
+          postTitle: row.title,
+          postType: row.post_type,
+          previousOutcome,
         });
         return { previousOutcome };
       },

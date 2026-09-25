@@ -62,6 +62,10 @@ const SAMPLE_PARAMS: NotificationTemplateParamsMap = {
   NEW_REPLY: { actorName: 'Ahmed' },
   COMMENT_BOOSTED: { actorName: 'Ahmed', target: 'comment' },
   COMMENT_PINNED: { postTitle: 'Missing cat' },
+  POST_COMPLETED: { postTitle: 'Missing cat' },
+  POST_REOPENED: { postTitle: 'Missing cat' },
+  RESCUE_COMPLETED: { postTitle: 'Missing cat', outcome: 'RESOLVED' },
+  RESCUE_REOPENED: { postTitle: 'Missing cat' },
 };
 
 /** Controllable provider standing in for FCM at the external boundary. */

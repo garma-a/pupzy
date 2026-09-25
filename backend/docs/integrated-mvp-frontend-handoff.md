@@ -33,7 +33,7 @@ Everything here is backend or AdminJS work. There is **no Flutter change in the 
 - **Additive operations (11):** `getAdoptionWhatsAppLink`, `terms`, `acceptTerms`, `updateMyLanguagePreference`, `updateMyNotificationPreferences`, `registerDevice`, `unregisterDevice`, `renewPost`, `requestProfilePhotoUploadUrl`, `setProfilePhoto`, `removeProfilePhoto`.
 - **Additive arguments (5):** optional `search: String` on `homeFeed`, `helpFeed`, `adoptFeed`, `marketFeed`, `matingFeed`.
 - **Additive input field (1):** optional `CompleteProfileInput.languagePreference: Language`. Onboarding stays compatible; there is no required terms field.
-- **Additive enum values:** `PostStatus.EXPIRED`, `NotificationType.POST_RESOLVED_BY_ADMIN`, `NotificationType.POST_REOPENED_BY_ADMIN`.
+- **Additive enum values:** `PostStatus.EXPIRED`, `PostStatus.ANIMAL_DECEASED`, `NotificationType.POST_RESOLVED_BY_ADMIN`, `NotificationType.POST_REOPENED_BY_ADMIN`. `ANIMAL_DECEASED` is the ticket-06 RESCUE-only closure outcome; its authoritative additive rollout ordering is in `docs/post-lifecycle-transition-contract.md` §6.
 - **Additive enums/types:** `Language`, `DevicePlatform`, `DeviceRegistration`, `TermsInfo`, `AcceptTermsInput`, `RegisterDeviceInput`, `RequestProfilePhotoUploadInput`, `ProfilePhotoUploadTicket`.
 - **No phone verification of any kind.** Phones stay self-entered and existing contact flows are unchanged.
 
@@ -70,6 +70,7 @@ The comment-image contract §4 also records `COMMENT_MEDIA_NOT_READY`, `COMMENT_
 ### 2.3 New enum values the client must decode
 
 - **`PostStatus.EXPIRED`** — an inactivity state, not a resolution and not a removal. Any exhaustive `switch`/`when` over `PostStatus` must add the value or decoding fails for expired listings.
+- **`PostStatus.ANIMAL_DECEASED`** — a completed RESCUE closure recording that the animal died. Only RESCUE permits it, it is never labelled as a successful rescue, and any exhaustive `switch`/`when` over `PostStatus` must add the value or decoding fails for a deceased rescue.
 - **`NotificationType.POST_RESOLVED_BY_ADMIN`** and **`NotificationType.POST_REOPENED_BY_ADMIN`** — owner inbox entries for administrator resolution/correction.
 - **`NotificationType.SYSTEM_ANNOUNCEMENT`** — retained for historical rows; no creation site exists (saved-search alerts removed).
 - **`Language { ar, en }`**, **`DevicePlatform { ANDROID, IOS }`**.
@@ -110,13 +111,14 @@ No new client operation. `updatePostStatus(postId: ID!, status: PostStatus!): Po
 
 | Post type | Direction (`report_type`) | Owner closure outcome |
 |---|---|---|
-| `RESCUE` | — | `RESOLVED` (unchanged) |
+| `RESCUE` | — | `RESOLVED` (unchanged) **and** `ANIMAL_DECEASED` (**new**) |
 | `LOST` | `LOST_PET` | `REUNITED` (unchanged) |
 | `LOST` | `FOUND_STRAY` | `RESOLVED` **and** `REUNITED` (both accepted) |
 | `ADOPTION` | — | `ADOPTED` (unchanged) |
 | `PRODUCT` | — | `SOLD` (unchanged) |
 | `MATING` | — | `RESOLVED` (**new**) |
 
+- `ANIMAL_DECEASED` closes a rescue because the animal died. It is a completed outcome but not a success: only RESCUE permits it, its copy never says "rescued" / "تم إنقاذها", and it is offered without any evidence gate. Its authoritative rollout compatibility is in `docs/post-lifecycle-transition-contract.md` §6.
 - Closing a listing moves still-`PENDING` Contact Requests and Adoption Applications to the terminal `REJECTED` state in the same transaction; records are preserved and approved access keeps its restrictions. Reopening/renewal never revives closed interactions.
 - `EXPIRED` is **not** a valid `updatePostStatus` target (`VALIDATION_ERROR`); renew first. Owners cannot reopen completed Posts; only administrators can (§5).
 - Boosts remain engagement, never resolution votes; a photo Comment does not create a report or resolve anything.
@@ -260,7 +262,7 @@ English AdminJS only; `ADMIN`/`SUPER_ADMIN` retain access; the secondary technic
 
 - **Work queues:** Needs review (`Flagged — needs review`, `Pending moderation`, open Post/Comment/Account Reports), Rescue, Lost & found (with Lost pet / Found stray), Listings (Adoption/Products/Mating), History (Completed/Expired/Removed). Counts and result pages share predicates; an expired listing is not outstanding review work.
 - **Post review workspace:** header with readable type/subtype/outcome/moderation/urgency/City context, original Post photos and paginated discussion images in aligned thumbnail grids with full-image previews, Reports, and append-only action history. Filters survive returning from a Post.
-- **Actions:** type-specific `markRescued` / `markReunited` / `markResolved` / `markAdopted` / `markSold` (with internal reason) and administrator-only `reopenPost` for completed outcomes whose owner is not banned. Resolution/reopening write audit rows, localized owner notifications and pending-interaction cleanup transactionally; reopening leaves closed interactions closed; removal/restoration keep their existing paths, and expired listings expose no removal/reopen action.
+- **Actions:** type-specific `markRescued` / `markAnimalDeceased` / `markReunited` / `markResolved` / `markAdopted` / `markSold` (with internal reason) and administrator-only `reopenPost` for completed outcomes whose owner is not banned. `markAnimalDeceased` closes a RESCUE whose animal died and is never described as rescued. Resolution/reopening write audit rows, localized owner notifications and pending-interaction cleanup transactionally; reopening leaves closed interactions closed; removal/restoration keep their existing paths, and expired listings expose no removal/reopen action.
 - **Terms and device state:** the Users resource shows read-only `terms_accepted_version`/`terms_accepted_at`; expired listings are filterable; `renewed_at`/`reminder_sent_at` are read-only.
 
 ---

@@ -88,12 +88,17 @@ describe('Post review workspace labels and media URLs', () => {
       'Pupzy Account Report reviewed — no action',
     );
     assert.equal(postStatusLabel('EXPIRED'), 'Expired');
+    assert.equal(postStatusLabel('ANIMAL_DECEASED'), 'Animal deceased');
     assert.equal(postStatusLabel(null), 'Unknown');
   });
 
   it('renders the recorded administrator resolution outcome in the action history', () => {
     assert.equal(moderationActionHistoryLabel('POST_RESOLVED', { outcome: 'ADOPTED' }), 'Post marked adopted');
     assert.equal(moderationActionHistoryLabel('POST_RESOLVED', { outcome: 'REUNITED' }), 'Post marked reunited');
+    assert.equal(
+      moderationActionHistoryLabel('POST_RESOLVED', { outcome: 'ANIMAL_DECEASED' }),
+      'Post marked animal deceased',
+    );
     assert.equal(moderationActionHistoryLabel('POST_RESOLVED', null), 'Post resolution recorded');
     assert.equal(moderationActionHistoryLabel('POST_REMOVED', { outcome: 'ADOPTED' }), 'Post removed');
   });

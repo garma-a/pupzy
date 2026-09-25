@@ -1630,6 +1630,13 @@ describe('administrator post resolution', () => {
     const actions = buildPostActions(database.pool, 'ModerationAction');
     const cases = [
       { label: 'rescue', postType: 'RESCUE', reportType: null, action: 'markRescued', outcome: 'RESOLVED' },
+      {
+        label: 'rescue animal deceased',
+        postType: 'RESCUE',
+        reportType: null,
+        action: 'markAnimalDeceased',
+        outcome: 'ANIMAL_DECEASED',
+      },
       { label: 'lost pet', postType: 'LOST', reportType: 'LOST_PET', action: 'markReunited', outcome: 'REUNITED' },
       {
         label: 'found stray resolved',
@@ -1819,6 +1826,9 @@ describe('administrator post resolution', () => {
       [actions.markAdopted, removedId, { reason: 'Resolve removed' }, /only active/i],
       [actions.markReunited, rescueId, { reason: 'Wrong type' }, /cannot be resolved/i],
       [actions.markSold, rescueId, { reason: 'Wrong type' }, /cannot be resolved/i],
+      [actions.markAnimalDeceased, rescueId, { reason: '' }, /reason is required/i],
+      [actions.markAnimalDeceased, lostPetId, { reason: 'Wrong type' }, /cannot be resolved/i],
+      [actions.markAnimalDeceased, resolvedId, { reason: 'Second outcome' }, /only active/i],
     ];
 
     for (const [action, postId, payload, expectedMessage] of invalidAttempts) {
@@ -1926,6 +1936,7 @@ describe('administrator post reopening', () => {
     const actions = buildPostActions(database.pool, 'ModerationAction');
     const cases = [
       { status: 'RESOLVED', postType: 'RESCUE', reportType: null },
+      { status: 'ANIMAL_DECEASED', postType: 'RESCUE', reportType: null },
       { status: 'REUNITED', postType: 'LOST', reportType: 'LOST_PET' },
       { status: 'RESOLVED', postType: 'MATING', reportType: null },
       { status: 'ADOPTED', postType: 'ADOPTION', reportType: null },

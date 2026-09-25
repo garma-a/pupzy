@@ -28,6 +28,9 @@ export const lostFoundTypeEnum = pgEnum('lost_found_type', ['LOST_PET', 'FOUND_S
  * the creator's post history. REMOVED is a soft delete. EXPIRED is the
  * inactivity state for renewable listings: it also leaves active discovery
  * but keeps direct detail, history, media and discussion for explicit renewal.
+ * ANIMAL_DECEASED closes a RESCUE whose animal died; it is a completed outcome
+ * but never a successful rescue and only RESCUE accepts it. It is appended last
+ * to match the database enum order (migration 0058 adds it with ALTER TYPE).
  */
 export const postStatusEnum = pgEnum('post_status', [
   'ACTIVE',
@@ -37,6 +40,7 @@ export const postStatusEnum = pgEnum('post_status', [
   'SOLD',
   'REMOVED',
   'EXPIRED',
+  'ANIMAL_DECEASED',
 ]);
 
 /**
@@ -140,6 +144,10 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'NEW_REPLY',
   'COMMENT_BOOSTED',
   'COMMENT_PINNED',
+  'POST_COMPLETED',
+  'POST_REOPENED',
+  'RESCUE_COMPLETED',
+  'RESCUE_REOPENED',
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────

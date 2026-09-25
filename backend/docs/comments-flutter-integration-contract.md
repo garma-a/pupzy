@@ -203,26 +203,46 @@ query GetComments($postId: ID!, $first: Int, $after: String, $sort: CommentSort)
     }
     pageInfo {
       hasNextPage
-      hasPreviousPage
-      startCursor
       endCursor
     }
-    totalCount
   }
 }
 ```
 
 ### 5.2 Parameters
-- `first`: Default `20`, maximum `50`. Values > 50 are rejected with `ValidationError`.
+- `first`: Default `20`, maximum `50`. Values > 50 or < 1 are rejected with `ValidationError`.
 - `sort`:
-  - `TOP`: Ordered by `boost_count DESC, created_at DESC, id DESC`.
+  - `TOP`: Ordered by `boost_count DESC, created_at DESC, id DESC`. Resolves ties deterministically by monotonic UUIDv7 generation order.
   - `NEWEST`: Ordered by `created_at DESC, id DESC`.
-- `after`: Opaque base64 cursor. Flutter must treat cursors as opaque tokens.
+- `after`: Opaque base64url keyset cursor. Encodes `(createdAt, id)` for `NEWEST`, `(boostCount, createdAt, id)` for `TOP`, and `isPinned` state. Flutter must treat cursors as opaque tokens.
 
-### 5.3 Pinned Comments Behavior
-- If a Comment is pinned by the Post author, it appears as the **very first item** on page 1 regardless of sort order (`TOP` or `NEWEST`).
-- It is excluded from subsequent pages to eliminate duplicate entries.
-- The `isPinned: true` boolean indicates pinned status in UI.
+### 5.3 Pinned Comments & Ordering Contract
+- **Position Invariant:** If a Comment is pinned by the Post author, it appears as the **very first item** (`edges[0]`) on page 1 regardless of sort order (`TOP` or `NEWEST`).
+- **Displacement Immunity:** Publishing a new Comment beneath a Post never displaces an active pinned Comment. Newly added Comments appear beneath the pin in their natural sort order.
+- **Pin Transition Semantics:**
+  - `pinComment(commentId)`: Atomically pins the target top-level Comment and replaces any previous pin for that Post without discussion gaps. The pinned Comment returns with `isPinned: true`. If the actor is not the Comment author, a `COMMENT_PINNED` notification is enqueued.
+  - `unpinComment(postId)`: Clears the pin. The Comment transitions back to its natural ranked position based on `sort`.
+  - Pinned status is restricted to `ACTIVE` and `IMAGE_HIDDEN` top-level Comments. Comments with status `DELETED`, `HIDDEN`, `REMOVED`, or authored by an isolated/blocked account are omitted from position 0.
+- **Pagination Around Pins:**
+  - Keyset pagination excludes the pinned Comment from all subsequent pages to prevent duplication.
+  - Keyset pagination with `after` pointing to a pinned Comment seamlessly fetches regular comments starting from the top rank without duplicates or dropped entries.
+  - Keyset continuation strictly excludes `cursor.id`, ensuring that if a Comment was pinned on page 1 and unpinned or replaced before page 2 is fetched, it is never duplicated on page 2.
+
+### 5.4 Client Discussion Reconciliation Rules
+When clients maintain local discussion state across mutations and pagination, they must reconcile according to these rules:
+1. **Comment Creation:**
+   - Prepend the newly created Comment beneath any active pinned Comment (at index 1 if a pinned Comment exists, or index 0 if not).
+   - Never displace the pinned Comment from index 0.
+2. **Pin Toggling / Replacement:**
+   - When a Comment is pinned, move it immediately to index 0 with `isPinned: true`.
+   - Any previously pinned Comment must have `isPinned: false` and be repositioned into its natural rank under the active `sort`.
+   - When a Comment is unpinned, set `isPinned: false` and reposition it into its natural rank under the active `sort`.
+3. **Boost Toggling:**
+   - Toggling a boost updates `boostCount` and `isBoostedByMe` immediately.
+   - Under `TOP` sort, reposition the boosted/unboosted Comment among regular Comments according to `(boostCount DESC, createdAt DESC, id DESC)` while preserving the pinned Comment at index 0.
+4. **Paginated Page Continuation (`loadMore`):**
+   - When appending fetched pages to existing discussion items, deduplicate by `id` (`[...existing, ...incoming.where((c) => !existingIds.contains(c.id))]`).
+   - Deduplication guarantees that concurrent rank shifts across cursor boundaries never produce duplicate entries in the reader list.
 
 ---
 

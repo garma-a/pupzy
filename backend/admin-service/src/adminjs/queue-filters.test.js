@@ -84,8 +84,8 @@ describe('Admin work-queue virtual filters', () => {
       });
       assert.equal(applied, true);
       const compiled = query.toSQL();
-      assert.match(compiled.sql, /where "status" in \(\?, \?, \?, \?\)/);
-      assert.deepEqual(compiled.bindings, ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD']);
+      assert.match(compiled.sql, /where "status" in \(\?, \?, \?, \?, \?\)/);
+      assert.deepEqual(compiled.bindings, ['RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'ANIMAL_DECEASED']);
     } finally {
       await sql.destroy();
     }

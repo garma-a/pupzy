@@ -78,7 +78,10 @@ describe('Admin work-queue definitions', () => {
 
   it('keeps completed, expired and removed history views distinct', () => {
     assert.deepEqual(queue('completed').filters, { queue: 'completed' });
-    assert.equal(queue('completed').predicate, `status IN ('RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD')`);
+    assert.equal(
+      queue('completed').predicate,
+      `status IN ('RESOLVED', 'REUNITED', 'ADOPTED', 'SOLD', 'ANIMAL_DECEASED')`,
+    );
     assert.deepEqual(queue('expired').filters, { status: 'EXPIRED' });
     assert.deepEqual(queue('removed').filters, { status: 'REMOVED' });
   });

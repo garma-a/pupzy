@@ -40,12 +40,13 @@ Opening one Post shows, in this order:
 The workspace exposes only the lifecycle actions valid for the current record, alongside the existing
 moderation actions:
 
-- `markRescued` for an active rescue; `markReunited` for an active lost/found case; `markResolved` for an
-  active mating listing or found stray; `markAdopted` for an active adoption; `markSold` for an active
-  product listing. A recorded outcome, removal or expiry exposes none of them.
-- `reopenPost` for a completed outcome (`RESOLVED`, `REUNITED`, `ADOPTED` or `SOLD`) whose owner is not
-  banned. Active, removed and expired Posts expose no Reopen action: removal and expiry keep their own
-  dedicated paths.
+- `markRescued` and `markAnimalDeceased` for an active rescue (`markAnimalDeceased` closes the rescue
+  because the animal died and is never described as rescued); `markReunited` for an active lost/found
+  case; `markResolved` for an active mating listing or found stray; `markAdopted` for an active adoption;
+  `markSold` for an active product listing. A recorded outcome, removal or expiry exposes none of them.
+- `reopenPost` for a completed outcome (`RESOLVED`, `REUNITED`, `ADOPTED`, `SOLD` or `ANIMAL_DECEASED`)
+  whose owner is not banned. Active, removed and expired Posts expose no Reopen action: removal and
+  expiry keep their own dedicated paths.
 - Both confirmations state the consequence, require an internal reason, and use a primary
   (non-destructive) button so outcome changes are visibly distinct from **Remove Post**. The
   confirmation is a filled primary action, **Remove Post** keeps the filled danger treatment, and

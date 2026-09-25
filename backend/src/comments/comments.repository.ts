@@ -658,11 +658,16 @@ export class CommentsRepository {
 
     // Case 1: Cursor is after the pinned comment
     // The client has received the pinned comment on page 1 and is requesting regular comments starting from the top.
-    if (cursor?.isPinned) {
+    // Exclude cursor.id explicitly so unpinning or pin-replacement between page 1 and page 2 never emits a duplicate.
+    if (cursor?.isPinned || (pinnedComment && cursor?.id === pinnedComment.id)) {
+      const case1Conditions = [...baseConditions];
+      if (cursor?.id) {
+        case1Conditions.push(ne(comments.id, cursor.id));
+      }
       const rows = await this.db
         .select()
         .from(comments)
-        .where(and(...baseConditions))
+        .where(and(...case1Conditions))
         .orderBy(...orderBys)
         .limit(limit + 1);
 
@@ -673,8 +678,8 @@ export class CommentsRepository {
     if (cursor) {
       const cursorDate = new Date(cursor.createdAt);
       const cursorConditions = [...baseConditions];
-      if (sort === 'TOP' && cursor.boostCount !== undefined) {
-        const cursorBoost = cursor.boostCount;
+      if (sort === 'TOP') {
+        const cursorBoost = cursor.boostCount ?? 0;
         const cursorId = cursor.id;
         cursorConditions.push(
           sql`(${comments.boostCount} < ${cursorBoost} OR (${comments.boostCount} = ${cursorBoost} AND (${comments.createdAt} < ${cursorDate} OR (${comments.createdAt} = ${cursorDate} AND ${comments.id} < ${cursorId}))))`,

@@ -1,5 +1,6 @@
 import { POST_DISCUSSION_LOCK_NAMESPACE } from '../../../../src/common/contracts/post-lifecycle.contract.ts';
 import { isPushDeliveryEnabled } from '../../../../src/notifications/push-delivery.constants.ts';
+import { buildNotificationContent } from '../../../../src/notifications/notification-templates.ts';
 
 const MODERATION_TABLES = new Set(['users', 'posts', 'comments']);
 
@@ -274,17 +275,19 @@ export async function closeOpenCommentReports(client, commentId) {
  * recipient, inside the same transaction as the notification insert. This
  * mirrors the Nest API's push-delivery outbox and shares its type allowlist;
  * `ON CONFLICT` makes a repeated enqueue harmless. Admin-triggered
- * notifications have no acting user, so no Block actor is recorded.
+ * notifications default to no acting user, so no Block actor is recorded;
+ * callers that know the relevant Post creator (reopening corrections) pass it
+ * as `actorId` so the push worker's send-time Block recheck can run.
  */
-export async function enqueuePushDeliveries(client, { id, recipientId, type }) {
+export async function enqueuePushDeliveries(client, { id, recipientId, type, actorId = null }) {
   if (!isPushDeliveryEnabled(type)) return;
   await client.query(
     `INSERT INTO push_deliveries (notification_id, recipient_id, actor_id, device_id)
-     SELECT $1::uuid, $2::uuid, NULL, d.id
+     SELECT $1::uuid, $2::uuid, $3::uuid, d.id
      FROM device_registrations d
      WHERE d.user_id = $2::uuid
      ON CONFLICT (notification_id, device_id) DO NOTHING`,
-    [id, recipientId],
+    [id, recipientId, actorId],
   );
 }
 
@@ -303,4 +306,210 @@ export function readModerationReason(value) {
     return { error: 'A reason must be at most 500 characters.' };
   }
   return { reason };
+}
+
+/**
+ * Atomically captures a post completion event and audience snapshot for a
+ * completed Post outcome. The audience is the closure-time union of Boost/save,
+ * Comment/Reply, Contact Request and Adoption Application participation,
+ * deduplicated; Comment/Reply authors are eligible unless their contribution is
+ * `DELETED` or `REMOVED`, so `HIDDEN`/`IMAGE_HIDDEN` authors remain eligible.
+ * Excludes the closing actor and the post creator
+ * (the creator already receives POST_RESOLVED_BY_ADMIN).
+ *
+ * `closingActorId` must be a `users.id`, never an `admin_users.id`: the column
+ * has a foreign key to `users`. Administrator actions record no app-user
+ * closing actor because the append-only audit row already names the admin.
+ */
+export async function capturePostCompletion(client, { postId, postType, outcome, closingActorId, title, creatorId }) {
+  const notificationType = postType === 'RESCUE' ? 'RESCUE_COMPLETED' : 'POST_COMPLETED';
+  const content = buildNotificationContent(notificationType, { postTitle: title, outcome });
+
+  const { rows: eventRows } = await client.query(
+    `INSERT INTO post_completion_notification_events
+       (post_id, post_type, outcome, closing_actor_id, type, title, body, title_arabic, body_arabic, status, total_recipients)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'PENDING', 0)
+     RETURNING id`,
+    [
+      postId,
+      postType,
+      outcome,
+      closingActorId,
+      notificationType,
+      content.title,
+      content.body,
+      content.titleArabic,
+      content.bodyArabic,
+    ],
+  );
+  const eventId = eventRows[0].id;
+
+  const insertResult = await client.query(
+    `INSERT INTO post_completion_recipients (event_id, post_id, recipient_id, status)
+     SELECT $1::uuid, $2::uuid, sub.recipient_id, 'PENDING'
+     FROM (
+       SELECT user_id AS recipient_id FROM post_upvotes WHERE post_id = $2::uuid
+       UNION
+       SELECT user_id AS recipient_id FROM post_saves WHERE post_id = $2::uuid
+       UNION
+       SELECT author_id AS recipient_id FROM comments WHERE post_id = $2::uuid AND status NOT IN ('DELETED', 'REMOVED')
+       UNION
+       SELECT requester_id AS recipient_id FROM contact_requests WHERE post_id = $2::uuid
+       UNION
+       SELECT applicant_id AS recipient_id FROM adoption_applications WHERE target_post_id = $2::uuid
+     ) sub
+     WHERE sub.recipient_id IS NOT NULL
+       AND ($3::uuid IS NULL OR sub.recipient_id <> $3::uuid)
+       AND ($4::uuid IS NULL OR sub.recipient_id <> $4::uuid)
+     ON CONFLICT (event_id, recipient_id) DO NOTHING`,
+    [eventId, postId, closingActorId, creatorId],
+  );
+
+  const totalRecipients = insertResult.rowCount ?? 0;
+  // An event with no audience has nothing to deliver, so it must not stay
+  // PENDING forever waiting for a worker that will never find work.
+  await client.query(
+    `UPDATE post_completion_notification_events
+     SET total_recipients = $2,
+         status = CASE WHEN $2::int = 0 THEN 'COMPLETED' ELSE status END,
+         updated_at = now()
+     WHERE id = $1`,
+    [eventId, totalRecipients],
+  );
+
+  return { eventId, totalRecipients };
+}
+
+/**
+ * Handles post reopening by an administrator. Mirrors the API repository's
+ * durable correction queueing in SQL:
+ * 1. Supersedes active CLOSURE events. An undelivered correction queued by an
+ *    earlier reopening is owed history and is never superseded.
+ * 2. Suppresses obsolete pending/processing CLOSURE recipients, and any queued
+ *    PENDING/PROCESSING push intents for their committed closure inbox rows.
+ * 3. Queues ONE durable correction event (`POST_REOPENED`/`RESCUE_REOPENED`,
+ *    linked to the latest delivered closure event through `corrects_event_id`)
+ *    whose audience is the distinct set of already-delivered closure
+ *    recipients, and marks those closure rows CORRECTED.
+ *
+ * No access or preference check happens here. The completion worker applies
+ * account availability, Blocks and push preferences under the canonical
+ * account-pair locks at delivery time, so a correction cannot race a
+ * concurrently committing Block.
+ */
+export async function reopenPostCompletion(client, { postId, postTitle, postType, previousOutcome }) {
+  await client.query(
+    `UPDATE post_completion_notification_events
+     SET status = 'SUPERSEDED', updated_at = now()
+     WHERE post_id = $1::uuid
+       AND status IN ('PENDING', 'PROCESSING')
+       AND type IN ('POST_COMPLETED', 'RESCUE_COMPLETED')`,
+    [postId],
+  );
+
+  await client.query(
+    `UPDATE post_completion_recipients r
+     SET status = 'SUPPRESSED', updated_at = now()
+     WHERE r.post_id = $1::uuid
+       AND r.status IN ('PENDING', 'PROCESSING')
+       AND EXISTS (
+         SELECT 1 FROM post_completion_notification_events e
+         WHERE e.id = r.event_id AND e.type IN ('POST_COMPLETED', 'RESCUE_COMPLETED')
+       )`,
+    [postId],
+  );
+
+  // Only closure events are correctable: a correction delivered by an earlier
+  // reopen is final history and must never be corrected again.
+  const { rows: deliveredRows } = await client.query(
+    `SELECT r.id, r.recipient_id, r.notification_id,
+            e.id AS event_id, e.post_type, e.outcome
+     FROM post_completion_recipients r
+     JOIN post_completion_notification_events e ON e.id = r.event_id
+     WHERE r.post_id = $1::uuid
+       AND r.status = 'DELIVERED'
+       AND e.type IN ('POST_COMPLETED', 'RESCUE_COMPLETED')
+     ORDER BY e.created_at DESC, e.id DESC`,
+    [postId],
+  );
+
+  // A committed closure inbox row may already have PENDING/PROCESSING push
+  // intents. The reopening makes that closure message obsolete, so suppress
+  // them while leaving terminal rows (DELIVERED/FAILED/SUPPRESSED) untouched.
+  // The correction push intents are created later by the delivery worker.
+  const closureNotificationIds = deliveredRows.map((row) => row.notification_id).filter(Boolean);
+  if (closureNotificationIds.length > 0) {
+    await client.query(
+      `UPDATE push_deliveries
+       SET status = 'SUPPRESSED', updated_at = now()
+       WHERE notification_id = ANY($1::uuid[])
+         AND status IN ('PENDING', 'PROCESSING')`,
+      [closureNotificationIds],
+    );
+  }
+
+  // No delivered recipient means there is nothing to correct.
+  if (deliveredRows.length === 0) {
+    return { correctedCount: 0, correctionEventId: null };
+  }
+
+  const correctionType = postType === 'RESCUE' ? 'RESCUE_REOPENED' : 'POST_REOPENED';
+  const content = buildNotificationContent(correctionType, { postTitle });
+
+  const { rows: eventRows } = await client.query(
+    `INSERT INTO post_completion_notification_events
+       (post_id, post_type, outcome, closing_actor_id, type, title, body, title_arabic, body_arabic,
+        status, total_recipients, corrects_event_id)
+     VALUES ($1::uuid, $2, $3, NULL, $4, $5, $6, $7, $8, 'PENDING', 0, $9::uuid)
+     RETURNING id`,
+    [
+      postId,
+      postType,
+      previousOutcome,
+      correctionType,
+      content.title,
+      content.body,
+      content.titleArabic,
+      content.bodyArabic,
+      deliveredRows[0].event_id,
+    ],
+  );
+  const correctionEventId = eventRows[0].id;
+
+  const insertResult = await client.query(
+    `INSERT INTO post_completion_recipients (event_id, post_id, recipient_id, status)
+     SELECT $1::uuid, $2::uuid, delivered.recipient_id, 'PENDING'
+     FROM (
+       SELECT DISTINCT r.recipient_id
+       FROM post_completion_recipients r
+       JOIN post_completion_notification_events e ON e.id = r.event_id
+       WHERE r.post_id = $2::uuid
+         AND r.status = 'DELIVERED'
+         AND e.type IN ('POST_COMPLETED', 'RESCUE_COMPLETED')
+     ) delivered
+     ON CONFLICT (event_id, recipient_id) DO NOTHING`,
+    [correctionEventId, postId],
+  );
+  const correctedCount = insertResult.rowCount ?? 0;
+
+  await client.query(
+    `UPDATE post_completion_recipients r
+     SET status = 'CORRECTED', updated_at = now()
+     WHERE r.post_id = $1::uuid
+       AND r.status = 'DELIVERED'
+       AND EXISTS (
+         SELECT 1 FROM post_completion_notification_events e
+         WHERE e.id = r.event_id AND e.type IN ('POST_COMPLETED', 'RESCUE_COMPLETED')
+       )`,
+    [postId],
+  );
+
+  await client.query(
+    `UPDATE post_completion_notification_events
+     SET total_recipients = $2, updated_at = now()
+     WHERE id = $1`,
+    [correctionEventId, correctedCount],
+  );
+
+  return { correctedCount, correctionEventId };
 }

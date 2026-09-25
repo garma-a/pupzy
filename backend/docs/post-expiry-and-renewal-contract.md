@@ -12,6 +12,7 @@ Tickets 12 and 13 enable the PRODUCT (14/11-day) and ADOPTION (30/27-day) window
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `ACTIVE`                   | Discoverable and accepting interactions.                                                                             |
 | `RESOLVED`/`REUNITED`/`ADOPTED`/`SOLD` | A Post Resolution decided by the owner or an administrator.                                                |
+| `ANIMAL_DECEASED`          | A completed RESCUE Post Resolution recording that the animal died. Not a success; never renewable and never labelled rescued. |
 | `REMOVED`                  | Administrative takedown or owner deletion. Inaccessible to clients, restorable by an administrator.                  |
 | `EXPIRED`                  | Inactivity state of a renewable listing. **Not** resolved, **not** moderation-removed, **not** deletable state.      |
 

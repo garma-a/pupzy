@@ -35,15 +35,21 @@
  * invalidation and other external effects run only after commit.
  *
  * ## Statuses
- * `ACTIVE` plus the per-type successful outcomes, `REMOVED` and `EXPIRED`.
+ * `ACTIVE` plus the per-type completed outcomes, `REMOVED` and `EXPIRED`.
  * Administrative removal stores `REMOVED`; inactivity expiry stores `EXPIRED`,
  * deliberately distinct so an expired listing keeps its detail, media and
  * discussion until renewal. Conceptually the two events are recorded by actor,
  * status value and side effects (see `POST_LIFECYCLE_SIDE_EFFECTS`).
+ *
+ * Most completed outcomes record success (a rescue that ended well, a reunion,
+ * an adoption, a sale), but `ANIMAL_DECEASED` does not: it closes a RESCUE
+ * because the animal died. Only RESCUE permits it, and no notification,
+ * correction or label may describe it as a successful rescue.
  */
 
 /** Lifecycle statuses a Post can hold today. */
-export type PostLifecycleStatus = 'ACTIVE' | 'RESOLVED' | 'REUNITED' | 'ADOPTED' | 'SOLD' | 'REMOVED' | 'EXPIRED';
+export type PostLifecycleStatus =
+  'ACTIVE' | 'RESOLVED' | 'REUNITED' | 'ADOPTED' | 'SOLD' | 'ANIMAL_DECEASED' | 'REMOVED' | 'EXPIRED';
 
 /** Listing types a Post can hold today. */
 export type PostLifecyclePostType = 'RESCUE' | 'LOST' | 'ADOPTION' | 'PRODUCT' | 'MATING';
@@ -78,8 +84,12 @@ export const POST_LIFECYCLE_LOCK_ORDER = Object.freeze(['post-discussion-advisor
 
 /**
  * Owner closure targets by Post type. Owners may close an `ACTIVE` Post into
- * its type-specific successful outcome only. Successful outcomes stay directly
+ * its type-specific completed outcome only. Completed outcomes stay directly
  * readable while leaving discovery.
+ *
+ * RESCUE is the one type with two targets: `RESOLVED` for a successful rescue
+ * and `ANIMAL_DECEASED` for a rescue that ended with the animal's death. The
+ * latter is not a success and only RESCUE permits it.
  *
  * LOST is the one type whose targets depend on its direction discriminator:
  * see `LOST_SUBTYPE_CLOSURE_TRANSITIONS`. The entry here is the conservative
@@ -87,7 +97,7 @@ export const POST_LIFECYCLE_LOCK_ORDER = Object.freeze(['post-discussion-advisor
  */
 export const OWNER_CLOSURE_TRANSITIONS: Readonly<Record<PostLifecyclePostType, readonly PostLifecycleStatus[]>> =
   Object.freeze({
-    RESCUE: Object.freeze(['RESOLVED'] as const),
+    RESCUE: Object.freeze(['RESOLVED', 'ANIMAL_DECEASED'] as const),
     LOST: Object.freeze(['REUNITED'] as const),
     ADOPTION: Object.freeze(['ADOPTED'] as const),
     PRODUCT: Object.freeze(['SOLD'] as const),
@@ -150,7 +160,7 @@ export function canOwnerRemove(currentStatus: string): boolean {
 /**
  * True when an administrator may record a Post Resolution for this Post.
  *
- * Administrators mirror the owner's successful outcome per type (and, for
+ * Administrators mirror the owner's completed outcome per type (and, for
  * LOST, direction) but are never a second owner path: the source status must
  * still be `ACTIVE`, so a recorded outcome can only be corrected through the
  * explicit reopening transition and never overwritten by another resolution.
@@ -166,17 +176,24 @@ export function canAdminResolve(
 }
 
 /**
- * The successful outcomes a Post Resolution can record. These are the only
+ * The completed outcomes a Post Resolution can record. These are the only
  * statuses an administrator may correct through reopening; `ACTIVE`, `REMOVED`
  * and `EXPIRED` are deliberately absent. This is the one outcome list: the
  * AdminJS queue predicates, the reopening rule and the notification templates
  * all derive from it, so adding an outcome cannot ship in one service only.
+ *
+ * `ANIMAL_DECEASED` is a completed outcome but not a success: it closes a
+ * RESCUE because the animal died. It is included here so the reopening
+ * correction, the AdminJS Completed queue and the durable completion event all
+ * treat it exactly like every other recorded outcome, while its copy and
+ * labels stay distinct from a successful rescue.
  */
 export const COMPLETED_POST_OUTCOMES = Object.freeze([
   'RESOLVED',
   'REUNITED',
   'ADOPTED',
   'SOLD',
+  'ANIMAL_DECEASED',
 ] as const satisfies readonly PostLifecycleStatus[]);
 
 /** A completed Post outcome: one of `COMPLETED_POST_OUTCOMES`. */
@@ -186,11 +203,12 @@ export type PostLifecycleCompletedOutcome = (typeof COMPLETED_POST_OUTCOMES)[num
  * True when an administrator may reopen this Post.
  *
  * Reopening is the administrator-only correction for a mistaken Post
- * Resolution. It applies only to a completed successful outcome, so it never
- * overwrites an `ACTIVE` Post and never bypasses the dedicated paths for
- * removed or expired content: a `REMOVED` Post is returned only by the
- * explicit restoration transition, and an `EXPIRED` listing only by explicit
- * owner renewal. Owners have no reopening path in any case.
+ * Resolution. It applies only to a completed outcome (including
+ * `ANIMAL_DECEASED`), so it never overwrites an `ACTIVE` Post and never
+ * bypasses the dedicated paths for removed or expired content: a `REMOVED`
+ * Post is returned only by the explicit restoration transition, and an
+ * `EXPIRED` listing only by explicit owner renewal. Owners have no reopening
+ * path in any case.
  */
 export function canAdminReopen(currentStatus: string): boolean {
   return COMPLETED_POST_OUTCOMES.includes(currentStatus as PostLifecycleCompletedOutcome);
@@ -199,7 +217,7 @@ export function canAdminReopen(currentStatus: string): boolean {
 /**
  * True when an administrator may remove this Post. Administrative removal is
  * the moderation takedown path and only applies to `ACTIVE` Posts, so it can
- * never overwrite a recorded successful outcome.
+ * never overwrite a recorded outcome.
  */
 export function canAdminRemove(currentStatus: string): boolean {
   return currentStatus === 'ACTIVE';

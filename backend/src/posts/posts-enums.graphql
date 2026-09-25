@@ -26,6 +26,8 @@ Lifecycle state of a post.
 EXPIRED is the inactivity state for renewable ADOPTION/PRODUCT listings:
 the listing leaves active discovery but keeps its detail, media and discussion
 until its owner renews it.
+ANIMAL_DECEASED closes a RESCUE whose animal died. It is a completed outcome
+but never a successful rescue, and only RESCUE permits it.
 """
 enum PostStatus {
   ACTIVE
@@ -35,6 +37,7 @@ enum PostStatus {
   SOLD
   REMOVED
   EXPIRED
+  ANIMAL_DECEASED
 }
 
 """
@@ -200,6 +203,10 @@ enum NotificationType {
   NEW_REPLY
   COMMENT_BOOSTED
   COMMENT_PINNED
+  POST_COMPLETED
+  POST_REOPENED
+  RESCUE_COMPLETED
+  RESCUE_REOPENED
 }
 
 """

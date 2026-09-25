@@ -28,12 +28,20 @@ let staffId;
 const BUSINESS_TABLES = `
   post_media, rescue_posts, lost_posts, adoption_posts, product_posts, mating_posts,
   post_upvotes, post_saves, contact_requests, adoption_applications, post_reports, comment_reports, account_reports,
-  notifications, moderation_actions, posts, users,
+  notifications, post_completion_recipients, post_completion_notification_events,
+  moderation_actions, posts, users,
   comments, comment_media, post_pins, comment_boosts, comment_idempotency,
   media_deletion_work, blocked_media_hashes, blocks, account_deletions
 `;
 
-const RESOLUTION_ACTION_NAMES = ['markRescued', 'markReunited', 'markResolved', 'markAdopted', 'markSold'];
+const RESOLUTION_ACTION_NAMES = [
+  'markRescued',
+  'markAnimalDeceased',
+  'markReunited',
+  'markResolved',
+  'markAdopted',
+  'markSold',
+];
 const REOPEN_ACTION_NAME = 'reopenPost';
 
 async function login(email, password) {
@@ -232,7 +240,7 @@ describe('Administrator case resolution HTTP boundary', () => {
   it('exposes only the valid type-specific resolution actions and leaves uncertain cases active', async () => {
     const ownerId = await insertUser('resolution-owner');
     const cases = [
-      { postType: 'RESCUE', reportType: null, expected: ['markRescued'] },
+      { postType: 'RESCUE', reportType: null, expected: ['markRescued', 'markAnimalDeceased'] },
       { postType: 'LOST', reportType: 'LOST_PET', expected: ['markReunited'] },
       { postType: 'LOST', reportType: 'FOUND_STRAY', expected: ['markReunited', 'markResolved'] },
       { postType: 'ADOPTION', reportType: null, expected: ['markAdopted'] },
@@ -414,6 +422,247 @@ describe('Administrator case resolution HTTP boundary', () => {
     assert.equal(actionsAfter.names.includes('removePost'), false, 'removal is hidden once an outcome is recorded');
   });
 
+  it('records an audited animal-deceased resolution for an ACTIVE RESCUE only and never labels it as rescued', async () => {
+    const ownerId = await insertUser('deceased-owner');
+    const participantId = await insertUser('deceased-participant');
+    const rescueId = await insertTypedPost({ ownerId, postType: 'RESCUE', title: 'Deceased rescue case' });
+    const pendingContact = await insertContactRequest({ postId: rescueId, requesterId: participantId });
+
+    // The action is only offered for an ACTIVE RESCUE; every other type rejects
+    // a direct attempt without any write.
+    for (const postType of ['LOST', 'ADOPTION', 'PRODUCT', 'MATING']) {
+      const otherId = await insertTypedPost({
+        ownerId,
+        postType,
+        reportType: postType === 'LOST' ? 'FOUND_STRAY' : null,
+        title: `${postType} cannot be deceased`,
+      });
+      const response = await postAction(
+        'markAnimalDeceased',
+        otherId,
+        { reason: 'Wrong type' },
+        staffCookie,
+        staffCsrf,
+      );
+      assert.equal(response.status, 200);
+      const result = await response.json();
+      assert.equal(result.notice?.type, 'error', `${postType} must reject markAnimalDeceased`);
+      assert.match(result.notice?.message ?? '', /cannot be resolved/i);
+      const row = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [otherId])).rows[0];
+      assert.equal(row.status, 'ACTIVE');
+    }
+
+    const response = await postAction(
+      'markAnimalDeceased',
+      rescueId,
+      { reason: 'Animal died at the vet' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.notice?.type, 'success');
+    assert.equal(result.notice?.message, 'Post resolution recorded.');
+
+    const post = (await database.pool.query(`SELECT status, moderation_status FROM posts WHERE id = $1`, [rescueId]))
+      .rows[0];
+    assert.equal(post.status, 'ANIMAL_DECEASED');
+    assert.equal(post.moderation_status, 'PENDING_AUTO_REVIEW', 'resolution is not a moderation decision');
+
+    const audit = (
+      await database.pool.query(
+        `SELECT admin_user_id, action_type, target_type, reason, metadata
+         FROM moderation_actions WHERE target_id = $1`,
+        [rescueId],
+      )
+    ).rows[0];
+    assert.equal(audit.admin_user_id, staffId);
+    assert.equal(audit.action_type, 'POST_RESOLVED');
+    assert.equal(audit.target_type, 'POST');
+    assert.equal(audit.reason, 'Animal died at the vet');
+    assert.equal(audit.metadata.outcome, 'ANIMAL_DECEASED');
+    assert.equal(audit.metadata.terminatedContactRequestCount, 1);
+
+    const notifications = (
+      await database.pool.query(
+        `SELECT type, recipient_id, related_post_id, title, body, title_arabic, body_arabic
+         FROM notifications WHERE related_post_id = $1`,
+        [rescueId],
+      )
+    ).rows;
+    assert.equal(notifications.length, 1);
+    assert.equal(notifications[0].type, 'POST_RESOLVED_BY_ADMIN');
+    assert.equal(notifications[0].recipient_id, ownerId);
+    assert.equal(
+      notifications[0].body,
+      'An administrator marked your post "Deceased rescue case" as closed (animal deceased).',
+    );
+    assert.equal(notifications[0].body.includes('rescued'), false, 'death is never labelled a successful rescue');
+    assert.equal(notifications[0].body_arabic.includes('تم إنقاذها'), false);
+    assert.ok(notifications[0].body_arabic.includes('وفاة الحيوان'));
+
+    const event = (
+      await database.pool.query(
+        `SELECT type, outcome, post_type, closing_actor_id, title, body, title_arabic, body_arabic, status, total_recipients
+         FROM post_completion_notification_events WHERE post_id = $1`,
+        [rescueId],
+      )
+    ).rows[0];
+    assert.equal(event.type, 'RESCUE_COMPLETED');
+    assert.equal(event.post_type, 'RESCUE');
+    assert.equal(event.outcome, 'ANIMAL_DECEASED');
+    assert.equal(event.closing_actor_id, null);
+    assert.equal(event.title, 'Rescue closed');
+    assert.equal(event.body, 'The rescue "Deceased rescue case" was closed (animal deceased).');
+    assert.equal(event.body.includes('rescued'), false);
+    assert.equal(event.status, 'PENDING');
+    assert.equal(event.total_recipients, 1);
+
+    const contact = (
+      await database.pool.query(`SELECT status, responded_at FROM contact_requests WHERE id = $1`, [pendingContact])
+    ).rows[0];
+    assert.equal(contact.status, 'REJECTED');
+    assert.ok(contact.responded_at);
+
+    const actionsAfter = await fetchRecordActions(rescueId);
+    assert.equal(actionsAfter.names.includes('markAnimalDeceased'), false);
+    assert.equal(actionsAfter.names.includes('markRescued'), false, 'a recorded outcome cannot be resolved twice');
+    assert.equal(actionsAfter.names.includes(REOPEN_ACTION_NAME), true, 'the deceased outcome stays reopenable');
+
+    const repeated = await postAction(
+      'markAnimalDeceased',
+      rescueId,
+      { reason: 'Repeat attempt' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal((await repeated.json()).notice?.type, 'error');
+  });
+
+  it('captures and localizes the participant completion event for a non-rescue outcome, and never on removal', async () => {
+    const ownerId = await insertUser('sold-owner');
+    const buyerId = await insertUser('sold-buyer');
+    const otherBuyerId = await insertUser('sold-other-buyer');
+    const productId = await insertTypedPost({ ownerId, postType: 'PRODUCT', title: 'Sold product case' });
+
+    await database.pool.query(`INSERT INTO post_saves (post_id, user_id) VALUES ($1, $2), ($1, $3)`, [
+      productId,
+      buyerId,
+      otherBuyerId,
+    ]);
+
+    const response = await postAction('markSold', productId, { reason: 'Sold in person' }, staffCookie, staffCsrf);
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.notice?.type, 'success');
+
+    const event = (
+      await database.pool.query(
+        `SELECT type, outcome, post_type, closing_actor_id, title, body, title_arabic, body_arabic, status, total_recipients
+         FROM post_completion_notification_events WHERE post_id = $1`,
+        [productId],
+      )
+    ).rows[0];
+    assert.equal(event.type, 'POST_COMPLETED');
+    assert.equal(event.post_type, 'PRODUCT');
+    assert.equal(event.outcome, 'SOLD');
+    assert.equal(
+      event.closing_actor_id,
+      null,
+      'AdminJS actors are not app users, so the event stores no closing user; the audit row names the admin',
+    );
+    assert.equal(event.title, 'Item sold');
+    assert.equal(event.body, 'The post "Sold product case" was marked as sold.');
+    assert.equal(event.title_arabic, 'تم البيع');
+    assert.ok(event.body_arabic.includes('Sold product case'));
+    assert.ok(event.body_arabic.includes('تم البيع'));
+    assert.equal(event.total_recipients, 2);
+    assert.equal(event.status, 'PENDING');
+
+    const recipients = (
+      await database.pool.query(`SELECT recipient_id FROM post_completion_recipients WHERE post_id = $1`, [productId])
+    ).rows.map((row) => row.recipient_id);
+    assert.deepEqual(recipients.sort(), [buyerId, otherBuyerId].sort());
+    assert.equal(recipients.includes(ownerId), false, 'the creator is never a completion audience member');
+
+    // Administrator removal is a moderation takedown, not a completion.
+    const removedId = await insertTypedPost({ ownerId, postType: 'PRODUCT', title: 'Removed product case' });
+    await database.pool.query(`INSERT INTO post_saves (post_id, user_id) VALUES ($1, $2)`, [removedId, buyerId]);
+    const removal = await postAction('removePost', removedId, { reason: 'Policy violation' }, staffCookie, staffCsrf);
+    assert.equal((await removal.json()).notice?.type, 'success');
+    const removalEvents = await database.pool.query(
+      `SELECT count(*)::int AS count FROM post_completion_notification_events WHERE post_id = $1`,
+      [removedId],
+    );
+    assert.equal(removalEvents.rows[0].count, 0, 'removal never emits a completion event');
+  });
+
+  it('captures adoption applicants of every status in the ADOPTED completion audience over authenticated HTTP', async () => {
+    const ownerId = await insertUser('adopted-audience-owner');
+    const pendingApplicantId = await insertUser('adopted-audience-pending');
+    const approvedApplicantId = await insertUser('adopted-audience-approved');
+    const rejectedApplicantId = await insertUser('adopted-audience-rejected');
+    const overlappingApplicantId = await insertUser('adopted-audience-overlapping');
+    const saverId = await insertUser('adopted-audience-saver');
+    const postId = await insertTypedPost({ ownerId, postType: 'ADOPTION', title: 'Adopted audience case' });
+
+    await insertAdoptionApplication({ postId, applicantId: pendingApplicantId });
+    await insertAdoptionApplication({ postId, applicantId: approvedApplicantId, status: 'APPROVED' });
+    await insertAdoptionApplication({ postId, applicantId: rejectedApplicantId, status: 'REJECTED' });
+    await insertAdoptionApplication({ postId, applicantId: overlappingApplicantId });
+
+    // The overlapping applicant is also a saver and a commenter, and one user
+    // saves without applying, so the audience union is exercised end to end.
+    await database.pool.query(`INSERT INTO post_saves (post_id, user_id) VALUES ($1, $2), ($1, $3)`, [
+      postId,
+      overlappingApplicantId,
+      saverId,
+    ]);
+    await database.pool.query(
+      `INSERT INTO comments (post_id, author_id, text, status)
+       VALUES ($1, $2, 'Applied and commented!', 'ACTIVE')`,
+      [postId, overlappingApplicantId],
+    );
+
+    const response = await postAction('markAdopted', postId, { reason: 'Adoption completed' }, staffCookie, staffCsrf);
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.notice?.type, 'success');
+
+    const event = (
+      await database.pool.query(
+        `SELECT type, outcome, post_type, closing_actor_id, title, body, title_arabic, body_arabic, status, total_recipients
+         FROM post_completion_notification_events WHERE post_id = $1`,
+        [postId],
+      )
+    ).rows[0];
+    assert.equal(event.type, 'POST_COMPLETED');
+    assert.equal(event.outcome, 'ADOPTED');
+    assert.equal(event.post_type, 'ADOPTION');
+    assert.equal(event.closing_actor_id, null);
+    assert.equal(event.title, 'Pet adopted');
+    assert.equal(event.body, 'The post "Adopted audience case" was marked as adopted.');
+    assert.equal(event.title_arabic, 'تم التبني');
+    assert.ok(event.body_arabic.includes('Adopted audience case'));
+    assert.ok(event.body_arabic.includes('تم التبني'));
+    assert.equal(event.total_recipients, 5);
+    assert.equal(event.status, 'PENDING');
+
+    const recipients = (
+      await database.pool.query(`SELECT recipient_id FROM post_completion_recipients WHERE post_id = $1`, [postId])
+    ).rows.map((row) => row.recipient_id);
+    assert.deepEqual(
+      recipients.sort(),
+      [pendingApplicantId, approvedApplicantId, rejectedApplicantId, overlappingApplicantId, saverId].sort(),
+    );
+    assert.equal(recipients.includes(ownerId), false, 'the creator is never a completion audience member');
+    assert.equal(
+      recipients.filter((id) => id === overlappingApplicantId).length,
+      1,
+      'overlapping applicant/comment/save membership produces exactly one recipient row',
+    );
+  });
+
   it('requires an internal reason and rejects invalid, repeated or removed-state resolutions without writes', async () => {
     const ownerId = await insertUser('guard-owner');
     const adoptionId = await insertTypedPost({ ownerId, postType: 'ADOPTION', title: 'Guard adoption' });
@@ -584,6 +833,7 @@ describe('Administrator case reopening HTTP boundary', () => {
     const ownerId = await insertUser('reopen-visibility-owner');
     const completedCases = [
       { postType: 'RESCUE', reportType: null, status: 'RESOLVED', title: 'Reopen rescue' },
+      { postType: 'RESCUE', reportType: null, status: 'ANIMAL_DECEASED', title: 'Reopen deceased rescue' },
       { postType: 'LOST', reportType: 'LOST_PET', status: 'REUNITED', title: 'Reopen lost pet' },
       { postType: 'LOST', reportType: 'FOUND_STRAY', status: 'RESOLVED', title: 'Reopen found stray' },
       { postType: 'ADOPTION', reportType: null, status: 'ADOPTED', title: 'Reopen adoption' },
@@ -671,6 +921,7 @@ describe('Administrator case reopening HTTP boundary', () => {
   it('corrects a mistaken resolution over authenticated HTTP while closed interactions stay closed', async () => {
     const ownerId = await insertUser('reopen-flow-owner');
     const requesterId = await insertUser('reopen-flow-requester');
+    const applicantId = await insertUser('reopen-flow-applicant');
     const reporterId = await insertUser('reopen-flow-reporter');
     await database.pool.query(
       `INSERT INTO device_registrations (user_id, token, platform)
@@ -679,6 +930,7 @@ describe('Administrator case reopening HTTP boundary', () => {
     );
     const postId = await insertTypedPost({ ownerId, postType: 'ADOPTION', title: 'Correction journey case' });
     const contactRequestId = await insertContactRequest({ postId, requesterId });
+    const applicationId = await insertAdoptionApplication({ postId, applicantId });
     const reportId = (
       await database.pool.query(
         `INSERT INTO post_reports (post_id, reporter_id, reason)
@@ -702,6 +954,11 @@ describe('Administrator case reopening HTTP boundary', () => {
       await database.pool.query(`SELECT status, responded_at FROM contact_requests WHERE id = $1`, [contactRequestId])
     ).rows[0];
     assert.equal(closedRequest.status, 'REJECTED');
+    const closedApplication = (
+      await database.pool.query(`SELECT status, responded_at FROM adoption_applications WHERE id = $1`, [applicationId])
+    ).rows[0];
+    assert.equal(closedApplication.status, 'REJECTED');
+    assert.ok(closedApplication.responded_at);
 
     const reopened = await postAction(
       REOPEN_ACTION_NAME,
@@ -772,6 +1029,16 @@ describe('Administrator case reopening HTTP boundary', () => {
     ).rows[0];
     assert.equal(stillClosed.status, 'REJECTED', 'reopening never revives a closed request');
     assert.ok(stillClosed.responded_at);
+    const stillClosedApplication = (
+      await database.pool.query(`SELECT status, responded_at FROM adoption_applications WHERE id = $1`, [applicationId])
+    ).rows[0];
+    assert.equal(stillClosedApplication.status, 'REJECTED', 'reopening never revives a terminated application');
+    assert.ok(stillClosedApplication.responded_at);
+    const completionNotifications = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE recipient_id = $1 AND type = 'POST_COMPLETED'`,
+      [applicantId],
+    );
+    assert.equal(completionNotifications.rows[0].count, 0, 'reopening never re-notifies the recorded completion');
 
     const report = (
       await database.pool.query(`SELECT reviewed_at, review_outcome FROM post_reports WHERE id = $1`, [reportId])
@@ -781,6 +1048,399 @@ describe('Administrator case reopening HTTP boundary', () => {
     const view = await fetchRecordActions(postId);
     assert.ok(view.names.includes('markAdopted'), 'the corrected case can be resolved again if justified');
     assert.equal(view.names.includes(REOPEN_ACTION_NAME), false, 'an active case offers no reopening');
+  });
+
+  it('corrects a delivered non-rescue participant, suppresses pending ones, and leaves the owner notification unchanged', async () => {
+    const ownerId = await insertUser('participant-owner');
+    const deliveredParticipantId = await insertUser('participant-delivered');
+    const pendingParticipantId = await insertUser('participant-pending');
+    const productId = await insertTypedPost({ ownerId, postType: 'PRODUCT', title: 'Participant correction case' });
+
+    // Record the SOLD outcome through the authenticated boundary first.
+    const resolution = await postAction('markSold', productId, { reason: 'Sold offline' }, staffCookie, staffCsrf);
+    assert.equal(resolution.status, 200);
+    assert.equal((await resolution.json()).notice?.type, 'success');
+
+    const event = (
+      await database.pool.query(`SELECT id, type FROM post_completion_notification_events WHERE post_id = $1`, [
+        productId,
+      ])
+    ).rows[0];
+    assert.equal(event.type, 'POST_COMPLETED');
+
+    // Seed the participant audience the API worker would normally consume: one
+    // participant already delivered a committed closure inbox row, one still
+    // pending.
+    const deliveredNotification = (
+      await database.pool.query(
+        `INSERT INTO notifications
+           (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
+         VALUES ($1, 'POST_COMPLETED', 'Item sold',
+                 'The post "Participant correction case" was marked as sold.',
+                 'تم البيع', 'تم تسجيل نتيجة المنشور "Participant correction case": تم البيع.', $2, false)
+         RETURNING id`,
+        [deliveredParticipantId, productId],
+      )
+    ).rows[0];
+    const deliveredRecipient = (
+      await database.pool.query(
+        `INSERT INTO post_completion_recipients
+           (event_id, post_id, recipient_id, status, notification_id, delivered_at, attempts)
+         VALUES ($1, $2, $3, 'DELIVERED', $4, now(), 1)
+         RETURNING id`,
+        [event.id, productId, deliveredParticipantId, deliveredNotification.id],
+      )
+    ).rows[0];
+    const pendingRecipient = (
+      await database.pool.query(
+        `INSERT INTO post_completion_recipients (event_id, post_id, recipient_id, status)
+         VALUES ($1, $2, $3, 'PENDING')
+         RETURNING id`,
+        [event.id, productId, pendingParticipantId],
+      )
+    ).rows[0];
+    await database.pool.query(
+      `UPDATE post_completion_notification_events SET total_recipients = 2, status = 'PENDING' WHERE id = $1`,
+      [event.id],
+    );
+
+    const response = await postAction(
+      REOPEN_ACTION_NAME,
+      productId,
+      { reason: 'The sale was recorded by mistake' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).notice?.type, 'success');
+
+    // (a) The delivered participant's closure row is CORRECTED and queued into
+    // ONE durable correction event. No inbox row is written synchronously: the
+    // API completion worker delivers the correction in bounded batches.
+    const correctedRecipient = (
+      await database.pool.query(`SELECT status, notification_id FROM post_completion_recipients WHERE id = $1`, [
+        deliveredRecipient.id,
+      ])
+    ).rows[0];
+    assert.equal(correctedRecipient.status, 'CORRECTED');
+    assert.equal(correctedRecipient.notification_id, deliveredNotification.id, 'the original inbox row is kept');
+
+    const correctionEvents = (
+      await database.pool.query(
+        `SELECT id, type, post_type, outcome, corrects_event_id, status, total_recipients,
+                title, body, title_arabic, body_arabic
+         FROM post_completion_notification_events
+         WHERE post_id = $1 AND type = 'POST_REOPENED'`,
+        [productId],
+      )
+    ).rows;
+    assert.equal(correctionEvents.length, 1);
+    assert.equal(correctionEvents[0].post_type, 'PRODUCT');
+    assert.equal(correctionEvents[0].outcome, 'SOLD');
+    assert.equal(correctionEvents[0].corrects_event_id, event.id);
+    assert.equal(correctionEvents[0].status, 'PENDING');
+    assert.equal(correctionEvents[0].total_recipients, 1);
+    assert.equal(correctionEvents[0].title, 'Post reopened');
+    assert.equal(correctionEvents[0].body, 'The post "Participant correction case" was reopened.');
+    assert.equal(correctionEvents[0].title_arabic, 'تمت إعادة فتح المنشور');
+    assert.ok(correctionEvents[0].body_arabic.includes('Participant correction case'));
+
+    const queuedCorrectionRecipients = (
+      await database.pool.query(
+        `SELECT recipient_id, status, notification_id
+         FROM post_completion_recipients WHERE event_id = $1`,
+        [correctionEvents[0].id],
+      )
+    ).rows;
+    assert.equal(queuedCorrectionRecipients.length, 1);
+    assert.equal(queuedCorrectionRecipients[0].recipient_id, deliveredParticipantId);
+    assert.equal(queuedCorrectionRecipients[0].status, 'PENDING');
+    assert.equal(queuedCorrectionRecipients[0].notification_id, null);
+
+    const synchronousCorrections = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE recipient_id = $1 AND type = 'POST_REOPENED'`,
+      [deliveredParticipantId],
+    );
+    assert.equal(synchronousCorrections.rows[0].count, 0, 'corrections are delivered by the API worker');
+
+    // (b) Still-pending recipients are suppressed and never delivered.
+    const pendingRow = (
+      await database.pool.query(`SELECT status FROM post_completion_recipients WHERE id = $1`, [pendingRecipient.id])
+    ).rows[0];
+    assert.equal(pendingRow.status, 'SUPPRESSED');
+    const eventRow = (
+      await database.pool.query(`SELECT status FROM post_completion_notification_events WHERE id = $1`, [event.id])
+    ).rows[0];
+    assert.equal(eventRow.status, 'SUPERSEDED');
+    const pendingNotifications = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE recipient_id = $1`,
+      [pendingParticipantId],
+    );
+    assert.equal(pendingNotifications.rows[0].count, 0, 'a suppressed closure recipient never receives a notification');
+
+    // (c) The owner's POST_REOPENED_BY_ADMIN behavior is unchanged.
+    const ownerCorrections = (
+      await database.pool.query(
+        `SELECT type, related_post_id, title, body, title_arabic, body_arabic
+         FROM notifications WHERE recipient_id = $1 AND type = 'POST_REOPENED_BY_ADMIN'`,
+        [ownerId],
+      )
+    ).rows;
+    assert.equal(ownerCorrections.length, 1);
+    assert.equal(ownerCorrections[0].related_post_id, productId);
+    assert.equal(ownerCorrections[0].title, 'Post reopened');
+    assert.equal(ownerCorrections[0].body, 'An administrator reopened your post "Participant correction case".');
+    assert.equal(ownerCorrections[0].title_arabic, 'تمت إعادة فتح المنشور');
+    assert.ok(ownerCorrections[0].body_arabic.includes('Participant correction case'));
+  });
+
+  it('suppresses a queued closure push intent when reopening corrects the outcome', async () => {
+    const ownerId = await insertUser('queued-push-owner');
+    const participantId = await insertUser('queued-push-participant');
+    const productId = await insertTypedPost({ ownerId, postType: 'PRODUCT', title: 'Queued push correction case' });
+
+    await database.pool.query(
+      `INSERT INTO device_registrations (user_id, token, platform)
+       VALUES ($1, 'queued-push-participant-token', 'ANDROID')`,
+      [participantId],
+    );
+    // The saver is part of the closure-time audience, so the resolution action
+    // captures a recipient row for them.
+    await database.pool.query(`INSERT INTO post_saves (post_id, user_id) VALUES ($1, $2)`, [productId, participantId]);
+
+    // Record the SOLD outcome through the authenticated boundary first.
+    const resolution = await postAction('markSold', productId, { reason: 'Sold offline' }, staffCookie, staffCsrf);
+    assert.equal(resolution.status, 200);
+    assert.equal((await resolution.json()).notice?.type, 'success');
+
+    const event = (
+      await database.pool.query(`SELECT id FROM post_completion_notification_events WHERE post_id = $1`, [productId])
+    ).rows[0];
+
+    // Seed the delivered closure state the API worker would have committed:
+    // a committed closure inbox row and its still-PENDING push intent.
+    const closureNotification = (
+      await database.pool.query(
+        `INSERT INTO notifications
+           (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
+         VALUES ($1, 'POST_COMPLETED', 'Item sold',
+                 'The post "Queued push correction case" was marked as sold.',
+                 'تم البيع', 'تم تسجيل نتيجة المنشور "Queued push correction case": تم البيع.', $2, false)
+         RETURNING id`,
+        [participantId, productId],
+      )
+    ).rows[0];
+    await database.pool.query(
+      `UPDATE post_completion_recipients
+       SET status = 'DELIVERED', notification_id = $3, delivered_at = now(), attempts = 1
+       WHERE event_id = $1 AND recipient_id = $2`,
+      [event.id, participantId, closureNotification.id],
+    );
+    const closurePush = (
+      await database.pool.query(
+        `INSERT INTO push_deliveries (notification_id, recipient_id, device_id, status)
+         SELECT $1, $2, d.id, 'PENDING'
+         FROM device_registrations d WHERE d.user_id = $2
+         RETURNING id, status`,
+        [closureNotification.id, participantId],
+      )
+    ).rows[0];
+    assert.equal(closurePush.status, 'PENDING');
+
+    const response = await postAction(
+      REOPEN_ACTION_NAME,
+      productId,
+      { reason: 'The sale was recorded by mistake' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).notice?.type, 'success');
+
+    // The obsolete closure intent is terminal, so no provider send can follow.
+    const suppressedClosure = (
+      await database.pool.query(`SELECT status FROM push_deliveries WHERE id = $1`, [closurePush.id])
+    ).rows[0];
+    assert.equal(suppressedClosure.status, 'SUPPRESSED');
+
+    // The correction is queued as ONE durable event with a PENDING recipient.
+    // No inbox row or push intent exists until the API worker delivers it.
+    const correctionEvents = (
+      await database.pool.query(
+        `SELECT id, type, outcome, corrects_event_id, status, total_recipients
+         FROM post_completion_notification_events
+         WHERE post_id = $1 AND type = 'POST_REOPENED'`,
+        [productId],
+      )
+    ).rows;
+    assert.equal(correctionEvents.length, 1);
+    assert.equal(correctionEvents[0].outcome, 'SOLD');
+    assert.equal(correctionEvents[0].corrects_event_id, event.id);
+    assert.equal(correctionEvents[0].status, 'PENDING');
+    assert.equal(correctionEvents[0].total_recipients, 1);
+
+    const correctionRecipients = (
+      await database.pool.query(`SELECT recipient_id, status FROM post_completion_recipients WHERE event_id = $1`, [
+        correctionEvents[0].id,
+      ])
+    ).rows;
+    assert.equal(correctionRecipients.length, 1);
+    assert.equal(correctionRecipients[0].recipient_id, participantId);
+    assert.equal(correctionRecipients[0].status, 'PENDING');
+
+    const correctionNotifications = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE recipient_id = $1 AND type = 'POST_REOPENED'`,
+      [participantId],
+    );
+    assert.equal(correctionNotifications.rows[0].count, 0, 'the correction is materialized by the API worker');
+
+    // Nothing is dispatchable yet: the closure was suppressed and the correction
+    // push intent is created only when the worker delivers the correction.
+    const dispatchable = (
+      await database.pool.query(
+        `SELECT count(*)::int AS count FROM push_deliveries WHERE status IN ('PENDING', 'PROCESSING')`,
+      )
+    ).rows[0];
+    assert.equal(dispatchable.count, 0);
+  });
+
+  it('queues corrections for every delivered participant and leaves access checks to delivery', async () => {
+    const ownerId = await insertUser('reopen-access-owner');
+    const blockedRecipientId = await insertUser('reopen-access-blocked');
+    const eligibleRecipientId = await insertUser('reopen-access-eligible');
+    const postId = await insertTypedPost({ ownerId, postType: 'PRODUCT', title: 'Access-checked correction case' });
+
+    await database.pool.query(
+      `INSERT INTO device_registrations (user_id, token, platform)
+       VALUES ($1, 'reopen-access-blocked-token', 'ANDROID'),
+              ($2, 'reopen-access-eligible-token', 'IOS'),
+              ($3, 'reopen-access-owner-token', 'ANDROID')`,
+      [blockedRecipientId, eligibleRecipientId, ownerId],
+    );
+    await database.pool.query(`INSERT INTO post_saves (post_id, user_id) VALUES ($1, $2), ($1, $3)`, [
+      postId,
+      blockedRecipientId,
+      eligibleRecipientId,
+    ]);
+
+    const resolution = await postAction('markSold', postId, { reason: 'Sold offline' }, staffCookie, staffCsrf);
+    assert.equal((await resolution.json()).notice?.type, 'success');
+
+    const event = (
+      await database.pool.query(`SELECT id FROM post_completion_notification_events WHERE post_id = $1`, [postId])
+    ).rows[0];
+
+    // Seed the delivered closure state the API worker would have committed.
+    const deliveredNotifications = new Map();
+    for (const recipientId of [blockedRecipientId, eligibleRecipientId]) {
+      const notificationId = (
+        await database.pool.query(
+          `INSERT INTO notifications
+             (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
+           VALUES ($1, 'POST_COMPLETED', 'Item sold', 'The post "Access-checked correction case" was marked as sold.',
+                   'تم البيع', 'تم تسجيل نتيجة المنشور "Access-checked correction case": تم البيع.', $2, false)
+           RETURNING id`,
+          [recipientId, postId],
+        )
+      ).rows[0].id;
+      deliveredNotifications.set(recipientId, notificationId);
+      await database.pool.query(
+        `UPDATE post_completion_recipients
+         SET status = 'DELIVERED', notification_id = $3, delivered_at = now(), attempts = 1
+         WHERE event_id = $1 AND recipient_id = $2`,
+        [event.id, recipientId, notificationId],
+      );
+    }
+    await database.pool.query(
+      `UPDATE post_completion_notification_events SET total_recipients = 2, status = 'PENDING' WHERE id = $1`,
+      [event.id],
+    );
+
+    // The creator blocks one participant after the closure notification was
+    // committed but before the administrative reopening runs.
+    await database.pool.query(`INSERT INTO blocks (blocker_id, blocked_id) VALUES ($1, $2)`, [
+      ownerId,
+      blockedRecipientId,
+    ]);
+
+    const response = await postAction(
+      REOPEN_ACTION_NAME,
+      postId,
+      { reason: 'The sale was recorded by mistake' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).notice?.type, 'success');
+
+    // The administrative transaction queues a correction for every delivered
+    // participant; neither later Blocks nor bans filter here, because the API
+    // completion worker rechecks access under pair locks at delivery time
+    // (covered by the API integration suite).
+    const correctionEvents = (
+      await database.pool.query(
+        `SELECT id, type, corrects_event_id, status, total_recipients
+         FROM post_completion_notification_events
+         WHERE post_id = $1 AND type = 'POST_REOPENED'`,
+        [postId],
+      )
+    ).rows;
+    assert.equal(correctionEvents.length, 1);
+    assert.equal(correctionEvents[0].corrects_event_id, event.id);
+    assert.equal(correctionEvents[0].status, 'PENDING');
+    assert.equal(correctionEvents[0].total_recipients, 2);
+
+    const queuedRecipients = (
+      await database.pool.query(
+        `SELECT recipient_id, status, notification_id FROM post_completion_recipients WHERE event_id = $1`,
+        [correctionEvents[0].id],
+      )
+    ).rows;
+    assert.equal(queuedRecipients.length, 2);
+    assert.ok(queuedRecipients.every((row) => row.status === 'PENDING'));
+    assert.deepEqual(
+      [...new Set(queuedRecipients.map((row) => row.recipient_id))].sort(),
+      [blockedRecipientId, eligibleRecipientId].sort(),
+    );
+
+    for (const recipientId of [blockedRecipientId, eligibleRecipientId]) {
+      const closureRecipient = (
+        await database.pool.query(
+          `SELECT status, notification_id FROM post_completion_recipients WHERE event_id = $1 AND recipient_id = $2`,
+          [event.id, recipientId],
+        )
+      ).rows[0];
+      assert.equal(closureRecipient.status, 'CORRECTED');
+      assert.equal(closureRecipient.notification_id, deliveredNotifications.get(recipientId));
+    }
+
+    const correctionNotifications = await database.pool.query(
+      `SELECT count(*)::int AS count
+       FROM notifications
+       WHERE type = 'POST_REOPENED' AND recipient_id = ANY($1::uuid[])`,
+      [[blockedRecipientId, eligibleRecipientId]],
+    );
+    assert.equal(correctionNotifications.rows[0].count, 0, 'no correction is written synchronously');
+    const correctionPushIntents = await database.pool.query(
+      `SELECT count(*)::int AS count
+       FROM push_deliveries
+       WHERE recipient_id = ANY($1::uuid[])`,
+      [[blockedRecipientId, eligibleRecipientId]],
+    );
+    assert.equal(correctionPushIntents.rows[0].count, 0, 'no correction push intent is queued synchronously');
+
+    // Existing admin-triggered owner push intents keep their null actor.
+    const ownerPushIntents = (
+      await database.pool.query(
+        `SELECT pd.actor_id
+         FROM push_deliveries pd
+         JOIN notifications n ON n.id = pd.notification_id
+         WHERE n.recipient_id = $1 AND n.type = 'POST_REOPENED_BY_ADMIN'`,
+        [ownerId],
+      )
+    ).rows;
+    assert.ok(ownerPushIntents.length > 0);
+    assert.ok(ownerPushIntents.every((row) => row.actor_id === null));
   });
 
   it('requires an internal reason and rejects repeated, removed or expired reopening without writes', async () => {
@@ -953,5 +1613,72 @@ describe('Administrator case reopening HTTP boundary', () => {
     assert.equal(audits.rows[0].count, 0);
     const notifications = await database.pool.query(`SELECT count(*)::int AS count FROM notifications`);
     assert.equal(notifications.rows[0].count, 0);
+  });
+
+  it('reopens an animal-deceased rescue and keeps a banned owner out of the correction', async () => {
+    const ownerId = await insertUser('deceased-reopen-owner');
+    const postId = await insertTypedPost({
+      ownerId,
+      postType: 'RESCUE',
+      title: 'Mistaken deceased rescue',
+      status: 'ANIMAL_DECEASED',
+    });
+
+    const response = await postAction(
+      REOPEN_ACTION_NAME,
+      postId,
+      { reason: 'The animal is alive' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.notice?.type, 'success');
+    assert.equal(result.notice?.message, 'Post reopened.');
+
+    const post = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [postId])).rows[0];
+    assert.equal(post.status, 'ACTIVE', 'the deceased outcome is corrected back to Active');
+
+    const audit = (
+      await database.pool.query(`SELECT action_type, metadata FROM moderation_actions WHERE target_id = $1`, [postId])
+    ).rows[0];
+    assert.equal(audit.action_type, 'POST_REOPENED');
+    assert.equal(audit.metadata.previousOutcome, 'ANIMAL_DECEASED');
+
+    const notifications = (
+      await database.pool.query(
+        `SELECT type, recipient_id, related_post_id, body FROM notifications WHERE related_post_id = $1`,
+        [postId],
+      )
+    ).rows;
+    assert.equal(notifications.length, 1);
+    assert.equal(notifications[0].type, 'POST_REOPENED_BY_ADMIN');
+    assert.equal(notifications[0].recipient_id, ownerId);
+    assert.equal(notifications[0].body, 'An administrator reopened your post "Mistaken deceased rescue".');
+
+    // A banned owner's deceased outcome is never offered and never corrected.
+    const bannedOwnerId = await insertUser('deceased-reopen-banned-owner');
+    await database.pool.query(`UPDATE users SET is_banned = true WHERE id = $1`, [bannedOwnerId]);
+    const bannedPostId = await insertTypedPost({
+      ownerId: bannedOwnerId,
+      postType: 'RESCUE',
+      title: 'Banned owner deceased rescue',
+      status: 'ANIMAL_DECEASED',
+    });
+    const bannedView = await fetchRecordActions(bannedPostId);
+    assert.equal(bannedView.names.includes(REOPEN_ACTION_NAME), false, 'a banned owner is not offered reopening');
+    const bannedAttempt = await postAction(
+      REOPEN_ACTION_NAME,
+      bannedPostId,
+      { reason: 'Direct banned-owner attempt' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(bannedAttempt.status, 200);
+    const bannedResult = await bannedAttempt.json();
+    assert.equal(bannedResult.notice?.type, 'error');
+    assert.match(bannedResult.notice?.message ?? '', /banned account/i);
+    const bannedPost = (await database.pool.query(`SELECT status FROM posts WHERE id = $1`, [bannedPostId])).rows[0];
+    assert.equal(bannedPost.status, 'ANIMAL_DECEASED', 'a banned owner post never returns to Active');
   });
 });

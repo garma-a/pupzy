@@ -50,6 +50,7 @@ export * from './post-reports.schema';
 export * from './account-reports.schema';
 export * from './notifications.schema';
 export * from './discussion-notification-events.schema';
+export * from './post-completion-notification-events.schema';
 export * from './device-registrations.schema';
 export * from './push-deliveries.schema';
 
