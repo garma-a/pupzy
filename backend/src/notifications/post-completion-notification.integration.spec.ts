@@ -1146,8 +1146,12 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
         .select()
         .from(postCompletionRecipients)
         .where(
-          sql`${postCompletionRecipients.postId} = ${post.id}::uuid AND ${postCompletionRecipients.id} <> ${claimedRecipient.id}::uuid`,
+          and(
+            eq(postCompletionRecipients.eventId, events[0].id),
+            sql`${postCompletionRecipients.id} <> ${claimedRecipient.id}::uuid`,
+          ),
         );
+      expect(otherRecipients).toHaveLength(1);
       expect(otherRecipients[0].status).toBe('SUPPRESSED');
 
       // 2. The delivered closure row keeps its inbox history and is CORRECTED.
@@ -2235,12 +2239,17 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(deliveredNotifsBefore.filter((n) => n.type === 'RESCUE_COMPLETED')).toHaveLength(1);
       expect(deliveredNotifsBefore.filter((n) => n.type === 'RESCUE_REOPENED')).toHaveLength(0);
 
-      const [staleRecipient] = await dbHelper.db
+      const staleRecipients = await dbHelper.db
         .select()
         .from(postCompletionRecipients)
         .where(
-          sql`${postCompletionRecipients.postId} = ${post.id}::uuid AND ${postCompletionRecipients.id} <> ${deliveredRecipient.id}::uuid`,
+          and(
+            eq(postCompletionRecipients.eventId, closureEvent.id),
+            sql`${postCompletionRecipients.id} <> ${deliveredRecipient.id}::uuid`,
+          ),
         );
+      expect(staleRecipients).toHaveLength(1);
+      const [staleRecipient] = staleRecipients;
       expect(staleRecipient.status).toBe('SUPPRESSED');
 
       const staleNotifs = await notificationsFor(staleRecipient.recipientId);
