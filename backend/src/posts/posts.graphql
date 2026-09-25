@@ -793,7 +793,8 @@ extend type Mutation {
   """
   Update a post's lifecycle status.
   Allowed transitions depend on post type:
-    RESCUE  → RESOLVED
+    RESCUE  → RESOLVED, or ANIMAL_DECEASED when the animal died
+              (only RESCUE permits ANIMAL_DECEASED)
     LOST    → LOST_PET closes as REUNITED; FOUND_STRAY accepts RESOLVED
               and retains REUNITED
     ADOPTION → ADOPTED
