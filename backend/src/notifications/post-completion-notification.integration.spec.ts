@@ -31,6 +31,7 @@ import { PushDeliveryRepository } from './push-delivery.repository';
 import { PushDeliveryProcessor } from './push-delivery.processor';
 import type { PushDeliveryMessage, PushProvider } from './push.provider';
 import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
+import { withDbRetry } from '../common/utils/db-retry.util';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
 
 describe('Post Completion Notifications Integration (Ticket 03)', () => {
@@ -345,6 +346,78 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       for (const r of recipients) {
         expect(r.status).toBe('PENDING');
       }
+    });
+
+    it('captures the exact audience union across replies, rejected requesters, and hidden versus removed comments', async () => {
+      const owner = await createUser({ name: 'UnionOwner' });
+      const post = await createRescuePost(owner.id, 'Union Rescue');
+
+      const threadStarter = await createUser({ name: 'ThreadStarter' });
+      const replyAuthor = await createUser({ name: 'ReplyAuthor' });
+      const rejectedRequester = await createUser({ name: 'RejectedRequester' });
+      const hiddenCommenter = await createUser({ name: 'HiddenCommenter' });
+      const removedCommenter = await createUser({ name: 'RemovedCommenter' });
+
+      // A Reply author participates through the parent thread.
+      const parentCommentId = generateUuidV7();
+      await dbHelper.db.insert(comments).values({
+        id: parentCommentId,
+        postId: post.id,
+        authorId: threadStarter.id,
+        text: 'Starting the discussion',
+        status: 'ACTIVE',
+      });
+      await dbHelper.db.insert(comments).values({
+        id: generateUuidV7(),
+        postId: post.id,
+        authorId: replyAuthor.id,
+        parentId: parentCommentId,
+        text: 'Replying with transport help',
+        status: 'ACTIVE',
+      });
+
+      // Contact requesters count regardless of their request status.
+      await dbHelper.db.insert(contactRequests).values({
+        id: generateUuidV7(),
+        postId: post.id,
+        requesterId: rejectedRequester.id,
+        message: 'Earlier request already rejected',
+        status: 'REJECTED',
+      });
+
+      // HIDDEN authors remain eligible; only DELETED/REMOVED contributions are excluded.
+      await dbHelper.db.insert(comments).values({
+        id: generateUuidV7(),
+        postId: post.id,
+        authorId: hiddenCommenter.id,
+        text: 'Hidden by reports but still a participant',
+        status: 'HIDDEN',
+      });
+      await dbHelper.db.insert(comments).values({
+        id: generateUuidV7(),
+        postId: post.id,
+        authorId: removedCommenter.id,
+        text: 'Removed contribution',
+        status: 'REMOVED',
+      });
+
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+
+      const [event] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.postId, post.id));
+      expect(event.totalRecipients).toBe(4);
+
+      const recipients = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.eventId, event.id));
+      expect(recipients.map((r) => r.recipientId).sort()).toEqual(
+        [threadStarter.id, replyAuthor.id, rejectedRequester.id, hiddenCommenter.id].sort(),
+      );
+      expect(recipients.map((r) => r.recipientId)).not.toContain(removedCommenter.id);
+      expect(recipients.map((r) => r.recipientId)).not.toContain(owner.id);
     });
 
     it('deduplicates participants across multiple interaction types', async () => {
@@ -707,6 +780,81 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(pushes).toHaveLength(0);
     });
 
+    it('does not resurrect a push intent when the recipient re-enables notifications after delivery', async () => {
+      const owner = await createUser({ name: 'ReEnableOwner' });
+      const post = await createRescuePost(owner.id, 'ReEnable Rescue');
+      const user = await createUser({ name: 'ReEnableUser', notificationsEnabled: false });
+
+      await dbHelper.db.insert(deviceRegistrations).values({
+        id: generateUuidV7(),
+        userId: user.id,
+        token: 'token_reenable',
+        platform: 'ANDROID',
+      });
+
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: user.id });
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+
+      const firstPass = await processor.processPendingBatches({ batchSize: 10 });
+      expect(firstPass.delivered).toBe(1);
+
+      const notifs = await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, user.id));
+      expect(notifs).toHaveLength(1);
+      expect(
+        await dbHelper.db.select().from(pushDeliveries).where(eq(pushDeliveries.recipientId, user.id)),
+      ).toHaveLength(0);
+
+      // Re-enabling push later must not resurrect suppressed delivery.
+      await dbHelper.db.update(users).set({ notificationsEnabled: true }).where(eq(users.id, user.id));
+
+      const secondPass = await processor.processPendingBatches({ batchSize: 10 });
+      expect(secondPass.delivered).toBe(0);
+      expect(secondPass.batchesProcessed).toBe(0);
+
+      expect(
+        await dbHelper.db.select().from(pushDeliveries).where(eq(pushDeliveries.recipientId, user.id)),
+      ).toHaveLength(0);
+      expect(await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, user.id))).toHaveLength(
+        1,
+      );
+    });
+
+    it('suppresses a materialized closure event when the owner removes the post before delivery', async () => {
+      const owner = await createUser({ name: 'CloseThenDeleteOwner' });
+      const post = await createRescuePost(owner.id, 'Close Then Delete Rescue');
+      const participant = await createUser({ name: 'CloseThenDeleteParticipant' });
+
+      await dbHelper.db.insert(deviceRegistrations).values({
+        id: generateUuidV7(),
+        userId: participant.id,
+        token: 'token_close_then_delete',
+        platform: 'IOS',
+      });
+      await dbHelper.db.insert(postUpvotes).values({ postId: post.id, userId: participant.id });
+
+      await postsRepo.updateStatus(post.id, owner.id, 'RESOLVED');
+      const removed = await postsRepo.softDelete(post.id, owner.id);
+      expect(removed?.status).toBe('REMOVED');
+
+      const batchRes = await processor.processPendingBatches({ batchSize: 10 });
+      expect(batchRes.delivered).toBe(0);
+      expect(batchRes.suppressed).toBe(1);
+
+      const [recipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.recipientId, participant.id));
+      expect(recipient.status).toBe('SUPPRESSED');
+      expect(recipient.notificationId).toBeNull();
+
+      expect(
+        await dbHelper.db.select().from(notifications).where(eq(notifications.recipientId, participant.id)),
+      ).toHaveLength(0);
+      expect(
+        await dbHelper.db.select().from(pushDeliveries).where(eq(pushDeliveries.recipientId, participant.id)),
+      ).toHaveLength(0);
+    });
+
     it('enqueues push when notifications are enabled for the recipient', async () => {
       const owner = await createUser({ name: 'Owner' });
       const post = await createRescuePost(owner.id);
@@ -885,6 +1033,173 @@ describe('Post Completion Notifications Integration (Ticket 03)', () => {
       expect(notifs).toHaveLength(3);
       expect(notifs.filter((n) => n.type === 'RESCUE_COMPLETED')).toHaveLength(2);
       expect(notifs.filter((n) => n.type === 'RESCUE_REOPENED')).toHaveLength(1);
+    });
+
+    it('applies current access checks to reopening corrections and records the creator as the push actor', async () => {
+      const creator = await createUser({ name: 'CorrectionAccessCreator' });
+      const post = await createRescuePost(creator.id, 'Correction Access Rescue');
+      const blocked = await createUser({ name: 'CorrectionAccessBlocked' });
+      const eligible = await createUser({ name: 'CorrectionAccessEligible' });
+
+      for (const [user, token] of [
+        [blocked, 'token_correction_blocked'],
+        [eligible, 'token_correction_eligible'],
+      ] as Array<[User, string]>) {
+        await dbHelper.db.insert(deviceRegistrations).values({
+          id: generateUuidV7(),
+          userId: user.id,
+          token,
+          platform: 'ANDROID',
+        });
+      }
+
+      await dbHelper.db.insert(postUpvotes).values([
+        { postId: post.id, userId: blocked.id },
+        { postId: post.id, userId: eligible.id },
+      ]);
+
+      await postsRepo.updateStatus(post.id, creator.id, 'RESOLVED');
+      expect((await processor.processPendingBatches({ batchSize: 10 })).delivered).toBe(2);
+
+      // The creator blocks one participant after the closure notification was
+      // committed but before the administrative reopening runs.
+      await dbHelper.db.insert(blocks).values({ blockerId: creator.id, blockedId: blocked.id });
+
+      await dbHelper.db.transaction(async (tx) => {
+        await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
+        await postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
+      });
+
+      // The isolated participant keeps the delivered closure row, is not marked
+      // CORRECTED, and receives no correction notification or push intent.
+      const [blockedRecipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.recipientId, blocked.id));
+      expect(blockedRecipient.status).toBe('DELIVERED');
+      expect(blockedRecipient.notificationId).not.toBeNull();
+
+      const blockedNotifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, blocked.id));
+      expect(blockedNotifs.filter((n) => n.type === 'RESCUE_COMPLETED')).toHaveLength(1);
+      expect(blockedNotifs.filter((n) => n.type === 'RESCUE_REOPENED')).toHaveLength(0);
+
+      const blockedPushes = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.recipientId, blocked.id));
+      expect(blockedPushes).toHaveLength(1);
+      expect(blockedPushes[0].notificationId).toBe(blockedNotifs.find((n) => n.type === 'RESCUE_COMPLETED')!.id);
+
+      // The eligible participant is corrected, and the correction push intent
+      // records the Post creator for the send-time Block recheck.
+      const [eligibleRecipient] = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.recipientId, eligible.id));
+      expect(eligibleRecipient.status).toBe('CORRECTED');
+
+      const eligibleNotifs = await dbHelper.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, eligible.id));
+      const correction = eligibleNotifs.find((n) => n.type === 'RESCUE_REOPENED');
+      expect(correction).toBeDefined();
+
+      const correctionPushes = await dbHelper.db
+        .select()
+        .from(pushDeliveries)
+        .where(eq(pushDeliveries.notificationId, correction!.id));
+      expect(correctionPushes).toHaveLength(1);
+      expect(correctionPushes[0].actorId).toBe(creator.id);
+    });
+
+    it('serializes a concurrent reopening against worker materialization without orphaned or misrouted notifications', async () => {
+      const creator = await createUser({ name: 'RaceCreator' });
+      const post = await createRescuePost(creator.id, 'Race Reopen Rescue');
+      const first = await createUser({ name: 'RaceFirst' });
+      const second = await createUser({ name: 'RaceSecond' });
+
+      await dbHelper.db.insert(postUpvotes).values([
+        { postId: post.id, userId: first.id },
+        { postId: post.id, userId: second.id },
+      ]);
+      await postsRepo.updateStatus(post.id, creator.id, 'RESOLVED');
+
+      // The worker materializes the closure while an administrator reopening
+      // supersedes it. withDbRetry gives the reopening the same deadlock retry
+      // the production paths use, so the race always settles in one serial order.
+      const [batchResult, reopenResult] = await Promise.all([
+        processor.processPendingBatches({ batchSize: 10 }),
+        withDbRetry(() =>
+          dbHelper.db.transaction(async (tx) => {
+            await tx.execute(sql`UPDATE posts SET status = 'ACTIVE' WHERE id = ${post.id}::uuid`);
+            return postCompletionRepo.handleReopen(tx, { postId: post.id, postTitle: post.title });
+          }),
+        ),
+      ]);
+      expect(batchResult.failed).toBe(0);
+
+      // Drain any lease the race left behind so the assertions see the settled
+      // serial order rather than an in-flight claim.
+      await processor.processPendingBatches({ batchSize: 10 });
+
+      const [event] = await dbHelper.db
+        .select()
+        .from(postCompletionNotificationEvents)
+        .where(eq(postCompletionNotificationEvents.postId, post.id));
+      expect(event).toBeDefined();
+
+      const recipients = await dbHelper.db
+        .select()
+        .from(postCompletionRecipients)
+        .where(eq(postCompletionRecipients.eventId, event.id));
+      expect(recipients).toHaveLength(2);
+      for (const recipient of recipients) {
+        expect(['SUPPRESSED', 'CORRECTED', 'DELIVERED']).toContain(recipient.status);
+      }
+
+      const postNotifs = await dbHelper.db.select().from(notifications).where(eq(notifications.relatedPostId, post.id));
+      const recipientIds = recipients.map((r) => r.recipientId);
+      for (const notification of postNotifs) {
+        expect(recipientIds).toContain(notification.recipientId);
+      }
+
+      const closures = postNotifs.filter((n) => n.type === 'RESCUE_COMPLETED');
+      const corrections = postNotifs.filter((n) => n.type === 'RESCUE_REOPENED');
+
+      // Every committed closure inbox row corresponds to exactly one closure
+      // notification, and a superseded event can never keep an uncorrected
+      // closure inbox row.
+      const closureInboxRecipients = recipients.filter((r) => r.notificationId !== null);
+      expect(closures).toHaveLength(closureInboxRecipients.length);
+      for (const recipient of closureInboxRecipients) {
+        expect(closures.some((n) => n.id === recipient.notificationId && n.recipientId === recipient.recipientId)).toBe(
+          true,
+        );
+        if (event.status === 'SUPERSEDED') {
+          expect(recipient.status).toBe('CORRECTED');
+          expect(corrections.some((n) => n.recipientId === recipient.recipientId)).toBe(true);
+        }
+      }
+
+      // A correction can exist only for a recipient whose closure inbox row was
+      // committed, and every correction is unique per recipient.
+      expect(corrections).toHaveLength(reopenResult.correctedCount);
+      for (const correction of corrections) {
+        const recipient = recipients.find((r) => r.recipientId === correction.recipientId);
+        expect(recipient).toBeDefined();
+        expect(recipient!.notificationId).not.toBeNull();
+        expect(recipient!.status).toBe('CORRECTED');
+      }
+      expect(new Set(corrections.map((n) => n.recipientId)).size).toBe(corrections.length);
+
+      // Once superseded, no recipient is still deliverable.
+      if (event.status === 'SUPERSEDED') {
+        expect(recipients.filter((r) => r.status === 'PENDING' || r.status === 'PROCESSING')).toHaveLength(0);
+      }
     });
   });
 

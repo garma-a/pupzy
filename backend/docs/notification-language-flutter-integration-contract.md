@@ -141,7 +141,7 @@ Administrative notifications written directly by the AdminJS service (`POST_REMO
 
 ### 3.2 Participant completion notifications
 
-Closure-time participants (Boost/save, Comment/Reply, Contact Request and Adoption Application participation) receive the durable completion notification types as bilingual rows routed through `related_post_id`; `related_comment_id` is null. Every adoption applicant counts regardless of application status (`PENDING`, `APPROVED`, `REJECTED`), and overlapping membership across participation types produces one recipient. The copy is outcome-specific:
+Closure-time participants (Boost/save, Comment/Reply, Contact Request and Adoption Application participation) receive the durable completion notification types as bilingual rows routed through `related_post_id`; `related_comment_id` is null. Every adoption applicant counts regardless of application status (`PENDING`, `APPROVED`, `REJECTED`), and overlapping membership across participation types produces one recipient. Comment/Reply authors are eligible unless their contribution is `DELETED` or `REMOVED`; `HIDDEN`/`IMAGE_HIDDEN` authors remain eligible. The copy is outcome-specific:
 
 | Type | Outcome | English | Arabic |
 |---|---|---|---|

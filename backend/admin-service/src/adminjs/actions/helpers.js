@@ -275,17 +275,19 @@ export async function closeOpenCommentReports(client, commentId) {
  * recipient, inside the same transaction as the notification insert. This
  * mirrors the Nest API's push-delivery outbox and shares its type allowlist;
  * `ON CONFLICT` makes a repeated enqueue harmless. Admin-triggered
- * notifications have no acting user, so no Block actor is recorded.
+ * notifications default to no acting user, so no Block actor is recorded;
+ * callers that know the relevant Post creator (reopening corrections) pass it
+ * as `actorId` so the push worker's send-time Block recheck can run.
  */
-export async function enqueuePushDeliveries(client, { id, recipientId, type }) {
+export async function enqueuePushDeliveries(client, { id, recipientId, type, actorId = null }) {
   if (!isPushDeliveryEnabled(type)) return;
   await client.query(
     `INSERT INTO push_deliveries (notification_id, recipient_id, actor_id, device_id)
-     SELECT $1::uuid, $2::uuid, NULL, d.id
+     SELECT $1::uuid, $2::uuid, $3::uuid, d.id
      FROM device_registrations d
      WHERE d.user_id = $2::uuid
      ON CONFLICT (notification_id, device_id) DO NOTHING`,
-    [id, recipientId],
+    [id, recipientId, actorId],
   );
 }
 
@@ -309,8 +311,10 @@ export function readModerationReason(value) {
 /**
  * Atomically captures a post completion event and audience snapshot for a
  * completed Post outcome. The audience is the closure-time union of Boost/save,
- * active Comment/Reply, Contact Request and Adoption Application participation,
- * deduplicated. Excludes the closing actor and the post creator
+ * Comment/Reply, Contact Request and Adoption Application participation,
+ * deduplicated; Comment/Reply authors are eligible unless their contribution is
+ * `DELETED` or `REMOVED`, so `HIDDEN`/`IMAGE_HIDDEN` authors remain eligible.
+ * Excludes the closing actor and the post creator
  * (the creator already receives POST_RESOLVED_BY_ADMIN).
  *
  * `closingActorId` must be a `users.id`, never an `admin_users.id`: the column
@@ -380,7 +384,13 @@ export async function capturePostCompletion(client, { postId, postType, outcome,
  * Handles post reopening by an administrator:
  * 1. Supersedes active completion events.
  * 2. Suppresses obsolete pending/processing recipients.
- * 3. Delivers correction notifications for recipients who already received closure inbox messages.
+ * 3. Applies current access checks to every delivered recipient: the account
+ *    must still exist and not be banned, and no active Block may isolate them
+ *    from the Post creator in either direction. Recipients that fail keep their
+ *    delivered history and are not marked CORRECTED.
+ * 4. Delivers correction notifications for the delivered recipients that pass,
+ *    with the Post creator recorded as the correction push intent's actor so
+ *    the push worker's send-time Block recheck still applies.
  */
 export async function reopenPostCompletion(client, { postId, postTitle }) {
   await client.query(
@@ -397,6 +407,9 @@ export async function reopenPostCompletion(client, { postId, postTitle }) {
     [postId],
   );
 
+  const { rows: creatorRows } = await client.query(`SELECT creator_id FROM posts WHERE id = $1::uuid`, [postId]);
+  const creatorId = creatorRows[0]?.creator_id ?? null;
+
   const { rows: deliveredRows } = await client.query(
     `SELECT r.id, r.recipient_id, e.type AS event_type
      FROM post_completion_recipients r
@@ -407,6 +420,24 @@ export async function reopenPostCompletion(client, { postId, postTitle }) {
 
   let correctedCount = 0;
   for (const row of deliveredRows) {
+    const { rows: accessRows } = await client.query(
+      `SELECT u.notifications_enabled,
+              u.is_banned,
+              (
+                $2::uuid IS NOT NULL
+                AND EXISTS (
+                  SELECT 1 FROM blocks b
+                  WHERE (b.blocker_id = $2::uuid AND b.blocked_id = u.id)
+                     OR (b.blocker_id = u.id AND b.blocked_id = $2::uuid)
+                )
+              ) AS is_isolated
+       FROM users u
+       WHERE u.id = $1::uuid`,
+      [row.recipient_id, creatorId],
+    );
+    const access = accessRows[0];
+    if (!access || access.is_banned || access.is_isolated) continue;
+
     const markRes = await client.query(
       `UPDATE post_completion_recipients
        SET status = 'CORRECTED', updated_at = now()
@@ -426,14 +457,12 @@ export async function reopenPostCompletion(client, { postId, postTitle }) {
       [row.recipient_id, correctionType, content.title, content.body, content.titleArabic, content.bodyArabic, postId],
     );
 
-    const { rows: userRows } = await client.query(`SELECT notifications_enabled FROM users WHERE id = $1::uuid`, [
-      row.recipient_id,
-    ]);
-    if (userRows[0]?.notifications_enabled && isPushDeliveryEnabled(correctionType)) {
+    if (access.notifications_enabled && isPushDeliveryEnabled(correctionType)) {
       await enqueuePushDeliveries(client, {
         id: notifRows[0].id,
         recipientId: row.recipient_id,
         type: correctionType,
+        actorId: creatorId,
       });
     }
     correctedCount++;

@@ -1167,6 +1167,137 @@ describe('Administrator case reopening HTTP boundary', () => {
     assert.ok(ownerCorrections[0].body_arabic.includes('Participant correction case'));
   });
 
+  it('applies current access checks to corrections and stores the creator as the correction push actor', async () => {
+    const ownerId = await insertUser('reopen-access-owner');
+    const blockedRecipientId = await insertUser('reopen-access-blocked');
+    const eligibleRecipientId = await insertUser('reopen-access-eligible');
+    const postId = await insertTypedPost({ ownerId, postType: 'PRODUCT', title: 'Access-checked correction case' });
+
+    await database.pool.query(
+      `INSERT INTO device_registrations (user_id, token, platform)
+       VALUES ($1, 'reopen-access-blocked-token', 'ANDROID'),
+              ($2, 'reopen-access-eligible-token', 'IOS'),
+              ($3, 'reopen-access-owner-token', 'ANDROID')`,
+      [blockedRecipientId, eligibleRecipientId, ownerId],
+    );
+    await database.pool.query(`INSERT INTO post_saves (post_id, user_id) VALUES ($1, $2), ($1, $3)`, [
+      postId,
+      blockedRecipientId,
+      eligibleRecipientId,
+    ]);
+
+    const resolution = await postAction('markSold', postId, { reason: 'Sold offline' }, staffCookie, staffCsrf);
+    assert.equal((await resolution.json()).notice?.type, 'success');
+
+    const event = (
+      await database.pool.query(`SELECT id FROM post_completion_notification_events WHERE post_id = $1`, [postId])
+    ).rows[0];
+
+    // Seed the delivered closure state the API worker would have committed.
+    const deliveredNotifications = new Map();
+    for (const recipientId of [blockedRecipientId, eligibleRecipientId]) {
+      const notificationId = (
+        await database.pool.query(
+          `INSERT INTO notifications
+             (recipient_id, type, title, body, title_arabic, body_arabic, related_post_id, is_read)
+           VALUES ($1, 'POST_COMPLETED', 'Item sold', 'The post "Access-checked correction case" was marked as sold.',
+                   'تم البيع', 'تم تسجيل نتيجة المنشور "Access-checked correction case": تم البيع.', $2, false)
+           RETURNING id`,
+          [recipientId, postId],
+        )
+      ).rows[0].id;
+      deliveredNotifications.set(recipientId, notificationId);
+      await database.pool.query(
+        `UPDATE post_completion_recipients
+         SET status = 'DELIVERED', notification_id = $3, delivered_at = now(), attempts = 1
+         WHERE event_id = $1 AND recipient_id = $2`,
+        [event.id, recipientId, notificationId],
+      );
+    }
+    await database.pool.query(
+      `UPDATE post_completion_notification_events SET total_recipients = 2, status = 'PENDING' WHERE id = $1`,
+      [event.id],
+    );
+
+    // The creator blocks one participant after the closure notification was
+    // committed but before the administrative reopening runs.
+    await database.pool.query(`INSERT INTO blocks (blocker_id, blocked_id) VALUES ($1, $2)`, [
+      ownerId,
+      blockedRecipientId,
+    ]);
+
+    const response = await postAction(
+      REOPEN_ACTION_NAME,
+      postId,
+      { reason: 'The sale was recorded by mistake' },
+      staffCookie,
+      staffCsrf,
+    );
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).notice?.type, 'success');
+
+    // The isolated participant keeps the delivered history, with no correction
+    // inbox row and no correction push intent.
+    const blockedRecipient = (
+      await database.pool.query(
+        `SELECT status, notification_id FROM post_completion_recipients WHERE event_id = $1 AND recipient_id = $2`,
+        [event.id, blockedRecipientId],
+      )
+    ).rows[0];
+    assert.equal(blockedRecipient.status, 'DELIVERED');
+    assert.equal(blockedRecipient.notification_id, deliveredNotifications.get(blockedRecipientId));
+    const blockedCorrections = await database.pool.query(
+      `SELECT count(*)::int AS count FROM notifications WHERE recipient_id = $1 AND type = 'POST_REOPENED'`,
+      [blockedRecipientId],
+    );
+    assert.equal(blockedCorrections.rows[0].count, 0, 'a blocked participant never receives a correction');
+    const blockedPushIntents = await database.pool.query(
+      `SELECT count(*)::int AS count FROM push_deliveries WHERE recipient_id = $1`,
+      [blockedRecipientId],
+    );
+    assert.equal(blockedPushIntents.rows[0].count, 0, 'a blocked participant never gets a correction push intent');
+
+    // The eligible participant is corrected, and the correction push intent
+    // records the Post creator as the send-time Block actor.
+    const eligibleRecipient = (
+      await database.pool.query(
+        `SELECT status, notification_id FROM post_completion_recipients WHERE event_id = $1 AND recipient_id = $2`,
+        [event.id, eligibleRecipientId],
+      )
+    ).rows[0];
+    assert.equal(eligibleRecipient.status, 'CORRECTED');
+    assert.equal(eligibleRecipient.notification_id, deliveredNotifications.get(eligibleRecipientId));
+    const eligibleCorrections = (
+      await database.pool.query(
+        `SELECT n.id, n.type, n.related_post_id, n.title, n.body, n.title_arabic, n.body_arabic,
+                pd.actor_id, pd.recipient_id AS push_recipient_id
+         FROM notifications n
+         LEFT JOIN push_deliveries pd ON pd.notification_id = n.id
+         WHERE n.recipient_id = $1 AND n.type = 'POST_REOPENED'`,
+        [eligibleRecipientId],
+      )
+    ).rows;
+    assert.equal(eligibleCorrections.length, 1);
+    assert.equal(eligibleCorrections[0].related_post_id, postId);
+    assert.equal(eligibleCorrections[0].title, 'Post reopened');
+    assert.equal(eligibleCorrections[0].body, 'The post "Access-checked correction case" was reopened.');
+    assert.equal(eligibleCorrections[0].push_recipient_id, eligibleRecipientId);
+    assert.equal(eligibleCorrections[0].actor_id, ownerId, 'the push intent carries the creator as its actor');
+
+    // Existing admin-triggered owner push intents keep their null actor.
+    const ownerPushIntents = (
+      await database.pool.query(
+        `SELECT pd.actor_id
+         FROM push_deliveries pd
+         JOIN notifications n ON n.id = pd.notification_id
+         WHERE n.recipient_id = $1 AND n.type = 'POST_REOPENED_BY_ADMIN'`,
+        [ownerId],
+      )
+    ).rows;
+    assert.ok(ownerPushIntents.length > 0);
+    assert.ok(ownerPushIntents.every((row) => row.actor_id === null));
+  });
+
   it('requires an internal reason and rejects repeated, removed or expired reopening without writes', async () => {
     const ownerId = await insertUser('reopen-guard-owner');
     const completedId = await insertCompletedPost({

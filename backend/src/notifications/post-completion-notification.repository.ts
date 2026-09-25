@@ -138,8 +138,14 @@ export class PostCompletionNotificationRepository {
    * Reopening correction:
    * 1. Marks obsolete active (PENDING / PROCESSING) completion events as SUPERSEDED.
    * 2. Suppresses obsolete pending / processing recipients so they are never delivered.
-   * 3. Finds recipients who had closure inbox entries committed (DELIVERED) and creates
-   *    localized correction notifications for them (exposing no internal admin reason).
+   * 3. Applies current access checks to every recipient who had a closure inbox entry
+   *    committed (DELIVERED): the account must still exist and not be banned, and no
+   *    active Block may isolate them from the Post creator.
+   * 4. Creates localized correction notifications for the recipients that pass
+   *    (exposing no internal admin reason). Recipients that fail keep their delivered
+   *    history untouched and are not marked CORRECTED. Correction push intents store
+   *    the Post creator as their actor so the push worker's send-time Block recheck
+   *    still applies.
    */
   async handleReopen(
     tx: DbTransaction,
@@ -175,8 +181,39 @@ export class PostCompletionNotificationRepository {
       WHERE r.post_id = ${postId}::uuid AND r.status = 'DELIVERED'
     `);
 
+    // 4. Apply current access and preference checks to corrections inside the
+    //    same transaction. The recipient account must still exist and be
+    //    unbanned, and no active Block may isolate them from the Post creator
+    //    in either direction. Failing recipients keep their delivered history
+    //    and are never marked CORRECTED.
+    const creatorResult = await tx.execute<{ creator_id: string }>(sql`
+      SELECT creator_id FROM posts WHERE id = ${postId}::uuid
+    `);
+    const creatorId = creatorResult.rows[0]?.creator_id ?? null;
+
     let correctedCount = 0;
     for (const row of deliveredResult.rows) {
+      const accessResult = await tx.execute<{
+        notifications_enabled: boolean;
+        is_banned: boolean;
+        is_isolated: boolean;
+      }>(sql`
+        SELECT u.notifications_enabled,
+               u.is_banned,
+               (
+                 ${creatorId}::uuid IS NOT NULL
+                 AND EXISTS (
+                   SELECT 1 FROM blocks b
+                   WHERE (b.blocker_id = ${creatorId}::uuid AND b.blocked_id = u.id)
+                      OR (b.blocker_id = u.id AND b.blocked_id = ${creatorId}::uuid)
+                 )
+               ) AS is_isolated
+        FROM users u
+        WHERE u.id = ${row.recipient_id}::uuid
+      `);
+      const access = accessResult.rows[0];
+      if (!access || access.is_banned || access.is_isolated) continue;
+
       // Mark recipient as CORRECTED to avoid duplicate corrections in close/reopen cycles
       const markResult = await tx.execute(sql`
         UPDATE post_completion_recipients
@@ -201,12 +238,10 @@ export class PostCompletionNotificationRepository {
         })
         .returning({ id: notifications.id, recipientId: notifications.recipientId });
 
-      // Recheck push preferences for the correction notification
-      const userRes = await tx.execute<{ notifications_enabled: boolean }>(sql`
-        SELECT notifications_enabled FROM users WHERE id = ${row.recipient_id}::uuid
-      `);
-      if (userRes.rows[0]?.notifications_enabled && isPushDeliveryEnabled(correctionType)) {
-        await this.pushDeliveryRepository.enqueueForNotification(notification, null, tx);
+      // The Post creator is stored as the correction's actor so the push
+      // worker can recheck Block isolation at send time.
+      if (access.notifications_enabled && isPushDeliveryEnabled(correctionType)) {
+        await this.pushDeliveryRepository.enqueueForNotification(notification, creatorId, tx);
       }
       correctedCount++;
     }
