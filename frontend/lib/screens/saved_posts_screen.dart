@@ -11,6 +11,7 @@ import '../widgets/blurred_thumbnail.dart';
 import '../widgets/image_with_fallback.dart';
 import '../widgets/skeleton_loader.dart';
 import 'adoption_detail_screen.dart';
+import 'mating_detail_screen.dart';
 import 'product_detail_screen.dart';
 import 'rescue_detail_screen.dart';
 
@@ -199,6 +200,8 @@ class _SavedPostTile extends StatelessWidget {
         return t(context, 'Adoption', 'تبني');
       case 'PRODUCT':
         return t(context, 'Marketplace', 'السوق');
+      case 'MATING':
+        return t(context, 'Matching', 'مطابقة');
       default:
         return post.postType;
     }
@@ -222,6 +225,7 @@ class _SavedPostTile extends StatelessWidget {
     final Widget screen = switch (post.postType) {
       'ADOPTION' => AdoptionDetailScreen(postId: post.id),
       'PRODUCT' => ProductDetailScreen(postId: post.id),
+      'MATING' => MatingDetailScreen(postId: post.id),
       _ => RescueDetailScreen(postId: post.id),
     };
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));

@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
+import '../services/graphql_service.dart';
+import '../services/push_service.dart';
+import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
 import '../widgets/distance_filter.dart';
 import 'adopt_screen.dart';
@@ -27,6 +30,46 @@ class _AppShellState extends State<AppShell> {
   final Set<int> _visitedIndices = {0};
   double _maxDistance = 15.0;
   bool _postSheetOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Runs once per authenticated session: sync the explicit language
+    // preference with the backend (so notifications/push render in the
+    // right language), register this device for push, and show the Terms
+    // acceptance sheet if the backend says it's required. Deferred to a
+    // post-frame callback so it runs after the first build has a BuildContext
+    // with every provider (and a Navigator) available.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrapSession());
+  }
+
+  Future<void> _bootstrapSession() async {
+    if (!mounted) return;
+    final graphql = context.read<GraphQLService>();
+    final me = await graphql.fetchMe();
+    if (!mounted) return;
+    final serverLang = me?['languagePreference'] as String?;
+    final localLang = context.read<LangProvider>().lang;
+    if (serverLang == 'ar' || serverLang == 'en') {
+      // The backend is the multi-device source of truth once synchronized.
+      final serverIsAr = serverLang == 'ar';
+      if ((localLang == Lang.ar) != serverIsAr) {
+        context.read<LangProvider>().setLang(serverIsAr ? Lang.ar : Lang.en);
+      }
+    } else {
+      // Never synchronized (e.g. an account created before this feature, or
+      // native Sign in with Apple/Google onboarding that skipped it) — push
+      // the on-device choice up once so notifications stop defaulting to
+      // English.
+      graphql.updateMyLanguagePreference(localLang == Lang.ar ? 'ar' : 'en');
+    }
+
+    if (!mounted) return;
+    context.read<PushService>().initialize(graphql);
+
+    if (!mounted) return;
+    ensureTermsAccepted(context);
+  }
 
   void _goToIndex(int i) {
     setState(() {

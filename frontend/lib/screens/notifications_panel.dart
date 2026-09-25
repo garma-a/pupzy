@@ -32,6 +32,10 @@ IconData _iconForType(String type) {
       return Icons.assignment_outlined;
     case 'POST_REMOVED_BY_ADMIN':
       return Icons.report_gmailerrorred_outlined;
+    case 'POST_RESOLVED_BY_ADMIN':
+      return Icons.gavel_outlined;
+    case 'POST_REOPENED_BY_ADMIN':
+      return Icons.restore_outlined;
     case 'POST_INACTIVITY_NUDGE':
       return Icons.timer_outlined;
     case 'SYSTEM_ANNOUNCEMENT':
@@ -43,12 +47,6 @@ IconData _iconForType(String type) {
       return Icons.arrow_upward;
     case 'COMMENT_PINNED':
       return Icons.push_pin_outlined;
-    case 'RESCUE_PROOF_RECEIVED':
-      return Icons.photo_camera_outlined;
-    case 'RESCUE_PROOF_CONFIRMED':
-      return Icons.verified_outlined;
-    case 'RESCUE_PROOF_REJECTED':
-      return Icons.cancel_outlined;
     default:
       return Icons.notifications_none;
   }
@@ -65,6 +63,7 @@ class _NotificationsPanelState extends State<NotificationsPanel> {
   bool _loading = true;
   String? _errorMessage;
   List<AppNotification> _notifications = [];
+  bool _markingAllRead = false;
 
   @override
   void initState() {
@@ -85,6 +84,25 @@ class _NotificationsPanelState extends State<NotificationsPanel> {
       _notifications = notifications;
       _errorMessage = error;
     });
+  }
+
+  int get _unreadCount => _notifications.where((n) => !n.isRead).length;
+
+  Future<void> _markAllRead() async {
+    // Paint it read immediately — the list is already on screen and the
+    // server returns only a count, so there is nothing else to wait for.
+    final previous = _notifications;
+    setState(() {
+      _markingAllRead = true;
+      _notifications = _notifications.map((n) => n.copyWith(isRead: true)).toList();
+    });
+    final (_, error) = await context.read<GraphQLService>().markAllNotificationsRead();
+    if (!mounted) return;
+    setState(() {
+      _markingAllRead = false;
+      if (error != null) _notifications = previous;
+    });
+    if (error != null) Fluttertoast.showToast(msg: error);
   }
 
   Future<void> _openNotification(AppNotification n) async {
@@ -188,9 +206,20 @@ class _NotificationsPanelState extends State<NotificationsPanel> {
               ),
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Text(
-                  t(context, 'Notifications', 'الإشعارات'),
-                  style: Theme.of(context).textTheme.headlineMedium,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        t(context, 'Notifications', 'الإشعارات'),
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                    ),
+                    if (_unreadCount > 0)
+                      TextButton(
+                        onPressed: _markingAllRead ? null : _markAllRead,
+                        child: Text(t(context, 'Mark all read', 'تعليم الكل كمقروء')),
+                      ),
+                  ],
                 ),
               ),
               Expanded(

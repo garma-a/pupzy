@@ -118,6 +118,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       cityId: _selectedCity!['id'] as String,
       latitude: _position?.latitude,
       longitude: _position?.longitude,
+      languagePreference: context.read<LangProvider>().lang == Lang.ar ? 'ar' : 'en',
     );
 
     if (!mounted) return;

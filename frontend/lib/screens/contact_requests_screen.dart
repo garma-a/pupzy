@@ -228,9 +228,17 @@ class _ResolvedCard extends StatelessWidget {
   final ContactRequest item;
   const _ResolvedCard({required this.item});
 
+  /// The link isn't carried on the request itself — `myContactRequests`
+  /// never populates `whatsappLink`, so an approved request fetches it on
+  /// demand through the requester-only `getWhatsAppLink` query.
   Future<void> _openWhatsApp(BuildContext context) async {
-    final link = item.whatsappLink;
-    if (link == null) return;
+    final graphql = context.read<GraphQLService>();
+    final (link, error) = await graphql.getWhatsAppLink(item.id);
+    if (!context.mounted) return;
+    if (link == null) {
+      Fluttertoast.showToast(msg: error ?? t(context, "This content isn't available.", 'هذا المحتوى غير متاح.'));
+      return;
+    }
     final opened = await launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
     if (!opened && context.mounted) {
       Fluttertoast.showToast(msg: t(context, 'Could not open WhatsApp', 'تعذر فتح واتساب'));
@@ -240,7 +248,7 @@ class _ResolvedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final approved = item.status == 'APPROVED';
-    final canOpen = approved && item.whatsappLink != null;
+    final canOpen = approved;
     final statusColor = approved ? AppColors.sectionLineGreen : AppColors.critical;
     final statusLabel = approved
         ? t(context, 'Approved · WhatsApp shared', 'تمت الموافقة · تمت مشاركة واتساب')

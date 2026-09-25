@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
 import '../services/graphql_service.dart';
+import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
 
 /// Full adoption-questionnaire form for `submitAdoptionApplication` — the
@@ -49,6 +50,8 @@ class _AdoptionApplicationSheetState extends State<AdoptionApplicationSheet> {
 
   Future<void> _submit() async {
     if (!_canSubmit) return;
+    if (!await ensureTermsAccepted(context)) return;
+    if (!mounted) return;
     setState(() => _submitting = true);
     final graphql = context.read<GraphQLService>();
     final input = <String, dynamic>{

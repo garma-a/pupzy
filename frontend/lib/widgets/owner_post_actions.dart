@@ -65,6 +65,44 @@ class OwnerCloseAction {
     toastEn: 'Listing marked as adopted',
     toastAr: 'تم تحديد الإعلان كمُتبنّى',
   );
+
+  static const mating = OwnerCloseAction(
+    status: 'RESOLVED',
+    actionEn: 'Mark Resolved',
+    actionAr: 'تحديد كمنتهية',
+    doneEn: 'Resolved ✓',
+    doneAr: 'تم الحل ✓',
+    confirmEn: 'Mark this mating listing as resolved? This closes the post and cannot be undone.',
+    confirmAr: 'تحديد إعلان التزاوج هذا كمنتهٍ؟ سيتم إغلاق المنشور ولا يمكن التراجع عن ذلك.',
+    toastEn: 'Listing marked as resolved',
+    toastAr: 'تم تحديد الإعلان كمنتهٍ',
+  );
+
+  // A FOUND_STRAY report accepts either outcome (unlike LOST_PET, which is
+  // REUNITED-only) — see post-lifecycle-transition-contract.md §1.
+  static const foundResolved = OwnerCloseAction(
+    status: 'RESOLVED',
+    actionEn: 'Mark Resolved',
+    actionAr: 'تحديد كمنتهية',
+    doneEn: 'Resolved ✓',
+    doneAr: 'تم الحل ✓',
+    confirmEn: 'Mark this resolved (e.g. rehomed or handed to a shelter)? This closes the post and cannot be undone.',
+    confirmAr: 'تحديد هذا البلاغ كمنتهٍ (مثل إيجاد منزل له أو تسليمه لملجأ)؟ سيتم إغلاق المنشور ولا يمكن التراجع عن ذلك.',
+    toastEn: 'Post marked as resolved',
+    toastAr: 'تم تحديد المنشور كمنتهٍ',
+  );
+
+  static const foundReunited = OwnerCloseAction(
+    status: 'REUNITED',
+    actionEn: 'Mark Reunited',
+    actionAr: 'تم لمّ الشمل',
+    doneEn: 'Reunited ✓',
+    doneAr: 'تم لمّ الشمل ✓',
+    confirmEn: "Mark this pet as reunited with its owner? This closes the post and cannot be undone.",
+    confirmAr: 'تحديد أن الحيوان عاد إلى صاحبه؟ سيتم إغلاق المنشور ولا يمكن التراجع عن ذلك.',
+    toastEn: 'Post marked as reunited',
+    toastAr: 'تم تحديد المنشور كمُلمّ الشمل',
+  );
 }
 
 /// Bottom action bar for the owner of a post: close it (when its type has a
@@ -76,8 +114,18 @@ class OwnerPostActions extends StatefulWidget {
   /// Null for post types with no terminal status (mating) — Delete only.
   final OwnerCloseAction? close;
 
+  /// A second valid outcome (currently only FOUND_STRAY, which accepts
+  /// RESOLVED or REUNITED). When set, closing asks which outcome first
+  /// instead of jumping straight to [close]'s confirmation.
+  final OwnerCloseAction? alternateClose;
+
   /// Whether the post is already past ACTIVE (closed).
   final bool isClosed;
+
+  /// The post's actual current status — only needed when [alternateClose] is
+  /// set, to show the right "done" label ([close] vs [alternateClose]) for
+  /// an already-closed post.
+  final String? currentStatus;
 
   /// Called with the new status after the post was closed.
   final ValueChanged<String> onClosed;
@@ -89,7 +137,9 @@ class OwnerPostActions extends StatefulWidget {
     super.key,
     required this.postId,
     required this.close,
+    this.alternateClose,
     required this.isClosed,
+    this.currentStatus,
     required this.onClosed,
     required this.onDeleted,
   });
@@ -122,9 +172,38 @@ class _OwnerPostActionsState extends State<OwnerPostActions> {
     return ok == true;
   }
 
+  /// When [OwnerPostActions.alternateClose] is set, asks which of the two
+  /// valid outcomes the owner means before confirming — otherwise returns
+  /// [OwnerPostActions.close] directly, unchanged from before this existed.
+  Future<OwnerCloseAction?> _resolveCloseAction() async {
+    final primary = widget.close;
+    final alternate = widget.alternateClose;
+    if (primary == null) return null;
+    if (alternate == null) return primary;
+    return showDialog<OwnerCloseAction>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
+        title: Text(t(ctx, 'Mark as...', 'تحديد كـ...')),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.of(ctx).pop(primary),
+            child: Text(t(ctx, primary.actionEn, primary.actionAr)),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.of(ctx).pop(alternate),
+            child: Text(t(ctx, alternate.actionEn, alternate.actionAr)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _closePost() async {
-    final close = widget.close;
-    if (close == null || _busy || widget.isClosed) return;
+    if (_busy || widget.isClosed) return;
+    final close = await _resolveCloseAction();
+    if (close == null || !mounted) return;
     final confirmed = await _confirm(
       title: t(context, close.actionEn, close.actionAr),
       body: t(context, close.confirmEn, close.confirmAr),
@@ -181,6 +260,16 @@ class _OwnerPostActionsState extends State<OwnerPostActions> {
   @override
   Widget build(BuildContext context) {
     final close = widget.close;
+    final alternate = widget.alternateClose;
+    // Which outcome actually happened, for the "done" label — falls back to
+    // `close` when there's no second outcome or the current status doesn't
+    // match the alternate one.
+    final doneAction = (alternate != null && widget.currentStatus == alternate.status) ? alternate : close;
+    final actionLabel = alternate != null
+        ? t(context, 'Mark as...', 'تحديد كـ...')
+        : close != null
+            ? t(context, close.actionEn, close.actionAr)
+            : '';
     return Row(
       children: [
         Expanded(
@@ -197,7 +286,7 @@ class _OwnerPostActionsState extends State<OwnerPostActions> {
             child: ElevatedButton(
               key: const Key('ownerCloseButton'),
               onPressed: _busy || widget.isClosed ? null : _closePost,
-              child: Text(widget.isClosed ? t(context, close.doneEn, close.doneAr) : t(context, close.actionEn, close.actionAr)),
+              child: Text(widget.isClosed && doneAction != null ? t(context, doneAction.doneEn, doneAction.doneAr) : actionLabel),
             ),
           ),
         ],

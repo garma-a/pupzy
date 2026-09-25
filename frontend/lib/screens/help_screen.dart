@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
@@ -50,6 +52,46 @@ class _HelpScreenState extends State<HelpScreen> with RouteAware {
   String? _endCursor;
   bool _hasNextPage = false;
   bool _loadingMore = false;
+  Timer? _searchDebounce;
+  bool _searching = false;
+
+  /// The server-side search term, or null under the backend's 2-character
+  /// minimum (feed-search-flutter-integration-contract.md §4) — a 0/1
+  /// character query behaves as "no search" rather than being sent.
+  String? get _activeSearch {
+    final trimmed = _query.trim();
+    return trimmed.length >= 2 ? trimmed : null;
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() => _query = value);
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), _reloadForSearch);
+  }
+
+  Future<void> _reloadForSearch() async {
+    if (_governorate == null) return;
+    setState(() => _searching = true);
+    final graphql = context.read<GraphQLService>();
+    final maxDist = DistanceProvider.of(context).maxDistance;
+    final (posts, endCursor, hasNextPage, error) = await graphql.fetchHelpFeed(
+      governorate: _governorate!,
+      cityId: _cityId,
+      latitude: _position?.latitude,
+      longitude: _position?.longitude,
+      radiusKm: maxDist.isFinite ? maxDist : null,
+      search: _activeSearch,
+    );
+    if (!mounted) return;
+    setState(() {
+      _searching = false;
+      if (error == null) {
+        _posts = posts;
+        _endCursor = endCursor;
+        _hasNextPage = hasNextPage;
+      }
+    });
+  }
 
   @override
   void didUpdateWidget(covariant HelpScreen oldWidget) {
@@ -86,6 +128,7 @@ class _HelpScreenState extends State<HelpScreen> with RouteAware {
   @override
   void dispose() {
     routeObserver.unsubscribe(this);
+    _searchDebounce?.cancel();
     super.dispose();
   }
 
@@ -107,6 +150,7 @@ class _HelpScreenState extends State<HelpScreen> with RouteAware {
       latitude: _position?.latitude,
       longitude: _position?.longitude,
       radiusKm: maxDist.isFinite ? maxDist : null,
+      search: _activeSearch,
     );
     if (!mounted || error != null) return;
     final byId = {for (final p in posts) p.id: p};
@@ -151,6 +195,7 @@ class _HelpScreenState extends State<HelpScreen> with RouteAware {
       latitude: _position?.latitude,
       longitude: _position?.longitude,
       radiusKm: maxDist.isFinite ? maxDist : null,
+      search: _activeSearch,
     );
     if (!mounted) return;
     setState(() {
@@ -176,6 +221,7 @@ class _HelpScreenState extends State<HelpScreen> with RouteAware {
       latitude: _position?.latitude,
       longitude: _position?.longitude,
       radiusKm: maxDist.isFinite ? maxDist : null,
+      search: _activeSearch,
       after: _endCursor,
     );
     if (!mounted) return;
@@ -238,9 +284,10 @@ class _HelpScreenState extends State<HelpScreen> with RouteAware {
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: AdaptiveSearchBar(
                   hintText: t(context, 'Search by title, description, or location...', 'ابحث حسب العنوان أو الوصف أو الموقع...'),
-                  onChanged: (v) => setState(() => _query = v),
+                  onChanged: _onSearchChanged,
                 ),
               ),
+              if (_searching) const LinearProgressIndicator(color: AppColors.primary, minHeight: 2),
               const SizedBox(height: AppSpacing.md),
               const DistanceFilter(),
               const SizedBox(height: AppSpacing.sm),
@@ -353,7 +400,7 @@ class _HelpFeedList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final q = query.trim();
-    final items = posts.where((p) => p.matchesQuery(query)).toList();
+    final items = posts;
     if (items.isEmpty) {
       return Center(
         child: Padding(
@@ -377,7 +424,7 @@ class _HelpFeedList extends StatelessWidget {
     }
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
-        if (q.isEmpty && notification.metrics.pixels >= notification.metrics.maxScrollExtent - 400) {
+        if (notification.metrics.pixels >= notification.metrics.maxScrollExtent - 400) {
           onLoadMore();
         }
         return false;

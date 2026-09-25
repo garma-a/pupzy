@@ -1,9 +1,6 @@
 import 'dart:io';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -13,81 +10,18 @@ import '../localization/lang_provider.dart';
 import '../models/comment.dart';
 import '../models/safety.dart';
 import '../services/graphql_service.dart';
+import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
 import '../utils/client_request_id.dart';
 import '../utils/time_format.dart';
+import '../utils/webp_compress.dart';
 import 'safety_actions.dart';
-
-/// Max bytes the backend accepts for a comment image (see
-/// MAX_COMMENT_IMAGE_BYTES in comment-image.validator.ts).
-const int _kCommentImageMaxBytes = 100000;
-
-/// Max width/height and pixel count the backend accepts for a comment image
-/// (see MAX_COMMENT_IMAGE_WIDTH/HEIGHT/PIXELS in comment-image.validator.ts
-/// — it rejects on dimensions independently of byte size).
-const int _kCommentImageMaxSide = 480;
-const int _kCommentImageMaxPixels = _kCommentImageMaxSide * _kCommentImageMaxSide;
 
 String _authorName(BuildContext context, CommentAuthor? author) {
   if (author == null) return t(context, 'Deleted user', 'مستخدم محذوف');
   final ar = Localizations.localeOf(context).languageCode == 'ar';
   final name = ar ? (author.fullNameArabic ?? author.fullName) : (author.fullName ?? author.fullNameArabic);
   return name ?? t(context, 'Pupzy user', 'مستخدم Pupzy');
-}
-
-/// Decodes [bytes] just far enough to read its actual pixel dimensions.
-Future<(int width, int height)> _decodedDimensions(Uint8List bytes) async {
-  final codec = await ui.instantiateImageCodec(bytes);
-  final frame = await codec.getNextFrame();
-  final size = (frame.image.width, frame.image.height);
-  frame.image.dispose();
-  codec.dispose();
-  return size;
-}
-
-/// Compresses a picked image down to WebP that fits both the backend's byte
-/// budget ([_kCommentImageMaxBytes]) and its pixel-dimension cap
-/// ([_kCommentImageMaxSide] on each side). Returns null if compression isn't
-/// achievable (e.g. unsupported platform) so the caller can skip the image
-/// gracefully.
-///
-/// `compressWithFile`'s `minWidth`/`minHeight` are NOT a hard ceiling on
-/// their own: the plugin picks `scale = min(srcW/minWidth, srcH/minHeight)`,
-/// so for any non-square source (i.e. virtually every real camera photo)
-/// only the axis needing *less* shrinking is guaranteed to land at the
-/// target — the other axis can still come out larger. Passing 480 for both
-/// only reliably works for square sources. So every attempt's actual output
-/// is re-decoded and measured here rather than trusted from the input
-/// parameters, and the retry loop keeps shrinking until it's verified to
-/// actually fit — this is what makes the guarantee real instead of
-/// aspirational.
-Future<Uint8List?> _compressToWebpUnderLimit(XFile file) async {
-  try {
-    int quality = 80;
-    int minSide = _kCommentImageMaxSide;
-    for (var attempt = 0; attempt < 8; attempt++) {
-      final result = await FlutterImageCompress.compressWithFile(
-        file.path,
-        format: CompressFormat.webp,
-        quality: quality,
-        minWidth: minSide,
-        minHeight: minSide,
-      );
-      if (result == null) return null;
-      if (result.lengthInBytes <= _kCommentImageMaxBytes) {
-        final (width, height) = await _decodedDimensions(result);
-        if (width <= _kCommentImageMaxSide && height <= _kCommentImageMaxSide && width * height <= _kCommentImageMaxPixels) {
-          return result;
-        }
-      }
-      quality = (quality - 12).clamp(20, 100);
-      minSide = (minSide * 0.75).round();
-      if (minSide < 16) return null;
-    }
-    return null;
-  } catch (_) {
-    return null;
-  }
 }
 
 /// Bottom sheet showing a post's discussion: top-level comments (with Top/
@@ -98,7 +32,14 @@ class CommentsSheet extends StatefulWidget {
   final String postId;
   final bool isPostOwner;
 
-  const CommentsSheet({super.key, required this.postId, this.isPostOwner = false});
+  /// Whether photo comments are offered here. The backend only accepts
+  /// image comments on RESCUE and LOST posts (both subtypes) — ADOPTION,
+  /// PRODUCT and MATING reject them with `COMMENT_MEDIA_NOT_ALLOWED` (see
+  /// comments-flutter-integration-contract.md §3). Text comments remain
+  /// available everywhere regardless of this flag.
+  final bool allowImages;
+
+  const CommentsSheet({super.key, required this.postId, this.isPostOwner = false, this.allowImages = true});
 
   @override
   State<CommentsSheet> createState() => _CommentsSheetState();
@@ -182,13 +123,15 @@ class _CommentsSheetState extends State<CommentsSheet> {
   Future<void> _send() async {
     final text = _textController.text.trim();
     if (text.isEmpty || _sending) return;
+    if (!await ensureTermsAccepted(context)) return;
+    if (!mounted) return;
     setState(() => _sending = true);
     final graphql = context.read<GraphQLService>();
 
     List<String>? mediaIds;
     final image = _pendingImage;
     if (image != null) {
-      final webpBytes = await _compressToWebpUnderLimit(image);
+      final webpBytes = await compressToWebpUnderLimit(image);
       if (webpBytes == null) {
         if (!mounted) return;
         Fluttertoast.showToast(
@@ -436,7 +379,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (_pendingImage != null)
+                      if (widget.allowImages && _pendingImage != null)
                         Padding(
                           padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                           child: Stack(
@@ -459,12 +402,13 @@ class _CommentsSheetState extends State<CommentsSheet> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          IconButton(
-                            onPressed: _pendingImage == null ? _pickImage : null,
-                            icon: const Icon(Icons.image_outlined),
-                            color: AppColors.textMuted,
-                            tooltip: t(context, 'Attach image', 'إرفاق صورة'),
-                          ),
+                          if (widget.allowImages)
+                            IconButton(
+                              onPressed: _pendingImage == null ? _pickImage : null,
+                              icon: const Icon(Icons.image_outlined),
+                              color: AppColors.textMuted,
+                              tooltip: t(context, 'Attach image', 'إرفاق صورة'),
+                            ),
                           Expanded(
                             child: TextField(
                               controller: _textController,
@@ -622,6 +566,8 @@ class _CommentTileState extends State<_CommentTile> {
   Future<void> _sendReply() async {
     final text = _replyController.text.trim();
     if (text.isEmpty || _sendingReply) return;
+    if (!await ensureTermsAccepted(context)) return;
+    if (!mounted) return;
     setState(() => _sendingReply = true);
     final graphql = context.read<GraphQLService>();
     final (reply, error) = await graphql.createReply(

@@ -9,6 +9,7 @@ import '../models/mating_detail.dart';
 import '../models/post_detail.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/animated_boost_chip.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/contact_request_sheet.dart';
@@ -38,6 +39,7 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
   MatingDetails? _ext;
   String? _myUserId;
   ContactRequest? _myContactRequest;
+  bool _openingWhatsApp = false;
 
   bool get _isOwner => _myUserId != null && _post != null && _post!.creator.id == _myUserId;
 
@@ -81,6 +83,19 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
     });
   }
 
+  Future<bool> _toggleBoost() async {
+    if (_post == null) return false;
+    final graphql = context.read<GraphQLService>();
+    final (count, upvoted, error) = await graphql.toggleUpvote(_post!.id);
+    if (!mounted) return false;
+    if (error != null || count == null || upvoted == null) {
+      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update raise. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.'));
+      return false;
+    }
+    setState(() => _post = _post!.copyWith(upvoteCount: count, isUpvotedByMe: upvoted));
+    return true;
+  }
+
   Future<bool> _toggleSave() async {
     if (_post == null) return false;
     final graphql = context.read<GraphQLService>();
@@ -110,11 +125,21 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
       setState(() => _myContactRequest = mine.isNotEmpty ? mine.first : null);
       return;
     }
-    if (existing.status == 'APPROVED' && existing.whatsappLink != null) {
-      final opened = await launchUrl(Uri.parse(existing.whatsappLink!), mode: LaunchMode.externalApplication);
-      if (!opened && mounted) {
-        Fluttertoast.showToast(msg: t(context, 'Could not open WhatsApp', 'تعذر فتح واتساب'));
-      }
+    if (existing.status != 'APPROVED' || _openingWhatsApp) return;
+    // See rescue_detail_screen: `whatsappLink` is never populated on the
+    // requester's own list, so fetch it on demand.
+    setState(() => _openingWhatsApp = true);
+    final graphql = context.read<GraphQLService>();
+    final (link, error) = await graphql.getWhatsAppLink(existing.id);
+    if (!mounted) return;
+    setState(() => _openingWhatsApp = false);
+    if (link == null) {
+      Fluttertoast.showToast(msg: error ?? t(context, "This content isn't available.", 'هذا المحتوى غير متاح.'));
+      return;
+    }
+    final opened = await launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      Fluttertoast.showToast(msg: t(context, 'Could not open WhatsApp', 'تعذر فتح واتساب'));
     }
   }
 
@@ -244,6 +269,19 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
                       Row(
                         children: [
                           Expanded(child: Text(ext.petName, style: Theme.of(context).textTheme.headlineLarge)),
+                          if (!_isOwner)
+                            AnimatedBoostChip(
+                              count: post.upvoteCount,
+                              boosted: post.isUpvotedByMe,
+                              onToggle: _toggleBoost,
+                              boostedLabel: t(context, 'Raised', 'مُعزَّز'),
+                              unboostedLabel: t(context, 'Raise', 'تعزيز'),
+                              activeColor: AppColors.primary,
+                              inactiveColor: AppColors.textMuted,
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              iconSize: 13,
+                              fontSize: 12,
+                            ),
                           Material(
                             color: Colors.transparent,
                             child: InkWell(
@@ -252,7 +290,7 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
                                 context: context,
                                 isScrollControlled: true,
                                 backgroundColor: Colors.transparent,
-                                builder: (_) => CommentsSheet(postId: post.id, isPostOwner: _isOwner),
+                                builder: (_) => CommentsSheet(postId: post.id, isPostOwner: _isOwner, allowImages: false),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -337,15 +375,13 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
           ),
         ],
       ),
-      // Mating posts have no terminal status on the backend, so owners can
-      // only delete them.
       bottomNavigationBar: _isOwner
           ? SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 child: OwnerPostActions(
                   postId: post.id,
-                  close: null,
+                  close: OwnerCloseAction.mating,
                   isClosed: post.status != 'ACTIVE',
                   onClosed: (status) => setState(() => _post = _post!.copyWith(status: status)),
                   onDeleted: () => Navigator.of(context).pop(),

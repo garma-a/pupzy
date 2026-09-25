@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
@@ -55,6 +57,23 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
   bool _matingHasNextPage = false;
   bool _matingLoadingMore = false;
   final _matingScrollController = ScrollController();
+  Timer? _searchDebounce;
+
+  /// The server-side search term, or null under the backend's 2-character
+  /// minimum (feed-search-flutter-integration-contract.md §4).
+  String? get _activeSearch {
+    final trimmed = _query.trim();
+    return trimmed.length >= 2 ? trimmed : null;
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() => _query = value);
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      _loadFeed();
+      _loadMatingFeed();
+    });
+  }
 
   @override
   void initState() {
@@ -71,18 +90,19 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
     _scrollController.dispose();
     _matingScrollController.removeListener(_onMatingScroll);
     _matingScrollController.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
   }
 
   void _onScroll() {
-    if (_loading || _loadingMore || !_hasNextPage || _query.trim().isNotEmpty) return;
+    if (_loading || _loadingMore || !_hasNextPage) return;
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 400) {
       _loadMore();
     }
   }
 
   void _onMatingScroll() {
-    if (_matingLoading || _matingLoadingMore || !_matingHasNextPage || _query.trim().isNotEmpty) return;
+    if (_matingLoading || _matingLoadingMore || !_matingHasNextPage) return;
     if (_matingScrollController.position.pixels >= _matingScrollController.position.maxScrollExtent - 400) {
       _loadMoreMating();
     }
@@ -108,6 +128,7 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
       latitude: _position?.latitude,
       longitude: _position?.longitude,
       radiusKm: maxDist.isFinite ? maxDist : null,
+      search: _activeSearch,
     );
     if (!mounted || error != null) return;
     final byId = {for (final p in posts) p.id: p};
@@ -120,7 +141,7 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
   /// posts already in [_matingPosts] with fresh data.
   Future<void> _refreshMatingFeedQuietly() async {
     final graphql = context.read<GraphQLService>();
-    final (posts, _, _, error) = await graphql.fetchMatingFeed(cityId: _cityId);
+    final (posts, _, _, error) = await graphql.fetchMatingFeed(cityId: _cityId, search: _activeSearch);
     if (!mounted || error != null) return;
     final byId = {for (final p in posts) p.id: p};
     setState(() {
@@ -198,6 +219,7 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
       latitude: _position?.latitude,
       longitude: _position?.longitude,
       radiusKm: maxDist.isFinite ? maxDist : null,
+      search: _activeSearch,
     );
     if (!mounted) return;
     setState(() {
@@ -223,6 +245,7 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
       latitude: _position?.latitude,
       longitude: _position?.longitude,
       radiusKm: maxDist.isFinite ? maxDist : null,
+      search: _activeSearch,
       after: _endCursor,
     );
     if (!mounted) return;
@@ -246,7 +269,7 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
       _matingErrorMessage = null;
     });
     final graphql = context.read<GraphQLService>();
-    final (posts, endCursor, hasNextPage, error) = await graphql.fetchMatingFeed(cityId: _cityId);
+    final (posts, endCursor, hasNextPage, error) = await graphql.fetchMatingFeed(cityId: _cityId, search: _activeSearch);
     if (!mounted) return;
     setState(() {
       _matingLoading = false;
@@ -264,7 +287,7 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
     if (_matingLoadingMore || !_matingHasNextPage) return;
     setState(() => _matingLoadingMore = true);
     final graphql = context.read<GraphQLService>();
-    final (more, endCursor, hasNextPage, error) = await graphql.fetchMatingFeed(cityId: _cityId, after: _matingEndCursor);
+    final (more, endCursor, hasNextPage, error) = await graphql.fetchMatingFeed(cityId: _cityId, search: _activeSearch, after: _matingEndCursor);
     if (!mounted) return;
     setState(() {
       _matingLoadingMore = false;
@@ -276,8 +299,10 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
     });
   }
 
-  List<FeedPost> get _filtered => _posts.where((p) => p.matchesQuery(_query)).toList();
-  List<FeedPost> get _matingFiltered => _matingPosts.where((p) => p.matchesQuery(_query)).toList();
+  // Both lists come back pre-filtered from the server when a search is
+  // active (fetchAdoptFeed/fetchMatingFeed already receive [_activeSearch]).
+  List<FeedPost> get _filtered => _posts;
+  List<FeedPost> get _matingFiltered => _matingPosts;
 
   Future<bool> _toggleSave(FeedPost post) async {
     final graphql = context.read<GraphQLService>();
@@ -327,7 +352,7 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: AdaptiveSearchBar(
                   hintText: t(context, 'Search pets by breed, name, or location...', 'ابحث عن حيوانات بالسلالة أو الاسم أو الموقع...'),
-                  onChanged: (v) => setState(() => _query = v),
+                  onChanged: _onSearchChanged,
                 ),
               ),
               const SizedBox(height: AppSpacing.md),

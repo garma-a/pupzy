@@ -3,17 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
 import '../services/auth_service.dart';
 import '../services/graphql_service.dart';
+import '../services/push_service.dart';
+import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
+import '../utils/webp_compress.dart';
 import '../widgets/language_toggle.dart';
 import 'blocked_accounts_screen.dart';
 import 'contact_requests_screen.dart';
 import 'delete_account_screen.dart';
 import 'login_screen.dart';
+import 'my_adoption_applications_screen.dart';
 import 'my_posts_screen.dart';
 
 class ProfileSheet extends StatefulWidget {
@@ -184,7 +190,94 @@ class _ProfileSheetState extends State<ProfileSheet> {
     }
   }
 
+  Future<void> _changeAvatar() async {
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.background,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_outlined, color: AppColors.primary),
+              title: Text(t(ctx, 'Choose a photo', 'اختر صورة')),
+              onTap: () => Navigator.of(ctx).pop('pick'),
+            ),
+            if (_user?['profilePictureUrl'] != null)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: AppColors.critical),
+                title: Text(t(ctx, 'Remove photo', 'إزالة الصورة')),
+                onTap: () => Navigator.of(ctx).pop('remove'),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked == 'pick') {
+      await _pickAndUploadAvatar();
+    } else if (picked == 'remove') {
+      await _removeAvatar();
+    }
+  }
+
+  Future<void> _pickAndUploadAvatar() async {
+    final image = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 90);
+    if (image == null || !mounted) return;
+    final webpBytes = await compressToWebpUnderLimit(image);
+    if (!mounted) return;
+    if (webpBytes == null) {
+      Fluttertoast.showToast(msg: t(context, "Couldn't prepare that photo. Try a different one.", 'تعذر تجهيز هذه الصورة. جرّب صورة أخرى.'));
+      return;
+    }
+    final graphql = context.read<GraphQLService>();
+    final (ticket, _, ticketError) = await graphql.requestProfilePhotoUploadUrl(fileSizeBytes: webpBytes.length);
+    if (!mounted) return;
+    if (ticket == null) {
+      Fluttertoast.showToast(msg: ticketError ?? t(context, 'Could not upload photo. Try again.', 'تعذر رفع الصورة. حاول مرة أخرى.'));
+      return;
+    }
+    final response = await http.put(
+      Uri.parse(ticket['uploadUrl'] as String),
+      headers: {'Content-Type': 'image/webp'},
+      body: webpBytes,
+    );
+    if (!mounted) return;
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      Fluttertoast.showToast(msg: t(context, 'Could not upload photo. Try again.', 'تعذر رفع الصورة. حاول مرة أخرى.'));
+      return;
+    }
+    final (profilePictureUrl, _, setError) = await graphql.setProfilePhoto(ticket['mediaId'] as String);
+    if (!mounted) return;
+    if (setError != null) {
+      Fluttertoast.showToast(msg: setError);
+      return;
+    }
+    setState(() => _user = {...?_user, 'profilePictureUrl': profilePictureUrl});
+  }
+
+  Future<void> _removeAvatar() async {
+    final graphql = context.read<GraphQLService>();
+    final (success, error) = await graphql.removeProfilePhoto();
+    if (!mounted) return;
+    if (!success) {
+      Fluttertoast.showToast(msg: error ?? t(context, 'Could not remove photo. Try again.', 'تعذر إزالة الصورة. حاول مرة أخرى.'));
+      return;
+    }
+    setState(() => _user = {...?_user, 'profilePictureUrl': null});
+  }
+
+  Future<void> _toggleNotifications() async {
+    final current = _user?['notificationsEnabled'] == true;
+    final graphql = context.read<GraphQLService>();
+    final ok = await graphql.updateMyNotificationPreferences(!current);
+    if (!mounted || !ok) return;
+    setState(() => _user = {...?_user, 'notificationsEnabled': !current});
+  }
+
   Future<void> _signOut() async {
+    await context.read<PushService>().unregisterCurrentDevice();
+    if (!mounted) return;
     final auth = context.read<AuthService>();
     await auth.signOut();
     if (mounted) {
@@ -204,7 +297,12 @@ class _ProfileSheetState extends State<ProfileSheet> {
     final displayName = _user?['fullName'] ?? firebaseUser?.displayName ?? t(context, 'Pupzy User', 'مستخدم بابزي');
     final arabicName = _user?['fullNameArabic'] ?? '';
     final email = _user?['email'] ?? firebaseUser?.email ?? '';
-    final photoUrl = _user?['profilePictureUrl'] ?? firebaseUser?.photoURL;
+    // profile-photo-flutter-integration-contract.md §8.3: once `_user` has
+    // loaded, its `profilePictureUrl` is authoritative — including an
+    // explicit null after removal, which must render initials rather than
+    // falling back to a cached Firebase provider picture. Only fall back to
+    // the Firebase photo while the profile hasn't loaded yet at all.
+    final photoUrl = _loadingProfile ? firebaseUser?.photoURL : _user?['profilePictureUrl'] as String?;
     final rescues = _user?['rescuePostCount']?.toString() ?? '0';
     final adopted = _user?['adoptionPostCount']?.toString() ?? '0';
     final lost = _user?['lostPostCount']?.toString() ?? '0';
@@ -226,15 +324,32 @@ class _ProfileSheetState extends State<ProfileSheet> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 32,
-                  backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
-                  child: photoUrl == null
-                      ? Text(
-                          displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                        )
-                      : null,
+                GestureDetector(
+                  onTap: _changeAvatar,
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 32,
+                        backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
+                        child: photoUrl == null
+                            ? Text(
+                                displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                              )
+                            : null,
+                      ),
+                      PositionedDirectional(
+                        bottom: 0,
+                        end: 0,
+                        child: Container(
+                          width: 22,
+                          height: 22,
+                          decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle, border: Border.fromBorderSide(BorderSide(color: Colors.white, width: 2))),
+                          child: const Icon(Icons.camera_alt, size: 12, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -294,7 +409,10 @@ class _ProfileSheetState extends State<ProfileSheet> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: LanguageToggle(
               lang: lang,
-              onChanged: (l) => context.read<LangProvider>().setLang(l),
+              onChanged: (l) {
+                context.read<LangProvider>().setLang(l);
+                context.read<GraphQLService>().updateMyLanguagePreference(l == Lang.ar ? 'ar' : 'en');
+              },
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -338,6 +456,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
                     icon: Icons.notifications_none,
                     label: t(context, 'Notifications', 'الإشعارات'),
                     trailing: _user?['notificationsEnabled'] == true ? t(context, 'On', 'مفعّل') : t(context, 'Off', 'متوقف'),
+                    onTap: _toggleNotifications,
                   ),
                   const Divider(height: 1, indent: 48),
                   _SettingsRow(
@@ -353,11 +472,25 @@ class _ProfileSheetState extends State<ProfileSheet> {
                   ),
                   const Divider(height: 1, indent: 48),
                   _SettingsRow(
+                    icon: Icons.assignment_outlined,
+                    label: t(context, 'My Applications', 'طلباتي للتبني'),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const MyAdoptionApplicationsScreen()),
+                    ),
+                  ),
+                  const Divider(height: 1, indent: 48),
+                  _SettingsRow(
                     icon: Icons.block_outlined,
                     label: t(context, 'Blocked Accounts', 'الحسابات المحظورة'),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const BlockedAccountsScreen()),
                     ),
+                  ),
+                  const Divider(height: 1, indent: 48),
+                  _SettingsRow(
+                    icon: Icons.gavel_outlined,
+                    label: t(context, 'Terms & Privacy', 'الشروط والخصوصية'),
+                    onTap: () => showTermsInfoSheet(context),
                   ),
                 ],
               ),
