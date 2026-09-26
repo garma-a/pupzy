@@ -48,6 +48,9 @@ final cases = [
 void main() {
   late FakeDetailGraphQL graphql;
 
+  // The comments sheet and the language setting keep state on the device.
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   Future<void> pumpDetail(
     WidgetTester tester,
     Case c, {
@@ -285,6 +288,37 @@ void main() {
       await pumpDetail(tester, cases[0], asOwner: false, status: 'ANIMAL_DECEASED', lang: lang);
       expect(find.text('وفاة الحيوان'), findsOneWidget);
       expect(find.text('أُغلقت حالة الإنقاذ هذه بسبب وفاة الحيوان.'), findsOneWidget);
+    });
+  });
+
+  // ── Marketplace: no discussion or Raise; Lost & Found: text-only comments ──
+
+  group('discussion by post type', () {
+    for (final asOwner in [true, false]) {
+      testWidgets('a marketplace listing has no comments or Raise (${asOwner ? 'owner' : 'viewer'})', (tester) async {
+        await pumpDetail(tester, cases[4], asOwner: asOwner);
+        expect(find.byIcon(Icons.mode_comment_outlined), findsNothing);
+        expect(find.textContaining('Raise'), findsNothing);
+      });
+    }
+
+    for (final c in [cases[1], cases[2]]) {
+      testWidgets('${c.name} comments are text-only', (tester) async {
+        await pumpDetail(tester, c, asOwner: false);
+        expect(find.textContaining('Add a photo'), findsNothing);
+        await tester.tap(find.text('Seen this pet? Say where and when in the comments so the owner knows where to look.'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Add a comment...'), findsOneWidget, reason: 'the comments sheet is open');
+        expect(find.byIcon(Icons.image_outlined), findsNothing, reason: 'no photo picking');
+      });
+    }
+
+    testWidgets('RESCUE comments still take photos', (tester) async {
+      await pumpDetail(tester, cases[0], asOwner: false);
+      await tester.tap(find.text('Post Update'));
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.image_outlined), findsOneWidget);
     });
   });
 }
