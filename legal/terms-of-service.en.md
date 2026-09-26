@@ -1,27 +1,28 @@
 # Pupzy Terms of Service
 
-**Version:** 2026-09-27
+**Version:** 2026-09-27  
 **Last updated:** 27 September 2026
 
-> **Draft — must be reviewed by a qualified Egyptian lawyer before publication.**
-> Replace every item in [square brackets] before publishing. When this version is
-> published, set the backend's `TERMS_VERSION` to the version above and
-> `TERMS_URL` to the page where it is hosted. Every account will then be asked to
-> accept it inside the app.
+<!--
+**Draft — must be reviewed by a qualified Egyptian lawyer before publication.**
+Replace every item in [square brackets] before publishing. When this version is
+published, set the backend's `TERMS_VERSION` to the version above and
+`TERMS_URL` to the page where it is hosted. Every account will then be asked to
+accept it inside the app.
+-->
 
 ---
 
 ## 1. About these Terms
 
 1.1 These Terms of Service ("**Terms**") are a binding agreement between you and
-**[Legal entity name]**, [company type], registered in the Arab Republic of Egypt
-under commercial registration no. [number], with its address at [registered
-address] ("**Pupzy**", "**we**", "**us**"). They govern your use of the Pupzy
+**{{legal_entity_name}}**, {{company_type}}, registered in the Arab Republic of Egypt
+under commercial registration no. {{commercial_registration_no}}, with its address at {{registered_address}} ("**Pupzy**", "**we**", "**us**"). They govern your use of the Pupzy
 mobile applications, website and related services (together, the "**Service**").
 
 1.2 By creating an account, or by tapping "Accept" when the Service asks you to,
 you confirm that you have read, understood and agree to these Terms and to our
-Privacy Policy at [Privacy Policy URL]. If you do not agree, do not use the
+Privacy Policy at {{privacy_url}}. If you do not agree, do not use the
 Service.
 
 1.3 We may update these Terms (see section 18). Each version has a version date.
@@ -43,7 +44,7 @@ impersonate any person or organisation, or create a new account after we have
 suspended or banned you.
 
 2.3 You are responsible for everything done through your account and for
-keeping your sign-in details secure. Tell us promptly at [support email] if you
+keeping your sign-in details secure. Tell us promptly at {{support_email}} if you
 believe your account has been used without your permission.
 
 ## 3. What Pupzy is — and what it is not
@@ -266,7 +267,7 @@ with them.
 
 8.4 We are not obliged to monitor all content, and we are not responsible for
 content posted by users. If you believe we made a mistake, contact us at
-[support email] and we will review it.
+{{support_email}} and we will review it.
 
 ## 9. Your content
 
@@ -287,7 +288,7 @@ but you should still avoid photos that reveal private information.
 
 ## 10. Privacy and notifications
 
-10.1 Our Privacy Policy at [Privacy Policy URL] explains what personal data we
+10.1 Our Privacy Policy at {{privacy_url}} explains what personal data we
 collect, including your name, email, phone number, city, the approximate
 location of posts, photos and device information, how we use it, who we share
 it with, how long we keep it and your rights. It forms part of these Terms.
@@ -299,7 +300,7 @@ your phone's settings.
 ## 11. Deleting your account
 
 11.1 You can delete your account at any time from your profile in the app, or
-by writing to [support email] or using [account deletion web page URL].
+by writing to {{support_email}} or using {{delete_account_url}}.
 
 11.2 Deleting your account permanently removes your account, your posts and
 photos and your personal information from the Service. Some information may
@@ -362,7 +363,7 @@ loss of profits, data, goodwill or opportunity; or
 15.2 To the fullest extent permitted by law, our total liability to you for all
 claims relating to the Service is limited to the greater of the amount you
 paid us in the 12 months before the claim (the Service is currently free) or
-**[EGP amount]**.
+**{{liability_cap_egp}}**.
 
 15.3 Nothing in these Terms excludes or limits any liability that cannot be
 excluded or limited under Egyptian law, including liability for fraud, gross
@@ -399,11 +400,11 @@ new content, and you can delete your account.
 
 19.1 These Terms are governed by the laws of the **Arab Republic of Egypt**.
 
-19.2 Before starting any legal proceedings, please contact us at [support email]
+19.2 Before starting any legal proceedings, please contact us at {{support_email}}
 so that we can try to resolve the matter amicably within 30 days.
 
 19.3 Any dispute that is not resolved amicably will be subject to the
-jurisdiction of the competent courts of **[Cairo]**, without prejudice to any
+jurisdiction of the competent courts of **{{court_city}}**, without prejudice to any
 mandatory right you have as a consumer to bring a claim elsewhere or before the
 Consumer Protection Agency.
 
@@ -465,10 +466,10 @@ agreement between you and us about the Service.
 
 ## 22. Contact us
 
-**[Legal entity name]**
-[Registered address]
-Email: [support email]
-Phone: [support phone]
+**{{legal_entity_name}}**  
+{{registered_address}}  
+Email: {{support_email}}  
+Phone: {{support_phone}}
 
 To report urgent safety issues or illegal content, use the report button in the
-app or email [safety email].
+app or email {{safety_email}}.
