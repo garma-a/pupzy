@@ -516,7 +516,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                                 )
                               else
                                 SizedBox(
-                                  height: 270,
+                                  height: _rescueCarouselHeight(context),
                                   child: ListView.builder(
                                     scrollDirection: Axis.horizontal,
                                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -550,7 +550,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                                 )
                               else
                                 SizedBox(
-                                  height: 270,
+                                  height: _rescueCarouselHeight(context),
                                   child: ListView.builder(
                                     scrollDirection: Axis.horizontal,
                                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -1203,6 +1203,11 @@ class _HomeUrgentBanner extends StatelessWidget {
     );
   }
 }
+
+/// Height of the horizontal rescue / lost-and-found carousels: the 180 px
+/// photo plus a text block that grows with the user's text size. A fixed 270
+/// clipped the cards by 7 px at 130 % text on a 360 dp phone.
+double _rescueCarouselHeight(BuildContext context) => 180 + MediaQuery.textScalerOf(context).scale(90);
 
 class _HomeRescueCard extends StatelessWidget {
   final FeedPost post;

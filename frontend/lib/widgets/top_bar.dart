@@ -6,6 +6,7 @@ import '../screens/profile_screen.dart';
 import '../services/auth_service.dart';
 import '../services/browse_location_service.dart';
 import '../services/graphql_service.dart';
+import '../services/notification_center.dart';
 import '../theme/app_theme.dart';
 import 'city_picker_sheet.dart';
 
@@ -207,27 +208,24 @@ class _NotifButton extends StatefulWidget {
 }
 
 class _NotifButtonState extends State<_NotifButton> {
-  int _unreadCount = 0;
-
   @override
   void initState() {
     super.initState();
     _refreshUnreadCount();
   }
 
-  Future<void> _refreshUnreadCount() async {
-    final graphql = context.read<GraphQLService>();
-    final (count, _) = await graphql.fetchMyUnreadNotificationCount();
-    if (mounted) setState(() => _unreadCount = count ?? 0);
+  void _refreshUnreadCount() {
+    context.read<NotificationCenter>().refresh(context.read<GraphQLService>());
   }
 
   @override
   Widget build(BuildContext context) {
-    final hasUnread = _unreadCount > 0;
+    final unreadCount = context.watch<NotificationCenter>().unreadCount;
+    final hasUnread = unreadCount > 0;
     return Semantics(
       button: true,
       label: hasUnread
-          ? t(context, 'Notifications, unread', 'الإشعارات، غير مقروءة')
+          ? t(context, '$unreadCount unread notifications', 'إشعارات غير مقروءة: $unreadCount')
           : t(context, 'Notifications', 'الإشعارات'),
       child: GestureDetector(
         onTap: () async {
@@ -257,14 +255,29 @@ class _NotifButtonState extends State<_NotifButton> {
               ),
               if (hasUnread)
                 PositionedDirectional(
-                  top: 8,
-                  end: 8,
-                  child: Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
-                      color: AppColors.critical,
-                      shape: BoxShape.circle,
+                  top: 2,
+                  end: 0,
+                  child: ExcludeSemantics(
+                    child: Container(
+                      constraints: const BoxConstraints(minWidth: 16),
+                      height: 16,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.critical,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.surface, width: 1.5),
+                      ),
+                      child: Text(
+                        unreadCount > 9 ? '9+' : '$unreadCount',
+                        textScaler: TextScaler.noScaling,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          height: 1,
+                        ),
+                      ),
                     ),
                   ),
                 ),

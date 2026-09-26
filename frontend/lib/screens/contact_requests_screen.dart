@@ -7,6 +7,7 @@ import '../localization/lang_provider.dart';
 import '../models/contact_request.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/load_more_footer.dart';
 import '../widgets/skeleton_loader.dart';
 
 /// Contact requests I've SENT — tracks their approve/reject status.
@@ -26,6 +27,11 @@ class _ContactRequestsScreenState extends State<ContactRequestsScreen> {
   bool _loading = true;
   String? _errorMessage;
   List<ContactRequest> _requests = [];
+  String? _endCursor;
+  bool _hasNextPage = false;
+  bool _loadingMore = false;
+  bool _loadMoreFailed = false;
+  int _pagesLoaded = 0;
 
   @override
   void initState() {
@@ -39,12 +45,41 @@ class _ContactRequestsScreenState extends State<ContactRequestsScreen> {
       _errorMessage = null;
     });
     final graphql = context.read<GraphQLService>();
-    final (requests, error) = await graphql.fetchMyContactRequests(first: 50);
+    final page = await graphql.fetchMyContactRequests();
     if (!mounted) return;
     setState(() {
       _loading = false;
-      _requests = requests;
-      _errorMessage = error;
+      _requests = page.items;
+      _errorMessage = page.errorMessage;
+      _endCursor = page.endCursor;
+      _hasNextPage = page.hasNextPage;
+      _loadMoreFailed = false;
+      _pagesLoaded = 1;
+    });
+  }
+
+  /// Loads the next page, skipping anything already shown (rows can move
+  /// between pages when their status changes).
+  Future<void> _loadMore() async {
+    if (_loadingMore || !_hasNextPage) return;
+    setState(() {
+      _loadingMore = true;
+      _loadMoreFailed = false;
+    });
+    final graphql = context.read<GraphQLService>();
+    final page = await graphql.fetchMyContactRequests(after: _endCursor);
+    if (!mounted) return;
+    setState(() {
+      _loadingMore = false;
+      if (page.failed) {
+        _loadMoreFailed = true;
+        return;
+      }
+      final known = _requests.map((x) => x.id).toSet();
+      _requests = [..._requests, ...page.items.where((x) => known.add(x.id))];
+      _endCursor = page.endCursor;
+      _hasNextPage = page.hasNextPage;
+      _pagesLoaded++;
     });
   }
 
@@ -101,7 +136,8 @@ class _ContactRequestsScreenState extends State<ContactRequestsScreen> {
                   Text(
                     pending.isEmpty
                         ? t(context, 'No pending requests', 'لا توجد طلبات معلقة')
-                        : t(context, '${pending.length} awaiting response', '${pending.length} بانتظار الرد'),
+                        : t(context, '${pending.length}${_hasNextPage ? '+' : ''} awaiting response',
+                            '${pending.length}${_hasNextPage ? '+' : ''} بانتظار الرد'),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
@@ -171,6 +207,14 @@ class _ContactRequestsScreenState extends State<ContactRequestsScreen> {
                                   ),
                                 ),
                               ),
+                            LoadMoreFooter(
+                              hasMore: _hasNextPage,
+                              loading: _loadingMore,
+                              failed: _loadMoreFailed,
+                              autoLoad: true,
+                              pagedBeyondFirst: _pagesLoaded > 1,
+                              onLoadMore: _loadMore,
+                            ),
                           ],
                         ),
             ),

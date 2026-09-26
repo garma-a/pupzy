@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../localization/lang_provider.dart';
 import '../models/adoption_application.dart';
 import '../models/post_detail.dart';
+import '../services/adoption_application_lookup.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/adoption_application_sheet.dart';
@@ -14,6 +15,7 @@ import '../widgets/comments_sheet.dart';
 import '../widgets/adoption_applications_owner_section.dart';
 import '../widgets/nearby_vets_section.dart';
 import '../widgets/owner_post_actions.dart';
+import '../utils/post_status_labels.dart';
 import '../widgets/pet_carousel.dart';
 import '../widgets/renew_post_button.dart';
 import '../widgets/safety_actions.dart';
@@ -39,6 +41,10 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
   bool get _isOwner => _myUserId != null && _post != null && _post!.creator.id == _myUserId;
   bool get _isExpired => _post?.status == 'EXPIRED';
   bool get _isRenewable => _post?.status == 'ACTIVE' || _isExpired;
+
+  /// New applications are only accepted while the listing is ACTIVE (not
+  /// expired, not adopted). An approved applicant keeps WhatsApp access.
+  bool get _acceptsApplications => _post?.status == 'ACTIVE';
   bool _openingWhatsApp = false;
 
   @override
@@ -67,9 +73,9 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
     final me = await meFuture;
     _myUserId = me?['id'] as String?;
     if (_myUserId != post.creator.id) {
-      final (mine, _) = await graphql.fetchMyAdoptionApplications(first: 50);
+      final (mine, _) = await findMyAdoptionApplication(graphql, post.id);
       if (!mounted) return;
-      _myApplication = mine.where((a) => a.targetPostId == post.id).isEmpty ? null : mine.firstWhere((a) => a.targetPostId == post.id);
+      _myApplication = mine;
     }
     final (ext, extError) = await graphql.fetchAdoptionPostDetail(widget.postId);
     if (!mounted) return;
@@ -81,20 +87,32 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
     });
   }
 
+  /// Re-reads the Post's status after an application didn't go through — it may
+  /// have closed while this screen was open, and the button should say so.
+  Future<void> _refreshStatus() async {
+    final (fresh, _) = await context.read<GraphQLService>().fetchPostDetail(widget.postId);
+    if (!mounted || fresh == null || _post == null || fresh.status == _post!.status) return;
+    setState(() => _post = _post!.copyWith(status: fresh.status));
+  }
+
   Future<void> _adopt() async {
-    if (_myApplication != null || _isExpired) return;
+    if (_myApplication != null || !_acceptsApplications) return;
     final submitted = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => AdoptionApplicationSheet(postId: widget.postId),
     );
-    if (submitted != true || !mounted) return;
+    if (!mounted) return;
+    if (submitted != true) {
+      await _refreshStatus();
+      return;
+    }
     final graphql = context.read<GraphQLService>();
-    final (mine, _) = await graphql.fetchMyAdoptionApplications(first: 50);
+    final (mine, _) = await findMyAdoptionApplication(graphql, widget.postId);
     if (!mounted) return;
     setState(() {
-      _myApplication = mine.where((a) => a.targetPostId == widget.postId).isEmpty ? null : mine.firstWhere((a) => a.targetPostId == widget.postId);
+      _myApplication = mine;
     });
   }
 
@@ -141,7 +159,10 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
       case 'REJECTED':
         return t(context, 'Application Declined', 'تم رفض الطلب');
       default:
-        return _isExpired ? t(context, 'Listing expired', 'انتهى الإعلان') : t(context, 'Ask to adopt', 'اطلب التبني');
+        if (_acceptsApplications) return t(context, 'Ask to adopt', 'اطلب التبني');
+        return _isExpired
+            ? t(context, 'Listing expired', 'انتهى الإعلان')
+            : closedToNewApplicationsLabel(context, _post!.status);
     }
   }
 
@@ -346,6 +367,13 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                       postId: post.id,
                       close: OwnerCloseAction.adoption,
                       isClosed: post.status == 'ADOPTED',
+                      closeBlockedReason: _isExpired
+                          ? t(
+                              context,
+                              'Renew this listing before marking it adopted.',
+                              'جدّد هذا الإعلان قبل تحديده كمُتبنّى.',
+                            )
+                          : null,
                       onClosed: (status) => setState(() => _post = _post!.copyWith(status: status)),
                       onDeleted: () => Navigator.of(context).pop(),
                     ),
@@ -371,7 +399,7 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                   child: ElevatedButton(
                     onPressed: _myApplication?.status == 'APPROVED'
                         ? (_openingWhatsApp ? null : _messageOwner)
-                        : (_myApplication == null && !_isExpired ? _adopt : null),
+                        : (_myApplication == null && _acceptsApplications ? _adopt : null),
                     child: Text(_applyButtonLabel(context)),
                   ),
                 ),

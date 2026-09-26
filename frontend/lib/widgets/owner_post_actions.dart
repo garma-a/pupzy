@@ -7,16 +7,19 @@ import '../services/graphql_service.dart';
 import '../services/safety_events.dart';
 import '../theme/app_theme.dart';
 
-/// The one terminal status a post type can move to via `updatePostStatus`,
-/// plus the copy for it. Mirrors the backend's `ALLOWED_TRANSITIONS`
-/// (RESCUE→RESOLVED, LOST→REUNITED, ADOPTION→ADOPTED, PRODUCT→SOLD). Mating
-/// posts have no transition, so they only get Delete.
+/// A terminal status a post type can move to via `updatePostStatus`, plus
+/// the copy for it. Mirrors the backend's `ALLOWED_TRANSITIONS`
+/// (RESCUE→RESOLVED or ANIMAL_DECEASED, LOST→REUNITED, FOUND_STRAY→RESOLVED
+/// or REUNITED, ADOPTION→ADOPTED, PRODUCT→SOLD, MATING→RESOLVED).
 class OwnerCloseAction {
   final String status;
   final String actionEn, actionAr;
   final String doneEn, doneAr;
   final String confirmEn, confirmAr;
   final String toastEn, toastAr;
+
+  /// One line under the option when the owner chooses between two outcomes.
+  final String? descriptionEn, descriptionAr;
 
   const OwnerCloseAction({
     required this.status,
@@ -28,18 +31,42 @@ class OwnerCloseAction {
     required this.confirmAr,
     required this.toastEn,
     required this.toastAr,
+    this.descriptionEn,
+    this.descriptionAr,
   });
 
+  /// "Rescued" = immediate danger addressed and appropriate care secured;
+  /// the animal does not need to have been adopted. Stored as `RESOLVED`.
   static const rescue = OwnerCloseAction(
     status: 'RESOLVED',
-    actionEn: 'Mark Resolved',
-    actionAr: 'تحديد كمحلولة',
-    doneEn: 'Resolved ✓',
-    doneAr: 'تم الحل ✓',
-    confirmEn: 'Mark this rescue as resolved? This closes the post and cannot be undone.',
-    confirmAr: 'تحديد هذه الحالة كمحلولة؟ سيتم إغلاق المنشور ولا يمكن التراجع عن ذلك.',
-    toastEn: 'Post marked as resolved',
-    toastAr: 'تم تحديد المنشور كمحلول',
+    actionEn: 'Rescued',
+    actionAr: 'تم الإنقاذ',
+    doneEn: 'Rescued ✓',
+    doneAr: 'تم الإنقاذ ✓',
+    confirmEn:
+        'Mark this animal as rescued? Its immediate danger has been addressed and it has appropriate care — it does not need to be adopted. This closes the post and cannot be undone.',
+    confirmAr:
+        'تحديد أن الحيوان تم إنقاذه؟ زال الخطر المباشر عنه وحصل على رعاية مناسبة — ولا يُشترط أن يكون قد تم تبنيه. سيتم إغلاق المنشور ولا يمكن التراجع عن ذلك.',
+    toastEn: 'Rescue marked as rescued',
+    toastAr: 'تم تحديد حالة الإنقاذ كناجحة',
+    descriptionEn: 'Danger addressed and care secured — adoption not required',
+    descriptionAr: 'زال الخطر وتم تأمين الرعاية — لا يُشترط التبني',
+  );
+
+  /// RESCUE only. A completed outcome that is not a success: never shown
+  /// with a tick or as "Rescued".
+  static const animalDeceased = OwnerCloseAction(
+    status: 'ANIMAL_DECEASED',
+    actionEn: 'Animal deceased',
+    actionAr: 'وفاة الحيوان',
+    doneEn: 'Animal deceased',
+    doneAr: 'وفاة الحيوان',
+    confirmEn: 'Close this rescue because the animal died? This closes the post and cannot be undone.',
+    confirmAr: 'إغلاق حالة الإنقاذ هذه بسبب وفاة الحيوان؟ سيتم إغلاق المنشور ولا يمكن التراجع عن ذلك.',
+    toastEn: 'Rescue closed',
+    toastAr: 'تم إغلاق حالة الإنقاذ',
+    descriptionEn: 'The animal died — closes the rescue without marking it rescued',
+    descriptionAr: 'توفي الحيوان — يُغلق الحالة دون اعتبارها إنقاذًا',
   );
 
   static const lost = OwnerCloseAction(
@@ -127,6 +154,11 @@ class OwnerPostActions extends StatefulWidget {
   /// an already-closed post.
   final String? currentStatus;
 
+  /// Why closing isn't possible right now although the post isn't closed —
+  /// e.g. an expired listing must be renewed first. Disables the close button
+  /// and shows this line above it. Null when closing is allowed.
+  final String? closeBlockedReason;
+
   /// Called with the new status after the post was closed.
   final ValueChanged<String> onClosed;
 
@@ -140,6 +172,7 @@ class OwnerPostActions extends StatefulWidget {
     this.alternateClose,
     required this.isClosed,
     this.currentStatus,
+    this.closeBlockedReason,
     required this.onClosed,
     required this.onDeleted,
   });
@@ -187,21 +220,31 @@ class _OwnerPostActionsState extends State<OwnerPostActions> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         title: Text(t(ctx, 'Mark as...', 'تحديد كـ...')),
         children: [
-          SimpleDialogOption(
-            onPressed: () => Navigator.of(ctx).pop(primary),
-            child: Text(t(ctx, primary.actionEn, primary.actionAr)),
-          ),
-          SimpleDialogOption(
-            onPressed: () => Navigator.of(ctx).pop(alternate),
-            child: Text(t(ctx, alternate.actionEn, alternate.actionAr)),
-          ),
+          for (final option in [primary, alternate])
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(ctx).pop(option),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    t(ctx, option.actionEn, option.actionAr),
+                    style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  if (option.descriptionEn != null)
+                    Text(
+                      t(ctx, option.descriptionEn!, option.descriptionAr ?? option.descriptionEn!),
+                      style: Theme.of(ctx).textTheme.bodySmall,
+                    ),
+                ],
+              ),
+            ),
         ],
       ),
     );
   }
 
   Future<void> _closePost() async {
-    if (_busy || widget.isClosed) return;
+    if (_busy || widget.isClosed || widget.closeBlockedReason != null) return;
     final close = await _resolveCloseAction();
     if (close == null || !mounted) return;
     final confirmed = await _confirm(
@@ -270,7 +313,8 @@ class _OwnerPostActionsState extends State<OwnerPostActions> {
         : close != null
             ? t(context, close.actionEn, close.actionAr)
             : '';
-    return Row(
+    final blockedReason = widget.isClosed ? null : widget.closeBlockedReason;
+    final buttons = Row(
       children: [
         Expanded(
           child: OutlinedButton(
@@ -285,11 +329,38 @@ class _OwnerPostActionsState extends State<OwnerPostActions> {
           Expanded(
             child: ElevatedButton(
               key: const Key('ownerCloseButton'),
-              onPressed: _busy || widget.isClosed ? null : _closePost,
+              onPressed: _busy || widget.isClosed || blockedReason != null ? null : _closePost,
               child: Text(widget.isClosed && doneAction != null ? t(context, doneAction.doneEn, doneAction.doneAr) : actionLabel),
             ),
           ),
         ],
+      ],
+    );
+    if (close == null || blockedReason == null) return buttons;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        BlockedActionNote(blockedReason),
+        const SizedBox(height: AppSpacing.sm),
+        buttons,
+      ],
+    );
+  }
+}
+
+/// One muted line explaining why an owner action is unavailable right now.
+class BlockedActionNote extends StatelessWidget {
+  const BlockedActionNote(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Icon(Icons.info_outline, size: 16, color: AppColors.textSecondary),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(child: Text(text, style: Theme.of(context).textTheme.bodySmall)),
       ],
     );
   }

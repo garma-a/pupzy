@@ -7,9 +7,12 @@ import 'package:pupzy/localization/lang_provider.dart';
 import 'package:pupzy/models/app_notification.dart';
 import 'package:pupzy/models/blocked_user.dart';
 import 'package:pupzy/models/contact_request.dart';
+import 'package:pupzy/models/list_page.dart';
 import 'package:pupzy/models/post_detail.dart';
 import 'package:pupzy/models/safety.dart';
+import 'package:pupzy/models/terms_info.dart';
 import 'package:pupzy/services/graphql_service.dart';
+import 'package:pupzy/services/notification_center.dart';
 import 'package:pupzy/services/safety_events.dart';
 
 /// Captures every Fluttertoast message shown during a test (the real plugin
@@ -135,14 +138,58 @@ class FakeSafetyGraphQL implements GraphQLService {
   String? whatsAppLink;
   String? whatsAppLinkError;
 
+  // ── Terms ──────────────────────────────────────────────────────────────────
+  /// What the last rejected operation asked for (see GraphQLService).
+  TermsRequirement? termsRequirement;
+
+  /// Versions passed to acceptTerms, in order.
+  final List<String> acceptedVersions = [];
+
+  /// Versions acceptTerms rejects as stale, each pointing at the next one.
+  final Map<String, String> staleTermsVersions = {};
+
   @override
-  Future<(List<ContactRequest> requests, String? errorMessage)> fetchMyContactRequests({
+  TermsRequirement? takeTermsRequirement() {
+    final requirement = termsRequirement;
+    termsRequirement = null;
+    return requirement;
+  }
+
+  @override
+  Future<(TermsInfo?, String?, String?)> acceptTerms(String version) async {
+    acceptedVersions.add(version);
+    final newer = staleTermsVersions[version];
+    if (newer != null) {
+      termsRequirement = TermsRequirement(version: newer, url: 'https://example.org/terms/$newer');
+      return (null, 'TERMS_VERSION_MISMATCH', 'Terms version is out of date');
+    }
+    return (TermsInfo(currentVersion: version, acceptedVersion: version, acceptanceRequired: false), null, null);
+  }
+
+  /// When set, the next "load more" page (one with an `after` cursor) fails.
+  bool failNextLoadMore = false;
+
+  @override
+  Future<ListPage<ContactRequest>> fetchMyContactRequests({
     String? postId,
     String? status,
     int first = 20,
+    String? after,
   }) async {
     calls.add('fetchMyContactRequests');
-    return (List.of(myContactRequests), null);
+    return pageFor(myContactRequests.where((r) => status == null || r.status == status).toList(), first, after);
+  }
+
+  /// Serves [all] in pages of [first] with offset cursors, honouring
+  /// [failNextLoadMore].
+  ListPage<T> pageFor<T>(List<T> all, int first, String? after) {
+    if (after != null && failNextLoadMore) {
+      failNextLoadMore = false;
+      return const ListPage(errorMessage: 'Network down');
+    }
+    final start = after == null ? 0 : int.parse(after);
+    final end = (start + first).clamp(0, all.length);
+    return ListPage(items: all.sublist(start, end), endCursor: '$end', hasNextPage: end < all.length);
   }
 
   @override
@@ -158,10 +205,25 @@ class FakeSafetyGraphQL implements GraphQLService {
   String? postDetailError;
   final List<String> readNotificationIds = [];
 
+  /// Serves [notifications] in pages of `first`; the cursor is the index of
+  /// the next item.
   @override
-  Future<(List<AppNotification> notifications, int unreadCount, String? errorMessage)> fetchMyNotifications({int first = 30}) async {
-    return (notifications, notifications.where((n) => !n.isRead).length, null);
+  Future<NotificationPage> fetchMyNotifications({int first = 30, String? after}) async {
+    calls.add('fetchMyNotifications(${after ?? ''})');
+    final start = after == null ? 0 : int.parse(after);
+    final end = (start + first).clamp(0, notifications.length);
+    return NotificationPage(
+      notifications: notifications.sublist(start, end),
+      unreadCount: notifications.where((n) => !n.isRead).length,
+      endCursor: end < notifications.length ? '$end' : null,
+      hasNextPage: end < notifications.length,
+    );
   }
+
+  int unreadCount = 0;
+
+  @override
+  Future<(int? count, String? errorMessage)> fetchMyUnreadNotificationCount() async => (unreadCount, null);
 
   @override
   Future<(bool success, String? errorMessage)> markNotificationRead(String notificationId) async {
@@ -204,12 +266,14 @@ Widget safetyTestApp({
   required SafetyEvents events,
   required Widget child,
   LangProvider? lang,
+  NotificationCenter? notificationCenter,
 }) {
   return MultiProvider(
     providers: [
       ChangeNotifierProvider<LangProvider>.value(value: lang ?? LangProvider()),
       ChangeNotifierProvider<SafetyEvents>.value(value: events),
       Provider<GraphQLService>.value(value: graphql),
+      ChangeNotifierProvider<NotificationCenter>.value(value: notificationCenter ?? NotificationCenter()),
     ],
     child: Consumer<LangProvider>(
       builder: (context, l, _) => MaterialApp(

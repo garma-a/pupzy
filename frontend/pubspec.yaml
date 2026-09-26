@@ -61,10 +61,17 @@ dependencies:
   # flutter_native_splash:create` codegen step, so it belongs here rather
   # than in dev_dependencies.
   flutter_native_splash: ^2.4.6
+  flutter_local_notifications: ^22.3.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
+  # Integration tests replace the native photo picker and generate test
+  # photos (with and without GPS EXIF). Both are already transitive deps.
+  image_picker_platform_interface: ^2.11.1
+  image: ^4.8.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

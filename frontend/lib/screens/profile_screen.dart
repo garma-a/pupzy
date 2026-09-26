@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -15,6 +14,7 @@ import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
 import '../utils/webp_compress.dart';
 import '../widgets/language_toggle.dart';
+import '../utils/presigned_upload.dart';
 import 'blocked_accounts_screen.dart';
 import 'contact_requests_screen.dart';
 import 'delete_account_screen.dart';
@@ -33,6 +33,9 @@ class _ProfileSheetState extends State<ProfileSheet> {
   Map<String, dynamic>? _user;
   bool _loadingProfile = true;
   int _pendingSentRequests = 0;
+
+  /// More than one page of pending requests: shown as "50+".
+  bool _morePendingSent = false;
 
   @override
   void initState() {
@@ -54,8 +57,12 @@ class _ProfileSheetState extends State<ProfileSheet> {
 
   Future<void> _fetchPendingSentCount() async {
     final graphql = context.read<GraphQLService>();
-    final (requests, _) = await graphql.fetchMyContactRequests(status: 'PENDING', first: 50);
-    if (mounted) setState(() => _pendingSentRequests = requests.length);
+    final page = await graphql.fetchMyContactRequests(status: 'PENDING', first: 50);
+    if (!mounted || page.failed) return;
+    setState(() {
+      _pendingSentRequests = page.items.length;
+      _morePendingSent = page.hasNextPage;
+    });
   }
 
   void _showEditProfile() {
@@ -237,13 +244,9 @@ class _ProfileSheetState extends State<ProfileSheet> {
       Fluttertoast.showToast(msg: ticketError ?? t(context, 'Could not upload photo. Try again.', 'تعذر رفع الصورة. حاول مرة أخرى.'));
       return;
     }
-    final response = await http.put(
-      Uri.parse(ticket['uploadUrl'] as String),
-      headers: {'Content-Type': 'image/webp'},
-      body: webpBytes,
-    );
+    final uploaded = await putToPresignedUrl(ticket['uploadUrl'] as String, webpBytes, 'image/webp');
     if (!mounted) return;
-    if (response.statusCode < 200 || response.statusCode >= 300) {
+    if (!uploaded) {
       Fluttertoast.showToast(msg: t(context, 'Could not upload photo. Try again.', 'تعذر رفع الصورة. حاول مرة أخرى.'));
       return;
     }
@@ -270,9 +273,43 @@ class _ProfileSheetState extends State<ProfileSheet> {
   Future<void> _toggleNotifications() async {
     final current = _user?['notificationsEnabled'] == true;
     final graphql = context.read<GraphQLService>();
+    final push = context.read<PushService>();
+    final failedCopy = t(context, 'Could not update notifications. Try again.', 'تعذر تحديث الإشعارات. حاول مرة أخرى.');
     final ok = await graphql.updateMyNotificationPreferences(!current);
-    if (!mounted || !ok) return;
+    if (!mounted) return;
+    if (!ok) {
+      Fluttertoast.showToast(msg: failedCopy);
+      return;
+    }
     setState(() => _user = {...?_user, 'notificationsEnabled': !current});
+    // Turning them on only helps if the phone lets the app show them.
+    if (!current && !await push.requestPermission() && mounted) {
+      await _explainBlockedNotifications();
+    }
+  }
+
+  /// The phone blocks Pupzy's notifications: only its settings can undo
+  /// that, so offer to open them. Coming back to the app registers the
+  /// device on its own once they're allowed (PushService.ensureRegistered).
+  Future<void> _explainBlockedNotifications() async {
+    final open = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
+        title: Text(t(ctx, 'Notifications are blocked', 'الإشعارات محظورة')),
+        content: Text(t(
+          ctx,
+          'Notifications are on for your account, but your phone is blocking them for Pupzy. Allow them in your phone settings to get alerts.',
+          'الإشعارات مفعّلة لحسابك، لكن هاتفك يمنعها عن بابزي. اسمح بها من إعدادات الهاتف لتصلك التنبيهات.',
+        )),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(t(ctx, 'Not now', 'ليس الآن'))),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(t(ctx, 'Open settings', 'فتح الإعدادات'))),
+        ],
+      ),
+    );
+    if (open == true) await Geolocator.openAppSettings();
   }
 
   Future<void> _signOut() async {
@@ -313,7 +350,11 @@ class _ProfileSheetState extends State<ProfileSheet> {
         color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
       ),
-      child: Column(
+      // Scrolls so Sign Out and Delete Account (a store requirement) stay
+      // reachable when the sheet is taller than the screen — small phones or
+      // a large accessibility font size. It overflowed by 33 px at 360×780 dp.
+      child: SingleChildScrollView(
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 12),
@@ -462,7 +503,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
                   _SettingsRow(
                     icon: Icons.mail_outline,
                     label: t(context, 'My Contact Requests', 'طلبات التواصل الخاصة بي'),
-                    trailing: _pendingSentRequests > 0 ? _pendingSentRequests.toString() : null,
+                    trailing: _pendingSentRequests > 0 ? '$_pendingSentRequests${_morePendingSent ? '+' : ''}' : null,
                     onTap: () async {
                       await Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const ContactRequestsScreen()),
@@ -532,6 +573,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
           ),
           const SizedBox(height: AppSpacing.xl),
         ],
+      ),
       ),
     );
   }

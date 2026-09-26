@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -13,6 +12,10 @@ import '../services/graphql_service.dart';
 import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
 import '../widgets/city_picker_sheet.dart';
+import '../utils/age_parser.dart';
+import '../utils/photo_privacy.dart';
+import '../utils/presigned_upload.dart';
+import '../widgets/yes_no_question.dart';
 
 /// A fixed-choice option: (canonical value sent to the backend, English label, Arabic label).
 /// The canonical value is what state/logic keys off of — never the translated label.
@@ -71,14 +74,28 @@ class _PostFormScreenState extends State<PostFormScreen> {
   bool _foundStraySafeWithReporter = true;
   // RESCUE urgency signals — the server computes posts.urgency from these
   // rather than trusting a client-picked severity tier.
-  bool _isLifeThreatening = false;
-  bool _hasVisibleSeriousInjury = false;
-  bool _isInDangerousLocation = false;
-  bool _canAnimalMoveOrEscape = true;
+  // Rescue urgency answers start unanswered (null): they set how urgent the
+  // alert is, so a hurried reporter must answer each one rather than post
+  // with a silent default.
+  bool? _isLifeThreatening;
+  bool? _hasVisibleSeriousInjury;
+  bool? _isInDangerousLocation;
+  bool? _canAnimalMoveOrEscape;
+
+  bool get _rescueSituationAnswered =>
+      _isLifeThreatening != null &&
+      _hasVisibleSeriousInjury != null &&
+      _isInDangerousLocation != null &&
+      _canAnimalMoveOrEscape != null;
   // LOST_PET urgency signals — same idea, different questions.
-  bool _hasMedicalNeeds = false;
-  bool _isElderlyOrVeryYoung = false;
-  bool _lastSeenNearHazard = false;
+  // Lost-pet urgency answers start unanswered too, for the same reason as
+  // the rescue ones: each must be a deliberate answer, not a default.
+  bool? _hasMedicalNeeds;
+  bool? _isElderlyOrVeryYoung;
+  bool? _lastSeenNearHazard;
+
+  bool get _lostPetSituationAnswered =>
+      _hasMedicalNeeds != null && _isElderlyOrVeryYoung != null && _lastSeenNearHazard != null;
   String? _gender;
   bool _vaccinated = false;
   bool _neutered = false;
@@ -249,20 +266,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
         _species != null &&
         _conditionController.text.trim().length >= 10 &&
         _neighborhoodController.text.trim().isNotEmpty &&
-        _role != null;
-  }
-
-  String _mimeTypeFor(XFile file) {
-    final mime = file.mimeType;
-    if (mime != null) return mime;
-    switch (file.path.split('.').last.toLowerCase()) {
-      case 'png':
-        return 'image/png';
-      case 'webp':
-        return 'image/webp';
-      default:
-        return 'image/jpeg';
-    }
+        _role != null &&
+        _rescueSituationAnswered;
   }
 
   Future<Position?> _getCurrentPosition() async {
@@ -304,7 +309,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
         _petNameController.text.trim().isNotEmpty &&
         _approximateAreaController.text.trim().isNotEmpty &&
         _circumstancesController.text.trim().length >= 10 &&
-        _dateLastSeen != null;
+        _dateLastSeen != null &&
+        _lostPetSituationAnswered;
   }
 
   String _isoDate(DateTime d) =>
@@ -353,27 +359,6 @@ class _PostFormScreenState extends State<PostFormScreen> {
         _gender != null;
   }
 
-  (int, String)? _parseAge(String text) {
-    final match = RegExp(r'(\d+)').firstMatch(text);
-    if (match == null) return null;
-    final value = int.tryParse(match.group(1)!);
-    if (value == null || value <= 0) return null;
-    final lower = text.toLowerCase();
-    String unit;
-    if (lower.contains('year')) {
-      unit = 'YEARS';
-    } else if (lower.contains('month')) {
-      unit = 'MONTHS';
-    } else if (lower.contains('week')) {
-      unit = 'WEEKS';
-    } else if (lower.contains('day')) {
-      unit = 'DAYS';
-    } else {
-      unit = 'YEARS';
-    }
-    return (value, unit);
-  }
-
   String _ageUnitLabel(String unit) {
     switch (unit) {
       case 'DAYS':
@@ -415,20 +400,15 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final mediaIds = <String>[];
       for (final image in _images) {
-        final bytes = await image.readAsBytes();
-        final contentType = _mimeTypeFor(image);
+        final (bytes, contentType) = await photoForUpload(image);
         final uploadInfo = await graphql.requestMediaUploadUrl(
           contentType: contentType,
           fileSizeBytes: bytes.length,
         );
         if (uploadInfo == null) continue;
-        final response = await http.put(
-          Uri.parse(uploadInfo['uploadUrl'] as String),
-          headers: {'Content-Type': contentType},
-          body: bytes,
-        );
+        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
         if (!mounted) return;
-        if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (uploaded) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
           Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
@@ -439,7 +419,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       final landmark = _landmarkController.text.trim();
       final areaName = landmark.isEmpty ? neighborhood : '$neighborhood — near $landmark';
 
-      final (result, errorMessage) = await graphql.createProductPost(
+      final (result, errorMessage) = await withTermsRecovery(context, () => graphql.createProductPost(
         title: _productTitleController.text.trim(),
         description: _captionController.text.trim(),
         latitude: position.latitude,
@@ -451,7 +431,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         isFree: _isFree,
         openToOffers: _openToOffers,
         mediaIds: mediaIds,
-      );
+      ));
       if (!mounted) return;
 
       if (result != null) {
@@ -485,20 +465,15 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final mediaIds = <String>[];
       for (final image in _images) {
-        final bytes = await image.readAsBytes();
-        final contentType = _mimeTypeFor(image);
+        final (bytes, contentType) = await photoForUpload(image);
         final uploadInfo = await graphql.requestMediaUploadUrl(
           contentType: contentType,
           fileSizeBytes: bytes.length,
         );
         if (uploadInfo == null) continue;
-        final response = await http.put(
-          Uri.parse(uploadInfo['uploadUrl'] as String),
-          headers: {'Content-Type': contentType},
-          body: bytes,
-        );
+        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
         if (!mounted) return;
-        if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (uploaded) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
           Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
@@ -511,7 +486,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       final condition = _conditionController.text.trim();
       final speciesLabel = _labelFor(_speciesOptions, _species!);
 
-      final (result, errorMessage) = await graphql.createRescuePost(
+      final (result, errorMessage) = await withTermsRecovery(context, () => graphql.createRescuePost(
         title: '${t(context, 'Rescue', 'إنقاذ')}: $speciesLabel',
         description: condition,
         latitude: position.latitude,
@@ -520,12 +495,12 @@ class _PostFormScreenState extends State<PostFormScreen> {
         species: _species!,
         conditionSummary: condition,
         reporterRole: _role!,
-        isLifeThreatening: _isLifeThreatening,
-        hasVisibleSeriousInjury: _hasVisibleSeriousInjury,
-        isInDangerousLocation: _isInDangerousLocation,
-        canAnimalMoveOrEscape: _canAnimalMoveOrEscape,
+        isLifeThreatening: _isLifeThreatening!,
+        hasVisibleSeriousInjury: _hasVisibleSeriousInjury!,
+        isInDangerousLocation: _isInDangerousLocation!,
+        canAnimalMoveOrEscape: _canAnimalMoveOrEscape!,
         mediaIds: mediaIds,
-      );
+      ));
       if (!mounted) return;
 
       if (result != null) {
@@ -559,20 +534,15 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final mediaIds = <String>[];
       for (final image in _images) {
-        final bytes = await image.readAsBytes();
-        final contentType = _mimeTypeFor(image);
+        final (bytes, contentType) = await photoForUpload(image);
         final uploadInfo = await graphql.requestMediaUploadUrl(
           contentType: contentType,
           fileSizeBytes: bytes.length,
         );
         if (uploadInfo == null) continue;
-        final response = await http.put(
-          Uri.parse(uploadInfo['uploadUrl'] as String),
-          headers: {'Content-Type': contentType},
-          body: bytes,
-        );
+        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
         if (!mounted) return;
-        if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (uploaded) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
           Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
@@ -583,7 +553,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       final speciesLabel = _labelFor(_speciesOptions, _species!);
       final circumstances = _circumstancesController.text.trim();
 
-      final (result, errorMessage) = await graphql.createLostPost(
+      final (result, errorMessage) = await withTermsRecovery(context, () => graphql.createLostPost(
         title: '${t(context, 'Lost', 'مفقود')} $speciesLabel: $petName',
         description: circumstances,
         latitude: position.latitude,
@@ -601,7 +571,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         isElderlyOrVeryYoung: _isElderlyOrVeryYoung,
         lastSeenNearHazard: _lastSeenNearHazard,
         mediaIds: mediaIds,
-      );
+      ));
       if (!mounted) return;
 
       if (result != null) {
@@ -635,20 +605,15 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final mediaIds = <String>[];
       for (final image in _images) {
-        final bytes = await image.readAsBytes();
-        final contentType = _mimeTypeFor(image);
+        final (bytes, contentType) = await photoForUpload(image);
         final uploadInfo = await graphql.requestMediaUploadUrl(
           contentType: contentType,
           fileSizeBytes: bytes.length,
         );
         if (uploadInfo == null) continue;
-        final response = await http.put(
-          Uri.parse(uploadInfo['uploadUrl'] as String),
-          headers: {'Content-Type': contentType},
-          body: bytes,
-        );
+        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
         if (!mounted) return;
-        if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (uploaded) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
           Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
@@ -658,7 +623,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       final speciesLabel = _labelFor(_speciesOptions, _species!);
       final circumstances = _circumstancesController.text.trim();
 
-      final (result, errorMessage) = await graphql.createLostPost(
+      final (result, errorMessage) = await withTermsRecovery(context, () => graphql.createLostPost(
         title: '${t(context, 'Found', 'تم العثور على')} $speciesLabel',
         description: circumstances,
         latitude: position.latitude,
@@ -674,7 +639,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         isCurrentlySafeWithReporter: _foundStraySafeWithReporter,
         dateFound: _isoDate(_dateFound!),
         mediaIds: mediaIds,
-      );
+      ));
       if (!mounted) return;
 
       if (result != null) {
@@ -708,20 +673,15 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final mediaIds = <String>[];
       for (final image in _images) {
-        final bytes = await image.readAsBytes();
-        final contentType = _mimeTypeFor(image);
+        final (bytes, contentType) = await photoForUpload(image);
         final uploadInfo = await graphql.requestMediaUploadUrl(
           contentType: contentType,
           fileSizeBytes: bytes.length,
         );
         if (uploadInfo == null) continue;
-        final response = await http.put(
-          Uri.parse(uploadInfo['uploadUrl'] as String),
-          headers: {'Content-Type': contentType},
-          body: bytes,
-        );
+        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
         if (!mounted) return;
-        if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (uploaded) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
           Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
@@ -732,7 +692,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       final breed = _breedController.text.trim();
       final speciesLabel = _labelFor(_adoptionSpeciesOptions, _species!);
       final genderLabel = _labelFor(_genderOptions, _gender!);
-      final agePair = _parseAge(_ageController.text.trim());
+      final agePair = parseAge(_ageController.text.trim());
       final ageText = agePair != null ? '${agePair.$1} ${_ageUnitLabel(agePair.$2)} ' : '';
       final breedText = breed.isEmpty ? '' : ' ($breed)';
 
@@ -740,7 +700,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
           '$petName ${t(context, 'is a', 'هو')} $ageText$genderLabel $speciesLabel$breedText '
           '${t(context, 'looking for a loving home.', 'يبحث عن منزل محب.')}';
 
-      final (result, errorMessage) = await graphql.createAdoptionPost(
+      final (result, errorMessage) = await withTermsRecovery(context, () => graphql.createAdoptionPost(
         title: '${t(context, 'Adoption', 'تبني')}: $petName',
         description: description,
         latitude: position.latitude,
@@ -761,7 +721,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
             ? null
             : _additionalRequirementsController.text.trim(),
         mediaIds: mediaIds,
-      );
+      ));
       if (!mounted) return;
 
       if (result != null) {
@@ -785,7 +745,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         _species != null &&
         _breedController.text.trim().isNotEmpty &&
         _gender != null &&
-        _parseAge(_ageController.text.trim()) != null &&
+        parseAge(_ageController.text.trim()) != null &&
         _selectedCity != null;
   }
 
@@ -800,20 +760,15 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final mediaIds = <String>[];
       for (final image in _images) {
-        final bytes = await image.readAsBytes();
-        final contentType = _mimeTypeFor(image);
+        final (bytes, contentType) = await photoForUpload(image);
         final uploadInfo = await graphql.requestMediaUploadUrl(
           contentType: contentType,
           fileSizeBytes: bytes.length,
         );
         if (uploadInfo == null) continue;
-        final response = await http.put(
-          Uri.parse(uploadInfo['uploadUrl'] as String),
-          headers: {'Content-Type': contentType},
-          body: bytes,
-        );
+        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
         if (!mounted) return;
-        if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (uploaded) {
           mediaIds.add(uploadInfo['mediaId'] as String);
         } else {
           Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
@@ -828,9 +783,9 @@ class _PostFormScreenState extends State<PostFormScreen> {
         return;
       }
 
-      final agePair = _parseAge(_ageController.text.trim())!;
+      final agePair = parseAge(_ageController.text.trim())!;
 
-      final (result, errorMessage) = await graphql.createMatingPost(
+      final (result, errorMessage) = await withTermsRecovery(context, () => graphql.createMatingPost(
         cityId: _selectedCity!['id'] as String,
         petName: _petNameController.text.trim(),
         species: _species!,
@@ -845,7 +800,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         termsSummary: _termsSummaryController.text.trim().isEmpty ? null : _termsSummaryController.text.trim(),
         matingConditions: _matingConditionsController.text.trim().isEmpty ? null : _matingConditionsController.text.trim(),
         mediaIds: mediaIds,
-      );
+      ));
       if (!mounted) return;
 
       if (result != null) {
@@ -1036,30 +991,32 @@ class _PostFormScreenState extends State<PostFormScreen> {
                   const SizedBox(height: AppSpacing.lg),
                   Text(t(context, 'Situation check', 'تقييم الحالة'), style: Theme.of(context).textTheme.labelLarge),
                   Text(
-                    t(context, "We use these answers to set the rescue's urgency.", 'نستخدم هذه الإجابات لتحديد مدى إلحاح الإنقاذ.'),
+                    t(
+                      context,
+                      "We use these answers to set the rescue's urgency. Answer each one.",
+                      'نستخدم هذه الإجابات لتحديد مدى إلحاح الإنقاذ. أجب عن كل سؤال.',
+                    ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, "Animal's life is in immediate danger", 'حياة الحيوان في خطر مباشر')),
+                  YesNoQuestion(
+                    question: t(context, "Is the animal's life in immediate danger?", 'هل حياة الحيوان في خطر مباشر؟'),
                     value: _isLifeThreatening,
                     onChanged: (v) => setState(() => _isLifeThreatening = v),
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Visible serious injury (heavy bleeding, broken bone, can\'t stand)', 'إصابة خطيرة واضحة (نزيف شديد، كسر، لا يستطيع الوقوف)')),
+                  YesNoQuestion(
+                    question: t(context, 'Does it have a visible serious injury?', 'هل لديه إصابة خطيرة واضحة؟'),
+                    helper: t(context, "Heavy bleeding, a broken bone, or it can't stand", 'نزيف شديد، كسر، أو لا يستطيع الوقوف'),
                     value: _hasVisibleSeriousInjury,
                     onChanged: (v) => setState(() => _hasVisibleSeriousInjury = v),
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'In a dangerous location right now (road, construction, trapped)', 'في موقع خطر الآن (طريق، موقع بناء، محاصر)')),
+                  YesNoQuestion(
+                    question: t(context, 'Is it in a dangerous place right now?', 'هل هو في مكان خطر الآن؟'),
+                    helper: t(context, 'On a road, at a construction site, or trapped', 'على طريق، في موقع بناء، أو محاصر'),
                     value: _isInDangerousLocation,
                     onChanged: (v) => setState(() => _isInDangerousLocation = v),
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Animal can move or escape on its own', 'يستطيع الحيوان الحركة أو الهرب بمفرده')),
+                  YesNoQuestion(
+                    question: t(context, 'Can the animal move or escape on its own?', 'هل يستطيع الحيوان الحركة أو الهرب بمفرده؟'),
                     value: _canAnimalMoveOrEscape,
                     onChanged: (v) => setState(() => _canAnimalMoveOrEscape = v),
                   ),
@@ -1121,8 +1078,17 @@ class _PostFormScreenState extends State<PostFormScreen> {
                   const SizedBox(height: AppSpacing.xl),
                   Center(
                     child: Text(
-                      t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر'),
+                      // Name the usual blocker: the situation questions sit
+                      // mid-form and are easy to scroll past.
+                      _rescueSituationAnswered
+                          ? t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر')
+                          : t(
+                              context,
+                              'Answer all 4 Situation check questions to post',
+                              'أجب عن أسئلة تقييم الحالة الأربعة للنشر',
+                            ),
                       style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -1291,9 +1257,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Has collar with ID tag', 'يرتدي طوقًا يحمل بطاقة تعريف')),
+                  YesNoQuestion(
+                    question: t(context, 'Does it wear a collar with an ID tag?', 'هل يرتدي طوقًا يحمل بطاقة تعريف؟'),
                     value: _hasCollarWithIdTag,
                     onChanged: (v) => setState(() => _hasCollarWithIdTag = v),
                   ),
@@ -1349,32 +1314,40 @@ class _PostFormScreenState extends State<PostFormScreen> {
                   const SizedBox(height: AppSpacing.lg),
                   Text(t(context, 'Situation check', 'تقييم الحالة'), style: Theme.of(context).textTheme.labelLarge),
                   Text(
-                    t(context, 'We use these answers to set how urgent this report is.', 'نستخدم هذه الإجابات لتحديد مدى إلحاح هذا البلاغ.'),
+                    t(
+                      context,
+                      'We use these answers to set how urgent this report is. Answer each one.',
+                      'نستخدم هذه الإجابات لتحديد مدى إلحاح هذا البلاغ. أجب عن كل سؤال.',
+                    ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Needs regular medication or has a medical condition', 'يحتاج دواء منتظم أو لديه حالة طبية')),
+                  YesNoQuestion(
+                    question: t(context, 'Does it need regular medication or have a medical condition?', 'هل يحتاج دواءً منتظمًا أو لديه حالة طبية؟'),
                     value: _hasMedicalNeeds,
                     onChanged: (v) => setState(() => _hasMedicalNeeds = v),
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Elderly or very young', 'كبير في السن أو صغير جدًا')),
+                  YesNoQuestion(
+                    question: t(context, 'Is it elderly or very young?', 'هل هو كبير في السن أو صغير جدًا؟'),
                     value: _isElderlyOrVeryYoung,
                     onChanged: (v) => setState(() => _isElderlyOrVeryYoung = v),
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Last seen near a busy road, canal, or other hazard', 'شوهد آخر مرة قرب طريق مزدحم أو ترعة أو خطر آخر')),
+                  YesNoQuestion(
+                    question: t(context, 'Was it last seen near a busy road, canal, or other hazard?', 'هل شوهد آخر مرة قرب طريق مزدحم أو ترعة أو خطر آخر؟'),
                     value: _lastSeenNearHazard,
                     onChanged: (v) => setState(() => _lastSeenNearHazard = v),
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   Center(
                     child: Text(
-                      t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر'),
+                      _lostPetSituationAnswered
+                          ? t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر')
+                          : t(
+                              context,
+                              'Answer all 3 Situation check questions to post',
+                              'أجب عن أسئلة تقييم الحالة الثلاثة للنشر',
+                            ),
                       style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -1534,9 +1507,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Has collar with ID tag', 'يرتدي طوقًا يحمل بطاقة تعريف')),
+                  YesNoQuestion(
+                    question: t(context, 'Does it wear a collar with an ID tag?', 'هل يرتدي طوقًا يحمل بطاقة تعريف؟'),
                     value: _hasCollarWithIdTag,
                     onChanged: (v) => setState(() => _hasCollarWithIdTag = v),
                   ),
@@ -1605,13 +1577,9 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     }).toList(),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Currently safe with me', 'حاليًا بأمان معي')),
-                    subtitle: Text(
-                      t(context, 'Off if it ran off or you no longer have it', 'أطفئه إذا هرب الحيوان أو لم يعد معك'),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                  YesNoQuestion(
+                    question: t(context, 'Is it safe with you right now?', 'هل هو بأمان معك الآن؟'),
+                    helper: t(context, 'Choose No if it ran off or you no longer have it', 'اختر «لا» إذا هرب أو لم يعد معك'),
                     value: _foundStraySafeWithReporter,
                     onChanged: (v) => setState(() => _foundStraySafeWithReporter = v),
                   ),
@@ -1801,15 +1769,13 @@ class _PostFormScreenState extends State<PostFormScreen> {
                   const SizedBox(height: AppSpacing.xl),
                   _SectionLabel(t(context, 'HEALTH & CARE', 'الصحة والرعاية')),
                   const SizedBox(height: AppSpacing.md),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Vaccinated', 'مُطعَّم')),
+                  YesNoQuestion(
+                    question: t(context, 'Is it vaccinated?', 'هل هو مُطعَّم؟'),
                     value: _vaccinated,
                     onChanged: (v) => setState(() => _vaccinated = v),
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Neutered / Spayed', 'مُعقَّم')),
+                  YesNoQuestion(
+                    question: t(context, 'Is it neutered or spayed?', 'هل هو مُعقَّم؟'),
                     value: _neutered,
                     onChanged: (v) => setState(() => _neutered = v),
                   ),
@@ -1863,9 +1829,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     }).toList(),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Prior pet experience required', 'يتطلب خبرة سابقة بالحيوانات')),
+                  YesNoQuestion(
+                    question: t(context, 'Must adopters have prior pet experience?', 'هل يُشترط أن تكون لدى المتبنّي خبرة سابقة بالحيوانات؟'),
                     value: _priorPetExperienceRequired,
                     onChanged: (v) => setState(() => _priorPetExperienceRequired = v),
                   ),
@@ -2101,27 +2066,23 @@ class _PostFormScreenState extends State<PostFormScreen> {
                   const SizedBox(height: AppSpacing.xl),
                   _SectionLabel(t(context, 'PEDIGREE & HEALTH', 'النسب والصحة')),
                   const SizedBox(height: AppSpacing.md),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Purebred', 'أصيل')),
+                  YesNoQuestion(
+                    question: t(context, 'Is it purebred?', 'هل هو أصيل؟'),
                     value: _isPurebred,
                     onChanged: (v) => setState(() => _isPurebred = v),
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Has pedigree certificate', 'يملك شهادة نسب')),
+                  YesNoQuestion(
+                    question: t(context, 'Does it have a pedigree certificate?', 'هل لديه شهادة نسب؟'),
                     value: _hasPedigreeCertificate,
                     onChanged: (v) => setState(() => _hasPedigreeCertificate = v),
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Vaccinated', 'مُطعّم')),
+                  YesNoQuestion(
+                    question: t(context, 'Is it vaccinated?', 'هل هو مُطعَّم؟'),
                     value: _matingVaccinated,
                     onChanged: (v) => setState(() => _matingVaccinated = v),
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Dewormed', 'مُطهّر من الديدان')),
+                  YesNoQuestion(
+                    question: t(context, 'Is it dewormed?', 'هل هو مُطهَّر من الديدان؟'),
                     value: _matingDewormed,
                     onChanged: (v) => setState(() => _matingDewormed = v),
                   ),
@@ -2355,9 +2316,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
                   const SizedBox(height: AppSpacing.xl),
                   _SectionLabel(t(context, 'PRICE', 'السعر')),
                   const SizedBox(height: AppSpacing.md),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'List as free / giveaway', 'إعلان مجاني / تبرع')),
+                  YesNoQuestion(
+                    question: t(context, 'Is it free (a giveaway)?', 'هل هو مجاني (تبرّع)؟'),
                     value: _isFree,
                     onChanged: (v) => setState(() => _isFree = v),
                   ),
@@ -2371,9 +2331,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     ),
                   ],
                   const SizedBox(height: AppSpacing.sm),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(t(context, 'Open to offers', 'قابل للتفاوض')),
+                  YesNoQuestion(
+                    question: t(context, 'Are you open to offers?', 'هل السعر قابل للتفاوض؟'),
                     value: _openToOffers,
                     onChanged: (v) => setState(() => _openToOffers = v),
                   ),

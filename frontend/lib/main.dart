@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -14,6 +16,7 @@ import 'services/auth_service.dart';
 import 'services/browse_location_service.dart';
 import 'services/graphql_service.dart';
 import 'services/location_service.dart';
+import 'services/notification_center.dart';
 import 'services/push_service.dart';
 import 'services/safety_events.dart';
 import 'theme/app_theme.dart';
@@ -47,11 +50,26 @@ void main() {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    await _useAuthEmulatorIfRequested();
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     runApp(const PupzyApp());
   }, (error, stack) {
     _reportError(error, stack);
   });
+}
+
+/// End-to-end runs sign in against the Firebase Auth Emulator instead of the
+/// real project: `--dart-define=AUTH_EMULATOR_HOST=10.0.2.2:9099`. Ignored in
+/// profile/release builds, so it can never redirect a shipped app.
+const _authEmulatorHost = String.fromEnvironment('AUTH_EMULATOR_HOST');
+
+Future<void> _useAuthEmulatorIfRequested() async {
+  if (!kDebugMode || _authEmulatorHost.isEmpty) return;
+  final separator = _authEmulatorHost.lastIndexOf(':');
+  await FirebaseAuth.instance.useAuthEmulator(
+    _authEmulatorHost.substring(0, separator),
+    int.parse(_authEmulatorHost.substring(separator + 1)),
+  );
 }
 
 /// Single choke point for uncaught errors. No crash-reporting SDK is wired
@@ -73,6 +91,7 @@ class PupzyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LocationService()),
         ChangeNotifierProvider(create: (_) => BrowseLocationService()),
         ChangeNotifierProvider(create: (_) => SafetyEvents()),
+        ChangeNotifierProvider(create: (_) => NotificationCenter()),
         Provider(create: (_) => PushService()),
         ProxyProvider<AuthService, GraphQLService>(
           update: (_, auth, prev) => GraphQLService(auth),

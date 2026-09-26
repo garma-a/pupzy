@@ -18,6 +18,7 @@ import '../widgets/contact_requests_owner_section.dart';
 import '../widgets/image_with_fallback.dart';
 import '../widgets/nearby_vets_section.dart';
 import '../widgets/owner_post_actions.dart';
+import '../utils/post_status_labels.dart';
 import '../widgets/pet_carousel.dart';
 import '../widgets/safety_actions.dart';
 import '../widgets/skeleton_loader.dart';
@@ -48,6 +49,10 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
   /// photographed an animal in distress, not someone waiting to be messaged.
   /// Only LOST/FOUND reports route through the contact handshake.
   bool get _usesContactFlow => _post?.postType != 'RESCUE';
+
+  /// New contact requests are only accepted while the Post is ACTIVE. An
+  /// already-approved requester keeps WhatsApp access after it closes.
+  bool get _acceptsNewRequests => _post?.status == 'ACTIVE';
 
   void _openComments() {
     showModalBottomSheet(
@@ -85,7 +90,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
     _myUserId = me?['id'] as String?;
     // RESCUE has no contact handshake, so there's nothing to look up for it.
     if (_myUserId != post.creator.id && post.postType != 'RESCUE') {
-      final (mine, _) = await graphql.fetchMyContactRequests(postId: post.id, first: 1);
+      final mine = (await graphql.fetchMyContactRequests(postId: post.id, first: 1)).items;
       if (!mounted) return;
       _myContactRequest = mine.isNotEmpty ? mine.first : null;
     }
@@ -137,18 +142,31 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
     return true;
   }
 
+  /// Re-reads the Post's status after a request didn't go through — it may
+  /// have closed while this screen was open, and the button should say so.
+  Future<void> _refreshStatus() async {
+    final (fresh, _) = await context.read<GraphQLService>().fetchPostDetail(widget.postId);
+    if (!mounted || fresh == null || _post == null || fresh.status == _post!.status) return;
+    setState(() => _post = _post!.copyWith(status: fresh.status));
+  }
+
   Future<void> _contactRescue() async {
     final existing = _myContactRequest;
     if (existing == null) {
+      if (!_acceptsNewRequests) return;
       final sent = await showModalBottomSheet<bool>(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
         builder: (_) => ContactRequestSheet(postId: widget.postId),
       );
-      if (sent != true || !mounted) return;
+      if (!mounted) return;
+      if (sent != true) {
+        await _refreshStatus();
+        return;
+      }
       final graphql = context.read<GraphQLService>();
-      final (mine, _) = await graphql.fetchMyContactRequests(postId: widget.postId, first: 1);
+      final mine = (await graphql.fetchMyContactRequests(postId: widget.postId, first: 1)).items;
       if (!mounted) return;
       setState(() => _myContactRequest = mine.isNotEmpty ? mine.first : null);
       return;
@@ -269,10 +287,15 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (post.status != 'ACTIVE') ...[
+                        PostOutcomeBanner(status: post.status, postType: post.postType),
+                        const SizedBox(height: AppSpacing.md),
+                      ],
                       Row(
                         children: [
                           Expanded(child: Text(post.title, style: Theme.of(context).textTheme.headlineLarge)),
-                          if (post.isUrgent)
+                          // Urgency describes an open call for help, not a closed one.
+                          if (post.isUrgent && post.status == 'ACTIVE')
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
                               decoration: BoxDecoration(
@@ -327,6 +350,14 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                       const SizedBox(height: AppSpacing.lg),
                       Row(
                         children: [
+                          // Wraps onto a second line on narrow phones or with a large
+                          // accessibility font instead of pushing the comment and save
+                          // buttons off-screen (overflowed 37 px at 360 dp, 130 % text).
+                          Expanded(
+                            child: Wrap(
+                              spacing: AppSpacing.sm,
+                              runSpacing: AppSpacing.sm,
+                              children: [
                           if (_isOwner)
                             Tooltip(
                               message: t(context, "You can't raise your own post", 'لا يمكنك تعزيز منشورك الخاص'),
@@ -360,8 +391,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                               activeColor: AppColors.primary,
                               inactiveColor: AppColors.textMuted,
                             ),
-                          if (post.latitude != null && post.longitude != null) ...[
-                            const SizedBox(width: AppSpacing.sm),
+                          if (post.latitude != null && post.longitude != null)
                             Material(
                               color: Colors.transparent,
                               child: InkWell(
@@ -388,8 +418,9 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                                 ),
                               ),
                             ),
-                          ],
-                          const Spacer(),
+                              ],
+                            ),
+                          ),
                           Material(
                             color: Colors.transparent,
                             child: InkWell(
@@ -450,7 +481,11 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                       : _lostExt?.reportType == 'FOUND_STRAY'
                           ? OwnerCloseAction.foundResolved
                           : OwnerCloseAction.lost,
-                  alternateClose: _lostExt?.reportType == 'FOUND_STRAY' ? OwnerCloseAction.foundReunited : null,
+                  alternateClose: post.postType == 'RESCUE'
+                      ? OwnerCloseAction.animalDeceased
+                      : _lostExt?.reportType == 'FOUND_STRAY'
+                          ? OwnerCloseAction.foundReunited
+                          : null,
                   isClosed: post.status != 'ACTIVE',
                   currentStatus: post.status,
                   onClosed: (status) => setState(() => _post = _post!.copyWith(status: status)),
@@ -460,7 +495,11 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                   ? SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _myContactRequest?.status == 'PENDING' || _myContactRequest?.status == 'REJECTED' ? null : _contactRescue,
+                        onPressed: switch (_myContactRequest?.status) {
+                          'APPROVED' => _contactRescue,
+                          null => _acceptsNewRequests ? _contactRescue : null,
+                          _ => null,
+                        },
                         child: Text(_contactButtonLabel(context)),
                       ),
                     )
@@ -646,7 +685,9 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
       case 'REJECTED':
         return t(context, 'Request Declined', 'تم رفض الطلب');
       default:
-        return t(context, 'Contact', 'تواصل');
+        return _acceptsNewRequests
+            ? t(context, 'Contact', 'تواصل')
+            : closedToNewRequestsLabel(context, _post!.status, postType: _post!.postType);
     }
   }
 

@@ -10,6 +10,7 @@ import '../models/blocked_user.dart';
 import '../models/comment.dart';
 import '../models/contact_request.dart';
 import '../models/feed_post.dart';
+import '../models/list_page.dart';
 import '../models/mating_detail.dart';
 import '../models/post_detail.dart';
 import '../models/safety.dart';
@@ -782,10 +783,34 @@ class GraphQLService {
   String? _serverErrorMessage(OperationException? exception) {
     if (exception == null) return null;
     _checkForAccountLockout(exception);
+    _noteTermsRequirement(exception);
     if (exception.graphqlErrors.isNotEmpty) {
       return exception.graphqlErrors.first.message;
     }
     return null;
+  }
+
+  TermsRequirement? _termsRequirement;
+
+  /// The Terms version the last rejected operation asked for, if it was
+  /// rejected for Terms (`TERMS_ACCEPTANCE_REQUIRED`, or a stale version on
+  /// `acceptTerms`). Reading it clears it, so it is handled once.
+  TermsRequirement? takeTermsRequirement() {
+    final requirement = _termsRequirement;
+    _termsRequirement = null;
+    return requirement;
+  }
+
+  void _noteTermsRequirement(OperationException exception) {
+    for (final error in exception.graphqlErrors) {
+      final code = error.extensions?['code'];
+      if (code != 'TERMS_ACCEPTANCE_REQUIRED' && code != 'TERMS_VERSION_MISMATCH') continue;
+      final version = error.extensions?['currentVersion'];
+      if (version is String && version.isNotEmpty) {
+        final url = error.extensions?['termsUrl'];
+        _termsRequirement = TermsRequirement(version: version, url: url is String ? url : null);
+      }
+    }
   }
 
   /// Detects the two lockout rejections `FirebaseAuthGuard` throws on
@@ -1512,45 +1537,56 @@ class GraphQLService {
   // ─── Contact requests ─────────────────────────────────────────────────
 
   /// Contact requests I've SENT. Optionally filter by [postId]/[status].
-  Future<(List<ContactRequest> requests, String? errorMessage)> fetchMyContactRequests({
+  Future<ListPage<ContactRequest>> fetchMyContactRequests({
     String? postId,
     String? status,
     int first = 20,
+    String? after,
   }) async {
     final result = await client.value.query(
       QueryOptions(
         document: gql(myContactRequestsQuery),
-        variables: {'postId': postId, 'status': status, 'first': first},
+        variables: {'postId': postId, 'status': status, 'first': first, 'after': after},
         fetchPolicy: FetchPolicy.networkOnly,
       ),
     );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (<ContactRequest>[], _serverErrorMessage(result.exception));
-    }
-    final edges = result.data?['myContactRequests']?['edges'] as List<dynamic>? ?? [];
-    return (edges.map((e) => ContactRequest.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>)).toList(), null);
+    return _connectionPage(result, 'myContactRequests', ContactRequest.fromJson);
   }
 
   /// Contact requests received on my [postId]. Owner-only.
-  Future<(List<ContactRequest> requests, String? errorMessage)> fetchPostContactRequests({
+  Future<ListPage<ContactRequest>> fetchPostContactRequests({
     required String postId,
     String? status,
     int first = 20,
+    String? after,
   }) async {
     final result = await client.value.query(
       QueryOptions(
         document: gql(postContactRequestsQuery),
-        variables: {'postId': postId, 'status': status, 'first': first},
+        variables: {'postId': postId, 'status': status, 'first': first, 'after': after},
         fetchPolicy: FetchPolicy.networkOnly,
       ),
     );
+    return _connectionPage(result, 'postContactRequests', ContactRequest.fromJson);
+  }
+
+  /// Folds a GraphQL connection (`edges { node }`, `pageInfo`) into a
+  /// [ListPage], or a failed page carrying the error message.
+  ListPage<T> _connectionPage<T>(QueryResult result, String field, T Function(Map<String, dynamic>) parse) {
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (<ContactRequest>[], _serverErrorMessage(result.exception));
+      return ListPage(
+        errorMessage: _serverErrorMessage(result.exception) ?? 'Could not reach the server. Check your connection and try again.',
+      );
     }
-    final edges = result.data?['postContactRequests']?['edges'] as List<dynamic>? ?? [];
-    return (edges.map((e) => ContactRequest.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>)).toList(), null);
+    final data = result.data?[field] as Map<String, dynamic>?;
+    final edges = data?['edges'] as List<dynamic>? ?? [];
+    final pageInfo = data?['pageInfo'] as Map<String, dynamic>?;
+    return ListPage(
+      items: edges.map((e) => parse((e as Map<String, dynamic>)['node'] as Map<String, dynamic>)).toList(),
+      endCursor: pageInfo?['endCursor'] as String?,
+      hasNextPage: pageInfo?['hasNextPage'] as bool? ?? false,
+    );
   }
 
   /// Re-fetches the wa.me link for an already-approved request I sent.
@@ -1616,36 +1652,32 @@ class GraphQLService {
 
   // ─── Adoption applications ────────────────────────────────────────────
 
-  Future<(List<AdoptionApplication> applications, String? errorMessage)> fetchMyAdoptionApplications({int first = 20}) async {
+  Future<ListPage<AdoptionApplication>> fetchMyAdoptionApplications({int first = 20, String? after}) async {
     final result = await client.value.query(
-      QueryOptions(document: gql(myAdoptionApplicationsQuery), variables: {'first': first}, fetchPolicy: FetchPolicy.networkOnly),
+      QueryOptions(
+        document: gql(myAdoptionApplicationsQuery),
+        variables: {'first': first, 'after': after},
+        fetchPolicy: FetchPolicy.networkOnly,
+      ),
     );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (<AdoptionApplication>[], _serverErrorMessage(result.exception));
-    }
-    final edges = result.data?['myAdoptionApplications']?['edges'] as List<dynamic>? ?? [];
-    return (edges.map((e) => AdoptionApplication.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>)).toList(), null);
+    return _connectionPage(result, 'myAdoptionApplications', AdoptionApplication.fromJson);
   }
 
-  Future<(List<AdoptionApplication> applications, String? errorMessage)> fetchPostAdoptionApplications({
+
+  Future<ListPage<AdoptionApplication>> fetchPostAdoptionApplications({
     required String postId,
     String? status,
     int first = 20,
+    String? after,
   }) async {
     final result = await client.value.query(
       QueryOptions(
         document: gql(postAdoptionApplicationsQuery),
-        variables: {'postId': postId, 'status': status, 'first': first},
+        variables: {'postId': postId, 'status': status, 'first': first, 'after': after},
         fetchPolicy: FetchPolicy.networkOnly,
       ),
     );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (<AdoptionApplication>[], _serverErrorMessage(result.exception));
-    }
-    final edges = result.data?['postAdoptionApplications']?['edges'] as List<dynamic>? ?? [];
-    return (edges.map((e) => AdoptionApplication.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>)).toList(), null);
+    return _connectionPage(result, 'postAdoptionApplications', AdoptionApplication.fromJson);
   }
 
   /// Submits the adoption questionnaire for a target ADOPTION post.
@@ -1687,18 +1719,27 @@ class GraphQLService {
 
   // ─── Notifications ─────────────────────────────────────────────────────
 
-  Future<(List<AppNotification> notifications, int unreadCount, String? errorMessage)> fetchMyNotifications({int first = 30}) async {
+  Future<NotificationPage> fetchMyNotifications({int first = 30, String? after}) async {
     final result = await client.value.query(
-      QueryOptions(document: gql(myNotificationsQuery), variables: {'first': first}, fetchPolicy: FetchPolicy.networkOnly),
+      QueryOptions(
+        document: gql(myNotificationsQuery),
+        variables: {'first': first, 'after': after},
+        fetchPolicy: FetchPolicy.networkOnly,
+      ),
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (<AppNotification>[], 0, _serverErrorMessage(result.exception));
+      return NotificationPage(errorMessage: _serverErrorMessage(result.exception));
     }
     final data = result.data?['myNotifications'] as Map<String, dynamic>?;
     final edges = data?['edges'] as List<dynamic>? ?? [];
-    final notifications = edges.map((e) => AppNotification.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>)).toList();
-    return (notifications, data?['unreadCount'] as int? ?? 0, null);
+    final pageInfo = data?['pageInfo'] as Map<String, dynamic>?;
+    return NotificationPage(
+      notifications: edges.map((e) => AppNotification.fromJson((e as Map<String, dynamic>)['node'] as Map<String, dynamic>)).toList(),
+      unreadCount: data?['unreadCount'] as int? ?? 0,
+      endCursor: pageInfo?['endCursor'] as String?,
+      hasNextPage: pageInfo?['hasNextPage'] as bool? ?? false,
+    );
   }
 
   Future<(int? count, String? errorMessage)> fetchMyUnreadNotificationCount() async {
@@ -1999,7 +2040,7 @@ class GraphQLService {
   /// Requests a presigned upload ticket for a comment image. Returns the
   /// raw ticket map (mediaId/uploadUrl/...) — the caller PUTs the image
   /// bytes to `uploadUrl` directly, same pattern as post media uploads.
-  Future<(Map<String, dynamic>? ticket, String? errorMessage)> requestCommentImageUploadUrl({
+  Future<(Map<String, dynamic>? ticket, String? errorCode, String? errorMessage)> requestCommentImageUploadUrl({
     required String contentType,
     required int fileSizeBytes,
   }) async {
@@ -2013,12 +2054,28 @@ class GraphQLService {
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (null, _serverErrorMessage(result.exception));
+      return (null, _errorCode(result.exception), _serverErrorMessage(result.exception));
     }
-    return (result.data?['requestCommentImageUploadUrl'] as Map<String, dynamic>?, null);
+    return (result.data?['requestCommentImageUploadUrl'] as Map<String, dynamic>?, null, null);
   }
 
-  Future<(Comment? comment, String? errorMessage)> createComment({
+  /// Folds a create-Comment/Reply response into a [CommentMutationResult]:
+  /// the canonical Comment, or the error code/message, or — when no answer
+  /// reached the app at all — an unknown outcome the caller must retry with
+  /// the same `clientRequestId`.
+  CommentMutationResult _commentMutationResult(QueryResult result, String field) {
+    if (result.hasException) {
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      return CommentMutationResult(
+        errorCode: _errorCode(result.exception),
+        errorMessage: _serverErrorMessage(result.exception),
+      );
+    }
+    final node = result.data?[field] as Map<String, dynamic>?;
+    return CommentMutationResult(comment: node != null ? Comment.fromJson(node) : null);
+  }
+
+  Future<CommentMutationResult> createComment({
     required String clientRequestId,
     required String postId,
     required String text,
@@ -2033,15 +2090,10 @@ class GraphQLService {
     final result = await client.value.mutate(
       MutationOptions(document: gql(createCommentMutation), variables: {'input': input}),
     );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (null, _serverErrorMessage(result.exception));
-    }
-    final node = result.data?['createComment'] as Map<String, dynamic>?;
-    return (node != null ? Comment.fromJson(node) : null, null);
+    return _commentMutationResult(result, 'createComment');
   }
 
-  Future<(Comment? reply, String? errorMessage)> createReply({
+  Future<CommentMutationResult> createReply({
     required String clientRequestId,
     required String commentId,
     required String text,
@@ -2054,12 +2106,7 @@ class GraphQLService {
         },
       ),
     );
-    if (result.hasException) {
-      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      return (null, _serverErrorMessage(result.exception));
-    }
-    final node = result.data?['createReply'] as Map<String, dynamic>?;
-    return (node != null ? Comment.fromJson(node) : null, null);
+    return _commentMutationResult(result, 'createReply');
   }
 
   Future<(bool success, String? errorMessage)> deleteComment(String id) async {
