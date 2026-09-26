@@ -1,4 +1,5 @@
 import 'package:pupzy/models/adoption_application.dart';
+import 'package:pupzy/models/comment.dart';
 import 'package:pupzy/models/contact_request.dart';
 import 'package:pupzy/models/list_page.dart';
 import 'package:pupzy/models/mating_detail.dart';
@@ -77,6 +78,16 @@ class FakeDetailGraphQL extends FakeSafetyGraphQL {
     }
     return ListPage(items: out, endCursor: out.isEmpty ? after : id(out.last), hasNextPage: all.skip(i).any(keep));
   }
+
+  /// An empty discussion, for tests that open the comments sheet.
+  @override
+  Future<(List<Comment>, String?, bool, String?)> fetchComments({
+    required String postId,
+    required String sort,
+    int first = 20,
+    String? after,
+  }) async =>
+      (<Comment>[], null, false, null);
 
   @override
   Future<(ContactRequest?, String?)> approveContactRequest(String requestId) async {

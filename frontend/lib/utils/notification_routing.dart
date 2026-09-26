@@ -48,7 +48,8 @@ Future<bool> openNotificationTarget({
   };
   navigator.push(MaterialPageRoute(builder: (_) => screen));
 
-  if (commentNotificationTypes.contains(type)) {
+  // Marketplace listings have no discussion to open.
+  if (commentNotificationTypes.contains(type) && post.postType != 'PRODUCT') {
     final me = await graphql.fetchMe();
     if (!navigator.mounted) return true;
     final isOwner = (me?['id'] as String?) == post.creator.id;
@@ -58,7 +59,7 @@ Future<bool> openNotificationTarget({
       context: navigator.context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => CommentsSheet(postId: postId, isPostOwner: isOwner),
+      builder: (_) => CommentsSheet(postId: postId, isPostOwner: isOwner, allowImages: post.postType == 'RESCUE'),
     );
   }
   return true;
