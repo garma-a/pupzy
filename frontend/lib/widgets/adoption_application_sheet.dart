@@ -71,7 +71,7 @@ class _AdoptionApplicationSheetState extends State<AdoptionApplicationSheet> {
       input['previousPetExperience'] = _experienceController.text.trim();
     }
 
-    final (application, error) = await graphql.submitAdoptionApplication(input);
+    final (application, error) = await withTermsRecovery(context, () => graphql.submitAdoptionApplication(input));
     if (!mounted) return;
     setState(() => _submitting = false);
     if (application == null) {

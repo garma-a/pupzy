@@ -783,10 +783,34 @@ class GraphQLService {
   String? _serverErrorMessage(OperationException? exception) {
     if (exception == null) return null;
     _checkForAccountLockout(exception);
+    _noteTermsRequirement(exception);
     if (exception.graphqlErrors.isNotEmpty) {
       return exception.graphqlErrors.first.message;
     }
     return null;
+  }
+
+  TermsRequirement? _termsRequirement;
+
+  /// The Terms version the last rejected operation asked for, if it was
+  /// rejected for Terms (`TERMS_ACCEPTANCE_REQUIRED`, or a stale version on
+  /// `acceptTerms`). Reading it clears it, so it is handled once.
+  TermsRequirement? takeTermsRequirement() {
+    final requirement = _termsRequirement;
+    _termsRequirement = null;
+    return requirement;
+  }
+
+  void _noteTermsRequirement(OperationException exception) {
+    for (final error in exception.graphqlErrors) {
+      final code = error.extensions?['code'];
+      if (code != 'TERMS_ACCEPTANCE_REQUIRED' && code != 'TERMS_VERSION_MISMATCH') continue;
+      final version = error.extensions?['currentVersion'];
+      if (version is String && version.isNotEmpty) {
+        final url = error.extensions?['termsUrl'];
+        _termsRequirement = TermsRequirement(version: version, url: url is String ? url : null);
+      }
+    }
   }
 
   /// Detects the two lockout rejections `FirebaseAuthGuard` throws on

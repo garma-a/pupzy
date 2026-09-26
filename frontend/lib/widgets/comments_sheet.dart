@@ -238,12 +238,12 @@ class _CommentsSheetState extends State<CommentsSheet> {
           return;
         }
 
-        final result = await graphql.createComment(
+        final result = await withTermsRecovery(context, () => graphql.createComment(
           clientRequestId: pending.clientRequestId,
           postId: widget.postId,
           text: pending.text,
           mediaIds: pending.mediaIds.whereType<String>().toList(),
-        );
+        ));
         if (!mounted) return;
 
         final created = result.comment;
@@ -801,11 +801,12 @@ class _CommentTileState extends State<_CommentTile> {
     );
     try {
       await widget.drafts.saveReply(widget.comment.id, pending);
-      final result = await graphql.createReply(
+      if (!mounted) return;
+      final result = await withTermsRecovery(context, () => graphql.createReply(
         clientRequestId: pending.clientRequestId,
         commentId: widget.comment.id,
         text: pending.text,
-      );
+      ));
       if (!mounted) return;
       final reply = result.comment;
       if (reply != null) {

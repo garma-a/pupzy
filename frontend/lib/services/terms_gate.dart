@@ -25,15 +25,49 @@ Future<bool> ensureTermsAccepted(BuildContext context) async {
   if (terms == null || !terms.acceptanceRequired || terms.currentVersion == null) {
     return true;
   }
+  return presentTermsAcceptance(context, version: terms.currentVersion!, url: terms.termsUrl);
+}
+
+/// Shows [version] of the Terms for explicit acceptance. Returns true once
+/// the account has accepted the current version. [changed] explains that
+/// the Terms were updated while the user was working, so the prompt doesn't
+/// come out of nowhere.
+Future<bool> presentTermsAcceptance(
+  BuildContext context, {
+  required String version,
+  String? url,
+  bool changed = false,
+}) async {
   final accepted = await showModalBottomSheet<bool>(
     context: context,
     isDismissible: false,
     enableDrag: false,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => _TermsAcceptanceSheet(version: terms.currentVersion!, url: terms.termsUrl),
+    builder: (_) => _TermsAcceptanceSheet(version: version, url: url, changed: changed),
   );
   return accepted == true;
+}
+
+/// Runs a protected operation (creating a Post, Comment, Reply, Contact
+/// Request or Adoption Application) and recovers from the Terms changing
+/// underneath it.
+///
+/// [ensureTermsAccepted] checks before the user submits, but a new version
+/// can be published between that check and the request. When the backend
+/// then rejects the operation with `TERMS_ACCEPTANCE_REQUIRED`, this shows
+/// the version named in the error for explicit acceptance and, only once it
+/// is accepted, runs the operation exactly once more. The caller's draft is
+/// untouched either way; declining returns the original failed result.
+Future<T> withTermsRecovery<T>(BuildContext context, Future<T> Function() operation) async {
+  final graphql = context.read<GraphQLService>();
+  graphql.takeTermsRequirement();
+  final result = await operation();
+  final requirement = graphql.takeTermsRequirement();
+  if (requirement == null || !context.mounted) return result;
+  final accepted = await presentTermsAcceptance(context, version: requirement.version, url: requirement.url, changed: true);
+  if (!accepted || !context.mounted) return result;
+  return operation();
 }
 
 /// Opens the "Terms & Privacy" settings sheet — the informational, non-
@@ -88,8 +122,23 @@ class _TermsInfoSheetState extends State<_TermsInfoSheet> {
     if (version == null || _accepting) return;
     setState(() => _accepting = true);
     final graphql = context.read<GraphQLService>();
-    final (info, _, errorMessage) = await graphql.acceptTerms(version);
+    final (info, errorCode, errorMessage) = await graphql.acceptTerms(version);
     if (!mounted) return;
+    if (errorCode == 'TERMS_VERSION_MISMATCH') {
+      // A newer version was published while this sheet was open: show it
+      // instead, for the user to read and accept.
+      graphql.takeTermsRequirement();
+      final fresh = await graphql.fetchTerms();
+      if (!mounted) return;
+      setState(() {
+        _accepting = false;
+        if (fresh != null) _terms = fresh;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_termsChangedCopy(context))),
+      );
+      return;
+    }
     setState(() {
       _accepting = false;
       if (info != null) _terms = info;
@@ -181,7 +230,8 @@ class _TermsInfoSheetState extends State<_TermsInfoSheet> {
 class _TermsAcceptanceSheet extends StatefulWidget {
   final String version;
   final String? url;
-  const _TermsAcceptanceSheet({required this.version, required this.url});
+  final bool changed;
+  const _TermsAcceptanceSheet({required this.version, required this.url, this.changed = false});
 
   @override
   State<_TermsAcceptanceSheet> createState() => _TermsAcceptanceSheetState();
@@ -190,8 +240,14 @@ class _TermsAcceptanceSheet extends StatefulWidget {
 class _TermsAcceptanceSheetState extends State<_TermsAcceptanceSheet> {
   bool _accepting = false;
 
+  /// The version shown and submitted. Starts as the one the sheet opened
+  /// with and moves to a newer one if the Terms change while it is open.
+  late String _version = widget.version;
+  late String? _url = widget.url;
+  late bool _changed = widget.changed;
+
   Future<void> _openTerms() async {
-    final url = widget.url;
+    final url = _url;
     if (url == null) return;
     await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
@@ -199,8 +255,28 @@ class _TermsAcceptanceSheetState extends State<_TermsAcceptanceSheet> {
   Future<void> _accept() async {
     setState(() => _accepting = true);
     final graphql = context.read<GraphQLService>();
-    final (info, _, errorMessage) = await graphql.acceptTerms(widget.version);
+    final (info, errorCode, errorMessage) = await graphql.acceptTerms(_version);
     if (!mounted) return;
+    if (errorCode == 'TERMS_VERSION_MISMATCH') {
+      // Never accept the newer version on the user's behalf: show it and
+      // let them accept it explicitly.
+      final requirement = graphql.takeTermsRequirement();
+      final fresh = requirement == null ? await graphql.fetchTerms() : null;
+      if (!mounted) return;
+      final nextVersion = requirement?.version ?? fresh?.currentVersion;
+      if (nextVersion == null || fresh?.acceptanceRequired == false) {
+        // Nothing left to accept (Terms withdrawn, or already accepted).
+        Navigator.of(context).pop(true);
+        return;
+      }
+      setState(() {
+        _accepting = false;
+        _version = nextVersion;
+        _url = requirement?.url ?? fresh?.termsUrl ?? _url;
+        _changed = true;
+      });
+      return;
+    }
     setState(() => _accepting = false);
     if (info != null && !info.acceptanceRequired) {
       Navigator.of(context).pop(true);
@@ -233,14 +309,16 @@ class _TermsAcceptanceSheetState extends State<_TermsAcceptanceSheet> {
           Text(t(context, 'Updated Terms', 'شروط محدّثة'), style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            t(
-              context,
-              'Please review and accept the current Pupzy Terms before continuing.',
-              'يرجى مراجعة شروط بابزي الحالية والموافقة عليها قبل المتابعة.',
-            ),
+            _changed
+                ? _termsChangedCopy(context)
+                : t(
+                    context,
+                    'Please review and accept the current Pupzy Terms before continuing.',
+                    'يرجى مراجعة شروط بابزي الحالية والموافقة عليها قبل المتابعة.',
+                  ),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          if (widget.url != null) ...[
+          if (_url != null) ...[
             const SizedBox(height: AppSpacing.sm),
             TextButton(onPressed: _openTerms, child: Text(t(context, 'Read the Terms', 'قراءة الشروط'))),
           ],
@@ -269,3 +347,9 @@ class _TermsAcceptanceSheetState extends State<_TermsAcceptanceSheet> {
     );
   }
 }
+
+String _termsChangedCopy(BuildContext context) => t(
+      context,
+      "Pupzy's Terms were just updated. Please review the new version and accept it to continue — your draft is kept.",
+      'تم تحديث شروط بابزي للتو. يرجى مراجعة النسخة الجديدة والموافقة عليها للمتابعة — تم الاحتفاظ بمسودتك.',
+    );

@@ -419,7 +419,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       final landmark = _landmarkController.text.trim();
       final areaName = landmark.isEmpty ? neighborhood : '$neighborhood — near $landmark';
 
-      final (result, errorMessage) = await graphql.createProductPost(
+      final (result, errorMessage) = await withTermsRecovery(context, () => graphql.createProductPost(
         title: _productTitleController.text.trim(),
         description: _captionController.text.trim(),
         latitude: position.latitude,
@@ -431,7 +431,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         isFree: _isFree,
         openToOffers: _openToOffers,
         mediaIds: mediaIds,
-      );
+      ));
       if (!mounted) return;
 
       if (result != null) {
@@ -486,7 +486,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       final condition = _conditionController.text.trim();
       final speciesLabel = _labelFor(_speciesOptions, _species!);
 
-      final (result, errorMessage) = await graphql.createRescuePost(
+      final (result, errorMessage) = await withTermsRecovery(context, () => graphql.createRescuePost(
         title: '${t(context, 'Rescue', 'إنقاذ')}: $speciesLabel',
         description: condition,
         latitude: position.latitude,
@@ -500,7 +500,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         isInDangerousLocation: _isInDangerousLocation!,
         canAnimalMoveOrEscape: _canAnimalMoveOrEscape!,
         mediaIds: mediaIds,
-      );
+      ));
       if (!mounted) return;
 
       if (result != null) {
@@ -553,7 +553,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       final speciesLabel = _labelFor(_speciesOptions, _species!);
       final circumstances = _circumstancesController.text.trim();
 
-      final (result, errorMessage) = await graphql.createLostPost(
+      final (result, errorMessage) = await withTermsRecovery(context, () => graphql.createLostPost(
         title: '${t(context, 'Lost', 'مفقود')} $speciesLabel: $petName',
         description: circumstances,
         latitude: position.latitude,
@@ -571,7 +571,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         isElderlyOrVeryYoung: _isElderlyOrVeryYoung,
         lastSeenNearHazard: _lastSeenNearHazard,
         mediaIds: mediaIds,
-      );
+      ));
       if (!mounted) return;
 
       if (result != null) {
@@ -623,7 +623,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
       final speciesLabel = _labelFor(_speciesOptions, _species!);
       final circumstances = _circumstancesController.text.trim();
 
-      final (result, errorMessage) = await graphql.createLostPost(
+      final (result, errorMessage) = await withTermsRecovery(context, () => graphql.createLostPost(
         title: '${t(context, 'Found', 'تم العثور على')} $speciesLabel',
         description: circumstances,
         latitude: position.latitude,
@@ -639,7 +639,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         isCurrentlySafeWithReporter: _foundStraySafeWithReporter,
         dateFound: _isoDate(_dateFound!),
         mediaIds: mediaIds,
-      );
+      ));
       if (!mounted) return;
 
       if (result != null) {
@@ -700,7 +700,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
           '$petName ${t(context, 'is a', 'هو')} $ageText$genderLabel $speciesLabel$breedText '
           '${t(context, 'looking for a loving home.', 'يبحث عن منزل محب.')}';
 
-      final (result, errorMessage) = await graphql.createAdoptionPost(
+      final (result, errorMessage) = await withTermsRecovery(context, () => graphql.createAdoptionPost(
         title: '${t(context, 'Adoption', 'تبني')}: $petName',
         description: description,
         latitude: position.latitude,
@@ -721,7 +721,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
             ? null
             : _additionalRequirementsController.text.trim(),
         mediaIds: mediaIds,
-      );
+      ));
       if (!mounted) return;
 
       if (result != null) {
@@ -785,7 +785,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final agePair = parseAge(_ageController.text.trim())!;
 
-      final (result, errorMessage) = await graphql.createMatingPost(
+      final (result, errorMessage) = await withTermsRecovery(context, () => graphql.createMatingPost(
         cityId: _selectedCity!['id'] as String,
         petName: _petNameController.text.trim(),
         species: _species!,
@@ -800,7 +800,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         termsSummary: _termsSummaryController.text.trim().isEmpty ? null : _termsSummaryController.text.trim(),
         matingConditions: _matingConditionsController.text.trim().isEmpty ? null : _matingConditionsController.text.trim(),
         mediaIds: mediaIds,
-      );
+      ));
       if (!mounted) return;
 
       if (result != null) {

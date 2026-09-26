@@ -275,11 +275,6 @@ class _ProfileSheetState extends State<ProfileSheet> {
     final graphql = context.read<GraphQLService>();
     final push = context.read<PushService>();
     final failedCopy = t(context, 'Could not update notifications. Try again.', 'تعذر تحديث الإشعارات. حاول مرة أخرى.');
-    final blockedCopy = t(
-      context,
-      'Notifications are on, but your phone is blocking them for Pupzy. Allow them in your phone settings to get alerts.',
-      'الإشعارات مفعّلة، لكن هاتفك يمنعها عن بابزي. اسمح بها من إعدادات الهاتف لتصلك التنبيهات.',
-    );
     final ok = await graphql.updateMyNotificationPreferences(!current);
     if (!mounted) return;
     if (!ok) {
@@ -288,9 +283,33 @@ class _ProfileSheetState extends State<ProfileSheet> {
     }
     setState(() => _user = {...?_user, 'notificationsEnabled': !current});
     // Turning them on only helps if the phone lets the app show them.
-    if (!current && !await push.requestPermission()) {
-      Fluttertoast.showToast(msg: blockedCopy, toastLength: Toast.LENGTH_LONG);
+    if (!current && !await push.requestPermission() && mounted) {
+      await _explainBlockedNotifications();
     }
+  }
+
+  /// The phone blocks Pupzy's notifications: only its settings can undo
+  /// that, so offer to open them. Coming back to the app registers the
+  /// device on its own once they're allowed (PushService.ensureRegistered).
+  Future<void> _explainBlockedNotifications() async {
+    final open = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
+        title: Text(t(ctx, 'Notifications are blocked', 'الإشعارات محظورة')),
+        content: Text(t(
+          ctx,
+          'Notifications are on for your account, but your phone is blocking them for Pupzy. Allow them in your phone settings to get alerts.',
+          'الإشعارات مفعّلة لحسابك، لكن هاتفك يمنعها عن بابزي. اسمح بها من إعدادات الهاتف لتصلك التنبيهات.',
+        )),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(t(ctx, 'Not now', 'ليس الآن'))),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(t(ctx, 'Open settings', 'فتح الإعدادات'))),
+        ],
+      ),
+    );
+    if (open == true) await Geolocator.openAppSettings();
   }
 
   Future<void> _signOut() async {

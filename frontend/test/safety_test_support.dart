@@ -10,6 +10,7 @@ import 'package:pupzy/models/contact_request.dart';
 import 'package:pupzy/models/list_page.dart';
 import 'package:pupzy/models/post_detail.dart';
 import 'package:pupzy/models/safety.dart';
+import 'package:pupzy/models/terms_info.dart';
 import 'package:pupzy/services/graphql_service.dart';
 import 'package:pupzy/services/notification_center.dart';
 import 'package:pupzy/services/safety_events.dart';
@@ -136,6 +137,34 @@ class FakeSafetyGraphQL implements GraphQLService {
   final List<String> whatsAppLinkLookups = [];
   String? whatsAppLink;
   String? whatsAppLinkError;
+
+  // ── Terms ──────────────────────────────────────────────────────────────────
+  /// What the last rejected operation asked for (see GraphQLService).
+  TermsRequirement? termsRequirement;
+
+  /// Versions passed to acceptTerms, in order.
+  final List<String> acceptedVersions = [];
+
+  /// Versions acceptTerms rejects as stale, each pointing at the next one.
+  final Map<String, String> staleTermsVersions = {};
+
+  @override
+  TermsRequirement? takeTermsRequirement() {
+    final requirement = termsRequirement;
+    termsRequirement = null;
+    return requirement;
+  }
+
+  @override
+  Future<(TermsInfo?, String?, String?)> acceptTerms(String version) async {
+    acceptedVersions.add(version);
+    final newer = staleTermsVersions[version];
+    if (newer != null) {
+      termsRequirement = TermsRequirement(version: newer, url: 'https://example.org/terms/$newer');
+      return (null, 'TERMS_VERSION_MISMATCH', 'Terms version is out of date');
+    }
+    return (TermsInfo(currentVersion: version, acceptedVersion: version, acceptanceRequired: false), null, null);
+  }
 
   /// When set, the next "load more" page (one with an `after` cursor) fails.
   bool failNextLoadMore = false;

@@ -102,7 +102,12 @@ class FakeCommentsGraphQL extends FakeSafetyGraphQL {
 
   CommentMutationResult _run(String id, List<String> script, Comment Function() create) {
     final mode = script.isEmpty ? 'ok' : script.removeAt(0);
-    if (mode.startsWith('code:')) return CommentMutationResult(errorCode: mode.substring(5), errorMessage: 'server: ${mode.substring(5)}');
+    if (mode.startsWith('code:')) {
+      final code = mode.substring(5);
+      // Like the real service: a Terms rejection records the version to accept.
+      if (code == 'TERMS_ACCEPTANCE_REQUIRED') termsRequirement = const TermsRequirement(version: 'v2');
+      return CommentMutationResult(errorCode: code, errorMessage: 'server: $code');
+    }
     final canonical = _committed.putIfAbsent(id, create);
     return mode == 'lost' ? const CommentMutationResult() : CommentMutationResult(comment: canonical);
   }

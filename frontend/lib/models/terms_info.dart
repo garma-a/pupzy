@@ -2,6 +2,16 @@
 /// state. `currentVersion`/`termsUrl` are null while the release owner
 /// hasn't configured `TERMS_URL`/`TERMS_VERSION` on the backend — in that
 /// state [acceptanceRequired] is always false and nothing is gated.
+/// The Terms version the backend currently requires, read from the
+/// `extensions` of a `TERMS_ACCEPTANCE_REQUIRED` or `TERMS_VERSION_MISMATCH`
+/// error — never a cached or hard-coded version.
+class TermsRequirement {
+  final String version;
+  final String? url;
+
+  const TermsRequirement({required this.version, this.url});
+}
+
 class TermsInfo {
   final String? currentVersion;
   final String? termsUrl;
