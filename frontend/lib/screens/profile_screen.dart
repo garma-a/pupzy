@@ -34,6 +34,9 @@ class _ProfileSheetState extends State<ProfileSheet> {
   bool _loadingProfile = true;
   int _pendingSentRequests = 0;
 
+  /// More than one page of pending requests: shown as "50+".
+  bool _morePendingSent = false;
+
   @override
   void initState() {
     super.initState();
@@ -54,8 +57,12 @@ class _ProfileSheetState extends State<ProfileSheet> {
 
   Future<void> _fetchPendingSentCount() async {
     final graphql = context.read<GraphQLService>();
-    final (requests, _) = await graphql.fetchMyContactRequests(status: 'PENDING', first: 50);
-    if (mounted) setState(() => _pendingSentRequests = requests.length);
+    final page = await graphql.fetchMyContactRequests(status: 'PENDING', first: 50);
+    if (!mounted || page.failed) return;
+    setState(() {
+      _pendingSentRequests = page.items.length;
+      _morePendingSent = page.hasNextPage;
+    });
   }
 
   void _showEditProfile() {
@@ -477,7 +484,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
                   _SettingsRow(
                     icon: Icons.mail_outline,
                     label: t(context, 'My Contact Requests', 'طلبات التواصل الخاصة بي'),
-                    trailing: _pendingSentRequests > 0 ? _pendingSentRequests.toString() : null,
+                    trailing: _pendingSentRequests > 0 ? '$_pendingSentRequests${_morePendingSent ? '+' : ''}' : null,
                     onTap: () async {
                       await Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const ContactRequestsScreen()),

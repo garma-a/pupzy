@@ -7,6 +7,7 @@ import 'package:pupzy/localization/lang_provider.dart';
 import 'package:pupzy/models/app_notification.dart';
 import 'package:pupzy/models/blocked_user.dart';
 import 'package:pupzy/models/contact_request.dart';
+import 'package:pupzy/models/list_page.dart';
 import 'package:pupzy/models/post_detail.dart';
 import 'package:pupzy/models/safety.dart';
 import 'package:pupzy/services/graphql_service.dart';
@@ -136,14 +137,30 @@ class FakeSafetyGraphQL implements GraphQLService {
   String? whatsAppLink;
   String? whatsAppLinkError;
 
+  /// When set, the next "load more" page (one with an `after` cursor) fails.
+  bool failNextLoadMore = false;
+
   @override
-  Future<(List<ContactRequest> requests, String? errorMessage)> fetchMyContactRequests({
+  Future<ListPage<ContactRequest>> fetchMyContactRequests({
     String? postId,
     String? status,
     int first = 20,
+    String? after,
   }) async {
     calls.add('fetchMyContactRequests');
-    return (List.of(myContactRequests), null);
+    return pageFor(myContactRequests.where((r) => status == null || r.status == status).toList(), first, after);
+  }
+
+  /// Serves [all] in pages of [first] with offset cursors, honouring
+  /// [failNextLoadMore].
+  ListPage<T> pageFor<T>(List<T> all, int first, String? after) {
+    if (after != null && failNextLoadMore) {
+      failNextLoadMore = false;
+      return const ListPage(errorMessage: 'Network down');
+    }
+    final start = after == null ? 0 : int.parse(after);
+    final end = (start + first).clamp(0, all.length);
+    return ListPage(items: all.sublist(start, end), endCursor: '$end', hasNextPage: end < all.length);
   }
 
   @override

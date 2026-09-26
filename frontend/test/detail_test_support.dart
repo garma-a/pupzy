@@ -1,5 +1,6 @@
 import 'package:pupzy/models/adoption_application.dart';
 import 'package:pupzy/models/contact_request.dart';
+import 'package:pupzy/models/list_page.dart';
 import 'package:pupzy/models/mating_detail.dart';
 import 'package:pupzy/models/post_detail.dart';
 
@@ -33,19 +34,56 @@ class FakeDetailGraphQL extends FakeSafetyGraphQL {
   Future<(ProductPostExtension?, String?)> fetchProductPostDetail(String postId) async => (product, null);
   @override
   Future<(MatingDetails?, String?)> fetchMatingPostDetail(String postId) async => (mating, null);
+  final List<String?> myApplicationCursors = [];
   @override
-  Future<(List<AdoptionApplication>, String?)> fetchMyAdoptionApplications({int first = 20}) async => (List.of(myApplications), null);
+  Future<ListPage<AdoptionApplication>> fetchMyAdoptionApplications({int first = 20, String? after}) async {
+    myApplicationCursors.add(after);
+    return pageFor(myApplications, first, after);
+  }
   @override
   Future<(bool, String?)> renewPost(String postId) async {
     renewCalls++;
     return (renewError == null, renewError);
   }
+  /// Requests and applications received on the owner's Post.
+  List<ContactRequest> postRequests = [];
+  List<AdoptionApplication> postApplications = [];
+
   @override
-  Future<(List<ContactRequest>, String?)> fetchPostContactRequests({required String postId, String? status, int first = 20}) async =>
-      (<ContactRequest>[], null);
+  Future<ListPage<ContactRequest>> fetchPostContactRequests({
+    required String postId,
+    String? status,
+    int first = 20,
+    String? after,
+  }) async =>
+      keysetPage(postRequests, (r) => status == null || r.status == status, (r) => r.id, first, after);
   @override
-  Future<(List<AdoptionApplication>, String?)> fetchPostAdoptionApplications({required String postId, String? status, int first = 20}) async =>
-      (<AdoptionApplication>[], null);
+  Future<ListPage<AdoptionApplication>> fetchPostAdoptionApplications({
+    required String postId,
+    String? status,
+    int first = 20,
+    String? after,
+  }) async =>
+      pageFor(postApplications.where((a) => status == null || a.status == status).toList(), first, after);
+
+  /// Keyset paging like the API: continue after the last item's id, so rows
+  /// that change status meanwhile never shift the next page.
+  ListPage<T> keysetPage<T>(List<T> all, bool Function(T) keep, String Function(T) id, int first, String? after) {
+    final start = after == null ? 0 : all.indexWhere((x) => id(x) == after) + 1;
+    final out = <T>[];
+    var i = start;
+    for (; i < all.length && out.length < first; i++) {
+      if (keep(all[i])) out.add(all[i]);
+    }
+    return ListPage(items: out, endCursor: out.isEmpty ? after : id(out.last), hasNextPage: all.skip(i).any(keep));
+  }
+
+  @override
+  Future<(ContactRequest?, String?)> approveContactRequest(String requestId) async {
+    final i = postRequests.indexWhere((r) => r.id == requestId);
+    postRequests[i] = postRequests[i].copyWith(status: 'APPROVED');
+    return (postRequests[i], null);
+  }
 }
 
 const ownerId = 'owner-1';

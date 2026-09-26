@@ -90,7 +90,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
     _myUserId = me?['id'] as String?;
     // RESCUE has no contact handshake, so there's nothing to look up for it.
     if (_myUserId != post.creator.id && post.postType != 'RESCUE') {
-      final (mine, _) = await graphql.fetchMyContactRequests(postId: post.id, first: 1);
+      final mine = (await graphql.fetchMyContactRequests(postId: post.id, first: 1)).items;
       if (!mounted) return;
       _myContactRequest = mine.isNotEmpty ? mine.first : null;
     }
@@ -166,7 +166,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
         return;
       }
       final graphql = context.read<GraphQLService>();
-      final (mine, _) = await graphql.fetchMyContactRequests(postId: widget.postId, first: 1);
+      final mine = (await graphql.fetchMyContactRequests(postId: widget.postId, first: 1)).items;
       if (!mounted) return;
       setState(() => _myContactRequest = mine.isNotEmpty ? mine.first : null);
       return;
