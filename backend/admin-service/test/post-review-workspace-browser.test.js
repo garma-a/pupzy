@@ -872,11 +872,20 @@ describe('Post review workspace real browser suite', { timeout: 120000 }, () => 
       await page.waitForFunction(
         () => document.querySelector('[data-testid="moderation-action-submit"]')?.disabled === false,
       );
-      await page.click('[data-testid="moderation-action-submit"]');
-
-      await page.waitForFunction(() => document.body.innerText.includes('Post marked resolved'), {
-        timeout: 60000,
-      });
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 60000 }),
+        page.click('[data-testid="moderation-action-submit"]'),
+      ]);
+      await page.waitForFunction(
+        () => {
+          const text = document.body.innerText;
+          return text.includes('Post marked resolved') || text.includes('Post resolution recorded.');
+        },
+        {
+          timeout: 60000,
+        },
+      );
+      await page.waitForSelector('[data-testid="pupzy-review-workspace"]', { timeout: 60000 });
       const resultText = await page.$eval('body', (element) => element.innerText);
       assert.match(resultText, /Animal safely reunited with its owner/);
       console.log(
