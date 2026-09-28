@@ -405,6 +405,7 @@ export interface IQuery {
     after?: Nullable<string>,
   ): NotificationConnection | Promise<NotificationConnection>;
   myUnreadNotificationCount(): number | Promise<number>;
+  myPostNotificationPreferences(postId: string): PostNotificationPreferences | Promise<PostNotificationPreferences>;
   post(id: string): Nullable<Post> | Promise<Nullable<Post>>;
   rescuePostDetail(postId: string): Nullable<RescuePost> | Promise<Nullable<RescuePost>>;
   lostPostDetail(postId: string): Nullable<LostPost> | Promise<Nullable<LostPost>>;
@@ -525,6 +526,10 @@ export interface IMutation {
   createMatingPost(input: CreateMatingPostInput): Post | Promise<Post>;
   markNotificationRead(notificationId: string): Notification | Promise<Notification>;
   markAllNotificationsRead(): number | Promise<number>;
+  setPostNotificationsMuted(
+    postId: string,
+    muted: boolean,
+  ): PostNotificationPreferences | Promise<PostNotificationPreferences>;
   registerDevice(input: RegisterDeviceInput): DeviceRegistration | Promise<DeviceRegistration>;
   unregisterDevice(token: string): boolean | Promise<boolean>;
   createRescuePost(input: CreateRescuePostInput): Post | Promise<Post>;
@@ -817,7 +822,7 @@ export interface ProfilePhotoUploadTicket {
 
 export interface User {
   id: string;
-  email: string;
+  email?: Nullable<string>;
   fullName?: Nullable<string>;
   fullNameArabic?: Nullable<string>;
   profilePictureUrl?: Nullable<string>;
@@ -832,7 +837,7 @@ export interface User {
   adoptionPostCount: number;
   productPostCount: number;
   languagePreference?: Nullable<string>;
-  notificationsEnabled: boolean;
+  notificationsEnabled?: Nullable<boolean>;
   lastSeenAt?: Nullable<DateTime>;
   createdAt: DateTime;
   updatedAt: DateTime;
@@ -858,3 +863,10 @@ export interface VetClinic {
 
 export type DateTime = any;
 type Nullable<T> = T | null;
+
+export interface PostNotificationPreferences {
+  postId: string;
+  isFollowing: boolean;
+  isMuted: boolean;
+  notificationsEnabled: boolean;
+}

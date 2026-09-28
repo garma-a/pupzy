@@ -1,3 +1,5 @@
+import { PostNotificationPreferencesService } from './post-notification-preferences.service';
+import { PostNotificationPreferencesResolver } from './post-notification-preferences.resolver';
 import { Module } from '@nestjs/common';
 import { NotificationsResolver } from './notifications.resolver';
 import { NotificationsService } from './notifications.service';
@@ -22,6 +24,8 @@ import { PostCompletionNotificationProcessor } from './post-completion-notificat
  * `PushDeliveryRepository` is exported so direct notification-insert sites
  * (inactivity reminders, the ban cascade) enqueue durable push intents in the
  * same transaction through the shared outbox.
+ * `DiscussionNotificationProcessor` is exported so discussion writes can
+ * start delivery immediately after their source event commits.
  * `PostCompletionNotificationRepository` and `PostCompletionNotificationProcessor`
  * are exported to support post completion notification lifecycle and background batching.
  *
@@ -36,6 +40,8 @@ import { PostCompletionNotificationProcessor } from './post-completion-notificat
 @Module({
   imports: [AccountIsolationModule],
   providers: [
+    PostNotificationPreferencesService,
+    PostNotificationPreferencesResolver,
     NotificationsResolver,
     NotificationsService,
     NotificationsRepository,
@@ -54,6 +60,7 @@ import { PostCompletionNotificationProcessor } from './post-completion-notificat
     PushDeliveryRepository,
     PostCompletionNotificationRepository,
     PostCompletionNotificationProcessor,
+    DiscussionNotificationProcessor,
   ],
 })
 export class NotificationsModule {}

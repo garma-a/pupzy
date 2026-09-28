@@ -1,3 +1,4 @@
+import { postFollowerAudience, postNotificationsUnmuted } from '../notifications/post-notification-policy';
 import { Injectable, Inject, Optional } from '@nestjs/common';
 import { eq, and, ne, sql, gte, gt, lt, or, inArray, isNull, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
@@ -15,7 +16,6 @@ import {
   commentMedia,
   mediaDeletionWork,
   commentReports,
-  discussionNotificationEvents,
   users,
   Post,
   Comment,
@@ -147,8 +147,42 @@ export class CommentsRepository {
       relatedCommentId: string;
     },
   ): Promise<void> {
-    if (event.recipientId === event.actorId) return;
-    await tx.insert(discussionNotificationEvents).values(event).onConflictDoNothing();
+    if (event.recipientId !== event.actorId) {
+      await tx.execute(sql`
+        INSERT INTO discussion_notification_events
+          (source_event_id, recipient_id, actor_id, type, title, body, title_arabic, body_arabic, related_post_id, related_comment_id)
+        SELECT ${event.sourceEventId}, ${event.recipientId}::uuid, ${event.actorId}::uuid,
+          ${event.type}::notification_type, ${event.title}, ${event.body}, ${event.titleArabic}, ${event.bodyArabic},
+          ${event.relatedPostId}::uuid, ${event.relatedCommentId}::uuid
+        WHERE ${postNotificationsUnmuted(event.relatedPostId, event.recipientId)}
+        ON CONFLICT DO NOTHING
+      `);
+    }
+    if (event.type !== 'NEW_COMMENT' && event.type !== 'NEW_REPLY') return;
+    const [post] = await tx
+      .select({ title: posts.title, creatorId: posts.creatorId })
+      .from(posts)
+      .where(eq(posts.id, event.relatedPostId))
+      .limit(1);
+    const actorName = await this.getDiscussionActorName(tx, event.actorId);
+    const content = buildNotificationContent(event.type, { actorName, postTitle: post.title, following: true });
+    // One atomic set-oriented snapshot, with no recipient cap and no per-user queries.
+    await tx.execute(sql`
+      INSERT INTO discussion_notification_events
+        (source_event_id, recipient_id, actor_id, type, title, body, title_arabic, body_arabic, related_post_id, related_comment_id)
+      SELECT ${event.sourceEventId} || ':' || audience.recipient_id::text,
+        audience.recipient_id, ${event.actorId}::uuid, ${event.type}::notification_type,
+        ${content.title}, ${content.body}, ${content.titleArabic}, ${content.bodyArabic},
+        ${event.relatedPostId}::uuid, ${event.relatedCommentId}::uuid
+      FROM (${postFollowerAudience(event.relatedPostId)} UNION SELECT ${post.creatorId}::uuid) audience
+      JOIN users recipient ON recipient.id = audience.recipient_id AND NOT recipient.is_banned
+      WHERE audience.recipient_id <> ${event.actorId}::uuid AND audience.recipient_id <> ${event.recipientId}::uuid
+        AND ${postNotificationsUnmuted(event.relatedPostId, sql`audience.recipient_id`)}
+        AND NOT EXISTS (SELECT 1 FROM blocks b WHERE
+          (b.blocker_id = audience.recipient_id AND b.blocked_id IN (${event.actorId}::uuid, ${post.creatorId}::uuid)) OR
+          (b.blocked_id = audience.recipient_id AND b.blocker_id IN (${event.actorId}::uuid, ${post.creatorId}::uuid)))
+      ON CONFLICT DO NOTHING
+    `);
   }
 
   /**

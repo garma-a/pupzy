@@ -126,9 +126,12 @@ export class UploadService {
     @Inject(MediaFinalizationRepository)
     private readonly mediaFinalizationRepository?: MediaFinalizationRepository,
   ) {
+    const endpointOverride = config.get<string>('R2_ENDPOINT');
     this.s3Client = new S3Client({
       region: 'auto',
-      endpoint: `https://${config.get('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com`,
+      endpoint: endpointOverride ?? `https://${config.get('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com`,
+      // S3 fakes address buckets by path, not by subdomain.
+      ...(endpointOverride ? { forcePathStyle: true } : {}),
       credentials: {
         accessKeyId: config.get('R2_ACCESS_KEY_ID')!,
         secretAccessKey: config.get('R2_SECRET_ACCESS_KEY')!,

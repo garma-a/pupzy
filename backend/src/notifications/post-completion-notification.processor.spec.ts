@@ -126,7 +126,7 @@ function createHarness(): FakeProcessorHarness {
         where: () => Promise.resolve(undefined),
       }),
     }),
-    execute: () => Promise.resolve({ rows: [], rowCount: 0 }),
+    execute: () => Promise.resolve({ rows: [{ muted: false }], rowCount: 1 }),
   };
 
   const db = {

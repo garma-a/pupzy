@@ -39,3 +39,27 @@ extend type Mutation {
   """
   markAllNotificationsRead: Int!
 }
+
+"""
+Current caller's automatic following and explicit mute for one accessible Post.
+"""
+type PostNotificationPreferences {
+  postId: ID!
+  isFollowing: Boolean!
+  isMuted: Boolean!
+  """
+  Following and unmuted. Device push also requires the account-wide setting.
+  """
+  notificationsEnabled: Boolean!
+}
+
+extend type Query {
+  myPostNotificationPreferences(postId: ID!): PostNotificationPreferences!
+}
+
+extend type Mutation {
+  """
+  Idempotent per-post mute; later engagement does not reset it.
+  """
+  setPostNotificationsMuted(postId: ID!, muted: Boolean!): PostNotificationPreferences!
+}

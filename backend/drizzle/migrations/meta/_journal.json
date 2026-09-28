@@ -421,6 +421,20 @@
       "when": 1792174400000,
       "tag": "0059_add_completion_correction_link",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1792260800000,
+      "tag": "0060_posts_coordinates_srid_4326",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1792260800001,
+      "tag": "0061_post_notification_preferences",
+      "breakpoints": true
     }
   ]
 }

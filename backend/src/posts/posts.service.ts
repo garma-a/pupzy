@@ -1,4 +1,5 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { PostCompletionNotificationProcessor } from '../notifications/post-completion-notification.processor';
+import { Injectable, Inject, Logger, Optional } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
@@ -111,6 +112,9 @@ export class PostsService {
     private readonly usersService: UsersService,
     private readonly notificationsService: NotificationsService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    @Optional()
+    @Inject(PostCompletionNotificationProcessor)
+    private readonly completionNotifications?: PostCompletionNotificationProcessor,
   ) {}
 
   // ─── RESCUE ──────────────────────────────────────────────────────────────
@@ -511,6 +515,7 @@ export class PostsService {
 
     const updatedPost = await this.postsRepository.updateStatus(postId, userId, status);
     if (!updatedPost) throw new NotFoundError('Post', postId);
+    this.completionNotifications?.requestImmediateRun();
     await this.usersService.invalidateUserCacheById(post.creatorId).catch(() => {});
     return updatedPost;
   }

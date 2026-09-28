@@ -1,3 +1,4 @@
+import { isPostActivityMuted, canDeliverDiscussion } from './post-notification-policy';
 import { Inject, Injectable, Logger, OnApplicationBootstrap, Optional } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { eq, sql } from 'drizzle-orm';
@@ -85,6 +86,7 @@ export class PushDeliveryProcessor implements OnApplicationBootstrap {
   private readonly logger = new Logger(PushDeliveryProcessor.name);
   private readonly isolationPolicy: AccountIsolationPolicy;
   private isProcessing = false;
+  private immediateRunRequested = false;
 
   constructor(
     @Inject(DATABASE_TOKEN)
@@ -116,6 +118,23 @@ export class PushDeliveryProcessor implements OnApplicationBootstrap {
   }
 
   /**
+   * Starts a drain now instead of waiting for the next cron tick, so a push
+   * reaches the device within seconds of its notification committing. Called
+   * after a write that enqueued intents; never throws. When a drain is already
+   * running (possibly already past the new intent) one more drain follows it.
+   * The cron remains the safety net for retries and other processes' work.
+   */
+  requestImmediateRun(): void {
+    if (this.isProcessing) {
+      this.immediateRunRequested = true;
+      return;
+    }
+    this.processPendingDeliveries().catch((error) => {
+      this.logger.error('Unable to deliver pending push notifications', error);
+    });
+  }
+
+  /**
    * Claims and drains one bounded batch. Public for restart, retry and
    * multi-worker fault-injection tests; database leases protect competing API
    * processes.
@@ -126,9 +145,11 @@ export class PushDeliveryProcessor implements OnApplicationBootstrap {
 
     try {
       let delivered = 0;
+      let processed = 0;
       for (let index = 0; index < PUSH_DELIVERY_BATCH_SIZE; index++) {
         const delivery = await this.claimNextDelivery();
         if (!delivery) break;
+        processed++;
 
         let resolved: ResolvedPushDelivery | null;
         try {
@@ -148,9 +169,14 @@ export class PushDeliveryProcessor implements OnApplicationBootstrap {
           await this.handleSendFailure(delivery, resolved, error);
         }
       }
+      if (processed === PUSH_DELIVERY_BATCH_SIZE) this.immediateRunRequested = true;
       return delivered;
     } finally {
       this.isProcessing = false;
+      if (this.immediateRunRequested) {
+        this.immediateRunRequested = false;
+        this.requestImmediateRun();
+      }
     }
   }
 
@@ -245,23 +271,26 @@ export class PushDeliveryProcessor implements OnApplicationBootstrap {
           return null;
         }
 
-        // A Block committed after the notification was queued terminates the
-        // push while the inbox row survives. The pair lock orders this check
-        // with a concurrently committing Block.
-        if (
-          current.actorId &&
-          (await this.isolationPolicy.lockPairAndRecheck(tx, current.actorId, current.recipientId))
-        ) {
-          await this.markSuppressed(tx, current.id, delivery.leaseToken);
-          return null;
-        }
-
         const [notification] = await tx
           .select()
           .from(notifications)
           .where(eq(notifications.id, current.notificationId))
           .limit(1);
         if (!notification) {
+          await this.markSuppressed(tx, current.id, delivery.leaseToken);
+          return null;
+        }
+
+        if (notification.relatedCommentId) {
+          if (!(await canDeliverDiscussion(tx, this.isolationPolicy, { ...notification, actorId: current.actorId }))) {
+            await this.markSuppressed(tx, current.id, delivery.leaseToken);
+            return null;
+          }
+        } else if (
+          (current.actorId &&
+            (await this.isolationPolicy.lockPairAndRecheck(tx, current.actorId, current.recipientId))) ||
+          (await isPostActivityMuted(tx, notification.relatedPostId, current.recipientId, notification.type))
+        ) {
           await this.markSuppressed(tx, current.id, delivery.leaseToken);
           return null;
         }

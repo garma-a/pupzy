@@ -23,6 +23,7 @@ import { RequestCommentImageUploadDto } from './dto/request-comment-image-upload
 import { ReportCommentInput } from './dto/report-comment.input';
 import { assertImageCommentAllowed } from './comment-image-eligibility';
 import { NotificationsService } from '../notifications/notifications.service';
+import { DiscussionNotificationProcessor } from '../notifications/discussion-notification.processor';
 import { UsersService } from '../users/users.service';
 
 export interface CommentEdge {
@@ -55,6 +56,9 @@ export class CommentsService {
     @Optional()
     @Inject(AccountIsolationPolicy)
     private readonly isolationPolicy?: AccountIsolationPolicy,
+    @Optional()
+    @Inject(DiscussionNotificationProcessor)
+    private readonly discussionNotifications?: DiscussionNotificationProcessor,
   ) {}
 
   /**
@@ -249,6 +253,7 @@ export class CommentsService {
         requestHash,
         mediaItems,
       });
+      this.discussionNotifications?.requestImmediateRun();
 
       // 7. Cleanup staging objects after successful DB commit
       if (mediaItems && mediaItems.length > 0) {
@@ -487,6 +492,7 @@ export class CommentsService {
         clientRequestId,
         requestHash,
       });
+      this.discussionNotifications?.requestImmediateRun();
 
       return reply;
     } catch (err) {
@@ -636,6 +642,7 @@ export class CommentsService {
     try {
       // 2. Transactional toggle in repository
       const result = await this.commentsRepository.toggleBoost(commentId, userId);
+      if (result.isBoostedByMe) this.discussionNotifications?.requestImmediateRun();
 
       return {
         commentId,
@@ -664,6 +671,7 @@ export class CommentsService {
    */
   async pinComment(userId: string, commentId: string): Promise<Comment> {
     const result = await this.commentsRepository.pinComment(commentId, userId);
+    this.discussionNotifications?.requestImmediateRun();
 
     return result.comment;
   }

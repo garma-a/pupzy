@@ -53,8 +53,8 @@ export interface NotificationTemplateParamsMap {
   POST_REOPENED_BY_ADMIN: { postTitle: string };
   POST_INACTIVITY_NUDGE: { postTitle: string };
   SYSTEM_ANNOUNCEMENT: { postTitle: string };
-  NEW_COMMENT: { actorName: string; postTitle: string };
-  NEW_REPLY: { actorName: string };
+  NEW_COMMENT: { actorName: string; postTitle: string; following?: boolean };
+  NEW_REPLY: { actorName: string; postTitle?: string; following?: boolean };
   COMMENT_BOOSTED: { actorName: string; target: 'comment' | 'reply' };
   COMMENT_PINNED: { postTitle: string };
   POST_COMPLETED: { postTitle: string; outcome?: PostLifecycleCompletedOutcome };
@@ -239,23 +239,29 @@ const NOTIFICATION_TEMPLATES: NotificationTemplateRegistry = {
     }),
   },
   NEW_COMMENT: {
-    en: ({ actorName, postTitle }) => ({
+    en: ({ actorName, postTitle, following }) => ({
       title: 'New comment',
-      body: `${actorName} commented on your post "${postTitle}"`,
+      body: following
+        ? `${actorName} commented on a post you follow "${postTitle}"`
+        : `${actorName} commented on your post "${postTitle}"`,
     }),
-    ar: ({ actorName, postTitle }) => ({
+    ar: ({ actorName, postTitle, following }) => ({
       title: 'تعليق جديد',
-      body: `علّق ${actorName} على منشورك "${postTitle}"`,
+      body: following
+        ? `علّق ${actorName} على منشور تتابعه "${postTitle}"`
+        : `علّق ${actorName} على منشورك "${postTitle}"`,
     }),
   },
   NEW_REPLY: {
-    en: ({ actorName }) => ({
+    en: ({ actorName, postTitle, following }) => ({
       title: 'New reply',
-      body: `${actorName} replied to your comment`,
+      body: following
+        ? `${actorName} replied on a post you follow "${postTitle}"`
+        : `${actorName} replied to your comment`,
     }),
-    ar: ({ actorName }) => ({
+    ar: ({ actorName, postTitle, following }) => ({
       title: 'رد جديد',
-      body: `ردّ ${actorName} على تعليقك`,
+      body: following ? `ردّ ${actorName} على منشور تتابعه "${postTitle}"` : `ردّ ${actorName} على تعليقك`,
     }),
   },
   COMMENT_BOOSTED: {

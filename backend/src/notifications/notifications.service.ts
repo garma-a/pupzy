@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { NotificationsRepository } from './notifications.repository';
 import { localizeNotification } from './notification-templates';
 import { isPushDeliveryEnabled } from './push-delivery.constants';
+import { PushDeliveryProcessor } from './push-delivery.processor';
 import { NotFoundError, ValidationError } from '../common/errors/app.errors';
 import { assertUuid } from '../common/utils/validate-uuid';
 import { clampFirst } from '../common/utils/pagination.util';
@@ -19,7 +20,12 @@ import type { Notification, NewNotification } from '../database/schema';
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(private readonly notificationsRepository: NotificationsRepository) {}
+  constructor(
+    private readonly notificationsRepository: NotificationsRepository,
+    @Optional()
+    @Inject(PushDeliveryProcessor)
+    private readonly pushDeliveryProcessor?: PushDeliveryProcessor,
+  ) {}
 
   /**
    * Fire-and-forget notification creation.
@@ -37,14 +43,19 @@ export class NotificationsService {
    * ## Durable push intent
    * Push-enabled types persist their delivery intents in the same transaction
    * as the notification; the push worker sends only after that commit and
-   * rechecks preference, account state and isolation again.
+   * rechecks preference, account state and isolation again. The worker is
+   * nudged as soon as the row commits, so the push arrives within seconds.
    */
   fireNotification(data: NewNotification, actorId?: string): void {
     // Don't notify yourself
     if (actorId && data.recipientId === actorId) return;
 
+    const enqueuePush = isPushDeliveryEnabled(data.type);
     this.notificationsRepository
-      .createIfNotIsolated(data, actorId, { enqueuePush: isPushDeliveryEnabled(data.type) })
+      .createIfNotIsolated(data, actorId, { enqueuePush })
+      .then(() => {
+        if (enqueuePush) this.pushDeliveryProcessor?.requestImmediateRun();
+      })
       .catch((err) => {
         this.logger.error(
           `Failed to create notification type=${data.type} for recipient=${data.recipientId}`,

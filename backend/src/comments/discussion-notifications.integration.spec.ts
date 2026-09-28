@@ -392,7 +392,9 @@ describe('Durable Discussion Notifications Integration (Ticket 12)', () => {
       .select()
       .from(discussionNotificationEvents)
       .orderBy(discussionNotificationEvents.type);
-    expect(events).toHaveLength(4);
+    // Direct events plus the post owner's reply update and two followers of the owner's comment.
+    expect(events).toHaveLength(7);
+    expect(events.every((event) => event.actorId !== event.recipientId)).toBe(true);
     expect(events).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

@@ -1,3 +1,4 @@
+import { postFollowerAudience, postNotificationsUnmuted } from './post-notification-policy';
 import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
@@ -105,17 +106,10 @@ export class PostCompletionNotificationRepository {
       INSERT INTO post_completion_recipients (id, event_id, post_id, recipient_id, status)
       SELECT uuidv7(), ${event.id}::uuid, ${postId}::uuid, sub.recipient_id, 'PENDING'
       FROM (
-        SELECT user_id AS recipient_id FROM post_upvotes WHERE post_id = ${postId}::uuid
-        UNION
-        SELECT user_id AS recipient_id FROM post_saves WHERE post_id = ${postId}::uuid
-        UNION
-        SELECT author_id AS recipient_id FROM comments WHERE post_id = ${postId}::uuid AND status NOT IN ('DELETED', 'REMOVED')
-        UNION
-        SELECT requester_id AS recipient_id FROM contact_requests WHERE post_id = ${postId}::uuid
-        UNION
-        SELECT applicant_id AS recipient_id FROM adoption_applications WHERE target_post_id = ${postId}::uuid
+        ${postFollowerAudience(postId)}
       ) sub
       WHERE sub.recipient_id IS NOT NULL
+        AND ${postNotificationsUnmuted(postId, sql`sub.recipient_id`)}
         AND (${closingActorId}::uuid IS NULL OR sub.recipient_id <> ${closingActorId}::uuid)
         AND (${creatorId}::uuid IS NULL OR sub.recipient_id <> ${creatorId}::uuid)
       ON CONFLICT (event_id, recipient_id) DO NOTHING

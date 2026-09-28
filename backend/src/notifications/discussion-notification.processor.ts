@@ -1,3 +1,4 @@
+import { canDeliverDiscussion } from './post-notification-policy';
 import { Injectable, Inject, Logger, OnApplicationBootstrap, Optional } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { and, eq, sql } from 'drizzle-orm';
@@ -10,6 +11,7 @@ import { withDbRetry } from '../common/utils/db-retry.util';
 import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
 import { PushDeliveryRepository } from './push-delivery.repository';
 import { isPushDeliveryEnabled } from './push-delivery.constants';
+import { PushDeliveryProcessor } from './push-delivery.processor';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -34,6 +36,7 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
   private readonly isolationPolicy: AccountIsolationPolicy;
   private readonly pushDeliveryRepository: PushDeliveryRepository;
   private isProcessing = false;
+  private immediateRunRequested = false;
 
   constructor(
     @Inject(DATABASE_TOKEN)
@@ -44,6 +47,9 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
     @Optional()
     @Inject(PushDeliveryRepository)
     pushDeliveryRepository?: PushDeliveryRepository,
+    @Optional()
+    @Inject(PushDeliveryProcessor)
+    private readonly pushDeliveryProcessor?: PushDeliveryProcessor,
   ) {
     this.isolationPolicy = isolationPolicy ?? new AccountIsolationPolicy(this.db);
     this.pushDeliveryRepository = pushDeliveryRepository ?? new PushDeliveryRepository(this.db);
@@ -67,6 +73,21 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
   }
 
   /**
+   * Starts a drain now instead of waiting for the next cron tick. Called after
+   * a discussion write (comment, reply, boost, pin) commits its source event;
+   * never throws. When a drain is already running one more drain follows it.
+   */
+  requestImmediateRun(): void {
+    if (this.isProcessing) {
+      this.immediateRunRequested = true;
+      return;
+    }
+    this.processPendingEvents().catch((error) => {
+      this.logger.error('Unable to deliver pending discussion notifications', error);
+    });
+  }
+
+  /**
    * Claims and drains one bounded batch. This is public for restart and fault
    * injection tests; database leases protect competing API processes.
    */
@@ -76,9 +97,11 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
 
     try {
       let delivered = 0;
+      let processed = 0;
       for (let index = 0; index < DISCUSSION_NOTIFICATION_BATCH_SIZE; index++) {
         const event = await this.claimNextEvent();
         if (!event) break;
+        processed++;
 
         try {
           if (await this.deliverClaimedEvent(event)) {
@@ -89,9 +112,17 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
           this.logger.error(`Unable to persist discussion notification event ${event.id}`, error);
         }
       }
+      if (processed === DISCUSSION_NOTIFICATION_BATCH_SIZE) this.immediateRunRequested = true;
+      // Inbox rows written above may carry push intents — send them now
+      // rather than on the push worker's next tick.
+      if (delivered > 0) this.pushDeliveryProcessor?.requestImmediateRun();
       return delivered;
     } finally {
       this.isProcessing = false;
+      if (this.immediateRunRequested) {
+        this.immediateRunRequested = false;
+        this.requestImmediateRun();
+      }
     }
   }
 
@@ -134,6 +165,8 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
   private async deliverClaimedEvent(event: DiscussionNotificationEvent): Promise<boolean> {
     return withDbRetry(() =>
       this.db.transaction(async (tx) => {
+        // Acquire account pair locks before the outbox row, matching discussion writes.
+        const accessible = await canDeliverDiscussion(tx, this.isolationPolicy, event);
         const [current] = await tx
           .select()
           .from(discussionNotificationEvents)
@@ -148,13 +181,7 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
           return false;
         }
 
-        // A Block committed before delivery is terminal: no inbox row is
-        // created and the event never retries. The canonical pair lock makes
-        // this check ordered against a concurrently committing Block.
-        if (
-          current.actorId &&
-          (await this.isolationPolicy.lockPairAndRecheck(tx, current.actorId, current.recipientId))
-        ) {
+        if (!accessible) {
           await this.markSuppressed(tx, current.id, event.leaseToken!);
           return false;
         }

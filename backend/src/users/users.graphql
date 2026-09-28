@@ -1,10 +1,18 @@
 """
 Represents a registered Pupzy user.
 Created automatically on first Firebase login — no explicit signup required.
+
+The same type is returned for other people (post creators, comment authors,
+contact requesters, adoption applicants). Account-private fields — email,
+phoneNumber, homeCityId, city, languagePreference, notificationsEnabled and
+lastSeenAt — resolve only for the account itself and are null for everyone else.
 """
 type User {
   id: ID!
-  email: String!
+  """
+  Account email. Null unless the viewer is this user.
+  """
+  email: String
   """
   Display name — null until the user completes their profile.
   """
@@ -61,9 +69,9 @@ type User {
   """
   languagePreference: String
   """
-  Whether push notifications are enabled.
+  Whether push notifications are enabled. Null unless the viewer is this user.
   """
-  notificationsEnabled: Boolean!
+  notificationsEnabled: Boolean
   """
   Timestamp of the user's most recent authenticated request.
   """

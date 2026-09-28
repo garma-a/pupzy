@@ -906,7 +906,7 @@ describe('Durable adoption-approval push delivery (Ticket 11)', () => {
     expect(untouched.attempts).toBe(MAX_PUSH_DELIVERY_ATTEMPTS);
   });
 
-  it('bounds one invocation to PUSH_DELIVERY_BATCH_SIZE delivers', async () => {
+  it('bounds each batch and immediately follows up when more deliveries remain', async () => {
     const devices = Array.from({ length: PUSH_DELIVERY_BATCH_SIZE + 1 }, (_, index) => ({
       userId: applicant.id,
       token: `fcm-token-${index}-${generateUuidV7()}`,
@@ -920,9 +920,9 @@ describe('Durable adoption-approval push delivery (Ticket 11)', () => {
     expect(await processor.processPendingDeliveries()).toBe(PUSH_DELIVERY_BATCH_SIZE);
     expect(provider.sent).toHaveLength(PUSH_DELIVERY_BATCH_SIZE);
 
-    expect(await processor.processPendingDeliveries()).toBe(1);
+    const deadline = Date.now() + 5_000;
+    while (provider.sent.length < PUSH_DELIVERY_BATCH_SIZE + 1 && Date.now() < deadline) await sleep(20);
     expect(provider.sent).toHaveLength(PUSH_DELIVERY_BATCH_SIZE + 1);
-
     expect(await processor.processPendingDeliveries()).toBe(0);
   });
 
