@@ -1,0 +1,16 @@
+{
+  "name": "pupzy-e2e-rig",
+  "private": true,
+  "description": "Local, credential-free rig for end-to-end runs: s3rver (fake R2), Firebase Auth Emulator, e2e backend.",
+  "scripts": {
+    "env": "node make-e2e-env.js",
+    "s3": "node run.js s3",
+    "auth": "node run.js auth",
+    "backend": "node run.js backend",
+    "seed": "node seed-e2e.js"
+  },
+  "dependencies": {
+    "firebase-tools": "^14.27.0",
+    "s3rver": "^3.7.1"
+  }
+}

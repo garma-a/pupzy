@@ -1,0 +1,6 @@
+node_modules/
+s3data/
+e2e.env.json
+*.log
+seed-output.json
+photos/
