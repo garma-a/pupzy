@@ -50,6 +50,9 @@ export const discussionNotificationEvents = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
+    pendingRecipientPostIdx: index('idx_discussion_notifications_pending_recipient_post')
+      .on(table.recipientId, table.relatedPostId)
+      .where(sql`${table.status} IN ('PENDING', 'PROCESSING')`),
     sourceEventUnique: uniqueIndex('uq_discussion_notification_events_source').on(table.sourceEventId),
     dueIdx: index('idx_discussion_notification_events_due').on(
       table.status,

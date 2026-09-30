@@ -46,6 +46,14 @@ IconData _iconForType(String type) {
       return Icons.arrow_upward;
     case 'COMMENT_PINNED':
       return Icons.push_pin_outlined;
+    // Neutral on purpose: a completed rescue may have ended with the animal's
+    // death, so completion never gets a success icon.
+    case 'RESCUE_COMPLETED':
+    case 'POST_COMPLETED':
+      return Icons.flag_outlined;
+    case 'RESCUE_REOPENED':
+    case 'POST_REOPENED':
+      return Icons.restore_outlined;
     default:
       return Icons.notifications_none;
   }

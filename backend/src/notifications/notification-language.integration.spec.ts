@@ -9,6 +9,7 @@ import { TestDatabaseHelper } from '../../test/test-database.helper';
 import {
   blocks,
   cities,
+  comments,
   discussionNotificationEvents,
   notifications,
   posts,
@@ -667,9 +668,18 @@ describe('Notification language synchronization (Ticket 07)', () => {
       relatedPostId: rescuePost.id,
     });
 
-    // A pre-ticket durable event: English columns only.
+    // A pre-ticket durable event: English columns only, with its source still accessible.
+    const [legacyComment] = await dbHelper.db
+      .insert(comments)
+      .values({
+        postId: rescuePost.id,
+        authorId: commenter.id,
+        text: 'Legacy comment',
+      })
+      .returning();
     await dbHelper.db.insert(discussionNotificationEvents).values({
       sourceEventId: `NEW_COMMENT:legacy-${generateUuidV7()}`,
+      relatedCommentId: legacyComment.id,
       recipientId: owner.id,
       actorId: commenter.id,
       type: 'NEW_COMMENT',

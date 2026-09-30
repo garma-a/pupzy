@@ -59,7 +59,8 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => CommentsSheet(postId: _post!.id, isPostOwner: _isOwner),
+      // Photo comments are for RESCUE only; Lost & Found threads are text.
+      builder: (_) => CommentsSheet(postId: _post!.id, isPostOwner: _isOwner, allowImages: _post!.postType == 'RESCUE'),
     );
   }
 
@@ -90,7 +91,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
     _myUserId = me?['id'] as String?;
     // RESCUE has no contact handshake, so there's nothing to look up for it.
     if (_myUserId != post.creator.id && post.postType != 'RESCUE') {
-      final (mine, _) = await graphql.fetchMyContactRequests(postId: post.id, first: 1);
+      final mine = (await graphql.fetchMyContactRequests(postId: post.id, first: 1)).items;
       if (!mounted) return;
       _myContactRequest = mine.isNotEmpty ? mine.first : null;
     }
@@ -166,7 +167,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
         return;
       }
       final graphql = context.read<GraphQLService>();
-      final (mine, _) = await graphql.fetchMyContactRequests(postId: widget.postId, first: 1);
+      final mine = (await graphql.fetchMyContactRequests(postId: widget.postId, first: 1)).items;
       if (!mounted) return;
       setState(() => _myContactRequest = mine.isNotEmpty ? mine.first : null);
       return;
@@ -287,10 +288,15 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (post.status != 'ACTIVE') ...[
+                        PostOutcomeBanner(status: post.status, postType: post.postType),
+                        const SizedBox(height: AppSpacing.md),
+                      ],
                       Row(
                         children: [
                           Expanded(child: Text(post.title, style: Theme.of(context).textTheme.headlineLarge)),
-                          if (post.isUrgent)
+                          // Urgency describes an open call for help, not a closed one.
+                          if (post.isUrgent && post.status == 'ACTIVE')
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
                               decoration: BoxDecoration(
@@ -476,7 +482,11 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                       : _lostExt?.reportType == 'FOUND_STRAY'
                           ? OwnerCloseAction.foundResolved
                           : OwnerCloseAction.lost,
-                  alternateClose: _lostExt?.reportType == 'FOUND_STRAY' ? OwnerCloseAction.foundReunited : null,
+                  alternateClose: post.postType == 'RESCUE'
+                      ? OwnerCloseAction.animalDeceased
+                      : _lostExt?.reportType == 'FOUND_STRAY'
+                          ? OwnerCloseAction.foundReunited
+                          : null,
                   isClosed: post.status != 'ACTIVE',
                   currentStatus: post.status,
                   onClosed: (status) => setState(() => _post = _post!.copyWith(status: status)),
@@ -521,11 +531,12 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
     );
   }
 
-  /// Rescue and lost/found threads are the only two places the backend lets
-  /// a comment carry photos — it calls them "community evidence" (comments
-  /// contract §1). That is deliberately the proof mechanism here: nobody
-  /// files a separate report, the thread itself shows what happened, and the
-  /// reporter closes the post once a photo shows the animal is safe.
+  /// Rescue threads are the only place a comment can carry photos — the
+  /// "community evidence" of comments contract §1. That is deliberately the
+  /// proof mechanism here: nobody files a separate report, the thread itself
+  /// shows what happened, and the reporter closes the post once a photo shows
+  /// the animal is safe. Lost & Found threads are text-only: sightings are
+  /// described in words.
   Widget _communityEvidenceCard(BuildContext context) {
     final isRescue = _post?.postType == 'RESCUE';
     final (title, body) = _isOwner
@@ -539,8 +550,8 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                   )
                 : t(
                     context,
-                    'People who spot your pet can post a photo here. When you have them back, close this post.',
-                    'يمكن لمن يرى حيوانك نشر صورة هنا. عند استعادته، أغلق هذا المنشور.',
+                    'People who spot your pet can tell you where and when here. When you have them back, close this post.',
+                    'يمكن لمن يرى حيوانك أن يخبرك هنا بالمكان والوقت. عند استعادته، أغلق هذا المنشور.',
                   ),
           )
         : (
@@ -553,8 +564,8 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                   )
                 : t(
                     context,
-                    'Seen this pet? Add a photo in the comments so the owner knows where to look.',
-                    'رأيت هذا الحيوان؟ أضف صورة في التعليقات ليعرف المالك أين يبحث.',
+                    'Seen this pet? Say where and when in the comments so the owner knows where to look.',
+                    'رأيت هذا الحيوان؟ اذكر المكان والوقت في التعليقات ليعرف المالك أين يبحث.',
                   ),
           );
 
@@ -573,7 +584,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.photo_camera_outlined, size: 20, color: AppColors.primary),
+              Icon(isRescue ? Icons.photo_camera_outlined : Icons.mode_comment_outlined, size: 20, color: AppColors.primary),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
@@ -676,7 +687,9 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
       case 'REJECTED':
         return t(context, 'Request Declined', 'تم رفض الطلب');
       default:
-        return _acceptsNewRequests ? t(context, 'Contact', 'تواصل') : closedToNewRequestsLabel(context, _post!.status);
+        return _acceptsNewRequests
+            ? t(context, 'Contact', 'تواصل')
+            : closedToNewRequestsLabel(context, _post!.status, postType: _post!.postType);
     }
   }
 

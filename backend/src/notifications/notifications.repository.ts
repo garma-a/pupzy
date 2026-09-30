@@ -1,3 +1,4 @@
+import { isPostActivityMuted } from './post-notification-policy';
 import { Injectable, Inject, Logger, Optional } from '@nestjs/common';
 import { eq, and, or, lt, desc, count } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
@@ -69,12 +70,13 @@ export class NotificationsRepository {
     options?: { enqueuePush?: boolean },
   ): Promise<Notification | undefined> {
     const shouldEnqueuePush = Boolean(options?.enqueuePush && this.pushDeliveryRepository);
-    if (!actorId && !shouldEnqueuePush) return this.create(data);
+    if (!actorId && !shouldEnqueuePush && !data.relatedPostId) return this.create(data);
 
     return this.db.transaction(async (tx) => {
       if (actorId && (await this.isolationPolicy.lockPairAndRecheck(tx, actorId, data.recipientId))) {
         return undefined;
       }
+      if (await isPostActivityMuted(tx, data.relatedPostId, data.recipientId, data.type)) return undefined;
       const notification = await this.create(data, tx);
       if (shouldEnqueuePush) {
         await this.pushDeliveryRepository!.enqueueForNotification(notification, actorId, tx);

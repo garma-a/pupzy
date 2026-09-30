@@ -3,11 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pupzy/localization/lang_provider.dart';
 import 'package:pupzy/models/app_notification.dart';
 import 'package:pupzy/screens/notifications_panel.dart';
+import 'package:pupzy/models/post_detail.dart';
+import 'package:pupzy/screens/adoption_detail_screen.dart';
 import 'package:pupzy/screens/rescue_detail_screen.dart';
 import 'package:pupzy/services/notification_center.dart';
 import 'package:pupzy/services/safety_events.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'detail_test_support.dart';
 import 'safety_test_support.dart';
 
 AppNotification _unread(String id, String title) => AppNotification(
@@ -208,5 +211,75 @@ void main() {
 
     expect(find.text('Notification 44'), findsOneWidget);
     expect(graphql.calls, contains('fetchMyNotifications(30)'));
+  });
+
+  group('completion and reopening notifications open their Post', () {
+    for (final (type, postType, screen) in [
+      ('RESCUE_COMPLETED', 'RESCUE', RescueDetailScreen),
+      ('RESCUE_REOPENED', 'RESCUE', RescueDetailScreen),
+      ('POST_COMPLETED', 'ADOPTION', AdoptionDetailScreen),
+      ('POST_REOPENED', 'ADOPTION', AdoptionDetailScreen),
+    ]) {
+      testWidgets(type, (tester) async {
+        final detail = FakeDetailGraphQL()
+          ..postDetailResult = post(postType, status: type.endsWith('COMPLETED') ? 'RESOLVED' : 'ACTIVE')
+          ..rescue = const RescuePostExtension(species: 'DOG', conditionSummary: 'Limping', reporterRole: 'REPORTING')
+          ..adoption = AdoptionPostExtension.fromJson({'petName': 'Nala', 'species': 'CAT', 'gender': 'FEMALE'})
+          ..notifications = [
+            AppNotification(
+              id: 'n-$type',
+              type: type,
+              title: 'Update on a post you followed',
+              body: 'Body',
+              relatedPostId: 'post-$postType',
+              isRead: false,
+              createdAt: DateTime.utc(2026, 9, 25),
+            ),
+          ];
+        graphql = detail;
+        tester.view.physicalSize = const Size(2000, 3200);
+        tester.view.devicePixelRatio = 2;
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(safetyTestApp(graphql: graphql, events: SafetyEvents(), child: const NotificationsPanel()));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Update on a post you followed'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(screen), findsOneWidget);
+        expect(graphql.readNotificationIds, ['n-$type']);
+      });
+    }
+
+    testWidgets('a deceased rescue opened from a notification shows the deceased outcome', (tester) async {
+      final detail = FakeDetailGraphQL()
+        ..postDetailResult = post('RESCUE', status: 'ANIMAL_DECEASED')
+        ..rescue = const RescuePostExtension(species: 'DOG', conditionSummary: 'Limping', reporterRole: 'REPORTING')
+        ..notifications = [
+          AppNotification(
+            id: 'n1',
+            type: 'RESCUE_COMPLETED',
+            title: 'Rescue closed',
+            body: 'The rescue was closed (animal deceased).',
+            relatedPostId: 'post-RESCUE',
+            isRead: false,
+            createdAt: DateTime.utc(2026, 9, 25),
+          ),
+        ];
+      graphql = detail;
+      tester.view.physicalSize = const Size(2000, 3200);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(safetyTestApp(graphql: graphql, events: SafetyEvents(), child: const NotificationsPanel()));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.flag_outlined), findsOneWidget, reason: 'completion has a neutral icon, not a success one');
+      await tester.tap(find.text('Rescue closed'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(RescueDetailScreen), findsOneWidget);
+      expect(find.text('This rescue was closed because the animal died.'), findsOneWidget);
+      expect(find.textContaining('Rescued'), findsNothing);
+    });
   });
 }

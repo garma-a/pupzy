@@ -65,8 +65,15 @@ export class FirebasePushProvider implements PushProvider {
       token: message.token,
       notification: { title: message.title, body: message.body },
       data: message.data,
-      android: { collapseKey: message.collapseId },
-      apns: { headers: { 'apns-collapse-id': message.collapseId } },
+      android: {
+        priority: 'high',
+        collapseKey: message.collapseId,
+        notification: { channelId: 'pupzy_activity', sound: 'default', tag: message.collapseId },
+      },
+      apns: {
+        headers: { 'apns-collapse-id': message.collapseId, 'apns-priority': '10', 'apns-push-type': 'alert' },
+        payload: { aps: { sound: 'default' } },
+      },
     });
   }
 }

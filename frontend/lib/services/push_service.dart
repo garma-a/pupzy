@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -73,6 +74,12 @@ class PushService {
     await messaging.setForegroundNotificationPresentationOptions(alert: true, badge: true, sound: true);
 
     _subscriptions
+      // Every sign-out path — Profile, Delete Account, an invalid session
+      // found at launch — ends this session here, so the next account starts
+      // clean and registers its own device.
+      ..add(FirebaseAuth.instance.authStateChanges().listen((user) {
+        if (user == null) _resetSession();
+      }))
       ..add(messaging.onTokenRefresh.listen(_register))
       ..add(FirebaseMessaging.onMessage.listen(_onForegroundMessage))
       ..add(FirebaseMessaging.onMessageOpenedApp.listen((m) => _openFromData(m.data)));
@@ -110,21 +117,29 @@ class PushService {
     if (await hasPermission()) await _registerCurrentToken();
   }
 
-  /// Call on sign-out so this device stops receiving push for the account
-  /// that just signed out, and so its notifications don't linger on screen
-  /// for whoever signs in next.
+  /// Call before signing out (while still authenticated) so this device
+  /// stops receiving push for the account that is leaving. The local
+  /// session reset then follows automatically on sign-out.
   Future<void> unregisterCurrentDevice() async {
     final graphql = _graphql;
-    for (final subscription in _subscriptions) {
-      await subscription.cancel();
-    }
-    _subscriptions.clear();
-    if (_localReady) await _local.cancelAll();
-    _center?.clear();
     if (graphql != null) {
       final token = await FirebaseMessaging.instance.getToken();
       if (token != null) await graphql.unregisterDevice(token);
     }
+    await _resetSession();
+  }
+
+  /// Ends the push session on this device: stops listening, clears this
+  /// account's notifications from the screen and the badge, and lets the
+  /// next [initialize] start from scratch. Safe to call more than once.
+  Future<void> _resetSession() async {
+    final subscriptions = List.of(_subscriptions);
+    _subscriptions.clear();
+    for (final subscription in subscriptions) {
+      await subscription.cancel();
+    }
+    if (_localReady) await _local.cancelAll();
+    _center?.clear();
     _initialized = false;
     _registeredToken = null;
     _graphql = null;

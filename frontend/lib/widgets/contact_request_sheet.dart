@@ -35,7 +35,7 @@ class _ContactRequestSheetState extends State<ContactRequestSheet> {
     if (!mounted) return;
     setState(() => _sending = true);
     final graphql = context.read<GraphQLService>();
-    final (request, error) = await graphql.requestContact(postId: widget.postId, message: message);
+    final (request, error) = await withTermsRecovery(context, () => graphql.requestContact(postId: widget.postId, message: message));
     if (!mounted) return;
     setState(() => _sending = false);
     if (request == null) {

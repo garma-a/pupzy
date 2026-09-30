@@ -359,6 +359,8 @@ export async function capturePostCompletion(client, { postId, postType, outcome,
        SELECT applicant_id AS recipient_id FROM adoption_applications WHERE target_post_id = $2::uuid
      ) sub
      WHERE sub.recipient_id IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM post_notification_preferences pref
+         WHERE pref.post_id = $2::uuid AND pref.user_id = sub.recipient_id AND pref.muted)
        AND ($3::uuid IS NULL OR sub.recipient_id <> $3::uuid)
        AND ($4::uuid IS NULL OR sub.recipient_id <> $4::uuid)
      ON CONFLICT (event_id, recipient_id) DO NOTHING`,

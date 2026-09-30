@@ -1,3 +1,4 @@
+import { canDeliverDiscussion } from './post-notification-policy';
 import { Injectable, Inject, Logger, OnApplicationBootstrap, Optional } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { and, eq, sql } from 'drizzle-orm';
@@ -96,9 +97,11 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
 
     try {
       let delivered = 0;
+      let processed = 0;
       for (let index = 0; index < DISCUSSION_NOTIFICATION_BATCH_SIZE; index++) {
         const event = await this.claimNextEvent();
         if (!event) break;
+        processed++;
 
         try {
           if (await this.deliverClaimedEvent(event)) {
@@ -109,6 +112,7 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
           this.logger.error(`Unable to persist discussion notification event ${event.id}`, error);
         }
       }
+      if (processed === DISCUSSION_NOTIFICATION_BATCH_SIZE) this.immediateRunRequested = true;
       // Inbox rows written above may carry push intents — send them now
       // rather than on the push worker's next tick.
       if (delivered > 0) this.pushDeliveryProcessor?.requestImmediateRun();
@@ -161,6 +165,8 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
   private async deliverClaimedEvent(event: DiscussionNotificationEvent): Promise<boolean> {
     return withDbRetry(() =>
       this.db.transaction(async (tx) => {
+        // Acquire account pair locks before the outbox row, matching discussion writes.
+        const accessible = await canDeliverDiscussion(tx, this.isolationPolicy, event);
         const [current] = await tx
           .select()
           .from(discussionNotificationEvents)
@@ -175,13 +181,7 @@ export class DiscussionNotificationProcessor implements OnApplicationBootstrap {
           return false;
         }
 
-        // A Block committed before delivery is terminal: no inbox row is
-        // created and the event never retries. The canonical pair lock makes
-        // this check ordered against a concurrently committing Block.
-        if (
-          current.actorId &&
-          (await this.isolationPolicy.lockPairAndRecheck(tx, current.actorId, current.recipientId))
-        ) {
+        if (!accessible) {
           await this.markSuppressed(tx, current.id, event.leaseToken!);
           return false;
         }

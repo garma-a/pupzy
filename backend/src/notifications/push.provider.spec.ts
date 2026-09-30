@@ -32,8 +32,15 @@ describe('FirebasePushProvider', () => {
       token: 'device-token',
       notification: { title: 'Adoption application approved!', body: 'You can now contact the owner.' },
       data: { notificationId: 'notification-1', type: 'ADOPTION_APPLICATION_APPROVED' },
-      android: { collapseKey: 'collapse-key' },
-      apns: { headers: { 'apns-collapse-id': 'collapse-key' } },
+      android: {
+        priority: 'high',
+        collapseKey: 'collapse-key',
+        notification: { channelId: 'pupzy_activity', sound: 'default', tag: 'collapse-key' },
+      },
+      apns: {
+        headers: { 'apns-collapse-id': 'collapse-key', 'apns-priority': '10', 'apns-push-type': 'alert' },
+        payload: { aps: { sound: 'default' } },
+      },
     });
   });
 

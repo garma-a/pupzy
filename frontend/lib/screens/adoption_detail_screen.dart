@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../localization/lang_provider.dart';
 import '../models/adoption_application.dart';
 import '../models/post_detail.dart';
+import '../services/adoption_application_lookup.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/adoption_application_sheet.dart';
@@ -72,9 +73,9 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
     final me = await meFuture;
     _myUserId = me?['id'] as String?;
     if (_myUserId != post.creator.id) {
-      final (mine, _) = await graphql.fetchMyAdoptionApplications(first: 50);
+      final (mine, _) = await findMyAdoptionApplication(graphql, post.id);
       if (!mounted) return;
-      _myApplication = mine.where((a) => a.targetPostId == post.id).isEmpty ? null : mine.firstWhere((a) => a.targetPostId == post.id);
+      _myApplication = mine;
     }
     final (ext, extError) = await graphql.fetchAdoptionPostDetail(widget.postId);
     if (!mounted) return;
@@ -108,10 +109,10 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
       return;
     }
     final graphql = context.read<GraphQLService>();
-    final (mine, _) = await graphql.fetchMyAdoptionApplications(first: 50);
+    final (mine, _) = await findMyAdoptionApplication(graphql, widget.postId);
     if (!mounted) return;
     setState(() {
-      _myApplication = mine.where((a) => a.targetPostId == widget.postId).isEmpty ? null : mine.firstWhere((a) => a.targetPostId == widget.postId);
+      _myApplication = mine;
     });
   }
 

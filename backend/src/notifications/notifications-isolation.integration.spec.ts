@@ -462,7 +462,7 @@ describe('Notification account isolation (Ticket 10)', () => {
     expect(pinResult.errors).toBeUndefined();
 
     const pendingEvents = await dbHelper.db.select().from(discussionNotificationEvents);
-    expect(pendingEvents).toHaveLength(4);
+    expect(pendingEvents).toHaveLength(5);
 
     // The source events predate every Block.
     await dbHelper.db.insert(blocks).values([
@@ -475,7 +475,7 @@ describe('Notification account isolation (Ticket 10)', () => {
     expect(await notificationCount()).toBe(0);
 
     const suppressed = await dbHelper.db.select().from(discussionNotificationEvents);
-    expect(suppressed).toHaveLength(4);
+    expect(suppressed).toHaveLength(5);
     for (const event of suppressed) {
       expect(event.status).toBe('SUPPRESSED');
       expect(event.attempts).toBe(1);
@@ -510,24 +510,25 @@ describe('Notification account isolation (Ticket 10)', () => {
     const pinResult = await executeGql(PIN_COMMENT, { commentId }, postOwner);
     expect(pinResult.errors).toBeUndefined();
 
-    // A self-comment does not enqueue a durable event (self-suppression intact).
+    // An owner Comment notifies the two existing participants, but never the owner.
     await createCommentViaGql('Talking to myself', postOwner);
-    expect(await dbHelper.db.select().from(discussionNotificationEvents)).toHaveLength(4);
+    expect(await dbHelper.db.select().from(discussionNotificationEvents)).toHaveLength(7);
 
     const parallelWorkers = await Promise.all([
       new DiscussionNotificationProcessor(dbHelper.db).processPendingEvents(),
       new DiscussionNotificationProcessor(dbHelper.db).processPendingEvents(),
     ]);
-    expect(parallelWorkers[0] + parallelWorkers[1]).toBe(4);
-    expect(await notificationCount()).toBe(4);
+    expect(parallelWorkers[0] + parallelWorkers[1]).toBe(7);
+    expect(await notificationCount()).toBe(7);
 
     // Exactly-once delivery: a later run adds no duplicate inbox rows.
     expect(await commentProcessor.processPendingEvents()).toBe(0);
-    expect(await notificationCount()).toBe(4);
+    expect(await notificationCount()).toBe(7);
 
     const delivered = await dbHelper.db.select().from(discussionNotificationEvents);
     for (const event of delivered) {
       expect(event.status).toBe('DELIVERED');
+      expect(event.recipientId).not.toBe(event.actorId);
     }
   });
 

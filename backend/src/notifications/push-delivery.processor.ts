@@ -1,3 +1,4 @@
+import { isPostActivityMuted, canDeliverDiscussion } from './post-notification-policy';
 import { Inject, Injectable, Logger, OnApplicationBootstrap, Optional } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { eq, sql } from 'drizzle-orm';
@@ -144,9 +145,11 @@ export class PushDeliveryProcessor implements OnApplicationBootstrap {
 
     try {
       let delivered = 0;
+      let processed = 0;
       for (let index = 0; index < PUSH_DELIVERY_BATCH_SIZE; index++) {
         const delivery = await this.claimNextDelivery();
         if (!delivery) break;
+        processed++;
 
         let resolved: ResolvedPushDelivery | null;
         try {
@@ -166,6 +169,7 @@ export class PushDeliveryProcessor implements OnApplicationBootstrap {
           await this.handleSendFailure(delivery, resolved, error);
         }
       }
+      if (processed === PUSH_DELIVERY_BATCH_SIZE) this.immediateRunRequested = true;
       return delivered;
     } finally {
       this.isProcessing = false;
@@ -267,23 +271,26 @@ export class PushDeliveryProcessor implements OnApplicationBootstrap {
           return null;
         }
 
-        // A Block committed after the notification was queued terminates the
-        // push while the inbox row survives. The pair lock orders this check
-        // with a concurrently committing Block.
-        if (
-          current.actorId &&
-          (await this.isolationPolicy.lockPairAndRecheck(tx, current.actorId, current.recipientId))
-        ) {
-          await this.markSuppressed(tx, current.id, delivery.leaseToken);
-          return null;
-        }
-
         const [notification] = await tx
           .select()
           .from(notifications)
           .where(eq(notifications.id, current.notificationId))
           .limit(1);
         if (!notification) {
+          await this.markSuppressed(tx, current.id, delivery.leaseToken);
+          return null;
+        }
+
+        if (notification.relatedCommentId) {
+          if (!(await canDeliverDiscussion(tx, this.isolationPolicy, { ...notification, actorId: current.actorId }))) {
+            await this.markSuppressed(tx, current.id, delivery.leaseToken);
+            return null;
+          }
+        } else if (
+          (current.actorId &&
+            (await this.isolationPolicy.lockPairAndRecheck(tx, current.actorId, current.recipientId))) ||
+          (await isPostActivityMuted(tx, notification.relatedPostId, current.recipientId, notification.type))
+        ) {
           await this.markSuppressed(tx, current.id, delivery.leaseToken);
           return null;
         }

@@ -70,7 +70,7 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
     final me = await meFuture;
     _myUserId = me?['id'] as String?;
     if (_myUserId != post.creator.id) {
-      final (mine, _) = await graphql.fetchMyContactRequests(postId: post.id, first: 1);
+      final mine = (await graphql.fetchMyContactRequests(postId: post.id, first: 1)).items;
       if (!mounted) return;
       _myContactRequest = mine.isNotEmpty ? mine.first : null;
     }
@@ -138,7 +138,7 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
         return;
       }
       final graphql = context.read<GraphQLService>();
-      final (mine, _) = await graphql.fetchMyContactRequests(postId: widget.postId, first: 1);
+      final mine = (await graphql.fetchMyContactRequests(postId: widget.postId, first: 1)).items;
       if (!mounted) return;
       setState(() => _myContactRequest = mine.isNotEmpty ? mine.first : null);
       return;

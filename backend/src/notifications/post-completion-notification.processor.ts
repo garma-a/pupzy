@@ -1,3 +1,5 @@
+import { isPostActivityMuted } from './post-notification-policy';
+import { PushDeliveryProcessor } from './push-delivery.processor';
 import { Injectable, Inject, Logger, OnApplicationBootstrap, Optional } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { and, eq } from 'drizzle-orm';
@@ -60,6 +62,7 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
   private readonly pushDeliveryRepository: PushDeliveryRepository;
   private readonly repository: PostCompletionNotificationRepository;
   private isProcessing = false;
+  private immediateRunRequested = false;
 
   constructor(
     @Inject(DATABASE_TOKEN)
@@ -73,10 +76,23 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
     @Optional()
     @Inject(PushDeliveryRepository)
     pushDeliveryRepository?: PushDeliveryRepository,
+    @Optional()
+    @Inject(PushDeliveryProcessor)
+    private readonly pushDeliveryProcessor?: PushDeliveryProcessor,
   ) {
     this.pushDeliveryRepository = pushDeliveryRepository ?? new PushDeliveryRepository(this.db);
     this.repository = repository ?? new PostCompletionNotificationRepository(this.db);
     this.isolationPolicy = isolationPolicy ?? new AccountIsolationPolicy(this.db);
+  }
+
+  requestImmediateRun(): void {
+    if (this.isProcessing) {
+      this.immediateRunRequested = true;
+      return;
+    }
+    this.processPendingBatches().catch((error) =>
+      this.logger.error('Unable to deliver post completion notifications', error),
+    );
   }
 
   async onApplicationBootstrap(): Promise<void> {
@@ -150,9 +166,14 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
       // still reach COMPLETED.
       await this.repository.completeFinishedEvents();
 
+      if (delivered > 0) this.pushDeliveryProcessor?.requestImmediateRun();
       return { batchesProcessed, delivered, suppressed, failed };
     } finally {
       this.isProcessing = false;
+      if (this.immediateRunRequested) {
+        this.immediateRunRequested = false;
+        this.requestImmediateRun();
+      }
     }
   }
 
@@ -251,6 +272,13 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
           return 'SUPPRESSED';
         }
 
+        // Reopening corrections remain owed for already-delivered closure history (ADR 0008).
+        const muted = await isPostActivityMuted(tx, event.postId, currentRecipient.recipientId, event.type);
+        if (muted && !isCorrectionEvent) {
+          await this.markSuppressed(tx, currentRecipient.id, recipient.leaseToken!);
+          return 'SUPPRESSED';
+        }
+
         // Create the in-app notification row
         const [notification] = await tx
           .insert(notifications)
@@ -277,7 +305,7 @@ export class PostCompletionNotificationProcessor implements OnApplicationBootstr
         // recheck closes even for an administrator-recorded outcome, where the
         // closing actor has no app-user identity.
         const pushRelevant = isCorrectionEvent ? post.status === 'ACTIVE' : true;
-        if (user.notificationsEnabled && pushRelevant && isPushDeliveryEnabled(event.type)) {
+        if (!muted && user.notificationsEnabled && pushRelevant && isPushDeliveryEnabled(event.type)) {
           await this.pushDeliveryRepository.enqueueForNotification(notification, post.creatorId, tx);
         }
 

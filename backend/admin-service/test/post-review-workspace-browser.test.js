@@ -542,7 +542,11 @@ describe('Post review workspace real browser suite', { timeout: 120000 }, () => 
           document.querySelector('[data-testid="pupzy-image-dialog"]')?.getAttribute('aria-label') ===
           'Full image preview, image 2 of 2',
       );
-      const fallbackText = await page.$eval('.pupzy-media-dialog-fallback', (element) => element.innerText);
+      // The fallback replaces the image only once the browser reports the broken
+      // image (onError after its request fails), which can land after the label
+      // changes on a slow runner — wait for it rather than reading it at once.
+      const fallback = await page.waitForSelector('.pupzy-media-dialog-fallback');
+      const fallbackText = await fallback.evaluate((element) => element.innerText);
       assert.match(fallbackText, /unavailable/i, 'a broken image degrades to a readable fallback');
 
       await page.keyboard.press('Tab');
@@ -868,11 +872,20 @@ describe('Post review workspace real browser suite', { timeout: 120000 }, () => 
       await page.waitForFunction(
         () => document.querySelector('[data-testid="moderation-action-submit"]')?.disabled === false,
       );
-      await page.click('[data-testid="moderation-action-submit"]');
-
-      await page.waitForFunction(() => document.body.innerText.includes('Post marked resolved'), {
-        timeout: 60000,
-      });
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 60000 }),
+        page.click('[data-testid="moderation-action-submit"]'),
+      ]);
+      await page.waitForFunction(
+        () => {
+          const text = document.body.innerText;
+          return text.includes('Post marked resolved') || text.includes('Post resolution recorded.');
+        },
+        {
+          timeout: 60000,
+        },
+      );
+      await page.waitForSelector('[data-testid="pupzy-review-workspace"]', { timeout: 60000 });
       const resultText = await page.$eval('body', (element) => element.innerText);
       assert.match(resultText, /Animal safely reunited with its owner/);
       console.log(

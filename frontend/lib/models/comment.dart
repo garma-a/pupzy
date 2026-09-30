@@ -48,6 +48,23 @@ class CommentAuthor {
 
 /// A top-level Comment or a Reply beneath one. Replies never carry [media]
 /// (enforced server-side) and always have a non-null [parentId].
+/// Outcome of `createComment` / `createReply`.
+class CommentMutationResult {
+  /// The canonical Comment or Reply on success.
+  final Comment? comment;
+
+  /// The backend's stable `extensions.code`, when it answered with an error.
+  final String? errorCode;
+  final String? errorMessage;
+
+  const CommentMutationResult({this.comment, this.errorCode, this.errorMessage});
+
+  /// No answer reached the app (offline, timeout, dropped response): the
+  /// server may or may not have saved it, so a retry must reuse the same
+  /// `clientRequestId` and payload to get the canonical result back.
+  bool get outcomeUnknown => comment == null && errorCode == null && errorMessage == null;
+}
+
 class Comment {
   final String id;
   final String postId;
