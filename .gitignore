@@ -1,1 +1,4 @@
 .scratch/
+
+# Local device-test screenshots and visual audit output
+/AUDIT/screenshots/

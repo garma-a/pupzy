@@ -2,7 +2,7 @@
 
 **Branch:** `audit/e2e-release-readiness` (base `main` @ e5c6162) · **Date:** 2026-09-24/25 · **Environment:** Windows 10, Flutter 3.38.9, Android emulator (API 36, x86_64), PostgreSQL 18.4 + PostGIS 3.6.2, Node 24 — no Docker, no macOS.
 
-Supporting files: [`inventory.md`](inventory.md) (system map) · [`baseline.md`](baseline.md) (pre-change results) · [`findings.md`](findings.md) (working log) · [`progress.md`](progress.md) · [`screenshots/`](screenshots/) · [`e2e-rig/`](e2e-rig/) (credential-free test rig).
+Supporting files: [`inventory.md`](inventory.md) (system map) · [`baseline.md`](baseline.md) (pre-change results) · [`findings.md`](findings.md) (working log) · [`progress.md`](progress.md) · local screenshots (generated in `AUDIT/screenshots/`, excluded from Git) · [`e2e-rig/`](e2e-rig/) (credential-free test rig).
 
 ---
 
@@ -155,7 +155,7 @@ Sources: backend `test/live/post-matrix.live-spec.ts` (HTTP, real tokens and upl
 
 ---
 
-## 5. Frontend / UX findings (screenshots in `screenshots/`)
+## 5. Frontend / UX findings (local screenshots in `screenshots/`)
 
 | Finding | Evidence | Status |
 |---|---|---|
