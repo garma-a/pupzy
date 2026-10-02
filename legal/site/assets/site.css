@@ -1,0 +1,125 @@
+:root {
+  --bg: #faf6f1;
+  --surface: #ffffff;
+  --text: #2d1506;
+  --muted: #8b6355;
+  --border: #e8ded5;
+  --brand: #c4622d;
+  --brand-soft: #f5ede3;
+  --todo: #fff1a8;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1b1410;
+    --surface: #251b16;
+    --text: #f3e9e1;
+    --muted: #c3a898;
+    --border: #3a2c24;
+    --brand: #e98a55;
+    --brand-soft: #2f231c;
+    --todo: #5a4a10;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.7 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Naskh Arabic", Tahoma, sans-serif;
+}
+
+[lang="ar"] { font-family: "Noto Naskh Arabic", "Segoe UI", Tahoma, system-ui, sans-serif; line-height: 1.9; }
+
+a { color: var(--brand); text-underline-offset: 2px; }
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand { font-weight: 800; font-size: 20px; text-decoration: none; color: var(--brand); }
+
+.lang-switch { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
+.lang-switch button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.lang-switch button[aria-pressed="true"] { background: var(--brand); color: #fff; }
+
+.lang-block { max-width: 780px; margin: 0 auto; padding: 0 16px; }
+.lang-block + .lang-block { border-top: 4px solid var(--border); margin-top: 32px; }
+
+/* With JavaScript, show only the chosen language. */
+html.js .lang-block { display: none; }
+html.js[data-lang="en"] .lang-block[data-lang="en"],
+html.js[data-lang="ar"] .lang-block[data-lang="ar"] { display: block; border-top: 0; margin-top: 0; }
+
+.site-nav { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 14px 0 4px; font-size: 14px; }
+.site-nav a { color: var(--muted); text-decoration: none; }
+.site-nav a[aria-current="page"] { color: var(--brand); font-weight: 700; }
+
+article { padding: 8px 0 24px; overflow-wrap: anywhere; }
+h1 { font-size: clamp(26px, 5vw, 34px); line-height: 1.25; margin: 20px 0 8px; }
+h2 { font-size: 21px; line-height: 1.35; margin: 36px 0 8px; scroll-margin-top: 72px; }
+h3 { font-size: 17px; margin: 24px 0 6px; scroll-margin-top: 72px; }
+p, li { margin: 0 0 12px; }
+ul, ol { padding-inline-start: 22px; margin: 0 0 12px; }
+li > ul, li > ol { margin-top: 6px; }
+hr { border: 0; border-top: 1px solid var(--border); margin: 20px 0; }
+code { font-size: 0.9em; background: var(--brand-soft); padding: 1px 5px; border-radius: 4px; }
+strong { font-weight: 700; }
+
+.toc { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px; margin: 16px 0 8px; }
+.toc summary { cursor: pointer; font-weight: 700; }
+.toc ul { margin: 8px 0 4px; padding: 0; list-style: none; }
+.toc li { margin: 2px 0; }
+.toc a { text-decoration: none; }
+
+.cards { display: grid; gap: 12px; margin-top: 16px; }
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  text-decoration: none;
+  color: var(--text);
+}
+.card strong { color: var(--brand); font-size: 17px; }
+.card span { color: var(--muted); font-size: 15px; }
+.card:hover { border-color: var(--brand); }
+
+mark.todo { background: var(--todo); color: inherit; padding: 0 4px; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 0.85em; }
+
+.site-footer { color: var(--muted); font-size: 13px; padding: 24px 0 40px; border-top: 1px solid var(--border); }
+
+@media print {
+  .site-header, .site-nav, .toc, .lang-switch { display: none !important; }
+  html.js .lang-block { display: block !important; }
+  body { background: #fff; color: #000; }
+}

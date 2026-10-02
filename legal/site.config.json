@@ -1,0 +1,19 @@
+{
+  "_help": "Fill every empty value, then run: python legal/build_site.py. Values given as {\"en\": ..., \"ar\": ...} can differ per language. Anything left empty shows up highlighted on the pages and is listed when you build.",
+
+  "site_base_url": "https://pupzy.net",
+
+  "legal_entity_name": { "en": "", "ar": "" },
+  "company_type": { "en": "", "ar": "" },
+  "commercial_registration_no": "",
+  "registered_address": { "en": "", "ar": "" },
+
+  "support_email": "",
+  "safety_email": "",
+  "support_phone": "",
+  "support_response_time": { "en": "2 business days", "ar": "يومي عمل" },
+
+  "hosting_provider": "",
+  "liability_cap_egp": { "en": "", "ar": "" },
+  "court_city": { "en": "Cairo", "ar": "القاهرة" }
+}
