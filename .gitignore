@@ -1,1 +1,4 @@
 .scratch/
+__pycache__/
+*.py[cod]
+legal/*_print.html

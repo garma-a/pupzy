@@ -3,17 +3,17 @@
 
   "site_base_url": "https://pupzy.net",
 
-  "legal_entity_name": { "en": "", "ar": "" },
-  "company_type": { "en": "", "ar": "" },
-  "commercial_registration_no": "",
-  "registered_address": { "en": "", "ar": "" },
+  "legal_entity_name": { "en": "Pupzy", "ar": "بابزي" },
+  "company_type": { "en": "Sole Proprietorship", "ar": "منشأة فردية" },
+  "commercial_registration_no": "Under Registration / قيد التأسيس",
+  "registered_address": { "en": "Cairo, Egypt", "ar": "القاهرة، جمهورية مصر العربية" },
 
-  "support_email": "",
-  "safety_email": "",
-  "support_phone": "",
+  "support_email": "support@pupzy.net",
+  "safety_email": "safety@pupzy.net",
+  "support_phone": "+20 100 000 0000",
   "support_response_time": { "en": "2 business days", "ar": "يومي عمل" },
 
-  "hosting_provider": "",
-  "liability_cap_egp": { "en": "", "ar": "" },
+  "hosting_provider": "Cloudflare / GoDaddy",
+  "liability_cap_egp": { "en": "1,000 EGP", "ar": "١٠٠٠ جنيه مصري" },
   "court_city": { "en": "Cairo", "ar": "القاهرة" }
 }

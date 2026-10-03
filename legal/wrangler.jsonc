@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pupzy-legal",
+  "main": "worker.js",
+  "compatibility_date": "2024-09-23",
+  "assets": {
+    "directory": "./site",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  },
+  "routes": [
+    { "pattern": "pupzy.net/terms*", "zone_name": "pupzy.net" },
+    { "pattern": "www.pupzy.net/terms*", "zone_name": "pupzy.net" },
+    { "pattern": "pupzy.net/privacy*", "zone_name": "pupzy.net" },
+    { "pattern": "www.pupzy.net/privacy*", "zone_name": "pupzy.net" },
+    { "pattern": "pupzy.net/delete-account*", "zone_name": "pupzy.net" },
+    { "pattern": "www.pupzy.net/delete-account*", "zone_name": "pupzy.net" },
+    { "pattern": "pupzy.net/support*", "zone_name": "pupzy.net" },
+    { "pattern": "www.pupzy.net/support*", "zone_name": "pupzy.net" },
+    { "pattern": "pupzy.net/child-safety*", "zone_name": "pupzy.net" },
+    { "pattern": "www.pupzy.net/child-safety*", "zone_name": "pupzy.net" },
+    { "pattern": "pupzy.net/assets/*", "zone_name": "pupzy.net" },
+    { "pattern": "www.pupzy.net/assets/*", "zone_name": "pupzy.net" }
+  ]
+}
