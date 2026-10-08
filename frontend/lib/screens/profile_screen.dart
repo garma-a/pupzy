@@ -424,32 +424,53 @@ class _ProfileSheetState extends State<ProfileSheet> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          // Stats row
-          if (!_loadingProfile)
+          // My posts, by type — each count opens My Posts on that type.
+          if (!_loadingProfile) ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Row(
                 children: [
-                  _StatCard(
-                    value: rescues,
-                    label: t(context, 'RESCUE POSTS', 'منشورات الإنقاذ'),
-                    onTap: () => _openMyPosts('RESCUE'),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  _StatCard(
-                    value: adopted,
-                    label: t(context, 'ADOPTION POSTS', 'منشورات التبني'),
-                    onTap: () => _openMyPosts('ADOPTION'),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  _StatCard(
-                    value: lost,
-                    label: t(context, 'LOST & FOUND POSTS', 'منشورات المفقود'),
-                    onTap: () => _openMyPosts('LOST'),
-                  ),
+                  Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
+                  const SizedBox(width: 6),
+                  Text(t(context, 'MY POSTS', 'منشوراتي'), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
                 ],
               ),
             ),
+            const SizedBox(height: AppSpacing.sm),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _PostCountCard(
+                      icon: Icons.healing_outlined,
+                      accent: AppColors.critical,
+                      count: rescues,
+                      label: t(context, 'Rescue', 'إنقاذ'),
+                      onTap: () => _openMyPosts('RESCUE'),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    _PostCountCard(
+                      icon: Icons.home_outlined,
+                      accent: const Color(0xFFB08C3A),
+                      count: adopted,
+                      label: t(context, 'Adoption', 'تبني'),
+                      onTap: () => _openMyPosts('ADOPTION'),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    _PostCountCard(
+                      icon: Icons.search,
+                      accent: const Color(0xFFE08A2E),
+                      count: lost,
+                      label: t(context, 'Lost & Found', 'مفقود'),
+                      onTap: () => _openMyPosts('LOST'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.lg),
           // Language
           Padding(
@@ -596,37 +617,73 @@ class _ProfileSheetState extends State<ProfileSheet> {
   }
 }
 
-/// One of the profile's post counts; tapping it opens My Posts on that type.
-class _StatCard extends StatelessWidget {
-  final String value;
+/// One of the profile's post counts: the type's icon in its accent colour,
+/// the count, the type's name and a chevron, all one tap target that opens
+/// My Posts on that type. Colours and icons match the New Post sheet.
+class _PostCountCard extends StatelessWidget {
+  final IconData icon;
+  final Color accent;
+  final String count;
   final String label;
   final VoidCallback onTap;
-  const _StatCard({required this.value, required this.label, required this.onTap});
+
+  const _PostCountCard({
+    required this.icon,
+    required this.accent,
+    required this.count,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Material(
-        color: AppColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          side: const BorderSide(color: AppColors.border),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md, horizontal: AppSpacing.xs),
-            child: Column(
-              children: [
-                Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.primary)),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, fontSize: 10, letterSpacing: 0.5),
-                ),
-              ],
+      child: Semantics(
+        button: true,
+        label: '$count $label. ${t(context, 'Open in My Posts', 'افتح في منشوراتي')}',
+        excludeSemantics: true,
+        child: Material(
+          color: AppColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            side: const BorderSide(color: AppColors.border),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            splashColor: accent.withValues(alpha: 0.12),
+            highlightColor: accent.withValues(alpha: 0.06),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(color: accent.withValues(alpha: 0.12), shape: BoxShape.circle),
+                        child: Icon(icon, size: 18, color: accent),
+                      ),
+                      const Spacer(),
+                      const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    count,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800, height: 1.1),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
