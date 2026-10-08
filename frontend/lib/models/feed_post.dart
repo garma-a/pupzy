@@ -1,8 +1,7 @@
 /// A post as returned by the backend's combined home feed.
-/// Only carries the base `Post` fields the GraphQL API exposes on feed
-/// queries — extension-type fields (species, breed, price, personality
-/// tags, etc.) are only available from the per-post detail query, which
-/// isn't wired yet.
+/// Carries the base `Post` fields the GraphQL API exposes on feed queries,
+/// plus a PRODUCT listing's price. Other extension-type fields (species,
+/// breed, personality tags, etc.) come only from the per-post detail query.
 class FeedPost {
   final String id;
   final String postType; // RESCUE, LOST, ADOPTION, PRODUCT
@@ -24,6 +23,12 @@ class FeedPost {
   final double? distanceKm;
   final DateTime createdAt;
 
+  /// PRODUCT listings only (null for every other type, and when the feed did
+  /// not include it): what Market cards show as the price.
+  final double? priceAmount;
+  final String? priceCurrency;
+  final bool? isFree;
+
   const FeedPost({
     required this.id,
     required this.postType,
@@ -44,6 +49,9 @@ class FeedPost {
     required this.mediaUrls,
     this.distanceKm,
     required this.createdAt,
+    this.priceAmount,
+    this.priceCurrency,
+    this.isFree,
   });
 
   bool get isUrgent => urgency == 'CRITICAL';
@@ -56,6 +64,7 @@ class FeedPost {
         .map((m) => m as Map<String, dynamic>)
         .toList()
       ..sort((a, b) => (a['displayOrder'] as int).compareTo(b['displayOrder'] as int));
+    final product = node['product'] as Map<String, dynamic>?;
 
     return FeedPost(
       id: node['id'] as String,
@@ -77,6 +86,9 @@ class FeedPost {
       mediaUrls: mediaList.map((m) => m['publicUrl'] as String).toList(),
       distanceKm: (edge['distanceKm'] as num?)?.toDouble(),
       createdAt: DateTime.parse(node['createdAt'] as String),
+      priceAmount: (product?['priceAmount'] as num?)?.toDouble(),
+      priceCurrency: product?['priceCurrency'] as String?,
+      isFree: product?['isFree'] as bool?,
     );
   }
 
@@ -108,6 +120,9 @@ class FeedPost {
       mediaUrls: mediaUrls,
       distanceKm: distanceKm,
       createdAt: createdAt,
+      priceAmount: priceAmount,
+      priceCurrency: priceCurrency,
+      isFree: isFree,
     );
   }
 }

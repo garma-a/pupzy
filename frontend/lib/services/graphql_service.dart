@@ -235,6 +235,11 @@ class GraphQLService {
           publicUrl
           displayOrder
         }
+        product {
+          priceAmount
+          priceCurrency
+          isFree
+        }
       }
     }
     pageInfo {

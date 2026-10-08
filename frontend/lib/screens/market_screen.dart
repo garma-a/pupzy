@@ -15,6 +15,7 @@ import '../services/graphql_service.dart';
 import '../services/safety_events.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/price_label.dart';
 import '../widgets/adaptive_search_bar.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/distance_filter.dart';
@@ -24,7 +25,6 @@ import '../widgets/top_bar.dart';
 import 'post_form_screen.dart';
 import 'product_detail_screen.dart';
 
-enum _SortOption { hot, newest }
 
 /// A fixed-choice category: (canonical ProductCategory enum value, English label, Arabic label).
 typedef _CategoryChoice = (String value, String en, String ar);
@@ -44,16 +44,12 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
     ('ALL', 'All', 'الكل'),
     ('CARE', 'Care', 'رعاية'),
     ('FOOD', 'Food', 'طعام'),
-    ('TRANSPORT', 'Transport', 'نقل'),
     ('ACCESSORIES', 'Accessories', 'إكسسوارات'),
-    ('GROOMING', 'Grooming', 'تجميل'),
-    ('MEDICAL_SUPPLIES', 'Medical Supplies', 'مستلزمات طبية'),
     ('OTHER', 'Other', 'أخرى'),
   ];
 
   String _query = '';
   String _category = 'ALL';
-  _SortOption _sort = _SortOption.hot;
 
   bool _loading = true;
   String? _errorMessage;
@@ -124,7 +120,7 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
       longitude: _position?.longitude,
       radiusKm: maxDist.isFinite ? maxDist : null,
       category: _category == 'ALL' ? null : _category,
-      sort: _sort == _SortOption.hot ? 'HOT' : 'NEWEST',
+      sort: 'NEWEST',
       search: _activeSearch,
     );
     if (!mounted || error != null) return;
@@ -203,7 +199,7 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
       longitude: _position?.longitude,
       radiusKm: maxDist.isFinite ? maxDist : null,
       category: _category == 'ALL' ? null : _category,
-      sort: _sort == _SortOption.hot ? 'HOT' : 'NEWEST',
+      sort: 'NEWEST',
       search: _activeSearch,
     );
     if (!mounted) return;
@@ -231,7 +227,7 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
       longitude: _position?.longitude,
       radiusKm: maxDist.isFinite ? maxDist : null,
       category: _category == 'ALL' ? null : _category,
-      sort: _sort == _SortOption.hot ? 'HOT' : 'NEWEST',
+      sort: 'NEWEST',
       search: _activeSearch,
       after: _endCursor,
     );
@@ -265,23 +261,9 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
     _loadFeed();
   }
 
-  void _selectSort(_SortOption o) {
-    setState(() => _sort = o);
-    _loadFeed();
-  }
-
   // Pre-filtered server-side when a search is active (_activeSearch is sent
   // to fetchMarketFeed).
   List<FeedPost> get _filtered => _posts;
-
-  String _sortLabel(BuildContext context, _SortOption o) {
-    switch (o) {
-      case _SortOption.hot:
-        return t(context, 'Most popular', 'الأكثر رواجًا');
-      case _SortOption.newest:
-        return t(context, 'Newest', 'الأحدث');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -319,22 +301,6 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
                           Text(t(context, 'Marketplace', 'السوق'), style: Theme.of(context).textTheme.headlineMedium),
                           const SizedBox(width: AppSpacing.md),
                           Container(width: 4, height: 32, color: AppColors.sectionLineGreen),
-                          const Spacer(),
-                          PopupMenuButton<_SortOption>(
-                            initialValue: _sort,
-                            onSelected: _selectSort,
-                            itemBuilder: (context) => _SortOption.values
-                                .map((o) => PopupMenuItem(value: o, child: Text(_sortLabel(context, o))))
-                                .toList(),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.sort, size: 16, color: AppColors.textSecondary),
-                                const SizedBox(width: 4),
-                                Text(_sortLabel(context, _sort), style: Theme.of(context).textTheme.bodySmall),
-                              ],
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -571,10 +537,24 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.all(AppSpacing.sm),
-                                      child: Text(p.title,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 14)),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(p.title,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 14)),
+                                          if (p.isFree != null) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              priceLabel(context, isFree: p.isFree!, amount: p.priceAmount, currency: p.priceCurrency),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 14),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),

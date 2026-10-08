@@ -83,6 +83,22 @@ void main() {
     });
   }
 
+  testWidgets('Product: the category is Care, Food, Accessories or Other', (tester) async {
+    await pumpForm(tester, PostType.product);
+    final list = find.descendant(of: find.byType(PostFormScreen), matching: find.byType(Scrollable)).first;
+    await tester.scrollUntilVisible(find.text('Accessories'), 300, scrollable: list);
+
+    final row = find.ancestor(of: find.text('Accessories'), matching: find.byType(Wrap)).first;
+    final options = tester
+        .widgetList<Text>(find.descendant(of: row, matching: find.byType(Text)))
+        .map((text) => text.data)
+        .toList();
+    expect(options, ['Care', 'Food', 'Accessories', 'Other']);
+    for (final retired in ['Transport', 'Grooming', 'Medical Supplies']) {
+      expect(find.text(retired), findsNothing);
+    }
+  });
+
   testWidgets('Find a Mate needs a photo even when every other field is filled', (tester) async {
     final photo = File('${Directory.systemTemp.path}/form-validation.jpg')..writeAsBytesSync([0xFF, 0xD8, 0xFF, 0xD9]);
     ImagePickerPlatform.instance = OnePhotoPicker(photo.path);
