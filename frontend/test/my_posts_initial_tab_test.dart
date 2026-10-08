@@ -91,25 +91,37 @@ void main() {
 
     const counts = [('Rescue', '4', 0), ('Lost & Found', '2', 1), ('Adoption', '3', 2), ('Marketplace', '1', 3), ('Find a Mate', '5', 4)];
 
-    testWidgets('lists every post type under MY POSTS as equal rows, in tab order, with the total', (tester) async {
+    testWidgets('shows every post type and All posts as identical cards, three across, in tab order', (tester) async {
       await pumpProfile(tester);
       expect(find.text('MY POSTS'), findsOneWidget);
-      expect(find.text('· 15'), findsOneWidget);
 
-      final cards = [for (final (label, count, _) in counts) find.bySemanticsLabel('$count $label. Open in My Posts')];
+      final cards = [
+        for (final (label, count, _) in counts) find.bySemanticsLabel('$count $label. Open in My Posts'),
+        find.bySemanticsLabel('15 All posts. Open in My Posts'),
+      ];
       for (final card in cards) {
         expect(card, findsOneWidget);
       }
-      // One list, top to bottom in My Posts tab order, every row the same height.
+      // A 3 × 2 grid read in My Posts tab order, every card the same size.
       final rects = [for (final card in cards) tester.getRect(card)];
-      for (var i = 1; i < rects.length; i++) {
-        expect(rects[i].top, greaterThan(rects[i - 1].top));
-        expect(rects[i].height, rects[0].height);
-        expect(rects[i].width, rects[0].width);
+      for (var i = 0; i < rects.length; i++) {
+        expect(rects[i].size, rects[0].size);
+        expect(rects[i].top, rects[i - i % 3].top, reason: 'cards of one row line up');
+        if (i % 3 > 0) expect(rects[i].left, greaterThan(rects[i - 1].left));
+        if (i >= 3) expect(rects[i].left, rects[i - 3].left, reason: 'columns line up');
       }
-      expect(rects[0].height, greaterThanOrEqualTo(48), reason: 'each row is a full-size tap target');
+      expect(rects[3].top, greaterThan(rects[0].bottom));
+      expect(rects[0].height, greaterThanOrEqualTo(48), reason: 'each card is a full-size tap target');
       // The Settings list no longer repeats a My Posts entry.
       expect(find.text('My Posts'), findsNothing);
+    });
+
+    testWidgets('All posts opens My Posts on its first tab', (tester) async {
+      await pumpProfile(tester);
+      await tester.tap(find.bySemanticsLabel('15 All posts. Open in My Posts'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MyPostsScreen), findsOneWidget);
+      expect(selectedTab(tester), 0);
     });
 
     for (final (label, count, index) in counts) {

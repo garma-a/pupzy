@@ -326,7 +326,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
   }
 
   /// A profile count was tapped: My Posts, opened on that post type.
-  void _openMyPosts(String postType) {
+  void _openMyPosts(String? postType) {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => MyPostsScreen(initialPostType: postType)));
   }
 
@@ -352,15 +352,32 @@ class _ProfileSheetState extends State<ProfileSheet> {
       (type: 'LOST', count: countOf('lostPostCount'), icon: Icons.search, accent: const Color(0xFFE08A2E), label: t(context, 'Lost & Found', 'مفقود')),
       (type: 'ADOPTION', count: countOf('adoptionPostCount'), icon: Icons.home_outlined, accent: const Color(0xFFB08C3A), label: t(context, 'Adoption', 'تبني')),
       (type: 'PRODUCT', count: countOf('productPostCount'), icon: Icons.storefront_outlined, accent: const Color(0xFF5B8DEF), label: t(context, 'Marketplace', 'السوق')),
-      (type: 'MATING', count: countOf('matingPostCount'), icon: Icons.favorite_border, accent: const Color(0xFFD1608A), label: t(context, 'Find a Mate', 'البحث عن شريك')),
+      (type: 'MATING', count: countOf('matingPostCount'), icon: Icons.favorite_border, accent: const Color(0xFFD1608A), label: t(context, 'Find a Mate', 'تزاوج')),
     ];
     final totalPosts = postCounts.fold<int>(0, (sum, c) => sum + c.count);
-    final postTypeRows = <Widget>[
-      for (final (i, c) in postCounts.indexed) ...[
-        if (i > 0) const Divider(height: 1, indent: 60),
-        _PostTypeRow(icon: c.icon, accent: c.accent, count: c.count, label: c.label, onTap: () => _openMyPosts(c.type)),
-      ],
+    // Five types plus All posts fill a 3 × 2 grid of identical cards.
+    final postCards = [
+      for (final c in postCounts)
+        _PostCountCard(icon: c.icon, accent: c.accent, count: c.count, label: c.label, onTap: () => _openMyPosts(c.type)),
+      _PostCountCard(
+        icon: Icons.grid_view_outlined,
+        accent: AppColors.primary,
+        count: totalPosts,
+        label: t(context, 'All posts', 'كل المنشورات'),
+        onTap: () => _openMyPosts(null),
+      ),
     ];
+    Widget cardRow(int start) => IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = start; i < start + 3; i++) ...[
+                if (i > start) const SizedBox(width: AppSpacing.sm),
+                Expanded(child: postCards[i]),
+              ],
+            ],
+          ),
+        );
     final cityName = _user?['city']?[cityField] as String?;
 
     return Container(
@@ -446,24 +463,15 @@ class _ProfileSheetState extends State<ProfileSheet> {
                   Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
                   const SizedBox(width: 6),
                   Text(t(context, 'MY POSTS', 'منشوراتي'), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
-                  const SizedBox(width: 6),
-                  Text('· $totalPosts', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted, fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
-            // One grouped list, styled like Settings below: every type the
-            // same full-width row, so long names and large text never squeeze.
+            // Every type the same card, in My Posts tab order.
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Material(
-                color: AppColors.surface,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.card),
-                  side: const BorderSide(color: AppColors.border),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(children: postTypeRows),
+              child: Column(
+                children: [cardRow(0), const SizedBox(height: AppSpacing.sm), cardRow(3)],
               ),
             ),
           ],
@@ -605,18 +613,18 @@ class _ProfileSheetState extends State<ProfileSheet> {
   }
 }
 
-/// One post type in the profile's My Posts list: the type's icon in its
-/// accent colour (as on the New Post sheet), its name, how many posts the
-/// user has of it and a chevron. The whole row opens My Posts on that type;
-/// a zero count is greyed so the types in use stand out.
-class _PostTypeRow extends StatelessWidget {
+/// One card of the profile's My Posts grid: the type's icon in its accent
+/// colour (as on the New Post sheet), how many posts the user has of it, its
+/// name and a chevron. The whole card opens My Posts on that type; a zero
+/// count is greyed so the types in use stand out.
+class _PostCountCard extends StatelessWidget {
   final IconData icon;
   final Color accent;
   final int count;
   final String label;
   final VoidCallback onTap;
 
-  const _PostTypeRow({
+  const _PostCountCard({
     required this.icon,
     required this.accent,
     required this.count,
@@ -631,45 +639,56 @@ class _PostTypeRow extends StatelessWidget {
       button: true,
       label: '$count $label. ${t(context, 'Open in My Posts', 'افتح في منشوراتي')}',
       excludeSemantics: true,
-      child: InkWell(
-        onTap: onTap,
-        splashColor: accent.withValues(alpha: 0.12),
-        highlightColor: accent.withValues(alpha: 0.06),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 56),
+      child: Material(
+        color: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          side: const BorderSide(color: AppColors.border),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          splashColor: accent.withValues(alpha: 0.12),
+          highlightColor: accent.withValues(alpha: 0.06),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.sm, AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(color: accent.withValues(alpha: 0.12), shape: BoxShape.circle),
-                  child: Icon(icon, size: 18, color: accent),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(child: Text(label, style: Theme.of(context).textTheme.bodyLarge)),
-                const SizedBox(width: AppSpacing.sm),
-                Container(
-                  constraints: const BoxConstraints(minWidth: 28),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: hasPosts ? accent.withValues(alpha: 0.12) : AppColors.background,
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                  ),
-                  child: Text(
-                    '$count',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: hasPosts ? AppColors.textPrimary : AppColors.textMuted,
-                      fontFeatures: const [FontFeature.tabularFigures()],
+                Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(color: accent.withValues(alpha: 0.12), shape: BoxShape.circle),
+                      child: Icon(icon, size: 18, color: accent),
                     ),
+                    const Spacer(),
+                    const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  '$count',
+                  style: TextStyle(
+                    fontSize: 22,
+                    height: 1.15,
+                    fontWeight: FontWeight.w800,
+                    color: hasPosts ? AppColors.textPrimary : AppColors.textMuted,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
-                const SizedBox(width: AppSpacing.xs),
-                const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+                const SizedBox(height: 2),
+                // Shrinks rather than cuts off a long name or large text.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                  ),
+                ),
               ],
             ),
           ),
