@@ -29,7 +29,13 @@ class AdoptScreen extends StatefulWidget {
   // Whether this tab is the one currently shown by the bottom nav — see
   // HomeScreen.active for why this matters.
   final bool active;
-  const AdoptScreen({super.key, this.active = true});
+
+  /// Which tab to show: 0 Adoption, 1 Matching. A new [tabRequest] (e.g. from
+  /// Home's "See all") switches to [tab] even when the screen already exists.
+  final int tab;
+  final int tabRequest;
+
+  const AdoptScreen({super.key, this.active = true, this.tab = 0, this.tabRequest = 0});
 
   @override
   State<AdoptScreen> createState() => _AdoptScreenState();
@@ -373,7 +379,11 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
     final distLabel = maxDist.isFinite ? '${maxDist.toInt()}km' : '50+km';
 
     return DefaultTabController(
+      // Keyed by the request so each "See all" reopens on the asked-for tab;
+      // the feeds live in this State, so nothing reloads.
+      key: ValueKey(widget.tabRequest),
       length: 2,
+      initialIndex: widget.tab,
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: SafeArea(
