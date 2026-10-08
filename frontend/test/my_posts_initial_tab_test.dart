@@ -7,6 +7,7 @@ import 'package:pupzy/screens/my_posts_screen.dart';
 import 'package:pupzy/screens/profile_screen.dart';
 import 'package:pupzy/services/auth_service.dart';
 import 'package:pupzy/services/safety_events.dart';
+import 'package:pupzy/widgets/language_toggle.dart';
 
 import 'safety_test_support.dart';
 
@@ -114,6 +115,27 @@ void main() {
       expect(rects[0].height, greaterThanOrEqualTo(48), reason: 'each card is a full-size tap target');
       // The Settings list no longer repeats a My Posts entry.
       expect(find.text('My Posts'), findsNothing);
+    });
+
+    testWidgets('opens at about half the screen and swipes up for the rest', (tester) async {
+      await pumpProfile(tester);
+      final sheet = find.descendant(of: find.byType(ProfileSheet), matching: find.byType(SingleChildScrollView));
+      final screenHeight = tester.view.physicalSize.height / tester.view.devicePixelRatio;
+      expect(tester.getSize(sheet).height, closeTo(screenHeight * 0.6, 1));
+
+      await tester.drag(find.text('MY POSTS'), const Offset(0, -600));
+      await tester.pumpAndSettle();
+      expect(tester.getSize(sheet).height, closeTo(screenHeight * 0.95, 1));
+      expect(find.text('Sign Out').hitTestable(), findsOneWidget);
+    });
+
+    testWidgets('Language is a compact Settings row, not a section of its own', (tester) async {
+      await pumpProfile(tester);
+      expect(find.text('LANGUAGE'), findsNothing);
+      expect(find.text('Language'), findsOneWidget);
+      final toggle = tester.getSize(find.byType(LanguageToggle));
+      expect(toggle.height, lessThanOrEqualTo(34));
+      expect(toggle.width, lessThan(200));
     });
 
     testWidgets('All posts opens My Posts on its first tab', (tester) async {

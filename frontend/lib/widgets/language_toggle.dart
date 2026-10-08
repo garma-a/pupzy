@@ -21,15 +21,18 @@ class LanguageToggle extends StatelessWidget {
   final Lang lang;
   final ValueChanged<Lang> onChanged;
 
-  const LanguageToggle({super.key, required this.lang, required this.onChanged});
+  /// Smaller, for a settings row rather than a section of its own.
+  final bool compact;
+
+  const LanguageToggle({super.key, required this.lang, required this.onChanged, this.compact = false});
 
   static const _duration = Duration(milliseconds: 260);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 46,
-      padding: const EdgeInsets.all(3),
+      height: compact ? 34 : 46,
+      padding: EdgeInsets.all(compact ? 2 : 3),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.chip),
@@ -58,6 +61,7 @@ class LanguageToggle extends StatelessWidget {
                   child: _LanguageOption(
                     label: 'English',
                     selected: lang == Lang.en,
+                    fontSize: compact ? 13 : null,
                     duration: _duration,
                     onTap: () => onChanged(Lang.en),
                   ),
@@ -66,6 +70,7 @@ class LanguageToggle extends StatelessWidget {
                   child: _LanguageOption(
                     label: 'العربية',
                     selected: lang == Lang.ar,
+                    fontSize: compact ? 13 : null,
                     duration: _duration,
                     onTap: () => onChanged(Lang.ar),
                   ),
@@ -82,10 +87,11 @@ class LanguageToggle extends StatelessWidget {
 class _LanguageOption extends StatelessWidget {
   final String label;
   final bool selected;
+  final double? fontSize;
   final Duration duration;
   final VoidCallback onTap;
 
-  const _LanguageOption({required this.label, required this.selected, required this.duration, required this.onTap});
+  const _LanguageOption({required this.label, required this.selected, this.fontSize, required this.duration, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +101,7 @@ class _LanguageOption extends StatelessWidget {
       child: Center(
         child: AnimatedDefaultTextStyle(
           duration: duration,
-          style: TextStyle(color: selected ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w600),
+          style: TextStyle(color: selected ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: fontSize),
           child: Text(label),
         ),
       ),

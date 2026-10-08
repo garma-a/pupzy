@@ -380,234 +380,244 @@ class _ProfileSheetState extends State<ProfileSheet> {
         );
     final cityName = _user?['city']?[cityField] as String?;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
-      ),
-      // Scrolls so Sign Out and Delete Account (a store requirement) stay
-      // reachable when the sheet is taller than the screen — small phones or
-      // a large accessibility font size. It overflowed by 33 px at 360×780 dp.
-      child: SingleChildScrollView(
-        child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 12),
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
-          const SizedBox(height: AppSpacing.lg),
-          // Avatar + name
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: _changeAvatar,
-                  child: Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 32,
-                        backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
-                        child: photoUrl == null
-                            ? Text(
-                                displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
-                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                              )
-                            : null,
-                      ),
-                      PositionedDirectional(
-                        bottom: 0,
-                        end: 0,
-                        child: Container(
-                          width: 22,
-                          height: 22,
-                          decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle, border: Border.fromBorderSide(BorderSide(color: Colors.white, width: 2))),
-                          child: const Icon(Icons.camera_alt, size: 12, color: Colors.white),
+    // Opens at about half the screen; swipe up for the rest of the options,
+    // down to close.
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.6,
+      minChildSize: 0.3,
+      maxChildSize: 0.95,
+      snap: true,
+      snapSizes: const [0.6],
+      builder: (_, scrollController) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        ),
+        // Scrolls so Sign Out and Delete Account (a store requirement) stay
+        // reachable when the sheet is taller than the screen — small phones or
+        // a large accessibility font size. It overflowed by 33 px at 360×780 dp.
+          child: SingleChildScrollView(
+            controller: scrollController,
+          child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: AppSpacing.lg),
+            // Avatar + name
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: _changeAvatar,
+                    child: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 32,
+                          backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
+                          child: photoUrl == null
+                              ? Text(
+                                  displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                                )
+                              : null,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(displayName, style: Theme.of(context).textTheme.headlineSmall),
-                      if (arabicName.isNotEmpty)
-                        Text(arabicName, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.primary)),
-                      const SizedBox(height: 2),
-                      Text(email, style: Theme.of(context).textTheme.bodySmall),
-                      if (cityName != null) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.location_on, size: 12, color: AppColors.primary),
-                            const SizedBox(width: 2),
-                            Text(cityName, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
-                          ],
+                        PositionedDirectional(
+                          bottom: 0,
+                          end: 0,
+                          child: Container(
+                            width: 22,
+                            height: 22,
+                            decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle, border: Border.fromBorderSide(BorderSide(color: Colors.white, width: 2))),
+                            child: const Icon(Icons.camera_alt, size: 12, color: Colors.white),
+                          ),
                         ),
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(displayName, style: Theme.of(context).textTheme.headlineSmall),
+                        if (arabicName.isNotEmpty)
+                          Text(arabicName, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.primary)),
+                        const SizedBox(height: 2),
+                        Text(email, style: Theme.of(context).textTheme.bodySmall),
+                        if (cityName != null) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on, size: 12, color: AppColors.primary),
+                              const SizedBox(width: 2),
+                              Text(cityName, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          // My posts, by type — each count opens My Posts on that type.
-          if (!_loadingProfile) ...[
+            const SizedBox(height: AppSpacing.md),
+            // My posts, by type — each count opens My Posts on that type.
+            if (!_loadingProfile) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Row(
+                  children: [
+                    Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
+                    const SizedBox(width: 6),
+                    Text(t(context, 'MY POSTS', 'منشوراتي'), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              // Every type the same card, in My Posts tab order.
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Column(
+                  children: [cardRow(0), const SizedBox(height: AppSpacing.sm), cardRow(3)],
+                ),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.lg),
+            // Settings
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Row(
                 children: [
                   Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
                   const SizedBox(width: 6),
-                  Text(t(context, 'MY POSTS', 'منشوراتي'), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                  Text(t(context, 'SETTINGS', 'الإعدادات'), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
                 ],
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
-            // Every type the same card, in My Posts tab order.
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Column(
-                children: [cardRow(0), const SizedBox(height: AppSpacing.sm), cardRow(3)],
-              ),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.lg),
-          // Language
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Row(
-              children: [
-                Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
-                const SizedBox(width: 6),
-                Text(t(context, 'LANGUAGE', 'اللغة'), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: LanguageToggle(
-              lang: lang,
-              onChanged: (l) {
-                context.read<LangProvider>().setLang(l);
-                context.read<GraphQLService>().updateMyLanguagePreference(l == Lang.ar ? 'ar' : 'en');
-              },
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          // Settings
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Row(
-              children: [
-                Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
-                const SizedBox(width: 6),
-                Text(t(context, 'SETTINGS', 'الإعدادات'), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppRadius.card),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                children: [
-                  _SettingsRow(
-                    icon: Icons.person_outline,
-                    label: t(context, 'Edit profile', 'تعديل الملف الشخصي'),
-                    onTap: () => _showEditProfile(),
-                  ),
-                  const Divider(height: 1, indent: 48),
-                  _SettingsRow(
-                    icon: Icons.notifications_none,
-                    label: t(context, 'Notifications', 'الإشعارات'),
-                    trailing: _user?['notificationsEnabled'] == true ? t(context, 'On', 'مفعّل') : t(context, 'Off', 'متوقف'),
-                    onTap: _toggleNotifications,
-                  ),
-                  const Divider(height: 1, indent: 48),
-                  _SettingsRow(
-                    icon: Icons.mail_outline,
-                    label: t(context, 'My Contact Requests', 'طلبات التواصل الخاصة بي'),
-                    trailing: _pendingSentRequests > 0 ? '$_pendingSentRequests${_morePendingSent ? '+' : ''}' : null,
-                    onTap: () async {
-                      await Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const ContactRequestsScreen()),
-                      );
-                      if (mounted) _fetchPendingSentCount();
-                    },
-                  ),
-                  const Divider(height: 1, indent: 48),
-                  _SettingsRow(
-                    icon: Icons.assignment_outlined,
-                    label: t(context, 'My Applications', 'طلباتي للتبني'),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const MyAdoptionApplicationsScreen()),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 9),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.translate, size: 20, color: AppColors.primary),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(child: Text(t(context, 'Language', 'اللغة'), style: Theme.of(context).textTheme.bodyLarge)),
+                          SizedBox(
+                            width: 168,
+                            child: LanguageToggle(
+                              compact: true,
+                              lang: lang,
+                              onChanged: (l) {
+                                context.read<LangProvider>().setLang(l);
+                                context.read<GraphQLService>().updateMyLanguagePreference(l == Lang.ar ? 'ar' : 'en');
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const Divider(height: 1, indent: 48),
-                  _SettingsRow(
-                    icon: Icons.block_outlined,
-                    label: t(context, 'Blocked Accounts', 'الحسابات المحظورة'),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const BlockedAccountsScreen()),
+                    const Divider(height: 1, indent: 48),
+                    _SettingsRow(
+                      icon: Icons.person_outline,
+                      label: t(context, 'Edit profile', 'تعديل الملف الشخصي'),
+                      onTap: () => _showEditProfile(),
                     ),
-                  ),
-                  const Divider(height: 1, indent: 48),
-                  _SettingsRow(
-                    icon: Icons.gavel_outlined,
-                    label: t(context, 'Terms & Privacy', 'الشروط والخصوصية'),
-                    onTap: () => showTermsInfoSheet(context),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          // Sign out button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _signOut,
-                icon: const Icon(Icons.logout, size: 18),
-                label: Text(t(context, 'Sign Out', 'تسجيل الخروج')),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.critical,
-                  side: BorderSide(color: AppColors.critical.withValues(alpha: 0.3)),
+                    const Divider(height: 1, indent: 48),
+                    _SettingsRow(
+                      icon: Icons.notifications_none,
+                      label: t(context, 'Notifications', 'الإشعارات'),
+                      trailing: _user?['notificationsEnabled'] == true ? t(context, 'On', 'مفعّل') : t(context, 'Off', 'متوقف'),
+                      onTap: _toggleNotifications,
+                    ),
+                    const Divider(height: 1, indent: 48),
+                    _SettingsRow(
+                      icon: Icons.mail_outline,
+                      label: t(context, 'My Contact Requests', 'طلبات التواصل الخاصة بي'),
+                      trailing: _pendingSentRequests > 0 ? '$_pendingSentRequests${_morePendingSent ? '+' : ''}' : null,
+                      onTap: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const ContactRequestsScreen()),
+                        );
+                        if (mounted) _fetchPendingSentCount();
+                      },
+                    ),
+                    const Divider(height: 1, indent: 48),
+                    _SettingsRow(
+                      icon: Icons.assignment_outlined,
+                      label: t(context, 'My Applications', 'طلباتي للتبني'),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const MyAdoptionApplicationsScreen()),
+                      ),
+                    ),
+                    const Divider(height: 1, indent: 48),
+                    _SettingsRow(
+                      icon: Icons.block_outlined,
+                      label: t(context, 'Blocked Accounts', 'الحسابات المحظورة'),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const BlockedAccountsScreen()),
+                      ),
+                    ),
+                    const Divider(height: 1, indent: 48),
+                    _SettingsRow(
+                      icon: Icons.gavel_outlined,
+                      label: t(context, 'Terms & Privacy', 'الشروط والخصوصية'),
+                      onTap: () => showTermsInfoSheet(context),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: SizedBox(
-              width: double.infinity,
-              child: TextButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const DeleteAccountScreen()),
-                  );
-                },
-                icon: const Icon(Icons.delete_forever_outlined, size: 18),
-                label: Text(t(context, 'Delete Account', 'حذف الحساب')),
-                style: TextButton.styleFrom(foregroundColor: AppColors.textMuted),
+            const SizedBox(height: AppSpacing.lg),
+            // Sign out button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _signOut,
+                  icon: const Icon(Icons.logout, size: 18),
+                  label: Text(t(context, 'Sign Out', 'تسجيل الخروج')),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.critical,
+                    side: BorderSide(color: AppColors.critical.withValues(alpha: 0.3)),
+                  ),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-        ],
-      ),
+            const SizedBox(height: AppSpacing.sm),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const DeleteAccountScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.delete_forever_outlined, size: 18),
+                  label: Text(t(context, 'Delete Account', 'حذف الحساب')),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.textMuted),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+          ],
+        ),
+        ),
       ),
     );
   }
