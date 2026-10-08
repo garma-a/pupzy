@@ -336,6 +336,17 @@ export class PostsResolver {
   }
 
   /**
+   * Resolves a PRODUCT post's price, condition and category through the
+   * per-request DataLoader, so a Market feed page costs one extra query, not
+   * one per card. Null for every other post type.
+   */
+  @ResolveField('product')
+  product(@Root() post: Post, @Context() ctx: GqlContext): Promise<ProductPost | null> {
+    if (post.postType !== 'PRODUCT' || !ctx.loaders.productByPostId) return Promise.resolve(null);
+    return ctx.loaders.productByPostId.load(post.id);
+  }
+
+  /**
    * Resolves whether the current viewer has upvoted this post.
    * Uses the per-request DataLoader to batch all checks into a single query.
    * Returns `false` for unauthenticated viewers.

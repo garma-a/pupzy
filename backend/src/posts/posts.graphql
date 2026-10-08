@@ -80,6 +80,11 @@ type Post {
   """
   isSavedByMe: Boolean!
   media: [PostMedia!]!
+  """
+  PRODUCT listing details (price, condition, category), so Market cards can
+  show the price without opening the listing. Null for every other post type.
+  """
+  product: ProductPost
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -181,7 +186,8 @@ type AdoptionPost {
 }
 
 """
-Extension data for PRODUCT posts. Fetched only on the detail screen.
+Extension data for PRODUCT posts: from productPostDetail on the detail
+screen, or Post.product on feed cards.
 """
 type ProductPost {
   postId: ID!

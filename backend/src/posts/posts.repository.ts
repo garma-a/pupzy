@@ -393,6 +393,31 @@ export class PostsRepository {
     });
   }
 
+  /**
+   * Batch-loads PRODUCT extension rows (price, condition, category) by post
+   * ID, so Market feed cards can show the price without a detail query per
+   * card. Returns null for posts without a product row — every other type.
+   * Callers only reach posts already visible to the viewer, so no isolation
+   * filter is repeated here.
+   */
+  async findProductDetailsByPostIds(postIds: readonly string[]): Promise<(ProductPost | null)[]> {
+    if (postIds.length === 0) return [];
+    const rows = await this.db
+      .select()
+      .from(productPosts)
+      .where(inArray(productPosts.postId, postIds as string[]));
+    const byPostId = new Map(rows.map((row) => [row.postId, row]));
+    return postIds.map((id) => byPostId.get(id) ?? null);
+  }
+
+  /** Per-request DataLoader over {@link findProductDetailsByPostIds}. */
+  createProductByPostIdLoader(): DataLoader<string, ProductPost | null> {
+    return new DataLoader<string, ProductPost | null>((ids) => this.findProductDetailsByPostIds(ids), {
+      cache: true,
+      maxBatchSize: 100,
+    });
+  }
+
   // ─── Read ─────────────────────────────────────────────────────────────
 
   /**

@@ -32,8 +32,12 @@ const createProductPostSchema = z
     /** Human-readable name for the area (e.g. "Maadi, Cairo"). */
     areaName: z.string().max(200).trim().optional(),
 
-    /** Product category. */
-    category: z.enum(['CARE', 'FOOD', 'TRANSPORT', 'ACCESSORIES', 'GROOMING', 'MEDICAL_SUPPLIES', 'OTHER']),
+    /**
+     * Product category. TRANSPORT, GROOMING and MEDICAL_SUPPLIES were retired
+     * from the Marketplace: they stay valid on existing listings (and in the
+     * ProductCategory enum and feed filter) but new listings cannot use them.
+     */
+    category: z.enum(['CARE', 'FOOD', 'ACCESSORIES', 'OTHER']),
 
     /** Physical condition of the product. */
     condition: z.enum(['NEW', 'LIKE_NEW', 'USED']),

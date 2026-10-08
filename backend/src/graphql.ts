@@ -1,3 +1,4 @@
+
 /*
  * -------------------------------------------------------
  * THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
@@ -7,866 +8,890 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export enum PostType {
-  RESCUE = 'RESCUE',
-  LOST = 'LOST',
-  ADOPTION = 'ADOPTION',
-  PRODUCT = 'PRODUCT',
-  MATING = 'MATING',
+export enum AccountReportReason {
+    HARASSMENT = "HARASSMENT",
+    SPAM = "SPAM",
+    SCAM_OR_FRAUD = "SCAM_OR_FRAUD",
+    IMPERSONATION = "IMPERSONATION",
+    INAPPROPRIATE_CONDUCT = "INAPPROPRIATE_CONDUCT",
+    SAFETY_CONCERN = "SAFETY_CONCERN",
+    OTHER = "OTHER"
 }
 
-export enum LostFoundType {
-  LOST_PET = 'LOST_PET',
-  FOUND_STRAY = 'FOUND_STRAY',
-}
-
-export enum PostStatus {
-  ACTIVE = 'ACTIVE',
-  RESOLVED = 'RESOLVED',
-  REUNITED = 'REUNITED',
-  ADOPTED = 'ADOPTED',
-  SOLD = 'SOLD',
-  REMOVED = 'REMOVED',
-  EXPIRED = 'EXPIRED',
-  ANIMAL_DECEASED = 'ANIMAL_DECEASED',
-}
-
-export enum ModerationStatus {
-  PENDING_AUTO_REVIEW = 'PENDING_AUTO_REVIEW',
-  CLEAN = 'CLEAN',
-  FLAGGED = 'FLAGGED',
-}
-
-export enum UrgencyTier {
-  CRITICAL = 'CRITICAL',
-  URGENT = 'URGENT',
-  MODERATE = 'MODERATE',
-}
-
-export enum SpeciesType {
-  DOG = 'DOG',
-  CAT = 'CAT',
-  BIRD = 'BIRD',
-  RABBIT = 'RABBIT',
-  OTHER = 'OTHER',
-}
-
-export enum GenderType {
-  MALE = 'MALE',
-  FEMALE = 'FEMALE',
-  UNKNOWN = 'UNKNOWN',
-}
-
-export enum AgeUnit {
-  DAYS = 'DAYS',
-  WEEKS = 'WEEKS',
-  MONTHS = 'MONTHS',
-  YEARS = 'YEARS',
-}
-
-export enum ReporterRole {
-  REPORTING = 'REPORTING',
-  ON_SITE = 'ON_SITE',
-  CAN_TRANSPORT = 'CAN_TRANSPORT',
-}
-
-export enum FoundAnimalCondition {
-  HEALTHY = 'HEALTHY',
-  INJURED = 'INJURED',
-  UNKNOWN = 'UNKNOWN',
-}
-
-export enum SpaceRequirement {
-  APARTMENT_OK = 'APARTMENT_OK',
-  NEEDS_YARD = 'NEEDS_YARD',
-  NEEDS_FARM_OR_LARGE_SPACE = 'NEEDS_FARM_OR_LARGE_SPACE',
-}
-
-export enum LivingSituation {
-  APARTMENT = 'APARTMENT',
-  HOUSE_WITH_YARD = 'HOUSE_WITH_YARD',
-  FARM = 'FARM',
-  OTHER = 'OTHER',
-}
-
-export enum ProductCategory {
-  CARE = 'CARE',
-  FOOD = 'FOOD',
-  TRANSPORT = 'TRANSPORT',
-  ACCESSORIES = 'ACCESSORIES',
-  GROOMING = 'GROOMING',
-  MEDICAL_SUPPLIES = 'MEDICAL_SUPPLIES',
-  OTHER = 'OTHER',
-}
-
-export enum ProductCondition {
-  NEW = 'NEW',
-  LIKE_NEW = 'LIKE_NEW',
-  USED = 'USED',
-}
-
-export enum RequestStatus {
-  PENDING = 'PENDING',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-}
-
-export enum ReportReason {
-  UNRELATED_TO_ANIMALS = 'UNRELATED_TO_ANIMALS',
-  SPAM = 'SPAM',
-  INAPPROPRIATE_CONTENT = 'INAPPROPRIATE_CONTENT',
-  SCAM = 'SCAM',
-  DUPLICATE = 'DUPLICATE',
-  OTHER = 'OTHER',
-}
-
-export enum NotificationType {
-  NEW_UPVOTE = 'NEW_UPVOTE',
-  POST_SAVED = 'POST_SAVED',
-  CONTACT_REQUEST_RECEIVED = 'CONTACT_REQUEST_RECEIVED',
-  CONTACT_REQUEST_APPROVED = 'CONTACT_REQUEST_APPROVED',
-  CONTACT_REQUEST_REJECTED = 'CONTACT_REQUEST_REJECTED',
-  ADOPTION_APPLICATION_RECEIVED = 'ADOPTION_APPLICATION_RECEIVED',
-  ADOPTION_APPLICATION_APPROVED = 'ADOPTION_APPLICATION_APPROVED',
-  ADOPTION_APPLICATION_REJECTED = 'ADOPTION_APPLICATION_REJECTED',
-  POST_REMOVED_BY_ADMIN = 'POST_REMOVED_BY_ADMIN',
-  POST_RESOLVED_BY_ADMIN = 'POST_RESOLVED_BY_ADMIN',
-  POST_REOPENED_BY_ADMIN = 'POST_REOPENED_BY_ADMIN',
-  POST_INACTIVITY_NUDGE = 'POST_INACTIVITY_NUDGE',
-  SYSTEM_ANNOUNCEMENT = 'SYSTEM_ANNOUNCEMENT',
-  POST_COMPLETED = 'POST_COMPLETED',
-  POST_REOPENED = 'POST_REOPENED',
-  RESCUE_COMPLETED = 'RESCUE_COMPLETED',
-  RESCUE_REOPENED = 'RESCUE_REOPENED',
-}
-
-export enum Language {
-  ar = 'ar',
-  en = 'en',
-}
-
-export enum DevicePlatform {
-  ANDROID = 'ANDROID',
-  IOS = 'IOS',
-}
-
-export enum PersonalityTag {
-  PLAYFUL = 'PLAYFUL',
-  GENTLE = 'GENTLE',
-  INDOOR = 'INDOOR',
-  OUTDOOR = 'OUTDOOR',
-  GOOD_WITH_KIDS = 'GOOD_WITH_KIDS',
-  GOOD_WITH_CATS = 'GOOD_WITH_CATS',
-  GOOD_WITH_DOGS = 'GOOD_WITH_DOGS',
-  SHY = 'SHY',
-  ENERGETIC = 'ENERGETIC',
-  CALM = 'CALM',
-}
-
-export enum CityLifecycleStatus {
-  OFFICIAL = 'OFFICIAL',
-  LEGACY = 'LEGACY',
-  RETIRED = 'RETIRED',
-}
-
-export enum AdoptFeedSort {
-  HOT = 'HOT',
-  NEWEST = 'NEWEST',
-}
-
-export enum MarketFeedSort {
-  HOT = 'HOT',
-  NEWEST = 'NEWEST',
+export enum AccountReportSourceType {
+    POST = "POST",
+    COMMENT = "COMMENT",
+    CONTACT_REQUEST = "CONTACT_REQUEST",
+    ADOPTION_APPLICATION = "ADOPTION_APPLICATION"
 }
 
 export enum CommentStatus {
-  ACTIVE = 'ACTIVE',
-  IMAGE_HIDDEN = 'IMAGE_HIDDEN',
-  HIDDEN = 'HIDDEN',
-  DELETED = 'DELETED',
-  REMOVED = 'REMOVED',
+    ACTIVE = "ACTIVE",
+    IMAGE_HIDDEN = "IMAGE_HIDDEN",
+    HIDDEN = "HIDDEN",
+    DELETED = "DELETED",
+    REMOVED = "REMOVED"
 }
 
 export enum CommentSort {
-  TOP = 'TOP',
-  NEWEST = 'NEWEST',
+    TOP = "TOP",
+    NEWEST = "NEWEST"
 }
 
-export interface SubmitAdoptionApplicationInput {
-  targetPostId: string;
-  speciesPreference?: Nullable<SpeciesType>;
-  breedPreference?: Nullable<string>;
-  agePreference?: Nullable<string>;
-  genderPreference?: Nullable<GenderType>;
-  livingSituation: LivingSituation;
-  hasOutdoorAccess: boolean;
-  hasOtherPetsAtHome: boolean;
-  hasChildrenAtHome: boolean;
-  hoursAtHomePerDay?: Nullable<number>;
-  previousPetExperience?: Nullable<string>;
-  whyAdopt: string;
-  consentHomeVisit: boolean;
-  canProvideVetReference: boolean;
+export enum PostType {
+    RESCUE = "RESCUE",
+    LOST = "LOST",
+    ADOPTION = "ADOPTION",
+    PRODUCT = "PRODUCT",
+    MATING = "MATING"
 }
 
-export interface MatingFeedFilter {
-  species?: Nullable<SpeciesType>;
-  gender?: Nullable<GenderType>;
-  breed?: Nullable<string>;
-  cityId?: Nullable<string>;
+export enum LostFoundType {
+    LOST_PET = "LOST_PET",
+    FOUND_STRAY = "FOUND_STRAY"
 }
 
-export interface CreateMatingPostInput {
-  petName: string;
-  species: SpeciesType;
-  breed: string;
-  gender: GenderType;
-  ageValue: number;
-  ageUnit: AgeUnit;
-  isPurebred: boolean;
-  hasPedigreeCertificate?: Nullable<boolean>;
-  vaccinated?: Nullable<boolean>;
-  dewormed?: Nullable<boolean>;
-  termsSummary?: Nullable<string>;
-  matingConditions?: Nullable<string>;
-  cityId: string;
-  mediaIds: string[];
+export enum PostStatus {
+    ACTIVE = "ACTIVE",
+    RESOLVED = "RESOLVED",
+    REUNITED = "REUNITED",
+    ADOPTED = "ADOPTED",
+    SOLD = "SOLD",
+    REMOVED = "REMOVED",
+    EXPIRED = "EXPIRED",
+    ANIMAL_DECEASED = "ANIMAL_DECEASED"
 }
 
-export interface CreateRescuePostInput {
-  title: string;
-  description: string;
-  cityId?: Nullable<string>;
-  coordinates: GeoLocationInput;
-  areaName?: Nullable<string>;
-  species: SpeciesType;
-  conditionSummary: string;
-  reporterRole: ReporterRole;
-  isLifeThreatening: boolean;
-  hasVisibleSeriousInjury: boolean;
-  isInDangerousLocation: boolean;
-  canAnimalMoveOrEscape: boolean;
-  mediaIds?: Nullable<string[]>;
+export enum ModerationStatus {
+    PENDING_AUTO_REVIEW = "PENDING_AUTO_REVIEW",
+    CLEAN = "CLEAN",
+    FLAGGED = "FLAGGED"
 }
 
-export interface CreateLostPostInput {
-  title: string;
-  description: string;
-  cityId?: Nullable<string>;
-  coordinates: GeoLocationInput;
-  areaName?: Nullable<string>;
-  reportType: LostFoundType;
-  species: SpeciesType;
-  breed?: Nullable<string>;
-  colorAndMarkings?: Nullable<string>;
-  hasCollarWithIdentificationTag?: Nullable<boolean>;
-  circumstances?: Nullable<string>;
-  petName?: Nullable<string>;
-  dateLastSeen?: Nullable<string>;
-  hasMedicalNeeds?: Nullable<boolean>;
-  isElderlyOrVeryYoung?: Nullable<boolean>;
-  lastSeenNearHazard?: Nullable<boolean>;
-  currentCondition?: Nullable<FoundAnimalCondition>;
-  isCurrentlySafeWithReporter?: Nullable<boolean>;
-  dateFound?: Nullable<string>;
-  mediaIds?: Nullable<string[]>;
+export enum UrgencyTier {
+    CRITICAL = "CRITICAL",
+    URGENT = "URGENT",
+    MODERATE = "MODERATE"
 }
 
-export interface CreateAdoptionPostInput {
-  title: string;
-  description: string;
-  cityId?: Nullable<string>;
-  coordinates: GeoLocationInput;
-  areaName?: Nullable<string>;
-  petName: string;
-  species: SpeciesType;
-  breed?: Nullable<string>;
-  ageValue?: Nullable<number>;
-  ageUnit?: Nullable<AgeUnit>;
-  gender: GenderType;
-  vaccinated: boolean;
-  neutered: boolean;
-  healthNotes?: Nullable<string>;
-  personalityTags?: Nullable<PersonalityTag[]>;
-  spaceRequirement?: Nullable<SpaceRequirement>;
-  priorPetExperienceRequired: boolean;
-  additionalRequirements?: Nullable<string>;
-  currentlyWith?: Nullable<string>;
-  mediaIds?: Nullable<string[]>;
+export enum SpeciesType {
+    DOG = "DOG",
+    CAT = "CAT",
+    BIRD = "BIRD",
+    RABBIT = "RABBIT",
+    OTHER = "OTHER"
 }
 
-export interface CreateProductPostInput {
-  title: string;
-  description: string;
-  cityId?: Nullable<string>;
-  coordinates: GeoLocationInput;
-  areaName?: Nullable<string>;
-  category: ProductCategory;
-  condition: ProductCondition;
-  priceAmount?: Nullable<number>;
-  priceCurrency?: Nullable<string>;
-  isFree: boolean;
-  openToOffers?: Nullable<boolean>;
-  mediaIds?: Nullable<string[]>;
+export enum GenderType {
+    MALE = "MALE",
+    FEMALE = "FEMALE",
+    UNKNOWN = "UNKNOWN"
 }
 
-export interface ViewerLocationInput {
-  latitude: number;
-  longitude: number;
+export enum AgeUnit {
+    DAYS = "DAYS",
+    WEEKS = "WEEKS",
+    MONTHS = "MONTHS",
+    YEARS = "YEARS"
 }
 
-export interface RequestMediaUploadInput {
-  contentType: string;
-  fileSizeBytes: number;
+export enum ReporterRole {
+    REPORTING = "REPORTING",
+    ON_SITE = "ON_SITE",
+    CAN_TRANSPORT = "CAN_TRANSPORT"
 }
 
-export interface RequestProfilePhotoUploadInput {
-  contentType: string;
-  fileSizeBytes: number;
+export enum FoundAnimalCondition {
+    HEALTHY = "HEALTHY",
+    INJURED = "INJURED",
+    UNKNOWN = "UNKNOWN"
 }
 
-export interface CompleteProfileInput {
-  fullName: string;
-  phoneNumber: string;
-  cityId?: Nullable<string>;
-  location?: Nullable<GeoLocationInput>;
-  languagePreference?: Nullable<Language>;
+export enum SpaceRequirement {
+    APARTMENT_OK = "APARTMENT_OK",
+    NEEDS_YARD = "NEEDS_YARD",
+    NEEDS_FARM_OR_LARGE_SPACE = "NEEDS_FARM_OR_LARGE_SPACE"
 }
 
-export interface GeoLocationInput {
-  latitude: number;
-  longitude: number;
+export enum LivingSituation {
+    APARTMENT = "APARTMENT",
+    HOUSE_WITH_YARD = "HOUSE_WITH_YARD",
+    FARM = "FARM",
+    OTHER = "OTHER"
 }
 
-export interface UpdateProfileInput {
-  fullName: string;
-  phoneNumber?: Nullable<string>;
+export enum ProductCategory {
+    CARE = "CARE",
+    FOOD = "FOOD",
+    TRANSPORT = "TRANSPORT",
+    ACCESSORIES = "ACCESSORIES",
+    GROOMING = "GROOMING",
+    MEDICAL_SUPPLIES = "MEDICAL_SUPPLIES",
+    OTHER = "OTHER"
 }
 
-export interface CreateCommentInput {
-  clientRequestId: string;
-  postId: string;
-  text: string;
-  mediaIds?: Nullable<string[]>;
+export enum ProductCondition {
+    NEW = "NEW",
+    LIKE_NEW = "LIKE_NEW",
+    USED = "USED"
 }
 
-export interface CreateReplyInput {
-  clientRequestId: string;
-  commentId: string;
-  text: string;
+export enum RequestStatus {
+    PENDING = "PENDING",
+    APPROVED = "APPROVED",
+    REJECTED = "REJECTED"
 }
 
-export interface AdoptionApplicationConnection {
-  edges: AdoptionApplicationEdge[];
-  pageInfo: PageInfo;
+export enum ReportReason {
+    UNRELATED_TO_ANIMALS = "UNRELATED_TO_ANIMALS",
+    SPAM = "SPAM",
+    INAPPROPRIATE_CONTENT = "INAPPROPRIATE_CONTENT",
+    SCAM = "SCAM",
+    DUPLICATE = "DUPLICATE",
+    OTHER = "OTHER"
 }
 
-export interface AdoptionApplicationEdge {
-  node: AdoptionApplication;
-  cursor: string;
+export enum NotificationType {
+    NEW_UPVOTE = "NEW_UPVOTE",
+    POST_SAVED = "POST_SAVED",
+    CONTACT_REQUEST_RECEIVED = "CONTACT_REQUEST_RECEIVED",
+    CONTACT_REQUEST_APPROVED = "CONTACT_REQUEST_APPROVED",
+    CONTACT_REQUEST_REJECTED = "CONTACT_REQUEST_REJECTED",
+    ADOPTION_APPLICATION_RECEIVED = "ADOPTION_APPLICATION_RECEIVED",
+    ADOPTION_APPLICATION_APPROVED = "ADOPTION_APPLICATION_APPROVED",
+    ADOPTION_APPLICATION_REJECTED = "ADOPTION_APPLICATION_REJECTED",
+    POST_REMOVED_BY_ADMIN = "POST_REMOVED_BY_ADMIN",
+    POST_RESOLVED_BY_ADMIN = "POST_RESOLVED_BY_ADMIN",
+    POST_REOPENED_BY_ADMIN = "POST_REOPENED_BY_ADMIN",
+    POST_INACTIVITY_NUDGE = "POST_INACTIVITY_NUDGE",
+    SYSTEM_ANNOUNCEMENT = "SYSTEM_ANNOUNCEMENT",
+    NEW_COMMENT = "NEW_COMMENT",
+    NEW_REPLY = "NEW_REPLY",
+    COMMENT_BOOSTED = "COMMENT_BOOSTED",
+    COMMENT_PINNED = "COMMENT_PINNED",
+    POST_COMPLETED = "POST_COMPLETED",
+    POST_REOPENED = "POST_REOPENED",
+    RESCUE_COMPLETED = "RESCUE_COMPLETED",
+    RESCUE_REOPENED = "RESCUE_REOPENED"
 }
 
-export interface IQuery {
-  myAdoptionApplications(
-    first?: Nullable<number>,
-    after?: Nullable<string>,
-  ): AdoptionApplicationConnection | Promise<AdoptionApplicationConnection>;
-  postAdoptionApplications(
-    postId: string,
-    status?: Nullable<RequestStatus>,
-    first?: Nullable<number>,
-    after?: Nullable<string>,
-  ): AdoptionApplicationConnection | Promise<AdoptionApplicationConnection>;
-  getAdoptionWhatsAppLink(applicationId: string): string | Promise<string>;
-  cities(): City[] | Promise<City[]>;
-  myContactRequests(
-    postId?: Nullable<string>,
-    status?: Nullable<RequestStatus>,
-    first?: Nullable<number>,
-    after?: Nullable<string>,
-  ): ContactRequestConnection | Promise<ContactRequestConnection>;
-  postContactRequests(
-    postId: string,
-    status?: Nullable<RequestStatus>,
-    first?: Nullable<number>,
-    after?: Nullable<string>,
-  ): ContactRequestConnection | Promise<ContactRequestConnection>;
-  getWhatsAppLink(requestId: string): string | Promise<string>;
-  getProductSellerContact(postId: string): string | Promise<string>;
-  matingFeed(
-    filter?: Nullable<MatingFeedFilter>,
-    first?: Nullable<number>,
-    after?: Nullable<string>,
-    search?: Nullable<string>,
-  ): MatingPostConnection | Promise<MatingPostConnection>;
-  matingPostDetail(postId: string): Nullable<MatingDetails> | Promise<Nullable<MatingDetails>>;
-  myNotifications(
-    first?: Nullable<number>,
-    after?: Nullable<string>,
-  ): NotificationConnection | Promise<NotificationConnection>;
-  myUnreadNotificationCount(): number | Promise<number>;
-  myPostNotificationPreferences(postId: string): PostNotificationPreferences | Promise<PostNotificationPreferences>;
-  post(id: string): Nullable<Post> | Promise<Nullable<Post>>;
-  rescuePostDetail(postId: string): Nullable<RescuePost> | Promise<Nullable<RescuePost>>;
-  lostPostDetail(postId: string): Nullable<LostPost> | Promise<Nullable<LostPost>>;
-  adoptionPostDetail(postId: string): Nullable<AdoptionPost> | Promise<Nullable<AdoptionPost>>;
-  productPostDetail(postId: string): Nullable<ProductPost> | Promise<Nullable<ProductPost>>;
-  helpFeed(
-    governorate?: Nullable<string>,
-    cityId?: Nullable<string>,
-    viewerLocation?: Nullable<ViewerLocationInput>,
-    radiusKm?: Nullable<number>,
-    first?: Nullable<number>,
-    after?: Nullable<string>,
-    search?: Nullable<string>,
-  ): PostConnection | Promise<PostConnection>;
-  adoptFeed(
-    governorate?: Nullable<string>,
-    cityId?: Nullable<string>,
-    viewerLocation?: Nullable<ViewerLocationInput>,
-    radiusKm?: Nullable<number>,
-    sort?: Nullable<AdoptFeedSort>,
-    first?: Nullable<number>,
-    after?: Nullable<string>,
-    search?: Nullable<string>,
-  ): PostConnection | Promise<PostConnection>;
-  marketFeed(
-    governorate?: Nullable<string>,
-    cityId?: Nullable<string>,
-    viewerLocation?: Nullable<ViewerLocationInput>,
-    radiusKm?: Nullable<number>,
-    category?: Nullable<ProductCategory>,
-    sort?: Nullable<MarketFeedSort>,
-    first?: Nullable<number>,
-    after?: Nullable<string>,
-    search?: Nullable<string>,
-  ): PostConnection | Promise<PostConnection>;
-  homeFeed(
-    governorate?: Nullable<string>,
-    cityId?: Nullable<string>,
-    viewerLocation?: Nullable<ViewerLocationInput>,
-    radiusKm?: Nullable<number>,
-    first?: Nullable<number>,
-    after?: Nullable<string>,
-    search?: Nullable<string>,
-  ): PostConnection | Promise<PostConnection>;
-  mySavedPosts(first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
-  myPosts(
-    postType: PostType,
-    first?: Nullable<number>,
-    after?: Nullable<string>,
-  ): PostConnection | Promise<PostConnection>;
-  me(): User | Promise<User>;
-  terms(): TermsInfo | Promise<TermsInfo>;
-  accountDeletionProgress(
-    deletionId: string,
-    progressToken: string,
-  ): AccountDeletionPayload | Promise<AccountDeletionPayload>;
-  nearbyVetClinics(cityId: string): VetClinic[] | Promise<VetClinic[]>;
-  comments(
-    postId: string,
-    sort?: Nullable<CommentSort>,
-    first?: Nullable<number>,
-    after?: Nullable<string>,
-  ): CommentConnection | Promise<CommentConnection>;
-  replies(
-    commentId: string,
-    first?: Nullable<number>,
-    after?: Nullable<string>,
-  ): CommentConnection | Promise<CommentConnection>;
+export enum PersonalityTag {
+    PLAYFUL = "PLAYFUL",
+    GENTLE = "GENTLE",
+    INDOOR = "INDOOR",
+    OUTDOOR = "OUTDOOR",
+    GOOD_WITH_KIDS = "GOOD_WITH_KIDS",
+    GOOD_WITH_CATS = "GOOD_WITH_CATS",
+    GOOD_WITH_DOGS = "GOOD_WITH_DOGS",
+    SHY = "SHY",
+    ENERGETIC = "ENERGETIC",
+    CALM = "CALM"
+}
+
+export enum CityLifecycleStatus {
+    OFFICIAL = "OFFICIAL",
+    LEGACY = "LEGACY",
+    RETIRED = "RETIRED"
+}
+
+export enum DevicePlatform {
+    ANDROID = "ANDROID",
+    IOS = "IOS"
+}
+
+export enum AdoptFeedSort {
+    HOT = "HOT",
+    NEWEST = "NEWEST"
+}
+
+export enum MarketFeedSort {
+    HOT = "HOT",
+    NEWEST = "NEWEST"
+}
+
+export enum Language {
+    ar = "ar",
+    en = "en"
 }
 
 export enum AccountDeletionStatus {
-  PENDING = 'PENDING',
-  COMPLETED = 'COMPLETED',
-  FAILED = 'FAILED',
+    PENDING = "PENDING",
+    COMPLETED = "COMPLETED",
+    FAILED = "FAILED"
 }
 
-export interface AccountDeletionPayload {
-  status: AccountDeletionStatus;
-  deletionId: string;
-  progressToken?: Nullable<string>;
-  message: string;
-  acceptedAt: Date;
-  completedAt?: Nullable<Date>;
+export interface ReportUserInput {
+    userId: string;
+    reason: AccountReportReason;
+    details?: Nullable<string>;
+    sourceType?: Nullable<AccountReportSourceType>;
+    sourceId?: Nullable<string>;
 }
 
-export interface TermsInfo {
-  currentVersion?: Nullable<string>;
-  termsUrl?: Nullable<string>;
-  acceptedVersion?: Nullable<string>;
-  acceptedAt?: Nullable<DateTime>;
-  acceptanceRequired: boolean;
+export interface SubmitAdoptionApplicationInput {
+    targetPostId: string;
+    speciesPreference?: Nullable<SpeciesType>;
+    breedPreference?: Nullable<string>;
+    agePreference?: Nullable<string>;
+    genderPreference?: Nullable<GenderType>;
+    livingSituation: LivingSituation;
+    hasOutdoorAccess: boolean;
+    hasOtherPetsAtHome: boolean;
+    hasChildrenAtHome: boolean;
+    hoursAtHomePerDay?: Nullable<number>;
+    previousPetExperience?: Nullable<string>;
+    whyAdopt: string;
+    consentHomeVisit: boolean;
+    canProvideVetReference: boolean;
 }
 
-export interface DeleteMyAccountInput {
-  confirm: boolean;
-  progressToken?: Nullable<string>;
+export interface CreateCommentInput {
+    clientRequestId: string;
+    postId: string;
+    text: string;
+    mediaIds?: Nullable<string[]>;
 }
 
-export interface AcceptTermsInput {
-  version: string;
+export interface CreateReplyInput {
+    clientRequestId: string;
+    commentId: string;
+    text: string;
+}
+
+export interface ReportCommentInput {
+    commentId: string;
+    reason: ReportReason;
+    details?: Nullable<string>;
+}
+
+export interface RequestCommentImageUploadInput {
+    contentType: string;
+    fileSizeBytes: number;
+}
+
+export interface MatingFeedFilter {
+    species?: Nullable<SpeciesType>;
+    gender?: Nullable<GenderType>;
+    breed?: Nullable<string>;
+    cityId?: Nullable<string>;
+}
+
+export interface CreateMatingPostInput {
+    petName: string;
+    species: SpeciesType;
+    breed: string;
+    gender: GenderType;
+    ageValue: number;
+    ageUnit: AgeUnit;
+    isPurebred: boolean;
+    hasPedigreeCertificate?: Nullable<boolean>;
+    vaccinated?: Nullable<boolean>;
+    dewormed?: Nullable<boolean>;
+    termsSummary?: Nullable<string>;
+    matingConditions?: Nullable<string>;
+    cityId: string;
+    mediaIds: string[];
 }
 
 export interface RegisterDeviceInput {
-  token: string;
-  platform: DevicePlatform;
+    token: string;
+    platform: DevicePlatform;
+}
+
+export interface ReportPostInput {
+    postId: string;
+    reason: ReportReason;
+    details?: Nullable<string>;
+}
+
+export interface CreateRescuePostInput {
+    title: string;
+    description: string;
+    cityId?: Nullable<string>;
+    coordinates: GeoLocationInput;
+    areaName?: Nullable<string>;
+    species: SpeciesType;
+    conditionSummary: string;
+    reporterRole: ReporterRole;
+    isLifeThreatening: boolean;
+    hasVisibleSeriousInjury: boolean;
+    isInDangerousLocation: boolean;
+    canAnimalMoveOrEscape: boolean;
+    mediaIds?: Nullable<string[]>;
+}
+
+export interface CreateLostPostInput {
+    title: string;
+    description: string;
+    cityId?: Nullable<string>;
+    coordinates: GeoLocationInput;
+    areaName?: Nullable<string>;
+    reportType: LostFoundType;
+    species: SpeciesType;
+    breed?: Nullable<string>;
+    colorAndMarkings?: Nullable<string>;
+    hasCollarWithIdentificationTag?: Nullable<boolean>;
+    circumstances?: Nullable<string>;
+    petName?: Nullable<string>;
+    dateLastSeen?: Nullable<string>;
+    hasMedicalNeeds?: Nullable<boolean>;
+    isElderlyOrVeryYoung?: Nullable<boolean>;
+    lastSeenNearHazard?: Nullable<boolean>;
+    currentCondition?: Nullable<FoundAnimalCondition>;
+    isCurrentlySafeWithReporter?: Nullable<boolean>;
+    dateFound?: Nullable<string>;
+    mediaIds?: Nullable<string[]>;
+}
+
+export interface CreateAdoptionPostInput {
+    title: string;
+    description: string;
+    cityId?: Nullable<string>;
+    coordinates: GeoLocationInput;
+    areaName?: Nullable<string>;
+    petName: string;
+    species: SpeciesType;
+    breed?: Nullable<string>;
+    ageValue?: Nullable<number>;
+    ageUnit?: Nullable<AgeUnit>;
+    gender: GenderType;
+    vaccinated: boolean;
+    neutered: boolean;
+    healthNotes?: Nullable<string>;
+    personalityTags?: Nullable<PersonalityTag[]>;
+    spaceRequirement?: Nullable<SpaceRequirement>;
+    priorPetExperienceRequired: boolean;
+    additionalRequirements?: Nullable<string>;
+    currentlyWith?: Nullable<string>;
+    mediaIds?: Nullable<string[]>;
+}
+
+export interface CreateProductPostInput {
+    title: string;
+    description: string;
+    cityId?: Nullable<string>;
+    coordinates: GeoLocationInput;
+    areaName?: Nullable<string>;
+    category: ProductCategory;
+    condition: ProductCondition;
+    priceAmount?: Nullable<number>;
+    priceCurrency?: Nullable<string>;
+    isFree: boolean;
+    openToOffers?: Nullable<boolean>;
+    mediaIds?: Nullable<string[]>;
+}
+
+export interface ViewerLocationInput {
+    latitude: number;
+    longitude: number;
+}
+
+export interface AcceptTermsInput {
+    version: string;
+}
+
+export interface RequestMediaUploadInput {
+    contentType: string;
+    fileSizeBytes: number;
+}
+
+export interface RequestProfilePhotoUploadInput {
+    contentType: string;
+    fileSizeBytes: number;
+}
+
+export interface CompleteProfileInput {
+    fullName: string;
+    phoneNumber: string;
+    cityId?: Nullable<string>;
+    location?: Nullable<GeoLocationInput>;
+    languagePreference?: Nullable<Language>;
+}
+
+export interface GeoLocationInput {
+    latitude: number;
+    longitude: number;
+}
+
+export interface UpdateProfileInput {
+    fullName: string;
+    phoneNumber?: Nullable<string>;
+}
+
+export interface DeleteMyAccountInput {
+    confirm: boolean;
+    progressToken?: Nullable<string>;
 }
 
 export interface IMutation {
-  createComment(input: CreateCommentInput): Comment | Promise<Comment>;
-  createReply(input: CreateReplyInput): Comment | Promise<Comment>;
-  deleteComment(id: string): boolean | Promise<boolean>;
-  submitAdoptionApplication(input: SubmitAdoptionApplicationInput): AdoptionApplication | Promise<AdoptionApplication>;
-  approveAdoptionApplication(applicationId: string): AdoptionApplication | Promise<AdoptionApplication>;
-  rejectAdoptionApplication(applicationId: string): AdoptionApplication | Promise<AdoptionApplication>;
-  requestContact(postId: string, message: string): ContactRequest | Promise<ContactRequest>;
-  approveContactRequest(requestId: string): ContactRequest | Promise<ContactRequest>;
-  rejectContactRequest(requestId: string): ContactRequest | Promise<ContactRequest>;
-  createMatingPost(input: CreateMatingPostInput): Post | Promise<Post>;
-  markNotificationRead(notificationId: string): Notification | Promise<Notification>;
-  markAllNotificationsRead(): number | Promise<number>;
-  setPostNotificationsMuted(
-    postId: string,
-    muted: boolean,
-  ): PostNotificationPreferences | Promise<PostNotificationPreferences>;
-  registerDevice(input: RegisterDeviceInput): DeviceRegistration | Promise<DeviceRegistration>;
-  unregisterDevice(token: string): boolean | Promise<boolean>;
-  createRescuePost(input: CreateRescuePostInput): Post | Promise<Post>;
-  createLostPost(input: CreateLostPostInput): Post | Promise<Post>;
-  createAdoptionPost(input: CreateAdoptionPostInput): Post | Promise<Post>;
-  createProductPost(input: CreateProductPostInput): Post | Promise<Post>;
-  deletePost(postId: string): boolean | Promise<boolean>;
-  toggleUpvote(postId: string): Post | Promise<Post>;
-  toggleSave(postId: string): Post | Promise<Post>;
-  updatePostStatus(postId: string, status: PostStatus): Post | Promise<Post>;
-  renewPost(postId: string): Post | Promise<Post>;
-  recordView(postId: string): boolean | Promise<boolean>;
-  requestMediaUploadUrl(input: RequestMediaUploadInput): MediaUploadResponse | Promise<MediaUploadResponse>;
-  requestProfilePhotoUploadUrl(
-    input: RequestProfilePhotoUploadInput,
-  ): ProfilePhotoUploadTicket | Promise<ProfilePhotoUploadTicket>;
-  completeProfile(input: CompleteProfileInput): User | Promise<User>;
-  updateProfile(input: UpdateProfileInput): User | Promise<User>;
-  updateMyLocation(location: GeoLocationInput): User | Promise<User>;
-  setProfilePhoto(mediaId: string): User | Promise<User>;
-  removeProfilePhoto(): User | Promise<User>;
-  updateMyLanguagePreference(languagePreference: Language): User | Promise<User>;
-  updateMyNotificationPreferences(notificationsEnabled: boolean): User | Promise<User>;
-  deleteMyAccount(input: DeleteMyAccountInput): AccountDeletionPayload | Promise<AccountDeletionPayload>;
-  acceptTerms(input: AcceptTermsInput): TermsInfo | Promise<TermsInfo>;
+    reportUser(input: ReportUserInput): boolean | Promise<boolean>;
+    submitAdoptionApplication(input: SubmitAdoptionApplicationInput): AdoptionApplication | Promise<AdoptionApplication>;
+    approveAdoptionApplication(applicationId: string): AdoptionApplication | Promise<AdoptionApplication>;
+    rejectAdoptionApplication(applicationId: string): AdoptionApplication | Promise<AdoptionApplication>;
+    blockUser(userId: string): boolean | Promise<boolean>;
+    unblockUser(userId: string): boolean | Promise<boolean>;
+    requestCommentImageUploadUrl(input: RequestCommentImageUploadInput): CommentImageUploadTicket | Promise<CommentImageUploadTicket>;
+    createComment(input: CreateCommentInput): Comment | Promise<Comment>;
+    createReply(input: CreateReplyInput): Comment | Promise<Comment>;
+    deleteComment(id: string): boolean | Promise<boolean>;
+    toggleCommentBoost(commentId: string): ToggleCommentBoostPayload | Promise<ToggleCommentBoostPayload>;
+    pinComment(commentId: string): Comment | Promise<Comment>;
+    unpinComment(postId: string): boolean | Promise<boolean>;
+    reportComment(input: ReportCommentInput): boolean | Promise<boolean>;
+    requestContact(postId: string, message: string): ContactRequest | Promise<ContactRequest>;
+    approveContactRequest(requestId: string): ContactRequest | Promise<ContactRequest>;
+    rejectContactRequest(requestId: string): ContactRequest | Promise<ContactRequest>;
+    createMatingPost(input: CreateMatingPostInput): Post | Promise<Post>;
+    registerDevice(input: RegisterDeviceInput): DeviceRegistration | Promise<DeviceRegistration>;
+    unregisterDevice(token: string): boolean | Promise<boolean>;
+    markNotificationRead(notificationId: string): Notification | Promise<Notification>;
+    markAllNotificationsRead(): number | Promise<number>;
+    setPostNotificationsMuted(postId: string, muted: boolean): PostNotificationPreferences | Promise<PostNotificationPreferences>;
+    createRescuePost(input: CreateRescuePostInput): Post | Promise<Post>;
+    createLostPost(input: CreateLostPostInput): Post | Promise<Post>;
+    createAdoptionPost(input: CreateAdoptionPostInput): Post | Promise<Post>;
+    createProductPost(input: CreateProductPostInput): Post | Promise<Post>;
+    deletePost(postId: string): boolean | Promise<boolean>;
+    toggleUpvote(postId: string): Post | Promise<Post>;
+    toggleSave(postId: string): Post | Promise<Post>;
+    updatePostStatus(postId: string, status: PostStatus): Post | Promise<Post>;
+    renewPost(postId: string): Post | Promise<Post>;
+    recordView(postId: string): boolean | Promise<boolean>;
+    reportPost(input: ReportPostInput): boolean | Promise<boolean>;
+    acceptTerms(input: AcceptTermsInput): TermsInfo | Promise<TermsInfo>;
+    requestMediaUploadUrl(input: RequestMediaUploadInput): MediaUploadResponse | Promise<MediaUploadResponse>;
+    requestProfilePhotoUploadUrl(input: RequestProfilePhotoUploadInput): ProfilePhotoUploadTicket | Promise<ProfilePhotoUploadTicket>;
+    completeProfile(input: CompleteProfileInput): User | Promise<User>;
+    updateProfile(input: UpdateProfileInput): User | Promise<User>;
+    updateMyLocation(location: GeoLocationInput): User | Promise<User>;
+    setProfilePhoto(mediaId: string): User | Promise<User>;
+    removeProfilePhoto(): User | Promise<User>;
+    updateMyLanguagePreference(languagePreference: Language): User | Promise<User>;
+    updateMyNotificationPreferences(notificationsEnabled: boolean): User | Promise<User>;
+    deleteMyAccount(input: DeleteMyAccountInput): AccountDeletionPayload | Promise<AccountDeletionPayload>;
+}
+
+export interface AdoptionApplicationConnection {
+    edges: AdoptionApplicationEdge[];
+    pageInfo: PageInfo;
+}
+
+export interface AdoptionApplicationEdge {
+    node: AdoptionApplication;
+    cursor: string;
+}
+
+export interface IQuery {
+    myAdoptionApplications(first?: Nullable<number>, after?: Nullable<string>): AdoptionApplicationConnection | Promise<AdoptionApplicationConnection>;
+    postAdoptionApplications(postId: string, status?: Nullable<RequestStatus>, first?: Nullable<number>, after?: Nullable<string>): AdoptionApplicationConnection | Promise<AdoptionApplicationConnection>;
+    getAdoptionWhatsAppLink(applicationId: string): string | Promise<string>;
+    blockedUsers(first?: Nullable<number>, after?: Nullable<string>): BlockedUserConnection | Promise<BlockedUserConnection>;
+    cities(): City[] | Promise<City[]>;
+    comments(postId: string, sort?: Nullable<CommentSort>, first?: Nullable<number>, after?: Nullable<string>): CommentConnection | Promise<CommentConnection>;
+    replies(commentId: string, first?: Nullable<number>, after?: Nullable<string>): CommentConnection | Promise<CommentConnection>;
+    myContactRequests(postId?: Nullable<string>, status?: Nullable<RequestStatus>, first?: Nullable<number>, after?: Nullable<string>): ContactRequestConnection | Promise<ContactRequestConnection>;
+    postContactRequests(postId: string, status?: Nullable<RequestStatus>, first?: Nullable<number>, after?: Nullable<string>): ContactRequestConnection | Promise<ContactRequestConnection>;
+    getWhatsAppLink(requestId: string): string | Promise<string>;
+    getProductSellerContact(postId: string): string | Promise<string>;
+    matingFeed(filter?: Nullable<MatingFeedFilter>, first?: Nullable<number>, after?: Nullable<string>, search?: Nullable<string>): MatingPostConnection | Promise<MatingPostConnection>;
+    matingPostDetail(postId: string): Nullable<MatingDetails> | Promise<Nullable<MatingDetails>>;
+    myNotifications(first?: Nullable<number>, after?: Nullable<string>): NotificationConnection | Promise<NotificationConnection>;
+    myUnreadNotificationCount(): number | Promise<number>;
+    myPostNotificationPreferences(postId: string): PostNotificationPreferences | Promise<PostNotificationPreferences>;
+    post(id: string): Nullable<Post> | Promise<Nullable<Post>>;
+    rescuePostDetail(postId: string): Nullable<RescuePost> | Promise<Nullable<RescuePost>>;
+    lostPostDetail(postId: string): Nullable<LostPost> | Promise<Nullable<LostPost>>;
+    adoptionPostDetail(postId: string): Nullable<AdoptionPost> | Promise<Nullable<AdoptionPost>>;
+    productPostDetail(postId: string): Nullable<ProductPost> | Promise<Nullable<ProductPost>>;
+    helpFeed(governorate?: Nullable<string>, cityId?: Nullable<string>, viewerLocation?: Nullable<ViewerLocationInput>, radiusKm?: Nullable<number>, first?: Nullable<number>, after?: Nullable<string>, search?: Nullable<string>): PostConnection | Promise<PostConnection>;
+    adoptFeed(governorate?: Nullable<string>, cityId?: Nullable<string>, viewerLocation?: Nullable<ViewerLocationInput>, radiusKm?: Nullable<number>, sort?: Nullable<AdoptFeedSort>, first?: Nullable<number>, after?: Nullable<string>, search?: Nullable<string>): PostConnection | Promise<PostConnection>;
+    marketFeed(governorate?: Nullable<string>, cityId?: Nullable<string>, viewerLocation?: Nullable<ViewerLocationInput>, radiusKm?: Nullable<number>, category?: Nullable<ProductCategory>, sort?: Nullable<MarketFeedSort>, first?: Nullable<number>, after?: Nullable<string>, search?: Nullable<string>): PostConnection | Promise<PostConnection>;
+    homeFeed(governorate?: Nullable<string>, cityId?: Nullable<string>, viewerLocation?: Nullable<ViewerLocationInput>, radiusKm?: Nullable<number>, first?: Nullable<number>, after?: Nullable<string>, search?: Nullable<string>): PostConnection | Promise<PostConnection>;
+    mySavedPosts(first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
+    myPosts(postType: PostType, first?: Nullable<number>, after?: Nullable<string>): PostConnection | Promise<PostConnection>;
+    terms(): TermsInfo | Promise<TermsInfo>;
+    me(): User | Promise<User>;
+    accountDeletionProgress(deletionId: string, progressToken: string): AccountDeletionPayload | Promise<AccountDeletionPayload>;
+    nearbyVetClinics(cityId: string): VetClinic[] | Promise<VetClinic[]>;
+}
+
+export interface BlockedUser {
+    id: string;
+    fullName?: Nullable<string>;
+    fullNameArabic?: Nullable<string>;
+    profilePictureUrl?: Nullable<string>;
+    isVerified: boolean;
+}
+
+export interface BlockedUserEdge {
+    node: BlockedUser;
+    blockedAt: DateTime;
+    cursor: string;
+}
+
+export interface BlockedUserConnection {
+    edges: BlockedUserEdge[];
+    pageInfo: PageInfo;
 }
 
 export interface City {
-  id: string;
-  nameEnglish: string;
-  nameArabic: string;
-  governorate: string;
-  status: CityLifecycleStatus;
+    id: string;
+    nameEnglish: string;
+    nameArabic: string;
+    governorate: string;
+    status: CityLifecycleStatus;
 }
 
-export interface ContactRequestConnection {
-  edges: ContactRequestEdge[];
-  pageInfo: PageInfo;
-}
-
-export interface ContactRequestEdge {
-  node: ContactRequest;
-  cursor: string;
-}
-
-export interface MatingDetails {
-  petName: string;
-  species: SpeciesType;
-  breed: string;
-  gender: GenderType;
-  ageValue: number;
-  ageUnit: AgeUnit;
-  isPurebred: boolean;
-  hasPedigreeCertificate: boolean;
-  vaccinated: boolean;
-  dewormed: boolean;
-  termsSummary?: Nullable<string>;
-  matingConditions?: Nullable<string>;
-}
-
-export interface MatingPostEdge {
-  node: Post;
-  cursor: string;
-}
-
-export interface MatingPostConnection {
-  edges: MatingPostEdge[];
-  pageInfo: PageInfo;
-}
-
-export interface NotificationConnection {
-  edges: NotificationEdge[];
-  pageInfo: PageInfo;
-  unreadCount: number;
-}
-
-export interface NotificationEdge {
-  node: Notification;
-  cursor: string;
-}
-
-export interface GeoLocation {
-  latitude: number;
-  longitude: number;
-}
-
-export interface PostMedia {
-  id: string;
-  publicUrl: string;
-  displayOrder: number;
-  fileContentType?: Nullable<string>;
-  width?: Nullable<number>;
-  height?: Nullable<number>;
-}
-
-export interface Post {
-  id: string;
-  creator: User;
-  postType: PostType;
-  title: string;
-  description: string;
-  status: PostStatus;
-  moderationStatus: ModerationStatus;
-  urgency?: Nullable<UrgencyTier>;
-  city: City;
-  areaName?: Nullable<string>;
-  coordinates?: Nullable<GeoLocation>;
-  marketCategory?: Nullable<ProductCategory>;
-  upvoteCount: number;
-  saveCount: number;
-  viewCount: number;
-  commentCount: number;
-  effectiveScore: number;
-  isUpvotedByMe: boolean;
-  isSavedByMe: boolean;
-  media: PostMedia[];
-  createdAt: DateTime;
-  updatedAt: DateTime;
-  nearestVetClinics: VetClinic[];
+export interface CommentMedia {
+    id: string;
+    publicUrl: string;
+    width: number;
+    height: number;
+    displayOrder: number;
 }
 
 export interface Comment {
-  id: string;
-  postId: string;
-  parentId?: Nullable<string>;
-  author?: Nullable<User>;
-  text: string;
-  status: CommentStatus;
-  replyCount: number;
-  createdAt: DateTime;
-  updatedAt: DateTime;
+    id: string;
+    postId: string;
+    parentId?: Nullable<string>;
+    author?: Nullable<User>;
+    text: string;
+    status: CommentStatus;
+    replyCount: number;
+    boostCount: number;
+    isBoostedByMe: boolean;
+    isPinned: boolean;
+    media: CommentMedia[];
+    createdAt: DateTime;
+    updatedAt: DateTime;
 }
 
 export interface CommentEdge {
-  node: Comment;
-  cursor: string;
+    node: Comment;
+    cursor: string;
 }
 
 export interface CommentConnection {
-  edges: CommentEdge[];
-  pageInfo: PageInfo;
+    edges: CommentEdge[];
+    pageInfo: PageInfo;
 }
 
-export interface RescuePost {
-  postId: string;
-  species: SpeciesType;
-  conditionSummary: string;
-  reporterRole: ReporterRole;
-  isLifeThreatening: boolean;
-  hasVisibleSeriousInjury: boolean;
-  isInDangerousLocation: boolean;
-  canAnimalMoveOrEscape: boolean;
+export interface CommentImageUploadTicket {
+    mediaId: string;
+    uploadUrl: string;
+    expiresAt: DateTime;
+    maxSizeBytes: number;
+    maxWidth: number;
+    maxHeight: number;
+    allowedContentType: string;
 }
 
-export interface LostPost {
-  postId: string;
-  reportType: LostFoundType;
-  species: SpeciesType;
-  breed?: Nullable<string>;
-  colorAndMarkings?: Nullable<string>;
-  hasCollarWithIdentificationTag?: Nullable<boolean>;
-  circumstances?: Nullable<string>;
-  petName?: Nullable<string>;
-  dateLastSeen?: Nullable<string>;
-  hasMedicalNeeds?: Nullable<boolean>;
-  isElderlyOrVeryYoung?: Nullable<boolean>;
-  lastSeenNearHazard?: Nullable<boolean>;
-  currentCondition?: Nullable<FoundAnimalCondition>;
-  isCurrentlySafeWithReporter?: Nullable<boolean>;
-  dateFound?: Nullable<string>;
+export interface ToggleCommentBoostPayload {
+    commentId: string;
+    isBoostedByMe: boolean;
+    boostedByMe: boolean;
+    boostCount: number;
 }
 
-export interface AdoptionPost {
-  postId: string;
-  petName: string;
-  species: SpeciesType;
-  breed?: Nullable<string>;
-  ageValue?: Nullable<number>;
-  ageUnit?: Nullable<AgeUnit>;
-  gender: GenderType;
-  vaccinated: boolean;
-  neutered: boolean;
-  healthNotes?: Nullable<string>;
-  personalityTags: PersonalityTag[];
-  spaceRequirement?: Nullable<SpaceRequirement>;
-  priorPetExperienceRequired: boolean;
-  additionalRequirements?: Nullable<string>;
-  currentlyWith?: Nullable<string>;
+export interface ContactRequestConnection {
+    edges: ContactRequestEdge[];
+    pageInfo: PageInfo;
 }
 
-export interface ProductPost {
-  postId: string;
-  category: ProductCategory;
-  condition: ProductCondition;
-  priceAmount?: Nullable<number>;
-  priceCurrency: string;
-  isFree: boolean;
-  openToOffers: boolean;
+export interface ContactRequestEdge {
+    node: ContactRequest;
+    cursor: string;
 }
 
-export interface ContactRequest {
-  id: string;
-  postId: string;
-  requester?: Nullable<User>;
-  message: string;
-  status: RequestStatus;
-  whatsappLink?: Nullable<string>;
-  respondedAt?: Nullable<DateTime>;
-  createdAt: DateTime;
+export interface MatingDetails {
+    petName: string;
+    species: SpeciesType;
+    breed: string;
+    gender: GenderType;
+    ageValue: number;
+    ageUnit: AgeUnit;
+    isPurebred: boolean;
+    hasPedigreeCertificate: boolean;
+    vaccinated: boolean;
+    dewormed: boolean;
+    termsSummary?: Nullable<string>;
+    matingConditions?: Nullable<string>;
 }
 
-export interface AdoptionApplication {
-  id: string;
-  targetPostId: string;
-  applicant?: Nullable<User>;
-  status: RequestStatus;
-  speciesPreference?: Nullable<SpeciesType>;
-  breedPreference?: Nullable<string>;
-  agePreference?: Nullable<string>;
-  genderPreference?: Nullable<GenderType>;
-  livingSituation: LivingSituation;
-  hasOutdoorAccess: boolean;
-  hasOtherPetsAtHome: boolean;
-  hasChildrenAtHome: boolean;
-  hoursAtHomePerDay?: Nullable<number>;
-  previousPetExperience?: Nullable<string>;
-  whyAdopt: string;
-  consentHomeVisit: boolean;
-  canProvideVetReference: boolean;
-  respondedAt?: Nullable<DateTime>;
-  createdAt: DateTime;
+export interface MatingPostEdge {
+    node: Post;
+    cursor: string;
 }
 
-export interface PostReport {
-  id: string;
-  postId: string;
-  reason: ReportReason;
-  details?: Nullable<string>;
-  createdAt: DateTime;
-}
-
-export interface Notification {
-  id: string;
-  type: NotificationType;
-  title: string;
-  body: string;
-  relatedPostId?: Nullable<string>;
-  isRead: boolean;
-  createdAt: DateTime;
+export interface MatingPostConnection {
+    edges: MatingPostEdge[];
+    pageInfo: PageInfo;
 }
 
 export interface DeviceRegistration {
-  id: string;
-  platform: DevicePlatform;
-  createdAt: DateTime;
-  updatedAt: DateTime;
+    id: string;
+    platform: DevicePlatform;
+    createdAt: DateTime;
+    updatedAt: DateTime;
+}
+
+export interface NotificationConnection {
+    edges: NotificationEdge[];
+    pageInfo: PageInfo;
+    unreadCount: number;
+}
+
+export interface NotificationEdge {
+    node: Notification;
+    cursor: string;
+}
+
+export interface PostNotificationPreferences {
+    postId: string;
+    isFollowing: boolean;
+    isMuted: boolean;
+    notificationsEnabled: boolean;
+}
+
+export interface GeoLocation {
+    latitude: number;
+    longitude: number;
+}
+
+export interface PostMedia {
+    id: string;
+    publicUrl: string;
+    displayOrder: number;
+    fileContentType?: Nullable<string>;
+    width?: Nullable<number>;
+    height?: Nullable<number>;
+}
+
+export interface Post {
+    id: string;
+    creator: User;
+    postType: PostType;
+    title: string;
+    description: string;
+    status: PostStatus;
+    moderationStatus: ModerationStatus;
+    urgency?: Nullable<UrgencyTier>;
+    city: City;
+    areaName?: Nullable<string>;
+    coordinates?: Nullable<GeoLocation>;
+    marketCategory?: Nullable<ProductCategory>;
+    upvoteCount: number;
+    saveCount: number;
+    viewCount: number;
+    commentCount: number;
+    effectiveScore: number;
+    isUpvotedByMe: boolean;
+    isSavedByMe: boolean;
+    media: PostMedia[];
+    product?: Nullable<ProductPost>;
+    createdAt: DateTime;
+    updatedAt: DateTime;
+    nearestVetClinics: VetClinic[];
+}
+
+export interface RescuePost {
+    postId: string;
+    species: SpeciesType;
+    conditionSummary: string;
+    reporterRole: ReporterRole;
+    isLifeThreatening: boolean;
+    hasVisibleSeriousInjury: boolean;
+    isInDangerousLocation: boolean;
+    canAnimalMoveOrEscape: boolean;
+}
+
+export interface LostPost {
+    postId: string;
+    reportType: LostFoundType;
+    species: SpeciesType;
+    breed?: Nullable<string>;
+    colorAndMarkings?: Nullable<string>;
+    hasCollarWithIdentificationTag?: Nullable<boolean>;
+    circumstances?: Nullable<string>;
+    petName?: Nullable<string>;
+    dateLastSeen?: Nullable<string>;
+    hasMedicalNeeds?: Nullable<boolean>;
+    isElderlyOrVeryYoung?: Nullable<boolean>;
+    lastSeenNearHazard?: Nullable<boolean>;
+    currentCondition?: Nullable<FoundAnimalCondition>;
+    isCurrentlySafeWithReporter?: Nullable<boolean>;
+    dateFound?: Nullable<string>;
+}
+
+export interface AdoptionPost {
+    postId: string;
+    petName: string;
+    species: SpeciesType;
+    breed?: Nullable<string>;
+    ageValue?: Nullable<number>;
+    ageUnit?: Nullable<AgeUnit>;
+    gender: GenderType;
+    vaccinated: boolean;
+    neutered: boolean;
+    healthNotes?: Nullable<string>;
+    personalityTags: PersonalityTag[];
+    spaceRequirement?: Nullable<SpaceRequirement>;
+    priorPetExperienceRequired: boolean;
+    additionalRequirements?: Nullable<string>;
+    currentlyWith?: Nullable<string>;
+}
+
+export interface ProductPost {
+    postId: string;
+    category: ProductCategory;
+    condition: ProductCondition;
+    priceAmount?: Nullable<number>;
+    priceCurrency: string;
+    isFree: boolean;
+    openToOffers: boolean;
+}
+
+export interface ContactRequest {
+    id: string;
+    postId: string;
+    requester?: Nullable<User>;
+    message: string;
+    status: RequestStatus;
+    whatsappLink?: Nullable<string>;
+    respondedAt?: Nullable<DateTime>;
+    createdAt: DateTime;
+}
+
+export interface AdoptionApplication {
+    id: string;
+    targetPostId: string;
+    applicant?: Nullable<User>;
+    status: RequestStatus;
+    speciesPreference?: Nullable<SpeciesType>;
+    breedPreference?: Nullable<string>;
+    agePreference?: Nullable<string>;
+    genderPreference?: Nullable<GenderType>;
+    livingSituation: LivingSituation;
+    hasOutdoorAccess: boolean;
+    hasOtherPetsAtHome: boolean;
+    hasChildrenAtHome: boolean;
+    hoursAtHomePerDay?: Nullable<number>;
+    previousPetExperience?: Nullable<string>;
+    whyAdopt: string;
+    consentHomeVisit: boolean;
+    canProvideVetReference: boolean;
+    respondedAt?: Nullable<DateTime>;
+    createdAt: DateTime;
+}
+
+export interface PostReport {
+    id: string;
+    postId: string;
+    reason: ReportReason;
+    details?: Nullable<string>;
+    createdAt: DateTime;
+}
+
+export interface Notification {
+    id: string;
+    type: NotificationType;
+    title: string;
+    body: string;
+    relatedPostId?: Nullable<string>;
+    relatedCommentId?: Nullable<string>;
+    isRead: boolean;
+    createdAt: DateTime;
 }
 
 export interface PageInfo {
-  endCursor?: Nullable<string>;
-  hasNextPage: boolean;
+    endCursor?: Nullable<string>;
+    hasNextPage: boolean;
 }
 
 export interface PostEdge {
-  node: Post;
-  cursor: string;
-  distanceKm?: Nullable<number>;
+    node: Post;
+    cursor: string;
+    distanceKm?: Nullable<number>;
 }
 
 export interface PostConnection {
-  edges: PostEdge[];
-  pageInfo: PageInfo;
+    edges: PostEdge[];
+    pageInfo: PageInfo;
+}
+
+export interface TermsInfo {
+    currentVersion?: Nullable<string>;
+    termsUrl?: Nullable<string>;
+    acceptedVersion?: Nullable<string>;
+    acceptedAt?: Nullable<DateTime>;
+    acceptanceRequired: boolean;
 }
 
 export interface MediaUploadResponse {
-  mediaId: string;
-  uploadUrl: string;
-  expiresAt: DateTime;
+    mediaId: string;
+    uploadUrl: string;
+    expiresAt: DateTime;
 }
 
 export interface ProfilePhotoUploadTicket {
-  mediaId: string;
-  uploadUrl: string;
-  expiresAt: DateTime;
-  maxSizeBytes: number;
-  maxWidth: number;
-  maxHeight: number;
-  allowedContentType: string;
+    mediaId: string;
+    uploadUrl: string;
+    expiresAt: DateTime;
+    maxSizeBytes: number;
+    maxWidth: number;
+    maxHeight: number;
+    allowedContentType: string;
 }
 
 export interface User {
-  id: string;
-  email?: Nullable<string>;
-  fullName?: Nullable<string>;
-  fullNameArabic?: Nullable<string>;
-  profilePictureUrl?: Nullable<string>;
-  isVerified: boolean;
-  phoneNumber?: Nullable<string>;
-  profileComplete: boolean;
-  homeCityId?: Nullable<string>;
-  city?: Nullable<City>;
-  postCount: number;
-  rescuePostCount: number;
-  lostPostCount: number;
-  adoptionPostCount: number;
-  productPostCount: number;
-  languagePreference?: Nullable<string>;
-  notificationsEnabled?: Nullable<boolean>;
-  lastSeenAt?: Nullable<DateTime>;
-  createdAt: DateTime;
-  updatedAt: DateTime;
+    id: string;
+    email?: Nullable<string>;
+    fullName?: Nullable<string>;
+    fullNameArabic?: Nullable<string>;
+    profilePictureUrl?: Nullable<string>;
+    isVerified: boolean;
+    phoneNumber?: Nullable<string>;
+    profileComplete: boolean;
+    homeCityId?: Nullable<string>;
+    city?: Nullable<City>;
+    postCount: number;
+    rescuePostCount: number;
+    lostPostCount: number;
+    adoptionPostCount: number;
+    productPostCount: number;
+    languagePreference?: Nullable<string>;
+    notificationsEnabled?: Nullable<boolean>;
+    lastSeenAt?: Nullable<DateTime>;
+    createdAt: DateTime;
+    updatedAt: DateTime;
+}
+
+export interface AccountDeletionPayload {
+    status: AccountDeletionStatus;
+    deletionId: string;
+    progressToken?: Nullable<string>;
+    message: string;
+    acceptedAt: DateTime;
+    completedAt?: Nullable<DateTime>;
 }
 
 export interface VetClinic {
-  id: string;
-  nameEnglish?: Nullable<string>;
-  nameArabic?: Nullable<string>;
-  phoneNumber?: Nullable<string>;
-  addressEnglish?: Nullable<string>;
-  addressArabic?: Nullable<string>;
-  address?: Nullable<string>;
-  city?: Nullable<City>;
-  cityId?: Nullable<string>;
-  website?: Nullable<string>;
-  latitude: number;
-  longitude: number;
-  distanceKm: number;
-  googleMapsUrl: string;
-  whatsappPhoneUrl?: Nullable<string>;
+    id: string;
+    nameEnglish?: Nullable<string>;
+    nameArabic?: Nullable<string>;
+    phoneNumber?: Nullable<string>;
+    addressEnglish?: Nullable<string>;
+    addressArabic?: Nullable<string>;
+    address?: Nullable<string>;
+    city?: Nullable<City>;
+    cityId?: Nullable<string>;
+    website?: Nullable<string>;
+    latitude: number;
+    longitude: number;
+    distanceKm: number;
+    googleMapsUrl: string;
+    whatsappPhoneUrl?: Nullable<string>;
 }
 
 export type DateTime = any;
 type Nullable<T> = T | null;
-
-export interface PostNotificationPreferences {
-  postId: string;
-  isFollowing: boolean;
-  isMuted: boolean;
-  notificationsEnabled: boolean;
-}

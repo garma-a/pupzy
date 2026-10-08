@@ -121,6 +121,7 @@ import type { GqlContext } from './common/types/gql-context.type';
               cityById: citiesService.createCityByIdLoader(),
               userById: usersService.createUserByIdLoader(),
               mediaByPostId: postsRepository.createMediaByPostIdLoader(),
+              productByPostId: postsRepository.createProductByPostIdLoader(),
               upvotedByMe: postsRepository.createUpvotedByMeLoader(),
               savedByMe: postsRepository.createSavedByMeLoader(),
               commentBoostedByMe: commentsRepository.createCommentBoostedByMeLoader(),
