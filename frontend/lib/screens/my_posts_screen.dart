@@ -5,6 +5,7 @@ import '../localization/lang_provider.dart';
 import '../models/feed_post.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/upvote_wording.dart';
 import '../widgets/blurred_thumbnail.dart';
 import '../widgets/image_with_fallback.dart';
 import '../widgets/skeleton_loader.dart';
@@ -305,8 +306,8 @@ class _MyPostTile extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     [
-                      // Marketplace listings can't be raised.
-                      if (post.postType != 'PRODUCT') '${post.upvoteCount} ${t(context, 'raises', 'تعزيز')}',
+                      // Marketplace listings have no upvote.
+                      if (post.postType != 'PRODUCT') UpvoteWording.of(post.postType).count(context, post.upvoteCount),
                       '${post.saveCount} ${t(context, 'saves', 'حفظ')}',
                       '${post.viewCount} ${t(context, 'views', 'مشاهدة')}',
                     ].join(' · '),

@@ -9,7 +9,9 @@ import '../models/post_detail.dart';
 import '../services/adoption_application_lookup.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/upvote_wording.dart';
 import '../widgets/adoption_application_sheet.dart';
+import '../widgets/animated_boost_chip.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/adoption_applications_owner_section.dart';
@@ -135,6 +137,19 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
     if (!opened && mounted) {
       Fluttertoast.showToast(msg: t(context, 'Could not open WhatsApp', 'تعذر فتح واتساب'));
     }
+  }
+
+  Future<bool> _toggleLike() async {
+    if (_post == null) return false;
+    final graphql = context.read<GraphQLService>();
+    final (count, liked, error) = await graphql.toggleUpvote(_post!.id);
+    if (!mounted) return false;
+    if (error != null || count == null || liked == null) {
+      Fluttertoast.showToast(msg: error ?? UpvoteWording.of('ADOPTION').failed(context));
+      return false;
+    }
+    setState(() => _post = _post!.copyWith(upvoteCount: count, isUpvotedByMe: liked));
+    return true;
   }
 
   Future<bool> _toggleSave() async {
@@ -272,6 +287,21 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                       Row(
                         children: [
                           Expanded(child: Text(ext.petName, style: Theme.of(context).textTheme.headlineLarge)),
+                          if (!_isOwner)
+                            AnimatedBoostChip(
+                              count: post.upvoteCount,
+                              boosted: post.isUpvotedByMe,
+                              onToggle: _toggleLike,
+                              boostedLabel: UpvoteWording.of('ADOPTION').done(context),
+                              unboostedLabel: UpvoteWording.of('ADOPTION').action(context),
+                              icon: UpvoteWording.of('ADOPTION').icon,
+                              boostedIcon: UpvoteWording.of('ADOPTION').doneIcon,
+                              activeColor: AppColors.primary,
+                              inactiveColor: AppColors.textMuted,
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              iconSize: 13,
+                              fontSize: 12,
+                            ),
                           Material(
                             color: Colors.transparent,
                             child: InkWell(
@@ -300,9 +330,9 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                             child: AnimatedFavoriteIcon(
                               isSaved: post.isSavedByMe,
                               onToggle: _toggleSave,
-                              semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
-                              semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
-                              activeColor: AppColors.critical,
+                              semanticLabelOn: t(context, 'Remove from saved', 'إزالة من المحفوظات'),
+                              semanticLabelOff: t(context, 'Save', 'حفظ'),
+                              activeColor: AppColors.primary,
                               inactiveColor: AppColors.textSecondary,
                               size: 24,
                             ),

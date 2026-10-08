@@ -17,6 +17,10 @@ class AnimatedBoostChip extends StatefulWidget {
   final double iconSize;
   final double fontSize;
 
+  /// Icon before the count; [boostedIcon] replaces it once boosted.
+  final IconData icon;
+  final IconData? boostedIcon;
+
   const AnimatedBoostChip({
     super.key,
     required this.count,
@@ -29,6 +33,8 @@ class AnimatedBoostChip extends StatefulWidget {
     this.padding = const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
     this.iconSize = 15,
     this.fontSize = 13,
+    this.icon = Icons.arrow_upward,
+    this.boostedIcon,
   });
 
   @override
@@ -106,7 +112,7 @@ class _AnimatedBoostChipState extends State<AnimatedBoostChip> with SingleTicker
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.arrow_upward, size: widget.iconSize, color: color),
+                Icon(_boosted ? (widget.boostedIcon ?? widget.icon) : widget.icon, size: widget.iconSize, color: color),
                 const SizedBox(width: 5),
                 Text(
                   '$_count  ${_boosted ? widget.boostedLabel : widget.unboostedLabel}',

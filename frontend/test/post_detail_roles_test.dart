@@ -134,13 +134,40 @@ void main() {
   }
 
   for (final c in [cases[0], cases[1]]) {
-    testWidgets('${c.name}: the Raise / comments / save row sits above the comments hint', (tester) async {
+    testWidgets('${c.name}: the Support / comments / save row sits above the comments hint', (tester) async {
       await pumpDetail(tester, c, asOwner: false);
-      final raise = tester.getTopLeft(find.textContaining('Raise').first).dy;
+      final raise = tester.getTopLeft(find.textContaining('Support').first).dy;
       final hintTop = tester.getTopLeft(find.text('Helped out? Show it')).dy;
       expect(raise, lessThan(hintTop));
     });
   }
+
+  // ── Upvote wording: Support on Rescue / Lost & Found, Like on Adoption / Find a Mate ──
+
+  for (final (c, word) in [
+    (cases[0], 'Support'),
+    (cases[1], 'Support'),
+    (cases[2], 'Support'),
+    (cases[3], 'Like'),
+    (cases[5], 'Like'),
+  ]) {
+    testWidgets('${c.name}: a viewer can $word the post, and the save button is a bookmark', (tester) async {
+      await pumpDetail(tester, c, asOwner: false);
+      expect(find.text('0  $word'), findsOneWidget);
+      expect(find.textContaining('Raise'), findsNothing);
+      expect(find.byIcon(Icons.bookmark_border), findsWidgets);
+      expect(find.byIcon(Icons.favorite_border), findsNothing);
+
+      await tester.tap(find.text('0  $word'));
+      await tester.pumpAndSettle();
+      expect(find.text('1  ${word == 'Like' ? 'Liked' : 'Supported'}'), findsOneWidget);
+    });
+  }
+
+  testWidgets('ADOPTION: the owner gets no Like button on their own listing', (tester) async {
+    await pumpDetail(tester, cases[3], asOwner: true);
+    expect(find.textContaining('Like'), findsNothing);
+  });
 
   // ── Nearby vets: for people going to the animal, not for the poster ──
 
@@ -341,14 +368,15 @@ void main() {
     });
   });
 
-  // ── Marketplace: no discussion or Raise; Lost & Found: text-only comments ──
+  // ── Marketplace: no discussion or upvote; Lost & Found: text-only comments ──
 
   group('discussion by post type', () {
     for (final asOwner in [true, false]) {
-      testWidgets('a marketplace listing has no comments or Raise (${asOwner ? 'owner' : 'viewer'})', (tester) async {
+      testWidgets('a marketplace listing has no comments, Support or Like (${asOwner ? 'owner' : 'viewer'})', (tester) async {
         await pumpDetail(tester, cases[4], asOwner: asOwner);
         expect(find.byIcon(Icons.mode_comment_outlined), findsNothing);
-        expect(find.textContaining('Raise'), findsNothing);
+        expect(find.textContaining('Support'), findsNothing);
+        expect(find.textContaining('Like'), findsNothing);
       });
     }
 

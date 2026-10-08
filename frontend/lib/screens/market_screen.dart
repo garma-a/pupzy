@@ -521,8 +521,8 @@ class _MarketScreenState extends State<MarketScreen> with RouteAware {
                                                 child: AnimatedFavoriteIcon(
                                                   isSaved: p.isSavedByMe,
                                                   onToggle: () => _toggleSave(p),
-                                                  semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
-                                                  semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
+                                                  semanticLabelOn: t(context, 'Remove from saved', 'إزالة من المحفوظات'),
+                                                  semanticLabelOff: t(context, 'Save', 'حفظ'),
                                                   filledIcon: Icons.bookmark,
                                                   outlineIcon: Icons.bookmark_border,
                                                   activeColor: AppColors.primary,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// A heart/bookmark icon that bounces on toggle and updates optimistically —
+/// The Save (bookmark) icon that bounces on toggle and updates optimistically —
 /// flips instantly on tap (no waiting on the network to feel responsive),
 /// calls [onToggle] in the background, and reverts itself if that call fails.
 ///
@@ -25,8 +25,10 @@ class AnimatedFavoriteIcon extends StatefulWidget {
     required this.semanticLabelOff,
     required this.activeColor,
     required this.inactiveColor,
-    this.filledIcon = Icons.favorite,
-    this.outlineIcon = Icons.favorite_border,
+    // A bookmark, not a heart: saving keeps a post to come back to, and a
+    // heart would read as "like", which Adoption and Find a Mate now have.
+    this.filledIcon = Icons.bookmark,
+    this.outlineIcon = Icons.bookmark_border,
     this.size = 16,
   });
 

@@ -16,6 +16,7 @@ import '../services/graphql_service.dart';
 import '../services/safety_events.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/upvote_wording.dart';
 import '../widgets/adaptive_search_bar.dart';
 import '../widgets/adoption_application_sheet.dart';
 import '../widgets/animated_boost_chip.dart';
@@ -327,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final (count, upvoted, error) = await graphql.toggleUpvote(post.id);
     if (!mounted) return false;
     if (error != null || count == null || upvoted == null) {
-      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update raise. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.'));
+      Fluttertoast.showToast(msg: error ?? UpvoteWording.of(post.postType).failed(context));
       return false;
     }
     setState(() {
@@ -458,9 +459,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                               // FAVORITES
                               if (_savedLoading || _savedPosts.isNotEmpty) ...[
                                 SectionHeader(
-                                  icon: Icons.favorite_rounded,
-                                  accentColor: AppColors.critical,
-                                  title: t(context, 'Favorites', 'المفضلة'),
+                                  icon: Icons.bookmark_rounded,
+                                  accentColor: AppColors.primary,
+                                  title: t(context, 'Saved', 'المحفوظات'),
                                   subtitle: t(context, 'Posts you saved', 'المنشورات التي حفظتها'),
                                   onSeeAll: () => Navigator.of(context).push(
                                     MaterialPageRoute(builder: (_) => const SavedPostsScreen()),
@@ -652,8 +653,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                                                         child: AnimatedFavoriteIcon(
                                                           isSaved: p.isSavedByMe,
                                                           onToggle: () => _toggleSave(p),
-                                                          semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
-                                                          semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
+                                                          semanticLabelOn: t(context, 'Remove from saved', 'إزالة من المحفوظات'),
+                                                          semanticLabelOff: t(context, 'Save', 'حفظ'),
                                                           filledIcon: Icons.bookmark,
                                                           outlineIcon: Icons.bookmark_border,
                                                           activeColor: AppColors.primary,
@@ -1260,9 +1261,9 @@ class _HomeRescueCard extends StatelessWidget {
                     child: AnimatedFavoriteIcon(
                       isSaved: post.isSavedByMe,
                       onToggle: onSave,
-                      semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
-                      semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
-                      activeColor: AppColors.critical,
+                      semanticLabelOn: t(context, 'Remove from saved', 'إزالة من المحفوظات'),
+                      semanticLabelOff: t(context, 'Save', 'حفظ'),
+                      activeColor: AppColors.primary,
                       inactiveColor: AppColors.textMuted,
                       size: 16,
                     ),
@@ -1332,8 +1333,10 @@ class _HomeRescueCard extends StatelessWidget {
                   count: post.upvoteCount,
                   boosted: post.isUpvotedByMe,
                   onToggle: onBoost,
-                  boostedLabel: t(context, 'Raised', 'مُعزَّز'),
-                  unboostedLabel: t(context, 'Raise', 'تعزيز'),
+                  boostedLabel: UpvoteWording.of(post.postType).done(context),
+                  unboostedLabel: UpvoteWording.of(post.postType).action(context),
+                  icon: UpvoteWording.of(post.postType).icon,
+                  boostedIcon: UpvoteWording.of(post.postType).doneIcon,
                   activeColor: AppColors.primary,
                   inactiveColor: AppColors.textMuted,
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -1391,9 +1394,9 @@ class _HomeAdoptionPreviewCard extends StatelessWidget {
                     child: AnimatedFavoriteIcon(
                       isSaved: post.isSavedByMe,
                       onToggle: onSave,
-                      semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
-                      semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
-                      activeColor: AppColors.critical,
+                      semanticLabelOn: t(context, 'Remove from saved', 'إزالة من المحفوظات'),
+                      semanticLabelOff: t(context, 'Save', 'حفظ'),
+                      activeColor: AppColors.primary,
                       inactiveColor: AppColors.textMuted,
                       size: 18,
                     ),

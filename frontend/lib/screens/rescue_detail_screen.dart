@@ -10,6 +10,7 @@ import '../models/contact_request.dart';
 import '../models/post_detail.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/upvote_wording.dart';
 import '../widgets/animated_boost_chip.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/comments_sheet.dart';
@@ -129,7 +130,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
     final (count, upvoted, error) = await graphql.toggleUpvote(_post!.id);
     if (!mounted) return false;
     if (error != null || count == null || upvoted == null) {
-      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update raise. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.'));
+      Fluttertoast.showToast(msg: error ?? UpvoteWording.of(_post!.postType).failed(context));
       return false;
     }
     setState(() => _post = _post!.copyWith(upvoteCount: count, isUpvotedByMe: upvoted));
@@ -363,7 +364,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                               children: [
                           if (_isOwner)
                             Tooltip(
-                              message: t(context, "You can't raise your own post", 'لا يمكنك تعزيز منشورك الخاص'),
+                              message: UpvoteWording.of(post.postType).notOwnPost(context),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                                 decoration: BoxDecoration(
@@ -374,10 +375,10 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.arrow_upward, size: 15, color: AppColors.textMuted),
+                                    Icon(UpvoteWording.of(post.postType).icon, size: 15, color: AppColors.textMuted),
                                     const SizedBox(width: 5),
                                     Text(
-                                      '${post.upvoteCount}  ${t(context, 'Raise', 'تعزيز')}',
+                                      '${post.upvoteCount}  ${UpvoteWording.of(post.postType).action(context)}',
                                       style: const TextStyle(fontSize: 13, color: AppColors.textMuted, fontWeight: FontWeight.w500),
                                     ),
                                   ],
@@ -389,8 +390,10 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                               count: post.upvoteCount,
                               boosted: post.isUpvotedByMe,
                               onToggle: _toggleBoost,
-                              boostedLabel: t(context, 'Raised', 'مُعزَّز'),
-                              unboostedLabel: t(context, 'Raise', 'تعزيز'),
+                              boostedLabel: UpvoteWording.of(post.postType).done(context),
+                              unboostedLabel: UpvoteWording.of(post.postType).action(context),
+                              icon: UpvoteWording.of(post.postType).icon,
+                              boostedIcon: UpvoteWording.of(post.postType).doneIcon,
                               activeColor: AppColors.primary,
                               inactiveColor: AppColors.textMuted,
                             ),
@@ -447,9 +450,9 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                             child: AnimatedFavoriteIcon(
                               isSaved: post.isSavedByMe,
                               onToggle: _toggleSave,
-                              semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
-                              semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
-                              activeColor: AppColors.critical,
+                              semanticLabelOn: t(context, 'Remove from saved', 'إزالة من المحفوظات'),
+                              semanticLabelOff: t(context, 'Save', 'حفظ'),
+                              activeColor: AppColors.primary,
                               inactiveColor: AppColors.textSecondary,
                               size: 24,
                             ),

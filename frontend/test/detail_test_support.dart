@@ -41,6 +41,9 @@ class FakeDetailGraphQL extends FakeSafetyGraphQL {
     myApplicationCursors.add(after);
     return pageFor(myApplications, first, after);
   }
+  /// Support / Like: the first tap always succeeds with one upvote.
+  @override
+  Future<(int?, bool?, String?)> toggleUpvote(String postId) async => (1, true, null);
   @override
   Future<(bool, String?)> renewPost(String postId) async {
     renewCalls++;
