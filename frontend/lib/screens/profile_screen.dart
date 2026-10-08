@@ -661,34 +661,37 @@ class _PostCountCard extends StatelessWidget {
           splashColor: accent.withValues(alpha: 0.12),
           highlightColor: accent.withValues(alpha: 0.06),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.sm, AppSpacing.md),
+            padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 6, 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Icon and count side by side keep the card short.
                 Row(
                   children: [
                     Container(
-                      width: 32,
-                      height: 32,
+                      width: 28,
+                      height: 28,
                       decoration: BoxDecoration(color: accent.withValues(alpha: 0.12), shape: BoxShape.circle),
-                      child: Icon(icon, size: 18, color: accent),
+                      child: Icon(icon, size: 16, color: accent),
                     ),
-                    const Spacer(),
-                    const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        '$count',
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: 20,
+                          height: 1.1,
+                          fontWeight: FontWeight.w800,
+                          color: hasPosts ? AppColors.textPrimary : AppColors.textMuted,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, size: 16, color: AppColors.textMuted),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  '$count',
-                  style: TextStyle(
-                    fontSize: 22,
-                    height: 1.15,
-                    fontWeight: FontWeight.w800,
-                    color: hasPosts ? AppColors.textPrimary : AppColors.textMuted,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 6),
                 // Shrinks rather than cuts off a long name or large text.
                 FittedBox(
                   fit: BoxFit.scaleDown,
