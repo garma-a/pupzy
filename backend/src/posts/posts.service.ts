@@ -590,6 +590,7 @@ export class PostsService {
           ...buildNotificationContent('NEW_UPVOTE', {
             actorName: voter?.fullName ?? 'Someone',
             postTitle: post.title,
+            postType: post.postType,
           }),
           relatedPostId: postId,
         },

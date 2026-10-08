@@ -115,7 +115,7 @@ class _SavedPostsScreenState extends State<SavedPostsScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: Text(t(context, 'Favorites', 'المفضلة'), style: Theme.of(context).textTheme.headlineMedium),
+        title: Text(t(context, 'Saved', 'المحفوظات'), style: Theme.of(context).textTheme.headlineMedium),
       ),
       body: SafeArea(
         child: RefreshIndicator(
@@ -154,7 +154,7 @@ class _SavedPostsScreenState extends State<SavedPostsScreen> {
                             Center(
                               child: Column(
                                 children: [
-                                  const Icon(Icons.favorite_border, size: 48, color: AppColors.textMuted),
+                                  const Icon(Icons.bookmark_border, size: 48, color: AppColors.textMuted),
                                   const SizedBox(height: AppSpacing.md),
                                   Text(
                                     t(context, "You haven't saved any posts yet", 'لم تحفظ أي منشورات بعد'),
@@ -278,9 +278,9 @@ class _SavedPostTile extends StatelessWidget {
             AnimatedFavoriteIcon(
               isSaved: true,
               onToggle: onToggleSave,
-              semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
-              semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
-              activeColor: AppColors.critical,
+              semanticLabelOn: t(context, 'Remove from saved', 'إزالة من المحفوظات'),
+              semanticLabelOff: t(context, 'Save', 'حفظ'),
+              activeColor: AppColors.primary,
               inactiveColor: AppColors.textMuted,
               size: 20,
             ),

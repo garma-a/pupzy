@@ -216,10 +216,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
         return const [
           ('CARE', 'Care', 'رعاية'),
           ('FOOD', 'Food', 'طعام'),
-          ('TRANSPORT', 'Transport', 'نقل'),
           ('ACCESSORIES', 'Accessories', 'إكسسوارات'),
-          ('GROOMING', 'Grooming', 'تجميل'),
-          ('MEDICAL_SUPPLIES', 'Medical Supplies', 'مستلزمات طبية'),
           ('OTHER', 'Other', 'أخرى'),
         ];
       case PostType.general:

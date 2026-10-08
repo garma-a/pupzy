@@ -11,7 +11,7 @@ import {
 
 /** Representative parameters for every type — also proves the params contract. */
 const SAMPLE_PARAMS: NotificationTemplateParamsMap = {
-  NEW_UPVOTE: { actorName: 'Ahmed', postTitle: 'Missing cat' },
+  NEW_UPVOTE: { actorName: 'Ahmed', postTitle: 'Missing cat', postType: 'LOST' },
   POST_SAVED: { actorName: 'Ahmed', postTitle: 'Missing cat' },
   CONTACT_REQUEST_RECEIVED: { actorName: 'Ahmed', postTitle: 'Missing cat' },
   CONTACT_REQUEST_APPROVED: { postTitle: 'Missing cat' },
@@ -50,9 +50,21 @@ describe('notification templates', () => {
 
   it('preserves the existing English copy byte-for-byte', () => {
     expect(buildNotificationContent('NEW_UPVOTE', SAMPLE_PARAMS.NEW_UPVOTE)).toMatchObject({
-      title: 'New upvote',
-      body: 'Ahmed upvoted your post "Missing cat"',
+      title: 'New support',
+      body: 'Ahmed supported your post "Missing cat"',
+      titleArabic: 'دعم جديد',
+      bodyArabic: 'دعم Ahmed منشورك "Missing cat"',
     });
+    for (const postType of ['ADOPTION', 'MATING']) {
+      expect(buildNotificationContent('NEW_UPVOTE', { actorName: 'Ahmed', postTitle: 'Luna', postType })).toMatchObject(
+        {
+          title: 'New like',
+          body: 'Ahmed liked your post "Luna"',
+          titleArabic: 'إعجاب جديد',
+          bodyArabic: 'أعجب Ahmed بمنشورك "Luna"',
+        },
+      );
+    }
     expect(buildNotificationContent('POST_SAVED', SAMPLE_PARAMS.POST_SAVED)).toMatchObject({
       title: 'Post saved',
       body: 'Ahmed saved your post "Missing cat"',

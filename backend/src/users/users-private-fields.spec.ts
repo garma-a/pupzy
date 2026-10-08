@@ -56,3 +56,22 @@ describe('UsersResolver account-private fields', () => {
     expect(cityLoader).not.toHaveBeenCalled();
   });
 });
+
+describe('UsersResolver matingPostCount', () => {
+  const countMatingPosts = jest.fn().mockResolvedValue(3);
+  const resolver = new UsersResolver({ countMatingPosts } as never, {} as never);
+  const owner = { id: 'user-owner' } as unknown as User;
+  const ctxFor = (viewerId: string) => ({ user: { id: viewerId } }) as unknown as GqlContext;
+
+  beforeEach(() => countMatingPosts.mockClear());
+
+  it('counts the Find a Mate posts of the account itself', async () => {
+    await expect(resolver.matingPostCount(owner, ctxFor('user-owner'))).resolves.toBe(3);
+    expect(countMatingPosts).toHaveBeenCalledWith('user-owner');
+  });
+
+  it('is null for anyone else, without querying', async () => {
+    await expect(resolver.matingPostCount(owner, ctxFor('user-viewer'))).resolves.toBeNull();
+    expect(countMatingPosts).not.toHaveBeenCalled();
+  });
+});

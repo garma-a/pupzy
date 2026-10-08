@@ -1,5 +1,5 @@
 import DataLoader from 'dataloader';
-import type { City, User, PostMedia, CommentMedia } from '../../database/schema';
+import type { City, User, PostMedia, CommentMedia, ProductPost } from '../../database/schema';
 
 /**
  * DataLoaders bag — one instance per GraphQL request.
@@ -30,6 +30,12 @@ export interface DataLoaders {
    * Returns an empty array for posts with no media.
    */
   mediaByPostId: DataLoader<string, PostMedia[]>;
+
+  /**
+   * Batch-loads the PRODUCT extension row (price, condition, category) for
+   * each post. Returns `null` for posts of every other type.
+   */
+  productByPostId?: DataLoader<string, ProductPost | null>;
 
   /**
    * Batch-checks if the current viewer has upvoted each post.

@@ -9,6 +9,7 @@ import '../models/post_detail.dart';
 import '../services/graphql_service.dart';
 import '../services/safety_events.dart';
 import '../theme/app_theme.dart';
+import '../utils/price_label.dart';
 import '../utils/time_format.dart';
 import '../widgets/owner_post_actions.dart';
 import '../widgets/animated_favorite_icon.dart';
@@ -17,6 +18,8 @@ import '../widgets/renew_post_button.dart';
 import '../widgets/safety_actions.dart';
 import '../widgets/skeleton_loader.dart';
 
+// Transport, Grooming and Medical Supplies are no longer offered for new
+// listings; their labels stay so older listings still show their category.
 const Map<String, (String, String)> _categoryLabels = {
   'CARE': ('Care', 'رعاية'),
   'FOOD': ('Food', 'طعام'),
@@ -117,9 +120,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void _shareListing() {
     final post = _post!;
     final ext = _ext!;
-    final priceLabel = ext.isFree ? t(context, 'Free', 'مجاني') : '${ext.priceAmount?.toStringAsFixed(0) ?? '-'} ${ext.priceCurrency}';
+    final price = priceLabel(context, isFree: ext.isFree, amount: ext.priceAmount, currency: ext.priceCurrency);
     SharePlus.instance.share(
-      ShareParams(text: '${t(context, 'Check out this listing on Pupzy', 'شاهد هذا الإعلان على بابزي')}: ${post.title} — $priceLabel\n${post.description}'),
+      ShareParams(text: '${t(context, 'Check out this listing on Pupzy', 'شاهد هذا الإعلان على بابزي')}: ${post.title} — $price\n${post.description}'),
     );
   }
 
@@ -314,7 +317,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
-                            ext.isFree ? t(context, 'Free', 'مجاني') : '${ext.priceAmount?.toStringAsFixed(0) ?? '-'} ${ext.priceCurrency}',
+                            priceLabel(context, isFree: ext.isFree, amount: ext.priceAmount, currency: ext.priceCurrency),
                             style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: AppColors.primary),
                           ),
                           _Badge(label: _conditionLabel(context, ext.condition), color: AppColors.textSecondary),
@@ -377,8 +380,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               isSaved: post.isSavedByMe,
               onToggle: _toggleSave,
               label: t(context, 'Save', 'حفظ'),
-              semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
-              semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
+              semanticLabelOn: t(context, 'Remove from saved', 'إزالة من المحفوظات'),
+              semanticLabelOff: t(context, 'Save', 'حفظ'),
             ),
             _IconAction(icon: Icons.share_outlined, label: t(context, 'Share', 'مشاركة'), onTap: _shareListing),
           ],

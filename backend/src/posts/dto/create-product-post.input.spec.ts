@@ -23,6 +23,22 @@ describe('validateCreateProductPostInput', () => {
     expect(parsed.isFree).toBe(false);
   });
 
+  it.each(['TRANSPORT', 'GROOMING', 'MEDICAL_SUPPLIES'])(
+    'rejects the retired %s category on new listings',
+    (category) => {
+      expect(() =>
+        validateCreateProductPostInput({
+          title: 'Pet carrier',
+          description: 'A sturdy pet carrier in good condition.',
+          coordinates: validCoordinates,
+          category,
+          condition: 'USED',
+          isFree: true,
+        }),
+      ).toThrow(ValidationError);
+    },
+  );
+
   it('validates a correct free product post input', () => {
     const validRaw = {
       title: 'Free Cat Scratching Post',

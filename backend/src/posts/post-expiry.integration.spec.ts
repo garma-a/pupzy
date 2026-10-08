@@ -353,6 +353,7 @@ describe('Post inactivity expiry, reminders and renewal (Tickets 12–13)', () =
         },
         Post: {
           media: (root: Post) => postsRepository.findMediaByPostIds([root.id]).then((rows) => rows[0]),
+          product: (root: Post, _args: unknown, ctx: GqlContext) => postsResolver.product(root, ctx),
         },
         ContactRequest: {
           requester: (root: ContactRequest, _args: unknown, ctx: GqlContext) => contactsResolver.requester(root, ctx),
@@ -522,7 +523,10 @@ describe('Post inactivity expiry, reminders and renewal (Tickets 12–13)', () =
     return {
       req: {} as unknown as GqlContext['req'],
       user,
-      loaders: { userById: userLoader } as unknown as GqlContext['loaders'],
+      loaders: {
+        userById: userLoader,
+        productByPostId: postsRepository.createProductByPostIdLoader(),
+      } as unknown as GqlContext['loaders'],
     };
   }
 
@@ -1524,6 +1528,44 @@ describe('Post inactivity expiry, reminders and renewal (Tickets 12–13)', () =
   });
 
   // ─── Batch bound ────────────────────────────────────────────────────────
+
+  describe('Market feed price', () => {
+    it('returns each listing price with the feed so cards can show it, and no price for other types', async () => {
+      const free = await seedProduct({});
+      const paid = await seedProduct({});
+      await dbHelper.db
+        .update(productPosts)
+        .set({ isFree: false, priceAmount: '350', openToOffers: true })
+        .where(eq(productPosts.postId, paid.id));
+      const adoption = await seedAdoption({});
+
+      const market = await runGql<{
+        marketFeed: {
+          edges: {
+            node: { id: string; product: { priceAmount: number | null; priceCurrency: string; isFree: boolean } };
+          }[];
+        };
+      }>(
+        `query Market($cityId: ID) {
+          marketFeed(cityId: $cityId, first: 20) { edges { node { id product { priceAmount priceCurrency isFree } } } }
+        }`,
+        { cityId: testCity.id },
+        other,
+      );
+      expect(market.errors).toBeUndefined();
+      const byId = new Map(market.data!.marketFeed.edges.map((edge) => [edge.node.id, edge.node.product]));
+      expect(byId.get(paid.id)).toEqual({ priceAmount: 350, priceCurrency: 'EGP', isFree: false });
+      expect(byId.get(free.id)).toEqual({ priceAmount: null, priceCurrency: 'EGP', isFree: true });
+
+      const adopt = await runGql<{ adoptFeed: { edges: { node: { id: string; product: unknown } }[] } }>(
+        `query Adopt($cityId: ID) { adoptFeed(cityId: $cityId, first: 20) { edges { node { id product { isFree } } } } }`,
+        { cityId: testCity.id },
+        other,
+      );
+      expect(adopt.errors).toBeUndefined();
+      expect(adopt.data!.adoptFeed.edges.find((edge) => edge.node.id === adoption.id)?.node.product).toBeNull();
+    });
+  });
 
   describe('bounded batch processing', () => {
     it('processes at most one candidate batch per expiry query', async () => {

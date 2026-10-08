@@ -63,6 +63,11 @@ type User {
   """
   productPostCount: Int!
   """
+  Number of MATING (Find a Mate) posts created and not removed. Null unless
+  the viewer is this user.
+  """
+  matingPostCount: Int
+  """
   Preferred notification language, explicitly synchronized by the user.
   Null until the user makes an explicit ar/en choice; clients treat null as
   English, because the historic Arabic database default was never a decision.

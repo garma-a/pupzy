@@ -9,7 +9,8 @@ import '../models/mating_detail.dart';
 import '../models/post_detail.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/animated_boost_chip.dart';
+import '../utils/upvote_wording.dart';
+import '../widgets/upvote_button.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/contact_request_sheet.dart';
@@ -90,7 +91,7 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
     final (count, upvoted, error) = await graphql.toggleUpvote(_post!.id);
     if (!mounted) return false;
     if (error != null || count == null || upvoted == null) {
-      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update raise. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.'));
+      Fluttertoast.showToast(msg: error ?? UpvoteWording.of('MATING').failed(context));
       return false;
     }
     setState(() => _post = _post!.copyWith(upvoteCount: count, isUpvotedByMe: upvoted));
@@ -289,19 +290,14 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
                       Row(
                         children: [
                           Expanded(child: Text(ext.petName, style: Theme.of(context).textTheme.headlineLarge)),
-                          if (!_isOwner)
-                            AnimatedBoostChip(
-                              count: post.upvoteCount,
-                              boosted: post.isUpvotedByMe,
-                              onToggle: _toggleBoost,
-                              boostedLabel: t(context, 'Raised', 'مُعزَّز'),
-                              unboostedLabel: t(context, 'Raise', 'تعزيز'),
-                              activeColor: AppColors.primary,
-                              inactiveColor: AppColors.textMuted,
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              iconSize: 13,
-                              fontSize: 12,
-                            ),
+                          UpvoteButton(
+                            postType: 'MATING',
+                            count: post.upvoteCount,
+                            upvoted: post.isUpvotedByMe,
+                            isOwner: _isOwner,
+                            onToggle: _toggleBoost,
+                            compact: true,
+                          ),
                           Material(
                             color: Colors.transparent,
                             child: InkWell(
@@ -330,9 +326,9 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
                             child: AnimatedFavoriteIcon(
                               isSaved: post.isSavedByMe,
                               onToggle: _toggleSave,
-                              semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
-                              semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
-                              activeColor: AppColors.critical,
+                              semanticLabelOn: t(context, 'Remove from saved', 'إزالة من المحفوظات'),
+                              semanticLabelOff: t(context, 'Save', 'حفظ'),
+                              activeColor: AppColors.primary,
                               inactiveColor: AppColors.textSecondary,
                               size: 24,
                             ),
@@ -378,7 +374,8 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
                         const SizedBox(height: AppSpacing.xs),
                         Text(ext.matingConditions!, style: Theme.of(context).textTheme.bodyMedium),
                       ],
-                      if (post.vetClinics.isNotEmpty) ...[
+                      // Nearby vets help someone going to the animal, not the person who posted it.
+                      if (!_isOwner && post.vetClinics.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.lg),
                         NearbyVetsSection(clinics: post.vetClinics),
                       ],

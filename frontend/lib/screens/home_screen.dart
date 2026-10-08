@@ -16,6 +16,7 @@ import '../services/graphql_service.dart';
 import '../services/safety_events.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/upvote_wording.dart';
 import '../widgets/adaptive_search_bar.dart';
 import '../widgets/adoption_application_sheet.dart';
 import '../widgets/animated_boost_chip.dart';
@@ -28,6 +29,7 @@ import '../widgets/section_header.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/top_bar.dart';
 import 'adoption_detail_screen.dart';
+import 'mating_detail_screen.dart';
 import 'product_detail_screen.dart';
 import 'rescue_detail_screen.dart';
 import 'saved_posts_screen.dart';
@@ -37,6 +39,7 @@ class HomeScreen extends StatefulWidget {
   final VoidCallback? onNavigateToMarket;
   final VoidCallback? onNavigateToHelp;
   final VoidCallback? onNavigateToAdopt;
+  final VoidCallback? onNavigateToMating;
   // Whether this tab is the one currently shown by the bottom nav — Home
   // stays mounted in the background (IndexedStack) even when another tab is
   // active, so this is how it knows to refresh FAVORITES when the user
@@ -47,6 +50,7 @@ class HomeScreen extends StatefulWidget {
     this.onNavigateToMarket,
     this.onNavigateToHelp,
     this.onNavigateToAdopt,
+    this.onNavigateToMating,
     this.active = true,
   });
 
@@ -327,7 +331,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final (count, upvoted, error) = await graphql.toggleUpvote(post.id);
     if (!mounted) return false;
     if (error != null || count == null || upvoted == null) {
-      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update raise. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.'));
+      Fluttertoast.showToast(msg: error ?? UpvoteWording.of(post.postType).failed(context));
       return false;
     }
     setState(() {
@@ -366,6 +370,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final urgent = helpPosts.where((p) => p.isUrgent).toList();
     final findPosts = _posts.where((p) => p.postType == 'LOST').toList();
     final adoption = _posts.where((p) => p.postType == 'ADOPTION').toList();
+    final mating = _posts.where((p) => p.postType == 'MATING').toList();
     final products = _posts.where((p) => p.postType == 'PRODUCT').take(2).toList();
 
     return Scaffold(
@@ -458,9 +463,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                               // FAVORITES
                               if (_savedLoading || _savedPosts.isNotEmpty) ...[
                                 SectionHeader(
-                                  icon: Icons.favorite_rounded,
-                                  accentColor: AppColors.critical,
-                                  title: t(context, 'Favorites', 'المفضلة'),
+                                  icon: Icons.bookmark_rounded,
+                                  accentColor: AppColors.primary,
+                                  title: t(context, 'Saved', 'المحفوظات'),
                                   subtitle: t(context, 'Posts you saved', 'المنشورات التي حفظتها'),
                                   onSeeAll: () => Navigator.of(context).push(
                                     MaterialPageRoute(builder: (_) => const SavedPostsScreen()),
@@ -591,6 +596,31 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                                   ),
                                 ),
 
+                              // FIND A MATE
+                              const SizedBox(height: AppSpacing.xxl),
+                              SectionHeader(
+                                icon: Icons.favorite_border,
+                                accentColor: AppColors.critical,
+                                title: t(context, 'Find a Mate', 'البحث عن شريك'),
+                                subtitle: t(context, 'Pets looking for a partner', 'حيوانات تبحث عن شريك'),
+                                onSeeAll: widget.onNavigateToMating,
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              if (mating.isEmpty)
+                                _EmptySection(
+                                  icon: Icons.favorite_border,
+                                  message: t(context, 'No pets looking for a mate within this distance', 'لا توجد حيوانات تبحث عن شريك ضمن هذه المسافة'),
+                                )
+                              else
+                                _HomeAdoptionPreviewCard(
+                                  post: mating.first,
+                                  kicker: t(context, 'SEEKING A MATE', 'يبحث عن شريك'),
+                                  onSave: () => _toggleSave(mating.first),
+                                  onTap: () => Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (_) => MatingDetailScreen(postId: mating.first.id)),
+                                  ),
+                                ),
+
                               // MARKETPLACE
                               const SizedBox(height: AppSpacing.xxl),
                               SectionHeader(
@@ -652,8 +682,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                                                         child: AnimatedFavoriteIcon(
                                                           isSaved: p.isSavedByMe,
                                                           onToggle: () => _toggleSave(p),
-                                                          semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
-                                                          semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
+                                                          semanticLabelOn: t(context, 'Remove from saved', 'إزالة من المحفوظات'),
+                                                          semanticLabelOff: t(context, 'Save', 'حفظ'),
                                                           filledIcon: Icons.bookmark,
                                                           outlineIcon: Icons.bookmark_border,
                                                           activeColor: AppColors.primary,
@@ -1260,9 +1290,9 @@ class _HomeRescueCard extends StatelessWidget {
                     child: AnimatedFavoriteIcon(
                       isSaved: post.isSavedByMe,
                       onToggle: onSave,
-                      semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
-                      semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
-                      activeColor: AppColors.critical,
+                      semanticLabelOn: t(context, 'Remove from saved', 'إزالة من المحفوظات'),
+                      semanticLabelOff: t(context, 'Save', 'حفظ'),
+                      activeColor: AppColors.primary,
                       inactiveColor: AppColors.textMuted,
                       size: 16,
                     ),
@@ -1332,8 +1362,10 @@ class _HomeRescueCard extends StatelessWidget {
                   count: post.upvoteCount,
                   boosted: post.isUpvotedByMe,
                   onToggle: onBoost,
-                  boostedLabel: t(context, 'Raised', 'مُعزَّز'),
-                  unboostedLabel: t(context, 'Raise', 'تعزيز'),
+                  boostedLabel: UpvoteWording.of(post.postType).done(context),
+                  unboostedLabel: UpvoteWording.of(post.postType).action(context),
+                  icon: UpvoteWording.of(post.postType).icon,
+                  boostedIcon: UpvoteWording.of(post.postType).doneIcon,
                   activeColor: AppColors.primary,
                   inactiveColor: AppColors.textMuted,
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -1353,11 +1385,17 @@ class _HomeRescueCard extends StatelessWidget {
 /// Lightweight "Find a Pet" preview built from feed-level Post fields only —
 /// breed/age/personality tags show on the detail screen, which fetches the
 /// full AdoptionPost extension data.
+/// Large photo card for the Adopt a Pet and Find a Mate home sections. An
+/// adoption card's button asks to adopt; a Find a Mate card's opens the post,
+/// where contact goes through the owner's approval.
 class _HomeAdoptionPreviewCard extends StatelessWidget {
   final FeedPost post;
   final Future<bool> Function() onSave;
   final VoidCallback onTap;
-  const _HomeAdoptionPreviewCard({required this.post, required this.onSave, required this.onTap});
+
+  /// Small label above the name; "MEET" when null.
+  final String? kicker;
+  const _HomeAdoptionPreviewCard({required this.post, required this.onSave, required this.onTap, this.kicker});
 
   @override
   Widget build(BuildContext context) {
@@ -1391,9 +1429,9 @@ class _HomeAdoptionPreviewCard extends StatelessWidget {
                     child: AnimatedFavoriteIcon(
                       isSaved: post.isSavedByMe,
                       onToggle: onSave,
-                      semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
-                      semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
-                      activeColor: AppColors.critical,
+                      semanticLabelOn: t(context, 'Remove from saved', 'إزالة من المحفوظات'),
+                      semanticLabelOff: t(context, 'Save', 'حفظ'),
+                      activeColor: AppColors.primary,
                       inactiveColor: AppColors.textMuted,
                       size: 18,
                     ),
@@ -1417,7 +1455,7 @@ class _HomeAdoptionPreviewCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        t(context, 'MEET', 'تعرّف'),
+                        kicker ?? t(context, 'MEET', 'تعرّف'),
                         style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11, letterSpacing: 2, fontWeight: FontWeight.w700),
                       ),
                       Text(
@@ -1443,14 +1481,18 @@ class _HomeAdoptionPreviewCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: ElevatedButton(
-              onPressed: () => showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => AdoptionApplicationSheet(postId: post.id),
-              ),
+              onPressed: post.postType == 'MATING'
+                  ? onTap
+                  : () => showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => AdoptionApplicationSheet(postId: post.id),
+                      ),
               style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 48)),
-              child: Text(t(context, 'Ask to adopt', 'اطلب التبني')),
+              child: Text(post.postType == 'MATING'
+                  ? t(context, 'View details', 'عرض التفاصيل')
+                  : t(context, 'Ask to adopt', 'اطلب التبني')),
             ),
           ),
         ],

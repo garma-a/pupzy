@@ -10,6 +10,7 @@ import 'package:pupzy/screens/mating_detail_screen.dart';
 import 'package:pupzy/screens/product_detail_screen.dart';
 import 'package:pupzy/screens/rescue_detail_screen.dart';
 import 'package:pupzy/services/safety_events.dart';
+import 'package:pupzy/widgets/animated_boost_chip.dart';
 import 'package:pupzy/widgets/owner_post_actions.dart';
 import 'package:pupzy/widgets/safety_actions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -116,6 +117,89 @@ void main() {
         expect(find.textContaining(c.viewerAction), findsWidgets);
       });
     });
+  }
+
+  // ── Sensitive-photo blur: Rescue only, like the feed cards ──
+
+  for (final (c, blurred) in [(cases[0], true), (cases[1], false), (cases[2], false)]) {
+    testWidgets('${c.name}: the photo ${blurred ? 'opens behind "Tap to see photo"' : 'shows straight away'}', (tester) async {
+      await pumpDetail(tester, c, asOwner: false);
+      expect(find.text('Tap to see photo'), blurred ? findsOneWidget : findsNothing);
+
+      if (blurred) {
+        await tester.tap(find.text('Tap to see photo'));
+        await tester.pumpAndSettle();
+        expect(find.text('Tap to see photo'), findsNothing);
+      }
+    });
+  }
+
+  for (final c in [cases[0], cases[1]]) {
+    testWidgets('${c.name}: the Support / comments / save row sits above the comments hint', (tester) async {
+      await pumpDetail(tester, c, asOwner: false);
+      final raise = tester.getTopLeft(find.textContaining('Support').first).dy;
+      final hintTop = tester.getTopLeft(find.text('Helped out? Show it')).dy;
+      expect(raise, lessThan(hintTop));
+    });
+  }
+
+  // ── Upvote wording: Support on Rescue / Lost & Found, Like on Adoption / Find a Mate ──
+
+  for (final (c, word) in [
+    (cases[0], 'Support'),
+    (cases[1], 'Support'),
+    (cases[2], 'Support'),
+    (cases[3], 'Like'),
+    (cases[5], 'Like'),
+  ]) {
+    testWidgets('${c.name}: a viewer can $word the post, and the save button is a bookmark', (tester) async {
+      await pumpDetail(tester, c, asOwner: false);
+      expect(find.text('0  $word'), findsOneWidget);
+      expect(find.textContaining('Raise'), findsNothing);
+      expect(find.byIcon(Icons.bookmark_border), findsWidgets);
+      expect(find.byIcon(Icons.favorite_border), findsNothing);
+
+      await tester.tap(find.text('0  $word'));
+      await tester.pumpAndSettle();
+      expect(find.text('1  ${word == 'Like' ? 'Liked' : 'Supported'}'), findsOneWidget);
+    });
+  }
+
+  for (final (c, word) in [(cases[0], 'Support'), (cases[3], 'Like'), (cases[5], 'Like')]) {
+    testWidgets('${c.name}: the owner sees the $word count but cannot tap it', (tester) async {
+      await pumpDetail(tester, c, asOwner: true);
+      expect(find.text('0  $word'), findsOneWidget);
+      expect(find.byType(AnimatedBoostChip), findsNothing);
+      await tester.tap(find.text('0  $word'));
+      await tester.pumpAndSettle();
+      expect(find.text('0  $word'), findsOneWidget);
+    });
+  }
+
+  // ── Nearby vets: for people going to the animal, not for the poster ──
+
+  const clinic = {
+    'id': 'vet-1',
+    'nameEnglish': 'Maadi Vet Clinic',
+    'nameArabic': 'عيادة المعادي البيطرية',
+    'latitude': 30.05,
+    'longitude': 31.24,
+    'distanceKm': 1.2,
+    'googleMapsUrl': 'https://www.google.com/maps/search/?api=1&query=30.05%2C31.24',
+  };
+
+  for (final c in cases.where((c) => c.type != 'PRODUCT')) {
+    for (final asOwner in [true, false]) {
+      testWidgets('${c.name}: ${asOwner ? 'the owner does not see' : 'a viewer sees'} Nearby Vets', (tester) async {
+        await pumpDetail(
+          tester,
+          c,
+          asOwner: asOwner,
+          setUp: (g) => g.postDetailResult = post(c.type, vetClinics: [clinic]),
+        );
+        expect(find.text('Nearby Vets'), asOwner ? findsNothing : findsOneWidget);
+      });
+    }
   }
 
   // ── Item 3: no new contact requests / applications on completed Posts ──
@@ -291,14 +375,15 @@ void main() {
     });
   });
 
-  // ── Marketplace: no discussion or Raise; Lost & Found: text-only comments ──
+  // ── Marketplace: no discussion or upvote; Lost & Found: text-only comments ──
 
   group('discussion by post type', () {
     for (final asOwner in [true, false]) {
-      testWidgets('a marketplace listing has no comments or Raise (${asOwner ? 'owner' : 'viewer'})', (tester) async {
+      testWidgets('a marketplace listing has no comments, Support or Like (${asOwner ? 'owner' : 'viewer'})', (tester) async {
         await pumpDetail(tester, cases[4], asOwner: asOwner);
         expect(find.byIcon(Icons.mode_comment_outlined), findsNothing);
-        expect(find.textContaining('Raise'), findsNothing);
+        expect(find.textContaining('Support'), findsNothing);
+        expect(find.textContaining('Like'), findsNothing);
       });
     }
 

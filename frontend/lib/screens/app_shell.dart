@@ -97,6 +97,18 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     });
   }
 
+  /// Pets tab, opened on Adoption (0) or Matching (1) — Home's "See all".
+  int _petsTab = 0;
+  int _petsTabRequest = 0;
+
+  void _openPets(int tab) {
+    setState(() {
+      _petsTab = tab;
+      _petsTabRequest++;
+    });
+    _goToIndex(3);
+  }
+
   Future<void> _openNewPost() async {
     setState(() => _postSheetOpen = true);
     final result = await showModalBottomSheet(
@@ -135,13 +147,16 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           children: [
             HomeScreen(
               onNavigateToHelp: () => _goToIndex(1),
-              onNavigateToAdopt: () => _goToIndex(3),
+              onNavigateToAdopt: () => _openPets(0),
+              onNavigateToMating: () => _openPets(1),
               onNavigateToMarket: () => _goToIndex(4),
               active: _index == 0,
             ),
             _visitedIndices.contains(1) ? HelpScreen(active: _index == 1) : const SizedBox.shrink(),
             const SizedBox.shrink(),
-            _visitedIndices.contains(3) ? AdoptScreen(active: _index == 3) : const SizedBox.shrink(),
+            _visitedIndices.contains(3)
+                ? AdoptScreen(active: _index == 3, tab: _petsTab, tabRequest: _petsTabRequest)
+                : const SizedBox.shrink(),
             _visitedIndices.contains(4) ? MarketScreen(active: _index == 4) : const SizedBox.shrink(),
           ],
         ),

@@ -10,7 +10,8 @@ import '../models/contact_request.dart';
 import '../models/post_detail.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/animated_boost_chip.dart';
+import '../utils/upvote_wording.dart';
+import '../widgets/upvote_button.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/contact_request_sheet.dart';
@@ -49,6 +50,12 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
   /// photographed an animal in distress, not someone waiting to be messaged.
   /// Only LOST/FOUND reports route through the contact handshake.
   bool get _usesContactFlow => _post?.postType != 'RESCUE';
+
+  /// Only RESCUE photos sit behind "Tap to see photo": they can show an
+  /// injured or distressed animal. Lost & Found photos are what helps people
+  /// recognise the pet, so they show straight away — the same rule the feed
+  /// cards follow.
+  bool get _blursPhotos => _post?.postType == 'RESCUE';
 
   /// New contact requests are only accepted while the Post is ACTIVE. An
   /// already-approved requester keeps WhatsApp access after it closes.
@@ -123,7 +130,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
     final (count, upvoted, error) = await graphql.toggleUpvote(_post!.id);
     if (!mounted) return false;
     if (error != null || count == null || upvoted == null) {
-      Fluttertoast.showToast(msg: error ?? t(context, 'Could not update raise. Try again.', 'تعذر تحديث التعزيز. حاول مرة أخرى.'));
+      Fluttertoast.showToast(msg: error ?? UpvoteWording.of(_post!.postType).failed(context));
       return false;
     }
     setState(() => _post = _post!.copyWith(upvoteCount: count, isUpvotedByMe: upvoted));
@@ -248,7 +255,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
               children: [
                 Stack(
                   children: [
-                    if (_revealed)
+                    if (_revealed || !_blursPhotos)
                       PetCarousel(imageUrls: images, height: 320)
                     else
                       _BlurredCarousel(
@@ -344,10 +351,6 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                         Text(_lostExt!.circumstances!, style: Theme.of(context).textTheme.bodyMedium),
                       ],
                       if (_lostExt != null) ..._identificationDetails(context, _lostExt!),
-                      if (post.status == 'ACTIVE') ...[
-                        const SizedBox(height: AppSpacing.lg),
-                        _communityEvidenceCard(context),
-                      ],
                       const SizedBox(height: AppSpacing.lg),
                       Row(
                         children: [
@@ -359,39 +362,13 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                               spacing: AppSpacing.sm,
                               runSpacing: AppSpacing.sm,
                               children: [
-                          if (_isOwner)
-                            Tooltip(
-                              message: t(context, "You can't raise your own post", 'لا يمكنك تعزيز منشورك الخاص'),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                                decoration: BoxDecoration(
-                                  color: AppColors.background,
-                                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                                  border: Border.all(color: AppColors.border),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.arrow_upward, size: 15, color: AppColors.textMuted),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      '${post.upvoteCount}  ${t(context, 'Raise', 'تعزيز')}',
-                                      style: const TextStyle(fontSize: 13, color: AppColors.textMuted, fontWeight: FontWeight.w500),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          else
-                            AnimatedBoostChip(
-                              count: post.upvoteCount,
-                              boosted: post.isUpvotedByMe,
-                              onToggle: _toggleBoost,
-                              boostedLabel: t(context, 'Raised', 'مُعزَّز'),
-                              unboostedLabel: t(context, 'Raise', 'تعزيز'),
-                              activeColor: AppColors.primary,
-                              inactiveColor: AppColors.textMuted,
-                            ),
+                          UpvoteButton(
+                            postType: post.postType,
+                            count: post.upvoteCount,
+                            upvoted: post.isUpvotedByMe,
+                            isOwner: _isOwner,
+                            onToggle: _toggleBoost,
+                          ),
                           if (post.latitude != null && post.longitude != null)
                             Material(
                               color: Colors.transparent,
@@ -445,16 +422,23 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                             child: AnimatedFavoriteIcon(
                               isSaved: post.isSavedByMe,
                               onToggle: _toggleSave,
-                              semanticLabelOn: t(context, 'Remove from favorites', 'إزالة من المفضلة'),
-                              semanticLabelOff: t(context, 'Add to favorites', 'إضافة إلى المفضلة'),
-                              activeColor: AppColors.critical,
+                              semanticLabelOn: t(context, 'Remove from saved', 'إزالة من المحفوظات'),
+                              semanticLabelOff: t(context, 'Save', 'حفظ'),
+                              activeColor: AppColors.primary,
                               inactiveColor: AppColors.textSecondary,
                               size: 24,
                             ),
                           ),
                         ],
                       ),
-                      if (post.vetClinics.isNotEmpty) ...[
+                      // The Raise / directions / comments / save row comes first, so
+                      // the post's main actions sit right under its details.
+                      if (post.status == 'ACTIVE') ...[
+                        const SizedBox(height: AppSpacing.lg),
+                        _communityEvidenceCard(context),
+                      ],
+                      // Nearby vets help someone going to the animal, not the person who posted it.
+                      if (!_isOwner && post.vetClinics.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.lg),
                         NearbyVetsSection(clinics: post.vetClinics),
                       ],

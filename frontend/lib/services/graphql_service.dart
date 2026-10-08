@@ -81,6 +81,7 @@ class GraphQLService {
         lostPostCount
         adoptionPostCount
         productPostCount
+        matingPostCount
         languagePreference
         notificationsEnabled
         lastSeenAt
@@ -225,6 +226,9 @@ class GraphQLService {
         isUpvotedByMe
         isSavedByMe
         createdAt
+        creator {
+          id
+        }
         city {
           id
           nameEnglish
@@ -234,6 +238,11 @@ class GraphQLService {
         media {
           publicUrl
           displayOrder
+        }
+        product {
+          priceAmount
+          priceCurrency
+          isFree
         }
       }
     }
@@ -296,6 +305,9 @@ class GraphQLService {
         isUpvotedByMe
         isSavedByMe
         createdAt
+        creator {
+          id
+        }
         city {
           id
           nameEnglish

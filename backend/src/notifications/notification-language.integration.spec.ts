@@ -462,11 +462,11 @@ describe('Notification language synchronization (Ticket 07)', () => {
       await dbHelper.db.insert(notifications).values({
         recipientId: legacyUser.id,
         type: 'NEW_UPVOTE',
-        ...buildNotificationContent('NEW_UPVOTE', { actorName: 'Ahmed', postTitle: 'Missing cat' }),
+        ...buildNotificationContent('NEW_UPVOTE', { actorName: 'Ahmed', postTitle: 'Missing cat', postType: 'LOST' }),
       });
       const [node] = await inboxFor(legacyRow);
-      expect(node.title).toBe('New upvote');
-      expect(node.body).toBe('Ahmed upvoted your post "Missing cat"');
+      expect(node.title).toBe('New support');
+      expect(node.body).toBe('Ahmed supported your post "Missing cat"');
     } finally {
       await dbHelper.pool.query(`ALTER TABLE users ALTER COLUMN language_preference DROP DEFAULT`);
     }
