@@ -698,7 +698,8 @@ describe('PostsService', () => {
         expect.objectContaining({
           recipientId: otherUserId,
           type: 'NEW_UPVOTE',
-          title: 'New upvote',
+          title: 'New like',
+          body: 'Test User liked your post "Puppy"',
           titleArabic: 'إعجاب جديد',
           bodyArabic: 'أعجب Test User بمنشورك "Puppy"',
         }),

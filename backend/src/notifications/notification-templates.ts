@@ -37,7 +37,8 @@ export type RescueCompletedOutcome = Extract<PostLifecycleCompletedOutcome, 'RES
  * notification.
  */
 export interface NotificationTemplateParamsMap {
-  NEW_UPVOTE: { actorName: string; postTitle: string };
+  /** `postType` picks the wording: Rescue and Lost & Found are supported, Adoption and Find a Mate are liked. */
+  NEW_UPVOTE: { actorName: string; postTitle: string; postType: string };
   POST_SAVED: { actorName: string; postTitle: string };
   CONTACT_REQUEST_RECEIVED: { actorName: string; postTitle: string };
   CONTACT_REQUEST_APPROVED: { postTitle: string };
@@ -101,16 +102,21 @@ const POST_RESOLUTION_OUTCOME_LABELS: Readonly<Record<PostResolutionOutcome, { e
  * type. In-app display and push read the same rendered columns, and comments
  * repository records them in its durable discussion outbox.
  */
+/** Rescue and Lost & Found posts are supported; every other upvotable type is liked. */
+function isSupportedPostType(postType: string): boolean {
+  return postType === 'RESCUE' || postType === 'LOST';
+}
+
 const NOTIFICATION_TEMPLATES: NotificationTemplateRegistry = {
   NEW_UPVOTE: {
-    en: ({ actorName, postTitle }) => ({
-      title: 'New upvote',
-      body: `${actorName} upvoted your post "${postTitle}"`,
-    }),
-    ar: ({ actorName, postTitle }) => ({
-      title: 'إعجاب جديد',
-      body: `أعجب ${actorName} بمنشورك "${postTitle}"`,
-    }),
+    en: ({ actorName, postTitle, postType }) =>
+      isSupportedPostType(postType)
+        ? { title: 'New support', body: `${actorName} supported your post "${postTitle}"` }
+        : { title: 'New like', body: `${actorName} liked your post "${postTitle}"` },
+    ar: ({ actorName, postTitle, postType }) =>
+      isSupportedPostType(postType)
+        ? { title: 'دعم جديد', body: `دعم ${actorName} منشورك "${postTitle}"` }
+        : { title: 'إعجاب جديد', body: `أعجب ${actorName} بمنشورك "${postTitle}"` },
   },
   POST_SAVED: {
     en: ({ actorName, postTitle }) => ({

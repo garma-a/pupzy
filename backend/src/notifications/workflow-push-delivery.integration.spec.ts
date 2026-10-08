@@ -45,7 +45,7 @@ const PHONE_ENCRYPTION_KEY = 'MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=';
 
 /** Representative parameters for the type-coverage sweep. */
 const SAMPLE_PARAMS: NotificationTemplateParamsMap = {
-  NEW_UPVOTE: { actorName: 'Ahmed', postTitle: 'Missing cat' },
+  NEW_UPVOTE: { actorName: 'Ahmed', postTitle: 'Missing cat', postType: 'LOST' },
   POST_SAVED: { actorName: 'Ahmed', postTitle: 'Missing cat' },
   CONTACT_REQUEST_RECEIVED: { actorName: 'Ahmed', postTitle: 'Missing cat' },
   CONTACT_REQUEST_APPROVED: { postTitle: 'Missing cat' },
