@@ -350,10 +350,6 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                         Text(_lostExt!.circumstances!, style: Theme.of(context).textTheme.bodyMedium),
                       ],
                       if (_lostExt != null) ..._identificationDetails(context, _lostExt!),
-                      if (post.status == 'ACTIVE') ...[
-                        const SizedBox(height: AppSpacing.lg),
-                        _communityEvidenceCard(context),
-                      ],
                       const SizedBox(height: AppSpacing.lg),
                       Row(
                         children: [
@@ -460,6 +456,12 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                           ),
                         ],
                       ),
+                      // The Raise / directions / comments / save row comes first, so
+                      // the post's main actions sit right under its details.
+                      if (post.status == 'ACTIVE') ...[
+                        const SizedBox(height: AppSpacing.lg),
+                        _communityEvidenceCard(context),
+                      ],
                       if (post.vetClinics.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.lg),
                         NearbyVetsSection(clinics: post.vetClinics),

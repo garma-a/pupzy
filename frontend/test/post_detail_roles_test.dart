@@ -133,6 +133,15 @@ void main() {
     });
   }
 
+  for (final c in [cases[0], cases[1]]) {
+    testWidgets('${c.name}: the Raise / comments / save row sits above the comments hint', (tester) async {
+      await pumpDetail(tester, c, asOwner: false);
+      final raise = tester.getTopLeft(find.textContaining('Raise').first).dy;
+      final hintTop = tester.getTopLeft(find.text('Helped out? Show it')).dy;
+      expect(raise, lessThan(hintTop));
+    });
+  }
+
   // ── Item 3: no new contact requests / applications on completed Posts ──
 
   ElevatedButton buttonLabelled(WidgetTester tester, String label) =>
