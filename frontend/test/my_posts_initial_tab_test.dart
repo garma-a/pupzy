@@ -91,7 +91,7 @@ void main() {
 
     const counts = [('Rescue', '4', 0), ('Lost & Found', '2', 1), ('Adoption', '3', 2), ('Marketplace', '1', 3), ('Find a Mate', '5', 4)];
 
-    testWidgets('shows every post type under MY POSTS, in My Posts tab order, with the total', (tester) async {
+    testWidgets('lists every post type under MY POSTS as equal rows, in tab order, with the total', (tester) async {
       await pumpProfile(tester);
       expect(find.text('MY POSTS'), findsOneWidget);
       expect(find.text('· 15'), findsOneWidget);
@@ -100,14 +100,16 @@ void main() {
       for (final card in cards) {
         expect(card, findsOneWidget);
       }
-      // Rescue, Lost & Found, Adoption across the first row; the rest below.
-      final positions = [for (final card in cards) tester.getTopLeft(card)];
-      expect(positions[0].dy, positions[1].dy);
-      expect(positions[1].dy, positions[2].dy);
-      expect(positions[0].dx, lessThan(positions[1].dx));
-      expect(positions[1].dx, lessThan(positions[2].dx));
-      expect(positions[3].dy, greaterThan(positions[0].dy));
-      expect(positions[3].dy, positions[4].dy);
+      // One list, top to bottom in My Posts tab order, every row the same height.
+      final rects = [for (final card in cards) tester.getRect(card)];
+      for (var i = 1; i < rects.length; i++) {
+        expect(rects[i].top, greaterThan(rects[i - 1].top));
+        expect(rects[i].height, rects[0].height);
+        expect(rects[i].width, rects[0].width);
+      }
+      expect(rects[0].height, greaterThanOrEqualTo(48), reason: 'each row is a full-size tap target');
+      // The Settings list no longer repeats a My Posts entry.
+      expect(find.text('My Posts'), findsNothing);
     });
 
     for (final (label, count, index) in counts) {
