@@ -378,7 +378,8 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
                         const SizedBox(height: AppSpacing.xs),
                         Text(ext.matingConditions!, style: Theme.of(context).textTheme.bodyMedium),
                       ],
-                      if (post.vetClinics.isNotEmpty) ...[
+                      // Nearby vets help someone going to the animal, not the person who posted it.
+                      if (!_isOwner && post.vetClinics.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.lg),
                         NearbyVetsSection(clinics: post.vetClinics),
                       ],

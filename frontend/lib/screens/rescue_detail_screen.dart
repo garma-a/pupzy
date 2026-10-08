@@ -462,7 +462,8 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                         const SizedBox(height: AppSpacing.lg),
                         _communityEvidenceCard(context),
                       ],
-                      if (post.vetClinics.isNotEmpty) ...[
+                      // Nearby vets help someone going to the animal, not the person who posted it.
+                      if (!_isOwner && post.vetClinics.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.lg),
                         NearbyVetsSection(clinics: post.vetClinics),
                       ],

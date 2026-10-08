@@ -99,7 +99,7 @@ class FakeDetailGraphQL extends FakeSafetyGraphQL {
 
 const ownerId = 'owner-1';
 
-PostDetail post(String type, {String status = 'ACTIVE'}) => PostDetail.fromJson({
+PostDetail post(String type, {String status = 'ACTIVE', List<Object> vetClinics = const []}) => PostDetail.fromJson({
       'id': 'post-$type',
       'postType': type,
       'title': 'A $type post',
@@ -115,5 +115,5 @@ PostDetail post(String type, {String status = 'ACTIVE'}) => PostDetail.fromJson(
       'viewCount': 0,
       'commentCount': 0,
       'createdAt': '2026-09-20T10:00:00Z',
-      'nearestVetClinics': <Object>[],
+      'nearestVetClinics': vetClinics,
     });

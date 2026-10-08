@@ -142,6 +142,32 @@ void main() {
     });
   }
 
+  // ── Nearby vets: for people going to the animal, not for the poster ──
+
+  const clinic = {
+    'id': 'vet-1',
+    'nameEnglish': 'Maadi Vet Clinic',
+    'nameArabic': 'عيادة المعادي البيطرية',
+    'latitude': 30.05,
+    'longitude': 31.24,
+    'distanceKm': 1.2,
+    'googleMapsUrl': 'https://www.google.com/maps/search/?api=1&query=30.05%2C31.24',
+  };
+
+  for (final c in cases.where((c) => c.type != 'PRODUCT')) {
+    for (final asOwner in [true, false]) {
+      testWidgets('${c.name}: ${asOwner ? 'the owner does not see' : 'a viewer sees'} Nearby Vets', (tester) async {
+        await pumpDetail(
+          tester,
+          c,
+          asOwner: asOwner,
+          setUp: (g) => g.postDetailResult = post(c.type, vetClinics: [clinic]),
+        );
+        expect(find.text('Nearby Vets'), asOwner ? findsNothing : findsOneWidget);
+      });
+    }
+  }
+
   // ── Item 3: no new contact requests / applications on completed Posts ──
 
   ElevatedButton buttonLabelled(WidgetTester tester, String label) =>
