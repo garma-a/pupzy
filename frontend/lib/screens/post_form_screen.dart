@@ -104,9 +104,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
   bool _priorPetExperienceRequired = false;
   bool _submitting = false;
 
+  /// The same four species for every post type, in this order.
   static const List<Choice> _speciesOptions = [
     ('DOG', 'Dog', 'كلب'),
     ('CAT', 'Cat', 'قطة'),
+    ('BIRD', 'Bird', 'طائر'),
     ('OTHER', 'Other', 'أخرى'),
   ];
 
@@ -122,12 +124,6 @@ class _PostFormScreenState extends State<PostFormScreen> {
     ('HEALTHY', 'Healthy', 'بصحة جيدة'),
     ('INJURED', 'Injured', 'مصاب'),
     ('UNKNOWN', 'Not sure', 'غير متأكد'),
-  ];
-
-  static const List<Choice> _adoptionSpeciesOptions = [
-    ('CAT', 'Cat', 'قطة'),
-    ('DOG', 'Dog', 'كلب'),
-    ('OTHER', 'Other', 'أخرى'),
   ];
 
   static const List<Choice> _genderOptions = [
@@ -690,7 +686,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final petName = _petNameController.text.trim();
       final breed = _breedController.text.trim();
-      final speciesLabel = _labelFor(_adoptionSpeciesOptions, _species!);
+      final speciesLabel = _labelFor(_speciesOptions, _species!);
       final genderLabel = _labelFor(_genderOptions, _gender!);
       final agePair = parseAge(_ageController.text.trim());
       final ageText = agePair != null ? '${agePair.$1} ${_ageUnitLabel(agePair.$2)} ' : '';
@@ -1731,7 +1727,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: AppSpacing.sm,
-                    children: _adoptionSpeciesOptions.map((s) {
+                    children: _speciesOptions.map((s) {
                       return _PillChoice(
                         label: t(context, s.$2, s.$3),
                         selected: _species == s.$1,
@@ -2021,7 +2017,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: AppSpacing.sm,
-                    children: _adoptionSpeciesOptions.map((s) {
+                    children: _speciesOptions.map((s) {
                       return _PillChoice(
                         label: t(context, s.$2, s.$3),
                         selected: _species == s.$1,
