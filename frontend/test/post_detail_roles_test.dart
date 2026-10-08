@@ -118,6 +118,21 @@ void main() {
     });
   }
 
+  // ── Sensitive-photo blur: Rescue only, like the feed cards ──
+
+  for (final (c, blurred) in [(cases[0], true), (cases[1], false), (cases[2], false)]) {
+    testWidgets('${c.name}: the photo ${blurred ? 'opens behind "Tap to see photo"' : 'shows straight away'}', (tester) async {
+      await pumpDetail(tester, c, asOwner: false);
+      expect(find.text('Tap to see photo'), blurred ? findsOneWidget : findsNothing);
+
+      if (blurred) {
+        await tester.tap(find.text('Tap to see photo'));
+        await tester.pumpAndSettle();
+        expect(find.text('Tap to see photo'), findsNothing);
+      }
+    });
+  }
+
   // ── Item 3: no new contact requests / applications on completed Posts ──
 
   ElevatedButton buttonLabelled(WidgetTester tester, String label) =>

@@ -50,6 +50,12 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
   /// Only LOST/FOUND reports route through the contact handshake.
   bool get _usesContactFlow => _post?.postType != 'RESCUE';
 
+  /// Only RESCUE photos sit behind "Tap to see photo": they can show an
+  /// injured or distressed animal. Lost & Found photos are what helps people
+  /// recognise the pet, so they show straight away — the same rule the feed
+  /// cards follow.
+  bool get _blursPhotos => _post?.postType == 'RESCUE';
+
   /// New contact requests are only accepted while the Post is ACTIVE. An
   /// already-approved requester keeps WhatsApp access after it closes.
   bool get _acceptsNewRequests => _post?.status == 'ACTIVE';
@@ -248,7 +254,7 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
               children: [
                 Stack(
                   children: [
-                    if (_revealed)
+                    if (_revealed || !_blursPhotos)
                       PetCarousel(imageUrls: images, height: 320)
                     else
                       _BlurredCarousel(
