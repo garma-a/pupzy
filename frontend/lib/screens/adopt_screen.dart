@@ -14,8 +14,10 @@ import '../services/graphql_service.dart';
 import '../services/safety_events.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/upvote_wording.dart';
 import '../widgets/adaptive_search_bar.dart';
 import '../widgets/animated_favorite_icon.dart';
+import '../widgets/upvote_button.dart';
 import '../widgets/distance_filter.dart';
 import '../widgets/image_with_fallback.dart';
 import '../widgets/skeleton_loader.dart';
@@ -59,6 +61,10 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
   final _matingScrollController = ScrollController();
   Timer? _searchDebounce;
 
+  /// The signed-in account, so its own cards show their like count instead
+  /// of a Like button (nobody can like their own post).
+  String? _myUserId;
+
   /// The server-side search term, or null under the backend's 2-character
   /// minimum (feed-search-flutter-integration-contract.md §4).
   String? get _activeSearch {
@@ -81,7 +87,16 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
     _scrollController.addListener(_onScroll);
     _matingScrollController.addListener(_onMatingScroll);
     _loadMatingFeed();
+    _loadMyUserId();
   }
+
+  Future<void> _loadMyUserId() async {
+    final me = await context.read<GraphQLService>().fetchMe();
+    if (!mounted) return;
+    setState(() => _myUserId = me?['id'] as String?);
+  }
+
+  bool _isMine(FeedPost post) => _myUserId != null && post.creatorId == _myUserId;
 
   @override
   void dispose() {
@@ -318,6 +333,26 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
     return true;
   }
 
+  /// Like on an Adoption or Find a Mate card; [mating] picks the list to update.
+  Future<bool> _toggleLike(FeedPost post, {required bool mating}) async {
+    final graphql = context.read<GraphQLService>();
+    final (count, liked, error) = await graphql.toggleUpvote(post.id);
+    if (!mounted) return false;
+    if (error != null || count == null || liked == null) {
+      Fluttertoast.showToast(msg: error ?? UpvoteWording.of(post.postType).failed(context));
+      return false;
+    }
+    FeedPost update(FeedPost p) => p.id == post.id ? p.copyWith(upvoteCount: count, isUpvotedByMe: liked) : p;
+    setState(() {
+      if (mating) {
+        _matingPosts = _matingPosts.map(update).toList();
+      } else {
+        _posts = _posts.map(update).toList();
+      }
+    });
+    return true;
+  }
+
   Future<bool> _toggleSaveMating(FeedPost post) async {
     final graphql = context.read<GraphQLService>();
     final (count, saved, error) = await graphql.toggleSave(post.id);
@@ -459,6 +494,8 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
                                         key: ValueKey(filtered[i].id),
                                         post: filtered[i],
                                         onSave: () => _toggleSave(filtered[i]),
+                                        isOwn: _isMine(filtered[i]),
+                                        onLike: () => _toggleLike(filtered[i], mating: false),
                                         onTap: () => Navigator.of(context).push(
                                           MaterialPageRoute(builder: (_) => AdoptionDetailScreen(postId: filtered[i].id)),
                                         ),
@@ -545,6 +582,8 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
                                         key: ValueKey(filtered[i].id),
                                         post: filtered[i],
                                         onSave: () => _toggleSaveMating(filtered[i]),
+                                        isOwn: _isMine(filtered[i]),
+                                        onLike: () => _toggleLike(filtered[i], mating: true),
                                         onTap: () => Navigator.of(context).push(
                                           MaterialPageRoute(builder: (_) => MatingDetailScreen(postId: filtered[i].id)),
                                         ),
@@ -569,8 +608,17 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
 class _AdoptFeedCard extends StatelessWidget {
   final FeedPost post;
   final Future<bool> Function() onSave;
+  final Future<bool> Function() onLike;
+  final bool isOwn;
   final VoidCallback onTap;
-  const _AdoptFeedCard({super.key, required this.post, required this.onSave, required this.onTap});
+  const _AdoptFeedCard({
+    super.key,
+    required this.post,
+    required this.onSave,
+    required this.onLike,
+    required this.isOwn,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -650,8 +698,19 @@ class _AdoptFeedCard extends StatelessWidget {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.md),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
               child: Text(post.description, style: Theme.of(context).textTheme.bodyMedium, maxLines: 3, overflow: TextOverflow.ellipsis),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.md),
+              child: UpvoteButton(
+                postType: post.postType,
+                count: post.upvoteCount,
+                upvoted: post.isUpvotedByMe,
+                isOwner: isOwn,
+                onToggle: onLike,
+                compact: true,
+              ),
             ),
           ],
         ),
@@ -665,8 +724,17 @@ class _AdoptFeedCard extends StatelessWidget {
 class _MatingFeedCard extends StatelessWidget {
   final FeedPost post;
   final Future<bool> Function() onSave;
+  final Future<bool> Function() onLike;
+  final bool isOwn;
   final VoidCallback onTap;
-  const _MatingFeedCard({super.key, required this.post, required this.onSave, required this.onTap});
+  const _MatingFeedCard({
+    super.key,
+    required this.post,
+    required this.onSave,
+    required this.onLike,
+    required this.isOwn,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -746,8 +814,19 @@ class _MatingFeedCard extends StatelessWidget {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.md),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
               child: Text(post.description, style: Theme.of(context).textTheme.bodyMedium, maxLines: 3, overflow: TextOverflow.ellipsis),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.md),
+              child: UpvoteButton(
+                postType: post.postType,
+                count: post.upvoteCount,
+                upvoted: post.isUpvotedByMe,
+                isOwner: isOwn,
+                onToggle: onLike,
+                compact: true,
+              ),
             ),
           ],
         ),

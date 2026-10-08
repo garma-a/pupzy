@@ -27,6 +27,7 @@ void main() {
           'createdAt': '2026-10-08T10:00:00Z',
           'city': {'id': 'c1', 'nameEnglish': 'Qasr Al-Nile', 'nameArabic': 'قصر النيل', 'governorate': 'Cairo'},
           'media': <Object>[],
+          'creator': {'id': 'owner-1'},
           'product': product,
         },
       };
@@ -39,6 +40,12 @@ void main() {
 
     final copy = post.copyWith(isSavedByMe: true);
     expect((copy.priceAmount, copy.priceCurrency, copy.isFree), (350, 'EGP', false));
+  });
+
+  test("a feed post carries who posted it, so cards can spot the viewer's own posts", () {
+    final post = FeedPost.fromEdgeJson(edge());
+    expect(post.creatorId, 'owner-1');
+    expect(post.copyWith(isSavedByMe: true).creatorId, 'owner-1');
   });
 
   test('other post types carry no price', () {

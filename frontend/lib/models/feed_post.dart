@@ -23,6 +23,10 @@ class FeedPost {
   final double? distanceKm;
   final DateTime createdAt;
 
+  /// Who posted it, so a card can tell the viewer's own posts apart (an owner
+  /// cannot support or like their own post). Null when the feed omitted it.
+  final String? creatorId;
+
   /// PRODUCT listings only (null for every other type, and when the feed did
   /// not include it): what Market cards show as the price.
   final double? priceAmount;
@@ -49,6 +53,7 @@ class FeedPost {
     required this.mediaUrls,
     this.distanceKm,
     required this.createdAt,
+    this.creatorId,
     this.priceAmount,
     this.priceCurrency,
     this.isFree,
@@ -86,6 +91,7 @@ class FeedPost {
       mediaUrls: mediaList.map((m) => m['publicUrl'] as String).toList(),
       distanceKm: (edge['distanceKm'] as num?)?.toDouble(),
       createdAt: DateTime.parse(node['createdAt'] as String),
+      creatorId: (node['creator'] as Map<String, dynamic>?)?['id'] as String?,
       priceAmount: (product?['priceAmount'] as num?)?.toDouble(),
       priceCurrency: product?['priceCurrency'] as String?,
       isFree: product?['isFree'] as bool?,
@@ -120,6 +126,7 @@ class FeedPost {
       mediaUrls: mediaUrls,
       distanceKm: distanceKm,
       createdAt: createdAt,
+      creatorId: creatorId,
       priceAmount: priceAmount,
       priceCurrency: priceCurrency,
       isFree: isFree,

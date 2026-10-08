@@ -11,7 +11,7 @@ import '../models/post_detail.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/upvote_wording.dart';
-import '../widgets/animated_boost_chip.dart';
+import '../widgets/upvote_button.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/contact_request_sheet.dart';
@@ -362,41 +362,13 @@ class _RescueDetailScreenState extends State<RescueDetailScreen> {
                               spacing: AppSpacing.sm,
                               runSpacing: AppSpacing.sm,
                               children: [
-                          if (_isOwner)
-                            Tooltip(
-                              message: UpvoteWording.of(post.postType).notOwnPost(context),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                                decoration: BoxDecoration(
-                                  color: AppColors.background,
-                                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                                  border: Border.all(color: AppColors.border),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(UpvoteWording.of(post.postType).icon, size: 15, color: AppColors.textMuted),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      '${post.upvoteCount}  ${UpvoteWording.of(post.postType).action(context)}',
-                                      style: const TextStyle(fontSize: 13, color: AppColors.textMuted, fontWeight: FontWeight.w500),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          else
-                            AnimatedBoostChip(
-                              count: post.upvoteCount,
-                              boosted: post.isUpvotedByMe,
-                              onToggle: _toggleBoost,
-                              boostedLabel: UpvoteWording.of(post.postType).done(context),
-                              unboostedLabel: UpvoteWording.of(post.postType).action(context),
-                              icon: UpvoteWording.of(post.postType).icon,
-                              boostedIcon: UpvoteWording.of(post.postType).doneIcon,
-                              activeColor: AppColors.primary,
-                              inactiveColor: AppColors.textMuted,
-                            ),
+                          UpvoteButton(
+                            postType: post.postType,
+                            count: post.upvoteCount,
+                            upvoted: post.isUpvotedByMe,
+                            isOwner: _isOwner,
+                            onToggle: _toggleBoost,
+                          ),
                           if (post.latitude != null && post.longitude != null)
                             Material(
                               color: Colors.transparent,

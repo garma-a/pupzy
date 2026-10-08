@@ -10,7 +10,7 @@ import '../models/post_detail.dart';
 import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/upvote_wording.dart';
-import '../widgets/animated_boost_chip.dart';
+import '../widgets/upvote_button.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/contact_request_sheet.dart';
@@ -290,21 +290,14 @@ class _MatingDetailScreenState extends State<MatingDetailScreen> {
                       Row(
                         children: [
                           Expanded(child: Text(ext.petName, style: Theme.of(context).textTheme.headlineLarge)),
-                          if (!_isOwner)
-                            AnimatedBoostChip(
-                              count: post.upvoteCount,
-                              boosted: post.isUpvotedByMe,
-                              onToggle: _toggleBoost,
-                              boostedLabel: UpvoteWording.of('MATING').done(context),
-                              unboostedLabel: UpvoteWording.of('MATING').action(context),
-                              icon: UpvoteWording.of('MATING').icon,
-                              boostedIcon: UpvoteWording.of('MATING').doneIcon,
-                              activeColor: AppColors.primary,
-                              inactiveColor: AppColors.textMuted,
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              iconSize: 13,
-                              fontSize: 12,
-                            ),
+                          UpvoteButton(
+                            postType: 'MATING',
+                            count: post.upvoteCount,
+                            upvoted: post.isUpvotedByMe,
+                            isOwner: _isOwner,
+                            onToggle: _toggleBoost,
+                            compact: true,
+                          ),
                           Material(
                             color: Colors.transparent,
                             child: InkWell(

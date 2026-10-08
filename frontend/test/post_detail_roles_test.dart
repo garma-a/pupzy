@@ -10,6 +10,7 @@ import 'package:pupzy/screens/mating_detail_screen.dart';
 import 'package:pupzy/screens/product_detail_screen.dart';
 import 'package:pupzy/screens/rescue_detail_screen.dart';
 import 'package:pupzy/services/safety_events.dart';
+import 'package:pupzy/widgets/animated_boost_chip.dart';
 import 'package:pupzy/widgets/owner_post_actions.dart';
 import 'package:pupzy/widgets/safety_actions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -164,10 +165,16 @@ void main() {
     });
   }
 
-  testWidgets('ADOPTION: the owner gets no Like button on their own listing', (tester) async {
-    await pumpDetail(tester, cases[3], asOwner: true);
-    expect(find.textContaining('Like'), findsNothing);
-  });
+  for (final (c, word) in [(cases[0], 'Support'), (cases[3], 'Like'), (cases[5], 'Like')]) {
+    testWidgets('${c.name}: the owner sees the $word count but cannot tap it', (tester) async {
+      await pumpDetail(tester, c, asOwner: true);
+      expect(find.text('0  $word'), findsOneWidget);
+      expect(find.byType(AnimatedBoostChip), findsNothing);
+      await tester.tap(find.text('0  $word'));
+      await tester.pumpAndSettle();
+      expect(find.text('0  $word'), findsOneWidget);
+    });
+  }
 
   // ── Nearby vets: for people going to the animal, not for the poster ──
 

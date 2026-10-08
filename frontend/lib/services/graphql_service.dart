@@ -225,6 +225,9 @@ class GraphQLService {
         isUpvotedByMe
         isSavedByMe
         createdAt
+        creator {
+          id
+        }
         city {
           id
           nameEnglish
@@ -301,6 +304,9 @@ class GraphQLService {
         isUpvotedByMe
         isSavedByMe
         createdAt
+        creator {
+          id
+        }
         city {
           id
           nameEnglish

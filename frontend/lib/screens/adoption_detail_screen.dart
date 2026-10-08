@@ -11,7 +11,7 @@ import '../services/graphql_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/upvote_wording.dart';
 import '../widgets/adoption_application_sheet.dart';
-import '../widgets/animated_boost_chip.dart';
+import '../widgets/upvote_button.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/adoption_applications_owner_section.dart';
@@ -287,21 +287,14 @@ class _AdoptionDetailScreenState extends State<AdoptionDetailScreen> {
                       Row(
                         children: [
                           Expanded(child: Text(ext.petName, style: Theme.of(context).textTheme.headlineLarge)),
-                          if (!_isOwner)
-                            AnimatedBoostChip(
-                              count: post.upvoteCount,
-                              boosted: post.isUpvotedByMe,
-                              onToggle: _toggleLike,
-                              boostedLabel: UpvoteWording.of('ADOPTION').done(context),
-                              unboostedLabel: UpvoteWording.of('ADOPTION').action(context),
-                              icon: UpvoteWording.of('ADOPTION').icon,
-                              boostedIcon: UpvoteWording.of('ADOPTION').doneIcon,
-                              activeColor: AppColors.primary,
-                              inactiveColor: AppColors.textMuted,
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              iconSize: 13,
-                              fontSize: 12,
-                            ),
+                          UpvoteButton(
+                            postType: 'ADOPTION',
+                            count: post.upvoteCount,
+                            upvoted: post.isUpvotedByMe,
+                            isOwner: _isOwner,
+                            onToggle: _toggleLike,
+                            compact: true,
+                          ),
                           Material(
                             color: Colors.transparent,
                             child: InkWell(
