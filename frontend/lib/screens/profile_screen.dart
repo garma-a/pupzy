@@ -345,9 +345,24 @@ class _ProfileSheetState extends State<ProfileSheet> {
     // falling back to a cached Firebase provider picture. Only fall back to
     // the Firebase photo while the profile hasn't loaded yet at all.
     final photoUrl = _loadingProfile ? firebaseUser?.photoURL : _user?['profilePictureUrl'] as String?;
-    final rescues = _user?['rescuePostCount']?.toString() ?? '0';
-    final adopted = _user?['adoptionPostCount']?.toString() ?? '0';
-    final lost = _user?['lostPostCount']?.toString() ?? '0';
+    int countOf(String field) => (_user?[field] as int?) ?? 0;
+    // Same order as the My Posts tabs. Accents and icons match the New Post sheet.
+    final postCounts = [
+      (type: 'RESCUE', count: countOf('rescuePostCount'), icon: Icons.healing_outlined, accent: AppColors.critical, label: t(context, 'Rescue', 'إنقاذ')),
+      (type: 'LOST', count: countOf('lostPostCount'), icon: Icons.search, accent: const Color(0xFFE08A2E), label: t(context, 'Lost & Found', 'مفقود')),
+      (type: 'ADOPTION', count: countOf('adoptionPostCount'), icon: Icons.home_outlined, accent: const Color(0xFFB08C3A), label: t(context, 'Adoption', 'تبني')),
+      (type: 'PRODUCT', count: countOf('productPostCount'), icon: Icons.storefront_outlined, accent: const Color(0xFF5B8DEF), label: t(context, 'Marketplace', 'السوق')),
+      (type: 'MATING', count: countOf('matingPostCount'), icon: Icons.favorite_border, accent: const Color(0xFFD1608A), label: t(context, 'Find a Mate', 'البحث عن شريك')),
+    ];
+    final totalPosts = postCounts.fold<int>(0, (sum, c) => sum + c.count);
+    Widget countCard(int i, {bool horizontal = false}) => _PostCountCard(
+          icon: postCounts[i].icon,
+          accent: postCounts[i].accent,
+          count: '${postCounts[i].count}',
+          label: postCounts[i].label,
+          horizontal: horizontal,
+          onTap: () => _openMyPosts(postCounts[i].type),
+        );
     final cityName = _user?['city']?[cityField] as String?;
 
     return Container(
@@ -433,41 +448,41 @@ class _ProfileSheetState extends State<ProfileSheet> {
                   Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
                   const SizedBox(width: 6),
                   Text(t(context, 'MY POSTS', 'منشوراتي'), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                  const SizedBox(width: 6),
+                  Text('· $totalPosts', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted, fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
+            // Three across, then the last two sharing the second row.
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _PostCountCard(
-                      icon: Icons.healing_outlined,
-                      accent: AppColors.critical,
-                      count: rescues,
-                      label: t(context, 'Rescue', 'إنقاذ'),
-                      onTap: () => _openMyPosts('RESCUE'),
+              child: Column(
+                children: [
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        countCard(0),
+                        const SizedBox(width: AppSpacing.sm),
+                        countCard(1),
+                        const SizedBox(width: AppSpacing.sm),
+                        countCard(2),
+                      ],
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    _PostCountCard(
-                      icon: Icons.home_outlined,
-                      accent: const Color(0xFFB08C3A),
-                      count: adopted,
-                      label: t(context, 'Adoption', 'تبني'),
-                      onTap: () => _openMyPosts('ADOPTION'),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        countCard(3, horizontal: true),
+                        const SizedBox(width: AppSpacing.sm),
+                        countCard(4, horizontal: true),
+                      ],
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    _PostCountCard(
-                      icon: Icons.search,
-                      accent: const Color(0xFFE08A2E),
-                      count: lost,
-                      label: t(context, 'Lost & Found', 'مفقود'),
-                      onTap: () => _openMyPosts('LOST'),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -620,11 +635,13 @@ class _ProfileSheetState extends State<ProfileSheet> {
 /// One of the profile's post counts: the type's icon in its accent colour,
 /// the count, the type's name and a chevron, all one tap target that opens
 /// My Posts on that type. Colours and icons match the New Post sheet.
+/// [horizontal] lays it out in one line, for the wider second-row cards.
 class _PostCountCard extends StatelessWidget {
   final IconData icon;
   final Color accent;
   final String count;
   final String label;
+  final bool horizontal;
   final VoidCallback onTap;
 
   const _PostCountCard({
@@ -633,10 +650,29 @@ class _PostCountCard extends StatelessWidget {
     required this.count,
     required this.label,
     required this.onTap,
+    this.horizontal = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final badge = Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(color: accent.withValues(alpha: 0.12), shape: BoxShape.circle),
+      child: Icon(icon, size: 18, color: accent),
+    );
+    const chevron = Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted);
+    final countText = Text(
+      count,
+      style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800, height: 1.1),
+    );
+    final labelText = Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+    );
+
     return Expanded(
       child: Semantics(
         button: true,
@@ -655,35 +691,31 @@ class _PostCountCard extends StatelessWidget {
             highlightColor: accent.withValues(alpha: 0.06),
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(color: accent.withValues(alpha: 0.12), shape: BoxShape.circle),
-                        child: Icon(icon, size: 18, color: accent),
-                      ),
-                      const Spacer(),
-                      const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    count,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800, height: 1.1),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
-                  ),
-                ],
-              ),
+              child: horizontal
+                  ? Row(
+                      children: [
+                        badge,
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [countText, labelText],
+                          ),
+                        ),
+                        chevron,
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [badge, const Spacer(), chevron]),
+                        const SizedBox(height: AppSpacing.sm),
+                        countText,
+                        const SizedBox(height: 2),
+                        labelText,
+                      ],
+                    ),
             ),
           ),
         ),

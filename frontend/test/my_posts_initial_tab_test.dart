@@ -23,6 +23,8 @@ class _MyPostsGraphQL extends FakeSafetyGraphQL {
         'rescuePostCount': 4,
         'adoptionPostCount': 3,
         'lostPostCount': 2,
+        'productPostCount': 1,
+        'matingPostCount': 5,
       };
 
   @override
@@ -87,15 +89,28 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('shows each count under MY POSTS with its type name', (tester) async {
+    const counts = [('Rescue', '4', 0), ('Lost & Found', '2', 1), ('Adoption', '3', 2), ('Marketplace', '1', 3), ('Find a Mate', '5', 4)];
+
+    testWidgets('shows every post type under MY POSTS, in My Posts tab order, with the total', (tester) async {
       await pumpProfile(tester);
       expect(find.text('MY POSTS'), findsOneWidget);
-      for (final (count, label) in [('4', 'Rescue'), ('3', 'Adoption'), ('2', 'Lost & Found')]) {
-        expect(find.bySemanticsLabel('$count $label. Open in My Posts'), findsOneWidget);
+      expect(find.text('· 15'), findsOneWidget);
+
+      final cards = [for (final (label, count, _) in counts) find.bySemanticsLabel('$count $label. Open in My Posts')];
+      for (final card in cards) {
+        expect(card, findsOneWidget);
       }
+      // Rescue, Lost & Found, Adoption across the first row; the rest below.
+      final positions = [for (final card in cards) tester.getTopLeft(card)];
+      expect(positions[0].dy, positions[1].dy);
+      expect(positions[1].dy, positions[2].dy);
+      expect(positions[0].dx, lessThan(positions[1].dx));
+      expect(positions[1].dx, lessThan(positions[2].dx));
+      expect(positions[3].dy, greaterThan(positions[0].dy));
+      expect(positions[3].dy, positions[4].dy);
     });
 
-    for (final (label, count, index) in [('Rescue', '4', 0), ('Adoption', '3', 2), ('Lost & Found', '2', 1)]) {
+    for (final (label, count, index) in counts) {
       testWidgets('tapping $label opens My Posts on its tab', (tester) async {
         await pumpProfile(tester);
         await tester.tap(find.bySemanticsLabel('$count $label. Open in My Posts'));

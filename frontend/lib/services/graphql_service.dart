@@ -81,6 +81,7 @@ class GraphQLService {
         lostPostCount
         adoptionPostCount
         productPostCount
+        matingPostCount
         languagePreference
         notificationsEnabled
         lastSeenAt
