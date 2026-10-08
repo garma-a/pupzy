@@ -13,24 +13,26 @@ CREATE INDEX IF NOT EXISTS idx_posts_help_governorate_ordered
   ON posts (governorate, urgency ASC, created_at DESC, id DESC)
   WHERE status = 'ACTIVE' AND post_type IN ('RESCUE', 'LOST');
 
-CREATE INDEX IF NOT EXISTS idx_posts_adopt_city_newest
-  ON posts (city_id, id DESC)
+-- Adopt and Market Newest feeds order by listed_at, so a renewed listing
+-- is new again (see 0062_posts_listed_at.sql).
+CREATE INDEX IF NOT EXISTS idx_posts_adopt_city_listed
+  ON posts (city_id, listed_at DESC, id DESC)
   WHERE status = 'ACTIVE' AND post_type = 'ADOPTION';
 
-CREATE INDEX IF NOT EXISTS idx_posts_adopt_governorate_newest
-  ON posts (governorate, id DESC)
+CREATE INDEX IF NOT EXISTS idx_posts_adopt_governorate_listed
+  ON posts (governorate, listed_at DESC, id DESC)
   WHERE status = 'ACTIVE' AND post_type = 'ADOPTION';
 
-CREATE INDEX IF NOT EXISTS idx_posts_market_city_newest
-  ON posts (city_id, id DESC)
+CREATE INDEX IF NOT EXISTS idx_posts_market_city_listed
+  ON posts (city_id, listed_at DESC, id DESC)
   WHERE status = 'ACTIVE' AND post_type = 'PRODUCT';
 
-CREATE INDEX IF NOT EXISTS idx_posts_market_governorate_newest
-  ON posts (governorate, id DESC)
+CREATE INDEX IF NOT EXISTS idx_posts_market_governorate_listed
+  ON posts (governorate, listed_at DESC, id DESC)
   WHERE status = 'ACTIVE' AND post_type = 'PRODUCT';
 
-CREATE INDEX IF NOT EXISTS idx_posts_market_city_category_newest
-  ON posts (city_id, market_category, id DESC)
+CREATE INDEX IF NOT EXISTS idx_posts_market_city_category_listed
+  ON posts (city_id, market_category, listed_at DESC, id DESC)
   WHERE status = 'ACTIVE' AND post_type = 'PRODUCT';
 
 CREATE INDEX IF NOT EXISTS idx_posts_home_governorate_newest

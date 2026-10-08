@@ -47,7 +47,7 @@ import { ViewFlushCron } from './view-flush.cron';
 
 type IdCursor = { id: string };
 type HelpFeedCursor = { urgency: NonNullable<Post['urgency']>; createdAt: string; id: string };
-type ScoredFeedCursor = { score?: number; createdAt?: string; id: string };
+type ScoredFeedCursor = { score?: number; createdAt?: string; listedAt?: string; id: string };
 type SavedPostsCursor = { savedAt: string; postId: string };
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -81,7 +81,7 @@ function isHelpFeedCursor(cursor: unknown): cursor is HelpFeedCursor {
 
 function isScoredFeedCursor(cursor: unknown, sort: 'HOT' | 'NEWEST'): cursor is ScoredFeedCursor {
   if (!isCursorRecord(cursor) || !isUuidCursorValue(cursor.id)) return false;
-  if (sort === 'NEWEST') return true;
+  if (sort === 'NEWEST') return isValidCursorDate(cursor.listedAt);
   return typeof cursor.score === 'number' && Number.isFinite(cursor.score) && isValidCursorDate(cursor.createdAt);
 }
 
@@ -712,7 +712,7 @@ export class PostsService {
     return this.mapFeedResultToConnection(result, (post) =>
       sort === 'HOT'
         ? { score: post.effectiveScore, createdAt: post.createdAt.toISOString(), id: post.id }
-        : { id: post.id },
+        : { listedAt: post.listedAt.toISOString(), id: post.id },
     );
   }
 
@@ -733,7 +733,7 @@ export class PostsService {
     return this.mapFeedResultToConnection(result, (post) =>
       sort === 'HOT'
         ? { score: post.effectiveScore, createdAt: post.createdAt.toISOString(), id: post.id }
-        : { id: post.id },
+        : { listedAt: post.listedAt.toISOString(), id: post.id },
     );
   }
 

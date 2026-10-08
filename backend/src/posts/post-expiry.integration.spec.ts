@@ -1259,6 +1259,41 @@ describe('Post inactivity expiry, reminders and renewal (Tickets 12–13)', () =
       expect(discussion.data?.comments.edges).toHaveLength(1);
     });
 
+    it('lists a renewed adoption listing as new again in the Newest and Hot feeds', async () => {
+      // `renewed` is the older listing: lower id and created 40 days ago.
+      const renewed = await seedAdoption({ inactiveMinutes: 31 * DAY_MINUTES });
+      const fresh = await seedAdoption({});
+      await dbHelper.db
+        .update(posts)
+        .set({ createdAt: inactiveTimestamp(40 * DAY_MINUTES), listedAt: inactiveTimestamp(40 * DAY_MINUTES) })
+        .where(eq(posts.id, renewed.id));
+      expect((await processor.processPendingExpiry()).expired).toBe(1);
+
+      expect((await renewPost(renewed)).errors).toBeUndefined();
+      const stored = (await storedPost(renewed.id))!;
+      expect(Date.now() - stored.listedAt.getTime()).toBeLessThan(60_000);
+      expect(stored.effectiveScore).toBeCloseTo(1 / Math.pow(2, 1.5), 3);
+
+      const sortedFeedIds = async (sort: 'HOT' | 'NEWEST') => {
+        const result = await runGql<{ adoptFeed: PostConnectionData }>(
+          `query Adopt($cityId: ID, $sort: AdoptFeedSort) {
+            adoptFeed(cityId: $cityId, sort: $sort, first: 20) { edges { node { id } } }
+          }`,
+          { cityId: testCity.id, sort },
+          other,
+        );
+        expect(result.errors).toBeUndefined();
+        return result.data!.adoptFeed.edges.map((edge) => edge.node.id);
+      };
+      expect(await sortedFeedIds('NEWEST')).toEqual([renewed.id, fresh.id]);
+      expect((await sortedFeedIds('HOT'))[0]).toBe(renewed.id);
+
+      // Later engagement keeps measuring age from the renewal, not the creation.
+      expect((await runGql(TOGGLE_UPVOTE, { postId: renewed.id }, other)).errors).toBeUndefined();
+      expect((await storedPost(renewed.id))!.effectiveScore).toBeGreaterThan(1);
+      expect((await sortedFeedIds('HOT'))[0]).toBe(renewed.id);
+    });
+
     it('does not let new engagement revive an expired adoption listing', async () => {
       const post = await seedAdoption({ inactiveMinutes: 31 * DAY_MINUTES });
       expect((await processor.processPendingExpiry()).expired).toBe(1);
