@@ -530,8 +530,9 @@ export class PostsRepository {
    * Runs inside one transaction under the shared lifecycle locks, re-reads the
    * Post, then applies the renewal only while the stored `renewed_at` is older
    * than the seven-day cooldown. Renewal resets the inactivity window,
-   * reactivates an EXPIRED listing and leaves every direct interaction
-   * untouched, so interactions terminated by expiry stay terminated.
+   * reactivates an EXPIRED listing, re-lists it as fresh in the Hot and Newest
+   * feeds, and leaves every direct interaction untouched, so interactions
+   * terminated by expiry stay terminated.
    *
    * @throws {NotFoundError} when the Post no longer exists.
    * @throws {ForbiddenError} when the caller does not own the Post.
@@ -552,9 +553,25 @@ export class PostsRepository {
           );
         }
 
+        // A renewed listing ranks as a fresh one: listed_at moves to now, and the
+        // Hot score is recomputed for that age (zero hours, hence POWER(2, 1.5)).
         const [post] = await tx
           .update(posts)
-          .set({ status: 'ACTIVE', lastEngagedAt: sql`now()`, renewedAt: sql`now()` })
+          .set({
+            status: 'ACTIVE',
+            lastEngagedAt: sql`now()`,
+            renewedAt: sql`now()`,
+            listedAt: sql`now()`,
+            effectiveScore: sql`
+              CASE
+                WHEN ${posts.postType} = 'ADOPTION' THEN
+                  (${posts.upvoteCount} * 3 + ${posts.saveCount} * 2 + ${posts.viewCount} * 0.1 + 1) / POWER(2, 1.5)
+                WHEN ${posts.postType} = 'PRODUCT' THEN
+                  (${posts.viewCount} * 1 + ${posts.saveCount} * 5 + 1) / POWER(2, 1.5)
+                ELSE ${posts.effectiveScore}
+              END
+            `,
+          })
           .where(
             and(
               eq(posts.id, postId),
@@ -924,7 +941,7 @@ export class PostsRepository {
               effectiveScore: sql`
                 CASE WHEN ${posts.postType} = 'ADOPTION' THEN
                   ((${posts.upvoteCount} - 1) * 3 + ${posts.saveCount} * 2 + ${posts.viewCount} * 0.1 + 1)
-                  / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+                  / POWER(EXTRACT(EPOCH FROM (now() - ${posts.listedAt})) / 3600.0 + 2, 1.5)
                 ELSE ${posts.effectiveScore}
                 END
               `,
@@ -956,7 +973,7 @@ export class PostsRepository {
                 effectiveScore: sql`
                   CASE WHEN ${posts.postType} = 'ADOPTION' THEN
                     ((${posts.upvoteCount} + 1) * 3 + ${posts.saveCount} * 2 + ${posts.viewCount} * 0.1 + 1)
-                    / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+                    / POWER(EXTRACT(EPOCH FROM (now() - ${posts.listedAt})) / 3600.0 + 2, 1.5)
                   ELSE ${posts.effectiveScore}
                   END
                 `,
@@ -1038,10 +1055,10 @@ export class PostsRepository {
                 CASE
                   WHEN ${posts.postType} = 'ADOPTION' THEN
                     (${posts.upvoteCount} * 3 + (${posts.saveCount} - 1) * 2 + ${posts.viewCount} * 0.1 + 1)
-                    / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+                    / POWER(EXTRACT(EPOCH FROM (now() - ${posts.listedAt})) / 3600.0 + 2, 1.5)
                   WHEN ${posts.postType} = 'PRODUCT' THEN
                     (${posts.viewCount} * 1 + (${posts.saveCount} - 1) * 5 + 1)
-                    / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+                    / POWER(EXTRACT(EPOCH FROM (now() - ${posts.listedAt})) / 3600.0 + 2, 1.5)
                   ELSE ${posts.effectiveScore}
                 END
               `,
@@ -1074,10 +1091,10 @@ export class PostsRepository {
                   CASE
                     WHEN ${posts.postType} = 'ADOPTION' THEN
                       (${posts.upvoteCount} * 3 + (${posts.saveCount} + 1) * 2 + ${posts.viewCount} * 0.1 + 1)
-                      / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+                      / POWER(EXTRACT(EPOCH FROM (now() - ${posts.listedAt})) / 3600.0 + 2, 1.5)
                     WHEN ${posts.postType} = 'PRODUCT' THEN
                       (${posts.viewCount} * 1 + (${posts.saveCount} + 1) * 5 + 1)
-                      / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+                      / POWER(EXTRACT(EPOCH FROM (now() - ${posts.listedAt})) / 3600.0 + 2, 1.5)
                     ELSE ${posts.effectiveScore}
                   END
                 `,
@@ -1349,17 +1366,21 @@ export class PostsRepository {
 
   /**
    * Shared keyset-pagination cursor condition for the Adopt Feed and Market
-   * Feed, which both sort by effectiveScore (HOT) or plain id (NEWEST).
+   * Feed, which both sort by effectiveScore (HOT) or by listing time, then id
+   * (NEWEST), so a renewed listing is new again.
    * Fully expressible with builder operators — no sql fragment needed, since
    * gt()/lt()/eq() work correctly against Postgres enum and numeric columns
    * without a manual ::cast.
    */
   private buildScoredFeedCursorCondition(
     sort: 'HOT' | 'NEWEST',
-    cursor: { score?: number; createdAt?: string; id: string } | null,
+    cursor: { score?: number; createdAt?: string; listedAt?: string; id: string } | null,
   ): SQL | undefined {
     if (!cursor) return undefined;
-    if (sort === 'NEWEST') return lt(posts.id, cursor.id);
+    if (sort === 'NEWEST') {
+      const listedAt = new Date(cursor.listedAt!);
+      return or(lt(posts.listedAt, listedAt), and(eq(posts.listedAt, listedAt), lt(posts.id, cursor.id)));
+    }
 
     const score = cursor.score!;
     const createdAt = new Date(cursor.createdAt!);
@@ -1450,7 +1471,7 @@ export class PostsRepository {
   /**
    * Adopt Feed — ADOPTION posts sorted by effective_score (HOT) or newest.
    * Index (HOT): idx_posts_adopt_score (city_id, effective_score DESC, created_at DESC)
-   * Index (NEWEST): primary key (UUIDv7 id is time-ordered)
+   * Index (NEWEST): idx_posts_adopt_{city,governorate}_listed (listed_at DESC, id DESC)
    * Optional `searchPattern` adds the shared normalized search filter without
    * changing the ordering or the cursor shape.
    */
@@ -1461,7 +1482,7 @@ export class PostsRepository {
     radiusKm: number;
     sort: 'HOT' | 'NEWEST';
     limit: number;
-    cursor: { score?: number; createdAt?: string; id: string } | null;
+    cursor: { score?: number; createdAt?: string; listedAt?: string; id: string } | null;
     searchPattern?: string | null;
     viewerId?: string | null;
   }): Promise<FeedResult> {
@@ -1475,7 +1496,9 @@ export class PostsRepository {
     const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
     const cursorCondition = this.buildScoredFeedCursorCondition(sort, cursor);
     const orderByClauses =
-      sort === 'HOT' ? [desc(posts.effectiveScore), desc(posts.createdAt), desc(posts.id)] : [desc(posts.id)];
+      sort === 'HOT'
+        ? [desc(posts.effectiveScore), desc(posts.createdAt), desc(posts.id)]
+        : [desc(posts.listedAt), desc(posts.id)];
 
     const rows = await this.db
       .select({
@@ -1504,7 +1527,7 @@ export class PostsRepository {
    * Supports optional category filtering using denormalized market_category.
    * Index (HOT, no category): idx_posts_market_score
    * Index (HOT, with category): idx_posts_market_category
-   * Index (NEWEST): primary key (UUIDv7 id is time-ordered)
+   * Index (NEWEST): idx_posts_market_{city,governorate,city_category}_listed (listed_at DESC, id DESC)
    * Optional `searchPattern` adds the shared normalized search filter without
    * changing the ordering, category filter or cursor shape.
    */
@@ -1516,7 +1539,7 @@ export class PostsRepository {
     sort: 'HOT' | 'NEWEST';
     category: Post['marketCategory'] | null | undefined;
     limit: number;
-    cursor: { score?: number; createdAt?: string; id: string } | null;
+    cursor: { score?: number; createdAt?: string; listedAt?: string; id: string } | null;
     searchPattern?: string | null;
     viewerId?: string | null;
   }): Promise<FeedResult> {
@@ -1531,7 +1554,9 @@ export class PostsRepository {
     const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
     const cursorCondition = this.buildScoredFeedCursorCondition(sort, cursor);
     const orderByClauses =
-      sort === 'HOT' ? [desc(posts.effectiveScore), desc(posts.createdAt), desc(posts.id)] : [desc(posts.id)];
+      sort === 'HOT'
+        ? [desc(posts.effectiveScore), desc(posts.createdAt), desc(posts.id)]
+        : [desc(posts.listedAt), desc(posts.id)];
 
     const rows = await this.db
       .select({
@@ -1719,10 +1744,10 @@ export class PostsRepository {
         effective_score = CASE
           WHEN ${posts.postType} = 'ADOPTION' THEN
             (${posts.upvoteCount} * 3 + ${posts.saveCount} * 2 + (${posts.viewCount} + v.additional_view_count) * 0.1 + 1)
-            / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+            / POWER(EXTRACT(EPOCH FROM (now() - ${posts.listedAt})) / 3600.0 + 2, 1.5)
           WHEN ${posts.postType} = 'PRODUCT' THEN
             ((${posts.viewCount} + v.additional_view_count) * 1 + ${posts.saveCount} * 5 + 1)
-            / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5)
+            / POWER(EXTRACT(EPOCH FROM (now() - ${posts.listedAt})) / 3600.0 + 2, 1.5)
           ELSE ${posts.effectiveScore}
         END,
         last_engaged_at = CASE

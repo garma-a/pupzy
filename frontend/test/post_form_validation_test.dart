@@ -62,6 +62,27 @@ void main() {
     });
   }
 
+  for (final (name, type, category) in [
+    ('Rescue Alert', PostType.rescue, 'URGENT'),
+    ('Lost Pet', PostType.rescue, 'LOST'),
+    ('Found a Pet', PostType.rescue, 'FOUND'),
+    ('Adoption', PostType.adoption, null),
+    ('Find a Mate', PostType.mating, null),
+  ]) {
+    testWidgets('$name: species is Dog, Cat, Bird or Other', (tester) async {
+      await pumpForm(tester, type, category);
+      final list = find.descendant(of: find.byType(PostFormScreen), matching: find.byType(Scrollable)).first;
+      await tester.scrollUntilVisible(find.text('Bird'), 300, scrollable: list);
+
+      final row = find.ancestor(of: find.text('Bird'), matching: find.byType(Wrap)).first;
+      final options = tester
+          .widgetList<Text>(find.descendant(of: row, matching: find.byType(Text)))
+          .map((text) => text.data)
+          .toList();
+      expect(options, ['Dog', 'Cat', 'Bird', 'Other']);
+    });
+  }
+
   testWidgets('Find a Mate needs a photo even when every other field is filled', (tester) async {
     final photo = File('${Directory.systemTemp.path}/form-validation.jpg')..writeAsBytesSync([0xFF, 0xD8, 0xFF, 0xD9]);
     ImagePickerPlatform.instance = OnePhotoPicker(photo.path);

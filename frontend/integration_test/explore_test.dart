@@ -14,7 +14,7 @@ void main() {
     await launchApp();
     await signIn(tester, ownerEmail);
     await shoot(tester, 'explore-01-home');
-    for (final (i, tab) in ['Help', 'Adopt', 'Market'].indexed) {
+    for (final (i, tab) in ['Help', 'Pets', 'Market'].indexed) {
       await tester.tap(find.text(tab).last);
       await tester.pump(const Duration(seconds: 8));
       await shoot(tester, 'explore-0${i + 2}-${tab.toLowerCase()}');

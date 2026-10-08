@@ -233,7 +233,7 @@ class _PupzyBottomNav extends StatelessWidget {
                     ),
                   ),
                 ),
-                _NavItem(icon: Icons.pets_outlined, activeIcon: Icons.pets, label: t(context, 'Adopt', 'تبني'), index: 3, currentIndex: currentIndex, onTap: onTap),
+                _NavItem(icon: Icons.pets_outlined, activeIcon: Icons.pets, label: t(context, 'Pets', 'حيوانات'), index: 3, currentIndex: currentIndex, onTap: onTap),
                 _NavItem(icon: Icons.shopping_bag_outlined, activeIcon: Icons.shopping_bag, label: t(context, 'Market', 'المتجر'), index: 4, currentIndex: currentIndex, onTap: onTap),
               ],
             ),

@@ -165,7 +165,9 @@ export const posts = pgTable(
      * PRODUCT formula:
      *   (view_count × 1 + save_count × 5 + 1) / POWER(age_hours + 2, 1.5)
      *
-     * Recalculated immediately on upvote/save and by the view-flush cron.
+     * `age_hours` counts from `listed_at`, so a renewal restarts the decay.
+     * Recalculated immediately on upvote/save, on renewal and by the
+     * view-flush cron.
      */
     effectiveScore: doublePrecision('effective_score').notNull().default(0.0),
 
@@ -188,6 +190,15 @@ export const posts = pgTable(
      * renewal. The expiry boundary allows one renewal per seven days.
      */
     renewedAt: timestamp('renewed_at', { withTimezone: true }),
+
+    /**
+     * When the listing was last published: its creation, or its latest
+     * renewal. A renewed listing ranks as a fresh one, so the Hot score's age
+     * and the Newest order of the Adopt and Market feeds count from here, not
+     * from `created_at`. Millisecond precision so a feed cursor round-trips it
+     * exactly.
+     */
+    listedAt: timestamp('listed_at', { withTimezone: true, precision: 3 }).notNull().defaultNow(),
 
     /**
      * When the inactivity reminder for the current inactivity cycle was

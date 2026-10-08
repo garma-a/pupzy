@@ -787,7 +787,12 @@ describe('PostsService', () => {
     });
 
     it('getAdoptFeed supports HOT and NEWEST sort', async () => {
-      const mockPost = { id: validPostId, effectiveScore: 10, createdAt: new Date() } as unknown as Post;
+      const mockPost = {
+        id: validPostId,
+        effectiveScore: 10,
+        createdAt: new Date(),
+        listedAt: new Date(),
+      } as unknown as Post;
       mockPostsRepo.findAdoptFeed = jest.fn().mockResolvedValue({
         rows: [{ post: mockPost, distanceKm: 1.2 }],
         hasNextPage: false,
@@ -798,6 +803,35 @@ describe('PostsService', () => {
 
       const newestResult = await service.getAdoptFeed({ sort: 'NEWEST' });
       expect(newestResult.edges).toHaveLength(1);
+    });
+
+    it('pages the NEWEST adopt feed by listing time, so a renewed listing is new again', async () => {
+      const listedAt = new Date('2026-10-08T11:25:47.452Z');
+      const mockPost = {
+        id: validPostId,
+        effectiveScore: 0.35,
+        createdAt: new Date('2026-08-09T21:00:00.000Z'),
+        listedAt,
+      } as unknown as Post;
+      mockPostsRepo.findAdoptFeed = jest.fn().mockResolvedValue({
+        rows: [{ post: mockPost, distanceKm: null }],
+        hasNextPage: true,
+      });
+
+      const page = await service.getAdoptFeed({ sort: 'NEWEST' });
+      const cursor = JSON.parse(Buffer.from(page.pageInfo.endCursor!, 'base64url').toString('utf8')) as unknown;
+      expect(cursor).toEqual({ listedAt: listedAt.toISOString(), id: validPostId });
+
+      await service.getAdoptFeed({ sort: 'NEWEST', after: page.pageInfo.endCursor });
+      expect(mockPostsRepo.findAdoptFeed).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sort: 'NEWEST', cursor: { listedAt: listedAt.toISOString(), id: validPostId } }),
+      );
+
+      // A NEWEST cursor without a listing time cannot resume a page.
+      const legacyCursor = Buffer.from(JSON.stringify({ id: validPostId })).toString('base64url');
+      await expect(service.getAdoptFeed({ sort: 'NEWEST', after: legacyCursor })).rejects.toThrow(
+        'Invalid cursor format',
+      );
     });
 
     it('getMarketFeed supports category and sort', async () => {

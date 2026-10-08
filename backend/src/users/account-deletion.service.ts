@@ -429,7 +429,7 @@ export class AccountDeletionService {
               effectiveScore: sql`
                 CASE WHEN ${posts.postType} = 'ADOPTION' THEN
                   GREATEST(0.0, (GREATEST(0, ${posts.upvoteCount} - 1) * 3 + ${posts.saveCount} * 2 + ${posts.viewCount} * 0.1 + 1)
-                  / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5))
+                  / POWER(EXTRACT(EPOCH FROM (now() - ${posts.listedAt})) / 3600.0 + 2, 1.5))
                 ELSE ${posts.effectiveScore}
                 END
               `,
@@ -452,10 +452,10 @@ export class AccountDeletionService {
                 CASE
                   WHEN ${posts.postType} = 'ADOPTION' THEN
                     GREATEST(0.0, (${posts.upvoteCount} * 3 + GREATEST(0, ${posts.saveCount} - 1) * 2 + ${posts.viewCount} * 0.1 + 1)
-                    / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5))
+                    / POWER(EXTRACT(EPOCH FROM (now() - ${posts.listedAt})) / 3600.0 + 2, 1.5))
                   WHEN ${posts.postType} = 'PRODUCT' THEN
                     GREATEST(0.0, (${posts.viewCount} * 1 + GREATEST(0, ${posts.saveCount} - 1) * 5 + 1)
-                    / POWER(EXTRACT(EPOCH FROM (now() - ${posts.createdAt})) / 3600.0 + 2, 1.5))
+                    / POWER(EXTRACT(EPOCH FROM (now() - ${posts.listedAt})) / 3600.0 + 2, 1.5))
                   ELSE ${posts.effectiveScore}
                 END
               `,
