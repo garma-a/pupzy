@@ -859,6 +859,7 @@ export interface User {
     lostPostCount: number;
     adoptionPostCount: number;
     productPostCount: number;
+    matingPostCount?: Nullable<number>;
     languagePreference?: Nullable<string>;
     notificationsEnabled?: Nullable<boolean>;
     lastSeenAt?: Nullable<DateTime>;

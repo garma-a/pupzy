@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, ne, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DATABASE_TOKEN } from '../database/database.provider';
-import { users, stagedUploads, mediaDeletionWork, type User, type NewUser } from '../database/schema';
+import { users, posts, stagedUploads, mediaDeletionWork, type User, type NewUser } from '../database/schema';
 import { ConflictError, ForbiddenError } from '../common/errors/app.errors';
 import type * as schema from '../database/schema';
 
@@ -31,6 +31,19 @@ export class UsersRepository {
   async findById(id: string): Promise<User | undefined> {
     const [user] = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
     return user;
+  }
+
+  /**
+   * Find a Mate posts the user created and did not remove — the same rule as
+   * the trigger-maintained rescue/lost/adoption/product counters, counted on
+   * demand because MATING has no counter column.
+   */
+  async countMatingPosts(userId: string): Promise<number> {
+    const [row] = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(posts)
+      .where(and(eq(posts.creatorId, userId), eq(posts.postType, 'MATING'), ne(posts.status, 'REMOVED')));
+    return row?.count ?? 0;
   }
 
   async findActiveById(id: string, executor: UsersExecutor = this.db): Promise<User | undefined> {

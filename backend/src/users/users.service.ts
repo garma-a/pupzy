@@ -104,6 +104,11 @@ export class UsersService {
     return this.decryptUserPhone(newUser);
   }
 
+  /** See {@link UsersRepository.countMatingPosts}. */
+  countMatingPosts(userId: string): Promise<number> {
+    return this.usersRepository.countMatingPosts(userId);
+  }
+
   async findById(id: string): Promise<User | undefined> {
     const user = await this.usersRepository.findById(id);
     return user ? this.decryptUserPhone(user) : undefined;

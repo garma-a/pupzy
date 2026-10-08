@@ -116,6 +116,16 @@ export class UsersResolver {
     return isViewerSelf(user, ctx) ? user.notificationsEnabled : null;
   }
 
+  /**
+   * Find a Mate posts the account created, for its own profile. Counted on
+   * demand (MATING has no counter column), so other viewers get null rather
+   * than one count query per user in a list.
+   */
+  @ResolveField('matingPostCount')
+  matingPostCount(@Root() user: User, @Context() ctx: GqlContext): Promise<number | null> {
+    return isViewerSelf(user, ctx) ? this.usersService.countMatingPosts(user.id) : Promise.resolve(null);
+  }
+
   @ResolveField('lastSeenAt')
   lastSeenAt(@Root() user: User, @Context() ctx: GqlContext): Date | null {
     return isViewerSelf(user, ctx) ? user.lastSeenAt : null;
