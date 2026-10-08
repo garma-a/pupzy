@@ -31,7 +31,7 @@ Future<Map<String, dynamic>> _gql(String query, [Map<String, Object?> variables 
 }
 
 Future<void> _openMatchingTab(WidgetTester tester) async {
-  await tester.tap(find.text('Adopt').last);
+  await tester.tap(find.text('Pets').last);
   await pumpUntil(tester, find.text('Matching'));
   await tester.tap(find.text('Matching'));
   await tester.pump(const Duration(seconds: 2));
