@@ -18,7 +18,11 @@ import 'rescue_detail_screen.dart';
 /// The current user's own posts, one section (postType) at a time —
 /// reached from the profile sheet's "My Posts" row.
 class MyPostsScreen extends StatefulWidget {
-  const MyPostsScreen({super.key});
+  /// The tab to open on: RESCUE, LOST, ADOPTION, PRODUCT or MATING. The first
+  /// tab when null or unknown.
+  final String? initialPostType;
+
+  const MyPostsScreen({super.key, this.initialPostType});
 
   @override
   State<MyPostsScreen> createState() => _MyPostsScreenState();
@@ -26,7 +30,11 @@ class MyPostsScreen extends StatefulWidget {
 
 class _MyPostsScreenState extends State<MyPostsScreen> with SingleTickerProviderStateMixin {
   static const _postTypes = ['RESCUE', 'LOST', 'ADOPTION', 'PRODUCT', 'MATING'];
-  late final TabController _tabController = TabController(length: _postTypes.length, vsync: this);
+  late final TabController _tabController = TabController(
+    length: _postTypes.length,
+    vsync: this,
+    initialIndex: _postTypes.indexOf(widget.initialPostType ?? '').clamp(0, _postTypes.length - 1),
+  );
 
   @override
   void dispose() {

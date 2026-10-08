@@ -325,6 +325,11 @@ class _ProfileSheetState extends State<ProfileSheet> {
     }
   }
 
+  /// A profile count was tapped: My Posts, opened on that post type.
+  void _openMyPosts(String postType) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => MyPostsScreen(initialPostType: postType)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final lang = context.watch<LangProvider>().lang;
@@ -425,11 +430,23 @@ class _ProfileSheetState extends State<ProfileSheet> {
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Row(
                 children: [
-                  _StatCard(value: rescues, label: t(context, 'RESCUES', 'إنقاذ')),
+                  _StatCard(
+                    value: rescues,
+                    label: t(context, 'RESCUE POSTS', 'منشورات الإنقاذ'),
+                    onTap: () => _openMyPosts('RESCUE'),
+                  ),
                   const SizedBox(width: AppSpacing.sm),
-                  _StatCard(value: adopted, label: t(context, 'ADOPTED', 'تبني')),
+                  _StatCard(
+                    value: adopted,
+                    label: t(context, 'ADOPTION POSTS', 'منشورات التبني'),
+                    onTap: () => _openMyPosts('ADOPTION'),
+                  ),
                   const SizedBox(width: AppSpacing.sm),
-                  _StatCard(value: lost, label: t(context, 'LOST', 'مفقود')),
+                  _StatCard(
+                    value: lost,
+                    label: t(context, 'LOST & FOUND POSTS', 'منشورات المفقود'),
+                    onTap: () => _openMyPosts('LOST'),
+                  ),
                 ],
               ),
             ),
@@ -579,26 +596,39 @@ class _ProfileSheetState extends State<ProfileSheet> {
   }
 }
 
+/// One of the profile's post counts; tapping it opens My Posts on that type.
 class _StatCard extends StatelessWidget {
   final String value;
   final String label;
-  const _StatCard({required this.value, required this.label});
+  final VoidCallback onTap;
+  const _StatCard({required this.value, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
+      child: Material(
+        color: AppColors.surface,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.border),
+          side: const BorderSide(color: AppColors.border),
         ),
-        child: Column(
-          children: [
-            Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.primary)),
-            Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, fontSize: 10, letterSpacing: 0.5)),
-          ],
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md, horizontal: AppSpacing.xs),
+            child: Column(
+              children: [
+                Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.primary)),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, fontSize: 10, letterSpacing: 0.5),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
