@@ -25,10 +25,18 @@ describe('post image validation', () => {
     await expect(sanitizePostImage(Buffer.alloc(MAX_POST_IMAGE_BYTES + 1), 'image/jpeg')).rejects.toMatchObject({
       code: 'VALIDATION_ERROR',
     });
-    const large = await sharp({ create: { width: 4001, height: 4001, channels: 3, background: '#abc' } })
+    const large = await sharp({ create: { width: 2001, height: 2000, channels: 3, background: '#abc' } })
       .png()
       .toBuffer();
     await expect(sanitizePostImage(large, 'image/png')).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+  });
+
+  it('accepts the four-megapixel boundary used to bound concurrent decoding memory', async () => {
+    const bytes = await sharp({ create: { width: 2000, height: 2000, channels: 3, background: '#abc' } })
+      .jpeg()
+      .toBuffer();
+    const sanitized = await sanitizePostImage(bytes, 'image/jpeg');
+    expect(await sharp(sanitized).metadata()).toMatchObject({ width: 2000, height: 2000 });
   });
 
   it.each(['jpeg', 'png', 'webp'] as const)('fully decodes and preserves the allowed %s format', async (format) => {

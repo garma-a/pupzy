@@ -2,7 +2,8 @@ import sharp from 'sharp';
 import { ValidationError } from '../common/errors/app.errors';
 
 export const MAX_POST_IMAGE_BYTES = 5_242_880;
-const MAX_POST_IMAGE_PIXELS = 16_000_000;
+// Current clients resize to 1600×1600; bound native memory for the shared four-slot pool.
+const MAX_POST_IMAGE_PIXELS = 4_000_000;
 
 /** Decode only allowed raster formats, then encode without location or other metadata. */
 export async function sanitizePostImage(bytes: Buffer, contentType: string): Promise<Buffer> {
