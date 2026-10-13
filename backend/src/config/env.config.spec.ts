@@ -3,7 +3,7 @@ import { validateEnv } from './env.config';
 describe('validateEnv', () => {
   const base = {
     DATABASE_URL: 'postgres://u:p@localhost:5432/pupzy_test',
-    PHONE_ENCRYPTION_KEY: 'a'.repeat(44),
+    PHONE_ENCRYPTION_KEY: Buffer.alloc(32, 1).toString('base64'),
     FIREBASE_PROJECT_ID: 'demo-project',
     FIREBASE_CLIENT_EMAIL: 'svc@demo-project.iam.gserviceaccount.com',
     FIREBASE_PRIVATE_KEY: 'unused-in-this-test',
@@ -32,6 +32,11 @@ describe('validateEnv', () => {
     it('rejects a value that is not a recognisable boolean instead of guessing', () => {
       expect(() => validateEnv({ ...base, ACCOUNT_DELETION_ENABLED: 'maybe' })).toThrow();
     });
+  });
+
+  it('rejects encryption keys with the right string length but invalid AES-256 bytes', () => {
+    expect(() => validateEnv({ ...base, PHONE_ENCRYPTION_KEY: 'a'.repeat(44) })).toThrow('exactly 32 bytes');
+    expect(() => validateEnv({ ...base, PHONE_ENCRYPTION_KEY: '!'.repeat(44) })).toThrow('exactly 32 bytes');
   });
 
   it('rejects the signature-bypassing Firebase emulator in production while allowing isolated tests', () => {

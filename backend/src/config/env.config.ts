@@ -22,7 +22,13 @@ const envSchema = z.object({
    * Required for encrypting phone numbers (AES-256-GCM).
    * Must be exactly 32 bytes encoded as base64.
    */
-  PHONE_ENCRYPTION_KEY: z.string().length(44, 'Key must be exactly 44 chars (32 bytes base64)'),
+  PHONE_ENCRYPTION_KEY: z
+    .string()
+    .length(44, 'Key must be exactly 44 chars (32 bytes base64)')
+    .refine((key) => {
+      const decoded = Buffer.from(key, 'base64');
+      return decoded.length === 32 && decoded.toString('base64') === key;
+    }, 'Key must encode exactly 32 bytes in base64'),
 
   // ─── Firebase Admin SDK ──────────────────────────────────────────────────
   FIREBASE_PROJECT_ID: z.string().min(1),
