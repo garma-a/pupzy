@@ -47,6 +47,12 @@ jobs:
         working-directory: backend/admin-service
         run: npm ci
 
+      - name: Audit Runtime Dependencies
+        working-directory: backend
+        run: |
+          npm audit --omit=dev --audit-level=high
+          npm --prefix admin-service audit --omit=dev --audit-level=high
+
       - name: Execute Authoritative Release Verification Gate
         id: release-gate
         working-directory: backend
