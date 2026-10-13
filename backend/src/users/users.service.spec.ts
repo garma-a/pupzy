@@ -9,6 +9,7 @@ import { CitiesService } from '../cities/cities.service';
 import { UploadService } from '../upload/upload.service';
 import { ConflictError } from '../common/errors/app.errors';
 import type { AccountDeletion, User } from '../database/schema';
+import { encryptString } from '../common/utils/crypto.util';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -22,6 +23,7 @@ describe('UsersService', () => {
     findById: jest.Mock;
     findActiveById: jest.Mock;
     activateProfilePhoto: jest.Mock;
+    findByIds: jest.Mock;
   };
   let mockCitiesService: { findById: jest.Mock; findNearest: jest.Mock };
   let mockCacheManager: { del: jest.Mock };
@@ -36,6 +38,7 @@ describe('UsersService', () => {
       findById: jest.fn().mockResolvedValue(undefined),
       findActiveById: jest.fn(),
       activateProfilePhoto: jest.fn(),
+      findByIds: jest.fn(),
     };
     mockCitiesService = { findById: jest.fn(), findNearest: jest.fn() };
     mockCacheManager = { del: jest.fn().mockResolvedValue(undefined) };
@@ -77,6 +80,16 @@ describe('UsersService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  it('decrypts phones in relationship loaders without changing stored rows or missing users', async () => {
+    const phoneNumber = encryptString('+201012345678', 'MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=');
+    const row = { id: 'user-1', phoneNumber } as User;
+    mockUsersRepo.findByIds.mockResolvedValue([row, null]);
+    const loader = service.createUserByIdLoader();
+    const loaded = await loader.loadMany(['user-1', 'missing']);
+    expect(loaded).toEqual([{ ...row, phoneNumber: '+201012345678' }, null]);
+    expect(row.phoneNumber).toBe(phoneNumber);
   });
 
   describe('findOrCreate', () => {

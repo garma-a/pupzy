@@ -364,9 +364,15 @@ export class UsersService {
    * the GraphQLModule context factory in app.module.ts.
    */
   createUserByIdLoader(): DataLoader<string, User | null> {
-    return new DataLoader<string, User | null>((ids) => this.usersRepository.findByIds(ids), {
-      cache: true,
-      maxBatchSize: 100,
-    });
+    return new DataLoader<string, User | null>(
+      async (ids) => {
+        const users = await this.usersRepository.findByIds(ids);
+        return users.map((user) => (user ? this.decryptUserPhone(user) : null));
+      },
+      {
+        cache: true,
+        maxBatchSize: 100,
+      },
+    );
   }
 }
