@@ -75,13 +75,13 @@ describe('attaching media to a post', () => {
 
   // Finding F-08: post media is copied from staging to public storage without
   // inspecting the bytes (comment images, by contrast, are fully validated).
-  it.failing('rejects a non-image uploaded as image/jpeg', async () => {
+  it('rejects a non-image uploaded as image/jpeg', async () => {
     const text = Buffer.from('plain text pretending to be a photograph, not an image at all');
     const id = await upload(owner.token, text, 'image/jpeg');
     await expect(outcome(RESCUE.create(owner.token, home, [id]))).resolves.toBe('VALIDATION_ERROR');
   });
 
-  it.failing('rejects a PNG declared as image/jpeg', async () => {
+  it('rejects a PNG declared as image/jpeg', async () => {
     const png = await sharp({ create: { width: 8, height: 8, channels: 3, background: '#000' } })
       .png()
       .toBuffer();

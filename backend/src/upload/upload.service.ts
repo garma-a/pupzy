@@ -27,7 +27,8 @@ import {
 } from '../database/schema';
 import * as schema from '../database/schema';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
-import { NotFoundError, ForbiddenError, AppError } from '../common/errors/app.errors';
+import { NotFoundError, ForbiddenError, AppError, ValidationError } from '../common/errors/app.errors';
+import { MAX_POST_IMAGE_BYTES, sanitizePostImage } from './post-image.validator';
 import {
   validateCommentImage,
   MAX_COMMENT_IMAGE_BYTES,
@@ -381,7 +382,7 @@ export class UploadService {
    * Moves a staged upload to its permanent location under the post's namespace.
    *
    * 1. **Verify** — `HeadObjectCommand` confirms staging object exists in R2.
-   * 2. **Copy** — `CopyObjectCommand` copies object to permanent location.
+   * 2. **Publish** — validates and re-encodes bytes before writing the permanent object.
    * 3. **Delete** — `DeleteObjectCommand` removes original staging object.
    * 4. **Update DB** — durably records finalization state.
    *
@@ -480,11 +481,15 @@ export class UploadService {
 
       await heartbeat();
       try {
+        const image = await this.sanitizeStagedPostImage(ticket);
+        await heartbeat();
         await this.s3Client.send(
-          new CopyObjectCommand({
+          new PutObjectCommand({
             Bucket: this.bucketName,
-            CopySource: `${this.bucketName}/${stagingKey}`,
             Key: finalKey,
+            Body: image,
+            ContentType: ticket.declaredContentType,
+            ContentLength: image.length,
           }),
         );
       } catch (err) {
@@ -492,7 +497,7 @@ export class UploadService {
           .update(stagedUploads)
           .set({
             status: 'FAILED',
-            errorMessage: `CopyObject failed: ${err instanceof Error ? err.message : String(err)}`,
+            errorMessage: `PublishObject failed: ${err instanceof Error ? err.message : String(err)}`,
             updatedAt: new Date(),
           })
           .where(eq(stagedUploads.id, mediaId));
@@ -570,6 +575,24 @@ export class UploadService {
       publicUrl: `${this.publicUrl}/${finalKey}`,
       cloudflareStorageKey: finalKey,
     };
+  }
+
+  private async sanitizeStagedPostImage(ticket: StagedUpload): Promise<Buffer> {
+    const response = await this.s3Client.send(
+      new GetObjectCommand({ Bucket: this.bucketName, Key: ticket.stagingKey }),
+    );
+    if (!response.Body || (response.ContentLength ?? 0) > MAX_POST_IMAGE_BYTES) {
+      throw new ValidationError('Image exceeds the upload size limit');
+    }
+    const chunks: Buffer[] = [];
+    let size = 0;
+    for await (const chunk of response.Body as AsyncIterable<Uint8Array>) {
+      size += chunk.length;
+      if (size > MAX_POST_IMAGE_BYTES) throw new ValidationError('Image exceeds the upload size limit');
+      chunks.push(Buffer.from(chunk));
+    }
+    if (size !== ticket.declaredFileSizeBytes) throw new ValidationError('Image size does not match the upload ticket');
+    return sanitizePostImage(Buffer.concat(chunks), ticket.declaredContentType);
   }
 
   /**

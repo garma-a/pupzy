@@ -158,6 +158,10 @@ describe('UploadService', () => {
   });
 
   beforeEach(() => {
+    // Lifecycle unit tests isolate decoding; real bytes are checked by the validator and publishing integration suites.
+    jest
+      .spyOn(UploadService.prototype as any, 'sanitizeStagedPostImage')
+      .mockResolvedValue(Buffer.from('sanitized-image'));
     ticketStore = new Map<string, StagedUpload>();
     ticketStore.set('media-1', createMockTicket());
     mockRateLimitMinuteOverride = null;
@@ -1433,7 +1437,7 @@ describe('UploadService', () => {
         }),
         expect.anything(),
       );
-      expect(mockRepository.touch).toHaveBeenCalledTimes(3);
+      expect(mockRepository.touch).toHaveBeenCalledTimes(4);
       expect(mockRepository.delete).toHaveBeenCalledTimes(1);
       expect(mockRepository.markCompensationRequired).not.toHaveBeenCalled();
       expect(mockSend).toHaveBeenCalledTimes(3);

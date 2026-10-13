@@ -1,11 +1,18 @@
 import * as fs from 'fs';
+import sharp from 'sharp';
 import * as path from 'path';
 import { graphql, GraphQLSchema, type ExecutionResult } from 'graphql';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { eq, sql } from 'drizzle-orm';
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
-import { HeadObjectCommand, CopyObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import {
+  HeadObjectCommand,
+  CopyObjectCommand,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
 import { TestDatabaseHelper } from '../../test/test-database.helper';
 import {
   users,
@@ -144,14 +151,21 @@ class ControllableR2Adapter {
       return Promise.resolve({ ContentLength: this.objects.get(key)?.length ?? 1024 });
     }
 
-    if (cmdName === 'CopyObjectCommand' || command instanceof CopyObjectCommand) {
+    if (
+      cmdName === 'CopyObjectCommand' ||
+      command instanceof CopyObjectCommand ||
+      command instanceof PutObjectCommand
+    ) {
       if (this.shouldFailCopy) {
         return Promise.reject(new Error('Simulated R2 transient copy failure'));
       }
       const copySource = command.input?.CopySource ?? '';
       const slashIdx = copySource.indexOf('/');
       const sourceKey = slashIdx >= 0 ? copySource.substring(slashIdx + 1) : copySource;
-      const content = this.objects.get(sourceKey) ?? Buffer.from('staged-image-bytes');
+      const content =
+        command instanceof PutObjectCommand
+          ? Buffer.from(command.input.Body as Uint8Array)
+          : (this.objects.get(sourceKey) ?? Buffer.from('staged-image-bytes'));
       this.objects.set(key, content);
       if (this.onCopyObject) {
         await this.onCopyObject(key);
@@ -181,7 +195,11 @@ class ControllableR2Adapter {
         return Promise.reject(err);
       }
       return Promise.resolve({
+        ContentLength: content.length,
         Body: {
+          async *[Symbol.asyncIterator]() {
+            yield content;
+          },
           transformToByteArray: () => Promise.resolve(new Uint8Array(content)),
         },
       });
@@ -509,8 +527,14 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
   async function stageMedia(
     user: User = testUser1,
     contentType = 'image/jpeg',
-    fileSizeBytes = 1024,
+    bytes?: Buffer,
   ): Promise<{ mediaId: string; stagingKey: string }> {
+    const imageBytes =
+      bytes ??
+      (await sharp({ create: { width: 8, height: 8, channels: 3, background: '#abcdef' } })
+        .toFormat(contentType === 'image/jpeg' ? 'jpeg' : contentType === 'image/png' ? 'png' : 'webp')
+        .toBuffer());
+    const fileSizeBytes = imageBytes.length;
     const REQUEST_MEDIA_MUTATION = `
       mutation RequestMedia($input: RequestMediaUploadInput!) {
         requestMediaUploadUrl(input: $input) {
@@ -535,7 +559,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
     expect(ticket).toBeDefined();
 
     // Stage bytes into controllable R2 adapter
-    r2Adapter.putObject(ticket.stagingKey, Buffer.alloc(fileSizeBytes, 0x7f));
+    r2Adapter.putObject(ticket.stagingKey, imageBytes);
 
     return { mediaId, stagingKey: ticket.stagingKey };
   }
@@ -990,6 +1014,43 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
 
   // ─── 4. Cache Loss and API Restart Resilience (AC 4) ──────────────────────────
 
+  describe('Post image content and privacy', () => {
+    it.each(['non-image', 'MIME mismatch'])('rejects %s bytes before publishing a Post', async (scenario) => {
+      const bytes =
+        scenario === 'non-image'
+          ? Buffer.from('not an image')
+          : await sharp({ create: { width: 8, height: 8, channels: 3, background: '#abc' } })
+              .png()
+              .toBuffer();
+      const { mediaId } = await stageMedia(testUser1, 'image/jpeg', bytes);
+      const result = await executeGql(
+        'mutation($input: CreateRescuePostInput!) { createRescuePost(input: $input) { id } }',
+        { input: makeValidRescueInput([mediaId]) },
+      );
+      expect(result.errors?.[0].originalError).toMatchObject({ code: 'VALIDATION_ERROR' });
+      const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(ticket.status).toBe('FAILED');
+      expect(Array.from(r2Adapter.objects.keys()).some((key) => key.startsWith('posts/'))).toBe(false);
+    });
+
+    it('publishes a decodable image without the supplied GPS metadata', async () => {
+      const bytes = await sharp({ create: { width: 8, height: 8, channels: 3, background: '#abc' } })
+        .withExif({ IFD3: { GPSLatitudeRef: 'N', GPSLatitude: '30/1 3/1 45/1' } })
+        .jpeg()
+        .toBuffer();
+      const { mediaId } = await stageMedia(testUser1, 'image/jpeg', bytes);
+      const result = await executeGql<PostMutationResponse>(
+        'mutation($input: CreateRescuePostInput!) { createRescuePost(input: $input) { id media { publicUrl } } }',
+        { input: makeValidRescueInput([mediaId]) },
+      );
+      expect(result.errors).toBeUndefined();
+      const key = `posts/${result.data!.createRescuePost!.id}/${mediaId}.jpg`;
+      const published = r2Adapter.objects.get(key)!;
+      expect((await sharp(published).metadata()).exif).toBeUndefined();
+      await expect(sharp(published).raw().toBuffer()).resolves.toBeInstanceOf(Buffer);
+    });
+  });
+
   describe('Acceptance Criterion 4: Cache loss and API restart resilience', () => {
     it('claims and finalizes upload ticket successfully after total cache loss', async () => {
       // 1. User requests presigned upload URL (persisted in DB, cached in memory)
@@ -1211,7 +1272,7 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
       // Verify ticket state in DB: marked FAILED with CopyObject error
       const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
       expect(ticket.status).toBe('FAILED');
-      expect(ticket.errorMessage).toContain('CopyObject failed');
+      expect(ticket.errorMessage).toContain('PublishObject failed');
 
       // Verify zero posts created
       const allPosts = await dbHelper.db.select().from(posts);
