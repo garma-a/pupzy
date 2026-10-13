@@ -19,7 +19,8 @@ export interface ValidatedCommentImage {
 sharp.cache({ memory: 32, items: 20 });
 sharp.concurrency(1);
 
-let maxConcurrentDecodes = 4;
+// The shared pool also encodes Post images; two WebP jobs leave headroom in 512 MB.
+let maxConcurrentDecodes = 2;
 let maxQueueLength = 16;
 let acquireTimeoutMs = 1000;
 let decoderTimeoutMs = 2000;
@@ -44,7 +45,7 @@ export function _setDecoderConcurrencyLimits(options: {
 }
 
 export function _resetDecoderConcurrency(): void {
-  maxConcurrentDecodes = 4;
+  maxConcurrentDecodes = 2;
   maxQueueLength = 16;
   acquireTimeoutMs = 1000;
   decoderTimeoutMs = 2000;

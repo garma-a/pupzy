@@ -7,6 +7,7 @@ import {
   MAX_COMMENT_IMAGE_HEIGHT,
   _setDecoderConcurrencyLimits,
   _resetDecoderConcurrency,
+  acquireDecoderSlot,
 } from './comment-image.validator';
 
 async function createValidLossyWebp(width: number, height: number, totalSize?: number): Promise<Buffer> {
@@ -434,6 +435,19 @@ describe('CommentImageValidator', () => {
           expect(err.code).toBe('COMMENT_MEDIA_PROCESSING_FAILED');
           expect(err.message).toMatch(/execution limit exceeded|timed out/i);
         }
+      }
+    });
+
+    it('keeps the shared native decoder pool at two active jobs by default', async () => {
+      _setDecoderConcurrencyLimits({ acquireTimeoutMs: 10 });
+      const releases = [await acquireDecoderSlot(), await acquireDecoderSlot()];
+      try {
+        await expect(acquireDecoderSlot()).rejects.toMatchObject({
+          code: 'COMMENT_MEDIA_PROCESSING_FAILED',
+          extensions: { retryable: true },
+        });
+      } finally {
+        releases.forEach((release) => release());
       }
     });
 

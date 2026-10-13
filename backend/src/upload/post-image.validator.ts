@@ -2,7 +2,7 @@ import sharp from 'sharp';
 import { ValidationError } from '../common/errors/app.errors';
 
 export const MAX_POST_IMAGE_BYTES = 5_242_880;
-// Current clients resize to 1600×1600; bound native memory for the shared four-slot pool.
+// Current clients resize to 1600×1600; bound native memory for the shared decoder pool.
 const MAX_POST_IMAGE_PIXELS = 4_000_000;
 
 /** Decode only allowed raster formats, then encode without location or other metadata. */
