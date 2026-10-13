@@ -41,6 +41,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
 import type { GqlContext } from './common/types/gql-context.type';
 import { queryComplexityPlugin } from './common/graphql/query-complexity.plugin';
+import { createBoundedCacheStore } from './common/cache/bounded-cache.store';
 
 /**
  * AppModule — root module for the Pupzy backend.
@@ -239,7 +240,7 @@ import { queryComplexityPlugin } from './common/graphql/query-complexity.plugin'
        * Sized for peak: ~5k auth entries + ~40k view dedup keys + ~5k idempotency keys.
        * LRU eviction ensures least-used entries are dropped first.
        */
-      max: 50_000,
+      stores: [createBoundedCacheStore()],
       isGlobal: true,
     }),
   ],
