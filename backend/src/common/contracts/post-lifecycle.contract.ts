@@ -356,8 +356,9 @@ export interface PostLifecycleSideEffects {
  * - Administrator removal and restoration additionally write the audit row,
  *   close open Post Reports, and invalidate the AdminJS dashboard cache.
  *   Removal notifies the owner; restoration does not.
- * - Removal is not destructive: Post media, discussion and engagement records
- *   are retained, and restoration makes them reachable again.
+ * - Administrator removal retains media and discussion for restoration; expiry
+ *   retains them for renewal. Owner deletion queues public Post and Comment
+ *   image deletion and CDN purging transactionally and removes media references.
  * - Inactivity expiry is not moderation and not a successful outcome: it keeps
  *   the Post counted for its owner, terminates pending direct interactions in
  *   the same transaction, and notifies nobody (the owner already received the

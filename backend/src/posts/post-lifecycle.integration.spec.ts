@@ -10,6 +10,9 @@ import {
   blocks,
   cities,
   postMedia,
+  mediaDeletionWork,
+  comments,
+  commentMedia,
   postSaves,
   posts,
   users,
@@ -462,7 +465,7 @@ describe('Post lifecycle transitions through the executable GraphQL schema (Tick
       expect(saved.data?.mySavedPosts.edges.map((edge) => edge.node.id)).not.toContain(post.id);
     });
 
-    it('retains Post media rows when the owner removes the Post', async () => {
+    it('atomically queues storage and CDN cleanup when the owner removes the Post', async () => {
       const post = await seedPost({ postType: 'RESCUE' });
       await dbHelper.db.insert(postMedia).values({
         postId: post.id,
@@ -471,11 +474,42 @@ describe('Post lifecycle transitions through the executable GraphQL schema (Tick
         displayOrder: 0,
       });
 
+      const [comment] = await dbHelper.db
+        .insert(comments)
+        .values({ postId: post.id, authorId: viewer.id, text: 'Community photo' })
+        .returning();
+      await dbHelper.db.insert(commentMedia).values({
+        commentId: comment.id,
+        storageKey: `comments/${comment.id}/photo.webp`,
+        sha256: 'a'.repeat(64),
+        width: 8,
+        height: 8,
+        fileSizeBytes: 100,
+      });
+
       const result = await removePost(post);
       expect(result.errors).toBeUndefined();
 
       const retainedMedia = await dbHelper.db.select().from(postMedia).where(eq(postMedia.postId, post.id));
-      expect(retainedMedia).toHaveLength(1);
+      expect(retainedMedia).toHaveLength(0);
+      const work = await dbHelper.db.select().from(mediaDeletionWork);
+      expect(work).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            storageKey: `posts/${post.id}/lifecycle.webp`,
+            cdnUrl: 'https://cdn.pupzy.net/posts/lifecycle.webp',
+            status: 'PENDING',
+          }),
+        ]),
+      );
+      expect(work).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ storageKey: `comments/${comment.id}/photo.webp`, status: 'PENDING' }),
+        ]),
+      );
+      expect(await dbHelper.db.select().from(commentMedia).where(eq(commentMedia.commentId, comment.id))).toHaveLength(
+        0,
+      );
       expect((await storedPost(post.id)).status).toBe('REMOVED');
     });
 

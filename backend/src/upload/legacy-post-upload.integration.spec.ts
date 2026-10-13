@@ -1051,6 +1051,28 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
     });
   });
 
+  it('removes the published object and purges its CDN URL through the owner-deletion outbox', async () => {
+    const { mediaId } = await stageMedia(testUser1);
+    const result = await executeGql<PostMutationResponse>(
+      'mutation($input: CreateRescuePostInput!) { createRescuePost(input: $input) { id } }',
+      { input: makeValidRescueInput([mediaId]) },
+    );
+    const postId = result.data!.createRescuePost!.id;
+    const key = `posts/${postId}/${mediaId}.jpg`;
+    expect(r2Adapter.hasObject(key)).toBe(true);
+    await postsService.deletePost(postId, testUser1.id);
+    const purge = jest.spyOn(uploadService, 'purgeCdn').mockResolvedValue(undefined);
+    try {
+      await mediaDeletionProcessor.processPendingWork();
+      expect(r2Adapter.hasObject(key)).toBe(false);
+      expect(purge).toHaveBeenCalledWith(`https://cdn.pupzy.com/${key}`);
+      const work = await dbHelper.db.select().from(mediaDeletionWork).where(eq(mediaDeletionWork.storageKey, key));
+      expect(work.every((item) => item.status === 'COMPLETED')).toBe(true);
+    } finally {
+      purge.mockRestore();
+    }
+  });
+
   describe('Acceptance Criterion 4: Cache loss and API restart resilience', () => {
     it('claims and finalizes upload ticket successfully after total cache loss', async () => {
       // 1. User requests presigned upload URL (persisted in DB, cached in memory)

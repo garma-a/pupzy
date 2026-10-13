@@ -397,24 +397,20 @@ describe.each(POST_TYPES)('$key', (t) => {
 describe('photos of an owner-removed post', () => {
   // Finding F-09: OWNER_REMOVE retains media by contract, and no deletion work
   // is enqueued, so a removed post's photo stays publicly downloadable.
-  it.failing(
-    'become unreachable within two minutes of deletion',
-    async () => {
-      const author = await createAccount('photo-cleanup', home);
-      const RESCUE = POST_TYPES[0];
-      const id = await RESCUE.create(author.token, home, await uploads(author.token, 1));
-      const { post } = await ok<any>(author.token, POST_Q, { p: id });
-      const url: string = post.media[0].publicUrl;
-      expect((await fetch(url)).status).toBe(200);
-      await ok(author.token, `mutation($p: ID!) { deletePost(postId: $p) }`, { p: id });
-      const deadline = Date.now() + 120_000;
-      let status = 200;
-      while (Date.now() < deadline && status === 200) {
-        await sleep(10_000);
-        status = (await fetch(url)).status;
-      }
-      expect(status).not.toBe(200);
-    },
-    180_000,
-  );
+  it('become unreachable within two minutes of deletion', async () => {
+    const author = await createAccount('photo-cleanup', home);
+    const RESCUE = POST_TYPES[0];
+    const id = await RESCUE.create(author.token, home, await uploads(author.token, 1));
+    const { post } = await ok<any>(author.token, POST_Q, { p: id });
+    const url: string = post.media[0].publicUrl;
+    expect((await fetch(url)).status).toBe(200);
+    await ok(author.token, `mutation($p: ID!) { deletePost(postId: $p) }`, { p: id });
+    const deadline = Date.now() + 120_000;
+    let status = 200;
+    while (Date.now() < deadline && status === 200) {
+      await sleep(10_000);
+      status = (await fetch(url)).status;
+    }
+    expect(status).not.toBe(200);
+  }, 180_000);
 });

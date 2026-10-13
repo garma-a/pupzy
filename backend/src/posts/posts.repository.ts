@@ -18,6 +18,9 @@ import {
   notifications,
   contactRequests,
   adoptionApplications,
+  commentMedia,
+  comments,
+  mediaDeletionWork,
   type Post,
   type PostMedia,
   type NewPost,
@@ -55,6 +58,7 @@ import {
 import { excludeIsolatedAccounts } from '../blocks/account-isolation.sql';
 import { AccountIsolationPolicy } from '../blocks/account-isolation.policy';
 import { buildFeedSearchCondition } from './feed-search.sql';
+import { getCommentMediaPurgeUrls } from '../upload/media-delivery.util';
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -773,6 +777,33 @@ export class PostsRepository {
         const lockedPost = await this.lockDiscussionPost(tx, postId);
         if (!lockedPost || lockedPost.creatorId !== creatorId || !canOwnerRemove(lockedPost.status)) return undefined;
         const [post] = await tx.update(posts).set({ status: 'REMOVED' }).where(eq(posts.id, postId)).returning();
+        // Owner deletion revokes public photos; administrative removal and expiry retain theirs.
+        const images = await tx.select().from(postMedia).where(eq(postMedia.postId, postId));
+        const discussionImages = await tx
+          .select({ id: commentMedia.id, storageKey: commentMedia.storageKey })
+          .from(commentMedia)
+          .innerJoin(comments, eq(commentMedia.commentId, comments.id))
+          .where(eq(comments.postId, postId));
+        const work = [
+          ...images.flatMap((image) =>
+            [...new Set([image.publicUrl, ...getCommentMediaPurgeUrls(image.cloudflareStorageKey)])].map((cdnUrl) => ({
+              storageKey: image.cloudflareStorageKey,
+              cdnUrl,
+            })),
+          ),
+          ...discussionImages.flatMap((image) =>
+            getCommentMediaPurgeUrls(image.storageKey).map((cdnUrl) => ({ storageKey: image.storageKey, cdnUrl })),
+          ),
+        ];
+        if (work.length) await tx.insert(mediaDeletionWork).values(work);
+        await tx.delete(postMedia).where(eq(postMedia.postId, postId));
+        if (discussionImages.length)
+          await tx.delete(commentMedia).where(
+            inArray(
+              commentMedia.id,
+              discussionImages.map((image) => image.id),
+            ),
+          );
         return post;
       }),
     );
