@@ -1015,6 +1015,29 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
   // ─── 4. Cache Loss and API Restart Resilience (AC 4) ──────────────────────────
 
   describe('Post image content and privacy', () => {
+    it('reclaims published bytes when storage accepts the write but loses its response', async () => {
+      const { mediaId, stagingKey } = await stageMedia(testUser1);
+      let publishedKey = '';
+      r2Adapter.onCopyObject = (key) => {
+        publishedKey = key;
+        throw new Error('Storage response lost after write');
+      };
+      const result = await executeGql(
+        'mutation($input: CreateRescuePostInput!) { createRescuePost(input: $input) { id } }',
+        { input: makeValidRescueInput([mediaId]) },
+      );
+      expect(result.errors).toBeDefined();
+      expect(r2Adapter.hasObject(publishedKey)).toBe(true);
+      const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(ticket).toMatchObject({ status: 'FAILED', finalStorageKey: publishedKey });
+      await dbHelper.db
+        .update(stagedUploads)
+        .set({ updatedAt: new Date(Date.now() - 30_000) })
+        .where(eq(stagedUploads.id, mediaId));
+      await mediaDeletionProcessor.cleanupExpiredStaging({ olderThanMs: 0 });
+      expect(r2Adapter.hasObject(publishedKey)).toBe(false);
+      expect(r2Adapter.hasObject(stagingKey)).toBe(false);
+    });
     it.each(['non-image', 'MIME mismatch'])('rejects %s bytes before publishing a Post', async (scenario) => {
       const bytes =
         scenario === 'non-image'

@@ -514,6 +514,9 @@ export class UploadService {
           .set({
             status: 'FAILED',
             errorMessage: `PublishObject failed: ${err instanceof Error ? err.message : String(err)}`,
+            // Storage may have accepted the write before losing its response.
+            // Keep both keys discoverable by the existing durable cleanup path.
+            finalStorageKey: finalKey,
             updatedAt: new Date(),
           })
           .where(eq(stagedUploads.id, mediaId));
