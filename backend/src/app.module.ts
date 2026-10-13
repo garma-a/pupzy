@@ -40,6 +40,7 @@ import { GqlExceptionFilter } from './common/filters/gql-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
 import type { GqlContext } from './common/types/gql-context.type';
+import { queryComplexityPlugin } from './common/graphql/query-complexity.plugin';
 
 /**
  * AppModule — root module for the Pupzy backend.
@@ -147,6 +148,7 @@ import type { GqlContext } from './common/types/gql-context.type';
          * Adjust maxDepth as the schema grows; 10 is a safe default.
          */
         validationRules: [depthLimit(10) as ValidationRule],
+        plugins: [queryComplexityPlugin],
 
         /**
          * Format errors before they are sent to the client.

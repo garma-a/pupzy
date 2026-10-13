@@ -58,6 +58,7 @@
     "firebase-admin": "^14.3.0",
     "graphql": "^16.14.2",
     "graphql-depth-limit": "^1.1.0",
+    "graphql-query-complexity": "^2.0.0",
     "helmet": "^8.3.0",
     "nestjs-pino": "^4.6.1",
     "pg": "^8.23.0",
