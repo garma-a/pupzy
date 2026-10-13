@@ -82,8 +82,13 @@ export class IdempotencyInterceptor implements NestInterceptor {
       tap({
         next: (result) => {
           try {
-            // Cache the successful result for 24 hours
-            void this.cacheManager.set(cacheKey, JSON.stringify(result), IDEMPOTENCY_TTL_MS);
+            // Cache failures must not become unhandled promise rejections.
+            void this.cacheManager.set(cacheKey, JSON.stringify(result), IDEMPOTENCY_TTL_MS).catch((err: unknown) => {
+              this.logger.warn(
+                `Failed to cache idempotency result for key=${idempotencyKey}`,
+                err instanceof Error ? err.message : String(err),
+              );
+            });
           } catch (err) {
             this.logger.warn(
               `Failed to cache idempotency result for key=${idempotencyKey}`,
@@ -94,7 +99,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
         error: () => {
           // Remove the processing sentinel on failure so the key can be retried
           try {
-            void this.cacheManager.del(cacheKey);
+            void this.cacheManager.del(cacheKey).catch(() => {});
           } catch {
             // Swallow — cache cleanup is best-effort
           }
