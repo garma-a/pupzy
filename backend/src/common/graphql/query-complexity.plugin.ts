@@ -1,4 +1,4 @@
-import type { ApolloServerPlugin } from '@apollo/server';
+import type { ApolloServerPlugin, GraphQLRequestListener } from '@apollo/server';
 import { GraphQLError, isListType, getNullableType, type DocumentNode, type GraphQLSchema } from 'graphql';
 import { getComplexity, simpleEstimator } from 'graphql-query-complexity';
 import type { GqlContext } from '../types/gql-context.type';
@@ -37,11 +37,12 @@ export function assertQueryComplexity(
 
 /** Run for every operation, including cached documents with new pagination variables. */
 export const queryComplexityPlugin: ApolloServerPlugin<GqlContext> = {
-  async requestDidStart() {
-    return {
-      async didResolveOperation({ schema, document, request }) {
+  requestDidStart() {
+    return Promise.resolve<GraphQLRequestListener<GqlContext>>({
+      didResolveOperation({ schema, document, request }) {
         assertQueryComplexity(schema, document, request.variables ?? {}, request.operationName);
+        return Promise.resolve();
       },
-    };
+    });
   },
 };
