@@ -187,6 +187,10 @@ describe('MatingService', () => {
   });
 
   describe('matingFeed', () => {
+    it.each([0, -1, 51])('rejects out-of-range page size %p like other post feeds', async (first) => {
+      await expect(service.matingFeed(null, first, null, null)).rejects.toThrow(ValidationError);
+      expect(mockMatingRepo.findFeed).not.toHaveBeenCalled();
+    });
     it('returns paginated connection with cursor encoding', async () => {
       const feed = await service.matingFeed({ species: 'DOG', gender: 'FEMALE' }, 10, null);
       expect(feed.edges).toHaveLength(1);

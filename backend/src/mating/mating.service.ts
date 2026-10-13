@@ -3,7 +3,6 @@ import { MatingRepository } from './mating.repository';
 import { CitiesService } from '../cities/cities.service';
 import { UploadService } from '../upload/upload.service';
 import { generateUuidV7 } from '../common/utils/generate-uuidv7';
-import { clampFirst } from '../common/utils/pagination.util';
 import { assertUuid } from '../common/utils/validate-uuid';
 import { shouldFlagContent } from '../common/utils/moderation.util';
 import { ValidationError, NotFoundError } from '../common/errors/app.errors';
@@ -127,7 +126,10 @@ export class MatingService {
     if (f.cityId) assertUuid(f.cityId, 'filter.cityId');
     if (f.breed && f.breed.length > 100) throw new ValidationError('filter.breed is too long');
 
-    const limit = clampFirst(first);
+    if (first != null && (!Number.isInteger(first) || first < 1 || first > 50)) {
+      throw new ValidationError('first must be an integer between 1 and 50');
+    }
+    const limit = first ?? 20;
     const cursor = this.decodeCursor(after);
     // Validates bounds and rejects short/oversize text before the repository
     // is reached, exactly like the other searchable feeds.

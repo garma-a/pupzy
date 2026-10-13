@@ -143,24 +143,17 @@ describe('ownership of contact and adoption links (IDOR)', () => {
 });
 
 describe('pagination and identifiers', () => {
-  // Out-of-range page sizes never crash, but the two feed families disagree
-  // (finding F-12): the post feeds validate first ∈ 1..50, while matingFeed
-  // clamps it with common/utils/pagination.util.ts.
-  it.each([
-    [0, 1],
-    [-1, 1],
-    [1000, 50],
-  ])('first: %p — helpFeed rejects it, matingFeed clamps it to %p', async (first, max) => {
+  it.each([0, -1, 1000])('both feed families reject out-of-range first: %p', async (first) => {
     const help = await gql(
       owner.token,
       `query($f: Int, $c: ID) { helpFeed(cityId: $c, first: $f) { edges { node { id } } } }`,
       { f: first, c: home },
     );
     expect(help.code).toBe('VALIDATION_ERROR');
-    const mating = await ok<any>(owner.token, `query($f: Int) { matingFeed(first: $f) { edges { node { id } } } }`, {
+    const mating = await gql(owner.token, `query($f: Int) { matingFeed(first: $f) { edges { node { id } } } }`, {
       f: first,
     });
-    expect(mating.matingFeed.edges.length).toBeLessThanOrEqual(max);
+    expect(mating.code).toBe('VALIDATION_ERROR');
   });
 
   it('rejects a malformed cursor with a validation error, never a crash', async () => {
