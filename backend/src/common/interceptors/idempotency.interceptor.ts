@@ -3,7 +3,7 @@ import { GqlExecutionContext } from '@nestjs/graphql';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { Observable, of } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { tap, finalize } from 'rxjs/operators';
 import { ConflictError } from '../errors/app.errors';
 
 /**
@@ -12,7 +12,7 @@ import { ConflictError } from '../errors/app.errors';
  *
  * ## How it works
  * 1. Client sends `X-Idempotency-Key: <unique-uuid>` with mutations
- * 2. On first request: execute mutation, cache result for 24 hours
+ * 2. On first request: execute mutation, cache result for 15 minutes
  * 3. On retry with same key: return cached result immediately (no DB write)
  * 4. If a key is being processed concurrently: throw ConflictError
  *
@@ -21,7 +21,7 @@ import { ConflictError } from '../errors/app.errors';
  * cross-user conflicts.
  *
  * ## TTL
- * 24 hours — long enough to cover any mobile retry scenario.
+ * 15 minutes — covers ordinary mobile retries.
  * After TTL, the same key can be reused (acceptable trade-off).
  *
  * ## When it activates
@@ -35,6 +35,7 @@ const PROCESSING_SENTINEL = '__PROCESSING__';
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
   private readonly logger = new Logger(IdempotencyInterceptor.name);
+  private readonly processingKeys = new Set<string>();
 
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
 
@@ -75,36 +76,46 @@ export class IdempotencyInterceptor implements NestInterceptor {
       return of(JSON.parse(cached));
     }
 
-    // Mark as processing (short TTL to prevent deadlocks)
-    await this.cacheManager.set(cacheKey, PROCESSING_SENTINEL, 60_000);
+    // Reserve synchronously: cache get/set alone is not atomic across concurrent requests.
+    if (this.processingKeys.has(cacheKey))
+      throw new ConflictError('This request is already being processed. Please wait.');
+    this.processingKeys.add(cacheKey);
+    try {
+      // Mark as processing (short TTL to prevent deadlocks)
+      await this.cacheManager.set(cacheKey, PROCESSING_SENTINEL, 60_000);
 
-    return next.handle().pipe(
-      tap({
-        next: (result) => {
-          try {
-            // Cache failures must not become unhandled promise rejections.
-            void this.cacheManager.set(cacheKey, JSON.stringify(result), IDEMPOTENCY_TTL_MS).catch((err: unknown) => {
+      return next.handle().pipe(
+        tap({
+          next: (result) => {
+            try {
+              // Cache failures must not become unhandled promise rejections.
+              void this.cacheManager.set(cacheKey, JSON.stringify(result), IDEMPOTENCY_TTL_MS).catch((err: unknown) => {
+                this.logger.warn(
+                  `Failed to cache idempotency result for key=${idempotencyKey}`,
+                  err instanceof Error ? err.message : String(err),
+                );
+              });
+            } catch (err) {
               this.logger.warn(
                 `Failed to cache idempotency result for key=${idempotencyKey}`,
                 err instanceof Error ? err.message : String(err),
               );
-            });
-          } catch (err) {
-            this.logger.warn(
-              `Failed to cache idempotency result for key=${idempotencyKey}`,
-              err instanceof Error ? err.message : String(err),
-            );
-          }
-        },
-        error: () => {
-          // Remove the processing sentinel on failure so the key can be retried
-          try {
-            void this.cacheManager.del(cacheKey).catch(() => {});
-          } catch {
-            // Swallow — cache cleanup is best-effort
-          }
-        },
-      }),
-    );
+            }
+          },
+          error: () => {
+            // Remove the processing sentinel on failure so the key can be retried
+            try {
+              void this.cacheManager.del(cacheKey).catch(() => {});
+            } catch {
+              // Swallow — cache cleanup is best-effort
+            }
+          },
+        }),
+        finalize(() => this.processingKeys.delete(cacheKey)),
+      );
+    } catch (error) {
+      this.processingKeys.delete(cacheKey);
+      throw error;
+    }
   }
 }

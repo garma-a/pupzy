@@ -39,4 +39,24 @@ describe('IdempotencyInterceptor cache failures', () => {
     await expect(firstValueFrom(result)).rejects.toBe(error);
     await new Promise<void>((resolve) => setImmediate(resolve));
   });
+
+  it('admits only one of two simultaneous mutations with the same account and retry key', async () => {
+    const values = new Map<string, unknown>();
+    const cache = {
+      get: jest.fn((key: string) => Promise.resolve(values.get(key))),
+      set: jest.fn((key: string, value: unknown) => {
+        values.set(key, value);
+        return Promise.resolve();
+      }),
+    } as unknown as Cache;
+    const interceptor = new IdempotencyInterceptor(cache);
+    const handler = { handle: jest.fn(() => of({ id: 'post-1' })) };
+    const results = await Promise.allSettled([
+      interceptor.intercept(context, handler),
+      interceptor.intercept(context, handler),
+    ]);
+    expect(handler.handle).toHaveBeenCalledTimes(1);
+    expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+    for (const result of results) if (result.status === 'fulfilled') await firstValueFrom(result.value);
+  });
 });
