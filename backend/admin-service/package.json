@@ -44,6 +44,7 @@
     "@tiptap/extension-link": "2.10.4",
     "i18next-http-backend": "3.0.5",
     "uuid": "11.1.1",
-    "brace-expansion@2": "^2.1.7"
+    "brace-expansion@2": "^2.1.7",
+    "qs": "^6.16.0"
   }
 }
