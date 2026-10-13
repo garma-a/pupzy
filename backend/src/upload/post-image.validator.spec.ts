@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { sanitizePostImage } from './post-image.validator';
+import { MAX_POST_IMAGE_BYTES, sanitizePostImage } from './post-image.validator';
 
 describe('post image validation', () => {
   const image = () => sharp({ create: { width: 8, height: 6, channels: 3, background: '#abcdef' } });
@@ -19,6 +19,16 @@ describe('post image validation', () => {
     await expect(sanitizePostImage(Buffer.from([0xff, 0xd8, 0xff, 0]), 'image/jpeg')).rejects.toMatchObject({
       code: 'VALIDATION_ERROR',
     });
+  });
+
+  it('rejects oversized bytes and images whose decoded pixel count exceeds the limit', async () => {
+    await expect(sanitizePostImage(Buffer.alloc(MAX_POST_IMAGE_BYTES + 1), 'image/jpeg')).rejects.toMatchObject({
+      code: 'VALIDATION_ERROR',
+    });
+    const large = await sharp({ create: { width: 4001, height: 4001, channels: 3, background: '#abc' } })
+      .png()
+      .toBuffer();
+    await expect(sanitizePostImage(large, 'image/png')).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
   });
 
   it.each(['jpeg', 'png', 'webp'] as const)('fully decodes and preserves the allowed %s format', async (format) => {
