@@ -7,7 +7,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { GqlThrottlerGuard } from './common/guards/gql-throttler.guard';
+import { GqlIpThrottlerGuard, GqlThrottlerGuard } from './common/guards/gql-throttler.guard';
 import { join } from 'path';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const depthLimit = require('graphql-depth-limit') as (n: number) => unknown;
@@ -67,9 +67,10 @@ import type { GqlContext } from './common/types/gql-context.type';
  * ## Global providers
  * | Token             | Class                | Purpose                               |
  * |-------------------|----------------------|---------------------------------------|
- * | APP_GUARD (1)     | ThrottlerGuard       | Rate limiting — runs first            |
+ * | APP_GUARD (1)     | GqlIpThrottlerGuard   | Shared-IP safety ceiling before auth |
  * | APP_GUARD (2)     | FirebaseAuthGuard    | Firebase token verification + user DI |
- * | APP_GUARD (3)     | TermsAcceptanceGuard | Versioned Terms gate on protected ops |
+ * | APP_GUARD (3)     | GqlThrottlerGuard     | Account quotas after authentication  |
+ * | APP_GUARD (4)     | TermsAcceptanceGuard | Versioned Terms gate on protected ops |
  * | APP_FILTER        | GqlExceptionFilter   | Sanitized error responses             |
  * | APP_INTERCEPTOR   | LoggingInterceptor   | Request/response logging + requestId  |
  * | APP_INTERCEPTOR   | IdempotencyInterceptor| Idempotency key deduplication         |
@@ -245,7 +246,7 @@ import type { GqlContext } from './common/types/gql-context.type';
     // ── Rate limiting guard — runs before auth guard ──────────────────────
     {
       provide: APP_GUARD,
-      useClass: GqlThrottlerGuard,
+      useClass: GqlIpThrottlerGuard,
     },
 
     /**
@@ -259,6 +260,8 @@ import type { GqlContext } from './common/types/gql-context.type';
       provide: APP_GUARD,
       useClass: FirebaseAuthGuard,
     },
+
+    { provide: APP_GUARD, useClass: GqlThrottlerGuard },
 
     /**
      * Terms Acceptance guard — enforces the published Terms version on
