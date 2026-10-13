@@ -10,6 +10,12 @@ const valid = {
 };
 
 describe('environment validation', () => {
+  it('honors false/off environment values for the geocoding kill switch', () => {
+    for (const value of ['false', '0', 'off'])
+      assert.equal(validateEnv({ ...valid, NOMINATIM_ENABLED: value }).NOMINATIM_ENABLED, false);
+    assert.equal(validateEnv({ ...valid, NOMINATIM_ENABLED: 'true' }).NOMINATIM_ENABLED, true);
+    assert.throws(() => validateEnv({ ...valid, NOMINATIM_ENABLED: 'maybe' }));
+  });
   it('applies safe development defaults and does not require REDIS_URL', () => {
     const env = validateEnv(valid);
     assert.equal(env.NODE_ENV, 'development');

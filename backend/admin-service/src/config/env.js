@@ -20,7 +20,7 @@ const envSchema = z.object({
   NOMINATIM_ATTRIBUTION: z
     .string()
     .default('Data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ODbL 1.0'),
-  NOMINATIM_ENABLED: z.coerce.boolean().default(true),
+  NOMINATIM_ENABLED: z.stringbool().default(true),
   NOMINATIM_TIMEOUT_MS: z.coerce.number().default(5000),
   NOMINATIM_RATE_LIMIT_MS: z.coerce.number().default(1000),
 });
