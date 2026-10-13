@@ -16,6 +16,36 @@ describe('IdempotencyInterceptor cache failures', () => {
     getType: () => 'graphql',
   } as unknown as ExecutionContext;
 
+  function withRetryKey(key: unknown): ExecutionContext {
+    const args = context.getArgs<unknown[]>();
+    args[2] = { req: { headers: { 'x-idempotency-key': key } }, user: { id: 'user-1' } };
+    return { ...context, getArgs: () => args } as unknown as ExecutionContext;
+  }
+
+  it.each([
+    ['oversized', 'k'.repeat(129)],
+    ['multiple', ['first', 'second']],
+  ])('rejects %s retry keys before allocating cache entries or running a mutation', async (_, key) => {
+    const cache = { get: jest.fn(), set: jest.fn() } as unknown as Cache;
+    const handler = { handle: jest.fn(() => of(true)) };
+    await expect(new IdempotencyInterceptor(cache).intercept(withRetryKey(key), handler)).rejects.toMatchObject({
+      code: 'VALIDATION_ERROR',
+    });
+    expect(cache.get).not.toHaveBeenCalled();
+    expect(handler.handle).not.toHaveBeenCalled();
+  });
+
+  it('accepts a retry key at the 128-character boundary', async () => {
+    const cache = {
+      get: jest.fn().mockResolvedValue(undefined),
+      set: jest.fn().mockResolvedValue(undefined),
+    } as unknown as Cache;
+    const result = await new IdempotencyInterceptor(cache).intercept(withRetryKey('k'.repeat(128)), {
+      handle: () => of(true),
+    });
+    await expect(firstValueFrom(result)).resolves.toBe(true);
+  });
+
   it('preserves a successful mutation when the asynchronous result-cache write fails', async () => {
     const cache = {
       get: jest.fn().mockResolvedValue(undefined),

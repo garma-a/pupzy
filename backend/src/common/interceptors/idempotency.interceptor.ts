@@ -4,7 +4,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { Observable, of } from 'rxjs';
 import { tap, finalize } from 'rxjs/operators';
-import { ConflictError } from '../errors/app.errors';
+import { ConflictError, ValidationError } from '../errors/app.errors';
 
 /**
  * IdempotencyInterceptor — prevents duplicate mutation processing
@@ -57,6 +57,9 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const idempotencyKey = ctx.req.headers['x-idempotency-key'];
     if (!idempotencyKey) {
       return next.handle();
+    }
+    if (typeof idempotencyKey !== 'string' || idempotencyKey.length > 128) {
+      throw new ValidationError('Idempotency key must be a string of at most 128 characters');
     }
 
     const userId = ctx.user?.id ?? 'anonymous';
