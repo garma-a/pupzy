@@ -56,7 +56,7 @@ export function _resetDecoderConcurrency(): void {
   activeDecodes = 0;
 }
 
-async function acquireDecoderSlot(): Promise<() => void> {
+export async function acquireDecoderSlot(): Promise<() => void> {
   if (activeDecodes < maxConcurrentDecodes) {
     activeDecodes++;
     return () => releaseDecoderSlot();

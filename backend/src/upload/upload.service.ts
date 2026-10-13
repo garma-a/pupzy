@@ -30,6 +30,7 @@ import { NotFoundError, ForbiddenError, AppError, ValidationError } from '../com
 import { MAX_POST_IMAGE_BYTES, sanitizePostImage } from './post-image.validator';
 import {
   validateCommentImage,
+  acquireDecoderSlot,
   MAX_COMMENT_IMAGE_BYTES,
   MAX_COMMENT_IMAGE_WIDTH,
   MAX_COMMENT_IMAGE_HEIGHT,
@@ -480,17 +481,33 @@ export class UploadService {
 
       await heartbeat();
       try {
-        const image = await this.sanitizeStagedPostImage(ticket);
-        await heartbeat();
-        await this.s3Client.send(
-          new PutObjectCommand({
-            Bucket: this.bucketName,
-            Key: finalKey,
-            Body: image,
-            ContentType: ticket.declaredContentType,
-            ContentLength: image.length,
-          }),
-        );
+        let release: () => void;
+        try {
+          release = await acquireDecoderSlot();
+        } catch {
+          throw new AppError(
+            'Image processing is busy. Request a fresh upload and retry.',
+            'POST_MEDIA_PROCESSING_FAILED',
+            { retryable: true },
+          );
+        }
+        try {
+          // Reuse the bounded decoder pool before allocating download buffers,
+          // and hold the slot until storage releases the sanitized bytes.
+          const image = await this.sanitizeStagedPostImage(ticket);
+          await heartbeat();
+          await this.s3Client.send(
+            new PutObjectCommand({
+              Bucket: this.bucketName,
+              Key: finalKey,
+              Body: image,
+              ContentType: ticket.declaredContentType,
+              ContentLength: image.length,
+            }),
+          );
+        } finally {
+          release();
+        }
       } catch (err) {
         await this.db
           .update(stagedUploads)

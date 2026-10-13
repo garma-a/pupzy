@@ -8,6 +8,11 @@ import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { NotFoundError } from '../common/errors/app.errors';
 import type { MediaFinalizationRepository } from './media-finalization.repository';
 import type { StagedUpload } from '../database/schema';
+import {
+  acquireDecoderSlot,
+  _setDecoderConcurrencyLimits,
+  _resetDecoderConcurrency,
+} from '../comments/validators/comment-image.validator';
 
 jest.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: jest.fn().mockResolvedValue('https://r2.example.com/staging-presigned-url'),
@@ -486,6 +491,20 @@ describe('UploadService', () => {
   });
 
   describe('finalizeMedia', () => {
+    it('fails retryably when image capacity is full instead of allocating unbounded upload buffers', async () => {
+      _setDecoderConcurrencyLimits({ maxConcurrent: 1, maxQueue: 0 });
+      const release = await acquireDecoderSlot();
+      (service as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = jest.fn().mockResolvedValue({});
+      try {
+        await expect(service.finalizeMedia('media-1', 'user-1', 'post-1')).rejects.toMatchObject({
+          code: 'POST_MEDIA_PROCESSING_FAILED',
+          extensions: { retryable: true },
+        });
+      } finally {
+        release();
+        _resetDecoderConcurrency();
+      }
+    });
     it('copies staged file to permanent location, deletes staging, and marks durable state as FINALIZED', async () => {
       const mockSend = jest.fn().mockResolvedValue({});
       (service as unknown as { s3Client: { send: jest.Mock } }).s3Client.send = mockSend;
