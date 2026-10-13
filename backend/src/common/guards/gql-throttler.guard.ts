@@ -6,7 +6,7 @@ import { ThrottlerGuard, type ThrottlerRequest } from '@nestjs/throttler';
 export class GqlThrottlerGuard extends ThrottlerGuard {
   protected async getTracker(req: Record<string, unknown>, context?: ExecutionContext): Promise<string> {
     const user =
-      context?.getType() === 'graphql'
+      context?.getType<string>() === 'graphql'
         ? GqlExecutionContext.create(context).getContext<{ user?: { id: string } }>().user
         : context?.getType() === 'http'
           ? (req.user as { id?: string } | undefined)
