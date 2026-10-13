@@ -33,4 +33,15 @@ describe('validateEnv', () => {
       expect(() => validateEnv({ ...base, ACCOUNT_DELETION_ENABLED: 'maybe' })).toThrow();
     });
   });
+
+  it('rejects the signature-bypassing Firebase emulator in production while allowing isolated tests', () => {
+    expect(() =>
+      validateEnv({ ...base, NODE_ENV: 'production', FIREBASE_AUTH_EMULATOR_HOST: 'localhost:9099' }),
+    ).toThrow('emulator must not');
+    expect(
+      validateEnv({ ...base, NODE_ENV: 'test', FIREBASE_AUTH_EMULATOR_HOST: 'localhost:9099' })
+        .FIREBASE_AUTH_EMULATOR_HOST,
+    ).toBe('localhost:9099');
+    expect(() => validateEnv({ ...base, NODE_ENV: 'production' })).not.toThrow();
+  });
 });

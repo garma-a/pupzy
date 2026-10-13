@@ -28,6 +28,7 @@ const envSchema = z.object({
   FIREBASE_PROJECT_ID: z.string().min(1),
   FIREBASE_CLIENT_EMAIL: z.string().email({ message: 'FIREBASE_CLIENT_EMAIL must be a valid email' }),
   FIREBASE_PRIVATE_KEY: z.string().min(1),
+  FIREBASE_AUTH_EMULATOR_HOST: z.string().optional(),
 
   // ─── Cloudflare R2 (S3-compatible object storage) ─────────────────────
   /** Cloudflare account ID — found in the R2 dashboard URL. */
@@ -98,10 +99,15 @@ const envSchema = z.object({
  * must be set together or left unset together, so a half-configured release
  * can never run with a partially active gate.
  */
-const validatedEnvSchema = envSchema.refine((env) => (env.TERMS_VERSION ? Boolean(env.TERMS_URL) : !env.TERMS_URL), {
-  message: 'TERMS_URL and TERMS_VERSION must be configured together (set both or neither)',
-  path: ['TERMS_URL'],
-});
+const validatedEnvSchema = envSchema
+  .refine((env) => env.NODE_ENV !== 'production' || !env.FIREBASE_AUTH_EMULATOR_HOST, {
+    message: 'Firebase Auth emulator must not be enabled in production',
+    path: ['FIREBASE_AUTH_EMULATOR_HOST'],
+  })
+  .refine((env) => (env.TERMS_VERSION ? Boolean(env.TERMS_URL) : !env.TERMS_URL), {
+    message: 'TERMS_URL and TERMS_VERSION must be configured together (set both or neither)',
+    path: ['TERMS_URL'],
+  });
 
 export type Env = z.infer<typeof envSchema>;
 
