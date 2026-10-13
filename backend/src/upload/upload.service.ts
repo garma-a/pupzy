@@ -5,7 +5,6 @@ import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
   PutObjectCommand,
-  CopyObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
   GetObjectCommand,

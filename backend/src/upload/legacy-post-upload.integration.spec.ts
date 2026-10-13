@@ -198,7 +198,7 @@ class ControllableR2Adapter {
         ContentLength: content.length,
         Body: {
           async *[Symbol.asyncIterator]() {
-            yield content;
+            yield await Promise.resolve(content);
           },
           transformToByteArray: () => Promise.resolve(new Uint8Array(content)),
         },
