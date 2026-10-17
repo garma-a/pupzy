@@ -137,6 +137,13 @@ export class UploadService {
         accessKeyId: config.get('R2_ACCESS_KEY_ID')!,
         secretAccessKey: config.get('R2_SECRET_ACCESS_KEY')!,
       },
+      // Since v3.729 the SDK adds a CRC32 checksum to every request by default.
+      // A presigned PUT has no body when it is signed, so the URL would carry
+      // the checksum of an empty file (x-amz-checksum-crc32=AAAAAA==) and R2
+      // rejects every real upload with 400 BadDigest. Only add checksums where
+      // an operation requires them.
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
       maxAttempts: UploadService.R2_MAX_ATTEMPTS,
       requestHandler: {
         connectionTimeout: UploadService.R2_CONNECTION_TIMEOUT_MS,
