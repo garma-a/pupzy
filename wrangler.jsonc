@@ -3,6 +3,7 @@
   "name": "pupzy",
   "main": "legal/worker.js",
   "compatibility_date": "2024-09-23",
+  "previews": {},
   "assets": {
     "directory": "./legal/site",
     "binding": "ASSETS",
