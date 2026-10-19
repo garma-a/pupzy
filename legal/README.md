@@ -45,6 +45,18 @@ easy to spot. Only Python is needed; there is nothing to install.
 
 To change any text, edit the `.md` files and build again.
 
+The app also shows the Terms of Service and Privacy Policy in its own reader.
+After changing either one, or `site.config.json`, copy them into the app too:
+
+```bash
+python legal/export_app_docs.py
+```
+
+This writes `frontend/assets/legal/` with the values filled in. The app ships
+that copy, so a change reaches users with the next app release. Until then, the
+reader points to the website whenever the backend's `TERMS_VERSION` is newer
+than the copy in the app.
+
 ## 3. Upload
 
 Upload the **contents** of `legal/site/` to the root of your domain (for example
