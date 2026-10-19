@@ -27,8 +27,8 @@ If you have questions, contact us at pupzy.eg@gmail.com.
 - **Posts:** the content of Rescue, Lost & Found, Adoption, Marketplace and Find
   a Mate posts, including photos, descriptions, animal details, prices and
   approximate area or landmark.
-- **Discussions:** comments, replies, photos in Rescue comments, and Raise
-  signals.
+- **Discussions:** comments, replies, photos in Rescue comments, and Support
+  and Like.
 - **Requests and applications:** contact request messages, and adoption
   application answers such as your living situation, whether you have outdoor
   space, other pets or children at home, time at home, pet experience and why
@@ -185,5 +185,4 @@ for significant changes, tell you in the app.
 
 **Pupzy**  
 Cairo, Egypt  
-Email: pupzy.eg@gmail.com  
-Phone: +20 100 000 0000
+Email: pupzy.eg@gmail.com
