@@ -16,8 +16,8 @@ accept it inside the app.
 ## 1. About these Terms
 
 1.1 These Terms of Service ("**Terms**") are a binding agreement between you and
-**{{legal_entity_name}}**, {{company_type}}, registered in the Arab Republic of Egypt
-under commercial registration no. {{commercial_registration_no}}, with its address at {{registered_address}} ("**Pupzy**", "**we**", "**us**"). They govern your use of the Pupzy
+**{{legal_entity_name}}**, a {{company_type}} based in the Arab Republic of Egypt,
+with its address at {{registered_address}} ("**Pupzy**", "**we**", "**us**"). They govern your use of the Pupzy
 mobile applications, website and related services (together, the "**Service**").
 
 1.2 By creating an account, or by tapping "Accept" when the Service asks you to,
@@ -58,7 +58,8 @@ posts about animals in Egypt:
 - **Marketplace** listings of pet products and supplies;
 - **Find a Mate** posts about responsible pet breeding;
 
-together with comments, replies, "Raise" signals, saves, contact requests,
+together with comments, replies, "Support" (on Rescue and Lost & Found posts)
+and "Like" (on Adoption and Find a Mate posts), saves, contact requests,
 adoption applications, notifications, reports and blocks.
 
 3.2 **Pupzy is an intermediary platform only.** We do not own, sell, buy, rescue,
@@ -129,8 +130,7 @@ Pupzy does not screen adopters or animals.
 ### 4.3 Marketplace listings
 
 (a) The Marketplace is for **pet products and supplies only**, such as food,
-care, grooming, accessories, transport equipment and medical supplies that may
-lawfully be sold without a prescription.
+care products and accessories, that may lawfully be sold in Egypt.
 
 (b) **You may not list or sell any live animal, animal part or animal-derived
 product from a protected species** in the Marketplace, or anywhere else in the
@@ -148,7 +148,7 @@ directly with sellers.
 Service between buyer and seller, at their own risk. Never pay in advance to
 someone you have not verified.
 
-(e) Marketplace listings have no comments or "Raise" signals. Buyers contact
+(e) Marketplace listings have no comments, "Support" or "Like". Buyers contact
 the seller directly. Inactive listings may expire and must be renewed before
 they can be marked sold.
 
@@ -468,8 +468,7 @@ agreement between you and us about the Service.
 
 **{{legal_entity_name}}**  
 {{registered_address}}  
-Email: {{support_email}}  
-Phone: {{support_phone}}
+Email: {{support_email}}
 
 To report urgent safety issues or illegal content, use the report button in the
 app or email {{safety_email}}.

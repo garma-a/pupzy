@@ -5,12 +5,10 @@
 
   "legal_entity_name": { "en": "Pupzy", "ar": "بابزي" },
   "company_type": { "en": "Sole Proprietorship", "ar": "منشأة فردية" },
-  "commercial_registration_no": "Under Registration / قيد التأسيس",
   "registered_address": { "en": "Cairo, Egypt", "ar": "القاهرة، جمهورية مصر العربية" },
 
   "support_email": "pupzy.eg@gmail.com",
   "safety_email": "pupzy.eg@gmail.com",
-  "support_phone": "+20 100 000 0000",
   "support_response_time": { "en": "2 business days", "ar": "يومي عمل" },
 
   "hosting_provider": "Cloudflare / GoDaddy",

@@ -7,7 +7,6 @@ We're here to help.
 ## Contact us
 
 - **Email:** {{support_email}}
-- **Phone:** {{support_phone}}
 - **Safety issues and illegal content:** {{safety_email}}
 
 We usually reply within {{support_response_time}}.
