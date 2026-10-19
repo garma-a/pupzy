@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../localization/lang_provider.dart';
 import '../models/terms_info.dart';
+import '../screens/legal_document_screen.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
 import 'graphql_service.dart';
@@ -111,12 +111,6 @@ class _TermsInfoSheetState extends State<_TermsInfoSheet> {
     });
   }
 
-  Future<void> _openTerms() async {
-    final url = _terms?.termsUrl;
-    if (url == null) return;
-    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-  }
-
   Future<void> _accept() async {
     final version = _terms?.currentVersion;
     if (version == null || _accepting) return;
@@ -173,6 +167,8 @@ class _TermsInfoSheetState extends State<_TermsInfoSheet> {
           const SizedBox(height: AppSpacing.lg),
           Text(t(context, 'Terms & Privacy', 'الشروط والخصوصية'), style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: AppSpacing.md),
+          _LegalDocumentLinks(publishedVersion: terms?.currentVersion, termsUrl: terms?.termsUrl),
+          const SizedBox(height: AppSpacing.md),
           if (_loading)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
@@ -203,10 +199,6 @@ class _TermsInfoSheetState extends State<_TermsInfoSheet> {
                 '${t(context, 'Accepted', 'تمت الموافقة')} ${timeAgo(terms.acceptedAt!, lang)} ${t(context, 'ago', 'مضت')}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
               ),
-            ],
-            if (terms.termsUrl != null) ...[
-              const SizedBox(height: AppSpacing.sm),
-              TextButton(onPressed: _openTerms, child: Text(t(context, 'Read the Terms', 'قراءة الشروط'))),
             ],
             if (terms.acceptanceRequired) ...[
               const SizedBox(height: AppSpacing.md),
@@ -245,12 +237,6 @@ class _TermsAcceptanceSheetState extends State<_TermsAcceptanceSheet> {
   late String _version = widget.version;
   late String? _url = widget.url;
   late bool _changed = widget.changed;
-
-  Future<void> _openTerms() async {
-    final url = _url;
-    if (url == null) return;
-    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-  }
 
   Future<void> _accept() async {
     setState(() => _accepting = true);
@@ -318,10 +304,8 @@ class _TermsAcceptanceSheetState extends State<_TermsAcceptanceSheet> {
                   ),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          if (_url != null) ...[
-            const SizedBox(height: AppSpacing.sm),
-            TextButton(onPressed: _openTerms, child: Text(t(context, 'Read the Terms', 'قراءة الشروط'))),
-          ],
+          const SizedBox(height: AppSpacing.md),
+          _LegalDocumentLinks(publishedVersion: _version, termsUrl: _url),
           const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
@@ -344,6 +328,54 @@ class _TermsAcceptanceSheetState extends State<_TermsAcceptanceSheet> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The Terms of Service and Privacy Policy, each opening in the in-app
+/// reader. [publishedVersion] is the version the backend asks users to
+/// accept; the reader points to the website if it is newer than the copy
+/// bundled with the app.
+class _LegalDocumentLinks extends StatelessWidget {
+  final String? publishedVersion;
+  final String? termsUrl;
+
+  const _LegalDocumentLinks({required this.publishedVersion, required this.termsUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget link(LegalDocumentKind kind, IconData icon, {String? websiteUrl}) => Material(
+          color: AppColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            side: const BorderSide(color: AppColors.border),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => openLegalDocument(context, kind, publishedVersion: publishedVersion, websiteUrl: websiteUrl),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 52),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                child: Row(
+                  children: [
+                    Icon(icon, size: 20, color: AppColors.primary),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(child: Text(kind.title(context), style: Theme.of(context).textTheme.bodyLarge)),
+                    const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+
+    return Column(
+      children: [
+        link(LegalDocumentKind.terms, Icons.gavel_outlined, websiteUrl: termsUrl),
+        const SizedBox(height: AppSpacing.sm),
+        link(LegalDocumentKind.privacy, Icons.privacy_tip_outlined),
+      ],
     );
   }
 }
