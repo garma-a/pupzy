@@ -25,9 +25,13 @@ intentional wrongdoing, or waiving mandatory consumer rights.
 ## 1. Fill in your details
 
 Open [`site.config.json`](site.config.json) and fill every empty value: company
-name (English and Arabic), company type, commercial registration number,
-address, support, safety and phone contacts, hosting provider, liability cap,
-and your domain in `site_base_url`. Every page reads from this one file.
+name (English and Arabic), company type, address, support and safety email,
+hosting provider, liability cap, and your domain in `site_base_url`. Every page
+reads from this one file.
+
+The pages list no phone number, and the Terms do not state a commercial
+registration number. Once the registration is issued, add it to section 1.1 of
+both `terms-of-service` files.
 
 ## 2. Build
 
@@ -106,7 +110,7 @@ update `TERMS_VERSION`. Every account is then asked to accept it in the app.
 | Acceptance of each new Terms version in the app | Done |
 | Photo location metadata removed before publishing | Done |
 | No advertising or analytics trackers | Done (none in the app today; update the Privacy Policy if you add any) |
-| Marketplace has no comments or Raise | Done in the app. **The backend still accepts them through the API**, so enforce it there too |
+| Marketplace has no comments, Support or Like | Done in the app. **The backend still accepts them through the API**, so enforce it there too |
 | Lost & Found comments are text-only | Done in the app. **The backend still accepts photos on Lost & Found**, so enforce it there too |
 | Users are 18 or older | **Not enforced.** Add an age confirmation at sign-up |
 | Reports acted on within 24 hours | **An operational commitment.** Someone must review reports daily |

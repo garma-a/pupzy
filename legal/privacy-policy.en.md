@@ -34,8 +34,8 @@ If you have questions, contact us at {{support_email}}.
 - **Posts:** the content of Rescue, Lost & Found, Adoption, Marketplace and Find
   a Mate posts, including photos, descriptions, animal details, prices and
   approximate area or landmark.
-- **Discussions:** comments, replies, photos in Rescue comments, and Raise
-  signals.
+- **Discussions:** comments, replies, photos in Rescue comments, and Support
+  and Like.
 - **Requests and applications:** contact request messages, and adoption
   application answers such as your living situation, whether you have outdoor
   space, other pets or children at home, time at home, pet experience and why
@@ -192,5 +192,4 @@ for significant changes, tell you in the app.
 
 **{{legal_entity_name}}**  
 {{registered_address}}  
-Email: {{support_email}}  
-Phone: {{support_phone}}
+Email: {{support_email}}

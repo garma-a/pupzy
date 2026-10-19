@@ -177,14 +177,15 @@ def markdown_fragment(block: str) -> str:
     lines = block.split('\n')
     if re.match(r'(-|\d+\.)\s', lines[0]):
         return render_list(lines)
-    rendered = []
-    for i, line in enumerate(lines):
-        hard_break = line.endswith('  ') and i < len(lines) - 1
-        rendered.append(inline(line.strip()) + ('<br>' if hard_break else ''))
+    # Join the lines before inline formatting, so bold or a link that wraps
+    # onto the next source line still renders (it showed literal ** before).
+    # A line ending in two spaces is a line break.
     text = ''
-    for i, part in enumerate(rendered):
-        text += part if part.endswith('<br>') or i == len(rendered) - 1 else part + ' '
-    return f'<p>{text}</p>'
+    for i, line in enumerate(lines):
+        text += line.strip()
+        if i < len(lines) - 1:
+            text += '\n' if line.endswith('  ') else ' '
+    return '<p>' + inline(text).replace('\n', '<br>') + '</p>'
 
 
 # ─── Page template ──────────────────────────────────────────────────────────
