@@ -1,0 +1,16 @@
+# Copy this file to android/key.properties (which git ignores) and fill it in.
+# The release build then signs with your upload key, which Google Play needs.
+#
+# Create the upload keystore once, outside the repository, for example:
+#   keytool -genkey -v -keystore C:/Users/<you>/pupzy-upload.jks -keyalg RSA \
+#     -keysize 2048 -validity 10000 -alias upload
+#
+# Back up the keystore file and both passwords somewhere safe. Never commit
+# them. If the upload key is lost, Play App Signing lets you reset it through
+# Play Console support, but that takes time.
+#
+# storeFile may be absolute, or relative to the android/ folder.
+storeFile=C:/Users/<you>/pupzy-upload.jks
+storePassword=
+keyAlias=upload
+keyPassword=
