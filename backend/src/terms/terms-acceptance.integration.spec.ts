@@ -49,6 +49,7 @@ const TERMS_QUERY = `
       termsUrl
       acceptedVersion
       acceptedAt
+      ageConfirmedAt
       acceptanceRequired
     }
   }
@@ -61,6 +62,7 @@ const ACCEPT_TERMS_MUTATION = `
       termsUrl
       acceptedVersion
       acceptedAt
+      ageConfirmedAt
       acceptanceRequired
     }
   }
@@ -243,7 +245,10 @@ describe('Terms Acceptance (integration)', () => {
     return nestApp;
   }
 
-  async function seedUser(options: { acceptedVersion?: string; acceptedAt?: Date } = {}): Promise<User> {
+  /** Seeds an account. One that accepted a version also confirmed its age, unless `ageConfirmedAt` says otherwise. */
+  async function seedUser(
+    options: { acceptedVersion?: string; acceptedAt?: Date; ageConfirmedAt?: Date | null } = {},
+  ): Promise<User> {
     sequence += 1;
     const uid = `fb-terms-${sequence}-${generateUuidV7()}`;
     const [user] = await dbHelper.db
@@ -254,6 +259,7 @@ describe('Terms Acceptance (integration)', () => {
         fullName: 'Terms User',
         termsAcceptedVersion: options.acceptedVersion ?? null,
         termsAcceptedAt: options.acceptedAt ?? null,
+        ageConfirmedAt: options.ageConfirmedAt !== undefined ? options.ageConfirmedAt : (options.acceptedAt ?? null),
       })
       .returning();
     return user;
@@ -414,8 +420,59 @@ describe('Terms Acceptance (integration)', () => {
         termsUrl: 'https://pupzy.net/terms',
         acceptedVersion: null,
         acceptedAt: null,
+        ageConfirmedAt: null,
         acceptanceRequired: true,
       });
+    });
+
+    it('rejects acceptance without confirming the account holder is 18 or older', async () => {
+      app = await initTestApp();
+      const user = await seedUser();
+      authenticateAs(user);
+
+      const declined = await gql(ACCEPT_TERMS_MUTATION, { input: { version: '2026-09-01', ageConfirmed: false } });
+      expect(errorCode(declined)).toBe('VALIDATION_ERROR');
+      expect(declined.errors?.[0]?.message).toContain('18 or older');
+
+      const missing = await gql(ACCEPT_TERMS_MUTATION, { input: { version: '2026-09-01' } });
+      expect(missing.errors?.length).toBeGreaterThan(0);
+
+      const persisted = await usersRepo.findById(user.id);
+      expect(persisted?.termsAcceptedVersion).toBeNull();
+      expect(persisted?.ageConfirmedAt).toBeNull();
+    });
+
+    it('asks an account that accepted the current version before age confirmation existed, once', async () => {
+      app = await initTestApp();
+      const acceptedAt = new Date('2026-09-01T10:00:00.000Z');
+      const user = await seedUser({ acceptedVersion: '2026-09-01', acceptedAt, ageConfirmedAt: null });
+      authenticateAs(user);
+
+      const state = await gql(TERMS_QUERY);
+      expect(state.data?.terms).toMatchObject({
+        acceptedVersion: '2026-09-01',
+        ageConfirmedAt: null,
+        acceptanceRequired: true,
+      });
+      const blocked = await gql(
+        protectedOperation('createComment').query,
+        protectedOperation('createComment').variables,
+      );
+      expect(errorCode(blocked)).toBe('TERMS_ACCEPTANCE_REQUIRED');
+
+      const confirmed = await gql(ACCEPT_TERMS_MUTATION, { input: { version: '2026-09-01', ageConfirmed: true } });
+      expect(confirmed.errors).toBeUndefined();
+      const terms = confirmed.data?.acceptTerms as Record<string, unknown>;
+      expect(terms.acceptanceRequired).toBe(false);
+      expect(terms.ageConfirmedAt).toBeTruthy();
+      // The original acceptance time is kept; only the age confirmation is new.
+      expect(new Date(terms.acceptedAt as string).toISOString()).toBe(acceptedAt.toISOString());
+
+      const allowed = await gql(
+        protectedOperation('createComment').query,
+        protectedOperation('createComment').variables,
+      );
+      expect(allowed.errors).toBeUndefined();
     });
 
     it('records acceptance once and preserves the original timestamp on repeat acceptance', async () => {
@@ -423,7 +480,7 @@ describe('Terms Acceptance (integration)', () => {
       const user = await seedUser();
       authenticateAs(user);
 
-      const first = await gql(ACCEPT_TERMS_MUTATION, { input: { version: '2026-09-01' } });
+      const first = await gql(ACCEPT_TERMS_MUTATION, { input: { version: '2026-09-01', ageConfirmed: true } });
       expect(first.errors).toBeUndefined();
       const firstTerms = first.data?.acceptTerms as Record<string, unknown>;
       expect(firstTerms.acceptedVersion).toBe('2026-09-01');
@@ -432,7 +489,7 @@ describe('Terms Acceptance (integration)', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 30));
 
-      const second = await gql(ACCEPT_TERMS_MUTATION, { input: { version: '2026-09-01' } });
+      const second = await gql(ACCEPT_TERMS_MUTATION, { input: { version: '2026-09-01', ageConfirmed: true } });
       expect(second.errors).toBeUndefined();
       const secondTerms = second.data?.acceptTerms as Record<string, unknown>;
       expect(secondTerms.acceptedAt).toBe(firstTerms.acceptedAt);
@@ -450,7 +507,7 @@ describe('Terms Acceptance (integration)', () => {
       const user = await seedUser();
       authenticateAs(user);
 
-      const rejected = await gql(ACCEPT_TERMS_MUTATION, { input: { version: '2025-01-01' } });
+      const rejected = await gql(ACCEPT_TERMS_MUTATION, { input: { version: '2025-01-01', ageConfirmed: true } });
       expect(errorCode(rejected)).toBe('TERMS_VERSION_MISMATCH');
       expect(rejected.errors?.[0]?.extensions?.currentVersion).toBe('2026-09-01');
 
@@ -505,7 +562,7 @@ describe('Terms Acceptance (integration)', () => {
       const user = await seedUser();
       authenticateAs(user);
 
-      const accepted = await gql(ACCEPT_TERMS_MUTATION, { input: { version: '2026-09-01' } });
+      const accepted = await gql(ACCEPT_TERMS_MUTATION, { input: { version: '2026-09-01', ageConfirmed: true } });
       expect(accepted.errors).toBeUndefined();
 
       const rescue = await gql(
@@ -578,7 +635,7 @@ describe('Terms Acceptance (integration)', () => {
       );
       expect(errorCode(blocked)).toBe('TERMS_ACCEPTANCE_REQUIRED');
 
-      const reaccepted = await gql(ACCEPT_TERMS_MUTATION, { input: { version: '2026-10-01' } });
+      const reaccepted = await gql(ACCEPT_TERMS_MUTATION, { input: { version: '2026-10-01', ageConfirmed: true } });
       expect(reaccepted.errors).toBeUndefined();
       expect(reaccepted.data?.acceptTerms).toMatchObject({ acceptedVersion: '2026-10-01', acceptanceRequired: false });
 
@@ -647,7 +704,7 @@ describe('Terms Acceptance (integration)', () => {
       expect(accountDeletionServiceMock.initiateDeletion).toHaveBeenCalled();
     });
 
-    it('stays schema-compatible: onboarding input has no terms field and acceptance requires a version', async () => {
+    it('stays schema-compatible: onboarding input has no terms field and acceptance requires a version and age', async () => {
       app = await initTestApp();
       const user = await seedUser();
       authenticateAs(user);
@@ -666,7 +723,10 @@ describe('Terms Acceptance (integration)', () => {
       );
       expect(acceptFields.errors).toBeUndefined();
       expect(acceptFields.data?.__type).toEqual({
-        inputFields: [{ name: 'version', type: { kind: 'NON_NULL' } }],
+        inputFields: [
+          { name: 'version', type: { kind: 'NON_NULL' } },
+          { name: 'ageConfirmed', type: { kind: 'NON_NULL' } },
+        ],
       });
     });
 
@@ -683,6 +743,7 @@ describe('Terms Acceptance (integration)', () => {
         termsUrl: null,
         acceptedVersion: null,
         acceptedAt: null,
+        ageConfirmedAt: null,
         acceptanceRequired: false,
       });
 

@@ -12,6 +12,17 @@ import 'safety_test_support.dart';
 
 const _changedCopy =
     "Pupzy's Terms were just updated. Please review the new version and accept it to continue — your draft is kept.";
+const _ageCopy = 'I confirm I am 18 years of age or older';
+
+/// Ticks the 18+ confirmation (unless it already is) and taps Accept.
+Future<void> confirmAgeAndAccept(WidgetTester tester) async {
+  final box = find.descendant(of: find.ancestor(of: find.text(_ageCopy), matching: find.byType(Row)), matching: find.byType(Checkbox));
+  if (tester.widget<Checkbox>(box).value != true) {
+    await tester.tap(find.text(_ageCopy));
+    await tester.pump();
+  }
+  await tester.tap(find.text('Accept'));
+}
 
 void main() {
   late FakeSafetyGraphQL graphql;
@@ -56,10 +67,29 @@ void main() {
     expect(find.text(_changedCopy), findsOneWidget);
     expect(attempts, ['rejected'], reason: 'nothing is retried before the user accepts');
 
-    await tester.tap(find.text('Accept'));
+    await confirmAgeAndAccept(tester);
     await tester.pumpAndSettle();
 
     expect(graphql.acceptedVersions, ['v2'], reason: 'the version from the error, not a cached one');
+    expect(attempts, ['rejected', 'ok', 'result:ok']);
+  });
+
+  testWidgets('Accept stays disabled until the person confirms they are 18 or older', (tester) async {
+    final attempts = await pumpOperation(tester);
+    ElevatedButton accept() => tester.widget<ElevatedButton>(find.widgetWithText(ElevatedButton, 'Accept'));
+
+    expect(find.text(_ageCopy), findsOneWidget);
+    expect(accept().onPressed, isNull);
+    await tester.tap(find.text('Accept'));
+    await tester.pumpAndSettle();
+    expect(graphql.acceptedVersions, isEmpty, reason: 'nothing is accepted without the age confirmation');
+
+    await tester.tap(find.text(_ageCopy));
+    await tester.pump();
+    expect(accept().onPressed, isNotNull);
+    await tester.tap(find.text('Accept'));
+    await tester.pumpAndSettle();
+    expect(graphql.acceptedVersions, ['v2']);
     expect(attempts, ['rejected', 'ok', 'result:ok']);
   });
 
@@ -74,7 +104,7 @@ void main() {
 
   testWidgets('a second rejection does not loop', (tester) async {
     final attempts = await pumpOperation(tester, rejections: 5);
-    await tester.tap(find.text('Accept'));
+    await confirmAgeAndAccept(tester);
     await tester.pumpAndSettle();
 
     expect(find.text(_changedCopy), findsNothing, reason: 'the sheet is shown once per submission');
@@ -85,13 +115,13 @@ void main() {
     graphql.staleTermsVersions['v2'] = 'v3';
     final attempts = await pumpOperation(tester);
 
-    await tester.tap(find.text('Accept'));
+    await confirmAgeAndAccept(tester);
     await tester.pumpAndSettle();
     expect(graphql.acceptedVersions, ['v2']);
     expect(find.text(_changedCopy), findsOneWidget, reason: 'still open, now showing v3');
     expect(attempts, ['rejected'], reason: 'nothing retried until v3 is accepted');
 
-    await tester.tap(find.text('Accept'));
+    await confirmAgeAndAccept(tester);
     await tester.pumpAndSettle();
     expect(graphql.acceptedVersions, ['v2', 'v3']);
     expect(attempts, ['rejected', 'ok', 'result:ok']);
@@ -119,7 +149,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1)); // …and is fully open
 
     expect(find.text(_changedCopy), findsOneWidget);
-    await tester.tap(find.text('Accept'));
+    await confirmAgeAndAccept(tester);
     await tester.pumpAndSettle();
 
     expect(comments.acceptedVersions, ['v2']);

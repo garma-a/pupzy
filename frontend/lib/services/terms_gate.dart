@@ -95,6 +95,7 @@ class _TermsInfoSheetState extends State<_TermsInfoSheet> {
   bool _loading = true;
   TermsInfo? _terms;
   bool _accepting = false;
+  bool _ageConfirmed = false;
 
   @override
   void initState() {
@@ -113,7 +114,7 @@ class _TermsInfoSheetState extends State<_TermsInfoSheet> {
 
   Future<void> _accept() async {
     final version = _terms?.currentVersion;
-    if (version == null || _accepting) return;
+    if (version == null || _accepting || !_ageConfirmed) return;
     setState(() => _accepting = true);
     final graphql = context.read<GraphQLService>();
     final (info, errorCode, errorMessage) = await graphql.acceptTerms(version);
@@ -186,14 +187,16 @@ class _TermsInfoSheetState extends State<_TermsInfoSheet> {
             )
           else ...[
             Text(
-              terms.acceptedVersion == terms.currentVersion && terms.acceptedAt != null
+              terms.acceptanceRequired && terms.acceptedVersion == terms.currentVersion && terms.ageConfirmedAt == null
+                  ? t(context, 'Please confirm you are 18 or older', 'يرجى تأكيد أن عمرك 18 عامًا أو أكثر')
+                  : terms.acceptedVersion == terms.currentVersion && terms.acceptedAt != null
                   ? t(context, 'You accepted the current Terms', 'لقد وافقت على الشروط الحالية')
                   : terms.acceptedVersion != null
                       ? t(context, "You accepted an earlier version — please review the current one", 'لقد وافقت على نسخة سابقة — يرجى مراجعة النسخة الحالية')
                       : t(context, "You haven't accepted the current Terms yet", 'لم توافق على الشروط الحالية بعد'),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
-            if (terms.acceptedVersion == terms.currentVersion && terms.acceptedAt != null) ...[
+            if (terms.acceptedVersion == terms.currentVersion && terms.acceptedAt != null && !terms.acceptanceRequired) ...[
               const SizedBox(height: 4),
               Text(
                 '${t(context, 'Accepted', 'تمت الموافقة')} ${timeAgo(terms.acceptedAt!, lang)} ${t(context, 'ago', 'مضت')}',
@@ -201,11 +204,16 @@ class _TermsInfoSheetState extends State<_TermsInfoSheet> {
               ),
             ],
             if (terms.acceptanceRequired) ...[
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.sm),
+              _AgeConfirmation(
+                value: _ageConfirmed,
+                onChanged: _accepting ? null : (v) => setState(() => _ageConfirmed = v),
+              ),
+              const SizedBox(height: AppSpacing.sm),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _accepting ? null : _accept,
+                  onPressed: _accepting || !_ageConfirmed ? null : _accept,
                   child: _accepting
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                       : Text(t(context, 'Accept current Terms', 'الموافقة على الشروط الحالية')),
@@ -231,6 +239,7 @@ class _TermsAcceptanceSheet extends StatefulWidget {
 
 class _TermsAcceptanceSheetState extends State<_TermsAcceptanceSheet> {
   bool _accepting = false;
+  bool _ageConfirmed = false;
 
   /// The version shown and submitted. Starts as the one the sheet opened
   /// with and moves to a newer one if the Terms change while it is open.
@@ -239,6 +248,7 @@ class _TermsAcceptanceSheetState extends State<_TermsAcceptanceSheet> {
   late bool _changed = widget.changed;
 
   Future<void> _accept() async {
+    if (!_ageConfirmed) return;
     setState(() => _accepting = true);
     final graphql = context.read<GraphQLService>();
     final (info, errorCode, errorMessage) = await graphql.acceptTerms(_version);
@@ -306,7 +316,12 @@ class _TermsAcceptanceSheetState extends State<_TermsAcceptanceSheet> {
           ),
           const SizedBox(height: AppSpacing.md),
           _LegalDocumentLinks(publishedVersion: _version, termsUrl: _url),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.sm),
+          _AgeConfirmation(
+            value: _ageConfirmed,
+            onChanged: _accepting ? null : (v) => setState(() => _ageConfirmed = v),
+          ),
+          const SizedBox(height: AppSpacing.md),
           Row(
             children: [
               Expanded(
@@ -318,7 +333,7 @@ class _TermsAcceptanceSheetState extends State<_TermsAcceptanceSheet> {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: _accepting ? null : _accept,
+                  onPressed: _accepting || !_ageConfirmed ? null : _accept,
                   child: _accepting
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                       : Text(t(context, 'Accept', 'أوافق')),
@@ -327,6 +342,46 @@ class _TermsAcceptanceSheetState extends State<_TermsAcceptanceSheet> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Pupzy is only for people aged 18 and over (Terms of Service). Accepting
+/// the Terms includes confirming that, so the Accept buttons stay disabled
+/// until this is ticked; the backend rejects an acceptance without it.
+class _AgeConfirmation extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  const _AgeConfirmation({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final change = onChanged;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        onTap: change == null ? null : () => change(!value),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+          child: Row(
+            children: [
+              Checkbox(
+                value: value,
+                activeColor: AppColors.primary,
+                onChanged: change == null ? null : (v) => change(v ?? false),
+              ),
+              Expanded(
+                child: Text(
+                  t(context, 'I confirm I am 18 years of age or older', 'أؤكد أن عمري 18 عامًا أو أكثر'),
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

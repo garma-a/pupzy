@@ -17,6 +17,11 @@ class TermsInfo {
   final String? termsUrl;
   final String? acceptedVersion;
   final DateTime? acceptedAt;
+
+  /// When the account confirmed it is 18 or older. Null until it does; the
+  /// backend then keeps [acceptanceRequired] true even if [acceptedVersion]
+  /// is current.
+  final DateTime? ageConfirmedAt;
   final bool acceptanceRequired;
 
   const TermsInfo({
@@ -24,6 +29,7 @@ class TermsInfo {
     this.termsUrl,
     this.acceptedVersion,
     this.acceptedAt,
+    this.ageConfirmedAt,
     required this.acceptanceRequired,
   });
 
@@ -32,6 +38,7 @@ class TermsInfo {
         termsUrl: json['termsUrl'] as String?,
         acceptedVersion: json['acceptedVersion'] as String?,
         acceptedAt: json['acceptedAt'] != null ? DateTime.parse(json['acceptedAt'] as String) : null,
+        ageConfirmedAt: json['ageConfirmedAt'] != null ? DateTime.parse(json['ageConfirmedAt'] as String) : null,
         acceptanceRequired: json['acceptanceRequired'] as bool? ?? false,
       );
 }

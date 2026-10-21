@@ -158,6 +158,12 @@ export const users = pgTable(
      */
     termsAcceptedAt: timestamp('terms_accepted_at', { withTimezone: true }),
 
+    /**
+     * When the account first confirmed it is 18 or older, which it does
+     * together with accepting the Terms. NULL until then; never backfilled.
+     */
+    ageConfirmedAt: timestamp('age_confirmed_at', { withTimezone: true }),
+
     // ── Moderation (admin panel) ─────────────────────────────────────────────
     /** Set by an admin. Banned users are rejected by FirebaseAuthGuard. */
     isBanned: boolean('is_banned').notNull().default(false),

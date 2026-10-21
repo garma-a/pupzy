@@ -31,13 +31,14 @@ describe('TermsService', () => {
       const { service, repository } = buildService();
 
       expect(service.getCurrentTerms()).toBeNull();
-      repository.findAcceptance.mockResolvedValue({ acceptedVersion: null, acceptedAt: null });
+      repository.findAcceptance.mockResolvedValue({ acceptedVersion: null, acceptedAt: null, ageConfirmedAt: null });
 
       await expect(service.getTermsInfo('user-1')).resolves.toEqual({
         currentVersion: null,
         termsUrl: null,
         acceptedVersion: null,
         acceptedAt: null,
+        ageConfirmedAt: null,
         acceptanceRequired: false,
       });
 
@@ -55,13 +56,14 @@ describe('TermsService', () => {
   describe('while terms are configured', () => {
     it('requires acceptance for an account that never accepted', async () => {
       const { service, repository } = buildService(configured);
-      repository.findAcceptance.mockResolvedValue({ acceptedVersion: null, acceptedAt: null });
+      repository.findAcceptance.mockResolvedValue({ acceptedVersion: null, acceptedAt: null, ageConfirmedAt: null });
 
       await expect(service.getTermsInfo('user-1')).resolves.toEqual({
         currentVersion: configured.version,
         termsUrl: configured.url,
         acceptedVersion: null,
         acceptedAt: null,
+        ageConfirmedAt: null,
         acceptanceRequired: true,
       });
     });
@@ -71,6 +73,7 @@ describe('TermsService', () => {
       repository.findAcceptance.mockResolvedValue({
         acceptedVersion: '2025-01-01',
         acceptedAt: new Date('2025-01-01T00:00:00.000Z'),
+        ageConfirmedAt: new Date('2025-01-01T00:00:00.000Z'),
       });
 
       const info = await service.getTermsInfo('user-1');
@@ -79,24 +82,49 @@ describe('TermsService', () => {
       expect(info.acceptanceRequired).toBe(true);
     });
 
-    it('reports no acceptance requirement when the recorded version is current', async () => {
+    it('reports no acceptance requirement when the recorded version is current and age confirmed', async () => {
       const { service, repository } = buildService(configured);
       const acceptedAt = new Date('2026-09-01T10:00:00.000Z');
-      repository.findAcceptance.mockResolvedValue({ acceptedVersion: configured.version, acceptedAt });
+      repository.findAcceptance.mockResolvedValue({
+        acceptedVersion: configured.version,
+        acceptedAt,
+        ageConfirmedAt: acceptedAt,
+      });
 
       await expect(service.getTermsInfo('user-1')).resolves.toEqual({
         currentVersion: configured.version,
         termsUrl: configured.url,
         acceptedVersion: configured.version,
         acceptedAt,
+        ageConfirmedAt: acceptedAt,
         acceptanceRequired: false,
       });
+    });
+
+    it('still requires acceptance when the current version was accepted without an age confirmation', async () => {
+      const { service, repository } = buildService(configured);
+      repository.findAcceptance.mockResolvedValue({
+        acceptedVersion: configured.version,
+        acceptedAt: new Date('2026-09-01T10:00:00.000Z'),
+        ageConfirmedAt: null,
+      });
+
+      const info = await service.getTermsInfo('user-1');
+      expect(info.acceptanceRequired).toBe(true);
+
+      const failure = service.assertCurrentAcceptance('user-1');
+      await expect(failure).rejects.toBeInstanceOf(TermsAcceptanceRequiredError);
+      await expect(failure).rejects.toMatchObject({ extensions: { currentVersion: configured.version } });
     });
 
     it('records acceptance of the current version and reports the resulting state', async () => {
       const { service, repository } = buildService(configured);
       const acceptedAt = new Date('2026-09-02T09:00:00.000Z');
-      repository.recordAcceptance.mockResolvedValue({ acceptedVersion: configured.version, acceptedAt });
+      repository.recordAcceptance.mockResolvedValue({
+        acceptedVersion: configured.version,
+        acceptedAt,
+        ageConfirmedAt: acceptedAt,
+      });
 
       const info = await service.acceptTerms('user-1', configured.version);
 
@@ -106,6 +134,7 @@ describe('TermsService', () => {
         termsUrl: configured.url,
         acceptedVersion: configured.version,
         acceptedAt,
+        ageConfirmedAt: acceptedAt,
         acceptanceRequired: false,
       });
     });
@@ -127,6 +156,7 @@ describe('TermsService', () => {
       repository.findAcceptance.mockResolvedValue({
         acceptedVersion: '2025-01-01',
         acceptedAt: new Date('2025-01-01T00:00:00.000Z'),
+        ageConfirmedAt: new Date('2025-01-01T00:00:00.000Z'),
       });
 
       const failure = service.assertCurrentAcceptance('user-1');
@@ -139,6 +169,7 @@ describe('TermsService', () => {
       repository.findAcceptance.mockResolvedValue({
         acceptedVersion: configured.version,
         acceptedAt: new Date(),
+        ageConfirmedAt: new Date(),
       });
       await expect(service.assertCurrentAcceptance('user-1')).resolves.toBeUndefined();
     });

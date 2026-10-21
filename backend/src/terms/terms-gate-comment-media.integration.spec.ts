@@ -343,6 +343,7 @@ describe('Integrated release: Terms gate x Community Evidence media (Ticket 22)'
         fullName: `Release ${label}`,
         termsAcceptedVersion: acceptedVersion,
         termsAcceptedAt: acceptedVersion ? new Date() : null,
+        ageConfirmedAt: acceptedVersion ? new Date() : null,
       })
       .returning();
     return user;

@@ -2357,7 +2357,7 @@ class GraphQLService {
   // ── Versioned Terms Acceptance ──────────────────────────────────────────────
 
   static const String _termsInfoFields = r'''
-    currentVersion termsUrl acceptedVersion acceptedAt acceptanceRequired
+    currentVersion termsUrl acceptedVersion acceptedAt ageConfirmedAt acceptanceRequired
   ''';
 
   static final String termsQuery = '''
@@ -2391,9 +2391,17 @@ class GraphQLService {
   /// Idempotent for a repeat of the same version. On `TERMS_VERSION_MISMATCH`
   /// the caller should re-read [fetchTerms] rather than retry blindly — the
   /// published version may have changed since it was last read.
+  ///
+  /// Also records that the person confirmed they are 18 or older, so call it
+  /// only after they ticked that confirmation in the Terms sheet.
   Future<(TermsInfo? info, String? errorCode, String? errorMessage)> acceptTerms(String version) async {
     final result = await client.value.mutate(
-      MutationOptions(document: gql(acceptTermsMutation), variables: {'input': {'version': version}}),
+      MutationOptions(
+        document: gql(acceptTermsMutation),
+        variables: {
+          'input': {'version': version, 'ageConfirmed': true},
+        },
+      ),
     );
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');

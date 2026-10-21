@@ -22,8 +22,13 @@ type TermsInfo {
   """
   acceptedAt: DateTime
   """
-  True when the account must accept the current version before protected
-  publication and submission operations.
+  When this account first confirmed it is 18 or older, or null when it never did.
+  """
+  ageConfirmedAt: DateTime
+  """
+  True when the account must accept the current version, or has not yet
+  confirmed it is 18 or older, before protected publication and submission
+  operations.
   """
   acceptanceRequired: Boolean!
 }
@@ -37,6 +42,11 @@ input AcceptTermsInput {
   currently published version; unknown or stale versions are rejected.
   """
   version: String!
+  """
+  The person confirms they are 18 or older. Must be true: Pupzy is only for
+  people aged 18 and over.
+  """
+  ageConfirmed: Boolean!
 }
 
 extend type Query {
