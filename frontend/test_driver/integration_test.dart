@@ -21,7 +21,7 @@ Future<void> _grantPermissions() async {
   final adb = candidate.existsSync() ? candidate.path : 'adb';
   final device = Platform.environment['E2E_DEVICE'] ?? 'emulator-5554';
   for (final permission in _permissions) {
-    final result = await Process.run(adb, ['-s', device, 'shell', 'pm', 'grant', 'com.pupzy.app', permission]);
+    final result = await Process.run(adb, ['-s', device, 'shell', 'pm', 'grant', 'net.pupzy.app', permission]);
     if (result.exitCode != 0) stderr.writeln('pm grant $permission failed: ${result.stderr}');
   }
 }
