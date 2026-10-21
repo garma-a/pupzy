@@ -18,11 +18,26 @@ class _TermsGraphQL extends FakeSafetyGraphQL {
     termsUrl: 'https://pupzy.net/terms/',
     acceptedVersion: '2026-09-27',
     acceptedAt: DateTime.utc(2026, 10, 1),
+    ageConfirmedAt: DateTime.utc(2026, 10, 1),
     acceptanceRequired: false,
   );
 
   @override
   Future<TermsInfo?> fetchTerms() async => terms;
+
+  @override
+  Future<(TermsInfo?, String?, String?)> acceptTerms(String version) async {
+    acceptedVersions.add(version);
+    terms = TermsInfo(
+      currentVersion: version,
+      termsUrl: terms.termsUrl,
+      acceptedVersion: version,
+      acceptedAt: terms.acceptedVersion == version ? terms.acceptedAt : DateTime.now(),
+      ageConfirmedAt: DateTime.now(),
+      acceptanceRequired: false,
+    );
+    return (terms, null, null);
+  }
 }
 
 void main() {
@@ -160,6 +175,37 @@ void main() {
         expect(find.text(title), findsOneWidget);
       });
     }
+
+    testWidgets('asks an account that accepted before age confirmation existed to confirm it is 18 or older', (tester) async {
+      final graphql = _TermsGraphQL()
+        ..terms = TermsInfo(
+          currentVersion: '2026-09-27',
+          termsUrl: 'https://pupzy.net/terms/',
+          acceptedVersion: '2026-09-27',
+          acceptedAt: DateTime.utc(2026, 10, 1),
+          acceptanceRequired: true,
+        );
+      await tester.pumpWidget(safetyTestApp(
+        graphql: graphql,
+        events: SafetyEvents(),
+        child: Builder(builder: (context) => TextButton(onPressed: () => showTermsInfoSheet(context), child: const Text('open'))),
+      ));
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Please confirm you are 18 or older'), findsOneWidget);
+      expect(find.text('You accepted the current Terms'), findsNothing);
+
+      final accept = find.widgetWithText(ElevatedButton, 'Accept current Terms');
+      expect(tester.widget<ElevatedButton>(accept).onPressed, isNull);
+      await tester.tap(find.text('I confirm I am 18 years of age or older'));
+      await tester.pump();
+      await tester.tap(accept);
+      await tester.pumpAndSettle();
+
+      expect(graphql.acceptedVersions, ['2026-09-27']);
+      expect(find.text('You accepted the current Terms'), findsOneWidget);
+      expect(find.text('I confirm I am 18 years of age or older'), findsNothing);
+    });
 
     testWidgets('the acceptance prompt links both documents', (tester) async {
       await tester.pumpWidget(safetyTestApp(

@@ -43,6 +43,7 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
     assert.ok(resource.options.showProperties.includes('rescue_post_count'));
     assert.ok(resource.options.showProperties.includes('terms_accepted_version'));
     assert.ok(resource.options.showProperties.includes('terms_accepted_at'));
+    assert.ok(resource.options.showProperties.includes('age_confirmed_at'));
 
     // editProperties must match ALLOWED_USER_EDIT_FIELDS
     assert.deepEqual(resource.options.editProperties, [
@@ -76,6 +77,7 @@ describe('AdminJS Users Resource Configuration & City/Privacy Contracts', () => 
     assert.equal(props.product_post_count.isDisabled, true);
     assert.equal(props.terms_accepted_version.isDisabled, true);
     assert.equal(props.terms_accepted_at.isDisabled, true);
+    assert.equal(props.age_confirmed_at.isDisabled, true);
     assert.equal(props.is_banned.isDisabled, true);
     assert.equal(props.banned_at.isDisabled, true);
     assert.equal(props.ban_reason.isDisabled, true);

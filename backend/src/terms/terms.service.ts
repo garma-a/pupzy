@@ -15,6 +15,7 @@ export interface TermsInfo {
   termsUrl: string | null;
   acceptedVersion: string | null;
   acceptedAt: Date | null;
+  ageConfirmedAt: Date | null;
   acceptanceRequired: boolean;
 }
 
@@ -27,6 +28,11 @@ export interface TermsInfo {
  * accepted and nothing is gated. Once both are configured, acceptance of that
  * exact version is required before protected publication and submission
  * operations. The backend never invents a live URL or version.
+ *
+ * ## Age
+ * Pupzy is only for people aged 18 and over. Accepting requires confirming
+ * that, and an account that never confirmed its age still needs to accept,
+ * even when it already accepted the current version.
  *
  * ## Versioning
  * Only the currently configured version can be accepted. A new configured
@@ -54,12 +60,17 @@ export class TermsService {
   /** Returns the published version/URL plus the account's recorded acceptance. */
   async getTermsInfo(userId: string): Promise<TermsInfo> {
     const acceptance = await this.termsRepository.findAcceptance(userId);
-    return this.buildInfo(acceptance?.acceptedVersion ?? null, acceptance?.acceptedAt ?? null);
+    return this.buildInfo(
+      acceptance?.acceptedVersion ?? null,
+      acceptance?.acceptedAt ?? null,
+      acceptance?.ageConfirmedAt ?? null,
+    );
   }
 
   /**
-   * Records acceptance of the current published version.
-   * Rejects unknown/stale versions and returns the resulting state.
+   * Records acceptance of the current published version together with the
+   * account's confirmation that it is 18 or older (checked by the input
+   * validator). Rejects unknown/stale versions and returns the resulting state.
    */
   async acceptTerms(userId: string, version: string): Promise<TermsInfo> {
     const current = this.currentTerms;
@@ -71,31 +82,34 @@ export class TermsService {
     }
 
     const recorded = await this.termsRepository.recordAcceptance(userId, version);
-    return this.buildInfo(recorded.acceptedVersion, recorded.acceptedAt);
+    return this.buildInfo(recorded.acceptedVersion, recorded.acceptedAt, recorded.ageConfirmedAt);
   }
 
   /**
    * Enforces current acceptance for transport guards. No-ops while no Terms
    * are configured; otherwise throws TermsAcceptanceRequiredError unless the
-   * account's recorded version equals the published version.
+   * account's recorded version equals the published version and it has
+   * confirmed it is 18 or older.
    */
   async assertCurrentAcceptance(userId: string): Promise<void> {
     const current = this.currentTerms;
     if (!current) return;
 
     const acceptance = await this.termsRepository.findAcceptance(userId);
-    if (acceptance?.acceptedVersion === current.version) return;
+    if (acceptance?.acceptedVersion === current.version && acceptance.ageConfirmedAt) return;
 
     throw new TermsAcceptanceRequiredError(current.version, current.url);
   }
 
-  private buildInfo(acceptedVersion: string | null, acceptedAt: Date | null): TermsInfo {
+  private buildInfo(acceptedVersion: string | null, acceptedAt: Date | null, ageConfirmedAt: Date | null): TermsInfo {
     return {
       currentVersion: this.currentTerms?.version ?? null,
       termsUrl: this.currentTerms?.url ?? null,
       acceptedVersion,
       acceptedAt,
-      acceptanceRequired: this.currentTerms !== null && acceptedVersion !== this.currentTerms.version,
+      ageConfirmedAt,
+      acceptanceRequired:
+        this.currentTerms !== null && (acceptedVersion !== this.currentTerms.version || ageConfirmedAt === null),
     };
   }
 }

@@ -387,6 +387,7 @@ export interface ViewerLocationInput {
 
 export interface AcceptTermsInput {
   version: string;
+  ageConfirmed: boolean;
 }
 
 export interface RequestMediaUploadInput {
@@ -910,6 +911,7 @@ export interface TermsInfo {
   termsUrl?: Nullable<string>;
   acceptedVersion?: Nullable<string>;
   acceptedAt?: Nullable<DateTime>;
+  ageConfirmedAt?: Nullable<DateTime>;
   acceptanceRequired: boolean;
 }
 

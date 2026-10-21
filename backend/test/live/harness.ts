@@ -118,9 +118,13 @@ export async function createAccount(
       `{ terms { currentVersion acceptanceRequired } }`,
     );
     if (terms.acceptanceRequired && terms.currentVersion) {
-      await ok(token, `mutation($v: String!) { acceptTerms(input: { version: $v }) { acceptedVersion } }`, {
-        v: terms.currentVersion,
-      });
+      await ok(
+        token,
+        `mutation($v: String!) { acceptTerms(input: { version: $v, ageConfirmed: true }) { acceptedVersion } }`,
+        {
+          v: terms.currentVersion,
+        },
+      );
     }
   }
   return { label, email, token, id: me.id, firebaseUid: signUp.localId };
