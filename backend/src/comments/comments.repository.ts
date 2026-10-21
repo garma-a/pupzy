@@ -26,7 +26,7 @@ import {
 import { NotFoundError, ConflictError, ForbiddenError, ValidationError, AppError } from '../common/errors/app.errors';
 import { CommentCursorPayload, CommentSortOrder } from './dto/comments-query.input';
 import { getCommentMediaPurgeUrls } from '../upload/media-delivery.util';
-import { assertImageCommentAllowed } from './comment-image-eligibility';
+import { assertDiscussionAllowed, assertImageCommentAllowed } from './comment-image-eligibility';
 import { CommentsQuotaManager, QuotaReservation } from './comments-quota.manager';
 import {
   ModerationReportQuotaManager,
@@ -284,6 +284,7 @@ export class CommentsRepository {
           // The Post is always locked before discussion rows or counters.
           const post = await this.lockDiscussionPost(tx, postId);
           if (post.status === 'REMOVED') throw new NotFoundError('Post', postId);
+          assertDiscussionAllowed(post.postType);
           if (itemsToInsert.length > 0) {
             assertImageCommentAllowed(post.postType);
           }
@@ -838,6 +839,7 @@ export class CommentsRepository {
           // Post -> parent is the discussion lock order.
           const post = await this.lockDiscussionPost(tx, parentBeforeLock.postId);
           if (post.status === 'REMOVED') throw new NotFoundError('Post', parentBeforeLock.postId);
+          assertDiscussionAllowed(post.postType);
           // 1. Lock parent comment with FOR UPDATE
           const [parent] = await tx.select().from(comments).where(eq(comments.id, commentId)).for('update');
 
