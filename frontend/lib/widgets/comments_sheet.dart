@@ -34,10 +34,9 @@ class CommentsSheet extends StatefulWidget {
   final bool isPostOwner;
 
   /// Whether photo comments are offered here. The backend only accepts
-  /// image comments on RESCUE and LOST posts (both subtypes) — ADOPTION,
-  /// PRODUCT and MATING reject them with `COMMENT_MEDIA_NOT_ALLOWED` (see
-  /// comments-flutter-integration-contract.md §3). Text comments remain
-  /// available everywhere regardless of this flag.
+  /// image comments on RESCUE posts; every other type rejects them with
+  /// `COMMENT_MEDIA_NOT_ALLOWED`. PRODUCT posts take no comments at all
+  /// (`DISCUSSION_NOT_ALLOWED`), so the app never opens this sheet for them.
   final bool allowImages;
 
   /// Prepares and uploads photos; replaceable in tests.

@@ -139,7 +139,7 @@ class ControllableR2Adapter {
   }
 }
 
-describe('Community Evidence: image Comments restricted to RESCUE and LOST (Ticket 04)', () => {
+describe('Community Evidence: image Comments only on RESCUE, no discussion on PRODUCT', () => {
   jest.setTimeout(180_000);
 
   let dbHelper: TestDatabaseHelper;
@@ -490,39 +490,89 @@ describe('Community Evidence: image Comments restricted to RESCUE and LOST (Tick
     expect(postRow.commentCount).toBe(1);
   });
 
-  it('publishes two image Comments on LOST_PET and one on FOUND_STRAY', async () => {
-    const lostPet = await seedPost({ postType: 'LOST', reportType: 'LOST_PET' });
-    const foundStray = await seedPost({ postType: 'LOST', reportType: 'FOUND_STRAY' });
+  it.each(['LOST_PET', 'FOUND_STRAY'] as const)(
+    'rejects image publication on LOST %s, which is text-only',
+    async (reportType) => {
+      const post = await seedPost({ postType: 'LOST', reportType });
+      const { mediaId, stagingKey } = await stageCommentImage(commenter, validWebp1);
 
-    const first = await stageCommentImage(commenter, validWebp1);
-    const second = await stageCommentImage(commenter, validWebp2);
-    const lostRes = await executeGql<CreateCommentData>(CREATE_COMMENT_MUTATION, {
-      input: {
-        postId: lostPet.id,
-        text: 'Two photos of the missing pet area',
-        clientRequestId: generateUuidV7(),
-        mediaIds: [first.mediaId, second.mediaId],
-      },
-    });
+      const res = await executeGql(CREATE_COMMENT_MUTATION, {
+        input: {
+          postId: post.id,
+          text: 'Photo of where the pet was seen',
+          clientRequestId: generateUuidV7(),
+          mediaIds: [mediaId],
+        },
+      });
 
-    expect(lostRes.errors).toBeUndefined();
-    expect(lostRes.data!.createComment.media).toHaveLength(2);
+      expect(errorCode(res)).toBe('COMMENT_MEDIA_NOT_ALLOWED');
+      expect(await dbHelper.db.select().from(comments).where(eq(comments.postId, post.id))).toHaveLength(0);
+      const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(ticket.status).toBe('ISSUED');
+      expect(r2Adapter.hasObject(stagingKey)).toBe(true);
+    },
+  );
 
-    const third = await stageCommentImage(commenter, validWebp1);
-    const strayRes = await executeGql<CreateCommentData>(CREATE_COMMENT_MUTATION, {
-      input: {
-        postId: foundStray.id,
-        text: 'Photo of the found stray',
-        clientRequestId: generateUuidV7(),
-        mediaIds: [third.mediaId],
-      },
-    });
+  it.each(['ACTIVE', 'EXPIRED'] as const)(
+    'rejects every Comment and Reply on a %s PRODUCT listing without consuming quota',
+    async (status) => {
+      const product = await seedPost({ postType: 'PRODUCT', status });
+      const { mediaId } = await stageCommentImage(commenter, validWebp1);
 
-    expect(strayRes.errors).toBeUndefined();
-    expect(strayRes.data!.createComment.media).toHaveLength(1);
-  });
+      for (const mediaIds of [undefined, [mediaId]]) {
+        const res = await executeGql(CREATE_COMMENT_MUTATION, {
+          input: { postId: product.id, text: 'Is this still available?', clientRequestId: generateUuidV7(), mediaIds },
+        });
+        expect(errorCode(res)).toBe('DISCUSSION_NOT_ALLOWED');
+      }
 
-  it.each(['ADOPTION', 'PRODUCT', 'MATING'] as const)(
+      // A Comment left from before the rule cannot receive Replies.
+      const historicalId = generateUuidV7();
+      await dbHelper.db.insert(comments).values({
+        id: historicalId,
+        postId: product.id,
+        authorId: commenter.id,
+        text: 'Older question',
+        status: 'ACTIVE',
+      });
+      const reply = await executeGql(
+        `mutation CreateReply($input: CreateReplyInput!) { createReply(input: $input) { id } }`,
+        { input: { commentId: historicalId, text: 'Older answer', clientRequestId: generateUuidV7() } },
+        outsider,
+      );
+      expect(errorCode(reply)).toBe('DISCUSSION_NOT_ALLOWED');
+
+      // The rule is rechecked inside the committing transaction.
+      await expect(
+        commentsRepo.createCommentWithCounter({
+          commentId: generateUuidV7(),
+          postId: product.id,
+          authorId: commenter.id,
+          text: 'Commit-time comment',
+          clientRequestId: generateUuidV7(),
+          requestHash: 'product-commit-time-hash',
+          mediaItems: [],
+        }),
+      ).rejects.toMatchObject({ code: 'DISCUSSION_NOT_ALLOWED' });
+      await expect(
+        commentsRepo.createReplyWithCounters({
+          commentId: historicalId,
+          authorId: outsider.id,
+          text: 'Commit-time reply',
+          clientRequestId: generateUuidV7(),
+          requestHash: 'product-commit-time-reply-hash',
+        }),
+      ).rejects.toMatchObject({ code: 'DISCUSSION_NOT_ALLOWED' });
+
+      expect(await dbHelper.db.select().from(comments).where(eq(comments.postId, product.id))).toHaveLength(1);
+      const [ticket] = await dbHelper.db.select().from(stagedUploads).where(eq(stagedUploads.id, mediaId));
+      expect(ticket.status).toBe('ISSUED');
+      const admissions = await dbHelper.db.select().from(commentQuotaAdmissions);
+      expect(admissions).toHaveLength(0);
+    },
+  );
+
+  it.each(['ADOPTION', 'MATING'] as const)(
     'rejects image publication on %s before staging is finalized',
     async (postType) => {
       const post = await seedPost({ postType });
@@ -538,7 +588,7 @@ describe('Community Evidence: image Comments restricted to RESCUE and LOST (Tick
       });
 
       expect(errorCode(res)).toBe('COMMENT_MEDIA_NOT_ALLOWED');
-      expect(res.errors?.[0].message).toContain('rescue and lost/found');
+      expect(res.errors?.[0].message).toContain('rescue comments');
 
       expect(await dbHelper.db.select().from(comments).where(eq(comments.postId, post.id))).toHaveLength(0);
       expect(await dbHelper.db.select().from(commentMedia)).toHaveLength(0);
@@ -578,13 +628,12 @@ describe('Community Evidence: image Comments restricted to RESCUE and LOST (Tick
     expect(accepted.data!.createComment.media).toHaveLength(1);
   });
 
-  it('keeps text Comments available on every Post type and completed/expired statuses', async () => {
+  it('keeps text Comments available on every Post type except PRODUCT, including completed statuses', async () => {
     const matrix: Array<{ post: Post }> = [
       { post: await seedPost({ postType: 'RESCUE' }) },
       { post: await seedPost({ postType: 'LOST', reportType: 'LOST_PET' }) },
       { post: await seedPost({ postType: 'LOST', reportType: 'FOUND_STRAY' }) },
       { post: await seedPost({ postType: 'ADOPTION' }) },
-      { post: await seedPost({ postType: 'PRODUCT', status: 'EXPIRED' }) },
       { post: await seedPost({ postType: 'MATING', status: 'RESOLVED' }) },
     ];
 

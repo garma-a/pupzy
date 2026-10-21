@@ -12,6 +12,7 @@ import {
   adoptionPosts,
   blocks,
   cities,
+  comments,
   contactRequests,
   lostPosts,
   notifications,
@@ -590,6 +591,15 @@ describe('Post inactivity expiry, reminders and renewal (Tickets 12–13)', () =
     return result.data!.createComment;
   }
 
+  /** Marketplace takes no new Comments, so a listing's discussion can only be one left from before that rule. */
+  async function seedOlderComment(post: Post, user: User = other): Promise<CommentNode> {
+    const [row] = await dbHelper.db
+      .insert(comments)
+      .values({ postId: post.id, authorId: user.id, text: 'Any update on this listing?', status: 'ACTIVE' })
+      .returning();
+    return { id: row.id, postId: row.postId, text: row.text } as CommentNode;
+  }
+
   async function reminderWorkFor(post: Post, postType: PostType) {
     return postsRepository.recordInactivityReminder({
       postId: post.id,
@@ -605,7 +615,7 @@ describe('Post inactivity expiry, reminders and renewal (Tickets 12–13)', () =
   describe('PRODUCT inactivity window', () => {
     it('expires at 14 inactive days: leaves discovery but keeps direct detail, media, discussion and owner history', async () => {
       const post = await seedProduct({ inactiveMinutes: 14 * DAY_MINUTES + 60, withMedia: true });
-      const comment = await commentOnPost(post);
+      const comment = await seedOlderComment(post);
 
       expect(await feedIds(MARKET_FEED, other)).toContain(post.id);
       expect(await feedIds(HOME_FEED, other)).toContain(post.id);
@@ -1057,7 +1067,7 @@ describe('Post inactivity expiry, reminders and renewal (Tickets 12–13)', () =
   describe('explicit owner renewal', () => {
     it('renews an expired PRODUCT listing back into discovery while retaining media and discussion', async () => {
       const post = await seedProduct({ inactiveMinutes: 15 * DAY_MINUTES, withMedia: true });
-      await commentOnPost(post);
+      await seedOlderComment(post);
       expect((await processor.processPendingExpiry()).expired).toBe(1);
       expect((await storedPost(post.id))?.status).toBe('EXPIRED');
       const expiredAt = (await storedPost(post.id))!.lastEngagedAt;
@@ -1472,13 +1482,17 @@ describe('Post inactivity expiry, reminders and renewal (Tickets 12–13)', () =
       expect(firstError(sellerContact)).toMatch(/no longer active/i);
     });
 
-    it('keeps a viewed and commented expired listing expired without resetting its inactivity window', async () => {
+    it('keeps a viewed expired listing expired, rejecting comments, without resetting its inactivity window', async () => {
       const post = await seedProduct({ inactiveMinutes: 15 * DAY_MINUTES, withMedia: true });
       expect((await processor.processPendingExpiry()).expired).toBe(1);
 
       const before = (await storedPost(post.id))!;
-      const comment = await commentOnPost(post);
-      expect(comment.postId).toBe(post.id);
+      const comment = await runGql(
+        CREATE_COMMENT,
+        { input: { clientRequestId: generateUuidV7(), postId: post.id, text: 'Any update on this listing?' } },
+        other,
+      );
+      expect(errorCode(comment)).toBe('DISCUSSION_NOT_ALLOWED');
 
       const view = await runGql(RECORD_VIEW, { postId: post.id }, other);
       expect(view.errors).toBeUndefined();

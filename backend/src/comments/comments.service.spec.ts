@@ -419,10 +419,10 @@ describe('CommentsService', () => {
       expect(mockUploadService.markMediaFailed).toHaveBeenCalledWith([mediaId1], 'Database transaction failed');
     });
 
-    it('rejects image publication on ADOPTION, PRODUCT and MATING before quota or staged-media finalization', async () => {
+    it('rejects image publication on LOST, ADOPTION and MATING before quota or staged-media finalization', async () => {
       const mediaId = '01916327-0000-7000-8000-000000000051';
 
-      for (const postType of ['ADOPTION', 'PRODUCT', 'MATING'] as const) {
+      for (const postType of ['LOST', 'ADOPTION', 'MATING'] as const) {
         mockPostsRepo.findById.mockResolvedValueOnce({ ...mockPost, postType });
 
         let caught: AppError | undefined;
@@ -445,7 +445,7 @@ describe('CommentsService', () => {
       expect(mockCommentsRepo.createCommentWithCounter).not.toHaveBeenCalled();
     });
 
-    it('allows image publication on RESCUE and LOST', async () => {
+    it('allows image publication on RESCUE', async () => {
       const mediaId = '01916327-0000-7000-8000-000000000051';
       const finalizedItem = {
         id: mediaId,
@@ -460,25 +460,47 @@ describe('CommentsService', () => {
         displayOrder: 0,
       };
 
-      for (const postType of ['RESCUE', 'LOST'] as const) {
-        mockPostsRepo.findById.mockResolvedValueOnce({ ...mockPost, postType });
-        mockUploadService.finalizeCommentImages.mockResolvedValueOnce([finalizedItem]);
+      mockPostsRepo.findById.mockResolvedValueOnce({ ...mockPost, postType: 'RESCUE' });
+      mockUploadService.finalizeCommentImages.mockResolvedValueOnce([finalizedItem]);
 
-        const result = await service.createComment(userId, {
-          clientRequestId: `req-image-${postType}`,
-          postId,
-          text: 'Photo evidence',
-          mediaIds: [mediaId],
-        });
+      const result = await service.createComment(userId, {
+        clientRequestId: 'req-image-RESCUE',
+        postId,
+        text: 'Photo evidence',
+        mediaIds: [mediaId],
+      });
 
-        expect(result).toBeDefined();
-      }
-
-      expect(mockUploadService.finalizeCommentImages).toHaveBeenCalledTimes(2);
+      expect(result).toBeDefined();
+      expect(mockUploadService.finalizeCommentImages).toHaveBeenCalledTimes(1);
     });
 
-    it('keeps text Comments available on ADOPTION, PRODUCT and MATING', async () => {
-      for (const postType of ['ADOPTION', 'PRODUCT', 'MATING'] as const) {
+    it('rejects any Comment on a PRODUCT post before quota or staged-media finalization', async () => {
+      const mediaId = '01916327-0000-7000-8000-000000000051';
+      for (const mediaIds of [undefined, [mediaId]]) {
+        mockPostsRepo.findById.mockResolvedValueOnce({ ...mockPost, postType: 'PRODUCT' });
+
+        let caught: AppError | undefined;
+        try {
+          await service.createComment(userId, {
+            clientRequestId: `req-product-${mediaIds ? 'image' : 'text'}`,
+            postId,
+            text: 'Is this still available?',
+            mediaIds,
+          });
+        } catch (err) {
+          caught = err as AppError;
+        }
+
+        expect(caught?.code).toBe('DISCUSSION_NOT_ALLOWED');
+      }
+
+      expect(mockUploadService.finalizeCommentImages).not.toHaveBeenCalled();
+      expect(mockCommentsRepo.countRecentCreationsByAuthor).not.toHaveBeenCalled();
+      expect(mockCommentsRepo.createCommentWithCounter).not.toHaveBeenCalled();
+    });
+
+    it('keeps text Comments available on LOST, ADOPTION and MATING', async () => {
+      for (const postType of ['LOST', 'ADOPTION', 'MATING'] as const) {
         mockPostsRepo.findById.mockResolvedValueOnce({ ...mockPost, postType });
 
         const result = await service.createComment(userId, {
@@ -599,6 +621,24 @@ describe('CommentsService', () => {
           .update(JSON.stringify({ commentId: mockComment.id, text: 'I can help with transport!' }))
           .digest('hex'),
       });
+    });
+
+    it('rejects a reply beneath a PRODUCT post before quota', async () => {
+      mockPostsRepo.findById.mockResolvedValueOnce({ ...mockPost, postType: 'PRODUCT' });
+
+      let caught: AppError | undefined;
+      try {
+        await service.createReply(otherUserId, {
+          clientRequestId: 'req-reply-product',
+          commentId: mockComment.id,
+          text: 'Still available?',
+        });
+      } catch (err) {
+        caught = err as AppError;
+      }
+
+      expect(caught?.code).toBe('DISCUSSION_NOT_ALLOWED');
+      expect(mockCommentsRepo.createReplyWithCounters).not.toHaveBeenCalled();
     });
 
     it('rejects reply if parent comment does not exist', async () => {
