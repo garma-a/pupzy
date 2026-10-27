@@ -42,7 +42,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAHOJUrXQWayBW0v9pMfE0wo6lWrY8fz3Y',
-    appId: '1:48374136555:android:796d202347d02eb75cc8ae',
+    appId: '1:48374136555:android:6a361446fbaf66765cc8ae',
     messagingSenderId: '48374136555',
     projectId: 'pupzy-app-5f707',
     storageBucket: 'pupzy-app-5f707.firebasestorage.app',

@@ -46,7 +46,11 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.pupzy.app"
+        // The app's identity on Google Play; it can never change once published.
+        // com.pupzy.app is taken on Play by another developer, so Android uses
+        // net.pupzy.app (from pupzy.net). The Kotlin namespace and the iOS bundle
+        // ID stay com.pupzy.app.
+        applicationId = "net.pupzy.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
