@@ -23,6 +23,7 @@ function externalTestDatabaseUrl(): string | null {
 
 export class TestDatabaseHelper {
   private container?: StartedPostgreSqlContainer;
+  private readonly clientDisconnects = new Set<Promise<void>>();
   public pool!: Pool;
   public db!: NodePgDatabase<typeof schema>;
 
@@ -38,6 +39,15 @@ export class TestDatabaseHelper {
 
     const connectionString = externalUrl ?? this.container!.getConnectionUri();
     this.pool = new Pool({ connectionString });
+    this.pool.on('connect', (client) => {
+      const disconnected = new Promise<void>((resolve) => {
+        client.once('end', resolve);
+      });
+      this.clientDisconnects.add(disconnected);
+      void disconnected.then(() => {
+        this.clientDisconnects.delete(disconnected);
+      });
+    });
     this.db = drizzle(this.pool, { schema });
 
     if (externalUrl) {
@@ -103,6 +113,9 @@ export class TestDatabaseHelper {
   async stop(): Promise<void> {
     if (this.pool) {
       await this.pool.end();
+      // pg-pool can finish draining before idle clients finish disconnecting.
+      // Keep PostgreSQL running until their end events arrive.
+      await Promise.all(this.clientDisconnects);
     }
     if (this.container) {
       await this.container.stop();
