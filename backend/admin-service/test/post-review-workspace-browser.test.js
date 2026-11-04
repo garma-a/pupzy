@@ -411,6 +411,7 @@ describe('Post review workspace real browser suite', { timeout: 120000 }, () => 
       });
       const box = await preview.boundingBox();
       assert.ok(box.width > 40 && box.height > 40, 'the preview must be visible at a useful size');
+      assert.ok(box.width <= 128 && box.height <= 128, 'the preview must remain a compact thumbnail');
       const reviewHref = await page.$eval('[data-testid="post-media-review-link"]', (link) => link.href);
       assert.ok(reviewHref.endsWith(`/posts/records/${fixture.postId}/show`));
 
@@ -418,6 +419,22 @@ describe('Post review workspace real browser suite', { timeout: 120000 }, () => 
         waitUntil: 'networkidle0',
       });
       assert.equal((await page.$$('[data-testid="post-media-preview"]')).length, 2, 'media rows include previews');
+      const listBoxes = await page.$$eval('[data-testid="post-media-preview"] img', (images) =>
+        images.map((image) => {
+          const rect = image.getBoundingClientRect();
+          return { width: rect.width, height: rect.height };
+        }),
+      );
+      assert.equal(listBoxes.length, 1, 'the available photo has a thumbnail');
+      assert.equal(
+        (await page.$$('[data-testid="post-media-preview"] [aria-label="Image unavailable"]')).length,
+        1,
+        'the unavailable fixture keeps its fallback',
+      );
+      assert.ok(
+        listBoxes.every((rect) => rect.width > 40 && rect.width <= 128 && rect.height > 40 && rect.height <= 128),
+        'list previews must remain compact and visible',
+      );
     } finally {
       await page.close();
     }
