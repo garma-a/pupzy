@@ -360,6 +360,14 @@ export default function PostReviewWorkspace({ resource, record }) {
     <Box className="pupzy-post-review" p="xl" mb="xl" data-testid="pupzy-review-workspace">
       <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" style={{ gap: '12px' }}>
         <H3 style={{ margin: 0 }}>Review workspace</H3>
+        {resource.id !== 'posts' && post.id ? (
+          <Link
+            href={adminResourceUrl(`posts/records/${encodeURIComponent(post.id)}/show`)}
+            data-testid="pupzy-open-post"
+          >
+            Open Post for moderation
+          </Link>
+        ) : null}
         <Link href={backLink.href} data-testid="pupzy-back-to-queue" style={{ fontWeight: 600 }}>
           ← {backLink.label}
         </Link>
@@ -410,7 +418,7 @@ export default function PostReviewWorkspace({ resource, record }) {
             ))}
           </div>
         ) : (
-          <EmptyState>No photos were attached to this Post.</EmptyState>
+          <EmptyState>No photos are attached to this Post.</EmptyState>
         )}
       </section>
 

@@ -1,11 +1,15 @@
 import { attachShortUuid, buildReadOnlyResource, stripPopulatedPasswordHashes } from './resource-helpers.js';
 
 export function buildPostMediaResource(db, components = {}) {
+  const hasPreview = Boolean(components.PostMediaPreview);
   const properties = {
     id: { isTitle: true, isDisabled: true },
     post_id: {},
     cloudflare_storage_key: { isDisabled: true },
-    public_url: { isDisabled: true },
+    public_url: {
+      isDisabled: true,
+      ...(hasPreview ? { components: { list: components.PostMediaPreview, show: components.PostMediaPreview } } : {}),
+    },
     display_order: {},
     file_content_type: { isDisabled: true },
     file_size_bytes: { isDisabled: true },
@@ -22,7 +26,15 @@ export function buildPostMediaResource(db, components = {}) {
       list: { after: stripPopulatedPasswordHashes },
       show: { after: stripPopulatedPasswordHashes },
     },
-    listProperties: ['id', 'post_id', 'display_order', 'file_content_type', 'file_size_bytes', 'created_at'],
+    listProperties: [
+      ...(hasPreview ? ['public_url'] : []),
+      'id',
+      'post_id',
+      'display_order',
+      'file_content_type',
+      'file_size_bytes',
+      'created_at',
+    ],
     showProperties: [
       'id',
       'post_id',

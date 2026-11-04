@@ -951,64 +951,42 @@ describe('Legacy Post Upload & Image Publishing Integration (Ticket 01)', () => 
     });
   });
 
-  // ─── 3. Text-Only Publishing Unchanged (AC 3) ─────────────────────────────────
+  // ─── 3. Required photos — supersedes the legacy text-only creation rule ────
 
-  describe('Acceptance Criterion 3: Text-only workflows remain unchanged', () => {
-    it('publishes RESCUE, LOST, ADOPTION, and PRODUCT posts without mediaIds', async () => {
-      // RESCUE text-only
-      const rescueRes = await executeGql<PostMutationResponse>(
-        `mutation CreateRescue($input: CreateRescuePostInput!) {
-          createRescuePost(input: $input) { id postType media { id } }
-        }`,
-        { input: makeValidRescueInput() },
-        testUser1,
-      );
-      expect(rescueRes.errors).toBeUndefined();
-      expect(rescueRes.data?.createRescuePost?.media).toEqual([]);
+  describe('Every newly published Post requires a photo', () => {
+    it('rejects omitted or empty photo lists without creating Post, extension or media rows', async () => {
+      const inputs = [
+        ['createRescuePost', 'CreateRescuePostInput', makeValidRescueInput()],
+        ['createLostPost', 'CreateLostPostInput', makeValidLostPetInput()],
+        ['createAdoptionPost', 'CreateAdoptionPostInput', makeValidAdoptionInput()],
+        ['createProductPost', 'CreateProductPostInput', makeValidProductInput()],
+      ] as const;
 
-      // LOST text-only
-      const lostRes = await executeGql<PostMutationResponse>(
-        `mutation CreateLost($input: CreateLostPostInput!) {
-          createLostPost(input: $input) { id postType media { id } }
-        }`,
-        { input: makeValidLostPetInput() },
-        testUser1,
-      );
-      expect(lostRes.errors).toBeUndefined();
-      expect(lostRes.data?.createLostPost?.media).toEqual([]);
+      for (const [mutation, inputType, input] of inputs) {
+        for (const media of [{}, { mediaIds: [] }]) {
+          const result = await executeGql(
+            `mutation Publish($input: ${inputType}!) { ${mutation}(input: $input) { id } }`,
+            { input: { ...input, ...media } },
+            testUser1,
+          );
+          expect(result.errors).toHaveLength(1);
+          expect(result.errors![0].message).toContain('At least one photo');
+          expect(result.errors![0].originalError).toMatchObject({ code: 'VALIDATION_ERROR' });
+        }
+      }
 
-      // ADOPTION text-only
-      const adoptRes = await executeGql<PostMutationResponse>(
-        `mutation CreateAdopt($input: CreateAdoptionPostInput!) {
-          createAdoptionPost(input: $input) { id postType media { id } }
-        }`,
-        { input: makeValidAdoptionInput() },
-        testUser1,
-      );
-      expect(adoptRes.errors).toBeUndefined();
-      expect(adoptRes.data?.createAdoptionPost?.media).toEqual([]);
-
-      // PRODUCT text-only
-      const prodRes = await executeGql<PostMutationResponse>(
-        `mutation CreateProd($input: CreateProductPostInput!) {
-          createProductPost(input: $input) { id postType media { id } }
-        }`,
-        { input: makeValidProductInput() },
-        testUser1,
-      );
-      expect(prodRes.errors).toBeUndefined();
-      expect(prodRes.data?.createProductPost?.media).toEqual([]);
-
-      // Verify MATING business rule: requires at least one photo
-      const matingRes = await executeGql(
-        `mutation CreateMating($input: CreateMatingPostInput!) {
-          createMatingPost(input: $input) { id }
-        }`,
+      const matingResult = await executeGql(
+        'mutation($input: CreateMatingPostInput!) { createMatingPost(input: $input) { id } }',
         { input: makeValidMatingInput([]) },
         testUser1,
       );
-      expect(matingRes.errors).toBeDefined();
-      expect(matingRes.errors![0].message).toContain('At least one photo of the pet is required');
+      expect(matingResult.errors![0].message).toContain('At least one photo');
+      expect(await dbHelper.db.select({ id: posts.id }).from(posts)).toEqual([]);
+      expect(await dbHelper.db.select({ id: postMedia.id }).from(postMedia)).toEqual([]);
+      expect(await dbHelper.db.select({ id: rescuePosts.postId }).from(rescuePosts)).toEqual([]);
+      expect(await dbHelper.db.select({ id: adoptionPosts.postId }).from(adoptionPosts)).toEqual([]);
+      expect(await dbHelper.db.select({ id: productPosts.postId }).from(productPosts)).toEqual([]);
+      expect(await dbHelper.db.select({ id: matingPosts.postId }).from(matingPosts)).toEqual([]);
     });
   });
 

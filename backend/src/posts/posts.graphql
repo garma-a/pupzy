@@ -347,7 +347,8 @@ input CreateRescuePostInput {
   """
   canAnimalMoveOrEscape: Boolean!
   """
-  Media IDs from requestMediaUploadUrl. Max 4.
+  At least one successfully uploaded photo is required when publishing. Max 4.
+  Use media IDs from requestMediaUploadUrl; missing photos return VALIDATION_ERROR.
   """
   mediaIds: [ID!]
 }
@@ -413,7 +414,8 @@ input CreateLostPostInput {
   """
   dateFound: String
   """
-  Media IDs from requestMediaUploadUrl. Max 4.
+  At least one successfully uploaded photo is required when publishing. Max 4.
+  Use media IDs from requestMediaUploadUrl; missing photos return VALIDATION_ERROR.
   """
   mediaIds: [ID!]
 }
@@ -459,7 +461,8 @@ input CreateAdoptionPostInput {
   """
   currentlyWith: String
   """
-  Media IDs from requestMediaUploadUrl. Max 4.
+  At least one successfully uploaded photo is required when publishing. Max 4.
+  Use media IDs from requestMediaUploadUrl; missing photos return VALIDATION_ERROR.
   """
   mediaIds: [ID!]
 }
@@ -497,7 +500,8 @@ input CreateProductPostInput {
   """
   openToOffers: Boolean
   """
-  Media IDs from requestMediaUploadUrl. Max 4.
+  At least one successfully uploaded photo is required when publishing. Max 4.
+  Use media IDs from requestMediaUploadUrl; missing photos return VALIDATION_ERROR.
   """
   mediaIds: [ID!]
 }

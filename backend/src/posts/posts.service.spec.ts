@@ -135,6 +135,7 @@ describe('PostsService', () => {
 
       await expect(
         service.createRescuePost(validUserId, {
+          mediaIds: ['01916327-0000-7000-8000-000000000005'],
           title: 'Emergency: Kitten hit by car',
           description: 'Needs urgent surgery.',
           cityId: '01916327-0000-7000-8000-000000000999',
@@ -224,6 +225,7 @@ describe('PostsService', () => {
       mockPostsRepo.createRescuePost = jest.fn().mockResolvedValue(mockCreatedPost);
 
       await service.createRescuePost(validUserId, {
+        mediaIds: ['01916327-0000-7000-8000-000000000005'],
         title: 'iPhone 15 for sale with kitten',
         description: 'Clean animal.',
         coordinates: { latitude: 30.0444, longitude: 31.2357 },
@@ -274,6 +276,7 @@ describe('PostsService', () => {
       mockPostsRepo.createLostPost = jest.fn().mockResolvedValue(mockCreatedPost);
 
       const result = await service.createLostPost(validUserId, {
+        mediaIds: ['01916327-0000-7000-8000-000000000005'],
         title: 'Lost diabetic dog',
         description: 'Needs daily insulin injections urgently.',
         coordinates: { latitude: 30.0444, longitude: 31.2357 },
@@ -299,6 +302,7 @@ describe('PostsService', () => {
       mockPostsRepo.createLostPost = jest.fn().mockResolvedValue(mockCreatedPost);
 
       const result = await service.createLostPost(validUserId, {
+        mediaIds: ['01916327-0000-7000-8000-000000000005'],
         title: 'Found stray dog wandering',
         description: 'Healthy dog wandering near the park.',
         coordinates: { latitude: 30.0444, longitude: 31.2357 },
@@ -324,6 +328,7 @@ describe('PostsService', () => {
       mockPostsRepo.createAdoptionPost = jest.fn().mockResolvedValue(mockCreatedPost);
 
       const result = await service.createAdoptionPost(validUserId, {
+        mediaIds: ['01916327-0000-7000-8000-000000000005'],
         title: 'Golden Retriever for adoption',
         description: 'Very friendly and well-trained puppy looking for a loving home.',
         coordinates: { latitude: 30.0444, longitude: 31.2357 },
@@ -351,6 +356,7 @@ describe('PostsService', () => {
       mockPostsRepo.createProductPost = jest.fn().mockResolvedValue(mockCreatedPost);
 
       const result = await service.createProductPost(validUserId, {
+        mediaIds: ['01916327-0000-7000-8000-000000000005'],
         title: 'Dog Crate Large',
         description: 'Barely used heavy duty metal dog crate.',
         coordinates: { latitude: 30.0444, longitude: 31.2357 },
@@ -375,6 +381,7 @@ describe('PostsService', () => {
       mockPostsRepo.createProductPost = jest.fn().mockResolvedValue(mockCreatedPost);
 
       const result = await service.createProductPost(validUserId, {
+        mediaIds: ['01916327-0000-7000-8000-000000000005'],
         title: 'Free Cat Food Samples',
         description: 'Giving away extra cat food cans.',
         coordinates: { latitude: 30.0444, longitude: 31.2357 },
