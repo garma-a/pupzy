@@ -14,6 +14,7 @@ import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
 import '../utils/webp_compress.dart';
 import '../widgets/language_toggle.dart';
+import '../widgets/pill_toggle.dart';
 import '../utils/presigned_upload.dart';
 import 'blocked_accounts_screen.dart';
 import 'contact_requests_screen.dart';
@@ -547,11 +548,26 @@ class _ProfileSheetState extends State<ProfileSheet> {
                       onTap: () => _showEditProfile(),
                     ),
                     const Divider(height: 1, indent: 48),
-                    _SwitchRow(
-                      icon: Icons.notifications_none,
-                      label: t(context, 'Notifications', 'الإشعارات'),
-                      value: _user?['notificationsEnabled'] == true,
-                      onChanged: _savingNotifications ? null : (_) => _toggleNotifications(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 9),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.notifications_none, size: 20, color: AppColors.primary),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(child: Text(t(context, 'Notifications', 'الإشعارات'), style: Theme.of(context).textTheme.bodyLarge)),
+                          SizedBox(
+                            width: 168,
+                            child: PillToggle(
+                              compact: true,
+                              firstLabel: t(context, 'On', 'مفعّل'),
+                              secondLabel: t(context, 'Off', 'متوقف'),
+                              firstSelected: _user?['notificationsEnabled'] == true,
+                              pillKey: const Key('notificationsTogglePill'),
+                              onChanged: (_) => _toggleNotifications(),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const Divider(height: 1, indent: 48),
                     _SettingsRow(
@@ -748,45 +764,6 @@ class _SettingsRow extends StatelessWidget {
               ),
             const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A settings row that turns something on or off in place: a switch instead
-/// of the arrow, which means "opens another screen". Tapping anywhere on the
-/// row flips it, and screen readers announce it as one switch.
-class _SwitchRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool value;
-  final ValueChanged<bool>? onChanged;
-  const _SwitchRow({required this.icon, required this.label, required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return MergeSemantics(
-      child: GestureDetector(
-        onTap: onChanged == null ? null : () => onChanged!(!value),
-        behavior: HitTestBehavior.opaque,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 2),
-          child: Row(
-            children: [
-              Icon(icon, size: 20, color: AppColors.primary),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(child: Text(label, style: Theme.of(context).textTheme.bodyLarge)),
-              Switch.adaptive(
-                value: value,
-                onChanged: onChanged,
-                activeTrackColor: AppColors.primary,
-                inactiveThumbColor: AppColors.textMuted,
-                inactiveTrackColor: AppColors.border,
-                trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
-              ),
-            ],
-          ),
         ),
       ),
     );

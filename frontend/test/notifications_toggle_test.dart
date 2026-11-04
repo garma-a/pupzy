@@ -9,6 +9,7 @@ import 'package:pupzy/screens/profile_screen.dart';
 import 'package:pupzy/services/auth_service.dart';
 import 'package:pupzy/services/graphql_service.dart';
 import 'package:pupzy/services/push_service.dart';
+import 'package:pupzy/widgets/pill_toggle.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'safety_test_support.dart';
@@ -93,25 +94,26 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Finder notificationsRow() => find.ancestor(of: find.text('Notifications'), matching: find.byType(GestureDetector)).first;
-  bool switchValue(WidgetTester tester) => tester.widget<Switch>(find.byType(Switch)).value;
+  Finder toggle() => find.ancestor(of: find.byKey(const Key('notificationsTogglePill')), matching: find.byType(PillToggle));
+  bool isOn(WidgetTester tester) => tester.widget<PillToggle>(toggle()).firstSelected;
 
-  testWidgets('shows a switch, not an arrow, for notifications', (tester) async {
+  testWidgets('notifications use the same On/Off pill as the language row', (tester) async {
     await pumpSheet(tester);
 
-    expect(find.byType(Switch), findsOneWidget);
-    expect(switchValue(tester), isTrue);
-    expect(find.descendant(of: notificationsRow(), matching: find.byIcon(Icons.chevron_right)), findsNothing);
+    expect(find.byType(PillToggle), findsNWidgets(2), reason: 'language and notifications');
+    expect(find.descendant(of: toggle(), matching: find.text('On')), findsOneWidget);
+    expect(find.descendant(of: toggle(), matching: find.text('Off')), findsOneWidget);
+    expect(isOn(tester), isTrue);
   });
 
-  testWidgets('tapping the row turns notifications off', (tester) async {
+  testWidgets('tapping Off turns notifications off', (tester) async {
     await pumpSheet(tester);
 
-    await tester.tap(find.text('Notifications'));
+    await tester.tap(find.text('Off'));
     await tester.pumpAndSettle();
 
     expect(graphql.saved, [false]);
-    expect(switchValue(tester), isFalse);
+    expect(isOn(tester), isFalse);
     expect(push.permissionRequests, 0);
   });
 
@@ -119,22 +121,32 @@ void main() {
     graphql.notificationsEnabled = false;
     await pumpSheet(tester);
 
-    await tester.tap(find.byType(Switch));
+    await tester.tap(find.text('On'));
     await tester.pumpAndSettle();
 
     expect(graphql.saved, [true]);
-    expect(switchValue(tester), isTrue);
+    expect(isOn(tester), isTrue);
     expect(push.permissionRequests, 1);
   });
 
-  testWidgets('a failed save puts the switch back and says so', (tester) async {
+  testWidgets('a failed save puts the toggle back and says so', (tester) async {
     graphql.saveSucceeds = false;
     await pumpSheet(tester);
 
-    await tester.tap(find.byType(Switch));
+    await tester.tap(find.text('Off'));
     await tester.pumpAndSettle();
 
-    expect(switchValue(tester), isTrue);
+    expect(isOn(tester), isTrue);
     expect(toasts.messages, ['Could not update notifications. Try again.']);
+  });
+
+  testWidgets('tapping the option already selected changes nothing', (tester) async {
+    await pumpSheet(tester);
+
+    await tester.tap(find.text('On'));
+    await tester.pumpAndSettle();
+
+    expect(graphql.saved, isEmpty);
+    expect(isOn(tester), isTrue);
   });
 }
