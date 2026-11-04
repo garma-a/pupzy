@@ -456,178 +456,183 @@ class _CommentsSheetState extends State<CommentsSheet> {
   @override
   Widget build(BuildContext context) {
     final lang = context.watch<LangProvider>().lang;
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: AppSpacing.sm),
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
-                child: Row(
-                  children: [
-                    Text(t(context, 'Comments', 'التعليقات'), style: Theme.of(context).textTheme.headlineMedium),
-                    const Spacer(),
-                    _SortToggle(sort: _sort, onChanged: _setSort),
-                  ],
-                ),
-              ),
-              const Divider(height: 1, color: AppColors.border),
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _errorMessage != null
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(AppSpacing.xl),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.cloud_off_outlined, size: 36, color: AppColors.textMuted),
-                                  const SizedBox(height: AppSpacing.sm),
-                                  Text(_errorMessage!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted), textAlign: TextAlign.center),
-                                  const SizedBox(height: AppSpacing.md),
-                                  OutlinedButton(onPressed: _load, child: Text(t(context, 'Retry', 'إعادة المحاولة'))),
-                                ],
-                              ),
-                            ),
-                          )
-                        : _comments.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.mode_comment_outlined, size: 40, color: AppColors.textMuted),
-                                    const SizedBox(height: AppSpacing.sm),
-                                    Text(t(context, 'No comments yet — be the first', 'لا توجد تعليقات بعد \u2014 كن أول من يعلق'), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted)),
-                                  ],
-                                ),
-                              )
-                            : ListView.builder(
-                                controller: scrollController,
-                                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md),
-                                itemCount: _comments.length + (_hasNextPage ? 1 : 0),
-                                itemBuilder: (context, i) {
-                                  if (i >= _comments.length) {
-                                    if (!_loadingMore) {
-                                      WidgetsBinding.instance.addPostFrameCallback((_) => _loadMore());
-                                    }
-                                    return const Padding(
-                                      padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                                      child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-                                    );
-                                  }
-                                  final comment = _comments[i];
-                                  return _CommentTile(
-                                    key: ValueKey(comment.id),
-                                    comment: comment,
-                                    lang: lang,
-                                    isMine: comment.author?.id == _myUserId,
-                                    myUserId: _myUserId,
-                                    isPostOwner: widget.isPostOwner,
-                                    onBoostChanged: _onBoostChanged,
-                                    onPin: () => _pinComment(comment),
-                                    onUnpin: () => _unpinComment(comment),
-                                    onDelete: () => _deleteComment(comment),
-                                    onReport: _reportComment,
-                                    onReportAccount: _reportAccountOf,
-                                    onBlockAuthor: _blockAuthorOf,
-                                    hiddenAuthorIds: _hiddenAuthorIds,
-                                    onReplyCountChanged: (count) => _replaceComment(comment.copyWith(replyCount: count)),
-                                    drafts: widget.drafts,
-                                  );
-                                },
-                              ),
-              ),
-              const Divider(height: 1, color: AppColors.border),
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    // Lift the whole sheet above the keyboard so the comment box stays in
+    // view while typing; the sheet then fills the space left above it.
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: AppSpacing.sm),
+                Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
+                  child: Row(
                     children: [
-                      if (_notice != null)
-                        _ComposerNoticeBar(
-                          notice: _notice!,
-                          photoCount: _pendingImages.length,
-                          busy: _sending,
-                          onRetry: () => _send(),
-                          onPostWithoutPhotos: () => _send(withoutPhotos: true),
-                        ),
-                      if (widget.allowImages && _pendingImages.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                          child: Row(
-                            children: [
-                              for (var i = 0; i < _pendingImages.length; i++)
-                                Padding(
-                                  padding: const EdgeInsetsDirectional.only(end: AppSpacing.sm),
-                                  child: _PendingImageThumb(
-                                    path: _pendingImages[i].path,
-                                    onRemove: _sending ? null : () => _removeImage(i),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          if (widget.allowImages)
-                            IconButton(
-                              onPressed: !_sending && _pendingImages.length < CommentsSheet.maxImages ? _pickImage : null,
-                              icon: const Icon(Icons.image_outlined),
-                              color: AppColors.textMuted,
-                              tooltip: _pendingImages.length < CommentsSheet.maxImages
-                                  ? t(context, 'Attach photos (up to 2)', 'إرفاق صور (حتى صورتين)')
-                                  : t(context, 'Up to 2 photos per comment', 'حتى صورتين لكل تعليق'),
-                            ),
-                          Expanded(
-                            child: TextField(
-                              controller: _textController,
-                              minLines: 1,
-                              maxLines: 4,
-                              // Backend hard-limit (validateCommentText): 1,000 Unicode characters.
-                              maxLength: 1000,
-                              onChanged: (_) => setState(() {}),
-                              decoration: InputDecoration(
-                                hintText: t(context, 'Add a comment...', 'أضف تعليقًا...'),
-                                filled: true,
-                                fillColor: AppColors.surfaceWarm,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.chip), borderSide: BorderSide.none),
-                                counterText: '',
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.xs),
-                          IconButton(
-                            onPressed: _sending || _textController.text.trim().isEmpty ? null : () => _send(),
-                            icon: _sending
-                                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                                : const Icon(Icons.send),
-                            color: AppColors.primary,
-                          ),
-                        ],
-                      ),
+                      Text(t(context, 'Comments', 'التعليقات'), style: Theme.of(context).textTheme.headlineMedium),
+                      const Spacer(),
+                      _SortToggle(sort: _sort, onChanged: _setSort),
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
+                const Divider(height: 1, color: AppColors.border),
+                Expanded(
+                  child: _loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _errorMessage != null
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(AppSpacing.xl),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.cloud_off_outlined, size: 36, color: AppColors.textMuted),
+                                    const SizedBox(height: AppSpacing.sm),
+                                    Text(_errorMessage!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted), textAlign: TextAlign.center),
+                                    const SizedBox(height: AppSpacing.md),
+                                    OutlinedButton(onPressed: _load, child: Text(t(context, 'Retry', 'إعادة المحاولة'))),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : _comments.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.mode_comment_outlined, size: 40, color: AppColors.textMuted),
+                                      const SizedBox(height: AppSpacing.sm),
+                                      Text(t(context, 'No comments yet — be the first', 'لا توجد تعليقات بعد \u2014 كن أول من يعلق'), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted)),
+                                    ],
+                                  ),
+                                )
+                              : ListView.builder(
+                                  controller: scrollController,
+                                  padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md),
+                                  itemCount: _comments.length + (_hasNextPage ? 1 : 0),
+                                  itemBuilder: (context, i) {
+                                    if (i >= _comments.length) {
+                                      if (!_loadingMore) {
+                                        WidgetsBinding.instance.addPostFrameCallback((_) => _loadMore());
+                                      }
+                                      return const Padding(
+                                        padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                                        child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                                      );
+                                    }
+                                    final comment = _comments[i];
+                                    return _CommentTile(
+                                      key: ValueKey(comment.id),
+                                      comment: comment,
+                                      lang: lang,
+                                      isMine: comment.author?.id == _myUserId,
+                                      myUserId: _myUserId,
+                                      isPostOwner: widget.isPostOwner,
+                                      onBoostChanged: _onBoostChanged,
+                                      onPin: () => _pinComment(comment),
+                                      onUnpin: () => _unpinComment(comment),
+                                      onDelete: () => _deleteComment(comment),
+                                      onReport: _reportComment,
+                                      onReportAccount: _reportAccountOf,
+                                      onBlockAuthor: _blockAuthorOf,
+                                      hiddenAuthorIds: _hiddenAuthorIds,
+                                      onReplyCountChanged: (count) => _replaceComment(comment.copyWith(replyCount: count)),
+                                      drafts: widget.drafts,
+                                    );
+                                  },
+                                ),
+                ),
+                const Divider(height: 1, color: AppColors.border),
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_notice != null)
+                          _ComposerNoticeBar(
+                            notice: _notice!,
+                            photoCount: _pendingImages.length,
+                            busy: _sending,
+                            onRetry: () => _send(),
+                            onPostWithoutPhotos: () => _send(withoutPhotos: true),
+                          ),
+                        if (widget.allowImages && _pendingImages.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                            child: Row(
+                              children: [
+                                for (var i = 0; i < _pendingImages.length; i++)
+                                  Padding(
+                                    padding: const EdgeInsetsDirectional.only(end: AppSpacing.sm),
+                                    child: _PendingImageThumb(
+                                      path: _pendingImages[i].path,
+                                      onRemove: _sending ? null : () => _removeImage(i),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            if (widget.allowImages)
+                              IconButton(
+                                onPressed: !_sending && _pendingImages.length < CommentsSheet.maxImages ? _pickImage : null,
+                                icon: const Icon(Icons.image_outlined),
+                                color: AppColors.textMuted,
+                                tooltip: _pendingImages.length < CommentsSheet.maxImages
+                                    ? t(context, 'Attach photos (up to 2)', 'إرفاق صور (حتى صورتين)')
+                                    : t(context, 'Up to 2 photos per comment', 'حتى صورتين لكل تعليق'),
+                              ),
+                            Expanded(
+                              child: TextField(
+                                controller: _textController,
+                                minLines: 1,
+                                maxLines: 4,
+                                // Backend hard-limit (validateCommentText): 1,000 Unicode characters.
+                                maxLength: 1000,
+                                onChanged: (_) => setState(() {}),
+                                decoration: InputDecoration(
+                                  hintText: t(context, 'Add a comment...', 'أضف تعليقًا...'),
+                                  filled: true,
+                                  fillColor: AppColors.surfaceWarm,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.chip), borderSide: BorderSide.none),
+                                  counterText: '',
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.xs),
+                            IconButton(
+                              onPressed: _sending || _textController.text.trim().isEmpty ? null : () => _send(),
+                              icon: _sending
+                                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                                  : const Icon(Icons.send),
+                              color: AppColors.primary,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

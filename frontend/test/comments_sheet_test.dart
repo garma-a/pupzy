@@ -441,4 +441,38 @@ void main() {
       expect(find.text('text of reply-0'), findsOneWidget);
     });
   });
+
+  // ── Keyboard ─────────────────────────────────────────────────────────────
+
+  testWidgets('the comment box stays above the keyboard', (tester) async {
+    tester.view.physicalSize = const Size(1000, 2000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(safetyTestApp(
+      graphql: graphql,
+      events: SafetyEvents(),
+      child: Builder(
+        builder: (context) => TextButton(
+          onPressed: () => showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => CommentsSheet(postId: 'post-1', isPostOwner: false, allowImages: false, imageUploader: uploader),
+          ),
+          child: const Text('open'),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    // The keyboard covers the bottom 900 px of a 2000 px screen.
+    tester.view.viewInsets = const FakeViewPadding(bottom: 900);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpAndSettle();
+
+    final box = tester.getRect(find.widgetWithText(TextField, 'Add a comment...'));
+    expect(box.bottom, lessThanOrEqualTo(2000 - 900));
+    expect(box.top, greaterThan(0));
+  });
 }
