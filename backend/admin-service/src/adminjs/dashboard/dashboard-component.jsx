@@ -1,62 +1,43 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ApiClient } from 'adminjs';
+import { Loader } from '@adminjs/design-system';
 import { queueHref } from './work-queues.js';
-import {
-  Badge,
-  Box,
-  Button,
-  H2,
-  H3,
-  H4,
-  Link,
-  Loader,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Text,
-} from '@adminjs/design-system';
 
 const api = new ApiClient();
-
 const statLabels = [
-  ['total_users', 'Total Users'],
-  ['banned_users', 'Banned Users'],
+  ['total_users', 'Total users'],
+  ['banned_users', 'Banned users'],
   ['total_posts', 'Total Posts'],
   ['active_posts', 'Active Posts'],
-  ['needs_review_posts', 'Needs Review'],
+  ['needs_review_posts', 'Needs review'],
   ['flagged_posts', 'Flagged'],
 ];
-
 const ALERT_GROUPS = ['needs_review'];
-
+const statusLabel = (value) =>
+  ({ PENDING_AUTO_REVIEW: 'Pending review', FLAGGED: 'Flagged', CLEAN: 'Clean' })[value] ?? value;
+const typeLabel = (value) => (value ? value.charAt(0) + value.slice(1).toLowerCase() : '');
 function adminRootPath() {
-  return (typeof window !== 'undefined' && window.REDUX_STATE && window.REDUX_STATE.paths?.rootPath) || '/admin';
+  return (typeof window !== 'undefined' && window.REDUX_STATE?.paths?.rootPath) || '/admin';
 }
-
-function QueueButton({ queue }) {
+function QueueButton({ queue, priority }) {
   const isAlert = ALERT_GROUPS.includes(queue.group) && queue.count > 0;
   return (
-    <Link
+    <a
       href={queueHref(queue, adminRootPath())}
       className="pupzy-queue-button"
       data-testid={`pupzy-queue-${queue.id}`}
       data-alert={isAlert ? 'true' : 'false'}
+      data-priority={priority ? 'true' : 'false'}
     >
       <span className="pupzy-queue-button-label">{queue.label}</span>
       <span className="pupzy-queue-button-meta">
         <span className="pupzy-queue-button-count" aria-label={`${queue.count} records`}>
           {queue.count.toLocaleString()}
         </span>
-        <span aria-hidden="true" className="pupzy-queue-button-arrow">
-          →
-        </span>
       </span>
-    </Link>
+    </a>
   );
 }
-
 function queueGroups(queues) {
   const groups = [];
   for (const queue of queues) {
@@ -69,286 +50,201 @@ function queueGroups(queues) {
   }
   return groups;
 }
-
 export default function Dashboard() {
   const [data, setData] = useState();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
   const load = useCallback(async (fresh = false) => {
     setLoading(true);
-    setError('');
     try {
       const response = await api.getDashboard(fresh ? { params: { fresh: 'true' } } : undefined);
       setData(response.data);
+      setError('');
     } catch {
       setError('Dashboard data could not be loaded.');
     } finally {
       setLoading(false);
     }
   }, []);
-
   useEffect(() => {
     load();
   }, [load]);
-
-  if (loading && !data) {
+  if (!data && error) {
     return (
-      <Box p="xxl" display="flex" justifyContent="center" alignItems="center" flexDirection="column" minHeight="350px">
-        <Loader style={{ borderTopColor: '#C4622D' }} />
-        <Text mt="lg" style={{ color: '#8B6355', fontSize: '14px', fontWeight: 500 }}>
-          Loading Pupzy moderation overview…
-        </Text>
-      </Box>
+      <div className="pupzy-desk pupzy-desk-unavailable">
+        <h1>Moderation overview</h1>
+        <div className="pupzy-desk-error" role="alert">
+          <div>
+            <h2>Overview unavailable</h2>
+            <p>{error} Retry to see current Posts, reports and totals.</p>
+          </div>
+          <button data-variant="primary" disabled={loading} aria-busy={loading} onClick={() => void load(true)}>
+            {loading ? 'Retrying…' : 'Retry'}
+          </button>
+        </div>
+      </div>
     );
   }
-
+  if (loading && !data) {
+    return (
+      <div className="pupzy-desk-loading" role="status" aria-live="polite">
+        <Loader />
+        <p>Loading Pupzy moderation overview…</p>
+      </div>
+    );
+  }
   const queues = data?.queues ?? [];
   const flaggedQueue = queues.find((queue) => queue.id === 'flagged');
-
+  const priorityQueue = queues.find((queue) => queue.group === 'needs_review' && queue.count > 0);
   return (
-    <Box p="xl" style={{ backgroundColor: '#FAF6F1', minHeight: '100%' }}>
-      {/* Header */}
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb="xl"
-        flexWrap="wrap"
-        style={{ gap: '16px' }}
-      >
-        <H2 style={{ fontFamily: "'Playfair Display', 'Cairo', serif", color: '#2D1506', margin: 0 }}>
-          Pupzy moderation overview
-        </H2>
-        <Button
-          variant="primary"
-          data-variant="primary"
-          className="pupzy-dashboard-refresh"
-          disabled={loading}
-          aria-busy={loading}
-          onClick={() => void load(true)}
-        >
-          {loading ? 'Refreshing…' : 'Refresh now'}
-        </Button>
-      </Box>
-
-      {/* Error state if reload fails */}
-      {error ? (
-        <Box
-          p="lg"
-          mb="xl"
-          role="alert"
-          style={{
-            backgroundColor: '#F9E5E7',
-            border: '1px solid #F3C4CB',
-            borderRadius: '16px',
-            color: '#9D0616',
-          }}
-        >
-          <Text color="error" style={{ fontWeight: 600 }}>
-            {error}
-          </Text>
-          <Button mt="md" variant="danger" data-variant="danger" onClick={() => void load(true)}>
-            Retry
-          </Button>
-        </Box>
-      ) : null}
-
-      {/* Responsive Metric Cards Grid (3x2 on ordinary desktop, 6 on wide desktop) */}
-      <div className="pupzy-metric-grid">
-        {statLabels.map(([key, label]) => {
-          const rawCount = Number(data?.stats?.[key] ?? 0);
-          const isAlert = ['needs_review_posts', 'flagged_posts'].includes(key) && rawCount > 0;
-          return (
-            <Box
-              key={key}
-              variant="white"
-              p="lg"
-              className="pupzy-card"
-              style={{
-                backgroundColor: isAlert ? '#FFF8F6' : '#FFFFFF',
-                border: `1px solid ${isAlert ? '#F3C4CB' : '#E8DED5'}`,
-                borderLeft: isAlert ? '4px solid #D94040' : `1px solid ${isAlert ? '#F3C4CB' : '#E8DED5'}`,
-                borderRadius: '16px',
-                boxShadow: '0 2px 8px rgba(45, 21, 6, 0.04)',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                minHeight: '96px',
-              }}
-            >
-              <Text
-                variant="sm"
-                style={{
-                  color: isAlert ? '#9D0616' : '#8B6355',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  fontSize: '12px',
-                }}
-              >
-                {label}
-              </Text>
-              <H2
-                style={{
-                  fontSize: '26px',
-                  fontWeight: 700,
-                  color: isAlert ? '#D94040' : '#2D1506',
-                  margin: '6px 0 0 0',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  fontFamily: "'DM Sans', 'Cairo', sans-serif",
-                }}
-                title={rawCount.toLocaleString()}
-              >
-                {rawCount.toLocaleString()}
-              </H2>
-            </Box>
-          );
-        })}
-      </div>
-
-      <Text mb="xl" variant="sm" style={{ color: '#8B6355' }}>
-        Statistics computed {data?.stats?.computedAt ? new Date(data.stats.computedAt).toLocaleString() : '—'}
-      </Text>
-
-      {/* Work queues */}
-      <H3 mb="lg" style={{ fontFamily: "'Playfair Display', 'Cairo', serif", color: '#2D1506' }}>
-        Work queues
-      </H3>
-      <div className="pupzy-queue-groups" data-testid="pupzy-work-queues">
-        {queueGroups(queues).map((group) => (
-          <Box
-            key={group.id}
-            variant="white"
-            p="lg"
-            className="pupzy-card pupzy-queue-group"
-            data-testid={`pupzy-queue-group-${group.id}`}
+    <div className="pupzy-desk">
+      <div className="pupzy-desk-header">
+        <div>
+          <h1>Moderation overview</h1>
+          <p>Start with open reports, then take a closer look at new Posts.</p>
+        </div>
+        <div className="pupzy-desk-refresh">
+          <button
+            className="pupzy-dashboard-refresh"
+            data-variant="secondary"
+            disabled={loading}
+            aria-busy={loading}
+            onClick={() => void load(true)}
           >
-            <H4 mb="sm" style={{ color: '#2D1506' }}>
-              {group.label}
-            </H4>
-            <div className="pupzy-queue-grid">
-              {group.queues.map((queue) => (
-                <QueueButton key={queue.id} queue={queue} />
-              ))}
-            </div>
-          </Box>
-        ))}
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              aria-hidden="true"
+            >
+              <path d="M20 7v5h-5M4 17v-5h5M6.3 6.3A8 8 0 0 1 20 12M4 12a8 8 0 0 0 13.7 5.7" />
+            </svg>
+            {loading ? 'Refreshing…' : 'Refresh now'}
+          </button>
+          <span>
+            Updated{' '}
+            {data?.stats?.computedAt
+              ? new Date(data.stats.computedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : 'just now'}
+          </span>
+        </div>
       </div>
-
-      {/* Posts Needing Review Card */}
-      <Box
-        variant="white"
-        p="lg"
-        className="pupzy-card"
-        mt="xl"
-        style={{
-          backgroundColor: '#FFFFFF',
-          border: '1px solid #E8DED5',
-          borderRadius: '16px',
-          boxShadow: '0 2px 8px rgba(45, 21, 6, 0.04)',
-        }}
-      >
-        <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" style={{ gap: '12px' }}>
-          <H3 style={{ fontFamily: "'Playfair Display', 'Cairo', serif", color: '#2D1506', margin: 0 }}>
-            Posts needing review
-          </H3>
+      {error ? (
+        <div className="pupzy-desk-error" role="alert">
+          <p>{error} The last loaded overview remains below.</p>
+          <button data-variant="primary" disabled={loading} aria-busy={loading} onClick={() => void load(true)}>
+            {loading ? 'Retrying…' : 'Retry'}
+          </button>
+        </div>
+      ) : null}
+      <section className="pupzy-desk-queues" aria-labelledby="pupzy-queues-heading">
+        <div className="pupzy-section-heading">
+          <h2 id="pupzy-queues-heading">Work queues</h2>
+        </div>
+        <div className="pupzy-queue-groups" data-testid="pupzy-work-queues">
+          {queueGroups(queues).map((group) => (
+            <section key={group.id} className="pupzy-queue-group" data-testid={`pupzy-queue-group-${group.id}`}>
+              <h3>{group.label}</h3>
+              <div className="pupzy-queue-grid">
+                {group.queues.map((queue) => (
+                  <QueueButton key={queue.id} queue={queue} priority={priorityQueue?.id === queue.id} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </section>
+      <section className="pupzy-review-inbox" aria-labelledby="pupzy-inbox-heading">
+        <div className="pupzy-inbox-heading">
+          <div>
+            <h2 id="pupzy-inbox-heading">Posts needing review</h2>
+            <p>Open a Post to see its photos, discussion and reports.</p>
+          </div>
           {flaggedQueue ? (
-            <Link
+            <a
               href={queueHref(flaggedQueue, adminRootPath())}
-              className="pupzy-queue-button pupzy-queue-button-inline"
+              className="pupzy-inbox-link"
               data-testid="pupzy-view-all-flagged"
             >
-              <span className="pupzy-queue-button-label">Flagged — needs review</span>
-              <span className="pupzy-queue-button-count" aria-label={`${flaggedQueue.count} records`}>
-                {flaggedQueue.count.toLocaleString()}
-              </span>
-            </Link>
+              Flagged — needs review <span>{flaggedQueue.count.toLocaleString()}</span>
+            </a>
           ) : null}
-        </Box>
-        <div
-          data-testid="pupzy-needs-review-table"
-          style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', maxWidth: '100%' }}
-        >
-          <Table style={{ width: '100%', minWidth: '650px', borderCollapse: 'separate', borderSpacing: 0 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell style={{ width: '35%', minWidth: '200px', whiteSpace: 'nowrap' }}>Title</TableCell>
-                <TableCell style={{ whiteSpace: 'nowrap' }}>Type</TableCell>
-                <TableCell style={{ whiteSpace: 'nowrap' }}>Moderation</TableCell>
-                <TableCell style={{ whiteSpace: 'nowrap' }}>Open reports</TableCell>
-                <TableCell style={{ whiteSpace: 'nowrap' }}>Created</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {(data?.needsReview ?? []).map((post) => (
-                <TableRow key={post.id}>
-                  <TableCell style={{ maxWidth: '280px' }}>
-                    <div
-                      style={{
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxWidth: '280px',
-                      }}
-                      title={post.title}
-                    >
-                      <Link
-                        href={`/admin/resources/posts/records/${encodeURIComponent(post.id)}/show`}
-                        style={{ color: '#C4622D', fontWeight: 600, textDecoration: 'none' }}
+        </div>
+        {data?.needsReview?.length ? (
+          <div className="pupzy-inbox-table" data-testid="pupzy-needs-review-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Post</th>
+                  <th>Type</th>
+                  <th>Moderation</th>
+                  <th>Open reports</th>
+                  <th>Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.needsReview.map((post) => (
+                  <tr key={post.id}>
+                    <td>
+                      <a
+                        href={`${adminRootPath()}/resources/posts/records/${encodeURIComponent(post.id)}/show`}
+                        title={post.title}
                       >
                         {post.title}
-                      </Link>
-                    </div>
-                  </TableCell>
-                  <TableCell style={{ whiteSpace: 'nowrap' }}>{post.post_type?.replaceAll('_', ' ')}</TableCell>
-                  <TableCell style={{ whiteSpace: 'nowrap' }}>
-                    <Badge
-                      variant={post.moderation_status === 'FLAGGED' ? 'danger' : 'warning'}
-                      style={{
-                        backgroundColor: post.moderation_status === 'FLAGGED' ? '#F9E5E7' : '#F6EDE8',
-                        color: post.moderation_status === 'FLAGGED' ? '#9D0616' : '#A14F17',
-                        border: `1px solid ${post.moderation_status === 'FLAGGED' ? '#F3C4CB' : '#ECD5C8'}`,
-                        borderRadius: '6px',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {post.moderation_status.replaceAll('_', ' ')}
-                    </Badge>
-                  </TableCell>
-                  <TableCell style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
-                    {Number(post.open_report_count ?? 0)}
-                  </TableCell>
-                  <TableCell style={{ whiteSpace: 'nowrap', color: '#8B6355' }}>
-                    {new Date(post.created_at).toLocaleString()}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                      </a>
+                    </td>
+                    <td>{typeLabel(post.post_type)}</td>
+                    <td>
+                      <span
+                        className="pupzy-status"
+                        data-tone={post.moderation_status === 'FLAGGED' ? 'danger' : 'warning'}
+                      >
+                        {statusLabel(post.moderation_status)}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="pupzy-report-count" data-open={Number(post.open_report_count ?? 0) > 0}>
+                        {Number(post.open_report_count ?? 0)}
+                      </span>
+                    </td>
+                    <td>
+                      <time dateTime={post.created_at}>
+                        {new Date(post.created_at).toLocaleDateString([], { day: 'numeric', month: 'short' })}
+                      </time>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="pupzy-inbox-empty">
+            <span aria-hidden="true">✓</span>
+            <h3>Review queue clear</h3>
+            <p>There are no active Posts awaiting review. Open a work queue to revisit earlier decisions.</p>
+          </div>
+        )}
+      </section>
+      <section className="pupzy-community-summary" aria-label="Community totals">
+        <div className="pupzy-metric-grid">
+          {statLabels.map(([key, label]) => {
+            const count = Number(data?.stats?.[key] ?? 0);
+            return (
+              <div
+                key={key}
+                className="pupzy-card pupzy-stat"
+                data-alert={['needs_review_posts', 'flagged_posts'].includes(key) && count > 0}
+              >
+                <span>{label}</span>
+                <strong title={count.toLocaleString()}>{count.toLocaleString()}</strong>
+              </div>
+            );
+          })}
         </div>
-        {!data?.needsReview?.length ? (
-          <Box
-            p="xl"
-            textAlign="center"
-            style={{
-              backgroundColor: '#FAF6F1',
-              borderRadius: '12px',
-              border: '1px dashed #E8DED5',
-              margin: '16px 0',
-            }}
-          >
-            <Text style={{ color: '#2D8B6F', fontWeight: 600, fontSize: '15px', marginBottom: '4px' }}>
-              ✓ All clear!
-            </Text>
-            <Text style={{ color: '#8B6355', fontSize: '13px' }}>
-              No active posts currently require moderation review.
-            </Text>
-          </Box>
-        ) : null}
-      </Box>
-    </Box>
+      </section>
+    </div>
   );
 }

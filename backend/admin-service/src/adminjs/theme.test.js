@@ -15,9 +15,9 @@ describe('Pupzy Admin Theme Tokens', () => {
     assert.equal(PUPZY_COLORS.container, '#FFFFFF', 'White container cards');
   });
 
-  it('configures typography with Cairo and DM Sans for bilingual scanning', () => {
+  it('configures Onest with Cairo fallback for bilingual scanning', () => {
     assert.match(pupzyTheme.font, /Cairo/);
-    assert.match(pupzyTheme.font, /DM Sans/);
+    assert.match(pupzyTheme.font, /Onest/);
   });
 
   it('configures borders and focus shadows', () => {

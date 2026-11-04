@@ -1,15 +1,6 @@
 /**
- * Approved Pupzy visual identity theme tokens for AdminJS.
- *
- * Grounded in the historical Flutter-era design system:
- * - Warm cream background (#FAF6F1)
- * - Pupzy orange primary (#C4622D)
- * - Dark-brown text (#2D1506)
- * - Red critical / danger states (#D94040)
- * - Green success states (#2D8B6F)
- * - Warm secondary accents (#8B6355) and muted tones (#B8A499)
- * - Rounded cards and containers (16px border-radius)
- * - DM Sans and Cairo body typography with Playfair Display headings
+ * Pupzy moderation desk: original brand palette, clearer hierarchy, bilingual typography.
+ * Presentation only; status meanings and moderation behavior stay unchanged.
  */
 
 export const PUPZY_COLORS = Object.freeze({
@@ -66,7 +57,7 @@ export const PUPZY_COLORS = Object.freeze({
 
 export const pupzyTheme = Object.freeze({
   colors: PUPZY_COLORS,
-  font: "'DM Sans', 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  font: "'Onest', 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   borders: {
     input: '1px solid #E8DED5',
     filterInput: '1px solid #E8DED5',
@@ -74,11 +65,11 @@ export const pupzyTheme = Object.freeze({
     default: '1px solid #E8DED5',
   },
   shadows: {
-    login: '0 8px 30px rgba(45, 21, 6, 0.08)',
-    cardHover: '0 4px 16px rgba(45, 21, 6, 0.08)',
-    drawer: '-2px 0 12px rgba(45, 21, 6, 0.08)',
-    card: '0 2px 8px rgba(45, 21, 6, 0.04)',
-    inputFocus: '0 0 0 2px rgba(196, 98, 45, 0.25)',
-    buttonFocus: '0 0 0 2px rgba(196, 98, 45, 0.3)',
+    login: '0 24px 80px rgba(45, 21, 6, 0.12)',
+    cardHover: '0 6px 20px rgba(45, 21, 6, 0.06)',
+    drawer: '-8px 0 40px rgba(45, 21, 6, 0.12)',
+    card: '0 2px 4px rgba(45, 21, 6, 0.02)',
+    inputFocus: '0 0 0 3px rgba(196, 98, 45, 0.14)',
+    buttonFocus: '0 0 0 3px rgba(196, 98, 45, 0.2)',
   },
 });

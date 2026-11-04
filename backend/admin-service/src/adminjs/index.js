@@ -70,6 +70,7 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     });
 
   const componentLoader = new ComponentLoader();
+  componentLoader.override('Login', path.join(currentDirectory, 'components', 'login-component.jsx'));
   componentLoader.override(
     'RecordsTable',
     path.join(currentDirectory, 'components', 'scrollable-records-table-component.jsx'),
@@ -96,6 +97,10 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     PostMediaPreview: componentLoader.add(
       'PostMediaPreview',
       path.join(currentDirectory, 'components', 'post-media-preview-component.jsx'),
+    ),
+    RecordStatus: componentLoader.add(
+      'RecordStatus',
+      path.join(currentDirectory, 'components', 'record-status-component.jsx'),
     ),
   };
 
@@ -136,7 +141,17 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
     buildVetClinicLocationAuditsResource(db, components),
   ];
 
-  const resources = rawResources.map((resource) => attachCacheInvalidation(resource, cache));
+  const resources = rawResources.map((resource) => {
+    const properties = { ...resource.options.properties };
+    for (const name of ['status', 'moderation_status', 'urgency', 'review_outcome']) {
+      if (!properties[name]?.availableValues) continue;
+      properties[name] = {
+        ...properties[name],
+        components: { ...properties[name].components, list: components.RecordStatus, show: components.RecordStatus },
+      };
+    }
+    return attachCacheInvalidation({ ...resource, options: { ...resource.options, properties } }, cache);
+  });
 
   const dashboardHandler = buildDashboardHandler(pool, cache);
   const admin = new AdminJS({
@@ -149,12 +164,24 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       theme: pupzyTheme,
     },
     assets: {
-      styles: [
-        'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Playfair+Display:ital,wght@0,700;0,800;1,700;1,800&display=swap',
-        'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-        '/admin/assets/pupzy-theme.css',
-      ],
+      styles: ['https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', '/admin/assets/pupzy-theme.css'],
       scripts: ['https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'],
+    },
+    locale: {
+      language: 'en',
+      translations: {
+        en: {
+          actions: { show: 'Details', list: 'Records' },
+          resources: { posts: { actions: { show: 'Review Post', list: 'Posts' } } },
+          components: {
+            Login: {
+              welcomeHeader: 'Welcome to Pupzy',
+              welcomeMessage: 'Review Posts, follow reports and help keep the community safe.',
+              loginButton: 'Sign in',
+            },
+          },
+        },
+      },
     },
     componentLoader,
     resources,
