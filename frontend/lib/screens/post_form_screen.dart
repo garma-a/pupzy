@@ -377,6 +377,57 @@ class _PostFormScreenState extends State<PostFormScreen> {
         (_isFree || double.tryParse(_priceController.text.trim()) != null);
   }
 
+  /// Upload failures must never turn a photo post into a text-only post.
+  /// Keep the picked files and form fields intact so the user can retry.
+  Future<List<String>?> _uploadPostPhotos(GraphQLService graphql) async {
+    final mediaIds = <String>[];
+    for (final image in _images) {
+      try {
+        final (bytes, contentType) = await photoForUpload(image);
+        if (!mounted) return null;
+        final uploadInfo = await graphql.requestMediaUploadUrl(
+          contentType: contentType,
+          fileSizeBytes: bytes.length,
+        );
+        if (!mounted) return null;
+        if (uploadInfo == null) continue;
+        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
+        if (!mounted) return null;
+        if (uploaded) mediaIds.add(uploadInfo['mediaId'] as String);
+      } catch (_) {
+        if (!mounted) return null;
+        // A missing local file, failed ticket request or interrupted upload is
+        // a failed photo, not an unhandled submit exception.
+      }
+    }
+    if (mediaIds.isEmpty) {
+      Fluttertoast.showToast(
+        msg: t(context, 'Your photos could not be uploaded. Your post was not published. Please try again.',
+            'تعذر رفع الصور. لم يتم نشر منشورك. يرجى المحاولة مرة أخرى.'),
+        backgroundColor: AppColors.critical,
+        textColor: Colors.white,
+      );
+      return null;
+    }
+    if (mediaIds.length < _images.length) {
+      Fluttertoast.showToast(
+        msg: t(context, 'Some photos failed to upload. Only the uploaded photos will be included.',
+            'تعذر رفع بعض الصور. سيتم إرفاق الصور التي تم رفعها فقط.'),
+      );
+    }
+    return mediaIds;
+  }
+
+  void _showPublicationError() {
+    if (!mounted) return;
+    Fluttertoast.showToast(
+      msg: t(context, 'Could not confirm publication. Please check My Posts before trying again.',
+          'تعذر تأكيد النشر. يرجى التحقق من منشوراتي قبل المحاولة مرة أخرى.'),
+      backgroundColor: AppColors.critical,
+      textColor: Colors.white,
+    );
+  }
+
   Future<void> _submitProduct() async {
     if (!_productFormValid || _submitting) return;
     if (!await ensureTermsAccepted(context)) return;
@@ -391,22 +442,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final graphql = context.read<GraphQLService>();
 
-      final mediaIds = <String>[];
-      for (final image in _images) {
-        final (bytes, contentType) = await photoForUpload(image);
-        final uploadInfo = await graphql.requestMediaUploadUrl(
-          contentType: contentType,
-          fileSizeBytes: bytes.length,
-        );
-        if (uploadInfo == null) continue;
-        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
-        if (!mounted) return;
-        if (uploaded) {
-          mediaIds.add(uploadInfo['mediaId'] as String);
-        } else {
-          Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
-        }
-      }
+      final mediaIds = await _uploadPostPhotos(graphql);
+      if (!mounted || mediaIds == null) return;
 
       final neighborhood = _neighborhoodController.text.trim();
       final landmark = _landmarkController.text.trim();
@@ -437,6 +474,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
           textColor: Colors.white,
         );
       }
+    } catch (_) {
+      _showPublicationError();
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -456,22 +495,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final graphql = context.read<GraphQLService>();
 
-      final mediaIds = <String>[];
-      for (final image in _images) {
-        final (bytes, contentType) = await photoForUpload(image);
-        final uploadInfo = await graphql.requestMediaUploadUrl(
-          contentType: contentType,
-          fileSizeBytes: bytes.length,
-        );
-        if (uploadInfo == null) continue;
-        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
-        if (!mounted) return;
-        if (uploaded) {
-          mediaIds.add(uploadInfo['mediaId'] as String);
-        } else {
-          Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
-        }
-      }
+      final mediaIds = await _uploadPostPhotos(graphql);
+      if (!mounted || mediaIds == null) return;
 
       final neighborhood = _neighborhoodController.text.trim();
       final landmark = _landmarkController.text.trim();
@@ -506,6 +531,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
           textColor: Colors.white,
         );
       }
+    } catch (_) {
+      _showPublicationError();
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -525,22 +552,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final graphql = context.read<GraphQLService>();
 
-      final mediaIds = <String>[];
-      for (final image in _images) {
-        final (bytes, contentType) = await photoForUpload(image);
-        final uploadInfo = await graphql.requestMediaUploadUrl(
-          contentType: contentType,
-          fileSizeBytes: bytes.length,
-        );
-        if (uploadInfo == null) continue;
-        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
-        if (!mounted) return;
-        if (uploaded) {
-          mediaIds.add(uploadInfo['mediaId'] as String);
-        } else {
-          Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
-        }
-      }
+      final mediaIds = await _uploadPostPhotos(graphql);
+      if (!mounted || mediaIds == null) return;
 
       final petName = _petNameController.text.trim();
       final speciesLabel = _labelFor(_speciesOptions, _species!);
@@ -577,6 +590,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
           textColor: Colors.white,
         );
       }
+    } catch (_) {
+      _showPublicationError();
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -596,22 +611,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final graphql = context.read<GraphQLService>();
 
-      final mediaIds = <String>[];
-      for (final image in _images) {
-        final (bytes, contentType) = await photoForUpload(image);
-        final uploadInfo = await graphql.requestMediaUploadUrl(
-          contentType: contentType,
-          fileSizeBytes: bytes.length,
-        );
-        if (uploadInfo == null) continue;
-        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
-        if (!mounted) return;
-        if (uploaded) {
-          mediaIds.add(uploadInfo['mediaId'] as String);
-        } else {
-          Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
-        }
-      }
+      final mediaIds = await _uploadPostPhotos(graphql);
+      if (!mounted || mediaIds == null) return;
 
       final speciesLabel = _labelFor(_speciesOptions, _species!);
       final circumstances = _circumstancesController.text.trim();
@@ -645,6 +646,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
           textColor: Colors.white,
         );
       }
+    } catch (_) {
+      _showPublicationError();
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -664,22 +667,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       final graphql = context.read<GraphQLService>();
 
-      final mediaIds = <String>[];
-      for (final image in _images) {
-        final (bytes, contentType) = await photoForUpload(image);
-        final uploadInfo = await graphql.requestMediaUploadUrl(
-          contentType: contentType,
-          fileSizeBytes: bytes.length,
-        );
-        if (uploadInfo == null) continue;
-        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
-        if (!mounted) return;
-        if (uploaded) {
-          mediaIds.add(uploadInfo['mediaId'] as String);
-        } else {
-          Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
-        }
-      }
+      final mediaIds = await _uploadPostPhotos(graphql);
+      if (!mounted || mediaIds == null) return;
 
       final petName = _petNameController.text.trim();
       final breed = _breedController.text.trim();
@@ -727,6 +716,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
           textColor: Colors.white,
         );
       }
+    } catch (_) {
+      _showPublicationError();
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -751,30 +742,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
     try {
       final graphql = context.read<GraphQLService>();
 
-      final mediaIds = <String>[];
-      for (final image in _images) {
-        final (bytes, contentType) = await photoForUpload(image);
-        final uploadInfo = await graphql.requestMediaUploadUrl(
-          contentType: contentType,
-          fileSizeBytes: bytes.length,
-        );
-        if (uploadInfo == null) continue;
-        final uploaded = await putToPresignedUrl(uploadInfo['uploadUrl'] as String, bytes, contentType);
-        if (!mounted) return;
-        if (uploaded) {
-          mediaIds.add(uploadInfo['mediaId'] as String);
-        } else {
-          Fluttertoast.showToast(msg: t(context, 'One of your photos failed to upload and was skipped.', 'فشل رفع إحدى الصور وتم تخطيها.'));
-        }
-      }
-      if (mediaIds.isEmpty) {
-        Fluttertoast.showToast(
-          msg: t(context, 'At least one photo is required', 'مطلوب صورة واحدة على الأقل'),
-          backgroundColor: AppColors.critical,
-          textColor: Colors.white,
-        );
-        return;
-      }
+      final mediaIds = await _uploadPostPhotos(graphql);
+      if (!mounted || mediaIds == null) return;
 
       final agePair = parseAge(_ageController.text.trim())!;
 
@@ -806,6 +775,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
           textColor: Colors.white,
         );
       }
+    } catch (_) {
+      _showPublicationError();
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
