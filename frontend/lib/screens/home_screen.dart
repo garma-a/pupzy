@@ -18,7 +18,7 @@ import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/upvote_wording.dart';
 import '../widgets/adaptive_search_bar.dart';
-import '../widgets/adoption_application_sheet.dart';
+import '../widgets/adopt_card_button.dart';
 import '../widgets/animated_boost_chip.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/blurred_thumbnail.dart';
@@ -77,6 +77,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   List<FeedPost> _savedPosts = [];
   bool _savedLoading = true;
 
+  /// Signed-in user's id, so the adoption card knows its own listings.
+  String? _myUserId;
+
+  /// Bumped whenever Home comes back into view, so the adoption card
+  /// re-checks the viewer's application (it may have changed elsewhere).
+  int _applicationCheck = 0;
+
   Timer? _searchDebounce;
   int _searchRequestId = 0;
   List<FeedPost> _searchResults = [];
@@ -88,6 +95,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     super.initState();
     _scrollController.addListener(_onScroll);
     _loadSavedPosts();
+    _loadMyUserId();
+  }
+
+  Future<void> _loadMyUserId() async {
+    final me = await context.read<GraphQLService>().fetchMe();
+    if (!mounted) return;
+    setState(() => _myUserId = me?['id'] as String?);
   }
 
   @override
@@ -98,6 +112,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     if (widget.active && !oldWidget.active) {
       _loadSavedPosts();
       _refreshFeedQuietly();
+      _applicationCheck++; // build follows didUpdateWidget
     }
   }
 
@@ -202,6 +217,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   void didPopNext() {
     _loadSavedPosts();
     _refreshFeedQuietly();
+    setState(() => _applicationCheck++);
   }
 
   @override
@@ -590,6 +606,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                               else
                                 _HomeAdoptionPreviewCard(
                                   post: adoption.first,
+                                  myUserId: _myUserId,
+                                  applicationCheck: _applicationCheck,
                                   onSave: () => _toggleSave(adoption.first),
                                   onTap: () => Navigator.of(context).push(
                                     MaterialPageRoute(builder: (_) => AdoptionDetailScreen(postId: adoption.first.id)),
@@ -1395,7 +1413,19 @@ class _HomeAdoptionPreviewCard extends StatelessWidget {
 
   /// Small label above the name; "MEET" when null.
   final String? kicker;
-  const _HomeAdoptionPreviewCard({required this.post, required this.onSave, required this.onTap, this.kicker});
+
+  /// Adoption cards only: the viewer's id (null until loaded) and a counter
+  /// that tells the button to re-check the viewer's application.
+  final String? myUserId;
+  final int applicationCheck;
+  const _HomeAdoptionPreviewCard({
+    required this.post,
+    required this.onSave,
+    required this.onTap,
+    this.kicker,
+    this.myUserId,
+    this.applicationCheck = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1480,20 +1510,19 @@ class _HomeAdoptionPreviewCard extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
-            child: ElevatedButton(
-              onPressed: post.postType == 'MATING'
-                  ? onTap
-                  : () => showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (_) => AdoptionApplicationSheet(postId: post.id),
-                      ),
-              style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 48)),
-              child: Text(post.postType == 'MATING'
-                  ? t(context, 'View details', 'عرض التفاصيل')
-                  : t(context, 'Ask to adopt', 'اطلب التبني')),
-            ),
+            child: post.postType == 'MATING'
+                ? ElevatedButton(
+                    onPressed: onTap,
+                    style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 48)),
+                    child: Text(t(context, 'View details', 'عرض التفاصيل')),
+                  )
+                : AdoptCardButton(
+                    postId: post.id,
+                    creatorId: post.creatorId,
+                    myUserId: myUserId,
+                    applicationCheck: applicationCheck,
+                    onOpenDetails: onTap,
+                  ),
           ),
         ],
       ),
@@ -1501,4 +1530,3 @@ class _HomeAdoptionPreviewCard extends StatelessWidget {
     );
   }
 }
-
