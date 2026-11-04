@@ -504,10 +504,13 @@ export function attachOwnerBanStatus(pool) {
  * history without the page depending on technical media resources. A review
  * data failure must never break the Post record page.
  */
-export function attachPostReviewData(pool) {
+export function attachPostReviewData(pool, postIdProperty = 'id') {
   return async function postReviewDataAfterHook(response) {
     if (!response?.record?.params || !pool || typeof pool.query !== 'function') return response;
-    const recordId = typeof response.record.id === 'function' ? response.record.id() : response.record.params.id;
+    const recordId =
+      postIdProperty === 'id' && typeof response.record.id === 'function'
+        ? response.record.id()
+        : response.record.params[postIdProperty];
     if (!recordId) return response;
     try {
       const review = await loadPostReview(pool, recordId);
@@ -527,7 +530,7 @@ export function attachPostReviewData(pool) {
  * It is intentionally hidden from the action bar and returns the page payload
  * on the record params, mirroring the initial `show` payload.
  */
-export function buildPostReviewActions(pool) {
+export function buildPostReviewActions(pool, postIdProperty = 'id') {
   return {
     [POST_REVIEW_DISCUSSION_ACTION]: {
       actionType: 'record',
@@ -537,7 +540,8 @@ export function buildPostReviewActions(pool) {
       component: false,
       handler: async (request, _response, context) => {
         const { record, currentAdmin } = context;
-        const discussion = await loadDiscussion(pool, record.id(), {
+        const postId = postIdProperty === 'id' ? record.id() : record.params[postIdProperty];
+        const discussion = await loadDiscussion(pool, postId, {
           page: normalizeDiscussionPage(request?.query?.page),
         });
         const json = record.toJSON(currentAdmin);
@@ -546,4 +550,24 @@ export function buildPostReviewActions(pool) {
       },
     },
   };
+}
+
+/** Adds the same photo/discussion context to read-only Post Details pages. */
+export function attachPostDetailReviewWorkspace(resource, pool, components = {}) {
+  if (!components.PostReviewWorkspace) return resource;
+  const options = resource.options;
+  options.properties[POST_REVIEW_WORKSPACE_PARAM] = {
+    isVisible: { list: false, show: true, edit: false, filter: false },
+    isDisabled: true,
+    components: { show: components.PostReviewWorkspace },
+  };
+  options.showProperties = [POST_REVIEW_WORKSPACE_PARAM, ...options.showProperties];
+  const show = options.actions.show;
+  const existingAfter = Array.isArray(show.after) ? show.after : show.after ? [show.after] : [];
+  options.actions = {
+    ...options.actions,
+    show: { ...show, after: [...existingAfter, attachPostReviewData(pool, 'post_id')] },
+    ...buildPostReviewActions(pool, 'post_id'),
+  };
+  return resource;
 }

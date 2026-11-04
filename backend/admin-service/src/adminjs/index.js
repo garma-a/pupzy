@@ -30,6 +30,7 @@ import { buildUsersResource } from './resources/users.resource.js';
 import { buildVetClinicsResource } from './resources/vet-clinics.resource.js';
 import { buildVetClinicLocationAuditsResource } from './resources/vet-clinic-location-audits.resource.js';
 import { buildCommentsResource } from './resources/comments.resource.js';
+import { attachPostDetailReviewWorkspace } from './review/post-review.js';
 
 AdminJS.registerAdapter({ Database, Resource: QueueAwareSqlResource });
 
@@ -92,6 +93,10 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
       'PostReviewWorkspace',
       path.join(currentDirectory, 'components', 'post-review-workspace-component.jsx'),
     ),
+    PostMediaPreview: componentLoader.add(
+      'PostMediaPreview',
+      path.join(currentDirectory, 'components', 'post-media-preview-component.jsx'),
+    ),
   };
 
   const { db, sqlAdapterPool } = await buildAdminSqlDatabase(
@@ -109,11 +114,11 @@ export async function buildAdminJs(databaseUrl, databaseName, pool, options = {}
   const rawResources = [
     buildUsersResource(db, pool, components, cache),
     buildPostsResource(db, pool, components, cache),
-    buildRescuePostsResource(db, components),
-    buildLostPostsResource(db, components),
-    buildAdoptionPostsResource(db, components),
-    buildProductPostsResource(db, components),
-    buildMatingPostsResource(db, components),
+    attachPostDetailReviewWorkspace(buildRescuePostsResource(db, components), pool, components),
+    attachPostDetailReviewWorkspace(buildLostPostsResource(db, components), pool, components),
+    attachPostDetailReviewWorkspace(buildAdoptionPostsResource(db, components), pool, components),
+    attachPostDetailReviewWorkspace(buildProductPostsResource(db, components), pool, components),
+    attachPostDetailReviewWorkspace(buildMatingPostsResource(db, components), pool, components),
     buildPostMediaResource(db, components),
     buildPostUpvotesResource(db, components),
     buildPostSavesResource(db, components),

@@ -852,7 +852,11 @@ export class PostsService {
     userId: string,
     postId: string,
   ): Promise<Omit<NewPostMedia, 'postId'>[]> {
-    if (!mediaIds || mediaIds.length === 0) return [];
+    if (!mediaIds || mediaIds.length === 0) {
+      throw new ValidationError(
+        'At least one photo must upload successfully before publishing. Please upload a photo and try again.',
+      );
+    }
     if (mediaIds.length > 4) {
       throw new ValidationError('Maximum 4 images allowed per post');
     }

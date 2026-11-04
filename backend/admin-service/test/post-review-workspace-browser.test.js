@@ -392,6 +392,116 @@ after(async () => {
 });
 
 describe('Post review workspace real browser suite', { timeout: 120000 }, () => {
+  it('shows an actual photo preview in Post Media and links to its Post review', async () => {
+    const { page } = await createTestPage(browser);
+    try {
+      await loginAsAdmin(page, baseUrl);
+      const { rows } = await database.pool.query(
+        'SELECT id FROM post_media WHERE post_id = $1 ORDER BY display_order LIMIT 1',
+        [fixture.postId],
+      );
+      await page.goto(`${baseUrl}/admin/resources/post_media/records/${rows[0].id}/show`, {
+        waitUntil: 'networkidle0',
+      });
+      const preview = await page.$('[data-testid="post-media-preview"] img');
+      assert.ok(preview, 'Post Media must render its stored image, not only a URL string');
+      await page.waitForFunction(() => {
+        const image = document.querySelector('[data-testid="post-media-preview"] img');
+        return image?.complete && image.naturalWidth > 0;
+      });
+      const box = await preview.boundingBox();
+      assert.ok(box.width > 40 && box.height > 40, 'the preview must be visible at a useful size');
+      assert.ok(box.width <= 128 && box.height <= 128, 'the preview must remain a compact thumbnail');
+      const reviewHref = await page.$eval('[data-testid="post-media-review-link"]', (link) => link.href);
+      assert.ok(reviewHref.endsWith(`/posts/records/${fixture.postId}/show`));
+
+      await page.goto(`${baseUrl}/admin/resources/post_media?filters.post_id=${fixture.postId}`, {
+        waitUntil: 'networkidle0',
+      });
+      assert.equal((await page.$$('[data-testid="post-media-preview"]')).length, 2, 'media rows include previews');
+      const listBoxes = await page.$$eval('[data-testid="post-media-preview"] img', (images) =>
+        images.map((image) => {
+          const rect = image.getBoundingClientRect();
+          return { width: rect.width, height: rect.height };
+        }),
+      );
+      assert.equal(listBoxes.length, 1, 'the available photo has a thumbnail');
+      assert.equal(
+        (await page.$$('[data-testid="post-media-preview"] [aria-label="Image unavailable"]')).length,
+        1,
+        'the unavailable fixture keeps its fallback',
+      );
+      assert.ok(
+        listBoxes.every((rect) => rect.width > 40 && rect.width <= 128 && rect.height > 40 && rect.height <= 128),
+        'list previews must remain compact and visible',
+      );
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('shows photos, discussion and a moderation link on the type-specific Post detail page', async () => {
+    const { page } = await createTestPage(browser, [/Failed to load resource.*404/]);
+    try {
+      await loginAsAdmin(page, baseUrl);
+      await page.goto(`${baseUrl}/admin/resources/lost_posts/records/${fixture.postId}/show`, {
+        waitUntil: 'networkidle0',
+      });
+      assert.ok(await page.$('[data-testid="pupzy-review-workspace"]'), 'Post Details need the photo review workspace');
+      assert.equal(
+        (await page.$$('[data-testid="pupzy-original-photos"] [data-testid="pupzy-media-thumb"]')).length,
+        2,
+      );
+      const href = await page.$eval('[data-testid="pupzy-open-post"]', (link) => link.href);
+      assert.ok(href.endsWith(`/posts/records/${fixture.postId}/show`));
+      await page.click('[data-testid="pupzy-discussion-next"]');
+      await page.waitForFunction(() => document.body.innerText.includes('Page 2 of 2'));
+      assert.equal(
+        await page.$('[data-testid="pupzy-discussion-error"]'),
+        null,
+        'discussion paging works from Post Details',
+      );
+    } finally {
+      await page.close();
+    }
+  });
+
+  it('shows the Mating Post photo and actual lifecycle status to an ordinary administrator', async () => {
+    const postId = await insertPost(database.pool, {
+      userId: fixture.ownerId,
+      cityId: principals.cityId,
+      postType: 'MATING',
+      title: 'Mating photo context',
+      status: 'ACTIVE',
+    });
+    await database.pool.query(
+      `INSERT INTO mating_posts (post_id, pet_name, species, breed, gender, age_value, age_unit, is_purebred)
+       VALUES ($1, 'Max', 'DOG', 'Retriever', 'MALE', 2, 'YEARS', false)`,
+      [postId],
+    );
+    await database.pool.query(
+      `INSERT INTO post_media (post_id, public_url, cloudflare_storage_key, display_order, width, height)
+       VALUES ($1, $2, $3, 0, 300, 100)`,
+      [postId, `${baseUrl}/admin/test-media/photo-wide.svg`, `posts/${postId}/photo.svg`],
+    );
+    const { page } = await createTestPage(browser);
+    try {
+      await loginAsAdmin(page, baseUrl, 'staff@example.com', 'staff secure password');
+      await page.goto(`${baseUrl}/admin/resources/mating_posts/records/${postId}/show`, { waitUntil: 'networkidle0' });
+      await page.waitForFunction(() => {
+        const photo = document.querySelector('[data-testid="pupzy-original-photos"] img');
+        return photo?.complete && photo.naturalWidth > 0;
+      });
+      const header = await page.$eval('.pupzy-review-header', (element) => element.innerText);
+      assert.match(header, /Mating/);
+      assert.match(header, /Active/);
+      const href = await page.$eval('[data-testid="pupzy-open-post"]', (link) => link.href);
+      assert.ok(href.endsWith(`/posts/records/${postId}/show`));
+    } finally {
+      await page.close();
+    }
+  });
+
   it('renders original photos and Community Evidence as aligned thumbnails with readable state labels', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource.*404/]);
     try {
@@ -645,7 +755,7 @@ describe('Post review workspace real browser suite', { timeout: 120000 }, () => 
       await page.goto(`${baseUrl}/admin/resources/posts/records/${emptyPostId}/show`, { waitUntil: 'networkidle0' });
       await page.waitForSelector('[data-testid="pupzy-review-workspace"]');
       const emptyText = await page.$eval('[data-testid="pupzy-review-workspace"]', (element) => element.innerText);
-      assert.match(emptyText, /No photos were attached/);
+      assert.match(emptyText, /No photos are attached/);
       assert.match(emptyText, /No Comments or Replies/);
       assert.match(emptyText, /No Post Reports/);
       assert.match(emptyText, /No Comment Reports/);
