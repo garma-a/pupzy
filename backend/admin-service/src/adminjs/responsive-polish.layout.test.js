@@ -34,7 +34,7 @@ describe('Task 12: Finish Responsive Pupzy States & Browser Polish', () => {
     });
 
     it('styles login page container, card, headings, and error message', () => {
-      assert.match(cssContent, /section\[data-css\*=['"]Login['"]\]/);
+      assert.match(cssContent, /\.pupzy-login-card/);
       assert.match(cssContent, /var\(--pupzy-shadow-login\)/);
       assert.match(cssContent, /var\(--pupzy-error-light\)/);
       assert.match(cssContent, /var\(--pupzy-error-dark\)/);
@@ -63,15 +63,18 @@ describe('Task 12: Finish Responsive Pupzy States & Browser Polish', () => {
   });
 
   describe('Typography, Accessibility & High Contrast', () => {
-    it('imports Cairo, DM Sans, and Playfair Display fonts', () => {
-      assert.match(cssContent, /family=Cairo/);
-      assert.match(cssContent, /family=DM\+Sans/);
-      assert.match(cssContent, /family=Playfair\+Display/);
+    it('self-hosts English and Arabic interface fonts with their licenses', () => {
+      assert.match(cssContent, /fonts\/fonts\.css/);
+      const fonts = fs.readFileSync(path.join(currentDir, 'public', 'fonts', 'fonts.css'), 'utf8');
+      assert.match(fonts, /font-family:\s*'Onest'/);
+      assert.match(fonts, /font-family:\s*'Cairo'/);
+      assert.ok(fs.existsSync(path.join(currentDir, 'public', 'fonts', 'onest-OFL.txt')));
+      assert.ok(fs.existsSync(path.join(currentDir, 'public', 'fonts', 'cairo-OFL.txt')));
     });
 
-    it('configures Playfair Display for headings and DM Sans / Cairo for body', () => {
-      assert.match(cssContent, /--pupzy-font-heading:\s*'Playfair Display'/);
-      assert.match(cssContent, /--pupzy-font-body:\s*'DM Sans'/);
+    it('configures a coherent heading and body family with Arabic fallback', () => {
+      assert.match(cssContent, /--pupzy-font-heading:\s*'Onest'/);
+      assert.match(cssContent, /--pupzy-font-body:\s*'Onest'/);
       assert.match(cssContent, /--pupzy-font-arabic:\s*'Cairo'/);
       assert.match(cssContent, /--pupzy-font-mono/);
     });
@@ -97,7 +100,7 @@ describe('Task 12: Finish Responsive Pupzy States & Browser Polish', () => {
 
     it('configures touch-friendly target sizing for mobile and tablet devices', () => {
       assert.match(cssContent, /@media\s*\(pointer:\s*coarse\)/);
-      assert.match(cssContent, /min-height:\s*38px/);
+      assert.match(cssContent, /min-height:\s*44px/);
     });
   });
 

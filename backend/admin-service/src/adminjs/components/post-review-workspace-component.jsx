@@ -3,6 +3,7 @@ import { ApiClient } from 'adminjs';
 import { Badge, Box, Button, H3, H4, Icon, Link, Loader, MessageBox, Modal, Text } from '@adminjs/design-system';
 
 import { filteredListBackLink, recallListSearch } from './list-return.js';
+import { StateTag } from './record-status-component.jsx';
 
 const api = new ApiClient();
 const DISCUSSION_ACTION = 'postReviewDiscussion';
@@ -378,17 +379,34 @@ export default function PostReviewWorkspace({ resource, record }) {
         <div className="pupzy-discussion-meta">
           <Badge variant="primary">{post.typeLabel}</Badge>
           {post.subtypeLabel ? <Badge variant="secondary">{post.subtypeLabel}</Badge> : null}
-          <Badge variant={post.status === 'ACTIVE' ? 'success' : 'default'}>{post.statusLabel}</Badge>
-          <Badge variant={post.moderationStatus === 'FLAGGED' ? 'danger' : 'default'}>
-            {post.moderationStatusLabel}
-          </Badge>
-          {post.urgency ? <Badge variant="warning">{post.urgency}</Badge> : null}
+          <StateTag value={post.status} label={post.statusLabel} />
+          <StateTag value={post.moderationStatus} label={post.moderationStatusLabel} />
+          {post.urgency ? <StateTag value={post.urgency} /> : null}
         </div>
-        <Text mt="sm" color="grey60">
-          {[post.cityName, post.areaName].filter(Boolean).join(' · ') || 'No City selected'} · Created{' '}
-          {formatDateTime(post.createdAt)} ({post.ageLabel}) · Owner {post.owner?.name ?? 'Unknown'} (
-          {post.owner?.email ?? 'no email'})
-        </Text>
+        {post.description ? (
+          <p className="pupzy-post-description" dir="auto">
+            {post.description}
+          </p>
+        ) : null}
+        <dl className="pupzy-post-facts">
+          <div>
+            <dt>Location</dt>
+            <dd>{[post.cityName, post.areaName].filter(Boolean).join(', ') || 'No City selected'}</dd>
+          </div>
+          <div>
+            <dt>Created</dt>
+            <dd>
+              {formatDateTime(post.createdAt)} <span>({post.ageLabel})</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Owner</dt>
+            <dd>
+              {post.owner?.name ?? 'Unknown'}
+              <span>{post.owner?.email ?? 'No email available'}</span>
+            </dd>
+          </div>
+        </dl>
         {post.moderationReason ? (
           <Text mt="xs" color="grey60">
             Moderation reason: {post.moderationReason}

@@ -342,6 +342,49 @@ after(async () => {
 });
 
 describe('Admin review experience real browser suite', { timeout: 180000 }, () => {
+  it('distinguishes an unavailable dashboard from an empty queue and recovers through Retry', async () => {
+    const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
+    try {
+      let unavailable = true;
+      await page.setRequestInterception(true);
+      page.on('request', (request) => {
+        if (unavailable && request.url().includes('/admin/api/dashboard')) {
+          return request.respond({
+            status: 503,
+            contentType: 'application/json',
+            body: JSON.stringify({ error: 'simulated initial dashboard failure' }),
+          });
+        }
+        return request.continue();
+      });
+      await loginAsAdmin(page, baseUrl);
+      await page.waitForSelector('[role="alert"]');
+      assert.equal(
+        await page.$('[data-testid="pupzy-work-queues"]'),
+        null,
+        'failed data is never shown as zero counts',
+      );
+      assert.equal(
+        await page.$('.pupzy-inbox-empty'),
+        null,
+        'a failed request must not claim the review queue is clear',
+      );
+      assert.equal(await page.$('.pupzy-metric-grid'), null, 'unavailable totals must not be rendered as zeros');
+      unavailable = false;
+      await page.click('[role="alert"] button');
+      await page.waitForSelector('[data-testid="pupzy-work-queues"]');
+      assert.equal(await page.$('[role="alert"]'), null);
+      const count = await page.$eval(
+        '[data-testid="pupzy-queue-flagged"] .pupzy-queue-button-count',
+        (node) => node.innerText,
+      );
+      assert.equal(count, '1', 'Retry restores the actual review queue');
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  });
+
   it('keeps shared control states consistent across the dashboard, action windows and workspace', async () => {
     const { page, errors } = await createTestPage(browser, [/Failed to load resource/]);
     try {
@@ -382,7 +425,7 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       assert.equal(refreshIdle.label, 'Refresh now');
       assert.equal(refreshIdle.disabled, false);
       assert.equal(refreshIdle.ariaBusy, 'false');
-      assert.equal(refreshIdle.backgroundColor, 'rgb(196, 98, 45)', 'the refresh control is the filled primary action');
+      assert.equal(refreshIdle.backgroundColor, 'rgb(255, 255, 255)', 'refresh stays secondary to moderation work');
       assert.equal(refreshIdle.cursor, 'pointer');
       assert.ok(refreshIdle.height >= 32, 'the refresh control keeps a usable target size');
       await page.hover('.pupzy-dashboard-refresh');
@@ -657,9 +700,10 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
         Math.max(...dashboardLayout.cardWidths) - Math.min(...dashboardLayout.cardWidths) <= 1,
         'metric cards keep a shared width',
       );
-      assert.ok(
-        Math.max(...dashboardLayout.cardLefts) - Math.min(...dashboardLayout.cardLefts) <= 1,
-        'metric cards stay aligned to one grid',
+      assert.equal(
+        new Set(dashboardLayout.cardLefts.map(Math.round)).size,
+        2,
+        'compact totals align to two mobile columns',
       );
       assert.ok(dashboardLayout.queueTransition <= 0.001, 'reduced motion collapses queue button transitions');
       assert.ok(dashboardLayout.refreshTransition <= 0.001, 'reduced motion collapses refresh transitions');
@@ -820,8 +864,8 @@ describe('Admin review experience real browser suite', { timeout: 180000 }, () =
       await openDashboard(page);
 
       const dashboardText = await page.$eval('body', (element) => element.innerText);
-      assert.match(dashboardText, /All clear!/);
-      assert.match(dashboardText, /No active posts currently require moderation review/);
+      assert.match(dashboardText, /Review queue clear/);
+      assert.match(dashboardText, /There are no active Posts awaiting review/);
       const flaggedCount = await page.$eval(
         '[data-testid="pupzy-queue-flagged"] .pupzy-queue-button-count',
         (element) => element.innerText,
