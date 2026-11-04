@@ -1,6 +1,6 @@
 # Admin design preview
 
-This branch is for review before production. The deployed photo fixes are already on `main`; this design has not been deployed.
+Use this isolated preview to review the Admin design and workflows with synthetic data before changing a live environment.
 
 ## Open the preview
 

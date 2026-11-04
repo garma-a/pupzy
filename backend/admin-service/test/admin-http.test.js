@@ -177,7 +177,32 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.match(html, /\/admin\/assets\/logo\.png/);
     assert.match(html, /\/admin\/assets\/pupzy-theme\.css/);
     assert.match(html, /Cairo/);
-    assert.match(html, /DM\+Sans/);
+    assert.match(html, /Onest/);
+
+    const theme = await fetch(`${baseUrl}/admin/assets/pupzy-theme.css`);
+    assert.equal(theme.status, 200);
+    assert.match(await theme.text(), /fonts\/fonts\.css/);
+    const fonts = await fetch(`${baseUrl}/admin/assets/fonts/fonts.css`);
+    assert.equal(fonts.status, 200);
+    const fontCss = await fonts.text();
+    assert.match(fontCss, /font-family:\s*'Onest'/);
+    assert.match(fontCss, /font-family:\s*'Cairo'/);
+    assert.match(fontCss, /font-display:\s*swap/);
+    const fontFiles = [
+      ...new Set([...fontCss.matchAll(/url\(['"]?([^)'"\s]+\.woff2)['"]?\)/g)].map((match) => match[1])),
+    ];
+    assert.ok(fontFiles.length > 0, 'the font stylesheet references local font files');
+    for (const file of fontFiles) {
+      const font = await fetch(new URL(file, `${baseUrl}/admin/assets/fonts/fonts.css`));
+      assert.equal(font.status, 200, `font asset ${file} is served`);
+      assert.equal(
+        Buffer.from(await font.arrayBuffer())
+          .subarray(0, 4)
+          .toString(),
+        'wOF2',
+        `font asset ${file} is WOFF2`,
+      );
+    }
   });
 
   it('redirects unauthenticated resource requests to login', async () => {
