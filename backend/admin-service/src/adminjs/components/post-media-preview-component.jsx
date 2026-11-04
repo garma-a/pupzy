@@ -14,6 +14,7 @@ export default function PostMediaPreview({ property, record, where }) {
       {url && !failed ? (
         <a
           className="pupzy-media-thumb"
+          style={{ width: '112px', maxWidth: '100%' }}
           href={url}
           target="_blank"
           rel="noopener noreferrer"
