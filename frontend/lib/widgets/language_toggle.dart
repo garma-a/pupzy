@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../localization/lang_provider.dart';
-import '../theme/app_theme.dart';
+import 'pill_toggle.dart';
 
 /// Animated English/Arabic segmented toggle — a sliding pill behind the
 /// selected label, with the label color crossfading in sync.
 ///
-/// Deliberately pinned to a fixed LTR layout internally (see the
-/// [Directionality] override below) regardless of [lang]: this toggle's own
+/// Deliberately pinned to a fixed LTR layout internally (the
+/// `textDirection` passed below) regardless of [lang]: this toggle's own
 /// handedness must not flip when the language changes, because a language
 /// switch also flips the ambient app-wide `Directionality` at the same
 /// instant. If this toggle used `AlignmentDirectional` tied to that same
@@ -26,85 +26,17 @@ class LanguageToggle extends StatelessWidget {
 
   const LanguageToggle({super.key, required this.lang, required this.onChanged, this.compact = false});
 
-  static const _duration = Duration(milliseconds: 260);
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: compact ? 34 : 46,
-      padding: EdgeInsets.all(compact ? 2 : 3),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.chip),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Directionality(
-        textDirection: TextDirection.ltr,
-        child: Stack(
-          children: [
-            AnimatedAlign(
-              duration: _duration,
-              curve: Curves.easeOutCubic,
-              alignment: lang == Lang.en ? Alignment.centerLeft : Alignment.centerRight,
-              child: FractionallySizedBox(
-                widthFactor: 0.5,
-                heightFactor: 1,
-                child: DecoratedBox(
-                  key: const Key('languageTogglePill'),
-                  decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(AppRadius.chip)),
-                ),
-              ),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: _LanguageOption(
-                    label: 'English',
-                    selected: lang == Lang.en,
-                    fontSize: compact ? 13 : null,
-                    duration: _duration,
-                    onTap: () => onChanged(Lang.en),
-                  ),
-                ),
-                Expanded(
-                  child: _LanguageOption(
-                    label: 'العربية',
-                    selected: lang == Lang.ar,
-                    fontSize: compact ? 13 : null,
-                    duration: _duration,
-                    onTap: () => onChanged(Lang.ar),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LanguageOption extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final double? fontSize;
-  final Duration duration;
-  final VoidCallback onTap;
-
-  const _LanguageOption({required this.label, required this.selected, this.fontSize, required this.duration, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Center(
-        child: AnimatedDefaultTextStyle(
-          duration: duration,
-          style: TextStyle(color: selected ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: fontSize),
-          child: Text(label),
-        ),
-      ),
+    return PillToggle(
+      firstLabel: 'English',
+      secondLabel: 'العربية',
+      firstSelected: lang == Lang.en,
+      onChanged: (english) => onChanged(english ? Lang.en : Lang.ar),
+      compact: compact,
+      // English always on the physical left, whatever the language (above).
+      textDirection: TextDirection.ltr,
+      pillKey: const Key('languageTogglePill'),
     );
   }
 }

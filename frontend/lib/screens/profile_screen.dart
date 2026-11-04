@@ -14,6 +14,7 @@ import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
 import '../utils/webp_compress.dart';
 import '../widgets/language_toggle.dart';
+import '../widgets/pill_toggle.dart';
 import '../utils/presigned_upload.dart';
 import 'blocked_accounts_screen.dart';
 import 'contact_requests_screen.dart';
@@ -36,6 +37,7 @@ class _ProfileSheetState extends State<ProfileSheet> {
 
   /// More than one page of pending requests: shown as "50+".
   bool _morePendingSent = false;
+  bool _savingNotifications = false;
 
   @override
   void initState() {
@@ -271,17 +273,27 @@ class _ProfileSheetState extends State<ProfileSheet> {
   }
 
   Future<void> _toggleNotifications() async {
+    // Ignore taps while a change is saving, so quick taps can't race.
+    if (_savingNotifications) return;
     final current = _user?['notificationsEnabled'] == true;
     final graphql = context.read<GraphQLService>();
     final push = context.read<PushService>();
     final failedCopy = t(context, 'Could not update notifications. Try again.', 'تعذر تحديث الإشعارات. حاول مرة أخرى.');
+    // Move the switch right away and put it back if saving fails.
+    setState(() {
+      _savingNotifications = true;
+      _user = {...?_user, 'notificationsEnabled': !current};
+    });
     final ok = await graphql.updateMyNotificationPreferences(!current);
     if (!mounted) return;
+    setState(() {
+      _savingNotifications = false;
+      if (!ok) _user = {...?_user, 'notificationsEnabled': current};
+    });
     if (!ok) {
       Fluttertoast.showToast(msg: failedCopy);
       return;
     }
-    setState(() => _user = {...?_user, 'notificationsEnabled': !current});
     // Turning them on only helps if the phone lets the app show them.
     if (!current && !await push.requestPermission() && mounted) {
       await _explainBlockedNotifications();
@@ -536,11 +548,26 @@ class _ProfileSheetState extends State<ProfileSheet> {
                       onTap: () => _showEditProfile(),
                     ),
                     const Divider(height: 1, indent: 48),
-                    _SettingsRow(
-                      icon: Icons.notifications_none,
-                      label: t(context, 'Notifications', 'الإشعارات'),
-                      trailing: _user?['notificationsEnabled'] == true ? t(context, 'On', 'مفعّل') : t(context, 'Off', 'متوقف'),
-                      onTap: _toggleNotifications,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 9),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.notifications_none, size: 20, color: AppColors.primary),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(child: Text(t(context, 'Notifications', 'الإشعارات'), style: Theme.of(context).textTheme.bodyLarge)),
+                          SizedBox(
+                            width: 168,
+                            child: PillToggle(
+                              compact: true,
+                              firstLabel: t(context, 'On', 'مفعّل'),
+                              secondLabel: t(context, 'Off', 'متوقف'),
+                              firstSelected: _user?['notificationsEnabled'] == true,
+                              pillKey: const Key('notificationsTogglePill'),
+                              onChanged: (_) => _toggleNotifications(),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const Divider(height: 1, indent: 48),
                     _SettingsRow(
