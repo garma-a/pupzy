@@ -641,7 +641,10 @@ class _ProfileSheetState extends State<ProfileSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
+            // The sheet runs under Android's navigation bar (the three
+            // buttons, or the gesture bar): leave its height free too, so
+            // Delete Account can scroll fully above it.
+            SizedBox(height: AppSpacing.xl + MediaQuery.paddingOf(context).bottom),
           ],
         ),
         ),
