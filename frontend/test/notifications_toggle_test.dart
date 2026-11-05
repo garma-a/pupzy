@@ -149,4 +149,46 @@ void main() {
     expect(graphql.saved, isEmpty);
     expect(isOn(tester), isTrue);
   });
+
+  testWidgets('Delete Account scrolls clear of the Android navigation bar', (tester) async {
+    // A small phone with the three-button bar: 48 dp at the bottom.
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(bottom: 48);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MultiProvider(
+      providers: [
+        ChangeNotifierProvider<LangProvider>.value(value: LangProvider()),
+        Provider<GraphQLService>.value(value: graphql),
+        Provider<PushService>.value(value: push),
+        ChangeNotifierProvider<AuthService>.value(value: _FakeAuth()),
+      ],
+      child: MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => const ProfileSheet(),
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    // Swipe the sheet open and scroll to the very end.
+    for (var i = 0; i < 4; i++) {
+      await tester.dragFrom(const Offset(180, 500), const Offset(0, -1500));
+      await tester.pumpAndSettle();
+    }
+
+    final button = tester.getRect(find.text('Delete Account'));
+    expect(button.bottom, lessThanOrEqualTo(640 - 48), reason: 'not under the navigation bar');
+  });
 }
