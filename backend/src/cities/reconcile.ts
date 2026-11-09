@@ -307,7 +307,9 @@ export async function reconcileCities(db: any, options: ReconcileOptions = {}): 
     }
 
     // 3. Insert missing official cities
-    const missingOfficial = catalogRecords.filter((c) => !claimedSourceCodes.has(c.sourceCode));
+    const missingOfficial = catalogRecords
+      .filter((c) => !claimedSourceCodes.has(c.sourceCode))
+      .sort((a, b) => Number(!!a.districtSourceCode) - Number(!!b.districtSourceCode));
     for (const off of missingOfficial) {
       const dbValues = mapCatalogRecordToDbValues(off);
       await tx.query(
@@ -319,9 +321,9 @@ export async function reconcileCities(db: any, options: ReconcileOptions = {}): 
           source_name_english,
           source_name_arabic,
           status,
-          center_point
+          center_point, aliases, district_id
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, ST_SetSRID(ST_MakePoint($8, $9), 4326)
+          $1, $2, $3, $4, $5, $6, $7, ST_SetSRID(ST_MakePoint($8, $9), 4326), $10::text[], (SELECT id FROM cities WHERE source_code = $11)
         )
         ON CONFLICT (source_code) DO UPDATE SET
           name_english = EXCLUDED.name_english,
@@ -341,9 +343,18 @@ export async function reconcileCities(db: any, options: ReconcileOptions = {}): 
           dbValues.status,
           dbValues.longitude,
           dbValues.latitude,
+          dbValues.aliases,
+          dbValues.districtSourceCode,
         ],
       );
       insertedOfficialCount++;
+    }
+
+    for (const record of catalogRecords) {
+      await tx.query(
+        `UPDATE cities SET aliases = $1::text[], district_id = (SELECT id FROM cities WHERE source_code = $2) WHERE source_code = $3`,
+        [record.aliases ?? [], record.districtSourceCode ?? null, record.sourceCode],
+      );
     }
 
     // 4. Post-verification inside transaction

@@ -12,6 +12,7 @@ import {
 } from './refresh';
 import {
   getOfficialCatalog,
+  transformCatalog,
   validateSnapshot,
   loadRawSnapshot,
   type CitySnapshot,
@@ -20,7 +21,7 @@ import {
 import { DEFAULT_METADATA_URL } from './fetch';
 
 describe('Upstream Refresh and Future Release Diff Tooling', () => {
-  const currentCatalog = getOfficialCatalog();
+  const currentCatalog = transformCatalog(loadRawSnapshot()).records;
 
   const createMockSnapshot = (
     records: any[],

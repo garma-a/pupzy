@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { sql } from 'drizzle-orm';
+import type { Polygons, IndependentNames, GpsChecks } from './coverage';
+import { extendDistrictCatalog, type NeighbourhoodSources } from './neighbourhoods';
 
 export interface RawCitySnapshotRecord {
   adm2_name: string;
@@ -52,6 +54,14 @@ export interface CitySnapshotMetadata {
 }
 
 export interface CitySnapshot {
+  coverageEvidence?: {
+    residential: Polygons;
+    governorates: Polygons;
+    districts: Polygons;
+    names: IndependentNames;
+    gps: GpsChecks;
+  };
+  neighbourhoods?: NeighbourhoodSources;
   metadata: CitySnapshotMetadata;
   records: RawCitySnapshotRecord[];
 }
@@ -59,6 +69,9 @@ export interface CitySnapshot {
 export type CityLifecycleStatusValue = 'OFFICIAL' | 'LEGACY' | 'RETIRED';
 
 export interface CityCatalogRecord {
+  aliases?: string[];
+  districtSourceCode?: string | null;
+  provenance?: { source: string; notes: string; parentEvidence: string; pointEvidence: string };
   sourceCode: string;
   nameEnglish: string;
   nameArabic: string;
@@ -105,6 +118,8 @@ export interface ValidateCatalogOptions {
 }
 
 export interface CityDatabaseValues {
+  aliases: string[];
+  districtSourceCode: string | null;
   sourceCode: string;
   nameEnglish: string;
   nameArabic: string;
@@ -122,6 +137,8 @@ export interface CityDatabaseValues {
  */
 export function mapCatalogRecordToDbValues(record: CityCatalogRecord): CityDatabaseValues {
   return {
+    aliases: record.aliases ?? [],
+    districtSourceCode: record.districtSourceCode ?? null,
     sourceCode: record.sourceCode.trim(),
     nameEnglish: record.nameEnglish.trim(),
     nameArabic: record.nameArabic.trim(),
@@ -140,6 +157,10 @@ export function mapCatalogRecordToDbValues(record: CityCatalogRecord): CityDatab
 export function mapCatalogRecordToInsertRow(record: CityCatalogRecord) {
   const values = mapCatalogRecordToDbValues(record);
   return {
+    aliases: values.aliases,
+    districtId: values.districtSourceCode
+      ? sql`(SELECT id FROM cities WHERE source_code = ${values.districtSourceCode})`
+      : null,
     sourceCode: values.sourceCode,
     nameEnglish: values.nameEnglish,
     nameArabic: values.nameArabic,
@@ -175,6 +196,12 @@ export function loadRawSnapshot(): CitySnapshot {
   const filePath = resolveDataPath('ocha-adm2-egypt-snapshot.json');
   const content = fs.readFileSync(filePath, 'utf8');
   return JSON.parse(content) as CitySnapshot;
+}
+
+/** Last published combined source; raw OCHA remains a separately preserved input. */
+export function loadReleaseSnapshot(): CitySnapshot {
+  const file = resolveDataPath('combined-city-source-snapshot.json');
+  return fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, 'utf8')) as CitySnapshot) : loadRawSnapshot();
 }
 
 function toCatalogRecord(item: RawCitySnapshotRecord, nameEnglish: string): CityCatalogRecord {
@@ -247,13 +274,16 @@ export function transformCatalog(snapshot: CitySnapshot): CityCatalog {
     return a.nameEnglish.localeCompare(b.nameEnglish);
   });
 
+  const extended = snapshot.neighbourhoods ? extendDistrictCatalog(records, snapshot.neighbourhoods) : records;
   return {
     metadata: {
       ...snapshot.metadata,
-      totalCities: records.length,
+      selectableCount: extended.length,
+      declaredOfficialCount: extended.length,
+      totalCities: extended.length,
       governoratesCount: new Set(records.map((r) => r.governorate)).size,
     },
-    records,
+    records: extended,
   };
 }
 
@@ -370,10 +400,38 @@ export function validateCatalog(
     // Parent relationship validation
     if (!city.governorateCode || !VALID_GOVERNORATE_CODES.has(city.governorateCode)) {
       errors.push(`${prefix}: Invalid parent governorateCode '${city.governorateCode}'`);
-    } else if (city.sourceCode && !city.sourceCode.startsWith(city.governorateCode)) {
+    } else if (!city.districtSourceCode && city.sourceCode && !city.sourceCode.startsWith(city.governorateCode)) {
       errors.push(
         `${prefix}: sourceCode '${city.sourceCode}' does not match parent governorateCode '${city.governorateCode}'`,
       );
+    }
+
+    if (city.districtSourceCode) {
+      const parent = records.find((row) => row.sourceCode === city.districtSourceCode);
+      if (
+        !parent ||
+        parent.districtSourceCode ||
+        parent.status !== 'OFFICIAL' ||
+        parent.governorateCode !== city.governorateCode
+      ) {
+        errors.push(`${prefix}: Neighbourhood requires an OFFICIAL district in the same governorate`);
+      }
+      if (!/^(OSM:(node|way|relation)\/[0-9]+|WD:Q[0-9]+|PUPZY:[a-z0-9-]+)$/.test(city.sourceCode)) {
+        errors.push(`${prefix}: Invalid neighbourhood source namespace`);
+      }
+      if (!city.provenance?.parentEvidence || !city.provenance.pointEvidence)
+        errors.push(`${prefix}: Missing provenance`);
+    } else if (/^(OSM:|WD:|PUPZY:)/.test(city.sourceCode)) {
+      errors.push(`${prefix}: Neighbourhood source requires a district parent`);
+    }
+    const aliases = city.aliases ?? [];
+    const canonical = new Set([city.nameEnglish, city.nameArabic].map((value) => value.trim().toLowerCase()));
+    const seenAliases = new Set<string>();
+    for (const alias of aliases) {
+      const normalized = alias.trim().toLowerCase();
+      if (!normalized || canonical.has(normalized) || seenAliases.has(normalized))
+        errors.push(`${prefix}: Duplicate or blank alias '${alias}'`);
+      seenAliases.add(normalized);
     }
 
     // Unique (nameEnglish, governorate) for official cities
@@ -602,8 +660,7 @@ export function loadOfficialCatalog(): CityCatalog {
     const content = fs.readFileSync(filePath, 'utf8');
     return JSON.parse(content) as CityCatalog;
   }
-  const snapshot = loadRawSnapshot();
-  return transformCatalog(snapshot);
+  return transformCatalog(loadReleaseSnapshot());
 }
 
 /**

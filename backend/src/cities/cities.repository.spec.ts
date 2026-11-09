@@ -8,6 +8,8 @@ describe('CitiesRepository', () => {
   let mockDb: any;
 
   const officialCity: City = {
+    aliases: [],
+    districtId: null,
     id: '01916327-0000-7000-8000-000000000001',
     nameEnglish: 'Cairo',
     nameArabic: 'القاهرة',
@@ -21,6 +23,8 @@ describe('CitiesRepository', () => {
   };
 
   const legacyCity: City = {
+    aliases: [],
+    districtId: null,
     id: '01916327-0000-7000-8000-000000000002',
     nameEnglish: 'Old Heliopolis',
     nameArabic: 'مصر الجديدة القديمة',
@@ -34,6 +38,8 @@ describe('CitiesRepository', () => {
   };
 
   const retiredCity: City = {
+    aliases: [],
+    districtId: null,
     id: '01916327-0000-7000-8000-000000000003',
     nameEnglish: 'Retired District',
     nameArabic: 'حي ملغي',

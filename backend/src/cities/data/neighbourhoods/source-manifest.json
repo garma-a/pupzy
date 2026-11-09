@@ -1,0 +1,84 @@
+{
+  "attemptDate": "2026-11-09",
+  "networkStatus": "DNS resolution failed for both endpoints; nothing fetched",
+  "snapshots": [
+    {
+      "path": "src/cities/data/neighbourhoods/greater-cairo-places.json",
+      "query": "src/cities/scripts/greater-cairo-places.overpass",
+      "endpoint": "https://overpass-api.de/api/interpreter",
+      "retrievalDate": "2026-11-09T20:25:11.488733+00:00",
+      "license": "ODbL 1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "© OpenStreetMap contributors",
+      "status": "fetched"
+    },
+    {
+      "path": "src/cities/data/neighbourhoods/greater-cairo-residential.json",
+      "query": "src/cities/scripts/greater-cairo-residential.overpass",
+      "endpoint": "https://overpass-api.de/api/interpreter",
+      "retrievalDate": "2026-11-09T20:25:54.227442+00:00",
+      "license": "ODbL 1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "© OpenStreetMap contributors",
+      "status": "fetched"
+    },
+    {
+      "path": "src/cities/data/neighbourhoods/alexandria-places.json",
+      "query": "src/cities/scripts/alexandria-places.overpass",
+      "endpoint": "https://overpass-api.de/api/interpreter",
+      "retrievalDate": "2026-11-09T20:27:40.245550+00:00",
+      "license": "ODbL 1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "© OpenStreetMap contributors",
+      "status": "fetched"
+    },
+    {
+      "path": "src/cities/data/neighbourhoods/alexandria-residential.json",
+      "query": "src/cities/scripts/alexandria-residential.overpass",
+      "endpoint": "https://overpass-api.de/api/interpreter",
+      "retrievalDate": "2026-11-09T20:31:36.338672+00:00",
+      "license": "ODbL 1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "© OpenStreetMap contributors",
+      "status": "fetched"
+    },
+    {
+      "path": "src/cities/data/neighbourhoods/port-said-region-places.json",
+      "query": "src/cities/scripts/port-said-region-places.overpass",
+      "endpoint": "https://overpass-api.de/api/interpreter",
+      "retrievalDate": "2026-11-09T20:35:36.370004+00:00",
+      "license": "ODbL 1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "© OpenStreetMap contributors",
+      "status": "fetched"
+    },
+    {
+      "path": "src/cities/data/neighbourhoods/port-said-region-residential.json",
+      "query": "src/cities/scripts/port-said-region-residential.overpass",
+      "endpoint": "https://overpass-api.de/api/interpreter",
+      "retrievalDate": "2026-11-09T20:40:27.888522+00:00",
+      "license": "ODbL 1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "© OpenStreetMap contributors",
+      "status": "fetched"
+    },
+    {
+      "path": "src/cities/data/neighbourhoods/egypt-administrative-boundaries.json",
+      "query": "src/cities/scripts/egypt-administrative-boundaries.overpass",
+      "endpoint": "https://overpass-api.de/api/interpreter",
+      "retrievalDate": "2026-11-09T20:41:08.194404+00:00",
+      "license": "ODbL 1.0",
+      "attribution": "© OpenStreetMap contributors",
+      "status": "fetched"
+    },
+    {
+      "path": "src/cities/data/neighbourhoods/wikidata.json",
+      "query": "src/cities/scripts/neighbourhoods.sparql",
+      "endpoint": "https://query.wikidata.org/sparql",
+      "retrievalDate": "2026-11-09T20:42:36.673435+00:00",
+      "license": "CC0",
+      "attribution": "Wikidata contributors",
+      "status": "fetched"
+    }
+  ]
+}

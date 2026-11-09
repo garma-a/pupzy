@@ -21,8 +21,12 @@ A durable record that one notification should be sent to one registered device. 
 _Avoid_: Push job, notification send
 
 **City**:
-An authoritative selectable Egyptian ADM2 area (Markaz, Kism, or new urban community) across Egypt's 27 governorates, managed through reviewed local dataset releases. Each City maintains canonical English and Arabic names, an internal source identity, an explicit lifecycle state (`official`, `legacy`, or `retired`), and an approximate WGS84 representative point for distance-based discovery.
+A selectable Egyptian place that a Pupzy Account or Post is located in: either an official ADM2 district (Markaz, Kism, or new urban community) across Egypt's 27 governorates, or a **Neighbourhood** linked to exactly one official district. All Cities are managed through reviewed local dataset releases. Each City maintains canonical English and Arabic names, an internal source identity, an explicit lifecycle state (`official`, `legacy`, or `retired`), and an approximate WGS84 representative point for distance-based discovery and nearest-place recognition.
 _Avoid_: City record, location entry, custom city creation, operator-created city
+
+**Neighbourhood**:
+A commonly used named area (for example Smouha, Rehab, or Mohandessin) that is selectable as a City in its own right and belongs to one official ADM2 district. A Neighbourhood never stands in for its district: users and Posts reference whichever City they chose.
+_Avoid_: Sub-city, shiakha, district alias
 
 **Mapped Location**:
 An approximate place visually selected and confirmed by an administrator. It retains administrator-confirmed Arabic and English addresses and a fixed WGS84 coordinate point, but does not claim that a map provider independently verified the place or address.

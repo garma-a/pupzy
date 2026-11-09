@@ -2,6 +2,7 @@
   "metadata": {
     "source": "OCHA COD-AB (Common Operational Datasets - Subnational Administrative Boundaries)",
     "sourceUrl": "https://data.humdata.org/dataset/cod-ab-egy",
+    "resourceUrl": "https://data.humdata.org/dataset/b90d81ba-7c7a-4283-9899-827480d80a79/resource/81126a96-2991-48e1-93cb-24c164a4de88/download/egy_admin_boundaries.xlsx",
     "upstreamVersion": "01",
     "upstreamDates": {
       "validOn": "2017-04-21",
@@ -10,14 +11,23 @@
     },
     "retrievalDate": "2026-08-27",
     "license": "Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)",
+    "licenseUrl": "http://creativecommons.org/licenses/by/3.0/igo/legalcode",
     "attribution": "Central Agency for Public Mobilization and Statistics (CAPMAS), Government of Egypt; United Nations Office for the Coordination of Humanitarian Affairs (OCHA) Field Information Services Section (FISS) and OCHA ROMENA",
+    "totalRows": 365,
+    "outsideZemamCount": 14,
+    "selectableCount": 351,
+    "governorateCount": 27,
     "totalCities": 351,
-    "governoratesCount": 27
+    "declaredOfficialCount": 351,
+    "officialCitiesCount": 351,
+    "governoratesCount": 27,
+    "retiredCount": 0,
+    "legacyCount": 0
   },
   "records": [
     {
       "sourceCode": "EG0209",
-      "nameEnglish": "A L Labban",
+      "nameEnglish": "Labban",
       "nameArabic": "قسم اللبان",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -26,11 +36,15 @@
       "sourceNameArabic": "قسم اللبان",
       "latitude": 31.19072847,
       "longitude": 29.89239598,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "A L Labban"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0213",
-      "nameEnglish": "Al Amreia",
+      "nameEnglish": "Amreya",
       "nameArabic": "قسم العامرية",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -39,11 +53,15 @@
       "sourceNameArabic": "قسم العامرية",
       "latitude": 30.95892416,
       "longitude": 29.82759488,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Amreia"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0206",
-      "nameEnglish": "Al Attarin",
+      "nameEnglish": "Attarin",
       "nameArabic": "قسم العطارين",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -52,11 +70,15 @@
       "sourceNameArabic": "قسم العطارين",
       "latitude": 31.19811328,
       "longitude": 29.90400845,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Attarin"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0212",
-      "nameEnglish": "Al Dikhila",
+      "nameEnglish": "Dekheila",
       "nameArabic": "قسم الدخيلة",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -65,11 +87,15 @@
       "sourceNameArabic": "قسم الدخيلة",
       "latitude": 31.1185624,
       "longitude": 29.80608436,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Dikhila"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0210",
-      "nameEnglish": "Al Gumruk",
+      "nameEnglish": "Gomrok",
       "nameArabic": "قسم الجمرك",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -78,11 +104,15 @@
       "sourceNameArabic": "قسم الجمرك",
       "latitude": 31.20348379,
       "longitude": 29.87851276,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Gumruk"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0207",
-      "nameEnglish": "Al Manshiyya",
+      "nameEnglish": "Mansheya",
       "nameArabic": "قسم المنشية",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -91,11 +121,15 @@
       "sourceNameArabic": "قسم المنشية",
       "latitude": 31.1984817,
       "longitude": 29.8922597,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Manshiyya"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0202",
-      "nameEnglish": "Al Raml",
+      "nameEnglish": "Raml First",
       "nameArabic": "قسم أول الرمل",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -104,7 +138,11 @@
       "sourceNameArabic": "قسم أول الرمل",
       "latitude": 31.23674335,
       "longitude": 29.98579268,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Raml"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0204",
@@ -117,11 +155,13 @@
       "sourceNameArabic": "قسم باب شرقى",
       "latitude": 31.20502404,
       "longitude": 29.92102924,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0216",
-      "nameEnglish": "Burg Al-Arab City",
+      "nameEnglish": "New Borg El Arab",
       "nameArabic": "مدينه برج العرب الجديده",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -130,11 +170,15 @@
       "sourceNameArabic": "مدينه برج العرب الجديده",
       "latitude": 30.8987898,
       "longitude": 29.62224007,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Burg Al-Arab City"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0214",
-      "nameEnglish": "Burg al-Arab",
+      "nameEnglish": "Borg El Arab",
       "nameArabic": "قسم برج العرب",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -143,11 +187,15 @@
       "sourceNameArabic": "قسم برج العرب",
       "latitude": 30.90121245,
       "longitude": 29.49397559,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Burg al-Arab"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0208",
-      "nameEnglish": "Karmuz",
+      "nameEnglish": "Karmouz",
       "nameArabic": "قسم كرموز",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -156,11 +204,15 @@
       "sourceNameArabic": "قسم كرموز",
       "latitude": 31.17936477,
       "longitude": 29.9037698,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Karmuz"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0217",
-      "nameEnglish": "Kesm than Al Raml",
+      "nameEnglish": "Raml Second",
       "nameArabic": "قسم ثان الرمل",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -169,11 +221,15 @@
       "sourceNameArabic": "قسم ثان الرمل",
       "latitude": 31.21127748,
       "longitude": 29.99447711,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Kesm than Al Raml"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0211",
-      "nameEnglish": "Mina Al-Basal",
+      "nameEnglish": "Mina El Basal",
       "nameArabic": "قسم مينا البصل",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -182,11 +238,15 @@
       "sourceNameArabic": "قسم مينا البصل",
       "latitude": 31.16717534,
       "longitude": 29.88017089,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Mina Al-Basal"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0205",
-      "nameEnglish": "Muharam Bik",
+      "nameEnglish": "Moharam Bek",
       "nameArabic": "قسم محرم بك",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -195,11 +255,15 @@
       "sourceNameArabic": "قسم محرم بك",
       "latitude": 31.18402265,
       "longitude": 29.93882596,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Muharam Bik"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0201",
-      "nameEnglish": "Muntazah",
+      "nameEnglish": "Montaza",
       "nameArabic": "قسم المنتزة",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -208,7 +272,11 @@
       "sourceNameArabic": "قسم المنتزة",
       "latitude": 31.26426137,
       "longitude": 30.03048135,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Muntazah"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0218",
@@ -221,11 +289,13 @@
       "sourceNameArabic": "الساحل الشمالى",
       "latitude": 30.93455288,
       "longitude": 29.47512969,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0215",
-      "nameEnglish": "Port Alexandria Police Department",
+      "nameEnglish": "Alexandria Port",
       "nameArabic": "اداره شرطه ميناء الأسكندريه",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -234,11 +304,15 @@
       "sourceNameArabic": "اداره شرطه ميناء الأسكندريه",
       "latitude": 31.18040747,
       "longitude": 29.87603383,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Port Alexandria Police Department"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0203",
-      "nameEnglish": "Sidi Gabir",
+      "nameEnglish": "Sidi Gaber",
       "nameArabic": "قسم سيدى جابر",
       "governorate": "Alexandria",
       "governorateArabic": "الاسكندرية",
@@ -247,7 +321,11 @@
       "sourceNameArabic": "قسم سيدى جابر",
       "latitude": 31.21634408,
       "longitude": 29.94853089,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Sidi Gabir"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2504",
@@ -260,7 +338,9 @@
       "sourceNameArabic": "مركز أبنوب",
       "latitude": 27.29492579,
       "longitude": 31.10599108,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2505",
@@ -273,7 +353,9 @@
       "sourceNameArabic": "مركز أبوتيج",
       "latitude": 27.03655018,
       "longitude": 31.28889656,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2506",
@@ -286,7 +368,9 @@
       "sourceNameArabic": "مركز البدارى",
       "latitude": 26.94646337,
       "longitude": 31.45620124,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2508",
@@ -299,7 +383,9 @@
       "sourceNameArabic": "مركز الغنايم",
       "latitude": 26.9217302,
       "longitude": 31.3286369,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2509",
@@ -312,7 +398,9 @@
       "sourceNameArabic": "مركز القوصية",
       "latitude": 27.40301562,
       "longitude": 30.82637782,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2513",
@@ -325,7 +413,9 @@
       "sourceNameArabic": "مركز الفتح",
       "latitude": 27.21806618,
       "longitude": 31.21189666,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2503",
@@ -338,7 +428,9 @@
       "sourceNameArabic": "مركز أسيوط",
       "latitude": 27.11677928,
       "longitude": 31.23215375,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2514",
@@ -351,7 +443,9 @@
       "sourceNameArabic": "مدينة اسيوط الجديدة",
       "latitude": 27.25430695,
       "longitude": 31.28085748,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2510",
@@ -364,7 +458,9 @@
       "sourceNameArabic": "مركز ديروط",
       "latitude": 27.53711682,
       "longitude": 30.78222411,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2501",
@@ -377,7 +473,9 @@
       "sourceNameArabic": "قسم أول أسيوط",
       "latitude": 27.18610668,
       "longitude": 31.15363528,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2502",
@@ -390,7 +488,9 @@
       "sourceNameArabic": "قسم ثان أسيوط",
       "latitude": 27.19321519,
       "longitude": 31.17875998,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2512",
@@ -403,7 +503,9 @@
       "sourceNameArabic": "مركز منفلوط",
       "latitude": 27.29423756,
       "longitude": 30.95120144,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2507",
@@ -416,7 +518,9 @@
       "sourceNameArabic": "مركز ساحل سليم",
       "latitude": 27.09305048,
       "longitude": 31.34935522,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2511",
@@ -429,7 +533,9 @@
       "sourceNameArabic": "مركز صدفا",
       "latitude": 26.94330753,
       "longitude": 31.37955957,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2807",
@@ -442,7 +548,9 @@
       "sourceNameArabic": "مركز أبوسنبل",
       "latitude": 22.62431489,
       "longitude": 32.59908679,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2803",
@@ -455,7 +563,9 @@
       "sourceNameArabic": "مركز أدفو",
       "latitude": 25.06093989,
       "longitude": 32.95673042,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2801",
@@ -468,7 +578,9 @@
       "sourceNameArabic": "قسم أسوان",
       "latitude": 24.06280468,
       "longitude": 32.9014693,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2802",
@@ -481,7 +593,9 @@
       "sourceNameArabic": "مركز أسوان",
       "latitude": 23.97173132,
       "longitude": 32.83077982,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2808",
@@ -494,7 +608,9 @@
       "sourceNameArabic": "مدينة أسوان الجديدة",
       "latitude": 24.06750739,
       "longitude": 32.98283111,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2806",
@@ -507,7 +623,9 @@
       "sourceNameArabic": "مركز دراو",
       "latitude": 24.32555242,
       "longitude": 33.00058453,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2804",
@@ -520,7 +638,9 @@
       "sourceNameArabic": "مركز كوم امبو",
       "latitude": 24.479974,
       "longitude": 32.94651338,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2805",
@@ -533,7 +653,9 @@
       "sourceNameArabic": "مركز نصر",
       "latitude": 24.37301443,
       "longitude": 32.93159187,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2809",
@@ -546,7 +668,9 @@
       "sourceNameArabic": "مدينة توشكى الجديدة",
       "latitude": 22.85642634,
       "longitude": 31.66090448,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1804",
@@ -559,7 +683,9 @@
       "sourceNameArabic": "مركز ابوحمص",
       "latitude": 31.10584913,
       "longitude": 30.31029499,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1803",
@@ -572,7 +698,9 @@
       "sourceNameArabic": "مركز ابوالمطامير",
       "latitude": 30.77312654,
       "longitude": 30.14414086,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1805",
@@ -585,7 +713,9 @@
       "sourceNameArabic": "مركز الدلنجات",
       "latitude": 30.81012178,
       "longitude": 30.48995703,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1806",
@@ -598,7 +728,9 @@
       "sourceNameArabic": "مركز المحمودية",
       "latitude": 31.19691784,
       "longitude": 30.48806883,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1815",
@@ -611,7 +743,9 @@
       "sourceNameArabic": "مركز الرحمانية",
       "latitude": 31.10623814,
       "longitude": 30.58394312,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1818",
@@ -624,7 +758,9 @@
       "sourceNameArabic": "مركز بدر",
       "latitude": 30.54671167,
       "longitude": 30.67858174,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1801",
@@ -637,7 +773,9 @@
       "sourceNameArabic": "قسم دمنهور",
       "latitude": 31.04898058,
       "longitude": 30.46250878,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1802",
@@ -650,7 +788,9 @@
       "sourceNameArabic": "مركز دمنهور",
       "latitude": 31.03174608,
       "longitude": 30.52713592,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1808",
@@ -663,7 +803,9 @@
       "sourceNameArabic": "مركز حوش عيسى",
       "latitude": 30.89121824,
       "longitude": 30.34575848,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1816",
@@ -676,7 +818,9 @@
       "sourceNameArabic": "مركز إدكو",
       "latitude": 31.29825944,
       "longitude": 30.32493349,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1807",
@@ -689,7 +833,9 @@
       "sourceNameArabic": "مركز إيتاى البارود",
       "latitude": 30.88558547,
       "longitude": 30.65601513,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1811",
@@ -702,7 +848,9 @@
       "sourceNameArabic": "قسم كفرالدوار",
       "latitude": 31.13727256,
       "longitude": 30.13294612,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1812",
@@ -715,7 +863,9 @@
       "sourceNameArabic": "مركز كفر الدوار",
       "latitude": 31.12882124,
       "longitude": 30.03757396,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1813",
@@ -728,7 +878,9 @@
       "sourceNameArabic": "مركز كوم حمادة",
       "latitude": 30.65414719,
       "longitude": 30.7739189,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1817",
@@ -741,7 +893,9 @@
       "sourceNameArabic": "قسم غرب النوبارية",
       "latitude": 30.42486146,
       "longitude": 29.89725643,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1809",
@@ -754,7 +908,9 @@
       "sourceNameArabic": "مركز رشيد",
       "latitude": 31.37875874,
       "longitude": 30.37496527,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1810",
@@ -767,7 +923,9 @@
       "sourceNameArabic": "مركز شبراخيت",
       "latitude": 31.00270762,
       "longitude": 30.67879655,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1814",
@@ -780,7 +938,9 @@
       "sourceNameArabic": "مركز وادى النطرون",
       "latitude": 30.42960153,
       "longitude": 30.31256635,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2206",
@@ -793,7 +953,9 @@
       "sourceNameArabic": "مركز أهناسيا",
       "latitude": 29.10161328,
       "longitude": 30.9431998,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2204",
@@ -806,7 +968,9 @@
       "sourceNameArabic": "مركز الفشن",
       "latitude": 28.80879774,
       "longitude": 30.82738688,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2205",
@@ -819,7 +983,9 @@
       "sourceNameArabic": "مركز الواسطى",
       "latitude": 29.32399806,
       "longitude": 31.17024322,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2201",
@@ -832,7 +998,9 @@
       "sourceNameArabic": "قسم بنى سويف",
       "latitude": 29.07680552,
       "longitude": 31.09734952,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2202",
@@ -845,7 +1013,9 @@
       "sourceNameArabic": "مركز بنى سويف",
       "latitude": 29.09814894,
       "longitude": 31.04169817,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2203",
@@ -858,7 +1028,9 @@
       "sourceNameArabic": "قسم مدينة بنى سويف الجديدة",
       "latitude": 28.98226245,
       "longitude": 31.15947366,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2207",
@@ -871,7 +1043,9 @@
       "sourceNameArabic": "مركز ببا",
       "latitude": 28.95138917,
       "longitude": 30.96710958,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2209",
@@ -884,7 +1058,9 @@
       "sourceNameArabic": "مركز ناصر",
       "latitude": 29.18659305,
       "longitude": 31.07831814,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2208",
@@ -897,11 +1073,13 @@
       "sourceNameArabic": "مركز سمسطا",
       "latitude": 28.95052071,
       "longitude": 30.86581529,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0103",
-      "nameEnglish": "15 Mayu",
+      "nameEnglish": "15th of May",
       "nameArabic": "قسم 15 مايو",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -910,11 +1088,17 @@
       "sourceNameArabic": "قسم 15 مايو",
       "latitude": 29.85339077,
       "longitude": 31.38734968,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "15 Mayu",
+        "15 May",
+        "الخامس عشر من مايو"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0109",
-      "nameEnglish": "Abdin",
+      "nameEnglish": "Abdeen",
       "nameArabic": "قسم عابدين",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -923,7 +1107,11 @@
       "sourceNameArabic": "قسم عابدين",
       "latitude": 30.04602082,
       "longitude": 31.24521898,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Abdin"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0130",
@@ -936,11 +1124,13 @@
       "sourceNameArabic": "قسم عينشمس",
       "latitude": 30.12265349,
       "longitude": 31.33003863,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0113",
-      "nameEnglish": "Al Azbakiyya",
+      "nameEnglish": "Azbakeya",
       "nameArabic": "قسم الأزبكية",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -949,11 +1139,15 @@
       "sourceNameArabic": "قسم الأزبكية",
       "latitude": 30.0600347,
       "longitude": 31.24585442,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Azbakiyya"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0114",
-      "nameEnglish": "Al Darb al-Ahmar",
+      "nameEnglish": "Darb El Ahmar",
       "nameArabic": "قسم الدرب الأحمر",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -962,11 +1156,15 @@
       "sourceNameArabic": "قسم الدرب الأحمر",
       "latitude": 30.04140441,
       "longitude": 31.26011199,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Darb al-Ahmar"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0108",
-      "nameEnglish": "Al Khalifa",
+      "nameEnglish": "Khalifa",
       "nameArabic": "قسم الخليفة",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -975,11 +1173,15 @@
       "sourceNameArabic": "قسم الخليفة",
       "latitude": 30.01036599,
       "longitude": 31.29601008,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Khalifa"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0125",
-      "nameEnglish": "Al Matariyya",
+      "nameEnglish": "Matariya",
       "nameArabic": "قسم المطرية",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -988,11 +1190,15 @@
       "sourceNameArabic": "قسم المطرية",
       "latitude": 30.12796892,
       "longitude": 31.30398167,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Matariyya"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0121",
-      "nameEnglish": "Al Sahil",
+      "nameEnglish": "Sahel",
       "nameArabic": "قسم الساحل",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1001,11 +1207,15 @@
       "sourceNameArabic": "قسم الساحل",
       "latitude": 30.09212796,
       "longitude": 31.24721676,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Sahil"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0132",
-      "nameEnglish": "Al Salam",
+      "nameEnglish": "Salam",
       "nameArabic": "قسم السلام",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1014,11 +1224,15 @@
       "sourceNameArabic": "قسم السلام",
       "latitude": 30.1622057,
       "longitude": 31.42819373,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Salam"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0118",
-      "nameEnglish": "Al Sharabiyya",
+      "nameEnglish": "Shorabiya",
       "nameArabic": "قسم الشرابية",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1027,11 +1241,15 @@
       "sourceNameArabic": "قسم الشرابية",
       "latitude": 30.08196457,
       "longitude": 31.26412388,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Sharabiyya"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0101",
-      "nameEnglish": "Al Tibbin",
+      "nameEnglish": "Tebbin",
       "nameArabic": "قسم التبين",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1040,11 +1258,15 @@
       "sourceNameArabic": "قسم التبين",
       "latitude": 29.78062223,
       "longitude": 31.33665594,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Tibbin"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0122",
-      "nameEnglish": "Al Wayli",
+      "nameEnglish": "Waili",
       "nameArabic": "قسم الوايلي",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1053,11 +1275,15 @@
       "sourceNameArabic": "قسم الوايلي",
       "latitude": 30.07160933,
       "longitude": 31.28341275,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Wayli"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0117",
-      "nameEnglish": "Al Zahir",
+      "nameEnglish": "Zaher",
       "nameArabic": "قسم الظاهر",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1066,11 +1292,15 @@
       "sourceNameArabic": "قسم الظاهر",
       "latitude": 30.06279613,
       "longitude": 31.26809428,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Zahir"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0124",
-      "nameEnglish": "Al Zaytun",
+      "nameEnglish": "Zeitoun",
       "nameArabic": "قسم الزيتون",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1079,11 +1309,15 @@
       "sourceNameArabic": "قسم الزيتون",
       "latitude": 30.100449,
       "longitude": 31.30125807,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Zaytun"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0116",
-      "nameEnglish": "Bab Al-Shariyya",
+      "nameEnglish": "Bab El Sharia",
       "nameArabic": "قسم باب الشعرية",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1092,7 +1326,11 @@
       "sourceNameArabic": "قسم باب الشعرية",
       "latitude": 30.05877007,
       "longitude": 31.25799446,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Bab Al-Shariyya"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0141",
@@ -1105,11 +1343,13 @@
       "sourceNameArabic": "قسم بدر",
       "latitude": 30.1363098,
       "longitude": 31.70628631,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0135",
-      "nameEnglish": "Basatin",
+      "nameEnglish": "Basateen",
       "nameArabic": "قسم البساتين",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1118,11 +1358,15 @@
       "sourceNameArabic": "قسم البساتين",
       "latitude": 29.98022105,
       "longitude": 31.29304583,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Basatin"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0112",
-      "nameEnglish": "Bulaq",
+      "nameEnglish": "Boulaq",
       "nameArabic": "قسم بولاق",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1131,11 +1375,15 @@
       "sourceNameArabic": "قسم بولاق",
       "latitude": 30.06202785,
       "longitude": 31.23415993,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Bulaq"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0115",
-      "nameEnglish": "Gamaliyya",
+      "nameEnglish": "Gamaliya",
       "nameArabic": "قسم الجمالية",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1144,11 +1392,15 @@
       "sourceNameArabic": "قسم الجمالية",
       "latitude": 30.05366362,
       "longitude": 31.26455471,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Gamaliyya"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0123",
-      "nameEnglish": "Hadaiq Al-Qubba",
+      "nameEnglish": "Hadayek El Qobba",
       "nameArabic": "قسم حدائقالقبة",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1157,11 +1409,15 @@
       "sourceNameArabic": "قسم حدائقالقبة",
       "latitude": 30.08554385,
       "longitude": 31.28290808,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Hadaiq Al-Qubba"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0102",
-      "nameEnglish": "Hilwan",
+      "nameEnglish": "Helwan",
       "nameArabic": "قسم حلوان",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1170,7 +1426,11 @@
       "sourceNameArabic": "قسم حلوان",
       "latitude": 29.85378844,
       "longitude": 31.32893498,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Hilwan"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0104",
@@ -1183,11 +1443,13 @@
       "sourceNameArabic": "قسم المعادي",
       "latitude": 29.96342541,
       "longitude": 31.36791677,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0127",
-      "nameEnglish": "Madinat Nasr-2",
+      "nameEnglish": "Nasr City Second",
       "nameArabic": "قسم ثانمدينةنصر",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1196,7 +1458,11 @@
       "sourceNameArabic": "قسم ثانمدينةنصر",
       "latitude": 30.04817479,
       "longitude": 31.30859273,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Madinat Nasr-2"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0136",
@@ -1209,11 +1475,13 @@
       "sourceNameArabic": "قسم المرج",
       "latitude": 30.15581506,
       "longitude": 31.34620156,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0134",
-      "nameEnglish": "Minshat Nasir",
+      "nameEnglish": "Manshiyet Nasser",
       "nameArabic": "منشأةناصر",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1222,11 +1490,15 @@
       "sourceNameArabic": "منشأةناصر",
       "latitude": 30.04284771,
       "longitude": 31.28396176,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Minshat Nasir"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0106",
-      "nameEnglish": "Misr Al-Qadima",
+      "nameEnglish": "Old Cairo",
       "nameArabic": "مصرالقديمة",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1235,11 +1507,15 @@
       "sourceNameArabic": "مصرالقديمة",
       "latitude": 30.00550963,
       "longitude": 31.24188728,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Misr Al-Qadima"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0128",
-      "nameEnglish": "Misr al-Gadida",
+      "nameEnglish": "Heliopolis",
       "nameArabic": "قسم مصرالجديدة",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1248,11 +1524,16 @@
       "sourceNameArabic": "قسم مصرالجديدة",
       "latitude": 30.0907133,
       "longitude": 31.32733026,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Misr al-Gadida",
+        "Misr El Gedida"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0110",
-      "nameEnglish": "Muski",
+      "nameEnglish": "Moski",
       "nameArabic": "قسم الموسكي",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1261,11 +1542,15 @@
       "sourceNameArabic": "قسم الموسكي",
       "latitude": 30.0504347,
       "longitude": 31.25239218,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Muski"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0126",
-      "nameEnglish": "Nasr City",
+      "nameEnglish": "Nasr City First",
       "nameArabic": "قسم أول مدينة نصر",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1274,11 +1559,16 @@
       "sourceNameArabic": "قسم أول مدينة نصر",
       "latitude": 30.0320702,
       "longitude": 31.3694274,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Nasr City",
+        "مدينة نصر"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0137",
-      "nameEnglish": "New Cairo-1",
+      "nameEnglish": "New Cairo First",
       "nameArabic": "قسم أول القاهرة الجديدة",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1287,11 +1577,17 @@
       "sourceNameArabic": "قسم أول القاهرة الجديدة",
       "latitude": 30.0242492,
       "longitude": 31.54960872,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "New Cairo-1",
+        "القاهرة الجديدة",
+        "New Cairo"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0138",
-      "nameEnglish": "New Cairo-2",
+      "nameEnglish": "New Cairo Second",
       "nameArabic": "قسم ثان القاهرة الجديدة",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1300,11 +1596,15 @@
       "sourceNameArabic": "قسم ثان القاهرة الجديدة",
       "latitude": 30.07352277,
       "longitude": 31.58236481,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "New Cairo-2"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0139",
-      "nameEnglish": "New Cairo-3",
+      "nameEnglish": "New Cairo Third",
       "nameArabic": "قسم ثالث القاهرة الجديدة",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1313,11 +1613,15 @@
       "sourceNameArabic": "قسم ثالث القاهرة الجديدة",
       "latitude": 29.97752694,
       "longitude": 31.45574128,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "New Cairo-3"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0129",
-      "nameEnglish": "Nuzha",
+      "nameEnglish": "Nozha",
       "nameArabic": "قسم النزهة",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1326,11 +1630,15 @@
       "sourceNameArabic": "قسم النزهة",
       "latitude": 30.11522515,
       "longitude": 31.3887951,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Nuzha"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0111",
-      "nameEnglish": "Qasr Al-Nile",
+      "nameEnglish": "Qasr El Nile",
       "nameArabic": "قسم قصر النيل",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1339,11 +1647,15 @@
       "sourceNameArabic": "قسم قصر النيل",
       "latitude": 30.04308012,
       "longitude": 31.23513065,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Qasr Al-Nile"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0120",
-      "nameEnglish": "Rud Al-Farag",
+      "nameEnglish": "Rod El Farag",
       "nameArabic": "قسم روضالفرج",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1352,11 +1664,15 @@
       "sourceNameArabic": "قسم روضالفرج",
       "latitude": 30.07468275,
       "longitude": 31.23754308,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Rud Al-Farag"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0107",
-      "nameEnglish": "Sayyida Zainab",
+      "nameEnglish": "Sayeda Zeinab",
       "nameArabic": "قسم السيدة زينب",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1365,11 +1681,15 @@
       "sourceNameArabic": "قسم السيدة زينب",
       "latitude": 30.0298408,
       "longitude": 31.24183483,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Sayyida Zainab"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0140",
-      "nameEnglish": "Shroq",
+      "nameEnglish": "Shorouk",
       "nameArabic": "قسم الشروق",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1378,7 +1698,11 @@
       "sourceNameArabic": "قسم الشروق",
       "latitude": 30.13299876,
       "longitude": 31.54747487,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Shroq"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0119",
@@ -1391,11 +1715,13 @@
       "sourceNameArabic": "قسم شبرا",
       "latitude": 30.07175894,
       "longitude": 31.25032001,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0105",
-      "nameEnglish": "Tura",
+      "nameEnglish": "Tora",
       "nameArabic": "قسم طره",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1404,11 +1730,15 @@
       "sourceNameArabic": "قسم طره",
       "latitude": 29.93903558,
       "longitude": 31.38029291,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Tura"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0133",
-      "nameEnglish": "Zamalik",
+      "nameEnglish": "Zamalek",
       "nameArabic": "قسم الزمالك",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1417,11 +1747,15 @@
       "sourceNameArabic": "قسم الزمالك",
       "latitude": 30.05629301,
       "longitude": 31.22319433,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Zamalik"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0131",
-      "nameEnglish": "Zawiyya Al-Hamra",
+      "nameEnglish": "Zawya El Hamra",
       "nameArabic": "قسم الزاويةالحمراء",
       "governorate": "Cairo",
       "governorateArabic": "القاهرة",
@@ -1430,7 +1764,11 @@
       "sourceNameArabic": "قسم الزاويةالحمراء",
       "latitude": 30.09765937,
       "longitude": 31.26971678,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Zawiyya Al-Hamra"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1204",
@@ -1443,7 +1781,9 @@
       "sourceNameArabic": "مركز أجا",
       "latitude": 30.89531022,
       "longitude": 31.31346698,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1218",
@@ -1456,7 +1796,9 @@
       "sourceNameArabic": "مركز بنى عبيد",
       "latitude": 31.02418714,
       "longitude": 31.64827195,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1208",
@@ -1469,7 +1811,9 @@
       "sourceNameArabic": "مركز بلقاس",
       "latitude": 31.34403595,
       "longitude": 31.37935931,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1209",
@@ -1482,7 +1826,9 @@
       "sourceNameArabic": "مركز دكرنس",
       "latitude": 31.09314136,
       "longitude": 31.7801441,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1202",
@@ -1495,7 +1841,9 @@
       "sourceNameArabic": "قسم ثان المنصورة",
       "latitude": 31.04740656,
       "longitude": 31.41868348,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1203",
@@ -1508,7 +1856,9 @@
       "sourceNameArabic": "مركز المنصورة",
       "latitude": 31.05279543,
       "longitude": 31.46727616,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1201",
@@ -1521,7 +1871,9 @@
       "sourceNameArabic": "قسم اول المنصورة",
       "latitude": 31.02880206,
       "longitude": 31.37484911,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1215",
@@ -1534,7 +1886,9 @@
       "sourceNameArabic": "مركز الجمالية",
       "latitude": 31.2050801,
       "longitude": 31.85208386,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1220",
@@ -1547,7 +1901,9 @@
       "sourceNameArabic": "قسم جمصة",
       "latitude": 31.43827052,
       "longitude": 31.54940211,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1217",
@@ -1560,7 +1916,9 @@
       "sourceNameArabic": "مركز ميت سلسيل",
       "latitude": 31.23274151,
       "longitude": 31.79171337,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1219",
@@ -1573,7 +1931,9 @@
       "sourceNameArabic": "مركز محلة دمنة",
       "latitude": 31.09033898,
       "longitude": 31.51316083,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1207",
@@ -1586,7 +1946,9 @@
       "sourceNameArabic": "مركز المنزلة",
       "latitude": 31.15254631,
       "longitude": 31.95799841,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1206",
@@ -1599,7 +1961,9 @@
       "sourceNameArabic": "مركز المطرية",
       "latitude": 31.19067391,
       "longitude": 32.00361474,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1214",
@@ -1612,7 +1976,9 @@
       "sourceNameArabic": "مركز منية النصر",
       "latitude": 31.15392702,
       "longitude": 31.70722121,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1212",
@@ -1625,7 +1991,9 @@
       "sourceNameArabic": "قسم ميت غمر",
       "latitude": 30.71307835,
       "longitude": 31.27569267,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1213",
@@ -1638,7 +2006,9 @@
       "sourceNameArabic": "مركز ميت غمر",
       "latitude": 30.70807721,
       "longitude": 31.3379642,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1221",
@@ -1651,7 +2021,9 @@
       "sourceNameArabic": "مركز نبروة",
       "latitude": 31.12856443,
       "longitude": 31.29662112,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1210",
@@ -1664,7 +2036,9 @@
       "sourceNameArabic": "مركز شربين",
       "latitude": 31.26085039,
       "longitude": 31.57615837,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1205",
@@ -1677,7 +2051,9 @@
       "sourceNameArabic": "مركز السنبلاوين",
       "latitude": 30.88268107,
       "longitude": 31.51252093,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1211",
@@ -1690,7 +2066,9 @@
       "sourceNameArabic": "مركز طلخا",
       "latitude": 31.10922123,
       "longitude": 31.38263025,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1216",
@@ -1703,7 +2081,9 @@
       "sourceNameArabic": "مركز تمى الأمديد",
       "latitude": 30.94747203,
       "longitude": 31.59386347,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1102",
@@ -1716,11 +2096,13 @@
       "sourceNameArabic": "مركز دمياط",
       "latitude": 31.44026861,
       "longitude": 31.84205813,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1101",
-      "nameEnglish": "Dumyat 1",
+      "nameEnglish": "Damietta First",
       "nameArabic": "قسم أول دمياط",
       "governorate": "Damietta",
       "governorateArabic": "دمياط",
@@ -1729,11 +2111,15 @@
       "sourceNameArabic": "قسم أول دمياط",
       "latitude": 31.40693084,
       "longitude": 31.8067865,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Dumyat 1"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1109",
-      "nameEnglish": "Dumyat 2",
+      "nameEnglish": "Damietta Second",
       "nameArabic": "قسم ثان دمياط",
       "governorate": "Damietta",
       "governorateArabic": "دمياط",
@@ -1742,11 +2128,15 @@
       "sourceNameArabic": "قسم ثان دمياط",
       "latitude": 31.42505125,
       "longitude": 31.81853983,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Dumyat 2"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1105",
-      "nameEnglish": "Dumyat Al-Gadida",
+      "nameEnglish": "New Damietta",
       "nameArabic": "قسم مدينه دمياط الجديده",
       "governorate": "Damietta",
       "governorateArabic": "دمياط",
@@ -1755,7 +2145,11 @@
       "sourceNameArabic": "قسم مدينه دمياط الجديده",
       "latitude": 31.4388295,
       "longitude": 31.70597401,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Dumyat Al-Gadida"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1103",
@@ -1768,7 +2162,9 @@
       "sourceNameArabic": "مركز فارسكور",
       "latitude": 31.31001882,
       "longitude": 31.73266394,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1104",
@@ -1781,11 +2177,13 @@
       "sourceNameArabic": "مركز كفر سعد",
       "latitude": 31.35882675,
       "longitude": 31.60348925,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1108",
-      "nameEnglish": "Police Department Port of Damietta",
+      "nameEnglish": "Damietta Port",
       "nameArabic": "إداره شرطه ميناء دمياط الجديد",
       "governorate": "Damietta",
       "governorateArabic": "دمياط",
@@ -1794,11 +2192,15 @@
       "sourceNameArabic": "إداره شرطه ميناء دمياط الجديد",
       "latitude": 31.46620728,
       "longitude": 31.77766304,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Police Department Port of Damietta"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1106",
-      "nameEnglish": "Ras al-Bar",
+      "nameEnglish": "Ras El Bar",
       "nameArabic": "قسم رأس البر",
       "governorate": "Damietta",
       "governorateArabic": "دمياط",
@@ -1807,7 +2209,11 @@
       "sourceNameArabic": "قسم رأس البر",
       "latitude": 31.50965685,
       "longitude": 31.83036002,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Ras al-Bar"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1107",
@@ -1820,7 +2226,9 @@
       "sourceNameArabic": "مركز الزرقا",
       "latitude": 31.20883107,
       "longitude": 31.64870902,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2303",
@@ -1833,7 +2241,9 @@
       "sourceNameArabic": "مركز أبشواى",
       "latitude": 29.37436967,
       "longitude": 30.6901011,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2304",
@@ -1846,7 +2256,9 @@
       "sourceNameArabic": "مركز أطسا",
       "latitude": 29.20836002,
       "longitude": 30.7672634,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2301",
@@ -1859,7 +2271,9 @@
       "sourceNameArabic": "قسم الفيوم",
       "latitude": 29.31401376,
       "longitude": 30.83938662,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2302",
@@ -1872,7 +2286,9 @@
       "sourceNameArabic": "مركز الفيوم",
       "latitude": 29.29955188,
       "longitude": 30.95527793,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2308",
@@ -1885,7 +2301,9 @@
       "sourceNameArabic": "مدينة الفيوم الجديدة",
       "latitude": 29.20841854,
       "longitude": 30.88173239,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2305",
@@ -1898,7 +2316,9 @@
       "sourceNameArabic": "مركز سنورس",
       "latitude": 29.4411778,
       "longitude": 30.81504148,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2306",
@@ -1911,7 +2331,9 @@
       "sourceNameArabic": "مركز طامية",
       "latitude": 29.46747524,
       "longitude": 30.98155921,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2307",
@@ -1924,7 +2346,9 @@
       "sourceNameArabic": "مركز يوسف الصديق",
       "latitude": 29.35330534,
       "longitude": 30.58640872,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1608",
@@ -1937,7 +2361,9 @@
       "sourceNameArabic": "مركز بسيون",
       "latitude": 30.95890025,
       "longitude": 30.82706527,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1607",
@@ -1950,7 +2376,9 @@
       "sourceNameArabic": "مركز المحله الكبرى",
       "latitude": 31.01736518,
       "longitude": 31.13037843,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1605",
@@ -1963,7 +2391,9 @@
       "sourceNameArabic": "قسم أول المحلة الكبرى",
       "latitude": 30.97196255,
       "longitude": 31.17185409,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1606",
@@ -1976,7 +2406,9 @@
       "sourceNameArabic": "قسم ثان المحلة الكبرى",
       "latitude": 30.97141115,
       "longitude": 31.15713824,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1612",
@@ -1989,7 +2421,9 @@
       "sourceNameArabic": "مركز كفر الزيات",
       "latitude": 30.80717488,
       "longitude": 30.83528992,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1611",
@@ -2002,7 +2436,9 @@
       "sourceNameArabic": "مركز قطور",
       "latitude": 30.97051801,
       "longitude": 30.97000679,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1610",
@@ -2015,7 +2451,9 @@
       "sourceNameArabic": "مركز سمنود",
       "latitude": 30.95044076,
       "longitude": 31.22131809,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1604",
@@ -2028,7 +2466,9 @@
       "sourceNameArabic": "مركز السنطة",
       "latitude": 30.7731973,
       "longitude": 31.11884209,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1603",
@@ -2041,7 +2481,9 @@
       "sourceNameArabic": "مركز طنطا",
       "latitude": 30.80933518,
       "longitude": 30.93199476,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1601",
@@ -2054,7 +2496,9 @@
       "sourceNameArabic": "قسم أول طنطا",
       "latitude": 30.79538924,
       "longitude": 31.01426405,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1602",
@@ -2067,7 +2511,9 @@
       "sourceNameArabic": "قسم ثان طنطا",
       "latitude": 30.78591773,
       "longitude": 30.98924046,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1609",
@@ -2080,11 +2526,13 @@
       "sourceNameArabic": "مركز زفتى",
       "latitude": 30.72821639,
       "longitude": 31.21530251,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2107",
-      "nameEnglish": "6 October-1",
+      "nameEnglish": "6th of October First",
       "nameArabic": "قسم أول 6 أكتوبر",
       "governorate": "Giza",
       "governorateArabic": "الجيزة",
@@ -2093,11 +2541,19 @@
       "sourceNameArabic": "قسم أول 6 أكتوبر",
       "latitude": 29.98537796,
       "longitude": 30.96284219,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "6 October-1",
+        "6th of October",
+        "6 October",
+        "السادس من أكتوبر",
+        "٦ أكتوبر"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2121",
-      "nameEnglish": "6 October-2",
+      "nameEnglish": "6th of October Second",
       "nameArabic": "قسم ثان 6 أكتوبر",
       "governorate": "Giza",
       "governorateArabic": "الجيزة",
@@ -2106,11 +2562,15 @@
       "sourceNameArabic": "قسم ثان 6 أكتوبر",
       "latitude": 29.94085955,
       "longitude": 30.90785168,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "6 October-2"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2102",
-      "nameEnglish": "Al-Aguza",
+      "nameEnglish": "Agouza",
       "nameArabic": "قسم العجوزة",
       "governorate": "Giza",
       "governorateArabic": "الجيزة",
@@ -2119,11 +2579,15 @@
       "sourceNameArabic": "قسم العجوزة",
       "latitude": 30.05898821,
       "longitude": 31.20432519,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al-Aguza"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2106",
-      "nameEnglish": "Al-Ahram",
+      "nameEnglish": "Haram",
       "nameArabic": "قسم الأهرام",
       "governorate": "Giza",
       "governorateArabic": "الجيزة",
@@ -2132,7 +2596,11 @@
       "sourceNameArabic": "قسم الأهرام",
       "latitude": 29.99021265,
       "longitude": 31.13634936,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al-Ahram"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2115",
@@ -2145,7 +2613,9 @@
       "sourceNameArabic": "مركز أطفيح",
       "latitude": 29.34272016,
       "longitude": 31.25016224,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2116",
@@ -2158,7 +2628,9 @@
       "sourceNameArabic": "مركز أوسيم",
       "latitude": 30.13164718,
       "longitude": 31.14153477,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2112",
@@ -2171,7 +2643,9 @@
       "sourceNameArabic": "مركز العياط",
       "latitude": 29.56420986,
       "longitude": 31.24981162,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2110",
@@ -2184,7 +2658,9 @@
       "sourceNameArabic": "مركز البدرشين",
       "latitude": 29.82365402,
       "longitude": 31.25831466,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2114",
@@ -2197,11 +2673,13 @@
       "sourceNameArabic": "قسم الواحاتالبحرية",
       "latitude": 28.45212855,
       "longitude": 28.8363314,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2105",
-      "nameEnglish": "Bulaq Al-DakrUr",
+      "nameEnglish": "Boulaq El Dakrour",
       "nameArabic": "قسم بولاق الدكرور",
       "governorate": "Giza",
       "governorateArabic": "الجيزة",
@@ -2210,11 +2688,15 @@
       "sourceNameArabic": "قسم بولاق الدكرور",
       "latitude": 30.03027274,
       "longitude": 31.19001934,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Bulaq Al-DakrUr"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2103",
-      "nameEnglish": "DuqqI",
+      "nameEnglish": "Dokki",
       "nameArabic": "قسم الدقي",
       "governorate": "Giza",
       "governorateArabic": "الجيزة",
@@ -2223,7 +2705,11 @@
       "sourceNameArabic": "قسم الدقي",
       "latitude": 30.04242001,
       "longitude": 31.20822266,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "DuqqI"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2104",
@@ -2236,7 +2722,9 @@
       "sourceNameArabic": "قسم الجيزة",
       "latitude": 29.99947746,
       "longitude": 31.21578804,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2109",
@@ -2249,11 +2737,13 @@
       "sourceNameArabic": "مركز الجيزة",
       "latitude": 29.94317591,
       "longitude": 31.2127223,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2108",
-      "nameEnglish": "Hwamdeia",
+      "nameEnglish": "Hawamdeya",
       "nameArabic": "قسم الحوامدية",
       "governorate": "Giza",
       "governorateArabic": "الجيزة",
@@ -2262,7 +2752,11 @@
       "sourceNameArabic": "قسم الحوامدية",
       "latitude": 29.90225318,
       "longitude": 31.25279833,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Hwamdeia"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2101",
@@ -2275,7 +2769,9 @@
       "sourceNameArabic": "قسم امبابه",
       "latitude": 30.08320418,
       "longitude": 31.21038139,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2113",
@@ -2288,7 +2784,9 @@
       "sourceNameArabic": "مركز إمبابة",
       "latitude": 30.21991784,
       "longitude": 30.96274691,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2120",
@@ -2301,7 +2799,9 @@
       "sourceNameArabic": "مركز كرداسة",
       "latitude": 30.05145473,
       "longitude": 31.13449763,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2111",
@@ -2314,11 +2814,13 @@
       "sourceNameArabic": "مركز الصف",
       "latitude": 29.61987812,
       "longitude": 31.30466989,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2119",
-      "nameEnglish": "Shaykh Zayed",
+      "nameEnglish": "Sheikh Zayed",
       "nameArabic": "قسم الشيخ زايد",
       "governorate": "Giza",
       "governorateArabic": "الجيزة",
@@ -2327,11 +2829,16 @@
       "sourceNameArabic": "قسم الشيخ زايد",
       "latitude": 30.04898325,
       "longitude": 30.97796329,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Shaykh Zayed",
+        "Shaykh Zayid"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2118",
-      "nameEnglish": "Umraniyya",
+      "nameEnglish": "Omraniya",
       "nameArabic": "قسم العمرانية",
       "governorate": "Giza",
       "governorateArabic": "الجيزة",
@@ -2340,11 +2847,15 @@
       "sourceNameArabic": "قسم العمرانية",
       "latitude": 29.99289058,
       "longitude": 31.17743212,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Umraniyya"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2117",
-      "nameEnglish": "Waraq",
+      "nameEnglish": "Warraq",
       "nameArabic": "قسم الوراق",
       "governorate": "Giza",
       "governorateArabic": "الجيزة",
@@ -2353,7 +2864,11 @@
       "sourceNameArabic": "قسم الوراق",
       "latitude": 30.09681417,
       "longitude": 31.18925128,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Waraq"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1907",
@@ -2366,7 +2881,9 @@
       "sourceNameArabic": "مركز فايد",
       "latitude": 30.3662741,
       "longitude": 32.29183219,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1904",
@@ -2379,7 +2896,9 @@
       "sourceNameArabic": "مركز الاسماعيلية",
       "latitude": 30.426153,
       "longitude": 32.18334162,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1901",
@@ -2392,7 +2911,9 @@
       "sourceNameArabic": "قسم أول الاسماعيلية",
       "latitude": 30.60632882,
       "longitude": 32.31093867,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1902",
@@ -2405,7 +2926,9 @@
       "sourceNameArabic": "قسم ثان الاسماعيلية",
       "latitude": 30.61370149,
       "longitude": 32.26034467,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1903",
@@ -2418,7 +2941,9 @@
       "sourceNameArabic": "قسم ثالث الاسماعيلية",
       "latitude": 30.61219109,
       "longitude": 32.29104384,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1906",
@@ -2431,7 +2956,9 @@
       "sourceNameArabic": "مركز القنطرة",
       "latitude": 30.74175591,
       "longitude": 32.24461716,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1908",
@@ -2444,7 +2971,9 @@
       "sourceNameArabic": "قسم القنطرة شرق",
       "latitude": 30.6032662,
       "longitude": 32.55016812,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1905",
@@ -2457,7 +2986,9 @@
       "sourceNameArabic": "مركز التل الكبير",
       "latitude": 30.41816391,
       "longitude": 31.93259278,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1511",
@@ -2470,7 +3001,9 @@
       "sourceNameArabic": "مركز الحامول",
       "latitude": 31.38751518,
       "longitude": 31.07532809,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1504",
@@ -2483,7 +3016,9 @@
       "sourceNameArabic": "مركز بيلا",
       "latitude": 31.31950135,
       "longitude": 31.24784686,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1503",
@@ -2496,7 +3031,9 @@
       "sourceNameArabic": "مركز البرلس",
       "latitude": 31.52141084,
       "longitude": 31.27331411,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1505",
@@ -2509,7 +3046,9 @@
       "sourceNameArabic": "قسم دسوق",
       "latitude": 31.14512059,
       "longitude": 30.6488964,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1506",
@@ -2522,7 +3061,9 @@
       "sourceNameArabic": "مركز دسوق",
       "latitude": 31.14955054,
       "longitude": 30.71983865,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1508",
@@ -2535,7 +3076,9 @@
       "sourceNameArabic": "مركز فوه",
       "latitude": 31.23200186,
       "longitude": 30.56374053,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1501",
@@ -2548,7 +3091,9 @@
       "sourceNameArabic": "قسم كفر الشيخ",
       "latitude": 31.11904642,
       "longitude": 30.94145981,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1502",
@@ -2561,7 +3106,9 @@
       "sourceNameArabic": "مركز كفر الشيخ",
       "latitude": 31.20020562,
       "longitude": 31.01608635,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1510",
@@ -2574,7 +3121,9 @@
       "sourceNameArabic": "مركز مطوبس",
       "latitude": 31.38291427,
       "longitude": 30.46992412,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1509",
@@ -2587,7 +3136,9 @@
       "sourceNameArabic": "مركز قلين",
       "latitude": 31.08528534,
       "longitude": 30.81732339,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1512",
@@ -2600,7 +3151,9 @@
       "sourceNameArabic": "مركز الرياض",
       "latitude": 31.32066801,
       "longitude": 30.9203609,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1507",
@@ -2613,11 +3166,13 @@
       "sourceNameArabic": "مركز سيدى سالم",
       "latitude": 31.31017868,
       "longitude": 30.7381405,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1413",
-      "nameEnglish": "Abour",
+      "nameEnglish": "Obour",
       "nameArabic": "قسم العبور",
       "governorate": "Kalyoubia",
       "governorateArabic": "القليوبية",
@@ -2626,11 +3181,16 @@
       "sourceNameArabic": "قسم العبور",
       "latitude": 30.2247542,
       "longitude": 31.44741533,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Abour",
+        "El Obour"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1403",
-      "nameEnglish": "Al Khanka",
+      "nameEnglish": "Khanka (Markaz)",
       "nameArabic": "مركز الخانكة",
       "governorate": "Kalyoubia",
       "governorateArabic": "القليوبية",
@@ -2639,7 +3199,11 @@
       "sourceNameArabic": "مركز الخانكة",
       "latitude": 30.2305157,
       "longitude": 31.35785285,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al Khanka"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1401",
@@ -2652,7 +3216,9 @@
       "sourceNameArabic": "قسم بنها",
       "latitude": 30.46596668,
       "longitude": 31.19022124,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1402",
@@ -2665,7 +3231,9 @@
       "sourceNameArabic": "مركز بنها",
       "latitude": 30.44266145,
       "longitude": 31.24795153,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1411",
@@ -2678,11 +3246,13 @@
       "sourceNameArabic": "مركز كفر شكر",
       "latitude": 30.55438914,
       "longitude": 31.27473127,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1412",
-      "nameEnglish": "Khsos",
+      "nameEnglish": "Khosous",
       "nameArabic": "قسم الخصوص",
       "governorate": "Kalyoubia",
       "governorateArabic": "القليوبية",
@@ -2691,7 +3261,11 @@
       "sourceNameArabic": "قسم الخصوص",
       "latitude": 30.15722177,
       "longitude": 31.31759461,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Khsos"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1414",
@@ -2704,7 +3278,9 @@
       "sourceNameArabic": "قسم قها",
       "latitude": 30.29328335,
       "longitude": 31.21514451,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1409",
@@ -2717,7 +3293,9 @@
       "sourceNameArabic": "قسم قليوب",
       "latitude": 30.17996823,
       "longitude": 31.21582683,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1410",
@@ -2730,7 +3308,9 @@
       "sourceNameArabic": "مركز قليوب",
       "latitude": 30.20700621,
       "longitude": 31.21418507,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1404",
@@ -2743,7 +3323,9 @@
       "sourceNameArabic": "مركز القناطر الخيرية",
       "latitude": 30.21394069,
       "longitude": 31.13514612,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1405",
@@ -2756,11 +3338,13 @@
       "sourceNameArabic": "مركز شبين القناطر",
       "latitude": 30.29617095,
       "longitude": 31.30693566,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1406",
-      "nameEnglish": "Shubra Al-Khayma 1",
+      "nameEnglish": "Shubra El Kheima First",
       "nameArabic": "قسم أول شبرا الخيمة",
       "governorate": "Kalyoubia",
       "governorateArabic": "القليوبية",
@@ -2769,11 +3353,15 @@
       "sourceNameArabic": "قسم أول شبرا الخيمة",
       "latitude": 30.13167686,
       "longitude": 31.24833347,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Shubra Al-Khayma 1"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1407",
-      "nameEnglish": "Shubra Al-Khayma 2",
+      "nameEnglish": "Shubra El Kheima Second",
       "nameArabic": "قسم ثان شبرا الخيمة",
       "governorate": "Kalyoubia",
       "governorateArabic": "القليوبية",
@@ -2782,7 +3370,11 @@
       "sourceNameArabic": "قسم ثان شبرا الخيمة",
       "latitude": 30.1353485,
       "longitude": 31.28518332,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Shubra Al-Khayma 2"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1408",
@@ -2795,7 +3387,9 @@
       "sourceNameArabic": "مركز طوخ",
       "latitude": 30.34420517,
       "longitude": 31.19026312,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2901",
@@ -2808,7 +3402,9 @@
       "sourceNameArabic": "قسم الأقصر",
       "latitude": 25.70712487,
       "longitude": 32.66983615,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2902",
@@ -2821,7 +3417,9 @@
       "sourceNameArabic": "مركز الأقصر",
       "latitude": 25.68451075,
       "longitude": 32.58841652,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2903",
@@ -2834,7 +3432,9 @@
       "sourceNameArabic": "مركز شرطة طيبة",
       "latitude": 25.73796448,
       "longitude": 32.70311162,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3302",
@@ -2847,7 +3447,9 @@
       "sourceNameArabic": "قسم الحمام",
       "latitude": 29.80359105,
       "longitude": 29.41793162,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3307",
@@ -2860,7 +3462,9 @@
       "sourceNameArabic": "قسم مارينا العلمين السياحية",
       "latitude": 30.78217952,
       "longitude": 28.74008581,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3304",
@@ -2873,7 +3477,9 @@
       "sourceNameArabic": "مركز الضبعة",
       "latitude": 29.46332504,
       "longitude": 28.24286276,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3301",
@@ -2886,7 +3492,9 @@
       "sourceNameArabic": "قسم مرسى مطروح",
       "latitude": 30.02195299,
       "longitude": 26.9968074,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3308",
@@ -2899,7 +3507,9 @@
       "sourceNameArabic": "قسم الساحل الشمالى-جزء",
       "latitude": 30.86117024,
       "longitude": 29.28124252,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3303",
@@ -2912,7 +3522,9 @@
       "sourceNameArabic": "قسم السلوم",
       "latitude": 30.64589389,
       "longitude": 25.25463704,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3305",
@@ -2925,7 +3537,9 @@
       "sourceNameArabic": "قسم سيدى برانى",
       "latitude": 30.65597293,
       "longitude": 25.88590735,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3306",
@@ -2938,7 +3552,9 @@
       "sourceNameArabic": "مركز سيوة",
       "latitude": 28.70317815,
       "longitude": 25.58938909,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2401",
@@ -2951,7 +3567,9 @@
       "sourceNameArabic": "قسم المنيا",
       "latitude": 28.09527375,
       "longitude": 30.74419416,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2411",
@@ -2964,7 +3582,9 @@
       "sourceNameArabic": "قسم ملوى",
       "latitude": 27.72910737,
       "longitude": 30.83748521,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2404",
@@ -2977,7 +3597,9 @@
       "sourceNameArabic": "مركز ابو قرقاص",
       "latitude": 27.93914736,
       "longitude": 30.77022197,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2405",
@@ -2990,7 +3612,9 @@
       "sourceNameArabic": "مركز العدوة",
       "latitude": 28.69620249,
       "longitude": 30.73951973,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2402",
@@ -3003,7 +3627,9 @@
       "sourceNameArabic": "مركز المنيا",
       "latitude": 28.10116262,
       "longitude": 30.64066534,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2406",
@@ -3016,7 +3642,9 @@
       "sourceNameArabic": "مركز بنى مزار",
       "latitude": 28.5182766,
       "longitude": 30.73107663,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2407",
@@ -3029,7 +3657,9 @@
       "sourceNameArabic": "مركز دير مواس",
       "latitude": 27.65467926,
       "longitude": 30.79032735,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2410",
@@ -3042,7 +3672,9 @@
       "sourceNameArabic": "مركز مغاغة",
       "latitude": 28.64055663,
       "longitude": 30.79439037,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2412",
@@ -3055,7 +3687,9 @@
       "sourceNameArabic": "مركز ملوى",
       "latitude": 27.77487173,
       "longitude": 30.80124845,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2409",
@@ -3068,7 +3702,9 @@
       "sourceNameArabic": "مركز مطاى",
       "latitude": 28.43094573,
       "longitude": 30.70975153,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2408",
@@ -3081,7 +3717,9 @@
       "sourceNameArabic": "مركز سمالوط",
       "latitude": 28.28469014,
       "longitude": 30.62940087,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2403",
@@ -3094,7 +3732,9 @@
       "sourceNameArabic": "مدينة المنيا الجديدة",
       "latitude": 28.1096466,
       "longitude": 30.78831856,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1704",
@@ -3107,7 +3747,9 @@
       "sourceNameArabic": "مركز الباجور",
       "latitude": 30.41270032,
       "longitude": 31.03249615,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1705",
@@ -3120,7 +3762,9 @@
       "sourceNameArabic": "مركز الشهداء",
       "latitude": 30.6010708,
       "longitude": 30.86987038,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1703",
@@ -3133,7 +3777,9 @@
       "sourceNameArabic": "مركز أشمون",
       "latitude": 30.29921495,
       "longitude": 31.00832635,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1706",
@@ -3146,7 +3792,9 @@
       "sourceNameArabic": "مركز بركة السبع",
       "latitude": 30.65129905,
       "longitude": 31.10814076,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1709",
@@ -3159,7 +3807,9 @@
       "sourceNameArabic": "مركز منوف",
       "latitude": 30.45966842,
       "longitude": 30.88098696,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1712",
@@ -3172,7 +3822,9 @@
       "sourceNameArabic": "قسم مدينة منوف",
       "latitude": 30.46226008,
       "longitude": 30.93088878,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1708",
@@ -3185,7 +3837,9 @@
       "sourceNameArabic": "مركز قويسنا",
       "latitude": 30.55963564,
       "longitude": 31.16323531,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1711",
@@ -3198,7 +3852,9 @@
       "sourceNameArabic": "مركز السادات",
       "latitude": 30.35845668,
       "longitude": 30.66134829,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1701",
@@ -3211,7 +3867,9 @@
       "sourceNameArabic": "قسم شبين الكوم",
       "latitude": 30.5558006,
       "longitude": 30.9998989,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1702",
@@ -3224,7 +3882,9 @@
       "sourceNameArabic": "مركز شبين الكوم",
       "latitude": 30.56063632,
       "longitude": 30.95365356,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1710",
@@ -3237,7 +3897,9 @@
       "sourceNameArabic": "قسم مدينة سرس الليانة",
       "latitude": 30.44466302,
       "longitude": 30.9687411,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1707",
@@ -3250,7 +3912,9 @@
       "sourceNameArabic": "مركز تلا",
       "latitude": 30.66992925,
       "longitude": 30.94572975,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3202",
@@ -3263,7 +3927,9 @@
       "sourceNameArabic": "مركز الوحات الداخلة",
       "latitude": 24.8028831,
       "longitude": 27.20862683,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3203",
@@ -3276,7 +3942,9 @@
       "sourceNameArabic": "مركز الفرافرة",
       "latitude": 27.20514434,
       "longitude": 26.760442,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3201",
@@ -3289,7 +3957,9 @@
       "sourceNameArabic": "مركز الواحات الخارجة",
       "latitude": 24.96398407,
       "longitude": 31.01345352,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3204",
@@ -3302,7 +3972,9 @@
       "sourceNameArabic": "مركز باريس",
       "latitude": 22.7365943,
       "longitude": 30.41184044,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3406",
@@ -3315,7 +3987,9 @@
       "sourceNameArabic": "قسم الحسنة",
       "latitude": 30.28825262,
       "longitude": 33.54224018,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3405",
@@ -3328,7 +4002,9 @@
       "sourceNameArabic": "قسم بئر العبد",
       "latitude": 30.69012049,
       "longitude": 33.10158503,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3401",
@@ -3341,7 +4017,9 @@
       "sourceNameArabic": "قسم أول العريش",
       "latitude": 31.11980133,
       "longitude": 33.82429875,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3402",
@@ -3354,7 +4032,9 @@
       "sourceNameArabic": "قسم ثان العريش",
       "latitude": 31.09021853,
       "longitude": 33.75084223,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3403",
@@ -3367,7 +4047,9 @@
       "sourceNameArabic": "قسم ثالث العريش",
       "latitude": 30.99502225,
       "longitude": 33.77663353,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3404",
@@ -3380,7 +4062,9 @@
       "sourceNameArabic": "قسم رابع العريش",
       "latitude": 30.85120336,
       "longitude": 33.59570642,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3407",
@@ -3393,7 +4077,9 @@
       "sourceNameArabic": "قسم نخل",
       "latitude": 29.90919106,
       "longitude": 34.02429967,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3411",
@@ -3406,7 +4092,9 @@
       "sourceNameArabic": "قسم القسيمة",
       "latitude": 30.46355984,
       "longitude": 34.30095759,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3409",
@@ -3419,7 +4107,9 @@
       "sourceNameArabic": "قسم رفح",
       "latitude": 31.08660233,
       "longitude": 34.22684661,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3410",
@@ -3432,7 +4122,9 @@
       "sourceNameArabic": "قسم رمانة",
       "latitude": 30.95660446,
       "longitude": 32.69869741,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3408",
@@ -3445,11 +4137,13 @@
       "sourceNameArabic": "قسم الشيخ زويد",
       "latitude": 30.91792378,
       "longitude": 33.97086931,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0302",
-      "nameEnglish": "Al-Arab",
+      "nameEnglish": "Arab",
       "nameArabic": "قسم العرب",
       "governorate": "Port Said",
       "governorateArabic": "بورسعيد",
@@ -3458,11 +4152,15 @@
       "sourceNameArabic": "قسم العرب",
       "latitude": 31.26190402,
       "longitude": 32.29399453,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al-Arab"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0305",
-      "nameEnglish": "Al-Dawahy",
+      "nameEnglish": "Dawahy",
       "nameArabic": "قسم الضواحى",
       "governorate": "Port Said",
       "governorateArabic": "بورسعيد",
@@ -3471,11 +4169,15 @@
       "sourceNameArabic": "قسم الضواحى",
       "latitude": 31.24625424,
       "longitude": 32.27951804,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al-Dawahy"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0306",
-      "nameEnglish": "Al-Ganoub",
+      "nameEnglish": "Ganoub First",
       "nameArabic": "قسم الجنوب",
       "governorate": "Port Said",
       "governorateArabic": "بورسعيد",
@@ -3484,11 +4186,15 @@
       "sourceNameArabic": "قسم الجنوب",
       "latitude": 31.14080705,
       "longitude": 32.29136884,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al-Ganoub"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0311",
-      "nameEnglish": "Al-Ganoub 2",
+      "nameEnglish": "Ganoub Second",
       "nameArabic": "قسم ثان الجنوب",
       "governorate": "Port Said",
       "governorateArabic": "بورسعيد",
@@ -3497,11 +4203,15 @@
       "sourceNameArabic": "قسم ثان الجنوب",
       "latitude": 30.99327443,
       "longitude": 32.25397259,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al-Ganoub 2"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0310",
-      "nameEnglish": "Al-Manasra",
+      "nameEnglish": "Manasra",
       "nameArabic": "قسم المناصرة",
       "governorate": "Port Said",
       "governorateArabic": "بورسعيد",
@@ -3510,11 +4220,15 @@
       "sourceNameArabic": "قسم المناصرة",
       "latitude": 31.2371881,
       "longitude": 32.17303588,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al-Manasra"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0303",
-      "nameEnglish": "Al-Munakh",
+      "nameEnglish": "Manakh",
       "nameArabic": "قسم المناخ",
       "governorate": "Port Said",
       "governorateArabic": "بورسعيد",
@@ -3523,11 +4237,15 @@
       "sourceNameArabic": "قسم المناخ",
       "latitude": 31.26496764,
       "longitude": 32.28727198,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al-Munakh"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0301",
-      "nameEnglish": "Al-Sharq",
+      "nameEnglish": "Sharq",
       "nameArabic": "قسم الشرق",
       "governorate": "Port Said",
       "governorateArabic": "بورسعيد",
@@ -3536,11 +4254,15 @@
       "sourceNameArabic": "قسم الشرق",
       "latitude": 31.26312596,
       "longitude": 32.30730045,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al-Sharq"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0307",
-      "nameEnglish": "Al-Zohour",
+      "nameEnglish": "Zohour",
       "nameArabic": "قسم الزهور",
       "governorate": "Port Said",
       "governorateArabic": "بورسعيد",
@@ -3549,11 +4271,15 @@
       "sourceNameArabic": "قسم الزهور",
       "latitude": 31.26572572,
       "longitude": 32.26583991,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Al-Zohour"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0309",
-      "nameEnglish": "Mubark-Sharq Tafrea",
+      "nameEnglish": "East Port Said",
       "nameArabic": "قسم مبارك - شرق التفريعة",
       "governorate": "Port Said",
       "governorateArabic": "بورسعيد",
@@ -3562,11 +4288,17 @@
       "sourceNameArabic": "قسم مبارك - شرق التفريعة",
       "latitude": 31.06697658,
       "longitude": 32.4299708,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Mubark-Sharq Tafrea",
+        "Sharq El Tafreea",
+        "شرق التفريعة"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0312",
-      "nameEnglish": "Police Department Port Said Port",
+      "nameEnglish": "Port Said Port",
       "nameArabic": "إدارة شرطة ميناء بورسعيد",
       "governorate": "Port Said",
       "governorateArabic": "بورسعيد",
@@ -3575,7 +4307,11 @@
       "sourceNameArabic": "إدارة شرطة ميناء بورسعيد",
       "latitude": 31.25422354,
       "longitude": 32.30113498,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Police Department Port Said Port"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0304",
@@ -3588,11 +4324,13 @@
       "sourceNameArabic": "قسم بور فؤاد",
       "latitude": 31.23554228,
       "longitude": 32.33039249,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0308",
-      "nameEnglish": "Port Fuad 2",
+      "nameEnglish": "Port Fuad Second",
       "nameArabic": "قسم ثان بور فؤاد",
       "governorate": "Port Said",
       "governorateArabic": "بورسعيد",
@@ -3601,7 +4339,11 @@
       "sourceNameArabic": "قسم ثان بور فؤاد",
       "latitude": 31.16965408,
       "longitude": 32.31776337,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "Port Fuad 2"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2703",
@@ -3614,7 +4356,9 @@
       "sourceNameArabic": "مركز أبو طشت",
       "latitude": 26.12960513,
       "longitude": 32.08623048,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2712",
@@ -3627,7 +4371,9 @@
       "sourceNameArabic": "مركز الوقف",
       "latitude": 26.08438526,
       "longitude": 32.44842794,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2704",
@@ -3640,7 +4386,9 @@
       "sourceNameArabic": "مركز أرمنت",
       "latitude": 25.61169659,
       "longitude": 32.49194383,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2706",
@@ -3653,7 +4401,9 @@
       "sourceNameArabic": "مركز دشنا",
       "latitude": 26.1418727,
       "longitude": 32.44377681,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2710",
@@ -3666,7 +4416,9 @@
       "sourceNameArabic": "مركز فرشوط",
       "latitude": 26.05612702,
       "longitude": 32.14948086,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2705",
@@ -3679,7 +4431,9 @@
       "sourceNameArabic": "مركز إسنا",
       "latitude": 25.36493051,
       "longitude": 32.51970635,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2708",
@@ -3692,7 +4446,9 @@
       "sourceNameArabic": "مركز نجع حمادى",
       "latitude": 26.08523775,
       "longitude": 32.29716135,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2709",
@@ -3705,7 +4461,9 @@
       "sourceNameArabic": "مركز نقادة",
       "latitude": 25.89031902,
       "longitude": 32.71056368,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2711",
@@ -3718,7 +4476,9 @@
       "sourceNameArabic": "مركز قفط",
       "latitude": 25.99770195,
       "longitude": 32.82685988,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2701",
@@ -3731,7 +4491,9 @@
       "sourceNameArabic": "قسم قنا",
       "latitude": 26.16511094,
       "longitude": 32.71237614,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2702",
@@ -3744,7 +4506,9 @@
       "sourceNameArabic": "مركز قنا",
       "latitude": 26.16256926,
       "longitude": 32.57770419,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2713",
@@ -3757,7 +4521,9 @@
       "sourceNameArabic": "مدينة قنا الجديدة",
       "latitude": 26.17337732,
       "longitude": 32.76121499,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2707",
@@ -3770,7 +4536,9 @@
       "sourceNameArabic": "مركز قوص",
       "latitude": 25.85692151,
       "longitude": 32.78881056,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3107",
@@ -3783,7 +4551,9 @@
       "sourceNameArabic": "قسم حلايب",
       "latitude": 22.38566907,
       "longitude": 35.99967792,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3101",
@@ -3796,7 +4566,9 @@
       "sourceNameArabic": "قسم أول الغردقة",
       "latitude": 27.12888189,
       "longitude": 33.24391464,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3108",
@@ -3809,7 +4581,9 @@
       "sourceNameArabic": "قسم ثان الغردقة",
       "latitude": 27.74455516,
       "longitude": 33.08031549,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3104",
@@ -3822,7 +4596,9 @@
       "sourceNameArabic": "قسم مرسى علم",
       "latitude": 24.70693152,
       "longitude": 34.28558673,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3102",
@@ -3835,7 +4611,9 @@
       "sourceNameArabic": "قسم القصير",
       "latitude": 25.95669031,
       "longitude": 33.95052207,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3105",
@@ -3848,7 +4626,9 @@
       "sourceNameArabic": "قسم رأس غارب",
       "latitude": 28.50629722,
       "longitude": 32.37696766,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3103",
@@ -3861,7 +4641,9 @@
       "sourceNameArabic": "قسم سفاجا",
       "latitude": 26.73173007,
       "longitude": 33.46049466,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3106",
@@ -3874,11 +4656,13 @@
       "sourceNameArabic": "قسم شلاتين",
       "latitude": 23.07920343,
       "longitude": 34.57402392,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1309",
-      "nameEnglish": "10 Ramadan 1",
+      "nameEnglish": "10th of Ramadan First",
       "nameArabic": "قسم اول مدينة العاشر من رمضان",
       "governorate": "Sharkia",
       "governorateArabic": "الشرقية",
@@ -3887,11 +4671,15 @@
       "sourceNameArabic": "قسم اول مدينة العاشر من رمضان",
       "latitude": 30.22236909,
       "longitude": 31.73215378,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "10 Ramadan 1"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1321",
-      "nameEnglish": "10 Ramadan 2",
+      "nameEnglish": "10th of Ramadan Second",
       "nameArabic": "قسم ثان مدينه العاشر من رمضان",
       "governorate": "Sharkia",
       "governorateArabic": "الشرقية",
@@ -3900,7 +4688,11 @@
       "sourceNameArabic": "قسم ثان مدينه العاشر من رمضان",
       "latitude": 30.23834882,
       "longitude": 31.70035281,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [
+        "10 Ramadan 2"
+      ],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1304",
@@ -3913,7 +4705,9 @@
       "sourceNameArabic": "مركز أبو حماد",
       "latitude": 30.54330839,
       "longitude": 31.64926762,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1305",
@@ -3926,7 +4720,9 @@
       "sourceNameArabic": "مركز أبوكبير",
       "latitude": 30.73261252,
       "longitude": 31.68961004,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1306",
@@ -3939,7 +4735,9 @@
       "sourceNameArabic": "مركز الحسينية",
       "latitude": 30.92374249,
       "longitude": 32.00605382,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1318",
@@ -3952,7 +4750,9 @@
       "sourceNameArabic": "قسم القنايات",
       "latitude": 30.63453854,
       "longitude": 31.47070362,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1307",
@@ -3965,7 +4765,9 @@
       "sourceNameArabic": "قسم الصالحية الجديدة",
       "latitude": 30.6342612,
       "longitude": 32.00562576,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1319",
@@ -3978,7 +4780,9 @@
       "sourceNameArabic": "مركز أولاد صقر",
       "latitude": 30.96934711,
       "longitude": 31.77694782,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1308",
@@ -3991,7 +4795,9 @@
       "sourceNameArabic": "مركز بلبيس",
       "latitude": 30.40752612,
       "longitude": 31.53105184,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1310",
@@ -4004,7 +4810,9 @@
       "sourceNameArabic": "مركز ديرب نجم",
       "latitude": 30.75237143,
       "longitude": 31.44388852,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1317",
@@ -4017,7 +4825,9 @@
       "sourceNameArabic": "مركز الأبراهيمية",
       "latitude": 30.73152491,
       "longitude": 31.56419628,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1311",
@@ -4030,7 +4840,9 @@
       "sourceNameArabic": "قسم فاقوس",
       "latitude": 30.723424,
       "longitude": 31.79814098,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1312",
@@ -4043,7 +4855,9 @@
       "sourceNameArabic": "مركز فاقوس",
       "latitude": 30.74926057,
       "longitude": 31.89614087,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1315",
@@ -4056,7 +4870,9 @@
       "sourceNameArabic": "مركز ههيا",
       "latitude": 30.65180036,
       "longitude": 31.61700284,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1313",
@@ -4069,7 +4885,9 @@
       "sourceNameArabic": "مركز كفر صقر",
       "latitude": 30.83665106,
       "longitude": 31.67463945,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1316",
@@ -4082,7 +4900,9 @@
       "sourceNameArabic": "مركز مشتول السوق",
       "latitude": 30.36115174,
       "longitude": 31.38337887,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1314",
@@ -4095,7 +4915,9 @@
       "sourceNameArabic": "مركز منيا القمح",
       "latitude": 30.5073467,
       "longitude": 31.36907011,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1320",
@@ -4108,7 +4930,9 @@
       "sourceNameArabic": "قسم القرين",
       "latitude": 30.61051284,
       "longitude": 31.74239719,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1303",
@@ -4121,7 +4945,9 @@
       "sourceNameArabic": "مركز الزقازيق",
       "latitude": 30.58709729,
       "longitude": 31.58133673,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1301",
@@ -4134,7 +4960,9 @@
       "sourceNameArabic": "قسم اول الزقازيق",
       "latitude": 30.58474231,
       "longitude": 31.51332071,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG1302",
@@ -4147,7 +4975,9 @@
       "sourceNameArabic": "قسم ثان الزقازيق",
       "latitude": 30.60082188,
       "longitude": 31.51900829,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3503",
@@ -4160,7 +4990,9 @@
       "sourceNameArabic": "قسم أبو رديس",
       "latitude": 29.04939859,
       "longitude": 33.59781529,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3501",
@@ -4173,7 +5005,9 @@
       "sourceNameArabic": "قسم الطور",
       "latitude": 28.36472811,
       "longitude": 33.75327612,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3506",
@@ -4186,7 +5020,9 @@
       "sourceNameArabic": "قسم دهب",
       "latitude": 28.73029145,
       "longitude": 34.45078662,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3507",
@@ -4199,7 +5035,9 @@
       "sourceNameArabic": "قسم نويبع",
       "latitude": 29.3137184,
       "longitude": 34.311738,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3502",
@@ -4212,7 +5050,9 @@
       "sourceNameArabic": "قسم رأس سدر",
       "latitude": 29.59933439,
       "longitude": 33.31744279,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3504",
@@ -4225,7 +5065,9 @@
       "sourceNameArabic": "قسم سانت كاترين",
       "latitude": 28.65972175,
       "longitude": 34.05176215,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3505",
@@ -4238,7 +5080,9 @@
       "sourceNameArabic": "قسم شرم الشيخ",
       "latitude": 28.07987961,
       "longitude": 34.20279752,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG3508",
@@ -4251,7 +5095,9 @@
       "sourceNameArabic": "قسم طابا",
       "latitude": 29.5007464,
       "longitude": 34.84014165,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0402",
@@ -4264,7 +5110,9 @@
       "sourceNameArabic": "قسم الأربعين",
       "latitude": 29.98007116,
       "longitude": 32.5356173,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0405",
@@ -4277,7 +5125,9 @@
       "sourceNameArabic": "قسم الجناين",
       "latitude": 30.06291036,
       "longitude": 32.70256254,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0403",
@@ -4290,7 +5140,9 @@
       "sourceNameArabic": "قسم عتاقة",
       "latitude": 29.53854369,
       "longitude": 32.12799945,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0404",
@@ -4303,7 +5155,9 @@
       "sourceNameArabic": "قسم فيصل",
       "latitude": 30.11799049,
       "longitude": 32.18073587,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0406",
@@ -4316,7 +5170,9 @@
       "sourceNameArabic": "إدارة شرطة ميناء السويس",
       "latitude": 29.88153033,
       "longitude": 32.61861637,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG0401",
@@ -4329,7 +5185,9 @@
       "sourceNameArabic": "قسم السويس",
       "latitude": 29.96128978,
       "longitude": 32.56934356,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2604",
@@ -4342,7 +5200,9 @@
       "sourceNameArabic": "مركز أخميم",
       "latitude": 26.55082882,
       "longitude": 31.71479748,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2618",
@@ -4355,7 +5215,9 @@
       "sourceNameArabic": "مدينة أخميم الجديدة",
       "latitude": 26.5237523,
       "longitude": 31.86515734,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2617",
@@ -4368,7 +5230,9 @@
       "sourceNameArabic": "مركز العسيرات",
       "latitude": 26.40081976,
       "longitude": 31.81481154,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2605",
@@ -4381,7 +5245,9 @@
       "sourceNameArabic": "مركز البلينا",
       "latitude": 26.24100362,
       "longitude": 31.94429481,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2606",
@@ -4394,7 +5260,9 @@
       "sourceNameArabic": "مركز المراغة",
       "latitude": 26.66877557,
       "longitude": 31.5877047,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2607",
@@ -4407,7 +5275,9 @@
       "sourceNameArabic": "مركز المنشأة",
       "latitude": 26.46418529,
       "longitude": 31.75577529,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2608",
@@ -4420,7 +5290,9 @@
       "sourceNameArabic": "مركز دار السلام",
       "latitude": 26.27369111,
       "longitude": 32.0434416,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2609",
@@ -4433,7 +5305,9 @@
       "sourceNameArabic": "قسم جرجا",
       "latitude": 26.34816214,
       "longitude": 31.88824813,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2610",
@@ -4446,7 +5320,9 @@
       "sourceNameArabic": "مركز جرجا",
       "latitude": 26.30675013,
       "longitude": 31.86679545,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2611",
@@ -4459,7 +5335,9 @@
       "sourceNameArabic": "مركز جهينة الغربية",
       "latitude": 26.68868333,
       "longitude": 31.47052858,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2616",
@@ -4472,7 +5350,9 @@
       "sourceNameArabic": "قسم الكوثر",
       "latitude": 26.55546637,
       "longitude": 31.7222803,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2615",
@@ -4485,7 +5365,9 @@
       "sourceNameArabic": "قسم طهطا",
       "latitude": 26.76651598,
       "longitude": 31.49206358,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2612",
@@ -4498,7 +5380,9 @@
       "sourceNameArabic": "مركز ساقلته",
       "latitude": 26.69188694,
       "longitude": 31.66332449,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2601",
@@ -4511,7 +5395,9 @@
       "sourceNameArabic": "قسم اول سوهاج",
       "latitude": 26.54652854,
       "longitude": 31.69339527,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2603",
@@ -4524,7 +5410,9 @@
       "sourceNameArabic": "مركز سوهاج",
       "latitude": 26.54703415,
       "longitude": 31.65484961,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2619",
@@ -4537,7 +5425,9 @@
       "sourceNameArabic": "مدينة سوهاج الجديدة",
       "latitude": 26.48498272,
       "longitude": 31.64907251,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2602",
@@ -4550,7 +5440,9 @@
       "sourceNameArabic": "قسم ثان سوهاج",
       "latitude": 26.54325012,
       "longitude": 31.70270266,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2614",
@@ -4563,7 +5455,9 @@
       "sourceNameArabic": "مركز طهطا",
       "latitude": 26.7853952,
       "longitude": 31.42007428,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     },
     {
       "sourceCode": "EG2613",
@@ -4576,7 +5470,9 @@
       "sourceNameArabic": "مركز طما",
       "latitude": 26.87352625,
       "longitude": 31.42171759,
-      "status": "OFFICIAL"
+      "status": "OFFICIAL",
+      "aliases": [],
+      "districtSourceCode": null
     }
   ]
 }

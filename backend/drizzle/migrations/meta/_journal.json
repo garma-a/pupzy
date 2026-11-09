@@ -456,6 +456,20 @@
       "when": 1792260800004,
       "tag": "0064_users_age_confirmed_at",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1792260801004,
+      "tag": "0065_add_city_neighbourhood_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1794255232793,
+      "tag": "0066_release_city_catalog",
+      "breakpoints": true
     }
   ]
 }

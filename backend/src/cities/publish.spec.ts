@@ -10,7 +10,7 @@ import {
   SimulatedProcessInterruption,
   type FaultInjectionHook,
 } from './publish';
-import { getOfficialCatalog, type CitySnapshot, type CityCatalog } from './catalog';
+import { transformCatalog, loadRawSnapshot, type CitySnapshot, type CityCatalog } from './catalog';
 
 describe('Atomic Append-Only City Release Publication & History Reconciliation', () => {
   let tempBaseDir: string;
@@ -20,7 +20,8 @@ describe('Atomic Append-Only City Release Publication & History Reconciliation',
   let catalogPath: string;
   let snapshotPath: string;
 
-  const baseCatalog = getOfficialCatalog();
+  // Immutable ADM2 fixture for publisher recovery tests; combined releases are covered separately.
+  const baseCatalog = transformCatalog(loadRawSnapshot()).records;
 
   const createMockSnapshot = (
     records: any[],

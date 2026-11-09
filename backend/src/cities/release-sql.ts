@@ -18,7 +18,7 @@ export function generateCityUpsertSql(record: CityCatalogRecord, indent = '  '):
   const dbValues = mapCatalogRecordToDbValues(record);
   return (
     `${indent}INSERT INTO cities (` +
-    `source_code, name_english, name_arabic, governorate, source_name_english, source_name_arabic, status, center_point` +
+    `source_code, name_english, name_arabic, governorate, source_name_english, source_name_arabic, status, center_point, aliases, district_id` +
     `) VALUES (` +
     `'${escapeSqlString(dbValues.sourceCode)}', ` +
     `'${escapeSqlString(dbValues.nameEnglish)}', ` +
@@ -27,7 +27,11 @@ export function generateCityUpsertSql(record: CityCatalogRecord, indent = '  '):
     `'${escapeSqlString(dbValues.sourceNameEnglish)}', ` +
     `'${escapeSqlString(dbValues.sourceNameArabic)}', ` +
     `'${escapeSqlString(dbValues.status)}', ` +
-    `ST_SetSRID(ST_MakePoint(${dbValues.longitude}, ${dbValues.latitude}), 4326)` +
+    `ST_SetSRID(ST_MakePoint(${dbValues.longitude}, ${dbValues.latitude}), 4326), ` +
+    `ARRAY[${dbValues.aliases.map((a) => "'" + escapeSqlString(a) + "'").join(', ')}]::text[], ` +
+    (dbValues.districtSourceCode
+      ? `(SELECT id FROM cities WHERE source_code = '${escapeSqlString(dbValues.districtSourceCode)}')`
+      : `NULL`) +
     `) ON CONFLICT (source_code) DO UPDATE SET ` +
     `name_english = EXCLUDED.name_english, ` +
     `name_arabic = EXCLUDED.name_arabic, ` +
@@ -35,7 +39,7 @@ export function generateCityUpsertSql(record: CityCatalogRecord, indent = '  '):
     `source_name_english = EXCLUDED.source_name_english, ` +
     `source_name_arabic = EXCLUDED.source_name_arabic, ` +
     `status = EXCLUDED.status, ` +
-    `center_point = EXCLUDED.center_point;`
+    `center_point = EXCLUDED.center_point, aliases = EXCLUDED.aliases, district_id = EXCLUDED.district_id;`
   );
 }
 
@@ -43,7 +47,9 @@ export function generateCityUpsertSql(record: CityCatalogRecord, indent = '  '):
  * Generates an array of lifecycle-aware City upsert SQL statements for a collection of catalog records.
  */
 export function generateCitiesUpsertSql(records: CityCatalogRecord[], indent = '  '): string[] {
-  return records.map((record) => generateCityUpsertSql(record, indent));
+  return [...records]
+    .sort((a, b) => Number(!!a.districtSourceCode) - Number(!!b.districtSourceCode))
+    .map((record) => generateCityUpsertSql(record, indent));
 }
 
 /**

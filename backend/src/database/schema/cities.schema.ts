@@ -1,5 +1,17 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, timestamp, geometry, uniqueIndex, index, integer, check } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+  geometry,
+  text,
+  type AnyPgColumn,
+  uniqueIndex,
+  index,
+  integer,
+  check,
+} from 'drizzle-orm/pg-core';
 import { cityLifecycleStatusEnum } from './enums';
 
 /**
@@ -47,6 +59,13 @@ export const cities = pgTable(
     /** Internal upstream source code (e.g. OCHA P-code 'EG2801'). Unique when set. */
     sourceCode: varchar('source_code', { length: 100 }),
 
+    /** Null for districts; references an official root district for neighbourhoods. */
+    districtId: uuid('district_id').references((): AnyPgColumn => cities.id, { onDelete: 'restrict' }),
+    aliases: text('aliases')
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::text[]`),
+
     /** Untouched upstream English source name (e.g. 'Aswan'). */
     sourceNameEnglish: varchar('source_name_english', { length: 100 }),
 
@@ -76,6 +95,17 @@ export const cities = pgTable(
 
     /** Internal source code unique index. */
     uniqueCitySourceCode: uniqueIndex('unique_city_source_code').on(table.sourceCode),
+
+    aliasesNoNull: check('cities_aliases_no_null', sql`array_position(${table.aliases}, NULL) IS NULL`),
+    districtIdx: index('idx_cities_district_id').on(table.districtId),
+    noSelfParent: check(
+      'cities_no_self_parent',
+      sql`${table.districtId} IS NULL OR ${table.districtId} <> ${table.id}`,
+    ),
+    neighbourhoodNamespace: check(
+      'cities_neighbourhood_namespace',
+      sql`${table.districtId} IS NULL OR (${table.sourceCode} IS NOT NULL AND ${table.sourceCode} ~ '^(OSM:(node|way|relation)/[0-9]+|WD:Q[0-9]+|PUPZY:[a-z0-9-]+)$')`,
+    ),
 
     /** Enables filtering and grouping by governorate. */
     governorateIdx: index('idx_cities_governorate').on(table.governorate),

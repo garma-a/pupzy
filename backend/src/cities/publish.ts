@@ -11,6 +11,7 @@ import {
   type CityCatalogRecord,
   type CityCatalog,
 } from './catalog';
+import { verifyCoverage } from './coverage';
 import { compareSnapshots } from './diff';
 import { applyReviewedRelease, type ReviewedReleaseOptions, type ReviewedReleaseResult } from './plan';
 import {
@@ -235,6 +236,9 @@ export function validateCityReleaseArtifactSet(artifacts: readonly CityReleaseAr
       );
     }
     const coherentFields: Array<keyof CityCatalogRecord> = [
+      'aliases',
+      'districtSourceCode',
+      'provenance',
       'nameEnglish',
       'nameArabic',
       'governorate',
@@ -245,7 +249,7 @@ export function validateCityReleaseArtifactSet(artifacts: readonly CityReleaseAr
       'longitude',
     ];
     for (const field of coherentFields) {
-      if (catalogCity[field] !== sourceCity[field]) {
+      if (JSON.stringify(catalogCity[field]) !== JSON.stringify(sourceCity[field])) {
         throw new Error(
           `City release artifact validation failed: official City '${sourceCity.sourceCode}' ${field} differs from the source snapshot`,
         );
@@ -538,7 +542,7 @@ export function publishReviewedRelease(
 ): PublishReleaseResult {
   const migrationsFolder = resolveMigrationsFolder(options.migrationsFolder);
   const catalogPath = options.catalogPath ?? resolveDataPath('egypt-cities-catalog.json');
-  const snapshotPath = options.snapshotPath ?? resolveDataPath('ocha-adm2-egypt-snapshot.json');
+  const snapshotPath = options.snapshotPath ?? resolveDataPath('combined-city-source-snapshot.json');
 
   // 0. Automatic recovery from prior interrupted publication
   recoverInterruptedPublication(migrationsFolder);
@@ -556,7 +560,8 @@ export function publishReviewedRelease(
     diff.summary.removedCount === 0 &&
     diff.summary.renamedCount === 0 &&
     diff.summary.recodedCount === 0 &&
-    diff.summary.coordinateChangedCount === 0;
+    diff.summary.coordinateChangedCount === 0 &&
+    (diff.metadataChanged?.length ?? 0) === 0;
 
   if (hasNoChanges) {
     let currentMetadataVersion: string | undefined;
@@ -587,6 +592,33 @@ export function publishReviewedRelease(
 
   // 3. Apply reviewed release (validates count changes, metadata, and City identity transfers)
   const release = applyReviewedRelease(currentCatalog, candidateSnapshot, options);
+
+  if (release.updatedCatalog.some((row) => row.districtSourceCode && row.status === 'OFFICIAL')) {
+    const e = candidateSnapshot.coverageEvidence;
+    if (
+      !e ||
+      !verifyCoverage(
+        { metadata: release.metadata, records: release.updatedCatalog },
+        e.residential,
+        e.governorates,
+        e.districts,
+        e.names,
+        e.gps,
+      ).passed
+    ) {
+      throw new Error(
+        'Publication refused: neighbourhood coverage evidence is missing or failed. Run cities:verify-coverage.',
+      );
+    }
+    const decisions = new Map(candidateSnapshot.neighbourhoods?.decisions.map((d) => [d.sourceCode, d]));
+    if (
+      candidateSnapshot.neighbourhoods?.overpass?.response.elements.some(
+        (osm) => !decisions.get(`OSM:${osm.type}/${osm.id}`)?.reviewed,
+      )
+    ) {
+      throw new Error('Publication refused: every OSM place must have a reviewed include, merge or exclude decision');
+    }
+  }
 
   // 4. Validate updated catalog in memory
   const catalogVal = validateCatalog({

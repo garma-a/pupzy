@@ -1,0 +1,8 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "reviewed": false,
+    "notes": "Missing ADM1 polygons; provide features with properties.governorateCode."
+  },
+  "features": []
+}

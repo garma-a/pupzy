@@ -125,7 +125,9 @@ export class CitiesRepository {
       .select()
       .from(cities)
       .where(eq(cities.status, 'OFFICIAL'))
-      .orderBy(sql`ST_Distance(${cities.centerPoint}, ST_GeomFromEWKT(${point}))`)
+      .orderBy(
+        sql`ST_Distance(${cities.centerPoint}::geography, ST_GeomFromEWKT(${point})::geography), ${cities.sourceCode}`,
+      )
       .limit(1);
     return city;
   }

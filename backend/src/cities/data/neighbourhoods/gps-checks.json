@@ -1,0 +1,11 @@
+{
+  "metadata": {
+    "reviewed": false,
+    "notes": "No independent real GPS evidence available offline. Need 30 source-attributed coordinates per area, NOT catalog points."
+  },
+  "areas": {
+    "greater-cairo": [],
+    "alexandria": [],
+    "port-said-region": []
+  }
+}

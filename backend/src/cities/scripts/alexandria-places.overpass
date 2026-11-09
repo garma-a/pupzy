@@ -1,0 +1,6 @@
+[out:json][timeout:240];
+(
+ nwr["place"~"^(suburb|neighbourhood|quarter|town|city|village)$"](30.6,28.5,31.65,30.4);
+ nwr["landuse"="residential"]["name"](30.6,28.5,31.65,30.4);
+);
+out center tags;

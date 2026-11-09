@@ -1,0 +1,1383 @@
+{
+  "districtEdits": [
+    {
+      "sourceCode": "EG0209",
+      "nameEnglish": "Labban",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0213",
+      "nameEnglish": "Amreya",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0206",
+      "nameEnglish": "Attarin",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0212",
+      "nameEnglish": "Dekheila",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0210",
+      "nameEnglish": "Gomrok",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0207",
+      "nameEnglish": "Mansheya",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0202",
+      "nameEnglish": "Raml First",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0204",
+      "nameEnglish": "Bab Sharqi",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0216",
+      "nameEnglish": "New Borg El Arab",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0214",
+      "nameEnglish": "Borg El Arab",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0208",
+      "nameEnglish": "Karmouz",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0217",
+      "nameEnglish": "Raml Second",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0211",
+      "nameEnglish": "Mina El Basal",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0205",
+      "nameEnglish": "Moharam Bek",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0201",
+      "nameEnglish": "Montaza",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0215",
+      "nameEnglish": "Alexandria Port",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0203",
+      "nameEnglish": "Sidi Gaber",
+      "aliases": [
+        "Sidi Gabir"
+      ],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0103",
+      "nameEnglish": "15th of May",
+      "aliases": [
+        "15 May",
+        "الخامس عشر من مايو"
+      ],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0109",
+      "nameEnglish": "Abdeen",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0113",
+      "nameEnglish": "Azbakeya",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0114",
+      "nameEnglish": "Darb El Ahmar",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0108",
+      "nameEnglish": "Khalifa",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0125",
+      "nameEnglish": "Matariya",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0121",
+      "nameEnglish": "Sahel",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0132",
+      "nameEnglish": "Salam",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0118",
+      "nameEnglish": "Shorabiya",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0101",
+      "nameEnglish": "Tebbin",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0122",
+      "nameEnglish": "Waili",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0117",
+      "nameEnglish": "Zaher",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0124",
+      "nameEnglish": "Zeitoun",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0116",
+      "nameEnglish": "Bab El Sharia",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0135",
+      "nameEnglish": "Basateen",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0112",
+      "nameEnglish": "Boulaq",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0115",
+      "nameEnglish": "Gamaliya",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0123",
+      "nameEnglish": "Hadayek El Qobba",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0102",
+      "nameEnglish": "Helwan",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0127",
+      "nameEnglish": "Nasr City Second",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0136",
+      "nameEnglish": "Marg",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0134",
+      "nameEnglish": "Manshiyet Nasser",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0106",
+      "nameEnglish": "Old Cairo",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0128",
+      "nameEnglish": "Heliopolis",
+      "aliases": [
+        "Misr El Gedida"
+      ],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0110",
+      "nameEnglish": "Moski",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0126",
+      "nameEnglish": "Nasr City First",
+      "aliases": [
+        "مدينة نصر",
+        "Nasr City"
+      ],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0137",
+      "nameEnglish": "New Cairo First",
+      "aliases": [
+        "القاهرة الجديدة",
+        "New Cairo"
+      ],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0138",
+      "nameEnglish": "New Cairo Second",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0139",
+      "nameEnglish": "New Cairo Third",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0129",
+      "nameEnglish": "Nozha",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0111",
+      "nameEnglish": "Qasr El Nile",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0120",
+      "nameEnglish": "Rod El Farag",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0107",
+      "nameEnglish": "Sayeda Zeinab",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0140",
+      "nameEnglish": "Shorouk",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0105",
+      "nameEnglish": "Tora",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0133",
+      "nameEnglish": "Zamalek",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0131",
+      "nameEnglish": "Zawya El Hamra",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG2107",
+      "nameEnglish": "6th of October First",
+      "aliases": [
+        "6th of October",
+        "6 October",
+        "السادس من أكتوبر",
+        "٦ أكتوبر"
+      ],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG2121",
+      "nameEnglish": "6th of October Second",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG2102",
+      "nameEnglish": "Agouza",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG2106",
+      "nameEnglish": "Haram",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG2105",
+      "nameEnglish": "Boulaq El Dakrour",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG2103",
+      "nameEnglish": "Dokki",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG2108",
+      "nameEnglish": "Hawamdeya",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG2119",
+      "nameEnglish": "Sheikh Zayed",
+      "aliases": [
+        "Shaykh Zayid"
+      ],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG2118",
+      "nameEnglish": "Omraniya",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG2117",
+      "nameEnglish": "Warraq",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG1413",
+      "nameEnglish": "Obour",
+      "aliases": [
+        "El Obour"
+      ],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG1403",
+      "nameEnglish": "Khanka (Markaz)",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG1412",
+      "nameEnglish": "Khosous",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG1406",
+      "nameEnglish": "Shubra El Kheima First",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG1407",
+      "nameEnglish": "Shubra El Kheima Second",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0302",
+      "nameEnglish": "Arab",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0305",
+      "nameEnglish": "Dawahy",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0306",
+      "nameEnglish": "Ganoub First",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0311",
+      "nameEnglish": "Ganoub Second",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0310",
+      "nameEnglish": "Manasra",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0303",
+      "nameEnglish": "Manakh",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0301",
+      "nameEnglish": "Sharq",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0307",
+      "nameEnglish": "Zohour",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0309",
+      "nameEnglish": "East Port Said",
+      "aliases": [
+        "Sharq El Tafreea",
+        "شرق التفريعة"
+      ],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0312",
+      "nameEnglish": "Port Said Port",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG0308",
+      "nameEnglish": "Port Fuad Second",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG1309",
+      "nameEnglish": "10th of Ramadan First",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG1321",
+      "nameEnglish": "10th of Ramadan Second",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG1101",
+      "nameEnglish": "Damietta First",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG1109",
+      "nameEnglish": "Damietta Second",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG1105",
+      "nameEnglish": "New Damietta",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG1106",
+      "nameEnglish": "Ras El Bar",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    },
+    {
+      "sourceCode": "EG1108",
+      "nameEnglish": "Damietta Port",
+      "aliases": [],
+      "notes": "English display-name editorial correction from the existing bilingual OCHA row; district extent, identity and representative point unchanged. No neighbourhood membership assertion."
+    }
+  ],
+  "decisions": [
+    {
+      "sourceCode": "PUPZY:mokattam",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Mokattam",
+      "nameArabic": "المقطم",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:rehab",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Rehab",
+      "nameArabic": "الرحاب",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:madinaty",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Madinaty",
+      "nameArabic": "مدينتي",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:mohandessin",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Mohandessin",
+      "nameArabic": "المهندسين",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:sheikh-zayed",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Sheikh Zayed",
+      "nameArabic": "الشيخ زايد",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:dokki",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Dokki",
+      "nameArabic": "الدقي",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:agouza",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Agouza",
+      "nameArabic": "العجوزة",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:imbaba",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Imbaba",
+      "nameArabic": "إمبابة",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:haram",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Haram",
+      "nameArabic": "الهرم",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:faisal",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Faisal",
+      "nameArabic": "فيصل",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:omraniya",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Omraniya",
+      "nameArabic": "العمرانية",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:boulaq-el-dakrour",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Boulaq El Dakrour",
+      "nameArabic": "بولاق الدكرور",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:giza",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Giza",
+      "nameArabic": "الجيزة",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:6th-of-october",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "6th of October",
+      "nameArabic": "السادس من أكتوبر",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:hadayek-october",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Hadayek October",
+      "nameArabic": "حدائق أكتوبر",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:shubra-el-kheima",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Shubra El Kheima",
+      "nameArabic": "شبرا الخيمة",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:obour",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Obour",
+      "nameArabic": "العبور",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:khanka",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Khanka",
+      "nameArabic": "الخانكة",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:qalyub",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Qalyub",
+      "nameArabic": "قليوب",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:khosous",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Khosous",
+      "nameArabic": "الخصوص",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:fifth-settlement",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Fifth Settlement",
+      "nameArabic": "التجمع الخامس",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:first-settlement",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "First Settlement",
+      "nameArabic": "التجمع الأول",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:third-settlement",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Third Settlement",
+      "nameArabic": "التجمع الثالث",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:katameya",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Katameya",
+      "nameArabic": "القطامية",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:shorouk",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Shorouk",
+      "nameArabic": "الشروق",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:badr",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Badr",
+      "nameArabic": "بدر",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:new-administrative-capital",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "New Administrative Capital",
+      "nameArabic": "العاصمة الإدارية الجديدة",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:10th-of-ramadan",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "10th of Ramadan",
+      "nameArabic": "العاشر من رمضان",
+      "aliases": [],
+      "coverageArea": "greater-cairo"
+    },
+    {
+      "sourceCode": "PUPZY:montaza",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Montaza",
+      "nameArabic": "المنتزه",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:maamoura",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Maamoura",
+      "nameArabic": "المعمورة",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:abu-qir",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Abu Qir",
+      "nameArabic": "أبو قير",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:mandara",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Mandara",
+      "nameArabic": "المندرة",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:asafra",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Asafra",
+      "nameArabic": "العصافرة",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:miami",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Miami",
+      "nameArabic": "ميامي",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:sidi-bishr",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Sidi Bishr",
+      "nameArabic": "سيدي بشر",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:victoria",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Victoria",
+      "nameArabic": "فيكتوريا",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:san-stefano",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "San Stefano",
+      "nameArabic": "سان ستيفانو",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:gleem",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Gleem",
+      "nameArabic": "جليم",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:stanley",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Stanley",
+      "nameArabic": "ستانلي",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:roushdy",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Roushdy",
+      "nameArabic": "رشدي",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:kafr-abdo",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Kafr Abdo",
+      "nameArabic": "كفر عبده",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:smouha",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Smouha",
+      "nameArabic": "سموحة",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:sidi-gaber",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Sidi Gaber",
+      "nameArabic": "سيدي جابر",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:sporting",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Sporting",
+      "nameArabic": "سبورتنج",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:ibrahimia",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Ibrahimia",
+      "nameArabic": "الإبراهيمية",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:camp-shezar",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Camp Shezar",
+      "nameArabic": "كامب شيزار",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:shatby",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Shatby",
+      "nameArabic": "الشاطبي",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:azarita",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Azarita",
+      "nameArabic": "الأزاريطة",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:raml-station",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Raml Station",
+      "nameArabic": "محطة الرمل",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:mansheya",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Mansheya",
+      "nameArabic": "المنشية",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:bahary",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Bahary",
+      "nameArabic": "بحري",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:anfoushi",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Anfoushi",
+      "nameArabic": "الأنفوشي",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:moharam-bek",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Moharam Bek",
+      "nameArabic": "محرم بك",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:karmouz",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Karmouz",
+      "nameArabic": "كرموز",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:wardian",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Wardian",
+      "nameArabic": "الورديان",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:mex",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Mex",
+      "nameArabic": "المكس",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:agami",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Agami",
+      "nameArabic": "العجمي",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:bitash",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Bitash",
+      "nameArabic": "البيطاش",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:hannoville",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Hannoville",
+      "nameArabic": "الهانوفيل",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:dekheila",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Dekheila",
+      "nameArabic": "الدخيلة",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:amreya",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Amreya",
+      "nameArabic": "العامرية",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:king-mariout",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "King Mariout",
+      "nameArabic": "كينج مريوط",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:borg-el-arab",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Borg El Arab",
+      "nameArabic": "برج العرب",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:new-borg-el-arab",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "New Borg El Arab",
+      "nameArabic": "برج العرب الجديدة",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:marina",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Marina",
+      "nameArabic": "مارينا",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:new-alamein",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "New Alamein",
+      "nameArabic": "العلمين الجديدة",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:kafr-el-dawwar",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Kafr El Dawwar",
+      "nameArabic": "كفر الدوار",
+      "aliases": [],
+      "coverageArea": "alexandria"
+    },
+    {
+      "sourceCode": "PUPZY:port-fuad-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Port Fuad",
+      "nameArabic": "بورفؤاد",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    },
+    {
+      "sourceCode": "PUPZY:east-port-said-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "East Port Said",
+      "nameArabic": "شرق بورسعيد",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    },
+    {
+      "sourceCode": "PUPZY:sharq-el-tafreea-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Sharq El Tafreea",
+      "nameArabic": "شرق التفريعة",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    },
+    {
+      "sourceCode": "PUPZY:arab-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Arab",
+      "nameArabic": "العرب",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    },
+    {
+      "sourceCode": "PUPZY:manakh-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Manakh",
+      "nameArabic": "المناخ",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    },
+    {
+      "sourceCode": "PUPZY:zohour-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Zohour",
+      "nameArabic": "الزهور",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    },
+    {
+      "sourceCode": "PUPZY:dawahy-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Dawahy",
+      "nameArabic": "الضواحي",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    },
+    {
+      "sourceCode": "PUPZY:sharq-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Sharq",
+      "nameArabic": "الشرق",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    },
+    {
+      "sourceCode": "PUPZY:gharb-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Gharb",
+      "nameArabic": "الغرب",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    },
+    {
+      "sourceCode": "PUPZY:ganoub-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Ganoub",
+      "nameArabic": "الجنوب",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    },
+    {
+      "sourceCode": "PUPZY:el-afrang-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "El Afrang",
+      "nameArabic": "الإفرنج",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    },
+    {
+      "sourceCode": "PUPZY:el-qabouty-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "El Qabouty",
+      "nameArabic": "القابوطي",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    },
+    {
+      "sourceCode": "PUPZY:mubarak-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Mubarak",
+      "nameArabic": "مبارك",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    },
+    {
+      "sourceCode": "PUPZY:mostafa-kamel-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "Mostafa Kamel",
+      "nameArabic": "مصطفى كامل",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    },
+    {
+      "sourceCode": "PUPZY:el-kuwait-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "El Kuwait",
+      "nameArabic": "الكويت",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    },
+    {
+      "sourceCode": "PUPZY:el-gaber-port-said",
+      "decision": "include",
+      "reviewed": false,
+      "notes": "HAND-CURATED STARTER ONLY. Names from task/general knowledge. No sourced coordinate or verified containing ADM2; not selectable until reviewed.",
+      "nameEnglish": "El Gaber",
+      "nameArabic": "الجابر",
+      "aliases": [],
+      "coverageArea": "port-said-region"
+    }
+  ]
+}

@@ -26,6 +26,7 @@ export interface CoordinateChangedAreaDiff {
 }
 
 export interface SnapshotDiffReport {
+  metadataChanged?: string[];
   added: CityCatalogRecord[];
   removed: CityCatalogRecord[];
   renamed: RenamedAreaDiff[];
@@ -73,6 +74,7 @@ export function compareSnapshots(
   const currentByCode = new Map<string, CityCatalogRecord>(currentCatalog.map((c) => [c.sourceCode, c]));
   const candidateByCode = new Map<string, CityCatalogRecord>(candidateRecords.map((c) => [c.sourceCode, c]));
 
+  const metadataChanged: string[] = [];
   const added: CityCatalogRecord[] = [];
   const removed: CityCatalogRecord[] = [];
   const renamed: RenamedAreaDiff[] = [];
@@ -83,19 +85,39 @@ export function compareSnapshots(
   for (const cand of candidateRecords) {
     const curr = currentByCode.get(cand.sourceCode);
     if (!curr) {
-      // Check if this was a recode of an existing city with same name and governorate
-      const matchedByName = currentCatalog.find(
-        (c) =>
-          c.governorate.toLowerCase() === cand.governorate.toLowerCase() &&
-          c.nameEnglish.toLowerCase() === cand.nameEnglish.toLowerCase(),
+      // Display cleanup must not hide recodes of a retained upstream name or alias.
+      // A recode replaces an absent identity of the same kind, not a still-present district.
+      const candidateNames = new Set(
+        [cand.nameEnglish, cand.sourceNameEnglish].map((name) => name.trim().toLowerCase()),
       );
-      if (matchedByName) {
-        recoded.push({
-          oldSourceCode: matchedByName.sourceCode,
-          newSourceCode: cand.sourceCode,
-          nameEnglish: cand.nameEnglish,
-          governorate: cand.governorate,
-        });
+      const eligible = currentCatalog.filter(
+        (c) =>
+          (c.status === 'OFFICIAL' || !c.status) &&
+          !candidateByCode.has(c.sourceCode) &&
+          !!c.districtSourceCode === !!cand.districtSourceCode &&
+          c.governorate.toLowerCase() === cand.governorate.toLowerCase(),
+      );
+      // Canonical Kism/Markaz disambiguation takes precedence over shared source names.
+      const canonicalMatches = eligible.filter(
+        (c) => c.nameEnglish.trim().toLowerCase() === cand.nameEnglish.trim().toLowerCase(),
+      );
+      const matchedByName =
+        canonicalMatches.length > 0
+          ? canonicalMatches
+          : eligible.filter((c) =>
+              [c.nameEnglish, c.sourceNameEnglish, ...(c.aliases ?? [])].some((name) =>
+                candidateNames.has(name.trim().toLowerCase()),
+              ),
+            );
+      if (matchedByName.length > 0) {
+        for (const matched of matchedByName) {
+          recoded.push({
+            oldSourceCode: matched.sourceCode,
+            newSourceCode: cand.sourceCode,
+            nameEnglish: cand.nameEnglish,
+            governorate: cand.governorate,
+          });
+        }
       } else {
         added.push(cand);
       }
@@ -118,6 +140,12 @@ export function compareSnapshots(
         });
       }
 
+      if (
+        JSON.stringify(curr.aliases ?? []) !== JSON.stringify(cand.aliases ?? []) ||
+        (curr.districtSourceCode ?? null) !== (cand.districtSourceCode ?? null) ||
+        JSON.stringify(curr.provenance) !== JSON.stringify(cand.provenance)
+      )
+        metadataChanged.push(cand.sourceCode);
       // Check for coordinate change (> 100 meters / ~0.001 deg)
       const latDiff = Math.abs(curr.latitude - cand.latitude);
       const lonDiff = Math.abs(curr.longitude - cand.longitude);
@@ -145,6 +173,7 @@ export function compareSnapshots(
   }
 
   return {
+    metadataChanged,
     added,
     removed,
     renamed,

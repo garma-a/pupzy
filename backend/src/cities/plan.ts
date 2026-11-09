@@ -73,6 +73,11 @@ export function applyReviewedRelease(
   candidateSnapshot: CitySnapshot,
   options: ReviewedReleaseOptions = {},
 ): ReviewedReleaseResult {
+  if (currentCatalog.some((row) => row.districtSourceCode) && !candidateSnapshot.neighbourhoods) {
+    throw new Error(
+      'Combined source snapshot required: refusing to retire neighbourhoods through an ADM2-only refresh',
+    );
+  }
   const snapshotVal = validateSnapshot(candidateSnapshot);
   if (!snapshotVal.isValid) {
     throw new Error(`Candidate snapshot failed schema/provenance validation:\n- ${snapshotVal.errors.join('\n- ')}`);

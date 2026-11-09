@@ -1,0 +1,162 @@
+import type { CityCatalogRecord } from './catalog';
+import { normalizeCitySearch } from './search';
+
+export interface OsmElement {
+  type: 'node' | 'way' | 'relation';
+  id: number;
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
+  tags?: Record<string, string>;
+}
+
+export interface SourceSnapshot<T> {
+  metadata: { retrievalDate: string; license: string; attribution: string; queryFile: string };
+  response: T;
+}
+
+export interface PlaceDecision {
+  sourceCode: string;
+  decision: 'include' | 'exclude' | 'merge';
+  reviewed: boolean;
+  notes: string;
+  nameEnglish?: string;
+  nameArabic?: string;
+  aliases?: string[];
+  governorateCode?: string;
+  districtSourceCode?: string;
+  /** Required for curated points and corrections; never inferred from the nearest centroid. */
+  point?: { latitude: number; longitude: number; evidence: string };
+  parentEvidence?: string;
+  mergeInto?: string;
+}
+
+export interface NeighbourhoodSources {
+  districtEdits: Array<{ sourceCode: string; nameEnglish: string; aliases: string[]; notes: string }>;
+  overpass?: SourceSnapshot<{ elements: OsmElement[] }>;
+  wikidata?: SourceSnapshot<{ results: { bindings: Array<Record<string, { value: string }>> } }>;
+  decisions: PlaceDecision[];
+}
+
+/** All source responses and review decisions travel in the publisher's single snapshot artifact. */
+export function extendDistrictCatalog(
+  districts: CityCatalogRecord[],
+  sources: NeighbourhoodSources,
+): CityCatalogRecord[] {
+  const records: CityCatalogRecord[] = districts.map((row) => ({
+    ...row,
+    aliases: row.aliases ?? [],
+    districtSourceCode: null,
+  }));
+  const byCode = new Map<string, CityCatalogRecord>(records.map((row) => [row.sourceCode, row]));
+  for (const edit of sources.districtEdits) {
+    const district = byCode.get(edit.sourceCode);
+    if (!district || !edit.notes.trim()) throw new Error(`Invalid district edit ${edit.sourceCode}`);
+    district.aliases = [...new Set([...(district.aliases ?? []), district.nameEnglish, ...edit.aliases])].filter(
+      (alias) => alias !== edit.nameEnglish && alias !== district.nameArabic,
+    );
+    district.nameEnglish = edit.nameEnglish;
+  }
+  const elements = new Map((sources.overpass?.response.elements ?? []).map((e) => [`OSM:${e.type}/${e.id}`, e]));
+  const seen = new Set<string>();
+  for (const decision of sources.decisions) {
+    if (seen.has(decision.sourceCode)) throw new Error(`Duplicate review decision ${decision.sourceCode}`);
+    seen.add(decision.sourceCode);
+    if (!decision.reviewed) continue;
+    if (!decision.notes.trim()) throw new Error(`Review notes required: ${decision.sourceCode}`);
+    if (decision.decision === 'exclude') continue;
+    if (decision.decision === 'merge') {
+      const target = byCode.get(decision.mergeInto ?? '');
+      if (!target) throw new Error(`Unknown merge district: ${decision.sourceCode}`);
+      target.aliases = [
+        ...new Set([
+          ...(target.aliases ?? []),
+          ...(decision.aliases ?? []),
+          decision.nameEnglish ?? '',
+          decision.nameArabic ?? '',
+        ]),
+      ].filter((alias) => alias && alias !== target.nameEnglish && alias !== target.nameArabic);
+      continue;
+    }
+    const district = byCode.get(decision.districtSourceCode ?? '');
+    const element = elements.get(decision.sourceCode);
+    const wdId =
+      element?.tags?.wikidata ?? (decision.sourceCode.startsWith('WD:') ? decision.sourceCode.slice(3) : undefined);
+    const wdRows = (sources.wikidata?.response.results.bindings ?? []).filter((row) =>
+      row.item?.value.endsWith('/' + wdId),
+    );
+    const wdPoint = wdRows[0]?.coord?.value.match(/^Point\(([-0-9.]+) ([-0-9.]+)\)$/);
+    const nameEnglish = decision.nameEnglish ?? element?.tags?.['name:en'] ?? wdRows.find((r) => r.en)?.en.value;
+    const nameArabic = decision.nameArabic ?? element?.tags?.['name:ar'] ?? wdRows.find((r) => r.ar)?.ar.value;
+    if (
+      element &&
+      (!sources.overpass?.metadata.retrievalDate ||
+        !sources.overpass.metadata.license ||
+        !sources.overpass.metadata.attribution)
+    )
+      throw new Error('Missing OSM provenance');
+    if (
+      decision.sourceCode.startsWith('WD:') &&
+      (!wdRows.length || !sources.wikidata?.metadata.retrievalDate || !sources.wikidata.metadata.license)
+    )
+      throw new Error('Missing Wikidata evidence');
+    const point =
+      decision.point ??
+      (element
+        ? { latitude: element.lat ?? element.center?.lat, longitude: element.lon ?? element.center?.lon }
+        : wdPoint
+          ? { longitude: Number(wdPoint[1]), latitude: Number(wdPoint[2]) }
+          : undefined);
+    if (
+      !district ||
+      district.districtSourceCode ||
+      district.status !== 'OFFICIAL' ||
+      district.governorateCode !== decision.governorateCode ||
+      !decision.parentEvidence?.trim() ||
+      !nameEnglish ||
+      !nameArabic ||
+      !Number.isFinite(point?.latitude) ||
+      !Number.isFinite(point?.longitude) ||
+      (!element && !wdPoint && !decision.point?.evidence.trim())
+    ) {
+      throw new Error(`Incomplete reviewed place/point/parent evidence: ${decision.sourceCode}`);
+    }
+    const existingDistrict = districts.find(
+      (d) =>
+        d.governorateCode === decision.governorateCode &&
+        [d.nameEnglish, d.nameArabic.replace(/^(قسم|مركز|مدينة)\s*/, '')].some(
+          (n) =>
+            normalizeCitySearch(n) === normalizeCitySearch(nameEnglish) ||
+            normalizeCitySearch(n) === normalizeCitySearch(nameArabic),
+        ),
+    );
+    if (existingDistrict) throw new Error(`Place coincides with district; use merge decision: ${decision.sourceCode}`);
+    const record: CityCatalogRecord = {
+      ...district,
+      sourceCode: decision.sourceCode,
+      nameEnglish,
+      nameArabic,
+      sourceNameEnglish: element?.tags?.['name:en'] ?? nameEnglish,
+      sourceNameArabic: element?.tags?.['name:ar'] ?? nameArabic,
+      latitude: point!.latitude!,
+      longitude: point!.longitude!,
+      aliases: [
+        ...new Set([
+          ...(decision.aliases ?? []),
+          ...wdRows.flatMap((r) => [r.enAlias?.value, r.arAlias?.value]).filter((v): v is string => !!v),
+        ]),
+      ].filter((a) => a !== nameEnglish && a !== nameArabic),
+      districtSourceCode: district.sourceCode,
+      provenance: {
+        source: element ? 'OSM' : decision.sourceCode.startsWith('WD:') ? 'Wikidata' : 'hand-curated',
+        notes: decision.notes,
+        parentEvidence: decision.parentEvidence,
+        pointEvidence: decision.point?.evidence ?? decision.sourceCode,
+      },
+    };
+    if (byCode.has(record.sourceCode)) throw new Error(`Duplicate source identity ${record.sourceCode}`);
+    records.push(record);
+    byCode.set(record.sourceCode, record);
+  }
+  return records.sort((a, b) => a.sourceCode.localeCompare(b.sourceCode));
+}

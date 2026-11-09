@@ -53,25 +53,32 @@ export async function seedOfficialCities(db: any, options: SeedCitiesOptions = {
   const governorates = new Set(officialRecords.map((c) => c.governorate));
 
   const runSeed = async (tx: any) => {
-    for (let i = 0; i < catalogRecords.length; i += batchSize) {
-      const chunk = catalogRecords.slice(i, i + batchSize);
-      const batchValues = chunk.map((c) => mapCatalogRecordToInsertRow(c));
+    for (const tier of [
+      catalogRecords.filter((c) => !c.districtSourceCode),
+      catalogRecords.filter((c) => c.districtSourceCode),
+    ]) {
+      for (let i = 0; i < tier.length; i += batchSize) {
+        const chunk = tier.slice(i, i + batchSize);
+        const batchValues = chunk.map((c) => mapCatalogRecordToInsertRow(c));
 
-      await tx
-        .insert(cities)
-        .values(batchValues)
-        .onConflictDoUpdate({
-          target: cities.sourceCode,
-          set: {
-            nameEnglish: sql`excluded.name_english`,
-            nameArabic: sql`excluded.name_arabic`,
-            governorate: sql`excluded.governorate`,
-            sourceNameEnglish: sql`excluded.source_name_english`,
-            sourceNameArabic: sql`excluded.source_name_arabic`,
-            status: sql`excluded.status`,
-            centerPoint: sql`excluded.center_point`,
-          },
-        });
+        await tx
+          .insert(cities)
+          .values(batchValues)
+          .onConflictDoUpdate({
+            target: cities.sourceCode,
+            set: {
+              nameEnglish: sql`excluded.name_english`,
+              nameArabic: sql`excluded.name_arabic`,
+              governorate: sql`excluded.governorate`,
+              sourceNameEnglish: sql`excluded.source_name_english`,
+              sourceNameArabic: sql`excluded.source_name_arabic`,
+              status: sql`excluded.status`,
+              centerPoint: sql`excluded.center_point`,
+              aliases: sql`excluded.aliases`,
+              districtId: sql`excluded.district_id`,
+            },
+          });
+      }
     }
   };
 

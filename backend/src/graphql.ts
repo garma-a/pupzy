@@ -624,6 +624,8 @@ export interface BlockedUserConnection {
 }
 
 export interface City {
+  aliases: string[];
+  district?: Nullable<City>;
   id: string;
   nameEnglish: string;
   nameArabic: string;

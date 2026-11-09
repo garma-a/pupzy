@@ -1,4 +1,11 @@
-import { loadRawSnapshot, transformCatalog, validateCatalog, getOfficialCatalog } from './catalog';
+import {
+  loadRawSnapshot,
+  loadReleaseSnapshot,
+  loadOfficialCatalog,
+  transformCatalog,
+  validateCatalog,
+  getOfficialCatalog,
+} from './catalog';
 
 describe('Offline Egyptian City Catalog and Transformation', () => {
   describe('Raw Snapshot', () => {
@@ -251,5 +258,24 @@ describe('Offline Egyptian City Catalog and Transformation', () => {
       expect(result.isValid).toBe(false);
       expect(result.errors.length).toBeGreaterThanOrEqual(4);
     });
+  });
+});
+
+describe('Combined source artifact reproducibility', () => {
+  it('reproduces every released row from the source snapshot and reviewed overrides offline', () => {
+    const transformed = transformCatalog(loadReleaseSnapshot());
+    const published = loadOfficialCatalog();
+    expect(new Map(transformed.records.map((r) => [r.sourceCode, r]))).toEqual(
+      new Map(published.records.map((r) => [r.sourceCode, r])),
+    );
+  });
+  it('keeps every existing district source identity and point, with old display spellings retained', () => {
+    const old = transformCatalog(loadRawSnapshot()).records;
+    const released = new Map(loadOfficialCatalog().records.map((r) => [r.sourceCode, r]));
+    for (const row of old) {
+      const current = released.get(row.sourceCode)!;
+      expect([current.longitude, current.latitude]).toEqual([row.longitude, row.latitude]);
+      if (current.nameEnglish !== row.nameEnglish) expect(current.aliases).toContain(row.nameEnglish);
+    }
   });
 });

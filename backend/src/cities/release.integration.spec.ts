@@ -527,7 +527,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     await expect(primedRelationshipLoader.load(eg0101Id)).resolves.toMatchObject({ sourceCode: 'EG0101' });
     await expect(primedRelationshipLoader.load(eg0102Id)).resolves.toMatchObject({ status: 'OFFICIAL' });
     await expect(primedRelationshipLoader.load(maadiId)).resolves.toMatchObject({ nameEnglish: 'Maadi' });
-    await expect(repo.getCatalogRevision()).resolves.toBe(1);
+    await expect(repo.getCatalogRevision()).resolves.toBe(2);
 
     // 2. Failed release simulation (e.g. invalid migration that raises exception before commit)
     const failedReleaseSql = `
@@ -550,7 +550,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
 
     const postFail0101 = await runningInstance.findById(eg0101Id);
     expect(postFail0101?.status).toBe('OFFICIAL');
-    await expect(repo.getCatalogRevision()).resolves.toBe(1);
+    await expect(repo.getCatalogRevision()).resolves.toBe(2);
 
     // 3. A request already using the old cache holds a shared revision lock.
     // The release must not commit while that request is still selecting its
@@ -589,7 +589,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     releaseOldCacheRead!();
     await expect(inFlightOldRead).resolves.toHaveLength(351);
     await releaseMigration;
-    await expect(repo.getCatalogRevision()).resolves.toBe(2);
+    await expect(repo.getCatalogRevision()).resolves.toBe(3);
 
     // 5. Railway boots Instance 2 (new container with cold cache) during deployment overlap
     const cacheStore2 = new Map<string, unknown>();
