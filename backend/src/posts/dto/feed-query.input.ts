@@ -10,10 +10,12 @@ const viewerLocationSchema = z.object({
 
 /**
  * Location filter schema.
- * - governorate: Optional. Filters posts by Egyptian governorate. Omit for radius-only filtering.
- * - cityId: Optional. Narrows to a specific city; also used as radius center when no GPS.
- * - viewerLocation: Optional. GPS for distance calc and radius filtering.
- * - radiusKm: Optional. Proximity radius in km. Default 25, range [1, 100].
+ * - governorate: Optional. Fallback filter when a numeric radius has no resolvable center.
+ * - cityId: Optional. Distance/radius center when no GPS; fallback City filter for a numeric radius.
+ * - viewerLocation: Optional. GPS for distance calculation and numeric radius filtering.
+ * - radiusKm: Null or omitted means nationwide, ignoring governorate/City scoping.
+ *   A numeric radius retains proximity/fallback location filtering, range [1, 100].
+ *   Distance is still returned whenever viewerLocation or a City center can be resolved.
  *
  * At least one of governorate, cityId, or viewerLocation must be provided.
  */

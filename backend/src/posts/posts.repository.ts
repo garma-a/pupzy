@@ -1359,6 +1359,23 @@ export class PostsRepository {
   }
 
   /**
+   * Null/omitted radius means nationwide, even when the client sends a City
+   * or governorate. Center resolution remains separate so distance is still
+   * available nationwide. Numeric radii keep the existing location fallback.
+   */
+  private buildFeedLocationCondition(
+    radiusKm: number | null | undefined,
+    centerPointAsEwkt: string | null,
+    governorate: string | null | undefined,
+    cityId: string | null | undefined,
+  ): SQL | undefined {
+    if (radiusKm == null) return undefined;
+    return centerPointAsEwkt
+      ? this.buildRadiusCondition(centerPointAsEwkt, radiusKm * 1000)
+      : this.buildLocationFilterCondition(governorate, cityId);
+  }
+
+  /**
    * Resolves the center point for radius-based filtering, as EWKT text.
    *
    * Priority:
@@ -1471,6 +1488,7 @@ export class PostsRepository {
    * Help Feed — RESCUE + LOST posts sorted by urgency ASC, then newest.
    * Index: idx_posts_help_feed (city_id, post_type, urgency ASC, created_at DESC)
    *   WHERE status='ACTIVE' AND post_type IN ('RESCUE','LOST')
+   * Existing City/governorate-leading indexes do not provide nationwide ordering.
    * Optional `searchPattern` adds the shared normalized search filter without
    * changing the ordering or the cursor shape.
    */
@@ -1478,19 +1496,16 @@ export class PostsRepository {
     governorate: string | null | undefined;
     cityId: string | null | undefined;
     viewerLocation: { latitude: number; longitude: number } | null | undefined;
-    radiusKm: number;
+    radiusKm?: number | null;
     limit: number;
     cursor: { urgency: NonNullable<Post['urgency']>; createdAt: string; id: string } | null;
     searchPattern?: string | null;
     viewerId?: string | null;
   }): Promise<FeedResult> {
     const { governorate, cityId, viewerLocation, radiusKm, limit, cursor, searchPattern, viewerId } = parameters;
-    const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
-    const locationCondition = centerPointAsEwkt
-      ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
-      : this.buildLocationFilterCondition(governorate, cityId);
+    const locationCondition = this.buildFeedLocationCondition(radiusKm, centerPointAsEwkt, governorate, cityId);
     const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
 
     const cursorCondition = cursor
@@ -1528,6 +1543,7 @@ export class PostsRepository {
    * Adopt Feed — ADOPTION posts sorted by effective_score (HOT) or newest.
    * Index (HOT): idx_posts_adopt_score (city_id, effective_score DESC, created_at DESC)
    * Index (NEWEST): idx_posts_adopt_{city,governorate}_listed (listed_at DESC, id DESC)
+   * These location-leading indexes do not provide nationwide HOT/NEWEST ordering.
    * Optional `searchPattern` adds the shared normalized search filter without
    * changing the ordering or the cursor shape.
    */
@@ -1535,7 +1551,7 @@ export class PostsRepository {
     governorate: string | null | undefined;
     cityId: string | null | undefined;
     viewerLocation: { latitude: number; longitude: number } | null | undefined;
-    radiusKm: number;
+    radiusKm?: number | null;
     sort: 'HOT' | 'NEWEST';
     limit: number;
     cursor: { score?: number; createdAt?: string; listedAt?: string; id: string } | null;
@@ -1543,12 +1559,9 @@ export class PostsRepository {
     viewerId?: string | null;
   }): Promise<FeedResult> {
     const { governorate, cityId, viewerLocation, radiusKm, sort, limit, cursor, searchPattern, viewerId } = parameters;
-    const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
-    const locationCondition = centerPointAsEwkt
-      ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
-      : this.buildLocationFilterCondition(governorate, cityId);
+    const locationCondition = this.buildFeedLocationCondition(radiusKm, centerPointAsEwkt, governorate, cityId);
     const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
     const cursorCondition = this.buildScoredFeedCursorCondition(sort, cursor);
     const orderByClauses =
@@ -1584,6 +1597,7 @@ export class PostsRepository {
    * Index (HOT, no category): idx_posts_market_score
    * Index (HOT, with category): idx_posts_market_category
    * Index (NEWEST): idx_posts_market_{city,governorate,city_category}_listed (listed_at DESC, id DESC)
+   * These location-leading indexes do not provide nationwide HOT/NEWEST ordering.
    * Optional `searchPattern` adds the shared normalized search filter without
    * changing the ordering, category filter or cursor shape.
    */
@@ -1591,7 +1605,7 @@ export class PostsRepository {
     governorate: string | null | undefined;
     cityId: string | null | undefined;
     viewerLocation: { latitude: number; longitude: number } | null | undefined;
-    radiusKm: number;
+    radiusKm?: number | null;
     sort: 'HOT' | 'NEWEST';
     category: Post['marketCategory'] | null | undefined;
     limit: number;
@@ -1601,12 +1615,9 @@ export class PostsRepository {
   }): Promise<FeedResult> {
     const { governorate, cityId, viewerLocation, radiusKm, sort, category, limit, cursor, searchPattern, viewerId } =
       parameters;
-    const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
-    const locationCondition = centerPointAsEwkt
-      ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
-      : this.buildLocationFilterCondition(governorate, cityId);
+    const locationCondition = this.buildFeedLocationCondition(radiusKm, centerPointAsEwkt, governorate, cityId);
     const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
     const cursorCondition = this.buildScoredFeedCursorCondition(sort, cursor);
     const orderByClauses =
@@ -1640,6 +1651,7 @@ export class PostsRepository {
   /**
    * Home Feed — all post types combined, sorted by newest (UUIDv7 id DESC).
    * Cursor: plain id — no composite needed, single-column sort.
+   * Nationwide ordering can use the primary key; idx_posts_home_feed starts with City.
    * Optional `searchPattern` adds the shared normalized search filter without
    * changing the ordering or the cursor shape.
    */
@@ -1647,19 +1659,16 @@ export class PostsRepository {
     governorate: string | null | undefined;
     cityId: string | null | undefined;
     viewerLocation: { latitude: number; longitude: number } | null | undefined;
-    radiusKm: number;
+    radiusKm?: number | null;
     limit: number;
     cursor: { id: string } | null;
     searchPattern?: string | null;
     viewerId?: string | null;
   }): Promise<FeedResult> {
     const { governorate, cityId, viewerLocation, radiusKm, limit, cursor, searchPattern, viewerId } = parameters;
-    const radiusInMeters = radiusKm * 1000;
 
     const centerPointAsEwkt = await this.resolveRadiusCenter(viewerLocation, cityId);
-    const locationCondition = centerPointAsEwkt
-      ? this.buildRadiusCondition(centerPointAsEwkt, radiusInMeters)
-      : this.buildLocationFilterCondition(governorate, cityId);
+    const locationCondition = this.buildFeedLocationCondition(radiusKm, centerPointAsEwkt, governorate, cityId);
     const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
 
     const rows = await this.db
