@@ -679,7 +679,7 @@ describe('Server-side feed search (Ticket 15)', () => {
     const byGovernorate = await runFeed(
       HOME_FEED,
       'homeFeed',
-      { governorate: 'Cairo', search: 'zebra', first: 10 },
+      { governorate: 'Cairo', radiusKm: 5, search: 'zebra', first: 10 },
       viewer,
     );
     expect(new Set(ids(byGovernorate))).toEqual(new Set([nearby.id, farAway.id, cairoMatchTwo.id, cairoMatch.id]));
@@ -971,7 +971,7 @@ describe('Server-side feed search (Ticket 15)', () => {
     const food = await runFeed(
       MARKET_FEED,
       'marketFeed',
-      { governorate: 'Cairo', category: 'FOOD', search: 'zebra', first: 10 },
+      { governorate: 'Cairo', radiusKm: 5, category: 'FOOD', search: 'zebra', first: 10 },
       viewer,
     );
     expect(ids(food)).toEqual([marketFood.id]);
@@ -979,7 +979,7 @@ describe('Server-side feed search (Ticket 15)', () => {
     const accessories = await runFeed(
       MARKET_FEED,
       'marketFeed',
-      { governorate: 'Cairo', category: 'ACCESSORIES', search: 'zebra', first: 10 },
+      { governorate: 'Cairo', radiusKm: 5, category: 'ACCESSORIES', search: 'zebra', first: 10 },
       viewer,
     );
     expect(ids(accessories)).toEqual([marketAccessory.id]);
@@ -987,7 +987,7 @@ describe('Server-side feed search (Ticket 15)', () => {
     const allMarketCairo = await runFeed(
       MARKET_FEED,
       'marketFeed',
-      { governorate: 'Cairo', search: 'zebra', first: 10 },
+      { governorate: 'Cairo', radiusKm: 5, search: 'zebra', first: 10 },
       viewer,
     );
     expect(new Set(ids(allMarketCairo))).toEqual(new Set([marketCare.id, marketAccessory.id, marketFood.id]));
@@ -1004,7 +1004,7 @@ describe('Server-side feed search (Ticket 15)', () => {
     const marketByGovernorate = await runFeed(
       MARKET_FEED,
       'marketFeed',
-      { governorate: 'Cairo', search: 'zebra', first: 20 },
+      { governorate: 'Cairo', radiusKm: 5, search: 'zebra', first: 20 },
       viewer,
     );
     expect(ids(marketByGovernorate)).not.toContain(marketGiza.id);

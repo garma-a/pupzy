@@ -4,10 +4,30 @@ import {
   validateHelpFeedInput,
   validateAdoptFeedInput,
   validateMarketFeedInput,
+  validateHomeFeedInput,
 } from './feed-query.input';
 import { ValidationError } from '../../common/errors/app.errors';
 
 describe('feed-query.input', () => {
+  describe.each([
+    ['help', validateHelpFeedInput],
+    ['adopt', validateAdoptFeedInput],
+    ['market', validateMarketFeedInput],
+    ['home', validateHomeFeedInput],
+  ] as const)('%s radius validation', (_name, validate) => {
+    it('preserves null and omitted radii for nationwide discovery', () => {
+      expect(validate({ governorate: 'Cairo', radiusKm: null }).radiusKm).toBeNull();
+      expect(validate({ governorate: 'Cairo' }).radiusKm).toBeUndefined();
+    });
+
+    it('keeps numeric radii within the existing [1, 100] range', () => {
+      expect(validate({ governorate: 'Cairo', radiusKm: 1 }).radiusKm).toBe(1);
+      expect(validate({ governorate: 'Cairo', radiusKm: 100 }).radiusKm).toBe(100);
+      expect(() => validate({ governorate: 'Cairo', radiusKm: 0 })).toThrow(ValidationError);
+      expect(() => validate({ governorate: 'Cairo', radiusKm: 101 })).toThrow(ValidationError);
+    });
+  });
+
   describe('validateMySavedPostsInput', () => {
     it('validates empty args (defaults applied downstream)', () => {
       const result = validateMySavedPostsInput({});

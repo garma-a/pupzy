@@ -782,6 +782,27 @@ describe('PostsService', () => {
   });
 
   describe('Feed queries', () => {
+    it.each([
+      ['getHelpFeed', 'findHelpFeed'],
+      ['getAdoptFeed', 'findAdoptFeed'],
+      ['getMarketFeed', 'findMarketFeed'],
+      ['getHomeFeed', 'findHomeFeed'],
+    ] as const)('%s preserves null, omitted and numeric radii', async (serviceMethod, repositoryMethod) => {
+      mockPostsRepo[repositoryMethod] = jest.fn().mockResolvedValue({ rows: [], hasNextPage: false });
+      const location = {
+        governorate: 'Cairo',
+        cityId: mockCity.id,
+        viewerLocation: { latitude: 30.0444, longitude: 31.2357 },
+      };
+
+      for (const radius of [{ radiusKm: null }, {}, { radiusKm: 50 }]) {
+        await service[serviceMethod]({ ...location, ...radius }, validUserId);
+        expect(mockPostsRepo[repositoryMethod]).toHaveBeenLastCalledWith(
+          expect.objectContaining({ ...location, radiusKm: radius.radiusKm, viewerId: validUserId }),
+        );
+      }
+    });
+
     it('getHelpFeed parses cursor and calls repository', async () => {
       const mockPost = { id: validPostId, urgency: 'CRITICAL', createdAt: new Date() } as unknown as Post;
       mockPostsRepo.findHelpFeed = jest.fn().mockResolvedValue({

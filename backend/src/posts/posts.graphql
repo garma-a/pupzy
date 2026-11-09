@@ -616,25 +616,27 @@ extend type Query {
 
   """
   Help Feed — RESCUE and LOST posts sorted by urgency (CRITICAL first), then newest.
-  Filtered by governorate and optional city. Optional radius proximity filter.
+  Null or omitted radiusKm returns eligible Posts nationwide across Egypt.
   Optional server-side search finds Posts that have not loaded on the client,
   keeping this feed's ordering, filters and cursor pagination.
   """
   helpFeed(
     """
-    Optional. Governorate name to scope results. Omit when filtering by radius from viewerLocation or city center.
+    Optional. Fallback scope for a numeric radius without a resolvable center. Ignored nationwide.
     """
     governorate: String
     """
-    Optional. Specific city ID within the governorate.
+    Optional. City center for distance/radius when GPS is absent. Does not scope nationwide results.
     """
     cityId: ID
     """
-    Optional. Viewer's GPS for distance calc and radius filtering.
+    Optional. Viewer's GPS for distance calculation, including nationwide, and numeric radius filtering.
     """
     viewerLocation: ViewerLocationInput
     """
-    Optional. Radius in km for proximity filter. Default 25, max 100.
+    Null or omitted means nationwide: no radius, governorate or City filter.
+    Numeric radius in km, range [1, 100], keeps proximity/fallback location filtering.
+    Distance is returned when viewerLocation or a City center can be resolved, otherwise null.
     """
     radiusKm: Float
     """
@@ -664,6 +666,11 @@ extend type Query {
     governorate: String
     cityId: ID
     viewerLocation: ViewerLocationInput
+    """
+    Null or omitted means nationwide: no radius, governorate or City filter.
+    Numeric radius in km, range [1, 100], keeps proximity/fallback location filtering.
+    Distance is returned when viewerLocation or a City center can be resolved, otherwise null.
+    """
     radiusKm: Float
     """
     Sort mode. Default HOT.
@@ -691,6 +698,11 @@ extend type Query {
     governorate: String
     cityId: ID
     viewerLocation: ViewerLocationInput
+    """
+    Null or omitted means nationwide: no radius, governorate or City filter.
+    Numeric radius in km, range [1, 100], keeps proximity/fallback location filtering.
+    Distance is returned when viewerLocation or a City center can be resolved, otherwise null.
+    """
     radiusKm: Float
     """
     Optional. Filter by product category.
@@ -722,6 +734,11 @@ extend type Query {
     governorate: String
     cityId: ID
     viewerLocation: ViewerLocationInput
+    """
+    Null or omitted means nationwide: no radius, governorate or City filter.
+    Numeric radius in km, range [1, 100], keeps proximity/fallback location filtering.
+    Distance is returned when viewerLocation or a City center can be resolved, otherwise null.
+    """
     radiusKm: Float
     first: Int
     after: String
