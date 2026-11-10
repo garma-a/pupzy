@@ -5,6 +5,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../localization/lang_provider.dart';
 import '../services/auth_service.dart';
@@ -603,6 +604,15 @@ class _ProfileSheetState extends State<ProfileSheet> {
                       label: t(context, 'Terms & Privacy', 'الشروط والخصوصية'),
                       onTap: () => showTermsInfoSheet(context),
                     ),
+                    const Divider(height: 1, indent: 48),
+                    // Area names come from OpenStreetMap, whose licence asks
+                    // for this credit and a link to its copyright page.
+                    _SettingsRow(
+                      icon: Icons.map_outlined,
+                      label: t(context, '© OpenStreetMap contributors', '© المساهمون في OpenStreetMap'),
+                      trailingIcon: Icons.open_in_new,
+                      onTap: () => launchUrl(openStreetMapCopyright, mode: LaunchMode.externalApplication),
+                    ),
                   ],
                 ),
               ),
@@ -741,12 +751,19 @@ class _PostCountCard extends StatelessWidget {
   }
 }
 
+/// OpenStreetMap's copyright and licence page, linked from the profile menu.
+final openStreetMapCopyright = Uri.parse('https://www.openstreetmap.org/copyright');
+
 class _SettingsRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String? trailing;
   final VoidCallback? onTap;
-  const _SettingsRow({required this.icon, required this.label, this.trailing, this.onTap});
+
+  /// A chevron for rows that open another screen; [Icons.open_in_new] for
+  /// rows that open a web page.
+  final IconData trailingIcon;
+  const _SettingsRow({required this.icon, required this.label, this.trailing, this.onTap, this.trailingIcon = Icons.chevron_right});
 
   @override
   Widget build(BuildContext context) {
@@ -765,7 +782,7 @@ class _SettingsRow extends StatelessWidget {
                 padding: const EdgeInsets.only(right: AppSpacing.sm),
                 child: Text(trailing!, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted)),
               ),
-            const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+            Icon(trailingIcon, size: 18, color: AppColors.textMuted),
           ],
         ),
       ),

@@ -91,7 +91,30 @@ class GraphQLService {
     }
   ''';
 
+  /// The City list with the search extras: alternative spellings and, for a
+  /// Neighbourhood, the official district it belongs to.
   static const String citiesQuery = r'''
+    query GetCities {
+      cities {
+        id
+        nameEnglish
+        nameArabic
+        governorate
+        status
+        aliases
+        district {
+          id
+          nameEnglish
+          nameArabic
+        }
+      }
+    }
+  ''';
+
+  /// The City list as servers without `aliases` and `district` serve it.
+  /// Used when the server rejects [citiesQuery], so the app keeps working
+  /// before and after the backend that adds those fields is deployed.
+  static const String legacyCitiesQuery = r'''
     query GetCities {
       cities {
         id
@@ -327,8 +350,8 @@ class GraphQLService {
   ''';
 
   static final String matingFeedQuery = '''
-    query MatingFeed(\$filter: MatingFeedFilter, \$search: String, \$first: Int, \$after: String) {
-      matingFeed(filter: \$filter, search: \$search, first: \$first, after: \$after) {
+    query MatingFeed(\$filter: MatingFeedFilter, \$viewerLocation: ViewerLocationInput, \$radiusKm: Float, \$search: String, \$first: Int, \$after: String) {
+      matingFeed(filter: \$filter, viewerLocation: \$viewerLocation, radiusKm: \$radiusKm, search: \$search, first: \$first, after: \$after) {
         $_matingConnectionFields
       }
     }
@@ -752,17 +775,46 @@ class GraphQLService {
     return (city?['governorate'] as String?, city?['id'] as String?);
   }
 
-  Future<List<Map<String, dynamic>>> fetchCities() async {
-    final result = await client.value.query(
-      QueryOptions(document: gql(citiesQuery)),
-    );
+  List<Map<String, dynamic>>? _cities;
+  Future<List<Map<String, dynamic>>>? _citiesInFlight;
+  bool _serverLacksCitySearchFields = false;
+
+  /// The full City list, fetched once per app session and shared by every
+  /// picker (top bar, post form, profile setup). Calls made while the first
+  /// fetch is running wait for it. An empty result or a failure is not kept,
+  /// so the next call tries again.
+  Future<List<Map<String, dynamic>>> fetchCities() {
+    final cached = _cities;
+    if (cached != null) return Future.value(cached);
+    return _citiesInFlight ??= _loadCities().whenComplete(() => _citiesInFlight = null);
+  }
+
+  Future<List<Map<String, dynamic>>> _loadCities() async {
+    if (!_serverLacksCitySearchFields) {
+      final result = await client.value.query(QueryOptions(document: gql(citiesQuery)));
+      if (!result.hasException) return _keepCities(result.data);
+      if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
+      final exception = result.exception!;
+      _checkForAccountLockout(exception);
+      // No answer from the server (offline, timeout): try again next time.
+      if (exception.graphqlErrors.isEmpty) return [];
+      // The server answered but rejected the query: it predates `aliases`
+      // and `district`. Ask for the old fields for the rest of the session.
+      _serverLacksCitySearchFields = true;
+    }
+    final result = await client.value.query(QueryOptions(document: gql(legacyCitiesQuery)));
     if (result.hasException) {
       if (kDebugMode) debugPrint('GraphQL error: ${result.exception}');
-      if (result.exception != null) _checkForAccountLockout(result.exception!);
+      _checkForAccountLockout(result.exception!);
       return [];
     }
-    final list = result.data?['cities'] as List<dynamic>?;
-    return list?.cast<Map<String, dynamic>>() ?? [];
+    return _keepCities(result.data);
+  }
+
+  List<Map<String, dynamic>> _keepCities(Map<String, dynamic>? data) {
+    final list = (data?['cities'] as List<dynamic>?)?.cast<Map<String, dynamic>>().toList() ?? [];
+    if (list.isNotEmpty) _cities = list;
+    return list;
   }
 
   /// Fetches up to 15 vet clinics nearest to a city's center, sorted by
@@ -1316,11 +1368,15 @@ class GraphQLService {
     return _runFeedQuery(marketFeedQuery, 'marketFeed', variables);
   }
 
-  /// Fetches the Mating feed — MATING posts only, newest first. Unlike the
-  /// other feeds this isn't governorate/radius-scoped; pass [cityId] to
-  /// narrow to one city, or omit it to browse mating listings everywhere.
+  /// Fetches the Mating feed — MATING posts only, newest first. [radiusKm]
+  /// works as on the other feeds: null is nationwide, a number measures from
+  /// the viewer's GPS position ([latitude]/[longitude]) or, without one, from
+  /// the centre of [cityId].
   Future<(List<FeedPost> posts, String? endCursor, bool hasNextPage, String? errorMessage)> fetchMatingFeed({
     String? cityId,
+    double? latitude,
+    double? longitude,
+    double? radiusKm,
     String? species,
     String? gender,
     String? breed,
@@ -1335,10 +1391,14 @@ class GraphQLService {
     if (breed != null) filter['breed'] = breed;
     final variables = <String, dynamic>{
       'filter': filter.isEmpty ? null : filter,
+      'radiusKm': radiusKm,
       'search': search,
       'first': first,
       'after': after,
     };
+    if (latitude != null && longitude != null) {
+      variables['viewerLocation'] = {'latitude': latitude, 'longitude': longitude};
+    }
     return _runFeedQuery(matingFeedQuery, 'matingFeed', variables);
   }
 
