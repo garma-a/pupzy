@@ -6,6 +6,7 @@ import 'package:image_picker_platform_interface/image_picker_platform_interface.
 import 'package:pupzy/models/post.dart';
 import 'package:pupzy/screens/post_form_screen.dart';
 import 'package:pupzy/services/safety_events.dart';
+import 'package:pupzy/theme/app_theme.dart';
 import 'package:pupzy/widgets/yes_no_question.dart';
 
 import 'safety_test_support.dart';
@@ -25,9 +26,17 @@ class OnePhotoPicker extends ImagePickerPlatform {
       XFile(path, mimeType: 'image/jpeg');
 }
 
+const _tall = Size(1000, 1800);
+
+/// A phone screen, so the form scrolls.
+const _phone = Size(400, 800);
+
 void main() {
-  Future<void> pumpForm(WidgetTester tester, PostType type, [String? category]) async {
-    tester.view.physicalSize = const Size(2000, 3600);
+  var screen = _tall;
+
+  Future<void> pumpForm(WidgetTester tester, PostType type, [String? category, Size size = _tall]) async {
+    screen = size;
+    tester.view.physicalSize = size * 2;
     tester.view.devicePixelRatio = 2.0;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(safetyTestApp(
@@ -38,29 +47,79 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  /// Scrolls the lazily built form to the end and returns its submit button.
-  Future<ElevatedButton> submitButton(WidgetTester tester) async {
-    final list = find.descendant(of: find.byType(PostFormScreen), matching: find.byType(ListView)).first;
-    for (var i = 0; i < 12; i++) {
-      await tester.drag(list, const Offset(0, -600));
-      await tester.pump();
-    }
-    return tester.widgetList<ElevatedButton>(find.byType(ElevatedButton)).last;
+  Finder postButton() => find.byType(ElevatedButton).last;
+
+  /// The Post button is always tappable; it is drawn at full colour only when
+  /// every required field is filled in.
+  bool ready(WidgetTester tester) {
+    final color = tester.widget<ElevatedButton>(postButton()).style!.backgroundColor!.resolve({})!;
+    return color.a == 1.0;
   }
 
-  for (final (name, type, category) in [
-    ('Rescue Alert', PostType.rescue, 'URGENT'),
-    ('Lost Pet', PostType.rescue, 'LOST'),
-    ('Found a Pet', PostType.rescue, 'FOUND'),
-    ('Adoption', PostType.adoption, null),
-    ('Product', PostType.product, null),
-    ('Find a Mate', PostType.mating, null),
+  Future<void> tapPost(WidgetTester tester) async {
+    await tester.ensureVisible(postButton());
+    await tester.pumpAndSettle();
+    await tester.tap(postButton());
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> tapVisible(WidgetTester tester, Finder finder) async {
+    await tester.ensureVisible(finder);
+    await tester.pumpAndSettle();
+    await tester.tap(finder);
+    await tester.pumpAndSettle();
+  }
+
+  bool onScreen(WidgetTester tester, Finder finder) {
+    final rect = tester.getRect(finder);
+    return rect.top >= 0 && rect.bottom <= screen.height;
+  }
+
+  for (final (name, type, category, missing) in [
+    ('Rescue Alert', PostType.rescue, 'URGENT', 6),
+    ('Lost Pet', PostType.rescue, 'LOST', 7),
+    ('Found a Pet', PostType.rescue, 'FOUND', 6),
+    ('Adoption', PostType.adoption, null, 4),
+    ('Product', PostType.product, null, 7),
+    ('Find a Mate', PostType.mating, null, 7),
   ]) {
-    testWidgets('$name: an empty form cannot be submitted', (tester) async {
-      await pumpForm(tester, type, category);
-      expect((await submitButton(tester)).onPressed, isNull);
+    testWidgets('$name: Post on an empty form marks every missing field and scrolls to the first', (tester) async {
+      await pumpForm(tester, type, category, _phone);
+      expect(ready(tester), isFalse);
+      expect(find.byIcon(Icons.error_outline), findsNothing, reason: 'nothing is red before Post is tapped');
+      final form = tester.state<ScrollableState>(
+        find.descendant(of: find.byType(PostFormScreen), matching: find.byType(Scrollable)).first,
+      );
+
+      await tester.ensureVisible(postButton());
+      await tester.pumpAndSettle();
+      final atButton = form.position.pixels;
+      expect(atButton, greaterThan(0), reason: 'the form is taller than the screen');
+      await tester.tap(postButton());
+      await tester.pumpAndSettle();
+
+      expect(form.position.pixels, lessThan(atButton), reason: 'scrolled back up');
+      expect(find.byIcon(Icons.error_outline), findsNWidgets(missing));
+      expect(find.text('Fill in the $missing fields marked in red above'), findsOneWidget);
+      expect(find.text('Add at least one photo'), findsOneWidget);
+      expect(onScreen(tester, find.text('Add at least one photo')), isTrue, reason: 'scrolled up to the photo box');
     });
   }
+
+  testWidgets('a missing field label turns red, and back once it is filled in', (tester) async {
+    await pumpForm(tester, PostType.adoption);
+    Color? labelColor(String text) => tester.widget<Text>(find.text(text)).style?.color;
+
+    expect(labelColor('Gender'), isNot(AppColors.critical));
+    await tapPost(tester);
+    expect(labelColor('Gender'), AppColors.critical);
+    expect(find.text('Choose the gender'), findsOneWidget);
+
+    await tapVisible(tester, find.text('Female'));
+    expect(labelColor('Gender'), isNot(AppColors.critical));
+    expect(find.text('Choose the gender'), findsNothing);
+    expect(find.text('Fill in the 3 fields marked in red above'), findsOneWidget);
+  });
 
   for (final (name, type, category) in [
     ('Rescue Alert', PostType.rescue, 'URGENT'),
@@ -99,29 +158,40 @@ void main() {
     }
   });
 
+  testWidgets('Product: a giveaway needs no price', (tester) async {
+    await pumpForm(tester, PostType.product);
+    await tapPost(tester);
+    expect(find.text('Enter the price, or answer Yes if it is free'), findsOneWidget);
+
+    final free = find.byWidgetPredicate((w) => w is YesNoQuestion && w.question.contains('free'));
+    await tapVisible(tester, find.descendant(of: free, matching: find.text('Yes')));
+    expect(find.text('Enter the price, or answer Yes if it is free'), findsNothing);
+  });
+
   testWidgets('Find a Mate needs a photo even when every other field is filled', (tester) async {
     final photo = File('${Directory.systemTemp.path}/form-validation.jpg')..writeAsBytesSync([0xFF, 0xD8, 0xFF, 0xD9]);
     ImagePickerPlatform.instance = OnePhotoPicker(photo.path);
     await pumpForm(tester, PostType.mating);
 
     await tester.enterText(find.widgetWithText(TextField, 'e.g. Rex'), 'Duke');
-    await tester.tap(find.text('Dog').first);
+    await tapVisible(tester, find.text('Dog').first);
     await tester.enterText(find.widgetWithText(TextField, 'e.g. German Shepherd'), 'Golden Retriever');
     await tester.enterText(find.widgetWithText(TextField, 'e.g. 2 years'), '٣ سنوات'); // Arabic-Indic digits
-    await tester.tap(find.text('Male').first);
-    await tester.pump();
-    await tester.ensureVisible(find.text('Search and select a city'));
-    await tester.tap(find.text('Search and select a city'));
-    await tester.pumpAndSettle();
+    await tapVisible(tester, find.text('Male').first);
+    await tapVisible(tester, find.text('Search and select a city'));
     await tester.tap(find.text('Qasr Al-Nile').last);
     await tester.pumpAndSettle();
-    expect((await submitButton(tester)).onPressed, isNull, reason: 'no photo yet');
+    expect(ready(tester), isFalse, reason: 'no photo yet');
 
-    await tester.drag(find.byType(ListView).first, const Offset(0, 8000));
-    await tester.pump();
-    await tester.tap(find.text('Add pet photos'));
-    await tester.pumpAndSettle();
-    expect((await submitButton(tester)).onPressed, isNotNull);
+    await tapPost(tester);
+    expect(find.byIcon(Icons.error_outline), findsOneWidget, reason: 'only the photo is missing');
+    expect(find.text('Fill in the field marked in red above'), findsOneWidget);
+    expect(onScreen(tester, find.text('Add at least one photo')), isTrue);
+
+    await tapVisible(tester, find.text('Add pet photos'));
+    expect(find.byIcon(Icons.error_outline), findsNothing);
+    expect(find.text('Fill in the field marked in red above'), findsNothing);
+    expect(ready(tester), isTrue);
   });
 
   testWidgets('Rescue Alert: the situation questions start unanswered and must all be answered', (tester) async {
@@ -129,18 +199,11 @@ void main() {
     ImagePickerPlatform.instance = OnePhotoPicker(photo.path);
     await pumpForm(tester, PostType.rescue, 'URGENT');
 
-    Future<void> tapVisible(Finder finder) async {
-      await tester.ensureVisible(finder);
-      await tester.pumpAndSettle();
-      await tester.tap(finder);
-      await tester.pumpAndSettle();
-    }
-
-    await tapVisible(find.text('Add photos of the animal'));
-    await tapVisible(find.text('Dog').first);
+    await tapVisible(tester, find.text('Add photos of the animal'));
+    await tapVisible(tester, find.text('Dog').first);
     await tester.enterText(find.widgetWithText(TextField, "Describe the animal's visible condition..."), 'Limping on its back leg');
     await tester.enterText(find.widgetWithText(TextField, 'e.g. Maadi area'), 'Maadi');
-    await tapVisible(find.text("On-site — I'm with the animal"));
+    await tapVisible(tester, find.text("On-site — I'm with the animal"));
 
     final questions = find.byType(YesNoQuestion);
     expect(questions, findsNWidgets(4));
@@ -149,17 +212,26 @@ void main() {
     }
     expect(find.byIcon(Icons.check), findsNothing, reason: 'no answer looks chosen');
 
-    expect((await submitButton(tester)).onPressed, isNull, reason: 'situation not answered');
+    expect(ready(tester), isFalse, reason: 'situation not answered');
     expect(find.text('Answer all 4 Situation check questions to post'), findsOneWidget);
+
+    await tapPost(tester);
+    expect(find.text('Answer every question below'), findsOneWidget);
+    expect(onScreen(tester, find.text('Answer every question below')), isTrue);
+    for (final q in tester.widgetList<YesNoQuestion>(questions)) {
+      expect(q.flagUnanswered, isTrue, reason: 'unanswered questions are red');
+    }
 
     // Answering three of four is still not enough.
     for (var i = 0; i < 3; i++) {
-      await tapVisible(find.descendant(of: questions.at(i), matching: find.text('No')));
+      await tapVisible(tester, find.descendant(of: questions.at(i), matching: find.text('No')));
     }
-    expect((await submitButton(tester)).onPressed, isNull, reason: 'one question left');
+    expect(ready(tester), isFalse, reason: 'one question left');
+    expect(find.text('Answer every question below'), findsOneWidget);
 
-    await tapVisible(find.descendant(of: questions.at(3), matching: find.text('Yes')));
-    expect((await submitButton(tester)).onPressed, isNotNull);
+    await tapVisible(tester, find.descendant(of: questions.at(3), matching: find.text('Yes')));
+    expect(ready(tester), isTrue);
+    expect(find.text('Answer every question below'), findsNothing);
     expect(find.text('Complete all required fields to post'), findsOneWidget);
   });
 
@@ -168,17 +240,10 @@ void main() {
     ImagePickerPlatform.instance = OnePhotoPicker(photo.path);
     await pumpForm(tester, PostType.rescue, 'LOST');
 
-    Future<void> tapVisible(Finder finder) async {
-      await tester.ensureVisible(finder);
-      await tester.pumpAndSettle();
-      await tester.tap(finder);
-      await tester.pumpAndSettle();
-    }
-
-    await tapVisible(find.text('Add photos of your pet'));
-    await tapVisible(find.text('Dog').first);
+    await tapVisible(tester, find.text('Add photos of your pet'));
+    await tapVisible(tester, find.text('Dog').first);
     await tester.enterText(find.widgetWithText(TextField, 'e.g. Max'), 'Luna');
-    await tapVisible(find.text('Select date'));
+    await tapVisible(tester, find.text('Select date'));
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextField, 'e.g. 7th Circle area'), 'Nasr City');
@@ -197,16 +262,20 @@ void main() {
     for (final q in tester.widgetList<YesNoQuestion>(questions)) {
       expect(q.value, isNull, reason: '"${q.question}" must not be pre-answered');
     }
-    expect((await submitButton(tester)).onPressed, isNull, reason: 'situation not answered');
+    expect(ready(tester), isFalse, reason: 'situation not answered');
     expect(find.text('Answer all 3 Situation check questions to post'), findsOneWidget);
 
-    for (var i = 0; i < 2; i++) {
-      await tapVisible(find.descendant(of: questions.at(i), matching: find.text('No')));
-    }
-    expect((await submitButton(tester)).onPressed, isNull, reason: 'one question left');
+    await tapPost(tester);
+    expect(find.text('Answer every question below'), findsOneWidget);
 
-    await tapVisible(find.descendant(of: questions.at(2), matching: find.text('Yes')));
-    expect((await submitButton(tester)).onPressed, isNotNull);
+    for (var i = 0; i < 2; i++) {
+      await tapVisible(tester, find.descendant(of: questions.at(i), matching: find.text('No')));
+    }
+    expect(ready(tester), isFalse, reason: 'one question left');
+
+    await tapVisible(tester, find.descendant(of: questions.at(2), matching: find.text('Yes')));
+    expect(ready(tester), isTrue);
+    expect(find.text('Answer every question below'), findsNothing);
     expect(find.text('Complete all required fields to post'), findsOneWidget);
   });
 }
