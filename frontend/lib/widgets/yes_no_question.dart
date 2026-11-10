@@ -18,12 +18,20 @@ import '../theme/app_theme.dart';
 ///
 /// A null [value] means "not answered yet": neither button is filled. Forms
 /// use that for questions that must be answered deliberately rather than
-/// left on a default, and keep their submit button disabled until then.
+/// left on a default; with [flagUnanswered] an unanswered question turns
+/// red, so a form can point at the ones still to answer.
 ///
 /// Short questions sit on one line with the buttons at the end; at large
 /// text sizes the buttons move under the question so nothing gets squeezed.
 class YesNoQuestion extends StatelessWidget {
-  const YesNoQuestion({super.key, required this.question, required this.value, required this.onChanged, this.helper});
+  const YesNoQuestion({
+    super.key,
+    required this.question,
+    required this.value,
+    required this.onChanged,
+    this.helper,
+    this.flagUnanswered = false,
+  });
 
   /// Phrase it as a question ("Is it vaccinated?").
   final String question;
@@ -35,6 +43,9 @@ class YesNoQuestion extends StatelessWidget {
   final bool? value;
   final ValueChanged<bool> onChanged;
 
+  /// Shows the question in red while it is unanswered (a null [value]).
+  final bool flagUnanswered;
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -44,7 +55,13 @@ class YesNoQuestion extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(question, style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+        Text(
+          question,
+          style: textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: flagUnanswered && value == null ? AppColors.critical : null,
+          ),
+        ),
         if (helper != null) ...[const SizedBox(height: 2), Text(helper!, style: textTheme.bodySmall)],
       ],
     );

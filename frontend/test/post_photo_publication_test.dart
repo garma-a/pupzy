@@ -129,7 +129,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Qasr Al-Nile').last);
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(ListView).first, const Offset(0, 8000));
+    await tester.ensureVisible(find.text('Add pet photos'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add pet photos'));
     await tester.pumpAndSettle();
@@ -137,10 +137,8 @@ void main() {
       await tester.tap(find.byIcon(Icons.add_a_photo_outlined));
       await tester.pumpAndSettle();
     }
-    for (var i = 0; i < 12; i++) {
-      await tester.drag(find.byType(ListView).first, const Offset(0, -600));
-      await tester.pump();
-    }
+    await tester.ensureVisible(find.widgetWithText(ElevatedButton, 'Post Mating Listing'));
+    await tester.pumpAndSettle();
     expect(tester.widget<ElevatedButton>(find.widgetWithText(ElevatedButton, 'Post Mating Listing')).onPressed, isNotNull);
   }
 

@@ -21,6 +21,10 @@ import '../widgets/yes_no_question.dart';
 /// The canonical value is what state/logic keys off of — never the translated label.
 typedef Choice = (String value, String en, String ar);
 
+/// One required field: its [id] (also its scroll anchor), whether it is
+/// still [missing], and the [message] shown under its label when it is.
+typedef _Check = ({String id, bool missing, String message});
+
 class PostFormScreen extends StatefulWidget {
   final PostType type;
   final String? initialCategory;
@@ -103,6 +107,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
   String? _spaceRequirement;
   bool _priorPetExperienceRequired = false;
   bool _submitting = false;
+
+  /// Set when Post is tapped on an incomplete form: from then on every
+  /// missing field is marked in red until it is filled in.
+  bool _showMissing = false;
+  final Map<String, GlobalKey> _fieldKeys = {};
 
   /// The same four species for every post type, in this order.
   static const List<Choice> _speciesOptions = [
@@ -252,16 +261,36 @@ class _PostFormScreenState extends State<PostFormScreen> {
     if (picked != null) setState(() => _images.add(picked));
   }
 
-  bool get _rescueFormValid {
-    // condition text feeds both `description` (backend min 10) and
-    // `conditionSummary` (backend min 5) — 10 is the binding constraint.
-    return _images.isNotEmpty &&
-        _species != null &&
-        _conditionController.text.trim().length >= 10 &&
-        _neighborhoodController.text.trim().isNotEmpty &&
-        _role != null &&
-        _rescueSituationAnswered;
-  }
+  _Check get _photosCheck =>
+      (id: 'photos', missing: _images.isEmpty, message: t(context, 'Add at least one photo', 'أضف صورة واحدة على الأقل'));
+  _Check get _speciesCheck =>
+      (id: 'species', missing: _species == null, message: t(context, 'Choose the species', 'اختر النوع'));
+  _Check _situationCheck(bool answered) => (
+        id: 'situation',
+        missing: !answered,
+        message: t(context, 'Answer every question below', 'أجب عن كل الأسئلة أدناه'),
+      );
+
+  List<_Check> get _rescueChecks => [
+        _photosCheck,
+        _speciesCheck,
+        // condition text feeds both `description` (backend min 10) and
+        // `conditionSummary` (backend min 5) — 10 is the binding constraint.
+        (
+          id: 'rescueCondition',
+          missing: _conditionController.text.trim().length < 10,
+          message: t(context, 'Describe the condition (at least 10 characters)', 'صف الحالة (10 أحرف على الأقل)'),
+        ),
+        _situationCheck(_rescueSituationAnswered),
+        (
+          id: 'neighborhood',
+          missing: _neighborhoodController.text.trim().isEmpty,
+          message: t(context, 'Enter the neighborhood or area', 'أدخل الحي أو المنطقة'),
+        ),
+        (id: 'role', missing: _role == null, message: t(context, 'Choose your role', 'اختر دورك')),
+      ];
+
+  bool get _rescueFormValid => _rescueChecks.every((c) => !c.missing);
 
   Future<Position?> _getCurrentPosition() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -296,15 +325,33 @@ class _PostFormScreenState extends State<PostFormScreen> {
     return pos;
   }
 
-  bool get _lostPetFormValid {
-    return _images.isNotEmpty &&
-        _species != null &&
-        _petNameController.text.trim().isNotEmpty &&
-        _approximateAreaController.text.trim().isNotEmpty &&
-        _circumstancesController.text.trim().length >= 10 &&
-        _dateLastSeen != null &&
-        _lostPetSituationAnswered;
-  }
+  _Check get _petNameCheck => (
+        id: 'petName',
+        missing: _petNameController.text.trim().isEmpty,
+        message: t(context, "Enter the pet's name", 'أدخل اسم الحيوان'),
+      );
+  _Check get _areaCheck => (
+        id: 'area',
+        missing: _approximateAreaController.text.trim().isEmpty,
+        message: t(context, 'Enter the area', 'أدخل المنطقة'),
+      );
+  _Check get _circumstancesCheck => (
+        id: 'circumstances',
+        missing: _circumstancesController.text.trim().length < 10,
+        message: t(context, 'Describe what happened (at least 10 characters)', 'اشرح ما حدث (10 أحرف على الأقل)'),
+      );
+
+  List<_Check> get _lostPetChecks => [
+        _photosCheck,
+        _speciesCheck,
+        _petNameCheck,
+        (id: 'dateLastSeen', missing: _dateLastSeen == null, message: t(context, 'Pick the date', 'اختر التاريخ')),
+        _areaCheck,
+        _circumstancesCheck,
+        _situationCheck(_lostPetSituationAnswered),
+      ];
+
+  bool get _lostPetFormValid => _lostPetChecks.every((c) => !c.missing);
 
   String _isoDate(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -325,14 +372,16 @@ class _PostFormScreenState extends State<PostFormScreen> {
     if (picked != null) setState(() => _dateLastSeen = picked);
   }
 
-  bool get _foundStrayFormValid {
-    return _images.isNotEmpty &&
-        _species != null &&
-        _approximateAreaController.text.trim().isNotEmpty &&
-        _circumstancesController.text.trim().length >= 10 &&
-        _foundStrayCondition != null &&
-        _dateFound != null;
-  }
+  List<_Check> get _foundStrayChecks => [
+        _photosCheck,
+        _speciesCheck,
+        (id: 'dateFound', missing: _dateFound == null, message: t(context, 'Pick the date', 'اختر التاريخ')),
+        _areaCheck,
+        _circumstancesCheck,
+        (id: 'condition', missing: _foundStrayCondition == null, message: t(context, 'Choose the condition', 'اختر الحالة')),
+      ];
+
+  bool get _foundStrayFormValid => _foundStrayChecks.every((c) => !c.missing);
 
   Future<void> _pickDateFound() async {
     final now = DateTime.now();
@@ -345,12 +394,12 @@ class _PostFormScreenState extends State<PostFormScreen> {
     if (picked != null) setState(() => _dateFound = picked);
   }
 
-  bool get _adoptionFormValid {
-    return _images.isNotEmpty &&
-        _petNameController.text.trim().isNotEmpty &&
-        _species != null &&
-        _gender != null;
-  }
+  _Check get _genderCheck =>
+      (id: 'gender', missing: _gender == null, message: t(context, 'Choose the gender', 'اختر الجنس'));
+
+  List<_Check> get _adoptionChecks => [_photosCheck, _petNameCheck, _speciesCheck, _genderCheck];
+
+  bool get _adoptionFormValid => _adoptionChecks.every((c) => !c.missing);
 
   String _ageUnitLabel(String unit) {
     switch (unit) {
@@ -367,15 +416,33 @@ class _PostFormScreenState extends State<PostFormScreen> {
     }
   }
 
-  bool get _productFormValid {
-    return _images.isNotEmpty &&
-        _productTitleController.text.trim().length >= 3 &&
-        _captionController.text.trim().length >= 10 &&
-        _selectedCategory != null &&
-        _condition != null &&
-        _neighborhoodController.text.trim().isNotEmpty &&
-        (_isFree || double.tryParse(_priceController.text.trim()) != null);
-  }
+  List<_Check> get _productChecks => [
+        _photosCheck,
+        (
+          id: 'title',
+          missing: _productTitleController.text.trim().length < 3,
+          message: t(context, 'Enter a title (at least 3 characters)', 'أدخل عنوانًا (3 أحرف على الأقل)'),
+        ),
+        (
+          id: 'description',
+          missing: _captionController.text.trim().length < 10,
+          message: t(context, 'Write a description (at least 10 characters)', 'اكتب وصفًا (10 أحرف على الأقل)'),
+        ),
+        (id: 'category', missing: _selectedCategory == null, message: t(context, 'Choose a category', 'اختر الفئة')),
+        (id: 'condition', missing: _condition == null, message: t(context, 'Choose the condition', 'اختر الحالة')),
+        (
+          id: 'price',
+          missing: !_isFree && double.tryParse(_priceController.text.trim()) == null,
+          message: t(context, 'Enter the price, or answer Yes if it is free', 'أدخل السعر، أو اختر «نعم» إذا كان مجانيًا'),
+        ),
+        (
+          id: 'neighborhood',
+          missing: _neighborhoodController.text.trim().isEmpty,
+          message: t(context, 'Enter the neighborhood or area', 'أدخل الحي أو المنطقة'),
+        ),
+      ];
+
+  bool get _productFormValid => _productChecks.every((c) => !c.missing);
 
   /// Upload failures must never turn a photo post into a text-only post.
   /// Keep the picked files and form fields intact so the user can retry.
@@ -723,15 +790,111 @@ class _PostFormScreenState extends State<PostFormScreen> {
     }
   }
 
-  bool get _matingFormValid {
-    return _images.isNotEmpty &&
-        _petNameController.text.trim().isNotEmpty &&
-        _species != null &&
-        _breedController.text.trim().isNotEmpty &&
-        _gender != null &&
-        parseAge(_ageController.text.trim()) != null &&
-        _selectedCity != null;
+  List<_Check> get _matingChecks => [
+        _photosCheck,
+        _petNameCheck,
+        _speciesCheck,
+        (id: 'breed', missing: _breedController.text.trim().isEmpty, message: t(context, 'Enter the breed', 'أدخل السلالة')),
+        (
+          id: 'age',
+          missing: parseAge(_ageController.text.trim()) == null,
+          message: t(context, 'Enter the age, like "2 years"', 'أدخل العمر، مثل «3 سنوات»'),
+        ),
+        _genderCheck,
+        (id: 'city', missing: _selectedCity == null, message: t(context, 'Choose the city', 'اختر المدينة')),
+      ];
+
+  bool get _matingFormValid => _matingChecks.every((c) => !c.missing);
+
+  /// The required fields of the form on screen, top to bottom.
+  List<_Check> get _checks {
+    if (widget.type == PostType.rescue && widget.initialCategory == 'LOST') return _lostPetChecks;
+    if (widget.type == PostType.rescue && widget.initialCategory == 'FOUND') return _foundStrayChecks;
+    if (widget.type == PostType.rescue) return _rescueChecks;
+    if (widget.type == PostType.product) return _productChecks;
+    if (widget.type == PostType.adoption) return _adoptionChecks;
+    if (widget.type == PostType.mating) return _matingChecks;
+    return const [];
   }
+
+  /// Post on a complete form submits it. On an incomplete one it marks every
+  /// missing field in red and scrolls to the first, so the user sees where
+  /// to look instead of a button that does nothing.
+  void _attemptSubmit(Future<void> Function() submit) {
+    final missing = _checks.where((c) => c.missing).toList();
+    if (missing.isEmpty) {
+      submit();
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    setState(() => _showMissing = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final target = _fieldKeys[missing.first.id]?.currentContext;
+      if (target == null || !target.mounted) return;
+      Scrollable.ensureVisible(target, duration: const Duration(milliseconds: 350), curve: Curves.easeOutCubic, alignment: 0.1);
+    });
+  }
+
+  /// A required field's label, in red with the reason underneath once the
+  /// user has tried to post without it. With no [text] it shows only the
+  /// reason (for the photo box and the price field). Also the field's scroll
+  /// anchor for [_attemptSubmit].
+  Widget _fieldLabel(String id, String? text) {
+    final check = _showMissing ? _checks.where((c) => c.id == id && c.missing).firstOrNull : null;
+    final textTheme = Theme.of(context).textTheme;
+    return KeyedSubtree(
+      key: _fieldKeys.putIfAbsent(id, GlobalKey.new),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (text != null)
+            Text(text, style: check == null ? textTheme.labelLarge : textTheme.labelLarge?.copyWith(color: AppColors.critical)),
+          if (check != null)
+            Padding(
+              padding: EdgeInsets.only(top: text == null ? 0 : 4, bottom: text == null ? AppSpacing.sm : 0),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, size: 16, color: AppColors.critical),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      check.message,
+                      style: textTheme.bodySmall?.copyWith(color: AppColors.critical, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Above the Post button once the user has tried to post: how many fields
+  /// are still marked in red. Nothing when the form is complete.
+  Widget _missingSummary() {
+    if (!_showMissing) return const SizedBox.shrink();
+    final count = _checks.where((c) => c.missing).length;
+    if (count == 0) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Text(
+        count == 1
+            ? t(context, 'Fill in the field marked in red above', 'أكمل الحقل المعلّم باللون الأحمر أعلاه')
+            : t(context, 'Fill in the $count fields marked in red above', 'أكمل الحقول المعلّمة باللون الأحمر أعلاه ($count)'),
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.critical, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  /// The Post button stays tappable so it can point out what is missing; it
+  /// looks faded until the form is complete.
+  ButtonStyle _postButtonStyle(bool ready, [Color color = AppColors.primary]) => ElevatedButton.styleFrom(
+        backgroundColor: ready ? color : color.withValues(alpha: 0.35),
+        disabledBackgroundColor: color.withValues(alpha: 0.35),
+      );
 
   Future<void> _submitMating() async {
     if (!_matingFormValid || _submitting) return;
@@ -858,223 +1021,229 @@ class _PostFormScreenState extends State<PostFormScreen> {
             ),
             const SizedBox(height: AppSpacing.lg),
             Expanded(
-              child: ListView(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
-                children: [
-                  _SectionLabel(t(context, 'ANIMAL DETAILS', 'تفاصيل الحيوان')),
-                  const SizedBox(height: AppSpacing.sm),
-                  InkWell(
-                    onTap: _pickImage,
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                    child: Container(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _SectionLabel(t(context, 'ANIMAL DETAILS', 'تفاصيل الحيوان')),
+                    const SizedBox(height: AppSpacing.sm),
+                    _fieldLabel('photos', null),
+                    InkWell(
+                      onTap: _pickImage,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceWarm,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+                        ),
+                        child: Column(
+                          children: [
+                            if (_images.isEmpty) ...[
+                              const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                t(context, 'Add photos of the animal', 'أضف صورًا للحيوان'),
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(t(context, 'Up to 4 photos', 'حتى 4 صور'), style: Theme.of(context).textTheme.bodySmall),
+                            ] else
+                              SizedBox(
+                                height: 90,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  children: [
+                                    ..._images.map(
+                                      (img) => Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
+                                        ),
+                                      ),
+                                    ),
+                                    if (_images.length < 4)
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                        child: Container(
+                                          width: 90,
+                                          height: 90,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(color: AppColors.border),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('species', t(context, 'Species', 'النوع')),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      children: _speciesOptions.map((s) {
+                        return _PillChoice(
+                          label: t(context, s.$2, s.$3),
+                          selected: _species == s.$1,
+                          onTap: () => setState(() => _species = s.$1),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('rescueCondition', t(context, 'Condition description', 'وصف الحالة')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _conditionController,
+                      maxLines: 3,
+                      onChanged: (_) => setState(() {}),
+                      decoration: InputDecoration(
+                        hintText: t(context, "Describe the animal's visible condition...", 'صف الحالة الظاهرة للحيوان...'),
+                        hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 14),
+                        filled: true,
+                        fillColor: AppColors.surfaceWarm,
+                        contentPadding: const EdgeInsets.all(16),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('situation', t(context, 'Situation check', 'تقييم الحالة')),
+                    Text(
+                      t(
+                        context,
+                        "We use these answers to set the rescue's urgency. Answer each one.",
+                        'نستخدم هذه الإجابات لتحديد مدى إلحاح الإنقاذ. أجب عن كل سؤال.',
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    YesNoQuestion(
+                      question: t(context, "Is the animal's life in immediate danger?", 'هل حياة الحيوان في خطر مباشر؟'),
+                      value: _isLifeThreatening,
+                      flagUnanswered: _showMissing,
+                      onChanged: (v) => setState(() => _isLifeThreatening = v),
+                    ),
+                    YesNoQuestion(
+                      question: t(context, 'Does it have a visible serious injury?', 'هل لديه إصابة خطيرة واضحة؟'),
+                      helper: t(context, "Heavy bleeding, a broken bone, or it can't stand", 'نزيف شديد، كسر، أو لا يستطيع الوقوف'),
+                      value: _hasVisibleSeriousInjury,
+                      flagUnanswered: _showMissing,
+                      onChanged: (v) => setState(() => _hasVisibleSeriousInjury = v),
+                    ),
+                    YesNoQuestion(
+                      question: t(context, 'Is it in a dangerous place right now?', 'هل هو في مكان خطر الآن؟'),
+                      helper: t(context, 'On a road, at a construction site, or trapped', 'على طريق، في موقع بناء، أو محاصر'),
+                      value: _isInDangerousLocation,
+                      flagUnanswered: _showMissing,
+                      onChanged: (v) => setState(() => _isInDangerousLocation = v),
+                    ),
+                    YesNoQuestion(
+                      question: t(context, 'Can the animal move or escape on its own?', 'هل يستطيع الحيوان الحركة أو الهرب بمفرده؟'),
+                      value: _canAnimalMoveOrEscape,
+                      flagUnanswered: _showMissing,
+                      onChanged: (v) => setState(() => _canAnimalMoveOrEscape = v),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _SectionLabel(t(context, 'LOCATION', 'الموقع')),
+                    const SizedBox(height: AppSpacing.md),
+                    _fieldLabel('neighborhood', t(context, 'Neighborhood or area', 'الحي أو المنطقة')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _neighborhoodController,
+                      onChanged: (_) => setState(() {}),
+                      decoration: _fieldDecoration(t(context, 'e.g. Maadi area', 'مثال: منطقة المعادي')),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(t(context, 'Nearby landmark', 'أقرب معلم'), style: Theme.of(context).textTheme.labelLarge),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _landmarkController,
+                      decoration: _fieldDecoration(t(context, 'e.g. near Al-Razi pharmacy', 'مثال: بجوار صيدلية الرازي')),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: AppColors.surfaceWarm,
                         borderRadius: BorderRadius.circular(AppRadius.card),
-                        border: Border.all(color: AppColors.border, style: BorderStyle.solid),
                       ),
-                      child: Column(
+                      child: Row(
                         children: [
-                          if (_images.isEmpty) ...[
-                            const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(
-                              t(context, 'Add photos of the animal', 'أضف صورًا للحيوان'),
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                          const Icon(Icons.schedule, size: 16, color: AppColors.textMuted),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              t(context, 'Exact address will never be shown publicly', 'العنوان الدقيق لن يُعرض للعامة أبدًا'),
+                              style: Theme.of(context).textTheme.bodySmall,
                             ),
-                            const SizedBox(height: 2),
-                            Text(t(context, 'Up to 4 photos', 'حتى 4 صور'), style: Theme.of(context).textTheme.bodySmall),
-                          ] else
-                            SizedBox(
-                              height: 90,
-                              child: ListView(
-                                scrollDirection: Axis.horizontal,
-                                children: [
-                                  ..._images.map(
-                                    (img) => Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
-                                      ),
-                                    ),
-                                  ),
-                                  if (_images.length < 4)
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                      child: Container(
-                                        width: 90,
-                                        height: 90,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(color: AppColors.border),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Species', 'النوع'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    children: _speciesOptions.map((s) {
-                      return _PillChoice(
-                        label: t(context, s.$2, s.$3),
-                        selected: _species == s.$1,
-                        onTap: () => setState(() => _species = s.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Condition description', 'وصف الحالة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _conditionController,
-                    maxLines: 3,
-                    onChanged: (_) => setState(() {}),
-                    decoration: InputDecoration(
-                      hintText: t(context, "Describe the animal's visible condition...", 'صف الحالة الظاهرة للحيوان...'),
-                      hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 14),
-                      filled: true,
-                      fillColor: AppColors.surfaceWarm,
-                      contentPadding: const EdgeInsets.all(16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.card),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Situation check', 'تقييم الحالة'), style: Theme.of(context).textTheme.labelLarge),
-                  Text(
-                    t(
-                      context,
-                      "We use these answers to set the rescue's urgency. Answer each one.",
-                      'نستخدم هذه الإجابات لتحديد مدى إلحاح الإنقاذ. أجب عن كل سؤال.',
-                    ),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  YesNoQuestion(
-                    question: t(context, "Is the animal's life in immediate danger?", 'هل حياة الحيوان في خطر مباشر؟'),
-                    value: _isLifeThreatening,
-                    onChanged: (v) => setState(() => _isLifeThreatening = v),
-                  ),
-                  YesNoQuestion(
-                    question: t(context, 'Does it have a visible serious injury?', 'هل لديه إصابة خطيرة واضحة؟'),
-                    helper: t(context, "Heavy bleeding, a broken bone, or it can't stand", 'نزيف شديد، كسر، أو لا يستطيع الوقوف'),
-                    value: _hasVisibleSeriousInjury,
-                    onChanged: (v) => setState(() => _hasVisibleSeriousInjury = v),
-                  ),
-                  YesNoQuestion(
-                    question: t(context, 'Is it in a dangerous place right now?', 'هل هو في مكان خطر الآن؟'),
-                    helper: t(context, 'On a road, at a construction site, or trapped', 'على طريق، في موقع بناء، أو محاصر'),
-                    value: _isInDangerousLocation,
-                    onChanged: (v) => setState(() => _isInDangerousLocation = v),
-                  ),
-                  YesNoQuestion(
-                    question: t(context, 'Can the animal move or escape on its own?', 'هل يستطيع الحيوان الحركة أو الهرب بمفرده؟'),
-                    value: _canAnimalMoveOrEscape,
-                    onChanged: (v) => setState(() => _canAnimalMoveOrEscape = v),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'LOCATION', 'الموقع')),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(t(context, 'Neighborhood or area', 'الحي أو المنطقة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _neighborhoodController,
-                    onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration(t(context, 'e.g. Maadi area', 'مثال: منطقة المعادي')),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Nearby landmark', 'أقرب معلم'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _landmarkController,
-                    decoration: _fieldDecoration(t(context, 'e.g. near Al-Razi pharmacy', 'مثال: بجوار صيدلية الرازي')),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceWarm,
-                      borderRadius: BorderRadius.circular(AppRadius.card),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.schedule, size: 16, color: AppColors.textMuted),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            t(context, 'Exact address will never be shown publicly', 'العنوان الدقيق لن يُعرض للعامة أبدًا'),
-                            style: Theme.of(context).textTheme.bodySmall,
+                    const SizedBox(height: AppSpacing.xl),
+                    _SectionLabel(t(context, 'YOUR ROLE', 'دورك')),
+                    const SizedBox(height: AppSpacing.md),
+                    _fieldLabel('role', t(context, 'I am', 'أنا')),
+                    const SizedBox(height: AppSpacing.sm),
+                    Column(
+                      children: _roleOptions.map((r) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          child: _RoleChoice(
+                            label: t(context, r.$2, r.$3),
+                            selected: _role == r.$1,
+                            onTap: () => setState(() => _role = r.$1),
                           ),
-                        ),
-                      ],
+                        );
+                      }).toList(),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'YOUR ROLE', 'دورك')),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(t(context, 'I am', 'أنا'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Column(
-                    children: _roleOptions.map((r) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                        child: _RoleChoice(
-                          label: t(context, r.$2, r.$3),
-                          selected: _role == r.$1,
-                          onTap: () => setState(() => _role = r.$1),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  Center(
-                    child: Text(
-                      // Name the usual blocker: the situation questions sit
-                      // mid-form and are easy to scroll past.
-                      _rescueSituationAnswered
-                          ? t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر')
-                          : t(
-                              context,
-                              'Answer all 4 Situation check questions to post',
-                              'أجب عن أسئلة تقييم الحالة الأربعة للنشر',
-                            ),
-                      style: Theme.of(context).textTheme.bodySmall,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: (_rescueFormValid && !_submitting) ? _submitRescue : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.critical,
-                        disabledBackgroundColor: AppColors.critical.withValues(alpha: 0.35),
+                    const SizedBox(height: AppSpacing.xl),
+                    Center(
+                      child: Text(
+                        // Name the usual blocker: the situation questions sit
+                        // mid-form and are easy to scroll past.
+                        _rescueSituationAnswered
+                            ? t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر')
+                            : t(
+                                context,
+                                'Answer all 4 Situation check questions to post',
+                                'أجب عن أسئلة تقييم الحالة الأربعة للنشر',
+                              ),
+                        style: Theme.of(context).textTheme.bodySmall,
+                        textAlign: TextAlign.center,
                       ),
-                      child: _submitting
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                            )
-                          : Text(t(context, 'Post Rescue Alert', 'نشر تنبيه الإنقاذ')),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: AppSpacing.md),
+                    _missingSummary(),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton(
+                        onPressed: _submitting ? null : () => _attemptSubmit(_submitRescue),
+                        style: _postButtonStyle(_rescueFormValid, AppColors.critical),
+                        child: _submitting
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                              )
+                            : Text(t(context, 'Post Rescue Alert', 'نشر تنبيه الإنقاذ')),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -1117,223 +1286,228 @@ class _PostFormScreenState extends State<PostFormScreen> {
             ),
             const SizedBox(height: AppSpacing.sm),
             Expanded(
-              child: ListView(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
-                children: [
-                  _SectionLabel(t(context, 'PET DETAILS', 'تفاصيل الحيوان')),
-                  const SizedBox(height: AppSpacing.sm),
-                  InkWell(
-                    onTap: _pickImage,
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceWarm,
-                        borderRadius: BorderRadius.circular(AppRadius.card),
-                        border: Border.all(color: AppColors.border, style: BorderStyle.solid),
-                      ),
-                      child: Column(
-                        children: [
-                          if (_images.isEmpty) ...[
-                            const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(
-                              t(context, 'Add photos of your pet', 'أضف صورًا لحيوانك الأليف'),
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              t(context, 'Clear photos help with identification', 'الصور الواضحة تساعد في التعرف عليه'),
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ] else
-                            SizedBox(
-                              height: 90,
-                              child: ListView(
-                                scrollDirection: Axis.horizontal,
-                                children: [
-                                  ..._images.map(
-                                    (img) => Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
-                                      ),
-                                    ),
-                                  ),
-                                  if (_images.length < 4)
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                      child: Container(
-                                        width: 90,
-                                        height: 90,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(color: AppColors.border),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _SectionLabel(t(context, 'PET DETAILS', 'تفاصيل الحيوان')),
+                    const SizedBox(height: AppSpacing.sm),
+                    _fieldLabel('photos', null),
+                    InkWell(
+                      onTap: _pickImage,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceWarm,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+                        ),
+                        child: Column(
+                          children: [
+                            if (_images.isEmpty) ...[
+                              const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                t(context, 'Add photos of your pet', 'أضف صورًا لحيوانك الأليف'),
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                t(context, 'Clear photos help with identification', 'الصور الواضحة تساعد في التعرف عليه'),
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ] else
+                              SizedBox(
+                                height: 90,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  children: [
+                                    ..._images.map(
+                                      (img) => Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                        child: ClipRRect(
                                           borderRadius: BorderRadius.circular(12),
+                                          child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
                                         ),
-                                        child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
                                       ),
                                     ),
-                                ],
+                                    if (_images.length < 4)
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                        child: Container(
+                                          width: 90,
+                                          height: 90,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(color: AppColors.border),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('species', t(context, 'Species', 'النوع')),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      children: _speciesOptions.map((s) {
+                        return _PillChoice(
+                          label: t(context, s.$2, s.$3),
+                          selected: _species == s.$1,
+                          onTap: () => setState(() => _species = s.$1),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('petName', t(context, "Pet's name", 'اسم الحيوان')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _petNameController,
+                      textCapitalization: TextCapitalization.words,
+                      onChanged: (_) => setState(() {}),
+                      decoration: _fieldDecoration(t(context, 'e.g. Max', 'مثال: ماكس')),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('breed', t(context, 'Breed', 'السلالة')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _breedController,
+                      decoration: _fieldDecoration(t(context, 'e.g. Golden Retriever', 'مثال: جولدن ريتريفر')),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(t(context, 'Color & markings', 'اللون والعلامات المميزة'), style: Theme.of(context).textTheme.labelLarge),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _colorMarkingsController,
+                      decoration: _fieldDecoration(
+                        t(context, 'e.g. tan and white, spot on left ear', 'مثال: بني وأبيض، بقعة على الأذن اليسرى'),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    YesNoQuestion(
+                      question: t(context, 'Does it wear a collar with an ID tag?', 'هل يرتدي طوقًا يحمل بطاقة تعريف؟'),
+                      value: _hasCollarWithIdTag,
+                      onChanged: (v) => setState(() => _hasCollarWithIdTag = v),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _SectionLabel(t(context, 'WHEN & WHERE LAST SEEN', 'متى وأين شوهد آخر مرة')),
+                    const SizedBox(height: AppSpacing.md),
+                    _fieldLabel('dateLastSeen', t(context, 'Date last seen', 'تاريخ آخر مشاهدة')),
+                    const SizedBox(height: AppSpacing.sm),
+                    InkWell(
+                      onTap: _pickDateLastSeen,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceWarm,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today_outlined, size: 18, color: AppColors.textMuted),
+                            const SizedBox(width: AppSpacing.sm),
+                            Text(
+                              _dateLastSeen != null ? _displayDate(_dateLastSeen!) : t(context, 'Select date', 'اختر التاريخ'),
+                              style: TextStyle(
+                                color: _dateLastSeen != null ? AppColors.textPrimary : AppColors.textMuted,
+                                fontSize: 14,
                               ),
                             ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Species', 'النوع'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    children: _speciesOptions.map((s) {
-                      return _PillChoice(
-                        label: t(context, s.$2, s.$3),
-                        selected: _species == s.$1,
-                        onTap: () => setState(() => _species = s.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, "Pet's name", 'اسم الحيوان'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _petNameController,
-                    textCapitalization: TextCapitalization.words,
-                    onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration(t(context, 'e.g. Max', 'مثال: ماكس')),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Breed', 'السلالة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _breedController,
-                    decoration: _fieldDecoration(t(context, 'e.g. Golden Retriever', 'مثال: جولدن ريتريفر')),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Color & markings', 'اللون والعلامات المميزة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _colorMarkingsController,
-                    decoration: _fieldDecoration(
-                      t(context, 'e.g. tan and white, spot on left ear', 'مثال: بني وأبيض، بقعة على الأذن اليسرى'),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('area', t(context, 'Approximate area', 'المنطقة التقريبية')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _approximateAreaController,
+                      onChanged: (_) => setState(() {}),
+                      decoration: _fieldDecoration(t(context, 'e.g. 7th Circle area', 'مثال: منطقة الدائرة السابعة')),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  YesNoQuestion(
-                    question: t(context, 'Does it wear a collar with an ID tag?', 'هل يرتدي طوقًا يحمل بطاقة تعريف؟'),
-                    value: _hasCollarWithIdTag,
-                    onChanged: (v) => setState(() => _hasCollarWithIdTag = v),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'WHEN & WHERE LAST SEEN', 'متى وأين شوهد آخر مرة')),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(t(context, 'Date last seen', 'تاريخ آخر مشاهدة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  InkWell(
-                    onTap: _pickDateLastSeen,
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceWarm,
-                        borderRadius: BorderRadius.circular(AppRadius.card),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.calendar_today_outlined, size: 18, color: AppColors.textMuted),
-                          const SizedBox(width: AppSpacing.sm),
-                          Text(
-                            _dateLastSeen != null ? _displayDate(_dateLastSeen!) : t(context, 'Select date', 'اختر التاريخ'),
-                            style: TextStyle(
-                              color: _dateLastSeen != null ? AppColors.textPrimary : AppColors.textMuted,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('circumstances', t(context, 'Circumstances', 'الظروف')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _circumstancesController,
+                      maxLines: 3,
+                      onChanged: (_) => setState(() {}),
+                      decoration: _fieldDecoration(
+                        t(context, 'Describe when and how your pet went missing...', 'صف متى وكيف فُقد حيوانك الأليف...'),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Approximate area', 'المنطقة التقريبية'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _approximateAreaController,
-                    onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration(t(context, 'e.g. 7th Circle area', 'مثال: منطقة الدائرة السابعة')),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Circumstances', 'الظروف'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _circumstancesController,
-                    maxLines: 3,
-                    onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration(
-                      t(context, 'Describe when and how your pet went missing...', 'صف متى وكيف فُقد حيوانك الأليف...'),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Situation check', 'تقييم الحالة'), style: Theme.of(context).textTheme.labelLarge),
-                  Text(
-                    t(
-                      context,
-                      'We use these answers to set how urgent this report is. Answer each one.',
-                      'نستخدم هذه الإجابات لتحديد مدى إلحاح هذا البلاغ. أجب عن كل سؤال.',
-                    ),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  YesNoQuestion(
-                    question: t(context, 'Does it need regular medication or have a medical condition?', 'هل يحتاج دواءً منتظمًا أو لديه حالة طبية؟'),
-                    value: _hasMedicalNeeds,
-                    onChanged: (v) => setState(() => _hasMedicalNeeds = v),
-                  ),
-                  YesNoQuestion(
-                    question: t(context, 'Is it elderly or very young?', 'هل هو كبير في السن أو صغير جدًا؟'),
-                    value: _isElderlyOrVeryYoung,
-                    onChanged: (v) => setState(() => _isElderlyOrVeryYoung = v),
-                  ),
-                  YesNoQuestion(
-                    question: t(context, 'Was it last seen near a busy road, canal, or other hazard?', 'هل شوهد آخر مرة قرب طريق مزدحم أو ترعة أو خطر آخر؟'),
-                    value: _lastSeenNearHazard,
-                    onChanged: (v) => setState(() => _lastSeenNearHazard = v),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  Center(
-                    child: Text(
-                      _lostPetSituationAnswered
-                          ? t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر')
-                          : t(
-                              context,
-                              'Answer all 3 Situation check questions to post',
-                              'أجب عن أسئلة تقييم الحالة الثلاثة للنشر',
-                            ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('situation', t(context, 'Situation check', 'تقييم الحالة')),
+                    Text(
+                      t(
+                        context,
+                        'We use these answers to set how urgent this report is. Answer each one.',
+                        'نستخدم هذه الإجابات لتحديد مدى إلحاح هذا البلاغ. أجب عن كل سؤال.',
+                      ),
                       style: Theme.of(context).textTheme.bodySmall,
-                      textAlign: TextAlign.center,
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: (_lostPetFormValid && !_submitting) ? _submitLostPet : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _lostPetAccent,
-                        disabledBackgroundColor: _lostPetAccent.withValues(alpha: 0.35),
+                    YesNoQuestion(
+                      question: t(context, 'Does it need regular medication or have a medical condition?', 'هل يحتاج دواءً منتظمًا أو لديه حالة طبية؟'),
+                      value: _hasMedicalNeeds,
+                      flagUnanswered: _showMissing,
+                      onChanged: (v) => setState(() => _hasMedicalNeeds = v),
+                    ),
+                    YesNoQuestion(
+                      question: t(context, 'Is it elderly or very young?', 'هل هو كبير في السن أو صغير جدًا؟'),
+                      value: _isElderlyOrVeryYoung,
+                      flagUnanswered: _showMissing,
+                      onChanged: (v) => setState(() => _isElderlyOrVeryYoung = v),
+                    ),
+                    YesNoQuestion(
+                      question: t(context, 'Was it last seen near a busy road, canal, or other hazard?', 'هل شوهد آخر مرة قرب طريق مزدحم أو ترعة أو خطر آخر؟'),
+                      value: _lastSeenNearHazard,
+                      flagUnanswered: _showMissing,
+                      onChanged: (v) => setState(() => _lastSeenNearHazard = v),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    Center(
+                      child: Text(
+                        _lostPetSituationAnswered
+                            ? t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر')
+                            : t(
+                                context,
+                                'Answer all 3 Situation check questions to post',
+                                'أجب عن أسئلة تقييم الحالة الثلاثة للنشر',
+                              ),
+                        style: Theme.of(context).textTheme.bodySmall,
+                        textAlign: TextAlign.center,
                       ),
-                      child: _submitting
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                            )
-                          : Text(t(context, 'Post Lost Pet Report', 'نشر بلاغ الحيوان المفقود')),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: AppSpacing.md),
+                    _missingSummary(),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton(
+                        onPressed: _submitting ? null : () => _attemptSubmit(_submitLostPet),
+                        style: _postButtonStyle(_lostPetFormValid, _lostPetAccent),
+                        child: _submitting
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                              )
+                            : Text(t(context, 'Post Lost Pet Report', 'نشر بلاغ الحيوان المفقود')),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -1376,204 +1550,206 @@ class _PostFormScreenState extends State<PostFormScreen> {
             ),
             const SizedBox(height: AppSpacing.sm),
             Expanded(
-              child: ListView(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
-                children: [
-                  _SectionLabel(t(context, 'ANIMAL DETAILS', 'تفاصيل الحيوان')),
-                  const SizedBox(height: AppSpacing.sm),
-                  InkWell(
-                    onTap: _pickImage,
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceWarm,
-                        borderRadius: BorderRadius.circular(AppRadius.card),
-                        border: Border.all(color: AppColors.border, style: BorderStyle.solid),
-                      ),
-                      child: Column(
-                        children: [
-                          if (_images.isEmpty) ...[
-                            const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(
-                              t(context, 'Add photos of the animal', 'أضف صورًا للحيوان'),
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              t(context, 'Clear photos help the owner recognize it', 'الصور الواضحة تساعد المالك على التعرف عليه'),
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ] else
-                            SizedBox(
-                              height: 90,
-                              child: ListView(
-                                scrollDirection: Axis.horizontal,
-                                children: [
-                                  ..._images.map(
-                                    (img) => Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
-                                      ),
-                                    ),
-                                  ),
-                                  if (_images.length < 4)
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                      child: Container(
-                                        width: 90,
-                                        height: 90,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(color: AppColors.border),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _SectionLabel(t(context, 'ANIMAL DETAILS', 'تفاصيل الحيوان')),
+                    const SizedBox(height: AppSpacing.sm),
+                    _fieldLabel('photos', null),
+                    InkWell(
+                      onTap: _pickImage,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceWarm,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+                        ),
+                        child: Column(
+                          children: [
+                            if (_images.isEmpty) ...[
+                              const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                t(context, 'Add photos of the animal', 'أضف صورًا للحيوان'),
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                t(context, 'Clear photos help the owner recognize it', 'الصور الواضحة تساعد المالك على التعرف عليه'),
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ] else
+                              SizedBox(
+                                height: 90,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  children: [
+                                    ..._images.map(
+                                      (img) => Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                        child: ClipRRect(
                                           borderRadius: BorderRadius.circular(12),
+                                          child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
                                         ),
-                                        child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
                                       ),
                                     ),
-                                ],
+                                    if (_images.length < 4)
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                        child: Container(
+                                          width: 90,
+                                          height: 90,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(color: AppColors.border),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('species', t(context, 'Species', 'النوع')),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      children: _speciesOptions.map((s) {
+                        return _PillChoice(
+                          label: t(context, s.$2, s.$3),
+                          selected: _species == s.$1,
+                          onTap: () => setState(() => _species = s.$1),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(t(context, 'Breed (if known)', 'السلالة (إن عُرفت)'), style: Theme.of(context).textTheme.labelLarge),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _breedController,
+                      decoration: _fieldDecoration(t(context, 'e.g. Golden Retriever', 'مثال: جولدن ريتريفر')),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(t(context, 'Color & markings', 'اللون والعلامات المميزة'), style: Theme.of(context).textTheme.labelLarge),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _colorMarkingsController,
+                      decoration: _fieldDecoration(
+                        t(context, 'e.g. tan and white, spot on left ear', 'مثال: بني وأبيض، بقعة على الأذن اليسرى'),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    YesNoQuestion(
+                      question: t(context, 'Does it wear a collar with an ID tag?', 'هل يرتدي طوقًا يحمل بطاقة تعريف؟'),
+                      value: _hasCollarWithIdTag,
+                      onChanged: (v) => setState(() => _hasCollarWithIdTag = v),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _SectionLabel(t(context, 'WHEN & WHERE FOUND', 'متى وأين تم العثور عليه')),
+                    const SizedBox(height: AppSpacing.md),
+                    _fieldLabel('dateFound', t(context, 'Date found', 'تاريخ العثور عليه')),
+                    const SizedBox(height: AppSpacing.sm),
+                    InkWell(
+                      onTap: _pickDateFound,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceWarm,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today_outlined, size: 18, color: AppColors.textMuted),
+                            const SizedBox(width: AppSpacing.sm),
+                            Text(
+                              _dateFound != null ? _displayDate(_dateFound!) : t(context, 'Select date', 'اختر التاريخ'),
+                              style: TextStyle(
+                                color: _dateFound != null ? AppColors.textPrimary : AppColors.textMuted,
+                                fontSize: 14,
                               ),
                             ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Species', 'النوع'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    children: _speciesOptions.map((s) {
-                      return _PillChoice(
-                        label: t(context, s.$2, s.$3),
-                        selected: _species == s.$1,
-                        onTap: () => setState(() => _species = s.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Breed (if known)', 'السلالة (إن عُرفت)'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _breedController,
-                    decoration: _fieldDecoration(t(context, 'e.g. Golden Retriever', 'مثال: جولدن ريتريفر')),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Color & markings', 'اللون والعلامات المميزة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _colorMarkingsController,
-                    decoration: _fieldDecoration(
-                      t(context, 'e.g. tan and white, spot on left ear', 'مثال: بني وأبيض، بقعة على الأذن اليسرى'),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('area', t(context, 'Area found', 'المنطقة التي تم العثور عليه فيها')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _approximateAreaController,
+                      onChanged: (_) => setState(() {}),
+                      decoration: _fieldDecoration(t(context, 'e.g. 7th Circle area', 'مثال: منطقة الدائرة السابعة')),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  YesNoQuestion(
-                    question: t(context, 'Does it wear a collar with an ID tag?', 'هل يرتدي طوقًا يحمل بطاقة تعريف؟'),
-                    value: _hasCollarWithIdTag,
-                    onChanged: (v) => setState(() => _hasCollarWithIdTag = v),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'WHEN & WHERE FOUND', 'متى وأين تم العثور عليه')),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(t(context, 'Date found', 'تاريخ العثور عليه'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  InkWell(
-                    onTap: _pickDateFound,
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                    child: Container(
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('circumstances', t(context, 'Circumstances', 'الظروف')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _circumstancesController,
+                      maxLines: 3,
+                      onChanged: (_) => setState(() {}),
+                      decoration: _fieldDecoration(
+                        t(context, 'Describe where and how you found the animal...', 'صف أين وكيف عثرت على الحيوان...'),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _SectionLabel(t(context, 'CURRENT CONDITION', 'الحالة الحالية')),
+                    const SizedBox(height: AppSpacing.md),
+                    _fieldLabel('condition', t(context, 'Condition', 'الحالة')),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      children: _foundStrayConditionOptions.map((c) {
+                        return _PillChoice(
+                          label: t(context, c.$2, c.$3),
+                          selected: _foundStrayCondition == c.$1,
+                          onTap: () => setState(() => _foundStrayCondition = c.$1),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    YesNoQuestion(
+                      question: t(context, 'Is it safe with you right now?', 'هل هو بأمان معك الآن؟'),
+                      helper: t(context, 'Choose No if it ran off or you no longer have it', 'اختر «لا» إذا هرب أو لم يعد معك'),
+                      value: _foundStraySafeWithReporter,
+                      onChanged: (v) => setState(() => _foundStraySafeWithReporter = v),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    Center(
+                      child: Text(
+                        t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _missingSummary(),
+                    SizedBox(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceWarm,
-                        borderRadius: BorderRadius.circular(AppRadius.card),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.calendar_today_outlined, size: 18, color: AppColors.textMuted),
-                          const SizedBox(width: AppSpacing.sm),
-                          Text(
-                            _dateFound != null ? _displayDate(_dateFound!) : t(context, 'Select date', 'اختر التاريخ'),
-                            style: TextStyle(
-                              color: _dateFound != null ? AppColors.textPrimary : AppColors.textMuted,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
+                      height: 54,
+                      child: ElevatedButton(
+                        onPressed: _submitting ? null : () => _attemptSubmit(_submitFoundStray),
+                        style: _postButtonStyle(_foundStrayFormValid, _lostPetAccent),
+                        child: _submitting
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                              )
+                            : Text(t(context, 'Post Found Pet Report', 'نشر بلاغ الحيوان الذي تم العثور عليه')),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Area found', 'المنطقة التي تم العثور عليه فيها'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _approximateAreaController,
-                    onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration(t(context, 'e.g. 7th Circle area', 'مثال: منطقة الدائرة السابعة')),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Circumstances', 'الظروف'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _circumstancesController,
-                    maxLines: 3,
-                    onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration(
-                      t(context, 'Describe where and how you found the animal...', 'صف أين وكيف عثرت على الحيوان...'),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'CURRENT CONDITION', 'الحالة الحالية')),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(t(context, 'Condition', 'الحالة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    children: _foundStrayConditionOptions.map((c) {
-                      return _PillChoice(
-                        label: t(context, c.$2, c.$3),
-                        selected: _foundStrayCondition == c.$1,
-                        onTap: () => setState(() => _foundStrayCondition = c.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  YesNoQuestion(
-                    question: t(context, 'Is it safe with you right now?', 'هل هو بأمان معك الآن؟'),
-                    helper: t(context, 'Choose No if it ran off or you no longer have it', 'اختر «لا» إذا هرب أو لم يعد معك'),
-                    value: _foundStraySafeWithReporter,
-                    onChanged: (v) => setState(() => _foundStraySafeWithReporter = v),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  Center(
-                    child: Text(
-                      t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر'),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: (_foundStrayFormValid && !_submitting) ? _submitFoundStray : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _lostPetAccent,
-                        disabledBackgroundColor: _lostPetAccent.withValues(alpha: 0.35),
-                      ),
-                      child: _submitting
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                            )
-                          : Text(t(context, 'Post Found Pet Report', 'نشر بلاغ الحيوان الذي تم العثور عليه')),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -1616,253 +1792,259 @@ class _PostFormScreenState extends State<PostFormScreen> {
             ),
             const SizedBox(height: AppSpacing.sm),
             Expanded(
-              child: ListView(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
-                children: [
-                  _SectionLabel(t(context, 'PET PROFILE', 'ملف الحيوان')),
-                  const SizedBox(height: AppSpacing.sm),
-                  InkWell(
-                    onTap: _pickImage,
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                    child: Container(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _SectionLabel(t(context, 'PET PROFILE', 'ملف الحيوان')),
+                    const SizedBox(height: AppSpacing.sm),
+                    _fieldLabel('photos', null),
+                    InkWell(
+                      onTap: _pickImage,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceWarm,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+                        ),
+                        child: Column(
+                          children: [
+                            if (_images.isEmpty) ...[
+                              const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                t(context, 'Add pet photos', 'أضف صور الحيوان'),
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                t(context, 'Up to 4 photos — first is the cover', 'حتى 4 صور — الأولى هي الغلاف'),
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ] else
+                              SizedBox(
+                                height: 90,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  children: [
+                                    ..._images.map(
+                                      (img) => Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
+                                        ),
+                                      ),
+                                    ),
+                                    if (_images.length < 4)
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                        child: Container(
+                                          width: 90,
+                                          height: 90,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(color: AppColors.border),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('petName', t(context, "Pet's name", 'اسم الحيوان')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _petNameController,
+                      textCapitalization: TextCapitalization.words,
+                      onChanged: (_) => setState(() {}),
+                      decoration: _fieldDecoration(t(context, 'e.g. Luna', 'مثال: لونا')),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('species', t(context, 'Species', 'النوع')),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      children: _speciesOptions.map((s) {
+                        return _PillChoice(
+                          label: t(context, s.$2, s.$3),
+                          selected: _species == s.$1,
+                          onTap: () => setState(() => _species = s.$1),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('breed', t(context, 'Breed', 'السلالة')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _breedController,
+                      decoration: _fieldDecoration(t(context, 'e.g. Domestic shorthair', 'مثال: شيرازي محلي')),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('age', t(context, 'Age', 'العمر')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _ageController,
+                      decoration: _fieldDecoration(t(context, 'e.g. 2 years', 'مثال: سنتان')),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('gender', t(context, 'Gender', 'الجنس')),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      children: _genderOptions.map((g) {
+                        return _PillChoice(
+                          label: t(context, g.$2, g.$3),
+                          selected: _gender == g.$1,
+                          onTap: () => setState(() => _gender = g.$1),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _SectionLabel(t(context, 'HEALTH & CARE', 'الصحة والرعاية')),
+                    const SizedBox(height: AppSpacing.md),
+                    YesNoQuestion(
+                      question: t(context, 'Is it vaccinated?', 'هل هو مُطعَّم؟'),
+                      value: _vaccinated,
+                      onChanged: (v) => setState(() => _vaccinated = v),
+                    ),
+                    YesNoQuestion(
+                      question: t(context, 'Is it neutered or spayed?', 'هل هو مُعقَّم؟'),
+                      value: _neutered,
+                      onChanged: (v) => setState(() => _neutered = v),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(t(context, 'Health notes', 'ملاحظات صحية'), style: Theme.of(context).textTheme.labelLarge),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _healthNotesController,
+                      maxLines: 3,
+                      decoration: _fieldDecoration(
+                        t(context, 'Any ongoing treatments, special dietary needs...', 'أي علاجات جارية أو احتياجات غذائية خاصة...'),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _SectionLabel(t(context, 'PERSONALITY', 'الشخصية')),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(t(context, 'Select all that apply', 'اختر كل ما ينطبق'), style: Theme.of(context).textTheme.bodySmall),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: _personalityOptions.map((p) {
+                        final selected = _personalityTags.contains(p.$1);
+                        return _PillChoice(
+                          label: t(context, p.$2, p.$3),
+                          selected: selected,
+                          onTap: () => setState(() {
+                            if (selected) {
+                              _personalityTags.remove(p.$1);
+                            } else {
+                              _personalityTags.add(p.$1);
+                            }
+                          }),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _SectionLabel(t(context, 'ADOPTION REQUIREMENTS', 'شروط التبني')),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(t(context, 'Space requirement', 'المساحة المطلوبة'), style: Theme.of(context).textTheme.labelLarge),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: _spaceOptions.map((s) {
+                        return _PillChoice(
+                          label: t(context, s.$2, s.$3),
+                          selected: _spaceRequirement == s.$1,
+                          onTap: () => setState(() => _spaceRequirement = s.$1),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    YesNoQuestion(
+                      question: t(context, 'Must adopters have prior pet experience?', 'هل يُشترط أن تكون لدى المتبنّي خبرة سابقة بالحيوانات؟'),
+                      value: _priorPetExperienceRequired,
+                      onChanged: (v) => setState(() => _priorPetExperienceRequired = v),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(t(context, 'Additional requirements', 'متطلبات إضافية'), style: Theme.of(context).textTheme.labelLarge),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _additionalRequirementsController,
+                      maxLines: 3,
+                      decoration: _fieldDecoration(
+                        t(context, 'Anything a potential adopter should know...', 'أي شيء يجب أن يعرفه المتبني المحتمل...'),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    const Text('CONTACT PRIVACY  ·  خصوصية التواصل', style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 0.5, fontSize: 12, color: AppColors.textMuted)),
+                    const SizedBox(height: AppSpacing.md),
+                    // Adoption contact is request-only on the server: a number is
+                    // released solely through an approved Adoption Application.
+                    // There is no per-post privacy setting to send, so this states
+                    // the rule instead of offering a choice nothing can honour.
+                    Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: AppColors.surfaceWarm,
                         borderRadius: BorderRadius.circular(AppRadius.card),
-                        border: Border.all(color: AppColors.border, style: BorderStyle.solid),
                       ),
-                      child: Column(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (_images.isEmpty) ...[
-                            const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(
-                              t(context, 'Add pet photos', 'أضف صور الحيوان'),
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              t(context, 'Up to 4 photos — first is the cover', 'حتى 4 صور — الأولى هي الغلاف'),
+                          const Icon(Icons.lock_outline, size: 18, color: AppColors.primary),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: Text(
+                              t(
+                                context,
+                                'Your phone number stays private. Interested adopters send you a request, and your number is shared only with the ones you approve.',
+                                'رقم هاتفك يبقى خاصًا. يرسل لك المتبنون المهتمون طلبًا، ولا تتم مشاركة رقمك إلا مع من توافق عليهم.',
+                              ),
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
-                          ] else
-                            SizedBox(
-                              height: 90,
-                              child: ListView(
-                                scrollDirection: Axis.horizontal,
-                                children: [
-                                  ..._images.map(
-                                    (img) => Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
-                                      ),
-                                    ),
-                                  ),
-                                  if (_images.length < 4)
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                      child: Container(
-                                        width: 90,
-                                        height: 90,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(color: AppColors.border),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, "Pet's name", 'اسم الحيوان'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _petNameController,
-                    textCapitalization: TextCapitalization.words,
-                    onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration(t(context, 'e.g. Luna', 'مثال: لونا')),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Species', 'النوع'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    children: _speciesOptions.map((s) {
-                      return _PillChoice(
-                        label: t(context, s.$2, s.$3),
-                        selected: _species == s.$1,
-                        onTap: () => setState(() => _species = s.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Breed', 'السلالة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _breedController,
-                    decoration: _fieldDecoration(t(context, 'e.g. Domestic shorthair', 'مثال: شيرازي محلي')),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Age', 'العمر'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _ageController,
-                    decoration: _fieldDecoration(t(context, 'e.g. 2 years', 'مثال: سنتان')),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Gender', 'الجنس'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    children: _genderOptions.map((g) {
-                      return _PillChoice(
-                        label: t(context, g.$2, g.$3),
-                        selected: _gender == g.$1,
-                        onTap: () => setState(() => _gender = g.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'HEALTH & CARE', 'الصحة والرعاية')),
-                  const SizedBox(height: AppSpacing.md),
-                  YesNoQuestion(
-                    question: t(context, 'Is it vaccinated?', 'هل هو مُطعَّم؟'),
-                    value: _vaccinated,
-                    onChanged: (v) => setState(() => _vaccinated = v),
-                  ),
-                  YesNoQuestion(
-                    question: t(context, 'Is it neutered or spayed?', 'هل هو مُعقَّم؟'),
-                    value: _neutered,
-                    onChanged: (v) => setState(() => _neutered = v),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(t(context, 'Health notes', 'ملاحظات صحية'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _healthNotesController,
-                    maxLines: 3,
-                    decoration: _fieldDecoration(
-                      t(context, 'Any ongoing treatments, special dietary needs...', 'أي علاجات جارية أو احتياجات غذائية خاصة...'),
+                    const SizedBox(height: AppSpacing.xl),
+                    Center(
+                      child: Text(
+                        t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'PERSONALITY', 'الشخصية')),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(t(context, 'Select all that apply', 'اختر كل ما ينطبق'), style: Theme.of(context).textTheme.bodySmall),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: _personalityOptions.map((p) {
-                      final selected = _personalityTags.contains(p.$1);
-                      return _PillChoice(
-                        label: t(context, p.$2, p.$3),
-                        selected: selected,
-                        onTap: () => setState(() {
-                          if (selected) {
-                            _personalityTags.remove(p.$1);
-                          } else {
-                            _personalityTags.add(p.$1);
-                          }
-                        }),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'ADOPTION REQUIREMENTS', 'شروط التبني')),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(t(context, 'Space requirement', 'المساحة المطلوبة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: _spaceOptions.map((s) {
-                      return _PillChoice(
-                        label: t(context, s.$2, s.$3),
-                        selected: _spaceRequirement == s.$1,
-                        onTap: () => setState(() => _spaceRequirement = s.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  YesNoQuestion(
-                    question: t(context, 'Must adopters have prior pet experience?', 'هل يُشترط أن تكون لدى المتبنّي خبرة سابقة بالحيوانات؟'),
-                    value: _priorPetExperienceRequired,
-                    onChanged: (v) => setState(() => _priorPetExperienceRequired = v),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(t(context, 'Additional requirements', 'متطلبات إضافية'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _additionalRequirementsController,
-                    maxLines: 3,
-                    decoration: _fieldDecoration(
-                      t(context, 'Anything a potential adopter should know...', 'أي شيء يجب أن يعرفه المتبني المحتمل...'),
+                    const SizedBox(height: AppSpacing.md),
+                    _missingSummary(),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton(
+                        onPressed: _submitting ? null : () => _attemptSubmit(_submitAdoption),
+                        style: _postButtonStyle(_adoptionFormValid),
+                        child: _submitting
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                              )
+                            : Text(t(context, 'List for Adoption', 'نشر إعلان التبني')),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  const Text('CONTACT PRIVACY  ·  خصوصية التواصل', style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 0.5, fontSize: 12, color: AppColors.textMuted)),
-                  const SizedBox(height: AppSpacing.md),
-                  // Adoption contact is request-only on the server: a number is
-                  // released solely through an approved Adoption Application.
-                  // There is no per-post privacy setting to send, so this states
-                  // the rule instead of offering a choice nothing can honour.
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceWarm,
-                      borderRadius: BorderRadius.circular(AppRadius.card),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.lock_outline, size: 18, color: AppColors.primary),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Text(
-                            t(
-                              context,
-                              'Your phone number stays private. Interested adopters send you a request, and your number is shared only with the ones you approve.',
-                              'رقم هاتفك يبقى خاصًا. يرسل لك المتبنون المهتمون طلبًا، ولا تتم مشاركة رقمك إلا مع من توافق عليهم.',
-                            ),
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  Center(
-                    child: Text(
-                      t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر'),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: (_adoptionFormValid && !_submitting) ? _submitAdoption : null,
-                      child: _submitting
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                            )
-                          : Text(t(context, 'List for Adoption', 'نشر إعلان التبني')),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -1906,235 +2088,241 @@ class _PostFormScreenState extends State<PostFormScreen> {
             ),
             const SizedBox(height: AppSpacing.sm),
             Expanded(
-              child: ListView(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
-                children: [
-                  _SectionLabel(t(context, 'PET PROFILE', 'ملف الحيوان')),
-                  const SizedBox(height: AppSpacing.sm),
-                  InkWell(
-                    onTap: _pickImage,
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceWarm,
-                        borderRadius: BorderRadius.circular(AppRadius.card),
-                        border: Border.all(color: AppColors.border, style: BorderStyle.solid),
-                      ),
-                      child: Column(
-                        children: [
-                          if (_images.isEmpty) ...[
-                            const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(
-                              t(context, 'Add pet photos', 'أضف صور الحيوان'),
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              t(context, 'Up to 4 photos — first is the cover', 'حتى 4 صور — الأولى هي الغلاف'),
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ] else
-                            SizedBox(
-                              height: 90,
-                              child: ListView(
-                                scrollDirection: Axis.horizontal,
-                                children: [
-                                  ..._images.map(
-                                    (img) => Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
-                                      ),
-                                    ),
-                                  ),
-                                  if (_images.length < 4)
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                      child: Container(
-                                        width: 90,
-                                        height: 90,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(color: AppColors.border),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
-                                      ),
-                                    ),
-                                ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _SectionLabel(t(context, 'PET PROFILE', 'ملف الحيوان')),
+                    const SizedBox(height: AppSpacing.sm),
+                    _fieldLabel('photos', null),
+                    InkWell(
+                      onTap: _pickImage,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceWarm,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+                        ),
+                        child: Column(
+                          children: [
+                            if (_images.isEmpty) ...[
+                              const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                t(context, 'Add pet photos', 'أضف صور الحيوان'),
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
                               ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, "Pet's name", 'اسم الحيوان'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _petNameController,
-                    textCapitalization: TextCapitalization.words,
-                    onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration(t(context, 'e.g. Rex', 'مثال: ريكس')),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Species', 'النوع'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    children: _speciesOptions.map((s) {
-                      return _PillChoice(
-                        label: t(context, s.$2, s.$3),
-                        selected: _species == s.$1,
-                        onTap: () => setState(() => _species = s.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Breed', 'السلالة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _breedController,
-                    onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration(t(context, 'e.g. German Shepherd', 'مثال: جيرمن شيبرد')),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Age', 'العمر'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _ageController,
-                    onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration(t(context, 'e.g. 2 years', 'مثال: سنتان')),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Gender', 'الجنس'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: 2),
-                  Text(
-                    t(context, "Your pet's gender — we'll search for the opposite", 'جنس حيوانك — سنبحث عن الجنس المقابل'),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    children: _genderOptions.map((g) {
-                      return _PillChoice(
-                        label: t(context, g.$2, g.$3),
-                        selected: _gender == g.$1,
-                        onTap: () => setState(() => _gender = g.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'PEDIGREE & HEALTH', 'النسب والصحة')),
-                  const SizedBox(height: AppSpacing.md),
-                  YesNoQuestion(
-                    question: t(context, 'Is it purebred?', 'هل هو أصيل؟'),
-                    value: _isPurebred,
-                    onChanged: (v) => setState(() => _isPurebred = v),
-                  ),
-                  YesNoQuestion(
-                    question: t(context, 'Does it have a pedigree certificate?', 'هل لديه شهادة نسب؟'),
-                    value: _hasPedigreeCertificate,
-                    onChanged: (v) => setState(() => _hasPedigreeCertificate = v),
-                  ),
-                  YesNoQuestion(
-                    question: t(context, 'Is it vaccinated?', 'هل هو مُطعَّم؟'),
-                    value: _matingVaccinated,
-                    onChanged: (v) => setState(() => _matingVaccinated = v),
-                  ),
-                  YesNoQuestion(
-                    question: t(context, 'Is it dewormed?', 'هل هو مُطهَّر من الديدان؟'),
-                    value: _matingDewormed,
-                    onChanged: (v) => setState(() => _matingDewormed = v),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'MATING TERMS', 'شروط التزاوج')),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(t(context, 'Terms summary (optional)', 'ملخص الشروط (اختياري)'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _termsSummaryController,
-                    maxLines: 2,
-                    decoration: _fieldDecoration(
-                      t(context, 'e.g. Pick of the litter, stud fee negotiable...', 'مثال: اختيار جرو من المولود، رسم قابل للتفاوض...'),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Mating conditions (optional)', 'شروط التزاوج (اختياري)'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _matingConditionsController,
-                    maxLines: 3,
-                    decoration: _fieldDecoration(
-                      t(context, 'Health checks required, preferred breed match...', 'فحوصات صحية مطلوبة، سلالة مفضلة للتزاوج...'),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'LOCATION', 'الموقع')),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(t(context, 'City', 'المدينة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  GestureDetector(
-                    onTap: _loadingCities ? null : _showCityPicker,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceWarm,
-                        borderRadius: BorderRadius.circular(AppRadius.card),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.location_city_outlined, color: AppColors.textMuted, size: 20),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _loadingCities
-                                ? SizedBox(
-                                    height: 18,
-                                    width: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                                  )
-                                : Text(
-                                    _selectedCity != null
-                                        ? (lang == Lang.ar ? _selectedCity!['nameArabic'] as String : _selectedCity!['nameEnglish'] as String)
-                                        : t(context, 'Search and select a city', 'ابحث واختر مدينة'),
-                                    style: TextStyle(
-                                      color: _selectedCity != null ? AppColors.textPrimary : AppColors.textMuted,
-                                      fontSize: 14,
+                              const SizedBox(height: 2),
+                              Text(
+                                t(context, 'Up to 4 photos — first is the cover', 'حتى 4 صور — الأولى هي الغلاف'),
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ] else
+                              SizedBox(
+                                height: 90,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  children: [
+                                    ..._images.map(
+                                      (img) => Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                          ),
-                          const Icon(Icons.search, color: AppColors.textMuted, size: 18),
-                        ],
+                                    if (_images.length < 4)
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                        child: Container(
+                                          width: 90,
+                                          height: 90,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(color: AppColors.border),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  Center(
-                    child: Text(
-                      t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر'),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('petName', t(context, "Pet's name", 'اسم الحيوان')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _petNameController,
+                      textCapitalization: TextCapitalization.words,
+                      onChanged: (_) => setState(() {}),
+                      decoration: _fieldDecoration(t(context, 'e.g. Rex', 'مثال: ريكس')),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('species', t(context, 'Species', 'النوع')),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      children: _speciesOptions.map((s) {
+                        return _PillChoice(
+                          label: t(context, s.$2, s.$3),
+                          selected: _species == s.$1,
+                          onTap: () => setState(() => _species = s.$1),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('breed', t(context, 'Breed', 'السلالة')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _breedController,
+                      onChanged: (_) => setState(() {}),
+                      decoration: _fieldDecoration(t(context, 'e.g. German Shepherd', 'مثال: جيرمن شيبرد')),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('age', t(context, 'Age', 'العمر')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _ageController,
+                      onChanged: (_) => setState(() {}),
+                      decoration: _fieldDecoration(t(context, 'e.g. 2 years', 'مثال: سنتان')),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('gender', t(context, 'Gender', 'الجنس')),
+                    const SizedBox(height: 2),
+                    Text(
+                      t(context, "Your pet's gender — we'll search for the opposite", 'جنس حيوانك — سنبحث عن الجنس المقابل'),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: (_matingFormValid && !_submitting) ? _submitMating : null,
-                      child: _submitting
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                            )
-                          : Text(t(context, 'Post Mating Listing', 'نشر إعلان التزاوج')),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      children: _genderOptions.map((g) {
+                        return _PillChoice(
+                          label: t(context, g.$2, g.$3),
+                          selected: _gender == g.$1,
+                          onTap: () => setState(() => _gender = g.$1),
+                        );
+                      }).toList(),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: AppSpacing.xl),
+                    _SectionLabel(t(context, 'PEDIGREE & HEALTH', 'النسب والصحة')),
+                    const SizedBox(height: AppSpacing.md),
+                    YesNoQuestion(
+                      question: t(context, 'Is it purebred?', 'هل هو أصيل؟'),
+                      value: _isPurebred,
+                      onChanged: (v) => setState(() => _isPurebred = v),
+                    ),
+                    YesNoQuestion(
+                      question: t(context, 'Does it have a pedigree certificate?', 'هل لديه شهادة نسب؟'),
+                      value: _hasPedigreeCertificate,
+                      onChanged: (v) => setState(() => _hasPedigreeCertificate = v),
+                    ),
+                    YesNoQuestion(
+                      question: t(context, 'Is it vaccinated?', 'هل هو مُطعَّم؟'),
+                      value: _matingVaccinated,
+                      onChanged: (v) => setState(() => _matingVaccinated = v),
+                    ),
+                    YesNoQuestion(
+                      question: t(context, 'Is it dewormed?', 'هل هو مُطهَّر من الديدان؟'),
+                      value: _matingDewormed,
+                      onChanged: (v) => setState(() => _matingDewormed = v),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _SectionLabel(t(context, 'MATING TERMS', 'شروط التزاوج')),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(t(context, 'Terms summary (optional)', 'ملخص الشروط (اختياري)'), style: Theme.of(context).textTheme.labelLarge),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _termsSummaryController,
+                      maxLines: 2,
+                      decoration: _fieldDecoration(
+                        t(context, 'e.g. Pick of the litter, stud fee negotiable...', 'مثال: اختيار جرو من المولود، رسم قابل للتفاوض...'),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(t(context, 'Mating conditions (optional)', 'شروط التزاوج (اختياري)'), style: Theme.of(context).textTheme.labelLarge),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _matingConditionsController,
+                      maxLines: 3,
+                      decoration: _fieldDecoration(
+                        t(context, 'Health checks required, preferred breed match...', 'فحوصات صحية مطلوبة، سلالة مفضلة للتزاوج...'),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _SectionLabel(t(context, 'LOCATION', 'الموقع')),
+                    const SizedBox(height: AppSpacing.md),
+                    _fieldLabel('city', t(context, 'City', 'المدينة')),
+                    const SizedBox(height: AppSpacing.sm),
+                    GestureDetector(
+                      onTap: _loadingCities ? null : _showCityPicker,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceWarm,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.location_city_outlined, color: AppColors.textMuted, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _loadingCities
+                                  ? SizedBox(
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                                    )
+                                  : Text(
+                                      _selectedCity != null
+                                          ? (lang == Lang.ar ? _selectedCity!['nameArabic'] as String : _selectedCity!['nameEnglish'] as String)
+                                          : t(context, 'Search and select a city', 'ابحث واختر مدينة'),
+                                      style: TextStyle(
+                                        color: _selectedCity != null ? AppColors.textPrimary : AppColors.textMuted,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                            ),
+                            const Icon(Icons.search, color: AppColors.textMuted, size: 18),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    Center(
+                      child: Text(
+                        t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _missingSummary(),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton(
+                        onPressed: _submitting ? null : () => _attemptSubmit(_submitMating),
+                        style: _postButtonStyle(_matingFormValid),
+                        child: _submitting
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                              )
+                            : Text(t(context, 'Post Mating Listing', 'نشر إعلان التزاوج')),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -2169,177 +2357,184 @@ class _PostFormScreenState extends State<PostFormScreen> {
             ),
             const SizedBox(height: AppSpacing.lg),
             Expanded(
-              child: ListView(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
-                children: [
-                  _SectionLabel(t(context, 'LISTING DETAILS', 'تفاصيل الإعلان')),
-                  const SizedBox(height: AppSpacing.sm),
-                  InkWell(
-                    onTap: _pickImage,
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceWarm,
-                        borderRadius: BorderRadius.circular(AppRadius.card),
-                        border: Border.all(color: AppColors.border, style: BorderStyle.solid),
-                      ),
-                      child: Column(
-                        children: [
-                          if (_images.isEmpty) ...[
-                            const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(
-                              t(context, 'Add photos of the item', 'أضف صورًا للمنتج'),
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(t(context, 'Up to 4 photos', 'حتى 4 صور'), style: Theme.of(context).textTheme.bodySmall),
-                          ] else
-                            SizedBox(
-                              height: 90,
-                              child: ListView(
-                                scrollDirection: Axis.horizontal,
-                                children: [
-                                  ..._images.map(
-                                    (img) => Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
-                                      ),
-                                    ),
-                                  ),
-                                  if (_images.length < 4)
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                                      child: Container(
-                                        width: 90,
-                                        height: 90,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(color: AppColors.border),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
-                                      ),
-                                    ),
-                                ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _SectionLabel(t(context, 'LISTING DETAILS', 'تفاصيل الإعلان')),
+                    const SizedBox(height: AppSpacing.sm),
+                    _fieldLabel('photos', null),
+                    InkWell(
+                      onTap: _pickImage,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceWarm,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+                        ),
+                        child: Column(
+                          children: [
+                            if (_images.isEmpty) ...[
+                              const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 28),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                t(context, 'Add photos of the item', 'أضف صورًا للمنتج'),
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
                               ),
-                            ),
-                        ],
+                              const SizedBox(height: 2),
+                              Text(t(context, 'Up to 4 photos', 'حتى 4 صور'), style: Theme.of(context).textTheme.bodySmall),
+                            ] else
+                              SizedBox(
+                                height: 90,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  children: [
+                                    ..._images.map(
+                                      (img) => Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.file(File(img.path), width: 90, height: 90, fit: BoxFit.cover),
+                                        ),
+                                      ),
+                                    ),
+                                    if (_images.length < 4)
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                                        child: Container(
+                                          width: 90,
+                                          height: 90,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(color: AppColors.border),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: const Icon(Icons.add_a_photo_outlined, color: AppColors.textMuted),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Title', 'العنوان'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _productTitleController,
-                    onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration(t(context, 'e.g. Field carrier, barely used', 'مثال: حقيبة نقل، شبه جديدة')),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Description', 'الوصف'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _captionController,
-                    maxLines: 3,
-                    onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration(
-                      t(context, 'Describe the item, condition, and any details buyers should know...', 'صف المنتج وحالته وأي تفاصيل يجب أن يعرفها المشترون...'),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Category', 'الفئة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: _categories.map((c) {
-                      return _PillChoice(
-                        label: t(context, c.$2, c.$3),
-                        selected: _selectedCategory == c.$1,
-                        onTap: () => setState(() => _selectedCategory = c.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Condition', 'الحالة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    children: _conditionOptions.map((c) {
-                      return _PillChoice(
-                        label: t(context, c.$2, c.$3),
-                        selected: _condition == c.$1,
-                        onTap: () => setState(() => _condition = c.$1),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'PRICE', 'السعر')),
-                  const SizedBox(height: AppSpacing.md),
-                  YesNoQuestion(
-                    question: t(context, 'Is it free (a giveaway)?', 'هل هو مجاني (تبرّع)؟'),
-                    value: _isFree,
-                    onChanged: (v) => setState(() => _isFree = v),
-                  ),
-                  if (!_isFree) ...[
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('title', t(context, 'Title', 'العنوان')),
                     const SizedBox(height: AppSpacing.sm),
                     TextField(
-                      controller: _priceController,
-                      keyboardType: TextInputType.number,
+                      controller: _productTitleController,
                       onChanged: (_) => setState(() {}),
-                      decoration: _fieldDecoration(t(context, 'Price in EGP', 'السعر بالجنيه المصري')),
+                      decoration: _fieldDecoration(t(context, 'e.g. Field carrier, barely used', 'مثال: حقيبة نقل، شبه جديدة')),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('description', t(context, 'Description', 'الوصف')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _captionController,
+                      maxLines: 3,
+                      onChanged: (_) => setState(() {}),
+                      decoration: _fieldDecoration(
+                        t(context, 'Describe the item, condition, and any details buyers should know...', 'صف المنتج وحالته وأي تفاصيل يجب أن يعرفها المشترون...'),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('category', t(context, 'Category', 'الفئة')),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: _categories.map((c) {
+                        return _PillChoice(
+                          label: t(context, c.$2, c.$3),
+                          selected: _selectedCategory == c.$1,
+                          onTap: () => setState(() => _selectedCategory = c.$1),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fieldLabel('condition', t(context, 'Condition', 'الحالة')),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      children: _conditionOptions.map((c) {
+                        return _PillChoice(
+                          label: t(context, c.$2, c.$3),
+                          selected: _condition == c.$1,
+                          onTap: () => setState(() => _condition = c.$1),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _SectionLabel(t(context, 'PRICE', 'السعر')),
+                    const SizedBox(height: AppSpacing.md),
+                    YesNoQuestion(
+                      question: t(context, 'Is it free (a giveaway)?', 'هل هو مجاني (تبرّع)؟'),
+                      value: _isFree,
+                      onChanged: (v) => setState(() => _isFree = v),
+                    ),
+                    _fieldLabel('price', null),
+                    if (!_isFree) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      TextField(
+                        controller: _priceController,
+                        keyboardType: TextInputType.number,
+                        onChanged: (_) => setState(() {}),
+                        decoration: _fieldDecoration(t(context, 'Price in EGP', 'السعر بالجنيه المصري')),
+                      ),
+                    ],
+                    const SizedBox(height: AppSpacing.sm),
+                    YesNoQuestion(
+                      question: t(context, 'Are you open to offers?', 'هل السعر قابل للتفاوض؟'),
+                      value: _openToOffers,
+                      onChanged: (v) => setState(() => _openToOffers = v),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _SectionLabel(t(context, 'LOCATION', 'الموقع')),
+                    const SizedBox(height: AppSpacing.md),
+                    _fieldLabel('neighborhood', t(context, 'Neighborhood or area', 'الحي أو المنطقة')),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _neighborhoodController,
+                      onChanged: (_) => setState(() {}),
+                      decoration: _fieldDecoration(t(context, 'e.g. Maadi area', 'مثال: منطقة المعادي')),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(t(context, 'Nearby landmark', 'أقرب معلم'), style: Theme.of(context).textTheme.labelLarge),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _landmarkController,
+                      decoration: _fieldDecoration(t(context, 'e.g. near Al-Razi pharmacy', 'مثال: بجوار صيدلية الرازي')),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    Center(
+                      child: Text(
+                        t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _missingSummary(),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton(
+                        onPressed: _submitting ? null : () => _attemptSubmit(_submitProduct),
+                        style: _postButtonStyle(_productFormValid),
+                        child: _submitting
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                              )
+                            : Text(t(context, 'Post Listing', 'نشر الإعلان')),
+                      ),
                     ),
                   ],
-                  const SizedBox(height: AppSpacing.sm),
-                  YesNoQuestion(
-                    question: t(context, 'Are you open to offers?', 'هل السعر قابل للتفاوض؟'),
-                    value: _openToOffers,
-                    onChanged: (v) => setState(() => _openToOffers = v),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionLabel(t(context, 'LOCATION', 'الموقع')),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(t(context, 'Neighborhood or area', 'الحي أو المنطقة'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _neighborhoodController,
-                    onChanged: (_) => setState(() {}),
-                    decoration: _fieldDecoration(t(context, 'e.g. Maadi area', 'مثال: منطقة المعادي')),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(t(context, 'Nearby landmark', 'أقرب معلم'), style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _landmarkController,
-                    decoration: _fieldDecoration(t(context, 'e.g. near Al-Razi pharmacy', 'مثال: بجوار صيدلية الرازي')),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  Center(
-                    child: Text(
-                      t(context, 'Complete all required fields to post', 'أكمل جميع الحقول المطلوبة للنشر'),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: (_productFormValid && !_submitting) ? _submitProduct : null,
-                      child: _submitting
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                            )
-                          : Text(t(context, 'Post Listing', 'نشر الإعلان')),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ],
