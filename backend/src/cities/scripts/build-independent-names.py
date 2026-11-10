@@ -35,11 +35,25 @@ areas = {a: [] for a in manual['areas']}
 seen = {a: set() for a in areas}
 
 def add(area, row):
-    key = norm(row['arabic'])
+    # Arabic joined/separated spellings and the explicitly reviewed city-prefix
+    # variants below are one independent name, not extra minimum-count credit.
+    equivalences = {
+        'port-said-region': {
+            norm('مدينة دمياط الجديدة').replace(' ', ''): 'دمياط الجديدة',
+            norm('مدينه رأس البر').replace(' ', ''): 'رأس البر',
+            norm('مدينه عزبه البرج').replace(' ', ''): 'عزبة البرج',
+            norm('مبارك - شرق التفريعة').replace(' ', ''): 'شرق بورسعيد',
+            norm('شرق التفريعة').replace(' ', ''): 'شرق بورسعيد',
+        }
+    }
+    canonical = equivalences.get(area, {}).get(norm(row['arabic']).replace(' ', ''), row['arabic'])
+    key = norm(canonical).replace(' ', '')
     if key in seen[area]:
-        prior = next((r for r in areas[area] if norm(r['arabic']) == key))
+        prior = next((r for r in areas[area] if norm(r['arabic']).replace(' ', '') == key))
         if norm(row['english']) != norm(prior['english']):
             prior['misspellings'].append(row['english'])
+        if norm(row['arabic']) != norm(prior['arabic']):
+            prior['misspellings'].append(row['arabic'])
         return
     seen[area].add(key)
     row['misspellings'] = row.get('misspellings', [])
@@ -57,7 +71,14 @@ def add(area, row):
 
 for area, rows in manual['areas'].items():
     for row in rows:
-        add(area, {**row, 'evidence': 'Independent task/knowledge checklist, individually screened 2026-11-09.'})
+        add(area, {**row, 'evidence': row.get('evidence', 'Independent task/knowledge checklist, individually screened 2026-11-09.')})
+
+# Explicitly selected public vocabulary is reviewed as source input, never mined
+# from candidate rows or filtered by whether a catalog match happens to exist.
+public = load(d / 'research-names/public-checklist.json')
+for area, rows in public['areas'].items():
+    for row in rows:
+        add(area, row)
 
 for f in load(d / 'ocha-cod-ab/egy_admin3-covered.geojson.gz')['features']:
     p = f['properties']
@@ -110,6 +131,6 @@ for rows in areas.values():
 signature = hashlib.sha256(json.dumps(areas,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
 reviewed = review.get('independentNameReview',{}).get('areasSha256') == signature
 
-save(d / 'independent-names.json', {'metadata': {'reviewed': reviewed, 'areasSha256': signature, 'compiledDate': '2026-11-10', 'method': 'Manual task/knowledge input, raw OCHA ADM3/populated-place labels and explicit Wikidata locality labels selected independently of the catalog. Public source URLs retained; Wikipedia/governorate web research remains blocked by DNS. Script never reads catalog or decision output. Duplicate Arabic forms combined; variants do not count as names. Counts remain a strict gate; this is not a claim of 150 per region.'}, 'removed': manual['removed'], 'areas': areas})
+save(d / 'independent-names.json', {'metadata': {'reviewed': reviewed, 'areasSha256': signature, 'compiledDate': '2026-11-10', 'minimums': manual['metadata'].get('minimums', {}), 'method': 'Manual task/knowledge input, raw OCHA ADM3/populated-place labels, explicit Wikidata locality labels, and individually selected Arabic/English Wikipedia city and governorate lists. Public URLs and compressed source pages retained in research-names. Script never reads catalog or decision output. Duplicate Arabic forms combined; variants do not count as names. Per-area minima are separately reviewed metadata, not inferred from catalog matches.'}, 'removed': manual['removed'], 'areas': areas})
 
 print({a: len(r) for a, r in areas.items()})

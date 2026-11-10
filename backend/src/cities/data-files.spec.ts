@@ -13,12 +13,15 @@ interface SourceEntry {
   retrievalDate: string;
   license: string;
   attribution: string;
+  endpoint: string;
+  sourceUrls?: string[];
 }
 
 describe('Pinned offline City evidence', () => {
   it('retains one checked compressed copy of every used raw source', () => {
     const manifest = readCityData<{ snapshots: SourceEntry[] }>('neighbourhoods/source-manifest.json');
-    expect(manifest.snapshots).toHaveLength(14);
+    expect(manifest.snapshots.filter((s) => !s.path.includes('/research-'))).toHaveLength(14);
+    expect(new Set(manifest.snapshots.map((s) => s.path)).size).toBe(manifest.snapshots.length);
     for (const entry of manifest.snapshots) {
       const compressed = fs.readFileSync(path.resolve(process.cwd(), entry.path));
       const raw = gunzipSync(compressed);
@@ -29,7 +32,12 @@ describe('Pinned offline City evidence', () => {
       expect(entry.retrievalDate).toBeTruthy();
       expect(entry.license).toBeTruthy();
       expect(entry.attribution).toBeTruthy();
-      expect(() => JSON.parse(raw.toString('utf8')) as unknown).not.toThrow();
+      const urls = /^https?:\/\//.test(entry.endpoint) ? [entry.endpoint] : (entry.sourceUrls ?? []);
+      expect(urls.length).toBeGreaterThan(0);
+      expect(urls.every((url) => /^https?:\/\//.test(url))).toBe(true);
+      // Research includes original HTML, images and failed HTTP responses. The
+      // source-point verifier parses every response actually used for a City.
+      if (!entry.path.includes('/research-')) expect(() => JSON.parse(raw.toString('utf8')) as unknown).not.toThrow();
     }
   });
   it('rejects a reference whose pinned bytes differ, even if the current manifest accepts the file', () => {

@@ -1,0 +1,405 @@
+{
+  "metadata": {
+    "reviewDate": "2026-11-10",
+    "reviewer": "Codex source review",
+    "status": "final",
+    "remainingResearch": "Exact sourced representative points for genuine unresolved names require further map/municipality research. Overpass service timed out; Nominatim valid raw responses retained.",
+    "rehabFayrouzVerdict": {
+      "El Rehab": "Real PortSaid housing area in ElDawahy, confirmed official ITDA commercial-register addresses and PortSaid governorate indexed development report. No usable exact locality point found; keep unresolved.",
+      "El Fayrouz": "Real BorFouad housing district, explicitly named on PortSaid governorate indexed page109694. Proposed approximate representative point from the within-estate OSM apartment الفيروز١٥٣, not unrelated Ismailia street."
+    },
+    "counts": {
+      "additions": 11,
+      "aliases": 8,
+      "removedChecklistEntries": 9
+    }
+  },
+  "additions": [
+    {
+      "sourceCode": "PUPZY:safir",
+      "coverageArea": "greater-cairo",
+      "nameEnglish": "Safir",
+      "nameArabic": "سفير",
+      "aliases": [
+        "El Safir",
+        "ميدان سفير"
+      ],
+      "sourceResponse": {
+        "file": "research-names/lead-nominatim-missing-names.json.gz",
+        "lookupQuery": "سفير",
+        "osmIdentity": "OSM:node/4525850189",
+        "area": "greater-cairo"
+      },
+      "point": [
+        31.3381123,
+        30.0976762
+      ],
+      "proxyPoint": true,
+      "notes": "Client-established area represented by exact named ميدان سفير OSM square; approximate area proxy. Recorded source: https://nominatim.openstreetmap.org/search?q=%D8%B3%D9%81%D9%8A%D8%B1&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
+      "sourceUrl": "https://nominatim.openstreetmap.org/search?q=%D8%B3%D9%81%D9%8A%D8%B1&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
+      "evidence": "Client-established area represented by exact named ميدان سفير OSM square; approximate area proxy. Recorded source: https://nominatim.openstreetmap.org/search?q=%D8%B3%D9%81%D9%8A%D8%B1&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg"
+    },
+    {
+      "sourceCode": "PUPZY:arab-el-maadi",
+      "coverageArea": "greater-cairo",
+      "nameEnglish": "Arab El Maadi",
+      "nameArabic": "عرب المعادي",
+      "aliases": [
+        "Arab Maadi"
+      ],
+      "sourceResponse": {
+        "file": "research-names/lead-nominatim-missing-names.json.gz",
+        "lookupQuery": "عرب المعادي",
+        "osmIdentity": "OSM:way/1531391187",
+        "area": "greater-cairo"
+      },
+      "point": [
+        31.2697546,
+        29.9703479
+      ],
+      "proxyPoint": true,
+      "notes": "Client-established Arab El Maadi area; exact named bus station موقف عرب المعادي supplies approximate locality proxy. Recorded source: https://nominatim.openstreetmap.org/search?q=%D8%B9%D8%B1%D8%A8+%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%AF%D9%8A&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
+      "sourceUrl": "https://nominatim.openstreetmap.org/search?q=%D8%B9%D8%B1%D8%A8+%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%AF%D9%8A&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
+      "evidence": "Client-established Arab El Maadi area; exact named bus station موقف عرب المعادي supplies approximate locality proxy. Recorded source: https://nominatim.openstreetmap.org/search?q=%D8%B9%D8%B1%D8%A8+%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%AF%D9%8A&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg"
+    },
+    {
+      "sourceCode": "PUPZY:motamayez-october",
+      "coverageArea": "greater-cairo",
+      "nameEnglish": "Motamayez October",
+      "nameArabic": "المتميز أكتوبر",
+      "aliases": [
+        "El Hay El Motamayez October",
+        "الحي المتميز أكتوبر"
+      ],
+      "sourceResponse": {
+        "file": "research-names/lead-nominatim-missing-names.json.gz",
+        "lookupQuery": "Motamayez October",
+        "osmIdentity": "OSM:way/1531391138",
+        "area": "greater-cairo"
+      },
+      "point": [
+        30.9789852,
+        29.9823763
+      ],
+      "proxyPoint": true,
+      "notes": "Established حي المتميز October; exact named موقف المتميز bus station representative point. Not a new City for the bus station. Recorded source: https://nominatim.openstreetmap.org/search?q=Motamayez+October&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
+      "sourceUrl": "https://nominatim.openstreetmap.org/search?q=Motamayez+October&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
+      "evidence": "Established حي المتميز October; exact named موقف المتميز bus station representative point. Not a new City for the bus station. Recorded source: https://nominatim.openstreetmap.org/search?q=Motamayez+October&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg"
+    },
+    {
+      "sourceCode": "PUPZY:kom-el-dikka",
+      "coverageArea": "alexandria",
+      "nameEnglish": "Kom El Dikka",
+      "nameArabic": "كوم الدكة",
+      "aliases": [
+        "Kom El Deka"
+      ],
+      "sourceResponse": {
+        "file": "research-names/lead-nominatim-missing-names.json.gz",
+        "lookupQuery": "Kom El Dikka",
+        "osmIdentity": "OSM:way/28817193",
+        "area": "alexandria"
+      },
+      "point": [
+        29.9039742,
+        31.1950754
+      ],
+      "proxyPoint": true,
+      "notes": "Well-established neighbourhood in independently read English/Arabic Alexandria Wikipedia district lists. The same-named park supplies an explicit locality proxy. Recorded source: https://nominatim.openstreetmap.org/search?q=Kom+El+Dikka&format=jsonv2&viewbox=28.5%2C31.65%2C30.4%2C30.6&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
+      "sourceUrl": "https://nominatim.openstreetmap.org/search?q=Kom+El+Dikka&format=jsonv2&viewbox=28.5%2C31.65%2C30.4%2C30.6&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
+      "evidence": "Well-established neighbourhood in independently read English/Arabic Alexandria Wikipedia district lists. The same-named park supplies an explicit locality proxy. Recorded source: https://nominatim.openstreetmap.org/search?q=Kom+El+Dikka&format=jsonv2&viewbox=28.5%2C31.65%2C30.4%2C30.6&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg"
+    },
+    {
+      "sourceCode": "PUPZY:nagaa-el-arab",
+      "coverageArea": "alexandria",
+      "nameEnglish": "Nagaa El Arab",
+      "nameArabic": "نجع العرب",
+      "aliases": [
+        "Naga El Arab"
+      ],
+      "sourceResponse": {
+        "file": "research-names/lead-nominatim-missing-names.json.gz",
+        "lookupQuery": "نجع العرب",
+        "osmIdentity": "OSM:way/749830488",
+        "area": "alexandria"
+      },
+      "point": [
+        29.8615607,
+        31.1610711
+      ],
+      "proxyPoint": true,
+      "notes": "Well-established named inhabited area in western Alexandria. Exact same-named street through neighbourhood supplies locality proxy; no inferred centre. Recorded source: https://nominatim.openstreetmap.org/search?q=%D9%86%D8%AC%D8%B9+%D8%A7%D9%84%D8%B9%D8%B1%D8%A8&format=jsonv2&viewbox=28.5%2C31.65%2C30.4%2C30.6&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
+      "sourceUrl": "https://nominatim.openstreetmap.org/search?q=%D9%86%D8%AC%D8%B9+%D8%A7%D9%84%D8%B9%D8%B1%D8%A8&format=jsonv2&viewbox=28.5%2C31.65%2C30.4%2C30.6&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
+      "evidence": "Well-established named inhabited area in western Alexandria. Exact same-named street through neighbourhood supplies locality proxy; no inferred centre. Recorded source: https://nominatim.openstreetmap.org/search?q=%D9%86%D8%AC%D8%B9+%D8%A7%D9%84%D8%B9%D8%B1%D8%A8&format=jsonv2&viewbox=28.5%2C31.65%2C30.4%2C30.6&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg"
+    },
+    {
+      "sourceCode": "PUPZY:ras-el-soda",
+      "coverageArea": "alexandria",
+      "nameEnglish": "El Ras El Soda",
+      "nameArabic": "الرأس السوداء",
+      "aliases": [
+        "Al Ras El Soda",
+        "Ras El Soda"
+      ],
+      "sourceResponse": {
+        "file": "research-names/lead-nominatim-missing-names.json.gz",
+        "lookupQuery": "الرأس السوداء",
+        "osmIdentity": "OSM:node/4938360196",
+        "area": "alexandria"
+      },
+      "point": [
+        29.9881092,
+        31.2444567
+      ],
+      "proxyPoint": true,
+      "notes": "Independently listed Alexandria neighbourhood on Arabic Wikipedia template. Exact named training institution مركز تدريب الرأس السوداء supplies approximate source point. Recorded source: https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B1%D8%A3%D8%B3+%D8%A7%D9%84%D8%B3%D9%88%D8%AF%D8%A7%D8%A1&format=jsonv2&viewbox=28.5%2C31.65%2C30.4%2C30.6&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
+      "sourceUrl": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B1%D8%A3%D8%B3+%D8%A7%D9%84%D8%B3%D9%88%D8%AF%D8%A7%D8%A1&format=jsonv2&viewbox=28.5%2C31.65%2C30.4%2C30.6&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
+      "evidence": "Independently listed Alexandria neighbourhood on Arabic Wikipedia template. Exact named training institution مركز تدريب الرأس السوداء supplies approximate source point. Recorded source: https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B1%D8%A3%D8%B3+%D8%A7%D9%84%D8%B3%D9%88%D8%AF%D8%A7%D8%A1&format=jsonv2&viewbox=28.5%2C31.65%2C30.4%2C30.6&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg"
+    },
+    {
+      "sourceCode": "PUPZY:shabab-obour",
+      "coverageArea": "greater-cairo",
+      "nameEnglish": "Shabab Obour",
+      "nameArabic": "الشباب العبور",
+      "aliases": [
+        "Iskan El Shabab Obour",
+        "إسكان الشباب العبور"
+      ],
+      "sourceResponse": {
+        "file": "greater-cairo-places.json.gz",
+        "osmIdentity": "OSM:way/754888107",
+        "area": "greater-cairo"
+      },
+      "point": [
+        31.4698769,
+        30.2555547
+      ],
+      "proxyPoint": false,
+      "notes": "Established Obour Youth Housing estate requested by client. Source OSM residential neighbourhood اسكان الشباب, not a bare housing code or individual building.",
+      "evidence": "Established Obour Youth Housing estate requested by client. Source OSM residential neighbourhood اسكان الشباب, not a bare housing code or individual building."
+    },
+    {
+      "sourceCode": "PUPZY:manshiyet-el-nozha",
+      "nameEnglish": "Nuzha",
+      "nameArabic": "منشية النزهة",
+      "aliases": [
+        "Nozha",
+        "El Nozha",
+        "النزهة"
+      ],
+      "coverageArea": "alexandria",
+      "wikidata": "Q138137072",
+      "proxyPoint": true,
+      "notes": "Arabic Wikipedia منشية النزهة independently establishes inhabited Alexandria neighbourhood. Source point from مسجد منشية النزهة Wikidata P625, not garden or airport centroid. https://ar.wikipedia.org/wiki/منشية_النزهة"
+    },
+    {
+      "sourceCode": "PUPZY:mariouteya",
+      "coverageArea": "greater-cairo",
+      "nameEnglish": "Mariouteya (Faisal)",
+      "nameArabic": "المريوطية فيصل",
+      "aliases": [
+        "Mariouteya",
+        "المريوطية",
+        "El Mariouteya"
+      ],
+      "sourceResponse": {
+        "file": "research-names/lead-nominatim-missing-names.json.gz",
+        "lookupQuery": "المريوطية",
+        "area": "greater-cairo",
+        "osmIdentity": "OSM:node/14124205746"
+      },
+      "point": [
+        31.1477546,
+        29.9939622
+      ],
+      "proxyPoint": true,
+      "evidence": "Exact locality المريوطية فيصل supplies representative point for the well-established Mariouteya/Faisal area. Prefer actual locality over northern railway station sharing canal name. Client-established area name. https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%85%D8%B1%D9%8A%D9%88%D8%B7%D9%8A%D8%A9&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
+      "notes": "Exact locality المريوطية فيصل supplies representative point for the well-established Mariouteya/Faisal area. Prefer actual locality over northern railway station sharing canal name. Client-established area name."
+    },
+    {
+      "sourceCode": "PUPZY:fayrouz-bor-fouad",
+      "coverageArea": "port-said-region",
+      "nameEnglish": "El Fayrouz (Bor Fouad)",
+      "nameArabic": "الفيروز بورفؤاد",
+      "aliases": [
+        "El Fayrouz",
+        "Al Fayrouz",
+        "الفيروز",
+        "Hay El Fayrouz"
+      ],
+      "sourceResponse": {
+        "file": "research-names/lead-nominatim-missing-names.json.gz",
+        "lookupQuery": "الفيروز",
+        "area": "port-said-region",
+        "osmIdentity": "OSM:node/10628310605"
+      },
+      "point": [
+        32.314008,
+        31.21826
+      ],
+      "proxyPoint": true,
+      "evidence": "Official Port Said Governorate indexed page https://portsaid.gov.eg/News/details/109694 establishes مساكن الفيروز at Bor Fouad, independently of Cairo. Exact named OSM الفيروز١٥٣ apartment point is an explicit within-estate locality proxy, not the unrelated Ismailia street. https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%81%D9%8A%D8%B1%D9%88%D8%B2&format=jsonv2&viewbox=31.4%2C31.85%2C32.8%2C30.4&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
+      "notes": "Official Port Said Governorate indexed page https://portsaid.gov.eg/News/details/109694 establishes مساكن الفيروز at Bor Fouad, independently of Cairo. Exact named OSM الفيروز١٥٣ apartment point is an explicit within-estate locality proxy, not the unrelated Ismailia street."
+    },
+    {
+      "sourceCode": "PUPZY:mostakbal-ismailia",
+      "coverageArea": "port-said-region",
+      "nameEnglish": "El Mostakbal Ismailia",
+      "nameArabic": "المستقبل الإسماعيلية",
+      "aliases": [
+        "Al Mostakbal Ismailia",
+        "Future City Ismailia"
+      ],
+      "wikidata": "Q138148800",
+      "proxyPoint": true,
+      "notes": "Client-established Mostakbal Ismailia area; source Wikidata مسجد الشهيد طنطاوي بالمستقبل P625 is explicitly within Mostakbal and beside independent مسجد المستقبل1 Q138141081. Approximate place proxy rather than inferred centroid."
+    }
+  ],
+  "aliases": [
+    {
+      "sourceCode": "OSM:node/3707953647",
+      "aliases": [
+        "Marina 1",
+        "مارينا ١"
+      ],
+      "notes": "Existing named Marina Gate locality is the corresponding Marina sector; preserve identity and add conventional gate-omitted spelling from client checklist. Source lead Nominatim exact named locality and existing hamlet response."
+    },
+    {
+      "sourceCode": "OSM:node/3708003837",
+      "aliases": [
+        "Marina 2",
+        "مارينا ٢"
+      ],
+      "notes": "Existing named Marina Gate locality is the corresponding Marina sector; preserve identity and add conventional gate-omitted spelling from client checklist. Source lead Nominatim exact named locality and existing hamlet response."
+    },
+    {
+      "sourceCode": "OSM:node/3708003838",
+      "aliases": [
+        "Marina 3",
+        "مارينا ٣"
+      ],
+      "notes": "Existing named Marina Gate locality is the corresponding Marina sector; preserve identity and add conventional gate-omitted spelling from client checklist. Source lead Nominatim exact named locality and existing hamlet response."
+    },
+    {
+      "sourceCode": "OSM:node/3708245594",
+      "aliases": [
+        "Marina 4",
+        "مارينا ٤"
+      ],
+      "notes": "Existing named Marina Gate locality is the corresponding Marina sector; preserve identity and add conventional gate-omitted spelling from client checklist. Source lead Nominatim exact named locality and existing hamlet response."
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg020507",
+      "aliases": [
+        "Abis 9",
+        "أبيس التاسعة"
+      ],
+      "notes": "Abis 9 is explicitly a component of independently sourced OCHA Abis 7/8/9/10 unit, not a newly inferred village coordinate."
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg021308",
+      "aliases": [
+        "El Nahda El Amreya",
+        "Al Nahda El Amreya",
+        "النهضة العامرية"
+      ],
+      "notes": "Explicit Amreya El Nahda Sector; regional qualifier distinguishes Borg El Arab Nahda homonyms. OCHA official source name قطاع النهضة."
+    },
+    {
+      "sourceCode": "OSM:way/810393909",
+      "aliases": [
+        "El Bahtini",
+        "البهتيني"
+      ],
+      "notes": "Arabic Wikipedia Ismailia district table spells البهتيني. Existing OSM حي البهتيمى appears a one-letter rendering error of the same Ismailia locality; source point preserved."
+    },
+    {
+      "sourceCode": "OSM:way/810492015",
+      "aliases": [
+        "El Toroq Wal Kabari",
+        "الطرق والكباري"
+      ],
+      "notes": "English transliteration and Arabic ya spelling of exact الطرق والكبارى locality; independently selected from Ismailia public administrative table."
+    }
+  ],
+  "removals": [
+    {
+      "area": "alexandria",
+      "english": "Nozha Gardens",
+      "arabic": "حدائق النزهة",
+      "reason": "A named public garden/zoo complex, rather than an independently established residential neighbourhood. Retain Nuzha/Manshiyet El Nozha separately. Wikidata Q23976192; source garden label and Alexandria page garden discussion.",
+      "sourceUrl": "https://ar.wikipedia.org/wiki/منشية_النزهة"
+    },
+    {
+      "area": "alexandria",
+      "english": "Fawzi Moaz",
+      "arabic": "فوزي معاذ",
+      "reason": "Checklist names the main street, OSM:way/30644575 شارع اللواء محمد فوزي معاذ. Staged lookup found the street and unrelated facilities, no independently established separate residential area. Smouha remains selectable.",
+      "sourceUrl": "https://www.openstreetmap.org/way/30644575"
+    },
+    {
+      "area": "alexandria",
+      "english": "El Nasr Smouha",
+      "arabic": "النصر سموحة",
+      "reason": "Street in Smouha rather than independently established district; primary bank Fawry agents list locates شارع النصر under سموحة. Remove street-level acceptance entry; keep Smouha.",
+      "sourceUrl": "https://adib.eg/media/1031529/fawry-branches.pdf"
+    },
+    {
+      "area": "alexandria",
+      "english": "El Mahmoudeya",
+      "arabic": "المحمودية",
+      "reason": "Ambiguous canal/linear road through several areas; staged response only شارع قنال المحمودية. Not evidence of an Alexandria residential neighbourhood of that name; Beheira Mahmoudiya city lies outside coverage.",
+      "sourceUrl": "https://www.openstreetmap.org/way/751770312"
+    },
+    {
+      "area": "alexandria",
+      "english": "El Horreya",
+      "arabic": "الحرية",
+      "reason": "City-spanning road name rather than independently established Alexandria neighbourhood. Staged responses find isolated towers; existing road/address sources call it طريق الحرية.",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria"
+    },
+    {
+      "area": "alexandria",
+      "english": "Soter",
+      "arabic": "سوتر",
+      "reason": "Former Soter Street, now شارع دكتور على مصطفى مشرفه, OSM:way/9929693; no separate residential locality established. Street-only acceptance entry removed, Azarita/Shatby retained.",
+      "sourceUrl": "https://www.openstreetmap.org/way/9929693"
+    },
+    {
+      "area": "alexandria",
+      "english": "Merghem 1",
+      "arabic": "مرغم الأولى",
+      "reason": "Numbered industrial-complex phase, not distinct residential area. Official SIS record identifies مجمعي مرغم 1 و2 as industrial production sites; Merghim neighbourhood retained.",
+      "sourceUrl": "https://mediadr.sis.gov.eg/handle/123456789/107054"
+    },
+    {
+      "area": "alexandria",
+      "english": "Merghem 2",
+      "arabic": "مرغم الثانية",
+      "reason": "Numbered industrial-complex phase, not distinct residential area. Official SIS record identifies مجمعي مرغم 1 و2 as industrial production sites; Merghim neighbourhood retained.",
+      "sourceUrl": "https://mediadr.sis.gov.eg/handle/123456789/107054"
+    },
+    {
+      "area": "port-said-region",
+      "english": "El Shatea Ras El Bar",
+      "arabic": "شاطئ رأس البر",
+      "reason": "Generic beach extent, not residential neighbourhood name. Source OSM:way/1554277916 is natural=beach; Ras El Bar and named El Lessan area retained.",
+      "sourceUrl": "https://www.openstreetmap.org/way/1554277916"
+    }
+  ],
+  "unresolved": [
+    {
+      "area": "port-said-region",
+      "english": "Bahr El Baqar",
+      "arabic": "بحر البقر",
+      "reason": "Staged OSM:node/10665296718 explicitly belongs to Sharqia, outside requested coverage, and cannot supply Port Said area point. EEAA Port Said environmental description separately supports Bahr El Baqar service area29km south ofPortSaid; keep legitimate name unresolved pending exact sourced local point.",
+      "sourceUrl": "https://www.eeaa.gov.eg/Uploads/Reports/Files/Port%20Said%20Des.pdf"
+    },
+    {
+      "area": "port-said-region",
+      "english": "El Lessan",
+      "arabic": "اللسان",
+      "reason": "Named attraction OSM:node/5550943543 point lies just seaward of dated OCHA governorate/coverage polygons. Valid locality name retained; no invented inland correction or forced inclusion."
+    }
+  ]
+}

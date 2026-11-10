@@ -13,6 +13,7 @@ export interface PolygonFeature {
     districtSourceCode?: string;
     evidence?: string;
     samplePoint?: Position;
+    osmSourceCode?: string;
   };
   geometry: { type: 'Polygon'; coordinates: Position[][] } | { type: 'MultiPolygon'; coordinates: Position[][][] };
 }
@@ -20,11 +21,32 @@ export interface Polygons {
   sourcePath?: string;
   sha256?: string;
   ochaLevel?: 1 | 2;
-  metadata: { reviewed: boolean; notes: string };
+  metadata: { reviewed: boolean; notes: string; gridReview?: GridReview };
   features: PolygonFeature[];
 }
+export interface GridException {
+  osmSourceCode: string;
+  area: CoverageArea;
+  centre: Position;
+  uncoveredSamples: number;
+  worstDistanceMeters: number;
+  nearestCity: string;
+  research: string;
+  whyNoName: string;
+  individualResearch?: string;
+}
+export interface GridReview {
+  reviewed: boolean;
+  decisionDate: string;
+  floors: Record<CoverageArea, number>;
+  exceptions: GridException[];
+}
 export interface IndependentNames {
-  metadata: { reviewed: boolean; method: string };
+  metadata: {
+    reviewed: boolean;
+    method: string;
+    minimums?: Record<CoverageArea, { minimum: number; reviewed: boolean; decisionDate: string; reason: string }>;
+  };
   areas: Record<CoverageArea, Array<{ english: string; arabic: string; misspellings: string[] }>>;
 }
 export interface GpsChecks {
@@ -137,15 +159,57 @@ export function sampleGrid(feature: PolygonFeature, spacingMeters = 500): Positi
   const north = Math.max(...vertices.map((p) => p[1]));
   const stepY = spacingMeters / 111195;
   const points: Position[] = [];
-  for (let lat = south; lat <= north; lat += stepY) {
+  for (let lat = south + stepY / 2; lat <= north; lat += stepY) {
     const stepX = spacingMeters / (111195 * Math.cos((lat * Math.PI) / 180));
-    for (let lon = west; lon <= east; lon += stepX) {
+    for (let lon = west + stepX / 2; lon <= east; lon += stepX) {
       if (containsPoint([lon, lat], feature)) points.push([lon, lat]);
     }
   }
   if (points.length === 0 && feature.properties.samplePoint && containsPoint(feature.properties.samplePoint, feature))
     points.push(feature.properties.samplePoint);
   return points;
+}
+
+/** The only built-up evidence admitted by the 2026-11-10 lead decision. */
+export function residentialFeatures(input: Polygons): PolygonFeature[] {
+  return input.features.filter(
+    (f) =>
+      /^OSM:(way|relation)\/\d+$/.test(f.properties.osmSourceCode ?? '') &&
+      Boolean(f.properties.evidence?.includes('landuse=residential')),
+  );
+}
+
+/** One contained OFFICIAL point credits the residential polygon's entire grid. */
+export function measureResidentialFeature(feature: PolygonFeature, records: CityCatalogRecord[]) {
+  const points = sampleGrid(feature);
+  const vertices =
+    feature.geometry.type === 'Polygon' ? feature.geometry.coordinates.flat() : feature.geometry.coordinates.flat(2);
+  const west = Math.min(...vertices.map((p) => p[0]));
+  const east = Math.max(...vertices.map((p) => p[0]));
+  const south = Math.min(...vertices.map((p) => p[1]));
+  const north = Math.max(...vertices.map((p) => p[1]));
+  const containedCity = records.find(
+    (r) =>
+      r.status === 'OFFICIAL' &&
+      r.longitude >= west &&
+      r.longitude <= east &&
+      r.latitude >= south &&
+      r.latitude <= north &&
+      containsPoint([r.longitude, r.latitude], feature),
+  );
+  const samples = points.map((point) => {
+    const nearest = nearestCatalogCity(point, records);
+    return {
+      longitude: point[0],
+      latitude: point[1],
+      evidence: feature.properties.evidence,
+      meters: nearest.meters,
+      nearest: nearest.city.sourceCode,
+    };
+  });
+  const gaps = containedCity ? [] : samples.filter((s) => s.meters > 1500);
+  gaps.sort((a, b) => b.meters - a.meters);
+  return { samples, gaps, containedCity: containedCity?.sourceCode };
 }
 
 export function verifyCoverage(
@@ -228,18 +292,42 @@ export function verifyCoverage(
     'port-said-region': ['EG03', 'EG19', 'EG11'],
   };
   const areas = COVERAGE_AREAS.map((area) => {
-    const polygons = residential.features.filter((f) => f.properties.area === area);
-    const points = polygons.flatMap((f) => sampleGrid(f).map((point) => ({ point, evidence: f.properties.evidence })));
-    const rankedSamples = points
-      .map(({ point, evidence }) => ({
-        longitude: point[0],
-        latitude: point[1],
-        evidence,
-        ...nearestCatalogCity(point, records),
-      }))
-      .map(({ city, ...gap }) => ({ ...gap, nearest: city.sourceCode }))
-      .sort((a, b) => b.meters - a.meters);
-    const gaps = rankedSamples.filter((gap) => gap.meters > 1500);
+    const polygons = residentialFeatures(residential).filter((f) => f.properties.area === area);
+    const measured = polygons.map((feature) => ({ feature, ...measureResidentialFeature(feature, records) }));
+    const rankedSamples = measured.flatMap((m) => m.samples).sort((a, b) => b.meters - a.meters);
+    const gaps = measured.flatMap((m) => m.gaps).sort((a, b) => b.meters - a.meters);
+    const share = rankedSamples.length ? 1 - gaps.length / rankedSamples.length : 0;
+    const review = residential.metadata.gridReview;
+    const floor = review?.floors?.[area];
+    const uncoveredFeatures = measured
+      .filter((m) => m.gaps.length)
+      .map(({ feature, gaps: featureGaps }) => ({
+        osmSourceCode: feature.properties.osmSourceCode!,
+        area,
+        centre: feature.properties.samplePoint!,
+        uncoveredSamples: featureGaps.length,
+        worstDistanceMeters: featureGaps[0].meters,
+        nearestCity: featureGaps[0].nearest,
+      }));
+    const unreviewedFeatures = uncoveredFeatures.filter((feature) => {
+      const matching = review?.exceptions.filter((e) => e.area === area && e.osmSourceCode === feature.osmSourceCode);
+      if (matching?.length !== 1) return true;
+      const e = matching[0];
+      return (
+        !e.research?.trim() ||
+        !e.whyNoName?.trim() ||
+        !Array.isArray(e.centre) ||
+        e.centre.length !== 2 ||
+        !e.centre.every(Number.isFinite) ||
+        !feature.centre ||
+        distanceMeters(e.centre, feature.centre) > 1 ||
+        feature.uncoveredSamples > e.uncoveredSamples ||
+        !Number.isFinite(e.worstDistanceMeters) ||
+        feature.worstDistanceMeters > e.worstDistanceMeters + 1 ||
+        e.nearestCity !== feature.nearestCity ||
+        (feature.worstDistanceMeters > 4000 && !e.individualResearch?.trim())
+      );
+    });
     const entries = names.areas[area];
     const distinctNames = new Set(entries.map((entry) => normalizeCitySearch(entry.arabic))).size;
     const missingNames = entries.flatMap((entry) =>
@@ -271,17 +359,36 @@ export function verifyCoverage(
         passed:
           residential.metadata.reviewed &&
           polygons.length > 0 &&
-          polygons.every((p) => p.properties.evidence) &&
-          points.length > 0 &&
-          gaps.length === 0,
-        samples: points.length,
+          polygons.every((p) => p.properties.evidence && p.properties.samplePoint) &&
+          rankedSamples.length > 0 &&
+          review?.reviewed === true &&
+          Boolean(review.decisionDate) &&
+          typeof floor === 'number' &&
+          floor >= 0 &&
+          floor <= 1 &&
+          Math.abs(floor * 200 - Math.round(floor * 200)) < 1e-8 &&
+          share + 1e-12 >= floor &&
+          unreviewedFeatures.length === 0,
+        samples: rankedSamples.length,
+        coverageShare: share,
+        floor,
+        uncoveredFeatures,
+        unreviewedFeatures,
         gapCount: gaps.length,
         worstGaps: gaps.slice(0, 10),
         worstSamples: rankedSamples.slice(0, 10),
         reason: polygons.length ? undefined : 'No built-up polygons fetched/reviewed; worst gaps cannot be measured',
       },
       names: {
-        passed: names.metadata.reviewed && distinctNames >= 150 && missingNames.length === 0,
+        passed:
+          names.metadata.reviewed &&
+          names.metadata.minimums?.[area]?.reviewed === true &&
+          Boolean(names.metadata.minimums[area].decisionDate && names.metadata.minimums[area].reason.trim()) &&
+          Number.isInteger(names.metadata.minimums[area].minimum) &&
+          names.metadata.minimums[area].minimum >= (area === 'port-said-region' ? 1 : 150) &&
+          distinctNames >= names.metadata.minimums[area].minimum &&
+          missingNames.length === 0,
+        minimum: names.metadata.minimums?.[area]?.minimum,
         entries: entries.length,
         distinctNames,
         variants: entries.reduce((sum, e) => sum + 2 + e.misspellings.length, 0),

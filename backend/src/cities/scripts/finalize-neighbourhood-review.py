@@ -17,7 +17,7 @@ review = load(d / 'personal-review.json')
 
 def review_signature():
     material = {'snapshots': load(d / 'source-manifest.json')['snapshots'], 'editorial': {k: review.get(k) for k in ['decisions', 'translations', 'englishArabic', 'additions', 'aliasReview', 'geometryCorrections', 'cityContexts', 'identityMerges', 'residentialComplexes', 'nameOverrides', 'areaLandmarks', 'preferredSourceCodes', 'populatedPlaces', 'populatedPlacesExcluded', 'districtIdentityMerges', 'districtNames', 'adm3HabitationEvidence']}, 'rules': {}}
-    for name in ['build-reviewed-dataset.py', 'dataset_geography.py', 'geo_offline.py', 'prepare-geographic-evidence.py']:
+    for name in ['build-reviewed-dataset.py', 'dataset_geography.py', 'geo_offline.py', 'prepare-geographic-evidence.py', 'source_response_point.py']:
         material['rules'][name] = hashlib.sha256((Path(__file__).parent / name).read_bytes()).hexdigest()
     return hashlib.sha256(json.dumps(material, sort_keys=True, ensure_ascii=False, separators=(',', ':')).encode()).hexdigest()
 
@@ -66,8 +66,10 @@ save(d / 'reviewed-overrides.json', {'districtEdits': load(out / 'district-edits
 
 built = load(out / 'candidate-builtup.geojson.gz')
 
-built['metadata'] = {'reviewed': True, 'notes': 'Complete clipped OSM residential polygons plus every ADM3 unit with residential/populated-place/named-OSM habitation evidence. Full extents retained; review does not assert that the 1.5 km gate passes.'}
+built['metadata'] = {'reviewed': True, 'notes': 'Complete clipped OSM landuse=residential polygons only. Lead decision 2026-11-10: within 1.5 km OR a contained OFFICIAL City; reviewed exceptions and per-area floors required.'}
 
+if (d / 'residential-grid-review.json').exists():
+    built['metadata']['gridReview'] = load(d / 'residential-grid-review.json')
 save(d / 'builtup-evidence.geojson.gz', built)
 
 # Final review tables; audit digests and errors are recorded separately in personal-review.json.

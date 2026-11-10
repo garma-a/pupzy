@@ -1,7 +1,15 @@
 /** Per-feature diagnostics using exactly the release gate's grid and nearest calculation. */
 import * as fs from 'fs';
 import * as path from 'path';
-import { containsPoint, hydratePolygons, nearestCatalogCity, sampleGrid, type PolygonFeature } from '../coverage';
+import {
+  containsPoint,
+  hydratePolygons,
+  nearestCatalogCity,
+  sampleGrid,
+  residentialFeatures,
+  measureResidentialFeature,
+  type PolygonFeature,
+} from '../coverage';
 import { readCityData } from '../data-files';
 import type { CityCatalog } from '../catalog';
 
@@ -24,6 +32,9 @@ for (const region of ['greater-cairo', 'alexandria', 'port-said-region']) {
   );
   for (const feature of source.elements) sourceTags.set(`OSM:${feature.type}/${feature.id}`, feature.tags ?? {});
 }
+const research = readCityData<Record<string, { research: string; whyNoName: string }>>(
+  'neighbourhoods/research-blocks/feature-notes.json',
+);
 const byCode = new Map(catalog.records.map((row) => [row.sourceCode, row]));
 const decisions = new Map(
   readCityData<Array<{ sourceCode: string; decision: string; rule: string }>>(
@@ -79,7 +90,7 @@ const features: Array<{
   evidence: string;
 }> = [];
 let index = 0;
-for (const feature of evidence.features) {
+for (const feature of residentialFeatures({ ...evidence, metadata: { reviewed: true, notes: 'Residential only' } })) {
   const area = feature.properties.area!;
   const identity =
     feature.properties.evidence?.match(/OSM:(?:node|way|relation)\/\d+|OCHA ADM3 \w+/)?.[0] ?? `feature-${index}`;
@@ -90,7 +101,8 @@ for (const feature of evidence.features) {
   let gapSamples = 0;
   let worstGapKm = 0;
   let nearestAtWorst = '';
-  for (const point of points) {
+  const credited = measureResidentialFeature(feature, catalog.records).containedCity;
+  for (const point of credited ? [] : points) {
     const nearest = nearestCatalogCity(point, catalog.records);
     if (nearest.meters <= 1500) continue;
     gapSamples++;
@@ -137,13 +149,15 @@ for (const feature of evidence.features) {
     centreDistanceKm: nearest.meters / 1000,
     tags,
     identification,
-    missingNameReason: name
-      ? decisions.get(identity)?.decision === 'exclude'
-        ? `Source record was excluded by ${decisions.get(identity)!.rule}; see the reviewed decision for duplicate/noise classification. No corroborated additional settlement name is available for the uncovered extent. Evidence geometry is retained.`
-        : 'A source name exists; the remaining gap is spatial extent beyond the available representative points. Do not manufacture extra place names.'
-      : identity.startsWith('OCHA')
-        ? 'Administrative label is available, but the snapshot supplies no names for every farm/water/desert portion of the unit.'
-        : 'Raw residential feature has no name. No corroborated development name in the committed evidence; online identification blocked by DNS. No speculative name assigned.',
+    missingNameReason:
+      research[identity]?.whyNoName ??
+      (name
+        ? decisions.get(identity)?.decision === 'exclude'
+          ? `Source record was excluded by ${decisions.get(identity)!.rule}; see the reviewed decision for duplicate/noise classification. No corroborated additional settlement name is available for the uncovered extent. Evidence geometry is retained.`
+          : 'A source name exists; the remaining gap is spatial extent beyond the available representative points. Do not manufacture extra place names.'
+        : identity.startsWith('OCHA')
+          ? 'Administrative label is available, but the snapshot supplies no names for every farm/water/desert portion of the unit.'
+          : 'Raw residential feature has no name. No corroborated development name in the committed evidence; see the recorded research notes. No speculative name assigned.'),
     evidence: feature.properties.evidence ?? '',
   });
 }
@@ -165,7 +179,7 @@ const top40 = features
 const lines = [
   '# Remaining grid gaps — offline source review',
   '',
-  '**Network lookup blocked:** Nominatim DNS resolution fails. No web identification is claimed. Full evidence and the 1.5 km threshold are unchanged.',
+  'Residential-only evidence, within 1.5 km OR a contained OFFICIAL City; lead correction 2026-11-10. Live research and failed Overpass attempts are cached in the manifest. See residential-grid-review.json for exceptions and research-blocks/feature-notes.json for individual notes.',
   '',
   'Uses the release gate’s exact 500 m sampleGrid, great-circle nearest calculation and current OFFICIAL candidate. Counts must agree with report.json. District allocation is point-in-polygon against all 365 OCHA ADM2 units, including Zemam Out. A straddling feature counts once in each district with a gap sample; sample counts are additive. Centres are derived bounding-box centres of the clipped evidence, not claimed settlement coordinates. Areas are spherical polygon estimates with holes subtracted.',
   '',
@@ -198,19 +212,6 @@ for (const [n, feature] of top40.entries())
     `Why unresolved: ${feature.missingNameReason}`,
     `Source: ${feature.evidence}; original tags/geometry in the checked residential snapshot.`,
     '',
-  );
-lines.push(
-  '## Largest uncovered populated ADM3 extents',
-  '',
-  '| Unit | Area | km² | Gap samples | Worst gap km |',
-  '| --- | --- | ---: | ---: | ---: |',
-);
-for (const feature of features
-  .filter((f) => !f.id.startsWith('OSM:'))
-  .sort((a, b) => b.areaKm2 - a.areaKm2)
-  .slice(0, 15))
-  lines.push(
-    `| ${feature.id} | ${feature.area} | ${feature.areaKm2.toFixed(3)} | ${feature.gapSamples} | ${feature.worstGapKm.toFixed(3)} |`,
   );
 fs.writeFileSync(path.join(output, 'grid-gap-review.md'), lines.join('\n') + '\n');
 fs.writeFileSync(

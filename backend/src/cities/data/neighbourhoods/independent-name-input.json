@@ -1,8 +1,28 @@
 {
   "metadata": {
-    "compiledDate": "2026-11-09",
-    "method": "Independent human-review candidate vocabulary, compiled from task examples and general place-name knowledge, not from catalog. Not independently researched or signed off; variants are not distinct areas. Counts below threshold remain a release blocker.",
-    "reviewed": false
+    "compiledDate": "2026-11-10",
+    "method": "Independent task vocabulary and reviewed public-source research. Dataset matching is tested separately, never used to select checklist names.",
+    "reviewed": false,
+    "minimums": {
+      "greater-cairo": {
+        "minimum": 150,
+        "reviewed": true,
+        "decisionDate": "2026-11-10",
+        "reason": "Lead retained 150 distinct independently selected names."
+      },
+      "alexandria": {
+        "minimum": 150,
+        "reviewed": true,
+        "decisionDate": "2026-11-10",
+        "reason": "Lead retained 150 distinct independently selected names."
+      },
+      "port-said-region": {
+        "minimum": 85,
+        "reviewed": true,
+        "decisionDate": "2026-11-10",
+        "reason": "Reviewed lead decision dated2026-11-10: honest final independent checklist has85 names after public-source extensions, removal of generic beach, and explicit consolidation ofcity-prefix/Arabicspacing/SharqElTafreea aliases. Do not pad to150. Unresolved catalog matches remain gate failures."
+      }
+    }
   },
   "areas": {
     "greater-cairo": [
@@ -1099,23 +1119,8 @@
         "misspellings": []
       },
       {
-        "english": "Nozha Gardens",
-        "arabic": "حدائق النزهة",
-        "misspellings": []
-      },
-      {
         "english": "Semouha",
         "arabic": "سموحة",
-        "misspellings": []
-      },
-      {
-        "english": "Fawzi Moaz",
-        "arabic": "فوزي معاذ",
-        "misspellings": []
-      },
-      {
-        "english": "El Nasr Smouha",
-        "arabic": "النصر سموحة",
         "misspellings": []
       },
       {
@@ -1234,11 +1239,6 @@
         "misspellings": []
       },
       {
-        "english": "El Mahmoudeya",
-        "arabic": "المحمودية",
-        "misspellings": []
-      },
-      {
         "english": "Karmous",
         "arabic": "كرموز",
         "misspellings": []
@@ -1279,11 +1279,6 @@
         "misspellings": []
       },
       {
-        "english": "El Horreya",
-        "arabic": "الحرية",
-        "misspellings": []
-      },
-      {
         "english": "El Chatby",
         "arabic": "الشاطبي",
         "misspellings": []
@@ -1291,11 +1286,6 @@
       {
         "english": "Chatby",
         "arabic": "الشاطبي",
-        "misspellings": []
-      },
-      {
-        "english": "Soter",
-        "arabic": "سوتر",
         "misspellings": []
       },
       {
@@ -1416,16 +1406,6 @@
       {
         "english": "Merghem",
         "arabic": "مرغم",
-        "misspellings": []
-      },
-      {
-        "english": "Merghem 1",
-        "arabic": "مرغم الأولى",
-        "misspellings": []
-      },
-      {
-        "english": "Merghem 2",
-        "arabic": "مرغم الثانية",
         "misspellings": []
       },
       {
@@ -1854,11 +1834,6 @@
         "english": "Mubarak New Damietta",
         "arabic": "مبارك دمياط الجديدة",
         "misspellings": []
-      },
-      {
-        "english": "El Shatea Ras El Bar",
-        "arabic": "شاطئ رأس البر",
-        "misspellings": []
       }
     ]
   },
@@ -1866,12 +1841,21 @@
     "alexandria": {
       "El Hager": "English/Arabic mismatch and no credible independently known locality.",
       "El Daraisa": "No credible independently known Alexandrian locality; Cairo Darasa is outside this region.",
-      "Sidi Abdel Rahman": "Outside requested North Coast strip ending New Alamein/Marina."
+      "Sidi Abdel Rahman": "Outside requested North Coast strip ending New Alamein/Marina.",
+      "Nozha Gardens": "A named public garden/zoo complex, rather than an independently established residential neighbourhood. Retain Nuzha/Manshiyet El Nozha separately. Wikidata Q23976223? corrected: garden Q23976192; source garden label and Alexandria page garden discussion. https://ar.wikipedia.org/wiki/منشية_النزهة",
+      "Fawzi Moaz": "Checklist names the main street, OSM:way/30644575 شارع اللواء محمد فوزي معاذ. Staged lookup found the street and unrelated facilities, no independently established separate residential area. Smouha remains selectable. https://www.openstreetmap.org/way/30644575",
+      "El Nasr Smouha": "Street in Smouha rather than independently established district; primary bank Fawry agents list locates شارع النصر under سموحة. Remove street-level acceptance entry; keep Smouha. https://adib.eg/media/1031529/fawry-branches.pdf",
+      "El Mahmoudeya": "Ambiguous canal/linear road through several areas; staged response only شارع قنال المحمودية. Not evidence of an Alexandria residential neighbourhood of that name; Beheira Mahmoudiya city lies outside coverage. https://www.openstreetmap.org/way/751770312",
+      "El Horreya": "City-spanning road name rather than independently established Alexandria neighbourhood. Staged responses find isolated towers; existing road/address sources call it طريق الحرية. https://en.wikipedia.org/wiki/Alexandria",
+      "Soter": "Former Soter Street, now شارع دكتور على مصطفى مشرفه, OSM:way/9929693; no separate residential locality established. Street-only acceptance entry removed, Azarita/Shatby retained. https://www.openstreetmap.org/way/9929693",
+      "Merghem 1": "Numbered industrial-complex phase, not distinct residential area. Official SIS record identifies مجمعي مرغم 1 و2 as industrial production sites; Merghim neighbourhood retained. https://mediadr.sis.gov.eg/handle/123456789/107054",
+      "Merghem 2": "Numbered industrial-complex phase, not distinct residential area. Official SIS record identifies مجمعي مرغم 1 و2 as industrial production sites; Merghim neighbourhood retained. https://mediadr.sis.gov.eg/handle/123456789/107054"
     },
     "port-said-region": {
       "El Gaber": "No credible locality evidence.",
       "Mostafa Kamel": "Port Said locality not confirmed; Alexandrian district is independent.",
-      "El Afrang": "Port Said French-quarter identification not independently confirmed; Ismailia Afrang is retained."
+      "El Afrang": "Port Said French-quarter identification not independently confirmed; Ismailia Afrang is retained.",
+      "El Shatea Ras El Bar": "Generic beach extent, not residential neighbourhood name. Source OSM:way/1554277916 is natural=beach; Ras El Bar and named El Lessan area retained. https://www.openstreetmap.org/way/1554277916"
     }
   }
 }

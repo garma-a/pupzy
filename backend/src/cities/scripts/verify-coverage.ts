@@ -9,9 +9,10 @@ const catalogPath = process.argv[2];
 const catalog = catalogPath ? (JSON.parse(fs.readFileSync(catalogPath, 'utf8')) as CityCatalog) : loadOfficialCatalog();
 const reference = (file: string, notes: string, level?: 1 | 2): Polygons => ({
   metadata: {
+    ...(level ? {} : readCityData<{ metadata: Polygons['metadata'] }>('neighbourhoods/' + file).metadata),
     reviewed: level
       ? true
-      : readCityData<{ metadata: { reviewed: boolean } }>('neighbourhoods/' + file).metadata.reviewed,
+      : readCityData<{ metadata: Polygons['metadata'] }>('neighbourhoods/' + file).metadata.reviewed,
     notes,
   },
   sourcePath: 'neighbourhoods/' + file,
@@ -25,7 +26,7 @@ const evidence = catalogPath
   ? {
       residential: reference(
         'builtup-evidence.geojson.gz',
-        'Full clipped OSM residential polygons plus populated ADM3.',
+        'Clipped OSM landuse=residential only; lead decision 2026-11-10.',
       ),
       governorates: reference('ocha-cod-ab/egy_admin1.geojson.gz', 'OCHA ADM1', 1),
       districts: reference('ocha-cod-ab/egy_admin2.geojson.gz', 'OCHA ADM2', 2),
@@ -53,8 +54,8 @@ const lines = [
 for (const a of report.areas) {
   const text = [
     `## ${a.area}`,
-    `Grid: ${a.grid.passed ? 'PASS' : 'FAIL'} — ${a.grid.samples} samples; ${a.grid.gapCount} over 1.5 km.`,
-    `Names: ${a.names.passed ? 'PASS' : 'FAIL'} — ${a.names.distinctNames} distinct; ${a.names.missingNames.length}/${a.names.variants} unmatched variants.`,
+    `Grid: ${a.grid.passed ? 'PASS' : 'FAIL'} — ${a.grid.samples} samples; ${a.grid.gapCount} uncovered; ${(a.grid.coverageShare * 100).toFixed(3)}% covered; floor ${a.grid.floor === undefined ? 'unreviewed' : (a.grid.floor * 100).toFixed(1) + '%'}; ${a.grid.unreviewedFeatures.length} unreviewed features.`,
+    `Names: ${a.names.passed ? 'PASS' : 'FAIL'} — ${a.names.distinctNames} distinct (reviewed minimum ${a.names.minimum ?? 'missing'}); ${a.names.missingNames.length}/${a.names.variants} unmatched variants.`,
     `GPS: ${a.gps.passed ? 'PASS' : 'FAIL'} — ${a.gps.checks} checks; ${a.gps.failures.length} failures.`,
     'Worst gaps: ' + JSON.stringify(a.grid.worstGaps),
     'Missing names: ' + a.names.missingNames.join(', '),

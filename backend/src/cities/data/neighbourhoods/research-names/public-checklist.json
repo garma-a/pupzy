@@ -1,0 +1,1199 @@
+{
+  "metadata": {
+    "reviewed": true,
+    "date": "2026-11-10",
+    "method": "Individual public-source selection, independent of catalog; English transliterations reviewed. Distinct names combine normalized Arabic, never variants."
+  },
+  "areas": {
+    "greater-cairo": [
+      {
+        "english": "Imbaba",
+        "arabic": "إمبابة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Giza",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-en.html.gz",
+        "evidence": "Public Giza district/new-city and permanently inhabited island lists. Standard Arabic counterparts reviewed individually."
+      },
+      {
+        "english": "Agouza",
+        "arabic": "العجوزة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Giza",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-en.html.gz",
+        "evidence": "Public Giza district/new-city and permanently inhabited island lists. Standard Arabic counterparts reviewed individually."
+      },
+      {
+        "english": "Dokki",
+        "arabic": "الدقي",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Giza",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-en.html.gz",
+        "evidence": "Public Giza district/new-city and permanently inhabited island lists. Standard Arabic counterparts reviewed individually."
+      },
+      {
+        "english": "Boulaq El Dakrour",
+        "arabic": "بولاق الدكرور",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Giza",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-en.html.gz",
+        "evidence": "Public Giza district/new-city and permanently inhabited island lists. Standard Arabic counterparts reviewed individually."
+      },
+      {
+        "english": "Omraniya",
+        "arabic": "العمرانية",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Giza",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-en.html.gz",
+        "evidence": "Public Giza district/new-city and permanently inhabited island lists. Standard Arabic counterparts reviewed individually."
+      },
+      {
+        "english": "Talbiya",
+        "arabic": "الطالبية",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Giza",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-en.html.gz",
+        "evidence": "Public Giza district/new-city and permanently inhabited island lists. Standard Arabic counterparts reviewed individually."
+      },
+      {
+        "english": "Haram",
+        "arabic": "الهرم",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Giza",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-en.html.gz",
+        "evidence": "Public Giza district/new-city and permanently inhabited island lists. Standard Arabic counterparts reviewed individually."
+      },
+      {
+        "english": "Warraq",
+        "arabic": "الوراق",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Giza",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-en.html.gz",
+        "evidence": "Public Giza district/new-city and permanently inhabited island lists. Standard Arabic counterparts reviewed individually."
+      },
+      {
+        "english": "Sheikh Zayed",
+        "arabic": "الشيخ زايد",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Giza",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-en.html.gz",
+        "evidence": "Public Giza district/new-city and permanently inhabited island lists. Standard Arabic counterparts reviewed individually."
+      },
+      {
+        "english": "Hadayek October",
+        "arabic": "حدائق أكتوبر",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Giza",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-en.html.gz",
+        "evidence": "Public Giza district/new-city and permanently inhabited island lists. Standard Arabic counterparts reviewed individually."
+      },
+      {
+        "english": "New October",
+        "arabic": "أكتوبر الجديدة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Giza",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-en.html.gz",
+        "evidence": "Public Giza district/new-city and permanently inhabited island lists. Standard Arabic counterparts reviewed individually."
+      },
+      {
+        "english": "New Sphinx",
+        "arabic": "سفنكس الجديدة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Giza",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-en.html.gz",
+        "evidence": "Public Giza district/new-city and permanently inhabited island lists. Standard Arabic counterparts reviewed individually."
+      },
+      {
+        "english": "Dahab Island",
+        "arabic": "جزيرة الدهب",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Giza",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-en.html.gz",
+        "evidence": "Public Giza district/new-city and permanently inhabited island lists. Standard Arabic counterparts reviewed individually."
+      },
+      {
+        "english": "Warraq Island",
+        "arabic": "جزيرة الوراق",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Giza",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-en.html.gz",
+        "evidence": "Public Giza district/new-city and permanently inhabited island lists. Standard Arabic counterparts reviewed individually."
+      },
+      {
+        "english": "Mohandessin",
+        "arabic": "المهندسين",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Kit Kat",
+        "arabic": "الكيت كات",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Warraq El Arab",
+        "arabic": "وراق العرب",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Tanash",
+        "arabic": "طناش",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Geziret Mohamed",
+        "arabic": "جزيرة محمد",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Birqash",
+        "arabic": "برقاش",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Nikla",
+        "arabic": "نكلا",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Bashtil",
+        "arabic": "بشتيل",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Baragil",
+        "arabic": "البراجيل",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Kafr Hakim",
+        "arabic": "كفر حكيم",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Abu Rawash",
+        "arabic": "أبو رواش",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Kerdasa",
+        "arabic": "كرداسة",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Ossim",
+        "arabic": "أوسيم",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Mansouriya",
+        "arabic": "المنصورية",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Moatamadiya",
+        "arabic": "المعتمدية",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Nahia",
+        "arabic": "ناهيا",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Manshiyet El Bakari",
+        "arabic": "منشأة البكاري",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Kafr Ghattati",
+        "arabic": "كفر غطاطي",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Mit Oqba",
+        "arabic": "ميت عقبة",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Faisal",
+        "arabic": "فيصل",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Kafr Tohormos",
+        "arabic": "كفر طهرمس",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Saqiet Mekki",
+        "arabic": "ساقية مكي",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Moneeb",
+        "arabic": "المنيب",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Qasabgi",
+        "arabic": "القصبجي",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Abu El Nomros",
+        "arabic": "أبو النمرس",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Nazlet El Ashter",
+        "arabic": "نزلة الأشطر",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Bani Youssef",
+        "arabic": "بني يوسف",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Harraniya",
+        "arabic": "الحرانية",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Manial Shiha",
+        "arabic": "منيل شيحة",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Tammouh",
+        "arabic": "طموه",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
+        "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
+        "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
+      },
+      {
+        "english": "Shubra",
+        "arabic": "شبرا",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Cairo",
+        "sourceSnapshot": "neighbourhoods/research-names/cairo-en.html.gz",
+        "evidence": "Public metropolitan area/district and satellite-city sections; names independently selected from page, never catalog."
+      },
+      {
+        "english": "Shubra El Kheima",
+        "arabic": "شبرا الخيمة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Cairo",
+        "sourceSnapshot": "neighbourhoods/research-names/cairo-en.html.gz",
+        "evidence": "Public metropolitan area/district and satellite-city sections; names independently selected from page, never catalog."
+      },
+      {
+        "english": "Heliopolis",
+        "arabic": "مصر الجديدة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Cairo",
+        "sourceSnapshot": "neighbourhoods/research-names/cairo-en.html.gz",
+        "evidence": "Public metropolitan area/district and satellite-city sections; names independently selected from page, never catalog."
+      },
+      {
+        "english": "Nasr City",
+        "arabic": "مدينة نصر",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Cairo",
+        "sourceSnapshot": "neighbourhoods/research-names/cairo-en.html.gz",
+        "evidence": "Public metropolitan area/district and satellite-city sections; names independently selected from page, never catalog."
+      },
+      {
+        "english": "Garden City",
+        "arabic": "جاردن سيتي",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Cairo",
+        "sourceSnapshot": "neighbourhoods/research-names/cairo-en.html.gz",
+        "evidence": "Public metropolitan area/district and satellite-city sections; names independently selected from page, never catalog."
+      },
+      {
+        "english": "Zamalek",
+        "arabic": "الزمالك",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Cairo",
+        "sourceSnapshot": "neighbourhoods/research-names/cairo-en.html.gz",
+        "evidence": "Public metropolitan area/district and satellite-city sections; names independently selected from page, never catalog."
+      },
+      {
+        "english": "Maadi",
+        "arabic": "المعادي",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Cairo",
+        "sourceSnapshot": "neighbourhoods/research-names/cairo-en.html.gz",
+        "evidence": "Public metropolitan area/district and satellite-city sections; names independently selected from page, never catalog."
+      },
+      {
+        "english": "Mokattam",
+        "arabic": "المقطم",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Cairo",
+        "sourceSnapshot": "neighbourhoods/research-names/cairo-en.html.gz",
+        "evidence": "Public metropolitan area/district and satellite-city sections; names independently selected from page, never catalog."
+      },
+      {
+        "english": "Rehab",
+        "arabic": "الرحاب",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Cairo",
+        "sourceSnapshot": "neighbourhoods/research-names/cairo-en.html.gz",
+        "evidence": "Public metropolitan area/district and satellite-city sections; names independently selected from page, never catalog."
+      },
+      {
+        "english": "Madinaty",
+        "arabic": "مدينتي",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Cairo",
+        "sourceSnapshot": "neighbourhoods/research-names/cairo-en.html.gz",
+        "evidence": "Public metropolitan area/district and satellite-city sections; names independently selected from page, never catalog."
+      },
+      {
+        "english": "New Cairo",
+        "arabic": "القاهرة الجديدة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Cairo",
+        "sourceSnapshot": "neighbourhoods/research-names/cairo-en.html.gz",
+        "evidence": "Public metropolitan area/district and satellite-city sections; names independently selected from page, never catalog."
+      },
+      {
+        "english": "Helwan",
+        "arabic": "حلوان",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Cairo",
+        "sourceSnapshot": "neighbourhoods/research-names/cairo-en.html.gz",
+        "evidence": "Public metropolitan area/district and satellite-city sections; names independently selected from page, never catalog."
+      },
+      {
+        "english": "New Administrative Capital",
+        "arabic": "العاصمة الإدارية الجديدة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Cairo",
+        "sourceSnapshot": "neighbourhoods/research-names/cairo-en.html.gz",
+        "evidence": "Public metropolitan area/district and satellite-city sections; names independently selected from page, never catalog."
+      }
+    ],
+    "alexandria": [
+      {
+        "english": "Asafra",
+        "arabic": "العصافرة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "El Mamoura",
+        "arabic": "المعمورة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Mandara",
+        "arabic": "المندرة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Abu Qir",
+        "arabic": "أبو قير",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Bakos",
+        "arabic": "باكوس",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Bolkly",
+        "arabic": "بولكلي",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Cleopatra",
+        "arabic": "كليوباترا",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "El Saraya",
+        "arabic": "السرايا",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Shods",
+        "arabic": "شدس",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Fleming",
+        "arabic": "فلمنج",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Gianaclis",
+        "arabic": "جناكليس",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Gleem",
+        "arabic": "جليم",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Kafr Abdu",
+        "arabic": "كفر عبده",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Louran",
+        "arabic": "لوران",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Roushdy",
+        "arabic": "رشدي",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Saba Pasha",
+        "arabic": "سابا باشا",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "San Stefano",
+        "arabic": "سان ستيفانو",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Smouha",
+        "arabic": "سموحة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Zizinia",
+        "arabic": "زيزينيا",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Sidi Gaber",
+        "arabic": "سيدي جابر",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Sporting",
+        "arabic": "سبورتنج",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Stanley",
+        "arabic": "ستانلي",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Tharwat",
+        "arabic": "ثروت",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Victoria",
+        "arabic": "فيكتوريا",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Camp Chezar",
+        "arabic": "كامب شيزار",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Azarita",
+        "arabic": "الأزاريطة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "El Atareen",
+        "arabic": "العطارين",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Mahatet El Raml",
+        "arabic": "محطة الرمل",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Moharam Bek",
+        "arabic": "محرم بك",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Shatby",
+        "arabic": "الشاطبي",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Hadara",
+        "arabic": "الحضرة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Ibrahimia",
+        "arabic": "الإبراهيمية",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Kom El Dikka",
+        "arabic": "كوم الدكة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Anfoushi",
+        "arabic": "الأنفوشي",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Bahary",
+        "arabic": "بحري",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "El Labban",
+        "arabic": "اللبان",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Mansheya",
+        "arabic": "المنشية",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Qabbary",
+        "arabic": "القباري",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Karmouz",
+        "arabic": "كرموز",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Wardian",
+        "arabic": "الورديان",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "El Max",
+        "arabic": "المكس",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Dekhela",
+        "arabic": "الدخيلة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Bitash",
+        "arabic": "البيطاش",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Merghim",
+        "arabic": "مرغم",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "King Mariout",
+        "arabic": "كينج مريوط",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Alexandria",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-en.html.gz",
+        "evidence": "Districts & Neighborhoods in Alexandria public navigation list; standard Arabic counterparts individually reviewed; Safar omitted pending identity research."
+      },
+      {
+        "english": "Ras El Soda",
+        "arabic": "الرأس السوداء",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Awaiyd",
+        "arabic": "العوايد",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Mansheya El Bahareya",
+        "arabic": "المنشية البحرية",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Miami",
+        "arabic": "ميامي",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Sidi Beshr",
+        "arabic": "سيدي بشر",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Toson",
+        "arabic": "طوسون",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Khorshid",
+        "arabic": "خورشيد",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Abis",
+        "arabic": "أبيس",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "El Zaheria",
+        "arabic": "الظاهرية",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Gabriel",
+        "arabic": "غبريال",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Manshiyet El Nozha",
+        "arabic": "منشية النزهة",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Hadara El Gedida",
+        "arabic": "الحضرة الجديدة",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Sawary",
+        "arabic": "صواري",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Mahatet Masr",
+        "arabic": "محطة مصر",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Sayala",
+        "arabic": "السيالة",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Ras El Tin",
+        "arabic": "رأس التين",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Bashayer El Kheir",
+        "arabic": "بشاير الخير",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Mina El Basal",
+        "arabic": "مينا البصل",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Kilo 21",
+        "arabic": "الكيلو 21",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Hannoville",
+        "arabic": "الهانوفيل",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Wadi El Qamar",
+        "arabic": "وادي القمر",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Sidi Krir",
+        "arabic": "سيدي كرير",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      },
+      {
+        "english": "Kafoury",
+        "arabic": "الكافوري",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
+        "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
+        "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
+      }
+    ],
+    "port-said-region": [
+      {
+        "english": "El Sharq",
+        "arabic": "الشرق",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/بورسعيد",
+        "sourceSnapshot": "neighbourhoods/research-names/port-ar.html.gz",
+        "evidence": "Public administrative division list; district aliases require reviewer mapping to exact ADM2 identity, not extra rows.",
+        "sourceArabic": "حي الشرق"
+      },
+      {
+        "english": "El Arab",
+        "arabic": "العرب",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/بورسعيد",
+        "sourceSnapshot": "neighbourhoods/research-names/port-ar.html.gz",
+        "evidence": "Public administrative division list; district aliases require reviewer mapping to exact ADM2 identity, not extra rows.",
+        "sourceArabic": "حي العرب"
+      },
+      {
+        "english": "El Manakh",
+        "arabic": "المناخ",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/بورسعيد",
+        "sourceSnapshot": "neighbourhoods/research-names/port-ar.html.gz",
+        "evidence": "Public administrative division list; district aliases require reviewer mapping to exact ADM2 identity, not extra rows.",
+        "sourceArabic": "حي المناخ"
+      },
+      {
+        "english": "El Dawahy",
+        "arabic": "الضواحي",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/بورسعيد",
+        "sourceSnapshot": "neighbourhoods/research-names/port-ar.html.gz",
+        "evidence": "Public administrative division list; district aliases require reviewer mapping to exact ADM2 identity, not extra rows.",
+        "sourceArabic": "حي الضواحي"
+      },
+      {
+        "english": "El Ganoub",
+        "arabic": "الجنوب",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/بورسعيد",
+        "sourceSnapshot": "neighbourhoods/research-names/port-ar.html.gz",
+        "evidence": "Public administrative division list; district aliases require reviewer mapping to exact ADM2 identity, not extra rows.",
+        "sourceArabic": "حي الجنوب"
+      },
+      {
+        "english": "El Zohour",
+        "arabic": "الزهور",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/بورسعيد",
+        "sourceSnapshot": "neighbourhoods/research-names/port-ar.html.gz",
+        "evidence": "Public administrative division list; district aliases require reviewer mapping to exact ADM2 identity, not extra rows.",
+        "sourceArabic": "حي الزهور"
+      },
+      {
+        "english": "El Gharb",
+        "arabic": "الغرب",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/بورسعيد",
+        "sourceSnapshot": "neighbourhoods/research-names/port-ar.html.gz",
+        "evidence": "Public administrative division list; district aliases require reviewer mapping to exact ADM2 identity, not extra rows.",
+        "sourceArabic": "حي غرب"
+      },
+      {
+        "english": "El Afrang Ismailia",
+        "arabic": "الإفرنج الإسماعيلية",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/الإسماعيلية_(مدينة)",
+        "sourceSnapshot": "neighbourhoods/research-names/ismailia-ar.html.gz",
+        "evidence": "Ismailia historical-quarter narrative and district/shiakha table; city qualifier distinguishes homonymous Salam. Public labels selected independently of catalog.",
+        "sourceArabic": "حي الإفرنج"
+      },
+      {
+        "english": "El Mahatta El Gedida",
+        "arabic": "المحطة الجديدة",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/الإسماعيلية_(مدينة)",
+        "sourceSnapshot": "neighbourhoods/research-names/ismailia-ar.html.gz",
+        "evidence": "Ismailia historical-quarter narrative and district/shiakha table; city qualifier distinguishes homonymous Salam. Public labels selected independently of catalog."
+      },
+      {
+        "english": "El Araishiya",
+        "arabic": "العرايشية",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/الإسماعيلية_(مدينة)",
+        "sourceSnapshot": "neighbourhoods/research-names/ismailia-ar.html.gz",
+        "evidence": "Ismailia historical-quarter narrative and district/shiakha table; city qualifier distinguishes homonymous Salam. Public labels selected independently of catalog."
+      },
+      {
+        "english": "El Temsah",
+        "arabic": "التمساح",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/الإسماعيلية_(مدينة)",
+        "sourceSnapshot": "neighbourhoods/research-names/ismailia-ar.html.gz",
+        "evidence": "Ismailia historical-quarter narrative and district/shiakha table; city qualifier distinguishes homonymous Salam. Public labels selected independently of catalog."
+      },
+      {
+        "english": "Makkah",
+        "arabic": "مكة",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/الإسماعيلية_(مدينة)",
+        "sourceSnapshot": "neighbourhoods/research-names/ismailia-ar.html.gz",
+        "evidence": "Ismailia historical-quarter narrative and district/shiakha table; city qualifier distinguishes homonymous Salam. Public labels selected independently of catalog."
+      },
+      {
+        "english": "El Abbasi",
+        "arabic": "العباسي",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/الإسماعيلية_(مدينة)",
+        "sourceSnapshot": "neighbourhoods/research-names/ismailia-ar.html.gz",
+        "evidence": "Ismailia historical-quarter narrative and district/shiakha table; city qualifier distinguishes homonymous Salam. Public labels selected independently of catalog."
+      },
+      {
+        "english": "El Bahtini",
+        "arabic": "البهتيني",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/الإسماعيلية_(مدينة)",
+        "sourceSnapshot": "neighbourhoods/research-names/ismailia-ar.html.gz",
+        "evidence": "Ismailia historical-quarter narrative and district/shiakha table; city qualifier distinguishes homonymous Salam. Public labels selected independently of catalog."
+      },
+      {
+        "english": "Hay El Salam Ismailia",
+        "arabic": "حي السلام الإسماعيلية",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/الإسماعيلية_(مدينة)",
+        "sourceSnapshot": "neighbourhoods/research-names/ismailia-ar.html.gz",
+        "evidence": "Ismailia historical-quarter narrative and district/shiakha table; city qualifier distinguishes homonymous Salam. Public labels selected independently of catalog."
+      },
+      {
+        "english": "El Tamlik",
+        "arabic": "التمليك",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/الإسماعيلية_(مدينة)",
+        "sourceSnapshot": "neighbourhoods/research-names/ismailia-ar.html.gz",
+        "evidence": "Ismailia historical-quarter narrative and district/shiakha table; city qualifier distinguishes homonymous Salam. Public labels selected independently of catalog."
+      },
+      {
+        "english": "El Toroq Wal Kabari",
+        "arabic": "الطرق والكباري",
+        "misspellings": [],
+        "sourceUrl": "https://ar.wikipedia.org/wiki/الإسماعيلية_(مدينة)",
+        "sourceSnapshot": "neighbourhoods/research-names/ismailia-ar.html.gz",
+        "evidence": "Ismailia historical-quarter narrative and district/shiakha table; city qualifier distinguishes homonymous Salam. Public labels selected independently of catalog."
+      },
+      {
+        "english": "Damietta",
+        "arabic": "دمياط",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Damietta_Governorate",
+        "sourceSnapshot": "neighbourhoods/research-names/damietta-gov-en.html.gz",
+        "evidence": "Public municipal division list filtered to declared Damietta/New Damietta coverage; other governorate towns outside coverage omitted."
+      },
+      {
+        "english": "New Damietta",
+        "arabic": "دمياط الجديدة",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Damietta_Governorate",
+        "sourceSnapshot": "neighbourhoods/research-names/damietta-gov-en.html.gz",
+        "evidence": "Public municipal division list filtered to declared Damietta/New Damietta coverage; other governorate towns outside coverage omitted."
+      },
+      {
+        "english": "Ras El Bar",
+        "arabic": "رأس البر",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Damietta_Governorate",
+        "sourceSnapshot": "neighbourhoods/research-names/damietta-gov-en.html.gz",
+        "evidence": "Public municipal division list filtered to declared Damietta/New Damietta coverage; other governorate towns outside coverage omitted."
+      },
+      {
+        "english": "Ezbet El Borg",
+        "arabic": "عزبة البرج",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Damietta_Governorate",
+        "sourceSnapshot": "neighbourhoods/research-names/damietta-gov-en.html.gz",
+        "evidence": "Public municipal division list filtered to declared Damietta/New Damietta coverage; other governorate towns outside coverage omitted."
+      },
+      {
+        "english": "Kafr El Battikh",
+        "arabic": "كفر البطيخ",
+        "misspellings": [],
+        "sourceUrl": "https://en.wikipedia.org/wiki/Damietta_Governorate",
+        "sourceSnapshot": "neighbourhoods/research-names/damietta-gov-en.html.gz",
+        "evidence": "Public municipal division list filtered to declared Damietta/New Damietta coverage; other governorate towns outside coverage omitted."
+      }
+    ]
+  }
+}

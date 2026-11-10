@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check every included coordinate against its recorded raw source, without network access."""
 from pathlib import Path
+from source_response_point import response_point
 import re
 from geo_offline import load, save, Shape, distance, osm_geometry
 from dataset_geography import REGIONS, osm_point
@@ -26,7 +27,9 @@ for row in rows:
         point = (row['point']['longitude'], row['point']['latitude'])
         provenance = row['provenance']
         source = provenance.get('coordinateSource', {})
-        if code.startswith('OSM:'):
+        if source.get('kind') == 'recorded response':
+            expected = {tuple(response_point(data, source))}
+        elif code.startswith('OSM:'):
             expected = {tuple(osm_point(osm[code]))}
             assert provenance['osmPlaceType'] == osm[code].get('tags', {}).get('place', 'residential'), 'Original place tag changed'
         elif code.startswith('PUPZY:adm3-'):

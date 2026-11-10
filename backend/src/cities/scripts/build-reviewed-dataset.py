@@ -6,6 +6,7 @@ from pathlib import Path
 import json, re, hashlib, random, collections, math, unicodedata
 
 from dataset_geography import *
+from source_response_point import response_point
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -444,7 +445,14 @@ print('Secondary Wikidata localities', len(WD_DECISIONS))
 for added in REVIEW.get('additions', []):
     prov_extra = {'proxyPoint': True} if added.get('proxyPoint') else {}
     p = None
-    if added.get('osmGeometry'):
+    if added.get('sourceResponse'):
+        source = added['sourceResponse']
+        if not any(s['path'] == 'src/cities/data/neighbourhoods/' + source['file'] for s in MANIFEST['snapshots']):
+            raise ValueError('Research response absent from source manifest')
+        p = response_point(D, source)
+        prov_extra['coordinateSource'] = {'kind': 'recorded response', **source}
+        evidence = added['evidence']
+    elif added.get('osmGeometry'):
         identity = added['osmGeometry']
         feature = next(e for region in REGIONS for e in load(D/(region+'-residential.json.gz'))['elements'] if source_id(e) == identity)
         shape = Shape(osm_geometry(feature))
@@ -581,7 +589,6 @@ for f in ADM3:
     if not residential and (not populated):
         ADM3_ROWS.append(decision)
         continue
-    RES.append({'type': 'Feature', 'properties': {'area': area, 'evidence': 'OCHA ADM3 ' + props['adm3_pcode'] + ' populated by ' + ('residential landuse' if residential else 'reviewed Wikidata locality ' + locality_q['wikidata'] if locality_q else 'populated-place snapshot / named OSM place'), 'samplePoint': shape.representative()}, 'geometry': polygonal(output(intersect(ctx, shape.geom, COV[area].geom)))})
     if re.search('خارج.*زمام', props['adm3_name1']):
         decision.update(rule='adm3-covered-unnamed-unit', notes='Outside-zemam administrative label is not a resident area name; existing named City points occupy this unit.')
         ADM3_ROWS.append(decision)
@@ -635,7 +642,7 @@ save(OUT / 'adm3-name-residue.json', ADM3_REVIEW)
 
 save(OUT / 'translation-residue.json', UNRESOLVED_NAMES)
 
-save(OUT / 'candidate-builtup.geojson.gz', {'type': 'FeatureCollection', 'metadata': {'reviewed': False, 'notes': 'All clipped residential polygons plus populated ADM3 unit polygons; unchanged extents, pending review.'}, 'features': RES})
+save(OUT / 'candidate-builtup.geojson.gz', {'type': 'FeatureCollection', 'metadata': {'reviewed': False, 'notes': 'All clipped OSM landuse=residential polygons only; ADM3 City fill retained separately.'}, 'features': RES})
 
 print('ADM3', dict(collections.Counter((r['rule'] for r in ADM3_ROWS))), 'name residue', len(ADM3_REVIEW), 'total named inclusions', len(CITIES))
 

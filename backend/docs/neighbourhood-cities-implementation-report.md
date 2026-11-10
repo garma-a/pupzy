@@ -1,259 +1,122 @@
-# Neighbourhood dataset continuation — 2026-11-10
+# Neighbourhood release investigation — 2026-11-10
 
-**NETWORK STILL UNAVAILABLE: Nominatim DNS fails (curl exit 6). No web response fetched this round; offline continuation only.** The requested first command produced no header; its pipeline exit 0 masked curl failure. The direct diagnostic `curl -sSI --connect-timeout 5 --max-time 15 https://nominatim.openstreetmap.org/` exposed the DNS failure. No Nominatim bulk requests, invented coordinates, Wikipedia research or live geocoding is claimed. The manifest records the probe.
+**3,469 Cities = 351 districts + 3,118 neighbourhoods; +14 rows. Grid PASS / data quality PASS / source-point integrity PASS. Names FAIL in all three areas; GPS 30/30, 30/30, 29/30. Release blocked; 0066 was not regenerated.**
 
-**3,455 OFFICIAL candidate Cities = 351 existing districts + 3,104 neighbourhoods. Net +140 this round; RELEASE BLOCKED.** The actual catalog, combined snapshot, 0066 and migration journal remain unchanged. The publisher was exercised against disposable artifact paths and rejected the candidate. No frontend, production, Railway, Docker, push, PR, merge, main or dependency-install operation occurred.
+| Area | Residential samples before → after | Uncovered before → after | Share before → after | Floor | Exceptions | Unmatched variants |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| greater-cairo | 8469 → 8469 | 242 → 242 | 97.143% → 97.143% | 97.0% | 161 | 22/1027 |
+| alexandria | 2146 → 2146 | 195 → 189 | 90.913% → 91.193% | 91.0% | 149 | 47/674 |
+| port-said-region | 721 → 721 | 38 → 38 | 94.730% → 94.730% | 94.5% | 34 | 30/236 |
 
-**No commit created:** Git cannot create the worktree index lock because the shared Git metadata is read-only: `/home/girgis/repo/work/pupzy_comapny/pupzy/.git/worktrees/neighbourhood-cities/index.lock`. Edits remain on `feat/neighbourhood-cities`; the refreshed ignored handoff bundle contains the tracked patch, new source/code files and verification artifacts. This is a filesystem restriction, not an approval rejection.
+Before means checkpoint `5750b75` Cities measured on the same residential evidence with the final centred-cell sampling method, not the obsolete ADM3 grid. ADM3 City rows remain. Only clipped OSM landuse=residential is sampled; a contained OFFICIAL City credits the polygon. All 344 remaining features have reviewed exceptions, and all 70 remaining >4km features have individual notes. No legacy point can credit a polygon.
 
-## Added rows this round
+Lead reference: 8332/220,2132/194,723/43 samples/gaps. Our centred 500 m grid plus interior fallback yields8469/242,2146/195,721/38 before additions. Sample totals differ by at most 1.64%; coverage shares differ by at most 0.68 percentage points. This is an explicit reproduction limitation, not a claim of exact agreement. The old lower-left-anchored grid yielded7724/203,2025/183,665/36; changing origin changes the inclusion of edge cells. The lead’s exact grid origin was not supplied, so exact reproduction remains unresolved. The committed algorithm uses centred cells consistently in the gate and diagnostic. The lead should compare this origin on Docker.
 
-The lead-staged Overpass responses contain 315 objects (149 / 120 / 46). Their raw bytes were moved into three deterministic gzip snapshots with queries, approximate retrieval time, upstream OSM timestamp, sizes, raw/compressed SHA-256, ODbL and attribution. All 315 names/tags were inspected. There are 121 included settlements, 3 district merges and 191 exclusions. No raw source is duplicated as an envelope.
+The 78 baseline far features were individually investigated: 4 full named Banger El Sokkar villages 23–26 added, 0 extra representative attachments, 73 lack corroborated whole-block names, 1 is identified as existing New October but has no extra representative yet. New points reduce the far-feature count to 70 and uncovered features 350→344. An additional 168 features at 2–4 km were inspected against recorded named OSM context. Live Overpass attempts failed with 502/414/timeouts; these are not negative naming evidence. Original regional place/landuse snapshots were inspected, successful Nominatim reverses cached, and project/village web evidence retained. See [residential research](neighbourhood-cities-residential-research.md).
 
-| Area | Staged OSM localities + hamlets | Restored OSM estates | OCHA populated places | Additional ADM3 names/fill | Source-backed curated | Added / removed | Net |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Greater Cairo | 61 + 3 | 2 | 7 | 2 | 0 | 75 / 16 | 59 |
-| Alexandria region | 47 + 5 | 0 | 15 | 2 | 3 | 72 / 0 | 72 |
-| Port Said region | 3 + 2 | 0 | 5 | 0 | 1 | 11 / 2 | 9 |
+## Names and sources
 
-158 rows added; 18 removed: thirteen coded-unit/facility/conflicting-source rows and five now-covered duplicate ADM3 identities. Swiss A/B are named residential estates restored after false-exclusion review. The four new curated places are Village 29 Banger El Sokkar (independent OSM geometry point plus WD name evidence), Ghorbal, Maamoura El Balad and Shatt El Sheikh Dergham. Every coordinate is read from a source response or explicitly derived from its recorded geometry.
+The 52 original unmatched checklist entries finish with 8 sourced resolutions, 6 alias/identity resolutions, 9 removals and 29 still unresolved. Ten total name City additions include two newly researched public names; four additional Cities are the far-block villages. Eight direct alias reviews plus 19 individually inspected exact-Arabic spelling/translation matches were applied. Final checklist sizes 425/269/85; reviewed minimums 150/150/85 are committed in metadata with the lead decision dated 2026-11-10. The compiler never selects checklist entries from catalog output. Port Said was semantically deduplicated and not padded.
 
-## Full candidate by inclusion source
+El Rehab is a real El Dawahy housing area; no defensible point was found, so it remains a failure. El Fayrouz is a real Bor Fouad housing district, supported by the [Port Said governorate](https://portsaid.gov.eg/News/details/109694); its recorded apartment الفيروز١٥٣ supplies an explicitly approximate proxy. [ITDA addresses](https://www.itda.gov.eg/CRM/885/CRA78.pdf) and governorate indexed material support Rehab. Neither was removed as a misfiled Cairo name.
 
-Mutually exclusive rule counts below; compounds/numbered districts are separated from raw OSM place tags. Original tags remain in provenance.
+Public checklist source URLs (exact fetched bytes/statuses in manifest):
 
-| Area | city / town / village / suburb / quarter | neighbourhood | locality / hamlet | compounds | numbered city districts | ADM3 fill / extra names | OCHA populated places | WD localities | curated additions | Total |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Greater Cairo | 8 / 2 / 82 / 46 / 0 | 1175 | 61 / 3 | 497 | 75 | 39 / 121 | 7 | 5 | 25 | 2146 |
-| Alexandria region | 3 / 1 / 113 / 7 / 0 | 368 | 47 / 5 | 13 | 7 | 31 / 81 | 15 | 7 | 19 | 717 |
-| Port Said region | 1 / 0 / 8 / 1 / 0 | 175 | 3 / 2 | 5 | 5 | 5 / 22 | 5 | 1 | 8 | 241 |
+- https://ar.wikipedia.org/wiki/أحياء_الإسكندرية
+- https://ar.wikipedia.org/wiki/الإسماعيلية_(مدينة)
+- https://ar.wikipedia.org/wiki/بورسعيد
+- https://ar.wikipedia.org/wiki/محافظة_الجيزة
+- https://en.wikipedia.org/wiki/Alexandria
+- https://en.wikipedia.org/wiki/Cairo
+- https://en.wikipedia.org/wiki/Damietta_Governorate
+- https://en.wikipedia.org/wiki/Giza
 
-Namespaces: {'OSM': 2713, 'WD': 34, 'PUPZY': 357}. Curated additions can carry WD identities or PUPZY identities backed by WD/ADM3/OSM geometry. There are 137 district merges ({'greater-cairo': 92, 'port-said-region': 22, 'alexandria': 23}); 14 more than before. EG3307 display name is now Marina Alamein, matching its authoritative Arabic; old Alamn remains an alias. Application UUID, source code and district point stay unchanged. This cleanup is candidate-only.
+Nine removals, with retained source evidence:
 
-## Source size and provenance
-
-Fourteen used compressed snapshots: nine Overpass responses, Wikidata, OCHA ADM1/ADM2, filtered ADM3 and populated places. Raw compressed bytes: 10,596,660. The complete neighbourhood directory is 14,314,514 bytes; all cities/data is 15,177,006 bytes (15.18 MB decimal, below 20 MB). Derived review/evidence files are included in these totals. The ADM3 extract retains 754 exact features from 5,716, with full-member SHA-256 and deterministic filter. OCHA boundaries have 2017 vintage, downloaded 2026-11-09; no current survey is claimed.
-
-OCHA source: https://data.humdata.org/dataset/cod-ab-egy and the exact archive resource in source-manifest.json, CC BY-IGO. OSM endpoint: https://overpass-api.de/api/interpreter , © OpenStreetMap contributors, ODbL 1.0. Wikidata endpoint: https://query.wikidata.org/sparql , CC0. Retrieval dates, exact available times, checksums, sizes and attribution are per file in the manifest and NOTICE. Build, tests and migrations remain offline.
-
-## Review and exclusions
-
-| Round | Included / excluded read | Inclusion errors before correction | Exclusion errors |
-| --- | ---: | ---: | ---: |
-| 1 | 300 / 300 | 26 (8.67%) | 0 confirmed |
-| 2 | 300 / 300 | 11 (3.67%) | 0 confirmed |
-| 3 | 300 / 300 | 4 (1.33%) | 0 confirmed |
-| 4 | 300 / 300 | 5 (1.67%) | 0 confirmed |
-| 5, this round | 300 / 300 | 10 (3.33%), plus 2 spelling errors | 1 (0.33%) |
-
-Samples overlap and are archived before corrections; they are not 1,500 independent observations or a final production error-rate estimate. Codex performed the source/rule audit; no field verification or independent human approval is claimed. The fifth round found coded allocations, building phases, student accommodation and contradictory bilingual names. Rules were corrected; Swiss B and targeted Swiss A were restored. First Heights and Electricity and Mechanics spelling fixes preserve raw labels. Every staged object, all 60 covered populated-place records, new curated names, changed merges and disambiguations were read. Six populated-place names lacking credible Arabic remain excluded; no Arabic was borrowed from a neighbouring unit.
-
-Final reviewed tables contain 525 curated-name rows, 137 merges, 292 identity/disambiguation decisions, 94 ordinal-name edits and all 83 starter requests. Two unsupported starter requests remain unpromoted. An attempted Nasr City interpretation of two bare “5th/6th Zone” labels was caught by OCHA geometry (Basateen) and removed rather than published as an alias.
-
-**Source-point integrity PASS: 3,104 neighbourhoods = 3,102 exact raw points + 1 independently derived OSM geometry point + 1 documented Stanley coastline correction (70.88 m).** Review signatures bind snapshots, rules, editorial input and decision bytes; name lists and GPS fixtures have separate signatures. No unresolved bilingual/parent residue is promoted.
-
-9,119 decisions; 5,878 exclusions:
-
-| Exclusion rule | Count |
-| --- | ---: |
-| adm3-covered-same-name | 347 |
-| adm3-covered-unnamed-unit | 3 |
-| adm3-uninhabited | 48 |
-| duplicate-place | 115 |
-| duplicate-populated-place | 13 |
-| duplicate-populated-place-reviewed | 3 |
-| duplicate-reviewed-identity | 26 |
-| gate-or-private-premises | 9 |
-| generic-allocation-or-building-phase | 2 |
-| generic-phase-or-housing-label | 8 |
-| generic-sector-or-service-code | 683 |
-| locality-without-settlement-evidence | 16 |
-| micro-unit-or-building | 3271 |
-| no-name | 15 |
-| non-place-feature | 4 |
-| non-settlement-locality | 49 |
-| outside-coverage | 1122 |
-| personal-review-exclusion | 53 |
-| personal-source-review-exclusion | 5 |
-| populated-place-no-credible-arabic | 6 |
-| single-accommodation-or-direction | 3 |
-| sub-compound-unit-or-generic-building | 77 |
-
-## Strict gates
-
-| Area | Grid samples: before → after | Gaps >1.5 km: before → after | Worst gap km | Distinct names / unmatched variants | GPS / failures |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Greater Cairo | 16595 → 16603 | 2182 → 2137 | 8.579 | 409 / 18 of 987 | 30 / 0 |
-| Alexandria region | 10862 → 10904 | 4909 → 4465 | 11.751 | 264 / 68 of 650 | 30 / 0 |
-| Port Said region | 5444 → 5517 | 3681 → 3704 | 15.876 | 88 / 33 of 228 | 30 / 1 |
-
-**Structural PASS (3,455 / 27 governorates), geographic quality PASS (0 errors), source-point audit PASS. Grid FAIL in all three areas. Independent names FAIL (119 unmatched variants total; name-list review pending; Port Said below 150). GPS PASS offline in Cairo and Alexandria, FAIL in Port Said (1); real PostGIS findNearest remains unrun here. Overall release FAIL.**
-
-Built-up evidence grew from 7,710 to 7,714 polygons: all 7,008 clipped OSM residential features plus 706 populated ADM3 units. Zero previous polygons were removed or trimmed. Abu El Noum, Kom Ashu, Kom El Akhdar and Shatt El Sheikh Dergham add populated-unit evidence. Port Said improves 31 old gap samples, then adds 54 uncovered samples in the newly evidenced Dergham unit: net 23 more gaps, honestly retained. Full populated-unit extents include agricultural, water, desert and planned portions. No threshold changed.
-
-The ignored **output/neighbourhood-cities/grid-gap-review.md** and JSON contain per-area/per-ADM2 feature/sample totals and the forty largest remaining OSM residential extents, with IDs, centres, estimated areas, original tags, nearest named City/distance, source-only identification and reason no additional real name was assigned. Fifteen largest ADM3 extents are listed separately. There are 492 uncovered features (213 Cairo, 222 Alexandria, 57 Port region). Unnamed developments remain unidentified because online lookup is blocked; source-coded plots/building series remain excluded. Named broad extents are not split into invented places. Source bbox centres in that diagnostic are geometric summaries, not new City coordinates.
-
-Worst remaining samples (lat, lon): Cairo 29.8987688, 31.7769411 — 8.579 km; Alexandria 30.7873308, 29.9565042 — 11.751 km; Port region 31.0960232, 32.1330052 — 15.876 km. Ten worst samples per area are reproduced below and in report.json.
-
-## Independent names
-
-Distinct checklists grew 386 → 409, 234 → 264, 80 → 88. They are selected from the independent task/knowledge input, raw OCHA ADM3/populated-place labels and raw Wikidata locality labels; never from the built catalog. Source URLs are https://data.humdata.org/dataset/cod-ab-egy and per-entity https://www.wikidata.org/wiki/Q… links retained in independent-names.json. Wikipedia/governorate page expansion was not performed because DNS remains unavailable. Port Said 88 is an incomplete checklist, not proof that the region has fewer than 150 real areas.
-
-Resolved 17 old variants: Cairo Mariouteya/المريوطية; Alexandria Falaky, Ghorbal/غربال, Ghait El Enab, Kom El Dikka, Maamoura El Balad forms, Abis 7/8/10 ordinals, Nakheel forms and مراقيا. All newly introduced source-list variants now match. Cached-source spelling aliases also cover Kafr Abdu, Kafr el-Dawwar, Ezbet El-Nakhl, 6th October/15th May City, New October, Madinat El-Amal, Kafr El Olow and Arts/Culture City. Q4519131’s conflated Port Alexandria Police Department alias was rejected: Alexandria Port EG0215 is separate from Gomrok EG0210. New October’s WD point differs substantially from its OSM representative; aliases only, no invented point correction or duplicate City.
-
-No original checklist area removed this round. The newly encountered WD typo “Central business district,l” was cleaned to Central Business District, not added as a junk alias. Prior removals remain documented: El Hager/الهواجر (language/locality conflict), El Daraisa (unconfirmed Alexandria identity), Sidi Abdel Rahman (outside the reviewed coast cutoff), El Gaber (unsupported), Port Said Mostafa Kamel and El Afrang (unconfirmed; Ismailia Afrang retained). The independently evidenced El Hagir/الحاجر ADM3 unit is a different name and remains a strict miss. Port Said El Rehab/El Fayrouz, Bahr El Baqar and other unresolved regional names remain failures; none was transplanted from Cairo or attached to a generic district. See name-resolution-review.md and name-research-queue.json for every request and variant.
-
-## Four original GPS failures
-
-All original fixture coordinates retained; no fixture replaced to conceal a failure. Source IDs and OCHA containing district come from the committed snapshots.
-
-| Case | Decision / result |
+| Entry | Reason |
 | --- | --- |
-| Q138181804 — Village 29 mosque, EG3302 | Added real Village 29 with independently derived OSM polygon point, 168 m from landmark. PASS offline. |
-| Q138206790 — مسجد الرحمنه, EG0306 | Explicit adjacent EG0310: OCHA polygons genuinely share a boundary; landmark is 6.649 km from that neighbour polygon, nearest representative point 9.277 km away. PASS under the permitted documented-adjacent rule. |
-| Q138206791 — mosque of Dr Ali El Hadidi, EG0306 | Explicit adjacent EG0311, genuine shared boundary; landmark 2.492 km from neighbour polygon, nearest point 7.708 km away. PASS under that rule. |
-| Q138196168 — مسجد مالك الملك 57, EG0306 | FAIL: nearest EG0308 at 2.002 km. Exact polygons do not intersect (165.582 m separation). No unsupported adjacency, fabricated place or fixture replacement. External location verification still needed. |
+| Nozha Gardens | A named public garden/zoo complex, rather than an independently established residential neighbourhood. Retain Nuzha/Manshiyet El Nozha separately. Wikidata Q23976192; source garden label and Alexandria page garden discussion. |
+| Fawzi Moaz | Checklist names the main street, OSM:way/30644575 شارع اللواء محمد فوزي معاذ. Staged lookup found the street and unrelated facilities, no independently established separate residential area. Smouha remains selectable. |
+| El Nasr Smouha | Street in Smouha rather than independently established district; primary bank Fawry agents list locates شارع النصر under سموحة. Remove street-level acceptance entry; keep Smouha. |
+| El Mahmoudeya | Ambiguous canal/linear road through several areas; staged response only شارع قنال المحمودية. Not evidence of an Alexandria residential neighbourhood of that name; Beheira Mahmoudiya city lies outside coverage. |
+| El Horreya | City-spanning road name rather than independently established Alexandria neighbourhood. Staged responses find isolated towers; existing road/address sources call it طريق الحرية. |
+| Soter | Former Soter Street, now شارع دكتور على مصطفى مشرفه, OSM:way/9929693; no separate residential locality established. Street-only acceptance entry removed, Azarita/Shatby retained. |
+| Merghem 1 | Numbered industrial-complex phase, not distinct residential area. Official SIS record identifies مجمعي مرغم 1 و2 as industrial production sites; Merghim neighbourhood retained. |
+| Merghem 2 | Numbered industrial-complex phase, not distinct residential area. Official SIS record identifies مجمعي مرغم 1 و2 as industrial production sites; Merghim neighbourhood retained. |
+| El Shatea Ras El Bar | Generic beach extent, not residential neighbourhood name. Source OSM:way/1554277916 is natural=beach; Ras El Bar and named El Lessan area retained. |
 
-gps-case-review.md/JSON gives coordinates, source links, distances and boundary proof. These rural adjacent exceptions acknowledge sparse representative points; they do not claim 1.5 km coverage or reclassify the landmark. Default adjacency requires a genuine shared boundary and proximity; these two separately reviewed exceptions use the original user contract’s explicit adjacent-district option. Sixty recent WD mosque imports have weaker source confidence than the thirty older landmark fixtures.
+All remaining variants are enumerated in committed `release-gate-status.json` and reproducible output/report.json. They include Asafra Bahary/Qebly, Hadara El Gedida, several new-capital/Alamein names, Rehab, Bahr El Baqar and the Ismailia groups. Genuine unresolved areas stay listed. Bahr El Baqar’s Nominatim result was Sharqia; El Lessan’s attraction point was outside both coastal coverage and OCHA governorate geometry. Mostakbal Ismailia’s WD mosque point is in EG1906 outside current city scope. Those proposals were withheld; no point was shifted to force containment. See [name research](neighbourhood-names-research-2026-11-10.md) and the final dispositions in `research-names/original-name-dispositions.json`.
 
-## Zemam Out exceptions
+## GPS, rows and verification
 
-340 included exceptions: 34 named-city, 306 nearest-polygon; zero beyond 40 km. All retain the true OCHA ADM1, original Zemam/no-polygon code, chosen same-governorate OFFICIAL district, rule, distance and candidate set. Every other neighbourhood requires exact ADM2 containment. The quality gate recomputes polygon-edge distances; no centroid shortcut.
+Q138196168 stays unchanged and fails: expected EG0306; nearest EG0308 at2,001.827 m versus EG0306 at2,121.059 m, without polygon adjacency. Reverse returns only the Ismailia–Port Said road. Imagery shows fish farms and a small structure near the point, so it does not prove the mosque coordinate wrong. No new place name was established and no substitute fixture/adjacency was invented. [GPS investigation](neighbourhood-gps-research-2026-11-10.md).
 
-| Source | Parent | Rule | Polygon distance km |
-| --- | --- | --- | ---: |
-| OSM:way/546460548 | EG2119 | zemam-out-nearest-polygon | 16.89781 |
-| OSM:way/880115683 | EG1321 | zemam-out-named-city | 13.23051 |
-| OSM:way/876202113 | EG1321 | zemam-out-named-city | 12.03056 |
-| OSM:way/878865997 | EG1321 | zemam-out-named-city | 11.72778 |
-| OSM:way/712641029 | EG1321 | zemam-out-named-city | 11.52537 |
-| OSM:way/876577841 | EG1321 | zemam-out-named-city | 10.82544 |
-| OSM:way/877547475 | EG1321 | zemam-out-named-city | 10.67718 |
-| OSM:way/879151658 | EG1321 | zemam-out-nearest-polygon | 10.59513 |
-| OSM:way/692556528 | EG2109 | zemam-out-nearest-polygon | 10.48046 |
-| OSM:way/877841729 | EG1321 | zemam-out-named-city | 10.17038 |
+| Added coordinate source | Cairo | Alexandria | Port Said | Total |
+| --- | ---: | ---: | ---: | ---: |
+| Recorded lead Nominatim response |4|3|1|8|
+| Original OSM place response |1|4|0|5|
+| Original Wikidata P625 |0|1|0|1|
+| Total |5|8|1|14|
 
-## SQL, code and commands
+Source-point audit: 3,118 rows, 3,116 exact recorded points, 1 previously documented OSM geometry representative, 1 previously documented Stanley coastal correction. All 14 additions use exact recorded source coordinates. Parent checks pass; there are 341 ZemamOut exceptions (35 named-city/306 nearest-polygon), no new >40km approval. Explicit changed decisions/alias reviews and hashes are recorded in personal-review.json. Existing random samples remain archived; no new independent random audit or field survey is claimed.
 
-Actual 0066: 264,485 bytes, unchanged. Disposable candidate benchmark: 2,916,423 bytes (2.916 MB). Local PostgreSQL 18/PostGIS single-user benchmark at 3,455 rows measured 0065+candidate apply 0.993 s, rerun 0.568 s; complete SQL workload 2.279 s. Local timing is not a production SLA. Indexed hierarchy checks avoid a full-table scan per changed row. SQL checks pass from schema 0064 with real-format User/Post references, 0065→0066, repeatable custom SQL/redeploy, unchanged UUIDs/references and exact City row state, stable no-op revision and rejected invalid parents.
-
-Source loaders support pinned compressed files; deterministic rules emit provenance/decisions; verify-source-points.py and review-grid-gaps.ts add offline diagnostics. Only source-manifest count expectation changed 11 → 14 in data-files.spec.ts because three legitimate raw snapshots were added; checksum, size, metadata and mismatch rejection assertions remain strict. No coverage/GPS assertions or thresholds were loosened. Empty unavailable-source placeholders were removed. The public additive aliases/district API, request DataLoader, OFFICIAL nearest selection, revision-fenced cache and read-only admin contract are retained.
-
-| Command from backend/ | Result |
-| --- | --- |
-| `curl -sI https://nominatim.openstreetmap.org/ | head -1` | Empty output; pipeline masks failure |
-| `curl -sSI --connect-timeout 5 --max-time 15 https://nominatim.openstreetmap.org/` | FAIL DNS, exit 6 |
-| `python3 src/cities/scripts/build-reviewed-dataset.py` | PASS: 3,104 inclusions, no bilingual/parent residue |
-| `python3 src/cities/scripts/build-independent-names.py` | Generated 409 / 264 / 88; approval remains false |
-| `python3 src/cities/scripts/build-gps-fixtures.py` | 30 per area; exact reviewed signature retained |
-| `python3 src/cities/scripts/finalize-neighbourhood-review.py` | PASS: exact audited inputs/output |
-| `python3 src/cities/scripts/verify-source-points.py` | PASS: 3,104 |
-| `npm run cities:build-neighbourhood-candidate` | PASS: 3,455; candidate only |
-| `npm run cities:verify-coverage -- output/neighbourhood-cities/candidate-catalog.json` | FAIL exit 1, numbers above |
-| `npx ts-node -r tsconfig-paths/register src/cities/scripts/review-grid-gaps.ts` | PASS: 492 uncovered features, counts equal strict gate |
-| `npx jest src/cities --testPathIgnorePatterns='.*\.integration\.spec\.ts$' --runInBand` | PASS: 15 suites / 172 tests |
-| `npx eslint 'src/cities/**/*.ts'` | PASS, zero errors/warnings; formatting fixed earlier |
-| `npx tsc --noEmit -p tsconfig.build.json` | PASS |
-| `npx tsc --noEmit -p tsconfig.json` | FAIL: 158 existing non-Cities diagnostics; same location/error-code multiset as untouched HEAD baseline |
-| `python3 -m py_compile src/cities/scripts/*.py` | PASS |
-| `python3 src/cities/scripts/verify-neighbourhood-sql.py` | PASS: released 351 rows, 0 SQL errors |
-| `npx ts-node -r tsconfig-paths/register src/cities/scripts/benchmark-neighbourhood-candidate.ts` | PASS: ignored benchmark, not release |
-| `python3 src/cities/scripts/verify-neighbourhood-sql.py --catalog output/neighbourhood-cities/candidate-catalog.json --migration output/neighbourhood-cities/candidate-benchmark.sql` | PASS: 3,455 rows, 0 SQL errors |
-| `node -r ts-node/register -r tsconfig-paths/register output/neighbourhood-cities/check-publication.cjs` | PASS: publisher rejects, all four real artifacts unchanged |
-| Rebuild + finalization + candidate digest comparison | PASS: six exact catalog/snapshot/decision/evidence/admin hashes unchanged |
-| Built-up retention comparison | PASS: 0 removed / 0 changed geometries; 4 populated units added |
-| `git diff --check` | PASS |
-| `git add -- backend/NOTICE.md` | FAIL: shared Git index is read-only; no commit |
-
-Integration was not run: Docker is unavailable and forbidden here. The lead’s earlier 16-pass/1-review-gate run predates this candidate. Lead commands:
+Executed from backend/:
 
 ```sh
-npx jest --testRegex='.*\.integration\.spec\.ts$' --runInBand src/cities
-CITY_CATALOG_CANDIDATE=output/neighbourhood-cities/candidate-catalog.json npx jest --testRegex='.*\.integration\.spec\.ts$' --runInBand src/cities
+python3 src/cities/scripts/build-reviewed-dataset.py
+python3 src/cities/scripts/build-independent-names.py
+python3 src/cities/scripts/build-gps-fixtures.py
+python3 src/cities/scripts/finalize-neighbourhood-review.py
+python3 src/cities/scripts/verify-source-points.py
+npm run cities:build-neighbourhood-candidate
+npm run cities:verify-coverage -- output/neighbourhood-cities/candidate-catalog.json
+npx jest src/cities --testPathIgnorePatterns='.*\.integration\.spec\.ts$' --runInBand
+npx eslint 'src/cities/**/*.ts'
+npx tsc --noEmit -p tsconfig.build.json
+python3 -m py_compile src/cities/scripts/*.py
+npx ts-node -r tsconfig-paths/register src/cities/scripts/review-grid-gaps.ts
+python3 src/cities/scripts/verify-neighbourhood-sql.py
+npx ts-node -r tsconfig-paths/register src/cities/scripts/benchmark-neighbourhood-candidate.ts
+python3 src/cities/scripts/verify-neighbourhood-sql.py --catalog output/neighbourhood-cities/candidate-catalog.json --migration output/neighbourhood-cities/candidate-benchmark.sql
 ```
 
-The optional environment variable loads validated candidate rows parent first only inside the GPS Testcontainers database and runs real findNearest. Neither integration command is claimed passing. Existing 0066 remains district-only and cannot serve as this candidate’s data release. Once all gates pass, replace the unshipped 0066 through the publisher in isolated staging whose journal ends at 0065; never hand-edit or append 0067. Pre-deploy pending migrations precede new application start; added columns are compatible with the old process. Repeatable SQL cannot restore old names, as verified locally.
+Unit 16 suites/179 tests pass; eslint/build typecheck/Python compilation pass. Coverage exits 1 for names/GPS, with structural/geographic/grid checks passing. Both the existing 351-row release and final 3,469-row candidate SQL pass the socket-free PostgreSQL/PostGIS upgrade/rerun/reference/hierarchy/no-op checks. Docker integration was not run here; commands remain in the runbook.
 
-## Thirty review priorities
+184 compressed raw snapshots, 13,567,760 bytes; all Cities data approximately 18,276,499 bytes (18.28MB), below 20 MB. Final disposable candidate SQL 2,929,286bytes; measured 0065+candidate apply 1.091935s and rerun 1.182597s; whole SQL verification 3.229 s on this machine. These are local candidate timings, not a published release or Docker measurement. Existing 0066 remains 264,485bytes; catalog, combined published snapshot and journal unchanged. No 0067, no commit (read-only Git), no dependency reinstall, frontend change, push, PR, production or Railway operation.
 
-Source/rule approval does not establish local familiarity. These are the least certain points/decisions, not confirmed errors. Coordinates are source-backed; proxy evidence and conflicts deserve human inspection.
+## Thirty decisions with the most uncertainty
 
-| # | Source / name | Lat, lon | Concern |
-| ---: | --- | --- | --- |
-| 1 | Q138196168 / مسجد مالك الملك 57 | 31.1574129, 32.3023366 | GPS landmark, unresolved non-adjacent nearest result; raw WD location may be wrong. |
-| 2 | PUPZY:banger-el-sokkar-village-29 / Banger El Sokkar Village 29 | 30.72684575, 29.474525342439463 | Unnamed residential geometry receives name from a contained independent mosque label; inspect settlement identity. |
-| 3 | PUPZY:shatt-sheikh-dergham / Shatt El Sheikh Dergham | 31.48701, 31.83493 | Curated transliteration and WD representative; full newly populated ADM3 extent increases measured gaps. |
-| 4 | PUPZY:ghorbal-alexandria / Ghorbal (Alexandria) | 31.1874636, 29.9085814 | Mosque proxy; distinguish Beheira Ghorbal Bahary/Qebly. |
-| 5 | PUPZY:maamoura-balad / Maamoura El Balad | 31.3001869, 30.0546395 | Mosque proxy for Balad, separate from beach. |
-| 6 | OSM:relation/17266240 / New October | 29.8869331, 30.9112405 | New October WD point differs substantially; broad OSM representative retained, aliases only. |
-| 7 | PUPZY:stanley / Stanley | 31.233970863348564, 29.947138420836485 | 70.88 m coastline correction against dated OCHA geography. |
-| 8 | PUPZY:ismailia-afrang / Afrang (Ismailia) | 30.592987, 32.283642 | Museum proxy for French quarter. |
-| 9 | PUPZY:ard-el-golf / Ard El Golf | 30.0758483, 31.3312707 | Cemetery/mosque point may lie at commonly understood area edge. |
-| 10 | PUPZY:triumph / Triumph | 30.0860218, 31.3058291 | Heliopolis hotel proxy, not namesake New Cairo hotel. |
-| 11 | PUPZY:new-obour / New Obour | 30.247688, 31.5117706 | Mosque proxy and Zemam named-city exception; extent needs local confirmation. |
-| 12 | PUPZY:korba / Korba | 30.093624, 31.325206 | Basilica representative, not measured area centroid. |
-| 13 | PUPZY:saint-fatima / Saint Fatima | 30.10589, 31.34447 | Cathedral representative; old OCHA assigns Nozha. |
-| 14 | WD:Q4518887 / Zizinia | 31.2354, 29.9682 | Zizinia source point is in Raml Second; compare resident understanding. |
-| 15 | WD:Q138183324 / District Asfour Al Janah | 29.9603318, 30.9511728 | District Asfour Al Janah: recent WD import and less-established name. |
-| 16 | WD:Q110420273 / Arts and Culture City | 30.012861111, 31.721694444 | Arts/Culture City is a broad campus/area identity. |
-| 17 | PUPZY:ezbet-el-walda / Ezbet El Walda | 29.869711944, 31.292208055 | Palace proxy for surrounding quarter. |
-| 18 | PUPZY:el-garabaa / El Garabaa | 31.3185054, 32.1346188 | Recent mosque import, proxy and transliteration. |
-| 19 | PUPZY:el-aasar / El Aasar | 31.4282162, 31.8055141 | Recent mosque representative in Damietta. |
-| 20 | PUPZY:oboor-ismailia / El Oboor (Ismailia) | 30.6063251, 32.2568263 | Mosque representative; retain Ismailia qualifier. |
-| 21 | PUPZY:taawon-ismailia / El Taawon (Ismailia) | 30.548393, 32.2987515 | Mosque representative; local extent needs review. |
-| 22 | PUPZY:adm3-eg031001 / El Manasra and El Gamil Airport | 31.2371881, 32.17303588 | Broad Manasra/airport unit; centre may miss resident core. |
-| 23 | PUPZY:adm3-eg021309 / Mariout Sector | 30.87204445, 29.7631614 | Mariout sector spans mixed/unbuilt land; largest Alexandria gaps. |
-| 24 | PUPZY:adm3-eg030601 / South Villages El Siddiq | 31.14080705, 32.29136884 | South Villages irregular unit; major grid/GPS uncertainty. |
-| 25 | OSM:node/768552340 / El Dimirdash | 30.0650382, 31.2992074 | GNS Demerdash village point is in Nasr City Second, distinct from familiar hospital quarter. |
-| 26 | OSM:way/746698351 / Al Sheikh Moustafa Ismail (Amreya, south-east of Sugar beet 2 Village) | 30.7222428, 29.8596262 | Distant Sheikh Moustafa Ismail homonym, geographic qualifier references a place 10 km away. |
-| 27 | OSM:way/806002627 / Housing 144 | 31.1494571, 30.1246472 | Housing 144 may be locally useful or too fine a unit. |
-| 28 | OSM:way/701038264 / Atlas G | 30.0071591, 31.3393985 | Atlas G is borderline named housing phase versus coded plot. |
-| 29 | OSM:way/546460548 / Janna El Soleimaniya Fourth District | 30.12729, 30.7683914 | Largest nearest-polygon exception, 16.89781 km to Sheikh Zayed. |
-| 30 | OSM:way/819260788 / Conflicting source label | see raw, see raw | Excluded: contradictory IL Bosco City / La Mirada source labels. |
+These require reviewer attention; inclusion means the cited evidence met the source rule, not that its point is a surveyed neighbourhood centre. Withheld cases remain withheld.
 
-## Ten worst grid samples per region
-
-### Greater Cairo
-
-| Lat, lon | km | Nearest | Evidence |
-| --- | ---: | --- | --- |
-| 29.8987688, 31.7769411 | 8.579 | OSM:way/819189829 | OSM:way/320492141 landuse=residential clipped to coverage-areas |
-| 30.1234299, 30.8374949 | 6.627 | OSM:way/727261263 | OSM:way/540236637 landuse=residential clipped to coverage-areas |
-| 30.1279265, 30.8374960 | 6.571 | OSM:way/727261263 | OSM:way/540236637 landuse=residential clipped to coverage-areas |
-| 30.1324231, 30.8374972 | 6.553 | OSM:way/727261263 | OSM:way/540236637 landuse=residential clipped to coverage-areas |
-| 30.1189333, 30.8322952 | 6.216 | OSM:way/546460548 | OSM:way/540236637 landuse=residential clipped to coverage-areas |
-| 30.1584665, 30.8492405 | 6.158 | OSM:way/727261263 | OSM:way/546468326 landuse=residential clipped to coverage-areas |
-| 30.1369197, 30.8426978 | 6.075 | OSM:way/727261263 | OSM:way/540236637 landuse=residential clipped to coverage-areas |
-| 30.1279265, 30.8426950 | 6.073 | OSM:way/727261263 | OSM:way/540236637 landuse=residential clipped to coverage-areas |
-| 30.1324231, 30.8426964 | 6.053 | OSM:way/727261263 | OSM:way/540236637 landuse=residential clipped to coverage-areas |
-| 30.1550693, 30.8215749 | 5.975 | OSM:way/546460548 | OSM:way/546460689 landuse=residential clipped to coverage-areas |
-
-### Alexandria region
-
-| Lat, lon | km | Nearest | Evidence |
-| --- | ---: | --- | --- |
-| 30.7873308, 29.9565042 | 11.751 | OSM:way/746698351 | OCHA ADM3 EG021309 populated by residential landuse |
-| 30.7918274, 29.9512847 | 11.503 | OSM:way/100953278 | OCHA ADM3 EG021309 populated by residential landuse |
-| 30.7873308, 29.9512700 | 11.361 | OSM:way/746698351 | OCHA ADM3 EG021309 populated by residential landuse |
-| 30.7918274, 29.9460502 | 11.221 | OSM:way/100953278 | OCHA ADM3 EG021309 populated by residential landuse |
-| 30.7828342, 29.9512553 | 11.048 | OSM:way/746698351 | OCHA ADM3 EG021309 populated by residential landuse |
-| 30.7873308, 29.9460357 | 10.980 | OSM:way/746698351 | OCHA ADM3 EG021309 populated by residential landuse |
-| 30.7918274, 29.9408157 | 10.819 | OSM:node/769126889 | OCHA ADM3 EG021309 populated by residential landuse |
-| 30.7963240, 29.9460646 | 10.807 | OSM:way/100953278 | OCHA ADM3 EG021309 populated by residential landuse |
-| 30.7828342, 29.9460213 | 10.656 | OSM:way/746698351 | OCHA ADM3 EG021309 populated by residential landuse |
-| 30.7873308, 29.9408015 | 10.609 | OSM:way/746698351 | OCHA ADM3 EG021309 populated by residential landuse |
-
-### Port Said region
-
-| Lat, lon | km | Nearest | Evidence |
-| --- | ---: | --- | --- |
-| 31.0960232, 32.1330052 | 15.876 | EG0306 | OCHA ADM3 EG030601 populated by residential landuse |
-| 31.1005198, 32.1330074 | 15.667 | EG0310 | OCHA ADM3 EG030601 populated by residential landuse |
-| 31.0915266, 32.1382539 | 15.521 | EG0311 | OCHA ADM3 EG030601 populated by residential landuse |
-| 31.1005198, 32.1277560 | 15.494 | EG1206 | OCHA ADM3 EG030601 populated by residential landuse |
-| 31.0960232, 32.1382563 | 15.403 | EG0306 | OCHA ADM3 EG030601 populated by residential landuse |
-| 31.1005198, 32.1382588 | 15.248 | EG0306 | OCHA ADM3 EG030601 populated by residential landuse |
-| 31.1050164, 32.1330096 | 15.182 | EG0310 | OCHA ADM3 EG030601 populated by residential landuse |
-| 31.1050164, 32.1277580 | 15.175 | EG1206 | OCHA ADM3 EG030601 populated by residential landuse |
-| 31.0915266, 32.1435048 | 15.105 | EG0306 | OCHA ADM3 EG030601 populated by residential landuse |
-| 31.1050164, 32.1382613 | 15.065 | EG0310 | OCHA ADM3 EG030601 populated by residential landuse |
+| # | Decision | Remaining uncertainty |
+| --- | --- | --- |
+| 1 | Q138196168 | Keep failing GPS fixture; positive mosque identity/coordinate evidence missing. |
+| 2 | PUPZY:arab-el-maadi | Representative landmark/road/housing point approximates an established area; verify resident extent. |
+| 3 | PUPZY:bangar-el-sokkar-village-23 | Full village identity corroborated by primary indexed sources; rural administrative descriptions conflict, OCHA controls parent. |
+| 4 | PUPZY:bangar-el-sokkar-village-24 | Full village identity corroborated by primary indexed sources; rural administrative descriptions conflict, OCHA controls parent. |
+| 5 | PUPZY:bangar-el-sokkar-village-25 | Full village identity corroborated by primary indexed sources; rural administrative descriptions conflict, OCHA controls parent. |
+| 6 | PUPZY:bangar-el-sokkar-village-26 | Full village identity corroborated by primary indexed sources; rural administrative descriptions conflict, OCHA controls parent. |
+| 7 | PUPZY:fayrouz-bor-fouad | Representative landmark/road/housing point approximates an established area; verify resident extent. |
+| 8 | PUPZY:kom-el-dikka | Representative landmark/road/housing point approximates an established area; verify resident extent. |
+| 9 | PUPZY:manshiyet-el-nozha | WD mosque proxy distinguishes ManshiyetEl Nozha from garden/zoo and other Nozha homonyms. |
+| 10 | PUPZY:mariouteya | Representative landmark/road/housing point approximates an established area; verify resident extent. |
+| 11 | PUPZY:motamayez-october | Representative landmark/road/housing point approximates an established area; verify resident extent. |
+| 12 | PUPZY:nagaa-el-arab | Representative landmark/road/housing point approximates an established area; verify resident extent. |
+| 13 | PUPZY:ras-el-soda | Representative landmark/road/housing point approximates an established area; verify resident extent. |
+| 14 | PUPZY:safir | Representative landmark/road/housing point approximates an established area; verify resident extent. |
+| 15 | PUPZY:shabab-obour | Representative landmark/road/housing point approximates an established area; verify resident extent. |
+| 16 | Checklist removal: Nozha Gardens | Evidence supports street, facility, canal or industrial phase; lead should confirm residents do not use it as an area name. |
+| 17 | Checklist removal: Fawzi Moaz | Evidence supports street, facility, canal or industrial phase; lead should confirm residents do not use it as an area name. |
+| 18 | Checklist removal: El Nasr Smouha | Evidence supports street, facility, canal or industrial phase; lead should confirm residents do not use it as an area name. |
+| 19 | Checklist removal: El Mahmoudeya | Evidence supports street, facility, canal or industrial phase; lead should confirm residents do not use it as an area name. |
+| 20 | Checklist removal: El Horreya | Evidence supports street, facility, canal or industrial phase; lead should confirm residents do not use it as an area name. |
+| 21 | Checklist removal: Soter | Evidence supports street, facility, canal or industrial phase; lead should confirm residents do not use it as an area name. |
+| 22 | Checklist removal: Merghem 1 | Evidence supports street, facility, canal or industrial phase; lead should confirm residents do not use it as an area name. |
+| 23 | Checklist removal: Merghem 2 | Evidence supports street, facility, canal or industrial phase; lead should confirm residents do not use it as an area name. |
+| 24 | Checklist removal: El Shatea Ras El Bar | Evidence supports street, facility, canal or industrial phase; lead should confirm residents do not use it as an area name. |
+| 25 | Bahr El Baqar withheld | Real Port Said locality remains unlocated; sourced Sharqia point is a homonym. |
+| 26 | El Lessan withheld | Known named tip; recorded attraction point falls outside OCHA coastline/coverage. |
+| 27 | Mostakbal Ismailia withheld | Genuine western city extension; recorded mosque point lies in EG1906 outside current city scope. |
+| 28 | OSM:way/692962840 | Reverse identifies New October; no extra representative point implemented. |
+| 29 | OSM:way/635698474 | Exception with worst distance 9.598km; failed liveOverpass leaves incomplete naming evidence. |
+| 30 | OSM:way/635698436 | Exception with worst distance 9.444km; failed liveOverpass leaves incomplete naming evidence. |

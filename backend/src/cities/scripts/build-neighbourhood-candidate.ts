@@ -9,9 +9,10 @@ import { readCityData } from '../data-files';
 const sources = readCityData<NeighbourhoodSources>('neighbourhoods/reviewed-overrides.json');
 const reference = (file: string, notes: string, level?: 1 | 2): Polygons => ({
   metadata: {
+    ...(level ? {} : readCityData<{ metadata: Polygons['metadata'] }>('neighbourhoods/' + file).metadata),
     reviewed: level
       ? true
-      : readCityData<{ metadata: { reviewed: boolean } }>('neighbourhoods/' + file).metadata.reviewed,
+      : readCityData<{ metadata: Polygons['metadata'] }>('neighbourhoods/' + file).metadata.reviewed,
     notes,
   },
   sourcePath: 'neighbourhoods/' + file,
@@ -34,7 +35,7 @@ const snapshot = {
   coverageEvidence: {
     residential: reference(
       'builtup-evidence.geojson.gz',
-      'Clipped OSM residential polygons plus populated OCHA ADM3 geometry; full extents retained.',
+      'Clipped OSM landuse=residential only; lead decision 2026-11-10.',
     ),
     governorates: reference('ocha-cod-ab/egy_admin1.geojson.gz', 'Authoritative OCHA ADM1 exact P-code polygons.', 1),
     districts: reference(

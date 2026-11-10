@@ -1,0 +1,13 @@
+[
+  {
+    "osmSourceCode": "OSM:way/692962840",
+    "area": "greater-cairo",
+    "centre": [
+      30.876263829504666,
+      29.86819475
+    ],
+    "uncoveredSamples": 2,
+    "worstDistanceMeters": 4028.525699187546,
+    "nearestCity": "OSM:relation/17266240"
+  }
+]
