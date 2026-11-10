@@ -5,6 +5,7 @@ import { RequiresTermsAcceptance } from '../terms/requires-terms-acceptance.deco
 import type { GqlContext } from '../common/types/gql-context.type';
 import type { Post } from '../database/schema';
 import type { MatingFeedFilterInput } from './mating.service';
+import type { FeedLocationInput } from '../posts/dto/feed-query.input';
 
 @Resolver('MatingPostConnection')
 export class MatingResolver {
@@ -17,8 +18,18 @@ export class MatingResolver {
     @Args('after') after: string | undefined,
     @Args('search') search: string | undefined,
     @Context() ctx: GqlContext,
+    @Args('viewerLocation') viewerLocation?: FeedLocationInput['viewerLocation'],
+    @Args('radiusKm') radiusKm?: number | null,
   ) {
-    return this.matingService.matingFeed(filter ?? null, first ?? null, after ?? null, search ?? null, ctx.user?.id);
+    return this.matingService.matingFeed(
+      filter ?? null,
+      first ?? null,
+      after ?? null,
+      search ?? null,
+      ctx.user?.id,
+      viewerLocation,
+      radiusKm,
+    );
   }
 
   @Query('matingPostDetail')

@@ -8,6 +8,15 @@ const viewerLocationSchema = z.object({
   longitude: z.number().min(-180, 'longitude must be >= -180').max(180, 'longitude must be <= 180'),
 });
 
+// Mating permits an entirely absent location; the other feeds additionally
+// require an administrative area or viewer point below.
+const feedLocationSchema = z.object({
+  viewerLocation: viewerLocationSchema.nullish(),
+  radiusKm: z.number().min(1, 'radiusKm minimum is 1').max(100, 'radiusKm maximum is 100').nullish(),
+});
+
+export type FeedLocationInput = z.infer<typeof feedLocationSchema>;
+
 /**
  * Location filter schema.
  * - governorate: Optional. Fallback filter when a numeric radius has no resolvable center.
@@ -19,12 +28,10 @@ const viewerLocationSchema = z.object({
  *
  * At least one of governorate, cityId, or viewerLocation must be provided.
  */
-const locationFilterSchema = z
-  .object({
+const locationFilterSchema = feedLocationSchema
+  .extend({
     governorate: z.string().min(1).max(100).nullish(),
     cityId: z.string().uuid('cityId must be a valid UUID').nullish(),
-    viewerLocation: viewerLocationSchema.nullish(),
-    radiusKm: z.number().min(1, 'radiusKm minimum is 1').max(100, 'radiusKm maximum is 100').nullish(),
   })
   .refine((data) => data.governorate || data.cityId || data.viewerLocation, {
     message: 'At least one of governorate, cityId, or viewerLocation must be provided',
@@ -110,6 +117,12 @@ export type MyPostsInput = z.infer<typeof myPostsSchema>;
 
 function formatZodErrors(error: z.ZodError): string {
   return error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
+}
+
+export function validateFeedLocationInput(raw: unknown): FeedLocationInput {
+  const result = feedLocationSchema.safeParse(raw);
+  if (!result.success) throw new ValidationError(formatZodErrors(result.error));
+  return result.data;
 }
 
 export function validateHelpFeedInput(raw: unknown): HelpFeedInput {

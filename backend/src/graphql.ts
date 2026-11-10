@@ -532,6 +532,8 @@ export interface IQuery {
   getProductSellerContact(postId: string): string | Promise<string>;
   matingFeed(
     filter?: Nullable<MatingFeedFilter>,
+    viewerLocation?: Nullable<ViewerLocationInput>,
+    radiusKm?: Nullable<number>,
     first?: Nullable<number>,
     after?: Nullable<string>,
     search?: Nullable<string>,

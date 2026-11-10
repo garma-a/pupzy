@@ -187,6 +187,49 @@ describe('MatingService', () => {
   });
 
   describe('matingFeed', () => {
+    it.each([null, undefined, 1, 5.5, 100])('accepts radius %p with optional location', async (radiusKm) => {
+      await service.matingFeed(null, 10, null, null, validUserId, null, radiusKm);
+      expect(mockMatingRepo.findFeed).toHaveBeenCalledWith(
+        expect.objectContaining({ filter: {}, viewerId: validUserId, viewerLocation: null, radiusKm }),
+      );
+    });
+
+    it('passes City, viewer location and all content filters to the repository', async () => {
+      const filter = { cityId: validCityId, species: 'DOG', gender: 'FEMALE', breed: 'retriever' };
+      const viewerLocation = { latitude: 24.0889, longitude: 32.8998 };
+      await service.matingFeed(filter, 10, null, 'zebra', validUserId, viewerLocation, 50);
+      expect(mockMatingRepo.findFeed).toHaveBeenCalledWith(
+        expect.objectContaining({ filter, viewerId: validUserId, viewerLocation, radiusKm: 50 }),
+      );
+    });
+
+    it.each([0, -1, 100.1, NaN, Infinity, '50'])('rejects invalid radius %p before querying', async (radiusKm) => {
+      await expect(service.matingFeed(null, 10, null, null, validUserId, null, radiusKm as number)).rejects.toThrow(
+        ValidationError,
+      );
+      expect(mockMatingRepo.findFeed).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      { latitude: -90.1, longitude: 31 },
+      { latitude: 90.1, longitude: 31 },
+      { latitude: 30, longitude: -180.1 },
+      { latitude: 30, longitude: 180.1 },
+      { latitude: NaN, longitude: 31 },
+      { latitude: 30, longitude: Infinity },
+    ])('rejects invalid viewer location %p even nationwide', async (viewerLocation) => {
+      await expect(service.matingFeed(null, 10, null, null, validUserId, viewerLocation)).rejects.toThrow(
+        ValidationError,
+      );
+      expect(mockMatingRepo.findFeed).not.toHaveBeenCalled();
+    });
+
+    it('retains filter City UUID and breed length validation', async () => {
+      await expect(service.matingFeed({ cityId: 'bad-id' }, 10, null)).rejects.toThrow(ValidationError);
+      await expect(service.matingFeed({ breed: 'a'.repeat(101) }, 10, null)).rejects.toThrow(ValidationError);
+      expect(mockMatingRepo.findFeed).not.toHaveBeenCalled();
+    });
+
     it.each([0, -1, 51])('rejects out-of-range page size %p like other post feeds', async (first) => {
       await expect(service.matingFeed(null, first, null, null)).rejects.toThrow(ValidationError);
       expect(mockMatingRepo.findFeed).not.toHaveBeenCalled();
