@@ -18,6 +18,8 @@ import type * as schema from '../database/schema';
 import { ForbiddenError } from '../common/errors/app.errors';
 import { excludeIsolatedAccounts } from '../blocks/account-isolation.sql';
 import { buildFeedSearchCondition } from '../posts/feed-search.sql';
+import { buildFeedLocationCondition, resolveRadiusCenter } from '../posts/feed-location.sql';
+import type { FeedLocationInput } from '../posts/dto/feed-query.input';
 export type NewMatingDetailsInput = Omit<NewMatingPostRow, 'postId'>;
 
 type DbTransaction = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];
@@ -108,22 +110,26 @@ export class MatingRepository {
    * Optional `searchPattern` adds the shared normalized search filter without
    * changing the ordering, the mating filters or the cursor shape.
    */
-  async findFeed(params: {
-    filter: {
-      species?: string | null;
-      gender?: string | null;
-      breed?: string | null;
-      cityId?: string | null;
-    };
-    limit: number;
-    cursor: { createdAt: string; id: string } | null;
-    searchPattern?: string | null;
-    viewerId?: string | null;
-  }): Promise<{ rows: Post[]; hasNextPage: boolean }> {
-    const { filter, limit, cursor, searchPattern, viewerId } = params;
+  async findFeed(
+    params: FeedLocationInput & {
+      filter: {
+        species?: string | null;
+        gender?: string | null;
+        breed?: string | null;
+        cityId?: string | null;
+      };
+      limit: number;
+      cursor: { createdAt: string; id: string } | null;
+      searchPattern?: string | null;
+      viewerId?: string | null;
+    },
+  ): Promise<{ rows: Post[]; hasNextPage: boolean }> {
+    const { filter, viewerLocation, radiusKm, limit, cursor, searchPattern, viewerId } = params;
     // Escape LIKE wildcards so user input can't scan the whole table
     const escapeLike = (s: string) => s.replace(/[\\%_]/g, (m) => '\\' + m);
 
+    const center = radiusKm == null ? null : await resolveRadiusCenter(this.db, viewerLocation, filter.cityId);
+    const locationCondition = buildFeedLocationCondition(radiusKm, center, null, filter.cityId);
     const searchCondition = await buildFeedSearchCondition(this.db, searchPattern);
 
     const rows = await this.db
@@ -137,7 +143,7 @@ export class MatingRepository {
           excludeIsolatedAccounts(viewerId, posts.creatorId),
           filter.species ? eq(matingPosts.species, filter.species as never) : undefined,
           filter.gender ? eq(matingPosts.gender, filter.gender as never) : undefined,
-          filter.cityId ? eq(posts.cityId, filter.cityId) : undefined,
+          locationCondition,
           filter.breed ? sql`${matingPosts.breed} ILIKE ${'%' + escapeLike(filter.breed) + '%'}` : undefined,
           searchCondition,
           cursor

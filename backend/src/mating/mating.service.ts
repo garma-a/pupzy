@@ -7,6 +7,7 @@ import { assertUuid } from '../common/utils/validate-uuid';
 import { shouldFlagContent } from '../common/utils/moderation.util';
 import { ValidationError, NotFoundError } from '../common/errors/app.errors';
 import { buildFeedSearchPattern } from '../posts/search-query.util';
+import { validateFeedLocationInput, type FeedLocationInput } from '../posts/dto/feed-query.input';
 import { validateCreateMatingPostInput } from './validate-create-mating-post.input';
 import type { Post, NewPost, NewPostMedia } from '../database/schema';
 
@@ -119,12 +120,15 @@ export class MatingService {
     filter: MatingFeedFilterInput | null,
     first: number | null | undefined,
     after: string | null | undefined,
-    search: string | null | undefined,
+    search?: string | null,
     viewerId?: string | null,
+    viewerLocation?: FeedLocationInput['viewerLocation'],
+    radiusKm?: number | null,
   ) {
     const f = filter ?? {};
     if (f.cityId) assertUuid(f.cityId, 'filter.cityId');
     if (f.breed && f.breed.length > 100) throw new ValidationError('filter.breed is too long');
+    const location = validateFeedLocationInput({ viewerLocation, radiusKm });
 
     if (first != null && (!Number.isInteger(first) || first < 1 || first > 50)) {
       throw new ValidationError('first must be an integer between 1 and 50');
@@ -135,7 +139,14 @@ export class MatingService {
     // is reached, exactly like the other searchable feeds.
     const searchPattern = buildFeedSearchPattern(search);
 
-    const result = await this.matingRepository.findFeed({ filter: f, limit, cursor, searchPattern, viewerId });
+    const result = await this.matingRepository.findFeed({
+      filter: f,
+      ...location,
+      limit,
+      cursor,
+      searchPattern,
+      viewerId,
+    });
 
     return {
       edges: result.rows.map((post) => ({ node: post, cursor: this.encodeCursor(post) })),

@@ -39,6 +39,10 @@ input MatingFeedFilter {
   Case-insensitive partial match on breed.
   """
   breed: String
+  """
+  Distance centre when viewerLocation is absent. Ignored for scoping when
+  radiusKm is null or omitted; exact City fallback if a numeric radius has no centre.
+  """
   cityId: ID
 }
 
@@ -65,10 +69,21 @@ input CreateMatingPostInput {
 extend type Query {
   """
   Feed of ACTIVE mating posts, newest first, keyset-paginated.
-  Optional server-side search composes with the filter's species, gender,
-  breed and city predicates and keeps the feed's ordering and cursor.
+  Null or omitted radiusKm means nationwide, even when filter.cityId is given.
+  A numeric radiusKm (1–100 km) filters around viewerLocation, else the centre
+  of filter.cityId. If no centre resolves, falls back to exact filter.cityId
+  when given, otherwise no location condition.
+  Optional search composes with species, gender, breed and distance filtering
+  and keeps the feed's ordering and cursor.
   """
-  matingFeed(filter: MatingFeedFilter, first: Int, after: String, search: String): MatingPostConnection!
+  matingFeed(
+    filter: MatingFeedFilter
+    viewerLocation: ViewerLocationInput
+    radiusKm: Float
+    first: Int
+    after: String
+    search: String
+  ): MatingPostConnection!
 
   """
   Fetches MATING extension data for the single-post detail screen.

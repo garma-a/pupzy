@@ -146,6 +146,8 @@ const MARKET_FEED = `query MarketFeed(
 }`;
 
 const MATING_FEED = `query MatingFeed(
+  $viewerLocation: ViewerLocationInput
+  $radiusKm: Float
   $cityId: ID
   $species: SpeciesType
   $gender: GenderType
@@ -156,6 +158,8 @@ const MATING_FEED = `query MatingFeed(
 ) {
   matingFeed(
     filter: { cityId: $cityId, species: $species, gender: $gender, breed: $breed }
+    viewerLocation: $viewerLocation
+    radiusKm: $radiusKm
     search: $search
     first: $first
     after: $after
@@ -289,12 +293,23 @@ describe('Server-side feed search (Ticket 15)', () => {
             _root: unknown,
             args: {
               filter?: Record<string, unknown> | null;
+              viewerLocation?: { latitude: number; longitude: number } | null;
+              radiusKm?: number | null;
               first?: number;
               after?: string;
               search?: string;
             },
             ctx: GqlContext,
-          ) => matingResolver.matingFeed(args.filter ?? undefined, args.first, args.after, args.search, ctx),
+          ) =>
+            matingResolver.matingFeed(
+              args.filter ?? undefined,
+              args.first,
+              args.after,
+              args.search,
+              ctx,
+              args.viewerLocation,
+              args.radiusKm,
+            ),
         },
         Post: {
           coordinates: (root: Post) => postsResolver.coordinates(root),
@@ -1009,7 +1024,7 @@ describe('Server-side feed search (Ticket 15)', () => {
     );
     expect(ids(marketByGovernorate)).not.toContain(marketGiza.id);
 
-    // Mating — species, gender, breed and city filters compose with search.
+    // Mating — species, gender, breed and radius filters compose with search.
     const matingDogMale = await seedPost({
       creatorId: other.id,
       postType: 'MATING',
