@@ -8,7 +8,7 @@ import * as schema from '../database/schema';
 import { runMigrations } from '../database/migrate';
 import { CitiesRepository } from './cities.repository';
 import { generateCityUpsertSql } from './release-sql';
-import { getOfficialCatalog } from './catalog';
+import { getOfficialCatalog, validateCatalog, type CityCatalog } from './catalog';
 import type { GpsChecks } from './coverage';
 
 describe('Neighbourhood schema upgrade on disposable PostGIS', () => {
@@ -77,6 +77,15 @@ describe('Neighbourhood schema upgrade on disposable PostGIS', () => {
     await pool.query(`DELETE FROM cities WHERE source_code = 'PUPZY:integration-quarter'`);
   });
   it('GPS data review gate: requires reviewed fixtures and 30 repository spot checks per area', async () => {
+    // Evaluate an unpublished candidate only inside this suite's disposable PostGIS container.
+    if (process.env.CITY_CATALOG_CANDIDATE) {
+      const candidate = JSON.parse(fs.readFileSync(process.env.CITY_CATALOG_CANDIDATE, 'utf8')) as CityCatalog;
+      expect(validateCatalog(candidate).errors).toEqual([]);
+      const rows = [...candidate.records].sort(
+        (a, b) => Number(!!a.districtSourceCode) - Number(!!b.districtSourceCode),
+      );
+      await pool.query('BEGIN;\n' + rows.map((row) => generateCityUpsertSql(row)).join('\n') + '\nCOMMIT;');
+    }
     const fixture = JSON.parse(
       fs.readFileSync(path.resolve('src/cities/data/neighbourhoods/gps-checks.json'), 'utf8'),
     ) as GpsChecks;
@@ -86,7 +95,17 @@ describe('Neighbourhood schema upgrade on disposable PostGIS', () => {
       expect(checks.length).toBeGreaterThanOrEqual(30);
       for (const check of checks) {
         const city = await repository.findNearest(check.latitude, check.longitude);
-        expect(check.acceptableSourceCodes).toContain(city?.sourceCode);
+        if (check.expectedDistrictSourceCode) {
+          const parent = city?.districtId ? await repository.findById(city.districtId) : city;
+          const acceptable = [
+            check.expectedDistrictSourceCode,
+            ...(check.acceptableAdjacentDistricts ?? []).map((adjacent) => {
+              expect(adjacent.reason.trim().length).toBeGreaterThan(0);
+              return adjacent.sourceCode;
+            }),
+          ];
+          expect(acceptable).toContain(parent?.sourceCode);
+        } else expect(check.acceptableSourceCodes).toContain(city?.sourceCode);
       }
     }
   });

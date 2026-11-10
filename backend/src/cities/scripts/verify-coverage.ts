@@ -1,39 +1,68 @@
 import * as fs from 'fs';
+import { createHash } from 'crypto';
 import * as path from 'path';
-import { loadOfficialCatalog, type CityCatalog } from '../catalog';
+import { loadOfficialCatalog, loadReleaseSnapshot, type CityCatalog } from '../catalog';
 import { verifyCoverage, type Polygons, type IndependentNames, type GpsChecks } from '../coverage';
+import { readCityData } from '../data-files';
 
-const data = path.resolve(__dirname, '../data/neighbourhoods');
-function read<T>(file: string): T {
-  return JSON.parse(fs.readFileSync(path.join(data, file), 'utf8')) as T;
-}
 const catalogPath = process.argv[2];
 const catalog = catalogPath ? (JSON.parse(fs.readFileSync(catalogPath, 'utf8')) as CityCatalog) : loadOfficialCatalog();
+const reference = (file: string, notes: string, level?: 1 | 2): Polygons => ({
+  metadata: {
+    reviewed: level
+      ? true
+      : readCityData<{ metadata: { reviewed: boolean } }>('neighbourhoods/' + file).metadata.reviewed,
+    notes,
+  },
+  sourcePath: 'neighbourhoods/' + file,
+  sha256: createHash('sha256')
+    .update(fs.readFileSync(path.resolve(process.cwd(), 'src/cities/data/neighbourhoods', file)))
+    .digest('hex'),
+  ochaLevel: level,
+  features: [],
+});
+const evidence = catalogPath
+  ? {
+      residential: reference(
+        'builtup-evidence.geojson.gz',
+        'Full clipped OSM residential polygons plus populated ADM3.',
+      ),
+      governorates: reference('ocha-cod-ab/egy_admin1.geojson.gz', 'OCHA ADM1', 1),
+      districts: reference('ocha-cod-ab/egy_admin2.geojson.gz', 'OCHA ADM2', 2),
+      names: readCityData<IndependentNames>('neighbourhoods/independent-names.json'),
+      gps: readCityData<GpsChecks>('neighbourhoods/gps-checks.json'),
+    }
+  : loadReleaseSnapshot().coverageEvidence;
+if (!evidence) throw new Error('No release coverage evidence');
 const report = verifyCoverage(
   catalog,
-  read<Polygons>('coverage-polygons.geojson'),
-  read<Polygons>('governorate-boundaries.geojson'),
-  read<Polygons>('district-boundaries.geojson'),
-  read<IndependentNames>('independent-names.json'),
-  read<GpsChecks>('gps-checks.json'),
+  evidence.residential,
+  evidence.governorates,
+  evidence.districts,
+  evidence.names,
+  evidence.gps,
 );
 const out = path.resolve(process.cwd(), 'output/neighbourhood-cities');
 fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(path.join(out, 'report.json'), JSON.stringify(report, null, 2));
-const text = [
+const lines = [
   '# Neighbourhood coverage — ' + (report.passed ? 'PASS' : 'FAIL / NOT MERGEABLE'),
   '',
-  `Structural quality: ${report.structuralValidation.isValid ? 'PASS' : 'FAIL'}. Geographic data quality: ${report.dataQuality.passed ? 'PASS' : 'FAIL'} (${report.dataQuality.errors.length} errors).`,
-  ...report.areas.flatMap((a) => [
-    '',
+  `Structural quality: ${report.structuralValidation.isValid ? 'PASS' : 'FAIL'}. Geographic quality: ${report.dataQuality.passed ? 'PASS' : 'FAIL'} (${report.dataQuality.errors.length} errors).`,
+];
+for (const a of report.areas) {
+  const text = [
     `## ${a.area}`,
-    `Grid: ${a.grid.passed ? 'PASS' : 'FAIL'} — ${a.grid.samples} samples, ${a.grid.gapCount} measured gaps. ${a.grid.reason ?? ''}`,
-    `Names: ${a.names.passed ? 'PASS' : 'FAIL'} — ${a.names.entries} entries / ${a.names.distinctNames} distinct Arabic names; ${a.names.missingNames.length}/${a.names.variants} unmatched variants.`,
-    `GPS: ${a.gps.passed ? 'PASS' : 'FAIL'} — ${a.gps.checks}/30 independent coordinates.`,
-    'Missing: ' + a.names.missingNames.join(', '),
-    'Worst measured gaps: ' + JSON.stringify(a.grid.worstGaps),
-  ]),
-].join('\n');
+    `Grid: ${a.grid.passed ? 'PASS' : 'FAIL'} — ${a.grid.samples} samples; ${a.grid.gapCount} over 1.5 km.`,
+    `Names: ${a.names.passed ? 'PASS' : 'FAIL'} — ${a.names.distinctNames} distinct; ${a.names.missingNames.length}/${a.names.variants} unmatched variants.`,
+    `GPS: ${a.gps.passed ? 'PASS' : 'FAIL'} — ${a.gps.checks} checks; ${a.gps.failures.length} failures.`,
+    'Worst gaps: ' + JSON.stringify(a.grid.worstGaps),
+    'Missing names: ' + a.names.missingNames.join(', '),
+  ].join('\n');
+  fs.writeFileSync(path.join(out, a.area + '.md'), text + '\n');
+  lines.push('', text);
+}
+const text = lines.join('\n');
 fs.writeFileSync(path.join(out, 'report.md'), text + '\n');
 console.log(text);
 process.exitCode = report.passed ? 0 : 1;

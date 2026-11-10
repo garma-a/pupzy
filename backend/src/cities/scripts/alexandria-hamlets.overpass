@@ -1,0 +1,5 @@
+[out:json][timeout:240];
+(
+ nwr["place"~"^(hamlet|isolated_dwelling|locality)$"]["name"](30.6,28.5,31.65,30.4);
+);
+out center tags;

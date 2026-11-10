@@ -284,7 +284,7 @@ export function generateReleaseMigrationSql(
   const lines: string[] = [
     '--',
     `-- Migration: ${tag}.sql`,
-    `-- Release upgrade data migration to authoritative ${officialCount}-city ADM2 catalog (${expectedGovCount} governorates).`,
+    `-- Release upgrade data migration to authoritative ${officialCount}-City catalog (${expectedGovCount} governorates).`,
     '--',
     'DO $$',
     'DECLARE',

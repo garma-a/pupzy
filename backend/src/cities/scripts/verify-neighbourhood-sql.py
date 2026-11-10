@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Disposable socket-free SQL check; requires local PostgreSQL + PostGIS binaries. No network."""
 from pathlib import Path
-import json, subprocess, tempfile, shutil, sys
+import json, subprocess, tempfile, shutil, sys, time, argparse
 root=Path(__file__).resolve().parents[3];folder=root/'drizzle/migrations'
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--catalog',type=Path);parser.add_argument('--migration',type=Path);args=parser.parse_args()
+if bool(args.catalog)!=bool(args.migration):parser.error('--catalog and --migration must be specified together')
 pgbin=Path(subprocess.check_output(['pg_config','--bindir'],text=True).strip())
 cluster=Path(tempfile.mkdtemp(prefix='pupzy-city-sql-'))
 subprocess.run([str(pgbin/'initdb'),'-D',str(cluster),'-A','trust','-U','test','--no-locale','-E','UTF8'],check=True,stdout=subprocess.DEVNULL)
@@ -12,11 +14,13 @@ for f in sorted(folder.glob('*.sql')):
 chunks.append((root/'drizzle/custom.sql').read_text())
 chunks.append("CREATE TABLE test_city_identities AS SELECT id, source_code FROM cities; INSERT INTO users (firebase_user_id,email,home_city_id) SELECT 'offline-neighbourhood','offline@example.invalid',id FROM cities WHERE source_code='EG0202'; INSERT INTO posts (creator_id,post_type,title,description,city_id,urgency,coordinates) SELECT users.id,'RESCUE','Offline test','Offline test',cities.id,'URGENT',cities.center_point FROM users CROSS JOIN cities WHERE users.firebase_user_id='offline-neighbourhood' AND cities.source_code='EG0202';")
 # Match pre-deploy's transactional pending migrations, followed by repeatable SQL.
-expected_names = json.dumps({r['sourceCode']: r['nameEnglish'] for r in json.loads((root/'src/cities/data/egypt-cities-catalog.json').read_text())['records']}).replace("'", "''")
+expected_names = json.dumps({r['sourceCode']: r['nameEnglish'] for r in json.loads((args.catalog or root/'src/cities/data/egypt-cities-catalog.json').read_text())['records']}).replace("'", "''")
 canonical_check = "DO $$ BEGIN IF EXISTS (SELECT 1 FROM jsonb_each_text('" + expected_names + "'::jsonb) expected LEFT JOIN cities ON cities.source_code = expected.key WHERE cities.name_english IS DISTINCT FROM expected.value) THEN RAISE EXCEPTION 'Deploy reverted cleaned City names'; END IF; END $$;"
 state_check = "DO $$ BEGIN IF EXISTS (SELECT row_data FROM test_released_city_state EXCEPT SELECT to_jsonb(c) FROM cities c) OR EXISTS (SELECT to_jsonb(c) FROM cities c EXCEPT SELECT row_data FROM test_released_city_state) THEN RAISE EXCEPTION 'Re-run changed released City rows'; END IF; END $$;"
 for attempt in range(2):
- chunks.append('BEGIN;\n' + '\n'.join((folder/n).read_text() for n in ['0065_add_city_neighbourhood_fields.sql','0066_release_city_catalog.sql']) + '\nCOMMIT;')
+ chunks.append("SELECT clock_timestamp() AS apply_started;")
+ chunks.append('BEGIN;\n' + (folder/'0065_add_city_neighbourhood_fields.sql').read_text() + '\n' + (args.migration or folder/'0066_release_city_catalog.sql').read_text() + '\nCOMMIT;')
+ chunks.append("SELECT clock_timestamp() AS apply_finished;")
  chunks.append((root/'drizzle/custom.sql').read_text())
  chunks.append('SELECT district_id, aliases FROM cities LIMIT 1;')
  chunks.append(canonical_check)
@@ -53,12 +57,15 @@ DELETE FROM cities WHERE source_code='PUPZY:sql-test-quarter';
 """)
 chunks.append("DO $$ BEGIN IF EXISTS(SELECT 1 FROM test_city_identities old LEFT JOIN cities USING(source_code) WHERE cities.id IS DISTINCT FROM old.id) THEN RAISE EXCEPTION 'UUID changed'; END IF; IF NOT EXISTS(SELECT 1 FROM users JOIN posts ON posts.creator_id=users.id WHERE users.firebase_user_id='offline-neighbourhood' AND users.home_city_id=posts.city_id) THEN RAISE EXCEPTION 'References lost'; END IF; END $$; SELECT 'OFFLINE_UPGRADE_OK' AS result;")
 content='\n\n'.join('\n'.join(line for line in chunk.splitlines() if line.strip()) for chunk in chunks)+'\n\n'
+started=time.perf_counter()
 run=subprocess.run([str(pgbin/'postgres'),'--single','-j','-D',str(cluster),'template1'],input=content,text=True,capture_output=True)
 log=run.stdout+'\n'+run.stderr
 (root/'output/neighbourhood-cities').mkdir(parents=True,exist_ok=True)
 (root/'output/neighbourhood-cities/single-user-postgres.log').write_text(log)
 shutil.rmtree(cluster)
 errors=[line for line in run.stderr.splitlines() if 'ERROR:' in line or 'FATAL:' in line]
+elapsed=time.perf_counter()-started
+print('SQL workload seconds',round(elapsed,3),'expected catalog rows',len(json.loads((args.catalog or root/'src/cities/data/egypt-cities-catalog.json').read_text())['records']))
 print('single-user exit',run.returncode,'errors',len(errors),'marker present','OFFLINE_UPGRADE_OK' in run.stdout)
 print('\n'.join(errors[:15]))
 

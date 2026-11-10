@@ -22,9 +22,18 @@ FOR EACH STATEMENT EXECUTE FUNCTION lock_city_hierarchy();
 -- Deferred so an offline release can reparent/retire related rows in either order.
 CREATE OR REPLACE FUNCTION check_city_hierarchy() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM cities WHERE source_code ~ '^(OSM:|WD:|PUPZY:)' AND district_id IS NULL) OR EXISTS (
-    SELECT 1 FROM cities child JOIN cities parent ON parent.id = child.district_id
-    WHERE parent.district_id IS NOT NULL OR parent.status <> 'OFFICIAL' OR parent.governorate <> child.governorate
+  -- Check the row's final state and its direct children through indexed identity/parent lookups.
+  IF EXISTS (
+    SELECT 1 FROM cities child LEFT JOIN cities parent ON parent.id = child.district_id
+    WHERE child.id = NEW.id AND (
+      (child.source_code ~ '^(OSM:|WD:|PUPZY:)' AND child.district_id IS NULL) OR
+      (child.district_id IS NOT NULL AND (parent.id IS NULL OR parent.district_id IS NOT NULL
+        OR parent.status <> 'OFFICIAL' OR parent.governorate <> child.governorate))
+    )
+  ) OR EXISTS (
+    SELECT 1 FROM cities parent JOIN cities child ON child.district_id = parent.id
+    WHERE parent.id = NEW.id AND
+      (parent.district_id IS NOT NULL OR parent.status <> 'OFFICIAL' OR parent.governorate <> child.governorate)
   ) THEN
     RAISE EXCEPTION 'Neighbourhood must belong to one OFFICIAL root district in the same governorate' USING ERRCODE = '23514';
   END IF;

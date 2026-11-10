@@ -1,4 +1,5 @@
 import type { CityCatalogRecord } from './catalog';
+import { readCityData } from './data-files';
 import { normalizeCitySearch } from './search';
 
 export interface OsmElement {
@@ -28,14 +29,46 @@ export interface PlaceDecision {
   /** Required for curated points and corrections; never inferred from the nearest centroid. */
   point?: { latitude: number; longitude: number; evidence: string };
   parentEvidence?: string;
+  provenance?: Record<string, unknown>;
   mergeInto?: string;
 }
 
 export interface NeighbourhoodSources {
+  overpassFiles?: string[];
+  decisionsFile?: string;
+  sourceDigests?: Record<string, string>;
+  wikidataFile?: string;
   districtEdits: Array<{ sourceCode: string; nameEnglish: string; aliases: string[]; notes: string }>;
   overpass?: SourceSnapshot<{ elements: OsmElement[] }>;
   wikidata?: SourceSnapshot<{ results: { bindings: Array<Record<string, { value: string }>> } }>;
   decisions: PlaceDecision[];
+}
+
+export function hydrateNeighbourhoodSources(sources: NeighbourhoodSources): NeighbourhoodSources {
+  const result = { ...sources };
+  if (sources.decisionsFile)
+    result.decisions = readCityData<PlaceDecision[]>(
+      sources.decisionsFile,
+      sources.sourceDigests?.[sources.decisionsFile],
+    );
+  if (sources.overpassFiles?.length) {
+    const elements = sources.overpassFiles.flatMap(
+      (file) => readCityData<{ elements: OsmElement[] }>(file, sources.sourceDigests?.[file]).elements,
+    );
+    if (!sources.overpass) throw new Error('OSM provenance metadata missing');
+    result.overpass = { ...sources.overpass, response: { elements } };
+  }
+  if (sources.wikidataFile) {
+    if (!sources.wikidata) throw new Error('Wikidata provenance metadata missing');
+    result.wikidata = {
+      ...sources.wikidata,
+      response: readCityData<NonNullable<NeighbourhoodSources['wikidata']>['response']>(
+        sources.wikidataFile,
+        sources.sourceDigests?.[sources.wikidataFile],
+      ),
+    };
+  }
+  return result;
 }
 
 /** All source responses and review decisions travel in the publisher's single snapshot artifact. */
@@ -43,6 +76,7 @@ export function extendDistrictCatalog(
   districts: CityCatalogRecord[],
   sources: NeighbourhoodSources,
 ): CityCatalogRecord[] {
+  sources = hydrateNeighbourhoodSources(sources);
   const records: CityCatalogRecord[] = districts.map((row) => ({
     ...row,
     aliases: row.aliases ?? [],
@@ -58,6 +92,14 @@ export function extendDistrictCatalog(
     district.nameEnglish = edit.nameEnglish;
   }
   const elements = new Map((sources.overpass?.response.elements ?? []).map((e) => [`OSM:${e.type}/${e.id}`, e]));
+  const wdById = new Map<string, Array<Record<string, { value: string }>>>();
+  for (const row of sources.wikidata?.response.results.bindings ?? []) {
+    const id = row.item?.value.split('/').at(-1);
+    if (!id) continue;
+    const entries = wdById.get(id) ?? [];
+    entries.push(row);
+    wdById.set(id, entries);
+  }
   const seen = new Set<string>();
   for (const decision of sources.decisions) {
     if (seen.has(decision.sourceCode)) throw new Error(`Duplicate review decision ${decision.sourceCode}`);
@@ -82,9 +124,7 @@ export function extendDistrictCatalog(
     const element = elements.get(decision.sourceCode);
     const wdId =
       element?.tags?.wikidata ?? (decision.sourceCode.startsWith('WD:') ? decision.sourceCode.slice(3) : undefined);
-    const wdRows = (sources.wikidata?.response.results.bindings ?? []).filter((row) =>
-      row.item?.value.endsWith('/' + wdId),
-    );
+    const wdRows = wdId ? (wdById.get(wdId) ?? []) : [];
     const wdPoint = wdRows[0]?.coord?.value.match(/^Point\(([-0-9.]+) ([-0-9.]+)\)$/);
     const nameEnglish = decision.nameEnglish ?? element?.tags?.['name:en'] ?? wdRows.find((r) => r.en)?.en.value;
     const nameArabic = decision.nameArabic ?? element?.tags?.['name:ar'] ?? wdRows.find((r) => r.ar)?.ar.value;
@@ -121,15 +161,17 @@ export function extendDistrictCatalog(
     ) {
       throw new Error(`Incomplete reviewed place/point/parent evidence: ${decision.sourceCode}`);
     }
-    const existingDistrict = districts.find(
-      (d) =>
-        d.governorateCode === decision.governorateCode &&
-        [d.nameEnglish, d.nameArabic.replace(/^(قسم|مركز|مدينة)\s*/, '')].some(
-          (n) =>
-            normalizeCitySearch(n) === normalizeCitySearch(nameEnglish) ||
-            normalizeCitySearch(n) === normalizeCitySearch(nameArabic),
-        ),
-    );
+    const existingDistrict = [...byCode.values()]
+      .filter((d) => !d.districtSourceCode)
+      .find(
+        (d) =>
+          d.governorateCode === decision.governorateCode &&
+          [d.nameEnglish, d.nameArabic.replace(/^(قسم|مركز|مدينة)\s*/, '')].some(
+            (n) =>
+              normalizeCitySearch(n) === normalizeCitySearch(nameEnglish) ||
+              normalizeCitySearch(n) === normalizeCitySearch(nameArabic),
+          ),
+      );
     if (existingDistrict) throw new Error(`Place coincides with district; use merge decision: ${decision.sourceCode}`);
     const record: CityCatalogRecord = {
       ...district,
@@ -148,6 +190,7 @@ export function extendDistrictCatalog(
       ].filter((a) => a !== nameEnglish && a !== nameArabic),
       districtSourceCode: district.sourceCode,
       provenance: {
+        ...decision.provenance,
         source: element ? 'OSM' : decision.sourceCode.startsWith('WD:') ? 'Wikidata' : 'hand-curated',
         notes: decision.notes,
         parentEvidence: decision.parentEvidence,
@@ -157,6 +200,16 @@ export function extendDistrictCatalog(
     if (byCode.has(record.sourceCode)) throw new Error(`Duplicate source identity ${record.sourceCode}`);
     records.push(record);
     byCode.set(record.sourceCode, record);
+  }
+  for (const row of records) {
+    const seenAliases = new Set([row.nameEnglish.toLowerCase(), row.nameArabic.toLowerCase()]);
+    row.aliases = (row.aliases ?? [])
+      .map((a) => a.trim())
+      .filter((a) => {
+        if (!a || seenAliases.has(a.toLowerCase())) return false;
+        seenAliases.add(a.toLowerCase());
+        return true;
+      });
   }
   return records.sort((a, b) => a.sourceCode.localeCompare(b.sourceCode));
 }

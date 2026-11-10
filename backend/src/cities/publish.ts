@@ -1,3 +1,4 @@
+import { hydrateNeighbourhoodSources } from './neighbourhoods';
 import * as fs from 'fs';
 import * as path from 'path';
 import { createHash, randomUUID } from 'crypto';
@@ -610,12 +611,11 @@ export function publishReviewedRelease(
         'Publication refused: neighbourhood coverage evidence is missing or failed. Run cities:verify-coverage.',
       );
     }
-    const decisions = new Map(candidateSnapshot.neighbourhoods?.decisions.map((d) => [d.sourceCode, d]));
-    if (
-      candidateSnapshot.neighbourhoods?.overpass?.response.elements.some(
-        (osm) => !decisions.get(`OSM:${osm.type}/${osm.id}`)?.reviewed,
-      )
-    ) {
+    const sources = candidateSnapshot.neighbourhoods
+      ? hydrateNeighbourhoodSources(candidateSnapshot.neighbourhoods)
+      : undefined;
+    const decisions = new Map(sources?.decisions.map((d) => [d.sourceCode, d]));
+    if (sources?.overpass?.response.elements.some((osm) => !decisions.get(`OSM:${osm.type}/${osm.id}`)?.reviewed)) {
       throw new Error('Publication refused: every OSM place must have a reviewed include, merge or exclude decision');
     }
   }

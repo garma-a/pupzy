@@ -1,4 +1,5 @@
 import { validateCatalog, type CityCatalog, type CityCatalogRecord } from './catalog';
+import { readCityData } from './data-files';
 import { matchesCitySearch, normalizeCitySearch } from './search';
 
 export const COVERAGE_AREAS = ['greater-cairo', 'alexandria', 'port-said-region'] as const;
@@ -6,10 +7,19 @@ export type CoverageArea = (typeof COVERAGE_AREAS)[number];
 type Position = [number, number];
 export interface PolygonFeature {
   type: 'Feature';
-  properties: { area?: CoverageArea; governorateCode?: string; districtSourceCode?: string; evidence?: string };
+  properties: {
+    area?: CoverageArea;
+    governorateCode?: string;
+    districtSourceCode?: string;
+    evidence?: string;
+    samplePoint?: Position;
+  };
   geometry: { type: 'Polygon'; coordinates: Position[][] } | { type: 'MultiPolygon'; coordinates: Position[][][] };
 }
 export interface Polygons {
+  sourcePath?: string;
+  sha256?: string;
+  ochaLevel?: 1 | 2;
   metadata: { reviewed: boolean; notes: string };
   features: PolygonFeature[];
 }
@@ -21,8 +31,60 @@ export interface GpsChecks {
   metadata: { reviewed: boolean; notes: string };
   areas: Record<
     CoverageArea,
-    Array<{ latitude: number; longitude: number; acceptableSourceCodes: string[]; evidence: string }>
+    Array<{
+      latitude: number;
+      longitude: number;
+      acceptableSourceCodes: string[];
+      expectedDistrictSourceCode?: string;
+      acceptableAdjacentDistricts?: Array<{ sourceCode: string; reason: string }>;
+      evidence: string;
+    }>
   >;
+}
+
+export function hydratePolygons(input: Polygons): Polygons {
+  if (!input.sourcePath) return input;
+  const source = readCityData<Polygons & { features: Array<PolygonFeature & { properties: Record<string, unknown> }> }>(
+    input.sourcePath,
+    input.sha256,
+  );
+  return {
+    metadata: input.metadata,
+    features: source.features.map((f) => ({
+      ...f,
+      properties: input.ochaLevel
+        ? {
+            governorateCode: String((f.properties as Record<string, unknown>).adm1_pcode),
+            ...(input.ochaLevel === 2
+              ? { districtSourceCode: String((f.properties as Record<string, unknown>).adm2_pcode) }
+              : {}),
+            evidence: 'OCHA COD-AB exact P-code geometry',
+          }
+        : f.properties,
+    })),
+  };
+}
+
+/** Distance to polygon edges, not to its representative centroid. */
+export function polygonDistanceMeters(point: Position, feature: PolygonFeature): number {
+  if (containsPoint(point, feature)) return 0;
+  const rings =
+    feature.geometry.type === 'Polygon' ? feature.geometry.coordinates : feature.geometry.coordinates.flat();
+  let best = Infinity;
+  for (const ring of rings)
+    for (let i = 1; i < ring.length; i++) {
+      const a = ring[i - 1],
+        b = ring[i];
+      const dx = b[0] - a[0],
+        dy = b[1] - a[1];
+      const scale = Math.cos((point[1] * Math.PI) / 180) ** 2;
+      const t = Math.max(
+        0,
+        Math.min(1, ((point[0] - a[0]) * dx * scale + (point[1] - a[1]) * dy) / (dx * dx * scale + dy * dy || 1)),
+      );
+      best = Math.min(best, distanceMeters(point, [a[0] + t * dx, a[1] + t * dy]));
+    }
+  return best;
 }
 
 function ringContains([x, y]: Position, ring: Position[]): boolean {
@@ -51,12 +113,18 @@ export function nearestCatalogCity(
   point: Position,
   records: CityCatalogRecord[],
 ): { city: CityCatalogRecord; meters: number } {
-  const ranked = records
-    .filter((r) => r.status === 'OFFICIAL')
-    .map((city) => ({ city, meters: distanceMeters(point, [city.longitude, city.latitude]) }));
-  ranked.sort((a, b) => a.meters - b.meters || a.city.sourceCode.localeCompare(b.city.sourceCode));
-  if (!ranked[0]) throw new Error('Cannot verify an empty official catalog');
-  return ranked[0];
+  let nearest: CityCatalogRecord | undefined;
+  let meters = Infinity;
+  for (const city of records) {
+    if (city.status !== 'OFFICIAL') continue;
+    const candidate = distanceMeters(point, [city.longitude, city.latitude]);
+    if (candidate < meters || (candidate === meters && city.sourceCode < (nearest?.sourceCode ?? ''))) {
+      nearest = city;
+      meters = candidate;
+    }
+  }
+  if (!nearest) throw new Error('Cannot verify an empty official catalog');
+  return { city: nearest, meters };
 }
 export function sampleGrid(feature: PolygonFeature, spacingMeters = 500): Position[] {
   if (!Number.isFinite(spacingMeters) || spacingMeters < 100) throw new Error('Grid spacing must be at least 100 m');
@@ -75,6 +143,8 @@ export function sampleGrid(feature: PolygonFeature, spacingMeters = 500): Positi
       if (containsPoint([lon, lat], feature)) points.push([lon, lat]);
     }
   }
+  if (points.length === 0 && feature.properties.samplePoint && containsPoint(feature.properties.samplePoint, feature))
+    points.push(feature.properties.samplePoint);
   return points;
 }
 
@@ -86,6 +156,9 @@ export function verifyCoverage(
   names: IndependentNames,
   gps: GpsChecks,
 ) {
+  residential = hydratePolygons(residential);
+  governorates = hydratePolygons(governorates);
+  districts = hydratePolygons(districts);
   const records = catalog.records;
   const byCode = new Map(records.map((r) => [r.sourceCode, r]));
   const validation = validateCatalog(catalog);
@@ -100,16 +173,53 @@ export function verifyCoverage(
       dataErrors.push(`${row.sourceCode}: governorate containment unverified or outside bounds`);
     if (row.districtSourceCode) {
       const parent = byCode.get(row.districtSourceCode);
-      if (!parent || distanceMeters([row.longitude, row.latitude], [parent.longitude, parent.latitude]) > 75000)
-        dataErrors.push(`${row.sourceCode}: parent point more than 75 km away or missing`);
-      if (
-        !districts.features.some(
-          (f) =>
-            f.properties.districtSourceCode === row.districtSourceCode &&
-            containsPoint([row.longitude, row.latitude], f),
+      if (!parent) dataErrors.push(`${row.sourceCode}: missing district parent`);
+      const containing = districts.features.find((f) => f.properties.districtSourceCode === row.districtSourceCode);
+      if (!containing) dataErrors.push(`${row.sourceCode}: parent polygon missing`);
+      else if (!containsPoint([row.longitude, row.latitude], containing)) {
+        const rule = row.provenance?.parentRule;
+        const zemam = row.provenance?.zemamOutSourceCode;
+        const recorded = row.provenance?.parentPolygonDistanceKm;
+        const actual = polygonDistanceMeters([row.longitude, row.latitude], containing) / 1000;
+        const original =
+          typeof zemam === 'string'
+            ? districts.features.find((f) => f.properties.districtSourceCode === zemam)
+            : undefined;
+        const inZemam = original
+          ? zemam?.toString().endsWith('00') && containsPoint([row.longitude, row.latitude], original)
+          : !districts.features.some(
+              (f) =>
+                !f.properties.districtSourceCode?.endsWith('00') && containsPoint([row.longitude, row.latitude], f),
+            );
+        const parentCandidates = row.provenance?.parentCandidateSourceCodes;
+        const candidates = districts.features.filter((f) => {
+          const district = byCode.get(f.properties.districtSourceCode ?? '');
+          if (
+            !district ||
+            district.districtSourceCode ||
+            district.status !== 'OFFICIAL' ||
+            district.governorateCode !== row.governorateCode
+          )
+            return false;
+          return (
+            rule === 'zemam-out-nearest-polygon' ||
+            (Array.isArray(parentCandidates) && parentCandidates.includes(district.sourceCode))
+          );
+        });
+        const minimum = Math.min(
+          ...candidates.map((f) => polygonDistanceMeters([row.longitude, row.latitude], f) / 1000),
+        );
+        if (
+          !['zemam-out-named-city', 'zemam-out-nearest-polygon'].includes(String(rule)) ||
+          !inZemam ||
+          typeof recorded !== 'number' ||
+          actual > 40 ||
+          Math.abs(actual - recorded) > 0.1 ||
+          !Number.isFinite(minimum) ||
+          actual - minimum > 0.1
         )
-      )
-        dataErrors.push(`${row.sourceCode}: containing district unverified`);
+          dataErrors.push(`${row.sourceCode}: containing district unverified (invalid Zemam Out exception)`);
+      }
     }
   }
   const areaGovernorates: Record<CoverageArea, string[]> = {
@@ -119,12 +229,17 @@ export function verifyCoverage(
   };
   const areas = COVERAGE_AREAS.map((area) => {
     const polygons = residential.features.filter((f) => f.properties.area === area);
-    const points = polygons.flatMap((f) => sampleGrid(f));
-    const gaps = points
-      .map((point) => ({ longitude: point[0], latitude: point[1], ...nearestCatalogCity(point, records) }))
+    const points = polygons.flatMap((f) => sampleGrid(f).map((point) => ({ point, evidence: f.properties.evidence })));
+    const rankedSamples = points
+      .map(({ point, evidence }) => ({
+        longitude: point[0],
+        latitude: point[1],
+        evidence,
+        ...nearestCatalogCity(point, records),
+      }))
       .map(({ city, ...gap }) => ({ ...gap, nearest: city.sourceCode }))
-      .filter((gap) => gap.meters > 1500)
       .sort((a, b) => b.meters - a.meters);
+    const gaps = rankedSamples.filter((gap) => gap.meters > 1500);
     const entries = names.areas[area];
     const distinctNames = new Set(entries.map((entry) => normalizeCitySearch(entry.arabic))).size;
     const missingNames = entries.flatMap((entry) =>
@@ -141,9 +256,14 @@ export function verifyCoverage(
     const checks = gps.areas[area];
     const gpsFailures = checks.flatMap((check) => {
       const result = nearestCatalogCity([check.longitude, check.latitude], records);
-      return check.evidence && check.acceptableSourceCodes.includes(result.city.sourceCode)
-        ? []
-        : [{ ...check, actual: result.city.sourceCode }];
+      const actualDistrict = result.city.districtSourceCode ?? result.city.sourceCode;
+      const acceptable = check.expectedDistrictSourceCode
+        ? [
+            check.expectedDistrictSourceCode,
+            ...(check.acceptableAdjacentDistricts ?? []).filter((a) => a.reason.trim()).map((a) => a.sourceCode),
+          ].includes(actualDistrict)
+        : check.acceptableSourceCodes.includes(result.city.sourceCode);
+      return check.evidence && acceptable ? [] : [{ ...check, actual: result.city.sourceCode }];
     });
     return {
       area,
@@ -157,6 +277,7 @@ export function verifyCoverage(
         samples: points.length,
         gapCount: gaps.length,
         worstGaps: gaps.slice(0, 10),
+        worstSamples: rankedSamples.slice(0, 10),
         reason: polygons.length ? undefined : 'No built-up polygons fetched/reviewed; worst gaps cannot be measured',
       },
       names: {

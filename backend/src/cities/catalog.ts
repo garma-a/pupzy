@@ -71,7 +71,7 @@ export type CityLifecycleStatusValue = 'OFFICIAL' | 'LEGACY' | 'RETIRED';
 export interface CityCatalogRecord {
   aliases?: string[];
   districtSourceCode?: string | null;
-  provenance?: { source: string; notes: string; parentEvidence: string; pointEvidence: string };
+  provenance?: { source: string; notes: string; parentEvidence: string; pointEvidence: string; [key: string]: unknown };
   sourceCode: string;
   nameEnglish: string;
   nameArabic: string;

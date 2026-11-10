@@ -1,8 +1,0 @@
-{
-  "type": "FeatureCollection",
-  "metadata": {
-    "reviewed": false,
-    "notes": "No residential polygons fetched; provide GeoJSON Polygon/MultiPolygon features with properties.area and evidence, then review extent completeness."
-  },
-  "features": []
-}
