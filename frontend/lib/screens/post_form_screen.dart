@@ -13,6 +13,7 @@ import '../services/terms_gate.dart';
 import '../theme/app_theme.dart';
 import '../widgets/city_picker_sheet.dart';
 import '../utils/age_parser.dart';
+import '../utils/arabic_adoption_description.dart';
 import '../utils/photo_privacy.dart';
 import '../utils/presigned_upload.dart';
 import '../widgets/yes_no_question.dart';
@@ -745,9 +746,9 @@ class _PostFormScreenState extends State<PostFormScreen> {
       final ageText = agePair != null ? '${agePair.$1} ${_ageUnitLabel(agePair.$2)} ' : '';
       final breedText = breed.isEmpty ? '' : ' ($breed)';
 
-      final description =
-          '$petName ${t(context, 'is a', 'هو')} $ageText$genderLabel $speciesLabel$breedText '
-          '${t(context, 'looking for a loving home.', 'يبحث عن منزل محب.')}';
+      final description = context.read<LangProvider>().lang == Lang.ar
+          ? arabicAdoptionDescription(petName: petName, species: _species!, gender: _gender!, breed: breed, age: agePair)
+          : '$petName is a $ageText$genderLabel $speciesLabel$breedText looking for a loving home.';
 
       final (result, errorMessage) = await withTermsRecovery(context, () => graphql.createAdoptionPost(
         title: '${t(context, 'Adoption', 'تبني')}: $petName',
