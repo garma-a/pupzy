@@ -81,10 +81,7 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
   void _onSearchChanged(String value) {
     setState(() => _query = value);
     _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
-      _loadFeed();
-      _loadMatingFeed();
-    });
+    _searchDebounce = Timer(const Duration(milliseconds: 350), _loadFeed);
   }
 
   @override
@@ -92,7 +89,7 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
     super.initState();
     _scrollController.addListener(_onScroll);
     _matingScrollController.addListener(_onMatingScroll);
-    _loadMatingFeed();
+    // The mating list loads once _loadFeed knows where the viewer is.
     _loadMyUserId();
   }
 
@@ -161,8 +158,7 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
   /// Re-fetches just the first page of the Matching tab and patches matching
   /// posts already in [_matingPosts] with fresh data.
   Future<void> _refreshMatingFeedQuietly() async {
-    final graphql = context.read<GraphQLService>();
-    final (posts, _, _, error) = await graphql.fetchMatingFeed(cityId: _cityId, search: _activeSearch);
+    final (posts, _, _, error) = await _fetchMatingPage();
     if (!mounted || error != null) return;
     final byId = {for (final p in posts) p.id: p};
     setState(() {
@@ -200,7 +196,6 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
       _lastRadius = maxDist;
       _lastBrowseCityId = browseCityId;
       _loadFeed();
-      _loadMatingFeed();
     }
   }
 
@@ -221,6 +216,9 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
     _position = resolved.position;
     _governorate = resolved.governorate;
     _cityId = resolved.cityId;
+    // Mating posts aren't limited to a governorate, so they load even when
+    // the adoption feed can't; they need the location for the distance filter.
+    _loadMatingFeed();
 
     if (_governorate == null) {
       if (mounted) {
@@ -280,17 +278,31 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
     });
   }
 
+  /// One page of the Matching tab, under the same distance filter as the
+  /// adoption feed: from the viewer's GPS position, or from the browse/home
+  /// City's centre without one. "50+ km" (an infinite distance) is nationwide.
+  Future<(List<FeedPost>, String?, bool, String?)> _fetchMatingPage({String? after}) {
+    final maxDist = DistanceProvider.of(context).maxDistance;
+    return context.read<GraphQLService>().fetchMatingFeed(
+          cityId: _cityId,
+          latitude: _position?.latitude,
+          longitude: _position?.longitude,
+          radiusKm: maxDist.isFinite ? maxDist : null,
+          search: _activeSearch,
+          after: after,
+        );
+  }
+
   /// Loads the Matching tab's first page. Unlike the Adoption feed, mating
-  /// listings aren't governorate-scoped — this can run independently of
-  /// location resolution, optionally narrowed to the browse city once known.
+  /// listings aren't governorate-scoped, so this runs even when no
+  /// governorate is known. [_loadFeed] calls it once the location is resolved.
   Future<void> _loadMatingFeed() async {
     if (!mounted) return;
     setState(() {
       _matingLoading = true;
       _matingErrorMessage = null;
     });
-    final graphql = context.read<GraphQLService>();
-    final (posts, endCursor, hasNextPage, error) = await graphql.fetchMatingFeed(cityId: _cityId, search: _activeSearch);
+    final (posts, endCursor, hasNextPage, error) = await _fetchMatingPage();
     if (!mounted) return;
     setState(() {
       _matingLoading = false;
@@ -307,8 +319,7 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
   Future<void> _loadMoreMating() async {
     if (_matingLoadingMore || !_matingHasNextPage) return;
     setState(() => _matingLoadingMore = true);
-    final graphql = context.read<GraphQLService>();
-    final (more, endCursor, hasNextPage, error) = await graphql.fetchMatingFeed(cityId: _cityId, search: _activeSearch, after: _matingEndCursor);
+    final (more, endCursor, hasNextPage, error) = await _fetchMatingPage(after: _matingEndCursor);
     if (!mounted) return;
     setState(() {
       _matingLoadingMore = false;

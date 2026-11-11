@@ -150,6 +150,16 @@ void main() {
     expect(isOn(tester), isTrue);
   });
 
+  testWidgets('the profile menu credits OpenStreetMap with a link-out icon', (tester) async {
+    await pumpSheet(tester);
+
+    final credit = find.text('© OpenStreetMap contributors');
+    expect(credit, findsOneWidget);
+    final row = find.ancestor(of: credit, matching: find.byType(Row)).first;
+    expect(find.descendant(of: row, matching: find.byIcon(Icons.open_in_new)), findsOneWidget);
+    expect(openStreetMapCopyright.toString(), 'https://www.openstreetmap.org/copyright');
+  });
+
   testWidgets('Delete Account scrolls clear of the Android navigation bar', (tester) async {
     // A small phone with the three-button bar: 48 dp at the bottom.
     tester.view.physicalSize = const Size(360, 640);

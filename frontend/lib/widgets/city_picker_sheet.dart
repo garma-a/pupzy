@@ -1,11 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../localization/lang_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/city_search.dart';
 
 /// A search-as-you-type bottom sheet for picking a city from the full
-/// `cities` list — filters by English name, Arabic name, or governorate.
+/// `cities` list. Search tolerates spelling differences and matches names,
+/// alternative spellings, the governorate and a Neighbourhood's district
+/// (see [CitySearchIndex]).
 ///
 /// Shared between the profile's "home city" picker and the feed screens'
 /// "browse a different area" location picker.
@@ -30,35 +35,67 @@ class CityPickerSheet extends StatefulWidget {
 }
 
 class _CityPickerSheetState extends State<CityPickerSheet> {
-  List<Map<String, dynamic>> _filtered = [];
+  /// How long typing must pause before the list is filtered again.
+  static const searchDelay = Duration(milliseconds: 150);
+
+  Timer? _searchTimer;
+  String _query = '';
+
+  // The last search, kept so rebuilds that change nothing don't search again.
+  String? _resultsQuery;
+  bool? _resultsArabic;
+  List<Map<String, dynamic>> _results = const [];
 
   @override
   void initState() {
     super.initState();
-    _filtered = widget.cities;
-    widget.searchController.addListener(_onSearch);
+    _query = widget.searchController.text;
+    widget.searchController.addListener(_onSearchChanged);
   }
 
-  void _onSearch() {
-    final query = widget.searchController.text.toLowerCase().trim();
-    setState(() {
-      if (query.isEmpty) {
-        _filtered = widget.cities;
-      } else {
-        _filtered = widget.cities.where((city) {
-          final en = (city['nameEnglish'] as String).toLowerCase();
-          final ar = city['nameArabic'] as String;
-          final gov = (city['governorate'] as String).toLowerCase();
-          return en.contains(query) || ar.contains(query) || gov.contains(query);
-        }).toList();
-      }
+  @override
+  void didUpdateWidget(covariant CityPickerSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.searchController != widget.searchController) {
+      oldWidget.searchController.removeListener(_onSearchChanged);
+      widget.searchController.addListener(_onSearchChanged);
+      _query = widget.searchController.text;
+    }
+    if (oldWidget.cities != widget.cities) _resultsQuery = null;
+  }
+
+  @override
+  void dispose() {
+    _searchTimer?.cancel();
+    widget.searchController.removeListener(_onSearchChanged);
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    _searchTimer?.cancel();
+    _searchTimer = Timer(searchDelay, () {
+      if (!mounted) return;
+      final query = widget.searchController.text;
+      if (query != _query) setState(() => _query = query);
     });
+  }
+
+  List<Map<String, dynamic>> _resultsFor(bool arabic) {
+    if (_resultsQuery != _query || _resultsArabic != arabic) {
+      _results = CitySearchIndex.of(widget.cities).search(_query, arabic: arabic);
+      _resultsQuery = _query;
+      _resultsArabic = arabic;
+    }
+    return _results;
   }
 
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.of(context).viewInsets.bottom;
-    final lang = context.watch<LangProvider>().lang;
+    final arabic = context.watch<LangProvider>().lang == Lang.ar;
+    final results = _resultsFor(arabic);
+    final hasHeader = widget.onUseCurrentLocation != null;
+    final headerCount = hasHeader ? 1 : 0;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
@@ -69,7 +106,11 @@ class _CityPickerSheetState extends State<CityPickerSheet> {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+          ),
           const SizedBox(height: AppSpacing.lg),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -82,7 +123,7 @@ class _CityPickerSheetState extends State<CityPickerSheet> {
               controller: widget.searchController,
               autofocus: true,
               decoration: InputDecoration(
-                hintText: t(context, 'Search by city, governorate...', 'ابحث بالمدينة أو المحافظة...'),
+                hintText: t(context, 'Search by area, city or governorate...', 'ابحث بالحي أو المدينة أو المحافظة...'),
                 hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 14),
                 prefixIcon: const Icon(Icons.search, color: AppColors.textMuted, size: 20),
                 filled: true,
@@ -105,45 +146,56 @@ class _CityPickerSheetState extends State<CityPickerSheet> {
           ),
           const SizedBox(height: AppSpacing.sm),
           Expanded(
-            child: ListView(
-              padding: EdgeInsets.only(bottom: bottomPad + AppSpacing.lg),
-              children: [
-                if (widget.onUseCurrentLocation != null)
-                  ListTile(
-                    leading: const Icon(Icons.my_location, color: AppColors.primary, size: 20),
+            // The sheet's decoration covers the bottom sheet's Material, which
+            // would hide each row's tap ripple; give the rows their own.
+            child: Material(
+              type: MaterialType.transparency,
+              // Built lazily: only the rows on screen exist, however long the list.
+              child: ListView.builder(
+                padding: EdgeInsets.only(bottom: bottomPad + AppSpacing.lg),
+                itemCount: headerCount + (results.isEmpty ? 1 : results.length),
+                itemBuilder: (context, index) {
+                  if (hasHeader && index == 0) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.my_location, color: AppColors.primary, size: 20),
+                          title: Text(
+                            t(context, 'Use my current location', 'استخدم موقعي الحالي'),
+                            style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
+                          ),
+                          dense: true,
+                          onTap: widget.onUseCurrentLocation,
+                        ),
+                        if (results.isNotEmpty) const Divider(height: 1, color: AppColors.border),
+                      ],
+                    );
+                  }
+                  if (results.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+                      child: Center(
+                        child: Text(t(context, 'No cities found', 'لا توجد مدن'), style: Theme.of(context).textTheme.bodyMedium),
+                      ),
+                    );
+                  }
+                  final city = results[index - headerCount];
+                  return ListTile(
+                    leading: const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 20),
                     title: Text(
-                      t(context, 'Use my current location', 'استخدم موقعي الحالي'),
-                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
+                      (arabic ? city['nameArabic'] : city['nameEnglish']) as String,
+                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                    ),
+                    subtitle: Text(
+                      citySubtitle(city, arabic: arabic),
+                      style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
                     ),
                     dense: true,
-                    onTap: widget.onUseCurrentLocation,
-                  ),
-                if (widget.onUseCurrentLocation != null && _filtered.isNotEmpty) const Divider(height: 1, color: AppColors.border),
-                if (_filtered.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
-                    child: Center(
-                      child: Text(
-                        t(context, 'No cities found', 'لا توجد مدن'),
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ),
-                  )
-                else
-                  ..._filtered.map((city) => ListTile(
-                        leading: const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 20),
-                        title: Text(
-                          lang == Lang.ar ? city['nameArabic'] as String : city['nameEnglish'] as String,
-                          style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
-                        ),
-                        subtitle: Text(
-                          city['governorate'] as String,
-                          style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
-                        ),
-                        dense: true,
-                        onTap: () => widget.onSelected(city),
-                      )),
-              ],
+                    onTap: () => widget.onSelected(city),
+                  );
+                },
+              ),
             ),
           ),
         ],

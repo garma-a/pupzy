@@ -8,6 +8,7 @@ import '../services/browse_location_service.dart';
 import '../services/graphql_service.dart';
 import '../services/notification_center.dart';
 import '../theme/app_theme.dart';
+import '../utils/city_search.dart';
 import 'city_picker_sheet.dart';
 
 class PupzyTopBar extends StatefulWidget {
@@ -171,7 +172,8 @@ class _LocationPillState extends State<_LocationPill> {
     final selected = context.watch<BrowseLocationService>().selectedCity;
     final lang = context.watch<LangProvider>().lang;
     final label = selected != null
-        ? '${lang == Lang.ar ? selected['nameArabic'] : selected['nameEnglish']}, ${selected['governorate']}'
+        ? '${lang == Lang.ar ? selected['nameArabic'] : selected['nameEnglish']}, '
+            '${cityGovernorateName(selected, arabic: lang == Lang.ar)}'
         : t(context, 'Near me', 'بالقرب مني');
 
     return Padding(
