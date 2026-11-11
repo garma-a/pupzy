@@ -4,7 +4,8 @@ import { assertQueryComplexity, queryComplexityPlugin } from './query-complexity
 import type { GqlContext } from '../types/gql-context.type';
 
 const schema = buildSchema(`
-  type Query { feed(first: Int): Connection! me: User! }
+  type Query { feed(first: Int): Connection! me: User! cities: [City!]! }
+  type City { id: ID! nameEnglish: String! nameArabic: String! governorate: String! governorateArabic: String! status: String! aliases: [String!]! district: City }
   type Connection { edges: [Edge!]! }
   type Edge { node: Post! }
   type Post { id: ID! title: String! creator: User! nearestVetClinics: [Clinic!]! }
@@ -27,6 +28,13 @@ describe('query complexity budget', () => {
         {},
       ),
     ).not.toThrow();
+  });
+  it('allows the city picker query and bounds repeated catalog selections', () => {
+    const picker =
+      'cities { id nameEnglish nameArabic governorate governorateArabic status aliases district { id nameEnglish nameArabic } }';
+    expect(() => assertQueryComplexity(schema, parse(`query GetCities { ${picker} }`), {})).not.toThrow();
+    const repeated = Array.from({ length: 6 }, (_, i) => `c${i}: ${picker}`).join(' ');
+    expect(() => assertQueryComplexity(schema, parse(`{ ${repeated} }`), {})).toThrow('complexity limit');
   });
   it('rejects geographic lookup amplification through aliases and fragments', () => {
     const query = parse(

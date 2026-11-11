@@ -23,7 +23,9 @@ export function assertQueryComplexity(
         // Geographic lookups are expensive even when the returned fields are few.
         if (field.name === 'nearestVetClinics') return 200 + 5 * childComplexity;
         if (field.name !== 'edges' && isListType(getNullableType(field.type))) {
-          const count = field.name === 'cities' ? 500 : field.name === 'media' ? 4 : 50;
+          // The City catalog is served from the in-memory cache, so its cost tracks
+          // repeated selections rather than its 3,000+ rows.
+          const count = field.name === 'cities' ? 100 : field.name === 'media' ? 4 : 50;
           return 1 + count * childComplexity;
         }
         return undefined;
