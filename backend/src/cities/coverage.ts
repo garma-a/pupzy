@@ -40,6 +40,19 @@ export interface GridReview {
   reviewed: boolean;
   decisionDate: string;
   floors: Record<CoverageArea, number>;
+  floorDecisions?: Partial<
+    Record<
+      CoverageArea,
+      {
+        reviewed: boolean;
+        approvedBy: string;
+        decisionDate: string;
+        previousFloor: number;
+        floor: number;
+        reason: string;
+      }
+    >
+  >;
   exceptions: GridException[];
 }
 export interface KnownMissingNames {
@@ -433,6 +446,18 @@ export function verifyCoverage(
     const share = rankedSamples.length ? 1 - gaps.length / rankedSamples.length : 0;
     const review = residential.metadata.gridReview;
     const floor = review?.floors?.[area];
+    const floorDecision = review?.floorDecisions?.[area];
+    const calibratedFloor = floorDecision
+      ? floorDecision.reviewed === true &&
+        floorDecision.approvedBy === 'lead' &&
+        /^\d{4}-\d{2}-\d{2}$/.test(floorDecision.decisionDate) &&
+        Number.isFinite(floorDecision.previousFloor) &&
+        floorDecision.previousFloor >= 0 &&
+        floorDecision.previousFloor <= 1 &&
+        floorDecision.floor === floor &&
+        typeof floorDecision.reason === 'string' &&
+        floorDecision.reason.trim().length > 0
+      : typeof floor === 'number' && Math.abs(floor * 200 - Math.round(floor * 200)) < 1e-8;
     const uncoveredFeatures = measured
       .filter((m) => m.gaps.length)
       .map(({ feature, gaps: featureGaps }) => ({
@@ -520,7 +545,7 @@ export function verifyCoverage(
           typeof floor === 'number' &&
           floor >= 0 &&
           floor <= 1 &&
-          Math.abs(floor * 200 - Math.round(floor * 200)) < 1e-8 &&
+          calibratedFloor &&
           share + 1e-12 >= floor &&
           unreviewedFeatures.length === 0,
         samples: rankedSamples.length,

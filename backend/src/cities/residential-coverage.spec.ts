@@ -94,6 +94,28 @@ describe('Reviewed residential coverage policy', () => {
     expect(report().grid.passed).toBe(false);
     expect(report([city], reviewedException()).grid.passed).toBe(true);
   });
+  it('requires a dated lead decision for an amended floor and rejects a stale approval', () => {
+    const review = reviewedException();
+    review.floors['greater-cairo'] = 0.968;
+    expect(report([city], review).grid.passed).toBe(false);
+    review.floorDecisions = {
+      'greater-cairo': {
+        reviewed: true,
+        approvedBy: 'lead',
+        decisionDate: '2026-11-11',
+        previousFloor: 0.97,
+        floor: 0.968,
+        reason: 'Lead reviewed the remaining unnamed blocks after synthetic references were removed.',
+      },
+    };
+    expect(report([city], review).grid.passed).toBe(true);
+    expect(report([outside], review).grid.passed).toBe(false);
+    review.floors['greater-cairo'] = 0.965;
+    expect(report([city], review).grid.passed).toBe(false);
+    review.floors['greater-cairo'] = 0.968;
+    review.floorDecisions['greater-cairo']!.reason = '';
+    expect(report([city], review).grid.passed).toBe(false);
+  });
   it('requires a complete matching exception and individual research beyond 4 km', () => {
     const review = reviewedException();
     expect(report([outside], review).grid.passed).toBe(true);

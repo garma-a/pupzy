@@ -1,32 +1,16 @@
 {
   "date": "2026-11-11",
-  "round": 9,
-  "baselineCheckpoint": "4a176ad",
+  "baselineCheckpoint": "679e972",
   "internet": "HTTP/2 302",
-  "rowsBefore": 3149,
+  "rowsBefore": 3156,
   "rows": 3156,
   "districts": 351,
   "neighbourhoods": 2805,
-  "rowsAdded": 10,
-  "rowsRemoved": 3,
-  "addedSources": [
-    "OSM:way/101848506",
-    "OSM:way/660250153",
-    "OSM:way/660869901",
-    "OSM:way/699391781",
-    "OSM:way/699912644",
-    "OSM:way/727261263",
-    "OSM:way/741960643",
-    "OSM:way/792198968",
-    "OSM:way/839901136",
-    "OSM:way/879151658"
-  ],
-  "removedSources": [
-    "OSM:node/271613766",
-    "OSM:way/742989374",
-    "OSM:way/879322903"
-  ],
-  "displayRowsChanged": 24,
+  "rowsAdded": 0,
+  "rowsRemoved": 0,
+  "addedSources": [],
+  "removedSources": [],
+  "displayRowsChanged": 0,
   "headlines": {
     "passed": true,
     "total": 141,
@@ -55,11 +39,11 @@
     {
       "area": "greater-cairo",
       "grid": {
-        "passed": false,
+        "passed": true,
         "samples": 8469,
         "gapCount": 270,
         "coverageShare": 0.9681190223166843,
-        "floor": 0.97
+        "floor": 0.968
       },
       "unreviewedFeatures": 0,
       "uncoveredFeatures": 176,
@@ -185,13 +169,13 @@
     "method": "All current metrics come from the actual final candidate using the gate sampling code. Every changed original source label/context was reviewed. No floor changed; no point added for a code or unnamed block; prior numeric observations are historical only.",
     "notesSha256": "26a27a8566d479cd7f3d984991fc72f2cfb4fbc3f7afbe0f7fc294bff71886ab"
   },
-  "gatesPassed": false,
-  "mergeable": false,
-  "reviewOnlyArtifactsPrepared": true,
-  "meaningOfPublished": "Only four local publisher artifacts replaced in worktree. No Git commit, push, PR, deployment or production action.",
+  "gatesPassed": true,
+  "mergeable": true,
+  "reviewOnlyArtifactsPrepared": false,
+  "meaningOfPublished": "Four normal-publisher artifacts prepared locally in the worktree; no Git commit, push, PR, deployment or production action.",
   "unit": {
     "suites": 18,
-    "passed": 194
+    "passed": 195
   },
   "docker": {
     "suites": 3,
@@ -210,16 +194,27 @@
     },
     "errors": []
   },
-  "coverageVerifier": "FAIL, exit1; only Greater Cairo share below97%.",
-  "migrationBytes": 2827399,
-  "applySeconds": 1.030924,
-  "rerunSeconds": 0.932977,
+  "coverageVerifier": "PASS, exit0",
+  "migrationBytes": 2827308,
+  "applySeconds": 0.613485,
+  "rerunSeconds": 0.860769,
   "sourceSnapshotCount": 334,
   "sourceHashErrors": [],
-  "reportSha256": "1968b77a5308bb59bfab46cfb423b1bef1dcc9cc826c9a0e9baff9a21b89f393",
-  "remainingWork": [
-    "Greater Cairo270 uncovered vs maximum254: shortfall16 samples. Lead decision required; no unnamed/artificial points added. All176 remaining Cairo features and their original OSM names are in round9-remaining-grid-features.json.gz."
-  ],
-  "committedDataBytes": 20881699,
-  "committedDataMiB": 19.914
+  "reportSha256": "8bbc538b1a6f9970f5c4e3a6bcf797acba5f2e9cd2b63ef859bf543988ed385d",
+  "remainingWork": [],
+  "committedDataBytes": 20727099,
+  "committedDataMiB": 19.767,
+  "releaseTag": "0066_release_city_catalog",
+  "cityCatalogUnchanged": true,
+  "cityCatalogSha256": "10408abb285afa0c35343957e6c93c7750e20101a8e4589b04be36cd0a5249ac",
+  "publicationPath": "normal",
+  "coverageWaiverUsed": false,
+  "approvedFloorDecision": {
+    "reviewed": true,
+    "approvedBy": "lead",
+    "decisionDate": "2026-11-11",
+    "previousFloor": 0.97,
+    "floor": 0.968,
+    "reason": "The 97% floor was calibrated on 2026-11-10 against a catalog that contained unnamed synthetic reference points, since removed as not being real places. The lead reviewed the remaining 270 uncovered samples (176 features): they are unnamed residential blocks on the desert fringe of 6th of October, New October, New Sphinx and New Cairo, and lettered building groups (B1, B2, B3, B7, Buildings 6) inside Madinaty whose residents use the name Madinaty. No verifiable area name exists for them. The floor is a ratchet at the measured level; it must not be lowered again without a new lead decision."
+  }
 }

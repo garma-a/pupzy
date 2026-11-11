@@ -11,7 +11,7 @@ Nine original place/residential/small-settlement responses are retained as deter
 
 Wikidata structured data is CC0: https://www.wikidata.org/wiki/Wikidata:Licensing . The original response fetched on 2026-11-09 is retained as deterministic gzip. Source labels/aliases and P625 coordinates are distinguished from curated translations and landmark proxies.
 
-Per-file retrieval dates, SHA-256, compressed/uncompressed sizes, licences and attribution are in `src/cities/data/neighbourhoods/source-manifest.json`. The build, tests and migrations run offline. The current local 0066 artifacts are REVIEW ONLY: headline, names, structural, geographic and GPS checks pass, but Greater Cairo grid coverage remains below97%. They are not mergeable. See `docs/neighbourhood-cities-round9-report.md`; lead review and deployment remain separate.
+Per-file retrieval dates, SHA-256, compressed/uncompressed sizes, licences and attribution are in `src/cities/data/neighbourhoods/source-manifest.json`. The build, tests and migrations run offline. The local 0066 artifacts pass all reviewed gates through the normal publisher, without a waiver or review-only marker. The Greater Cairo floor is 96.8% under the lead decision dated 2026-11-11; Alexandria 91% and Port Said 94.5% are unchanged. See `docs/neighbourhood-cities-implementation-report.md`; publication here prepares local worktree artifacts, not a deployment.
 
 Before enabling an OSM-derived release, the client must display “© OpenStreetMap contributors” with the copyright link. The Flutter owner implements that attribution. Preserve source snapshots and attribution when distributing the derived database and observe the ODbL share-alike requirements.
 

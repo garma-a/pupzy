@@ -4909,21 +4909,27 @@
       "path": "src/cities/data/neighbourhoods/round9-decision-delta.json.gz",
       "sha256": "7a0c705e7af06ca33f98420eac26acb9279f59e90aa43df87850a87e0e6444ee",
       "method": "Derived reviewed source/decision or measured coverage audit, not a fetched response."
+    },
+    "residential-grid-review": {
+      "path": "src/cities/data/neighbourhoods/residential-grid-review.json",
+      "sha256": "b959fc3a4793a1b39ddb768f701b5ddfbc03757c351664c77b63183cfedd3080",
+      "method": "Reviewed coverage/exception metadata; Greater Cairo floor amended by explicit lead decision dated2026-11-11. Individual exception notes and measurements unchanged."
     }
   },
   "finalReview": {
     "date": "2026-11-11",
-    "round": 9,
     "releaseTag": "0066_release_city_catalog",
     "officialCities": 3156,
-    "status": "LOCAL REVIEW ONLY / NOT MERGEABLE: Greater Cairo270 uncovered, maximum254 at unchanged97% floor; no other gate failure.",
+    "status": "PASS / MERGEABLE; normal publisher, no coverage waiver or review-only marker.",
     "rawSnapshotHashCheck": "334/334 compressed and all declared raw hashes verified",
-    "fetchPolicy": "Nominatim API requests serial with descriptive User-Agent and at least1.1seconds after each completion. Every response/error cached. Build/tests/migration offline.",
-    "rights": "ITDA address evidence is recorded as indexed excerpts with original publisher rights, not full fetched PDFs. Original rights/HTTP status retained per response.",
-    "reviewReport": "review-only-publication.json",
+    "cityDataChange": "None: catalog bytes, source snapshots, geometry, points and individual exception notes identical to lead checkpoint679e972.",
+    "floorDecision": "residential-grid-review.json#floorDecisions.greater-cairo",
+    "reviewReport": "release-gate-status.json",
     "catalogAudit": "round9-catalog-review.json.gz",
     "gridAudit": "round9-grid-remeasurement.json.gz",
     "remainingFeatures": "round9-remaining-grid-features.json.gz",
-    "knownMissingEntries": 14
+    "knownMissingEntries": 14,
+    "fetchPolicy": "No new fetches. Existing serial Nominatim research responses retain URLs, timestamps, rights and hashes; build/tests/migration stay offline.",
+    "rights": "Original publisher rights retained; indexed excerpts and HTTP failures are distinct from complete fetched sources."
   }
 }

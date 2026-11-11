@@ -1,4 +1,3 @@
--- REVIEW ONLY: recorded grid/name shortfalls remain. Not mergeable; lead review required.
 --
 -- Migration: 0066_release_city_catalog.sql
 -- Release upgrade data migration to authoritative 3156-City catalog (27 governorates).

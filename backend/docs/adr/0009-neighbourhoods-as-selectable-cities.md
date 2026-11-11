@@ -1,6 +1,6 @@
 # Neighbourhoods as selectable Cities
 
-Status: accepted; local release prepared, lead Docker verification pending
+Status: accepted; local release verified through the normal publisher
 
 The ADM2-only catalog from ADR 0002 gives Greater Cairo, Alexandria and Port Said too few selectable places: clients and their users could not find the areas they live in (Smouha, Rehab, Mohandessin and similar), because those are commonly used names rather than official districts. We therefore add Neighbourhoods as Cities in their own right, each linked to exactly one official ADM2 district, sourced from OpenStreetMap with Wikidata filling missing Arabic or English names, with decisions reviewed under the source/rule audit below. Each City may also carry alternative spellings so that search finds it under common transliterations.
 
@@ -41,3 +41,9 @@ Greater Cairo and Alexandria retain at least 150 independent names each. Port Sa
 Lead amendment dated 2026-11-10, implemented 2026-11-11: retain 30 independent GPS fixtures per area and require at least 29 correct nearest-City assignments. Each failure must exactly match individually reviewed committed evidence; Q138196168 remains a rural fish-farm landmark with no named locality, nearest EG0308 about 2.0 km versus its own EG0306 about 2.1 km. Other failures require their own exact review, and a second failure fails the area. Reviewed fixture identities are frozen so source additions cannot silently replace failures.
 
 Arabic and English display names identify resident areas, with original district P-codes, source names and coordinates preserved. Arabic is unique within each governorate and uses the same sourced qualifiers as English. Bare ordinal administrative units and nonresidential premises are excluded; same-place source duplicates merge aliases. A pinned district-only seed prevents published aliases from feeding back into later source identity decisions. All source snapshots and review signatures remain required for offline rebuilding.
+
+## Lead grid-floor amendment, 2026-11-11
+
+Greater Cairo now has a 96.8% coverage floor, superseding its 97% calibration and the earlier 0.5% rounding rule for that area. Alexandria remains 91%; Port Said region remains 94.5%. Every uncovered feature still requires its individual reviewed note; sampling, names, GPS and data-quality rules are unchanged.
+
+> The 97% floor was calibrated on 2026-11-10 against a catalog that contained unnamed synthetic reference points, since removed as not being real places. The lead reviewed the remaining 270 uncovered samples (176 features): they are unnamed residential blocks on the desert fringe of 6th of October, New October, New Sphinx and New Cairo, and lettered building groups (B1, B2, B3, B7, Buildings 6) inside Madinaty whose residents use the name Madinaty. No verifiable area name exists for them. The floor is a ratchet at the measured level; it must not be lowered again without a new lead decision.
