@@ -1,0 +1,765 @@
+{
+  "metadata": {
+    "reviewed": true,
+    "reviewDate": "2026-11-11",
+    "method": "Explicit source-label resident-name review plus restricted orthography dictionary; no coordinates, UUIDs or source codes changed. Raw source labels remain sourceName fields and aliases. Sole-child ordinal exception applied by district child count."
+  },
+  "coveredDistrictSourceCodes": [
+    "EG0101",
+    "EG0102",
+    "EG0103",
+    "EG0104",
+    "EG0105",
+    "EG0106",
+    "EG0107",
+    "EG0108",
+    "EG0109",
+    "EG0110",
+    "EG0111",
+    "EG0112",
+    "EG0113",
+    "EG0114",
+    "EG0115",
+    "EG0116",
+    "EG0117",
+    "EG0118",
+    "EG0119",
+    "EG0120",
+    "EG0121",
+    "EG0122",
+    "EG0123",
+    "EG0124",
+    "EG0125",
+    "EG0126",
+    "EG0127",
+    "EG0128",
+    "EG0129",
+    "EG0130",
+    "EG0131",
+    "EG0132",
+    "EG0133",
+    "EG0134",
+    "EG0135",
+    "EG0136",
+    "EG0137",
+    "EG0138",
+    "EG0139",
+    "EG0140",
+    "EG0141",
+    "EG0201",
+    "EG0202",
+    "EG0203",
+    "EG0204",
+    "EG0205",
+    "EG0206",
+    "EG0207",
+    "EG0208",
+    "EG0209",
+    "EG0210",
+    "EG0211",
+    "EG0212",
+    "EG0213",
+    "EG0214",
+    "EG0215",
+    "EG0216",
+    "EG0217",
+    "EG0218",
+    "EG0301",
+    "EG0302",
+    "EG0303",
+    "EG0304",
+    "EG0305",
+    "EG0306",
+    "EG0307",
+    "EG0308",
+    "EG0309",
+    "EG0310",
+    "EG0311",
+    "EG0312",
+    "EG1101",
+    "EG1102",
+    "EG1104",
+    "EG1105",
+    "EG1106",
+    "EG1108",
+    "EG1109",
+    "EG1309",
+    "EG1321",
+    "EG1403",
+    "EG1406",
+    "EG1407",
+    "EG1409",
+    "EG1410",
+    "EG1412",
+    "EG1413",
+    "EG1811",
+    "EG1812",
+    "EG1901",
+    "EG1902",
+    "EG1903",
+    "EG1904",
+    "EG1906",
+    "EG2101",
+    "EG2102",
+    "EG2103",
+    "EG2104",
+    "EG2105",
+    "EG2106",
+    "EG2107",
+    "EG2108",
+    "EG2109",
+    "EG2113",
+    "EG2116",
+    "EG2117",
+    "EG2118",
+    "EG2119",
+    "EG2120",
+    "EG2121",
+    "EG3302",
+    "EG3307",
+    "EG3308"
+  ],
+  "counts": {
+    "district-resident-arabic": 113,
+    "adm3-primary-resident-name": 43,
+    "adm3-ordinal-administrative-label": 22,
+    "arabic-standard-orthography": 1079,
+    "english-source-type-spelling": 1,
+    "source-primary-resident-name": 15,
+    "numbered-district-city-context": 6,
+    "institutional-prefix-retained": 131,
+    "generic-place-type-prefix-removed": 818,
+    "prefix-retained-for-uniqueness": 224,
+    "adm3-primary-district-identity": 5,
+    "adm3-primary-existing-locality": 7,
+    "institutional-housing-qualified": 131,
+    "arabic-mirrors-english-context": 250,
+    "arabic-governorate-uniqueness": 133
+  },
+  "exclusions": [
+    {
+      "sourceCode": "PUPZY:adm3-eg210701",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "الشياخة الاولى",
+      "nameEnglish": "First Quarter",
+      "districtSourceCode": "EG2107",
+      "otherNamedNeighbourhoods": 145
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg010301",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "الشياخة الأولى",
+      "nameEnglish": "First Quarter",
+      "districtSourceCode": "EG0103",
+      "otherNamedNeighbourhoods": 6
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg210706",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "الشياخة التاسعة",
+      "nameEnglish": "Ninth Quarter",
+      "districtSourceCode": "EG2107",
+      "otherNamedNeighbourhoods": 145
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg210703",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "الشياخة الثالثة",
+      "nameEnglish": "Third Quarter",
+      "districtSourceCode": "EG2107",
+      "otherNamedNeighbourhoods": 145
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg010303",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "الشياخة الثالثة و تشمل المجاورات من 2 إلى 52",
+      "nameEnglish": "Third Quarter",
+      "districtSourceCode": "EG0103",
+      "otherNamedNeighbourhoods": 6
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg210705",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "الشياخة الثامنة",
+      "nameEnglish": "Eighth Quarter",
+      "districtSourceCode": "EG2107",
+      "otherNamedNeighbourhoods": 145
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg210702",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "الشياخة الثانية",
+      "nameEnglish": "Second Quarter",
+      "districtSourceCode": "EG2107",
+      "otherNamedNeighbourhoods": 145
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg212106",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "الشياخة الثانية عشر",
+      "nameEnglish": "Twelfth Quarter",
+      "districtSourceCode": "EG2121",
+      "otherNamedNeighbourhoods": 85
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg010302",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "الشياخة الثانية و تشمل المجاورات من 7 إلى 21",
+      "nameEnglish": "Second Quarter",
+      "districtSourceCode": "EG0103",
+      "otherNamedNeighbourhoods": 6
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg212105",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "الشياخة الحادية عشر",
+      "nameEnglish": "Eleventh Quarter",
+      "districtSourceCode": "EG2121",
+      "otherNamedNeighbourhoods": 85
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg212102",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "الشياخة الخامسة",
+      "nameEnglish": "Fifth Quarter",
+      "districtSourceCode": "EG2121",
+      "otherNamedNeighbourhoods": 85
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg212101",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "الشياخة الرابعة",
+      "nameEnglish": "Fourth Quarter",
+      "districtSourceCode": "EG2121",
+      "otherNamedNeighbourhoods": 85
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg210704",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "الشياخة السابعة",
+      "nameEnglish": "Seventh Quarter",
+      "districtSourceCode": "EG2107",
+      "otherNamedNeighbourhoods": 145
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg212103",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "الشياخة السادسة",
+      "nameEnglish": "Sixth Quarter",
+      "districtSourceCode": "EG2121",
+      "otherNamedNeighbourhoods": 85
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg212104",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "الشياخة العاشرة",
+      "nameEnglish": "Tenth Quarter",
+      "districtSourceCode": "EG2121",
+      "otherNamedNeighbourhoods": 85
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg014001",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "شياخة الشروق 1",
+      "nameEnglish": "Shorouk First",
+      "districtSourceCode": "EG0140",
+      "otherNamedNeighbourhoods": 56
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg014002",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "شياخة الشروق 2",
+      "nameEnglish": "Shorouk Second",
+      "districtSourceCode": "EG0140",
+      "otherNamedNeighbourhoods": 56
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg014101",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "شياخة بدر 1",
+      "nameEnglish": "Badr First",
+      "districtSourceCode": "EG0141",
+      "otherNamedNeighbourhoods": 62
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg110101",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "شياخه قسم اول",
+      "nameEnglish": "First Quarter",
+      "districtSourceCode": "EG1101",
+      "otherNamedNeighbourhoods": 1
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg110901",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "شياخه قسم ثالث",
+      "nameEnglish": "Third Quarter",
+      "districtSourceCode": "EG1109",
+      "otherNamedNeighbourhoods": 2
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg110102",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "شياخه قسم ثان",
+      "nameEnglish": "Second Quarter",
+      "districtSourceCode": "EG1101",
+      "otherNamedNeighbourhoods": 1
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg110902",
+      "rule": "adm3-ordinal-administrative-label",
+      "nameArabic": "شياخه قسم رابع",
+      "nameEnglish": "Fourth Quarter",
+      "districtSourceCode": "EG1109",
+      "otherNamedNeighbourhoods": 2
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg020901",
+      "rule": "adm3-primary-district-identity",
+      "mergeInto": "EG0209",
+      "nameArabic": "اللبان",
+      "nameEnglish": "El Labban"
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg031001",
+      "rule": "adm3-primary-district-identity",
+      "mergeInto": "EG0310",
+      "nameArabic": "المناصرة",
+      "nameEnglish": "El Manasra"
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg020405",
+      "rule": "adm3-primary-district-identity",
+      "mergeInto": "EG0204",
+      "nameArabic": "باب شرقي",
+      "nameEnglish": "Bab Sharqi"
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg330201",
+      "rule": "adm3-primary-district-identity",
+      "mergeInto": "EG3302",
+      "nameArabic": "الحمام",
+      "nameEnglish": "Al Hammam"
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg211701",
+      "rule": "adm3-primary-district-identity",
+      "mergeInto": "EG2117",
+      "nameArabic": "الوراق",
+      "nameEnglish": "Warraq"
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg020902",
+      "rule": "adm3-primary-existing-locality",
+      "mergeInto": "OSM:way/744290199"
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg021403",
+      "rule": "adm3-primary-existing-locality",
+      "mergeInto": "OSM:way/751939447"
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg012701",
+      "rule": "adm3-primary-existing-locality",
+      "mergeInto": "OSM:way/31820671"
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg012702",
+      "rule": "adm3-primary-existing-locality",
+      "mergeInto": "OSM:way/108125747"
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg021702",
+      "rule": "adm3-primary-existing-locality",
+      "mergeInto": "OSM:way/746977489"
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg021410",
+      "rule": "adm3-primary-existing-locality",
+      "mergeInto": "OSM:way/749825814"
+    },
+    {
+      "sourceCode": "PUPZY:adm3-eg021706",
+      "rule": "adm3-primary-existing-locality",
+      "mergeInto": "OSM:way/745291451"
+    }
+  ],
+  "conflicts": [],
+  "remainingArabicCollisions": [],
+  "examples": {
+    "districts": [
+      {
+        "sourceCode": "EG0209",
+        "rule": "district-resident-arabic",
+        "beforeArabic": "قسم اللبان",
+        "afterArabic": "اللبان",
+        "beforeEnglish": "Labban",
+        "afterEnglish": "Labban",
+        "notes": "Resident name; official OCHA string remains sourceNameArabic and an alias. Kind/ordinal disambiguation matches the official district identity."
+      },
+      {
+        "sourceCode": "EG0213",
+        "rule": "district-resident-arabic",
+        "beforeArabic": "قسم العامرية",
+        "afterArabic": "العامرية",
+        "beforeEnglish": "Amreya",
+        "afterEnglish": "Amreya",
+        "notes": "Resident name; official OCHA string remains sourceNameArabic and an alias. Kind/ordinal disambiguation matches the official district identity."
+      },
+      {
+        "sourceCode": "EG0206",
+        "rule": "district-resident-arabic",
+        "beforeArabic": "قسم العطارين",
+        "afterArabic": "العطارين",
+        "beforeEnglish": "Attarin",
+        "afterEnglish": "Attarin",
+        "notes": "Resident name; official OCHA string remains sourceNameArabic and an alias. Kind/ordinal disambiguation matches the official district identity."
+      },
+      {
+        "sourceCode": "EG0212",
+        "rule": "district-resident-arabic",
+        "beforeArabic": "قسم الدخيلة",
+        "afterArabic": "الدخيلة",
+        "beforeEnglish": "Dekheila",
+        "afterEnglish": "Dekheila",
+        "notes": "Resident name; official OCHA string remains sourceNameArabic and an alias. Kind/ordinal disambiguation matches the official district identity."
+      },
+      {
+        "sourceCode": "EG0210",
+        "rule": "district-resident-arabic",
+        "beforeArabic": "قسم الجمرك",
+        "afterArabic": "الجمرك",
+        "beforeEnglish": "Gomrok",
+        "afterEnglish": "Gomrok",
+        "notes": "Resident name; official OCHA string remains sourceNameArabic and an alias. Kind/ordinal disambiguation matches the official district identity."
+      },
+      {
+        "sourceCode": "EG0207",
+        "rule": "district-resident-arabic",
+        "beforeArabic": "قسم المنشية",
+        "afterArabic": "المنشية",
+        "beforeEnglish": "Mansheya",
+        "afterEnglish": "Mansheya",
+        "notes": "Resident name; official OCHA string remains sourceNameArabic and an alias. Kind/ordinal disambiguation matches the official district identity."
+      },
+      {
+        "sourceCode": "EG0202",
+        "rule": "district-resident-arabic",
+        "beforeArabic": "قسم أول الرمل",
+        "afterArabic": "الرمل أول",
+        "beforeEnglish": "Raml First",
+        "afterEnglish": "Raml First",
+        "notes": "Resident name; official OCHA string remains sourceNameArabic and an alias. Kind/ordinal disambiguation matches the official district identity."
+      },
+      {
+        "sourceCode": "EG0204",
+        "rule": "district-resident-arabic",
+        "beforeArabic": "قسم باب شرقى",
+        "afterArabic": "باب شرقي",
+        "beforeEnglish": "Bab Sharqi",
+        "afterEnglish": "Bab Sharqi",
+        "notes": "Resident name; official OCHA string remains sourceNameArabic and an alias. Kind/ordinal disambiguation matches the official district identity."
+      },
+      {
+        "sourceCode": "EG0216",
+        "rule": "district-resident-arabic",
+        "beforeArabic": "مدينه برج العرب الجديده",
+        "afterArabic": "برج العرب الجديدة",
+        "beforeEnglish": "New Borg El Arab",
+        "afterEnglish": "New Borg El Arab",
+        "notes": "Resident name; official OCHA string remains sourceNameArabic and an alias. Kind/ordinal disambiguation matches the official district identity."
+      },
+      {
+        "sourceCode": "EG0214",
+        "rule": "district-resident-arabic",
+        "beforeArabic": "قسم برج العرب",
+        "afterArabic": "برج العرب",
+        "beforeEnglish": "Borg El Arab",
+        "afterEnglish": "Borg El Arab",
+        "notes": "Resident name; official OCHA string remains sourceNameArabic and an alias. Kind/ordinal disambiguation matches the official district identity."
+      }
+    ],
+    "prefixes": [
+      {
+        "sourceCode": "OSM:node/670235344",
+        "rule": "generic-place-type-prefix-removed",
+        "beforeArabic": "حي الأشجار — السادس من أكتوبر",
+        "afterArabic": "الأشجار — السادس من أكتوبر",
+        "beforeEnglish": "Al-Ashgar Suburb (October)",
+        "afterEnglish": "Al-Ashgar Suburb (October)",
+        "notes": "OSM feature-type prefix/suffix removed in both languages only where the proposed resident name remains unique in the governorate; source label remains alias."
+      },
+      {
+        "sourceCode": "OSM:node/769126854",
+        "rule": "generic-place-type-prefix-removed",
+        "beforeArabic": "قرية التنمية",
+        "afterArabic": "التنمية",
+        "beforeEnglish": "Qaryat al Tanmiyah",
+        "afterEnglish": "al Tanmiyah",
+        "notes": "OSM feature-type prefix/suffix removed in both languages only where the proposed resident name remains unique in the governorate; source label remains alias."
+      },
+      {
+        "sourceCode": "OSM:node/1139576842",
+        "rule": "generic-place-type-prefix-removed",
+        "beforeArabic": "حي الفردوس — السادس من أكتوبر",
+        "afterArabic": "الفردوس — السادس من أكتوبر",
+        "beforeEnglish": "Al Fardous City (October)",
+        "afterEnglish": "Al Fardous (October)",
+        "notes": "OSM feature-type prefix/suffix removed in both languages only where the proposed resident name remains unique in the governorate; source label remains alias."
+      },
+      {
+        "sourceCode": "OSM:node/1160384330",
+        "rule": "generic-place-type-prefix-removed",
+        "beforeArabic": "كمبوند زايد 2000",
+        "afterArabic": "زايد 2000",
+        "beforeEnglish": "Zayed 2000 Compound",
+        "afterEnglish": "Zayed 2000",
+        "notes": "OSM feature-type prefix/suffix removed in both languages only where the proposed resident name remains unique in the governorate; source label remains alias."
+      },
+      {
+        "sourceCode": "OSM:node/1160384387",
+        "rule": "generic-place-type-prefix-removed",
+        "beforeArabic": "كومباوند الندى",
+        "afterArabic": "الندى",
+        "beforeEnglish": "El Nada Compound",
+        "afterEnglish": "El Nada",
+        "notes": "OSM feature-type prefix/suffix removed in both languages only where the proposed resident name remains unique in the governorate; source label remains alias."
+      },
+      {
+        "sourceCode": "OSM:node/2587409532",
+        "rule": "generic-place-type-prefix-removed",
+        "beforeArabic": "كمبوند القطامية هايتس",
+        "afterArabic": "القطامية هايتس",
+        "beforeEnglish": "Katameya Heights Compound",
+        "afterEnglish": "Katameya Heights",
+        "notes": "OSM feature-type prefix/suffix removed in both languages only where the proposed resident name remains unique in the governorate; source label remains alias."
+      },
+      {
+        "sourceCode": "OSM:node/2595126521",
+        "rule": "generic-place-type-prefix-removed",
+        "beforeArabic": "حي الشويفات — القاهرة الجديدة",
+        "afterArabic": "الشويفات — القاهرة الجديدة",
+        "beforeEnglish": "El Showeifat District (New Cairo)",
+        "afterEnglish": "El Showeifat (New Cairo)",
+        "notes": "OSM feature-type prefix/suffix removed in both languages only where the proposed resident name remains unique in the governorate; source label remains alias."
+      },
+      {
+        "sourceCode": "OSM:node/2627439013",
+        "rule": "generic-place-type-prefix-removed",
+        "beforeArabic": "كومباوند قطامية ديونز",
+        "afterArabic": "قطامية ديونز",
+        "beforeEnglish": "Kattameya Dunes Compound",
+        "afterEnglish": "Kattameya Dunes",
+        "notes": "OSM feature-type prefix/suffix removed in both languages only where the proposed resident name remains unique in the governorate; source label remains alias."
+      },
+      {
+        "sourceCode": "OSM:node/2726665542",
+        "rule": "generic-place-type-prefix-removed",
+        "beforeArabic": "المركزية",
+        "afterArabic": "المركزية",
+        "beforeEnglish": "Central Village",
+        "afterEnglish": "Central",
+        "notes": "OSM feature-type prefix/suffix removed in both languages only where the proposed resident name remains unique in the governorate; source label remains alias."
+      },
+      {
+        "sourceCode": "OSM:node/2953957579",
+        "rule": "generic-place-type-prefix-removed",
+        "beforeArabic": "منطقة أبو رواش الصناعية",
+        "afterArabic": "أبو رواش الصناعية",
+        "beforeEnglish": "Abu Rawash Industerial Zone",
+        "afterEnglish": "Abu Rawash Industerial Zone",
+        "notes": "OSM feature-type prefix/suffix removed in both languages only where the proposed resident name remains unique in the governorate; source label remains alias."
+      }
+    ],
+    "adm3": [
+      {
+        "sourceCode": "PUPZY:adm3-eg210501",
+        "rule": "adm3-primary-resident-name",
+        "beforeArabic": "أبو قتادة و تشمل نوفل الجديدة ونوفل القديمة",
+        "afterArabic": "أبو قتادة",
+        "beforeEnglish": "Abu Qatada and New and Old Nofal",
+        "afterEnglish": "Abu Qatada",
+        "notes": "Primary locality named in the OCHA label; combined-unit centre unchanged; other source components retained only as aliases, with no split points."
+      },
+      {
+        "sourceCode": "PUPZY:adm3-eg020507",
+        "rule": "adm3-primary-resident-name",
+        "beforeArabic": "ابيس 7_8_9_10",
+        "afterArabic": "أبيس",
+        "beforeEnglish": "Abis 7 / 8 / 9 / 10",
+        "afterEnglish": "Abis",
+        "notes": "Primary locality named in the OCHA label; combined-unit centre unchanged; other source components retained only as aliases, with no split points."
+      },
+      {
+        "sourceCode": "PUPZY:adm3-eg021701",
+        "rule": "adm3-primary-resident-name",
+        "beforeArabic": "أبيس وخورشيد",
+        "afterArabic": "أبيس",
+        "beforeEnglish": "Abis and Khorshid",
+        "afterEnglish": "Abis",
+        "notes": "Primary locality named in the OCHA label; combined-unit centre unchanged; other source components retained only as aliases, with no split points."
+      },
+      {
+        "sourceCode": "PUPZY:adm3-eg013803",
+        "rule": "adm3-primary-resident-name",
+        "beforeArabic": "اكاديميه الشرطه و الميراج",
+        "afterArabic": "الميراج",
+        "beforeEnglish": "Police Academy and Mirage",
+        "afterEnglish": "Mirage",
+        "notes": "Primary locality named in the OCHA label; combined-unit centre unchanged; other source components retained only as aliases, with no split points."
+      },
+      {
+        "sourceCode": "PUPZY:adm3-eg020502",
+        "rule": "adm3-primary-resident-name",
+        "beforeArabic": "البابالجديدومنشا",
+        "afterArabic": "الباب الجديد",
+        "beforeEnglish": "El Bab El Gedid and Manshaa",
+        "afterEnglish": "El Bab El Gedid",
+        "notes": "Primary locality named in the OCHA label; combined-unit centre unchanged; other source components retained only as aliases, with no split points."
+      },
+      {
+        "sourceCode": "PUPZY:adm3-eg110202",
+        "rule": "adm3-primary-resident-name",
+        "beforeArabic": "البستانوكفرطبيخة",
+        "afterArabic": "البستان",
+        "beforeEnglish": "El Bostan and Kafr Tabikha",
+        "afterEnglish": "El Bostan",
+        "notes": "Primary locality named in the OCHA label; combined-unit centre unchanged; other source components retained only as aliases, with no split points."
+      },
+      {
+        "sourceCode": "PUPZY:adm3-eg021101",
+        "rule": "adm3-primary-resident-name",
+        "beforeArabic": "البورصةوكفرعشري",
+        "afterArabic": "البورصة",
+        "beforeEnglish": "El Borsa and Kafr Ashry",
+        "afterEnglish": "El Borsa",
+        "notes": "Primary locality named in the OCHA label; combined-unit centre unchanged; other source components retained only as aliases, with no split points."
+      },
+      {
+        "sourceCode": "PUPZY:adm3-eg013704",
+        "rule": "adm3-primary-resident-name",
+        "beforeArabic": "الجامعه الامريكيه و روضه",
+        "afterArabic": "الروضة",
+        "beforeEnglish": "American University and Rawda",
+        "afterEnglish": "El Rawda",
+        "notes": "Primary locality named in the OCHA label; combined-unit centre unchanged; other source components retained only as aliases, with no split points."
+      },
+      {
+        "sourceCode": "PUPZY:adm3-eg020901",
+        "rule": "adm3-primary-resident-name",
+        "beforeArabic": "الجدد و اللبان - الورشه",
+        "afterArabic": "اللبان",
+        "beforeEnglish": "El Gedd and El Labban El Warsha",
+        "afterEnglish": "El Labban",
+        "notes": "Primary locality named in the OCHA label; combined-unit centre unchanged; other source components retained only as aliases, with no split points."
+      },
+      {
+        "sourceCode": "PUPZY:adm3-eg020902",
+        "rule": "adm3-primary-resident-name",
+        "beforeArabic": "الجنينةالصغيرةوكومبكير",
+        "afterArabic": "الجنينة الصغيرة",
+        "beforeEnglish": "Al Genina Al Saghira And Kom Baker (Labban, near Meshmes Al Basal)",
+        "afterEnglish": "El Genina El Saghira",
+        "notes": "Primary locality named in the OCHA label; combined-unit centre unchanged; other source components retained only as aliases, with no split points."
+      }
+    ],
+    "uniqueness": [
+      {
+        "sourceCode": "OSM:relation/13651336",
+        "rule": "arabic-mirrors-english-context",
+        "beforeArabic": "رأس التين",
+        "afterArabic": "رأس التين — ميناء الإسكندرية",
+        "beforeEnglish": "Ra's Al Tin (Alexandria Port)",
+        "afterEnglish": "Ra's Al Tin (Alexandria Port)",
+        "notes": "Arabic uses exactly the district and source-backed reference facts already carried by the English disambiguation proof."
+      },
+      {
+        "sourceCode": "OSM:node/324282800",
+        "rule": "arabic-mirrors-english-context",
+        "beforeArabic": "السبتية",
+        "afterArabic": "السبتية — بولاق، قرب سوق العصر",
+        "beforeEnglish": "Al-Sabtiyya (Boulaq, near Souk El A'sr)",
+        "afterEnglish": "Al-Sabtiyya (Boulaq, near Souk El A'sr)",
+        "notes": "Arabic uses exactly the district and source-backed reference facts already carried by the English disambiguation proof."
+      },
+      {
+        "sourceCode": "OSM:node/324567000",
+        "rule": "arabic-mirrors-english-context",
+        "beforeArabic": "ميت نما",
+        "afterArabic": "ميت نما — قليوب (مركز)، قرب منطي",
+        "beforeEnglish": "Mit Nama (Qalyub (Markaz), near Manty)",
+        "afterEnglish": "Mit Nama (Qalyub (Markaz), near Manty)",
+        "notes": "Arabic uses exactly the district and source-backed reference facts already carried by the English disambiguation proof."
+      },
+      {
+        "sourceCode": "OSM:node/384309613",
+        "rule": "arabic-mirrors-english-context",
+        "beforeArabic": "الدمرداش",
+        "afterArabic": "الدمرداش — حدائق القبة",
+        "beforeEnglish": "El-Demerdash (Hadayek El Qobba)",
+        "afterEnglish": "El-Demerdash (Hadayek El Qobba)",
+        "notes": "Arabic uses exactly the district and source-backed reference facts already carried by the English disambiguation proof."
+      },
+      {
+        "sourceCode": "OSM:node/384309619",
+        "rule": "arabic-mirrors-english-context",
+        "beforeArabic": "مسطرد",
+        "afterArabic": "مسطرد — شبرا الخيمة ثان، قرب عزبة أوقاف مسطرد",
+        "beforeEnglish": "Musturud (Shubra El Kheima Second, near Ezba Awqaf Mostorod)",
+        "afterEnglish": "Musturud (Shubra El Kheima Second, near Ezba Awqaf Mostorod)",
+        "notes": "Arabic uses exactly the district and source-backed reference facts already carried by the English disambiguation proof."
+      },
+      {
+        "sourceCode": "OSM:node/768552659",
+        "rule": "arabic-mirrors-english-context",
+        "beforeArabic": "أثر النبي",
+        "afterArabic": "أثر النبي — مصر القديمة، قرب قرية الفسطاط",
+        "beforeEnglish": "Athar El Nabi (Old Cairo, near Fustat Village)",
+        "afterEnglish": "Athar El Nabi (Old Cairo, near Fustat Village)",
+        "notes": "Arabic uses exactly the district and source-backed reference facts already carried by the English disambiguation proof."
+      },
+      {
+        "sourceCode": "OSM:node/768553273",
+        "rule": "arabic-mirrors-english-context",
+        "beforeArabic": "نزلة بهجت",
+        "afterArabic": "نزلة بهجت — بولاق الدكرور، قرب زنين",
+        "beforeEnglish": "Nazlet Bahgat (Boulaq El Dakrour, near Zanain)",
+        "afterEnglish": "Nazlet Bahgat (Boulaq El Dakrour, near Zanain)",
+        "notes": "Arabic uses exactly the district and source-backed reference facts already carried by the English disambiguation proof."
+      },
+      {
+        "sourceCode": "OSM:node/768553288",
+        "rule": "arabic-mirrors-english-context",
+        "beforeArabic": "كوم الأخضر",
+        "afterArabic": "كوم الأخضر — الأهرام",
+        "beforeEnglish": "Kom al Akhdar (Haram)",
+        "afterEnglish": "Kom al Akhdar (Haram)",
+        "notes": "Arabic uses exactly the district and source-backed reference facts already carried by the English disambiguation proof."
+      },
+      {
+        "sourceCode": "OSM:node/768553302",
+        "rule": "arabic-mirrors-english-context",
+        "beforeArabic": "نزلة البطران",
+        "afterArabic": "نزلة البطران — الأهرام، قرب كفرة الجبل",
+        "beforeEnglish": "Nazlet al Batran (Haram, near Kafrat al Jabal)",
+        "afterEnglish": "Nazlet al Batran (Haram, near Kafrat al Jabal)",
+        "notes": "Arabic uses exactly the district and source-backed reference facts already carried by the English disambiguation proof."
+      },
+      {
+        "sourceCode": "OSM:node/768553361",
+        "rule": "arabic-mirrors-english-context",
+        "beforeArabic": "مسطرود",
+        "afterArabic": "مسطرود — شبرا الخيمة ثان، قرب عزبة شاكر",
+        "beforeEnglish": "Musturud (Shubra El Kheima Second, near Ezbet Shaker)",
+        "afterEnglish": "Musturud (Shubra El Kheima Second, near Ezbet Shaker)",
+        "notes": "Arabic uses exactly the district and source-backed reference facts already carried by the English disambiguation proof."
+      }
+    ]
+  },
+  "changesFile": {
+    "file": "arabic-display-changes.json.gz",
+    "sha256": "eec1417b48f49363738a94e1816299d462ec018e50ffcc5c09affd8ff80a4203",
+    "rows": 2589
+  },
+  "districtEditsFile": "reviewed-overrides.json#districtEdits"
+}

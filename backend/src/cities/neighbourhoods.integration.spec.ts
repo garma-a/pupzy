@@ -9,7 +9,7 @@ import { runMigrations } from '../database/migrate';
 import { CitiesRepository } from './cities.repository';
 import { generateCityUpsertSql } from './release-sql';
 import { getOfficialCatalog, validateCatalog, type CityCatalog } from './catalog';
-import type { GpsChecks } from './coverage';
+import { isGpsFailureDocumented, type GpsChecks, type CoverageArea } from './coverage';
 
 describe('Neighbourhood schema upgrade on disposable PostGIS', () => {
   jest.setTimeout(90000);
@@ -91,7 +91,8 @@ describe('Neighbourhood schema upgrade on disposable PostGIS', () => {
     ) as GpsChecks;
     const repository = new CitiesRepository(drizzle(pool, { schema }));
     expect(fixture.metadata.reviewed).toBe(true);
-    for (const checks of Object.values(fixture.areas)) {
+    for (const [area, checks] of Object.entries(fixture.areas)) {
+      let failures = 0;
       expect(checks.length).toBeGreaterThanOrEqual(30);
       for (const check of checks) {
         const city = await repository.findNearest(check.latitude, check.longitude);
@@ -104,9 +105,20 @@ describe('Neighbourhood schema upgrade on disposable PostGIS', () => {
               return adjacent.sourceCode;
             }),
           ];
-          expect(acceptable).toContain(parent?.sourceCode);
+          if (!acceptable.includes(parent?.sourceCode ?? '')) {
+            failures++;
+            expect(
+              isGpsFailureDocumented(
+                area as CoverageArea,
+                { ...check, actual: city?.sourceCode ?? '' },
+                fixture.metadata,
+              ),
+            ).toBe(true);
+          }
         } else expect(check.acceptableSourceCodes).toContain(city?.sourceCode);
       }
+      expect(failures).toBeLessThanOrEqual(1);
+      expect(checks.length - failures).toBeGreaterThanOrEqual(29);
     }
   });
 });

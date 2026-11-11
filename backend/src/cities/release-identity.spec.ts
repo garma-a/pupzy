@@ -1,6 +1,10 @@
+import { readCityData } from './data-files';
+import type { CityCatalog as DistrictFixtureCatalog } from './catalog';
 import { applyReviewedRelease } from './plan';
 import { compareSnapshots } from './diff';
-import { getOfficialCatalog, loadRawSnapshot } from './catalog';
+import { loadRawSnapshot } from './catalog';
+
+const districtFixture = () => readCityData<DistrictFixtureCatalog>('neighbourhoods/district-seed.json.gz').records;
 
 function recodedSnapshot() {
   const snapshot = structuredClone(loadRawSnapshot());
@@ -10,7 +14,7 @@ function recodedSnapshot() {
 
 describe('Reviewed City identity after display-name cleanup', () => {
   it('requires an explicit transfer when the upstream source name survives a display rename', () => {
-    const current = getOfficialCatalog();
+    const current = districtFixture();
     expect(current.find((row) => row.sourceCode === 'EG0101')).toMatchObject({
       nameEnglish: 'Tebbin',
       sourceNameEnglish: 'Al Tibbin',
@@ -24,7 +28,7 @@ describe('Reviewed City identity after display-name cleanup', () => {
 
 describe('Recode identity matching safeguards', () => {
   it('recognizes a retained alias when both display and upstream names have changed', () => {
-    const current = getOfficialCatalog().map((row) =>
+    const current = districtFixture().map((row) =>
       row.sourceCode === 'EG0101' ? { ...row, aliases: [...(row.aliases ?? []), 'El Tebbin'] } : row,
     );
     const snapshot = recodedSnapshot();
@@ -33,7 +37,7 @@ describe('Recode identity matching safeguards', () => {
   });
 
   it('allows an explicitly reviewed one-to-one transfer after display cleanup', () => {
-    const release = applyReviewedRelease(getOfficialCatalog(), recodedSnapshot(), {
+    const release = applyReviewedRelease(districtFixture(), recodedSnapshot(), {
       identityTransfers: [{ retiredCitySourceCode: 'EG0101', replacementCitySourceCode: 'EG0198' }],
     });
     expect(release.identityTransfers).toEqual([
@@ -44,7 +48,7 @@ describe('Recode identity matching safeguards', () => {
   });
 
   it('does not mistake an additional district for a recode while the alias owner still exists', () => {
-    const current = getOfficialCatalog().map((row) =>
+    const current = districtFixture().map((row) =>
       row.sourceCode === 'EG0101' ? { ...row, aliases: [...(row.aliases ?? []), 'Test Additional District'] } : row,
     );
     const snapshot = structuredClone(loadRawSnapshot());
@@ -66,7 +70,7 @@ describe('Canonical district disambiguation during recodes', () => {
     const snapshot = structuredClone(loadRawSnapshot());
     snapshot.records.find((row) => row.adm2_pcode === 'EG2801')!.adm2_pcode = 'EG2898';
     snapshot.records.find((row) => row.adm2_pcode === 'EG2802')!.adm2_pcode = 'EG2899';
-    const release = applyReviewedRelease(getOfficialCatalog(), snapshot, {
+    const release = applyReviewedRelease(districtFixture(), snapshot, {
       identityTransfers: [
         { retiredCitySourceCode: 'EG2801', replacementCitySourceCode: 'EG2898' },
         { retiredCitySourceCode: 'EG2802', replacementCitySourceCode: 'EG2899' },

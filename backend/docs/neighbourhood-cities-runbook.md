@@ -1,8 +1,8 @@
-# Neighbourhood dataset: offline candidate and release gates
+# Neighbourhood dataset: offline release and review gates
 
-The 2026-11-10 internet-enabled continuation remains a candidate. See the [implementation report](neighbourhood-cities-implementation-report.md) for measured counts and remaining failures. Do not publish until coverage verification passes. The actual catalog, combined release snapshot, 0066 and journal remain unchanged.
+The local release is prepared as the single replacement `0066_release_city_catalog.sql`, catalog, combined source snapshot and journal. See the [implementation report](neighbourhood-cities-implementation-report.md) for counts, source limitations, known missing names, timings and the 30 priority decisions. Unit and local Docker checks pass; the lead can independently reproduce them. Nothing has been committed, pushed or deployed.
 
-From `backend/`, using the existing installed dependencies and system GEOS, reproduce without network access:
+From `backend/`, using existing dependencies and system GEOS, rebuild without fetching data:
 
 ```sh
 python3 src/cities/scripts/prepare-geographic-evidence.py
@@ -13,36 +13,34 @@ python3 src/cities/scripts/finalize-neighbourhood-review.py
 python3 src/cities/scripts/verify-source-points.py
 npm run cities:build-neighbourhood-candidate
 npm run cities:verify-coverage -- output/neighbourhood-cities/candidate-catalog.json
-npx ts-node -r tsconfig-paths/register src/cities/scripts/review-grid-gaps.ts
+npm run cities:verify-coverage
 ```
 
-Verification exits 1 while a gate fails. Reports under ignored `output/neighbourhood-cities/` enumerate every unmatched variant, failed GPS check and unreviewed residential feature. The committed independent research, raw responses and exceptions are under `src/cities/data/neighbourhoods/`; the source manifest pins raw and compressed hashes, URLs, actual retrieval dates, licences and statuses, including failed HTTP attempts. The lead-provided lookup envelope preserves each original URL/time. An indexed excerpt or blocked endpoint is identified as such, never represented as a complete fetched public page.
+The immutable `district-seed.json.gz` supplies 351 original district identities for source matching. Published aliases never feed back into that process. It preserves source names, P-codes, coordinates and the previous English display review. Source/rule/editorial signatures, decision-byte hashes, exact independent-list signatures and frozen GPS identities fail closed if inputs change. A regular build cannot approve changed research or renew those signatures. The final offline rebuild reproduced the decision file byte for byte after publication.
 
-The lead correction of 2026-11-10 samples only complete clipped OSM `landuse=residential` polygons. It retains ADM3 City fill without sampling administrative polygons. Grid cells are 500 m, centred in each footprint's bounding box, with a recorded interior-point fallback for small polygons. A sample is covered within 1.5 km of an OFFICIAL City OR if its residential polygon contains an OFFICIAL point. Legacy Cities cannot credit coverage. `residential-grid-review.json` holds reviewed per-feature exceptions and per-area coverage floors rounded down to 0.5%. Increased per-feature gap counts/distances, changed nearest Cities, missing research, missing individual research beyond 4 km, or coverage below a floor fail verification. `propose-residential-review.ts` writes an **unreviewed draft** to output only; it cannot renew review automatically.
+The combined snapshot references pinned compressed decisions, source geometry and checklist/GPS evidence. `readCityData` and coverage hydration verify hashes before reading them. Full review prose is retained once in compressed audits; published City provenance links to its decision record. Every fetched response, including HTTP failures and explicitly marked search excerpts, remains cached with URL, retrieval time, licence/rights and raw/compressed hashes in `source-manifest.json`.
 
-Independent names come from separate client inputs, OCHA/WD labels and selected Arabic/English Wikipedia/governorate sources, never from catalog output. Minima live in reviewed per-area metadata: Cairo and Alexandria retain 150; Port Said uses the honest researched total per the dated lead decision. Unresolved genuine areas remain on the checklist and fail matching. A known area may use a documented landmark proxy, but fuzzy unrelated search results cannot supply its name/point.
+Grid sampling uses only complete clipped OSM `landuse=residential` polygons. ADM3 City fill remains selectable but its administrative polygons are never sampled. Centred 500m cells and interior-point fallback supply samples. A sample is covered within 1.5 km of an OFFICIAL City OR when its residential polygon contains an OFFICIAL City point. Reviewed per-feature exceptions bind OSM identity, centre, uncovered count, worst distance, nearest City, research and reason no whole-block name was assigned. Features beyond 4 km additionally require individual research. Missing notes, increased gaps/distances, changed nearest identities or coverage below 97/91/94.5% fail. Final exceptions=332, including 65 far features. Full notes are in `research-blocks/feature-notes.json.gz`.
 
-Source/rule/editorial review signatures, decision-byte hashes and separate exact-list/GPS signatures remain enforced. Changing inputs requires a deliberate documented review; the normal build cannot approve itself. No new independent 300/300 random audit is claimed this continuation: original audits remain archived; explicit additions, aliases and changed decisions were reviewed individually. Points are exact recorded coordinates or the already documented geometric exceptions. Ordinary parents use OCHA containment; Zemam Out uses documented same-governorate polygon-edge distance, never a centroid, with the existing 40 km ceiling.
+`propose-residential-review.ts` writes an **unreviewed draft** to ignored output. It cannot approve it. Named enclosing-area reverse evidence supports explicitly marked extra representatives; a code, road, generic city or nearby named feature alone does not prove a distinct neighbourhood. The reviewed coverage extensions use exact Mostakbal Ismailia residential and Kafr ElBattikh city source polygons. The Ras ElBar supplement adds only recorded named city-boundary portions outside all original OCHA governorate land, correcting a2017 coast/water gap. There are no buffers or reassigned existing land. Both inputs and the two modified P-code geometries are pinned.
 
-Run the checks without fetching data:
+Independent checklists use task input and separately selected public OCHA/Wikidata/Wikipedia/governorate sources, never candidate output. Final counts 420/268/85; reviewed minima 150/150/85. Port Said's honest minimum follows the lead decision dated 2026-11-10. Every unmatched variant must exactly belong to a reviewed entry in `known-missing-names.json`, with research, reason and source URLs. Eleven unresolved names remain visible to the client. Resolved aliases/usable unambiguous points cannot be hidden there. Arabic display uniqueness is also a data-quality requirement.
+
+GPS retains 30 fixtures per area, frozen in `gps-selection.json`. At least 29 must pass and at most one may fail, with an exact individual reviewed match of area, coordinate, actual City and expected district in committed metadata. Q138196168 stays a fish-farm landmark failure in `gps-failure-review.json`. No coordinate was changed or fixture substituted to improve its result. Other failures require their own evidence; two failures fail an area.
+
+Run release verification offline:
 
 ```sh
 npx jest src/cities --testPathIgnorePatterns='.*\.integration\.spec\.ts$' --runInBand
+npx jest --testRegex='.*\.integration\.spec\.ts$' --runInBand src/cities
 npx eslint 'src/cities/**/*.ts'
 npx tsc --noEmit -p tsconfig.build.json
 python3 -m py_compile src/cities/scripts/*.py
 python3 src/cities/scripts/verify-neighbourhood-sql.py
-npx ts-node -r tsconfig-paths/register src/cities/scripts/benchmark-neighbourhood-candidate.ts
-python3 src/cities/scripts/verify-neighbourhood-sql.py --catalog output/neighbourhood-cities/candidate-catalog.json --migration output/neighbourhood-cities/candidate-benchmark.sql
 ```
 
-Candidate benchmark SQL is disposable output, not a release. The local socket-free PostgreSQL/PostGIS verifier checks apply/rerun, exact rows, UUID/reference preservation, parent hierarchy and no-op revisions. The lead must also run real Docker integration:
+Docker uses disposable PostGIS containers. Historical district-only reconciliation/release scenarios have their own pinned fixture, including the former English cleanup and revision bump; Neighbourhood integration applies the actual repository 0066 and tests the complete release's UUIDs, references, hierarchy and all 90 GPS fixtures. The socket-free SQL verifier separately checks migration apply/re-run, bilingual/source names, exact released rows, retained legacy entries, parent hierarchy and no-op redeploy revisions. Its output records transaction start/finish times.
 
-```sh
-npx jest --testRegex='.*\.integration\.spec\.ts$' --runInBand src/cities
-CITY_CATALOG_CANDIDATE=output/neighbourhood-cities/candidate-catalog.json npx jest --testRegex='.*\.integration\.spec\.ts$' --runInBand src/cities
-```
+For a future deliberately reviewed replacement of this unshipped 0066, use the existing `publishReviewedRelease` API in isolated staging whose journal ends at 0065 and whose starting catalog is the pre-Neighbourhood district catalog. Supply explicit reviewed official/governorate counts. The publisher must validate all gates and the four artifacts before installation. Verify staged SQL, then replace catalog, combined snapshot,0066 and journal together with backups/rollback. Do not generate 0067 for this unshipped release. The current four artifacts already came through that publisher and match staging byte for byte. After deployment, append-only migration rules apply normally.
 
-Only after every gate passes, invoke the existing atomic publisher in isolated staging whose journal ends at 0065. Replace the unshipped 0066, catalog, combined snapshot and journal together; do not add 0067. The publisher refuses failed coverage and existing migration overwrite. Generated SQL must remain offline, idempotent and parent-first. Keep all pinned sources; display OSM attribution before enabling an OSM-derived release.
-
-This worktree cannot commit because Git metadata is read-only. Changes are left for review here. No dependency reinstall, frontend change, push, PR, production or Railway operation is part of this task.
+This worktree cannot commit because Git metadata is read-only. Leave changes for review here. No dependency reinstall, frontend change, push, PR, production or Railway operation is part of this task.

@@ -1,0 +1,19 @@
+{
+  "decisionDate": "2026-11-10",
+  "documentedFailures": [
+    {
+      "area": "port-said-region",
+      "latitude": 31.1574129,
+      "longitude": 32.3023366,
+      "actualSourceCode": "EG0308",
+      "expectedDistrictSourceCode": "EG0306",
+      "reviewed": true,
+      "research": "Q138196168 raw Wikidata point retained. Nominatim reverse finds only Ismailia–Port Said Road; Overpass names search and imagery show fish farms with a small structure, no corroborated nearby named locality. Exact source responses and investigation are retained in research-gps and research-blocks.",
+      "reason": "Reviewed lead decision2026-11-10: rural fish-farm landmark about2.0km fromEG0308 and2.1km fromits ownEG0306 district point. Keep the observed failure, no invented locality or fixture replacement. At least29/30 per area and each failure individually reviewed.",
+      "sourceUrls": [
+        "https://www.wikidata.org/wiki/Special:EntityData/Q138196168.json",
+        "https://nominatim.openstreetmap.org/reverse?lat=31.1574129&lon=32.3023366&format=jsonv2&zoom=16&accept-language=ar%2Cen&namedetails=1&addressdetails=1"
+      ]
+    }
+  ]
+}

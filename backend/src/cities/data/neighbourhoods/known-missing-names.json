@@ -1,0 +1,252 @@
+{
+  "metadata": {
+    "reviewed": true,
+    "decisionDate": "2026-11-11",
+    "leadPolicyDate": "2026-11-10",
+    "notes": "11 requested/attested residential names remain unlocated after recorded exact/bounded and source-context research. Manshiyet El Omara removed from Alexandria checklist pending regional attestation, rather than calling an uncertain identity a real missing area."
+  },
+  "entries": [
+    {
+      "area": "greater-cairo",
+      "english": "Hadayek Zayed",
+      "arabic": "حدائق زايد",
+      "variants": [
+        "Hadayek Zayed",
+        "حدائق زايد"
+      ],
+      "reviewed": true,
+      "research": "Exact/bounded search returned other gardens. A developer publishes a similarly named agriculturalinvestment project with JSONLD geo, but identity as the requested residential area is unproved. Its office point and project point were not repurposed. LiveOverpass residue query failedHTTP502; this is not negative naming evidence. Recorded attempts remain inresearch-round7.",
+      "reason": "No defensible point tied to the client residential-area identity; similarly named farm/office is not sufficient.",
+      "sourceUrls": [
+        "https://nominatim.openstreetmap.org/search?q=%D8%AD%D8%AF%D8%A7%D8%A6%D9%82+%D8%B2%D8%A7%D9%8A%D8%AF+%D8%A7%D9%84%D8%AC%D9%8A%D8%B2%D8%A9&format=jsonv2&countrycodes=eg&limit=5&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://afroland.com.eg/ar/projects/sheikh-zayed/"
+      ],
+      "responseFiles": [
+        "nominatim-zayed.json.gz",
+        "hadayek-zayed-developer.json.gz"
+      ]
+    },
+    {
+      "area": "alexandria",
+      "english": "Ezbet El Matar",
+      "arabic": "عزبة المطار",
+      "variants": [
+        "Ezbet El Matar",
+        "عزبة المطار"
+      ],
+      "reviewed": true,
+      "research": "Arabic EzbetElMatar boundedAlexandria searches and previous lead lookups returned no named locality; one result is the NuzhaAirport approachroad, not the settlement. Original regional place/landuse/WD labels inspected. LiveOverpass residue query failedHTTP502; this is not negative naming evidence. Recorded attempts remain inresearch-round7.",
+      "reason": "Airport/approachroad name alone does not identify the requested Ezbet; no coordinate borrowed from an airport.",
+      "sourceUrls": [
+        "https://nominatim.openstreetmap.org/search?q=%D9%85%D8%B7%D8%A7%D8%B1+%D8%A7%D9%84%D8%A5%D8%B3%D9%83%D9%86%D8%AF%D8%B1%D9%8A%D8%A9+%D8%B9%D8%B2%D8%A8%D8%A9&format=jsonv2&countrycodes=eg&limit=5&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search?q=%D8%B9%D8%B2%D8%A8%D8%A9+%D8%A7%D9%84%D9%85%D8%B7%D8%A7%D8%B1&format=jsonv2&viewbox=29.5%2C31.4%2C30.3%2C30.6&bounded=1&countrycodes=eg&limit=10&namedetails=1&addressdetails=1&accept-language=ar%2Cen"
+      ],
+      "responseFiles": [
+        "nominatim-matar.json.gz",
+        "more-airport-area.json.gz"
+      ]
+    },
+    {
+      "area": "alexandria",
+      "english": "El Islah",
+      "arabic": "الإصلاح",
+      "variants": [
+        "El Islah",
+        "الإصلاح",
+        "Al Islah"
+      ],
+      "reviewed": true,
+      "research": "Exact and bounded Alexandria searches found several different Islah/AgriculturalReform roads or mosque roads in distinct parts of the region. No result uniquely corroborates the requested unqualified area. LiveOverpass residue query failedHTTP502; this is not negative naming evidence. Recorded attempts remain inresearch-round7.",
+      "reason": "Multiple homonyms; a point would choose an area without sufficient identity evidence.",
+      "sourceUrls": [
+        "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%A5%D8%B5%D9%84%D8%A7%D8%AD&format=jsonv2&countrycodes=eg&viewbox=29.5%2C31.5%2C30.3%2C30.8&bounded=1&limit=8&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%A7%D8%B5%D9%84%D8%A7%D8%AD&format=jsonv2&countrycodes=eg&viewbox=29.5%2C31.5%2C30.3%2C30.8&bounded=1&limit=8&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%A7%D8%B5%D9%84%D8%A7%D8%AD+%D8%A7%D9%84%D8%A5%D8%B3%D9%83%D9%86%D8%AF%D8%B1%D9%8A%D8%A9&format=jsonv2&countrycodes=eg&limit=5&namedetails=1&addressdetails=1&accept-language=ar%2Cen"
+      ],
+      "responseFiles": [
+        "nominatim-islah-bounded.json.gz",
+        "nominatim-islah-bounded2.json.gz",
+        "nominatim-islah2.json.gz"
+      ]
+    },
+    {
+      "area": "alexandria",
+      "english": "Kilo 34",
+      "arabic": "الكيلو ٣٤",
+      "variants": [
+        "Kilo 34",
+        "الكيلو ٣٤"
+      ],
+      "reviewed": true,
+      "research": "BoundedArabic/English kilometre34 queries returned unrelated Matrouh houses, Kilo21/23/26 estates and a Kilo57 checkpoint. Regional rawplaces/landuse names do not establish a Kilo34 centre. LiveOverpass residue query failedHTTP502; this is not negative naming evidence. Recorded attempts remain inresearch-round7.",
+      "reason": "No interpolation along a road or point inferred from a kilometre number.",
+      "sourceUrls": [
+        "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%83%D9%8A%D9%84%D9%88+%D9%A3%D9%A4&format=jsonv2&countrycodes=eg&limit=5&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%83%D9%8A%D9%84%D9%88+34&format=jsonv2&viewbox=29.4%2C31.4%2C30.3%2C30.6&bounded=1&countrycodes=eg&limit=10&namedetails=1&addressdetails=1&accept-language=ar%2Cen"
+      ],
+      "responseFiles": [
+        "nominatim-kilo34.json.gz",
+        "more-kilo34-alt.json.gz"
+      ]
+    },
+    {
+      "area": "alexandria",
+      "english": "Al Hagir",
+      "arabic": "الحاجر",
+      "variants": [
+        "Al Hagir",
+        "الحاجر",
+        "El Hagir"
+      ],
+      "reviewed": true,
+      "research": "ExactArabic and English lookups supplied no unique named settlement, only a canal-road label elsewhere in the widerregion. Original rawplace/WD labels inspected; no uniquely corroborated requested block. LiveOverpass residue query failedHTTP502; this is not negative naming evidence. Recorded attempts remain inresearch-round7.",
+      "reason": "Canal-road homonym insufficient to locate the client area.",
+      "sourceUrls": [
+        "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%AD%D8%A7%D8%AC%D8%B1+%D8%A7%D8%B3%D9%83%D9%86%D8%AF%D8%B1%D9%8A%D8%A9&format=jsonv2&countrycodes=eg&limit=5&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%AD%D8%A7%D8%AC%D8%B1&format=jsonv2&countrycodes=eg&viewbox=29.4%2C31.45%2C30.45%2C30.7&bounded=1&limit=8&namedetails=1&addressdetails=1&accept-language=ar%2Cen"
+      ],
+      "responseFiles": [
+        "nominatim-hagir.json.gz",
+        "nominatim-hagir2.json.gz"
+      ]
+    },
+    {
+      "area": "port-said-region",
+      "english": "El Rehab",
+      "arabic": "الرحاب",
+      "variants": [
+        "El Rehab",
+        "الرحاب",
+        "Al Rehab"
+      ],
+      "reviewed": true,
+      "research": "PortSaid governorate indexed material and ITDA register prove Rehab housing inElDawahy. All exact/bounded Arabic/English Nominatim follow-ups and existing Overpass snapshots lack a defensible named block point; CairoRehab and unrelated Ismailia streets rejected. LiveOverpass residue query failedHTTP502; this is not negative naming evidence. Recorded attempts remain inresearch-round7.",
+      "reason": "A real PortSaid area remains unlocated; no Cairo point or generalElDawahy centroid substituted.",
+      "sourceUrls": [
+        "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B1%D8%AD%D8%A7%D8%A8+%D8%A8%D9%88%D8%B1%D8%B3%D8%B9%D9%8A%D8%AF&format=jsonv2&countrycodes=eg&limit=5&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B1%D8%AD%D8%A7%D8%A8&format=jsonv2&countrycodes=eg&viewbox=32.0%2C31.5%2C32.5%2C31.0&bounded=1&limit=8&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search?q=%D9%85%D8%B3%D8%AC%D8%AF+%D8%A7%D9%84%D8%B1%D8%AD%D8%A7%D8%A8&format=jsonv2&countrycodes=eg&viewbox=32.0%2C31.5%2C32.5%2C31.0&bounded=1&limit=8&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://www.itda.gov.eg/CRM/885/CRA78.pdf",
+        "https://portsaid.gov.eg/"
+      ],
+      "responseFiles": [
+        "nominatim-rehab.json.gz",
+        "nominatim-rehab2.json.gz",
+        "nominatim-rehab3.json.gz",
+        "port-rehab-official-register.html.gz"
+      ]
+    },
+    {
+      "area": "port-said-region",
+      "english": "Bahr El Baqar",
+      "arabic": "بحر البقر",
+      "variants": [
+        "Bahr El Baqar",
+        "بحر البقر"
+      ],
+      "reviewed": true,
+      "research": "Lead exact named locality result is inSharqia outside the requested PortSaid scope. RawWDvillage/mosque points also lie inSharqia; the PortSaid treatmentplant and longdrain roads do not establish the residents area centre. Official PortSaid environmental description attests the area name. LiveOverpass residue query failedHTTP502; this is not negative naming evidence. Recorded attempts remain inresearch-round7.",
+      "reason": "Do not move the Sharqia village intoPortSaid or name a sewageplant as a neighbourhood.",
+      "sourceUrls": [
+        "https://nominatim.openstreetmap.org/search?q=%D8%A8%D8%AD%D8%B1+%D8%A7%D9%84%D8%A8%D9%82%D8%B1+%D8%A8%D9%88%D8%B1%D8%B3%D8%B9%D9%8A%D8%AF&format=jsonv2&countrycodes=eg&limit=5&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search",
+        "https://www.eeaa.gov.eg/Uploads/Reports/Files/Port%20Said%20Des.pdf"
+      ],
+      "responseFiles": [
+        "nominatim-bahr.json.gz",
+        "lead-nominatim-missing-names.json.gz"
+      ]
+    },
+    {
+      "area": "port-said-region",
+      "english": "Hay El Salam Ismailia",
+      "arabic": "حي السلام الإسماعيلية",
+      "variants": [
+        "Hay El Salam Ismailia",
+        "حي السلام الإسماعيلية"
+      ],
+      "reviewed": true,
+      "research": "Exact/bounded Ismailia searches returned different road labels, a mosque road and a southern ruralManshiyetElSalam boundary. None establishes the client HayElSalam identity; sourceparents and province checked. LiveOverpass residue query failedHTTP502; this is not negative naming evidence. Recorded attempts remain inresearch-round7.",
+      "reason": "A shared Salam street/mosque label is insufficient amid multiple homonyms.",
+      "sourceUrls": [
+        "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85+%D8%A7%D8%B3%D9%85%D8%A7%D8%B9%D9%8A%D9%84%D9%8A%D8%A9&format=jsonv2&countrycodes=eg&limit=5&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search?q=%D8%AD%D9%8A+%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85&format=jsonv2&countrycodes=eg&viewbox=32.0%2C30.8%2C32.5%2C30.4&bounded=1&limit=8&namedetails=1&addressdetails=1&accept-language=ar%2Cen"
+      ],
+      "responseFiles": [
+        "nominatim-salam.json.gz",
+        "nominatim-salam2.json.gz"
+      ]
+    },
+    {
+      "area": "port-said-region",
+      "english": "El Mahatta El Gedida",
+      "arabic": "المحطة الجديدة",
+      "variants": [
+        "El Mahatta El Gedida",
+        "المحطة الجديدة",
+        "Al Mahatta El Gedida"
+      ],
+      "reviewed": true,
+      "research": "Arabic/English exact and boundedIsmailia searches plus lead responses returned no named NewStation locality. Official OCHA shiakhas and original OSM snapshots inspected; centralstation identity is not the same as this requested area by evidence alone. LiveOverpass residue query failedHTTP502; this is not negative naming evidence. Recorded attempts remain inresearch-round7.",
+      "reason": "No point inferred from the meaning of the name or substituted from Ismailia station.",
+      "sourceUrls": [
+        "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%85%D8%AD%D8%B7%D8%A9+%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9+%D8%A7%D8%B3%D9%85%D8%A7%D8%B9%D9%8A%D9%84%D9%8A%D8%A9&format=jsonv2&countrycodes=eg&limit=5&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%85%D8%AD%D8%B7%D9%87+%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D9%87&format=jsonv2&countrycodes=eg&viewbox=32.0%2C30.8%2C32.5%2C30.4&bounded=1&limit=8&namedetails=1&addressdetails=1&accept-language=ar%2Cen"
+      ],
+      "responseFiles": [
+        "nominatim-mahatta.json.gz",
+        "nominatim-mahatta2.json.gz"
+      ]
+    },
+    {
+      "area": "port-said-region",
+      "english": "El Saba Banat",
+      "arabic": "السبع بنات",
+      "variants": [
+        "El Saba Banat",
+        "السبع بنات",
+        "Al Saba Banat"
+      ],
+      "reviewed": true,
+      "research": "Arabic spellings and English SabaaBanat withinIsmailia returned no locality. RawWDsame-name Cairo mausoleum and outside-region public addresses are unrelated and rejected. LiveOverpass residue query failedHTTP502; this is not negative naming evidence. Recorded attempts remain inresearch-round7.",
+      "reason": "A passing point cannot be borrowed from the Cairo monument or another city.",
+      "sourceUrls": [
+        "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B3%D8%A8%D8%B9+%D8%A8%D9%86%D8%A7%D8%AA+%D8%A7%D8%B3%D9%85%D8%A7%D8%B9%D9%8A%D9%84%D9%8A%D8%A9&format=jsonv2&countrycodes=eg&limit=5&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B3%D8%A8%D8%B9+%D8%A8%D9%86%D8%A7%D8%AA&format=jsonv2&countrycodes=eg&viewbox=32.0%2C30.8%2C32.5%2C30.4&bounded=1&limit=8&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search?q=%D8%B3%D8%A8%D8%B9+%D8%A8%D9%86%D8%A7%D8%AA&format=jsonv2&countrycodes=eg&viewbox=32.0%2C30.8%2C32.5%2C30.4&bounded=1&limit=8&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search?q=Sabaa+Banat&format=jsonv2&viewbox=31.8%2C30.8%2C32.6%2C30.4&bounded=1&countrycodes=eg&limit=10&namedetails=1&addressdetails=1&accept-language=ar%2Cen"
+      ],
+      "responseFiles": [
+        "nominatim-banats.json.gz",
+        "nominatim-banats2.json.gz",
+        "nominatim-banats3.json.gz",
+        "more-banats-en.json.gz"
+      ]
+    },
+    {
+      "area": "port-said-region",
+      "english": "El Balabsa",
+      "arabic": "البلابسة",
+      "variants": [
+        "El Balabsa",
+        "البلابسة",
+        "Al Balabsa"
+      ],
+      "reviewed": true,
+      "research": "Arabicspellings/EnglishBalabsa boundedIsmailia and the lead archive returned no named point. Rawregional places, landuse and OCHA labels inspected; no unambiguous namedproxy. LiveOverpass residue query failedHTTP502; this is not negative naming evidence. Recorded attempts remain inresearch-round7.",
+      "reason": "No generic Ismailia coordinate or nearby ward centroid substituted.",
+      "sourceUrls": [
+        "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%A8%D9%84%D8%A7%D8%A8%D8%B3%D8%A9+%D8%A7%D8%B3%D9%85%D8%A7%D8%B9%D9%8A%D9%84%D9%8A%D8%A9&format=jsonv2&countrycodes=eg&limit=5&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search?q=%D8%A8%D9%84%D8%A7%D8%A8%D8%B3%D8%A9&format=jsonv2&countrycodes=eg&viewbox=32.0%2C30.8%2C32.5%2C30.4&bounded=1&limit=8&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search?q=%D8%A8%D9%84%D8%A7%D8%A8%D8%B3%D9%87&format=jsonv2&countrycodes=eg&viewbox=32.0%2C30.8%2C32.5%2C30.4&bounded=1&limit=8&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
+        "https://nominatim.openstreetmap.org/search?q=Balabsa&format=jsonv2&viewbox=31.8%2C30.8%2C32.6%2C30.4&bounded=1&countrycodes=eg&limit=10&namedetails=1&addressdetails=1&accept-language=ar%2Cen"
+      ],
+      "responseFiles": [
+        "nominatim-balabsa.json.gz",
+        "nominatim-balabsa2.json.gz",
+        "nominatim-balabsa3.json.gz",
+        "more-balabsa-en.json.gz"
+      ]
+    }
+  ]
+}

@@ -16,6 +16,7 @@ out = root / 'output/neighbourhood-cities'
 out.mkdir(parents=True, exist_ok=True)
 
 a1, a2, coverage = geography(data)
+save(data/'reviewed-boundary-replacements.geojson.gz', {'type':'FeatureCollection','metadata':{'reviewed':True,'notes':'Only replaced coastal features; source OCHA geometry retained in its original file. See boundary-supplements.json.'},'features':[{'type':'Feature','properties':{**shape.properties,'ochaLevel':level},'geometry':shape.value} for level,shapes,code,key in [(1,a1,'EG11','adm1_pcode'),(2,a2,'EG1106','adm2_pcode')] for shape in shapes if shape.properties[key]==code]})
 
 save(out / 'coverage-areas.geojson.gz', {'type': 'FeatureCollection', 'metadata': {'reviewed': True, 'notes': 'Coverage derived by scripts/dataset_geography.py from OCHA governorate/district unions, plus declared new-city expansion envelopes; Scope reviewed against the task: entire Cairo, Alexandria and Port Said governorates, specified urban districts and city-expansion envelopes; no gap-based exclusions.'}, 'features': [{'type': 'Feature', 'properties': {'area': a, 'evidence': 'dataset_geography.py coverage definition'}, 'geometry': s.value} for a, s in coverage.items()]})
 
@@ -76,7 +77,7 @@ for area in REGIONS:
         features.append({'type': 'Feature', 'properties': {'area': area, 'evidence': identity + ' landuse=residential clipped to coverage-areas', 'samplePoint': Shape(poly).representative(), 'osmSourceCode': identity, 'name': e.get('tags', {}).get('name', '')}, 'geometry': poly})
         stats[area] += 1
 
-save(out / 'residential-clipped.geojson.gz', {'type': 'FeatureCollection', 'metadata': {'reviewed': True, 'notes': 'Complete residential polygons clipped to declared coverage; no gap-based shrinking. Populated ADM3 evidence added by dataset builder.'}, 'features': features})
+save(out / 'residential-clipped.geojson.gz', {'type': 'FeatureCollection', 'metadata': {'reviewed': True, 'notes': 'Complete residential polygons clipped to declared coverage; no gap-based shrinking. ADM3 remains City fill only, never sampled.'}, 'features': features})
 
 save(out / 'geometry-rejected.json', rejected)
 

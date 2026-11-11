@@ -1,0 +1,15 @@
+{
+  "reviewed": true,
+  "date": "2026-11-11",
+  "affectedRows": 3067,
+  "generated": 25171,
+  "collisionsExcluded": 4,
+  "averageAliases": 9.773024361259655,
+  "eligibleRows": 3128,
+  "averageGeneratedPerEligibleRow": 8.046994884910486,
+  "averageAllAliasesPerEligibleRow": 10.513427109974424,
+  "maxGeneratedPerRow": 12,
+  "cap": 12,
+  "ruleSha256": "82a66ed997a6b7f6f2f689f7c2b5ba0427d4ea89a0e43de42036cf664ed66361",
+  "method": "Reconstruct same reviewed snapshot with generation disabled, then invoke generator once; source and explicit manual aliases already present. Collisions count rejected distinct candidate strings per row."
+}

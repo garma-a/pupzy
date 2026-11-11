@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/require-await, @typescript-eslint/no-unsafe-return */
 import { sql, eq } from 'drizzle-orm';
 import {
-  getOfficialCatalog,
+  loadOfficialCatalog,
   validateCatalog,
   unpackCatalog,
   mapCatalogRecordToInsertRow,
@@ -39,7 +39,7 @@ export interface OfficialCityReference {
  * 5. Safe: does not delete, truncate, or overwrite historical (LEGACY / RETIRED) records.
  */
 export async function seedOfficialCities(db: any, options: SeedCitiesOptions = {}): Promise<SeedCitiesResult> {
-  const rawCatalog = options.catalog ?? getOfficialCatalog();
+  const rawCatalog = options.catalog ?? loadOfficialCatalog();
   const { records: catalogRecords, officialRecords } = unpackCatalog(rawCatalog);
 
   if (options.validateBeforeSeed !== false) {
@@ -114,7 +114,7 @@ async function queryOfficialCityReferences(db: any): Promise<OfficialCityReferen
  */
 export async function ensureOfficialCities(
   db: any,
-  catalog: CityCatalogRecord[] | CityCatalog = getOfficialCatalog(),
+  catalog: CityCatalogRecord[] | CityCatalog = loadOfficialCatalog(),
 ): Promise<OfficialCityReference[]> {
   const existing = await queryOfficialCityReferences(db);
   const { officialRecords } = unpackCatalog(catalog);

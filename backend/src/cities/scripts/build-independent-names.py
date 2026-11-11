@@ -35,6 +35,8 @@ areas = {a: [] for a in manual['areas']}
 seen = {a: set() for a in areas}
 
 def add(area, row):
+    if row['english'] in {'Industrial Area','Cairo Airport','Smart Village',"Egypt's Olympic Sports City",'City of Arts and Culture (Egypt)'}:
+        return # Reviewed lead B: non-residential zone/premises, not an acceptance neighbourhood.
     # Arabic joined/separated spellings and the explicitly reviewed city-prefix
     # variants below are one independent name, not extra minimum-count credit.
     equivalences = {
@@ -83,6 +85,7 @@ for area, rows in public['areas'].items():
 for f in load(d / 'ocha-cod-ab/egy_admin3-covered.geojson.gz')['features']:
     p = f['properties']
     a = p['adm3_name1'].strip()
+    if norm(a) in {'منطقه الصناعيه','منطقة الصناعيه','مطار القاهره'}:continue # Explicit premises labels only; named staff housing remains eligible.
     area = p['coverageArea']
     b = lex.get(norm(a))
     if not b or re.search('شياخ|قسم (?:اول|أول|ثان|ثالث)|خارج|جزء من|^[\\d٠-٩]', a):
@@ -109,6 +112,7 @@ for binding in load(d / 'wikidata.json.gz')['results']['bindings']:
     match = re.match(r'Point\(([-\d.]+) ([-\d.]+)\)',binding.get('coord',{}).get('value',''))
     if match:record['points'].add((float(match[1]),float(match[2])))
 for q,record in sorted(entities.items()):
+    if q in {'Q110420027','Q110420273'}:continue # Source labels are non-residential institutional complexes per lead B.
     if 'WD:'+q in review.get('decisions',{}) or len(record['points']) != 1 or not record['en'] or not record['ar']:
         continue
     arabic = next((name for name in sorted(record['ar']) if re.match(r'^(?:حي|مدينة|قرية|عزبة|كفر)\s+',name)),None)
@@ -131,6 +135,6 @@ for rows in areas.values():
 signature = hashlib.sha256(json.dumps(areas,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
 reviewed = review.get('independentNameReview',{}).get('areasSha256') == signature
 
-save(d / 'independent-names.json', {'metadata': {'reviewed': reviewed, 'areasSha256': signature, 'compiledDate': '2026-11-10', 'minimums': manual['metadata'].get('minimums', {}), 'method': 'Manual task/knowledge input, raw OCHA ADM3/populated-place labels, explicit Wikidata locality labels, and individually selected Arabic/English Wikipedia city and governorate lists. Public URLs and compressed source pages retained in research-names. Script never reads catalog or decision output. Duplicate Arabic forms combined; variants do not count as names. Per-area minima are separately reviewed metadata, not inferred from catalog matches.'}, 'removed': manual['removed'], 'areas': areas})
+save(d / 'independent-names.json', {'metadata': {'reviewed': reviewed, 'areasSha256': signature, 'compiledDate': '2026-11-10', 'minimums': manual['metadata'].get('minimums', {}), 'method': 'Manual task/knowledge input, raw OCHA ADM3/populated-place labels, explicit Wikidata locality labels, and individually selected Arabic/English Wikipedia city and governorate lists. Public URLs and compressed source pages retained in research-names. Script never reads catalog or decision output. Duplicate Arabic forms combined; variants do not count as names. Per-area minima are separately reviewed metadata, not inferred from catalog matches.'}, 'removed': manual['removed'], 'areas': areas, 'knownMissing': load(d / 'known-missing-names.json') if (d / 'known-missing-names.json').exists() else None})
 
 print({a: len(r) for a, r in areas.items()})

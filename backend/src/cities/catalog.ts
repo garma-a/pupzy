@@ -664,7 +664,7 @@ export function loadOfficialCatalog(): CityCatalog {
 }
 
 /**
- * Returns the compiled 351-city official reference catalog records.
+ * Returns the compiled selectable official records from the reviewed release.
  * Cached in memory after first load.
  */
 export function getOfficialCatalog(): CityCatalogRecord[] {

@@ -1,6 +1,6 @@
 # Neighbourhoods as selectable Cities
 
-Status: accepted; implementation pending
+Status: accepted; local release prepared, lead Docker verification pending
 
 The ADM2-only catalog from ADR 0002 gives Greater Cairo, Alexandria and Port Said too few selectable places: clients and their users could not find the areas they live in (Smouha, Rehab, Mohandessin and similar), because those are commonly used names rather than official districts. We therefore add Neighbourhoods as Cities in their own right, each linked to exactly one official ADM2 district, sourced from OpenStreetMap with Wikidata filling missing Arabic or English names, with decisions reviewed under the source/rule audit below. Each City may also carry alternative spellings so that search finds it under common transliterations.
 
@@ -35,4 +35,9 @@ Independent-name review has its own exact-list signature. An incomplete or unver
 
 Built-up evidence comprises only the complete clipped OSM `landuse=residential` polygons. ADM3 City fill remains. A 500 m sample is covered within 1.5 km of any OFFICIAL City, or if its residential polygon contains an OFFICIAL City point. Remaining features require reviewed exceptions with identity, centre, sample count, worst distance, nearest City, research and reason no name was assigned; those beyond 4 km require individual research. Each area has a committed coverage floor at its final measured share rounded down to 0.5%. Later regressions below that floor fail.
 
-Greater Cairo and Alexandria retain at least 150 independent names each. Port Said region uses the final defensible researched name count, without padding; the per-area minimum and this reviewed lead decision dated 2026-11-10 live in committed checklist metadata. Missing genuine names remain failures, even where the research itself is reviewed.
+Greater Cairo and Alexandria retain at least 150 independent names each. Port Said region uses the final defensible researched name count, without padding; the per-area minimum and this reviewed lead decision dated 2026-11-10 live in committed checklist metadata. Every unmatched variant must be individually covered by reviewed `known-missing-names.json` research; otherwise the names gate fails. Resolved names and aliases cannot be put in that file.
+
+
+Lead amendment dated 2026-11-10, implemented 2026-11-11: retain 30 independent GPS fixtures per area and require at least 29 correct nearest-City assignments. Each failure must exactly match individually reviewed committed evidence; Q138196168 remains a rural fish-farm landmark with no named locality, nearest EG0308 about 2.0 km versus its own EG0306 about 2.1 km. Other failures require their own exact review, and a second failure fails the area. Reviewed fixture identities are frozen so source additions cannot silently replace failures.
+
+Arabic and English display names identify resident areas, with original district P-codes, source names and coordinates preserved. Arabic is unique within each governorate and uses the same sourced qualifiers as English. Bare ordinal administrative units and nonresidential premises are excluded; same-place source duplicates merge aliases. A pinned district-only seed prevents published aliases from feeding back into later source identity decisions. All source snapshots and review signatures remain required for offline rebuilding.

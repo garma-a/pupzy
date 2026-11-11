@@ -26,7 +26,8 @@ for r in load(d / 'wikidata.json.gz')['results']['bindings']:
     if m:
         rows[q]['points'].add((float(m[1]), float(m[2])))
 
-used_qids = {a.get('wikidata') for a in load(d / 'personal-review.json').get('additions', [])}
+used_qids = {a.get('wikidata') or a.get('sourceResponse',{}).get('qid') for a in load(d / 'personal-review.json').get('additions', [])}
+selection=load(d/'gps-selection.json') if (d/'gps-selection.json').exists() else None
 
 areas = {}
 
@@ -59,7 +60,11 @@ for area in REGIONS:
             available = established
         if not available:
             raise ValueError('Fewer than 30 independently named landmarks for ' + area)
-        if not selected:
+        if selection:
+            qid=selection['areas'][area][i]
+            pick=next((r for r in choices if r['q']==qid),None)
+            if not pick:raise ValueError('Frozen independent fixture is not eligible '+qid)
+        elif not selected:
             pick = min(available, key=lambda r: (r['priority'], int(r['q'][1:])))
         else:
             pick = max(available, key=lambda r: (min((distance(r['point'], x['point']) for x in selected)), -r['priority'], -int(r['q'][1:])))
@@ -93,6 +98,6 @@ signature = hashlib.sha256(json.dumps(areas, sort_keys=True, separators=(',', ':
 
 reviewed = load(d / 'personal-review.json').get('gpsReview', {}).get('areasSha256') == signature
 
-save(d / 'gps-checks.json', {'metadata': {'reviewed': reviewed, 'notes': '30 spatially spread named Wikidata landmarks per region; expected districts determined solely from OCHA polygons. No catalog points or nearest answers read. Individual fixture review is recorded by exact areas digest in personal-review.json; changed inputs invalidate signoff.', 'selection': 'Deterministic farthest-point sampling among named non-event landmarks; QIDs used as City coordinate sources excluded; name-only corroborating landmarks may remain when City coordinates derive independently from OSM geometry.'}, 'areas': areas})
+save(d / 'gps-checks.json', {'metadata': {'reviewed': reviewed, **(load(d / 'gps-failure-review.json') if (d / 'gps-failure-review.json').exists() else {}), 'notes': '30 spatially spread named Wikidata landmarks per region; expected districts determined solely from OCHA polygons. No catalog points or nearest answers read. Individual fixture review is recorded by exact areas digest in personal-review.json; changed inputs invalidate signoff.', 'selection': 'Deterministic farthest-point sampling among named non-event landmarks; QIDs used as City coordinate sources excluded; name-only corroborating landmarks may remain when City coordinates derive independently from OSM geometry.'}, 'areas': areas})
 
 print('GPS fixtures', {a: len(r) for a, r in areas.items()})

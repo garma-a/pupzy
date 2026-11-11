@@ -12,7 +12,7 @@ function createMockOfficialCities(): OfficialCityReference[] {
 }
 
 describe('Benchmark City Selection', () => {
-  it('reuses the official 351 Cities from the database and never creates fake Cities', async () => {
+  it('reuses the released official Cities from the database and never creates fake Cities', async () => {
     const mockOfficialCities = createMockOfficialCities();
 
     const mockDb: any = {
@@ -26,7 +26,7 @@ describe('Benchmark City Selection', () => {
 
     const result = await ensureOfficialCities(mockDb);
 
-    expect(result.length).toBe(351);
+    expect(result.length).toBe(getOfficialCatalog().length);
     expect(mockDb.select).toHaveBeenCalled();
     expect(mockDb.insert).not.toHaveBeenCalled();
 
@@ -37,7 +37,7 @@ describe('Benchmark City Selection', () => {
     }
   });
 
-  it('triggers official seeding if official cities are absent and returns the 351 official catalog', async () => {
+  it('triggers official seeding if official cities are absent and returns the complete official catalog', async () => {
     const mockOfficialCities = createMockOfficialCities();
 
     let queryCount = 0;
@@ -65,7 +65,7 @@ describe('Benchmark City Selection', () => {
 
     const result = await ensureOfficialCities(mockDb);
 
-    expect(result.length).toBe(351);
+    expect(result.length).toBe(getOfficialCatalog().length);
     expect(mockDb.transaction).toHaveBeenCalled();
     expect(mockTx.insert).toHaveBeenCalledWith(cities);
   });

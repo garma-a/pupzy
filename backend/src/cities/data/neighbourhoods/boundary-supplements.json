@@ -1,0 +1,13 @@
+{
+  "reviewed": true,
+  "date": "2026-11-11",
+  "items": [
+    {
+      "governorateCode": "EG11",
+      "districtSourceCode": "EG1106",
+      "sourceFile": "research-round7/osm-ras-elbar-full.json.gz",
+      "osmSourceCode": "OSM:way/97509646",
+      "reason": "Exact recorded named RasElBar cityadministrative boundary establishes northern coastalcityland absent from2017OCHA water/coast mask. Add only portions outside ALL existing OCHA governorates toEG11/EG1106. Existing governorate/district land assignments remain untouched. Required for sourcedElLessanpoint; no coordinate moved or buffered."
+    }
+  ]
+}

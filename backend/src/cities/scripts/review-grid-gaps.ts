@@ -33,7 +33,7 @@ for (const region of ['greater-cairo', 'alexandria', 'port-said-region']) {
   for (const feature of source.elements) sourceTags.set(`OSM:${feature.type}/${feature.id}`, feature.tags ?? {});
 }
 const research = readCityData<Record<string, { research: string; whyNoName: string }>>(
-  'neighbourhoods/research-blocks/feature-notes.json',
+  'neighbourhoods/research-blocks/feature-notes.json.gz',
 );
 const byCode = new Map(catalog.records.map((row) => [row.sourceCode, row]));
 const decisions = new Map(
@@ -179,7 +179,7 @@ const top40 = features
 const lines = [
   '# Remaining grid gaps — offline source review',
   '',
-  'Residential-only evidence, within 1.5 km OR a contained OFFICIAL City; lead correction 2026-11-10. Live research and failed Overpass attempts are cached in the manifest. See residential-grid-review.json for exceptions and research-blocks/feature-notes.json for individual notes.',
+  'Residential-only evidence, within 1.5 km OR a contained OFFICIAL City; lead correction 2026-11-10. Live research and failed Overpass attempts are cached in the manifest. See residential-grid-review.json for exceptions and research-blocks/feature-notes.json.gz for individual notes.',
   '',
   'Uses the release gate’s exact 500 m sampleGrid, great-circle nearest calculation and current OFFICIAL candidate. Counts must agree with report.json. District allocation is point-in-polygon against all 365 OCHA ADM2 units, including Zemam Out. A straddling feature counts once in each district with a gap sample; sample counts are additive. Centres are derived bounding-box centres of the clipped evidence, not claimed settlement coordinates. Areas are spherical polygon estimates with holes subtracted.',
   '',

@@ -1,0 +1,14 @@
+[
+  {
+    "area": "port-said-region",
+    "sourceFile": "port-said-region-residential.json.gz",
+    "osmSourceCode": "OSM:way/639204211",
+    "reason": "LeadC3 explicit MostakbalIsmailia request authorizes this contiguous source residential block as western Ismailia urbanextension. OriginalOSMpolygoncontains two independent named Mostakbal mosques Q138148800/Q138141081 and Nominatim records FutureRoad and Futureentrance adjacent. Clip this recorded residential geometry to OCHA EG19; do not alter any coordinate or expand by arbitrary buffer.",
+    "evidenceUrls": [
+      "https://www.wikidata.org/wiki/Q138148800",
+      "https://www.wikidata.org/wiki/Q138141081",
+      "https://www.openstreetmap.org/way/639204211",
+      "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%85%D8%B3%D8%AA%D9%82%D8%A8%D9%84+%D8%A7%D8%B3%D9%85%D8%A7%D8%B9%D9%8A%D9%84%D9%8A%D8%A9&format=jsonv2&countrycodes=eg&limit=5&namedetails=1&addressdetails=1&accept-language=ar%2Cen"
+    ]
+  }
+]

@@ -1,6 +1,5 @@
 /** Offline draft only. Reviewing/copying this output is a deliberate maintainer action. */
 import * as fs from 'fs';
-import * as path from 'path';
 import type { CityCatalog } from '../catalog';
 import {
   COVERAGE_AREAS,
@@ -15,17 +14,9 @@ const catalog = JSON.parse(
   fs.readFileSync(process.argv[2] ?? 'output/neighbourhood-cities/candidate-catalog.json', 'utf8'),
 ) as CityCatalog;
 const evidence = residentialFeatures(readCityData<Polygons>('neighbourhoods/builtup-evidence.geojson.gz'));
-const notesPath = path.resolve('src/cities/data/neighbourhoods/research-blocks/feature-notes.json');
-const notes = fs.existsSync(notesPath)
-  ? (JSON.parse(fs.readFileSync(notesPath, 'utf8')) as Record<
-      string,
-      {
-        research: string;
-        whyNoName: string;
-        individualResearch?: string;
-      }
-    >)
-  : {};
+const notes = readCityData<Record<string, { research: string; whyNoName: string; individualResearch?: string }>>(
+  'neighbourhoods/research-blocks/feature-notes.json.gz',
+);
 const measured = evidence.map((feature) => ({ feature, ...measureResidentialFeature(feature, catalog.records) }));
 const exceptions: GridException[] = measured
   .filter((m) => m.gaps.length)

@@ -1,10 +1,14 @@
+# Historical source research —2026-11-10
+
+This document preserves the earlier investigation. Its pending proposals/missing counts are superseded by the [final2026-11-11 implementation report](neighbourhood-cities-implementation-report.md), `known-missing-names.json` and `research-round7/integrated-proposals.json`.
+
 # Independent names: source research, 2026-11-10
 
 Original unmatched checklist entries: 52; 9 proposed sourced additions, 6 aliases, 9 removed non-place/industrial/street entries, 28 retained unresolved. Counts refer to names, not transliteration variants. Root integration may reject source points; actual final gate report is authoritative.
 
 Final independent checklist sizes: Greater Cairo425, Alexandria269, Port Said region85. Floors150/150/85. The Port Said minimum is a reviewed lead decision dated2026-11-10. The lower count consolidates city prefixes, spacing and EastPortSaid/SharqElTafreea synonyms instead of counting them twice. Catalog matching never selects vocabulary.
 
-The proposals file contains11 source-backed rows (including additions resolving names that older substring search happened to match),8 alias decisions and9 checklist removals. `original-name-dispositions.json` records every original unmatched entry with exact lead lookup URLs/time and further response snapshots. Every new response is compressed and listed in `manifest-entries.json`; root merges those entries into the main manifest. Raw Nominatim responses happen to have `.html.gz` suffix from a generic HTTP caching helper; contents are JSON.
+The proposals file contains11 source-backed rows (including additions resolving names that older substring search happened to match),8 alias decisions and9 checklist removals. `original-name-dispositions.json.gz` records every original unmatched entry with exact lead lookup URLs/time and further response snapshots. Every new response is compressed and listed in `manifest-entries.json`; root merges those entries into the main manifest. Raw Nominatim responses happen to have `.html.gz` suffix from a generic HTTP caching helper; contents are JSON.
 
 ## Rehab and Fayrouz
 
@@ -63,6 +67,6 @@ BahrElBaqar is an important source-confusion case: the staged locality is explic
 
 Three broad targeted Overpass GET queries to overpass-api.de and a PortSaid query to overpass.private.coffee timed out without returning response bytes. This is a service failure, not evidence that no named feature exists. Existing raw Overpass sources remain available. Live Nominatim requests were serialized with a descriptive User-Agent and1.1seconds between completed requests; all returned validJSON and were cached, including empty/fuzzy results.
 
-The least certain included recommendations are the Fayrouz apartment proxy, Nuzha mosque proxy, Mostakbal Ismailia mosque proxy, NagaaElArab street proxy and regional ShababObour estate restoration. FawziMoaz/ElNasrSmouha/Horreya/Mahmoudeya removals may deserve local address-user review because residents may sometimes use street names colloquially. No inferred coordinates, broad aliases for distinct Asafra north/south areas or proxy for unlocated Rehab were manufactured.
+The least certain included recommendations are the Fayrouz apartment proxy, Nuzha mosque proxy, Mostakbal Ismailia mosque proxy, NagaaElArab street proxy and regional ShababObour estate restoration. FawziMoaz/ElNasrSmouha/Horreya/Mahmoudeya removals may deserve local address-user review because residents may sometimes use street names colloquially. The subsequent lead decision explicitly aliases Asafra north/south variants to Asafra. Rehab remains unlocated; see the final review.
 
 Final integration: Mostakbal Ismailia was withheld because its recorded mosque point is in EG1906 outside the declared city coverage. The final candidate includes ten name additions, and nineteen further spelling/translation alias reviews were applied using unambiguous Arabic source identities. Of the original 52 unmatched entries, eight now resolve through new Cities, six through aliases/existing identities, nine were removed with the recorded reasons, and twenty-nine remain unresolved. The final gate has 22 / 47 / 30 unmatched variants across the extended checklists. The implementation report and `release-gate-status.json` supersede the preflight proposal counts above.

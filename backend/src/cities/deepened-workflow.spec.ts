@@ -1,4 +1,6 @@
-import { getOfficialCatalog, type CityCatalogRecord } from './catalog';
+import { readCityData } from './data-files';
+import type { CityCatalog as DistrictFixtureCatalog } from './catalog';
+import { type CityCatalogRecord } from './catalog';
 import { compareSnapshots, calculateDistanceKm } from './diff';
 import { fetchUpstreamSnapshot, DEFAULT_RESOURCE_URL } from './fetch';
 import { applyReviewedRelease, type ReviewedReleaseResult } from './plan';
@@ -16,8 +18,10 @@ import {
 import { generateReconcileMigrationSql } from './reconcile';
 import * as refreshFacade from './refresh';
 
+const districtFixture = () => readCityData<DistrictFixtureCatalog>('neighbourhoods/district-seed.json.gz').records;
+
 describe('Deepened City Release Workflow Architecture', () => {
-  const currentCatalog = getOfficialCatalog();
+  const currentCatalog = districtFixture();
 
   describe('Explicit Module Boundaries and Public Interfaces', () => {
     it('exposes independent focused interfaces across diff, fetch, plan, migration, publish, and release-sql', () => {

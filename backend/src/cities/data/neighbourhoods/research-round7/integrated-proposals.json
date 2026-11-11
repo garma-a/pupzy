@@ -1,0 +1,322 @@
+{
+  "metadata": {
+    "date": "2026-11-11",
+    "reviewed": true
+  },
+  "additions": [
+    {
+      "sourceCode": "PUPZY:mahatet-masr-alexandria",
+      "coverageArea": "alexandria",
+      "nameEnglish": "Mahatet Masr",
+      "nameArabic": "محطة مصر",
+      "wikidata": "Q958574",
+      "aliases": [
+        "Mahatet Masr",
+        "Mehatet Masr",
+        "Misr Station Alexandria"
+      ],
+      "proxyPoint": true,
+      "notes": "Established station-area name. Exact independent Wikidata Alexandria railway station point, transit proxy explicitly permitted by lead C.3."
+    },
+    {
+      "sourceCode": "PUPZY:tharwat-alexandria",
+      "coverageArea": "alexandria",
+      "nameEnglish": "Tharwat",
+      "nameArabic": "ثروت",
+      "wikidata": "Q7710847",
+      "aliases": [],
+      "proxyPoint": false,
+      "notes": "Exact named Tharwat locality P625 and bilingual names in existing recorded raw Wikidata response."
+    },
+    {
+      "sourceCode": "PUPZY:saraya-alexandria",
+      "coverageArea": "alexandria",
+      "nameEnglish": "El Saraya",
+      "nameArabic": "السرايا",
+      "wikidata": "Q4518634",
+      "aliases": [
+        "Al Saraya",
+        "Saraya"
+      ],
+      "proxyPoint": false,
+      "notes": "Exact named ElSaraya locality bilingual label السرايا(حي) and P625 in existing raw Wikidata response; parentMontaza1."
+    },
+    {
+      "sourceCode": "PUPZY:kafoury-alexandria",
+      "coverageArea": "alexandria",
+      "nameEnglish": "Kafoury",
+      "nameArabic": "الكافوري",
+      "wikidata": "Q110835589",
+      "aliases": [
+        "El Kafoury",
+        "Al Kafoury"
+      ],
+      "proxyPoint": true,
+      "notes": "Exact named الكافوري recorded Wikidata P625, reviewed English transliteration. Railway/locality proxy for independently listed Kafoury area."
+    },
+    {
+      "sourceCode": "PUPZY:new-sphinx",
+      "coverageArea": "greater-cairo",
+      "nameEnglish": "New Sphinx",
+      "nameArabic": "سفنكس الجديدة",
+      "wikidata": "Q112110813",
+      "aliases": [
+        "New Sphinx City",
+        "Sphinx New City"
+      ],
+      "proxyPoint": false,
+      "notes": "Exact recorded Wikidata NewSphinx bilingual names and locality P625, within existing declared GreaterCairo coverage; keep GizaZemamOut parent rule."
+    },
+    {
+      "sourceCode": "PUPZY:mostakbal-ismailia",
+      "coverageArea": "port-said-region",
+      "nameEnglish": "El Mostakbal Ismailia",
+      "nameArabic": "المستقبل الإسماعيلية",
+      "aliases": [
+        "Al Mostakbal Ismailia",
+        "Future City Ismailia"
+      ],
+      "wikidata": "Q138148800",
+      "proxyPoint": true,
+      "notes": "Exact previouslyrecorded named mosque مسجدالشهيدطنطاويبالمستقبل P625 is inside originalOSMresidentialway639204211, corroborated nearbyQ138141081مسجدالمستقبل1 and recordedNominatim طريقالمستقبل / مدخلالمستقبلالسريع. LeadC3 specificallyauthorizes the containing residentialpolygon extension, clippedEG19; keepOCHAEG1906parentexactly."
+    },
+    {
+      "sourceCode": "PUPZY:kafr-el-battikh",
+      "nameEnglish": "Kafr El Battikh",
+      "nameArabic": "كفر البطيخ",
+      "wikidata": "Q6839370",
+      "notes": "Same named city; exact OSM city point now in recorded coverage extension. Wikidata label/checklist aliases merged onto the OSM City, not a separate selectable place.",
+      "finalOutcome": "merged-identity",
+      "keep": "OSM:way/790985328"
+    },
+    {
+      "sourceCode": "PUPZY:gabriel-alexandria",
+      "nameEnglish": "Gabriel",
+      "nameArabic": "غبريال",
+      "aliases": [],
+      "sourceResponse": {
+        "file": "research-round7/nominatim-gabriel3.json.gz",
+        "osmIdentity": "OSM:node/1892910381"
+      },
+      "proxyPoint": true,
+      "evidence": "Established Gabriel area, exact named غبريال railway halt. Raw response bounded/context verifies Alexandria; source transit proxy permitted by lead.",
+      "notes": "Established Gabriel area, exact named غبريال railway halt. Raw response bounded/context verifies Alexandria; source transit proxy permitted by lead."
+    },
+    {
+      "sourceCode": "PUPZY:el-lessan",
+      "nameEnglish": "El Lessan",
+      "nameArabic": "اللسان",
+      "aliases": [
+        "Al Lessan"
+      ],
+      "sourceResponse": {
+        "file": "research-round7/nominatim-lessan.json.gz",
+        "osmIdentity": "OSM:node/10899712521"
+      },
+      "proxyPoint": true,
+      "evidence": "Established RasElBar tip area; exact سوق اللسان market proxy. Recorded named RasElBar cityboundary fills only the OCHA2017 coastal water-mask gap; no point moved.",
+      "notes": "Established RasElBar tip area; exact سوق اللسان market proxy. Recorded named RasElBar cityboundary fills only the OCHA2017 coastal water-mask gap; no point moved."
+    },
+    {
+      "sourceCode": "PUPZY:el-kafrawy-new-damietta",
+      "nameEnglish": "El Kafrawy",
+      "nameArabic": "الكفراوي",
+      "aliases": [
+        "Al Kafrawy"
+      ],
+      "sourceResponse": {
+        "file": "research-round7/nominatim-kafrawy.json.gz",
+        "osmIdentity": "OSM:way/97362994"
+      },
+      "proxyPoint": true,
+      "evidence": "Client-established NewDamietta area; exact named شارع الكفراوي and nearby namesake school corroborate an approximate road proxy, not a survey centre.",
+      "notes": "Client-established NewDamietta area; exact named شارع الكفراوي and nearby namesake school corroborate an approximate road proxy, not a survey centre."
+    },
+    {
+      "sourceCode": "PUPZY:mubarak-new-damietta",
+      "nameEnglish": "Mubarak New Damietta",
+      "nameArabic": "مبارك دمياط الجديدة",
+      "aliases": [],
+      "sourceResponse": {
+        "file": "research-round7/nominatim-mubarak2.json.gz",
+        "osmIdentity": "OSM:way/585284216"
+      },
+      "proxyPoint": true,
+      "evidence": "Client-established Mubarak area in NewDamietta; exact named شارع مبارك road proxy inside official NewDamietta district, corroborated adjacent side roads.",
+      "notes": "Client-established Mubarak area in NewDamietta; exact named شارع مبارك road proxy inside official NewDamietta district, corroborated adjacent side roads."
+    },
+    {
+      "sourceCode": "PUPZY:el-omayed",
+      "nameEnglish": "El Omayed",
+      "nameArabic": "العميد",
+      "aliases": [
+        "Al Omayed"
+      ],
+      "sourceResponse": {
+        "file": "research-round7/nominatim-omayed3.json.gz",
+        "osmIdentity": "OSM:way/1498183544"
+      },
+      "proxyPoint": true,
+      "evidence": "Client-established Omayed coast locality; exact named شارع ساحل العميد supplies approximate approach-road point. Reserve-centre coordinate was not used; this is a documented road proxy.",
+      "notes": "Client-established Omayed coast locality; exact named شارع ساحل العميد supplies approximate approach-road point. Reserve-centre coordinate was not used; this is a documented road proxy."
+    },
+    {
+      "sourceCode": "PUPZY:green-belt-october",
+      "nameEnglish": "Green Belt October",
+      "nameArabic": "الحزام الأخضر",
+      "aliases": [],
+      "sourceResponse": {
+        "file": "research-round7/nominatim-greenbelt.json.gz",
+        "osmIdentity": "OSM:relation/7777042"
+      },
+      "proxyPoint": true,
+      "evidence": "Client-established broad October GreenBelt area; exact lake بحيرة الحزام الاخضر is explicitly an approximate landmark proxy. No independent lake City is claimed; raw feature is a lake and source kind remains recorded.",
+      "notes": "Client-established broad October GreenBelt area; exact lake بحيرة الحزام الاخضر is explicitly an approximate landmark proxy. No independent lake City is claimed; raw feature is a lake and source kind remains recorded."
+    },
+    {
+      "sourceCode": "PUPZY:aghakhan",
+      "nameEnglish": "Aghakhan",
+      "nameArabic": "أغاخان",
+      "aliases": [
+        "Agha Khan",
+        "آغاخان"
+      ],
+      "proxyPoint": true,
+      "sourceResponse": {
+        "file": "research-round7/aghakhan-waze.json.gz",
+        "selector": "jsonld",
+        "schemaType": "Place",
+        "schemaName": "البنك الاهلى المصري فرع أغاخان - NBE Aghakhan Branch"
+      },
+      "notes": "Established ShubraAghakhan area, exact Waze JSONLD geo for the NationalBank AghakhanBranch, separately corroborated by EGMaps and official MOI address. Explicit bank proxy; not a bank-tower City.",
+      "evidence": "Recorded Waze named AghakhanBranch JSONLD geo, not the unrelated nearby unnamed reverse house."
+    },
+    {
+      "sourceCode": "PUPZY:sawary-alexandria",
+      "nameEnglish": "Sawary",
+      "nameArabic": "صواري",
+      "aliases": [
+        "Sawari"
+      ],
+      "proxyPoint": true,
+      "sourceResponse": {
+        "file": "research-round7/sawary-developer.json.gz",
+        "selector": "mapCentre"
+      },
+      "notes": "Exact centre of the project location-map iframe published by SaudiEgyptianDevelopers on its own Sawary project page; approximate mainland proxy beside the project, not a surveyed centroid. WD project/mosque points fall in the dated OCHA lake mask and were not moved.",
+      "evidence": "Primary developer project-location iframe !2d longitude/!3d latitude, recorded HTML; approximate map-centre proxy."
+    },
+    {
+      "sourceCode": "PUPZY:hadara-alexandria",
+      "nameEnglish": "Hadara",
+      "nameArabic": "الحضرة",
+      "aliases": [
+        "Al Hadrah",
+        "Hadara El Gedida",
+        "الحضرة الجديدة"
+      ],
+      "proxyPoint": false,
+      "sourceResponse": {
+        "file": "wikidata.json.gz",
+        "selector": "wikidata",
+        "qid": "Q5637597",
+        "coordinate": "Point(29.932323 31.20179)"
+      },
+      "notes": "Recorded raw WD Hadara locality has two points only a few metres apart; deliberately choose the more precise recorded point. LeadC2 permits new-Hadara subarea as alias of Hadara.",
+      "evidence": "Exact recorded Q5637597 P625 Point(29.932323 31.20179); no averaged or invented coordinate."
+    },
+    {
+      "sourceCode": "PUPZY:capital-r7",
+      "nameEnglish": "District R7 Capital",
+      "nameArabic": "الحي السكني السابع — العاصمة الإدارية",
+      "aliases": [
+        "الحي السكني السابع العاصمة",
+        "R7 New Capital"
+      ],
+      "sourceResponse": {
+        "file": "greater-cairo-places.json.gz",
+        "osmIdentity": "OSM:way/819189853"
+      },
+      "proxyPoint": true,
+      "notes": "Primary MBG company profile explicitly places Pukka inR7; original OSM Pukka residential compound centre is a representative proxy for the district. Source web response root-primary-membership contains https://mbgeg.com/wp-content/uploads/2025/01/MBG-Company-Profile_compressed.pdf.",
+      "evidence": "Primary MBG company profile explicitly places Pukka inR7; original OSM Pukka residential compound centre is a representative proxy for the district. Source web response root-primary-membership contains https://mbgeg.com/wp-content/uploads/2025/01/MBG-Company-Profile_compressed.pdf."
+    },
+    {
+      "sourceCode": "PUPZY:capital-r8",
+      "nameEnglish": "District R8 Capital",
+      "nameArabic": "الحي السكني الثامن — العاصمة الإدارية",
+      "aliases": [
+        "الحي السكني الثامن العاصمة",
+        "R8 New Capital"
+      ],
+      "sourceResponse": {
+        "file": "greater-cairo-places.json.gz",
+        "osmIdentity": "OSM:way/1366681574"
+      },
+      "proxyPoint": true,
+      "notes": "Recorded OSM DiploEast compound centre represents R8; first-party property inventory https://eslamhamza.com/developers/mbg-159 assigns DiploEast toR8 and primary MBG brochure map corroborates named project context. All responses recorded, no coordinate from a marketing recollection.",
+      "evidence": "Recorded OSM DiploEast compound centre represents R8; first-party property inventory https://eslamhamza.com/developers/mbg-159 assigns DiploEast toR8 and primary MBG brochure map corroborates named project context. All responses recorded, no coordinate from a marketing recollection."
+    }
+  ],
+  "aliases": {
+    "OSM:way/30677759": [
+      "Geziret Mohamed"
+    ],
+    "OSM:way/724746906": [
+      "Nikla"
+    ],
+    "OSM:way/645282013": [
+      "Mansouriya"
+    ],
+    "OSM:way/723728136": [
+      "Moatamadiya"
+    ],
+    "OSM:way/723092193": [
+      "Kafr Ghattati"
+    ],
+    "OSM:node/322007875": [
+      "Abu El Nomros"
+    ],
+    "OSM:way/244439100": [
+      "Nazlet El Ashter"
+    ],
+    "OSM:way/723061046": [
+      "Bani Youssef"
+    ],
+    "OSM:way/1551445047": [
+      "Bashayer El Kheir",
+      "بشائر الخير"
+    ],
+    "OSM:node/769118972": [
+      "Wadi El Qamar"
+    ],
+    "OSM:way/810437370": [
+      "El Araishiya"
+    ],
+    "WD:Q4803317": [
+      "العصافرة بحري",
+      "العصافرة قبلي",
+      "Asafra Bahary",
+      "Asafra Qebly"
+    ],
+    "EG3307": [
+      "مارينا ٥",
+      "مارينا ٦",
+      "مارينا ٧",
+      "Marina 5",
+      "Marina 6",
+      "Marina 7"
+    ],
+    "WD:Q96395299": [
+      "داون تاون العلمين",
+      "أبراج العلمين",
+      "Downtown Alamein",
+      "El Alamein Towers",
+      "Al Alamein Towers"
+    ],
+    "OSM:node/768590261": [
+      "جزيرة الوراق",
+      "Warraq Island"
+    ]
+  }
+}

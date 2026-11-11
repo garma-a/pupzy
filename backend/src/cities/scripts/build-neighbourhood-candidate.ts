@@ -6,10 +6,22 @@ import { loadRawSnapshot, transformCatalog, validateCatalog } from '../catalog';
 import type { NeighbourhoodSources, PlaceDecision } from '../neighbourhoods';
 import { readCityData } from '../data-files';
 
+const evidenceReference = <T extends IndependentNames | GpsChecks>(file: string): T => {
+  const sourcePath = 'neighbourhoods/' + file;
+  const input = readCityData<T>(sourcePath);
+  return {
+    ...input,
+    sourcePath,
+    sha256: createHash('sha256')
+      .update(fs.readFileSync(path.resolve('src/cities/data', sourcePath)))
+      .digest('hex'),
+    metadata: input.metadata,
+    areas: { 'greater-cairo': [], alexandria: [], 'port-said-region': [] },
+  };
+};
 const sources = readCityData<NeighbourhoodSources>('neighbourhoods/reviewed-overrides.json');
 const reference = (file: string, notes: string, level?: 1 | 2): Polygons => ({
   metadata: {
-    ...(level ? {} : readCityData<{ metadata: Polygons['metadata'] }>('neighbourhoods/' + file).metadata),
     reviewed: level
       ? true
       : readCityData<{ metadata: Polygons['metadata'] }>('neighbourhoods/' + file).metadata.reviewed,
@@ -20,6 +32,18 @@ const reference = (file: string, notes: string, level?: 1 | 2): Polygons => ({
     .update(fs.readFileSync(path.resolve(process.cwd(), 'src/cities/data/neighbourhoods', file)))
     .digest('hex'),
   ochaLevel: level,
+  ...(level
+    ? {
+        replacements: {
+          sourcePath: 'neighbourhoods/reviewed-boundary-replacements.geojson.gz',
+          sha256: createHash('sha256')
+            .update(
+              fs.readFileSync(path.resolve('src/cities/data/neighbourhoods/reviewed-boundary-replacements.geojson.gz')),
+            )
+            .digest('hex'),
+        },
+      }
+    : {}),
   features: [],
 });
 const districtSnapshot = loadRawSnapshot();
@@ -43,8 +67,8 @@ const snapshot = {
       'Authoritative OCHA ADM2 exact P-code polygons, including Zemam Out for explicit exception validation.',
       2,
     ),
-    names: readCityData<IndependentNames>('neighbourhoods/independent-names.json'),
-    gps: readCityData<GpsChecks>('neighbourhoods/gps-checks.json'),
+    names: evidenceReference<IndependentNames>('independent-names.json'),
+    gps: evidenceReference<GpsChecks>('gps-checks.json'),
   },
 };
 const catalog = transformCatalog(snapshot);

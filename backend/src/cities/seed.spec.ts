@@ -55,27 +55,30 @@ describe('seedOfficialCities', () => {
     expect(mockTx.insert).not.toHaveBeenCalled();
   });
 
-  it('seeds exactly 351 official cities across 27 governorates atomically in a transaction', async () => {
+  it('seeds the complete reviewed release across 27 governorates atomically in a transaction', async () => {
     const officialCatalog = getOfficialCatalog();
-    expect(officialCatalog.length).toBe(351);
+    expect(officialCatalog.length).toBeGreaterThan(351);
 
     const result = await seedOfficialCities(mockDb, { batchSize: 100 });
 
     expect(mockDb.transaction).toHaveBeenCalledTimes(1);
-    expect(result.totalSeeded).toBe(351);
+    expect(result.totalSeeded).toBe(officialCatalog.length);
     expect(result.governorateCount).toBe(27);
 
-    // Verify 4 batches: 100, 100, 100, 51
-    expect(insertedBatches.length).toBe(4);
+    // Districts are inserted before children, with separate bounded batches.
+    const districts = officialCatalog.filter((row) => !row.districtSourceCode).length;
+    expect(insertedBatches.length).toBe(
+      Math.ceil(districts / 100) + Math.ceil((officialCatalog.length - districts) / 100),
+    );
     const totalRecords = insertedBatches.reduce((acc, b) => acc + b.length, 0);
-    expect(totalRecords).toBe(351);
+    expect(totalRecords).toBe(officialCatalog.length);
 
     // Verify target table and structure
     expect(mockTx.insert).toHaveBeenCalledWith(cities);
     for (const batch of insertedBatches) {
       for (const row of batch) {
         expect(row.status).toBe('OFFICIAL');
-        expect(row.sourceCode).toMatch(/^EG\d{4}$/);
+        expect(officialCatalog.some((city) => city.sourceCode === row.sourceCode)).toBe(true);
         expect(row.nameEnglish.length).toBeGreaterThan(0);
         expect(row.nameArabic.length).toBeGreaterThan(0);
         expect(row.governorate.length).toBeGreaterThan(0);

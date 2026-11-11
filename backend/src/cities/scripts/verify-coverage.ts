@@ -5,11 +5,23 @@ import { loadOfficialCatalog, loadReleaseSnapshot, type CityCatalog } from '../c
 import { verifyCoverage, type Polygons, type IndependentNames, type GpsChecks } from '../coverage';
 import { readCityData } from '../data-files';
 
+const evidenceReference = <T extends IndependentNames | GpsChecks>(file: string): T => {
+  const sourcePath = 'neighbourhoods/' + file;
+  const input = readCityData<T>(sourcePath);
+  return {
+    ...input,
+    sourcePath,
+    sha256: createHash('sha256')
+      .update(fs.readFileSync(path.resolve('src/cities/data', sourcePath)))
+      .digest('hex'),
+    metadata: input.metadata,
+    areas: { 'greater-cairo': [], alexandria: [], 'port-said-region': [] },
+  };
+};
 const catalogPath = process.argv[2];
 const catalog = catalogPath ? (JSON.parse(fs.readFileSync(catalogPath, 'utf8')) as CityCatalog) : loadOfficialCatalog();
 const reference = (file: string, notes: string, level?: 1 | 2): Polygons => ({
   metadata: {
-    ...(level ? {} : readCityData<{ metadata: Polygons['metadata'] }>('neighbourhoods/' + file).metadata),
     reviewed: level
       ? true
       : readCityData<{ metadata: Polygons['metadata'] }>('neighbourhoods/' + file).metadata.reviewed,
@@ -20,6 +32,18 @@ const reference = (file: string, notes: string, level?: 1 | 2): Polygons => ({
     .update(fs.readFileSync(path.resolve(process.cwd(), 'src/cities/data/neighbourhoods', file)))
     .digest('hex'),
   ochaLevel: level,
+  ...(level
+    ? {
+        replacements: {
+          sourcePath: 'neighbourhoods/reviewed-boundary-replacements.geojson.gz',
+          sha256: createHash('sha256')
+            .update(
+              fs.readFileSync(path.resolve('src/cities/data/neighbourhoods/reviewed-boundary-replacements.geojson.gz')),
+            )
+            .digest('hex'),
+        },
+      }
+    : {}),
   features: [],
 });
 const evidence = catalogPath
@@ -30,8 +54,8 @@ const evidence = catalogPath
       ),
       governorates: reference('ocha-cod-ab/egy_admin1.geojson.gz', 'OCHA ADM1', 1),
       districts: reference('ocha-cod-ab/egy_admin2.geojson.gz', 'OCHA ADM2', 2),
-      names: readCityData<IndependentNames>('neighbourhoods/independent-names.json'),
-      gps: readCityData<GpsChecks>('neighbourhoods/gps-checks.json'),
+      names: evidenceReference<IndependentNames>('independent-names.json'),
+      gps: evidenceReference<GpsChecks>('gps-checks.json'),
     }
   : loadReleaseSnapshot().coverageEvidence;
 if (!evidence) throw new Error('No release coverage evidence');
@@ -55,8 +79,8 @@ for (const a of report.areas) {
   const text = [
     `## ${a.area}`,
     `Grid: ${a.grid.passed ? 'PASS' : 'FAIL'} — ${a.grid.samples} samples; ${a.grid.gapCount} uncovered; ${(a.grid.coverageShare * 100).toFixed(3)}% covered; floor ${a.grid.floor === undefined ? 'unreviewed' : (a.grid.floor * 100).toFixed(1) + '%'}; ${a.grid.unreviewedFeatures.length} unreviewed features.`,
-    `Names: ${a.names.passed ? 'PASS' : 'FAIL'} — ${a.names.distinctNames} distinct (reviewed minimum ${a.names.minimum ?? 'missing'}); ${a.names.missingNames.length}/${a.names.variants} unmatched variants.`,
-    `GPS: ${a.gps.passed ? 'PASS' : 'FAIL'} — ${a.gps.checks} checks; ${a.gps.failures.length} failures.`,
+    `Names: ${a.names.passed ? 'PASS' : 'FAIL'} — ${a.names.distinctNames} distinct (reviewed minimum ${a.names.minimum ?? 'missing'}); ${a.names.missingNames.length}/${a.names.variants} unmatched variants; ${a.names.knownMissingVariants} individually reviewed; ${a.names.unreviewedMissingNames.length} unreviewed.`,
+    `GPS: ${a.gps.passed ? 'PASS' : 'FAIL'} — ${a.gps.checks} checks; ${a.gps.checks - a.gps.failures.length} passed; ${a.gps.failures.length} individually reviewed failures.`,
     'Worst gaps: ' + JSON.stringify(a.grid.worstGaps),
     'Missing names: ' + a.names.missingNames.join(', '),
   ].join('\n');

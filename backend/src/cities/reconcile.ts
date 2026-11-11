@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
 import * as fs from 'fs';
 import {
-  getOfficialCatalog,
+  loadOfficialCatalog,
   validateCatalog,
   unpackCatalog,
   resolveDataPath,
@@ -135,7 +135,7 @@ export function validateLegacyMappings(
  * 8. Cache invalidation is triggered post-commit.
  */
 export async function reconcileCities(db: any, options: ReconcileOptions = {}): Promise<ReconcileResult> {
-  const rawCatalog = options.catalog ?? getOfficialCatalog();
+  const rawCatalog = options.catalog ?? loadOfficialCatalog();
   const { records: catalogRecords, officialRecords } = unpackCatalog(rawCatalog);
   const mappings = options.mappings ?? loadLegacyMappings();
 
@@ -413,7 +413,7 @@ export async function reconcileCities(db: any, options: ReconcileOptions = {}): 
  */
 export function generateReconcileMigrationSql(
   mappings: LegacyCityMapping[] = loadLegacyMappings(),
-  catalog: CityCatalogRecord[] | CityCatalog = getOfficialCatalog(),
+  catalog: CityCatalogRecord[] | CityCatalog = loadOfficialCatalog(),
 ): string {
   const { records: catalogRecords, officialRecords } = unpackCatalog(catalog);
 

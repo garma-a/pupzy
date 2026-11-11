@@ -1,6 +1,7 @@
 import type { CityCatalogRecord } from './catalog';
 import { readCityData } from './data-files';
 import { normalizeCitySearch } from './search';
+import { addReviewedTransliterations, type AliasGenerationReview } from './transliteration';
 
 export interface OsmElement {
   type: 'node' | 'way' | 'relation';
@@ -23,6 +24,8 @@ export interface PlaceDecision {
   notes: string;
   nameEnglish?: string;
   nameArabic?: string;
+  sourceNameArabic?: string;
+  sourceNameEnglish?: string;
   aliases?: string[];
   governorateCode?: string;
   districtSourceCode?: string;
@@ -38,7 +41,14 @@ export interface NeighbourhoodSources {
   decisionsFile?: string;
   sourceDigests?: Record<string, string>;
   wikidataFile?: string;
-  districtEdits: Array<{ sourceCode: string; nameEnglish: string; aliases: string[]; notes: string }>;
+  aliasGeneration?: AliasGenerationReview;
+  districtEdits: Array<{
+    sourceCode: string;
+    nameEnglish: string;
+    nameArabic?: string;
+    aliases: string[];
+    notes: string;
+  }>;
   overpass?: SourceSnapshot<{ elements: OsmElement[] }>;
   wikidata?: SourceSnapshot<{ results: { bindings: Array<Record<string, { value: string }>> } }>;
   decisions: PlaceDecision[];
@@ -86,10 +96,11 @@ export function extendDistrictCatalog(
   for (const edit of sources.districtEdits) {
     const district = byCode.get(edit.sourceCode);
     if (!district || !edit.notes.trim()) throw new Error(`Invalid district edit ${edit.sourceCode}`);
-    district.aliases = [...new Set([...(district.aliases ?? []), district.nameEnglish, ...edit.aliases])].filter(
-      (alias) => alias !== edit.nameEnglish && alias !== district.nameArabic,
-    );
+    district.aliases = [
+      ...new Set([...(district.aliases ?? []), district.nameEnglish, district.nameArabic, ...edit.aliases]),
+    ].filter((alias) => alias !== edit.nameEnglish && alias !== (edit.nameArabic ?? district.nameArabic));
     district.nameEnglish = edit.nameEnglish;
+    district.nameArabic = edit.nameArabic ?? district.nameArabic;
   }
   const elements = new Map((sources.overpass?.response.elements ?? []).map((e) => [`OSM:${e.type}/${e.id}`, e]));
   const wdById = new Map<string, Array<Record<string, { value: string }>>>();
@@ -178,8 +189,8 @@ export function extendDistrictCatalog(
       sourceCode: decision.sourceCode,
       nameEnglish,
       nameArabic,
-      sourceNameEnglish: element?.tags?.['name:en'] ?? nameEnglish,
-      sourceNameArabic: element?.tags?.['name:ar'] ?? nameArabic,
+      sourceNameEnglish: decision.sourceNameEnglish ?? element?.tags?.['name:en'] ?? element?.tags?.name ?? nameEnglish,
+      sourceNameArabic: decision.sourceNameArabic ?? element?.tags?.['name:ar'] ?? element?.tags?.name ?? nameArabic,
       latitude: point!.latitude!,
       longitude: point!.longitude!,
       aliases: [
@@ -197,6 +208,41 @@ export function extendDistrictCatalog(
         pointEvidence: decision.point?.evidence ?? decision.sourceCode,
       },
     };
+    if (sources.decisionsFile) {
+      // The complete audit is retained once in the pinned compressed decisions.
+      // Published rows retain the facts needed for quality validation and a
+      // resolvable source reference instead of duplicating long review prose.
+      const facts = [
+        'coverageArea',
+        'nameDisambiguation',
+        'arabicNameDisambiguation',
+        'proxyPoint',
+        'representativeOf',
+      ];
+      const detail = record.provenance!;
+      record.provenance = {
+        ...Object.fromEntries(facts.filter((key) => detail[key] !== undefined).map((key) => [key, detail[key]])),
+        ...(typeof detail.parentRule === 'string' && detail.parentRule.startsWith('zemam-out')
+          ? {
+              parentRule: detail.parentRule,
+              zemamOutSourceCode: detail.zemamOutSourceCode,
+              parentPolygonDistanceKm: detail.parentPolygonDistanceKm,
+              ...(detail.parentRule === 'zemam-out-named-city'
+                ? {
+                    parentCandidateSourceCodes: detail.parentCandidateSourceCodes,
+                    parentCityEvidence: detail.parentCityEvidence,
+                  }
+                : {}),
+            }
+          : {}),
+        source: detail.source,
+        notes: 'reviewed-decisions.json.gz#' + decision.sourceCode,
+        parentEvidence: 'OCHA ' + decision.districtSourceCode,
+        pointEvidence: decision.provenance?.coordinateSource
+          ? JSON.stringify(decision.provenance.coordinateSource)
+          : decision.sourceCode,
+      };
+    }
     if (byCode.has(record.sourceCode)) throw new Error(`Duplicate source identity ${record.sourceCode}`);
     records.push(record);
     byCode.set(record.sourceCode, record);
@@ -211,5 +257,6 @@ export function extendDistrictCatalog(
         return true;
       });
   }
+  if (sources.aliasGeneration) addReviewedTransliterations(records, sources.aliasGeneration);
   return records.sort((a, b) => a.sourceCode.localeCompare(b.sourceCode));
 }

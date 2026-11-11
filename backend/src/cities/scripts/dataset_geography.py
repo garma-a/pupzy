@@ -7,6 +7,8 @@ REGIONS = ['greater-cairo', 'alexandria', 'port-said-region']
 def geography(data):
     adm1 = [Shape(f['geometry'], f['properties']) for f in load(data / 'ocha-cod-ab/egy_admin1.geojson.gz')['features']]
     adm2 = [Shape(f['geometry'], f['properties']) for f in load(data / 'ocha-cod-ab/egy_admin2.geojson.gz')['features']]
+    from geographic_supplements import apply_supplements, source_shape
+    adm1,adm2=apply_supplements(data,adm1,adm2)
     by1 = {s.properties['adm1_pcode']: s for s in adm1}
     by2 = {s.properties['adm2_pcode']: s for s in adm2}
     cairo_codes = ['EG2101', 'EG2102', 'EG2103', 'EG2104', 'EG2105', 'EG2106', 'EG2107', 'EG2108', 'EG2109', 'EG2113', 'EG2116', 'EG2117', 'EG2118', 'EG2119', 'EG2120', 'EG2121', 'EG1403', 'EG1406', 'EG1407', 'EG1409', 'EG1410', 'EG1412', 'EG1413', 'EG1400', 'EG1309', 'EG1321']
@@ -17,6 +19,15 @@ def geography(data):
     alex_coast = rectangle(28.85, 30.6, 29.6, 31.15)
     alex_coast = Shape(output(intersect(ctx, alex_coast.geom, by1['EG33'].geom)))
     coverage = {'greater-cairo': union_shapes([by1['EG01'], *[by2[c] for c in cairo_codes], october_zayed, ramadan]), 'alexandria': union_shapes([by1['EG02'], by2['EG1811'], by2['EG1812'], alex_coast]), 'port-said-region': union_shapes([by1['EG03'], *[by2[c] for c in ['EG1901', 'EG1902', 'EG1903', 'EG1904', 'EG1101', 'EG1102', 'EG1105', 'EG1106', 'EG1108', 'EG1109']]])}
+    extensions=data/'coverage-extensions.json'
+    if extensions.exists():
+        policy=load(extensions)
+        if not policy['reviewed']:raise ValueError('Unreviewed coverage extensions')
+        for item in policy['items']:
+            shape=source_shape(data,item)
+            gov=by1['EG19' if '639204211' in item['osmSourceCode'] else 'EG11']
+            clipped=Shape(output(intersect(ctx,shape.geom,gov.geom)))
+            coverage[item['area']]=union_shapes([coverage[item['area']],clipped])
     return (adm1, adm2, coverage)
 
 def locate(point, shapes, key):

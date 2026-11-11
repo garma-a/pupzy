@@ -1,3 +1,5 @@
+import { readCityData } from './data-files';
+import type { CityCatalog } from './catalog';
 import {
   loadRawSnapshot,
   loadReleaseSnapshot,
@@ -6,6 +8,8 @@ import {
   validateCatalog,
   getOfficialCatalog,
 } from './catalog';
+
+const districtFixture = () => readCityData<CityCatalog>('neighbourhoods/district-seed.json.gz').records;
 
 describe('Offline Egyptian City Catalog and Transformation', () => {
   describe('Raw Snapshot', () => {
@@ -80,13 +84,13 @@ describe('Offline Egyptian City Catalog and Transformation', () => {
       expect(gizaMarkaz?.nameEnglish).toBe('Giza (Markaz)');
     });
 
-    it('ensures every (nameEnglish, governorate) pair in the 351 catalog is strictly unique', () => {
+    it('ensures every (nameEnglish, governorate) pair in the released catalog is strictly unique', () => {
       const catalog = getOfficialCatalog();
       const keys = catalog.map((c) => `${c.governorate}:${c.nameEnglish}`);
       const uniqueKeys = new Set(keys);
 
-      expect(keys.length).toBe(351);
-      expect(uniqueKeys.size).toBe(351);
+      expect(keys.length).toBe(loadOfficialCatalog().metadata?.declaredOfficialCount);
+      expect(uniqueKeys.size).toBe(keys.length);
     });
   });
 
@@ -145,12 +149,16 @@ describe('Offline Egyptian City Catalog and Transformation', () => {
       const catalog = getOfficialCatalog();
       for (const city of catalog) {
         expect(city.governorateCode).toMatch(/^EG\d{2}$/);
-        expect(city.sourceCode.startsWith(city.governorateCode)).toBe(true);
+        if (city.districtSourceCode) {
+          const parent = catalog.find((row) => row.sourceCode === city.districtSourceCode);
+          expect(parent?.governorateCode).toBe(city.governorateCode);
+          expect(parent?.districtSourceCode ?? null).toBeNull();
+        } else expect(city.sourceCode.startsWith(city.governorateCode)).toBe(true);
       }
     });
 
     it('distinguishes selectable official cities from total retained catalog entries in validation stats', () => {
-      const officialCatalog = getOfficialCatalog();
+      const officialCatalog = districtFixture();
       const retiredEntry: (typeof officialCatalog)[0] = {
         sourceCode: 'EG0199',
         nameEnglish: 'Old Obsolete District',
@@ -183,7 +191,7 @@ describe('Offline Egyptian City Catalog and Transformation', () => {
     });
 
     it('validates a reviewed release when declared official and governorate counts match the generated catalog', () => {
-      const officialCatalog = getOfficialCatalog();
+      const officialCatalog = districtFixture();
       // Remove 1 city from Cairo, mark it as retired
       const [removed, ...remaining] = officialCatalog;
       const retired: (typeof officialCatalog)[0] = {
@@ -208,7 +216,7 @@ describe('Offline Egyptian City Catalog and Transformation', () => {
     });
 
     it('rejects catalog when declared official count does not match the actual number of official records', () => {
-      const officialCatalog = getOfficialCatalog();
+      const officialCatalog = districtFixture();
       const catalogMismatch = {
         metadata: {
           declaredOfficialCount: 350, // actual is 351

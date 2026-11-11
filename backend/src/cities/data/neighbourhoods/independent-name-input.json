@@ -1389,11 +1389,6 @@
         "misspellings": []
       },
       {
-        "english": "Manshiyet El Omara",
-        "arabic": "منشية العمرا",
-        "misspellings": []
-      },
-      {
         "english": "El Nahda",
         "arabic": "النهضة",
         "misspellings": []
@@ -1849,7 +1844,8 @@
       "El Horreya": "City-spanning road name rather than independently established Alexandria neighbourhood. Staged responses find isolated towers; existing road/address sources call it طريق الحرية. https://en.wikipedia.org/wiki/Alexandria",
       "Soter": "Former Soter Street, now شارع دكتور على مصطفى مشرفه, OSM:way/9929693; no separate residential locality established. Street-only acceptance entry removed, Azarita/Shatby retained. https://www.openstreetmap.org/way/9929693",
       "Merghem 1": "Numbered industrial-complex phase, not distinct residential area. Official SIS record identifies مجمعي مرغم 1 و2 as industrial production sites; Merghim neighbourhood retained. https://mediadr.sis.gov.eg/handle/123456789/107054",
-      "Merghem 2": "Numbered industrial-complex phase, not distinct residential area. Official SIS record identifies مجمعي مرغم 1 و2 as industrial production sites; Merghim neighbourhood retained. https://mediadr.sis.gov.eg/handle/123456789/107054"
+      "Merghem 2": "Numbered industrial-complex phase, not distinct residential area. Official SIS record identifies مجمعي مرغم 1 و2 as industrial production sites; Merghim neighbourhood retained. https://mediadr.sis.gov.eg/handle/123456789/107054",
+      "Manshiyet El Omara": "Regional identity unverified: recorded exact/bounded research found Gharbia/Assiut homonyms, with no reliable Alexandria area attestation. Remove pending corroboration; an uncertain identity is not a real known-missing area. See research-round7/nominatim-omara*.json.gz and source-manifest.json."
     },
     "port-said-region": {
       "El Gaber": "No credible locality evidence.",

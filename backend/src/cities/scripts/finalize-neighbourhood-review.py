@@ -17,8 +17,10 @@ review = load(d / 'personal-review.json')
 
 def review_signature():
     material = {'snapshots': load(d / 'source-manifest.json')['snapshots'], 'editorial': {k: review.get(k) for k in ['decisions', 'translations', 'englishArabic', 'additions', 'aliasReview', 'geometryCorrections', 'cityContexts', 'identityMerges', 'residentialComplexes', 'nameOverrides', 'areaLandmarks', 'preferredSourceCodes', 'populatedPlaces', 'populatedPlacesExcluded', 'districtIdentityMerges', 'districtNames', 'adm3HabitationEvidence']}, 'rules': {}}
-    for name in ['build-reviewed-dataset.py', 'dataset_geography.py', 'geo_offline.py', 'prepare-geographic-evidence.py', 'source_response_point.py']:
+    for name in ['build-reviewed-dataset.py', 'dataset_geography.py', 'geo_offline.py', 'prepare-geographic-evidence.py', 'source_response_point.py', 'geographic_supplements.py', 'arabic_display_review.py', 'reviewed_noise.py']:
         material['rules'][name] = hashlib.sha256((Path(__file__).parent / name).read_bytes()).hexdigest()
+    material['transliteration'] = hashlib.sha256((Path(__file__).parent.parent / 'transliteration.ts').read_bytes()).hexdigest()
+    material['policyFiles'] = {name: hashlib.sha256((d/name).read_bytes()).hexdigest() for name in ['district-seed.json.gz','coverage-extensions.json','boundary-supplements.json','gps-failure-review.json','transliteration-review.json','known-missing-names.json','gps-selection.json'] if (d/name).exists()}
     return hashlib.sha256(json.dumps(material, sort_keys=True, ensure_ascii=False, separators=(',', ':')).encode()).hexdigest()
 
 if review.get('reviewedInputSha256') != review_signature():
@@ -62,7 +64,7 @@ overpass = {'metadata': {'retrievalDate': max(s['retrievalDate'][:10] for s in m
 
 wd = {'metadata': {'retrievalDate': '2026-11-09', 'license': 'CC0', 'attribution': 'Wikidata contributors', 'queryFile': 'src/cities/scripts/neighbourhoods.sparql'}, 'response': {'results': {'bindings': []}}}
 
-save(d / 'reviewed-overrides.json', {'districtEdits': load(out / 'district-edits.json'), 'decisions': [], 'decisionsFile': 'neighbourhoods/reviewed-decisions.json.gz', 'overpassFiles': paths, 'wikidataFile': 'neighbourhoods/wikidata.json.gz', 'sourceDigests': digests, 'overpass': overpass, 'wikidata': wd})
+save(d / 'reviewed-overrides.json', {'districtEdits': load(out / 'district-edits.json'), 'aliasGeneration': load(d / 'transliteration-review.json'), 'decisions': [], 'decisionsFile': 'neighbourhoods/reviewed-decisions.json.gz', 'overpassFiles': paths, 'wikidataFile': 'neighbourhoods/wikidata.json.gz', 'sourceDigests': digests, 'overpass': overpass, 'wikidata': wd})
 
 built = load(out / 'candidate-builtup.geojson.gz')
 

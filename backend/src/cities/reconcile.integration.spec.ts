@@ -1,3 +1,4 @@
+import { districtMigrationsFixture } from './district-migrations.fixture';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { Pool } from 'pg';
 import * as path from 'path';
@@ -15,8 +16,10 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
   let container: StartedPostgreSqlContainer;
   let connectionString: string;
   let pool: Pool;
+  let baselineMigrations: string;
 
   beforeAll(async () => {
+    baselineMigrations = districtMigrationsFixture();
     container = await new PostgreSqlContainer('postgis/postgis:16-3.4-alpine')
       .withDatabase('pupzy_reconcile_integration_test')
       .withUsername('test')
@@ -28,6 +31,7 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
   }, 90_000);
 
   afterAll(async () => {
+    if (baselineMigrations) fs.rmSync(baselineMigrations, { recursive: true, force: true });
     if (pool) {
       await pool.end();
     }
@@ -94,7 +98,7 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
 
   const applyMigrationsUpTo0010 = async () => {
     await cleanDatabase();
-    const migrationsDir = path.resolve(__dirname, '../../drizzle/migrations');
+    const migrationsDir = baselineMigrations;
     const migrationFiles = [
       '0000_familiar_shiver_man.sql',
       '0001_windy_moondragon.sql',
@@ -134,7 +138,7 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
     await expect(
       runMigrations({
         pool,
-        migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+        migrationsFolder: baselineMigrations,
         customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
       }),
     ).resolves.not.toThrow();
@@ -344,7 +348,7 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
     await cleanDatabase();
     await runMigrations({
       pool,
-      migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+      migrationsFolder: baselineMigrations,
       customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
     });
 
@@ -359,7 +363,7 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
     await expect(
       runMigrations({
         pool,
-        migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+        migrationsFolder: baselineMigrations,
         customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
       }),
     ).resolves.not.toThrow();

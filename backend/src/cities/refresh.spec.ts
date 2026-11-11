@@ -1,3 +1,5 @@
+import { readCityData } from './data-files';
+import type { CityCatalog as DistrictFixtureCatalog } from './catalog';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 import * as fs from 'fs';
 import * as path from 'path';
@@ -11,7 +13,6 @@ import {
   DEFAULT_RESOURCE_URL,
 } from './refresh';
 import {
-  getOfficialCatalog,
   transformCatalog,
   validateSnapshot,
   loadRawSnapshot,
@@ -19,6 +20,8 @@ import {
   type CityCatalogRecord,
 } from './catalog';
 import { DEFAULT_METADATA_URL } from './fetch';
+
+const districtFixture = () => readCityData<DistrictFixtureCatalog>('neighbourhoods/district-seed.json.gz').records;
 
 describe('Upstream Refresh and Future Release Diff Tooling', () => {
   const currentCatalog = transformCatalog(loadRawSnapshot()).records;
@@ -343,7 +346,7 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
 
   describe('Explicit Reviewed Metadata and Count Requirements', () => {
     it('requires explicit reviewed metadata when official count changes', () => {
-      const baseCatalog = getOfficialCatalog();
+      const baseCatalog = districtFixture();
       const rawRecords = baseCatalog
         .filter((c) => c.sourceCode !== 'EG0101') // Remove 1 city -> 350 official
         .map((c) => ({
@@ -982,7 +985,7 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
     });
 
     it('publishes reviewed release atomically without modifying earlier migrations and updating journal', () => {
-      const baseCatalog = getOfficialCatalog();
+      const baseCatalog = districtFixture();
       const candidateRaw = baseCatalog.map((c) => {
         if (c.sourceCode === 'EG0104') {
           return {
@@ -1041,7 +1044,7 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
     });
 
     it('fails closed without writing any files if candidate validation or count checks fail', () => {
-      const baseCatalog = getOfficialCatalog();
+      const baseCatalog = districtFixture();
       const invalidSnapshot = { metadata: { source: '' }, records: [] } as unknown as CitySnapshot;
 
       const tempCatalogPath = path.join(tempDir, 'catalog.json');

@@ -20,7 +20,9 @@ A1, A2, COV = geography(D)
 
 B2 = {s.properties['adm2_pcode']: s for s in A2}
 
-BASE = load(ROOT / 'src/cities/data/egypt-cities-catalog.json')['records']
+# Immutable district-only input: published neighbourhood aliases must never
+# feed back into source identity matching on a later offline rebuild.
+BASE = load(D / 'district-seed.json.gz')['records']
 
 DIST = {r['sourceCode']: r for r in BASE if not r.get('districtSourceCode')}
 
@@ -444,6 +446,7 @@ print('Secondary Wikidata localities', len(WD_DECISIONS))
 # Individually reviewed additions: all coordinates are read from named source records.
 for added in REVIEW.get('additions', []):
     prov_extra = {'proxyPoint': True} if added.get('proxyPoint') else {}
+    if added.get('representativeOf'):prov_extra['representativeOf']=added['representativeOf']
     p = None
     if added.get('sourceResponse'):
         source = added['sourceResponse']
@@ -709,6 +712,8 @@ for row in [r for r in DECISIONS if r['decision'] == 'include']:
         duplicate = CITY_INDEX.get(key[:2])
         if duplicate:
             identity_rule='same-whole-city'
+    if row.get('provenance',{}).get('representativeOf'):
+        duplicate=None
     if duplicate:
         duplicate['aliases'].extend([row['nameEnglish'], row['nameArabic'], *row['aliases']])
         IDENTITY_REVIEW.append({'kind':'duplicate','kept':duplicate['sourceCode'],'removed':row['sourceCode'],'name':row['nameEnglish'],'district':row['districtSourceCode'],'identityRule':identity_rule,'sourcePointDistanceKm':round(distance([row['point']['longitude'],row['point']['latitude']],[duplicate['point']['longitude'],duplicate['point']['latitude']])/1000,3)})
@@ -800,7 +805,7 @@ def clean_aliases(row):
     result = []
     for value in row.get('aliases', []):
         value = clean(value)
-        if not value or value.lower() in seen or len(value) > 100 or NOISE.search(value):
+        if not value or value.lower() in seen or len(value) > 100 or (NOISE.search(value) and value not in {clean(alias) for approval in REVIEW.get('aliasReview',[]) if approval['sourceCode']==row['sourceCode'] for alias in approval['aliases']}):
             continue
         seen.add(value.lower())
         result.append(value)
@@ -878,6 +883,25 @@ for approval in REVIEW.get('aliasReview', []):
     target.setdefault('aliases', []).extend(approval['aliases'])
     target['aliases'] = clean_aliases(target)
 
+# Lead review round7: deterministic source-noise and resident-facing displays.
+from reviewed_noise import apply_reviewed_noise
+from arabic_display_review import clean_display_names
+for row in DECISIONS:
+    if row['decision'] != 'include': continue
+    raw = OSM.get(row['sourceCode'], {}).get('tags', {})
+    row['sourceNameArabic'] = raw.get('name:ar') or (raw.get('name') if ar(raw.get('name')) else None) or row['nameArabic']
+    row['sourceNameEnglish'] = raw.get('name:en') or (raw.get('name') if en(raw.get('name')) else None) or row['nameEnglish']
+    if row['sourceCode'].startswith('PUPZY:adm3-'):
+        props = next(f['properties'] for f in ADM3 if f['properties']['adm3_pcode'] == row['provenance']['adm3SourceCode'])
+        row['sourceNameArabic'] = props['adm3_name1']
+noise_audit = apply_reviewed_noise(DECISIONS, OSM, DIST)
+save(OUT / 'round7-noise-audit.json', noise_audit)
+display_audit = clean_display_names(list(DIST.values()), DECISIONS)
+save(OUT / 'round7-display-audit.json', display_audit)
+if display_audit['remainingArabicCollisions'] or display_audit['conflicts']:
+    save(OUT / 'round7-display-residue.json', display_audit['remainingArabicCollisions'] + display_audit['conflicts'])
+kept = [r for r in DECISIONS if r['decision'] == 'include']
+
 # District aliases accumulated during starter matching are emitted as reviewed editorial edits.
 edits = []
 
@@ -891,6 +915,10 @@ for code, record in DIST.items():
             edit = {**edit,'nameEnglish':REVIEW['districtNames'][code]['nameEnglish'],'notes':REVIEW['districtNames'][code]['notes']}
         edits.append(edit)
 
+# Arabic edits include untouched source labels as aliases.
+arabic_edits = {e['sourceCode']: e for e in display_audit['districtEdits']}
+edits = [{**e, **arabic_edits.pop(e['sourceCode'], {})} for e in edits]
+edits.extend(arabic_edits.values())
 save(OUT / 'district-edits.json', edits)
 
 save(OUT / 'bulk-decisions.json', DECISIONS)
