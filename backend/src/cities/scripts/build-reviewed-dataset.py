@@ -901,7 +901,21 @@ save(OUT / 'round7-display-audit.json', display_audit)
 if display_audit['remainingArabicCollisions'] or display_audit['conflicts']:
     save(OUT / 'round7-display-residue.json', display_audit['remainingArabicCollisions'] + display_audit['conflicts'])
 from resident_catalog_review import apply_resident_review
-resident_audit = apply_resident_review(list(DIST.values()), DECISIONS, OSM, ADM3, load(D/'headline-names.json'), load(D/'resident-review.json'))
+resident_policy = load(D/'resident-review.json')
+# Explicitly reviewed source restorations reuse the recorded OSM centre and
+# ordinary geographic parent assignment, including rows previously merged early.
+by_decision = {r['sourceCode']:r for r in DECISIONS}
+for restoration in resident_policy.get('round9',{}).get('restorations',[]):
+    code = restoration['sourceCode']; raw = OSM[code]; tags = raw.get('tags',{}); p = osm_point(raw)
+    if not p or not area_for(p): raise ValueError('Restoration outside recorded coverage: '+code)
+    gov = locate(p,A1,'adm1_pcode'); raw_parent = locate(p,A2,'adm2_pcode')
+    parent, prov = parent_for(p,gov,raw_parent,restoration['nameEnglish']+' '+restoration['nameArabic'])
+    if not parent: raise ValueError('Restoration has no admissible parent: '+code)
+    row = by_decision[code]
+    row.update(decision='include',rule='round9-reviewed-real-place',nameEnglish=restoration['nameEnglish'],nameArabic=restoration['nameArabic'],governorateCode=gov,districtSourceCode=parent,point={'longitude':p[0],'latitude':p[1],'evidence':code+' original recorded Overpass centre'},parentEvidence='OCHA ADM2 '+str(raw_parent)+'; '+prov['parentRule'],notes=restoration['basis'],sourceNameEnglish=tags.get('name:en') or row.get('sourceNameEnglish'),sourceNameArabic=tags.get('name:ar') or tags.get('name') or row.get('sourceNameArabic'),provenance={**prov,'osmPlaceType':tags.get('place','residential'),'nameSource':'reviewed original source labels','coverageArea':area_for(p),'inclusionRule':'round9-reviewed-real-place','distinctSourcePlace':restoration['basis'],'nameEvidenceUrls':restoration['sourceUrls']})
+    row.setdefault('aliases',[]).extend(v for v in [tags.get('name'),tags.get('name:ar'),tags.get('name:en')] if v)
+    row.pop('mergeInto',None); row.pop('duplicateOf',None)
+resident_audit = apply_resident_review(list(DIST.values()), DECISIONS, OSM, ADM3, load(D/'headline-names.json'), resident_policy)
 save(OUT/'round8-resident-review.json',resident_audit)
 # These final edits supersede the old proximity-based display disambiguation.
 display_audit['districtEdits']=[{'sourceCode':r['sourceCode'],'nameEnglish':r['nameEnglish'],'nameArabic':r['nameArabic'],'aliases':r.get('aliases',[]),'notes':'Lead round8 exact resident/headline display; source identities unchanged.'} for r in DIST.values() if r['sourceCode'] in display_audit['coveredDistrictSourceCodes']]

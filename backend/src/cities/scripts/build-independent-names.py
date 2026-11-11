@@ -35,7 +35,7 @@ areas = {a: [] for a in manual['areas']}
 seen = {a: set() for a in areas}
 
 def add(area, row):
-    if row['english'] in {'Industrial Area','Cairo Airport','Smart Village',"Egypt's Olympic Sports City",'City of Arts and Culture (Egypt)'}:
+    if row['english'] in {'Cairo','Industrial Area','Cairo Airport','Smart Village',"Egypt's Olympic Sports City",'City of Arts and Culture (Egypt)'}:
         return # Reviewed lead B: non-residential zone/premises, not an acceptance neighbourhood.
     # Arabic joined/separated spellings and the explicitly reviewed city-prefix
     # variants below are one independent name, not extra minimum-count credit.

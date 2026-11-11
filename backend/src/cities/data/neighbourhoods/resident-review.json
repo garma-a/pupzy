@@ -240,6 +240,185 @@
     "EG2107": [
       "6th of October",
       "السادس من أكتوبر"
+    ],
+    "OSM:way/772964026": [
+      "El Nady District (Shorouk)",
+      "حي النادي — الشروق"
+    ],
+    "OSM:way/882793162": [
+      "Administrative Prosecution Housing",
+      "مساكن النيابة الإدارية"
+    ],
+    "OSM:way/692728323": [
+      "Eastern Company Housing",
+      "مساكن إيسترن كومباني"
+    ],
+    "OSM:way/756317788": [
+      "Saudi Company Housing (Obour)",
+      "مساكن الشركة السعودية — العبور"
+    ],
+    "OSM:way/540096389": [
+      "Trips Club Members Housing",
+      "مساكن أعضاء نادي الرحلات"
+    ],
+    "OSM:node/2953957579": [
+      "Abu Rawash Industrial Zone",
+      "أبو رواش الصناعية"
+    ]
+  },
+  "round9": {
+    "reviewed": true,
+    "date": "2026-11-11",
+    "leadAuthority": "Lead round9 brief; restore real named settlements/estates; no synthetic points, unchanged floors.",
+    "restorations": [
+      {
+        "sourceCode": "OSM:way/101848506",
+        "nameEnglish": "El Hammam City",
+        "nameArabic": "مدينة الحمام",
+        "basis": "Named residential town polygon; recorded centre is about116km from the EG3302 administrative centroid. Keep both identities; the district point is not in the town.",
+        "sourceUrls": [
+          "https://www.openstreetmap.org/way/101848506"
+        ]
+      },
+      {
+        "sourceCode": "OSM:way/839901136",
+        "nameEnglish": "Bank El Iskan Housing (El Hammam)",
+        "nameArabic": "مساكن بنك الإسكان والتعمير — الحمام",
+        "basis": "Source name explicitly begins مساكن and English says Housing And Development Bank Housing; named residential estate, not bank premises. Lead2026-11-11 authorises estate restoration.",
+        "sourceUrls": [
+          "https://www.openstreetmap.org/way/839901136"
+        ]
+      },
+      {
+        "sourceCode": "OSM:way/699912644",
+        "nameEnglish": "Bank El Iskan Housing",
+        "nameArabic": "مساكن بنك الإسكان والتعمير",
+        "basis": "Source name explicitly begins مساكن and English says Housing And Development Bank Housing; named residential estate, not bank premises. Lead2026-11-11 authorises estate restoration.",
+        "sourceUrls": [
+          "https://www.openstreetmap.org/way/699912644"
+        ]
+      },
+      {
+        "sourceCode": "OSM:way/792198968",
+        "nameEnglish": "Bank El Iskan Housing",
+        "nameArabic": "مساكن بنك الإسكان والتعمير",
+        "basis": "Source name explicitly begins مساكن and English says Housing And Development Bank Housing; named residential estate, not bank premises. Lead2026-11-11 authorises estate restoration.",
+        "sourceUrls": [
+          "https://www.openstreetmap.org/way/792198968"
+        ]
+      },
+      {
+        "sourceCode": "OSM:way/727261263",
+        "nameEnglish": "Abu Rawash Village",
+        "nameArabic": "قرية أبو رواش",
+        "basis": "Own named settlement polygon at the recorded source centre, geographically distinct from the Abu Rawash headline node. Lead2026-11-11 explicitly distinguishes this settlement from the other place.",
+        "sourceUrls": [
+          "https://www.openstreetmap.org/way/727261263"
+        ]
+      },
+      {
+        "sourceCode": "OSM:way/879151658",
+        "nameEnglish": "Social Housing (10th of Ramadan)",
+        "nameArabic": "الإسكان الاجتماعي — العاشر من رمضان",
+        "basis": "Separate named residential source polygon; restore the source estate rather than merging generic Social Housing labels on proximity alone.",
+        "sourceUrls": [
+          "https://www.openstreetmap.org/way/879151658"
+        ]
+      },
+      {
+        "sourceCode": "OSM:way/699391781",
+        "nameEnglish": "Othman Housing (10th of Ramadan)",
+        "nameArabic": "مساكن عثمان — العاشر من رمضان",
+        "basis": "Source explicitly says مساكن عثمان with landuse=residential; a named housing estate, not institutional offices. Separate original polygon retained as authorised by lead.",
+        "sourceUrls": [
+          "https://www.openstreetmap.org/way/699391781"
+        ]
+      },
+      {
+        "sourceCode": "OSM:way/660869901",
+        "nameEnglish": "Abis 8 Village 1",
+        "nameArabic": "أبيس 8 قرية 1",
+        "basis": "OSM names this residential village 1/8; primary ITDA commercial-register addresses independently attest Abis 1/8. Recorded Nominatim reverses confirm Abis context. Denominator8 is Abis8; explicit primary Abis الثامنة 12/8 evidence confirms that naming hierarchy. Exact OSM centre retained. Search excerpts, not full PDFs, cached in research-round9.",
+        "sourceUrls": [
+          "https://www.openstreetmap.org/way/660869901",
+          "https://www.itda.gov.eg/crm/863/CRA106.pdf"
+        ]
+      },
+      {
+        "sourceCode": "OSM:way/741960643",
+        "nameEnglish": "Abis 8 Village 4",
+        "nameArabic": "أبيس 8 قرية 4",
+        "basis": "OSM names this residential village 4/8; primary ITDA commercial-register addresses independently attest Abis 4/8. Recorded Nominatim reverses confirm Abis context. Denominator8 is Abis8; explicit primary Abis الثامنة 12/8 evidence confirms that naming hierarchy. Exact OSM centre retained. Search excerpts, not full PDFs, cached in research-round9.",
+        "sourceUrls": [
+          "https://www.openstreetmap.org/way/741960643",
+          "https://www.itda.gov.eg/CRM/857/CRA5.pdf"
+        ]
+      },
+      {
+        "sourceCode": "OSM:way/660250153",
+        "nameEnglish": "Abis 8 Village 12",
+        "nameArabic": "أبيس 8 قرية 12",
+        "basis": "OSM names this residential village 12/8; primary ITDA commercial-register addresses independently attest Abis 12/8. Recorded Nominatim reverses confirm Abis context. Denominator8 is Abis8; explicit primary Abis الثامنة 12/8 evidence confirms that naming hierarchy. Exact OSM centre retained. Search excerpts, not full PDFs, cached in research-round9.",
+        "sourceUrls": [
+          "https://www.openstreetmap.org/way/660250153",
+          "https://www.itda.gov.eg/CRM/828/CRA4.pdf",
+          "https://www.itda.gov.eg/crm/821/CRA106.pdf"
+        ]
+      }
+    ],
+    "distinctSourcePlaces": {
+      "OSM:way/101848506": "Named residential town polygon; recorded centre is about116km from the EG3302 administrative centroid. Keep both identities; the district point is not in the town.",
+      "OSM:way/839901136": "Source name explicitly begins مساكن and English says Housing And Development Bank Housing; named residential estate, not bank premises. Lead2026-11-11 authorises estate restoration.",
+      "OSM:way/699912644": "Source name explicitly begins مساكن and English says Housing And Development Bank Housing; named residential estate, not bank premises. Lead2026-11-11 authorises estate restoration.",
+      "OSM:way/792198968": "Source name explicitly begins مساكن and English says Housing And Development Bank Housing; named residential estate, not bank premises. Lead2026-11-11 authorises estate restoration.",
+      "OSM:way/727261263": "Own named settlement polygon at the recorded source centre, geographically distinct from the Abu Rawash headline node. Lead2026-11-11 explicitly distinguishes this settlement from the other place.",
+      "OSM:way/879151658": "Separate named residential source polygon; restore the source estate rather than merging generic Social Housing labels on proximity alone.",
+      "OSM:way/699391781": "Source explicitly says مساكن عثمان with landuse=residential; a named housing estate, not institutional offices. Separate original polygon retained as authorised by lead.",
+      "OSM:way/660869901": "OSM names this residential village 1/8; primary ITDA commercial-register addresses independently attest Abis 1/8. Recorded Nominatim reverses confirm Abis context. Denominator8 is Abis8; explicit primary Abis الثامنة 12/8 evidence confirms that naming hierarchy. Exact OSM centre retained. Search excerpts, not full PDFs, cached in research-round9.",
+      "OSM:way/741960643": "OSM names this residential village 4/8; primary ITDA commercial-register addresses independently attest Abis 4/8. Recorded Nominatim reverses confirm Abis context. Denominator8 is Abis8; explicit primary Abis الثامنة 12/8 evidence confirms that naming hierarchy. Exact OSM centre retained. Search excerpts, not full PDFs, cached in research-round9.",
+      "OSM:way/660250153": "OSM names this residential village 12/8; primary ITDA commercial-register addresses independently attest Abis 12/8. Recorded Nominatim reverses confirm Abis context. Denominator8 is Abis8; explicit primary Abis الثامنة 12/8 evidence confirms that naming hierarchy. Exact OSM centre retained. Search excerpts, not full PDFs, cached in research-round9."
+    },
+    "mergeRechecks": [
+      {
+        "sourceCode": "PUPZY:adm3-eg211702",
+        "kept": "OSM:way/722866684",
+        "decision": "Keep the merge; do not restore the ADM3 centroid as Bashteel.",
+        "evidence": "ADM3 centre reverse is Warraq El Hadar island, street السكة الكبيرة, not Bashteel. Existing Bashteel village boundary has its own recorded settlement centre about5km away. This administrative centre is not a second Bashteel settlement.",
+        "response": "research-round9/bashteel-adm3.json.gz"
+      },
+      {
+        "sourceCode": "PUPZY:adm3-eg210905",
+        "kept": "OSM:way/721164455",
+        "decision": "Keep same-village merge; source points are about0.43km apart, below the lead1km check.",
+        "evidence": "Named OSM Zawyet Abu Mosallam village polygon supplies the better settlement centre; ADM3 reverse is a Shubramant-context road, not a distinct named settlement.",
+        "response": "research-round9/zawyet-adm3.json.gz"
+      }
+    ],
+    "newOctoberResearch": {
+      "point": [
+        30.88,
+        29.87
+      ],
+      "decision": "No added point: no independently named sub-area verified.",
+      "research": "Original named place/residential context inspected. At zoom16 reverse identifies only the whole New October residential polygon; zoom14 only6th of October. Sakan Masr project search returned no object. Existing named housing estates lie farther east/north; generic numbered neighbourhoods and building-count projects stay excluded.",
+      "responses": [
+        "research-round9/new-october14.json.gz",
+        "research-round9/new-october16.json.gz",
+        "research-round9/new-october-search.json.gz"
+      ]
+    },
+    "housingNameEvidence": {
+      "OSM:way/882793162": "Original OSM tags explicitly name a compound and landuse=residential; render the residential identity as Housing rather than the institution alone.",
+      "OSM:way/692728323": "Original OSM tags explicitly name a compound and landuse=residential; render the residential identity as Housing rather than the institution alone.",
+      "OSM:way/756317788": "Original OSM tags explicitly name a compound and landuse=residential; render the residential identity as Housing rather than the institution alone.",
+      "OSM:way/540096389": "Original OSM tags explicitly name a compound and landuse=residential; render the residential identity as Housing rather than the institution alone."
+    },
+    "notAdded": [
+      {
+        "sourceCode": "OSM:way/659401201",
+        "name": "Abis village 8/8",
+        "reason": "Real name independently attested, but original recorded source centre [29.9225899,31.1270266] lies outside every pinned OCHA ADM1/ADM2 polygon. Keep excluded; do not move a coordinate or extend coverage to improve the gate."
+      }
     ]
   }
 }

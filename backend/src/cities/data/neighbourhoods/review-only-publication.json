@@ -1,9 +1,9 @@
 {
   "reviewed": true,
-  "sha256": "2a2500c177ae2eb28617b67e0c70a52f90a70545791f33714c28a4c602c41677",
+  "sha256": "1968b77a5308bb59bfab46cfb423b1bef1dcc9cc826c9a0e9baff9a21b89f393",
   "decisionDate": "2026-11-11",
-  "reason": "Lead explicitly requested conservative local unshipped regeneration, reporting grid loss from removing synthetic/duplicate points and unresolved exact names; lead decides afterwards. No structural, headline, display or GPS waiver.",
-  "sourceInstruction": "Lead2026-11-11: regenerate, retain/report grid losses; conservative ambiguities recorded for lead decision.",
+  "reason": "Lead round9 explicitly requires conservative real-place changes and reporting any remaining grid shortfall for lead decision. Cairo remains270 uncovered vs254 maximum; prepare local review-only artifacts with no floor, names, display/headline, structure or GPS waiver.",
+  "sourceInstruction": "Lead round9,2026-11-11: regenerate local artifacts; if a floor still fails, add no points merely to reach it and report exact remaining shortfall for lead decision.",
   "report": {
     "passed": false,
     "headlines": {
@@ -16,8 +16,8 @@
       "isValid": true,
       "errors": [],
       "stats": {
-        "totalCities": 3149,
-        "officialCount": 3149,
+        "totalCities": 3156,
+        "officialCount": 3156,
         "legacyCount": 0,
         "retiredCount": 0,
         "governorateCount": 27
@@ -33,7 +33,7 @@
         "grid": {
           "passed": false,
           "samples": 8469,
-          "coverageShare": 0.9671744007556973,
+          "coverageShare": 0.9681190223166843,
           "floor": 0.97,
           "uncoveredFeatures": [
             {
@@ -527,9 +527,9 @@
                 30.895918169940273,
                 30.1442355
               ],
-              "uncoveredSamples": 17,
-              "worstDistanceMeters": 9145.420861103506,
-              "nearestCity": "OSM:way/1426601598"
+              "uncoveredSamples": 15,
+              "worstDistanceMeters": 3329.8661503618155,
+              "nearestCity": "OSM:way/727261263"
             },
             {
               "osmSourceCode": "OSM:way/647387986",
@@ -1060,28 +1060,6 @@
               "nearestCity": "OSM:node/10154769796"
             },
             {
-              "osmSourceCode": "OSM:way/699391780",
-              "area": "greater-cairo",
-              "centre": [
-                31.702417410926547,
-                30.3133481
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1566.8409313517193,
-              "nearestCity": "OSM:way/698226008"
-            },
-            {
-              "osmSourceCode": "OSM:way/699391781",
-              "area": "greater-cairo",
-              "centre": [
-                31.70272749981838,
-                30.3088652
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1594.2307866152378,
-              "nearestCity": "OSM:way/698229183"
-            },
-            {
               "osmSourceCode": "OSM:way/725817032",
               "area": "greater-cairo",
               "centre": [
@@ -1313,15 +1291,15 @@
               "nearestCity": "OSM:way/647387984"
             },
             {
-              "osmSourceCode": "OSM:way/879151658",
+              "osmSourceCode": "OSM:way/879322903",
               "area": "greater-cairo",
               "centre": [
-                31.78307291418533,
-                30.344103599999997
+                31.730923979120355,
+                30.3376751
               ],
-              "uncoveredSamples": 5,
-              "worstDistanceMeters": 2134.9627065714376,
-              "nearestCity": "OSM:way/699234833"
+              "uncoveredSamples": 1,
+              "worstDistanceMeters": 1587.6930722441082,
+              "nearestCity": "OSM:way/876061393"
             },
             {
               "osmSourceCode": "OSM:way/880115020",
@@ -1980,8 +1958,8 @@
                 30.15493205
               ],
               "uncoveredSamples": 2,
-              "worstDistanceMeters": 6894.968052678098,
-              "nearestCity": "PUPZY:new-sphinx"
+              "worstDistanceMeters": 4691.068587255155,
+              "nearestCity": "OSM:way/727261263"
             },
             {
               "osmSourceCode": "OSM:relation/14891949",
@@ -1995,456 +1973,9 @@
               "nearestCity": "OSM:way/687344735"
             }
           ],
-          "unreviewedFeatures": [
-            {
-              "osmSourceCode": "OSM:way/245237228",
-              "area": "greater-cairo",
-              "centre": [
-                31.171206586414055,
-                29.94240935
-              ],
-              "uncoveredSamples": 3,
-              "worstDistanceMeters": 1838.6852409950138,
-              "nearestCity": "OSM:way/721164455"
-            },
-            {
-              "osmSourceCode": "OSM:way/544160889",
-              "area": "greater-cairo",
-              "centre": [
-                30.89398910263285,
-                29.88470865
-              ],
-              "uncoveredSamples": 6,
-              "worstDistanceMeters": 2582.3946152887647,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/546468475",
-              "area": "greater-cairo",
-              "centre": [
-                30.895918169940273,
-                30.1442355
-              ],
-              "uncoveredSamples": 17,
-              "worstDistanceMeters": 9145.420861103506,
-              "nearestCity": "OSM:way/1426601598"
-            },
-            {
-              "osmSourceCode": "OSM:way/690455760",
-              "area": "greater-cairo",
-              "centre": [
-                30.971479468850163,
-                29.9681489
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1507.0651561275522,
-              "nearestCity": "OSM:way/533262558"
-            },
-            {
-              "osmSourceCode": "OSM:way/690455767",
-              "area": "greater-cairo",
-              "centre": [
-                30.971285428922208,
-                29.96932175
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1630.090173610319,
-              "nearestCity": "PUPZY:motamayez-october"
-            },
-            {
-              "osmSourceCode": "OSM:way/690455768",
-              "area": "greater-cairo",
-              "centre": [
-                30.97031717010021,
-                29.9689034
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1590.4273712579031,
-              "nearestCity": "OSM:node/1160384365"
-            },
-            {
-              "osmSourceCode": "OSM:way/690490347",
-              "area": "greater-cairo",
-              "centre": [
-                30.975261942290622,
-                29.968800350000002
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1551.5938454395343,
-              "nearestCity": "PUPZY:motamayez-october"
-            },
-            {
-              "osmSourceCode": "OSM:way/690490351",
-              "area": "greater-cairo",
-              "centre": [
-                30.977717337784146,
-                29.968383000000003
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1560.7711930974654,
-              "nearestCity": "PUPZY:motamayez-october"
-            },
-            {
-              "osmSourceCode": "OSM:way/690490352",
-              "area": "greater-cairo",
-              "centre": [
-                30.973632811821886,
-                29.9689896
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1575.286648853562,
-              "nearestCity": "PUPZY:motamayez-october"
-            },
-            {
-              "osmSourceCode": "OSM:way/690490353",
-              "area": "greater-cairo",
-              "centre": [
-                30.975842694664735,
-                29.9682776
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1530.0928664470157,
-              "nearestCity": "OSM:way/533262558"
-            },
-            {
-              "osmSourceCode": "OSM:way/690490356",
-              "area": "greater-cairo",
-              "centre": [
-                30.97477166640052,
-                29.9693622
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1502.939094693701,
-              "nearestCity": "PUPZY:motamayez-october"
-            },
-            {
-              "osmSourceCode": "OSM:way/691035971",
-              "area": "greater-cairo",
-              "centre": [
-                30.96972852020287,
-                29.97038955
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1518.064696686044,
-              "nearestCity": "OSM:node/1160384365"
-            },
-            {
-              "osmSourceCode": "OSM:way/691035972",
-              "area": "greater-cairo",
-              "centre": [
-                30.97081550555294,
-                29.970214900000002
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1564.5803255782553,
-              "nearestCity": "PUPZY:motamayez-october"
-            },
-            {
-              "osmSourceCode": "OSM:way/691035978",
-              "area": "greater-cairo",
-              "centre": [
-                30.96967512080658,
-                29.9694643
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1521.0172983612533,
-              "nearestCity": "OSM:node/1160384365"
-            },
-            {
-              "osmSourceCode": "OSM:way/691941724",
-              "area": "greater-cairo",
-              "centre": [
-                30.891030846389153,
-                29.875447800000003
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2354.8203541217413,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/691941725",
-              "area": "greater-cairo",
-              "centre": [
-                30.890513739184804,
-                29.87808575
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2334.152709368587,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/691941726",
-              "area": "greater-cairo",
-              "centre": [
-                30.89224260445367,
-                29.873323499999998
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2402.173790022611,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/691959459",
-              "area": "greater-cairo",
-              "centre": [
-                30.88666855936541,
-                29.87420795
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2695.1072941722964,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/691959460",
-              "area": "greater-cairo",
-              "centre": [
-                30.88531505345331,
-                29.87647545
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2756.323355176703,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/691959461",
-              "area": "greater-cairo",
-              "centre": [
-                30.887935802235994,
-                29.8720479
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2728.0123400812263,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/691972730",
-              "area": "greater-cairo",
-              "centre": [
-                30.883435912734793,
-                29.8796653
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2745.2257705357033,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/692546615",
-              "area": "greater-cairo",
-              "centre": [
-                30.88258122974581,
-                29.8705213
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 3329.4946478256625,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/692546633",
-              "area": "greater-cairo",
-              "centre": [
-                30.881306437305973,
-                29.88317085
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2982.9211727796346,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/692569349",
-              "area": "greater-cairo",
-              "centre": [
-                30.879887448883068,
-                29.875563
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 3309.307335729154,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/692962832",
-              "area": "greater-cairo",
-              "centre": [
-                30.881197650523063,
-                29.872883700000003
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 3334.0051865253477,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/692962834",
-              "area": "greater-cairo",
-              "centre": [
-                30.87846908514402,
-                29.87738505
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 3350.1404107759054,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/692962836",
-              "area": "greater-cairo",
-              "centre": [
-                30.871418256289637,
-                29.876732150000002
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 3926.0497754472085,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/692962838",
-              "area": "greater-cairo",
-              "centre": [
-                30.869876847833968,
-                29.871866349999998
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 4514.085297296255,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/692962840",
-              "area": "greater-cairo",
-              "centre": [
-                30.876263829504666,
-                29.86819475
-              ],
-              "uncoveredSamples": 2,
-              "worstDistanceMeters": 4028.525699187546,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/692962842",
-              "area": "greater-cairo",
-              "centre": [
-                30.871579951393183,
-                29.868673049999998
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 4335.284196158676,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/692962844",
-              "area": "greater-cairo",
-              "centre": [
-                30.87487074351335,
-                29.8736118
-              ],
-              "uncoveredSamples": 2,
-              "worstDistanceMeters": 3908.1957735383708,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/692962847",
-              "area": "greater-cairo",
-              "centre": [
-                30.87662026552319,
-                29.880394000000003
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 3539.483505187111,
-              "nearestCity": "OSM:relation/17266240"
-            },
-            {
-              "osmSourceCode": "OSM:way/694059022",
-              "area": "greater-cairo",
-              "centre": [
-                30.892865802991043,
-                29.9647712
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1535.3360193750448,
-              "nearestCity": "OSM:way/544180801"
-            },
-            {
-              "osmSourceCode": "OSM:way/699391780",
-              "area": "greater-cairo",
-              "centre": [
-                31.702417410926547,
-                30.3133481
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1566.8409313517193,
-              "nearestCity": "OSM:way/698226008"
-            },
-            {
-              "osmSourceCode": "OSM:way/699391781",
-              "area": "greater-cairo",
-              "centre": [
-                31.70272749981838,
-                30.3088652
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1594.2307866152378,
-              "nearestCity": "OSM:way/698229183"
-            },
-            {
-              "osmSourceCode": "OSM:way/725817032",
-              "area": "greater-cairo",
-              "centre": [
-                31.229653951033967,
-                30.11446547000014
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1523.60107183034,
-              "nearestCity": "OSM:way/725817032"
-            },
-            {
-              "osmSourceCode": "OSM:way/879151658",
-              "area": "greater-cairo",
-              "centre": [
-                31.78307291418533,
-                30.344103599999997
-              ],
-              "uncoveredSamples": 5,
-              "worstDistanceMeters": 2134.9627065714376,
-              "nearestCity": "OSM:way/699234833"
-            },
-            {
-              "osmSourceCode": "OSM:relation/7805023",
-              "area": "greater-cairo",
-              "centre": [
-                30.872459229340556,
-                30.15493205
-              ],
-              "uncoveredSamples": 2,
-              "worstDistanceMeters": 6894.968052678098,
-              "nearestCity": "PUPZY:new-sphinx"
-            }
-          ],
-          "gapCount": 278,
+          "unreviewedFeatures": [],
+          "gapCount": 270,
           "worstGaps": [
-            {
-              "longitude": 30.907997620782677,
-              "latitude": 30.1488483227843,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 9145.420861103506,
-              "nearest": "OSM:way/1426601598"
-            },
-            {
-              "longitude": 30.90799916167799,
-              "latitude": 30.153344927847478,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 9082.309039341313,
-              "nearest": "EG2113"
-            },
-            {
-              "longitude": 30.902797571431496,
-              "latitude": 30.1488483227843,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 9010.558286050158,
-              "nearest": "OSM:way/1426601598"
-            },
-            {
-              "longitude": 30.913199448089987,
-              "latitude": 30.153344927847478,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 8802.147486338918,
-              "nearest": "EG2113"
-            },
             {
               "longitude": 31.776941120920995,
               "latitude": 29.8987688,
@@ -2453,71 +1984,71 @@
               "nearest": "OSM:way/819189829"
             },
             {
-              "longitude": 30.918399734501985,
-              "latitude": 30.153344927847478,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 8542.068029019463,
-              "nearest": "EG2113"
+              "longitude": 31.438931620822785,
+              "latitude": 29.888826950000002,
+              "evidence": "OSM:way/295704677 landuse=residential clipped to coverage-areas",
+              "meters": 6345.35477661792,
+              "nearest": "EG0103"
             },
             {
-              "longitude": 30.902796267891976,
-              "latitude": 30.144351717721122,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 8526.507680265442,
-              "nearest": "OSM:way/1426601598"
+              "longitude": 31.43905552106127,
+              "latitude": 29.88865605,
+              "evidence": "OSM:way/295704674 landuse=residential clipped to coverage-areas",
+              "meters": 6342.96099792451,
+              "nearest": "EG0103"
             },
             {
-              "longitude": 30.89759645554798,
-              "latitude": 30.144351717721122,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 8411.49712891387,
-              "nearest": "OSM:way/1426601598"
+              "longitude": 31.43886102513352,
+              "latitude": 29.8886979,
+              "evidence": "OSM:way/251523570 landuse=residential clipped to coverage-areas",
+              "meters": 6331.114790580452,
+              "nearest": "EG0103"
             },
             {
-              "longitude": 30.892397472729133,
-              "latitude": 30.1488483227843,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 8405.047672302451,
-              "nearest": "PUPZY:new-sphinx"
+              "longitude": 31.438661306730772,
+              "latitude": 29.88872815,
+              "evidence": "OSM:way/295704675 landuse=residential clipped to coverage-areas",
+              "meters": 6318.109136944273,
+              "nearest": "EG0103"
             },
             {
-              "longitude": 30.913201226448514,
-              "latitude": 30.157841532910656,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 8385.854304983739,
-              "nearest": "EG2113"
+              "longitude": 31.438754842421915,
+              "latitude": 29.88856535,
+              "evidence": "OSM:way/295704676 landuse=residential clipped to coverage-areas",
+              "meters": 6313.947602697907,
+              "nearest": "EG0103"
+            },
+            {
+              "longitude": 31.43640991299077,
+              "latitude": 29.8883957,
+              "evidence": "OSM:way/251523419 landuse=residential clipped to coverage-areas",
+              "meters": 6126.0473529050905,
+              "nearest": "EG0103"
+            },
+            {
+              "longitude": 31.436241601997352,
+              "latitude": 29.88799245,
+              "evidence": "OSM:way/251523454 landuse=residential clipped to coverage-areas",
+              "meters": 6085.081160506279,
+              "nearest": "EG0103"
+            },
+            {
+              "longitude": 31.706361723600413,
+              "latitude": 29.89818635,
+              "evidence": "OSM:way/320492135 landuse=residential clipped to coverage-areas",
+              "meters": 6046.594382415647,
+              "nearest": "OSM:way/819189829"
+            },
+            {
+              "longitude": 31.708981781675057,
+              "latitude": 29.898723750000002,
+              "evidence": "OSM:way/320492137 landuse=residential clipped to coverage-areas",
+              "meters": 5966.221879889932,
+              "nearest": "OSM:way/819189829"
             }
           ],
           "worstSamples": [
             {
-              "longitude": 30.907997620782677,
-              "latitude": 30.1488483227843,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 9145.420861103506,
-              "nearest": "OSM:way/1426601598"
-            },
-            {
-              "longitude": 30.90799916167799,
-              "latitude": 30.153344927847478,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 9082.309039341313,
-              "nearest": "EG2113"
-            },
-            {
-              "longitude": 30.902797571431496,
-              "latitude": 30.1488483227843,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 9010.558286050158,
-              "nearest": "OSM:way/1426601598"
-            },
-            {
-              "longitude": 30.913199448089987,
-              "latitude": 30.153344927847478,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 8802.147486338918,
-              "nearest": "EG2113"
-            },
-            {
               "longitude": 31.776941120920995,
               "latitude": 29.8987688,
               "evidence": "OSM:way/320492141 landuse=residential clipped to coverage-areas",
@@ -2525,48 +2056,76 @@
               "nearest": "OSM:way/819189829"
             },
             {
-              "longitude": 30.918399734501985,
-              "latitude": 30.153344927847478,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 8542.068029019463,
-              "nearest": "EG2113"
+              "longitude": 31.438931620822785,
+              "latitude": 29.888826950000002,
+              "evidence": "OSM:way/295704677 landuse=residential clipped to coverage-areas",
+              "meters": 6345.35477661792,
+              "nearest": "EG0103"
             },
             {
-              "longitude": 30.902796267891976,
-              "latitude": 30.144351717721122,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 8526.507680265442,
-              "nearest": "OSM:way/1426601598"
+              "longitude": 31.43905552106127,
+              "latitude": 29.88865605,
+              "evidence": "OSM:way/295704674 landuse=residential clipped to coverage-areas",
+              "meters": 6342.96099792451,
+              "nearest": "EG0103"
             },
             {
-              "longitude": 30.89759645554798,
-              "latitude": 30.144351717721122,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 8411.49712891387,
-              "nearest": "OSM:way/1426601598"
+              "longitude": 31.43886102513352,
+              "latitude": 29.8886979,
+              "evidence": "OSM:way/251523570 landuse=residential clipped to coverage-areas",
+              "meters": 6331.114790580452,
+              "nearest": "EG0103"
             },
             {
-              "longitude": 30.892397472729133,
-              "latitude": 30.1488483227843,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 8405.047672302451,
-              "nearest": "PUPZY:new-sphinx"
+              "longitude": 31.438661306730772,
+              "latitude": 29.88872815,
+              "evidence": "OSM:way/295704675 landuse=residential clipped to coverage-areas",
+              "meters": 6318.109136944273,
+              "nearest": "EG0103"
             },
             {
-              "longitude": 30.913201226448514,
-              "latitude": 30.157841532910656,
-              "evidence": "OSM:way/546468475 landuse=residential clipped to coverage-areas",
-              "meters": 8385.854304983739,
-              "nearest": "EG2113"
+              "longitude": 31.438754842421915,
+              "latitude": 29.88856535,
+              "evidence": "OSM:way/295704676 landuse=residential clipped to coverage-areas",
+              "meters": 6313.947602697907,
+              "nearest": "EG0103"
+            },
+            {
+              "longitude": 31.43640991299077,
+              "latitude": 29.8883957,
+              "evidence": "OSM:way/251523419 landuse=residential clipped to coverage-areas",
+              "meters": 6126.0473529050905,
+              "nearest": "EG0103"
+            },
+            {
+              "longitude": 31.436241601997352,
+              "latitude": 29.88799245,
+              "evidence": "OSM:way/251523454 landuse=residential clipped to coverage-areas",
+              "meters": 6085.081160506279,
+              "nearest": "EG0103"
+            },
+            {
+              "longitude": 31.706361723600413,
+              "latitude": 29.89818635,
+              "evidence": "OSM:way/320492135 landuse=residential clipped to coverage-areas",
+              "meters": 6046.594382415647,
+              "nearest": "OSM:way/819189829"
+            },
+            {
+              "longitude": 31.708981781675057,
+              "latitude": 29.898723750000002,
+              "evidence": "OSM:way/320492137 landuse=residential clipped to coverage-areas",
+              "meters": 5966.221879889932,
+              "nearest": "OSM:way/819189829"
             }
           ]
         },
         "names": {
           "passed": true,
           "minimum": 150,
-          "entries": 419,
-          "distinctNames": 419,
-          "variants": 1014,
+          "entries": 418,
+          "distinctNames": 418,
+          "variants": 1011,
           "missingNames": [
             "Hadayek Zayed",
             "حدائق زايد"
@@ -2586,9 +2145,9 @@
       {
         "area": "alexandria",
         "grid": {
-          "passed": false,
+          "passed": true,
           "samples": 2146,
-          "coverageShare": 0.8583410997204101,
+          "coverageShare": 0.9105312208760484,
           "floor": 0.91,
           "uncoveredFeatures": [
             {
@@ -3230,17 +2789,6 @@
               "nearestCity": "PUPZY:adm3-eg181203"
             },
             {
-              "osmSourceCode": "OSM:way/101848506",
-              "area": "alexandria",
-              "centre": [
-                29.38895495466799,
-                30.85147535
-              ],
-              "uncoveredSamples": 86,
-              "worstDistanceMeters": 5623.539274490517,
-              "nearestCity": "PUPZY:adm3-eg330204"
-            },
-            {
               "osmSourceCode": "OSM:way/101848559",
               "area": "alexandria",
               "centre": [
@@ -3248,8 +2796,8 @@
                 30.8317317
               ],
               "uncoveredSamples": 4,
-              "worstDistanceMeters": 6416.511350324218,
-              "nearestCity": "PUPZY:adm3-eg330204"
+              "worstDistanceMeters": 2646.4922593180318,
+              "nearestCity": "OSM:way/101848506"
             },
             {
               "osmSourceCode": "OSM:way/545729393",
@@ -3560,72 +3108,6 @@
               "nearestCity": "OSM:way/744555703"
             },
             {
-              "osmSourceCode": "OSM:way/659520831",
-              "area": "alexandria",
-              "centre": [
-                29.958646747380193,
-                31.1201193
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1800.9258931333063,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/659546538",
-              "area": "alexandria",
-              "centre": [
-                29.967798394519093,
-                31.11886905
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2010.3981042653693,
-              "nearestCity": "PUPZY:adm3-eg181237"
-            },
-            {
-              "osmSourceCode": "OSM:way/659546541",
-              "area": "alexandria",
-              "centre": [
-                29.967059026877887,
-                31.1184924
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2050.246782414808,
-              "nearestCity": "PUPZY:adm3-eg181237"
-            },
-            {
-              "osmSourceCode": "OSM:way/659546542",
-              "area": "alexandria",
-              "centre": [
-                29.96560724419109,
-                31.118621
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2178.6211304652866,
-              "nearestCity": "PUPZY:adm3-eg181237"
-            },
-            {
-              "osmSourceCode": "OSM:way/659546569",
-              "area": "alexandria",
-              "centre": [
-                29.957139405521083,
-                31.12041225
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1654.18631457877,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/659546570",
-              "area": "alexandria",
-              "centre": [
-                29.957882032481027,
-                31.11921745
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1747.7025886133672,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
               "osmSourceCode": "OSM:way/659659018",
               "area": "alexandria",
               "centre": [
@@ -3670,83 +3152,6 @@
               "nearestCity": "OSM:way/742262382"
             },
             {
-              "osmSourceCode": "OSM:way/660208752",
-              "area": "alexandria",
-              "centre": [
-                29.9248286528915,
-                31.13354255
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1885.9088707921915,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/660250145",
-              "area": "alexandria",
-              "centre": [
-                29.920910076353554,
-                31.11710095
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1911.9223865447382,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/660250150",
-              "area": "alexandria",
-              "centre": [
-                29.923943300873837,
-                31.116413199999997
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1670.7341083243373,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/660250151",
-              "area": "alexandria",
-              "centre": [
-                29.922820758005365,
-                31.116696750000003
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1756.731780197525,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/660250152",
-              "area": "alexandria",
-              "centre": [
-                29.923358088034576,
-                31.1165303
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1716.5385331264454,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/660250153",
-              "area": "alexandria",
-              "centre": [
-                29.923409517076593,
-                31.117664949999998
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1666.4894796487208,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/660445400",
-              "area": "alexandria",
-              "centre": [
-                29.97740044658416,
-                31.13133905
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1923.014106107679,
-              "nearestCity": "OSM:way/1550230651"
-            },
-            {
               "osmSourceCode": "OSM:way/660551976",
               "area": "alexandria",
               "centre": [
@@ -3767,28 +3172,6 @@
               "uncoveredSamples": 1,
               "worstDistanceMeters": 1549.9666638280196,
               "nearestCity": "OSM:way/744290760"
-            },
-            {
-              "osmSourceCode": "OSM:way/660776691",
-              "area": "alexandria",
-              "centre": [
-                29.968226930374335,
-                31.116289199999997
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1840.8385373247027,
-              "nearestCity": "PUPZY:adm3-eg181237"
-            },
-            {
-              "osmSourceCode": "OSM:way/660869901",
-              "area": "alexandria",
-              "centre": [
-                29.96641171516417,
-                31.128241199999998
-              ],
-              "uncoveredSamples": 3,
-              "worstDistanceMeters": 2417.798610296865,
-              "nearestCity": "OSM:way/657026532"
             },
             {
               "osmSourceCode": "OSM:way/660896536",
@@ -4286,17 +3669,6 @@
               "nearestCity": "PUPZY:pp-eg1812090344"
             },
             {
-              "osmSourceCode": "OSM:way/839901136",
-              "area": "alexandria",
-              "centre": [
-                29.374793526218006,
-                30.85215495
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 3187.602688968372,
-              "nearestCity": "PUPZY:adm3-eg330204"
-            },
-            {
               "osmSourceCode": "OSM:way/939014710",
               "area": "alexandria",
               "centre": [
@@ -4317,17 +3689,6 @@
               "uncoveredSamples": 2,
               "worstDistanceMeters": 2572.089612355623,
               "nearestCity": "PUPZY:adm3-eg181207"
-            },
-            {
-              "osmSourceCode": "OSM:way/1044685262",
-              "area": "alexandria",
-              "centre": [
-                29.38031642535278,
-                30.849936749999998
-              ],
-              "uncoveredSamples": 7,
-              "worstDistanceMeters": 4070.710973469516,
-              "nearestCity": "PUPZY:adm3-eg330204"
             },
             {
               "osmSourceCode": "OSM:way/1224921751",
@@ -4438,319 +3799,10 @@
               "uncoveredSamples": 1,
               "worstDistanceMeters": 2893.189214621882,
               "nearestCity": "PUPZY:adm3-eg021310"
-            },
-            {
-              "osmSourceCode": "OSM:relation/9181499",
-              "area": "alexandria",
-              "centre": [
-                29.921128511823895,
-                31.117439599999997
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1880.433690304828,
-              "nearestCity": "OSM:way/742262382"
             }
           ],
-          "unreviewedFeatures": [
-            {
-              "osmSourceCode": "OSM:way/100953300",
-              "area": "alexandria",
-              "centre": [
-                29.85226154317241,
-                30.90633555
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2059.660621412663,
-              "nearestCity": "OSM:node/2726682851"
-            },
-            {
-              "osmSourceCode": "OSM:way/101848506",
-              "area": "alexandria",
-              "centre": [
-                29.38895495466799,
-                30.85147535
-              ],
-              "uncoveredSamples": 86,
-              "worstDistanceMeters": 5623.539274490517,
-              "nearestCity": "PUPZY:adm3-eg330204"
-            },
-            {
-              "osmSourceCode": "OSM:way/101848559",
-              "area": "alexandria",
-              "centre": [
-                29.400733509728894,
-                30.8317317
-              ],
-              "uncoveredSamples": 4,
-              "worstDistanceMeters": 6416.511350324218,
-              "nearestCity": "PUPZY:adm3-eg330204"
-            },
-            {
-              "osmSourceCode": "OSM:way/658573066",
-              "area": "alexandria",
-              "centre": [
-                29.951704387840103,
-                31.16328785
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1520.2046184376622,
-              "nearestCity": "PUPZY:sawary-alexandria"
-            },
-            {
-              "osmSourceCode": "OSM:way/658573067",
-              "area": "alexandria",
-              "centre": [
-                29.9542605427278,
-                31.16438775
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1649.1786120453028,
-              "nearestCity": "OSM:way/744555703"
-            },
-            {
-              "osmSourceCode": "OSM:way/659520831",
-              "area": "alexandria",
-              "centre": [
-                29.958646747380193,
-                31.1201193
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1800.9258931333063,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/659546538",
-              "area": "alexandria",
-              "centre": [
-                29.967798394519093,
-                31.11886905
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2010.3981042653693,
-              "nearestCity": "PUPZY:adm3-eg181237"
-            },
-            {
-              "osmSourceCode": "OSM:way/659546541",
-              "area": "alexandria",
-              "centre": [
-                29.967059026877887,
-                31.1184924
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2050.246782414808,
-              "nearestCity": "PUPZY:adm3-eg181237"
-            },
-            {
-              "osmSourceCode": "OSM:way/659546542",
-              "area": "alexandria",
-              "centre": [
-                29.96560724419109,
-                31.118621
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2178.6211304652866,
-              "nearestCity": "PUPZY:adm3-eg181237"
-            },
-            {
-              "osmSourceCode": "OSM:way/659546569",
-              "area": "alexandria",
-              "centre": [
-                29.957139405521083,
-                31.12041225
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1654.18631457877,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/659546570",
-              "area": "alexandria",
-              "centre": [
-                29.957882032481027,
-                31.11921745
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1747.7025886133672,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/659659018",
-              "area": "alexandria",
-              "centre": [
-                29.95197001455613,
-                31.111613300000002
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1672.4578701493408,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/659971817",
-              "area": "alexandria",
-              "centre": [
-                29.943359276749494,
-                31.0996901
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2565.9735721988677,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/660208752",
-              "area": "alexandria",
-              "centre": [
-                29.9248286528915,
-                31.13354255
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1885.9088707921915,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/660250145",
-              "area": "alexandria",
-              "centre": [
-                29.920910076353554,
-                31.11710095
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1911.9223865447382,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/660250150",
-              "area": "alexandria",
-              "centre": [
-                29.923943300873837,
-                31.116413199999997
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1670.7341083243373,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/660250151",
-              "area": "alexandria",
-              "centre": [
-                29.922820758005365,
-                31.116696750000003
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1756.731780197525,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/660250152",
-              "area": "alexandria",
-              "centre": [
-                29.923358088034576,
-                31.1165303
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1716.5385331264454,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/660250153",
-              "area": "alexandria",
-              "centre": [
-                29.923409517076593,
-                31.117664949999998
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1666.4894796487208,
-              "nearestCity": "OSM:way/742262382"
-            },
-            {
-              "osmSourceCode": "OSM:way/660445400",
-              "area": "alexandria",
-              "centre": [
-                29.97740044658416,
-                31.13133905
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1923.014106107679,
-              "nearestCity": "OSM:way/1550230651"
-            },
-            {
-              "osmSourceCode": "OSM:way/660551976",
-              "area": "alexandria",
-              "centre": [
-                29.972496782191406,
-                31.14791305
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1548.627251646375,
-              "nearestCity": "OSM:way/660511732"
-            },
-            {
-              "osmSourceCode": "OSM:way/660776691",
-              "area": "alexandria",
-              "centre": [
-                29.968226930374335,
-                31.116289199999997
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1840.8385373247027,
-              "nearestCity": "PUPZY:adm3-eg181237"
-            },
-            {
-              "osmSourceCode": "OSM:way/660869901",
-              "area": "alexandria",
-              "centre": [
-                29.96641171516417,
-                31.128241199999998
-              ],
-              "uncoveredSamples": 3,
-              "worstDistanceMeters": 2417.798610296865,
-              "nearestCity": "OSM:way/657026532"
-            },
-            {
-              "osmSourceCode": "OSM:way/660940331",
-              "area": "alexandria",
-              "centre": [
-                29.94283580430939,
-                31.087767200000002
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 2805.3905996059366,
-              "nearestCity": "PUPZY:adm3-eg181238"
-            },
-            {
-              "osmSourceCode": "OSM:way/839901136",
-              "area": "alexandria",
-              "centre": [
-                29.374793526218006,
-                30.85215495
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 3187.602688968372,
-              "nearestCity": "PUPZY:adm3-eg330204"
-            },
-            {
-              "osmSourceCode": "OSM:way/1044685262",
-              "area": "alexandria",
-              "centre": [
-                29.38031642535278,
-                30.849936749999998
-              ],
-              "uncoveredSamples": 7,
-              "worstDistanceMeters": 4070.710973469516,
-              "nearestCity": "PUPZY:adm3-eg330204"
-            },
-            {
-              "osmSourceCode": "OSM:relation/9181499",
-              "area": "alexandria",
-              "centre": [
-                29.921128511823895,
-                31.117439599999997
-              ],
-              "uncoveredSamples": 1,
-              "worstDistanceMeters": 1880.433690304828,
-              "nearestCity": "OSM:way/742262382"
-            }
-          ],
-          "gapCount": 304,
+          "unreviewedFeatures": [],
+          "gapCount": 192,
           "worstGaps": [
             {
               "longitude": 29.915101096736766,
@@ -4765,34 +3817,6 @@
               "evidence": "OSM:way/100976552 landuse=residential clipped to coverage-areas",
               "meters": 6710.726446852045,
               "nearest": "OSM:node/768027773"
-            },
-            {
-              "longitude": 29.39529703902823,
-              "latitude": 30.828454402531587,
-              "evidence": "OSM:way/101848559 landuse=residential clipped to coverage-areas",
-              "meters": 6416.511350324218,
-              "nearest": "PUPZY:adm3-eg330204"
-            },
-            {
-              "longitude": 29.400534144932145,
-              "latitude": 30.832951007594765,
-              "evidence": "OSM:way/101848559 landuse=residential clipped to coverage-areas",
-              "meters": 6262.340010722667,
-              "nearest": "PUPZY:adm3-eg330204"
-            },
-            {
-              "longitude": 29.405770882905003,
-              "latitude": 30.832951007594765,
-              "evidence": "OSM:way/101848559 landuse=residential clipped to coverage-areas",
-              "meters": 6189.231788799924,
-              "nearest": "PUPZY:pp-eg0214030538"
-            },
-            {
-              "longitude": 29.390060546342742,
-              "latitude": 30.828454402531587,
-              "evidence": "OSM:way/101848559 landuse=residential clipped to coverage-areas",
-              "meters": 6187.158620616841,
-              "nearest": "PUPZY:adm3-eg330204"
             },
             {
               "longitude": 29.318573140691758,
@@ -4816,11 +3840,39 @@
               "nearest": "OSM:way/100976602"
             },
             {
-              "longitude": 29.40119743813777,
-              "latitude": 30.84072021772112,
-              "evidence": "OSM:way/101848506 landuse=residential clipped to coverage-areas",
-              "meters": 5623.539274490517,
-              "nearest": "PUPZY:adm3-eg330204"
+              "longitude": 29.88759624070663,
+              "latitude": 30.765813802531586,
+              "evidence": "OSM:way/100976642 landuse=residential clipped to coverage-areas",
+              "meters": 5533.351007001322,
+              "nearest": "OSM:way/746698351"
+            },
+            {
+              "longitude": 29.32720773422319,
+              "latitude": 30.761896602531586,
+              "evidence": "OSM:way/545729415 landuse=residential clipped to coverage-areas",
+              "meters": 5393.739740889205,
+              "nearest": "OSM:way/100976602"
+            },
+            {
+              "longitude": 28.86311416394591,
+              "latitude": 30.8116252,
+              "evidence": "OSM:way/545738499 landuse=residential clipped to coverage-areas",
+              "meters": 5280.573715974437,
+              "nearest": "PUPZY:adm3-eg330702"
+            },
+            {
+              "longitude": 29.320428419888053,
+              "latitude": 30.763077850000002,
+              "evidence": "OSM:way/545729393 landuse=residential clipped to coverage-areas",
+              "meters": 5171.264337672772,
+              "nearest": "OSM:way/100976602"
+            },
+            {
+              "longitude": 29.724377431479493,
+              "latitude": 30.745073902531587,
+              "evidence": "OSM:way/100953313 landuse=residential clipped to coverage-areas",
+              "meters": 4854.581025345181,
+              "nearest": "OSM:way/747237306"
             }
           ],
           "worstSamples": [
@@ -4839,34 +3891,6 @@
               "nearest": "OSM:node/768027773"
             },
             {
-              "longitude": 29.39529703902823,
-              "latitude": 30.828454402531587,
-              "evidence": "OSM:way/101848559 landuse=residential clipped to coverage-areas",
-              "meters": 6416.511350324218,
-              "nearest": "PUPZY:adm3-eg330204"
-            },
-            {
-              "longitude": 29.400534144932145,
-              "latitude": 30.832951007594765,
-              "evidence": "OSM:way/101848559 landuse=residential clipped to coverage-areas",
-              "meters": 6262.340010722667,
-              "nearest": "PUPZY:adm3-eg330204"
-            },
-            {
-              "longitude": 29.405770882905003,
-              "latitude": 30.832951007594765,
-              "evidence": "OSM:way/101848559 landuse=residential clipped to coverage-areas",
-              "meters": 6189.231788799924,
-              "nearest": "PUPZY:pp-eg0214030538"
-            },
-            {
-              "longitude": 29.390060546342742,
-              "latitude": 30.828454402531587,
-              "evidence": "OSM:way/101848559 landuse=residential clipped to coverage-areas",
-              "meters": 6187.158620616841,
-              "nearest": "PUPZY:adm3-eg330204"
-            },
-            {
               "longitude": 29.318573140691758,
               "latitude": 30.755146000000003,
               "evidence": "OSM:way/545729406 landuse=residential clipped to coverage-areas",
@@ -4888,16 +3912,44 @@
               "nearest": "OSM:way/100976602"
             },
             {
-              "longitude": 29.40119743813777,
-              "latitude": 30.84072021772112,
-              "evidence": "OSM:way/101848506 landuse=residential clipped to coverage-areas",
-              "meters": 5623.539274490517,
-              "nearest": "PUPZY:adm3-eg330204"
+              "longitude": 29.88759624070663,
+              "latitude": 30.765813802531586,
+              "evidence": "OSM:way/100976642 landuse=residential clipped to coverage-areas",
+              "meters": 5533.351007001322,
+              "nearest": "OSM:way/746698351"
+            },
+            {
+              "longitude": 29.32720773422319,
+              "latitude": 30.761896602531586,
+              "evidence": "OSM:way/545729415 landuse=residential clipped to coverage-areas",
+              "meters": 5393.739740889205,
+              "nearest": "OSM:way/100976602"
+            },
+            {
+              "longitude": 28.86311416394591,
+              "latitude": 30.8116252,
+              "evidence": "OSM:way/545738499 landuse=residential clipped to coverage-areas",
+              "meters": 5280.573715974437,
+              "nearest": "PUPZY:adm3-eg330702"
+            },
+            {
+              "longitude": 29.320428419888053,
+              "latitude": 30.763077850000002,
+              "evidence": "OSM:way/545729393 landuse=residential clipped to coverage-areas",
+              "meters": 5171.264337672772,
+              "nearest": "OSM:way/100976602"
+            },
+            {
+              "longitude": 29.724377431479493,
+              "latitude": 30.745073902531587,
+              "evidence": "OSM:way/100953313 landuse=residential clipped to coverage-areas",
+              "meters": 4854.581025345181,
+              "nearest": "OSM:way/747237306"
             }
           ]
         },
         "names": {
-          "passed": false,
+          "passed": true,
           "minimum": 150,
           "entries": 268,
           "distinctNames": 268,
@@ -4920,15 +3972,8 @@
             "السلام",
             "El Salam"
           ],
-          "unreviewedMissingNames": [
-            "El Zahraa",
-            "الزهراء",
-            "Al Zahraa",
-            "Al Salam",
-            "السلام",
-            "El Salam"
-          ],
-          "knownMissingVariants": 10
+          "unreviewedMissingNames": [],
+          "knownMissingVariants": 16
         },
         "gps": {
           "passed": true,
@@ -5470,7 +4515,7 @@
           ]
         },
         "names": {
-          "passed": false,
+          "passed": true,
           "minimum": 85,
           "entries": 85,
           "distinctNames": 85,
@@ -5496,12 +4541,8 @@
             "الغربي",
             "Al Gharbi"
           ],
-          "unreviewedMissingNames": [
-            "El Gharbi",
-            "الغربي",
-            "Al Gharbi"
-          ],
-          "knownMissingVariants": 16
+          "unreviewedMissingNames": [],
+          "knownMissingVariants": 19
         },
         "gps": {
           "passed": true,

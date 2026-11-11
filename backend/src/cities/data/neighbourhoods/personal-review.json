@@ -2079,11 +2079,11 @@
       "rows": 302
     },
     "merge-review": {
-      "sha256": "0ad4ea8b4f0692d1aebcf65b097799d2dbeacf0c07d6b286d8f3034c39be0352",
-      "rows": 142
+      "sha256": "76b0409bac14fdc57b4b91e5903ab39f52e8120a50859023f403bda25f5c3ade",
+      "rows": 141
     },
     "curated-name-review": {
-      "sha256": "e1573ae2cd9bed4dc2712666eaff9d36fc78f1a7ce5f52698f3017c0d3d28abe",
+      "sha256": "cb94c3c3e68f2d8a49dc37288f8e928d05f71b54dc28ad8b9cf90578e3d021ca",
       "rows": 425
     },
     "number-name-review": {
@@ -2120,7 +2120,7 @@
     "rows": 90,
     "method": "Individually read all 90 source labels, coordinates, containing OCHA district and adjacent-district list. Independent single-coordinate WD landmarks; no catalog coordinates used. Ten established landmarks and twenty dispersed points per region. Sixty recent named-mosque imports have lower source confidence; no field verification is claimed. Adjacency review includes genuinely shared boundaries across governorates; the same-governorate restriction governs City parent assignment, not GPS fixture neighbours. The 1.5 km additional proximity bound is retained. Original 90 landmark coordinates retained this round; two shared-boundary Ganoub neighbours explicitly reviewed. Village 29 City coordinate derives independently from the OSM footprint. The canal-gap case remains unaccepted."
   },
-  "reviewedInputSha256": "0b61bdeae79132623dae5b774d41116a1502b4ca0f80f8b236de32d11a057784",
+  "reviewedInputSha256": "a15537707075d3d21b58eed75acb9a2a50c223b8c62f8d3f37066128230efc5a",
   "aliasReview": [
     {
       "sourceCode": "OSM:node/768591737",
@@ -3303,7 +3303,7 @@
   "residueReview": {
     "notes": "All unresolved-name/parent and ADM3 residue tables empty. Read all 488 curated names, 124 district merges, 288 identity/disambiguation decisions and 94 ordinal edits in full after fourth sample fixes. Corrected Old Helmia source language conflict and Oula proper-name translation. Exact Arabic orthographic variants may be copied from attested source names; this does not alter Flutter normalization or create a place. Reviewed the source-name duplicate table as well; one conflicting IL Bosco City/La Mirada source was excluded rather than polluting aliases. Named-compound/numbered-ward changes retain source points. Largest-distance exception audit found industrial Sector A3 repeated, now excluded by the sector-code rule; Taj City is a named residential compound despite its subdivision place tag. Final source-tag audit preserves original OSM place tags for the ten reviewed tower communities and Taj City; their inclusion classification remains named residential compound."
   },
-  "reviewedDecisionsSha256": "78e2319ddcb92bcde683f6cc5c9f86b9afbe8e9d1b5762cd5274833d23a7d3f2",
+  "reviewedDecisionsSha256": "afeca534fb074ea8f48bc60d4446938a94845385e5b16a180ac3174a531675dc",
   "nameOverrides": {},
   "areaLandmarks": {
     "OSM:node/14123937863": {
@@ -3781,8 +3781,8 @@
   "independentNameReview": {
     "date": "2026-11-11",
     "reviewer": "Codex personal source/rule review",
-    "areasSha256": "8bb6f2a74a0f2a97e71d2695cc330b1af51f458372bf42e11b0c649e054a2b0b",
-    "notes": "Lead round8 exact normalization gate; sports-club acceptance entry removed as premises, original independent selection otherwise retained. Unresolved entries remain explicit failures rather than fabricated names/aliases."
+    "areasSha256": "dd35839db18305c5c17551a540fdccd19f666371a033614dafdbd6004241ecb4",
+    "notes": "Round9 independent419→418 Cairo names: national capital city is explicitly outside Neighbourhood granularity per lead. Alexandria268 / Port85 unchanged. Three individually researched missing entries approved by lead2026-11-11. Exact-name gate unchanged."
   },
   "districtNames": {
     "EG3307": {
@@ -3814,11 +3814,11 @@
   },
   "releaseGateCorrectionReview": {
     "date": "2026-11-11",
-    "reviewer": "Codex round8 source, display, identity and exact-name review",
-    "changedDecisions": 1997,
-    "deltaFile": "round7-decision-delta.json.gz",
-    "deltaSha256": "3443c970b7670eaa733d4c57c13ddf260e46ce27ca586f9425a1f1c179a66b62",
-    "basis": "Lead round8 headline, exact-name, same-place merge, noise and synthetic-point removal review. Official district UUIDs/source values and recorded source points preserved. Earlier round7 seed300 audit is historical and is not a new round8 random sample. Full per-row delta and round8 resident identity audit retained. Accepted floors97/91/94.5 remain unchanged; final grid/name failures are recorded, not approved."
+    "reviewer": "Codex round9 source, settlement identity and display residue review",
+    "changedDecisions": 38,
+    "deltaFile": "round9-decision-delta.json.gz",
+    "deltaSha256": "7a0c705e7af06ca33f98420eac26acb9279f59e90aa43df87850a87e0e6444ee",
+    "basis": "Lead round9: named town, bank housing and distinct village/estate restorations at exact source points; three researched lead-approved known-missing names; institutional housing and cadastral display review. No new random sample claimed. Unchanged grid floors97/91/94.5 and GPS rule. Exact per-row delta retained."
   },
   "exactArabicAliasReview": {
     "date": "2026-11-10",

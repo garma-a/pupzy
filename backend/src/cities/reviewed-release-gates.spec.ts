@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import { acceptsReviewOnlyCoverage } from './publish';
-import { loadRawSnapshot, transformCatalog, type CityCatalogRecord } from './catalog';
+import { loadOfficialCatalog, loadRawSnapshot, transformCatalog, type CityCatalogRecord } from './catalog';
 import { verifyCoverage, verifyHeadlineNames, type GpsChecks, type IndependentNames } from './coverage';
 const city = { ...transformCatalog(loadRawSnapshot()).records[0], governorateCode: 'EG03' };
 const empty = { 'greater-cairo': [], alexandria: [], 'port-said-region': [] };
@@ -134,6 +134,29 @@ it('rejects non-ASCII English and synthetic near display labels', () => {
     { ...city, nameEnglish: 'District (Giza) (Markaz)', nameArabic: 'حي — الجيزة — مركز' },
   ]);
   expect(qualified.dataQuality.errors.some((e) => e.includes('multiple display disambiguators'))).toBe(true);
+});
+
+it('requires Western display digits without removing the original Arabic-digit alias', () => {
+  const row = { ...city, nameEnglish: 'Lotus 1', nameArabic: 'لوتس ١', aliases: ['لوتس 1'] };
+  const gps: GpsChecks = { metadata: { reviewed: true, notes: 'Synthetic' }, areas: empty };
+  expect(report(names, gps, [row]).dataQuality.errors.some((e) => e.includes('Western digits'))).toBe(true);
+  expect(
+    report(names, gps, [{ ...row, nameArabic: 'لوتس 1', aliases: ['لوتس ١'] }]).dataQuality.errors.some((e) =>
+      e.includes('Western digits'),
+    ),
+  ).toBe(false);
+});
+
+it('retains reviewed real estate and village identities without restoring the capital node or basin codes', () => {
+  const rows = new Map(loadOfficialCatalog().records.map((row) => [row.sourceCode, row]));
+  expect(rows.get('OSM:way/727261263')?.nameEnglish).toBe('Abu Rawash Village');
+  expect(rows.get('OSM:node/6693579170')?.nameEnglish).toBe('Abu Rawash');
+  for (const code of ['839901136', '699912644', '792198968'])
+    expect(rows.get('OSM:way/' + code)?.nameEnglish).toContain('Housing');
+  expect(rows.get('OSM:way/101848506')?.nameArabic).toBe('مدينة الحمام');
+  expect(rows.get('OSM:way/879151658')?.nameEnglish).toBe('Social Housing (10th of Ramadan)');
+  expect(rows.has('OSM:node/271613766')).toBe(false);
+  expect(rows.has('OSM:way/742989374')).toBe(false);
 });
 
 it('binds local review publication to the exact report and never waives display, structure or GPS failures', () => {

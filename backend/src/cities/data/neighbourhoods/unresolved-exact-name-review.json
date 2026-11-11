@@ -1,6 +1,6 @@
 {
   "reviewDate": "2026-11-11",
-  "status": "Lead decision pending. These entries are NOT known-missing exemptions; exact names gates continue to fail. No aliases assigned to unrelated objects.",
+  "status": "Approved by lead2026-11-11 and recorded in known-missing-names.json. Original research retained; these names now satisfy the individually documented exception gate.",
   "entries": [
     {
       "area": "alexandria",
@@ -18,7 +18,8 @@
       ],
       "sourceUrls": [
         "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B2%D9%87%D8%B1%D8%A7%D8%A1+%D8%A7%D8%B3%D9%83%D9%86%D8%AF%D8%B1%D9%8A%D8%A9&format=jsonv2&viewbox=29.4%2C31.5%2C30.4%2C30.6&bounded=1&countrycodes=eg&limit=8&namedetails=1&addressdetails=1&accept-language=ar%2Cen"
-      ]
+      ],
+      "approvedBy": "lead 2026-11-11"
     },
     {
       "area": "alexandria",
@@ -38,7 +39,8 @@
       "sourceUrls": [
         "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85+%D8%A7%D8%B3%D9%83%D9%86%D8%AF%D8%B1%D9%8A%D8%A9&format=jsonv2&viewbox=29.4%2C31.5%2C30.4%2C30.6&bounded=1&countrycodes=eg&limit=8&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
         "https://data.humdata.org/dataset/b90d81ba-7c7a-4283-9899-827480d80a79/resource/2080e95f-51c7-45b6-b5ab-613ff1cfc041/download/egy_admin_boundaries.geojson.zip"
-      ]
+      ],
+      "approvedBy": "lead 2026-11-11"
     },
     {
       "area": "port-said-region",
@@ -58,7 +60,8 @@
       "sourceUrls": [
         "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%BA%D8%B1%D8%A8%D9%8A+%D8%AF%D9%85%D9%8A%D8%A7%D8%B7&format=jsonv2&viewbox=31.5%2C31.6%2C32.0%2C31.1&bounded=1&countrycodes=eg&limit=8&namedetails=1&addressdetails=1&accept-language=ar%2Cen",
         "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%BA%D8%B1%D8%A8%D9%8A+%D8%B1%D8%A3%D8%B3+%D8%A7%D9%84%D8%A8%D8%B1&format=jsonv2&viewbox=31.5%2C31.6%2C32.0%2C31.1&bounded=1&countrycodes=eg&limit=8&namedetails=1&addressdetails=1&accept-language=ar%2Cen"
-      ]
+      ],
+      "approvedBy": "lead 2026-11-11"
     }
   ]
 }

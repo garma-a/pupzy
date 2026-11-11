@@ -355,6 +355,8 @@ export function verifyCoverage(
   for (const row of records.filter((r) => r.status === 'OFFICIAL')) {
     if (!/^[\x20-\x7e]+$/.test(row.nameEnglish))
       dataErrors.push(`${row.sourceCode}: English display must be plain ASCII`);
+    if (/[\u0660-\u0669\u06f0-\u06f9]/.test(row.nameArabic))
+      dataErrors.push(`${row.sourceCode}: Arabic display must use Western digits; retain other digit forms as aliases`);
     if (/\bnear\b/i.test(row.nameEnglish) || /(?:^|[\s—،])قرب(?:\s|$)/.test(row.nameArabic))
       dataErrors.push(`${row.sourceCode}: near/قرب forbidden in display name`);
     if ((row.nameEnglish.match(/\(/g)?.length ?? 0) > 1 || (row.nameArabic.match(/ — /g)?.length ?? 0) > 1)

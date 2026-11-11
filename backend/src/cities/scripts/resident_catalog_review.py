@@ -32,12 +32,15 @@ def identity_labels(r):
 
 def apply_resident_review(districts,decisions,osm,adm3,headlines,policy):
  audit=[];owners={};gov_names={r['governorateCode']:r['governorate'] for r in districts};all_by={r['sourceCode']:r for r in [*districts,*decisions]}
+ distinct=policy.get('round9',{}).get('distinctSourcePlaces',{})
  def event(r,action,reason,**extra):audit.append({'sourceCode':r['sourceCode'],'action':action,'reason':reason,**extra})
  def rename(r,en,ar,why):
   old=[r['nameEnglish'],r['nameArabic']];r.setdefault('aliases',[]).extend(old);r.update(nameEnglish=en,nameArabic=ar)
   if old!=[en,ar]:event(r,'rename',why,before=old,after=[en,ar])
  def exclude(r,why,kind='noise'):
   event(r,'exclude-'+kind,why,nameEnglish=r.get('nameEnglish'),nameArabic=r.get('nameArabic'));r.update(decision='exclude',rule='resident-review-'+kind,notes=why)
+ for restoration in policy.get('round9',{}).get('restorations',[]):
+  event(all_by[restoration['sourceCode']],'restore-reviewed-real-place',restoration['basis'])
  # An explicit lead headline supersedes the previous business-park exclusion.
  smart=all_by.get('OSM:node/300754111')
  if smart:
@@ -47,7 +50,16 @@ def apply_resident_review(districts,decisions,osm,adm3,headlines,policy):
   code=r['sourceCode'];en=base(r['nameEnglish']);ar=base(r['nameArabic']);raw=osm.get(code,{}).get('tags',{});text=' '.join([en,ar])
   if code.endswith('-residential-reference'):
    exclude(r,'Lead rejects unnamed extra representative points; no separate sourced local name at this exact spot.','synthetic-representative');continue
-  if re.search(r'\bbank\b|(?:^|\s)(?:بنك|البنك)(?:\s|$)',text,re.I):
+  if raw.get('capital')=='yes' or raw.get('capital_ISO3166-1'):
+   exclude(r,'National capital city node is not a neighbourhood; Downtown Cairo already represents the central area.');continue
+  if re.search(r'^(?:حوض\s*[0-9٠-٩]+|Hod\s*\d+)\b',text,re.I):
+   exclude(r,'Numeric cadastral basin label without independent resident-area evidence.');continue
+  if en=='Finance and Business Centre':
+   exclude(r,'Institutional/business-centre label; no explicit named housing estate in the source.');continue
+  if en=='Club' and code not in policy.get('nameCorrections',{}):
+   exclude(r,'Bare club label without a reviewed residential district qualifier.');continue
+  bank_estate=code in distinct and re.match(r'^مساكن\s+بنك',raw.get('name:ar') or raw.get('name','')) and raw.get('landuse')=='residential'
+  if re.search(r'\bbank\b|(?:^|\s)(?:بنك|البنك)(?:\s|$)',text,re.I) and not bank_estate:
    exclude(r,'Bank/office label without independently established housing-estate identity.');continue
   if re.fullmatch(r'[0-9٠-٩\s]+|[ء-ي]|[0-9٠-٩]+\s*[ء-يA-Za-z]|[ء-يA-Za-z]\s*[0-9٠-٩]+',ar.replace('ـ','')) or re.fullmatch(r'(?:Area\s+\d+[A-Z]?|[A-Z]\s+Zone|Zone\s+[A-Z0-9]+)',en,re.I):
    exclude(r,'Bare numeric/letter/zone code has no resident area name.');continue
@@ -64,7 +76,10 @@ def apply_resident_review(districts,decisions,osm,adm3,headlines,policy):
   if raw.get('place') not in {'village','hamlet'}:clean_ar=re.sub(r'^قرية\s+','',clean_ar)
   clean_en=re.sub(r'^(?:Compound|Comound)\s+|\s+(?:Compound|Comound)$','',en,flags=re.I)
   if raw.get('place') not in {'village','hamlet'}:clean_en=re.sub(r'^(?:Village|The village of)\s+|\s+Village$','',clean_en,flags=re.I)
+  if code in distinct:clean_en=en;clean_ar=ar
   rename(r,ascii_name(clean_en),clean_ar,'Unique resident base, ASCII English and generic compound/resort prefix review.')
+ for restoration in policy.get('round9',{}).get('restorations',[]):
+  rename(all_by[restoration['sourceCode']],restoration['nameEnglish'],restoration['nameArabic'],'Reviewed settlement/estate identity and its real city qualifier supersede generic prefix cleanup.')
  for code,names in policy.get('nameCorrections',{}).items():
   row=all_by.get(code)
   if row and row.get('decision','include')=='include':rename(row,*names,'Reviewed real project/resort primary name; developer/type words stay aliases.')
@@ -77,7 +92,7 @@ def apply_resident_review(districts,decisions,osm,adm3,headlines,policy):
  for en,ar,gov in headlines['entries']:
   explicit=policy.get('headlineOwners',{}).get(en+'|'+gov)
   rows=[r for r in [*districts,*decisions] if r.get('decision','include')=='include' and gov_names[r['governorateCode']]==gov]
-  choices=[r for r in rows if norm(base(r['nameEnglish']))==norm(en) or norm(base(r['nameArabic']))==norm(ar)]
+  choices=[r for r in rows if r['sourceCode'] not in distinct and (norm(base(r['nameEnglish']))==norm(en) or norm(base(r['nameArabic']))==norm(ar))]
   if explicit:choices=[all_by[explicit]] if all_by.get(explicit,{}).get('decision','include')=='include' else []
   if not choices:event({'sourceCode':'HEADLINE:'+en},'unresolved-headline','No defensible source row',english=en,arabic=ar,governorate=gov);continue
   def rank(r):
@@ -126,6 +141,9 @@ def apply_resident_review(districts,decisions,osm,adm3,headlines,policy):
  for group in groups.values():
   for i,a in enumerate(group):
    for b in group[:i]:
+    # Proximity nominates possible duplicates; a reviewed separate settlement
+    # or estate polygon is not made identical by generic-name aliases.
+    if a['sourceCode'] in distinct or b['sourceCode'] in distinct:continue
     if not a.get('districtSourceCode') and not b.get('districtSourceCode'):continue
     close=meters(a,b)<=2500
     for unit,other in [(a,b),(b,a)]:
@@ -172,6 +190,9 @@ def apply_resident_review(districts,decisions,osm,adm3,headlines,policy):
   if remove:
    row['aliases']=[a for a in row.get('aliases',[]) if a not in remove];event(row,'remove-shadowing-alias','Alias is another distinct City primary name; preserve source facts in provenance, not false picker matches.',aliases=remove)
  for r in [*districts,*[r for r in decisions if r['decision']=='include']]:
+  western=r['nameArabic'].translate(str.maketrans('٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹','01234567890123456789'))
+  western=re.sub(r'^(\d+)\s+(بنجر السكر)$',r'\2 \1',western)
+  rename(r,r['nameEnglish'],western,'Western Arabic display digits; original digit forms remain aliases. Place number follows Banger El Sokkar.')
   cleaned=[];seen={alias_norm(r['nameEnglish']),alias_norm(r['nameArabic'])}
   for name in r.get('aliases',[]):
    if not name or re.search(r'\bnear\b|قرب|([a-z])\1\1|\ballamein\b',name,re.I):continue

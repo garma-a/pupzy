@@ -1,5 +1,7 @@
 # Round8 results — 2026-11-11
 
+Historical checkpoint4a176ad. Superseded by [round9 results](neighbourhood-cities-round9-report.md).
+
 Internet available: requested Nominatim probe returned HTTP/2 302. **3,366 → 3,149 Cities (351 districts + 2,798 Neighbourhoods).** **181 merges; 42 noise removals; 9 synthetic reference removals; 3 unqualified collisions removed; 18 additions, including 10 headline rows.** Official district source codes, source labels, coordinates and UUIDs are preserved. No frontend edits, dependency reinstall, commit, push, PR or production action.
 
 **141/141 exact bilingual headlines pass; no outstanding headline objection.** Per the lead's own list edit, Gleem stays primary; Glymonopoulo / جليمونوبولو are its aliases. Headline additions: Smouha, Sidi Bishr, Alf Maskan, Mostakbal City, Degla, Bitash, Khorshid, Seyouf, Bolkly, and restored Smart Village. The nine new PUPZY rows use recorded named-feature proxies or Wikidata points; Smart Village retains its original OSM point. Proxies are disclosed, not claimed as surveyed area centres.
