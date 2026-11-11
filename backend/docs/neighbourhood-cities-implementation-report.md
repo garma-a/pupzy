@@ -1,6 +1,8 @@
 # Neighbourhood Cities: implementation report — 2026-11-11
 
-**3,156 OFFICIAL Cities = 351 districts + 2,805 Neighbourhoods, 27 governorates.** Dataset gates and all 15 supported repository stage runs pass. Full `npm run verify:release` refuses an uncommitted worktree; this session cannot commit. The lead must commit and rerun the full gate before merge. No gate was weakened.
+This section records the committed `fef2b52` baseline. The [final picker polish](neighbourhood-cities-picker-polish-report.md) supersedes its counts and current verification status: **3,140 Cities**, dataset gates pass, cities unit 202 tests pass; Docker integration is blocked by socket permission in the current sandbox. Clean-commit full certification remains with the lead.
+
+**Baseline: 3,156 OFFICIAL Cities = 351 districts + 2,805 Neighbourhoods, 27 governorates.** Dataset gates and all 15 supported repository stage runs pass. Full `npm run verify:release` refuses an uncommitted worktree; this session cannot commit. The lead must commit and rerun the full gate before merge. No gate was weakened.
 
 | Area | Grid samples / gaps / share / floor | Names | GPS |
 |---|---|---|---|

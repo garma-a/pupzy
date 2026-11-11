@@ -4925,7 +4925,7 @@
     },
     "residential-grid-review": {
       "path": "src/cities/data/neighbourhoods/residential-grid-review.json",
-      "sha256": "b6b8e61c67273c16cea821a8bab863a6a97c2bda8f7cb2cd825d4ade4598be71",
+      "sha256": "39999a0243c182e03aa4dad9edca8f7d297e7688fe7bcdc8d70870369b566f11",
       "method": "Reviewed coverage/exception metadata; Greater Cairo floor amended by explicit lead decision dated2026-11-11. Individual exception notes and measurements unchanged."
     },
     "pr27-alias-audit.json.gz": {
@@ -4937,24 +4937,39 @@
       "path": "src/cities/data/neighbourhoods/pr27-source-decision-review.json.gz",
       "sha256": "2193141c64d98aa982d59f73bd8f57504abcc36416e161eaca2b90229fbef1b7",
       "method": "Derived PR27 alias/source-decision review, not a fetched response."
+    },
+    "picker-polish-review.json.gz": {
+      "path": "src/cities/data/neighbourhoods/picker-polish-review.json.gz",
+      "sha256": "79c26de6c0b85707739b4abb8948659b32f461393aa86fb781fe55769ae51515",
+      "method": "Final PR27 picker source-decision and merge audit; derived, no new fetched response."
+    },
+    "picker-polish-alias-audit.json.gz": {
+      "path": "src/cities/data/neighbourhoods/picker-polish-alias-audit.json.gz",
+      "sha256": "453b766cdae2ab1f1e43d50830c05eb98af58b5ef92d273fb6a81985f03e79d5",
+      "method": "Derived final PR27 picker audit; no source response changed."
+    },
+    "picker-polish-grid-review.json.gz": {
+      "path": "src/cities/data/neighbourhoods/picker-polish-grid-review.json.gz",
+      "sha256": "2848588619743071b2e23adc38301b5c5737ff75b8ec414b7132ea5782bbae72",
+      "method": "Derived final PR27 picker audit; no source response changed."
     }
   },
   "finalReview": {
     "date": "2026-11-11",
     "releaseTag": "0066_release_city_catalog",
-    "officialCities": 3156,
-    "status": "Dataset gates PASS; normal publication. Repository stages pass individually; clean-commit certification remains required.",
+    "officialCities": 3140,
+    "status": "Dataset gates PASS; normal local publication. Cities unit, SQL/source checks, format, lint and build typecheck pass. Docker integration blocked by sandbox socket permission; lead clean-commit full release gate remains required.",
     "rawSnapshotHashCheck": "335/335 compressed and all declared raw hashes verified; all 334 prior responses unchanged.",
-    "cityDataChange": "3156 source identities, displays, governorates, parents and coordinates unchanged from b5886b4; aliases reviewed separately in pr27-alias-audit.json.gz.",
+    "cityDataChange": "16 same-place City duplicates merged; original survivor coordinates and parents retained. 3140 OFFICIAL Cities, 351 districts +2789 neighbourhoods. See picker-polish audits.",
     "floorDecision": "residential-grid-review.json#floorDecisions.greater-cairo",
     "reviewReport": "release-gate-status.json",
-    "catalogAudit": "pr27-alias-audit.json.gz",
-    "gridAudit": "round9-grid-remeasurement.json.gz",
+    "catalogAudit": "picker-polish-alias-audit.json.gz",
+    "gridAudit": "picker-polish-grid-review.json.gz",
     "remainingFeatures": "round9-remaining-grid-features.json.gz",
     "knownMissingEntries": 14,
-    "fetchPolicy": "One saved primary-domain indexed-search response for the independent New Damietta 3rd District checklist entry. No new coordinate or Nominatim fetch. Builders/tests/migrations remain offline.",
+    "fetchPolicy": "Final picker polish uses existing pinned sources only; all335 raw responses unchanged. No network fetch.",
     "rights": "Original publisher rights retained; indexed excerpts and HTTP failures are distinct from complete fetched sources.",
-    "sourceDecisionAudit": "pr27-source-decision-review.json.gz",
+    "sourceDecisionAudit": "picker-polish-review.json.gz",
     "formatting": "Prettier-stable derived JSON and publisher outputs; no Prettier exclusion. Review signatures, evidence digests and derived/publication hashes recomputed through the offline pipeline."
   }
 }

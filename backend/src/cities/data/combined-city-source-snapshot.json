@@ -10858,7 +10858,14 @@
       {
         "sourceCode": "EG2101",
         "nameEnglish": "Imbaba",
-        "aliases": ["Imbaba (Kism)", "إمبابة (قسم)"],
+        "aliases": [
+          "Imbaba (Kism)",
+          "إمبابة (قسم)",
+          "Qism Embaba",
+          "قسم إمبابة",
+          "مساكن قسم امبابه",
+          "Qism Embaba Housing"
+        ],
         "notes": "Lead round8 exact resident/headline display; source identities unchanged.",
         "nameArabic": "إمبابة"
       },
@@ -11609,7 +11616,7 @@
       "neighbourhoods/research-round9/abu-rawash-village-lookup.json.gz": "92504669c311ba5764a37a5f6fe32b97e9ef025e583dec06e572cc9a12b9536f",
       "neighbourhoods/research-round9/abu-rawash-village-reverse.json.gz": "0a4c5efb17e8491be4e7a8fa3329d12bb26eb7695604cf8041e9f3ed0a3a7907",
       "neighbourhoods/research-pr27/independent-name-search.json.gz": "9590c8f074da9b77f2dfe913aa658e7df838d3fbeacfe9f41b28e3f12f221683",
-      "neighbourhoods/reviewed-decisions.json.gz": "ae66863bc62ff308691d58d13deb146ff7d84139baa41f5d38930faf338e249c"
+      "neighbourhoods/reviewed-decisions.json.gz": "0cd07f43ae098ff55dd7dcb1d4a64c283a7ac1b681dcd0db7c5a26c5c667d5cf"
     },
     "overpass": {
       "metadata": {
@@ -11634,7 +11641,7 @@
     "residential": {
       "metadata": { "reviewed": true, "notes": "Clipped OSM landuse=residential only; lead decision 2026-11-10." },
       "sourcePath": "neighbourhoods/builtup-evidence.geojson.gz",
-      "sha256": "7c432204a004115b0b2f507d42db5557f769d0cb10706aa2e1327bff68e8634f",
+      "sha256": "e30ba311771d71a667dbc570442c5fd90949e50881ddcaa241bef09e9323b0a1",
       "features": []
     },
     "governorates": {

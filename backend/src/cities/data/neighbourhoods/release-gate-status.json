@@ -322,5 +322,13 @@
       "sha256": "964b378fffdfb16de60e9291b978921a718d71f5aa342762dff91d230a16c129",
       "bytes": 9031
     }
-  ]
+  ],
+  "pickerPolish": {
+    "statusFile": "picker-polish-status.json",
+    "supersedesDataCounts": true,
+    "currentRows": 3140,
+    "dataGatesPassed": true,
+    "dockerIntegration": "ENVIRONMENT BLOCKED:socket permission denied",
+    "cleanCommitCertification": "Pending lead"
+  }
 }

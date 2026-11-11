@@ -137,6 +137,10 @@ def apply_resident_review(districts,decisions,osm,adm3,headlines,policy):
  groups=collections.defaultdict(list)
  for r in rows:
   for label in identity_labels(r):groups[r['governorateCode'],label].append(r)
+ def rank(r):
+  code=r['sourceCode'];return (0 if not r.get('districtSourceCode') else 1 if code in owners else 2 if code.startswith('OSM:node/') else 3 if code.startswith('OSM:relation/') else 4 if code.startswith('OSM:') else 6 if code.startswith('PUPZY:adm3-') else 5,code)
+ def primary(r):return {norm(base(r[k])).replace(' ','') for k in ['nameEnglish','nameArabic']}
+ extensions=[]
  a3={f['properties']['adm3_pcode']:Shape(f['geometry']) for f in adm3}
  for group in groups.values():
   for i,a in enumerate(group):
@@ -145,24 +149,51 @@ def apply_resident_review(districts,decisions,osm,adm3,headlines,policy):
     # or estate polygon is not made identical by generic-name aliases.
     if a['sourceCode'] in distinct or b['sourceCode'] in distinct:continue
     if not a.get('districtSourceCode') and not b.get('districtSourceCode'):continue
+    identical=bool(primary(a)&primary(b))
     close=meters(a,b)<=2500
     for unit,other in [(a,b),(b,a)]:
      if unit['sourceCode'].startswith('PUPZY:adm3-'):
       shape=a3.get(unit.get('provenance',{}).get('adm3SourceCode'))
       close=close or (shape and shape.covers(point(other))) or meters(unit,other)<=1500
     if close:parent[leader(a['sourceCode'])]=leader(b['sourceCode'])
+    elif identical and meters(a,b)<=3000:extensions.append((a,b))
+ # Apply the extension to the surviving City identities after the established
+ # alias/containment merges. A discarded source alias must not bridge two
+ # differently named places through a third same-name source.
+ for a,b in extensions:
+  left=leader(a['sourceCode']);right=leader(b['sourceCode'])
+  if left==right:continue
+  actual_a=min((r for r in rows if leader(r['sourceCode'])==left),key=rank)
+  actual_b=min((r for r in rows if leader(r['sourceCode'])==right),key=rank)
+  if primary(actual_a)&primary(actual_b):parent[left]=right
+  else:event(a,'retain-distinct-component','The3km source-name candidate resolves to differently named surviving Cities; source aliases alone do not establish identity.',candidate=b['sourceCode'],survivors=[actual_a['sourceCode'],actual_b['sourceCode']],names=[[actual_a['nameEnglish'],actual_a['nameArabic']],[actual_b['nameEnglish'],actual_b['nameArabic']]])
  components=collections.defaultdict(list)
  for r in rows:components[leader(r['sourceCode'])].append(r)
  for group in components.values():
   if len(group)<2:continue
-  def rank(r):
-   code=r['sourceCode'];return (0 if not r.get('districtSourceCode') else 1 if code in owners else 2 if code.startswith('OSM:node/') else 3 if code.startswith('OSM:relation/') else 4 if code.startswith('OSM:') else 6 if code.startswith('PUPZY:adm3-') else 5,code)
   # Districts are distinct upstream identities and retain UUIDs; merge neighbourhood duplicates only.
   keep=min(group,key=rank)
   for r in group:
    if r is keep or not r.get('districtSourceCode'):continue
    if r['sourceCode'] in owners and keep['sourceCode'] in owners and owners[r['sourceCode']]!=owners[keep['sourceCode']]:continue
-   keep.setdefault('aliases',[]).extend(aliases(r));r.update(decision='exclude',rule='resident-reviewed-same-place-merge',duplicateOf=keep['sourceCode'],notes='Lead same-name/proximity or same-ADM3-polygon identity; aliases merged onto '+keep['sourceCode']);event(r,'merge','Same normalized place within2.5km or matching ADM3 containment, regardless of district.',keep=keep['sourceCode'],distanceMeters=round(meters(r,keep),2))
+   keep.setdefault('aliases',[]).extend(aliases(r));r.update(decision='exclude',rule='resident-reviewed-same-place-merge',duplicateOf=keep['sourceCode'],notes='Lead same-name/proximity or same-ADM3-polygon identity; aliases merged onto '+keep['sourceCode']);event(r,'merge','Identical normalized display within3km, alias identity within2.5km or matching ADM3 containment, regardless of district.',keep=keep['sourceCode'],distanceMeters=round(meters(r,keep),2))
+ # Final picker review may supersede earlier restorations. Always preserve the
+ # chosen source coordinate and union names before discarding a duplicate.
+ for merge in policy.get('pickerPolish',{}).get('merges',[]):
+  keep=all_by[merge['keep']];removed=all_by[merge['remove']]
+  if keep.get('decision','include')!='include':
+   # An automatic component may have selected the other source; restore the
+   # explicitly reviewed point with its original parent/evidence intact.
+   keep.update(decision='include');keep.pop('duplicateOf',None)
+  keep.setdefault('aliases',[]).extend(aliases(removed))
+  removed.update(decision='exclude',rule='picker-reviewed-same-place-merge',duplicateOf=keep['sourceCode'],notes=merge['basis'])
+  event(removed,'picker-merge',merge['basis'],keep=keep['sourceCode'],distanceMeters=round(meters(removed,keep),2))
+  if merge.get('nameEnglish'):rename(keep,merge['nameEnglish'],merge['nameArabic'],'Unique merged resident display; district qualifier is no longer needed.')
+ for removal in policy.get('pickerPolish',{}).get('aliasRemovals',[]):
+  row=all_by[removal['sourceCode']]
+  rejected=[a for a in row.get('aliases',[]) if norm(base(a)) in {norm(n) for n in removal['aliases']}]
+  row['aliases']=[a for a in row.get('aliases',[]) if a not in rejected]
+  event(row,'remove-different-place-alias',removal['basis'],aliases=rejected)
  # One real parent qualifier at most. The best-known place gets the plain form.
  rows=[*districts,*[r for r in decisions if r['decision']=='include']];govs=collections.defaultdict(list)
  for r in rows:govs[r['governorateCode']].append(r)

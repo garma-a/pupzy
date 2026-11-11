@@ -236,6 +236,6 @@
       "tag": "0065_add_city_neighbourhood_fields",
       "breakpoints": true
     },
-    { "idx": 66, "version": "7", "when": 1794399084244, "tag": "0066_release_city_catalog", "breakpoints": true }
+    { "idx": 66, "version": "7", "when": 1794406365091, "tag": "0066_release_city_catalog", "breakpoints": true }
   ]
 }

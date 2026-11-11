@@ -58,10 +58,30 @@ export function englishAliasCandidates(value: string, includeArticle = false): s
     'staff',
     'university',
   ]);
+  // Only reviewed Arabic transliterations may undergo mechanical spelling
+  // changes. Unknown tokens (including English words and fixed place names
+  // such as Maadi/Cairo/Alexandria) stay intact; article aliases are separate.
+  const transliterated = new Set(
+    `abu abo abou ezbet ezbit izbet izbat sheikh shaikh shikh sidi seedy kafr kafar
+     qalyub qalyoub mansoureya mansouria mansuriya mohandessin mohandesin
+     mohandeseen mohandiseen mouhandesin mohandseen shoubra shubra shobra
+     smouha smuha roushdy rushdy agouza aguza agami agamy mandara montaza
+     hadayek hadaek hadayiq masaken masakin manshiyet manshiyat manshiya
+     ibrahim ibraheem ibrahimia ibrahimiya ibrahemiya ibrahemiyeh
+     ismailia ismailiya ismailiyya sharqiya sharqia gharbiya gharbia
+     gebel gabal gaber gabir gamal gamil jamil kebir kabir saghir soghayar
+     mahmoud mahmud youssef yusuf yousuf hussein hussein hassan hassanein
+     mostafa moustafa mustafa farouk faruk fouad fuad said saeed sayed sayyid
+     nour nur noor zohour zuhur zahraa zahra moqattam mokattam moqatam mokatam
+     fayrouz fairouz fayruz aqrishah akrishah matariya mataria matariyya
+     amreya amria amriya amiriyya mamoura mamura maamoura nakheel nakhil
+     rasheed rashid shorouk shoruk obour obur rehab rihaab helwan hilwan
+     bilbis bilbeis belbeis birqash barqash siouf suyuf sohag souhag mounira munira`.split(/\s+/),
+  );
   const mutable = (index: number) => {
     const left = value.slice(0, index).match(/[A-Za-z]+$/)?.[0] ?? '';
     const right = value.slice(index).match(/^[A-Za-z]+/)?.[0] ?? '';
-    return !descriptive.has((left + right).toLowerCase());
+    return transliterated.has((left + right).toLowerCase());
   };
   const result = new Set<string>();
   const add = (s: string) => {
@@ -108,8 +128,9 @@ export function englishAliasCandidates(value: string, includeArticle = false): s
     }
   }
   for (const match of value.matchAll(/(eya|ia)\b/gi))
-    for (const ending of ['eya', 'ia'])
-      add(value.slice(0, match.index) + ending + value.slice(match.index + match[0].length));
+    if (mutable(match.index))
+      for (const ending of ['eya', 'ia'])
+        add(value.slice(0, match.index) + ending + value.slice(match.index + match[0].length));
   for (const match of value.matchAll(/([bcdfghjklmnpqrstvwxyz])\1/gi))
     if (mutable(match.index)) add(value.slice(0, match.index) + match[1] + value.slice(match.index + 2));
   return [...result];

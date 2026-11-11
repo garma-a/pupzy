@@ -157,6 +157,12 @@
       "aliases": ["El Shoaraa", "Al Shoaraa", "الشعراء"],
       "entry": "El Shoaraa",
       "basis": "Recorded named Damietta village ShatElShoaraa and same-name canal-road response establish the local Shoaraa name; no different governorate borrowed."
+    },
+    {
+      "sourceCode": "OSM:way/714742689",
+      "aliases": ["Moqattam", "Mokatam", "Moqatam"],
+      "entry": "Mokattam",
+      "basis": "Lead final picker spellings, 2026-11-11."
     }
   ],
   "nameCorrections": {
@@ -260,8 +266,6 @@
       "OSM:way/699912644": "Source name explicitly begins مساكن and English says Housing And Development Bank Housing; named residential estate, not bank premises. Lead2026-11-11 authorises estate restoration.",
       "OSM:way/792198968": "Source name explicitly begins مساكن and English says Housing And Development Bank Housing; named residential estate, not bank premises. Lead2026-11-11 authorises estate restoration.",
       "OSM:way/727261263": "Own named settlement polygon at the recorded source centre, geographically distinct from the Abu Rawash headline node. Lead2026-11-11 explicitly distinguishes this settlement from the other place.",
-      "OSM:way/879151658": "Separate named residential source polygon; restore the source estate rather than merging generic Social Housing labels on proximity alone.",
-      "OSM:way/699391781": "Source explicitly says مساكن عثمان with landuse=residential; a named housing estate, not institutional offices. Separate original polygon retained as authorised by lead.",
       "OSM:way/660869901": "OSM names this residential village 1/8; primary ITDA commercial-register addresses independently attest Abis 1/8. Recorded Nominatim reverses confirm Abis context. Denominator8 is Abis8; explicit primary Abis الثامنة 12/8 evidence confirms that naming hierarchy. Exact OSM centre retained. Search excerpts, not full PDFs, cached in research-round9.",
       "OSM:way/741960643": "OSM names this residential village 4/8; primary ITDA commercial-register addresses independently attest Abis 4/8. Recorded Nominatim reverses confirm Abis context. Denominator8 is Abis8; explicit primary Abis الثامنة 12/8 evidence confirms that naming hierarchy. Exact OSM centre retained. Search excerpts, not full PDFs, cached in research-round9.",
       "OSM:way/660250153": "OSM names this residential village 12/8; primary ITDA commercial-register addresses independently attest Abis 12/8. Recorded Nominatim reverses confirm Abis context. Denominator8 is Abis8; explicit primary Abis الثامنة 12/8 evidence confirms that naming hierarchy. Exact OSM centre retained. Search excerpts, not full PDFs, cached in research-round9."
@@ -303,6 +307,101 @@
         "sourceCode": "OSM:way/659401201",
         "name": "Abis village 8/8",
         "reason": "Real name independently attested, but original recorded source centre [29.9225899,31.1270266] lies outside every pinned OCHA ADM1/ADM2 polygon. Keep excluded; do not move a coordinate or extend coverage to improve the gate."
+      }
+    ]
+  },
+  "pickerPolish": {
+    "reviewed": true,
+    "date": "2026-11-11",
+    "basis": "PR27 final Flutter picker findings; review committed original bilingual source labels, OCHA ADM3 units and recorded residential geometry. No independent evidence of distinct settlements for these pairs; separate geometry alone does not establish another resident name.",
+    "merges": [
+      {
+        "keep": "EG2101",
+        "remove": "OSM:way/774724712",
+        "nameEnglish": "Imbaba",
+        "nameArabic": "إمبابة",
+        "basis": "Same resident place in recorded sources; retain EG2101 original point and parent and union aliases from OSM:way/774724712. Prefer official district identity, sourced locality node or OSM named area over secondary source/ADM3 centre. No separate settlement evidence in the pinned sources."
+      },
+      {
+        "keep": "OSM:node/769129527",
+        "remove": "WD:Q43257212",
+        "nameEnglish": "Agami",
+        "nameArabic": "العجمي",
+        "basis": "Same resident place in recorded sources; retain OSM:node/769129527 original point and parent and union aliases from WD:Q43257212. Prefer official district identity, sourced locality node or OSM named area over secondary source/ADM3 centre. No separate settlement evidence in the pinned sources."
+      },
+      {
+        "keep": "OSM:way/879151658",
+        "remove": "OSM:way/699206711",
+        "basis": "Same resident place in recorded sources; retain OSM:way/879151658 original point and parent and union aliases from OSM:way/699206711. Retained point covers residential grid samples lost when it is removed; alternate source removal loses zero samples."
+      },
+      {
+        "keep": "OSM:way/699391781",
+        "remove": "OSM:way/698226008",
+        "nameEnglish": "Othman Housing",
+        "nameArabic": "مساكن عثمان",
+        "basis": "Same resident place in recorded sources; retain OSM:way/699391781 original point and parent and union aliases from OSM:way/698226008. Retained point covers residential grid samples lost when it is removed; alternate source removal loses zero samples."
+      },
+      {
+        "keep": "OSM:way/747137820",
+        "remove": "PUPZY:adm3-eg021402",
+        "nameEnglish": "Abou Sir",
+        "nameArabic": "أبو صير",
+        "basis": "Same resident place in recorded sources; retain OSM:way/747137820 original point and parent and union aliases from PUPZY:adm3-eg021402. Prefer official district identity, sourced locality node or OSM named area over secondary source/ADM3 centre. No separate settlement evidence in the pinned sources."
+      },
+      {
+        "keep": "OSM:node/324569652",
+        "remove": "OSM:way/725130954",
+        "nameEnglish": "Birqash",
+        "nameArabic": "برقاش",
+        "basis": "Same resident place in recorded sources; retain OSM:node/324569652 original point and parent and union aliases from OSM:way/725130954. Prefer official district identity, sourced locality node or OSM named area over secondary source/ADM3 centre. No separate settlement evidence in the pinned sources."
+      },
+      {
+        "keep": "OSM:way/267174187",
+        "remove": "OSM:way/267174189",
+        "nameEnglish": "Fayrouz",
+        "nameArabic": "الفيروز",
+        "basis": "Same resident place in recorded sources; retain OSM:way/267174187 original point and parent and union aliases from OSM:way/267174189. Prefer official district identity, sourced locality node or OSM named area over secondary source/ADM3 centre. No separate settlement evidence in the pinned sources."
+      },
+      {
+        "keep": "OSM:way/799808853",
+        "remove": "PUPZY:adm3-eg181103",
+        "nameEnglish": "Al Akrishah",
+        "nameArabic": "العكريشة",
+        "basis": "Same resident place in recorded sources; retain OSM:way/799808853 original point and parent and union aliases from PUPZY:adm3-eg181103. Prefer official district identity, sourced locality node or OSM named area over secondary source/ADM3 centre. No separate settlement evidence in the pinned sources."
+      },
+      {
+        "keep": "OSM:way/800738065",
+        "remove": "OSM:way/801292945",
+        "nameEnglish": "Beit Al Watan",
+        "nameArabic": "بيت الوطن",
+        "basis": "Same resident place in recorded sources; retain OSM:way/800738065 original point and parent and union aliases from OSM:way/801292945. Prefer official district identity, sourced locality node or OSM named area over secondary source/ADM3 centre. No separate settlement evidence in the pinned sources."
+      },
+      {
+        "keep": "OSM:way/723170455",
+        "remove": "PUPZY:adm3-eg210205",
+        "nameEnglish": "Al Awqaf City",
+        "nameArabic": "مدينة الأوقاف",
+        "basis": "Same resident place in recorded sources; retain OSM:way/723170455 original point and parent and union aliases from PUPZY:adm3-eg210205. Prefer official district identity, sourced locality node or OSM named area over secondary source/ADM3 centre. No separate settlement evidence in the pinned sources."
+      },
+      {
+        "keep": "OSM:way/810436704",
+        "remove": "OSM:way/822353769",
+        "nameEnglish": "Al A'hlal Housing",
+        "nameArabic": "مساكن الإحلال",
+        "basis": "Same resident place in recorded sources; retain OSM:way/810436704 original point and parent and union aliases from OSM:way/822353769. Prefer official district identity, sourced locality node or OSM named area over secondary source/ADM3 centre. No separate settlement evidence in the pinned sources."
+      }
+    ],
+    "aliasRemovals": [
+      {
+        "sourceCode": "PUPZY:bolkly-headline",
+        "aliases": [
+          "Mostafa Kamel",
+          "Mustafa Kamil",
+          "Moustafa Kamel And Bolokly",
+          "مصطفى كامل و بولوكلى",
+          "مصطفيكاملوبولوكلي"
+        ],
+        "basis": "Lead picker correction: Mostafa Kamel identifies a different City; the composite ADM3 extent is not a synonym for Bolkly."
       }
     ]
   }

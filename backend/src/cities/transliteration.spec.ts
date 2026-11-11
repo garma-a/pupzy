@@ -49,6 +49,22 @@ describe('Reviewed Egyptian transliteration alternatives', () => {
   });
   it('keeps English descriptor words intact', () => {
     expect(englishAliasCandidates('District Housing Compound')).toEqual([]);
+    for (const name of [
+      'Officers Housing',
+      'Cairo Housing',
+      'National Housing',
+      'Paradise Compound',
+      'Alexandria Housing',
+      'Nile Housing',
+      'Spring Valley',
+      'Iron and Steel Housing',
+      'Gardens City',
+      'Maadi',
+      'Airport Extension',
+    ])
+      expect(englishAliasCandidates(name)).toEqual([]);
+    expect(englishAliasCandidates('Mohandessin Gardens')).toContain('Mohandesin Gardens');
+    expect(englishAliasCandidates('Alexandria')).not.toContain('Alexandreya');
   });
   it('generates joined and spaced Arabic names and prioritizes them within the shared cap', () => {
     for (const name of ['بور فؤاد', 'أبو قير', 'عين شمس', 'كفر عبده', 'سيدي جابر', 'ميت عقبة']) {

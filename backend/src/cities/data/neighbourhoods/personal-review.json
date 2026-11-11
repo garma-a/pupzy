@@ -1730,7 +1730,7 @@
     "rows": 90,
     "method": "Individually read all 90 source labels, coordinates, containing OCHA district and adjacent-district list. Independent single-coordinate WD landmarks; no catalog coordinates used. Ten established landmarks and twenty dispersed points per region. Sixty recent named-mosque imports have lower source confidence; no field verification is claimed. Adjacency review includes genuinely shared boundaries across governorates; the same-governorate restriction governs City parent assignment, not GPS fixture neighbours. The 1.5 km additional proximity bound is retained. Original 90 landmark coordinates retained this round; two shared-boundary Ganoub neighbours explicitly reviewed. Village 29 City coordinate derives independently from the OSM footprint. The canal-gap case remains unaccepted."
   },
-  "reviewedInputSha256": "4792c536acf3d2a2969a5e2e599d85188f30c86c4ca123d8a77593c772ac1def",
+  "reviewedInputSha256": "96d07a6a76054db1aee21f9eea5f1bc02053b02f126deac1d738265388da06ad",
   "aliasReview": [
     {
       "sourceCode": "OSM:node/768591737",
@@ -2512,7 +2512,7 @@
   "residueReview": {
     "notes": "All unresolved-name/parent and ADM3 residue tables empty. Read all 488 curated names, 124 district merges, 288 identity/disambiguation decisions and 94 ordinal edits in full after fourth sample fixes. Corrected Old Helmia source language conflict and Oula proper-name translation. Exact Arabic orthographic variants may be copied from attested source names; this does not alter Flutter normalization or create a place. Reviewed the source-name duplicate table as well; one conflicting IL Bosco City/La Mirada source was excluded rather than polluting aliases. Named-compound/numbered-ward changes retain source points. Largest-distance exception audit found industrial Sector A3 repeated, now excluded by the sector-code rule; Taj City is a named residential compound despite its subdivision place tag. Final source-tag audit preserves original OSM place tags for the ten reviewed tower communities and Taj City; their inclusion classification remains named residential compound."
   },
-  "reviewedDecisionsSha256": "afeca534fb074ea8f48bc60d4446938a94845385e5b16a180ac3174a531675dc",
+  "reviewedDecisionsSha256": "98a023420698472a1d3aa380b8705cbf3b6aef5be42845e915c76f8c93a6bfb9",
   "nameOverrides": {},
   "areaLandmarks": {
     "OSM:node/14123937863": {
@@ -3307,5 +3307,12 @@
       "rows": 300
     },
     "corrections": "SmartVillage, InternationalPark, companycontractBuildings and bareordinal removed by general/exact reviewed rules. Restricted Arabic lexicon, institutional qualifiers and semantic Housing/City/Village descriptor retention corrected across catalog. Residue source-names such as OlympicVillage/UtilitiesCompound were retained as residential-tagged named estates with explicit uncertainty, not guessed to be facilities."
+  },
+  "pickerPolishReview": {
+    "reviewed": true,
+    "date": "2026-11-11",
+    "auditFile": "picker-polish-review.json.gz",
+    "decisionDeltaCount": 30,
+    "basis": "Explicit review of this run: same-place aliases unioned; retained original points; no noise or grid waiver; gate verification still required."
   }
 }
