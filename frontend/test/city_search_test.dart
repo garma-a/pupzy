@@ -1,14 +1,25 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pupzy/utils/city_search.dart';
 
-Map<String, dynamic> _city(String en, String ar, String governorate, {List<String> aliases = const [], Map<String, dynamic>? district}) => {
-  'id': en,
+Map<String, dynamic> _city(
+  String en,
+  String ar,
+  String governorate, {
+  List<String> aliases = const [],
+  Map<String, dynamic>? district,
+  String? governorateArabic,
+}) => {
+  'id': '$en · $governorate',
   'nameEnglish': en,
   'nameArabic': ar,
   'governorate': governorate,
+  'governorateArabic': ?governorateArabic,
   'aliases': aliases,
   'district': district,
 };
+
+/// A Neighbourhood's district, as the API nests it.
+Map<String, dynamic> _in(String en, String ar) => {'id': en, 'nameEnglish': en, 'nameArabic': ar};
 
 final _sidiGaber = _city('Sidi Gaber', 'قسم سيدي جابر', 'Alexandria', aliases: ['Sidi Gabir']);
 
@@ -96,6 +107,70 @@ void main() {
     test('an empty query keeps the list as the server sorted it', () {
       expect(_search('  ', cities: cities), cities.map((c) => c['nameEnglish']).toList());
     });
+  });
+
+  // Cases from the backend's test run on the real 3,140-City list, where the
+  // right place matched but ranked below smaller places with similar names.
+  group('ranking on the real list', () {
+    List<String> places(String query, List<Map<String, dynamic>> cities, {bool arabic = false}) => CitySearchIndex.of(
+      cities,
+    ).search(query, arabic: arabic).map((c) => '${c['nameEnglish']} · ${c['governorate']}').toList();
+
+    test('"Maadi" lists the Maadi district before Neighbourhoods of the same name', () {
+      final cities = [
+        _city('Al Maadi', 'المعادي', 'Matrouh', district: _in('Marsa Matrouh', 'مرسى مطروح')),
+        _city('El Maadi', 'المعادي', 'Giza', district: _in('Imbaba', 'إمبابة')),
+        _city('Maadi', 'المعادي', 'Cairo'),
+        _city('Maadi Degla', 'دجلة المعادي', 'Cairo', district: _in('Maadi', 'المعادي')),
+      ];
+      expect(places('Maadi', cities).first, 'Maadi · Cairo');
+      expect(places('المعادي', cities, arabic: true).first, 'Maadi · Cairo');
+    });
+
+    test('"المنتزه" lists the Montaza district first', () {
+      final cities = [
+        _city('El Montaza', 'المنتزه', 'Giza', district: _in('Haram', 'الهرم')),
+        _city('Al Montazah', 'المنتزه', 'Cairo', district: _in('Zeitoun', 'الزيتون')),
+        _city('Montaza', 'المنتزه', 'Alexandria'),
+      ];
+      expect(places('المنتزه', cities, arabic: true).first, 'Montaza · Alexandria');
+    });
+
+    test('an exact alias beats names that merely contain the query', () {
+      final cities = [
+        _city('Hadayek El Mohandiseen', 'حدائق المهندسين', 'Giza', district: _in('Sheikh Zayed', 'الشيخ زايد')),
+        _city('El Mohandesin Gardens', 'حدائق المهندسين', 'Giza', district: _in('Haram', 'الهرم')),
+        _city('Mohandessin', 'المهندسين', 'Giza', aliases: ['Mohandiseen', 'Mohandseen']),
+      ];
+      expect(places('mohandiseen', cities).first, 'Mohandessin · Giza');
+    });
+
+    test('"6 اكتوبر" lists the 6th of October district before small places named "6 أكتوبر"', () {
+      final cities = [
+        _city('6 October', '6 أكتوبر', 'Sharkia', district: _in('Zagazig', 'الزقازيق')),
+        _city('6 October', '6 أكتوبر', 'Menoufia', district: _in('Shebin', 'شبين الكوم')),
+        _city('6th of October First', 'أول 6 أكتوبر', 'Giza', aliases: ['6th of October', '6 أكتوبر']),
+      ];
+      expect(places('6 اكتوبر', cities, arabic: true).first, '6th of October First · Giza');
+    });
+
+    test("a governorate's name lists that governorate's Cities first", () {
+      final cities = [
+        _city('Alexandria 1000 — Salam', 'الإسكندرية 1000 - السلام', 'Cairo', district: _in('Salam', 'السلام')),
+        _city('Smouha', 'سموحة', 'Alexandria', district: _in('Sidi Gaber', 'سيدي جابر'), governorateArabic: 'الإسكندرية'),
+        _city('Sidi Gaber', 'سيدي جابر', 'Alexandria', governorateArabic: 'الإسكندرية'),
+      ];
+      expect(places('alexandria', cities), ['Sidi Gaber · Alexandria', 'Smouha · Alexandria', 'Alexandria 1000 — Salam · Cairo']);
+      expect(places('اسكندرية', cities, arabic: true).take(2), ['Sidi Gaber · Alexandria', 'Smouha · Alexandria']);
+    });
+  });
+
+  test('the Arabic governorate comes from the server when it sends one', () {
+    final city = _city('Luxor', 'الأقصر', 'Luxor', governorateArabic: 'محافظة الأقصر');
+    expect(cityGovernorateName(city, arabic: true), 'محافظة الأقصر');
+    expect(citySubtitle(city, arabic: true), 'محافظة الأقصر');
+    expect(cityGovernorateName(city, arabic: false), 'Luxor');
+    expect(_search('محافظه الاقصر', cities: [city]), ['Luxor']);
   });
 
   test('a list is indexed once and reused', () {

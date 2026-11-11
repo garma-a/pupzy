@@ -106,7 +106,11 @@ class _CityPickerSheetState extends State<CityPickerSheet> {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+          ),
           const SizedBox(height: AppSpacing.lg),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -142,54 +146,56 @@ class _CityPickerSheetState extends State<CityPickerSheet> {
           ),
           const SizedBox(height: AppSpacing.sm),
           Expanded(
-            // Built lazily: only the rows on screen exist, however long the list.
-            child: ListView.builder(
-              padding: EdgeInsets.only(bottom: bottomPad + AppSpacing.lg),
-              itemCount: headerCount + (results.isEmpty ? 1 : results.length),
-              itemBuilder: (context, index) {
-                if (hasHeader && index == 0) {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListTile(
-                        leading: const Icon(Icons.my_location, color: AppColors.primary, size: 20),
-                        title: Text(
-                          t(context, 'Use my current location', 'استخدم موقعي الحالي'),
-                          style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
+            // The sheet's decoration covers the bottom sheet's Material, which
+            // would hide each row's tap ripple; give the rows their own.
+            child: Material(
+              type: MaterialType.transparency,
+              // Built lazily: only the rows on screen exist, however long the list.
+              child: ListView.builder(
+                padding: EdgeInsets.only(bottom: bottomPad + AppSpacing.lg),
+                itemCount: headerCount + (results.isEmpty ? 1 : results.length),
+                itemBuilder: (context, index) {
+                  if (hasHeader && index == 0) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.my_location, color: AppColors.primary, size: 20),
+                          title: Text(
+                            t(context, 'Use my current location', 'استخدم موقعي الحالي'),
+                            style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
+                          ),
+                          dense: true,
+                          onTap: widget.onUseCurrentLocation,
                         ),
-                        dense: true,
-                        onTap: widget.onUseCurrentLocation,
+                        if (results.isNotEmpty) const Divider(height: 1, color: AppColors.border),
+                      ],
+                    );
+                  }
+                  if (results.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+                      child: Center(
+                        child: Text(t(context, 'No cities found', 'لا توجد مدن'), style: Theme.of(context).textTheme.bodyMedium),
                       ),
-                      if (results.isNotEmpty) const Divider(height: 1, color: AppColors.border),
-                    ],
-                  );
-                }
-                if (results.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
-                    child: Center(
-                      child: Text(
-                        t(context, 'No cities found', 'لا توجد مدن'),
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
+                    );
+                  }
+                  final city = results[index - headerCount];
+                  return ListTile(
+                    leading: const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 20),
+                    title: Text(
+                      (arabic ? city['nameArabic'] : city['nameEnglish']) as String,
+                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
                     ),
+                    subtitle: Text(
+                      citySubtitle(city, arabic: arabic),
+                      style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                    ),
+                    dense: true,
+                    onTap: () => widget.onSelected(city),
                   );
-                }
-                final city = results[index - headerCount];
-                return ListTile(
-                  leading: const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 20),
-                  title: Text(
-                    (arabic ? city['nameArabic'] : city['nameEnglish']) as String,
-                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
-                  ),
-                  subtitle: Text(
-                    citySubtitle(city, arabic: arabic),
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
-                  ),
-                  dense: true,
-                  onTap: () => widget.onSelected(city),
-                );
-              },
+                },
+              ),
             ),
           ),
         ],

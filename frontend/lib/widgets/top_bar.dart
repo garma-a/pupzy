@@ -173,7 +173,7 @@ class _LocationPillState extends State<_LocationPill> {
     final lang = context.watch<LangProvider>().lang;
     final label = selected != null
         ? '${lang == Lang.ar ? selected['nameArabic'] : selected['nameEnglish']}, '
-            '${governorateName(selected['governorate'] as String? ?? '', arabic: lang == Lang.ar)}'
+            '${cityGovernorateName(selected, arabic: lang == Lang.ar)}'
         : t(context, 'Near me', 'بالقرب مني');
 
     return Padding(

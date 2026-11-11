@@ -38,6 +38,7 @@ void main() {
             'cities': [
               {
                 ..._maadi,
+                'governorateArabic': 'القاهرة',
                 'status': 'OFFICIAL',
                 'aliases': ['Maadi'],
                 'district': null,
@@ -127,7 +128,7 @@ void main() {
             data: {
               '__typename': 'Query',
               'cities': [
-                {..._maadi, 'status': 'OFFICIAL', 'aliases': <String>[], 'district': null},
+                {..._maadi, 'governorateArabic': 'القاهرة', 'status': 'OFFICIAL', 'aliases': <String>[], 'district': null},
               ],
             },
           );

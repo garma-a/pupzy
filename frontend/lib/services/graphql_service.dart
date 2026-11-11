@@ -100,6 +100,7 @@ class GraphQLService {
         nameEnglish
         nameArabic
         governorate
+        governorateArabic
         status
         aliases
         district {
@@ -111,7 +112,8 @@ class GraphQLService {
     }
   ''';
 
-  /// The City list as servers without `aliases` and `district` serve it.
+  /// The City list as servers without `aliases`, `district` and
+  /// `governorateArabic` serve it.
   /// Used when the server rejects [citiesQuery], so the app keeps working
   /// before and after the backend that adds those fields is deployed.
   static const String legacyCitiesQuery = r'''
@@ -798,8 +800,8 @@ class GraphQLService {
       _checkForAccountLockout(exception);
       // No answer from the server (offline, timeout): try again next time.
       if (exception.graphqlErrors.isEmpty) return [];
-      // The server answered but rejected the query: it predates `aliases`
-      // and `district`. Ask for the old fields for the rest of the session.
+      // The server answered but rejected the query: it predates the
+      // Neighbourhood fields. Ask for the old ones for the rest of the session.
       _serverLacksCitySearchFields = true;
     }
     final result = await client.value.query(QueryOptions(document: gql(legacyCitiesQuery)));
