@@ -1,4 +1,4 @@
-import { englishAliasCandidates, addReviewedTransliterations } from './transliteration';
+import { englishAliasCandidates, arabicSpacingAliases, addReviewedTransliterations } from './transliteration';
 import { loadRawSnapshot, transformCatalog } from './catalog';
 const root = transformCatalog(loadRawSnapshot()).records[0];
 
@@ -49,6 +49,30 @@ describe('Reviewed Egyptian transliteration alternatives', () => {
   });
   it('keeps English descriptor words intact', () => {
     expect(englishAliasCandidates('District Housing Compound')).toEqual([]);
+  });
+  it('generates joined and spaced Arabic names and prioritizes them within the shared cap', () => {
+    for (const name of ['بور فؤاد', 'أبو قير', 'عين شمس', 'كفر عبده', 'سيدي جابر', 'ميت عقبة']) {
+      const joined = name.replace(' ', '');
+      expect(arabicSpacingAliases(name)).toEqual([joined]);
+      expect(arabicSpacingAliases(joined)).toEqual([name]);
+    }
+    expect(arabicSpacingAliases('بورتو مارينا')).toEqual([]);
+    expect(arabicSpacingAliases('كفرة نصار')).toEqual([]);
+    const row = {
+      ...root,
+      nameEnglish: 'Abu Qir',
+      sourceNameEnglish: 'Abu Qir',
+      nameArabic: 'أبو قير',
+      aliases: [] as string[],
+    };
+    addReviewedTransliterations([row], {
+      reviewed: true,
+      ruleVersion: 'egyptian-transliteration-v1',
+      maxPerRow: 1,
+      districtSourceCodes: [row.sourceCode],
+    });
+    expect(row.aliases).toEqual(['أبوقير']);
+    expect(englishAliasCandidates('Mohandessin')).toContain('Mohandseen');
   });
   it('does not generate Arabic variants or modify uncovered districts', () => {
     expect(englishAliasCandidates('الشيخ زايد')).toEqual([]);

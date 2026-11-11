@@ -14,12 +14,16 @@ for f in sorted(folder.glob('*.sql')):
 chunks.append((root/'drizzle/custom.sql').read_text())
 chunks.append("CREATE TABLE test_city_identities AS SELECT id, source_code FROM cities; INSERT INTO users (firebase_user_id,email,home_city_id) SELECT 'offline-neighbourhood','offline@example.invalid',id FROM cities WHERE source_code='EG0202'; INSERT INTO posts (creator_id,post_type,title,description,city_id,urgency,coordinates) SELECT users.id,'RESCUE','Offline test','Offline test',cities.id,'URGENT',cities.center_point FROM users CROSS JOIN cities WHERE users.firebase_user_id='offline-neighbourhood' AND cities.source_code='EG0202';")
 # Match pre-deploy's transactional pending migrations, followed by repeatable SQL.
-expected_rows = json.dumps({r['sourceCode']: {k:r.get(k) for k in ['nameEnglish','nameArabic','sourceNameEnglish','sourceNameArabic']} for r in json.loads((args.catalog or root/'src/cities/data/egypt-cities-catalog.json').read_text())['records']},ensure_ascii=False).replace("'", "''")
-canonical_check = "DO $$ BEGIN IF EXISTS (SELECT 1 FROM jsonb_each('" + expected_rows + "'::jsonb) expected LEFT JOIN cities ON cities.source_code = expected.key WHERE cities.name_english IS DISTINCT FROM expected.value->>'nameEnglish' OR cities.name_arabic IS DISTINCT FROM expected.value->>'nameArabic' OR cities.source_name_english IS DISTINCT FROM expected.value->>'sourceNameEnglish' OR cities.source_name_arabic IS DISTINCT FROM expected.value->>'sourceNameArabic') THEN RAISE EXCEPTION 'Deploy changed reviewed City display/source names'; END IF; END $$;"
+expected_rows = json.dumps({r['sourceCode']: {k:r.get(k) for k in ['nameEnglish','nameArabic','governorateArabic','sourceNameEnglish','sourceNameArabic']} for r in json.loads((args.catalog or root/'src/cities/data/egypt-cities-catalog.json').read_text())['records']},ensure_ascii=False).replace("'", "''")
+canonical_check = "DO $$ BEGIN IF EXISTS (SELECT 1 FROM jsonb_each('" + expected_rows + "'::jsonb) expected LEFT JOIN cities ON cities.source_code = expected.key WHERE cities.name_english IS DISTINCT FROM expected.value->>'nameEnglish' OR cities.name_arabic IS DISTINCT FROM expected.value->>'nameArabic' OR cities.governorate_arabic IS DISTINCT FROM expected.value->>'governorateArabic' OR cities.source_name_english IS DISTINCT FROM expected.value->>'sourceNameEnglish' OR cities.source_name_arabic IS DISTINCT FROM expected.value->>'sourceNameArabic') THEN RAISE EXCEPTION 'Deploy changed reviewed City display/source names'; END IF; END $$;"
 state_check = "DO $$ BEGIN IF EXISTS (SELECT row_data FROM test_released_city_state EXCEPT SELECT to_jsonb(c) FROM cities c) OR EXISTS (SELECT to_jsonb(c) FROM cities c EXCEPT SELECT row_data FROM test_released_city_state) THEN RAISE EXCEPTION 'Re-run changed released City rows'; END IF; END $$;"
 for attempt in range(2):
  chunks.append("SELECT clock_timestamp() AS apply_started;")
- chunks.append('BEGIN;\n' + (folder/'0065_add_city_neighbourhood_fields.sql').read_text() + '\n' + (args.migration or folder/'0066_release_city_catalog.sql').read_text() + '\nCOMMIT;')
+ schema_sql = (folder/'0065_add_city_neighbourhood_fields.sql').read_text()
+ # First apply models an existing review database with the original 0065 schema.
+ # The release must add and fill governorate_arabic even when 0065 is not replayed.
+ if attempt == 0: schema_sql = '\n'.join(line for line in schema_sql.splitlines() if 'governorate_arabic' not in line)
+ chunks.append('BEGIN;\n' + schema_sql + '\n' + (args.migration or folder/'0066_release_city_catalog.sql').read_text() + '\nCOMMIT;')
  chunks.append("SELECT clock_timestamp() AS apply_finished;")
  chunks.append((root/'drizzle/custom.sql').read_text())
  chunks.append('SELECT district_id, aliases FROM cities LIMIT 1;')

@@ -19,10 +19,7 @@
       "sourceFile": "research-round7/osm-kafr-battikh-full.json.gz",
       "osmSourceCode": "OSM:way/790985328",
       "reason": "LeadC3 explicitly requests KafrElBattikh city, a named municipality within datedOCHA KafrSaad district; include only the exact recorded cityboundary clippedEG11.",
-      "evidenceUrls": [
-        "https://www.openstreetmap.org/way/790985328",
-        "https://www.wikidata.org/wiki/Q6839370"
-      ]
+      "evidenceUrls": ["https://www.openstreetmap.org/way/790985328", "https://www.wikidata.org/wiki/Q6839370"]
     }
   ]
 }

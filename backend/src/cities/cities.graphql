@@ -18,6 +18,10 @@ type City {
   """
   governorate: String!
   """
+  Arabic name of the governorate.
+  """
+  governorateArabic: String!
+  """
   Explicit lifecycle status of this City (OFFICIAL, LEGACY, or RETIRED).
   """
   status: CityLifecycleStatus!

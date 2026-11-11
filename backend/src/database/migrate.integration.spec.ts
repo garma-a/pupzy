@@ -312,7 +312,7 @@ describe('Database Migration Runner Integration', () => {
     // Insert cities with different lifecycle statuses
     const officialRes = await pool.query<{ id: string }>(`
       INSERT INTO cities (name_english, name_arabic, governorate, center_point, status)
-      VALUES ('Alexandria', 'الإسكندرية', 'Alexandria', ST_SetSRID(ST_MakePoint(29.9187, 31.2001), 4326), 'OFFICIAL')
+      VALUES ('Lifecycle Fixture Official', 'حي اختبار الحالة', 'Alexandria', ST_SetSRID(ST_MakePoint(29.9187, 31.2001), 4326), 'OFFICIAL')
       RETURNING id
     `);
     const officialId = officialRes.rows[0].id;

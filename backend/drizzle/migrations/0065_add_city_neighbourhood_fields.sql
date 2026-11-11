@@ -1,4 +1,5 @@
 -- Additive; UUIDs and existing foreign keys are unchanged.
+ALTER TABLE cities ADD COLUMN IF NOT EXISTS governorate_arabic varchar(100) NOT NULL DEFAULT '';
 ALTER TABLE cities ADD COLUMN IF NOT EXISTS aliases text[] NOT NULL DEFAULT ARRAY[]::text[];
 ALTER TABLE cities ADD COLUMN IF NOT EXISTS district_id uuid;
 DO $$ BEGIN

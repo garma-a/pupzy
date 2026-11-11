@@ -15,6 +15,7 @@ import json
 import math
 import re
 import unicodedata
+from geo_offline import save
 
 ROOT = Path(__file__).resolve().parents[3]
 DATA = ROOT / 'src/cities/data/neighbourhoods'
@@ -353,7 +354,7 @@ def clean_display_names(districts, decisions, review_path=None):
     examples={label:[e for e in events if e['rule'] in rules][:10] for label,rules in {'districts':{'district-resident-arabic'},'prefixes':{'generic-place-type-prefix-removed'},'adm3':{'adm3-primary-resident-name'},'uniqueness':{'arabic-mirrors-english-context','arabic-governorate-uniqueness'}}.items()}
     report={'metadata':{'reviewed':True,'reviewDate':'2026-11-11','method':'Explicit source-label resident-name review plus restricted orthography dictionary; no coordinates, UUIDs or source codes changed. Raw source labels remain sourceName fields and aliases. Sole-child ordinal exception applied by district child count.'},'coveredDistrictSourceCodes':sorted(covered),'counts':dict(counts),'changes':events,'exclusions':exclusions,'conflicts':conflicts,'remainingArabicCollisions':remaining,'districtEdits':district_edits,'examples':examples}
     if review_path:
-        Path(review_path).write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
+        save(review_path, report)
     return report
 
 

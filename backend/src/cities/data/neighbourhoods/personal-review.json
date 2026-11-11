@@ -3,92 +3,38 @@
     "reviewer": "Codex",
     "date": "2026-11-09",
     "method": "Deterministic bulk rules plus personal residue, curated bilingual names, district merges and descriptive disambiguation review. Five 300+300 random sample rounds with errors recorded and corrected, plus targeted tower-complex review. Source coordinates only; no memory coordinates. Review does not assert release gates pass.",
-    "reviewDates": [
-      "2026-11-09",
-      "2026-11-10"
-    ]
+    "reviewDates": ["2026-11-09", "2026-11-10"]
   },
   "decisions": {
     "OSM:node/14060465814": {
       "decision": "exclude",
       "notes": "Named gathering/individual premises; no credible established residential-area identity."
     },
-    "OSM:node/14116069537": {
-      "decision": "exclude",
-      "notes": "Indonesian student lodging, not a neighbourhood."
-    },
-    "OSM:node/14116244027": {
-      "decision": "exclude",
-      "notes": "Named student lodging, not a neighbourhood."
-    },
-    "OSM:way/99529388": {
-      "decision": "exclude",
-      "notes": "Sports courts, not residential area."
-    },
-    "OSM:way/371283737": {
-      "decision": "exclude",
-      "notes": "Dentistry faculty; mistagged residential."
-    },
-    "OSM:way/371283738": {
-      "decision": "exclude",
-      "notes": "Dentistry hospital; standalone amenity."
-    },
-    "OSM:way/736790541": {
-      "decision": "exclude",
-      "notes": "Single private villa."
-    },
-    "OSM:way/736790543": {
-      "decision": "exclude",
-      "notes": "Single private villa."
-    },
-    "OSM:way/748919163": {
-      "decision": "exclude",
-      "notes": "Internet cafe / games shop, not residential area."
-    },
-    "OSM:way/928478959": {
-      "decision": "exclude",
-      "notes": "Individual person/premises, no area-name evidence."
-    },
+    "OSM:node/14116069537": { "decision": "exclude", "notes": "Indonesian student lodging, not a neighbourhood." },
+    "OSM:node/14116244027": { "decision": "exclude", "notes": "Named student lodging, not a neighbourhood." },
+    "OSM:way/99529388": { "decision": "exclude", "notes": "Sports courts, not residential area." },
+    "OSM:way/371283737": { "decision": "exclude", "notes": "Dentistry faculty; mistagged residential." },
+    "OSM:way/371283738": { "decision": "exclude", "notes": "Dentistry hospital; standalone amenity." },
+    "OSM:way/736790541": { "decision": "exclude", "notes": "Single private villa." },
+    "OSM:way/736790543": { "decision": "exclude", "notes": "Single private villa." },
+    "OSM:way/748919163": { "decision": "exclude", "notes": "Internet cafe / games shop, not residential area." },
+    "OSM:way/928478959": { "decision": "exclude", "notes": "Individual person/premises, no area-name evidence." },
     "OSM:way/943559382": {
       "decision": "exclude",
       "notes": "Industrial/laboratory station, not established residential area."
     },
-    "OSM:way/944110301": {
-      "decision": "exclude",
-      "notes": "Generic villa tier, no proper area name."
-    },
-    "OSM:way/1003961939": {
-      "decision": "exclude",
-      "notes": "Telecom business, not residential area."
-    },
-    "OSM:way/1387742458": {
-      "decision": "exclude",
-      "notes": "Restaurant brand, not a residential neighbourhood."
-    },
-    "OSM:way/1562623044": {
-      "decision": "exclude",
-      "notes": "Faculty of Science, not residential area."
-    },
-    "OSM:way/1562623045": {
-      "decision": "exclude",
-      "notes": "Classrooms and laboratories."
-    },
-    "OSM:way/1562623046": {
-      "decision": "exclude",
-      "notes": "Generic halls, not an area name."
-    },
+    "OSM:way/944110301": { "decision": "exclude", "notes": "Generic villa tier, no proper area name." },
+    "OSM:way/1003961939": { "decision": "exclude", "notes": "Telecom business, not residential area." },
+    "OSM:way/1387742458": { "decision": "exclude", "notes": "Restaurant brand, not a residential neighbourhood." },
+    "OSM:way/1562623044": { "decision": "exclude", "notes": "Faculty of Science, not residential area." },
+    "OSM:way/1562623045": { "decision": "exclude", "notes": "Classrooms and laboratories." },
+    "OSM:way/1562623046": { "decision": "exclude", "notes": "Generic halls, not an area name." },
     "OSM:way/646324723": {
       "decision": "exclude",
       "notes": "Islet, not one of the permitted inhabited place categories."
     },
-    "OSM:way/252625179": {
-      "decision": "exclude",
-      "notes": "Generic service area, no proper inhabited-area name."
-    },
-    "OSM:way/884727714": {
-      "decision": "exclude",
-      "notes": "Generic service area, no proper inhabited-area name."
-    },
+    "OSM:way/252625179": { "decision": "exclude", "notes": "Generic service area, no proper inhabited-area name." },
+    "OSM:way/884727714": { "decision": "exclude", "notes": "Generic service area, no proper inhabited-area name." },
     "OSM:way/1096324015": {
       "decision": "exclude",
       "notes": "Madinaty group/building code, below neighbourhood granularity."
@@ -109,26 +55,14 @@
       "decision": "exclude",
       "notes": "Villas 20: building/villa code, no independent area name."
     },
-    "OSM:way/694059017": {
-      "decision": "exclude",
-      "notes": "Area 2B: generic code."
-    },
-    "OSM:way/696705518": {
-      "decision": "exclude",
-      "notes": "Area D3: generic code."
-    },
-    "OSM:way/806878030": {
-      "decision": "exclude",
-      "notes": "Phase 7B Housing: generic phase code."
-    },
+    "OSM:way/694059017": { "decision": "exclude", "notes": "Area 2B: generic code." },
+    "OSM:way/696705518": { "decision": "exclude", "notes": "Area D3: generic code." },
+    "OSM:way/806878030": { "decision": "exclude", "notes": "Phase 7B Housing: generic phase code." },
     "OSM:way/747847281": {
       "decision": "exclude",
       "notes": "Al Azhar youth hostel: individual accommodation, not area."
     },
-    "OSM:way/685639464": {
-      "decision": "exclude",
-      "notes": "Cairo Business Park: standalone office complex."
-    },
+    "OSM:way/685639464": { "decision": "exclude", "notes": "Cairo Business Park: standalone office complex." },
     "OSM:way/772964023": {
       "decision": "exclude",
       "notes": "South East: direction without credible named area identity."
@@ -137,22 +71,13 @@
       "decision": "exclude",
       "notes": "Craftsmen Area A: letter-labelled industrial subdivision."
     },
-    "OSM:way/751793353": {
-      "decision": "exclude",
-      "notes": "Montazah Saad A: letter-labelled subdivision."
-    },
-    "OSM:way/705545736": {
-      "decision": "exclude",
-      "notes": "Upper Egypt Housing A: letter-labelled subdivision."
-    },
+    "OSM:way/751793353": { "decision": "exclude", "notes": "Montazah Saad A: letter-labelled subdivision." },
+    "OSM:way/705545736": { "decision": "exclude", "notes": "Upper Egypt Housing A: letter-labelled subdivision." },
     "OSM:way/752939550": {
       "decision": "exclude",
       "notes": "Japanese University hostel: single student accommodation."
     },
-    "OSM:way/1223416203": {
-      "decision": "exclude",
-      "notes": "Students hostel: university accommodation, not area."
-    },
+    "OSM:way/1223416203": { "decision": "exclude", "notes": "Students hostel: university accommodation, not area." },
     "OSM:way/772964024": {
       "decision": "exclude",
       "notes": "North West: generic direction, no established proper area identity."
@@ -177,21 +102,13 @@
       "decision": "exclude",
       "notes": "Entity names Eizbat Alwalda Pasha Palace; a single heritage building must not be ingested as a WD locality. The quarter has a separate explicit curated proxy decision."
     },
-    "OSM:way/705545727": {
-      "notes": "Bare Housing / مساكن without a proper area name."
-    },
-    "OSM:way/806878050": {
-      "notes": "Phase 9B Housing is a coded phase subdivision, below neighbourhood granularity."
-    },
+    "OSM:way/705545727": { "notes": "Bare Housing / مساكن without a proper area name." },
+    "OSM:way/806878050": { "notes": "Phase 9B Housing is a coded phase subdivision, below neighbourhood granularity." },
     "OSM:way/642012828": {
       "notes": "El Alsson international school is a standalone institution, despite residential/place tagging."
     },
-    "OSM:way/692774610": {
-      "notes": "Phase 3 Al Markazia A is a coded subdivision, not an independent area."
-    },
-    "OSM:way/698346533": {
-      "notes": "Industrial Area C6 is an industrial parcel code, not a named residential area."
-    },
+    "OSM:way/692774610": { "notes": "Phase 3 Al Markazia A is a coded subdivision, not an independent area." },
+    "OSM:way/698346533": { "notes": "Industrial Area C6 is an industrial parcel code, not a named residential area." },
     "OSM:way/819260788": {
       "notes": "Conflicting residential brand identities: English IL Bosco City versus Arabic La Mirada. Do not attach IL Bosco City as an alias to the nearby La Mirada row without resolving the source conflict."
     },
@@ -204,24 +121,18 @@
     "OSM:way/544128616": {
       "notes": "Draw B / القرعة ب is a coded allocation parcel, not an independently named neighbourhood."
     },
-    "OSM:way/99517610": {
-      "notes": "Buildings Phase 2 is a generic building-phase label."
-    },
+    "OSM:way/99517610": { "notes": "Buildings Phase 2 is a generic building-phase label." },
     "OSM:way/699928508": {
       "notes": "Cooperatives K Buildings is a lettered subdivision of a generic housing programme."
     },
-    "OSM:way/751504802": {
-      "notes": "Montaza Saad B is a coded subdivision; retain the broader Montaza Saad area."
-    },
+    "OSM:way/751504802": { "notes": "Montaza Saad B is a coded subdivision; retain the broader Montaza Saad area." },
     "OSM:way/691678869": {
       "notes": "English Fairouz District conflicts with Arabic Intelligence Land A, a coded land label. Requires independent confirmation of the current area identity."
     },
     "OSM:way/721115310": {
       "notes": "Nasser 2E Project Housing is a coded project phase, below supported neighbourhood granularity."
     },
-    "OSM:way/758493799": {
-      "notes": "Serial 5,6 is an allocation sequence code."
-    },
+    "OSM:way/758493799": { "notes": "Serial 5,6 is an allocation sequence code." },
     "OSM:way/986694824": {
       "notes": "Cairo University female student accommodation is a facility, not a separate residential neighbourhood."
     },
@@ -626,10 +537,7 @@
       "nameEnglish": "Hadayek October",
       "nameArabic": "حدائق أكتوبر",
       "wikidata": "Q22931319",
-      "aliases": [
-        "October Gardens",
-        "Hadayek 6 October"
-      ],
+      "aliases": ["October Gardens", "Hadayek 6 October"],
       "notes": "Wikidata locality October Gardens, explicit bilingual labels and P625."
     },
     {
@@ -637,10 +545,7 @@
       "nameEnglish": "Asafra",
       "nameArabic": "العصافرة",
       "wikidata": "Q4803317",
-      "aliases": [
-        "El Asafra",
-        "Al Asafra"
-      ],
+      "aliases": ["El Asafra", "Al Asafra"],
       "notes": "Wikidata Asafra locality, bilingual labels and coordinate."
     },
     {
@@ -655,10 +560,7 @@
       "nameEnglish": "Roushdy",
       "nameArabic": "رشدي",
       "wikidata": "Q7368840",
-      "aliases": [
-        "Roshdy",
-        "Rushdi"
-      ],
+      "aliases": ["Roshdy", "Rushdi"],
       "notes": "Wikidata Roshdy neighbourhood, source bilingual label and coordinate."
     },
     {
@@ -666,9 +568,7 @@
       "nameEnglish": "Sporting",
       "nameArabic": "سبورتنج",
       "wikidata": "Q7579542",
-      "aliases": [
-        "El Sporting"
-      ],
+      "aliases": ["El Sporting"],
       "notes": "Wikidata Sporting neighbourhood, remove redundant type suffix from Arabic."
     },
     {
@@ -676,10 +576,7 @@
       "nameEnglish": "Raml Station",
       "nameArabic": "محطة الرمل",
       "wikidata": "Q4518509",
-      "aliases": [
-        "Mahatet El Raml",
-        "Mahattet El Raml"
-      ],
+      "aliases": ["Mahatet El Raml", "Mahattet El Raml"],
       "notes": "Established station-as-area name explicitly requested by the client. WGS84 point from Wikidata Mahatet El Raml."
     },
     {
@@ -687,10 +584,7 @@
       "nameEnglish": "Anfoushi",
       "nameArabic": "الأنفوشي",
       "wikidata": "Q136708589",
-      "aliases": [
-        "Anfoushy",
-        "El Anfoushi"
-      ],
+      "aliases": ["Anfoushy", "El Anfoushi"],
       "notes": "Established Anfoushi neighbourhood; representative source point is the named El Anfoushi stop in Wikidata. Arabic is the standard transliteration supplied in the client brief."
     },
     {
@@ -698,19 +592,14 @@
       "nameEnglish": "New Alamein",
       "nameArabic": "العلمين الجديدة",
       "wikidata": "Q96395299",
-      "aliases": [
-        "New El Alamein"
-      ],
+      "aliases": ["New El Alamein"],
       "notes": "Wikidata New Alamein locality, exact coordinate and bilingual labels."
     },
     {
       "sourceCode": "PUPZY:stanley",
       "nameEnglish": "Stanley",
       "nameArabic": "ستانلي",
-      "aliases": [
-        "Stanly",
-        "ستانلى"
-      ],
+      "aliases": ["Stanly", "ستانلى"],
       "notes": "Wikidata Stanley locality P625 is slightly offshore relative to the dated OCHA coastline. Explicit source-derived correction to the nearest OCHA coastal polygon point and one metre inland; retain original coordinate and measured offset. Reviewer priority.",
       "wikidata": "Q4518923",
       "coastalCorrectionGovernorate": "EG02"
@@ -719,11 +608,7 @@
       "sourceCode": "PUPZY:ismailia-afrang",
       "nameEnglish": "Afrang (Ismailia)",
       "nameArabic": "الإفرنج بالإسماعيلية",
-      "aliases": [
-        "El Afrang",
-        "European Quarter",
-        "حي الإفرنج"
-      ],
+      "aliases": ["El Afrang", "European Quarter", "حي الإفرنج"],
       "notes": "The established French/European quarter of Ismailia. Uses the sourced Ismailia Archaeological Museum coordinate as an explicitly approximate representative point, not an invented area centroid. Reviewer priority.",
       "wikidata": "Q12238576"
     },
@@ -795,9 +680,7 @@
       "nameEnglish": "El Hosary",
       "nameArabic": "الحصري",
       "wikidata": "Q138136013",
-      "aliases": [
-        "Al Hosary"
-      ],
+      "aliases": ["Al Hosary"],
       "proxyPoint": true,
       "notes": "Named landmark serves as a representative point for this established area name; raw source labels: Hosary square. Approximate locality proxy, individually reviewed; no memory coordinates."
     },
@@ -815,9 +698,7 @@
       "nameEnglish": "El Shams Club",
       "nameArabic": "نادي الشمس",
       "wikidata": "Q106678979",
-      "aliases": [
-        "Al Shams Club"
-      ],
+      "aliases": ["Al Shams Club"],
       "proxyPoint": true,
       "notes": "Named landmark serves as a representative point for this established area name; raw source labels: El Shams Club, Nadi El-Shams. Approximate locality proxy, individually reviewed; no memory coordinates."
     },
@@ -961,9 +842,7 @@
       "nameEnglish": "El Basarta",
       "nameArabic": "البصارطة",
       "wikidata": "Q20395806",
-      "aliases": [
-        "Al Basarta"
-      ],
+      "aliases": ["Al Basarta"],
       "proxyPoint": false,
       "notes": "Exact named locality/square in Wikidata, individually reviewed bilingual name and containing OCHA geography; raw source labels: البصارطة, عزب البصارطة, عزبة البسارطة"
     },
@@ -972,9 +851,7 @@
       "nameEnglish": "El Adleya",
       "nameArabic": "العدلية",
       "wikidata": "Q12190061",
-      "aliases": [
-        "Al Adleya"
-      ],
+      "aliases": ["Al Adleya"],
       "proxyPoint": false,
       "notes": "Exact named locality/square in Wikidata, individually reviewed bilingual name and containing OCHA geography; raw source labels: العادلية, العدلية"
     },
@@ -1037,11 +914,7 @@
       "nameEnglish": "El Garabaa",
       "nameArabic": "الجرابعة",
       "wikidata": "Q138137329",
-      "aliases": [
-        "Jerabah",
-        "El Jerabaa",
-        "الجرابعه"
-      ],
+      "aliases": ["Jerabah", "El Jerabaa", "الجرابعه"],
       "proxyPoint": true,
       "notes": "Mosque label explicitly names this locality; representative landmark P625 point, not a claimed locality centroid. Arabic name and English transliteration individually reviewed; no memory coordinates."
     },
@@ -1059,10 +932,7 @@
       "nameEnglish": "El Oboor (Ismailia)",
       "nameArabic": "حي العبور بالإسماعيلية",
       "wikidata": "Q138156804",
-      "aliases": [
-        "El Oboor",
-        "العبور"
-      ],
+      "aliases": ["El Oboor", "العبور"],
       "proxyPoint": true,
       "notes": "Mosque label explicitly names this locality; representative landmark P625 point, not a claimed locality centroid. Arabic name and English transliteration individually reviewed; no memory coordinates."
     },
@@ -1071,10 +941,7 @@
       "nameEnglish": "El Taawon (Ismailia)",
       "nameArabic": "التعاون بالإسماعيلية",
       "wikidata": "Q138139546",
-      "aliases": [
-        "El Taawon",
-        "التعاون"
-      ],
+      "aliases": ["El Taawon", "التعاون"],
       "proxyPoint": true,
       "notes": "Mosque label explicitly names this locality; representative landmark P625 point, not a claimed locality centroid. Arabic name and English transliteration individually reviewed; no memory coordinates."
     },
@@ -1082,10 +949,7 @@
       "sourceCode": "PUPZY:banger-el-sokkar-village-29",
       "nameEnglish": "Banger El Sokkar Village 29",
       "nameArabic": "قرية ٢٩ بنجر السكر",
-      "aliases": [
-        "Banger Sugar Village 29",
-        "قرية 29 بنجر السكر"
-      ],
+      "aliases": ["Banger Sugar Village 29", "قرية 29 بنجر السكر"],
       "osmGeometry": "OSM:way/100976542",
       "nameWikidata": "Q138181804",
       "notes": "Real rural village is explicit in the independent WD landmark label مسجد الرحمن قرية ٢٩بنجر السكر. Source residential polygon contains that landmark. City point is derived independently from original OSM polygon geometry, not from the GPS fixture coordinate. Numeric rural-village identity is a proper named settlement, not a plot code."
@@ -1095,10 +959,7 @@
       "nameEnglish": "Ghorbal (Alexandria)",
       "nameArabic": "غربال بالإسكندرية",
       "wikidata": "Q138156970",
-      "aliases": [
-        "Ghorbal",
-        "غربال"
-      ],
+      "aliases": ["Ghorbal", "غربال"],
       "proxyPoint": true,
       "notes": "Cached mosque label explicitly names Ghorbal; point lies in EG0205 Moharam Bek. Do not confuse Ghorbal Bahary/Qebly in Beheira. Representative landmark proxy, not a locality centroid."
     },
@@ -1107,10 +968,7 @@
       "nameEnglish": "Maamoura El Balad",
       "nameArabic": "المعمورة البلد",
       "wikidata": "Q138175112",
-      "aliases": [
-        "El Maamoura El Balad",
-        "Maamoura Balad"
-      ],
+      "aliases": ["El Maamoura El Balad", "Maamoura Balad"],
       "proxyPoint": true,
       "notes": "Cached label مسجد الصناديدى المعمورة البلد الاسكندرية explicitly names this established area; point inside Montaza. Separate from Maamoura Beach. Representative landmark proxy."
     },
@@ -1119,12 +977,7 @@
       "nameEnglish": "Shatt El Sheikh Dergham",
       "nameArabic": "شط الشيخ درغام",
       "wikidata": "Q16124453",
-      "aliases": [
-        "Shatt El Sheikh Dergham",
-        "الشيخ ضرغام",
-        "الشيخ درغام",
-        "شط الشيخ ضرغام"
-      ],
+      "aliases": ["Shatt El Sheikh Dergham", "الشيخ ضرغام", "الشيخ درغام", "شط الشيخ ضرغام"],
       "proxyPoint": false,
       "notes": "Exact Wikidata Arabic locality aliases and single P625 point; English is standard curated transliteration. Independent OCHA ADM3 EG110211 confirms locality identity; original unit extent is retained as populated evidence, never trimmed."
     },
@@ -1133,20 +986,14 @@
       "coverageArea": "greater-cairo",
       "nameEnglish": "Safir",
       "nameArabic": "سفير",
-      "aliases": [
-        "El Safir",
-        "ميدان سفير"
-      ],
+      "aliases": ["El Safir", "ميدان سفير"],
       "sourceResponse": {
         "file": "research-names/lead-nominatim-missing-names.json.gz",
         "lookupQuery": "سفير",
         "osmIdentity": "OSM:node/4525850189",
         "area": "greater-cairo"
       },
-      "point": [
-        31.3381123,
-        30.0976762
-      ],
+      "point": [31.3381123, 30.0976762],
       "proxyPoint": true,
       "notes": "Client-established area represented by exact named ميدان سفير OSM square; approximate area proxy. Recorded source: https://nominatim.openstreetmap.org/search?q=%D8%B3%D9%81%D9%8A%D8%B1&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
       "sourceUrl": "https://nominatim.openstreetmap.org/search?q=%D8%B3%D9%81%D9%8A%D8%B1&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
@@ -1157,19 +1004,14 @@
       "coverageArea": "greater-cairo",
       "nameEnglish": "Arab El Maadi",
       "nameArabic": "عرب المعادي",
-      "aliases": [
-        "Arab Maadi"
-      ],
+      "aliases": ["Arab Maadi"],
       "sourceResponse": {
         "file": "research-names/lead-nominatim-missing-names.json.gz",
         "lookupQuery": "عرب المعادي",
         "osmIdentity": "OSM:way/1531391187",
         "area": "greater-cairo"
       },
-      "point": [
-        31.2697546,
-        29.9703479
-      ],
+      "point": [31.2697546, 29.9703479],
       "proxyPoint": true,
       "notes": "Client-established Arab El Maadi area; exact named bus station موقف عرب المعادي supplies approximate locality proxy. Recorded source: https://nominatim.openstreetmap.org/search?q=%D8%B9%D8%B1%D8%A8+%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%AF%D9%8A&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
       "sourceUrl": "https://nominatim.openstreetmap.org/search?q=%D8%B9%D8%B1%D8%A8+%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%AF%D9%8A&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
@@ -1180,20 +1022,14 @@
       "coverageArea": "greater-cairo",
       "nameEnglish": "Motamayez October",
       "nameArabic": "المتميز أكتوبر",
-      "aliases": [
-        "El Hay El Motamayez October",
-        "الحي المتميز أكتوبر"
-      ],
+      "aliases": ["El Hay El Motamayez October", "الحي المتميز أكتوبر"],
       "sourceResponse": {
         "file": "research-names/lead-nominatim-missing-names.json.gz",
         "lookupQuery": "Motamayez October",
         "osmIdentity": "OSM:way/1531391138",
         "area": "greater-cairo"
       },
-      "point": [
-        30.9789852,
-        29.9823763
-      ],
+      "point": [30.9789852, 29.9823763],
       "proxyPoint": true,
       "notes": "Established حي المتميز October; exact named موقف المتميز bus station representative point. Not a new City for the bus station. Recorded source: https://nominatim.openstreetmap.org/search?q=Motamayez+October&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
       "sourceUrl": "https://nominatim.openstreetmap.org/search?q=Motamayez+October&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
@@ -1204,19 +1040,14 @@
       "coverageArea": "alexandria",
       "nameEnglish": "Kom El Dikka",
       "nameArabic": "كوم الدكة",
-      "aliases": [
-        "Kom El Deka"
-      ],
+      "aliases": ["Kom El Deka"],
       "sourceResponse": {
         "file": "research-names/lead-nominatim-missing-names.json.gz",
         "lookupQuery": "Kom El Dikka",
         "osmIdentity": "OSM:way/28817193",
         "area": "alexandria"
       },
-      "point": [
-        29.9039742,
-        31.1950754
-      ],
+      "point": [29.9039742, 31.1950754],
       "proxyPoint": true,
       "notes": "Well-established neighbourhood in independently read English/Arabic Alexandria Wikipedia district lists. The same-named park supplies an explicit locality proxy. Recorded source: https://nominatim.openstreetmap.org/search?q=Kom+El+Dikka&format=jsonv2&viewbox=28.5%2C31.65%2C30.4%2C30.6&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
       "sourceUrl": "https://nominatim.openstreetmap.org/search?q=Kom+El+Dikka&format=jsonv2&viewbox=28.5%2C31.65%2C30.4%2C30.6&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
@@ -1227,19 +1058,14 @@
       "coverageArea": "alexandria",
       "nameEnglish": "Nagaa El Arab",
       "nameArabic": "نجع العرب",
-      "aliases": [
-        "Naga El Arab"
-      ],
+      "aliases": ["Naga El Arab"],
       "sourceResponse": {
         "file": "research-names/lead-nominatim-missing-names.json.gz",
         "lookupQuery": "نجع العرب",
         "osmIdentity": "OSM:way/749830488",
         "area": "alexandria"
       },
-      "point": [
-        29.8615607,
-        31.1610711
-      ],
+      "point": [29.8615607, 31.1610711],
       "proxyPoint": true,
       "notes": "Well-established named inhabited area in western Alexandria. Exact same-named street through neighbourhood supplies locality proxy; no inferred centre. Recorded source: https://nominatim.openstreetmap.org/search?q=%D9%86%D8%AC%D8%B9+%D8%A7%D9%84%D8%B9%D8%B1%D8%A8&format=jsonv2&viewbox=28.5%2C31.65%2C30.4%2C30.6&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
       "sourceUrl": "https://nominatim.openstreetmap.org/search?q=%D9%86%D8%AC%D8%B9+%D8%A7%D9%84%D8%B9%D8%B1%D8%A8&format=jsonv2&viewbox=28.5%2C31.65%2C30.4%2C30.6&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
@@ -1250,20 +1076,14 @@
       "coverageArea": "alexandria",
       "nameEnglish": "El Ras El Soda",
       "nameArabic": "الرأس السوداء",
-      "aliases": [
-        "Al Ras El Soda",
-        "Ras El Soda"
-      ],
+      "aliases": ["Al Ras El Soda", "Ras El Soda"],
       "sourceResponse": {
         "file": "research-names/lead-nominatim-missing-names.json.gz",
         "lookupQuery": "الرأس السوداء",
         "osmIdentity": "OSM:node/4938360196",
         "area": "alexandria"
       },
-      "point": [
-        29.9881092,
-        31.2444567
-      ],
+      "point": [29.9881092, 31.2444567],
       "proxyPoint": true,
       "notes": "Independently listed Alexandria neighbourhood on Arabic Wikipedia template. Exact named training institution مركز تدريب الرأس السوداء supplies approximate source point. Recorded source: https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B1%D8%A3%D8%B3+%D8%A7%D9%84%D8%B3%D9%88%D8%AF%D8%A7%D8%A1&format=jsonv2&viewbox=28.5%2C31.65%2C30.4%2C30.6&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
       "sourceUrl": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B1%D8%A3%D8%B3+%D8%A7%D9%84%D8%B3%D9%88%D8%AF%D8%A7%D8%A1&format=jsonv2&viewbox=28.5%2C31.65%2C30.4%2C30.6&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
@@ -1274,19 +1094,13 @@
       "coverageArea": "greater-cairo",
       "nameEnglish": "Shabab Obour",
       "nameArabic": "الشباب العبور",
-      "aliases": [
-        "Iskan El Shabab Obour",
-        "إسكان الشباب العبور"
-      ],
+      "aliases": ["Iskan El Shabab Obour", "إسكان الشباب العبور"],
       "sourceResponse": {
         "file": "greater-cairo-places.json.gz",
         "osmIdentity": "OSM:way/754888107",
         "area": "greater-cairo"
       },
-      "point": [
-        31.4698769,
-        30.2555547
-      ],
+      "point": [31.4698769, 30.2555547],
       "proxyPoint": false,
       "notes": "Established Obour Youth Housing estate requested by client. Source OSM residential neighbourhood اسكان الشباب, not a bare housing code or individual building.",
       "evidence": "Established Obour Youth Housing estate requested by client. Source OSM residential neighbourhood اسكان الشباب, not a bare housing code or individual building."
@@ -1295,11 +1109,7 @@
       "sourceCode": "PUPZY:manshiyet-el-nozha",
       "nameEnglish": "Nuzha",
       "nameArabic": "منشية النزهة",
-      "aliases": [
-        "Nozha",
-        "El Nozha",
-        "النزهة"
-      ],
+      "aliases": ["Nozha", "El Nozha", "النزهة"],
       "coverageArea": "alexandria",
       "wikidata": "Q138137072",
       "proxyPoint": true,
@@ -1309,14 +1119,8 @@
       "sourceCode": "PUPZY:bangar-el-sokkar-village-23",
       "nameEnglish": "Village 23 Banger El Sokkar",
       "nameArabic": "قرية 23 بنجر السكر",
-      "aliases": [
-        "بنجر 23",
-        "Banger 23"
-      ],
-      "point": [
-        29.5734322,
-        30.7682796
-      ],
+      "aliases": ["بنجر 23", "Banger 23"],
+      "point": [29.5734322, 30.7682796],
       "responseFile": "neighbourhoods/alexandria-places.json.gz",
       "lookupQuery": "قرية 23 بنجر السكر",
       "osmIdentity": "OSM:node/2726665536",
@@ -1324,24 +1128,15 @@
       "proxyPoint": false,
       "sourceUrl": "https://www.arc.sci.eg/Products/Search/1401?TypeID=4",
       "reviewCaution": "Number-qualified village identity needs lead acceptance under no bare-code rule; newspaper corroboration states Matrouh while ITDA addresses say Alexandria; parent must come from OCHA containment, never article governorate.",
-      "sourceResponse": {
-        "file": "alexandria-places.json.gz",
-        "osmIdentity": "OSM:node/2726665536"
-      },
+      "sourceResponse": { "file": "alexandria-places.json.gz", "osmIdentity": "OSM:node/2726665536" },
       "notes": "OSM village node literally named 23; full settlement identity independently corroborated by https://www.arc.sci.eg/Products/Search/1401?TypeID=4. These are long-established inhabited villages, not micro-level sectors in a city. Recorded source node point, no coordinate inference. Search evidence retained in research-blocks/web-search-results-2.json.gz and -3.json.gz. Primary naming source fetched as search excerpts only; full trade-register PDFs explicitly restrict republication and were not downloaded. Number-qualified village identity needs lead acceptance under no bare-code rule; newspaper corroboration states Matrouh while ITDA addresses say Alexandria; parent must come from OCHA containment, never article governorate."
     },
     {
       "sourceCode": "PUPZY:bangar-el-sokkar-village-24",
       "nameEnglish": "Village 24 Banger El Sokkar",
       "nameArabic": "قرية 24 بنجر السكر",
-      "aliases": [
-        "بنجر 24",
-        "Banger 24"
-      ],
-      "point": [
-        29.5618451,
-        30.7848718
-      ],
+      "aliases": ["بنجر 24", "Banger 24"],
+      "point": [29.5618451, 30.7848718],
       "responseFile": "neighbourhoods/alexandria-places.json.gz",
       "lookupQuery": "قرية 24 بنجر السكر",
       "osmIdentity": "OSM:node/2726665551",
@@ -1349,24 +1144,15 @@
       "proxyPoint": false,
       "sourceUrl": "https://www.itda.gov.eg/CRM/860/CRA57.pdf",
       "reviewCaution": "Number-qualified village identity needs lead acceptance under no bare-code rule; newspaper corroboration states Matrouh while ITDA addresses say Alexandria; parent must come from OCHA containment, never article governorate.",
-      "sourceResponse": {
-        "file": "alexandria-places.json.gz",
-        "osmIdentity": "OSM:node/2726665551"
-      },
+      "sourceResponse": { "file": "alexandria-places.json.gz", "osmIdentity": "OSM:node/2726665551" },
       "notes": "OSM village node literally named 24; full settlement identity independently corroborated by https://www.itda.gov.eg/CRM/860/CRA57.pdf. These are long-established inhabited villages, not micro-level sectors in a city. Recorded source node point, no coordinate inference. Search evidence retained in research-blocks/web-search-results-2.json.gz and -3.json.gz. Primary naming source fetched as search excerpts only; full trade-register PDFs explicitly restrict republication and were not downloaded. Number-qualified village identity needs lead acceptance under no bare-code rule; newspaper corroboration states Matrouh while ITDA addresses say Alexandria; parent must come from OCHA containment, never article governorate."
     },
     {
       "sourceCode": "PUPZY:bangar-el-sokkar-village-25",
       "nameEnglish": "Village 25 Banger El Sokkar",
       "nameArabic": "قرية 25 بنجر السكر",
-      "aliases": [
-        "بنجر 25",
-        "Banger 25"
-      ],
-      "point": [
-        29.533918,
-        30.7927015
-      ],
+      "aliases": ["بنجر 25", "Banger 25"],
+      "point": [29.533918, 30.7927015],
       "responseFile": "neighbourhoods/alexandria-places.json.gz",
       "lookupQuery": "قرية 25 بنجر السكر",
       "osmIdentity": "OSM:node/2726665532",
@@ -1374,24 +1160,15 @@
       "proxyPoint": false,
       "sourceUrl": "https://itda.gov.eg/CRM/873/CRA57.pdf",
       "reviewCaution": "Number-qualified village identity needs lead acceptance under no bare-code rule; newspaper corroboration states Matrouh while ITDA addresses say Alexandria; parent must come from OCHA containment, never article governorate.",
-      "sourceResponse": {
-        "file": "alexandria-places.json.gz",
-        "osmIdentity": "OSM:node/2726665532"
-      },
+      "sourceResponse": { "file": "alexandria-places.json.gz", "osmIdentity": "OSM:node/2726665532" },
       "notes": "OSM village node literally named 25; full settlement identity independently corroborated by https://itda.gov.eg/CRM/873/CRA57.pdf. These are long-established inhabited villages, not micro-level sectors in a city. Recorded source node point, no coordinate inference. Search evidence retained in research-blocks/web-search-results-2.json.gz and -3.json.gz. Primary naming source fetched as search excerpts only; full trade-register PDFs explicitly restrict republication and were not downloaded. Number-qualified village identity needs lead acceptance under no bare-code rule; newspaper corroboration states Matrouh while ITDA addresses say Alexandria; parent must come from OCHA containment, never article governorate."
     },
     {
       "sourceCode": "PUPZY:bangar-el-sokkar-village-26",
       "nameEnglish": "Village 26 Banger El Sokkar",
       "nameArabic": "قرية 26 بنجر السكر",
-      "aliases": [
-        "بنجر 26",
-        "Banger 26"
-      ],
-      "point": [
-        29.5281995,
-        30.7675421
-      ],
+      "aliases": ["بنجر 26", "Banger 26"],
+      "point": [29.5281995, 30.7675421],
       "responseFile": "neighbourhoods/alexandria-places.json.gz",
       "lookupQuery": "قرية 26 بنجر السكر",
       "osmIdentity": "OSM:node/2726665547",
@@ -1399,10 +1176,7 @@
       "proxyPoint": false,
       "sourceUrl": "https://www.itda.gov.eg/CRM/854/CRA57.pdf",
       "reviewCaution": "Number-qualified village identity needs lead acceptance under no bare-code rule; newspaper corroboration states Matrouh while ITDA addresses say Alexandria; parent must come from OCHA containment, never article governorate.",
-      "sourceResponse": {
-        "file": "alexandria-places.json.gz",
-        "osmIdentity": "OSM:node/2726665547"
-      },
+      "sourceResponse": { "file": "alexandria-places.json.gz", "osmIdentity": "OSM:node/2726665547" },
       "notes": "OSM village node literally named 26; full settlement identity independently corroborated by https://www.itda.gov.eg/CRM/854/CRA57.pdf. These are long-established inhabited villages, not micro-level sectors in a city. Recorded source node point, no coordinate inference. Search evidence retained in research-blocks/web-search-results-2.json.gz and -3.json.gz. Primary naming source fetched as search excerpts only; full trade-register PDFs explicitly restrict republication and were not downloaded. Number-qualified village identity needs lead acceptance under no bare-code rule; newspaper corroboration states Matrouh while ITDA addresses say Alexandria; parent must come from OCHA containment, never article governorate."
     },
     {
@@ -1410,21 +1184,14 @@
       "coverageArea": "greater-cairo",
       "nameEnglish": "Mariouteya (Faisal)",
       "nameArabic": "المريوطية فيصل",
-      "aliases": [
-        "Mariouteya",
-        "المريوطية",
-        "El Mariouteya"
-      ],
+      "aliases": ["Mariouteya", "المريوطية", "El Mariouteya"],
       "sourceResponse": {
         "file": "research-names/lead-nominatim-missing-names.json.gz",
         "lookupQuery": "المريوطية",
         "area": "greater-cairo",
         "osmIdentity": "OSM:node/14124205746"
       },
-      "point": [
-        31.1477546,
-        29.9939622
-      ],
+      "point": [31.1477546, 29.9939622],
       "proxyPoint": true,
       "evidence": "Exact locality المريوطية فيصل supplies representative point for the well-established Mariouteya/Faisal area. Prefer actual locality over northern railway station sharing canal name. Client-established area name. https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%85%D8%B1%D9%8A%D9%88%D8%B7%D9%8A%D8%A9&format=jsonv2&viewbox=30.45%2C30.6%2C32.05%2C29.45&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
       "notes": "Exact locality المريوطية فيصل supplies representative point for the well-established Mariouteya/Faisal area. Prefer actual locality over northern railway station sharing canal name. Client-established area name."
@@ -1434,22 +1201,14 @@
       "coverageArea": "port-said-region",
       "nameEnglish": "El Fayrouz (Bor Fouad)",
       "nameArabic": "الفيروز بورفؤاد",
-      "aliases": [
-        "El Fayrouz",
-        "Al Fayrouz",
-        "الفيروز",
-        "Hay El Fayrouz"
-      ],
+      "aliases": ["El Fayrouz", "Al Fayrouz", "الفيروز", "Hay El Fayrouz"],
       "sourceResponse": {
         "file": "research-names/lead-nominatim-missing-names.json.gz",
         "lookupQuery": "الفيروز",
         "area": "port-said-region",
         "osmIdentity": "OSM:node/10628310605"
       },
-      "point": [
-        32.314008,
-        31.21826
-      ],
+      "point": [32.314008, 31.21826],
       "proxyPoint": true,
       "evidence": "Official Port Said Governorate indexed page https://portsaid.gov.eg/News/details/109694 establishes مساكن الفيروز at Bor Fouad, independently of Cairo. Exact named OSM الفيروز١٥٣ apartment point is an explicit within-estate locality proxy, not the unrelated Ismailia street. https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%81%D9%8A%D8%B1%D9%88%D8%B2&format=jsonv2&viewbox=31.4%2C31.85%2C32.8%2C30.4&bounded=1&limit=5&accept-language=ar%2Cen&namedetails=1&addressdetails=1&countrycodes=eg",
       "notes": "Official Port Said Governorate indexed page https://portsaid.gov.eg/News/details/109694 establishes مساكن الفيروز at Bor Fouad, independently of Cairo. Exact named OSM الفيروز١٥٣ apartment point is an explicit within-estate locality proxy, not the unrelated Ismailia street."
@@ -1460,11 +1219,7 @@
       "nameEnglish": "Mahatet Masr",
       "nameArabic": "محطة مصر",
       "wikidata": "Q958574",
-      "aliases": [
-        "Mahatet Masr",
-        "Mehatet Masr",
-        "Misr Station Alexandria"
-      ],
+      "aliases": ["Mahatet Masr", "Mehatet Masr", "Misr Station Alexandria"],
       "proxyPoint": true,
       "notes": "Established station-area name. Exact independent Wikidata Alexandria railway station point, transit proxy explicitly permitted by lead C.3."
     },
@@ -1484,10 +1239,7 @@
       "nameEnglish": "El Saraya",
       "nameArabic": "السرايا",
       "wikidata": "Q4518634",
-      "aliases": [
-        "Al Saraya",
-        "Saraya"
-      ],
+      "aliases": ["Al Saraya", "Saraya"],
       "proxyPoint": false,
       "notes": "Exact named ElSaraya locality bilingual label السرايا(حي) and P625 in existing raw Wikidata response; parentMontaza1."
     },
@@ -1497,10 +1249,7 @@
       "nameEnglish": "Kafoury",
       "nameArabic": "الكافوري",
       "wikidata": "Q110835589",
-      "aliases": [
-        "El Kafoury",
-        "Al Kafoury"
-      ],
+      "aliases": ["El Kafoury", "Al Kafoury"],
       "proxyPoint": true,
       "notes": "Exact named الكافوري recorded Wikidata P625, reviewed English transliteration. Railway/locality proxy for independently listed Kafoury area."
     },
@@ -1510,10 +1259,7 @@
       "nameEnglish": "New Sphinx",
       "nameArabic": "سفنكس الجديدة",
       "wikidata": "Q112110813",
-      "aliases": [
-        "New Sphinx City",
-        "Sphinx New City"
-      ],
+      "aliases": ["New Sphinx City", "Sphinx New City"],
       "proxyPoint": false,
       "notes": "Exact recorded Wikidata NewSphinx bilingual names and locality P625, within existing declared GreaterCairo coverage; keep GizaZemamOut parent rule."
     },
@@ -1522,10 +1268,7 @@
       "coverageArea": "port-said-region",
       "nameEnglish": "El Mostakbal Ismailia",
       "nameArabic": "المستقبل الإسماعيلية",
-      "aliases": [
-        "Al Mostakbal Ismailia",
-        "Future City Ismailia"
-      ],
+      "aliases": ["Al Mostakbal Ismailia", "Future City Ismailia"],
       "wikidata": "Q138148800",
       "proxyPoint": true,
       "notes": "Exact previouslyrecorded named mosque مسجدالشهيدطنطاويبالمستقبل P625 is inside originalOSMresidentialway639204211, corroborated nearbyQ138141081مسجدالمستقبل1 and recordedNominatim طريقالمستقبل / مدخلالمستقبلالسريع. LeadC3 specificallyauthorizes the containing residentialpolygon extension, clippedEG19; keepOCHAEG1906parentexactly."
@@ -1536,19 +1279,14 @@
       "nameArabic": "كفر البطيخ",
       "wikidata": "Q6839370",
       "notes": "LeadC3 requested named city, exact WD P625 within current recorded OSM cityboundary; dated OCHA parent remains KafrSaad EG1104, not an alias of KafrSaad.",
-      "aliases": [
-        "Kafr El-Battikh city"
-      ]
+      "aliases": ["Kafr El-Battikh city"]
     },
     {
       "sourceCode": "PUPZY:gabriel-alexandria",
       "nameEnglish": "Gabriel",
       "nameArabic": "غبريال",
       "aliases": [],
-      "sourceResponse": {
-        "file": "research-round7/nominatim-gabriel3.json.gz",
-        "osmIdentity": "OSM:node/1892910381"
-      },
+      "sourceResponse": { "file": "research-round7/nominatim-gabriel3.json.gz", "osmIdentity": "OSM:node/1892910381" },
       "proxyPoint": true,
       "evidence": "Established Gabriel area, exact named غبريال railway halt. Raw response bounded/context verifies Alexandria; source transit proxy permitted by lead.",
       "notes": "Established Gabriel area, exact named غبريال railway halt. Raw response bounded/context verifies Alexandria; source transit proxy permitted by lead."
@@ -1557,13 +1295,8 @@
       "sourceCode": "PUPZY:el-lessan",
       "nameEnglish": "El Lessan",
       "nameArabic": "اللسان",
-      "aliases": [
-        "Al Lessan"
-      ],
-      "sourceResponse": {
-        "file": "research-round7/nominatim-lessan.json.gz",
-        "osmIdentity": "OSM:node/10899712521"
-      },
+      "aliases": ["Al Lessan"],
+      "sourceResponse": { "file": "research-round7/nominatim-lessan.json.gz", "osmIdentity": "OSM:node/10899712521" },
       "proxyPoint": true,
       "evidence": "Established RasElBar tip area; exact سوق اللسان market proxy. Recorded named RasElBar cityboundary fills only the OCHA2017 coastal water-mask gap; no point moved.",
       "notes": "Established RasElBar tip area; exact سوق اللسان market proxy. Recorded named RasElBar cityboundary fills only the OCHA2017 coastal water-mask gap; no point moved."
@@ -1572,13 +1305,8 @@
       "sourceCode": "PUPZY:el-kafrawy-new-damietta",
       "nameEnglish": "El Kafrawy",
       "nameArabic": "الكفراوي",
-      "aliases": [
-        "Al Kafrawy"
-      ],
-      "sourceResponse": {
-        "file": "research-round7/nominatim-kafrawy.json.gz",
-        "osmIdentity": "OSM:way/97362994"
-      },
+      "aliases": ["Al Kafrawy"],
+      "sourceResponse": { "file": "research-round7/nominatim-kafrawy.json.gz", "osmIdentity": "OSM:way/97362994" },
       "proxyPoint": true,
       "evidence": "Client-established NewDamietta area; exact named شارع الكفراوي and nearby namesake school corroborate an approximate road proxy, not a survey centre.",
       "notes": "Client-established NewDamietta area; exact named شارع الكفراوي and nearby namesake school corroborate an approximate road proxy, not a survey centre."
@@ -1588,10 +1316,7 @@
       "nameEnglish": "Mubarak New Damietta",
       "nameArabic": "مبارك دمياط الجديدة",
       "aliases": [],
-      "sourceResponse": {
-        "file": "research-round7/nominatim-mubarak2.json.gz",
-        "osmIdentity": "OSM:way/585284216"
-      },
+      "sourceResponse": { "file": "research-round7/nominatim-mubarak2.json.gz", "osmIdentity": "OSM:way/585284216" },
       "proxyPoint": true,
       "evidence": "Client-established Mubarak area in NewDamietta; exact named شارع مبارك road proxy inside official NewDamietta district, corroborated adjacent side roads.",
       "notes": "Client-established Mubarak area in NewDamietta; exact named شارع مبارك road proxy inside official NewDamietta district, corroborated adjacent side roads."
@@ -1600,13 +1325,8 @@
       "sourceCode": "PUPZY:el-omayed",
       "nameEnglish": "El Omayed",
       "nameArabic": "العميد",
-      "aliases": [
-        "Al Omayed"
-      ],
-      "sourceResponse": {
-        "file": "research-round7/nominatim-omayed3.json.gz",
-        "osmIdentity": "OSM:way/1498183544"
-      },
+      "aliases": ["Al Omayed"],
+      "sourceResponse": { "file": "research-round7/nominatim-omayed3.json.gz", "osmIdentity": "OSM:way/1498183544" },
       "proxyPoint": true,
       "evidence": "Client-established Omayed coast locality; exact named شارع ساحل العميد supplies approximate approach-road point. Reserve-centre coordinate was not used; this is a documented road proxy.",
       "notes": "Client-established Omayed coast locality; exact named شارع ساحل العميد supplies approximate approach-road point. Reserve-centre coordinate was not used; this is a documented road proxy."
@@ -1628,10 +1348,7 @@
       "sourceCode": "PUPZY:aghakhan",
       "nameEnglish": "Aghakhan",
       "nameArabic": "أغاخان",
-      "aliases": [
-        "Agha Khan",
-        "آغاخان"
-      ],
+      "aliases": ["Agha Khan", "آغاخان"],
       "proxyPoint": true,
       "sourceResponse": {
         "file": "research-round7/aghakhan-waze.json.gz",
@@ -1646,14 +1363,9 @@
       "sourceCode": "PUPZY:sawary-alexandria",
       "nameEnglish": "Sawary",
       "nameArabic": "صواري",
-      "aliases": [
-        "Sawari"
-      ],
+      "aliases": ["Sawari"],
       "proxyPoint": true,
-      "sourceResponse": {
-        "file": "research-round7/sawary-developer.json.gz",
-        "selector": "mapCentre"
-      },
+      "sourceResponse": { "file": "research-round7/sawary-developer.json.gz", "selector": "mapCentre" },
       "notes": "Exact centre of the project location-map iframe published by SaudiEgyptianDevelopers on its own Sawary project page; approximate mainland proxy beside the project, not a surveyed centroid. WD project/mosque points fall in the dated OCHA lake mask and were not moved.",
       "evidence": "Primary developer project-location iframe !2d longitude/!3d latitude, recorded HTML; approximate map-centre proxy."
     },
@@ -1661,11 +1373,7 @@
       "sourceCode": "PUPZY:hadara-alexandria",
       "nameEnglish": "Hadara",
       "nameArabic": "الحضرة",
-      "aliases": [
-        "Al Hadrah",
-        "Hadara El Gedida",
-        "الحضرة الجديدة"
-      ],
+      "aliases": ["Al Hadrah", "Hadara El Gedida", "الحضرة الجديدة"],
       "proxyPoint": false,
       "sourceResponse": {
         "file": "wikidata.json.gz",
@@ -1680,14 +1388,8 @@
       "sourceCode": "PUPZY:capital-r7",
       "nameEnglish": "District R7 Capital",
       "nameArabic": "الحي السكني السابع — العاصمة الإدارية",
-      "aliases": [
-        "الحي السكني السابع العاصمة",
-        "R7 New Capital"
-      ],
-      "sourceResponse": {
-        "file": "greater-cairo-places.json.gz",
-        "osmIdentity": "OSM:way/819189853"
-      },
+      "aliases": ["الحي السكني السابع العاصمة", "R7 New Capital"],
+      "sourceResponse": { "file": "greater-cairo-places.json.gz", "osmIdentity": "OSM:way/819189853" },
       "proxyPoint": true,
       "notes": "Primary MBG company profile explicitly places Pukka inR7; original OSM Pukka residential compound centre is a representative proxy for the district. Source web response root-primary-membership contains https://mbgeg.com/wp-content/uploads/2025/01/MBG-Company-Profile_compressed.pdf.",
       "evidence": "Primary MBG company profile explicitly places Pukka inR7; original OSM Pukka residential compound centre is a representative proxy for the district. Source web response root-primary-membership contains https://mbgeg.com/wp-content/uploads/2025/01/MBG-Company-Profile_compressed.pdf."
@@ -1696,14 +1398,8 @@
       "sourceCode": "PUPZY:capital-r8",
       "nameEnglish": "District R8 Capital",
       "nameArabic": "الحي السكني الثامن — العاصمة الإدارية",
-      "aliases": [
-        "الحي السكني الثامن العاصمة",
-        "R8 New Capital"
-      ],
-      "sourceResponse": {
-        "file": "greater-cairo-places.json.gz",
-        "osmIdentity": "OSM:way/1366681574"
-      },
+      "aliases": ["الحي السكني الثامن العاصمة", "R8 New Capital"],
+      "sourceResponse": { "file": "greater-cairo-places.json.gz", "osmIdentity": "OSM:way/1366681574" },
       "proxyPoint": true,
       "notes": "Recorded OSM DiploEast compound centre represents R8; first-party property inventory https://eslamhamza.com/developers/mbg-159 assigns DiploEast toR8 and primary MBG brochure map corroborates named project context. All responses recorded, no coordinate from a marketing recollection.",
       "evidence": "Recorded OSM DiploEast compound centre represents R8; first-party property inventory https://eslamhamza.com/developers/mbg-159 assigns DiploEast toR8 and primary MBG brochure map corroborates named project context. All responses recorded, no coordinate from a marketing recollection."
@@ -1712,10 +1408,7 @@
       "sourceCode": "PUPZY:october-first-residential-reference",
       "nameEnglish": "1st District (October)",
       "nameArabic": "الحي الأول",
-      "sourceResponse": {
-        "file": "research-round7/grid-690455767.json.gz",
-        "osmIdentity": "OSM:way/99780049"
-      },
+      "sourceResponse": { "file": "research-round7/grid-690455767.json.gz", "osmIdentity": "OSM:way/99780049" },
       "proxyPoint": true,
       "representativeOf": "OSM:node/1160384365",
       "notes": "Additional representative of already included OSM:node/1160384365; no new settlement name. Exact recorded reverse object OSM:way/99780049 point, with enclosing residential/suburb address {\"neighbourhood\": \"بلوك 1\", \"suburb\": \"الحى الأول\", \"city\": \"السادس من أكتوبر\", \"state\": \"الجيزة\", \"ISO3166-2-lvl4\": \"EG-GZ\", \"postcode\": \"33660\", \"country\": \"مصر\", \"country_code\": \"eg\"}. Parent still independently derived from source geometry. Generic block/village code is not promoted; City name is the source enclosing FirstDistrict/Abis/NewOctober.",
@@ -1725,10 +1418,7 @@
       "sourceCode": "PUPZY:abis-eastern-residential-reference",
       "nameEnglish": "Abis",
       "nameArabic": "أبيس",
-      "sourceResponse": {
-        "file": "research-round7/grid-660869901.json.gz",
-        "osmIdentity": "OSM:way/660427637"
-      },
+      "sourceResponse": { "file": "research-round7/grid-660869901.json.gz", "osmIdentity": "OSM:way/660427637" },
       "proxyPoint": true,
       "representativeOf": "OSM:way/744555703",
       "notes": "Additional representative of already included OSM:way/744555703; no new settlement name. Exact recorded reverse object OSM:way/660427637 point, with enclosing residential/suburb address {\"neighbourhood\": \"ابيس\", \"city\": \"الإسكندرية\", \"state\": \"الإسكندرية\", \"ISO3166-2-lvl4\": \"EG-ALX\", \"postcode\": \"23641\", \"country\": \"مصر\", \"country_code\": \"eg\"}. Parent still independently derived from source geometry. Generic block/village code is not promoted; City name is the source enclosing FirstDistrict/Abis/NewOctober.",
@@ -1738,10 +1428,7 @@
       "sourceCode": "PUPZY:abis-western-residential-reference",
       "nameEnglish": "Abis",
       "nameArabic": "أبيس",
-      "sourceResponse": {
-        "file": "research-round7/grid-660250153.json.gz",
-        "osmIdentity": "OSM:way/660250192"
-      },
+      "sourceResponse": { "file": "research-round7/grid-660250153.json.gz", "osmIdentity": "OSM:way/660250192" },
       "proxyPoint": true,
       "representativeOf": "OSM:way/744555703",
       "notes": "Additional representative of already included OSM:way/744555703; no new settlement name. Exact recorded reverse object OSM:way/660250192 point, with enclosing residential/suburb address {\"neighbourhood\": \"ابيس\", \"city\": \"الإسكندرية\", \"state\": \"الإسكندرية\", \"ISO3166-2-lvl4\": \"EG-ALX\", \"postcode\": \"23641\", \"country\": \"مصر\", \"country_code\": \"eg\"}. Parent still independently derived from source geometry. Generic block/village code is not promoted; City name is the source enclosing FirstDistrict/Abis/NewOctober.",
@@ -1764,10 +1451,7 @@
       "sourceCode": "PUPZY:abis-central-residential-reference",
       "nameEnglish": "Abis",
       "nameArabic": "أبيس",
-      "sourceResponse": {
-        "file": "research-round7/grid-659659018.json.gz",
-        "osmIdentity": "OSM:way/659659037"
-      },
+      "sourceResponse": { "file": "research-round7/grid-659659018.json.gz", "osmIdentity": "OSM:way/659659037" },
       "proxyPoint": true,
       "representativeOf": "OSM:way/744555703",
       "notes": "Additional representative point within the already sourced Abis residential area. Exact reverse object point; address.neighbourhood explicitly ابـيس. Generic villagecode9/8 not promoted, enclosing Abis namedCity retained with bilingual source-backed location qualifier.",
@@ -1777,10 +1461,7 @@
       "sourceCode": "PUPZY:abis-northern-residential-reference",
       "nameEnglish": "Abis",
       "nameArabic": "أبيس",
-      "sourceResponse": {
-        "file": "research-round7/grid-658573066.json.gz",
-        "osmIdentity": "OSM:way/689664414"
-      },
+      "sourceResponse": { "file": "research-round7/grid-658573066.json.gz", "osmIdentity": "OSM:way/689664414" },
       "proxyPoint": true,
       "representativeOf": "OSM:way/744555703",
       "notes": "Additional representative point for the explicitly named enclosing residential area in the recorded reverse address. Separate footprint; generic sub-block code not promoted. Exact returned object coordinate, no coordinate shift. Qualifier is an identity/location description, not a new neighbourhood.",
@@ -1790,10 +1471,7 @@
       "sourceCode": "PUPZY:abis-northwestern-residential-reference",
       "nameEnglish": "Abis",
       "nameArabic": "أبيس",
-      "sourceResponse": {
-        "file": "research-round7/grid-660208752.json.gz",
-        "osmIdentity": "OSM:way/660427659"
-      },
+      "sourceResponse": { "file": "research-round7/grid-660208752.json.gz", "osmIdentity": "OSM:way/660427659" },
       "proxyPoint": true,
       "representativeOf": "OSM:way/744555703",
       "notes": "Additional representative point for the explicitly named enclosing residential area in the recorded reverse address. Separate footprint; generic sub-block code not promoted. Exact returned object coordinate, no coordinate shift. Qualifier is an identity/location description, not a new neighbourhood.",
@@ -1803,10 +1481,7 @@
       "sourceCode": "PUPZY:abis-northeastern-residential-reference",
       "nameEnglish": "Abis",
       "nameArabic": "أبيس",
-      "sourceResponse": {
-        "file": "research-round7/grid-660551976.json.gz",
-        "osmIdentity": "OSM:way/741606918"
-      },
+      "sourceResponse": { "file": "research-round7/grid-660551976.json.gz", "osmIdentity": "OSM:way/741606918" },
       "proxyPoint": true,
       "representativeOf": "OSM:way/744555703",
       "notes": "Additional representative point for the explicitly named enclosing residential area in the recorded reverse address. Separate footprint; generic sub-block code not promoted. Exact returned object coordinate, no coordinate shift. Qualifier is an identity/location description, not a new neighbourhood.",
@@ -1816,10 +1491,7 @@
       "sourceCode": "PUPZY:october-twelfth-district-residential-reference",
       "nameEnglish": "12th District",
       "nameArabic": "الحي الثاني عشر",
-      "sourceResponse": {
-        "file": "research-round7/grid-694059022.json.gz",
-        "osmIdentity": "OSM:way/100220485"
-      },
+      "sourceResponse": { "file": "research-round7/grid-694059022.json.gz", "osmIdentity": "OSM:way/100220485" },
       "proxyPoint": true,
       "representativeOf": "OSM:node/1160384347",
       "notes": "Additional representative point for the explicitly named enclosing residential area in the recorded reverse address. Separate footprint; generic sub-block code not promoted. Exact returned object coordinate, no coordinate shift. Qualifier is an identity/location description, not a new neighbourhood.",
@@ -1829,10 +1501,7 @@
       "sourceCode": "PUPZY:smouha",
       "nameEnglish": "Smouha",
       "nameArabic": "سموحة",
-      "sourceResponse": {
-        "file": "research-round8/smouha.json.gz",
-        "osmIdentity": "OSM:node/11878324669"
-      },
+      "sourceResponse": { "file": "research-round8/smouha.json.gz", "osmIdentity": "OSM:node/11878324669" },
       "proxyPoint": true,
       "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
       "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
@@ -1841,10 +1510,7 @@
       "sourceCode": "PUPZY:sidi-bishr",
       "nameEnglish": "Sidi Bishr",
       "nameArabic": "سيدي بشر",
-      "sourceResponse": {
-        "file": "research-round8/sidi-bishr.json.gz",
-        "osmIdentity": "OSM:node/339078708"
-      },
+      "sourceResponse": { "file": "research-round8/sidi-bishr.json.gz", "osmIdentity": "OSM:node/339078708" },
       "proxyPoint": true,
       "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
       "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
@@ -1853,10 +1519,7 @@
       "sourceCode": "PUPZY:alf-maskan",
       "nameEnglish": "Alf Maskan",
       "nameArabic": "ألف مسكن",
-      "sourceResponse": {
-        "file": "research-round8/alf-maskan.json.gz",
-        "osmIdentity": "OSM:node/7153613350"
-      },
+      "sourceResponse": { "file": "research-round8/alf-maskan.json.gz", "osmIdentity": "OSM:node/7153613350" },
       "proxyPoint": true,
       "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
       "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
@@ -1865,10 +1528,7 @@
       "sourceCode": "PUPZY:mostakbal-headline",
       "nameEnglish": "Mostakbal City",
       "nameArabic": "مدينة المستقبل",
-      "sourceResponse": {
-        "file": "research-round8/mostakbal-city.json.gz",
-        "osmIdentity": "OSM:way/532811212"
-      },
+      "sourceResponse": { "file": "research-round8/mostakbal-city.json.gz", "osmIdentity": "OSM:way/532811212" },
       "proxyPoint": true,
       "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
       "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
@@ -1877,10 +1537,7 @@
       "sourceCode": "PUPZY:degla-headline",
       "nameEnglish": "Degla",
       "nameArabic": "دجلة",
-      "sourceResponse": {
-        "file": "research-round8/degla-square.json.gz",
-        "osmIdentity": "OSM:way/1559202714"
-      },
+      "sourceResponse": { "file": "research-round8/degla-square.json.gz", "osmIdentity": "OSM:way/1559202714" },
       "proxyPoint": true,
       "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
       "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
@@ -1889,10 +1546,7 @@
       "sourceCode": "PUPZY:bitash-headline",
       "nameEnglish": "Bitash",
       "nameArabic": "البيطاش",
-      "sourceResponse": {
-        "file": "research-round8/bitash.json.gz",
-        "osmIdentity": "OSM:way/653713928"
-      },
+      "sourceResponse": { "file": "research-round8/bitash.json.gz", "osmIdentity": "OSM:way/653713928" },
       "proxyPoint": true,
       "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
       "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
@@ -1901,10 +1555,7 @@
       "sourceCode": "PUPZY:khorshid-headline",
       "nameEnglish": "Khorshid",
       "nameArabic": "خورشيد",
-      "sourceResponse": {
-        "file": "research-round8/khorshid.json.gz",
-        "osmIdentity": "OSM:way/850535298"
-      },
+      "sourceResponse": { "file": "research-round8/khorshid.json.gz", "osmIdentity": "OSM:way/850535298" },
       "proxyPoint": true,
       "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
       "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
@@ -1913,10 +1564,7 @@
       "sourceCode": "PUPZY:seyouf-headline",
       "nameEnglish": "Seyouf",
       "nameArabic": "السيوف",
-      "sourceResponse": {
-        "file": "research-round8/seyouf.json.gz",
-        "osmIdentity": "OSM:node/14073921007"
-      },
+      "sourceResponse": { "file": "research-round8/seyouf.json.gz", "osmIdentity": "OSM:node/14073921007" },
       "proxyPoint": true,
       "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
       "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
@@ -1932,10 +1580,7 @@
       "sourceCode": "PUPZY:ramses-area",
       "nameEnglish": "Ramses",
       "nameArabic": "رمسيس",
-      "sourceResponse": {
-        "file": "research-round8/ramses.json.gz",
-        "osmIdentity": "OSM:node/14314432628"
-      },
+      "sourceResponse": { "file": "research-round8/ramses.json.gz", "osmIdentity": "OSM:node/14314432628" },
       "proxyPoint": true,
       "evidence": "Recorded exact named square/station/site/area club/road or enclosing-city project point, with an independently established area name from the reviewed checklist.",
       "notes": "Lead exact-name gate: real named area, explicit source-response landmark proxy, not an unnamed extra representative. NewZayed uses the project explicitly named Ritz New Zayed; Sayala club and GhaitEnab site are point proxies, not club/site Cities."
@@ -1944,10 +1589,7 @@
       "sourceCode": "PUPZY:hegaz-area",
       "nameEnglish": "Hegaz",
       "nameArabic": "الحجاز",
-      "sourceResponse": {
-        "file": "research-round8/hegaz.json.gz",
-        "osmIdentity": "OSM:way/1435535923"
-      },
+      "sourceResponse": { "file": "research-round8/hegaz.json.gz", "osmIdentity": "OSM:way/1435535923" },
       "proxyPoint": true,
       "evidence": "Recorded exact named square/station/site/area club/road or enclosing-city project point, with an independently established area name from the reviewed checklist.",
       "notes": "Lead exact-name gate: real named area, explicit source-response landmark proxy, not an unnamed extra representative. NewZayed uses the project explicitly named Ritz New Zayed; Sayala club and GhaitEnab site are point proxies, not club/site Cities."
@@ -1956,10 +1598,7 @@
       "sourceCode": "PUPZY:tabia-area",
       "nameEnglish": "Tabia",
       "nameArabic": "الطابية",
-      "sourceResponse": {
-        "file": "research-round8/tabia.json.gz",
-        "osmIdentity": "OSM:node/10601354357"
-      },
+      "sourceResponse": { "file": "research-round8/tabia.json.gz", "osmIdentity": "OSM:node/10601354357" },
       "proxyPoint": true,
       "evidence": "Recorded exact named square/station/site/area club/road or enclosing-city project point, with an independently established area name from the reviewed checklist.",
       "notes": "Lead exact-name gate: real named area, explicit source-response landmark proxy, not an unnamed extra representative. NewZayed uses the project explicitly named Ritz New Zayed; Sayala club and GhaitEnab site are point proxies, not club/site Cities."
@@ -1968,10 +1607,7 @@
       "sourceCode": "PUPZY:ghit-enab-area",
       "nameEnglish": "Ghait El Enab",
       "nameArabic": "غيط العنب",
-      "sourceResponse": {
-        "file": "research-round8/ghit-enab.json.gz",
-        "osmIdentity": "OSM:node/4263836689"
-      },
+      "sourceResponse": { "file": "research-round8/ghit-enab.json.gz", "osmIdentity": "OSM:node/4263836689" },
       "proxyPoint": true,
       "evidence": "Recorded exact named square/station/site/area club/road or enclosing-city project point, with an independently established area name from the reviewed checklist.",
       "notes": "Lead exact-name gate: real named area, explicit source-response landmark proxy, not an unnamed extra representative. NewZayed uses the project explicitly named Ritz New Zayed; Sayala club and GhaitEnab site are point proxies, not club/site Cities."
@@ -1980,10 +1616,7 @@
       "sourceCode": "PUPZY:sayala-alex-area",
       "nameEnglish": "Sayala",
       "nameArabic": "السيالة",
-      "sourceResponse": {
-        "file": "research-round8/sayala-alex.json.gz",
-        "osmIdentity": "OSM:node/12235878894"
-      },
+      "sourceResponse": { "file": "research-round8/sayala-alex.json.gz", "osmIdentity": "OSM:node/12235878894" },
       "proxyPoint": true,
       "evidence": "Recorded exact named square/station/site/area club/road or enclosing-city project point, with an independently established area name from the reviewed checklist.",
       "notes": "Lead exact-name gate: real named area, explicit source-response landmark proxy, not an unnamed extra representative. NewZayed uses the project explicitly named Ritz New Zayed; Sayala club and GhaitEnab site are point proxies, not club/site Cities."
@@ -1992,10 +1625,7 @@
       "sourceCode": "PUPZY:sayala-damietta-area",
       "nameEnglish": "El Sayala",
       "nameArabic": "السيالة",
-      "sourceResponse": {
-        "file": "research-round8/sayala-damietta.json.gz",
-        "osmIdentity": "OSM:way/794742681"
-      },
+      "sourceResponse": { "file": "research-round8/sayala-damietta.json.gz", "osmIdentity": "OSM:way/794742681" },
       "proxyPoint": true,
       "evidence": "Recorded exact named square/station/site/area club/road or enclosing-city project point, with an independently established area name from the reviewed checklist.",
       "notes": "Lead exact-name gate: real named area, explicit source-response landmark proxy, not an unnamed extra representative. NewZayed uses the project explicitly named Ritz New Zayed; Sayala club and GhaitEnab site are point proxies, not club/site Cities."
@@ -2004,10 +1634,7 @@
       "sourceCode": "PUPZY:new-zayed-area",
       "nameEnglish": "New Zayed",
       "nameArabic": "زايد الجديدة",
-      "sourceResponse": {
-        "file": "research-round8/new-zayed-en.json.gz",
-        "osmIdentity": "OSM:way/1426601598"
-      },
+      "sourceResponse": { "file": "research-round8/new-zayed-en.json.gz", "osmIdentity": "OSM:way/1426601598" },
       "proxyPoint": true,
       "evidence": "Recorded exact named square/station/site/area club/road or enclosing-city project point, with an independently established area name from the reviewed checklist.",
       "notes": "Lead exact-name gate: real named area, explicit source-response landmark proxy, not an unnamed extra representative. NewZayed uses the project explicitly named Ritz New Zayed; Sayala club and GhaitEnab site are point proxies, not club/site Cities."
@@ -2065,35 +1692,18 @@
     "excluded": 300,
     "includedErrors": 4,
     "excludedErrors": 0,
-    "errorSourceCodes": [
-      "OSM:way/752939550",
-      "OSM:way/1223416203",
-      "OSM:way/772964024",
-      "WD:Q12235306"
-    ],
+    "errorSourceCodes": ["OSM:way/752939550", "OSM:way/1223416203", "OSM:way/772964024", "WD:Q12235306"],
     "notes": "Read included/excluded tables and every merge/disambiguation/curated-name table; found four inclusion problems. Reject student hostels/directional labels and contradictory WD locality. Same-identity distant housing aggregates remain explicitly listed as reviewer priorities."
   },
   "auditFiles": {
-    "identity-review": {
-      "sha256": "8d5726f407dd741acbadb8a9312a6d240b3bc9c6cfd4339a317b152e83f8d5b6",
-      "rows": 302
-    },
-    "merge-review": {
-      "sha256": "76b0409bac14fdc57b4b91e5903ab39f52e8120a50859023f403bda25f5c3ade",
-      "rows": 141
-    },
+    "identity-review": { "sha256": "8d5726f407dd741acbadb8a9312a6d240b3bc9c6cfd4339a317b152e83f8d5b6", "rows": 302 },
+    "merge-review": { "sha256": "76b0409bac14fdc57b4b91e5903ab39f52e8120a50859023f403bda25f5c3ade", "rows": 141 },
     "curated-name-review": {
       "sha256": "cb94c3c3e68f2d8a49dc37288f8e928d05f71b54dc28ad8b9cf90578e3d021ca",
       "rows": 425
     },
-    "number-name-review": {
-      "sha256": "c8a5eae290dc523ddda9344f9d53a20fa7e8305f9465aad08e3d512189e8a426",
-      "rows": 94
-    },
-    "starter-review": {
-      "sha256": "63bfe480610352487d6424ad308e2f93663db5b39a5d5db22b09eaeb5306f1e5",
-      "rows": 83
-    },
+    "number-name-review": { "sha256": "c8a5eae290dc523ddda9344f9d53a20fa7e8305f9465aad08e3d512189e8a426", "rows": 94 },
+    "starter-review": { "sha256": "63bfe480610352487d6424ad308e2f93663db5b39a5d5db22b09eaeb5306f1e5", "rows": 83 },
     "sample-round4-included": {
       "sha256": "e1932753607ae076f2ddf9cd16a3f1cc7550ba62373d968376acdbc02a703c1a",
       "rows": 300
@@ -2120,1023 +1730,626 @@
     "rows": 90,
     "method": "Individually read all 90 source labels, coordinates, containing OCHA district and adjacent-district list. Independent single-coordinate WD landmarks; no catalog coordinates used. Ten established landmarks and twenty dispersed points per region. Sixty recent named-mosque imports have lower source confidence; no field verification is claimed. Adjacency review includes genuinely shared boundaries across governorates; the same-governorate restriction governs City parent assignment, not GPS fixture neighbours. The 1.5 km additional proximity bound is retained. Original 90 landmark coordinates retained this round; two shared-boundary Ganoub neighbours explicitly reviewed. Village 29 City coordinate derives independently from the OSM footprint. The canal-gap case remains unaccepted."
   },
-  "reviewedInputSha256": "a15537707075d3d21b58eed75acb9a2a50c223b8c62f8d3f37066128230efc5a",
+  "reviewedInputSha256": "4792c536acf3d2a2969a5e2e599d85188f30c86c4ca123d8a77593c772ac1def",
   "aliasReview": [
     {
       "sourceCode": "OSM:node/768591737",
-      "aliases": [
-        "Shubra El Kheima",
-        "شبرا الخيمة",
-        "Shobra El Kheima"
-      ],
+      "aliases": ["Shubra El Kheima", "شبرا الخيمة", "Shobra El Kheima"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/777522265",
-      "aliases": [
-        "New Maadi",
-        "المعادي الجديدة"
-      ],
+      "aliases": ["New Maadi", "المعادي الجديدة"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/31820671",
-      "aliases": [
-        "Hay El Sabea",
-        "الحي السابع"
-      ],
+      "aliases": ["Hay El Sabea", "الحي السابع"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/365077646",
-      "aliases": [
-        "Hay El Asher",
-        "الحي العاشر"
-      ],
+      "aliases": ["Hay El Asher", "الحي العاشر"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/310062496",
-      "aliases": [
-        "Hay El Tamen",
-        "الحي الثامن"
-      ],
+      "aliases": ["Hay El Tamen", "الحي الثامن"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "EG0123",
-      "aliases": [
-        "Hadayek El Qobba",
-        "حدائق القبة",
-        "Hadayek El Kobba"
-      ],
+      "aliases": ["Hadayek El Qobba", "حدائق القبة", "Hadayek El Kobba"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/708231172",
-      "aliases": [
-        "Dar El Salam",
-        "دار السلام"
-      ],
+      "aliases": ["Dar El Salam", "دار السلام"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:node/331877496",
-      "aliases": [
-        "Massara",
-        "المعصرة"
-      ],
+      "aliases": ["Massara", "المعصرة"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:node/13346917627",
-      "aliases": [
-        "Hadayek El Ahram",
-        "حدائق الأهرام"
-      ],
+      "aliases": ["Hadayek El Ahram", "حدائق الأهرام"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/725892870",
-      "aliases": [
-        "Talbiya",
-        "الطالبية"
-      ],
+      "aliases": ["Talbiya", "الطالبية"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/721813426",
-      "aliases": [
-        "Moneeb",
-        "المنيب",
-        "Al Mounib"
-      ],
+      "aliases": ["Moneeb", "المنيب", "Al Mounib"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/309245588",
-      "aliases": [
-        "Uptown Cairo",
-        "أب تاون كايرو"
-      ],
+      "aliases": ["Uptown Cairo", "أب تاون كايرو"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:node/2587210662",
-      "aliases": [
-        "South Academy",
-        "جنوب الأكاديمية"
-      ],
+      "aliases": ["South Academy", "جنوب الأكاديمية"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "PUPZY:adm3-eg013703",
-      "aliases": [
-        "North Investors",
-        "المستثمرين الشمالية"
-      ],
+      "aliases": ["North Investors", "المستثمرين الشمالية"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "PUPZY:adm3-eg013702",
-      "aliases": [
-        "South Investors",
-        "المستثمرين الجنوبية"
-      ],
+      "aliases": ["South Investors", "المستثمرين الجنوبية"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/691966648",
-      "aliases": [
-        "Beit El Watan",
-        "بيت الوطن"
-      ],
+      "aliases": ["Beit El Watan", "بيت الوطن"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/715436391",
-      "aliases": [
-        "Helmeyet El Zaitoun",
-        "حلمية الزيتون"
-      ],
+      "aliases": ["Helmeyet El Zaitoun", "حلمية الزيتون"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/701320188",
-      "aliases": [
-        "Manshiyet El Bakry",
-        "منشية البكري"
-      ],
+      "aliases": ["Manshiyet El Bakry", "منشية البكري"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/701374855",
-      "aliases": [
-        "Amiriyat El Balad",
-        "أميرية البلد"
-      ],
+      "aliases": ["Amiriyat El Balad", "أميرية البلد"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:node/384273421",
-      "aliases": [
-        "Bain El Sarayat",
-        "بين السرايات"
-      ],
+      "aliases": ["Bain El Sarayat", "بين السرايات"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/64503891",
-      "aliases": [
-        "Hadayek El Mohandessin",
-        "حدائق المهندسين",
-        "Mohandiseen",
-        "Mohandeseen"
-      ],
+      "aliases": ["Hadayek El Mohandessin", "حدائق المهندسين", "Mohandiseen", "Mohandeseen"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/695979202",
-      "aliases": [
-        "Iskan El Mostakbal",
-        "إسكان المستقبل"
-      ],
+      "aliases": ["Iskan El Mostakbal", "إسكان المستقبل"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/744380931",
-      "aliases": [
-        "Shatby",
-        "الشاطبي",
-        "El Chatby",
-        "Chatby"
-      ],
+      "aliases": ["Shatby", "الشاطبي", "El Chatby", "Chatby"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "EG0207",
-      "aliases": [
-        "Mansheya",
-        "المنشية",
-        "El Manshia"
-      ],
+      "aliases": ["Mansheya", "المنشية", "El Manshia"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "EG0208",
-      "aliases": [
-        "Karmouz",
-        "كرموز",
-        "Karmous"
-      ],
+      "aliases": ["Karmouz", "كرموز", "Karmous"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:node/769127440",
-      "aliases": [
-        "Hannoville",
-        "الهانوفيل",
-        "El Hanoville"
-      ],
+      "aliases": ["Hannoville", "الهانوفيل", "El Hanoville"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/753056665",
-      "aliases": [
-        "Sidi Beshr Bahary",
-        "سيدي بشر بحري",
-        "Sidi Beshr Bahry"
-      ],
+      "aliases": ["Sidi Beshr Bahary", "سيدي بشر بحري", "Sidi Beshr Bahry"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/753056663",
-      "aliases": [
-        "Sidi Bishr Qebly",
-        "سيدي بشر قبلي",
-        "Sidi Beshr Qebly"
-      ],
+      "aliases": ["Sidi Bishr Qebly", "سيدي بشر قبلي", "Sidi Beshr Qebly"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/740671929",
-      "aliases": [
-        "Mandara Bahary",
-        "المندرة بحري"
-      ],
+      "aliases": ["Mandara Bahary", "المندرة بحري"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/740670393",
-      "aliases": [
-        "Bolkeley",
-        "بولكلي",
-        "Bolkly"
-      ],
+      "aliases": ["Bolkeley", "بولكلي", "Bolkly"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point. Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: بولكلي. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "OSM:way/744363155",
-      "aliases": [
-        "Abu El Nawatir",
-        "أبو النواتير"
-      ],
+      "aliases": ["Abu El Nawatir", "أبو النواتير"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:node/769126812",
-      "aliases": [
-        "Mostafa Kamel",
-        "مصطفى كامل"
-      ],
+      "aliases": ["Mostafa Kamel", "مصطفى كامل"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/1550216998",
-      "aliases": [
-        "Abees",
-        "أبيس"
-      ],
+      "aliases": ["Abees", "أبيس"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/747077992",
-      "aliases": [
-        "Hagar El Nawateya",
-        "حجر النواتية"
-      ],
+      "aliases": ["Hagar El Nawateya", "حجر النواتية"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:relation/13651336",
-      "aliases": [
-        "Ras El Tin",
-        "رأس التين"
-      ],
+      "aliases": ["Ras El Tin", "رأس التين"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "EG0206",
-      "aliases": [
-        "Attarin",
-        "العطارين",
-        "Attareen",
-        "El Atareen"
-      ],
+      "aliases": ["Attarin", "العطارين", "Attareen", "El Atareen"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point. Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: العطارين. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "OSM:way/740701208",
-      "aliases": [
-        "Kom El Shokafa",
-        "كوم الشقافة"
-      ],
+      "aliases": ["Kom El Shokafa", "كوم الشقافة"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:node/769118971",
-      "aliases": [
-        "Kabbary",
-        "القباري",
-        "El Qabbari",
-        "El Qabari",
-        "Qabary",
-        "Qabbary"
-      ],
+      "aliases": ["Kabbary", "القباري", "El Qabbari", "El Qabari", "Qabary", "Qabbary"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point. Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: القباري. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "PUPZY:adm3-eg021101",
-      "aliases": [
-        "Kafr Ashry",
-        "كفر عشري"
-      ],
+      "aliases": ["Kafr Ashry", "كفر عشري"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/742230124",
-      "aliases": [
-        "Abis 2",
-        "أبيس الثانية"
-      ],
+      "aliases": ["Abis 2", "أبيس الثانية"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "PUPZY:adm3-eg181235",
-      "aliases": [
-        "Abis 3",
-        "أبيس الثالثة"
-      ],
+      "aliases": ["Abis 3", "أبيس الثالثة"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "PUPZY:adm3-eg181236",
-      "aliases": [
-        "Abis 4",
-        "أبيس الرابعة"
-      ],
+      "aliases": ["Abis 4", "أبيس الرابعة"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "PUPZY:adm3-eg181237",
-      "aliases": [
-        "Abis 5",
-        "أبيس الخامسة"
-      ],
+      "aliases": ["Abis 5", "أبيس الخامسة"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "PUPZY:adm3-eg181238",
-      "aliases": [
-        "Abis 6",
-        "أبيس السادسة"
-      ],
+      "aliases": ["Abis 6", "أبيس السادسة"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/1530614412",
-      "aliases": [
-        "Maamoura Beach",
-        "شاطئ المعمورة",
-        "El Mamoura El Shatea",
-        "Al Mamoura El Shatea"
-      ],
+      "aliases": ["Maamoura Beach", "شاطئ المعمورة", "El Mamoura El Shatea", "Al Mamoura El Shatea"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point. Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: المعمورة الشاطئ. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "OSM:way/744666834",
-      "aliases": [
-        "Merghem",
-        "مرغم",
-        "Merghim"
-      ],
+      "aliases": ["Merghem", "مرغم", "Merghim"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:node/769118342",
-      "aliases": [
-        "Abdel Kader",
-        "عبد القادر"
-      ],
+      "aliases": ["Abdel Kader", "عبد القادر"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/745361368",
-      "aliases": [
-        "El Hawareya",
-        "الهوارية",
-        "Al Hawareya",
-        "Al Hawaria"
-      ],
+      "aliases": ["El Hawareya", "الهوارية", "Al Hawareya", "Al Hawaria"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/746959124",
-      "aliases": [
-        "6 October Beach",
-        "شاطئ ٦ أكتوبر"
-      ],
+      "aliases": ["6 October Beach", "شاطئ ٦ أكتوبر"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/744960519",
-      "aliases": [
-        "Zahraa Agami",
-        "زهراء العجمي"
-      ],
+      "aliases": ["Zahraa Agami", "زهراء العجمي"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/746610705",
-      "aliases": [
-        "Abu Talat",
-        "أبو تلات"
-      ],
+      "aliases": ["Abu Talat", "أبو تلات"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:node/676395184",
-      "aliases": [
-        "Sidi Krir",
-        "سيدي كرير",
-        "Sidi Kerir"
-      ],
+      "aliases": ["Sidi Krir", "سيدي كرير", "Sidi Kerir"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/1429670450",
-      "aliases": [
-        "Latin Quarter Alamein",
-        "الحي اللاتيني العلمين"
-      ],
+      "aliases": ["Latin Quarter Alamein", "الحي اللاتيني العلمين"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "PUPZY:adm3-eg190301",
-      "aliases": [
-        "Sheikh Zayed Ismailia",
-        "الشيخ زايد الإسماعيلية"
-      ],
+      "aliases": ["Sheikh Zayed Ismailia", "الشيخ زايد الإسماعيلية"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "PUPZY:ismailia-afrang",
-      "aliases": [
-        "El Afrang Ismailia",
-        "الإفرنج الإسماعيلية",
-        "Al Afrang Ismailia"
-      ],
+      "aliases": ["El Afrang Ismailia", "الإفرنج الإسماعيلية", "Al Afrang Ismailia"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/803734509",
-      "aliases": [
-        "El Temsah",
-        "التمساح",
-        "Al Temsah",
-        "Al Tamsah"
-      ],
+      "aliases": ["El Temsah", "التمساح", "Al Temsah", "Al Tamsah"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/38581952",
-      "aliases": [
-        "Abu Atwa",
-        "أبو عطوة"
-      ],
+      "aliases": ["Abu Atwa", "أبو عطوة"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "PUPZY:adm3-eg110204",
-      "aliases": [
-        "El Senaneya",
-        "السنانية",
-        "Al Senaneya"
-      ],
+      "aliases": ["El Senaneya", "السنانية", "Al Senaneya"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "PUPZY:adm3-eg110206",
-      "aliases": [
-        "El Ananeya",
-        "العنانية",
-        "Al Ananeya",
-        "El Ananiya"
-      ],
+      "aliases": ["El Ananeya", "العنانية", "Al Ananeya", "El Ananiya"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "WD:Q1010823",
-      "aliases": [
-        "Ezbet Al Borg City",
-        "مدينه عزبه البرج"
-      ],
+      "aliases": ["Ezbet Al Borg City", "مدينه عزبه البرج"],
       "notes": "Personally reviewed bilingual identity/spelling or explicit named component of the source unit; independent checklist did not determine any point."
     },
     {
       "sourceCode": "OSM:way/810437370",
-      "aliases": [
-        "New Arayesheya",
-        "El Araishiya"
-      ],
+      "aliases": ["New Arayesheya", "El Araishiya"],
       "notes": "Spelling variant of New Al Araishyah; retains New qualifier. Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
     },
     {
       "sourceCode": "OSM:way/691672998",
-      "aliases": [
-        "Palm Hills October",
-        "بالم هيلز أكتوبر"
-      ],
+      "aliases": ["Palm Hills October", "بالم هيلز أكتوبر"],
       "notes": "Giza Palm Hills feature at the October/Zayed edge; New Cairo Palm Hills is a distinct source feature."
     },
     {
       "sourceCode": "OSM:node/14124125894",
-      "aliases": [
-        "Mariouteya",
-        "Maryouteya",
-        "El Mariouteya",
-        "المريوطية"
-      ],
+      "aliases": ["Mariouteya", "Maryouteya", "El Mariouteya", "المريوطية"],
       "notes": "Same named Mariouteya area, explicitly qualified Haram in source."
     },
     {
       "sourceCode": "OSM:node/14124205746",
-      "aliases": [
-        "Mariouteya Faisal",
-        "Maryouteya Faisal",
-        "المريوطية فيصل"
-      ],
+      "aliases": ["Mariouteya Faisal", "Maryouteya Faisal", "المريوطية فيصل"],
       "notes": "Source Maryouteya Faisal locality, credible transliteration."
     },
     {
       "sourceCode": "OSM:node/14103953185",
-      "aliases": [
-        "Falaky",
-        "El Falaky",
-        "الفلكي"
-      ],
+      "aliases": ["Falaky", "El Falaky", "الفلكي"],
       "notes": "Named Falaki entrance is the established area landmark; variant transliteration of explicit source component, not a nearby unrelated place."
     },
     {
       "sourceCode": "PUPZY:adm3-eg211307",
-      "aliases": [
-        "Al Hisaniyin",
-        "Al Hisaniyin",
-        "الحسانيين"
-      ],
+      "aliases": ["Al Hisaniyin", "Al Hisaniyin", "الحسانيين"],
       "notes": "Source-backed OCHA populated-place spelling of the same Arabic settlement identity; duplicate point excluded."
     },
     {
       "sourceCode": "PUPZY:adm3-eg212007",
-      "aliases": [
-        "Bani Majdul",
-        "Bani Majdul",
-        "بني مجدول"
-      ],
+      "aliases": ["Bani Majdul", "Bani Majdul", "بني مجدول"],
       "notes": "Source-backed OCHA populated-place spelling of the same Arabic settlement identity; duplicate point excluded."
     },
     {
       "sourceCode": "PUPZY:adm3-eg140302",
-      "aliases": [
-        "Abu Za bal",
-        "Abu Za bal",
-        "أبو زعبل"
-      ],
+      "aliases": ["Abu Za bal", "Abu Za bal", "أبو زعبل"],
       "notes": "Source-backed OCHA populated-place spelling of the same Arabic settlement identity; duplicate point excluded."
     },
     {
       "sourceCode": "OSM:way/718800414",
-      "aliases": [
-        "Ezbet El-Nakhl"
-      ],
+      "aliases": ["Ezbet El-Nakhl"],
       "notes": "Hyphen/spacing spelling of the canonical source name; same Arabic identity, no point change."
     },
     {
       "sourceCode": "EG2107",
-      "aliases": [
-        "6th of October City"
-      ],
+      "aliases": ["6th of October City"],
       "notes": "Existing 6th October city district; standard City qualifier from cached Wikidata label."
     },
     {
       "sourceCode": "EG0103",
-      "aliases": [
-        "15th of May City"
-      ],
+      "aliases": ["15th of May City"],
       "notes": "Existing 15th May city district; standard City qualifier from cached Wikidata label."
     },
     {
       "sourceCode": "OSM:relation/17266240",
-      "aliases": [
-        "New 6th of October City",
-        "مدينة أكتوبر الجديدة",
-        "السادس من أكتوبر الجديدة"
-      ],
+      "aliases": ["New 6th of October City", "مدينة أكتوبر الجديدة", "السادس من أكتوبر الجديدة"],
       "notes": "Q108750051 labels name New October city. Alias only: the broad OSM city polygon and WD representative coordinates differ by about 12 km; no coordinate correction or second duplicate city."
     },
     {
       "sourceCode": "WD:Q110420273",
-      "aliases": [
-        "City of Arts and Culture (Egypt)"
-      ],
+      "aliases": ["City of Arts and Culture (Egypt)"],
       "notes": "Exact English label of this same Wikidata source identity."
     },
     {
       "sourceCode": "OSM:way/706681889",
-      "aliases": [
-        "Kafr El Olow"
-      ],
+      "aliases": ["Kafr El Olow"],
       "notes": "Q19921433 has the exact same Arabic كفر العلو; transliteration variant, not a second settlement."
     },
     {
       "sourceCode": "OSM:way/363319622",
-      "aliases": [
-        "Madinat El-Amal",
-        "مدينة الأمل",
-        "Ezbet el-Haggana"
-      ],
+      "aliases": ["Madinat El-Amal", "مدينة الأمل", "Ezbet el-Haggana"],
       "notes": "Q5423099 explicitly lists عزبة الهجانة as alias; its coordinate is 359 m from this source point. Do not merge the unrelated generic Al Amal elsewhere."
     },
     {
       "sourceCode": "OSM:node/9621572768",
-      "aliases": [
-        "Kafr Abdu"
-      ],
+      "aliases": ["Kafr Abdu"],
       "notes": "Direct transliteration variant of كفر عبده."
     },
     {
       "sourceCode": "EG1811",
-      "aliases": [
-        "Kafr el-Dawwar"
-      ],
+      "aliases": ["Kafr el-Dawwar"],
       "notes": "Standard Kafr El Dawwar city spelling; the Markaz district remains separate."
     },
     {
       "sourceCode": "EG0210",
-      "aliases": [
-        "حي الجمرك",
-        "حى الجمرك",
-        "El Gomrok"
-      ],
+      "aliases": ["حي الجمرك", "حى الجمرك", "El Gomrok"],
       "notes": "Q4519131 Arabic label names Gomrok. Reject its conflated Port Alexandria Police Department alias: that belongs to separate district EG0215."
     },
     {
       "sourceCode": "PUPZY:maamoura-balad",
-      "aliases": [
-        "El Mamoura El Balad",
-        "Al Mamoura El Balad"
-      ],
+      "aliases": ["El Mamoura El Balad", "Al Mamoura El Balad"],
       "notes": "Single/double-a English variant of the exact source-backed Maamoura El Balad identity."
     },
     {
       "sourceCode": "OSM:way/740703455",
-      "aliases": [
-        "Ghait El Enab",
-        "Ghait El Enab East"
-      ],
+      "aliases": ["Ghait El Enab", "Ghait El Enab East"],
       "notes": "Same غيط العنب source component; common Ghait/Gheit transliteration. East qualifier remains canonical."
     },
     {
       "sourceCode": "OSM:way/741866073",
-      "aliases": [
-        "Ghait El Enab",
-        "Ghait El Enab West"
-      ],
+      "aliases": ["Ghait El Enab", "Ghait El Enab West"],
       "notes": "Same غيط العنب source component; common Ghait/Gheit transliteration. West qualifier remains canonical."
     },
     {
       "sourceCode": "OSM:way/741923530",
-      "aliases": [
-        "Kom El Dikka",
-        "Kom El Dikka East"
-      ],
+      "aliases": ["Kom El Dikka", "Kom El Dikka East"],
       "notes": "Same كوم الدكة source component; East quarter remains distinct."
     },
     {
       "sourceCode": "OSM:way/741923534",
-      "aliases": [
-        "Kom El Dikka",
-        "Kom El Dikka West"
-      ],
+      "aliases": ["Kom El Dikka", "Kom El Dikka West"],
       "notes": "Same كوم الدكة source component; West quarter remains distinct."
     },
     {
       "sourceCode": "OSM:way/744555703",
-      "aliases": [
-        "Abis 7",
-        "Abis 8",
-        "Abis 10",
-        "أبيس السابعة",
-        "أبيس الثامنة",
-        "أبيس العاشرة"
-      ],
+      "aliases": ["Abis 7", "Abis 8", "Abis 10", "أبيس السابعة", "أبيس الثامنة", "أبيس العاشرة"],
       "notes": "Raw source explicitly combines أبيس 7, 8, 10; spelled-out ordinal aliases of those components, not new points for unspecified numbered units."
     },
     {
       "sourceCode": "OSM:way/267097565",
-      "aliases": [
-        "مراقيا"
-      ],
+      "aliases": ["مراقيا"],
       "notes": "Standard alternate spelling of named Marakia / مراقية resort; source name retained."
     },
     {
       "sourceCode": "OSM:way/747236735",
-      "aliases": [
-        "El Nakheel",
-        "Al Nakheel",
-        "النخيل"
-      ],
+      "aliases": ["El Nakheel", "Al Nakheel", "النخيل"],
       "notes": "Palm Beach شاطئ النخيل source explicitly names Nakheel; area-name/transliteration alias, not a different resort or coordinate."
     },
     {
       "sourceCode": "OSM:node/3707953647",
-      "aliases": [
-        "Marina 1",
-        "مارينا ١"
-      ],
+      "aliases": ["Marina 1", "مارينا ١"],
       "notes": "Existing named Marina Gate locality is the corresponding Marina sector; preserve identity and add conventional gate-omitted spelling from client checklist. Source lead Nominatim exact named locality and existing hamlet response."
     },
     {
       "sourceCode": "OSM:node/3708003837",
-      "aliases": [
-        "Marina 2",
-        "مارينا ٢"
-      ],
+      "aliases": ["Marina 2", "مارينا ٢"],
       "notes": "Existing named Marina Gate locality is the corresponding Marina sector; preserve identity and add conventional gate-omitted spelling from client checklist. Source lead Nominatim exact named locality and existing hamlet response."
     },
     {
       "sourceCode": "OSM:node/3708003838",
-      "aliases": [
-        "Marina 3",
-        "مارينا ٣"
-      ],
+      "aliases": ["Marina 3", "مارينا ٣"],
       "notes": "Existing named Marina Gate locality is the corresponding Marina sector; preserve identity and add conventional gate-omitted spelling from client checklist. Source lead Nominatim exact named locality and existing hamlet response."
     },
     {
       "sourceCode": "OSM:node/3708245594",
-      "aliases": [
-        "Marina 4",
-        "مارينا ٤"
-      ],
+      "aliases": ["Marina 4", "مارينا ٤"],
       "notes": "Existing named Marina Gate locality is the corresponding Marina sector; preserve identity and add conventional gate-omitted spelling from client checklist. Source lead Nominatim exact named locality and existing hamlet response."
     },
     {
       "sourceCode": "PUPZY:adm3-eg020507",
-      "aliases": [
-        "Abis 9",
-        "أبيس التاسعة"
-      ],
+      "aliases": ["Abis 9", "أبيس التاسعة"],
       "notes": "Abis 9 is explicitly a component of independently sourced OCHA Abis 7/8/9/10 unit, not a newly inferred village coordinate."
     },
     {
       "sourceCode": "PUPZY:adm3-eg021308",
-      "aliases": [
-        "El Nahda El Amreya",
-        "Al Nahda El Amreya",
-        "النهضة العامرية"
-      ],
+      "aliases": ["El Nahda El Amreya", "Al Nahda El Amreya", "النهضة العامرية"],
       "notes": "Explicit Amreya El Nahda Sector; regional qualifier distinguishes Borg El Arab Nahda homonyms. OCHA official source name قطاع النهضة."
     },
     {
       "sourceCode": "OSM:way/810393909",
-      "aliases": [
-        "El Bahtini",
-        "البهتيني"
-      ],
+      "aliases": ["El Bahtini", "البهتيني"],
       "notes": "Arabic Wikipedia Ismailia district table spells البهتيني. Existing OSM حي البهتيمى appears a one-letter rendering error of the same Ismailia locality; source point preserved."
     },
     {
       "sourceCode": "OSM:way/810492015",
-      "aliases": [
-        "El Toroq Wal Kabari",
-        "الطرق والكباري"
-      ],
+      "aliases": ["El Toroq Wal Kabari", "الطرق والكباري"],
       "notes": "English transliteration and Arabic ya spelling of exact الطرق والكبارى locality; independently selected from Ismailia public administrative table."
     },
     {
       "sourceCode": "OSM:node/384265543",
-      "aliases": [
-        "Mit Oqba"
-      ],
+      "aliases": ["Mit Oqba"],
       "notes": "Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: ميت عقبة. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "OSM:way/30714938",
-      "aliases": [
-        "Dahab Island"
-      ],
+      "aliases": ["Dahab Island"],
       "notes": "Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: جزيرة الدهب. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "OSM:node/331952687",
-      "aliases": [
-        "Tanash"
-      ],
+      "aliases": ["Tanash"],
       "notes": "Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: طناش. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "EG2116",
-      "aliases": [
-        "Ossim"
-      ],
+      "aliases": ["Ossim"],
       "notes": "Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: أوسيم. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "OSM:node/324567643",
-      "aliases": [
-        "Manshiyet El Bakari"
-      ],
+      "aliases": ["Manshiyet El Bakari"],
       "notes": "Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: منشأة البكاري. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "OSM:node/768552662",
-      "aliases": [
-        "Saqiet Mekki"
-      ],
+      "aliases": ["Saqiet Mekki"],
       "notes": "Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: ساقية مكي. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "OSM:way/721931288",
-      "aliases": [
-        "Qasabgi"
-      ],
+      "aliases": ["Qasabgi"],
       "notes": "Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: القصبجي. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "OSM:node/331877617",
-      "aliases": [
-        "Tammouh"
-      ],
+      "aliases": ["Tammouh"],
       "notes": "Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: طموه. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "WD:Q1656184",
-      "aliases": [
-        "Gianaclis"
-      ],
+      "aliases": ["Gianaclis"],
       "notes": "Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: جناكليس. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "WD:Q4119403",
-      "aliases": [
-        "Louran"
-      ],
+      "aliases": ["Louran"],
       "notes": "Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: لوران. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "WD:Q4518565",
-      "aliases": [
-        "Shods"
-      ],
+      "aliases": ["Shods"],
       "notes": "Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: شدس. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "WD:Q16126094",
-      "aliases": [
-        "Awaiyd"
-      ],
+      "aliases": ["Awaiyd"],
       "notes": "Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: العوايد. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "OSM:node/769129524",
-      "aliases": [
-        "Mansheya El Bahareya"
-      ],
+      "aliases": ["Mansheya El Bahareya"],
       "notes": "Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: المنشية البحرية. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "OSM:way/746977489",
-      "aliases": [
-        "El Zaheria",
-        "Al Zaheria"
-      ],
+      "aliases": ["El Zaheria", "Al Zaheria"],
       "notes": "Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: الظاهرية. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "PUPZY:manshiyet-el-nozha",
-      "aliases": [
-        "Manshiyet El Nozha"
-      ],
+      "aliases": ["Manshiyet El Nozha"],
       "notes": "Reviewed public-checklist spelling/translation variant; unique exact normalized Arabic identity in the existing source names/aliases: منشية النزهة. No coordinate/identity change. Independent checklist selection predates this match."
     },
     {
       "sourceCode": "OSM:way/30677759",
-      "aliases": [
-        "Geziret Mohamed"
-      ],
+      "aliases": ["Geziret Mohamed"],
       "notes": " Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
     },
     {
       "sourceCode": "OSM:way/724746906",
-      "aliases": [
-        "Nikla"
-      ],
+      "aliases": ["Nikla"],
       "notes": " Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
     },
     {
       "sourceCode": "OSM:way/645282013",
-      "aliases": [
-        "Mansouriya"
-      ],
+      "aliases": ["Mansouriya"],
       "notes": " Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
     },
     {
       "sourceCode": "OSM:way/723728136",
-      "aliases": [
-        "Moatamadiya"
-      ],
+      "aliases": ["Moatamadiya"],
       "notes": " Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
     },
     {
       "sourceCode": "OSM:way/723092193",
-      "aliases": [
-        "Kafr Ghattati"
-      ],
+      "aliases": ["Kafr Ghattati"],
       "notes": " Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
     },
     {
       "sourceCode": "OSM:node/322007875",
-      "aliases": [
-        "Abu El Nomros"
-      ],
+      "aliases": ["Abu El Nomros"],
       "notes": " Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
     },
     {
       "sourceCode": "OSM:way/244439100",
-      "aliases": [
-        "Nazlet El Ashter"
-      ],
+      "aliases": ["Nazlet El Ashter"],
       "notes": " Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
     },
     {
       "sourceCode": "OSM:way/723061046",
-      "aliases": [
-        "Bani Youssef"
-      ],
+      "aliases": ["Bani Youssef"],
       "notes": " Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
     },
     {
       "sourceCode": "OSM:way/1551445047",
-      "aliases": [
-        "Bashayer El Kheir",
-        "بشائر الخير"
-      ],
+      "aliases": ["Bashayer El Kheir", "بشائر الخير"],
       "notes": " Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
     },
     {
       "sourceCode": "OSM:node/769118972",
-      "aliases": [
-        "Wadi El Qamar"
-      ],
+      "aliases": ["Wadi El Qamar"],
       "notes": " Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
     },
     {
       "sourceCode": "WD:Q4803317",
-      "aliases": [
-        "العصافرة بحري",
-        "العصافرة قبلي",
-        "Asafra Bahary",
-        "Asafra Qebly"
-      ],
+      "aliases": ["العصافرة بحري", "العصافرة قبلي", "Asafra Bahary", "Asafra Qebly"],
       "notes": " Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
     },
     {
       "sourceCode": "EG3307",
-      "aliases": [
-        "مارينا ٥",
-        "مارينا ٦",
-        "مارينا ٧",
-        "Marina 5",
-        "Marina 6",
-        "Marina 7"
-      ],
+      "aliases": ["مارينا ٥", "مارينا ٦", "مارينا ٧", "Marina 5", "Marina 6", "Marina 7"],
       "notes": " Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
     },
     {
       "sourceCode": "WD:Q96395299",
-      "aliases": [
-        "داون تاون العلمين",
-        "أبراج العلمين",
-        "Downtown Alamein",
-        "El Alamein Towers",
-        "Al Alamein Towers"
-      ],
+      "aliases": ["داون تاون العلمين", "أبراج العلمين", "Downtown Alamein", "El Alamein Towers", "Al Alamein Towers"],
       "notes": " Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
     },
     {
       "sourceCode": "OSM:node/768590261",
-      "aliases": [
-        "جزيرة الوراق",
-        "Warraq Island"
-      ],
+      "aliases": ["جزيرة الوراق", "Warraq Island"],
       "notes": " Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
     },
     {
       "sourceCode": "OSM:node/9757506417",
-      "aliases": [
-        "Glymonopoulo",
-        "جليمونوبولو"
-      ],
+      "aliases": ["Glymonopoulo", "جليمونوبولو"],
       "notes": "Lead confirmation: historical name of Gleem, not a second City."
     }
   ],
@@ -3293,11 +2506,7 @@
   "targetedTowerReview": {
     "inspected": 13,
     "restoredNamedCommunities": 10,
-    "retainedExclusions": [
-      "OSM:way/724098296",
-      "OSM:way/726553666",
-      "OSM:way/752671523"
-    ],
+    "retainedExclusions": ["OSM:way/724098296", "OSM:way/726553666", "OSM:way/752671523"],
     "notes": "Targeted follow-up, independent of random sample error rate. Keep micro/single-building features excluded. Approximate polygon areas are diagnostics, not a universal inclusion threshold."
   },
   "residueReview": {
@@ -3338,19 +2547,10 @@
       "afterFeatures": 7713,
       "removedFeatures": 0,
       "changedGeometries": 0,
-      "addedAdm3Units": [
-        "EG181240",
-        "EG181222",
-        "EG211805"
-      ]
+      "addedAdm3Units": ["EG181240", "EG181222", "EG211805"]
     }
   },
-  "preferredSourceCodes": [
-    "OSM:relation/13651336",
-    "OSM:way/701320188",
-    "OSM:way/704256225",
-    "PUPZY:adm3-eg021014"
-  ],
+  "preferredSourceCodes": ["OSM:relation/13651336", "OSM:way/701320188", "OSM:way/704256225", "PUPZY:adm3-eg021014"],
   "gpsAdjacentReview": {
     "Q138206790": [
       {
@@ -3750,9 +2950,7 @@
     "Ash Shabasiyah": "Arabic feature name absent and the archival English spelling does not unambiguously identify a credible Arabic form. Do not guess; requires another recorded source.",
     "Kafr ash Shara inah": "Arabic feature name absent and the archival English spelling does not unambiguously identify a credible Arabic form. Do not guess; requires another recorded source."
   },
-  "districtIdentityMerges": {
-    "OSM:node/768596700": "EG0304"
-  },
+  "districtIdentityMerges": { "OSM:node/768596700": "EG0304" },
   "fifthSampleReview": {
     "seed": 20261109,
     "included": 300,
@@ -3761,9 +2959,7 @@
     "includedErrorRate": 0.03333333333333333,
     "spellingErrors": 2,
     "excludedErrors": 1,
-    "excludedErrorSourceCodes": [
-      "OSM:way/700895447"
-    ],
+    "excludedErrorSourceCodes": ["OSM:way/700895447"],
     "errorSourceCodes": [
       "OSM:way/544128616",
       "OSM:way/99517610",
@@ -3781,8 +2977,8 @@
   "independentNameReview": {
     "date": "2026-11-11",
     "reviewer": "Codex personal source/rule review",
-    "areasSha256": "dd35839db18305c5c17551a540fdccd19f666371a033614dafdbd6004241ecb4",
-    "notes": "Round9 independent419→418 Cairo names: national capital city is explicitly outside Neighbourhood granularity per lead. Alexandria268 / Port85 unchanged. Three individually researched missing entries approved by lead2026-11-11. Exact-name gate unchanged."
+    "areasSha256": "bab0e6c524492a2bf517646717ce3463ed376bcf9c12374b05b013b0e61307fd",
+    "notes": "PR27: removed OCHA composite administrative extents from the independent resident-area checklist. Added independently attested New Damietta3rd District from official ITDA register, cached as indexed excerpts. No per-area minimum lowered."
   },
   "districtNames": {
     "EG3307": {
@@ -3814,11 +3010,11 @@
   },
   "releaseGateCorrectionReview": {
     "date": "2026-11-11",
-    "reviewer": "Codex round9 source, settlement identity and display residue review",
-    "changedDecisions": 38,
-    "deltaFile": "round9-decision-delta.json.gz",
-    "deltaSha256": "7a0c705e7af06ca33f98420eac26acb9279f59e90aa43df87850a87e0e6444ee",
-    "basis": "Lead round9: named town, bank housing and distinct village/estate restorations at exact source points; three researched lead-approved known-missing names; institutional housing and cadastral display review. No new random sample claimed. Unchanged grid floors97/91/94.5 and GPS rule. Exact per-row delta retained."
+    "reviewer": "Codex PR27 source/formatting and app alias review",
+    "changedDecisions": 0,
+    "deltaFile": "pr27-source-decision-review.json.gz",
+    "deltaSha256": "2193141c64d98aa982d59f73bd8f57504abcc36416e161eaca2b90229fbef1b7",
+    "basis": "No source decision changes. Canonical JSON formatting and signed Arabic spacing / Mohandseen / alias cleanup rules per app review. Existing identities, coordinates, parent decisions and lead floor approval remain unchanged."
   },
   "exactArabicAliasReview": {
     "date": "2026-11-10",
@@ -3829,15 +3025,11 @@
         "sourceCode": "OSM:node/384265543",
         "english": "Meet Oqba",
         "arabic": "ميت عقبة",
-        "aliases": [
-          "Mit Oqba"
-        ],
+        "aliases": ["Mit Oqba"],
         "checklist": {
           "english": "Mit Okba",
           "arabic": "ميت عقبة",
-          "misspellings": [
-            "Mit Oqba"
-          ],
+          "misspellings": ["Mit Oqba"],
           "evidence": "Independent task/knowledge checklist, individually screened 2026-11-09."
         }
       },
@@ -3846,9 +3038,7 @@
         "sourceCode": "OSM:way/30714938",
         "english": "Gezirat Dahab",
         "arabic": "جزيره الدهب",
-        "aliases": [
-          "Dahab Island"
-        ],
+        "aliases": ["Dahab Island"],
         "checklist": {
           "english": "Dahab Island",
           "arabic": "جزيرة الدهب",
@@ -3863,9 +3053,7 @@
         "sourceCode": "OSM:node/331952687",
         "english": "Tanaash",
         "arabic": "طناش",
-        "aliases": [
-          "Tanash"
-        ],
+        "aliases": ["Tanash"],
         "checklist": {
           "english": "Tanash",
           "arabic": "طناش",
@@ -3880,9 +3068,7 @@
         "sourceCode": "EG2116",
         "english": "Auseem",
         "arabic": "مركز أوسيم",
-        "aliases": [
-          "Ossim"
-        ],
+        "aliases": ["Ossim"],
         "checklist": {
           "english": "Ossim",
           "arabic": "أوسيم",
@@ -3897,9 +3083,7 @@
         "sourceCode": "OSM:node/324567643",
         "english": "Manshaat Al-Bekaary",
         "arabic": "منشأة البكاري",
-        "aliases": [
-          "Manshiyet El Bakari"
-        ],
+        "aliases": ["Manshiyet El Bakari"],
         "checklist": {
           "english": "Manshiyet El Bakari",
           "arabic": "منشأة البكاري",
@@ -3914,9 +3098,7 @@
         "sourceCode": "OSM:node/768552662",
         "english": "Saqiyat Makki",
         "arabic": "ساقية مكي",
-        "aliases": [
-          "Saqiet Mekki"
-        ],
+        "aliases": ["Saqiet Mekki"],
         "checklist": {
           "english": "Saqiet Mekki",
           "arabic": "ساقية مكي",
@@ -3931,9 +3113,7 @@
         "sourceCode": "OSM:way/721931288",
         "english": "Al Kasabgy",
         "arabic": "القصبجى",
-        "aliases": [
-          "Qasabgi"
-        ],
+        "aliases": ["Qasabgi"],
         "checklist": {
           "english": "Qasabgi",
           "arabic": "القصبجي",
@@ -3948,15 +3128,11 @@
         "sourceCode": "OSM:node/331877617",
         "english": "Tomouh",
         "arabic": "طموه",
-        "aliases": [
-          "Tammouh"
-        ],
+        "aliases": ["Tammouh"],
         "checklist": {
           "english": "Tammouh",
           "arabic": "طموه",
-          "misspellings": [
-            "Tomouh"
-          ],
+          "misspellings": ["Tomouh"],
           "sourceUrl": "https://ar.wikipedia.org/wiki/محافظة_الجيزة",
           "sourceSnapshot": "neighbourhoods/research-names/giza-gov-ar.html.gz",
           "evidence": "Arabic governorate page North/South Giza named-area list; streets, squares, facilities and distant out-of-scope southern villages not selected. English standard transliterations reviewed."
@@ -3967,15 +3143,11 @@
         "sourceCode": "WD:Q1656184",
         "english": "Janaklis",
         "arabic": "جناكليس",
-        "aliases": [
-          "Gianaclis"
-        ],
+        "aliases": ["Gianaclis"],
         "checklist": {
           "english": "Janaklis",
           "arabic": "جناكليس",
-          "misspellings": [
-            "Gianaclis"
-          ],
+          "misspellings": ["Gianaclis"],
           "evidence": "Independent task/knowledge checklist, individually screened 2026-11-09."
         }
       },
@@ -3984,15 +3156,11 @@
         "sourceCode": "WD:Q4119403",
         "english": "Laurent",
         "arabic": "لوران",
-        "aliases": [
-          "Louran"
-        ],
+        "aliases": ["Louran"],
         "checklist": {
           "english": "Laurent",
           "arabic": "لوران",
-          "misspellings": [
-            "Louran"
-          ],
+          "misspellings": ["Louran"],
           "evidence": "Independent task/knowledge checklist, individually screened 2026-11-09."
         }
       },
@@ -4001,15 +3169,11 @@
         "sourceCode": "OSM:way/740670393",
         "english": "Moustafa Kamel And Bolokly",
         "arabic": "مصطفى كامل و بولوكلى",
-        "aliases": [
-          "Bolkly"
-        ],
+        "aliases": ["Bolkly"],
         "checklist": {
           "english": "Bolkeley",
           "arabic": "بولكلي",
-          "misspellings": [
-            "Bolkly"
-          ],
+          "misspellings": ["Bolkly"],
           "evidence": "Independent task/knowledge checklist, individually screened 2026-11-09."
         }
       },
@@ -4018,15 +3182,11 @@
         "sourceCode": "WD:Q4518565",
         "english": "Schutz",
         "arabic": "شدس",
-        "aliases": [
-          "Shods"
-        ],
+        "aliases": ["Shods"],
         "checklist": {
           "english": "Schutz",
           "arabic": "شدس",
-          "misspellings": [
-            "Shods"
-          ],
+          "misspellings": ["Shods"],
           "evidence": "Independent task/knowledge checklist, individually screened 2026-11-09."
         }
       },
@@ -4035,15 +3195,11 @@
         "sourceCode": "WD:Q16126094",
         "english": "Awayed",
         "arabic": "العوايد",
-        "aliases": [
-          "Awaiyd"
-        ],
+        "aliases": ["Awaiyd"],
         "checklist": {
           "english": "Awayed",
           "arabic": "العوايد",
-          "misspellings": [
-            "Awaiyd"
-          ],
+          "misspellings": ["Awaiyd"],
           "evidence": "Independent task/knowledge checklist, individually screened 2026-11-09."
         }
       },
@@ -4052,16 +3208,11 @@
         "sourceCode": "EG0206",
         "english": "Attarin",
         "arabic": "قسم العطارين",
-        "aliases": [
-          "El Atareen"
-        ],
+        "aliases": ["El Atareen"],
         "checklist": {
           "english": "Attarin",
           "arabic": "العطارين",
-          "misspellings": [
-            "Attareen",
-            "El Atareen"
-          ],
+          "misspellings": ["Attareen", "El Atareen"],
           "evidence": "Independent task/knowledge checklist, individually screened 2026-11-09."
         }
       },
@@ -4070,18 +3221,11 @@
         "sourceCode": "OSM:node/769118971",
         "english": "Al Qabbari",
         "arabic": "القباري",
-        "aliases": [
-          "Qabbary"
-        ],
+        "aliases": ["Qabbary"],
         "checklist": {
           "english": "Kabbary",
           "arabic": "القباري",
-          "misspellings": [
-            "El Qabbari",
-            "El Qabari",
-            "Qabary",
-            "Qabbary"
-          ],
+          "misspellings": ["El Qabbari", "El Qabari", "Qabary", "Qabbary"],
           "evidence": "Independent task/knowledge checklist, individually screened 2026-11-09."
         }
       },
@@ -4090,16 +3234,11 @@
         "sourceCode": "OSM:way/1530614412",
         "english": "El Maamoura El Shati",
         "arabic": "المعمورة الشاطئ",
-        "aliases": [
-          "El Mamoura El Shatea",
-          "Al Mamoura El Shatea"
-        ],
+        "aliases": ["El Mamoura El Shatea", "Al Mamoura El Shatea"],
         "checklist": {
           "english": "El Mamoura El Shatea",
           "arabic": "المعمورة الشاطئ",
-          "misspellings": [
-            "Al Mamoura El Shatea"
-          ],
+          "misspellings": ["Al Mamoura El Shatea"],
           "evidence": "Independent task/knowledge checklist, individually screened 2026-11-09."
         }
       },
@@ -4108,9 +3247,7 @@
         "sourceCode": "OSM:node/769129524",
         "english": "Al Manshiya al Bahariya",
         "arabic": "المنشية البحرية",
-        "aliases": [
-          "Mansheya El Bahareya"
-        ],
+        "aliases": ["Mansheya El Bahareya"],
         "checklist": {
           "english": "Mansheya El Bahareya",
           "arabic": "المنشية البحرية",
@@ -4125,16 +3262,11 @@
         "sourceCode": "OSM:way/746977489",
         "english": "Al Zahereya",
         "arabic": "الظاهرية",
-        "aliases": [
-          "El Zaheria",
-          "Al Zaheria"
-        ],
+        "aliases": ["El Zaheria", "Al Zaheria"],
         "checklist": {
           "english": "El Zaheria",
           "arabic": "الظاهرية",
-          "misspellings": [
-            "Al Zaheria"
-          ],
+          "misspellings": ["Al Zaheria"],
           "sourceUrl": "https://ar.wikipedia.org/wiki/أحياء_الإسكندرية",
           "sourceSnapshot": "neighbourhoods/research-names/alex-ar.html.gz",
           "evidence": "Arabic Alexandria neighbourhood list; street and individual attraction lists excluded. Arabic-source names determine selection independently of catalog."
@@ -4145,9 +3277,7 @@
         "sourceCode": "PUPZY:manshiyet-el-nozha",
         "english": "Nuzha",
         "arabic": "منشية النزهة",
-        "aliases": [
-          "Manshiyet El Nozha"
-        ],
+        "aliases": ["Manshiyet El Nozha"],
         "checklist": {
           "english": "Manshiyet El Nozha",
           "arabic": "منشية النزهة",

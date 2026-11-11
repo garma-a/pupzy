@@ -10,11 +10,7 @@
       "nameEnglish": "Mahatet Masr",
       "nameArabic": "محطة مصر",
       "wikidata": "Q958574",
-      "aliases": [
-        "Mahatet Masr",
-        "Mehatet Masr",
-        "Misr Station Alexandria"
-      ],
+      "aliases": ["Mahatet Masr", "Mehatet Masr", "Misr Station Alexandria"],
       "proxyPoint": true,
       "notes": "Established station-area name. Exact independent Wikidata Alexandria railway station point, transit proxy explicitly permitted by lead C.3."
     },
@@ -34,10 +30,7 @@
       "nameEnglish": "El Saraya",
       "nameArabic": "السرايا",
       "wikidata": "Q4518634",
-      "aliases": [
-        "Al Saraya",
-        "Saraya"
-      ],
+      "aliases": ["Al Saraya", "Saraya"],
       "proxyPoint": false,
       "notes": "Exact named ElSaraya locality bilingual label السرايا(حي) and P625 in existing raw Wikidata response; parentMontaza1."
     },
@@ -47,10 +40,7 @@
       "nameEnglish": "Kafoury",
       "nameArabic": "الكافوري",
       "wikidata": "Q110835589",
-      "aliases": [
-        "El Kafoury",
-        "Al Kafoury"
-      ],
+      "aliases": ["El Kafoury", "Al Kafoury"],
       "proxyPoint": true,
       "notes": "Exact named الكافوري recorded Wikidata P625, reviewed English transliteration. Railway/locality proxy for independently listed Kafoury area."
     },
@@ -60,10 +50,7 @@
       "nameEnglish": "New Sphinx",
       "nameArabic": "سفنكس الجديدة",
       "wikidata": "Q112110813",
-      "aliases": [
-        "New Sphinx City",
-        "Sphinx New City"
-      ],
+      "aliases": ["New Sphinx City", "Sphinx New City"],
       "proxyPoint": false,
       "notes": "Exact recorded Wikidata NewSphinx bilingual names and locality P625, within existing declared GreaterCairo coverage; keep GizaZemamOut parent rule."
     },
@@ -72,10 +59,7 @@
       "coverageArea": "port-said-region",
       "nameEnglish": "El Mostakbal Ismailia",
       "nameArabic": "المستقبل الإسماعيلية",
-      "aliases": [
-        "Al Mostakbal Ismailia",
-        "Future City Ismailia"
-      ],
+      "aliases": ["Al Mostakbal Ismailia", "Future City Ismailia"],
       "wikidata": "Q138148800",
       "proxyPoint": true,
       "notes": "Exact previouslyrecorded named mosque مسجدالشهيدطنطاويبالمستقبل P625 is inside originalOSMresidentialway639204211, corroborated nearbyQ138141081مسجدالمستقبل1 and recordedNominatim طريقالمستقبل / مدخلالمستقبلالسريع. LeadC3 specificallyauthorizes the containing residentialpolygon extension, clippedEG19; keepOCHAEG1906parentexactly."
@@ -106,9 +90,7 @@
       "sourceCode": "PUPZY:el-lessan",
       "nameEnglish": "El Lessan",
       "nameArabic": "اللسان",
-      "aliases": [
-        "Al Lessan"
-      ],
+      "aliases": ["Al Lessan"],
       "sourceResponse": {
         "file": "research-round7/nominatim-lessan.json.gz",
         "osmIdentity": "OSM:node/10899712521"
@@ -121,9 +103,7 @@
       "sourceCode": "PUPZY:el-kafrawy-new-damietta",
       "nameEnglish": "El Kafrawy",
       "nameArabic": "الكفراوي",
-      "aliases": [
-        "Al Kafrawy"
-      ],
+      "aliases": ["Al Kafrawy"],
       "sourceResponse": {
         "file": "research-round7/nominatim-kafrawy.json.gz",
         "osmIdentity": "OSM:way/97362994"
@@ -149,9 +129,7 @@
       "sourceCode": "PUPZY:el-omayed",
       "nameEnglish": "El Omayed",
       "nameArabic": "العميد",
-      "aliases": [
-        "Al Omayed"
-      ],
+      "aliases": ["Al Omayed"],
       "sourceResponse": {
         "file": "research-round7/nominatim-omayed3.json.gz",
         "osmIdentity": "OSM:way/1498183544"
@@ -177,10 +155,7 @@
       "sourceCode": "PUPZY:aghakhan",
       "nameEnglish": "Aghakhan",
       "nameArabic": "أغاخان",
-      "aliases": [
-        "Agha Khan",
-        "آغاخان"
-      ],
+      "aliases": ["Agha Khan", "آغاخان"],
       "proxyPoint": true,
       "sourceResponse": {
         "file": "research-round7/aghakhan-waze.json.gz",
@@ -195,9 +170,7 @@
       "sourceCode": "PUPZY:sawary-alexandria",
       "nameEnglish": "Sawary",
       "nameArabic": "صواري",
-      "aliases": [
-        "Sawari"
-      ],
+      "aliases": ["Sawari"],
       "proxyPoint": true,
       "sourceResponse": {
         "file": "research-round7/sawary-developer.json.gz",
@@ -210,11 +183,7 @@
       "sourceCode": "PUPZY:hadara-alexandria",
       "nameEnglish": "Hadara",
       "nameArabic": "الحضرة",
-      "aliases": [
-        "Al Hadrah",
-        "Hadara El Gedida",
-        "الحضرة الجديدة"
-      ],
+      "aliases": ["Al Hadrah", "Hadara El Gedida", "الحضرة الجديدة"],
       "proxyPoint": false,
       "sourceResponse": {
         "file": "wikidata.json.gz",
@@ -229,10 +198,7 @@
       "sourceCode": "PUPZY:capital-r7",
       "nameEnglish": "District R7 Capital",
       "nameArabic": "الحي السكني السابع — العاصمة الإدارية",
-      "aliases": [
-        "الحي السكني السابع العاصمة",
-        "R7 New Capital"
-      ],
+      "aliases": ["الحي السكني السابع العاصمة", "R7 New Capital"],
       "sourceResponse": {
         "file": "greater-cairo-places.json.gz",
         "osmIdentity": "OSM:way/819189853"
@@ -245,10 +211,7 @@
       "sourceCode": "PUPZY:capital-r8",
       "nameEnglish": "District R8 Capital",
       "nameArabic": "الحي السكني الثامن — العاصمة الإدارية",
-      "aliases": [
-        "الحي السكني الثامن العاصمة",
-        "R8 New Capital"
-      ],
+      "aliases": ["الحي السكني الثامن العاصمة", "R8 New Capital"],
       "sourceResponse": {
         "file": "greater-cairo-places.json.gz",
         "osmIdentity": "OSM:way/1366681574"
@@ -259,54 +222,19 @@
     }
   ],
   "aliases": {
-    "OSM:way/30677759": [
-      "Geziret Mohamed"
-    ],
-    "OSM:way/724746906": [
-      "Nikla"
-    ],
-    "OSM:way/645282013": [
-      "Mansouriya"
-    ],
-    "OSM:way/723728136": [
-      "Moatamadiya"
-    ],
-    "OSM:way/723092193": [
-      "Kafr Ghattati"
-    ],
-    "OSM:node/322007875": [
-      "Abu El Nomros"
-    ],
-    "OSM:way/244439100": [
-      "Nazlet El Ashter"
-    ],
-    "OSM:way/723061046": [
-      "Bani Youssef"
-    ],
-    "OSM:way/1551445047": [
-      "Bashayer El Kheir",
-      "بشائر الخير"
-    ],
-    "OSM:node/769118972": [
-      "Wadi El Qamar"
-    ],
-    "OSM:way/810437370": [
-      "El Araishiya"
-    ],
-    "WD:Q4803317": [
-      "العصافرة بحري",
-      "العصافرة قبلي",
-      "Asafra Bahary",
-      "Asafra Qebly"
-    ],
-    "EG3307": [
-      "مارينا ٥",
-      "مارينا ٦",
-      "مارينا ٧",
-      "Marina 5",
-      "Marina 6",
-      "Marina 7"
-    ],
+    "OSM:way/30677759": ["Geziret Mohamed"],
+    "OSM:way/724746906": ["Nikla"],
+    "OSM:way/645282013": ["Mansouriya"],
+    "OSM:way/723728136": ["Moatamadiya"],
+    "OSM:way/723092193": ["Kafr Ghattati"],
+    "OSM:node/322007875": ["Abu El Nomros"],
+    "OSM:way/244439100": ["Nazlet El Ashter"],
+    "OSM:way/723061046": ["Bani Youssef"],
+    "OSM:way/1551445047": ["Bashayer El Kheir", "بشائر الخير"],
+    "OSM:node/769118972": ["Wadi El Qamar"],
+    "OSM:way/810437370": ["El Araishiya"],
+    "WD:Q4803317": ["العصافرة بحري", "العصافرة قبلي", "Asafra Bahary", "Asafra Qebly"],
+    "EG3307": ["مارينا ٥", "مارينا ٦", "مارينا ٧", "Marina 5", "Marina 6", "Marina 7"],
     "WD:Q96395299": [
       "داون تاون العلمين",
       "أبراج العلمين",
@@ -314,9 +242,6 @@
       "El Alamein Towers",
       "Al Alamein Towers"
     ],
-    "OSM:node/768590261": [
-      "جزيرة الوراق",
-      "Warraq Island"
-    ]
+    "OSM:node/768590261": ["جزيرة الوراق", "Warraq Island"]
   }
 }

@@ -2,6 +2,7 @@ import type { CityCatalogRecord } from './catalog';
 import { readCityData } from './data-files';
 import { normalizeCitySearch } from './search';
 import { addReviewedTransliterations, type AliasGenerationReview } from './transliteration';
+import { reviewCityAliases } from './alias-review';
 
 export interface OsmElement {
   type: 'node' | 'way' | 'relation';
@@ -278,5 +279,6 @@ export function extendDistrictCatalog(
       return !owners || [...owners].every((code) => code === row.sourceCode);
     });
   }
+  reviewCityAliases(records);
   return records.sort((a, b) => a.sourceCode.localeCompare(b.sourceCode));
 }

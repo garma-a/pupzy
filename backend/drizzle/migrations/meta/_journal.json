@@ -2,97 +2,19 @@
   "version": "7",
   "dialect": "postgresql",
   "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1783707214370,
-      "tag": "0000_familiar_shiver_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1784405426052,
-      "tag": "0001_windy_moondragon",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1785662302778,
-      "tag": "0002_lame_anita_blake",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1785783333237,
-      "tag": "0003_nosy_korg",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1786217521293,
-      "tag": "0004_curly_silhouette",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1787225275263,
-      "tag": "0005_easy_the_hand",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1787429088292,
-      "tag": "0006_add_mating_post_type",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1787429744817,
-      "tag": "0007_create_mating_posts",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1787603916812,
-      "tag": "0008_brave_lester",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1787752800000,
-      "tag": "0009_version_custom_ddl",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1787780407885,
-      "tag": "0010_peaceful_wind_dancer",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1787785000000,
-      "tag": "0011_reconcile_city_catalog",
-      "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "7",
-      "when": 1788141600000,
-      "tag": "0012_add_city_catalog_revision",
-      "breakpoints": true
-    },
+    { "idx": 0, "version": "7", "when": 1783707214370, "tag": "0000_familiar_shiver_man", "breakpoints": true },
+    { "idx": 1, "version": "7", "when": 1784405426052, "tag": "0001_windy_moondragon", "breakpoints": true },
+    { "idx": 2, "version": "7", "when": 1785662302778, "tag": "0002_lame_anita_blake", "breakpoints": true },
+    { "idx": 3, "version": "7", "when": 1785783333237, "tag": "0003_nosy_korg", "breakpoints": true },
+    { "idx": 4, "version": "7", "when": 1786217521293, "tag": "0004_curly_silhouette", "breakpoints": true },
+    { "idx": 5, "version": "7", "when": 1787225275263, "tag": "0005_easy_the_hand", "breakpoints": true },
+    { "idx": 6, "version": "7", "when": 1787429088292, "tag": "0006_add_mating_post_type", "breakpoints": true },
+    { "idx": 7, "version": "7", "when": 1787429744817, "tag": "0007_create_mating_posts", "breakpoints": true },
+    { "idx": 8, "version": "7", "when": 1787603916812, "tag": "0008_brave_lester", "breakpoints": true },
+    { "idx": 9, "version": "7", "when": 1787752800000, "tag": "0009_version_custom_ddl", "breakpoints": true },
+    { "idx": 10, "version": "7", "when": 1787780407885, "tag": "0010_peaceful_wind_dancer", "breakpoints": true },
+    { "idx": 11, "version": "7", "when": 1787785000000, "tag": "0011_reconcile_city_catalog", "breakpoints": true },
+    { "idx": 12, "version": "7", "when": 1788141600000, "tag": "0012_add_city_catalog_revision", "breakpoints": true },
     {
       "idx": 13,
       "version": "7",
@@ -114,13 +36,7 @@
       "tag": "0015_add_vet_clinic_location_audits",
       "breakpoints": true
     },
-    {
-      "idx": 16,
-      "version": "7",
-      "when": 1788459200000,
-      "tag": "0016_add_address_search_cache",
-      "breakpoints": true
-    },
+    { "idx": 16, "version": "7", "when": 1788459200000, "tag": "0016_add_address_search_cache", "breakpoints": true },
     {
       "idx": 17,
       "version": "7",
@@ -135,20 +51,8 @@
       "tag": "0018_remove_redundant_address_search_cache_indexes",
       "breakpoints": true
     },
-    {
-      "idx": 19,
-      "version": "7",
-      "when": 1788718400000,
-      "tag": "0019_fix_audit_fk_set_null",
-      "breakpoints": true
-    },
-    {
-      "idx": 20,
-      "version": "7",
-      "when": 1788804800000,
-      "tag": "0020_add_staged_uploads",
-      "breakpoints": true
-    },
+    { "idx": 19, "version": "7", "when": 1788718400000, "tag": "0019_fix_audit_fk_set_null", "breakpoints": true },
+    { "idx": 20, "version": "7", "when": 1788804800000, "tag": "0020_add_staged_uploads", "breakpoints": true },
     {
       "idx": 21,
       "version": "7",
@@ -163,41 +67,11 @@
       "tag": "0022_add_reply_count_to_comments",
       "breakpoints": true
     },
-    {
-      "idx": 23,
-      "version": "7",
-      "when": 1789064000000,
-      "tag": "0023_add_comment_boosts",
-      "breakpoints": true
-    },
-    {
-      "idx": 24,
-      "version": "7",
-      "when": 1789150400000,
-      "tag": "0024_add_post_pins",
-      "breakpoints": true
-    },
-    {
-      "idx": 25,
-      "version": "7",
-      "when": 1789236800000,
-      "tag": "0025_add_comment_media",
-      "breakpoints": true
-    },
-    {
-      "idx": 26,
-      "version": "7",
-      "when": 1789323200000,
-      "tag": "0026_add_media_deletion_work",
-      "breakpoints": true
-    },
-    {
-      "idx": 27,
-      "version": "7",
-      "when": 1789409600000,
-      "tag": "0027_add_comment_reports",
-      "breakpoints": true
-    },
+    { "idx": 23, "version": "7", "when": 1789064000000, "tag": "0023_add_comment_boosts", "breakpoints": true },
+    { "idx": 24, "version": "7", "when": 1789150400000, "tag": "0024_add_post_pins", "breakpoints": true },
+    { "idx": 25, "version": "7", "when": 1789236800000, "tag": "0025_add_comment_media", "breakpoints": true },
+    { "idx": 26, "version": "7", "when": 1789323200000, "tag": "0026_add_media_deletion_work", "breakpoints": true },
+    { "idx": 27, "version": "7", "when": 1789409600000, "tag": "0027_add_comment_reports", "breakpoints": true },
     {
       "idx": 28,
       "version": "7",
@@ -247,20 +121,8 @@
       "tag": "0034_add_discussion_notification_outbox",
       "breakpoints": true
     },
-    {
-      "idx": 35,
-      "version": "7",
-      "when": 1790100800000,
-      "tag": "0035_add_account_deletions",
-      "breakpoints": true
-    },
-    {
-      "idx": 36,
-      "version": "7",
-      "when": 1790187200000,
-      "tag": "0036_add_upload_grace_until",
-      "breakpoints": true
-    },
+    { "idx": 35, "version": "7", "when": 1790100800000, "tag": "0035_add_account_deletions", "breakpoints": true },
+    { "idx": 36, "version": "7", "when": 1790187200000, "tag": "0036_add_upload_grace_until", "breakpoints": true },
     {
       "idx": 37,
       "version": "7",
@@ -268,13 +130,7 @@
       "tag": "0037_enforce_unique_account_deletions",
       "breakpoints": true
     },
-    {
-      "idx": 38,
-      "version": "7",
-      "when": 1790360000000,
-      "tag": "0038_add_media_finalizations",
-      "breakpoints": true
-    },
+    { "idx": 38, "version": "7", "when": 1790360000000, "tag": "0038_add_media_finalizations", "breakpoints": true },
     {
       "idx": 39,
       "version": "7",
@@ -282,20 +138,8 @@
       "tag": "0039_shared_report_allowance_counter_repair",
       "breakpoints": true
     },
-    {
-      "idx": 40,
-      "version": "7",
-      "when": 1790532800000,
-      "tag": "0040_add_blocks",
-      "breakpoints": true
-    },
-    {
-      "idx": 41,
-      "version": "7",
-      "when": 1790619200000,
-      "tag": "0041_add_account_reports",
-      "breakpoints": true
-    },
+    { "idx": 40, "version": "7", "when": 1790532800000, "tag": "0040_add_blocks", "breakpoints": true },
+    { "idx": 41, "version": "7", "when": 1790619200000, "tag": "0041_add_account_reports", "breakpoints": true },
     {
       "idx": 42,
       "version": "7",
@@ -324,20 +168,8 @@
       "tag": "0045_add_bilingual_notification_content",
       "breakpoints": true
     },
-    {
-      "idx": 46,
-      "version": "7",
-      "when": 1791051200000,
-      "tag": "0046_add_expired_post_status",
-      "breakpoints": true
-    },
-    {
-      "idx": 47,
-      "version": "7",
-      "when": 1791137600000,
-      "tag": "0047_add_post_expiry_state",
-      "breakpoints": true
-    },
+    { "idx": 46, "version": "7", "when": 1791051200000, "tag": "0046_add_expired_post_status", "breakpoints": true },
+    { "idx": 47, "version": "7", "when": 1791137600000, "tag": "0047_add_post_expiry_state", "breakpoints": true },
     {
       "idx": 48,
       "version": "7",
@@ -345,48 +177,12 @@
       "tag": "0048_add_post_status_filter_operators",
       "breakpoints": true
     },
-    {
-      "idx": 49,
-      "version": "7",
-      "when": 1791310400000,
-      "tag": "0049_add_device_push_delivery",
-      "breakpoints": true
-    },
-    {
-      "idx": 50,
-      "version": "7",
-      "when": 1791396800000,
-      "tag": "0050_add_admin_post_resolution",
-      "breakpoints": true
-    },
-    {
-      "idx": 51,
-      "version": "7",
-      "when": 1791483200000,
-      "tag": "0051_add_admin_post_reopen",
-      "breakpoints": true
-    },
-    {
-      "idx": 52,
-      "version": "7",
-      "when": 1791569600000,
-      "tag": "0052_add_normalized_feed_search",
-      "breakpoints": true
-    },
-    {
-      "idx": 53,
-      "version": "7",
-      "when": 1791656000000,
-      "tag": "0053_drop_saved_searches",
-      "breakpoints": true
-    },
-    {
-      "idx": 54,
-      "version": "7",
-      "when": 1791742400000,
-      "tag": "0054_add_terms_acceptance",
-      "breakpoints": true
-    },
+    { "idx": 49, "version": "7", "when": 1791310400000, "tag": "0049_add_device_push_delivery", "breakpoints": true },
+    { "idx": 50, "version": "7", "when": 1791396800000, "tag": "0050_add_admin_post_resolution", "breakpoints": true },
+    { "idx": 51, "version": "7", "when": 1791483200000, "tag": "0051_add_admin_post_reopen", "breakpoints": true },
+    { "idx": 52, "version": "7", "when": 1791569600000, "tag": "0052_add_normalized_feed_search", "breakpoints": true },
+    { "idx": 53, "version": "7", "when": 1791656000000, "tag": "0053_drop_saved_searches", "breakpoints": true },
+    { "idx": 54, "version": "7", "when": 1791742400000, "tag": "0054_add_terms_acceptance", "breakpoints": true },
     {
       "idx": 55,
       "version": "7",
@@ -394,13 +190,7 @@
       "tag": "0055_add_profile_photo_lifecycle",
       "breakpoints": true
     },
-    {
-      "idx": 56,
-      "version": "7",
-      "when": 1791915200000,
-      "tag": "0056_cover_reminder_post_types",
-      "breakpoints": true
-    },
+    { "idx": 56, "version": "7", "when": 1791915200000, "tag": "0056_cover_reminder_post_types", "breakpoints": true },
     {
       "idx": 57,
       "version": "7",
@@ -436,27 +226,9 @@
       "tag": "0061_post_notification_preferences",
       "breakpoints": true
     },
-    {
-      "idx": 62,
-      "version": "7",
-      "when": 1792260800002,
-      "tag": "0062_posts_listed_at",
-      "breakpoints": true
-    },
-    {
-      "idx": 63,
-      "version": "7",
-      "when": 1792260800003,
-      "tag": "0063_posts_listed_at_indexes",
-      "breakpoints": true
-    },
-    {
-      "idx": 64,
-      "version": "7",
-      "when": 1792260800004,
-      "tag": "0064_users_age_confirmed_at",
-      "breakpoints": true
-    },
+    { "idx": 62, "version": "7", "when": 1792260800002, "tag": "0062_posts_listed_at", "breakpoints": true },
+    { "idx": 63, "version": "7", "when": 1792260800003, "tag": "0063_posts_listed_at_indexes", "breakpoints": true },
+    { "idx": 64, "version": "7", "when": 1792260800004, "tag": "0064_users_age_confirmed_at", "breakpoints": true },
     {
       "idx": 65,
       "version": "7",
@@ -464,12 +236,6 @@
       "tag": "0065_add_city_neighbourhood_fields",
       "breakpoints": true
     },
-    {
-      "idx": 66,
-      "version": "7",
-      "when": 1794385653920,
-      "tag": "0066_release_city_catalog",
-      "breakpoints": true
-    }
+    { "idx": 66, "version": "7", "when": 1794399084244, "tag": "0066_release_city_catalog", "breakpoints": true }
   ]
 }

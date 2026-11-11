@@ -4850,6 +4850,19 @@
       "uncompressedSha256": "84c996bb10baa2a08077e5d721c2ee29896c3a8032b9d56915445d7bcef4597e",
       "uncompressedSizeBytes": 584,
       "representation": "Untouched response; deterministic gzip (mtime=0)"
+    },
+    {
+      "path": "src/cities/data/neighbourhoods/research-pr27/independent-name-search.json.gz",
+      "endpoint": "https://www.itda.gov.eg/CRM/881/CRA9.pdf",
+      "retrievalDate": "2026-11-11T11:24:05.128695+00:00",
+      "license": "Original publisher rights; indexed research excerpts",
+      "attribution": "ITDA and returned official Egyptian government publishers",
+      "status": "web-search-indexed-excerpts",
+      "representation": "Exact serialized primary-domain web search response, not a full downloaded PDF. ITDA address attests New Damietta حي3; no coordinate sourced from the excerpts.",
+      "sha256": "9590c8f074da9b77f2dfe913aa658e7df838d3fbeacfe9f41b28e3f12f221683",
+      "sizeBytes": 7488,
+      "uncompressedSha256": "bb43c81068d6f092713fbc0a25007b4c7c2c25ecad9cdc487433ca94d89a0217",
+      "uncompressedSizeBytes": 29235
     }
   ],
   "unusedSources": [
@@ -4912,24 +4925,36 @@
     },
     "residential-grid-review": {
       "path": "src/cities/data/neighbourhoods/residential-grid-review.json",
-      "sha256": "b959fc3a4793a1b39ddb768f701b5ddfbc03757c351664c77b63183cfedd3080",
+      "sha256": "b6b8e61c67273c16cea821a8bab863a6a97c2bda8f7cb2cd825d4ade4598be71",
       "method": "Reviewed coverage/exception metadata; Greater Cairo floor amended by explicit lead decision dated2026-11-11. Individual exception notes and measurements unchanged."
+    },
+    "pr27-alias-audit.json.gz": {
+      "path": "src/cities/data/neighbourhoods/pr27-alias-audit.json.gz",
+      "sha256": "78736ae023205d1c66011aed1ff5df7f781cec39d99168db7bd5172eb4f06d60",
+      "method": "Derived PR27 alias/source-decision review, not a fetched response."
+    },
+    "pr27-source-decision-review.json.gz": {
+      "path": "src/cities/data/neighbourhoods/pr27-source-decision-review.json.gz",
+      "sha256": "2193141c64d98aa982d59f73bd8f57504abcc36416e161eaca2b90229fbef1b7",
+      "method": "Derived PR27 alias/source-decision review, not a fetched response."
     }
   },
   "finalReview": {
     "date": "2026-11-11",
     "releaseTag": "0066_release_city_catalog",
     "officialCities": 3156,
-    "status": "PASS / MERGEABLE; normal publisher, no coverage waiver or review-only marker.",
-    "rawSnapshotHashCheck": "334/334 compressed and all declared raw hashes verified",
-    "cityDataChange": "None: catalog bytes, source snapshots, geometry, points and individual exception notes identical to lead checkpoint679e972.",
+    "status": "Dataset gates PASS; normal publication. Repository stages pass individually; clean-commit certification remains required.",
+    "rawSnapshotHashCheck": "335/335 compressed and all declared raw hashes verified; all 334 prior responses unchanged.",
+    "cityDataChange": "3156 source identities, displays, governorates, parents and coordinates unchanged from b5886b4; aliases reviewed separately in pr27-alias-audit.json.gz.",
     "floorDecision": "residential-grid-review.json#floorDecisions.greater-cairo",
     "reviewReport": "release-gate-status.json",
-    "catalogAudit": "round9-catalog-review.json.gz",
+    "catalogAudit": "pr27-alias-audit.json.gz",
     "gridAudit": "round9-grid-remeasurement.json.gz",
     "remainingFeatures": "round9-remaining-grid-features.json.gz",
     "knownMissingEntries": 14,
-    "fetchPolicy": "No new fetches. Existing serial Nominatim research responses retain URLs, timestamps, rights and hashes; build/tests/migration stay offline.",
-    "rights": "Original publisher rights retained; indexed excerpts and HTTP failures are distinct from complete fetched sources."
+    "fetchPolicy": "One saved primary-domain indexed-search response for the independent New Damietta 3rd District checklist entry. No new coordinate or Nominatim fetch. Builders/tests/migrations remain offline.",
+    "rights": "Original publisher rights retained; indexed excerpts and HTTP failures are distinct from complete fetched sources.",
+    "sourceDecisionAudit": "pr27-source-decision-review.json.gz",
+    "formatting": "Prettier-stable derived JSON and publisher outputs; no Prettier exclusion. Review signatures, evidence digests and derived/publication hashes recomputed through the offline pipeline."
   }
 }

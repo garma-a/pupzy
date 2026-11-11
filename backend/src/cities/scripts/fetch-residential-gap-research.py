@@ -2,6 +2,7 @@
 """Developer-only network evidence collector; never imported by builds/tests."""
 import urllib.request, urllib.parse, time, json, gzip, hashlib, datetime
 from pathlib import Path
+from geo_offline import save
 B=Path(__file__).resolve().parents[3]
 D=B/'src/cities/data/neighbourhoods/research-blocks'
 entries=json.loads((D/'manifest-entries.json').read_text()) if (D/'manifest-entries.json').exists() else []
@@ -21,7 +22,7 @@ def fetch(url,path,data=None,license='ODbL 1.0',attribution='© OpenStreetMap co
     blob=gzip.compress(raw,mtime=0);dest.write_bytes(blob)
     entry={'path':str(dest.relative_to(B)),'endpoint':url,'retrievalDate':when,'license':license,'licenseUrl':'https://opendatacommons.org/licenses/odbl/1-0/','attribution':attribution,'status':'fetched' if status==200 else 'http-error-'+str(status),'sha256':hashlib.sha256(blob).hexdigest(),'sizeBytes':len(blob),'uncompressedSha256':hashlib.sha256(raw).hexdigest(),'uncompressedSizeBytes':len(raw),'representation':'Untouched HTTP response, deterministic gzip (mtime=0)'}
     if data:entry['requestBody']=data.decode()
-    entries.append(entry);(D/'manifest-entries.json').write_text(json.dumps(entries,indent=2,ensure_ascii=False)+'\n')
+    entries.append(entry);save(D/'manifest-entries.json', entries)
     try:return json.loads(raw)
     except ValueError:return None
 

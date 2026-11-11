@@ -1,4 +1,5 @@
 import { hydrateNeighbourhoodSources } from './neighbourhoods';
+import { formatCityJson } from './json-format';
 import * as fs from 'fs';
 import * as path from 'path';
 import { createHash, randomUUID } from 'crypto';
@@ -683,7 +684,7 @@ export function publishReviewedRelease(
     tag: migrationMeta.tag,
     breakpoints: true,
   });
-  const updatedJournalContent = JSON.stringify(journal, null, 2);
+  const updatedJournalContent = formatCityJson(journal);
 
   // Staging occurs beside each destination so the final rename is atomic on that filesystem.
   const publicationId = randomUUID();
@@ -698,11 +699,7 @@ export function publishReviewedRelease(
         kind: 'catalog',
         destinationPath: catalogPath,
         stagedPath: stagedPathFor(catalogPath),
-        content: JSON.stringify(
-          { metadata: release.metadata, records: release.updatedCatalog },
-          null,
-          candidateSnapshot.neighbourhoods?.decisionsFile ? undefined : 2,
-        ),
+        content: formatCityJson({ metadata: release.metadata, records: release.updatedCatalog }),
         stageFault: 'stage_catalog',
         syncFault: 'sync_catalog',
         replaceFault: 'replace_catalog',
@@ -711,11 +708,7 @@ export function publishReviewedRelease(
         kind: 'snapshot',
         destinationPath: snapshotPath,
         stagedPath: stagedPathFor(snapshotPath),
-        content: JSON.stringify(
-          candidateSnapshot,
-          null,
-          candidateSnapshot.neighbourhoods?.decisionsFile ? undefined : 2,
-        ),
+        content: formatCityJson(candidateSnapshot),
         stageFault: 'stage_snapshot',
         syncFault: 'sync_snapshot',
         replaceFault: 'replace_snapshot',

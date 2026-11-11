@@ -352,8 +352,8 @@ export async function reconcileCities(db: any, options: ReconcileOptions = {}): 
 
     for (const record of catalogRecords) {
       await tx.query(
-        `UPDATE cities SET aliases = $1::text[], district_id = (SELECT id FROM cities WHERE source_code = $2) WHERE source_code = $3`,
-        [record.aliases ?? [], record.districtSourceCode ?? null, record.sourceCode],
+        `UPDATE cities SET aliases = $1::text[], district_id = (SELECT id FROM cities WHERE source_code = $2), governorate_arabic = $4 WHERE source_code = $3`,
+        [record.aliases ?? [], record.districtSourceCode ?? null, record.sourceCode, record.governorateArabic ?? ''],
       );
     }
 

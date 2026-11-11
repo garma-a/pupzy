@@ -1,6 +1,7 @@
 import { validateCatalog, type CityCatalog, type CityCatalogRecord } from './catalog';
 import { readCityData } from './data-files';
 import { normalizeCitySearch } from './search';
+import { reviewCityAliases } from './alias-review';
 
 export const COVERAGE_AREAS = ['greater-cairo', 'alexandria', 'port-said-region'] as const;
 export type CoverageArea = (typeof COVERAGE_AREAS)[number];
@@ -356,6 +357,8 @@ export function verifyCoverage(
   const byCode = new Map(records.map((r) => [r.sourceCode, r]));
   const validation = validateCatalog(catalog);
   const dataErrors = [...validation.errors];
+  for (const removed of reviewCityAliases(records.map((row) => ({ ...row, aliases: [...(row.aliases ?? [])] }))))
+    dataErrors.push(`${removed.sourceCode}: invalid alias (${removed.reason}): ${removed.alias}`);
   for (const failure of headlineReview?.failures ?? [])
     dataErrors.push(
       `Headline missing/ambiguous: ${failure.english} / ${failure.arabic} (${failure.governorate}), exact matches=${failure.matches}`,

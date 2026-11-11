@@ -55,6 +55,7 @@ export const cities = pgTable(
 
     /** Governorate this city belongs to, e.g. 'Aswan' or 'Cairo'. */
     governorate: varchar('governorate', { length: 100 }).notNull(),
+    governorateArabic: varchar('governorate_arabic', { length: 100 }).notNull().default(''),
 
     /** Internal upstream source code (e.g. OCHA P-code 'EG2801'). Unique when set. */
     sourceCode: varchar('source_code', { length: 100 }),

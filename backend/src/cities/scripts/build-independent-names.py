@@ -85,6 +85,8 @@ for area, rows in public['areas'].items():
 for f in load(d / 'ocha-cod-ab/egy_admin3-covered.geojson.gz')['features']:
     p = f['properties']
     a = p['adm3_name1'].strip()
+    if re.search(r'تشمل|وضواحيها|(?:^|\s)و(?:\s|$)', a):
+        continue # Combined administrative extents are not independent resident-area names.
     if norm(a) in {'منطقه الصناعيه','منطقة الصناعيه','مطار القاهره'}:continue # Explicit premises labels only; named staff housing remains eligible.
     area = p['coverageArea']
     b = lex.get(norm(a))

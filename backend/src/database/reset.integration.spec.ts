@@ -1,3 +1,4 @@
+import { loadOfficialCatalog } from '../cities/catalog';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { Pool, type QueryResult } from 'pg';
 import * as bcrypt from 'bcryptjs';
@@ -471,10 +472,10 @@ describe('Canonical Baseline Database Reset Integration', () => {
       });
 
       // Verify reset report summary
-      expect(resetResult.citiesCount).toBe(351);
+      expect(resetResult.citiesCount).toBe(loadOfficialCatalog().records.length);
       expect(resetResult.governoratesCount).toBe(27);
       expect(resetResult.vetClinicsCount).toBe(16);
-      expect(resetResult.catalogRevision).toBe(1);
+      expect(resetResult.catalogRevision).toBe(2); // Initial revision1 plus the0066 catalog release.
       expect(resetResult.adminCreated).toBe(true);
       expect(resetResult.usersCount).toBe(0);
       expect(resetResult.postsCount).toBe(0);
@@ -487,7 +488,7 @@ describe('Canonical Baseline Database Reset Integration', () => {
       `);
       expect(dummyRes.rows[0].count).toBe('0');
 
-      // Verify all 351 official cities have required lifecycle fields
+      // Verify the complete released City catalog and its source identities.
       const officialCitiesRes = await pool.query<{
         id: string;
         source_code: string;
@@ -513,10 +514,11 @@ describe('Canonical Baseline Database Reset Integration', () => {
         ORDER BY source_code
       `);
 
-      expect(officialCitiesRes.rows.length).toBe(351);
+      const expectedCities = new Map(loadOfficialCatalog().records.map((row) => [row.sourceCode, row]));
+      expect(officialCitiesRes.rows.length).toBe(expectedCities.size);
       for (const city of officialCitiesRes.rows) {
         expect(city.status).toBe('OFFICIAL');
-        expect(city.source_code).toMatch(/^EG\d{4}$/);
+        expect(expectedCities.has(city.source_code)).toBe(true);
         expect(city.name_english.trim().length).toBeGreaterThan(0);
         expect(city.name_arabic.trim().length).toBeGreaterThan(0);
         expect(city.governorate.trim().length).toBeGreaterThan(0);
@@ -614,7 +616,7 @@ describe('Canonical Baseline Database Reset Integration', () => {
       const revRes = await pool.query<{ id: number; revision: number }>(`
         SELECT id, revision FROM city_catalog_revisions
       `);
-      expect(revRes.rows).toEqual([{ id: 1, revision: 1 }]);
+      expect(revRes.rows).toEqual([{ id: 1, revision: 2 }]);
     });
   });
 });

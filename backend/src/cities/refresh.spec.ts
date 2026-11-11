@@ -3,6 +3,7 @@ import type { CityCatalog as DistrictFixtureCatalog } from './catalog';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import {
   compareSnapshots,
   applyReviewedRelease,
@@ -890,6 +891,10 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
       expect(migrationSql).toContain("UPDATE cities SET status = 'RETIRED' WHERE source_code IN ('EG0102');");
       expect(migrationSql).not.toContain("SET status = 'RETIRED' WHERE source_code IN ('EG0101'");
       expect(migrationSql).toContain('INSERT INTO cities (source_code, name_english, name_arabic, governorate');
+      expect(migrationSql).toContain("ADD COLUMN IF NOT EXISTS governorate_arabic varchar(100) NOT NULL DEFAULT ''");
+      expect(migrationSql.indexOf('ADD COLUMN IF NOT EXISTS governorate_arabic')).toBeLessThan(
+        migrationSql.indexOf('INSERT INTO cities'),
+      );
       expect(migrationSql).toContain("'EG0198'");
       expect(migrationSql).toContain('UPDATE city_catalog_revisions SET revision = revision + 1 WHERE id = 1;');
       expect(migrationSql).toContain("RAISE EXCEPTION 'City catalog revision state is missing';");
@@ -900,12 +905,10 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
   });
 
   describe('Monotonically Ordered Migration Generation and Publishing', () => {
-    const tempDir = path.resolve(__dirname, '../../test/temp-migrations');
+    let tempDir: string;
 
     beforeEach(() => {
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-      }
+      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pupzy-city-migrations-'));
       const metaDir = path.join(tempDir, 'meta');
       if (!fs.existsSync(metaDir)) {
         fs.mkdirSync(metaDir, { recursive: true });

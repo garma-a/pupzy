@@ -14,6 +14,7 @@ describe('CitiesRepository', () => {
     nameEnglish: 'Cairo',
     nameArabic: 'القاهرة',
     governorate: 'Cairo',
+    governorateArabic: 'القاهرة',
     sourceCode: 'EG0101',
     sourceNameEnglish: 'Cairo',
     sourceNameArabic: 'القاهرة',
@@ -29,6 +30,7 @@ describe('CitiesRepository', () => {
     nameEnglish: 'Old Heliopolis',
     nameArabic: 'مصر الجديدة القديمة',
     governorate: 'Cairo',
+    governorateArabic: 'القاهرة',
     sourceCode: null,
     sourceNameEnglish: null,
     sourceNameArabic: null,
@@ -44,6 +46,7 @@ describe('CitiesRepository', () => {
     nameEnglish: 'Retired District',
     nameArabic: 'حي ملغي',
     governorate: 'Cairo',
+    governorateArabic: 'القاهرة',
     sourceCode: 'EG0199',
     sourceNameEnglish: 'Retired District',
     sourceNameArabic: 'حي ملغي',
@@ -75,6 +78,7 @@ describe('CitiesRepository', () => {
       expect(mockQueryBuilder.where).toHaveBeenCalledWith(eq(cities.status, 'OFFICIAL'));
       expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(asc(cities.nameEnglish));
       expect(result).toEqual([officialCity]);
+      expect(result[0].governorateArabic).toBe('القاهرة');
     });
   });
 

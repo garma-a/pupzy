@@ -10,6 +10,8 @@ import math
 
 import gzip
 
+import subprocess
+
 from pathlib import Path
 
 geos_library = ctypes.util.find_library('geos_c')
@@ -70,6 +72,9 @@ def load(path):
 def save(path, value):
     path = Path(path)
     data = (json.dumps(value, ensure_ascii=False, separators=(',', ':')) + '\n').encode()
+    root = Path(__file__).resolve().parents[3]
+    if path.suffix == '.json' and path.resolve().is_relative_to((root / 'src/cities/data').resolve()):
+        data = subprocess.check_output(['node', str(root / 'node_modules/prettier/bin/prettier.cjs'), '--parser', 'json', '--config', str(root / '.prettierrc')], input=data)
     if path.exists():
         existing = gzip.decompress(path.read_bytes()) if path.suffix == '.gz' else path.read_bytes()
         if existing == data:

@@ -18,12 +18,13 @@ export function generateCityUpsertSql(record: CityCatalogRecord, indent = '  '):
   const dbValues = mapCatalogRecordToDbValues(record);
   return (
     `${indent}INSERT INTO cities (` +
-    `source_code, name_english, name_arabic, governorate, source_name_english, source_name_arabic, status, center_point, aliases, district_id` +
+    `source_code, name_english, name_arabic, governorate, governorate_arabic, source_name_english, source_name_arabic, status, center_point, aliases, district_id` +
     `) VALUES (` +
     `'${escapeSqlString(dbValues.sourceCode)}', ` +
     `'${escapeSqlString(dbValues.nameEnglish)}', ` +
     `'${escapeSqlString(dbValues.nameArabic)}', ` +
     `'${escapeSqlString(dbValues.governorate)}', ` +
+    `'${escapeSqlString(dbValues.governorateArabic)}', ` +
     `'${escapeSqlString(dbValues.sourceNameEnglish)}', ` +
     `'${escapeSqlString(dbValues.sourceNameArabic)}', ` +
     `'${escapeSqlString(dbValues.status)}', ` +
@@ -36,6 +37,7 @@ export function generateCityUpsertSql(record: CityCatalogRecord, indent = '  '):
     `name_english = EXCLUDED.name_english, ` +
     `name_arabic = EXCLUDED.name_arabic, ` +
     `governorate = EXCLUDED.governorate, ` +
+    `governorate_arabic = EXCLUDED.governorate_arabic, ` +
     `source_name_english = EXCLUDED.source_name_english, ` +
     `source_name_arabic = EXCLUDED.source_name_arabic, ` +
     `status = EXCLUDED.status, ` +
@@ -57,6 +59,19 @@ export function generateCitiesUpsertSql(records: CityCatalogRecord[], indent = '
  */
 export function generatePostGovernorateSyncSql(indent = '  '): string {
   return `${indent}UPDATE posts SET governorate = cities.governorate FROM cities WHERE posts.city_id = cities.id AND cities.status = 'OFFICIAL';`;
+}
+
+/** Backfills retained historical Cities using the same reviewed governorate labels. */
+export function generateGovernorateArabicSyncSql(records: CityCatalogRecord[], indent = '  '): string {
+  const labels = new Map(
+    records.filter((row) => row.governorateArabic).map((row) => [row.governorate, row.governorateArabic!]),
+  );
+  if (!labels.size) return `${indent}-- No reviewed Arabic governorate labels supplied.`;
+  const values = [...labels]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([english, arabic]) => `('${escapeSqlString(english)}', '${escapeSqlString(arabic)}')`)
+    .join(', ');
+  return `${indent}UPDATE cities AS city SET governorate_arabic = labels.arabic FROM (VALUES ${values}) AS labels(english, arabic) WHERE city.governorate = labels.english AND city.governorate_arabic IS DISTINCT FROM labels.arabic;`;
 }
 
 /**

@@ -126,6 +126,7 @@ export interface CityDatabaseValues {
   nameEnglish: string;
   nameArabic: string;
   governorate: string;
+  governorateArabic: string;
   sourceNameEnglish: string;
   sourceNameArabic: string;
   status: CityLifecycleStatusValue;
@@ -145,6 +146,7 @@ export function mapCatalogRecordToDbValues(record: CityCatalogRecord): CityDatab
     nameEnglish: record.nameEnglish.trim(),
     nameArabic: record.nameArabic.trim(),
     governorate: record.governorate.trim(),
+    governorateArabic: record.governorateArabic?.trim() ?? '',
     sourceNameEnglish: record.sourceNameEnglish.trim(),
     sourceNameArabic: record.sourceNameArabic.trim(),
     status: record.status ?? 'OFFICIAL',
@@ -167,6 +169,7 @@ export function mapCatalogRecordToInsertRow(record: CityCatalogRecord) {
     nameEnglish: values.nameEnglish,
     nameArabic: values.nameArabic,
     governorate: values.governorate,
+    governorateArabic: values.governorateArabic,
     sourceNameEnglish: values.sourceNameEnglish,
     sourceNameArabic: values.sourceNameArabic,
     status: values.status,

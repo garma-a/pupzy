@@ -61,3 +61,6 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 /output/
+
+# Reuse existing local AdminJS dependencies (directory or symlink).
+/admin-service/node_modules

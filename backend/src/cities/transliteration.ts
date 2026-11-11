@@ -67,6 +67,7 @@ export function englishAliasCandidates(value: string, includeArticle = false): s
   const add = (s: string) => {
     if (s !== value && s.length <= 100 && !/([a-z])\1\1/i.test(s) && !/\ballamein\b/i.test(s)) result.add(s);
   };
+  if (value === 'Mohandessin') add('Mohandseen');
   const article = value.match(/^(El|Al)[ -]+(.+)$/i);
   if (article) {
     add(article[2]);
@@ -114,6 +115,15 @@ export function englishAliasCandidates(value: string, includeArticle = false): s
   return [...result];
 }
 
+export function arabicSpacingAliases(value: string): string[] {
+  if (value.startsWith('بورتو')) return [];
+  const spaced = value.match(/^(بور|أبو|ابو|عين|كفر|سيدي|سيدى|ميت)\s+(.+)$/u);
+  if (spaced) return [spaced[1] + spaced[2]];
+  const joined = value.match(/^(بور|أبو|ابو|عين|كفر|سيدي|سيدى|ميت)([\u0621-\u064a].*)$/u);
+  // كفرة is a complete word, not كفر followed by a one-letter place name.
+  return joined && joined[2].split(/\s/)[0].length > 1 ? [joined[1] + ' ' + joined[2]] : [];
+}
+
 export function addReviewedTransliterations(records: CityCatalogRecord[], review: AliasGenerationReview) {
   if (
     !review.reviewed ||
@@ -125,10 +135,12 @@ export function addReviewedTransliterations(records: CityCatalogRecord[], review
     throw new Error('Invalid reviewed transliteration rules');
   const names = new Map<string, Set<string>>();
   for (const row of records) {
-    const key = row.governorateCode + ':' + normalizeCitySearch(row.nameEnglish);
-    const codes = names.get(key) ?? new Set<string>();
-    codes.add(row.sourceCode);
-    names.set(key, codes);
+    for (const value of [row.nameEnglish, row.nameArabic]) {
+      const key = row.governorateCode + ':' + normalizeCitySearch(value);
+      const codes = names.get(key) ?? new Set<string>();
+      codes.add(row.sourceCode);
+      names.set(key, codes);
+    }
   }
   let affectedRows = 0,
     generated = 0,
@@ -143,6 +155,7 @@ export function addReviewedTransliterations(records: CityCatalogRecord[], review
     // Curated spellings are seeds, but no candidate feeds back into this generator.
     const seeds = [...new Set([row.nameEnglish, row.sourceNameEnglish])];
     const candidates = [
+      ...arabicSpacingAliases(row.nameArabic),
       ...new Set(seeds.flatMap((seed) => englishAliasCandidates(seed, row.nameArabic.startsWith('ال')))),
     ];
     let selected = 0;

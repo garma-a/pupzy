@@ -7,6 +7,7 @@ import hashlib
 from pathlib import Path
 import urllib.parse
 import urllib.request
+from geo_offline import save
 
 root = Path(__file__).resolve().parents[1]
 manifest_path = root / 'data/neighbourhoods/source-manifest.json'
@@ -34,5 +35,5 @@ for entry in manifest['snapshots']:
                  sha256=hashlib.sha256(compressed).hexdigest(),sizeBytes=len(compressed),
                  uncompressedSha256=hashlib.sha256(raw).hexdigest(),uncompressedSizeBytes=len(raw),
                  representation='Untouched raw response, deterministic gzip (mtime=0)')
-    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
+    save(manifest_path, manifest)
     print(destination)

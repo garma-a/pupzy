@@ -1,5 +1,6 @@
 import { readCityData } from './data-files';
 import type { CityCatalog } from './catalog';
+import { rejectedAliasReason } from './alias-review';
 import {
   loadRawSnapshot,
   loadReleaseSnapshot,
@@ -283,7 +284,42 @@ describe('Combined source artifact reproducibility', () => {
     for (const row of old) {
       const current = released.get(row.sourceCode)!;
       expect([current.longitude, current.latitude]).toEqual([row.longitude, row.latitude]);
-      if (current.nameEnglish !== row.nameEnglish) expect(current.aliases).toContain(row.nameEnglish);
+      if (current.nameEnglish !== row.nameEnglish) {
+        if (rejectedAliasReason(row.nameEnglish)) expect(current.sourceNameEnglish).toBe(row.sourceNameEnglish);
+        else expect(current.aliases).toContain(row.nameEnglish);
+      }
     }
   });
+});
+
+it('preserves the27 English governorate labels agreed with main', () => {
+  expect([...new Set(loadOfficialCatalog().records.map((row) => row.governorate))].sort()).toEqual([
+    'Alexandria',
+    'Assiut',
+    'Aswan',
+    'Behera',
+    'Beni Suef',
+    'Cairo',
+    'Dakahlia',
+    'Damietta',
+    'Fayoum',
+    'Gharbia',
+    'Giza',
+    'Ismailia',
+    'Kafr El-Shikh',
+    'Kalyoubia',
+    'Luxor',
+    'Matrouh',
+    'Menia',
+    'Menoufia',
+    'New Valley',
+    'North Sinai',
+    'Port Said',
+    'Qena',
+    'Red Sea',
+    'Sharkia',
+    'South Sinai',
+    'Suez',
+    'Suhag',
+  ]);
 });

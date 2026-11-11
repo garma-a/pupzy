@@ -22,249 +22,157 @@
   "aliasDecisions": [
     {
       "sourceCode": "OSM:way/774635278",
-      "aliases": [
-        "Tagamoa",
-        "El Tagamoa"
-      ],
+      "aliases": ["Tagamoa", "El Tagamoa"],
       "entry": "Fifth Settlement",
       "area": "greater-cairo",
       "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
     },
     {
       "sourceCode": "OSM:node/768592646",
-      "aliases": [
-        "Baragil"
-      ],
+      "aliases": ["Baragil"],
       "entry": "Baragil",
       "area": "greater-cairo",
       "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
     },
     {
       "sourceCode": "OSM:node/670235344",
-      "aliases": [
-        "El Ashgar",
-        "Al Ashgar"
-      ],
+      "aliases": ["El Ashgar", "Al Ashgar"],
       "entry": "El Ashgar",
       "area": "greater-cairo",
       "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
     },
     {
       "sourceCode": "OSM:way/727511112",
-      "aliases": [
-        "Warraq El Arab"
-      ],
+      "aliases": ["Warraq El Arab"],
       "entry": "Warraq El Arab",
       "area": "greater-cairo",
       "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
     },
     {
       "sourceCode": "EG0201",
-      "aliases": [
-        "El Montazah"
-      ],
+      "aliases": ["El Montazah"],
       "entry": "Montaza",
       "area": "alexandria",
       "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
     },
     {
       "sourceCode": "OSM:relation/13601670",
-      "aliases": [
-        "El Mamoura"
-      ],
+      "aliases": ["El Mamoura"],
       "entry": "Maamoura",
       "area": "alexandria",
       "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
     },
     {
       "sourceCode": "PUPZY:sidi-bishr",
-      "aliases": [
-        "Sidi Beshr"
-      ],
+      "aliases": ["Sidi Beshr"],
       "entry": "Sidi Bishr",
       "area": "alexandria",
       "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
     },
     {
       "sourceCode": "PUPZY:smouha",
-      "aliases": [
-        "Semouha"
-      ],
+      "aliases": ["Semouha"],
       "entry": "Smouha",
       "area": "alexandria",
       "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
     },
     {
       "sourceCode": "OSM:way/749734834",
-      "aliases": [
-        "Bacos"
-      ],
+      "aliases": ["Bacos"],
       "entry": "Bacos",
       "area": "alexandria",
       "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
     },
     {
       "sourceCode": "OSM:way/655605222",
-      "aliases": [
-        "El Mafrouza",
-        "Al Mafrouza"
-      ],
+      "aliases": ["El Mafrouza", "Al Mafrouza"],
       "entry": "El Mafrouza",
       "area": "alexandria",
       "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
     },
     {
       "sourceCode": "OSM:way/745355801",
-      "aliases": [
-        "Wabour El Maya"
-      ],
+      "aliases": ["Wabour El Maya"],
       "entry": "Wabour El Maya",
       "area": "alexandria",
       "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
     },
     {
       "sourceCode": "OSM:way/742223060",
-      "aliases": [
-        "Toson"
-      ],
+      "aliases": ["Toson"],
       "entry": "Toson",
       "area": "alexandria",
       "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
     },
     {
       "sourceCode": "EG2107",
-      "aliases": [
-        "6th October",
-        "6th of October",
-        "السادس من أكتوبر"
-      ],
+      "aliases": ["6th October", "6th of October", "السادس من أكتوبر"],
       "entry": "6th of October",
       "basis": "The first official October district represents the named city; the Imbaba quarter with the same label is a distinct locality."
     },
     {
       "sourceCode": "EG0103",
-      "aliases": [
-        "مدينة 15 مايو"
-      ],
+      "aliases": ["مدينة 15 مايو"],
       "entry": "15th of May City",
       "basis": "Exact city-type Arabic variant for the same official15May City."
     },
     {
       "sourceCode": "OSM:way/746592370",
-      "aliases": [
-        "الكيلو ٢١"
-      ],
+      "aliases": ["الكيلو ٢١"],
       "entry": "Kilo 21",
       "basis": "Eastern Arabic digit rendering of the same sourced kilometre settlement name."
     },
     {
       "sourceCode": "OSM:way/746652733",
-      "aliases": [
-        "الكيلو ٢٦"
-      ],
+      "aliases": ["الكيلو ٢٦"],
       "entry": "Kilo 26",
       "basis": "Eastern Arabic digit rendering of the same sourced kilometre settlement name."
     },
     {
       "sourceCode": "OSM:node/676395184",
-      "aliases": [
-        "Krier",
-        "كرير"
-      ],
+      "aliases": ["Krier", "كرير"],
       "entry": "Krier",
       "basis": "Reviewed local short form/transliteration of SidiKerir; source whole-place identities merge before final display."
     },
     {
       "sourceCode": "OSM:node/769118972",
-      "aliases": [
-        "وادي القمر"
-      ],
+      "aliases": ["وادي القمر"],
       "entry": "Wadi El Qamar",
       "basis": "Arabic short form of the same sourced EzbetWadiAlQamar settlement, matching the previously lead-approved English alias."
     },
     {
       "sourceCode": "OSM:way/810437370",
-      "aliases": [
-        "Arayesheya",
-        "العرايشية"
-      ],
+      "aliases": ["Arayesheya", "العرايشية"],
       "entry": "Arayesheya",
       "basis": "Exact Arabic/English variants of the previously lead-approved C1 ElAraishiya alias on this sourced locality."
     },
     {
       "sourceCode": "OSM:way/751315213",
-      "aliases": [
-        "El Amal",
-        "Al Amal",
-        "الأمل"
-      ],
+      "aliases": ["El Amal", "Al Amal", "الأمل"],
       "entry": "El Amal",
       "basis": "Recorded Nominatim exact PortSaid lookup identifies مساكن الامل نهضه مصر; this is the named Amal neighbourhood, not a substring of an unrelated hope-branded project."
     },
     {
       "sourceCode": "OSM:way/794862513",
-      "aliases": [
-        "El Shoaraa",
-        "Al Shoaraa",
-        "الشعراء"
-      ],
+      "aliases": ["El Shoaraa", "Al Shoaraa", "الشعراء"],
       "entry": "El Shoaraa",
       "basis": "Recorded named Damietta village ShatElShoaraa and same-name canal-road response establish the local Shoaraa name; no different governorate borrowed."
     }
   ],
   "nameCorrections": {
-    "OSM:way/252472309": [
-      "Mivida",
-      "ميفيدا"
-    ],
-    "OSM:way/252474635": [
-      "Hyde Park",
-      "هايد بارك"
-    ],
-    "OSM:way/267174187": [
-      "Fayrouz",
-      "الفيروز"
-    ],
-    "OSM:way/267174189": [
-      "Fayrouz",
-      "الفيروز"
-    ],
-    "OSM:way/267097564": [
-      "Diplomaseyeen",
-      "الدبلوماسيين"
-    ],
-    "OSM:way/379756027": [
-      "Diplomaseyeen",
-      "الدبلوماسيين"
-    ],
-    "EG2107": [
-      "6th of October",
-      "السادس من أكتوبر"
-    ],
-    "OSM:way/772964026": [
-      "El Nady District (Shorouk)",
-      "حي النادي — الشروق"
-    ],
-    "OSM:way/882793162": [
-      "Administrative Prosecution Housing",
-      "مساكن النيابة الإدارية"
-    ],
-    "OSM:way/692728323": [
-      "Eastern Company Housing",
-      "مساكن إيسترن كومباني"
-    ],
-    "OSM:way/756317788": [
-      "Saudi Company Housing (Obour)",
-      "مساكن الشركة السعودية — العبور"
-    ],
-    "OSM:way/540096389": [
-      "Trips Club Members Housing",
-      "مساكن أعضاء نادي الرحلات"
-    ],
-    "OSM:node/2953957579": [
-      "Abu Rawash Industrial Zone",
-      "أبو رواش الصناعية"
-    ]
+    "OSM:way/252472309": ["Mivida", "ميفيدا"],
+    "OSM:way/252474635": ["Hyde Park", "هايد بارك"],
+    "OSM:way/267174187": ["Fayrouz", "الفيروز"],
+    "OSM:way/267174189": ["Fayrouz", "الفيروز"],
+    "OSM:way/267097564": ["Diplomaseyeen", "الدبلوماسيين"],
+    "OSM:way/379756027": ["Diplomaseyeen", "الدبلوماسيين"],
+    "EG2107": ["6th of October", "السادس من أكتوبر"],
+    "OSM:way/772964026": ["El Nady District (Shorouk)", "حي النادي — الشروق"],
+    "OSM:way/882793162": ["Administrative Prosecution Housing", "مساكن النيابة الإدارية"],
+    "OSM:way/692728323": ["Eastern Company Housing", "مساكن إيسترن كومباني"],
+    "OSM:way/756317788": ["Saudi Company Housing (Obour)", "مساكن الشركة السعودية — العبور"],
+    "OSM:way/540096389": ["Trips Club Members Housing", "مساكن أعضاء نادي الرحلات"],
+    "OSM:node/2953957579": ["Abu Rawash Industrial Zone", "أبو رواش الصناعية"]
   },
   "round9": {
     "reviewed": true,
@@ -276,83 +184,63 @@
         "nameEnglish": "El Hammam City",
         "nameArabic": "مدينة الحمام",
         "basis": "Named residential town polygon; recorded centre is about116km from the EG3302 administrative centroid. Keep both identities; the district point is not in the town.",
-        "sourceUrls": [
-          "https://www.openstreetmap.org/way/101848506"
-        ]
+        "sourceUrls": ["https://www.openstreetmap.org/way/101848506"]
       },
       {
         "sourceCode": "OSM:way/839901136",
         "nameEnglish": "Bank El Iskan Housing (El Hammam)",
         "nameArabic": "مساكن بنك الإسكان والتعمير — الحمام",
         "basis": "Source name explicitly begins مساكن and English says Housing And Development Bank Housing; named residential estate, not bank premises. Lead2026-11-11 authorises estate restoration.",
-        "sourceUrls": [
-          "https://www.openstreetmap.org/way/839901136"
-        ]
+        "sourceUrls": ["https://www.openstreetmap.org/way/839901136"]
       },
       {
         "sourceCode": "OSM:way/699912644",
         "nameEnglish": "Bank El Iskan Housing",
         "nameArabic": "مساكن بنك الإسكان والتعمير",
         "basis": "Source name explicitly begins مساكن and English says Housing And Development Bank Housing; named residential estate, not bank premises. Lead2026-11-11 authorises estate restoration.",
-        "sourceUrls": [
-          "https://www.openstreetmap.org/way/699912644"
-        ]
+        "sourceUrls": ["https://www.openstreetmap.org/way/699912644"]
       },
       {
         "sourceCode": "OSM:way/792198968",
         "nameEnglish": "Bank El Iskan Housing",
         "nameArabic": "مساكن بنك الإسكان والتعمير",
         "basis": "Source name explicitly begins مساكن and English says Housing And Development Bank Housing; named residential estate, not bank premises. Lead2026-11-11 authorises estate restoration.",
-        "sourceUrls": [
-          "https://www.openstreetmap.org/way/792198968"
-        ]
+        "sourceUrls": ["https://www.openstreetmap.org/way/792198968"]
       },
       {
         "sourceCode": "OSM:way/727261263",
         "nameEnglish": "Abu Rawash Village",
         "nameArabic": "قرية أبو رواش",
         "basis": "Own named settlement polygon at the recorded source centre, geographically distinct from the Abu Rawash headline node. Lead2026-11-11 explicitly distinguishes this settlement from the other place.",
-        "sourceUrls": [
-          "https://www.openstreetmap.org/way/727261263"
-        ]
+        "sourceUrls": ["https://www.openstreetmap.org/way/727261263"]
       },
       {
         "sourceCode": "OSM:way/879151658",
         "nameEnglish": "Social Housing (10th of Ramadan)",
         "nameArabic": "الإسكان الاجتماعي — العاشر من رمضان",
         "basis": "Separate named residential source polygon; restore the source estate rather than merging generic Social Housing labels on proximity alone.",
-        "sourceUrls": [
-          "https://www.openstreetmap.org/way/879151658"
-        ]
+        "sourceUrls": ["https://www.openstreetmap.org/way/879151658"]
       },
       {
         "sourceCode": "OSM:way/699391781",
         "nameEnglish": "Othman Housing (10th of Ramadan)",
         "nameArabic": "مساكن عثمان — العاشر من رمضان",
         "basis": "Source explicitly says مساكن عثمان with landuse=residential; a named housing estate, not institutional offices. Separate original polygon retained as authorised by lead.",
-        "sourceUrls": [
-          "https://www.openstreetmap.org/way/699391781"
-        ]
+        "sourceUrls": ["https://www.openstreetmap.org/way/699391781"]
       },
       {
         "sourceCode": "OSM:way/660869901",
         "nameEnglish": "Abis 8 Village 1",
         "nameArabic": "أبيس 8 قرية 1",
         "basis": "OSM names this residential village 1/8; primary ITDA commercial-register addresses independently attest Abis 1/8. Recorded Nominatim reverses confirm Abis context. Denominator8 is Abis8; explicit primary Abis الثامنة 12/8 evidence confirms that naming hierarchy. Exact OSM centre retained. Search excerpts, not full PDFs, cached in research-round9.",
-        "sourceUrls": [
-          "https://www.openstreetmap.org/way/660869901",
-          "https://www.itda.gov.eg/crm/863/CRA106.pdf"
-        ]
+        "sourceUrls": ["https://www.openstreetmap.org/way/660869901", "https://www.itda.gov.eg/crm/863/CRA106.pdf"]
       },
       {
         "sourceCode": "OSM:way/741960643",
         "nameEnglish": "Abis 8 Village 4",
         "nameArabic": "أبيس 8 قرية 4",
         "basis": "OSM names this residential village 4/8; primary ITDA commercial-register addresses independently attest Abis 4/8. Recorded Nominatim reverses confirm Abis context. Denominator8 is Abis8; explicit primary Abis الثامنة 12/8 evidence confirms that naming hierarchy. Exact OSM centre retained. Search excerpts, not full PDFs, cached in research-round9.",
-        "sourceUrls": [
-          "https://www.openstreetmap.org/way/741960643",
-          "https://www.itda.gov.eg/CRM/857/CRA5.pdf"
-        ]
+        "sourceUrls": ["https://www.openstreetmap.org/way/741960643", "https://www.itda.gov.eg/CRM/857/CRA5.pdf"]
       },
       {
         "sourceCode": "OSM:way/660250153",
@@ -395,10 +283,7 @@
       }
     ],
     "newOctoberResearch": {
-      "point": [
-        30.88,
-        29.87
-      ],
+      "point": [30.88, 29.87],
       "decision": "No added point: no independently named sub-area verified.",
       "research": "Original named place/residential context inspected. At zoom16 reverse identifies only the whole New October residential polygon; zoom14 only6th of October. Sakan Masr project search returned no object. Existing named housing estates lie farther east/north; generic numbered neighbourhoods and building-count projects stay excluded.",
       "responses": [

@@ -1824,6 +1824,14 @@
         "english": "Mubarak New Damietta",
         "arabic": "مبارك دمياط الجديدة",
         "misspellings": []
+      },
+      {
+        "english": "3rd District",
+        "arabic": "الحي الثالث",
+        "misspellings": [],
+        "sourceUrl": "https://www.itda.gov.eg/CRM/881/CRA9.pdf",
+        "sourceSnapshot": "neighbourhoods/research-pr27/independent-name-search.json.gz",
+        "evidence": "Independently selected official ITDA register address explicitly says New Damietta حي3. Ordinal written as words in Arabic per reviewed display rules; existing standard English ordinal. This is a residential City district, not a building or locality code."
       }
     ]
   },
