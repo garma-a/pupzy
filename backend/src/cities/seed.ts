@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/require-await, @typescript-eslint/no-unsafe-return */
 import { sql, eq } from 'drizzle-orm';
 import {
-  getOfficialCatalog,
+  loadOfficialCatalog,
   validateCatalog,
   unpackCatalog,
   mapCatalogRecordToInsertRow,
@@ -39,7 +39,7 @@ export interface OfficialCityReference {
  * 5. Safe: does not delete, truncate, or overwrite historical (LEGACY / RETIRED) records.
  */
 export async function seedOfficialCities(db: any, options: SeedCitiesOptions = {}): Promise<SeedCitiesResult> {
-  const rawCatalog = options.catalog ?? getOfficialCatalog();
+  const rawCatalog = options.catalog ?? loadOfficialCatalog();
   const { records: catalogRecords, officialRecords } = unpackCatalog(rawCatalog);
 
   if (options.validateBeforeSeed !== false) {
@@ -53,25 +53,32 @@ export async function seedOfficialCities(db: any, options: SeedCitiesOptions = {
   const governorates = new Set(officialRecords.map((c) => c.governorate));
 
   const runSeed = async (tx: any) => {
-    for (let i = 0; i < catalogRecords.length; i += batchSize) {
-      const chunk = catalogRecords.slice(i, i + batchSize);
-      const batchValues = chunk.map((c) => mapCatalogRecordToInsertRow(c));
+    for (const tier of [
+      catalogRecords.filter((c) => !c.districtSourceCode),
+      catalogRecords.filter((c) => c.districtSourceCode),
+    ]) {
+      for (let i = 0; i < tier.length; i += batchSize) {
+        const chunk = tier.slice(i, i + batchSize);
+        const batchValues = chunk.map((c) => mapCatalogRecordToInsertRow(c));
 
-      await tx
-        .insert(cities)
-        .values(batchValues)
-        .onConflictDoUpdate({
-          target: cities.sourceCode,
-          set: {
-            nameEnglish: sql`excluded.name_english`,
-            nameArabic: sql`excluded.name_arabic`,
-            governorate: sql`excluded.governorate`,
-            sourceNameEnglish: sql`excluded.source_name_english`,
-            sourceNameArabic: sql`excluded.source_name_arabic`,
-            status: sql`excluded.status`,
-            centerPoint: sql`excluded.center_point`,
-          },
-        });
+        await tx
+          .insert(cities)
+          .values(batchValues)
+          .onConflictDoUpdate({
+            target: cities.sourceCode,
+            set: {
+              nameEnglish: sql`excluded.name_english`,
+              nameArabic: sql`excluded.name_arabic`,
+              governorate: sql`excluded.governorate`,
+              sourceNameEnglish: sql`excluded.source_name_english`,
+              sourceNameArabic: sql`excluded.source_name_arabic`,
+              status: sql`excluded.status`,
+              centerPoint: sql`excluded.center_point`,
+              aliases: sql`excluded.aliases`,
+              districtId: sql`excluded.district_id`,
+            },
+          });
+      }
     }
   };
 
@@ -107,7 +114,7 @@ async function queryOfficialCityReferences(db: any): Promise<OfficialCityReferen
  */
 export async function ensureOfficialCities(
   db: any,
-  catalog: CityCatalogRecord[] | CityCatalog = getOfficialCatalog(),
+  catalog: CityCatalogRecord[] | CityCatalog = loadOfficialCatalog(),
 ): Promise<OfficialCityReference[]> {
   const existing = await queryOfficialCityReferences(db);
   const { officialRecords } = unpackCatalog(catalog);

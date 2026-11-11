@@ -1,3 +1,5 @@
+import { readCityData } from './data-files';
+import type { CityCatalog as DistrictFixtureCatalog } from './catalog';
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/require-await, @typescript-eslint/no-unsafe-return */
 import {
   validateLegacyMappings,
@@ -7,13 +9,14 @@ import {
   type LegacyCityMapping,
   type ExistingCityRow,
 } from './reconcile';
-import { getOfficialCatalog } from './catalog';
 import { CitiesService } from './cities.service';
 import { CitiesRepository } from './cities.repository';
 import type { Cache } from 'cache-manager';
 
+const districtFixture = () => readCityData<DistrictFixtureCatalog>('neighbourhoods/district-seed.json.gz').records;
+
 describe('Legacy City Mappings Validation', () => {
-  const officialCatalog = getOfficialCatalog();
+  const officialCatalog = districtFixture();
 
   it('validates a correct 1:1 legacy mapping against the official catalog', () => {
     const mappings: LegacyCityMapping[] = [
@@ -104,7 +107,7 @@ describe('Legacy City Mappings Validation', () => {
 });
 
 describe('generateReconcileMigrationSql', () => {
-  const officialCatalog = getOfficialCatalog();
+  const officialCatalog = districtFixture();
 
   it('rejects invalid legacy mappings before generating SQL', () => {
     const invalidMappings: LegacyCityMapping[] = [
@@ -164,7 +167,7 @@ describe('generateReconcileMigrationSql', () => {
 });
 
 describe('reconcileCities', () => {
-  const officialCatalog = getOfficialCatalog();
+  const officialCatalog = districtFixture();
 
   it('reconciles existing legacy cities preserving UUIDs, marking unmapped as LEGACY, and inserting missing official cities', async () => {
     const legacyMaadiId = '01916327-0000-7000-8000-000000000001';

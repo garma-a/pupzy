@@ -1,6 +1,9 @@
+import { readCityData } from './data-files';
+import type { CityCatalog as DistrictFixtureCatalog } from './catalog';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import {
   compareSnapshots,
   applyReviewedRelease,
@@ -11,7 +14,7 @@ import {
   DEFAULT_RESOURCE_URL,
 } from './refresh';
 import {
-  getOfficialCatalog,
+  transformCatalog,
   validateSnapshot,
   loadRawSnapshot,
   type CitySnapshot,
@@ -19,8 +22,10 @@ import {
 } from './catalog';
 import { DEFAULT_METADATA_URL } from './fetch';
 
+const districtFixture = () => readCityData<DistrictFixtureCatalog>('neighbourhoods/district-seed.json.gz').records;
+
 describe('Upstream Refresh and Future Release Diff Tooling', () => {
-  const currentCatalog = getOfficialCatalog();
+  const currentCatalog = transformCatalog(loadRawSnapshot()).records;
 
   const createMockSnapshot = (
     records: any[],
@@ -342,7 +347,7 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
 
   describe('Explicit Reviewed Metadata and Count Requirements', () => {
     it('requires explicit reviewed metadata when official count changes', () => {
-      const baseCatalog = getOfficialCatalog();
+      const baseCatalog = districtFixture();
       const rawRecords = baseCatalog
         .filter((c) => c.sourceCode !== 'EG0101') // Remove 1 city -> 350 official
         .map((c) => ({
@@ -886,6 +891,10 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
       expect(migrationSql).toContain("UPDATE cities SET status = 'RETIRED' WHERE source_code IN ('EG0102');");
       expect(migrationSql).not.toContain("SET status = 'RETIRED' WHERE source_code IN ('EG0101'");
       expect(migrationSql).toContain('INSERT INTO cities (source_code, name_english, name_arabic, governorate');
+      expect(migrationSql).toContain("ADD COLUMN IF NOT EXISTS governorate_arabic varchar(100) NOT NULL DEFAULT ''");
+      expect(migrationSql.indexOf('ADD COLUMN IF NOT EXISTS governorate_arabic')).toBeLessThan(
+        migrationSql.indexOf('INSERT INTO cities'),
+      );
       expect(migrationSql).toContain("'EG0198'");
       expect(migrationSql).toContain('UPDATE city_catalog_revisions SET revision = revision + 1 WHERE id = 1;');
       expect(migrationSql).toContain("RAISE EXCEPTION 'City catalog revision state is missing';");
@@ -896,12 +905,10 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
   });
 
   describe('Monotonically Ordered Migration Generation and Publishing', () => {
-    const tempDir = path.resolve(__dirname, '../../test/temp-migrations');
+    let tempDir: string;
 
     beforeEach(() => {
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-      }
+      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pupzy-city-migrations-'));
       const metaDir = path.join(tempDir, 'meta');
       if (!fs.existsSync(metaDir)) {
         fs.mkdirSync(metaDir, { recursive: true });
@@ -981,7 +988,7 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
     });
 
     it('publishes reviewed release atomically without modifying earlier migrations and updating journal', () => {
-      const baseCatalog = getOfficialCatalog();
+      const baseCatalog = districtFixture();
       const candidateRaw = baseCatalog.map((c) => {
         if (c.sourceCode === 'EG0104') {
           return {
@@ -1040,7 +1047,7 @@ describe('Upstream Refresh and Future Release Diff Tooling', () => {
     });
 
     it('fails closed without writing any files if candidate validation or count checks fail', () => {
-      const baseCatalog = getOfficialCatalog();
+      const baseCatalog = districtFixture();
       const invalidSnapshot = { metadata: { source: '' }, records: [] } as unknown as CitySnapshot;
 
       const tempCatalogPath = path.join(tempDir, 'catalog.json');

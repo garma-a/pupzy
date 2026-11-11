@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
 import * as fs from 'fs';
 import {
-  getOfficialCatalog,
+  loadOfficialCatalog,
   validateCatalog,
   unpackCatalog,
   resolveDataPath,
@@ -135,7 +135,7 @@ export function validateLegacyMappings(
  * 8. Cache invalidation is triggered post-commit.
  */
 export async function reconcileCities(db: any, options: ReconcileOptions = {}): Promise<ReconcileResult> {
-  const rawCatalog = options.catalog ?? getOfficialCatalog();
+  const rawCatalog = options.catalog ?? loadOfficialCatalog();
   const { records: catalogRecords, officialRecords } = unpackCatalog(rawCatalog);
   const mappings = options.mappings ?? loadLegacyMappings();
 
@@ -307,7 +307,9 @@ export async function reconcileCities(db: any, options: ReconcileOptions = {}): 
     }
 
     // 3. Insert missing official cities
-    const missingOfficial = catalogRecords.filter((c) => !claimedSourceCodes.has(c.sourceCode));
+    const missingOfficial = catalogRecords
+      .filter((c) => !claimedSourceCodes.has(c.sourceCode))
+      .sort((a, b) => Number(!!a.districtSourceCode) - Number(!!b.districtSourceCode));
     for (const off of missingOfficial) {
       const dbValues = mapCatalogRecordToDbValues(off);
       await tx.query(
@@ -319,9 +321,9 @@ export async function reconcileCities(db: any, options: ReconcileOptions = {}): 
           source_name_english,
           source_name_arabic,
           status,
-          center_point
+          center_point, aliases, district_id
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, ST_SetSRID(ST_MakePoint($8, $9), 4326)
+          $1, $2, $3, $4, $5, $6, $7, ST_SetSRID(ST_MakePoint($8, $9), 4326), $10::text[], (SELECT id FROM cities WHERE source_code = $11)
         )
         ON CONFLICT (source_code) DO UPDATE SET
           name_english = EXCLUDED.name_english,
@@ -341,9 +343,18 @@ export async function reconcileCities(db: any, options: ReconcileOptions = {}): 
           dbValues.status,
           dbValues.longitude,
           dbValues.latitude,
+          dbValues.aliases,
+          dbValues.districtSourceCode,
         ],
       );
       insertedOfficialCount++;
+    }
+
+    for (const record of catalogRecords) {
+      await tx.query(
+        `UPDATE cities SET aliases = $1::text[], district_id = (SELECT id FROM cities WHERE source_code = $2), governorate_arabic = $4 WHERE source_code = $3`,
+        [record.aliases ?? [], record.districtSourceCode ?? null, record.sourceCode, record.governorateArabic ?? ''],
+      );
     }
 
     // 4. Post-verification inside transaction
@@ -402,7 +413,7 @@ export async function reconcileCities(db: any, options: ReconcileOptions = {}): 
  */
 export function generateReconcileMigrationSql(
   mappings: LegacyCityMapping[] = loadLegacyMappings(),
-  catalog: CityCatalogRecord[] | CityCatalog = getOfficialCatalog(),
+  catalog: CityCatalogRecord[] | CityCatalog = loadOfficialCatalog(),
 ): string {
   const { records: catalogRecords, officialRecords } = unpackCatalog(catalog);
 

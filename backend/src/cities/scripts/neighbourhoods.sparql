@@ -1,0 +1,19 @@
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+SELECT DISTINCT ?item ?coord ?en ?ar ?enAlias ?arAlias WHERE {
+  SERVICE wikibase:box {
+    ?item wdt:P625 ?coord .
+    bd:serviceParam wikibase:cornerWest "Point(28.5 29.45)"^^geo:wktLiteral .
+    bd:serviceParam wikibase:cornerEast "Point(32.8 31.85)"^^geo:wktLiteral .
+  }
+  ?item wdt:P17 wd:Q79 .
+  OPTIONAL { ?item rdfs:label ?en FILTER(LANG(?en) = "en") }
+  OPTIONAL { ?item rdfs:label ?ar FILTER(LANG(?ar) = "ar") }
+  OPTIONAL { ?item skos:altLabel ?enAlias FILTER(LANG(?enAlias) = "en") }
+  OPTIONAL { ?item skos:altLabel ?arAlias FILTER(LANG(?arAlias) = "ar") }
+}

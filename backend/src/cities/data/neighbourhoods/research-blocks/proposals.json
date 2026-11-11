@@ -1,0 +1,58 @@
+[
+  {
+    "sourceCode": "PUPZY:bangar-el-sokkar-village-23",
+    "nameEnglish": "Village 23 Banger El Sokkar",
+    "nameArabic": "قرية 23 بنجر السكر",
+    "aliases": ["بنجر 23", "Banger 23"],
+    "point": [29.5734322, 30.7682796],
+    "responseFile": "neighbourhoods/alexandria-places.json.gz",
+    "lookupQuery": "قرية 23 بنجر السكر",
+    "osmIdentity": "OSM:node/2726665536",
+    "evidence": "OSM village node literally named 23; full settlement identity independently corroborated by https://www.arc.sci.eg/Products/Search/1401?TypeID=4. These are long-established inhabited villages, not micro-level sectors in a city. Recorded source node point, no coordinate inference. Search evidence retained in research-blocks/web-search-results-2.json.gz and -3.json.gz. Primary naming source fetched as search excerpts only; full trade-register PDFs explicitly restrict republication and were not downloaded.",
+    "proxyPoint": false,
+    "sourceUrl": "https://www.arc.sci.eg/Products/Search/1401?TypeID=4",
+    "reviewCaution": "Number-qualified village identity needs lead acceptance under no bare-code rule; newspaper corroboration states Matrouh while ITDA addresses say Alexandria; parent must come from OCHA containment, never article governorate."
+  },
+  {
+    "sourceCode": "PUPZY:bangar-el-sokkar-village-24",
+    "nameEnglish": "Village 24 Banger El Sokkar",
+    "nameArabic": "قرية 24 بنجر السكر",
+    "aliases": ["بنجر 24", "Banger 24"],
+    "point": [29.5618451, 30.7848718],
+    "responseFile": "neighbourhoods/alexandria-places.json.gz",
+    "lookupQuery": "قرية 24 بنجر السكر",
+    "osmIdentity": "OSM:node/2726665551",
+    "evidence": "OSM village node literally named 24; full settlement identity independently corroborated by https://www.itda.gov.eg/CRM/860/CRA57.pdf. These are long-established inhabited villages, not micro-level sectors in a city. Recorded source node point, no coordinate inference. Search evidence retained in research-blocks/web-search-results-2.json.gz and -3.json.gz. Primary naming source fetched as search excerpts only; full trade-register PDFs explicitly restrict republication and were not downloaded.",
+    "proxyPoint": false,
+    "sourceUrl": "https://www.itda.gov.eg/CRM/860/CRA57.pdf",
+    "reviewCaution": "Number-qualified village identity needs lead acceptance under no bare-code rule; newspaper corroboration states Matrouh while ITDA addresses say Alexandria; parent must come from OCHA containment, never article governorate."
+  },
+  {
+    "sourceCode": "PUPZY:bangar-el-sokkar-village-25",
+    "nameEnglish": "Village 25 Banger El Sokkar",
+    "nameArabic": "قرية 25 بنجر السكر",
+    "aliases": ["بنجر 25", "Banger 25"],
+    "point": [29.533918, 30.7927015],
+    "responseFile": "neighbourhoods/alexandria-places.json.gz",
+    "lookupQuery": "قرية 25 بنجر السكر",
+    "osmIdentity": "OSM:node/2726665532",
+    "evidence": "OSM village node literally named 25; full settlement identity independently corroborated by https://itda.gov.eg/CRM/873/CRA57.pdf. These are long-established inhabited villages, not micro-level sectors in a city. Recorded source node point, no coordinate inference. Search evidence retained in research-blocks/web-search-results-2.json.gz and -3.json.gz. Primary naming source fetched as search excerpts only; full trade-register PDFs explicitly restrict republication and were not downloaded.",
+    "proxyPoint": false,
+    "sourceUrl": "https://itda.gov.eg/CRM/873/CRA57.pdf",
+    "reviewCaution": "Number-qualified village identity needs lead acceptance under no bare-code rule; newspaper corroboration states Matrouh while ITDA addresses say Alexandria; parent must come from OCHA containment, never article governorate."
+  },
+  {
+    "sourceCode": "PUPZY:bangar-el-sokkar-village-26",
+    "nameEnglish": "Village 26 Banger El Sokkar",
+    "nameArabic": "قرية 26 بنجر السكر",
+    "aliases": ["بنجر 26", "Banger 26"],
+    "point": [29.5281995, 30.7675421],
+    "responseFile": "neighbourhoods/alexandria-places.json.gz",
+    "lookupQuery": "قرية 26 بنجر السكر",
+    "osmIdentity": "OSM:node/2726665547",
+    "evidence": "OSM village node literally named 26; full settlement identity independently corroborated by https://www.itda.gov.eg/CRM/854/CRA57.pdf. These are long-established inhabited villages, not micro-level sectors in a city. Recorded source node point, no coordinate inference. Search evidence retained in research-blocks/web-search-results-2.json.gz and -3.json.gz. Primary naming source fetched as search excerpts only; full trade-register PDFs explicitly restrict republication and were not downloaded.",
+    "proxyPoint": false,
+    "sourceUrl": "https://www.itda.gov.eg/CRM/854/CRA57.pdf",
+    "reviewCaution": "Number-qualified village identity needs lead acceptance under no bare-code rule; newspaper corroboration states Matrouh while ITDA addresses say Alexandria; parent must come from OCHA containment, never article governorate."
+  }
+]

@@ -1,6 +1,7 @@
-import { Resolver, Query } from '@nestjs/graphql';
+import { Resolver, Query, ResolveField, Root, Context } from '@nestjs/graphql';
 import { CitiesService } from './cities.service';
 import { Public } from '../auth/firebase.guard';
+import type { GqlContext } from '../common/types/gql-context.type';
 import type { City } from '../database/schema';
 
 /**
@@ -13,12 +14,17 @@ import type { City } from '../database/schema';
  *
  * ## Caching strategy for `cities` query
  * The list of Egyptian cities is seeded once and virtually never changes.
- * We use NestJS CacheManager (backed by in-memory LRU) with a 1-hour TTL
+ * We use NestJS CacheManager with a 24-hour TTL and the catalog revision fence
  * so the DB is only hit once per server restart in practice.
  */
 @Resolver('City')
 export class CitiesResolver {
   constructor(private readonly citiesService: CitiesService) {}
+
+  @ResolveField('district')
+  district(@Root() city: City, @Context() ctx: GqlContext): Promise<City | null> {
+    return city.districtId ? ctx.loaders.cityById.load(city.districtId) : Promise.resolve(null);
+  }
 
   /**
    * Returns all Egyptian cities sorted A-Z by English name.

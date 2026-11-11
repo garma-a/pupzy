@@ -10,10 +10,13 @@ describe('CitiesService', () => {
   let catalogRevision: number;
 
   const mockCity: City = {
+    aliases: [],
+    districtId: null,
     id: '01916327-0000-7000-8000-000000000001',
     nameEnglish: 'Cairo',
     nameArabic: 'القاهرة',
     governorate: 'Cairo',
+    governorateArabic: 'القاهرة',
     sourceCode: 'EG0101',
     sourceNameEnglish: 'Cairo',
     sourceNameArabic: 'القاهرة',
@@ -23,10 +26,13 @@ describe('CitiesService', () => {
   };
 
   const mockLegacyCity: City = {
+    aliases: [],
+    districtId: null,
     id: '01916327-0000-7000-8000-000000000002',
     nameEnglish: 'Legacy Quarter',
     nameArabic: 'حي قديم',
     governorate: 'Cairo',
+    governorateArabic: 'القاهرة',
     sourceCode: null,
     sourceNameEnglish: null,
     sourceNameArabic: null,
@@ -36,6 +42,8 @@ describe('CitiesService', () => {
   };
 
   const mockRetiredCity: City = {
+    aliases: [],
+    districtId: null,
     id: '01916327-0000-7000-8000-000000000003',
     nameEnglish: 'Retired Markaz',
     nameArabic: 'مركز ملغي',
@@ -163,9 +171,18 @@ describe('CitiesService', () => {
       await service.findById(mockLegacyCity.id);
       await service.findById(mockRetiredCity.id);
 
-      const releasedOfficialCity: City = { ...mockCity, nameEnglish: 'Released Cairo' };
-      const releasedLegacyCity: City = { ...mockLegacyCity, nameEnglish: 'Released Legacy Quarter' };
-      const releasedRetiredCity: City = { ...mockRetiredCity, nameEnglish: 'Released Retired Markaz' };
+      const releasedOfficialCity: City = {
+        ...mockCity,
+        nameEnglish: 'Released Cairo',
+      };
+      const releasedLegacyCity: City = {
+        ...mockLegacyCity,
+        nameEnglish: 'Released Legacy Quarter',
+      };
+      const releasedRetiredCity: City = {
+        ...mockRetiredCity,
+        nameEnglish: 'Released Retired Markaz',
+      };
       mockRepo.findAll = jest.fn().mockResolvedValue([releasedOfficialCity]);
       mockRepo.findById = jest.fn().mockImplementation((id: string) => {
         if (id === mockCity.id) return Promise.resolve(releasedOfficialCity);
@@ -282,7 +299,10 @@ describe('CitiesService', () => {
       expect(service.getTrackedKeyCount()).toBe(0);
 
       // Subsequent query immediately queries repo and populates new generation
-      const updatedCity: City = { ...mockCity, nameEnglish: 'Immediate Updated City' };
+      const updatedCity: City = {
+        ...mockCity,
+        nameEnglish: 'Immediate Updated City',
+      };
       mockRepo.findAll = jest.fn().mockResolvedValue([updatedCity]);
 
       const result = await service.findAll();
@@ -406,7 +426,10 @@ describe('CitiesService', () => {
 
       await expect(loader.load(mockLegacyCity.id)).resolves.toEqual(mockCity);
 
-      const releasedCity: City = { ...mockCity, nameEnglish: 'Released Cairo' };
+      const releasedCity: City = {
+        ...mockCity,
+        nameEnglish: 'Released Cairo',
+      };
       mockRepo.findByIds = jest.fn().mockResolvedValue([releasedCity]);
       catalogRevision = 2;
 

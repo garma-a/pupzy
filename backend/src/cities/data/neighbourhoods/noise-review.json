@@ -1,0 +1,56 @@
+{
+  "metadata": {
+    "date": "2026-11-10",
+    "reviewer": "Codex source-label/tag and personal residue review, not field survey",
+    "method": "Scanned all3118 candidate names, then raw tags for642 noise/housing candidates. Deterministic class rules apply to every source; literal project-phase merges individually source-reviewed. Institutionalhousing qualification annotation consumed by Arabic/English display helper. No automatic renewal of approvals.",
+    "inputDecisionsSha256": "c0b650be28aca593fb7a85170b3605514423f8c9fa3c8e7efde28f2b85b294ab",
+    "rulesSha256": "2b60e171ba9a81f50e7cd08d1741cf5e8686231f08953ad8527a955c62f7fc6b"
+  },
+  "counts": {
+    "actions": {
+      "exclude": 83,
+      "rename-whole-project": 1,
+      "merge": 12,
+      "remove-shadowing-aliases": 1
+    },
+    "rules": {
+      "reviewed-noise-nonresidential-institution-or-premises": 10,
+      "reviewed-noise-single-private-villa": 1,
+      "reviewed-whole-project-name": 1,
+      "reviewed-noise-military-premises": 2,
+      "reviewed-noise-bank-or-company-building-blocks": 12,
+      "reviewed-noise-school-or-sports-premises": 6,
+      "reviewed-noise-single-student-accommodation": 1,
+      "reviewed-noise-industrial-premises": 19,
+      "reviewed-noise-bare-coded-reclamation-village": 19,
+      "reviewed-noise-bare-administrative-ordinal": 6,
+      "reviewed-noise-bare-code-or-building-count": 6,
+      "reviewed-whole-project-phase-merge": 12,
+      "reviewed-noise-unreviewed-project-phase": 1,
+      "institutional-housing-no-real-place-shadow": 1
+    }
+  },
+  "sampleReview": {
+    "reviewed": true,
+    "date": "2026-11-11",
+    "seed": 20261111,
+    "rows": 300,
+    "sampling": "Random300 included identities frozen during round7, all personally read in3batches; final names/source eligibility rechecked after residue fixes. Frozen IDs all remain included. This is a desktop source/display audit, not field validation.",
+    "initialSampleClassificationErrors": 4,
+    "initialSampleDisplayOrQualifierErrors": 55,
+    "initialFlaggedRows": 59,
+    "postCorrectionObservedErrors": 0,
+    "postCorrectionObservedErrorRate": 0,
+    "sampleFile": {
+      "file": "included-sample-300.json.gz",
+      "sha256": "94237a58c67e670a60942d06809619b10eca7209fcd885c59104e5d2f5618356",
+      "rows": 300
+    },
+    "corrections": "SmartVillage, InternationalPark, companycontractBuildings and bareordinal removed by general/exact reviewed rules. Restricted Arabic lexicon, institutional qualifiers and semantic Housing/City/Village descriptor retention corrected across catalog. Residue source-names such as OlympicVillage/UtilitiesCompound were retained as residential-tagged named estates with explicit uncertainty, not guessed to be facilities."
+  },
+  "decisionsFile": {
+    "file": "noise-changes.json.gz",
+    "sha256": "ddd00f253b14854fb119770df65aa7a824f1745dd9a085f22af415f4a409cf2a",
+    "rows": 97
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "webSearches": [
+    {
+      "response": "web-search-results-1.json.gz",
+      "queries": [
+        "\"سلام مصر\" \"بورفؤاد\" \"شرق\" مدينة",
+        "\"شرق بورسعيد\" \"جنوب\" \"مدينة\" \"سكنية\"",
+        "\"غرب المطار\" \"الشيخ زايد\" \"سكن\"",
+        "\"قرى بنجر السكر\" \"24\" \"26\""
+      ]
+    },
+    {
+      "response": "web-search-results-2.json.gz",
+      "queries": [
+        "\"قرية 24\" \"بنجر السكر\"",
+        "\"قرية 23\" \"بنجر السكر\"",
+        "\"قرية 25\" \"بنجر السكر\"",
+        "\"قرية 26\" \"بنجر السكر\""
+      ]
+    },
+    {
+      "response": "web-search-results-3.json.gz",
+      "queries": [
+        "site.gocp.gov.eg \"23\" \"بنجر\"",
+        "site.gocp.gov.eg \"24\" \"بنجر\"",
+        "site.matrouh.gov.eg \"25\" \"بنجر\"",
+        "site.mwri.gov.eg \"بنجر\" \"25\""
+      ]
+    }
+  ],
+  "overpassFailures": "Three regional around1200m/name union GETs returned capacity502 or URI414; same union POST to overpass.kumi.systems70second timeout each with no HTTP bytes; one small eastPortSaid bbox GET35second timeout. Request queries reproducible via src/cities/scripts/fetch-residential-gap-nearby.py. Cached error responses are not evidence of missing map names.",
+  "reversePolicy": "Exclusive serial Nominatim slot; zoom16, ar,en, namedetails=1,addressdetails=1; descriptive User-Agent;1.1second pause after completed response, cache all responses. 77 lead far responses, one GPS, one updated-baseline missing feature, one retry. Additional692962840 response owned by research-names manifest."
+}

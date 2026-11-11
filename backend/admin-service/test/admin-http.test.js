@@ -385,7 +385,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
     const found = listData.records.find((r) => r.params.source_code === 'EG0101');
     assert.ok(found, 'Expected official city EG0101 in list records');
     assert.equal(found.params.status, 'OFFICIAL');
-    assert.equal(found.params.name_english, 'Al Tibbin');
+    assert.equal(found.params.name_english, 'Tebbin');
 
     // Fetch cities show
     const showRes = await fetch(`${baseUrl}/admin/api/resources/cities/records/${officialCityId}/show`, {
@@ -1650,7 +1650,12 @@ describe('AdminJS HTTP security and resource behavior', () => {
     assert.ok(searchData.attribution);
 
     // 3. Create a vet clinic record using selected Nominatim search provenance
-    const cityRes = await database.pool.query(`SELECT id FROM cities WHERE name_english = 'Maadi (Kism)' LIMIT 1`);
+    // The released catalog includes Degla sub-areas: select the actual nearest City.
+    const cityRes = await database.pool.query(`
+      SELECT id FROM cities WHERE status = 'OFFICIAL'
+      ORDER BY ST_Distance(center_point, ST_SetSRID(ST_MakePoint(31.2825, 29.9578), 4326)::geography)
+      LIMIT 1
+    `);
     const maadiCityId = cityRes.rows[0].id;
 
     const createFromSearchRes = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/actions/new`, {
@@ -1713,18 +1718,14 @@ describe('AdminJS HTTP security and resource behavior', () => {
   });
 
   it('rolls official City references through posts, users, and read-only records while enforcing contracts and privacy', async () => {
-    // 1. Seed test cities: Official Cairo City, Official Alex City, Legacy City, Retired City
+    // 1. Use the released official Cities, then seed distinct lifecycle fixtures.
     const cairoOfficial = await database.pool.query(
-      `INSERT INTO cities (name_english, name_arabic, governorate, status, center_point)
-       VALUES ('Zamalek', 'الزمالك', 'Cairo', 'OFFICIAL', ST_SetSRID(ST_MakePoint(31.22, 30.06), 4326))
-       RETURNING id`,
+      `SELECT id FROM cities WHERE source_code = 'EG0133' AND status = 'OFFICIAL'`,
     );
     const zamalekId = cairoOfficial.rows[0].id;
 
     const alexOfficial = await database.pool.query(
-      `INSERT INTO cities (name_english, name_arabic, governorate, status, center_point)
-       VALUES ('Sidi Gaber', 'سيدي جابر', 'Alexandria', 'OFFICIAL', ST_SetSRID(ST_MakePoint(29.93, 31.22), 4326))
-       RETURNING id`,
+      `SELECT id FROM cities WHERE source_code = 'EG0203' AND status = 'OFFICIAL'`,
     );
     const sidiGaberId = alexOfficial.rows[0].id;
 
@@ -1847,8 +1848,16 @@ describe('AdminJS HTTP security and resource behavior', () => {
     });
     assert.equal(govSearchRes.status, 200);
     const govSearchData = await govSearchRes.json();
-    const foundSidiGaber = govSearchData.records.find((r) => r.id === sidiGaberId);
-    assert.ok(foundSidiGaber, 'Expected Sidi Gaber when searching by governorate');
+    assert.ok(govSearchData.records.length > 0, 'Expected official Cities when searching by governorate');
+    assert.ok(govSearchData.records.every((r) => r.params.governorate === 'Alexandria'));
+    // A bounded governorate result need not include one particular City.
+    const nameSearchRes = await fetch(`${baseUrl}/admin/api/resources/cities/actions/search?query=Sidi%20Gaber`, {
+      headers: { cookie: superCookie },
+    });
+    assert.equal(nameSearchRes.status, 200);
+    const nameSearchData = await nameSearchRes.json();
+    const foundSidiGaber = nameSearchData.records.find((r) => r.id === sidiGaberId);
+    assert.ok(foundSidiGaber, 'Expected Sidi Gaber when searching its English name');
     assert.equal(foundSidiGaber.title, 'Sidi Gaber / سيدي جابر (Alexandria)');
 
     // Search for legacy/retired city -> must NOT be returned
@@ -2604,7 +2613,7 @@ describe('AdminJS HTTP security and resource behavior', () => {
     const failNoPinData = await failNoPinRes.json();
     assert.ok(failNoPinData.record.errors.coordinates, 'Expected coordinates validation error when no pin placed');
 
-    // 4. Click interaction places marker at [31.2815, 30.0125] and drag interaction moves it to [31.2830, 30.0140]
+    // 4. Click and drag near the selected fixture point; other real Neighbourhoods are also present.
     const createWithPlacedMarkerRes = await fetch(`${baseUrl}/admin/api/resources/vet_clinics/actions/new`, {
       method: 'POST',
       headers: {
@@ -2617,8 +2626,8 @@ describe('AdminJS HTTP security and resource behavior', () => {
         name_english: 'Montaza Pet Hospital',
         name_arabic: 'مستشفى حيوانات المنتزه',
         city_id: alexCityId,
-        latitude: 31.283,
-        longitude: 30.014,
+        latitude: 31.28003,
+        longitude: 30.01004,
         address_english: '27 Corniche Rd, Montaza, Alexandria',
         address_arabic: '٢٧ طريق الكورنيش، المنتزه، الإسكندرية',
         location_confirmed: true,
@@ -2638,8 +2647,8 @@ describe('AdminJS HTTP security and resource behavior', () => {
     );
     assert.equal(clinicRow.rowCount, 1);
     assert.equal(clinicRow.rows[0].city_id, alexCityId);
-    assert.equal(Number(clinicRow.rows[0].lat.toFixed(4)), 31.283);
-    assert.equal(Number(clinicRow.rows[0].lng.toFixed(4)), 30.014);
+    assert.equal(Number(clinicRow.rows[0].lat.toFixed(5)), 31.28003);
+    assert.equal(Number(clinicRow.rows[0].lng.toFixed(5)), 30.01004);
 
     // 5. Simulating edit journey: changing City selection to Aswan recenters viewport, but does NOT overwrite marker
     // Administrator drags marker to new coordinates in Aswan and provides override reason

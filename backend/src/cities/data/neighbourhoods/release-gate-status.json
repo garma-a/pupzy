@@ -1,0 +1,334 @@
+{
+  "date": "2026-11-11",
+  "baselineCheckpoint": "b5886b4",
+  "internet": "HTTP/2 302",
+  "rowsBefore": 3156,
+  "rows": 3156,
+  "districts": 351,
+  "neighbourhoods": 2805,
+  "rowsAdded": 0,
+  "rowsRemoved": 0,
+  "addedSources": [],
+  "removedSources": [],
+  "displayRowsChanged": 0,
+  "headlines": { "passed": true, "total": 141, "matched": 141, "failures": [] },
+  "nearCount": 0,
+  "knownMissingEntries": 14,
+  "knownMissingApproval": "Three round8 ambiguous entries approvedBy lead2026-11-11; original11 research entries retained.",
+  "structuralValidation": {
+    "isValid": true,
+    "errors": [],
+    "stats": { "totalCities": 3156, "officialCount": 3156, "legacyCount": 0, "retiredCount": 0, "governorateCount": 27 }
+  },
+  "dataQuality": { "passed": true, "errors": [] },
+  "areas": [
+    {
+      "area": "greater-cairo",
+      "grid": { "passed": true, "samples": 8469, "gapCount": 270, "coverageShare": 0.9681190223166843, "floor": 0.968 },
+      "unreviewedFeatures": 0,
+      "uncoveredFeatures": 176,
+      "names": {
+        "passed": true,
+        "minimum": 150,
+        "entries": 411,
+        "distinctNames": 411,
+        "variants": 996,
+        "missingNames": ["Hadayek Zayed", "حدائق زايد"],
+        "unreviewedMissingNames": [],
+        "knownMissingVariants": 2
+      },
+      "gps": { "passed": true, "passing": 30, "checks": 30 }
+    },
+    {
+      "area": "alexandria",
+      "grid": { "passed": true, "samples": 2146, "gapCount": 192, "coverageShare": 0.9105312208760484, "floor": 0.91 },
+      "unreviewedFeatures": 0,
+      "uncoveredFeatures": 150,
+      "names": {
+        "passed": true,
+        "minimum": 150,
+        "entries": 264,
+        "distinctNames": 264,
+        "variants": 661,
+        "missingNames": [
+          "Ezbet El Matar",
+          "عزبة المطار",
+          "El Islah",
+          "الإصلاح",
+          "Al Islah",
+          "El Zahraa",
+          "الزهراء",
+          "Al Zahraa",
+          "Kilo 34",
+          "الكيلو ٣٤",
+          "Al Hagir",
+          "الحاجر",
+          "El Hagir",
+          "Al Salam",
+          "السلام",
+          "El Salam"
+        ],
+        "unreviewedMissingNames": [],
+        "knownMissingVariants": 16
+      },
+      "gps": { "passed": true, "passing": 30, "checks": 30 }
+    },
+    {
+      "area": "port-said-region",
+      "grid": { "passed": true, "samples": 734, "gapCount": 38, "coverageShare": 0.9482288828337875, "floor": 0.945 },
+      "unreviewedFeatures": 0,
+      "uncoveredFeatures": 34,
+      "names": {
+        "passed": true,
+        "minimum": 85,
+        "entries": 85,
+        "distinctNames": 85,
+        "variants": 236,
+        "missingNames": [
+          "El Rehab",
+          "الرحاب",
+          "Al Rehab",
+          "Bahr El Baqar",
+          "بحر البقر",
+          "Hay El Salam Ismailia",
+          "حي السلام الإسماعيلية",
+          "El Mahatta El Gedida",
+          "المحطة الجديدة",
+          "Al Mahatta El Gedida",
+          "El Saba Banat",
+          "السبع بنات",
+          "Al Saba Banat",
+          "El Balabsa",
+          "البلابسة",
+          "Al Balabsa",
+          "El Gharbi",
+          "الغربي",
+          "Al Gharbi"
+        ],
+        "unreviewedMissingNames": [],
+        "knownMissingVariants": 19
+      },
+      "gps": { "passed": true, "passing": 29, "checks": 30 }
+    }
+  ],
+  "gridResearch": {
+    "fullNotes": "round9-grid-remeasurement.json.gz",
+    "formerRound8Unreviewed": 65,
+    "formerResolved": 22,
+    "formerRemainingReReviewed": 43,
+    "currentExceptions": 360,
+    "currentChangedMeasurements": 42,
+    "farUncoveredFeatures": 68,
+    "method": "All current metrics come from the actual final candidate using the gate sampling code. Every changed original source label/context was reviewed. No floor changed; no point added for a code or unnamed block; prior numeric observations are historical only.",
+    "notesSha256": "26a27a8566d479cd7f3d984991fc72f2cfb4fbc3f7afbe0f7fc294bff71886ab"
+  },
+  "gatesPassed": true,
+  "mergeable": true,
+  "reviewOnlyArtifactsPrepared": false,
+  "meaningOfPublished": "Four normal-publisher artifacts prepared locally in the worktree; no Git commit, push, PR, deployment or production action.",
+  "unit": { "suites": 19, "passed": 199 },
+  "docker": { "suites": 3, "passed": 17 },
+  "lint": "PASS",
+  "buildTypecheck": "PASS",
+  "sqlVerifier": "PASS",
+  "sourcePointCheck": {
+    "passed": true,
+    "rows": 2805,
+    "counts": { "exactPoint": 2803, "sourceGeometry": 1, "documentedCoastalCorrection": 1 },
+    "errors": []
+  },
+  "coverageVerifier": "PASS, exit0",
+  "migrationBytes": 3100872,
+  "applySeconds": 0.605333,
+  "rerunSeconds": 0.569153,
+  "sourceSnapshotCount": 335,
+  "sourceHashErrors": [],
+  "reportSha256": "a6fbddef28edaf7129da3d6ddd1eb43bc92e910684bf23e2a1770cfd00846d18",
+  "remainingWork": ["Lead commits the worktree and runs full verify:release on that clean candidate."],
+  "committedDataBytes": 21569823,
+  "committedDataMiB": 20.571,
+  "releaseTag": "0066_release_city_catalog",
+  "cityCatalogUnchanged": false,
+  "cityCatalogSha256": "e5d1516c405214aeb193ba378d517576cb532d27af1abbe90eed69d8e8f924a4",
+  "publicationPath": "normal",
+  "coverageWaiverUsed": false,
+  "approvedFloorDecision": {
+    "reviewed": true,
+    "approvedBy": "lead",
+    "decisionDate": "2026-11-11",
+    "previousFloor": 0.97,
+    "floor": 0.968,
+    "reason": "The 97% floor was calibrated on 2026-11-10 against a catalog that contained unnamed synthetic reference points, since removed as not being real places. The lead reviewed the remaining 270 uncovered samples (176 features): they are unnamed residential blocks on the desert fringe of 6th of October, New October, New Sphinx and New Cairo, and lettered building groups (B1, B2, B3, B7, Buildings 6) inside Madinaty whose residents use the name Madinaty. No verifiable area name exists for them. The floor is a ratchet at the measured level; it must not be lowered again without a new lead decision."
+  },
+  "repositoryReleaseCertification": {
+    "certified": false,
+    "reason": "Full npm run verify:release refuses the dirty worktree before stages; Git is read-only and committing is forbidden. No gate or clean-tree check weakened. Lead must commit and rerun.",
+    "allStageRunsPassed": true,
+    "stages": [
+      {
+        "number": 1,
+        "id": "env-prereqs",
+        "status": "PASS",
+        "tests": 0,
+        "skips": 0,
+        "logfile": "output/neighbourhood-cities/pr27-stage-01-env-prereqs.log"
+      },
+      {
+        "number": 2,
+        "id": "format-root",
+        "status": "PASS",
+        "tests": 0,
+        "skips": 0,
+        "logfile": "output/neighbourhood-cities/pr27-final-2-format-root.log"
+      },
+      {
+        "number": 3,
+        "id": "format-admin",
+        "status": "PASS",
+        "tests": 0,
+        "skips": 0,
+        "logfile": "output/neighbourhood-cities/pr27-final-3-format-admin.log"
+      },
+      {
+        "number": 4,
+        "id": "glossary-root",
+        "status": "PASS",
+        "tests": 3,
+        "skips": 0,
+        "logfile": "output/neighbourhood-cities/pr27-stage-04-glossary-root.log"
+      },
+      {
+        "number": 5,
+        "id": "glossary-admin",
+        "status": "PASS",
+        "tests": 3,
+        "skips": 0,
+        "logfile": "output/neighbourhood-cities/pr27-stage-05-glossary-admin.log"
+      },
+      {
+        "number": 6,
+        "id": "lint-root",
+        "status": "PASS",
+        "tests": 0,
+        "skips": 0,
+        "logfile": "output/neighbourhood-cities/pr27-final-6-lint-root.log"
+      },
+      {
+        "number": 7,
+        "id": "build-root",
+        "status": "PASS",
+        "tests": 0,
+        "skips": 0,
+        "logfile": "output/neighbourhood-cities/pr27-final-7-build-root.log"
+      },
+      {
+        "number": 8,
+        "id": "unit-root",
+        "status": "PASS",
+        "tests": 1275,
+        "skips": 0,
+        "logfile": "output/neighbourhood-cities/pr27-final-8-unit-root.log"
+      },
+      {
+        "number": 9,
+        "id": "unit-admin",
+        "status": "PASS",
+        "tests": 421,
+        "skips": 0,
+        "logfile": "output/neighbourhood-cities/pr27-retry-09-unit-admin.log"
+      },
+      {
+        "number": 10,
+        "id": "migration-verification",
+        "status": "PASS",
+        "tests": 8,
+        "skips": 0,
+        "logfile": "output/neighbourhood-cities/pr27-final-10-migration-verification.log"
+      },
+      {
+        "number": 11,
+        "id": "reset-verification",
+        "status": "PASS",
+        "tests": 23,
+        "skips": 0,
+        "logfile": "output/neighbourhood-cities/pr27-final-11-reset-verification.log"
+      },
+      {
+        "number": 12,
+        "id": "integration-root",
+        "status": "PASS",
+        "tests": 729,
+        "skips": 0,
+        "logfile": "output/neighbourhood-cities/pr27-retry-12-integration-root.log"
+      },
+      {
+        "number": 13,
+        "id": "integration-admin",
+        "status": "PASS",
+        "tests": 185,
+        "skips": 0,
+        "logfile": "output/neighbourhood-cities/pr27-final-13-integration-admin.log"
+      },
+      {
+        "number": 14,
+        "id": "browser-admin",
+        "status": "PASS",
+        "tests": 31,
+        "skips": 0,
+        "logfile": "output/neighbourhood-cities/pr27-final-14-browser-admin.log"
+      },
+      {
+        "number": 15,
+        "id": "e2e-root",
+        "status": "PASS",
+        "tests": 9,
+        "skips": 0,
+        "logfile": "output/neighbourhood-cities/pr27-final-15-e2e-root.log"
+      }
+    ]
+  },
+  "aliasReview": {
+    "date": "2026-11-11",
+    "baseline": "b5886b4",
+    "rows": 3156,
+    "aliasesBefore": 11489,
+    "aliasesAfter": 11279,
+    "removed": 280,
+    "added": 70,
+    "affectedRows": 258,
+    "classRemovals": { "administrative composite": 32, "comma-joined": 196, "different City": 3, "non-ASCII Latin": 17 }
+  },
+  "cityIdentitiesNamesGovernoratesParentsPointsUnchanged": true,
+  "searchContractUnchanged": true,
+  "governorateArabic": "Non-null GraphQL field backed by additive0065 column,0066 create/backfill/upsert and reconciliation; generated GraphQL type and resolver/repository regressions.",
+  "publishedArtifacts": [
+    {
+      "path": "src/cities/data/egypt-cities-catalog.json",
+      "sha256": "e5d1516c405214aeb193ba378d517576cb532d27af1abbe90eed69d8e8f924a4",
+      "bytes": 2683162
+    },
+    {
+      "path": "src/cities/data/combined-city-source-snapshot.json",
+      "sha256": "a3128771814e87e35ca688208b7bb8a17a6bb78de22215da3a4c36fd574af961",
+      "bytes": 393068
+    },
+    {
+      "path": "drizzle/migrations/0066_release_city_catalog.sql",
+      "sha256": "ccf68d7678f803382336b8b9d4e2945fc59a0e5e95be6d777c9870a3dd215f51",
+      "bytes": 3100872
+    },
+    {
+      "path": "drizzle/migrations/meta/_journal.json",
+      "sha256": "964b378fffdfb16de60e9291b978921a718d71f5aa342762dff91d230a16c129",
+      "bytes": 9031
+    }
+  ],
+  "pickerPolish": {
+    "statusFile": "picker-polish-status.json",
+    "supersedesDataCounts": true,
+    "currentRows": 3140,
+    "dataGatesPassed": true,
+    "dockerIntegration": "ENVIRONMENT BLOCKED:socket permission denied",
+    "cleanCommitCertification": "Pending lead"
+  }
+}

@@ -1,3 +1,5 @@
+import { hydrateNeighbourhoodSources } from './neighbourhoods';
+import { formatCityJson } from './json-format';
 import * as fs from 'fs';
 import * as path from 'path';
 import { createHash, randomUUID } from 'crypto';
@@ -11,6 +13,7 @@ import {
   type CityCatalogRecord,
   type CityCatalog,
 } from './catalog';
+import { verifyCoverage } from './coverage';
 import { compareSnapshots } from './diff';
 import { applyReviewedRelease, type ReviewedReleaseOptions, type ReviewedReleaseResult } from './plan';
 import {
@@ -48,6 +51,8 @@ export type FaultInjectionHook = (stage: FaultInjectionStage) => void;
 export class SimulatedProcessInterruption extends Error {}
 
 export interface PublishReleaseOptions extends ReviewedReleaseOptions {
+  /** Lead-authorized local unshipped review only; default publication still fails closed. */
+  reviewOnlyCoverageReport?: { sha256: string; decisionDate: string; reason: string };
   migrationsFolder?: string;
   catalogPath?: string;
   snapshotPath?: string;
@@ -235,6 +240,9 @@ export function validateCityReleaseArtifactSet(artifacts: readonly CityReleaseAr
       );
     }
     const coherentFields: Array<keyof CityCatalogRecord> = [
+      'aliases',
+      'districtSourceCode',
+      'provenance',
       'nameEnglish',
       'nameArabic',
       'governorate',
@@ -245,7 +253,7 @@ export function validateCityReleaseArtifactSet(artifacts: readonly CityReleaseAr
       'longitude',
     ];
     for (const field of coherentFields) {
-      if (catalogCity[field] !== sourceCity[field]) {
+      if (JSON.stringify(catalogCity[field]) !== JSON.stringify(sourceCity[field])) {
         throw new Error(
           `City release artifact validation failed: official City '${sourceCity.sourceCode}' ${field} differs from the source snapshot`,
         );
@@ -531,6 +539,25 @@ export function recoverInterruptedPublication(migrationsFolder: string): boolean
  * 4. Boundary fault-safety: normal failures restore the previous artifact set; process interruption leaves durable recovery evidence.
  * 5. Crash-safety: deterministically verifies and completes recovery before subsequent publication starts.
  */
+export function acceptsReviewOnlyCoverage(
+  report: {
+    structuralValidation: { isValid: boolean };
+    dataQuality: { passed: boolean };
+    areas: Array<{ gps: { passed: boolean } }>;
+  },
+  review?: PublishReleaseOptions['reviewOnlyCoverageReport'],
+): boolean {
+  return Boolean(
+    review &&
+    /^\d{4}-\d{2}-\d{2}$/.test(review.decisionDate) &&
+    review.reason.trim().length >= 20 &&
+    review.sha256 === createHash('sha256').update(JSON.stringify(report)).digest('hex') &&
+    report.structuralValidation.isValid &&
+    report.dataQuality.passed &&
+    report.areas.every((area) => area.gps.passed),
+  );
+}
+
 export function publishReviewedRelease(
   currentCatalog: CityCatalogRecord[],
   candidateSnapshot: CitySnapshot,
@@ -538,7 +565,7 @@ export function publishReviewedRelease(
 ): PublishReleaseResult {
   const migrationsFolder = resolveMigrationsFolder(options.migrationsFolder);
   const catalogPath = options.catalogPath ?? resolveDataPath('egypt-cities-catalog.json');
-  const snapshotPath = options.snapshotPath ?? resolveDataPath('ocha-adm2-egypt-snapshot.json');
+  const snapshotPath = options.snapshotPath ?? resolveDataPath('combined-city-source-snapshot.json');
 
   // 0. Automatic recovery from prior interrupted publication
   recoverInterruptedPublication(migrationsFolder);
@@ -556,7 +583,8 @@ export function publishReviewedRelease(
     diff.summary.removedCount === 0 &&
     diff.summary.renamedCount === 0 &&
     diff.summary.recodedCount === 0 &&
-    diff.summary.coordinateChangedCount === 0;
+    diff.summary.coordinateChangedCount === 0 &&
+    (diff.metadataChanged?.length ?? 0) === 0;
 
   if (hasNoChanges) {
     let currentMetadataVersion: string | undefined;
@@ -588,6 +616,38 @@ export function publishReviewedRelease(
   // 3. Apply reviewed release (validates count changes, metadata, and City identity transfers)
   const release = applyReviewedRelease(currentCatalog, candidateSnapshot, options);
 
+  if (release.updatedCatalog.some((row) => row.districtSourceCode && row.status === 'OFFICIAL')) {
+    const e = candidateSnapshot.coverageEvidence;
+    if (!e || (candidateSnapshot.neighbourhoods?.decisionsFile && !e.headlines))
+      throw new Error('Publication refused: missing reviewed coverage evidence, including required headlines');
+    const coverage = verifyCoverage(
+      { metadata: release.metadata, records: release.updatedCatalog },
+      e.residential,
+      e.governorates,
+      e.districts,
+      e.names,
+      e.gps,
+      e.headlines,
+    );
+    if (!coverage.passed) {
+      if (!acceptsReviewOnlyCoverage(coverage, options.reviewOnlyCoverageReport))
+        throw new Error(
+          'Publication refused: neighbourhood coverage evidence is missing or failed. Run cities:verify-coverage.',
+        );
+      candidateSnapshot.coverageEvidence!.reviewOnlyPublication = {
+        ...options.reviewOnlyCoverageReport!,
+        note: 'Local unshipped review only. Grid/name gates remain failed and must be reported; lead decides afterwards. Structural, display/headline and GPS gates cannot be waived.',
+      };
+    }
+    const sources = candidateSnapshot.neighbourhoods
+      ? hydrateNeighbourhoodSources(candidateSnapshot.neighbourhoods)
+      : undefined;
+    const decisions = new Map(sources?.decisions.map((d) => [d.sourceCode, d]));
+    if (sources?.overpass?.response.elements.some((osm) => !decisions.get(`OSM:${osm.type}/${osm.id}`)?.reviewed)) {
+      throw new Error('Publication refused: every OSM place must have a reviewed include, merge or exclude decision');
+    }
+  }
+
   // 4. Validate updated catalog in memory
   const catalogVal = validateCatalog({
     metadata: release.metadata,
@@ -599,7 +659,10 @@ export function publishReviewedRelease(
 
   // 5. Reconcile migration history and determine next monotonic migration metadata
   const migrationMeta = getNextMigrationMeta(migrationsFolder);
-  const migrationSql = generateReleaseMigrationSql(release, { migrationTag: migrationMeta.tag });
+  const migrationSql =
+    (candidateSnapshot.coverageEvidence?.reviewOnlyPublication
+      ? '-- REVIEW ONLY: recorded grid/name shortfalls remain. Not mergeable; lead review required.\n'
+      : '') + generateReleaseMigrationSql(release, { migrationTag: migrationMeta.tag });
   const migrationFilePath = path.join(migrationsFolder, migrationMeta.filename);
 
   // Prepare the required journal artifact in memory. An empty migration history is initialized
@@ -621,7 +684,7 @@ export function publishReviewedRelease(
     tag: migrationMeta.tag,
     breakpoints: true,
   });
-  const updatedJournalContent = JSON.stringify(journal, null, 2);
+  const updatedJournalContent = formatCityJson(journal);
 
   // Staging occurs beside each destination so the final rename is atomic on that filesystem.
   const publicationId = randomUUID();
@@ -636,7 +699,7 @@ export function publishReviewedRelease(
         kind: 'catalog',
         destinationPath: catalogPath,
         stagedPath: stagedPathFor(catalogPath),
-        content: JSON.stringify({ metadata: release.metadata, records: release.updatedCatalog }, null, 2),
+        content: formatCityJson({ metadata: release.metadata, records: release.updatedCatalog }),
         stageFault: 'stage_catalog',
         syncFault: 'sync_catalog',
         replaceFault: 'replace_catalog',
@@ -645,7 +708,7 @@ export function publishReviewedRelease(
         kind: 'snapshot',
         destinationPath: snapshotPath,
         stagedPath: stagedPathFor(snapshotPath),
-        content: JSON.stringify(candidateSnapshot, null, 2),
+        content: formatCityJson(candidateSnapshot),
         stageFault: 'stage_snapshot',
         syncFault: 'sync_snapshot',
         replaceFault: 'replace_snapshot',

@@ -3,6 +3,8 @@ A city/governorate in Egypt available for selection during profile setup.
 """
 type City {
   id: ID!
+  aliases: [String!]!
+  district: City
   """
   English name of the city (e.g. 'Cairo', 'Aswan').
   """
@@ -15,6 +17,10 @@ type City {
   The governorate this city belongs to.
   """
   governorate: String!
+  """
+  Arabic name of the governorate.
+  """
+  governorateArabic: String!
   """
   Explicit lifecycle status of this City (OFFICIAL, LEGACY, or RETIRED).
   """

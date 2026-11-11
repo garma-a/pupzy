@@ -1,0 +1,1864 @@
+{
+  "metadata": {
+    "compiledDate": "2026-11-10",
+    "method": "Independent task vocabulary and reviewed public-source research. Dataset matching is tested separately, never used to select checklist names.",
+    "reviewed": false,
+    "minimums": {
+      "greater-cairo": {
+        "minimum": 150,
+        "reviewed": true,
+        "decisionDate": "2026-11-10",
+        "reason": "Lead retained 150 distinct independently selected names."
+      },
+      "alexandria": {
+        "minimum": 150,
+        "reviewed": true,
+        "decisionDate": "2026-11-10",
+        "reason": "Lead retained 150 distinct independently selected names."
+      },
+      "port-said-region": {
+        "minimum": 85,
+        "reviewed": true,
+        "decisionDate": "2026-11-10",
+        "reason": "Reviewed lead decision dated2026-11-10: honest final independent checklist has85 names after public-source extensions, removal of generic beach, and explicit consolidation ofcity-prefix/Arabicspacing/SharqElTafreea aliases. Do not pad to150. Unresolved catalog matches remain gate failures."
+      }
+    }
+  },
+  "areas": {
+    "greater-cairo": [
+      {
+        "english": "Mokattam",
+        "arabic": "المقطم",
+        "misspellings": []
+      },
+      {
+        "english": "Rehab",
+        "arabic": "الرحاب",
+        "misspellings": []
+      },
+      {
+        "english": "Madinaty",
+        "arabic": "مدينتي",
+        "misspellings": []
+      },
+      {
+        "english": "Mohandessin",
+        "arabic": "المهندسين",
+        "misspellings": []
+      },
+      {
+        "english": "Sheikh Zayed",
+        "arabic": "الشيخ زايد",
+        "misspellings": []
+      },
+      {
+        "english": "Dokki",
+        "arabic": "الدقي",
+        "misspellings": []
+      },
+      {
+        "english": "Agouza",
+        "arabic": "العجوزة",
+        "misspellings": []
+      },
+      {
+        "english": "Imbaba",
+        "arabic": "إمبابة",
+        "misspellings": []
+      },
+      {
+        "english": "Haram",
+        "arabic": "الهرم",
+        "misspellings": []
+      },
+      {
+        "english": "Faisal",
+        "arabic": "فيصل",
+        "misspellings": []
+      },
+      {
+        "english": "Omraniya",
+        "arabic": "العمرانية",
+        "misspellings": []
+      },
+      {
+        "english": "Boulaq El Dakrour",
+        "arabic": "بولاق الدكرور",
+        "misspellings": []
+      },
+      {
+        "english": "Giza",
+        "arabic": "الجيزة",
+        "misspellings": []
+      },
+      {
+        "english": "6th of October",
+        "arabic": "السادس من أكتوبر",
+        "misspellings": []
+      },
+      {
+        "english": "Hadayek October",
+        "arabic": "حدائق أكتوبر",
+        "misspellings": []
+      },
+      {
+        "english": "Shubra El Kheima",
+        "arabic": "شبرا الخيمة",
+        "misspellings": []
+      },
+      {
+        "english": "Obour",
+        "arabic": "العبور",
+        "misspellings": []
+      },
+      {
+        "english": "Khanka",
+        "arabic": "الخانكة",
+        "misspellings": []
+      },
+      {
+        "english": "Qalyub",
+        "arabic": "قليوب",
+        "misspellings": []
+      },
+      {
+        "english": "Khosous",
+        "arabic": "الخصوص",
+        "misspellings": []
+      },
+      {
+        "english": "Fifth Settlement",
+        "arabic": "التجمع الخامس",
+        "misspellings": []
+      },
+      {
+        "english": "First Settlement",
+        "arabic": "التجمع الأول",
+        "misspellings": []
+      },
+      {
+        "english": "Third Settlement",
+        "arabic": "التجمع الثالث",
+        "misspellings": []
+      },
+      {
+        "english": "Katameya",
+        "arabic": "القطامية",
+        "misspellings": []
+      },
+      {
+        "english": "Shorouk",
+        "arabic": "الشروق",
+        "misspellings": []
+      },
+      {
+        "english": "Badr",
+        "arabic": "بدر",
+        "misspellings": []
+      },
+      {
+        "english": "New Administrative Capital",
+        "arabic": "العاصمة الإدارية الجديدة",
+        "misspellings": []
+      },
+      {
+        "english": "10th of Ramadan",
+        "arabic": "العاشر من رمضان",
+        "misspellings": []
+      },
+      {
+        "english": "Helwan",
+        "arabic": "حلوان",
+        "misspellings": []
+      },
+      {
+        "english": "15th of May",
+        "arabic": "الخامس عشر من مايو",
+        "misspellings": []
+      },
+      {
+        "english": "Maadi",
+        "arabic": "المعادي",
+        "misspellings": []
+      },
+      {
+        "english": "New Maadi",
+        "arabic": "المعادي الجديدة",
+        "misspellings": []
+      },
+      {
+        "english": "Degla",
+        "arabic": "دجلة",
+        "misspellings": []
+      },
+      {
+        "english": "Zahraa El Maadi",
+        "arabic": "زهراء المعادي",
+        "misspellings": []
+      },
+      {
+        "english": "Hadayek El Maadi",
+        "arabic": "حدائق المعادي",
+        "misspellings": []
+      },
+      {
+        "english": "Tora",
+        "arabic": "طرة",
+        "misspellings": []
+      },
+      {
+        "english": "Nasr City",
+        "arabic": "مدينة نصر",
+        "misspellings": []
+      },
+      {
+        "english": "Hay El Sabea",
+        "arabic": "الحي السابع",
+        "misspellings": []
+      },
+      {
+        "english": "Hay El Asher",
+        "arabic": "الحي العاشر",
+        "misspellings": []
+      },
+      {
+        "english": "Hay El Tamen",
+        "arabic": "الحي الثامن",
+        "misspellings": []
+      },
+      {
+        "english": "Zahraa Nasr City",
+        "arabic": "زهراء مدينة نصر",
+        "misspellings": []
+      },
+      {
+        "english": "Heliopolis",
+        "arabic": "مصر الجديدة",
+        "misspellings": []
+      },
+      {
+        "english": "Korba",
+        "arabic": "الكوربة",
+        "misspellings": []
+      },
+      {
+        "english": "Ard El Golf",
+        "arabic": "أرض الجولف",
+        "misspellings": []
+      },
+      {
+        "english": "Almaza",
+        "arabic": "ألماظة",
+        "misspellings": []
+      },
+      {
+        "english": "Sheraton",
+        "arabic": "شيراتون",
+        "misspellings": []
+      },
+      {
+        "english": "Nozha",
+        "arabic": "النزهة",
+        "misspellings": []
+      },
+      {
+        "english": "Gesr El Suez",
+        "arabic": "جسر السويس",
+        "misspellings": []
+      },
+      {
+        "english": "Ain Shams",
+        "arabic": "عين شمس",
+        "misspellings": []
+      },
+      {
+        "english": "Matariya",
+        "arabic": "المطرية",
+        "misspellings": []
+      },
+      {
+        "english": "Zeitoun",
+        "arabic": "الزيتون",
+        "misspellings": []
+      },
+      {
+        "english": "Hadayek El Qobba",
+        "arabic": "حدائق القبة",
+        "misspellings": []
+      },
+      {
+        "english": "Abbassia",
+        "arabic": "العباسية",
+        "misspellings": []
+      },
+      {
+        "english": "Ramses",
+        "arabic": "رمسيس",
+        "misspellings": []
+      },
+      {
+        "english": "Downtown Cairo",
+        "arabic": "وسط البلد",
+        "misspellings": []
+      },
+      {
+        "english": "Garden City",
+        "arabic": "جاردن سيتي",
+        "misspellings": []
+      },
+      {
+        "english": "Zamalek",
+        "arabic": "الزمالك",
+        "misspellings": []
+      },
+      {
+        "english": "Manial",
+        "arabic": "المنيل",
+        "misspellings": []
+      },
+      {
+        "english": "Rod El Farag",
+        "arabic": "روض الفرج",
+        "misspellings": []
+      },
+      {
+        "english": "Shubra",
+        "arabic": "شبرا",
+        "misspellings": []
+      },
+      {
+        "english": "Sayeda Zeinab",
+        "arabic": "السيدة زينب",
+        "misspellings": []
+      },
+      {
+        "english": "Darb El Ahmar",
+        "arabic": "الدرب الأحمر",
+        "misspellings": []
+      },
+      {
+        "english": "Gamaliya",
+        "arabic": "الجمالية",
+        "misspellings": []
+      },
+      {
+        "english": "Bab El Sharia",
+        "arabic": "باب الشعرية",
+        "misspellings": []
+      },
+      {
+        "english": "Azbakeya",
+        "arabic": "الأزبكية",
+        "misspellings": []
+      },
+      {
+        "english": "Ataba",
+        "arabic": "العتبة",
+        "misspellings": []
+      },
+      {
+        "english": "Abdeen",
+        "arabic": "عابدين",
+        "misspellings": []
+      },
+      {
+        "english": "Fustat",
+        "arabic": "الفسطاط",
+        "misspellings": []
+      },
+      {
+        "english": "Old Cairo",
+        "arabic": "مصر القديمة",
+        "misspellings": []
+      },
+      {
+        "english": "Dar El Salam",
+        "arabic": "دار السلام",
+        "misspellings": []
+      },
+      {
+        "english": "Basateen",
+        "arabic": "البساتين",
+        "misspellings": []
+      },
+      {
+        "english": "Tebbin",
+        "arabic": "التبين",
+        "misspellings": []
+      },
+      {
+        "english": "Massara",
+        "arabic": "المعصرة",
+        "misspellings": []
+      },
+      {
+        "english": "Hadayek Helwan",
+        "arabic": "حدائق حلوان",
+        "misspellings": []
+      },
+      {
+        "english": "Wadi Hof",
+        "arabic": "وادي حوف",
+        "misspellings": []
+      },
+      {
+        "english": "Hadayek El Ahram",
+        "arabic": "حدائق الأهرام",
+        "misspellings": []
+      },
+      {
+        "english": "Kafr Tohormos",
+        "arabic": "كفر طهرمس",
+        "misspellings": []
+      },
+      {
+        "english": "Talbiya",
+        "arabic": "الطالبية",
+        "misspellings": []
+      },
+      {
+        "english": "Mariouteya",
+        "arabic": "المريوطية",
+        "misspellings": []
+      },
+      {
+        "english": "Moneeb",
+        "arabic": "المنيب",
+        "misspellings": []
+      },
+      {
+        "english": "Kit Kat",
+        "arabic": "الكيت كات",
+        "misspellings": []
+      },
+      {
+        "english": "Ard El Lewa",
+        "arabic": "أرض اللواء",
+        "misspellings": []
+      },
+      {
+        "english": "Bashteel",
+        "arabic": "بشتيل",
+        "misspellings": []
+      },
+      {
+        "english": "Warraq",
+        "arabic": "الوراق",
+        "misspellings": []
+      },
+      {
+        "english": "Baragil",
+        "arabic": "البراجيل",
+        "misspellings": []
+      },
+      {
+        "english": "Mit Okba",
+        "arabic": "ميت عقبة",
+        "misspellings": []
+      },
+      {
+        "english": "Mit Nama",
+        "arabic": "ميت نما",
+        "misspellings": []
+      },
+      {
+        "english": "Bahtim",
+        "arabic": "بهتيم",
+        "misspellings": []
+      },
+      {
+        "english": "Mostorod",
+        "arabic": "مسطرد",
+        "misspellings": []
+      },
+      {
+        "english": "Ezbet El Nakhl",
+        "arabic": "عزبة النخل",
+        "misspellings": []
+      },
+      {
+        "english": "Manshiyet Nasser",
+        "arabic": "منشأة ناصر",
+        "misspellings": []
+      },
+      {
+        "english": "Asmarat",
+        "arabic": "الأسمرات",
+        "misspellings": []
+      },
+      {
+        "english": "Uptown Cairo",
+        "arabic": "أب تاون كايرو",
+        "misspellings": []
+      },
+      {
+        "english": "South Academy",
+        "arabic": "جنوب الأكاديمية",
+        "misspellings": []
+      },
+      {
+        "english": "North Investors",
+        "arabic": "المستثمرين الشمالية",
+        "misspellings": []
+      },
+      {
+        "english": "South Investors",
+        "arabic": "المستثمرين الجنوبية",
+        "misspellings": []
+      },
+      {
+        "english": "Andalus",
+        "arabic": "الأندلس",
+        "misspellings": []
+      },
+      {
+        "english": "Banafseg",
+        "arabic": "البنفسج",
+        "misspellings": []
+      },
+      {
+        "english": "Narges",
+        "arabic": "النرجس",
+        "misspellings": []
+      },
+      {
+        "english": "Lotus",
+        "arabic": "اللوتس",
+        "misspellings": []
+      },
+      {
+        "english": "Yasmeen",
+        "arabic": "الياسمين",
+        "misspellings": []
+      },
+      {
+        "english": "Choueifat",
+        "arabic": "الشويفات",
+        "misspellings": []
+      },
+      {
+        "english": "West Arabella",
+        "arabic": "غرب أرابيلا",
+        "misspellings": []
+      },
+      {
+        "english": "Beit El Watan",
+        "arabic": "بيت الوطن",
+        "misspellings": []
+      },
+      {
+        "english": "Mountain View Hyde Park",
+        "arabic": "ماونتن فيو هايد بارك",
+        "misspellings": []
+      },
+      {
+        "english": "Mivida",
+        "arabic": "ميفيدا",
+        "misspellings": []
+      },
+      {
+        "english": "Hyde Park",
+        "arabic": "هايد بارك",
+        "misspellings": []
+      },
+      {
+        "english": "Sodic East",
+        "arabic": "سوديك إيست",
+        "misspellings": []
+      },
+      {
+        "english": "Beverly Hills",
+        "arabic": "بيفرلي هيلز",
+        "misspellings": []
+      },
+      {
+        "english": "Palm Hills October",
+        "arabic": "بالم هيلز أكتوبر",
+        "misspellings": []
+      },
+      {
+        "english": "Haram City",
+        "arabic": "هرم سيتي",
+        "misspellings": []
+      },
+      {
+        "english": "Ashgar City",
+        "arabic": "أشجار سيتي",
+        "misspellings": []
+      },
+      {
+        "english": "October Gardens",
+        "arabic": "حدائق اكتوبر",
+        "misspellings": []
+      },
+      {
+        "english": "Smart Village",
+        "arabic": "القرية الذكية",
+        "misspellings": []
+      },
+      {
+        "english": "El Hosary",
+        "arabic": "الحصري",
+        "misspellings": []
+      },
+      {
+        "english": "Hadayek El Kobba",
+        "arabic": "حدائق القبة",
+        "misspellings": []
+      },
+      {
+        "english": "El Zaher",
+        "arabic": "الظاهر",
+        "misspellings": []
+      },
+      {
+        "english": "Sakakini",
+        "arabic": "السكاكيني",
+        "misspellings": []
+      },
+      {
+        "english": "Helmeyet El Zaitoun",
+        "arabic": "حلمية الزيتون",
+        "misspellings": []
+      },
+      {
+        "english": "Manshiyet El Bakry",
+        "arabic": "منشية البكري",
+        "misspellings": []
+      },
+      {
+        "english": "Triumph",
+        "arabic": "تريومف",
+        "misspellings": []
+      },
+      {
+        "english": "Roxy",
+        "arabic": "روكسي",
+        "misspellings": []
+      },
+      {
+        "english": "Safir",
+        "arabic": "سفير",
+        "misspellings": []
+      },
+      {
+        "english": "Hegaz",
+        "arabic": "الحجاز",
+        "misspellings": []
+      },
+      {
+        "english": "Saint Fatima",
+        "arabic": "سانت فاتيما",
+        "misspellings": []
+      },
+      {
+        "english": "Arab El Maadi",
+        "arabic": "عرب المعادي",
+        "misspellings": []
+      },
+      {
+        "english": "Sahel",
+        "arabic": "الساحل",
+        "misspellings": []
+      },
+      {
+        "english": "Khalafawy",
+        "arabic": "الخلفاوي",
+        "misspellings": []
+      },
+      {
+        "english": "Aghakhan",
+        "arabic": "أغاخان",
+        "misspellings": []
+      },
+      {
+        "english": "Shorabiya",
+        "arabic": "الشرابية",
+        "misspellings": []
+      },
+      {
+        "english": "Zawya El Hamra",
+        "arabic": "الزاوية الحمراء",
+        "misspellings": []
+      },
+      {
+        "english": "Amiriya",
+        "arabic": "الأميرية",
+        "misspellings": []
+      },
+      {
+        "english": "Amiriyat El Balad",
+        "arabic": "أميرية البلد",
+        "misspellings": []
+      },
+      {
+        "english": "El Waili",
+        "arabic": "الوايلي",
+        "misspellings": []
+      },
+      {
+        "english": "Boulaq",
+        "arabic": "بولاق",
+        "misspellings": []
+      },
+      {
+        "english": "Mounira",
+        "arabic": "المنيرة",
+        "misspellings": []
+      },
+      {
+        "english": "Qasr El Aini",
+        "arabic": "القصر العيني",
+        "misspellings": []
+      },
+      {
+        "english": "Manyal El Roda",
+        "arabic": "منيل الروضة",
+        "misspellings": []
+      },
+      {
+        "english": "Bain El Sarayat",
+        "arabic": "بين السرايات",
+        "misspellings": []
+      },
+      {
+        "english": "Gamaat El Dowal",
+        "arabic": "جامعة الدول",
+        "misspellings": []
+      },
+      {
+        "english": "Gameat El Cairo",
+        "arabic": "جامعة القاهرة",
+        "misspellings": []
+      },
+      {
+        "english": "Lebanon Square",
+        "arabic": "ميدان لبنان",
+        "misspellings": []
+      },
+      {
+        "english": "Sphinx Square",
+        "arabic": "ميدان سفنكس",
+        "misspellings": []
+      },
+      {
+        "english": "Hadayek Zayed",
+        "arabic": "حدائق زايد",
+        "misspellings": []
+      },
+      {
+        "english": "New Zayed",
+        "arabic": "زايد الجديدة",
+        "misspellings": []
+      },
+      {
+        "english": "District R7 Capital",
+        "arabic": "الحي السكني السابع العاصمة",
+        "misspellings": []
+      },
+      {
+        "english": "District R8 Capital",
+        "arabic": "الحي السكني الثامن العاصمة",
+        "misspellings": []
+      },
+      {
+        "english": "Green Belt October",
+        "arabic": "الحزام الأخضر",
+        "misspellings": []
+      },
+      {
+        "english": "Motamayez October",
+        "arabic": "المتميز أكتوبر",
+        "misspellings": []
+      },
+      {
+        "english": "El Ashgar",
+        "arabic": "الأشجار",
+        "misspellings": []
+      },
+      {
+        "english": "Hadayek El Mohandessin",
+        "arabic": "حدائق المهندسين",
+        "misspellings": []
+      },
+      {
+        "english": "El Rabwa",
+        "arabic": "الربوة",
+        "misspellings": []
+      },
+      {
+        "english": "New Obour",
+        "arabic": "العبور الجديدة",
+        "misspellings": []
+      },
+      {
+        "english": "Shabab Obour",
+        "arabic": "الشباب العبور",
+        "misspellings": []
+      },
+      {
+        "english": "Iskan El Mostakbal",
+        "arabic": "إسكان المستقبل",
+        "misspellings": []
+      },
+      {
+        "english": "Mostakbal City",
+        "arabic": "مدينة المستقبل",
+        "misspellings": []
+      }
+    ],
+    "alexandria": [
+      {
+        "english": "Montaza",
+        "arabic": "المنتزه",
+        "misspellings": []
+      },
+      {
+        "english": "Maamoura",
+        "arabic": "المعمورة",
+        "misspellings": []
+      },
+      {
+        "english": "Abu Qir",
+        "arabic": "أبو قير",
+        "misspellings": []
+      },
+      {
+        "english": "Mandara",
+        "arabic": "المندرة",
+        "misspellings": []
+      },
+      {
+        "english": "Asafra",
+        "arabic": "العصافرة",
+        "misspellings": []
+      },
+      {
+        "english": "Miami",
+        "arabic": "ميامي",
+        "misspellings": []
+      },
+      {
+        "english": "Sidi Bishr",
+        "arabic": "سيدي بشر",
+        "misspellings": []
+      },
+      {
+        "english": "Victoria",
+        "arabic": "فيكتوريا",
+        "misspellings": []
+      },
+      {
+        "english": "San Stefano",
+        "arabic": "سان ستيفانو",
+        "misspellings": []
+      },
+      {
+        "english": "Gleem",
+        "arabic": "جليم",
+        "misspellings": []
+      },
+      {
+        "english": "Stanley",
+        "arabic": "ستانلي",
+        "misspellings": []
+      },
+      {
+        "english": "Roushdy",
+        "arabic": "رشدي",
+        "misspellings": []
+      },
+      {
+        "english": "Kafr Abdo",
+        "arabic": "كفر عبده",
+        "misspellings": []
+      },
+      {
+        "english": "Smouha",
+        "arabic": "سموحة",
+        "misspellings": []
+      },
+      {
+        "english": "Sidi Gaber",
+        "arabic": "سيدي جابر",
+        "misspellings": []
+      },
+      {
+        "english": "Sporting",
+        "arabic": "سبورتنج",
+        "misspellings": []
+      },
+      {
+        "english": "Ibrahimia",
+        "arabic": "الإبراهيمية",
+        "misspellings": []
+      },
+      {
+        "english": "Camp Shezar",
+        "arabic": "كامب شيزار",
+        "misspellings": []
+      },
+      {
+        "english": "Shatby",
+        "arabic": "الشاطبي",
+        "misspellings": []
+      },
+      {
+        "english": "Azarita",
+        "arabic": "الأزاريطة",
+        "misspellings": []
+      },
+      {
+        "english": "Raml Station",
+        "arabic": "محطة الرمل",
+        "misspellings": []
+      },
+      {
+        "english": "Mansheya",
+        "arabic": "المنشية",
+        "misspellings": []
+      },
+      {
+        "english": "Bahary",
+        "arabic": "بحري",
+        "misspellings": []
+      },
+      {
+        "english": "Anfoushi",
+        "arabic": "الأنفوشي",
+        "misspellings": []
+      },
+      {
+        "english": "Moharam Bek",
+        "arabic": "محرم بك",
+        "misspellings": []
+      },
+      {
+        "english": "Karmouz",
+        "arabic": "كرموز",
+        "misspellings": []
+      },
+      {
+        "english": "Wardian",
+        "arabic": "الورديان",
+        "misspellings": []
+      },
+      {
+        "english": "Mex",
+        "arabic": "المكس",
+        "misspellings": []
+      },
+      {
+        "english": "Agami",
+        "arabic": "العجمي",
+        "misspellings": []
+      },
+      {
+        "english": "Bitash",
+        "arabic": "البيطاش",
+        "misspellings": []
+      },
+      {
+        "english": "Hannoville",
+        "arabic": "الهانوفيل",
+        "misspellings": []
+      },
+      {
+        "english": "Dekheila",
+        "arabic": "الدخيلة",
+        "misspellings": []
+      },
+      {
+        "english": "Amreya",
+        "arabic": "العامرية",
+        "misspellings": []
+      },
+      {
+        "english": "King Mariout",
+        "arabic": "كينج مريوط",
+        "misspellings": []
+      },
+      {
+        "english": "Borg El Arab",
+        "arabic": "برج العرب",
+        "misspellings": []
+      },
+      {
+        "english": "New Borg El Arab",
+        "arabic": "برج العرب الجديدة",
+        "misspellings": []
+      },
+      {
+        "english": "Marina",
+        "arabic": "مارينا",
+        "misspellings": []
+      },
+      {
+        "english": "New Alamein",
+        "arabic": "العلمين الجديدة",
+        "misspellings": []
+      },
+      {
+        "english": "Kafr El Dawwar",
+        "arabic": "كفر الدوار",
+        "misspellings": []
+      },
+      {
+        "english": "Sidi Beshr Bahary",
+        "arabic": "سيدي بشر بحري",
+        "misspellings": []
+      },
+      {
+        "english": "Sidi Bishr Qebly",
+        "arabic": "سيدي بشر قبلي",
+        "misspellings": []
+      },
+      {
+        "english": "Mandara Bahary",
+        "arabic": "المندرة بحري",
+        "misspellings": []
+      },
+      {
+        "english": "Mandara Qebly",
+        "arabic": "المندرة قبلي",
+        "misspellings": []
+      },
+      {
+        "english": "Asafra Bahary",
+        "arabic": "العصافرة بحري",
+        "misspellings": []
+      },
+      {
+        "english": "Asafra Qebly",
+        "arabic": "العصافرة قبلي",
+        "misspellings": []
+      },
+      {
+        "english": "Fleming",
+        "arabic": "فلمنج",
+        "misspellings": []
+      },
+      {
+        "english": "Bacos",
+        "arabic": "باكوس",
+        "misspellings": []
+      },
+      {
+        "english": "Janaklis",
+        "arabic": "جناكليس",
+        "misspellings": []
+      },
+      {
+        "english": "Laurent",
+        "arabic": "لوران",
+        "misspellings": []
+      },
+      {
+        "english": "Zizinia",
+        "arabic": "زيزينيا",
+        "misspellings": []
+      },
+      {
+        "english": "Saba Pasha",
+        "arabic": "سابا باشا",
+        "misspellings": []
+      },
+      {
+        "english": "Bolkeley",
+        "arabic": "بولكلي",
+        "misspellings": []
+      },
+      {
+        "english": "Schutz",
+        "arabic": "شدس",
+        "misspellings": []
+      },
+      {
+        "english": "Abu El Nawatir",
+        "arabic": "أبو النواتير",
+        "misspellings": []
+      },
+      {
+        "english": "Mostafa Kamel",
+        "arabic": "مصطفى كامل",
+        "misspellings": []
+      },
+      {
+        "english": "Cleopatra",
+        "arabic": "كليوباترا",
+        "misspellings": []
+      },
+      {
+        "english": "Sidi Gabir",
+        "arabic": "سيدي جابر",
+        "misspellings": []
+      },
+      {
+        "english": "Hadara",
+        "arabic": "الحضرة",
+        "misspellings": []
+      },
+      {
+        "english": "Hadara El Gedida",
+        "arabic": "الحضرة الجديدة",
+        "misspellings": []
+      },
+      {
+        "english": "Hadara Qebly",
+        "arabic": "الحضرة قبلي",
+        "misspellings": []
+      },
+      {
+        "english": "Nuzha",
+        "arabic": "النزهة",
+        "misspellings": []
+      },
+      {
+        "english": "Semouha",
+        "arabic": "سموحة",
+        "misspellings": []
+      },
+      {
+        "english": "Seyouf",
+        "arabic": "السيوف",
+        "misspellings": []
+      },
+      {
+        "english": "Seyouf Shamaa",
+        "arabic": "السيوف شماعة",
+        "misspellings": []
+      },
+      {
+        "english": "Falaky",
+        "arabic": "الفلكي",
+        "misspellings": []
+      },
+      {
+        "english": "Khorshid",
+        "arabic": "خورشيد",
+        "misspellings": []
+      },
+      {
+        "english": "Abees",
+        "arabic": "أبيس",
+        "misspellings": []
+      },
+      {
+        "english": "Awayed",
+        "arabic": "العوايد",
+        "misspellings": []
+      },
+      {
+        "english": "Ezbet El Matar",
+        "arabic": "عزبة المطار",
+        "misspellings": []
+      },
+      {
+        "english": "Hagar El Nawateya",
+        "arabic": "حجر النواتية",
+        "misspellings": []
+      },
+      {
+        "english": "Ghait El Enab",
+        "arabic": "غيط العنب",
+        "misspellings": []
+      },
+      {
+        "english": "Ghorbal",
+        "arabic": "غربال",
+        "misspellings": []
+      },
+      {
+        "english": "Ras El Tin",
+        "arabic": "رأس التين",
+        "misspellings": []
+      },
+      {
+        "english": "Qaitbay",
+        "arabic": "قايتباي",
+        "misspellings": []
+      },
+      {
+        "english": "Gomrok",
+        "arabic": "الجمرك",
+        "misspellings": []
+      },
+      {
+        "english": "Labban",
+        "arabic": "اللبان",
+        "misspellings": []
+      },
+      {
+        "english": "Attarin",
+        "arabic": "العطارين",
+        "misspellings": []
+      },
+      {
+        "english": "Kom El Dikka",
+        "arabic": "كوم الدكة",
+        "misspellings": []
+      },
+      {
+        "english": "Kom El Shokafa",
+        "arabic": "كوم الشقافة",
+        "misspellings": []
+      },
+      {
+        "english": "Kabbary",
+        "arabic": "القباري",
+        "misspellings": []
+      },
+      {
+        "english": "Mina El Basal",
+        "arabic": "مينا البصل",
+        "misspellings": []
+      },
+      {
+        "english": "Kafr Ashry",
+        "arabic": "كفر عشري",
+        "misspellings": []
+      },
+      {
+        "english": "Nagaa El Arab",
+        "arabic": "نجع العرب",
+        "misspellings": []
+      },
+      {
+        "english": "El Mafrouza",
+        "arabic": "المفروزة",
+        "misspellings": []
+      },
+      {
+        "english": "El Qabbari",
+        "arabic": "القباري",
+        "misspellings": []
+      },
+      {
+        "english": "Karmous",
+        "arabic": "كرموز",
+        "misspellings": []
+      },
+      {
+        "english": "El Qabari",
+        "arabic": "القباري",
+        "misspellings": []
+      },
+      {
+        "english": "Qabary",
+        "arabic": "القباري",
+        "misspellings": []
+      },
+      {
+        "english": "El Gomrok",
+        "arabic": "الجمرك",
+        "misspellings": []
+      },
+      {
+        "english": "Attareen",
+        "arabic": "العطارين",
+        "misspellings": []
+      },
+      {
+        "english": "El Manshia",
+        "arabic": "المنشية",
+        "misspellings": []
+      },
+      {
+        "english": "El Azarita",
+        "arabic": "الأزاريطة",
+        "misspellings": []
+      },
+      {
+        "english": "Wabour El Maya",
+        "arabic": "وابور المياه",
+        "misspellings": []
+      },
+      {
+        "english": "El Chatby",
+        "arabic": "الشاطبي",
+        "misspellings": []
+      },
+      {
+        "english": "Chatby",
+        "arabic": "الشاطبي",
+        "misspellings": []
+      },
+      {
+        "english": "Abis 1",
+        "arabic": "أبيس الأولى",
+        "misspellings": []
+      },
+      {
+        "english": "Abis 2",
+        "arabic": "أبيس الثانية",
+        "misspellings": []
+      },
+      {
+        "english": "Abis 3",
+        "arabic": "أبيس الثالثة",
+        "misspellings": []
+      },
+      {
+        "english": "Abis 4",
+        "arabic": "أبيس الرابعة",
+        "misspellings": []
+      },
+      {
+        "english": "Abis 5",
+        "arabic": "أبيس الخامسة",
+        "misspellings": []
+      },
+      {
+        "english": "Abis 6",
+        "arabic": "أبيس السادسة",
+        "misspellings": []
+      },
+      {
+        "english": "Abis 7",
+        "arabic": "أبيس السابعة",
+        "misspellings": []
+      },
+      {
+        "english": "Abis 8",
+        "arabic": "أبيس الثامنة",
+        "misspellings": []
+      },
+      {
+        "english": "Abis 9",
+        "arabic": "أبيس التاسعة",
+        "misspellings": []
+      },
+      {
+        "english": "Abis 10",
+        "arabic": "أبيس العاشرة",
+        "misspellings": []
+      },
+      {
+        "english": "El Tabia",
+        "arabic": "الطابية",
+        "misspellings": []
+      },
+      {
+        "english": "Toson",
+        "arabic": "طوسون",
+        "misspellings": []
+      },
+      {
+        "english": "El Mamoura El Balad",
+        "arabic": "المعمورة البلد",
+        "misspellings": []
+      },
+      {
+        "english": "El Mamoura El Shatea",
+        "arabic": "المعمورة الشاطئ",
+        "misspellings": []
+      },
+      {
+        "english": "El Islah",
+        "arabic": "الإصلاح",
+        "misspellings": []
+      },
+      {
+        "english": "El Ras El Soda",
+        "arabic": "الرأس السوداء",
+        "misspellings": []
+      },
+      {
+        "english": "Ras El Soda",
+        "arabic": "الراس السوداء",
+        "misspellings": []
+      },
+      {
+        "english": "El Montazah",
+        "arabic": "المنتزه",
+        "misspellings": []
+      },
+      {
+        "english": "Fayrouz",
+        "arabic": "الفيروز",
+        "misspellings": []
+      },
+      {
+        "english": "Maamoura Beach",
+        "arabic": "شاطئ المعمورة",
+        "misspellings": []
+      },
+      {
+        "english": "El Nahda",
+        "arabic": "النهضة",
+        "misspellings": []
+      },
+      {
+        "english": "El Nahda El Amreya",
+        "arabic": "النهضة العامرية",
+        "misspellings": []
+      },
+      {
+        "english": "Merghem",
+        "arabic": "مرغم",
+        "misspellings": []
+      },
+      {
+        "english": "Abdel Kader",
+        "arabic": "عبد القادر",
+        "misspellings": []
+      },
+      {
+        "english": "El Hawareya",
+        "arabic": "الهوارية",
+        "misspellings": []
+      },
+      {
+        "english": "El Agamy",
+        "arabic": "العجمي",
+        "misspellings": []
+      },
+      {
+        "english": "Abu Youssef",
+        "arabic": "أبو يوسف",
+        "misspellings": []
+      },
+      {
+        "english": "El Nakheel",
+        "arabic": "النخيل",
+        "misspellings": []
+      },
+      {
+        "english": "6 October Beach",
+        "arabic": "شاطئ ٦ أكتوبر",
+        "misspellings": []
+      },
+      {
+        "english": "Zahraa Agami",
+        "arabic": "زهراء العجمي",
+        "misspellings": []
+      },
+      {
+        "english": "El Zahraa",
+        "arabic": "الزهراء",
+        "misspellings": []
+      },
+      {
+        "english": "Abu Talat",
+        "arabic": "أبو تلات",
+        "misspellings": []
+      },
+      {
+        "english": "El Hanoville",
+        "arabic": "الهانوفيل",
+        "misspellings": []
+      },
+      {
+        "english": "El Bitash",
+        "arabic": "البيطاش",
+        "misspellings": []
+      },
+      {
+        "english": "Sidi Krir",
+        "arabic": "سيدي كرير",
+        "misspellings": []
+      },
+      {
+        "english": "Kilo 21",
+        "arabic": "الكيلو ٢١",
+        "misspellings": []
+      },
+      {
+        "english": "Kilo 26",
+        "arabic": "الكيلو ٢٦",
+        "misspellings": []
+      },
+      {
+        "english": "Kilo 34",
+        "arabic": "الكيلو ٣٤",
+        "misspellings": []
+      },
+      {
+        "english": "El Orouba",
+        "arabic": "العروبة",
+        "misspellings": []
+      },
+      {
+        "english": "Krier",
+        "arabic": "كرير",
+        "misspellings": []
+      },
+      {
+        "english": "El Safa",
+        "arabic": "الصفا",
+        "misspellings": []
+      },
+      {
+        "english": "Sidi Kerir",
+        "arabic": "سيدي كرير",
+        "misspellings": []
+      },
+      {
+        "english": "El Omayed",
+        "arabic": "العميد",
+        "misspellings": []
+      },
+      {
+        "english": "El Hammam",
+        "arabic": "الحمام",
+        "misspellings": []
+      },
+      {
+        "english": "Marakia",
+        "arabic": "مراقيا",
+        "misspellings": []
+      },
+      {
+        "english": "Marabella",
+        "arabic": "مارابيلا",
+        "misspellings": []
+      },
+      {
+        "english": "Marina 1",
+        "arabic": "مارينا ١",
+        "misspellings": []
+      },
+      {
+        "english": "Marina 2",
+        "arabic": "مارينا ٢",
+        "misspellings": []
+      },
+      {
+        "english": "Marina 3",
+        "arabic": "مارينا ٣",
+        "misspellings": []
+      },
+      {
+        "english": "Marina 4",
+        "arabic": "مارينا ٤",
+        "misspellings": []
+      },
+      {
+        "english": "Marina 5",
+        "arabic": "مارينا ٥",
+        "misspellings": []
+      },
+      {
+        "english": "Marina 6",
+        "arabic": "مارينا ٦",
+        "misspellings": []
+      },
+      {
+        "english": "Marina 7",
+        "arabic": "مارينا ٧",
+        "misspellings": []
+      },
+      {
+        "english": "Downtown Alamein",
+        "arabic": "داون تاون العلمين",
+        "misspellings": []
+      },
+      {
+        "english": "Latin Quarter Alamein",
+        "arabic": "الحي اللاتيني العلمين",
+        "misspellings": []
+      },
+      {
+        "english": "El Alamein Towers",
+        "arabic": "أبراج العلمين",
+        "misspellings": []
+      }
+    ],
+    "port-said-region": [
+      {
+        "english": "Port Fuad",
+        "arabic": "بورفؤاد",
+        "misspellings": []
+      },
+      {
+        "english": "East Port Said",
+        "arabic": "شرق بورسعيد",
+        "misspellings": []
+      },
+      {
+        "english": "Sharq El Tafreea",
+        "arabic": "شرق التفريعة",
+        "misspellings": []
+      },
+      {
+        "english": "Arab",
+        "arabic": "العرب",
+        "misspellings": []
+      },
+      {
+        "english": "Manakh",
+        "arabic": "المناخ",
+        "misspellings": []
+      },
+      {
+        "english": "Zohour",
+        "arabic": "الزهور",
+        "misspellings": []
+      },
+      {
+        "english": "Dawahy",
+        "arabic": "الضواحي",
+        "misspellings": []
+      },
+      {
+        "english": "Sharq",
+        "arabic": "الشرق",
+        "misspellings": []
+      },
+      {
+        "english": "Gharb",
+        "arabic": "الغرب",
+        "misspellings": []
+      },
+      {
+        "english": "Ganoub",
+        "arabic": "الجنوب",
+        "misspellings": []
+      },
+      {
+        "english": "El Qabouty",
+        "arabic": "القابوطي",
+        "misspellings": []
+      },
+      {
+        "english": "Mubarak",
+        "arabic": "مبارك",
+        "misspellings": []
+      },
+      {
+        "english": "El Kuwait",
+        "arabic": "الكويت",
+        "misspellings": []
+      },
+      {
+        "english": "El Amal",
+        "arabic": "الأمل",
+        "misspellings": []
+      },
+      {
+        "english": "El Salam",
+        "arabic": "السلام",
+        "misspellings": []
+      },
+      {
+        "english": "El Oboor",
+        "arabic": "العبور",
+        "misspellings": []
+      },
+      {
+        "english": "El Rehab",
+        "arabic": "الرحاب",
+        "misspellings": []
+      },
+      {
+        "english": "El Fayrouz",
+        "arabic": "الفيروز",
+        "misspellings": []
+      },
+      {
+        "english": "El Manasra",
+        "arabic": "المناصرة",
+        "misspellings": []
+      },
+      {
+        "english": "El Garabaa",
+        "arabic": "الجرابعة",
+        "misspellings": []
+      },
+      {
+        "english": "Bahr El Baqar",
+        "arabic": "بحر البقر",
+        "misspellings": []
+      },
+      {
+        "english": "Ismailia",
+        "arabic": "الإسماعيلية",
+        "misspellings": []
+      },
+      {
+        "english": "Sheikh Zayed Ismailia",
+        "arabic": "الشيخ زايد الإسماعيلية",
+        "misspellings": []
+      },
+      {
+        "english": "Hay El Salam Ismailia",
+        "arabic": "حي السلام الإسماعيلية",
+        "misspellings": []
+      },
+      {
+        "english": "Arayesheya",
+        "arabic": "العرايشية",
+        "misspellings": []
+      },
+      {
+        "english": "El Mahatta El Gedida",
+        "arabic": "المحطة الجديدة",
+        "misspellings": []
+      },
+      {
+        "english": "El Saba Banat",
+        "arabic": "السبع بنات",
+        "misspellings": []
+      },
+      {
+        "english": "El Balabsa",
+        "arabic": "البلابسة",
+        "misspellings": []
+      },
+      {
+        "english": "El Afrang Ismailia",
+        "arabic": "الإفرنج الإسماعيلية",
+        "misspellings": []
+      },
+      {
+        "english": "El Temsah",
+        "arabic": "التمساح",
+        "misspellings": []
+      },
+      {
+        "english": "El Taawon",
+        "arabic": "التعاون",
+        "misspellings": []
+      },
+      {
+        "english": "Abu Atwa",
+        "arabic": "أبو عطوة",
+        "misspellings": []
+      },
+      {
+        "english": "Nefisha",
+        "arabic": "نفيشة",
+        "misspellings": []
+      },
+      {
+        "english": "El Mostakbal Ismailia",
+        "arabic": "المستقبل الإسماعيلية",
+        "misspellings": []
+      },
+      {
+        "english": "El Hekr",
+        "arabic": "الحكر",
+        "misspellings": []
+      },
+      {
+        "english": "Damietta",
+        "arabic": "دمياط",
+        "misspellings": []
+      },
+      {
+        "english": "New Damietta",
+        "arabic": "دمياط الجديدة",
+        "misspellings": []
+      },
+      {
+        "english": "Ras El Bar",
+        "arabic": "رأس البر",
+        "misspellings": []
+      },
+      {
+        "english": "El Lessan",
+        "arabic": "اللسان",
+        "misspellings": []
+      },
+      {
+        "english": "El Gharbi",
+        "arabic": "الغربي",
+        "misspellings": []
+      },
+      {
+        "english": "El Aasar",
+        "arabic": "الأعصر",
+        "misspellings": []
+      },
+      {
+        "english": "El Senaneya",
+        "arabic": "السنانية",
+        "misspellings": []
+      },
+      {
+        "english": "El Shata",
+        "arabic": "شطا",
+        "misspellings": []
+      },
+      {
+        "english": "Ezbet El Borg",
+        "arabic": "عزبة البرج",
+        "misspellings": []
+      },
+      {
+        "english": "El Shoaraa",
+        "arabic": "الشعراء",
+        "misspellings": []
+      },
+      {
+        "english": "El Bostan",
+        "arabic": "البستان",
+        "misspellings": []
+      },
+      {
+        "english": "El Basarta",
+        "arabic": "البصارطة",
+        "misspellings": []
+      },
+      {
+        "english": "El Ananeya",
+        "arabic": "العنانية",
+        "misspellings": []
+      },
+      {
+        "english": "El Adleya",
+        "arabic": "العدلية",
+        "misspellings": []
+      },
+      {
+        "english": "El Sayala",
+        "arabic": "السيالة",
+        "misspellings": []
+      },
+      {
+        "english": "El Kafrawy",
+        "arabic": "الكفراوي",
+        "misspellings": []
+      },
+      {
+        "english": "Mubarak New Damietta",
+        "arabic": "مبارك دمياط الجديدة",
+        "misspellings": []
+      },
+      {
+        "english": "3rd District",
+        "arabic": "الحي الثالث",
+        "misspellings": [],
+        "sourceUrl": "https://www.itda.gov.eg/CRM/881/CRA9.pdf",
+        "sourceSnapshot": "neighbourhoods/research-pr27/independent-name-search.json.gz",
+        "evidence": "Independently selected official ITDA register address explicitly says New Damietta حي3. Ordinal written as words in Arabic per reviewed display rules; existing standard English ordinal. This is a residential City district, not a building or locality code."
+      }
+    ]
+  },
+  "removed": {
+    "alexandria": {
+      "El Hager": "English/Arabic mismatch and no credible independently known locality.",
+      "El Daraisa": "No credible independently known Alexandrian locality; Cairo Darasa is outside this region.",
+      "Sidi Abdel Rahman": "Outside requested North Coast strip ending New Alamein/Marina.",
+      "Nozha Gardens": "A named public garden/zoo complex, rather than an independently established residential neighbourhood. Retain Nuzha/Manshiyet El Nozha separately. Wikidata Q23976223? corrected: garden Q23976192; source garden label and Alexandria page garden discussion. https://ar.wikipedia.org/wiki/منشية_النزهة",
+      "Fawzi Moaz": "Checklist names the main street, OSM:way/30644575 شارع اللواء محمد فوزي معاذ. Staged lookup found the street and unrelated facilities, no independently established separate residential area. Smouha remains selectable. https://www.openstreetmap.org/way/30644575",
+      "El Nasr Smouha": "Street in Smouha rather than independently established district; primary bank Fawry agents list locates شارع النصر under سموحة. Remove street-level acceptance entry; keep Smouha. https://adib.eg/media/1031529/fawry-branches.pdf",
+      "El Mahmoudeya": "Ambiguous canal/linear road through several areas; staged response only شارع قنال المحمودية. Not evidence of an Alexandria residential neighbourhood of that name; Beheira Mahmoudiya city lies outside coverage. https://www.openstreetmap.org/way/751770312",
+      "El Horreya": "City-spanning road name rather than independently established Alexandria neighbourhood. Staged responses find isolated towers; existing road/address sources call it طريق الحرية. https://en.wikipedia.org/wiki/Alexandria",
+      "Soter": "Former Soter Street, now شارع دكتور على مصطفى مشرفه, OSM:way/9929693; no separate residential locality established. Street-only acceptance entry removed, Azarita/Shatby retained. https://www.openstreetmap.org/way/9929693",
+      "Merghem 1": "Numbered industrial-complex phase, not distinct residential area. Official SIS record identifies مجمعي مرغم 1 و2 as industrial production sites; Merghim neighbourhood retained. https://mediadr.sis.gov.eg/handle/123456789/107054",
+      "Merghem 2": "Numbered industrial-complex phase, not distinct residential area. Official SIS record identifies مجمعي مرغم 1 و2 as industrial production sites; Merghim neighbourhood retained. https://mediadr.sis.gov.eg/handle/123456789/107054",
+      "Manshiyet El Omara": "Regional identity unverified: recorded exact/bounded research found Gharbia/Assiut homonyms, with no reliable Alexandria area attestation. Remove pending corroboration; an uncertain identity is not a real known-missing area. See research-round7/nominatim-omara*.json.gz and source-manifest.json."
+    },
+    "port-said-region": {
+      "El Gaber": "No credible locality evidence.",
+      "Mostafa Kamel": "Port Said locality not confirmed; Alexandrian district is independent.",
+      "El Afrang": "Port Said French-quarter identification not independently confirmed; Ismailia Afrang is retained.",
+      "El Shatea Ras El Bar": "Generic beach extent, not residential neighbourhood name. Source OSM:way/1554277916 is natural=beach; Ras El Bar and named El Lessan area retained. https://www.openstreetmap.org/way/1554277916"
+    },
+    "greater-cairo": {
+      "El Shams Club": "Lead round8: standalone sports-club premises, not an independently named residential area; exact-name acceptance cannot demand a facility City.",
+      "Cairo": "Lead round9 explicitly removes the national-capital city node from Neighbourhoods; OCHA populated-place city selection is outside the requested area granularity. Downtown Cairo remains independently selected. Not a missing residential neighbourhood."
+    }
+  }
+}

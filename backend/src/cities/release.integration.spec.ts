@@ -1,3 +1,4 @@
+import { districtMigrationsFixture } from './district-migrations.fixture';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { Pool } from 'pg';
 import * as path from 'path';
@@ -6,7 +7,8 @@ import * as os from 'os';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from '../database/schema';
 import { runMigrations } from '../database/migrate';
-import { getOfficialCatalog, type CitySnapshot } from './catalog';
+import { type CitySnapshot, type CityCatalog } from './catalog';
+import { readCityData } from './data-files';
 import { applyReviewedRelease, generateReleaseMigrationSql, publishReviewedRelease } from './refresh';
 import { CitiesRepository } from './cities.repository';
 import { CitiesService } from './cities.service';
@@ -17,8 +19,10 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
   let container: StartedPostgreSqlContainer;
   let connectionString: string;
   let pool: Pool;
+  let baselineMigrations: string;
 
   beforeAll(async () => {
+    baselineMigrations = districtMigrationsFixture();
     container = await new PostgreSqlContainer('postgis/postgis:16-3.4-alpine')
       .withDatabase('pupzy_release_integration_test')
       .withUsername('test')
@@ -30,6 +34,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
   }, 90_000);
 
   afterAll(async () => {
+    if (baselineMigrations) fs.rmSync(baselineMigrations, { recursive: true, force: true });
     if (pool) {
       await pool.end();
     }
@@ -90,7 +95,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
   };
 
   const createFutureReleaseMigration = () => {
-    const baseCatalog = getOfficialCatalog();
+    const baseCatalog = readCityData<CityCatalog>('neighbourhoods/district-seed.json.gz').records;
     expect(baseCatalog.length).toBe(351);
 
     // Create candidate where:
@@ -193,7 +198,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     // 1. Run baseline migrations up to 0011
     await runMigrations({
       pool,
-      migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+      migrationsFolder: baselineMigrations,
       customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
     });
 
@@ -249,7 +254,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     // 1. Run baseline migrations up to 0011
     await runMigrations({
       pool,
-      migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+      migrationsFolder: baselineMigrations,
       customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
     });
 
@@ -448,7 +453,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     await cleanDatabase();
     await runMigrations({
       pool,
-      migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+      migrationsFolder: baselineMigrations,
       customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
     });
 
@@ -475,7 +480,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     // 1. Initial production baseline migration
     await runMigrations({
       pool,
-      migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+      migrationsFolder: baselineMigrations,
       customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
     });
 
@@ -527,7 +532,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     await expect(primedRelationshipLoader.load(eg0101Id)).resolves.toMatchObject({ sourceCode: 'EG0101' });
     await expect(primedRelationshipLoader.load(eg0102Id)).resolves.toMatchObject({ status: 'OFFICIAL' });
     await expect(primedRelationshipLoader.load(maadiId)).resolves.toMatchObject({ nameEnglish: 'Maadi' });
-    await expect(repo.getCatalogRevision()).resolves.toBe(1);
+    await expect(repo.getCatalogRevision()).resolves.toBe(2);
 
     // 2. Failed release simulation (e.g. invalid migration that raises exception before commit)
     const failedReleaseSql = `
@@ -550,7 +555,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
 
     const postFail0101 = await runningInstance.findById(eg0101Id);
     expect(postFail0101?.status).toBe('OFFICIAL');
-    await expect(repo.getCatalogRevision()).resolves.toBe(1);
+    await expect(repo.getCatalogRevision()).resolves.toBe(2);
 
     // 3. A request already using the old cache holds a shared revision lock.
     // The release must not commit while that request is still selecting its
@@ -589,7 +594,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
     releaseOldCacheRead!();
     await expect(inFlightOldRead).resolves.toHaveLength(351);
     await releaseMigration;
-    await expect(repo.getCatalogRevision()).resolves.toBe(2);
+    await expect(repo.getCatalogRevision()).resolves.toBe(3);
 
     // 5. Railway boots Instance 2 (new container with cold cache) during deployment overlap
     const cacheStore2 = new Map<string, unknown>();
@@ -660,7 +665,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
   });
 
   it('fails closed when attempting to generate releases with invalid many-to-one mappings or unmapped detected recodes', () => {
-    const baseCatalog = getOfficialCatalog();
+    const baseCatalog = readCityData<CityCatalog>('neighbourhoods/district-seed.json.gz').records;
 
     // 1. Unmapped detected recode (EG0101 name & governorate matched with new P-code EG0198)
     const recodedRaw = baseCatalog
@@ -738,7 +743,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
 
   describe('End-to-End Published Release Migration with Drizzle Runner', () => {
     const copyBaselineMigrationsToTemp = (tempMigrationsDir: string) => {
-      const srcMigrationsDir = path.resolve(__dirname, '../../drizzle/migrations');
+      const srcMigrationsDir = baselineMigrations;
       const tempMetaDir = path.join(tempMigrationsDir, 'meta');
       fs.mkdirSync(tempMetaDir, { recursive: true });
 
@@ -760,7 +765,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
       const tempMigrationsDir = path.join(tempDir, 'migrations');
       copyBaselineMigrationsToTemp(tempMigrationsDir);
 
-      const baseCatalog = getOfficialCatalog();
+      const baseCatalog = readCityData<CityCatalog>('neighbourhoods/district-seed.json.gz').records;
       const rawRecords = baseCatalog
         .filter((c) => c.sourceCode !== 'EG0101' && c.sourceCode !== 'EG0102')
         .map((c) => ({
@@ -869,7 +874,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
       // 1. Apply baseline migrations up to 0011
       await runMigrations({
         pool,
-        migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+        migrationsFolder: baselineMigrations,
         customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
       });
 
@@ -898,7 +903,7 @@ describe('Reviewed Append-Only Release Workflow Integration (Disposable PostgreS
       const tempMigrationsDir = path.join(tempDir, 'migrations');
       copyBaselineMigrationsToTemp(tempMigrationsDir);
 
-      const baseCatalog = getOfficialCatalog();
+      const baseCatalog = readCityData<CityCatalog>('neighbourhoods/district-seed.json.gz').records;
       const rawRecords = baseCatalog
         .filter((c) => c.sourceCode !== 'EG0101' && c.sourceCode !== 'EG0102')
         .map((c) => ({

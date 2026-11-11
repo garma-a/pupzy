@@ -100,6 +100,8 @@ export function buildCitiesResource(db, components = {}) {
     id: { isTitle: false, isDisabled: true },
     name_english: { isTitle: true },
     name_arabic: {},
+    district_id: { reference: 'cities', isVisible: { list: false, show: true, edit: false, filter: false } },
+    aliases: { type: 'string', isArray: true, isVisible: { list: false, show: true, edit: false, filter: false } },
     governorate: {},
     source_code: {
       isVisible: { list: true, show: true, edit: false, filter: true },
@@ -193,6 +195,8 @@ export function buildCitiesResource(db, components = {}) {
       showProperties: [
         'id',
         'source_code',
+        'district_id',
+        'aliases',
         'name_english',
         'name_arabic',
         'governorate',

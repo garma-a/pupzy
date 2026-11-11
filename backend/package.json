@@ -33,7 +33,10 @@
     "db:custom": "ts-node -r tsconfig-paths/register src/database/migrate.ts",
     "admin:seed": "node admin-service/scripts/seed-first-admin.js",
     "cities:refresh": "ts-node -r tsconfig-paths/register src/cities/scripts/refresh.ts",
-    "cities:verify-upstream": "ts-node -r tsconfig-paths/register src/cities/scripts/verify-upstream.ts"
+    "cities:verify-upstream": "ts-node -r tsconfig-paths/register src/cities/scripts/verify-upstream.ts",
+    "cities:build-neighbourhood-candidate": "ts-node -r tsconfig-paths/register src/cities/scripts/build-neighbourhood-candidate.ts",
+    "cities:verify-coverage": "ts-node -r tsconfig-paths/register src/cities/scripts/verify-coverage.ts",
+    "cities:format-reviewed-metadata": "node scripts/format-city-metadata.cjs"
   },
   "dependencies": {
     "@apollo/server": "^5.5.1",

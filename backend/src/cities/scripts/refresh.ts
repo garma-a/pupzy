@@ -7,7 +7,7 @@ import {
   type SnapshotDiffReport,
   type ReviewedReleaseOptions,
 } from '../refresh';
-import { getOfficialCatalog, loadRawSnapshot, type CitySnapshot } from '../catalog';
+import { getOfficialCatalog, loadReleaseSnapshot, type CitySnapshot } from '../catalog';
 
 function printDiffReport(diff: SnapshotDiffReport): void {
   console.log('\n═══════════════════════════════════════════════════════════════');
@@ -20,6 +20,7 @@ function printDiffReport(diff: SnapshotDiffReport): void {
   console.log(`  Removed Cities:           ${diff.summary.removedCount}`);
   console.log(`  Renamed Cities:           ${diff.summary.renamedCount}`);
   console.log(`  Recoded Cities:           ${diff.summary.recodedCount}`);
+  console.log(`  Alias/parent/provenance changes: ${diff.metadataChanged?.length ?? 0}`);
   console.log(`  Coordinate changes:       ${diff.summary.coordinateChangedCount}`);
   console.log('───────────────────────────────────────────────────────────────\n');
 
@@ -86,9 +87,12 @@ export async function main(): Promise<void> {
     const fetchUrl = args[fetchIndex + 1] && !args[fetchIndex + 1].startsWith('--') ? args[fetchIndex + 1] : undefined;
     console.log(`Fetching candidate upstream snapshot from OCHA HDX resource (${fetchUrl || 'default'})...`);
     candidateSnapshot = await fetchUpstreamSnapshot(fetchUrl);
+    const published = loadReleaseSnapshot();
+    candidateSnapshot.neighbourhoods = published.neighbourhoods;
+    candidateSnapshot.coverageEvidence = published.coverageEvidence;
   } else {
     console.log('No candidate specified; comparing raw local snapshot with compiled catalog...');
-    candidateSnapshot = loadRawSnapshot();
+    candidateSnapshot = loadReleaseSnapshot();
   }
 
   const diff = compareSnapshots(currentCatalog, candidateSnapshot);

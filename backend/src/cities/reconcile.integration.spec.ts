@@ -1,3 +1,4 @@
+import { districtMigrationsFixture } from './district-migrations.fixture';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { Pool } from 'pg';
 import * as path from 'path';
@@ -15,8 +16,10 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
   let container: StartedPostgreSqlContainer;
   let connectionString: string;
   let pool: Pool;
+  let baselineMigrations: string;
 
   beforeAll(async () => {
+    baselineMigrations = districtMigrationsFixture();
     container = await new PostgreSqlContainer('postgis/postgis:16-3.4-alpine')
       .withDatabase('pupzy_reconcile_integration_test')
       .withUsername('test')
@@ -28,6 +31,7 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
   }, 90_000);
 
   afterAll(async () => {
+    if (baselineMigrations) fs.rmSync(baselineMigrations, { recursive: true, force: true });
     if (pool) {
       await pool.end();
     }
@@ -94,7 +98,7 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
 
   const applyMigrationsUpTo0010 = async () => {
     await cleanDatabase();
-    const migrationsDir = path.resolve(__dirname, '../../drizzle/migrations');
+    const migrationsDir = baselineMigrations;
     const migrationFiles = [
       '0000_familiar_shiver_man.sql',
       '0001_windy_moondragon.sql',
@@ -108,6 +112,7 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
       '0009_version_custom_ddl.sql',
       '0010_peaceful_wind_dancer.sql',
       '0012_add_city_catalog_revision.sql',
+      '0065_add_city_neighbourhood_fields.sql',
     ];
 
     for (const file of migrationFiles) {
@@ -133,7 +138,7 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
     await expect(
       runMigrations({
         pool,
-        migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+        migrationsFolder: baselineMigrations,
         customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
       }),
     ).resolves.not.toThrow();
@@ -343,24 +348,34 @@ describe('Reconciliation Migration Integration (Disposable PostgreSQL)', () => {
     await cleanDatabase();
     await runMigrations({
       pool,
-      migrationsFolder: path.resolve(__dirname, '../../drizzle/migrations'),
+      migrationsFolder: baselineMigrations,
       customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
     });
 
     const beforeRes = await pool.query<{ id: string; source_code: string; name_english: string }>(
-      `SELECT id, source_code, name_english FROM cities ORDER BY source_code LIMIT 10`,
+      `SELECT id, source_code, name_english FROM cities ORDER BY source_code`,
     );
     const beforeCities = beforeRes.rows;
+    expect(beforeCities.find((city) => city.source_code === 'EG0101')?.name_english).toBe('Tebbin');
+    const revisionBefore = await pool.query(`SELECT revision FROM city_catalog_revisions WHERE id = 1`);
 
-    // Re-run migration 0011
-    const migration0011Path = path.resolve(__dirname, '../../drizzle/migrations/0011_reconcile_city_catalog.sql');
-    await expect(runSqlFile(migration0011Path)).resolves.not.toThrow();
+    // Repeat pre-deploy: applied journal entries stay applied; repeatable indexes run again.
+    await expect(
+      runMigrations({
+        pool,
+        migrationsFolder: baselineMigrations,
+        customSqlPath: path.resolve(__dirname, '../../drizzle/custom.sql'),
+      }),
+    ).resolves.not.toThrow();
 
     // Verify UUIDs and identities remain strictly identical
     const afterRes = await pool.query<{ id: string; source_code: string; name_english: string }>(
-      `SELECT id, source_code, name_english FROM cities ORDER BY source_code LIMIT 10`,
+      `SELECT id, source_code, name_english FROM cities ORDER BY source_code`,
     );
     expect(afterRes.rows).toEqual(beforeCities);
+    expect((await pool.query(`SELECT revision FROM city_catalog_revisions WHERE id = 1`)).rows).toEqual(
+      revisionBefore.rows,
+    );
 
     // Verify total official count remains exactly 351 across 27 governorates
     const statsRes = await pool.query<{ official_count: string; gov_count: string }>(`

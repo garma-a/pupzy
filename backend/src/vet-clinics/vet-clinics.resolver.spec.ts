@@ -15,10 +15,13 @@ describe('VetClinicsResolver & VetClinicsPostResolver', () => {
   let mockContext: GqlContext;
 
   const mockCity: City = {
+    aliases: [],
+    districtId: null,
     id: '01916327-0000-7000-8000-000000000001',
     nameEnglish: 'Maadi',
     nameArabic: 'المعادي',
     governorate: 'Cairo',
+    governorateArabic: 'القاهرة',
     sourceCode: 'EG0101',
     sourceNameEnglish: 'Maadi',
     sourceNameArabic: 'المعادي',
@@ -28,10 +31,13 @@ describe('VetClinicsResolver & VetClinicsPostResolver', () => {
   };
 
   const mockLegacyCity: City = {
+    aliases: [],
+    districtId: null,
     id: '01916327-0000-7000-8000-000000000002',
     nameEnglish: 'Old Helwan District',
     nameArabic: 'حي حلوان القديم',
     governorate: 'Cairo',
+    governorateArabic: 'القاهرة',
     sourceCode: null,
     sourceNameEnglish: null,
     sourceNameArabic: null,
@@ -41,10 +47,13 @@ describe('VetClinicsResolver & VetClinicsPostResolver', () => {
   };
 
   const mockRetiredCity: City = {
+    aliases: [],
+    districtId: null,
     id: '01916327-0000-7000-8000-000000000003',
     nameEnglish: 'Superseded Markaz',
     nameArabic: 'مركز ملغي',
     governorate: 'Giza',
+    governorateArabic: 'الجيزة',
     sourceCode: 'EG0299',
     sourceNameEnglish: 'Superseded Markaz',
     sourceNameArabic: 'مركز ملغي',

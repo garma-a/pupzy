@@ -1,0 +1,73 @@
+{
+  "metadata": {
+    "date": "2026-11-11",
+    "status": "final-source-research; integrated subset and rejected points recorded separately",
+    "reviewer": "Codex primary-source review",
+    "finalDecisionFiles": ["integrated-proposals.json", "../personal-review.json", "../known-missing-names.json"]
+  },
+  "additions": [
+    {
+      "sourceCode": "PUPZY:mahatet-masr-alexandria",
+      "coverageArea": "alexandria",
+      "nameEnglish": "Mahatet Masr",
+      "nameArabic": "محطة مصر",
+      "wikidata": "Q958574",
+      "aliases": ["Mahatet Masr", "Mehatet Masr", "Misr Station Alexandria"],
+      "proxyPoint": true,
+      "notes": "Established station-area name. Exact independent Wikidata Alexandria railway station point, transit proxy explicitly permitted by lead C.3."
+    },
+    {
+      "sourceCode": "PUPZY:tharwat-alexandria",
+      "coverageArea": "alexandria",
+      "nameEnglish": "Tharwat",
+      "nameArabic": "ثروت",
+      "wikidata": "Q7710847",
+      "aliases": [],
+      "proxyPoint": false,
+      "notes": "Exact named Tharwat locality P625 and bilingual names in existing recorded raw Wikidata response."
+    },
+    {
+      "sourceCode": "PUPZY:saraya-alexandria",
+      "coverageArea": "alexandria",
+      "nameEnglish": "El Saraya",
+      "nameArabic": "السرايا",
+      "wikidata": "Q4518634",
+      "aliases": ["Al Saraya", "Saraya"],
+      "proxyPoint": false,
+      "notes": "Exact named ElSaraya locality bilingual label السرايا(حي) and P625 in existing raw Wikidata response; parentMontaza1."
+    },
+    {
+      "sourceCode": "PUPZY:kafoury-alexandria",
+      "coverageArea": "alexandria",
+      "nameEnglish": "Kafoury",
+      "nameArabic": "الكافوري",
+      "wikidata": "Q110835589",
+      "aliases": ["El Kafoury", "Al Kafoury"],
+      "proxyPoint": true,
+      "notes": "Exact named الكافوري recorded Wikidata P625, reviewed English transliteration. Railway/locality proxy for independently listed Kafoury area."
+    },
+    {
+      "sourceCode": "PUPZY:new-sphinx",
+      "coverageArea": "greater-cairo",
+      "nameEnglish": "New Sphinx",
+      "nameArabic": "سفنكس الجديدة",
+      "wikidata": "Q112110813",
+      "aliases": ["New Sphinx City", "Sphinx New City"],
+      "proxyPoint": false,
+      "notes": "Exact recorded Wikidata NewSphinx bilingual names and locality P625, within existing declared GreaterCairo coverage; keep GizaZemamOut parent rule."
+    },
+    {
+      "sourceCode": "PUPZY:mostakbal-ismailia",
+      "coverageArea": "port-said-region",
+      "nameEnglish": "El Mostakbal Ismailia",
+      "nameArabic": "المستقبل الإسماعيلية",
+      "aliases": ["Al Mostakbal Ismailia", "Future City Ismailia"],
+      "wikidata": "Q138148800",
+      "proxyPoint": true,
+      "notes": "Exact previouslyrecorded named mosque مسجدالشهيدطنطاويبالمستقبل P625 is inside originalOSMresidentialway639204211, corroborated nearbyQ138141081مسجدالمستقبل1 and recordedNominatim طريقالمستقبل / مدخلالمستقبلالسريع. LeadC3 specificallyauthorizes the containing residentialpolygon extension, clippedEG19; keepOCHAEG1906parentexactly."
+    }
+  ],
+  "aliases": [],
+  "knownMissing": [],
+  "scopeProposals": []
+}

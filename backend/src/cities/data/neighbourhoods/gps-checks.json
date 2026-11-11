@@ -1,0 +1,1169 @@
+{
+  "metadata": {
+    "reviewed": true,
+    "decisionDate": "2026-11-10",
+    "documentedFailures": [
+      {
+        "area": "port-said-region",
+        "latitude": 31.1574129,
+        "longitude": 32.3023366,
+        "actualSourceCode": "EG0308",
+        "expectedDistrictSourceCode": "EG0306",
+        "reviewed": true,
+        "research": "Q138196168 raw Wikidata point retained. Nominatim reverse finds only Ismailia–Port Said Road; Overpass names search and imagery show fish farms with a small structure, no corroborated nearby named locality. Exact source responses and investigation are retained in research-gps and research-blocks.",
+        "reason": "Reviewed lead decision2026-11-10: rural fish-farm landmark about2.0km fromEG0308 and2.1km fromits ownEG0306 district point. Keep the observed failure, no invented locality or fixture replacement. At least29/30 per area and each failure individually reviewed.",
+        "sourceUrls": [
+          "https://www.wikidata.org/wiki/Special:EntityData/Q138196168.json",
+          "https://nominatim.openstreetmap.org/reverse?lat=31.1574129&lon=32.3023366&format=jsonv2&zoom=16&accept-language=ar%2Cen&namedetails=1&addressdetails=1"
+        ]
+      }
+    ],
+    "notes": "30 spatially spread named Wikidata landmarks per region; expected districts determined solely from OCHA polygons. No catalog points or nearest answers read. Individual fixture review is recorded by exact areas digest in personal-review.json; changed inputs invalidate signoff.",
+    "selection": "Deterministic farthest-point sampling among named non-event landmarks; QIDs used as City coordinate sources excluded; name-only corroborating landmarks may remain when City coordinates derive independently from OSM geometry."
+  },
+  "areas": {
+    "greater-cairo": [
+      {
+        "latitude": 30.044444444,
+        "longitude": 31.235833333,
+        "name": "Tahrir Square",
+        "expectedDistrictSourceCode": "EG0111",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0109",
+            "reason": "Landmark is 135 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG0113",
+            "reason": "Landmark is 1107 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG0112",
+            "reason": "Landmark is 608 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG0107",
+            "reason": "Landmark is 427 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q12061 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0111"
+      },
+      {
+        "latitude": 30.128284836,
+        "longitude": 31.703324006,
+        "name": "Badr University in Cairo",
+        "expectedDistrictSourceCode": "EG0141",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q20411399 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0141"
+      },
+      {
+        "latitude": 29.93527778,
+        "longitude": 30.88277778,
+        "name": "Ahram Canadian University",
+        "expectedDistrictSourceCode": "EG2121",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q4702165 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG2121"
+      },
+      {
+        "latitude": 30.248166666,
+        "longitude": 30.946611111,
+        "name": "Giza North Power Station",
+        "expectedDistrictSourceCode": "EG2113",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q56359846 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG2113"
+      },
+      {
+        "latitude": 29.975031195,
+        "longitude": 31.524553815,
+        "name": "Al Hayah University In Cairo",
+        "expectedDistrictSourceCode": "EG0139",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q79403381 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0139"
+      },
+      {
+        "latitude": 30.1745,
+        "longitude": 31.435,
+        "name": "Al Salam Stadium",
+        "expectedDistrictSourceCode": "EG0132",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q430815 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0132"
+      },
+      {
+        "latitude": 29.84887,
+        "longitude": 31.33423,
+        "name": "Helwan",
+        "expectedDistrictSourceCode": "EG0102",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q10275853 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0102"
+      },
+      {
+        "latitude": 30.0199,
+        "longitude": 31.3737,
+        "name": "30 June Stadium",
+        "expectedDistrictSourceCode": "EG0126",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q4634507 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0126"
+      },
+      {
+        "latitude": 29.989193003,
+        "longitude": 31.128368698,
+        "name": "ميدان الرماية",
+        "expectedDistrictSourceCode": "EG2106",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG2120",
+            "reason": "Landmark is 1432 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q16120528 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG2106"
+      },
+      {
+        "latitude": 30.111096994,
+        "longitude": 31.327485382,
+        "name": "Egyptian Chinese University",
+        "expectedDistrictSourceCode": "EG0130",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0125",
+            "reason": "Landmark is 1245 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG0124",
+            "reason": "Landmark is 506 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG0128",
+            "reason": "Landmark is 537 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG0129",
+            "reason": "Landmark is 174 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q29513905 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0130"
+      },
+      {
+        "latitude": 30.2148922,
+        "longitude": 31.1592349,
+        "name": "مسجد السلام بعزبة احسان",
+        "expectedDistrictSourceCode": "EG1410",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1404",
+            "reason": "Landmark is 499 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138148295 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1410"
+      },
+      {
+        "latitude": 30.0842231,
+        "longitude": 30.9642068,
+        "name": "مسجد نادى رويال ميدوز",
+        "expectedDistrictSourceCode": "EG2119",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138141156 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG2119"
+      },
+      {
+        "latitude": 30.2963062,
+        "longitude": 31.3527602,
+        "name": "مسجد الشوبكيه",
+        "expectedDistrictSourceCode": "EG1403",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1405",
+            "reason": "Landmark is 7 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138143300 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1403"
+      },
+      {
+        "latitude": 29.9493709,
+        "longitude": 31.6788763,
+        "name": "مسجد الرحمة 635",
+        "expectedDistrictSourceCode": "EG0139",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138207728 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0139"
+      },
+      {
+        "latitude": 30.3293122,
+        "longitude": 30.8204389,
+        "name": "مسجد الإخلاص بعزبة الديب",
+        "expectedDistrictSourceCode": "EG2113",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1711",
+            "reason": "Landmark is 671 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138162280 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG2113"
+      },
+      {
+        "latitude": 30.2501219,
+        "longitude": 31.6711292,
+        "name": "مسجد الروضة 54",
+        "expectedDistrictSourceCode": "EG1321",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138186060 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1321"
+      },
+      {
+        "latitude": 30.1649119,
+        "longitude": 31.5689483,
+        "name": "Future mosque 2",
+        "expectedDistrictSourceCode": "EG0140",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138151209 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0140"
+      },
+      {
+        "latitude": 30.110342,
+        "longitude": 31.101395,
+        "name": "مسجد فاروق بعزبة موسى هليل",
+        "expectedDistrictSourceCode": "EG2113",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG2116",
+            "reason": "Landmark is 1065 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG2120",
+            "reason": "Landmark is 1082 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138142930 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG2113"
+      },
+      {
+        "latitude": 29.9318441,
+        "longitude": 31.2455823,
+        "name": "مسجد الخلفاء الراشدين 62",
+        "expectedDistrictSourceCode": "EG2109",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG2108",
+            "reason": "Landmark is 1091 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138178502 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG2109"
+      },
+      {
+        "latitude": 29.9809082,
+        "longitude": 30.9973086,
+        "name": "مسجد المصطفى 25",
+        "expectedDistrictSourceCode": "EG2107",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138153704 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG2107"
+      },
+      {
+        "latitude": 30.0750582,
+        "longitude": 31.474667,
+        "name": "مسجد العلى العظيم 1",
+        "expectedDistrictSourceCode": "EG0138",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0137",
+            "reason": "Landmark is 279 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG0140",
+            "reason": "Landmark is 1379 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138137505 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0138"
+      },
+      {
+        "latitude": 30.1979448,
+        "longitude": 31.0459747,
+        "name": "مسجد الرحمن 599",
+        "expectedDistrictSourceCode": "EG2113",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138177015 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG2113"
+      },
+      {
+        "latitude": 30.269374,
+        "longitude": 31.2486188,
+        "name": "جامع أبو بكر الصديق 1",
+        "expectedDistrictSourceCode": "EG1410",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1405",
+            "reason": "Landmark is 1468 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG1408",
+            "reason": "Landmark is 465 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138147680 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1410"
+      },
+      {
+        "latitude": 30.1427277,
+        "longitude": 31.2282115,
+        "name": "مسجد العظيم - شارع الثورة - ميت نما",
+        "expectedDistrictSourceCode": "EG1410",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1409",
+            "reason": "Landmark is 1399 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG1404",
+            "reason": "Landmark is 84 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG1406",
+            "reason": "Landmark is 960 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138197681 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1410"
+      },
+      {
+        "latitude": 30.2000563,
+        "longitude": 31.3303119,
+        "name": "مسجد السيده عائشه رضي الله عنه",
+        "expectedDistrictSourceCode": "EG1403",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138191634 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1403"
+      },
+      {
+        "latitude": 30.0407116,
+        "longitude": 31.6909716,
+        "name": "مسجد النادي 4",
+        "expectedDistrictSourceCode": "EG0138",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0137",
+            "reason": "Landmark is 154 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138154658 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0138"
+      },
+      {
+        "latitude": 29.9324473,
+        "longitude": 31.3409974,
+        "name": "مسجد الشيخ بكري",
+        "expectedDistrictSourceCode": "EG0105",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138203516 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0105"
+      },
+      {
+        "latitude": 30.02472,
+        "longitude": 31.59893,
+        "name": "Al-Fattah Al-Alim Mosque",
+        "expectedDistrictSourceCode": "EG0137",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0138",
+            "reason": "Landmark is 1345 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138818844 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0137"
+      },
+      {
+        "latitude": 30.3221136,
+        "longitude": 30.9159156,
+        "name": "مسجد عباد الرحمن 582",
+        "expectedDistrictSourceCode": "EG2113",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138200398 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG2113"
+      },
+      {
+        "latitude": 30.1001287,
+        "longitude": 31.6238226,
+        "name": "Golf Club Mosque",
+        "expectedDistrictSourceCode": "EG0138",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138187348 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0138"
+      }
+    ],
+    "alexandria": [
+      {
+        "latitude": 31.2011,
+        "longitude": 29.9132,
+        "name": "Alexandria National Museum",
+        "expectedDistrictSourceCode": "EG0204",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0206",
+            "reason": "Landmark is 257 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG0205",
+            "reason": "Landmark is 545 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q201383 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0204"
+      },
+      {
+        "latitude": 30.816829562,
+        "longitude": 28.932297662,
+        "name": "Alamein International University",
+        "expectedDistrictSourceCode": "EG3307",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q4705896 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG3307"
+      },
+      {
+        "latitude": 30.86,
+        "longitude": 29.563583333,
+        "name": "Egypt-Japan University of Science and Technology",
+        "expectedDistrictSourceCode": "EG0216",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q4115744 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0216"
+      },
+      {
+        "latitude": 31.129305555,
+        "longitude": 30.193194444,
+        "name": "Kafr El-Dawar Power Station",
+        "expectedDistrictSourceCode": "EG1812",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q56359722 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1812"
+      },
+      {
+        "latitude": 31.0031096,
+        "longitude": 29.7323493,
+        "name": "Tolip Stadium",
+        "expectedDistrictSourceCode": "EG0213",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q60753534 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0213"
+      },
+      {
+        "latitude": 31.302027777,
+        "longitude": 30.057888888,
+        "name": "Specialized hospital at Abu Qir",
+        "expectedDistrictSourceCode": "EG0201",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q64576186 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0201"
+      },
+      {
+        "latitude": 30.930055555,
+        "longitude": 29.699194444,
+        "name": "Alexandria International Airport",
+        "expectedDistrictSourceCode": "EG0216",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0213",
+            "reason": "Landmark is 320 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q1194015 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0216"
+      },
+      {
+        "latitude": 31.1509,
+        "longitude": 29.8485,
+        "name": "Haras El Hodoud Stadium",
+        "expectedDistrictSourceCode": "EG0212",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0211",
+            "reason": "Landmark is 292 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG0215",
+            "reason": "Landmark is 941 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q1567601 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0212"
+      },
+      {
+        "latitude": 31.261574,
+        "longitude": 29.985257,
+        "name": "Sidi Bishr Mosque",
+        "expectedDistrictSourceCode": "EG0201",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0202",
+            "reason": "Landmark is 1417 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q6856901 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0201"
+      },
+      {
+        "latitude": 31.2077,
+        "longitude": 29.9603,
+        "name": "Pharos University in Alexandria",
+        "expectedDistrictSourceCode": "EG0203",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0204",
+            "reason": "Landmark is 1070 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG0217",
+            "reason": "Landmark is 624 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG0205",
+            "reason": "Landmark is 1247 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q7180855 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0203"
+      },
+      {
+        "latitude": 30.684383,
+        "longitude": 29.2668083,
+        "name": "مسجد الرزاق 2",
+        "expectedDistrictSourceCode": "EG3302",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138155807 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG3302"
+      },
+      {
+        "latitude": 30.7646122,
+        "longitude": 29.8967866,
+        "name": "مسجد احمد مسعد عوض رحمة الله عليه",
+        "expectedDistrictSourceCode": "EG0213",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138187330 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0213"
+      },
+      {
+        "latitude": 30.8708646,
+        "longitude": 29.3374068,
+        "name": "Marbella Mosque",
+        "expectedDistrictSourceCode": "EG3302",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG3308",
+            "reason": "Landmark is 523 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138146924 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG3302"
+      },
+      {
+        "latitude": 31.0247177,
+        "longitude": 29.9935884,
+        "name": "مسجد الشنديدى 1",
+        "expectedDistrictSourceCode": "EG1812",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138166772 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1812"
+      },
+      {
+        "latitude": 30.8182314,
+        "longitude": 29.1389445,
+        "name": "مسجد قرية لونج بيتش",
+        "expectedDistrictSourceCode": "EG3302",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138184558 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG3302"
+      },
+      {
+        "latitude": 30.7283499,
+        "longitude": 29.4747191,
+        "name": "مسجد الرحمن قرية ٢٩بنجر السكر",
+        "expectedDistrictSourceCode": "EG3302",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138181804 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG3302"
+      },
+      {
+        "latitude": 30.7821381,
+        "longitude": 29.72177,
+        "name": "مسجد الرحمن 428",
+        "expectedDistrictSourceCode": "EG0213",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0214",
+            "reason": "Landmark is 1273 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138168509 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0213"
+      },
+      {
+        "latitude": 30.9863094,
+        "longitude": 30.1361103,
+        "name": "مسجد كوبري صالح",
+        "expectedDistrictSourceCode": "EG1812",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1803",
+            "reason": "Landmark is 114 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138153110 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1812"
+      },
+      {
+        "latitude": 30.9657885,
+        "longitude": 29.8696935,
+        "name": "مسجد الرحمن 1226",
+        "expectedDistrictSourceCode": "EG0213",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138203572 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0213"
+      },
+      {
+        "latitude": 30.9795523,
+        "longitude": 29.5711066,
+        "name": "El Sarab Village Mirage Beach Mosque",
+        "expectedDistrictSourceCode": "EG0214",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0218",
+            "reason": "Landmark is 697 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138137332 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0214"
+      },
+      {
+        "latitude": 31.1298289,
+        "longitude": 30.0574639,
+        "name": "المسجد الكبيرر",
+        "expectedDistrictSourceCode": "EG1812",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138199743 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1812"
+      },
+      {
+        "latitude": 30.8652585,
+        "longitude": 29.8209128,
+        "name": "مسجد قرية الصاعدة",
+        "expectedDistrictSourceCode": "EG0213",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138176049 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0213"
+      },
+      {
+        "latitude": 30.9256389,
+        "longitude": 29.4613909,
+        "name": "مسجد قرية زمردة السياحية",
+        "expectedDistrictSourceCode": "EG0214",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0218",
+            "reason": "Landmark is 25 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138137139 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0214"
+      },
+      {
+        "latitude": 30.7315105,
+        "longitude": 29.0729497,
+        "name": "مسجد عباد الرحمن 325",
+        "expectedDistrictSourceCode": "EG3302",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138181802 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG3302"
+      },
+      {
+        "latitude": 31.220924,
+        "longitude": 30.137567,
+        "name": "مسجد الرحمن بعزبة عموره",
+        "expectedDistrictSourceCode": "EG1812",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138159063 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1812"
+      },
+      {
+        "latitude": 31.1020627,
+        "longitude": 29.7497339,
+        "name": "مسجد الرضا 8",
+        "expectedDistrictSourceCode": "EG0212",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0213",
+            "reason": "Landmark is 871 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138161094 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0212"
+      },
+      {
+        "latitude": 30.8290729,
+        "longitude": 29.4483684,
+        "name": "مسجد نجع الصعايدة",
+        "expectedDistrictSourceCode": "EG0214",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG3302",
+            "reason": "Landmark is 1121 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138196228 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0214"
+      },
+      {
+        "latitude": 30.752305,
+        "longitude": 29.5836537,
+        "name": "مسجد نجع عسول ٢",
+        "expectedDistrictSourceCode": "EG3302",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0214",
+            "reason": "Landmark is 394 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138154881 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG3302"
+      },
+      {
+        "latitude": 30.836749,
+        "longitude": 29.241765,
+        "name": "Loualoaat Kreir Mosque",
+        "expectedDistrictSourceCode": "EG3302",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG3308",
+            "reason": "Landmark is 1083 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138196224 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG3302"
+      },
+      {
+        "latitude": 31.1016664,
+        "longitude": 29.9440892,
+        "name": "مسجد الرحمن الأمان",
+        "expectedDistrictSourceCode": "EG0213",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138199638 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0213"
+      }
+    ],
+    "port-said-region": [
+      {
+        "latitude": 30.60194444,
+        "longitude": 32.27388889,
+        "name": "Ismailia Stadium",
+        "expectedDistrictSourceCode": "EG1902",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1901",
+            "reason": "Landmark is 783 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG1903",
+            "reason": "Landmark is 163 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q779930 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1902"
+      },
+      {
+        "latitude": 31.449308664,
+        "longitude": 31.657314364,
+        "name": "Horus University",
+        "expectedDistrictSourceCode": "EG1105",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q59050599 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1105"
+      },
+      {
+        "latitude": 31.2414,
+        "longitude": 32.3168,
+        "name": "Port Said University",
+        "expectedDistrictSourceCode": "EG0304",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0312",
+            "reason": "Landmark is 73 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG0308",
+            "reason": "Landmark is 1467 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q1564902 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0304"
+      },
+      {
+        "latitude": 31.4143,
+        "longitude": 31.8122,
+        "name": "El-Ma'eini mosque, Dumyat",
+        "expectedDistrictSourceCode": "EG1101",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1102",
+            "reason": "Landmark is 424 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG1109",
+            "reason": "Landmark is 691 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q12242781 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1101"
+      },
+      {
+        "latitude": 31.279444444,
+        "longitude": 32.24,
+        "name": "Port Said Airport",
+        "expectedDistrictSourceCode": "EG0310",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q1432451 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0310"
+      },
+      {
+        "latitude": 31.271111,
+        "longitude": 32.291389,
+        "name": "Port Said Stadium",
+        "expectedDistrictSourceCode": "EG0303",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0302",
+            "reason": "Landmark is 525 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG0307",
+            "reason": "Landmark is 1103 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q1199860 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0303"
+      },
+      {
+        "latitude": 31.424,
+        "longitude": 31.65,
+        "name": "Damietta University",
+        "expectedDistrictSourceCode": "EG1105",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q5212540 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1105"
+      },
+      {
+        "latitude": 30.622777777,
+        "longitude": 32.275,
+        "name": "Suez Canal University",
+        "expectedDistrictSourceCode": "EG1903",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1902",
+            "reason": "Landmark is 566 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q1161619 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1903"
+      },
+      {
+        "latitude": 30.5927,
+        "longitude": 32.2925,
+        "name": "Suez Canal Stadium",
+        "expectedDistrictSourceCode": "EG1901",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1904",
+            "reason": "Landmark is 994 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG1902",
+            "reason": "Landmark is 1392 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG1903",
+            "reason": "Landmark is 388 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q4118765 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1901"
+      },
+      {
+        "latitude": 31.25717,
+        "longitude": 32.3086,
+        "name": "Suez Canal Authority Museum",
+        "expectedDistrictSourceCode": "EG0312",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0301",
+            "reason": "Landmark is 182 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG0304",
+            "reason": "Landmark is 760 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q28715618 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0312"
+      },
+      {
+        "latitude": 30.9321204,
+        "longitude": 32.2808402,
+        "name": "مسجد الاسلام 1",
+        "expectedDistrictSourceCode": "EG0311",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138177036 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0311"
+      },
+      {
+        "latitude": 30.4577581,
+        "longitude": 32.0635648,
+        "name": "Al Yaseen Mosque",
+        "expectedDistrictSourceCode": "EG1904",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1905",
+            "reason": "Landmark is 408 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138190973 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1904"
+      },
+      {
+        "latitude": 31.0247875,
+        "longitude": 32.5251418,
+        "name": "مسجد الرحمن 703",
+        "expectedDistrictSourceCode": "EG0309",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG3410",
+            "reason": "Landmark is 1419 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138181295 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0309"
+      },
+      {
+        "latitude": 30.3979219,
+        "longitude": 32.2725772,
+        "name": "مسجد مطرب زهران 2",
+        "expectedDistrictSourceCode": "EG1904",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1907",
+            "reason": "Landmark is 640 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138198574 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1904"
+      },
+      {
+        "latitude": 31.356834,
+        "longitude": 32.070574,
+        "name": "جامع اورتاكوي",
+        "expectedDistrictSourceCode": "EG0310",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1102",
+            "reason": "Landmark is 1022 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138161705 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0310"
+      },
+      {
+        "latitude": 31.1243652,
+        "longitude": 32.2006531,
+        "name": "مسجد ابو كامل 1",
+        "expectedDistrictSourceCode": "EG0306",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138177078 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0306"
+      },
+      {
+        "latitude": 30.6015858,
+        "longitude": 32.111919,
+        "name": "مسجد فرغل",
+        "expectedDistrictSourceCode": "EG1904",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1307",
+            "reason": "Landmark is 56 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          },
+          {
+            "sourceCode": "EG1906",
+            "reason": "Landmark is 658 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138190939 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1904"
+      },
+      {
+        "latitude": 30.5144632,
+        "longitude": 32.194021,
+        "name": "مسجد العارفين بالله",
+        "expectedDistrictSourceCode": "EG1904",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138190967 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1904"
+      },
+      {
+        "latitude": 31.5181727,
+        "longitude": 31.8380463,
+        "name": "مسجد الملك فاروق التاريخي",
+        "expectedDistrictSourceCode": "EG1106",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1102",
+            "reason": "Landmark is 587 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138163278 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1106"
+      },
+      {
+        "latitude": 31.0090144,
+        "longitude": 32.2024405,
+        "name": "مسجد الهوايسة",
+        "expectedDistrictSourceCode": "EG0311",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1306",
+            "reason": "Landmark is 1016 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138174205 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0311"
+      },
+      {
+        "latitude": 30.4961361,
+        "longitude": 32.3242262,
+        "name": "مسجد الرحمن 1111",
+        "expectedDistrictSourceCode": "EG1904",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1907",
+            "reason": "Landmark is 439 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138198596 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1904"
+      },
+      {
+        "latitude": 31.1574129,
+        "longitude": 32.3023366,
+        "name": "مسجد مالك الملك 57",
+        "expectedDistrictSourceCode": "EG0306",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138196168 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0306"
+      },
+      {
+        "latitude": 31.1649793,
+        "longitude": 32.1241874,
+        "name": "مسجد الرحمنه",
+        "expectedDistrictSourceCode": "EG0306",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0310",
+            "reason": "OCHA EG0306 Ganoub and EG0310 Manasra genuinely share a boundary. This rural landmark is 6.649 km inside Ganoub from the neighbouring polygon; sparse representative points put Manasra nearest. Explicit adjacent-district acceptance under the user contract, not a claim that the point lies in Manasra."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138206790 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0306"
+      },
+      {
+        "latitude": 30.5353502,
+        "longitude": 32.0781416,
+        "name": "Abu Mansour Mosque 2",
+        "expectedDistrictSourceCode": "EG1904",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1905",
+            "reason": "Landmark is 950 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138157905 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1904"
+      },
+      {
+        "latitude": 31.4185558,
+        "longitude": 31.7351763,
+        "name": "مسجد كوبرى ابو المجد",
+        "expectedDistrictSourceCode": "EG1105",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1104",
+            "reason": "Landmark is 695 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138184143 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1105"
+      },
+      {
+        "latitude": 30.5759228,
+        "longitude": 32.2068005,
+        "name": "مسجد بلال بن رباح 76",
+        "expectedDistrictSourceCode": "EG1904",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG1906",
+            "reason": "Landmark is 610 m from this genuinely adjacent OCHA district; representative-point nearest recognition may cross the shared boundary."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138178266 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1904"
+      },
+      {
+        "latitude": 30.5357707,
+        "longitude": 32.2638671,
+        "name": "مسجد الشيمى 4",
+        "expectedDistrictSourceCode": "EG1904",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138199318 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1904"
+      },
+      {
+        "latitude": 31.0611351,
+        "longitude": 32.2374594,
+        "name": "مسجد الدكتور على الحديدى",
+        "expectedDistrictSourceCode": "EG0306",
+        "acceptableAdjacentDistricts": [
+          {
+            "sourceCode": "EG0311",
+            "reason": "OCHA EG0306 Ganoub and EG0311 Ganoub Second genuinely share a boundary. The landmark is 2.492 km from that neighbouring polygon; nearest representative-point recognition crosses this administrative boundary. Explicit reviewed adjacency, not reclassification of the landmark."
+          }
+        ],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138206791 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG0306"
+      },
+      {
+        "latitude": 30.4760895,
+        "longitude": 32.257526,
+        "name": "مسجد عثمان 4",
+        "expectedDistrictSourceCode": "EG1904",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138178279 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1904"
+      },
+      {
+        "latitude": 30.5478921,
+        "longitude": 32.1421023,
+        "name": "مسجد أولاد الشيخ فريج بن حمود العقيلى المعازي",
+        "expectedDistrictSourceCode": "EG1904",
+        "acceptableAdjacentDistricts": [],
+        "acceptableSourceCodes": [],
+        "evidence": "Q138168998 P625, committed Wikidata snapshot; containing OCHA ADM2 polygon EG1904"
+      }
+    ]
+  }
+}

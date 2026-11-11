@@ -1,4 +1,16 @@
-import { loadRawSnapshot, transformCatalog, validateCatalog, getOfficialCatalog } from './catalog';
+import { readCityData } from './data-files';
+import type { CityCatalog } from './catalog';
+import { rejectedAliasReason } from './alias-review';
+import {
+  loadRawSnapshot,
+  loadReleaseSnapshot,
+  loadOfficialCatalog,
+  transformCatalog,
+  validateCatalog,
+  getOfficialCatalog,
+} from './catalog';
+
+const districtFixture = () => readCityData<CityCatalog>('neighbourhoods/district-seed.json.gz').records;
 
 describe('Offline Egyptian City Catalog and Transformation', () => {
   describe('Raw Snapshot', () => {
@@ -73,13 +85,13 @@ describe('Offline Egyptian City Catalog and Transformation', () => {
       expect(gizaMarkaz?.nameEnglish).toBe('Giza (Markaz)');
     });
 
-    it('ensures every (nameEnglish, governorate) pair in the 351 catalog is strictly unique', () => {
+    it('ensures every (nameEnglish, governorate) pair in the released catalog is strictly unique', () => {
       const catalog = getOfficialCatalog();
       const keys = catalog.map((c) => `${c.governorate}:${c.nameEnglish}`);
       const uniqueKeys = new Set(keys);
 
-      expect(keys.length).toBe(351);
-      expect(uniqueKeys.size).toBe(351);
+      expect(keys.length).toBe(loadOfficialCatalog().metadata?.declaredOfficialCount);
+      expect(uniqueKeys.size).toBe(keys.length);
     });
   });
 
@@ -138,12 +150,16 @@ describe('Offline Egyptian City Catalog and Transformation', () => {
       const catalog = getOfficialCatalog();
       for (const city of catalog) {
         expect(city.governorateCode).toMatch(/^EG\d{2}$/);
-        expect(city.sourceCode.startsWith(city.governorateCode)).toBe(true);
+        if (city.districtSourceCode) {
+          const parent = catalog.find((row) => row.sourceCode === city.districtSourceCode);
+          expect(parent?.governorateCode).toBe(city.governorateCode);
+          expect(parent?.districtSourceCode ?? null).toBeNull();
+        } else expect(city.sourceCode.startsWith(city.governorateCode)).toBe(true);
       }
     });
 
     it('distinguishes selectable official cities from total retained catalog entries in validation stats', () => {
-      const officialCatalog = getOfficialCatalog();
+      const officialCatalog = districtFixture();
       const retiredEntry: (typeof officialCatalog)[0] = {
         sourceCode: 'EG0199',
         nameEnglish: 'Old Obsolete District',
@@ -176,7 +192,7 @@ describe('Offline Egyptian City Catalog and Transformation', () => {
     });
 
     it('validates a reviewed release when declared official and governorate counts match the generated catalog', () => {
-      const officialCatalog = getOfficialCatalog();
+      const officialCatalog = districtFixture();
       // Remove 1 city from Cairo, mark it as retired
       const [removed, ...remaining] = officialCatalog;
       const retired: (typeof officialCatalog)[0] = {
@@ -201,7 +217,7 @@ describe('Offline Egyptian City Catalog and Transformation', () => {
     });
 
     it('rejects catalog when declared official count does not match the actual number of official records', () => {
-      const officialCatalog = getOfficialCatalog();
+      const officialCatalog = districtFixture();
       const catalogMismatch = {
         metadata: {
           declaredOfficialCount: 350, // actual is 351
@@ -252,4 +268,58 @@ describe('Offline Egyptian City Catalog and Transformation', () => {
       expect(result.errors.length).toBeGreaterThanOrEqual(4);
     });
   });
+});
+
+describe('Combined source artifact reproducibility', () => {
+  it('reproduces every released row from the source snapshot and reviewed overrides offline', () => {
+    const transformed = transformCatalog(loadReleaseSnapshot());
+    const published = loadOfficialCatalog();
+    expect(new Map(transformed.records.map((r) => [r.sourceCode, r]))).toEqual(
+      new Map(published.records.map((r) => [r.sourceCode, r])),
+    );
+  });
+  it('keeps every existing district source identity and point, with old display spellings retained', () => {
+    const old = transformCatalog(loadRawSnapshot()).records;
+    const released = new Map(loadOfficialCatalog().records.map((r) => [r.sourceCode, r]));
+    for (const row of old) {
+      const current = released.get(row.sourceCode)!;
+      expect([current.longitude, current.latitude]).toEqual([row.longitude, row.latitude]);
+      if (current.nameEnglish !== row.nameEnglish) {
+        if (rejectedAliasReason(row.nameEnglish)) expect(current.sourceNameEnglish).toBe(row.sourceNameEnglish);
+        else expect(current.aliases).toContain(row.nameEnglish);
+      }
+    }
+  });
+});
+
+it('preserves the27 English governorate labels agreed with main', () => {
+  expect([...new Set(loadOfficialCatalog().records.map((row) => row.governorate))].sort()).toEqual([
+    'Alexandria',
+    'Assiut',
+    'Aswan',
+    'Behera',
+    'Beni Suef',
+    'Cairo',
+    'Dakahlia',
+    'Damietta',
+    'Fayoum',
+    'Gharbia',
+    'Giza',
+    'Ismailia',
+    'Kafr El-Shikh',
+    'Kalyoubia',
+    'Luxor',
+    'Matrouh',
+    'Menia',
+    'Menoufia',
+    'New Valley',
+    'North Sinai',
+    'Port Said',
+    'Qena',
+    'Red Sea',
+    'Sharkia',
+    'South Sinai',
+    'Suez',
+    'Suhag',
+  ]);
 });

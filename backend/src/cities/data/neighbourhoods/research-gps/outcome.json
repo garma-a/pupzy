@@ -1,0 +1,17 @@
+{
+  "reviewedAt": "2026-11-10",
+  "fixture": "Q138196168",
+  "point": { "latitude": 31.1574129, "longitude": 32.3023366 },
+  "expectedDistrictSourceCode": "EG0306",
+  "nearestCitySourceCode": "EG0308",
+  "nearestMeters": 2001.8267710261136,
+  "expectedDistrictPointMeters": 2121.0592591266823,
+  "districtPolygonsIntersect": false,
+  "decision": "unresolved-retain-fixture",
+  "reason": "No named locality established at the source point, and no affirmative evidence that its coordinate is wrong. Absence of a mosque in OSM does not justify replacing an independent fixture.",
+  "proposedAdditions": [],
+  "proposedFixtureEdits": [],
+  "nominatimResponse": "neighbourhoods/research-blocks/GPS-Q138196168-reverse.json.gz",
+  "nominatimResult": "Ismailia, Port Said Road (OSM:way/858444461); no mosque or neighbourhood in address",
+  "reportPath": "docs/neighbourhood-gps-research-2026-11-10.md"
+}
