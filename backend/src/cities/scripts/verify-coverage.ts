@@ -56,6 +56,13 @@ const evidence = catalogPath
       districts: reference('ocha-cod-ab/egy_admin2.geojson.gz', 'OCHA ADM2', 2),
       names: evidenceReference<IndependentNames>('independent-names.json'),
       gps: evidenceReference<GpsChecks>('gps-checks.json'),
+      headlines: {
+        sourcePath: 'neighbourhoods/headline-names.json',
+        sha256: createHash('sha256')
+          .update(fs.readFileSync('src/cities/data/neighbourhoods/headline-names.json'))
+          .digest('hex'),
+        entries: [] as Array<[string, string, string]>,
+      },
     }
   : loadReleaseSnapshot().coverageEvidence;
 if (!evidence) throw new Error('No release coverage evidence');
@@ -66,6 +73,7 @@ const report = verifyCoverage(
   evidence.districts,
   evidence.names,
   evidence.gps,
+  evidence.headlines,
 );
 const out = path.resolve(process.cwd(), 'output/neighbourhood-cities');
 fs.mkdirSync(out, { recursive: true });
@@ -73,6 +81,7 @@ fs.writeFileSync(path.join(out, 'report.json'), JSON.stringify(report, null, 2))
 const lines = [
   '# Neighbourhood coverage — ' + (report.passed ? 'PASS' : 'FAIL / NOT MERGEABLE'),
   '',
+  `Headlines: ${report.headlines?.matched ?? 0}/${report.headlines?.total ?? 0}.`,
   `Structural quality: ${report.structuralValidation.isValid ? 'PASS' : 'FAIL'}. Geographic quality: ${report.dataQuality.passed ? 'PASS' : 'FAIL'} (${report.dataQuality.errors.length} errors).`,
 ];
 for (const a of report.areas) {

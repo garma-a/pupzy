@@ -258,5 +258,25 @@ export function extendDistrictCatalog(
       });
   }
   if (sources.aliasGeneration) addReviewedTransliterations(records, sources.aliasGeneration);
+  // Merge decisions and source aliases can restore a parent's former sub-area
+  // shorthand. Apply this after every alias producer so exact matching credits
+  // the separately named City rather than its enclosing district.
+  const canonicalNames = new Map<string, Set<string>>();
+  for (const row of records.filter((r) => r.status === 'OFFICIAL')) {
+    for (const name of [row.nameEnglish, row.nameArabic]) {
+      const key = row.governorateCode + ':' + normalizeCitySearch(name);
+      const owners = canonicalNames.get(key) ?? new Set<string>();
+      owners.add(row.sourceCode);
+      canonicalNames.set(key, owners);
+    }
+  }
+  for (const row of records) {
+    row.aliases = (row.aliases ?? []).filter((alias) => {
+      // Untouched official Arabic source labels remain searchable by contract.
+      if (!row.districtSourceCode && alias === row.sourceNameArabic) return true;
+      const owners = canonicalNames.get(row.governorateCode + ':' + normalizeCitySearch(alias));
+      return !owners || [...owners].every((code) => code === row.sourceCode);
+    });
+  }
   return records.sort((a, b) => a.sourceCode.localeCompare(b.sourceCode));
 }

@@ -60,6 +60,8 @@ export interface CitySnapshot {
     districts: Polygons;
     names: IndependentNames;
     gps: GpsChecks;
+    headlines?: import('./coverage').HeadlineNames;
+    reviewOnlyPublication?: { sha256: string; decisionDate: string; reason: string; note: string };
   };
   neighbourhoods?: NeighbourhoodSources;
   metadata: CitySnapshotMetadata;

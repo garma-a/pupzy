@@ -66,6 +66,52 @@ export interface DocumentedGpsFailure {
   reason: string;
   sourceUrls: string[];
 }
+export interface HeadlineNames {
+  sourcePath?: string;
+  sha256?: string;
+  entries: Array<[string, string, string]>;
+  displayRules?: string[];
+}
+
+export function verifyHeadlineNames(records: CityCatalogRecord[], headlines: HeadlineNames) {
+  const failures = headlines.entries.flatMap(([english, arabic, governorate]) => {
+    const matches = records.filter(
+      (row) =>
+        row.status === 'OFFICIAL' &&
+        row.governorate === governorate &&
+        row.nameEnglish === english &&
+        row.nameArabic === arabic,
+    );
+    const bare = (name: string) => name.split(/ \(| — /)[0];
+    const duplicates = records.filter(
+      (row) =>
+        row.status === 'OFFICIAL' &&
+        row.governorate === governorate &&
+        row.districtSourceCode &&
+        row.sourceCode !== matches[0]?.sourceCode &&
+        (normalizeCitySearch(bare(row.nameEnglish)) === normalizeCitySearch(english) ||
+          normalizeCitySearch(bare(row.nameArabic)) === normalizeCitySearch(arabic)),
+    );
+    return matches.length === 1 && duplicates.length === 0
+      ? []
+      : [
+          {
+            english,
+            arabic,
+            governorate,
+            matches: matches.length,
+            duplicateSourceCodes: duplicates.map((row) => row.sourceCode),
+          },
+        ];
+  });
+  return {
+    passed: failures.length === 0,
+    total: headlines.entries.length,
+    matched: headlines.entries.length - failures.length,
+    failures,
+  };
+}
+
 export interface IndependentNames {
   sourcePath?: string;
   sha256?: string;
@@ -284,22 +330,36 @@ export function verifyCoverage(
   districts: Polygons,
   names: IndependentNames,
   gps: GpsChecks,
+  headlines?: HeadlineNames,
 ) {
   if (names.sourcePath) names = readCityData<IndependentNames>(names.sourcePath, names.sha256);
   if (gps.sourcePath) gps = readCityData<GpsChecks>(gps.sourcePath, gps.sha256);
   residential = hydratePolygons(residential);
   governorates = hydratePolygons(governorates);
   districts = hydratePolygons(districts);
+  if (headlines?.sourcePath) headlines = readCityData<HeadlineNames>(headlines.sourcePath, headlines.sha256);
   const records = catalog.records;
+  const headlineReview = headlines ? verifyHeadlineNames(records, headlines) : undefined;
   const byCode = new Map(records.map((r) => [r.sourceCode, r]));
   const validation = validateCatalog(catalog);
   const dataErrors = [...validation.errors];
+  for (const failure of headlineReview?.failures ?? [])
+    dataErrors.push(
+      `Headline missing/ambiguous: ${failure.english} / ${failure.arabic} (${failure.governorate}), exact matches=${failure.matches}`,
+    );
   if (!governorates.metadata.reviewed || governorates.features.length === 0)
     dataErrors.push('Missing reviewed governorate boundaries');
   if (!districts.metadata.reviewed || districts.features.length === 0)
     dataErrors.push('Missing reviewed ADM2 boundaries');
   const seenArabic = new Set<string>();
   for (const row of records.filter((r) => r.status === 'OFFICIAL')) {
+    if (!/^[\x20-\x7e]+$/.test(row.nameEnglish))
+      dataErrors.push(`${row.sourceCode}: English display must be plain ASCII`);
+    if (/\bnear\b/i.test(row.nameEnglish) || /(?:^|[\s—،])قرب(?:\s|$)/.test(row.nameArabic))
+      dataErrors.push(`${row.sourceCode}: near/قرب forbidden in display name`);
+    if ((row.nameEnglish.match(/\(/g)?.length ?? 0) > 1 || (row.nameArabic.match(/ — /g)?.length ?? 0) > 1)
+      dataErrors.push(`${row.sourceCode}: multiple display disambiguators forbidden`);
+    if (/\([^)]*\(/.test(row.nameEnglish)) dataErrors.push(`${row.sourceCode}: nested display parentheses forbidden`);
     const key = row.governorateCode + ':' + row.nameArabic.normalize('NFC').trim().replace(/\s+/g, ' ');
     if (seenArabic.has(key))
       dataErrors.push(`${row.sourceCode}: Duplicate Arabic display name in governorate: ${row.nameArabic}`);
@@ -402,25 +462,16 @@ export function verifyCoverage(
     });
     const entries = names.areas[area];
     const distinctNames = new Set(entries.map((entry) => normalizeCitySearch(entry.arabic))).size;
-    const searchable = records
-      .filter((r) => r.status === 'OFFICIAL' && areaGovernorates[area].includes(r.governorateCode))
-      .flatMap((r) => {
-        const parent = byCode.get(r.districtSourceCode ?? '');
-        return [
-          r.nameEnglish,
-          r.nameArabic,
-          r.governorate,
-          r.governorateArabic ?? '',
-          ...(r.aliases ?? []),
-          parent?.nameEnglish ?? '',
-          parent?.nameArabic ?? '',
-        ];
-      })
-      .map(normalizeCitySearch);
+    const searchable = new Set(
+      records
+        .filter((r) => r.status === 'OFFICIAL' && areaGovernorates[area].includes(r.governorateCode))
+        .flatMap((r) => [r.nameEnglish, r.nameArabic, ...(r.aliases ?? [])])
+        .map(normalizeCitySearch),
+    );
     const missingNames = entries.flatMap((entry) =>
       [entry.english, entry.arabic, ...entry.misspellings].filter((name) => {
         const needle = normalizeCitySearch(name);
-        return !needle || !searchable.some((value) => value.includes(needle));
+        return !needle || !searchable.has(needle);
       }),
     );
     const acceptedMissing = names.knownMissing;
@@ -514,6 +565,7 @@ export function verifyCoverage(
   });
   return {
     passed: dataErrors.length === 0 && areas.every((a) => a.grid.passed && a.names.passed && a.gps.passed),
+    headlines: headlineReview,
     structuralValidation: validation,
     dataQuality: { passed: dataErrors.length === 0, errors: dataErrors },
     areas,

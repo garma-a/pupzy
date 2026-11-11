@@ -1,0 +1,245 @@
+{
+  "reviewed": true,
+  "date": "2026-11-11",
+  "headlineOwners": {
+    "Smouha|Alexandria": "PUPZY:smouha",
+    "Sidi Bishr|Alexandria": "PUPZY:sidi-bishr",
+    "Alf Maskan|Cairo": "PUPZY:alf-maskan",
+    "Mostakbal City|Cairo": "PUPZY:mostakbal-headline",
+    "Degla|Cairo": "PUPZY:degla-headline",
+    "Bitash|Alexandria": "PUPZY:bitash-headline",
+    "Khorshid|Alexandria": "PUPZY:khorshid-headline",
+    "Seyouf|Alexandria": "PUPZY:seyouf-headline",
+    "Bolkly|Alexandria": "PUPZY:bolkly-headline",
+    "Bahary|Alexandria": "EG0210"
+  },
+  "basis": "Lead exact headline and same-place deduplication brief; no synthetic near labels or unnamed representatives. Source identities and original district fields preserved.",
+  "headlineEvidence": {
+    "Bahary": "First-person Alexandria literature equates the traditional Bahary area with formal Gomrok district. Preserve OCHA district identity/point and raw names; render resident name requested by lead.",
+    "Smart Village": "Explicit current lead headline includes the named geographic technology community; this supersedes the earlier class exclusion, while individual bank/company premises remain excluded.",
+    "Gleem": "Lead removed duplicate Glymonopoulo headline and authorized historical English/Arabic aliases on Gleem."
+  },
+  "aliasDecisions": [
+    {
+      "sourceCode": "OSM:way/774635278",
+      "aliases": [
+        "Tagamoa",
+        "El Tagamoa"
+      ],
+      "entry": "Fifth Settlement",
+      "area": "greater-cairo",
+      "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
+    },
+    {
+      "sourceCode": "OSM:node/768592646",
+      "aliases": [
+        "Baragil"
+      ],
+      "entry": "Baragil",
+      "area": "greater-cairo",
+      "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
+    },
+    {
+      "sourceCode": "OSM:node/670235344",
+      "aliases": [
+        "El Ashgar",
+        "Al Ashgar"
+      ],
+      "entry": "El Ashgar",
+      "area": "greater-cairo",
+      "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
+    },
+    {
+      "sourceCode": "OSM:way/727511112",
+      "aliases": [
+        "Warraq El Arab"
+      ],
+      "entry": "Warraq El Arab",
+      "area": "greater-cairo",
+      "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
+    },
+    {
+      "sourceCode": "EG0201",
+      "aliases": [
+        "El Montazah"
+      ],
+      "entry": "Montaza",
+      "area": "alexandria",
+      "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
+    },
+    {
+      "sourceCode": "OSM:relation/13601670",
+      "aliases": [
+        "El Mamoura"
+      ],
+      "entry": "Maamoura",
+      "area": "alexandria",
+      "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
+    },
+    {
+      "sourceCode": "PUPZY:sidi-bishr",
+      "aliases": [
+        "Sidi Beshr"
+      ],
+      "entry": "Sidi Bishr",
+      "area": "alexandria",
+      "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
+    },
+    {
+      "sourceCode": "PUPZY:smouha",
+      "aliases": [
+        "Semouha"
+      ],
+      "entry": "Smouha",
+      "area": "alexandria",
+      "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
+    },
+    {
+      "sourceCode": "OSM:way/749734834",
+      "aliases": [
+        "Bacos"
+      ],
+      "entry": "Bacos",
+      "area": "alexandria",
+      "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
+    },
+    {
+      "sourceCode": "OSM:way/655605222",
+      "aliases": [
+        "El Mafrouza",
+        "Al Mafrouza"
+      ],
+      "entry": "El Mafrouza",
+      "area": "alexandria",
+      "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
+    },
+    {
+      "sourceCode": "OSM:way/745355801",
+      "aliases": [
+        "Wabour El Maya"
+      ],
+      "entry": "Wabour El Maya",
+      "area": "alexandria",
+      "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
+    },
+    {
+      "sourceCode": "OSM:way/742223060",
+      "aliases": [
+        "Toson"
+      ],
+      "entry": "Toson",
+      "area": "alexandria",
+      "basis": "Other script or an explicitly supplied variant equals this City display exactly; independent checklist provides these spellings."
+    },
+    {
+      "sourceCode": "EG2107",
+      "aliases": [
+        "6th October",
+        "6th of October",
+        "السادس من أكتوبر"
+      ],
+      "entry": "6th of October",
+      "basis": "The first official October district represents the named city; the Imbaba quarter with the same label is a distinct locality."
+    },
+    {
+      "sourceCode": "EG0103",
+      "aliases": [
+        "مدينة 15 مايو"
+      ],
+      "entry": "15th of May City",
+      "basis": "Exact city-type Arabic variant for the same official15May City."
+    },
+    {
+      "sourceCode": "OSM:way/746592370",
+      "aliases": [
+        "الكيلو ٢١"
+      ],
+      "entry": "Kilo 21",
+      "basis": "Eastern Arabic digit rendering of the same sourced kilometre settlement name."
+    },
+    {
+      "sourceCode": "OSM:way/746652733",
+      "aliases": [
+        "الكيلو ٢٦"
+      ],
+      "entry": "Kilo 26",
+      "basis": "Eastern Arabic digit rendering of the same sourced kilometre settlement name."
+    },
+    {
+      "sourceCode": "OSM:node/676395184",
+      "aliases": [
+        "Krier",
+        "كرير"
+      ],
+      "entry": "Krier",
+      "basis": "Reviewed local short form/transliteration of SidiKerir; source whole-place identities merge before final display."
+    },
+    {
+      "sourceCode": "OSM:node/769118972",
+      "aliases": [
+        "وادي القمر"
+      ],
+      "entry": "Wadi El Qamar",
+      "basis": "Arabic short form of the same sourced EzbetWadiAlQamar settlement, matching the previously lead-approved English alias."
+    },
+    {
+      "sourceCode": "OSM:way/810437370",
+      "aliases": [
+        "Arayesheya",
+        "العرايشية"
+      ],
+      "entry": "Arayesheya",
+      "basis": "Exact Arabic/English variants of the previously lead-approved C1 ElAraishiya alias on this sourced locality."
+    },
+    {
+      "sourceCode": "OSM:way/751315213",
+      "aliases": [
+        "El Amal",
+        "Al Amal",
+        "الأمل"
+      ],
+      "entry": "El Amal",
+      "basis": "Recorded Nominatim exact PortSaid lookup identifies مساكن الامل نهضه مصر; this is the named Amal neighbourhood, not a substring of an unrelated hope-branded project."
+    },
+    {
+      "sourceCode": "OSM:way/794862513",
+      "aliases": [
+        "El Shoaraa",
+        "Al Shoaraa",
+        "الشعراء"
+      ],
+      "entry": "El Shoaraa",
+      "basis": "Recorded named Damietta village ShatElShoaraa and same-name canal-road response establish the local Shoaraa name; no different governorate borrowed."
+    }
+  ],
+  "nameCorrections": {
+    "OSM:way/252472309": [
+      "Mivida",
+      "ميفيدا"
+    ],
+    "OSM:way/252474635": [
+      "Hyde Park",
+      "هايد بارك"
+    ],
+    "OSM:way/267174187": [
+      "Fayrouz",
+      "الفيروز"
+    ],
+    "OSM:way/267174189": [
+      "Fayrouz",
+      "الفيروز"
+    ],
+    "OSM:way/267097564": [
+      "Diplomaseyeen",
+      "الدبلوماسيين"
+    ],
+    "OSM:way/379756027": [
+      "Diplomaseyeen",
+      "الدبلوماسيين"
+    ],
+    "EG2107": [
+      "6th of October",
+      "السادس من أكتوبر"
+    ]
+  }
+}

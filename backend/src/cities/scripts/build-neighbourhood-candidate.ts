@@ -69,6 +69,13 @@ const snapshot = {
     ),
     names: evidenceReference<IndependentNames>('independent-names.json'),
     gps: evidenceReference<GpsChecks>('gps-checks.json'),
+    headlines: {
+      sourcePath: 'neighbourhoods/headline-names.json',
+      sha256: createHash('sha256')
+        .update(fs.readFileSync('src/cities/data/neighbourhoods/headline-names.json'))
+        .digest('hex'),
+      entries: [] as Array<[string, string, string]>,
+    },
   },
 };
 const catalog = transformCatalog(snapshot);

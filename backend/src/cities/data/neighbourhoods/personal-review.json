@@ -1824,6 +1824,206 @@
       "representativeOf": "OSM:node/1160384347",
       "notes": "Additional representative point for the explicitly named enclosing residential area in the recorded reverse address. Separate footprint; generic sub-block code not promoted. Exact returned object coordinate, no coordinate shift. Qualifier is an identity/location description, not a new neighbourhood.",
       "evidence": "Recorded reverse address explicitly names الحي الثاني عشر; exact object point from cached response."
+    },
+    {
+      "sourceCode": "PUPZY:smouha",
+      "nameEnglish": "Smouha",
+      "nameArabic": "سموحة",
+      "sourceResponse": {
+        "file": "research-round8/smouha.json.gz",
+        "osmIdentity": "OSM:node/11878324669"
+      },
+      "proxyPoint": true,
+      "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
+      "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
+    },
+    {
+      "sourceCode": "PUPZY:sidi-bishr",
+      "nameEnglish": "Sidi Bishr",
+      "nameArabic": "سيدي بشر",
+      "sourceResponse": {
+        "file": "research-round8/sidi-bishr.json.gz",
+        "osmIdentity": "OSM:node/339078708"
+      },
+      "proxyPoint": true,
+      "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
+      "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
+    },
+    {
+      "sourceCode": "PUPZY:alf-maskan",
+      "nameEnglish": "Alf Maskan",
+      "nameArabic": "ألف مسكن",
+      "sourceResponse": {
+        "file": "research-round8/alf-maskan.json.gz",
+        "osmIdentity": "OSM:node/7153613350"
+      },
+      "proxyPoint": true,
+      "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
+      "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
+    },
+    {
+      "sourceCode": "PUPZY:mostakbal-headline",
+      "nameEnglish": "Mostakbal City",
+      "nameArabic": "مدينة المستقبل",
+      "sourceResponse": {
+        "file": "research-round8/mostakbal-city.json.gz",
+        "osmIdentity": "OSM:way/532811212"
+      },
+      "proxyPoint": true,
+      "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
+      "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
+    },
+    {
+      "sourceCode": "PUPZY:degla-headline",
+      "nameEnglish": "Degla",
+      "nameArabic": "دجلة",
+      "sourceResponse": {
+        "file": "research-round8/degla-square.json.gz",
+        "osmIdentity": "OSM:way/1559202714"
+      },
+      "proxyPoint": true,
+      "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
+      "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
+    },
+    {
+      "sourceCode": "PUPZY:bitash-headline",
+      "nameEnglish": "Bitash",
+      "nameArabic": "البيطاش",
+      "sourceResponse": {
+        "file": "research-round8/bitash.json.gz",
+        "osmIdentity": "OSM:way/653713928"
+      },
+      "proxyPoint": true,
+      "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
+      "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
+    },
+    {
+      "sourceCode": "PUPZY:khorshid-headline",
+      "nameEnglish": "Khorshid",
+      "nameArabic": "خورشيد",
+      "sourceResponse": {
+        "file": "research-round8/khorshid.json.gz",
+        "osmIdentity": "OSM:way/850535298"
+      },
+      "proxyPoint": true,
+      "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
+      "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
+    },
+    {
+      "sourceCode": "PUPZY:seyouf-headline",
+      "nameEnglish": "Seyouf",
+      "nameArabic": "السيوف",
+      "sourceResponse": {
+        "file": "research-round8/seyouf.json.gz",
+        "osmIdentity": "OSM:node/14073921007"
+      },
+      "proxyPoint": true,
+      "evidence": "Exact recorded named locality/area landmark from Nominatim, lead headline establishes the resident area identity. No coordinate shift.",
+      "notes": "Lead round8 headline. The actual named locality or named station/square/townhall/main road supplies an explicit representative proxy; subarea-only rows do not substitute for this plain area."
+    },
+    {
+      "sourceCode": "PUPZY:bolkly-headline",
+      "nameEnglish": "Bolkly",
+      "nameArabic": "بولكلي",
+      "wikidata": "Q4939716",
+      "notes": "Lead headline; exact recorded named Bolkly locality point, distinct from the composite MostafaKamel source label."
+    },
+    {
+      "sourceCode": "PUPZY:ramses-area",
+      "nameEnglish": "Ramses",
+      "nameArabic": "رمسيس",
+      "sourceResponse": {
+        "file": "research-round8/ramses.json.gz",
+        "osmIdentity": "OSM:node/14314432628"
+      },
+      "proxyPoint": true,
+      "evidence": "Recorded exact named square/station/site/area club/road or enclosing-city project point, with an independently established area name from the reviewed checklist.",
+      "notes": "Lead exact-name gate: real named area, explicit source-response landmark proxy, not an unnamed extra representative. NewZayed uses the project explicitly named Ritz New Zayed; Sayala club and GhaitEnab site are point proxies, not club/site Cities."
+    },
+    {
+      "sourceCode": "PUPZY:hegaz-area",
+      "nameEnglish": "Hegaz",
+      "nameArabic": "الحجاز",
+      "sourceResponse": {
+        "file": "research-round8/hegaz.json.gz",
+        "osmIdentity": "OSM:way/1435535923"
+      },
+      "proxyPoint": true,
+      "evidence": "Recorded exact named square/station/site/area club/road or enclosing-city project point, with an independently established area name from the reviewed checklist.",
+      "notes": "Lead exact-name gate: real named area, explicit source-response landmark proxy, not an unnamed extra representative. NewZayed uses the project explicitly named Ritz New Zayed; Sayala club and GhaitEnab site are point proxies, not club/site Cities."
+    },
+    {
+      "sourceCode": "PUPZY:tabia-area",
+      "nameEnglish": "Tabia",
+      "nameArabic": "الطابية",
+      "sourceResponse": {
+        "file": "research-round8/tabia.json.gz",
+        "osmIdentity": "OSM:node/10601354357"
+      },
+      "proxyPoint": true,
+      "evidence": "Recorded exact named square/station/site/area club/road or enclosing-city project point, with an independently established area name from the reviewed checklist.",
+      "notes": "Lead exact-name gate: real named area, explicit source-response landmark proxy, not an unnamed extra representative. NewZayed uses the project explicitly named Ritz New Zayed; Sayala club and GhaitEnab site are point proxies, not club/site Cities."
+    },
+    {
+      "sourceCode": "PUPZY:ghit-enab-area",
+      "nameEnglish": "Ghait El Enab",
+      "nameArabic": "غيط العنب",
+      "sourceResponse": {
+        "file": "research-round8/ghit-enab.json.gz",
+        "osmIdentity": "OSM:node/4263836689"
+      },
+      "proxyPoint": true,
+      "evidence": "Recorded exact named square/station/site/area club/road or enclosing-city project point, with an independently established area name from the reviewed checklist.",
+      "notes": "Lead exact-name gate: real named area, explicit source-response landmark proxy, not an unnamed extra representative. NewZayed uses the project explicitly named Ritz New Zayed; Sayala club and GhaitEnab site are point proxies, not club/site Cities."
+    },
+    {
+      "sourceCode": "PUPZY:sayala-alex-area",
+      "nameEnglish": "Sayala",
+      "nameArabic": "السيالة",
+      "sourceResponse": {
+        "file": "research-round8/sayala-alex.json.gz",
+        "osmIdentity": "OSM:node/12235878894"
+      },
+      "proxyPoint": true,
+      "evidence": "Recorded exact named square/station/site/area club/road or enclosing-city project point, with an independently established area name from the reviewed checklist.",
+      "notes": "Lead exact-name gate: real named area, explicit source-response landmark proxy, not an unnamed extra representative. NewZayed uses the project explicitly named Ritz New Zayed; Sayala club and GhaitEnab site are point proxies, not club/site Cities."
+    },
+    {
+      "sourceCode": "PUPZY:sayala-damietta-area",
+      "nameEnglish": "El Sayala",
+      "nameArabic": "السيالة",
+      "sourceResponse": {
+        "file": "research-round8/sayala-damietta.json.gz",
+        "osmIdentity": "OSM:way/794742681"
+      },
+      "proxyPoint": true,
+      "evidence": "Recorded exact named square/station/site/area club/road or enclosing-city project point, with an independently established area name from the reviewed checklist.",
+      "notes": "Lead exact-name gate: real named area, explicit source-response landmark proxy, not an unnamed extra representative. NewZayed uses the project explicitly named Ritz New Zayed; Sayala club and GhaitEnab site are point proxies, not club/site Cities."
+    },
+    {
+      "sourceCode": "PUPZY:new-zayed-area",
+      "nameEnglish": "New Zayed",
+      "nameArabic": "زايد الجديدة",
+      "sourceResponse": {
+        "file": "research-round8/new-zayed-en.json.gz",
+        "osmIdentity": "OSM:way/1426601598"
+      },
+      "proxyPoint": true,
+      "evidence": "Recorded exact named square/station/site/area club/road or enclosing-city project point, with an independently established area name from the reviewed checklist.",
+      "notes": "Lead exact-name gate: real named area, explicit source-response landmark proxy, not an unnamed extra representative. NewZayed uses the project explicitly named Ritz New Zayed; Sayala club and GhaitEnab site are point proxies, not club/site Cities."
+    },
+    {
+      "sourceCode": "PUPZY:sodic-east-area",
+      "nameEnglish": "Sodic East",
+      "nameArabic": "سوديك إيست",
+      "sourceResponse": {
+        "file": "research-round8/sodic-primary.html.gz",
+        "selector": "nextProject",
+        "pageUid": "sodic-east",
+        "pageTitle": "SODIC East"
+      },
+      "evidence": "Exact project-specific Latitude/Longitude in recorded first-party SODIC project data; validated by PageUid and PageTitle.",
+      "notes": "Actual SODIC East in NewHeliopolis, not unrelated SODIC Eastown in NewCairo. Primary developer page exact named-project coordinate; other template coordinates rejected."
     }
   ],
   "removedStarterNames": [
@@ -1883,15 +2083,15 @@
       "rows": 142
     },
     "curated-name-review": {
-      "sha256": "122f2ba5dde7ce16b48b152dc8f75c96cb403e37817a8d8def55c2ef1c0c7ed7",
-      "rows": 522
+      "sha256": "e1573ae2cd9bed4dc2712666eaff9d36fc78f1a7ce5f52698f3017c0d3d28abe",
+      "rows": 425
     },
     "number-name-review": {
       "sha256": "c8a5eae290dc523ddda9344f9d53a20fa7e8305f9465aad08e3d512189e8a426",
       "rows": 94
     },
     "starter-review": {
-      "sha256": "ce9bdb8159d2970734349db1306838aaffc5dcd70fff21f48c93f648b38c8d45",
+      "sha256": "63bfe480610352487d6424ad308e2f93663db5b39a5d5db22b09eaeb5306f1e5",
       "rows": 83
     },
     "sample-round4-included": {
@@ -1920,7 +2120,7 @@
     "rows": 90,
     "method": "Individually read all 90 source labels, coordinates, containing OCHA district and adjacent-district list. Independent single-coordinate WD landmarks; no catalog coordinates used. Ten established landmarks and twenty dispersed points per region. Sixty recent named-mosque imports have lower source confidence; no field verification is claimed. Adjacency review includes genuinely shared boundaries across governorates; the same-governorate restriction governs City parent assignment, not GPS fixture neighbours. The 1.5 km additional proximity bound is retained. Original 90 landmark coordinates retained this round; two shared-boundary Ganoub neighbours explicitly reviewed. Village 29 City coordinate derives independently from the OSM footprint. The canal-gap case remains unaccepted."
   },
-  "reviewedInputSha256": "b44ab86ee29dce19c2c4d5fb7bf596576045492e64894ec29af9a3f126c86a03",
+  "reviewedInputSha256": "0b61bdeae79132623dae5b774d41116a1502b4ca0f80f8b236de32d11a057784",
   "aliasReview": [
     {
       "sourceCode": "OSM:node/768591737",
@@ -2930,6 +3130,14 @@
         "Warraq Island"
       ],
       "notes": " Lead round7 C1/C2 explicit reviewed identity/subarea mapping; coordinate unchanged."
+    },
+    {
+      "sourceCode": "OSM:node/9757506417",
+      "aliases": [
+        "Glymonopoulo",
+        "جليمونوبولو"
+      ],
+      "notes": "Lead confirmation: historical name of Gleem, not a second City."
     }
   ],
   "geometryCorrections": {
@@ -3095,7 +3303,7 @@
   "residueReview": {
     "notes": "All unresolved-name/parent and ADM3 residue tables empty. Read all 488 curated names, 124 district merges, 288 identity/disambiguation decisions and 94 ordinal edits in full after fourth sample fixes. Corrected Old Helmia source language conflict and Oula proper-name translation. Exact Arabic orthographic variants may be copied from attested source names; this does not alter Flutter normalization or create a place. Reviewed the source-name duplicate table as well; one conflicting IL Bosco City/La Mirada source was excluded rather than polluting aliases. Named-compound/numbered-ward changes retain source points. Largest-distance exception audit found industrial Sector A3 repeated, now excluded by the sector-code rule; Taj City is a named residential compound despite its subdivision place tag. Final source-tag audit preserves original OSM place tags for the ten reviewed tower communities and Taj City; their inclusion classification remains named residential compound."
   },
-  "reviewedDecisionsSha256": "612bb43c848e42890cb7fa8aa1c169e6fc96936ecac3eccca974895e4df006a0",
+  "reviewedDecisionsSha256": "78e2319ddcb92bcde683f6cc5c9f86b9afbe8e9d1b5762cd5274833d23a7d3f2",
   "nameOverrides": {},
   "areaLandmarks": {
     "OSM:node/14123937863": {
@@ -3573,8 +3781,8 @@
   "independentNameReview": {
     "date": "2026-11-11",
     "reviewer": "Codex personal source/rule review",
-    "areasSha256": "fe592a4a27650d73f30b414d93f656e00de00aa52338db68f493288898984e1f",
-    "notes": "420/268/85 independent names after explicit lead-B facility exclusions. C1/C2 aliases and11 honest client-visible known-missing entries; recorded unambiguous C3 proxies integrated."
+    "areasSha256": "8bb6f2a74a0f2a97e71d2695cc330b1af51f458372bf42e11b0c649e054a2b0b",
+    "notes": "Lead round8 exact normalization gate; sports-club acceptance entry removed as premises, original independent selection otherwise retained. Unresolved entries remain explicit failures rather than fabricated names/aliases."
   },
   "districtNames": {
     "EG3307": {
@@ -3606,11 +3814,11 @@
   },
   "releaseGateCorrectionReview": {
     "date": "2026-11-11",
-    "reviewer": "Codex source/rule and 300-row personal review",
-    "changedDecisions": 2120,
+    "reviewer": "Codex round8 source, display, identity and exact-name review",
+    "changedDecisions": 1997,
     "deltaFile": "round7-decision-delta.json.gz",
-    "deltaSha256": "f87eb1f465b77953ba69fbc1a3627ef2229ef609d946f8efe63a862329f02bf7",
-    "basis": "Lead Arabic display and noise review A/B, C1/C2 aliases, recorded C3 points and honest known-missing research; individual new far-block reverse notes. Source identifiers, source points and official district UUIDs preserved. Fixed seed300 included sample personally read and residue corrected. Grid floors retain accepted97/91/94.5; GPS >=29/30 and exact documented failures per lead2026-11-10. Full per-row delta compressed beside this file."
+    "deltaSha256": "3443c970b7670eaa733d4c57c13ddf260e46ce27ca586f9425a1f1c179a66b62",
+    "basis": "Lead round8 headline, exact-name, same-place merge, noise and synthetic-point removal review. Official district UUIDs/source values and recorded source points preserved. Earlier round7 seed300 audit is historical and is not a new round8 random sample. Full per-row delta and round8 resident identity audit retained. Accepted floors97/91/94.5 remain unchanged; final grid/name failures are recorded, not approved."
   },
   "exactArabicAliasReview": {
     "date": "2026-11-10",

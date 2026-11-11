@@ -900,6 +900,11 @@ display_audit = clean_display_names(list(DIST.values()), DECISIONS)
 save(OUT / 'round7-display-audit.json', display_audit)
 if display_audit['remainingArabicCollisions'] or display_audit['conflicts']:
     save(OUT / 'round7-display-residue.json', display_audit['remainingArabicCollisions'] + display_audit['conflicts'])
+from resident_catalog_review import apply_resident_review
+resident_audit = apply_resident_review(list(DIST.values()), DECISIONS, OSM, ADM3, load(D/'headline-names.json'), load(D/'resident-review.json'))
+save(OUT/'round8-resident-review.json',resident_audit)
+# These final edits supersede the old proximity-based display disambiguation.
+display_audit['districtEdits']=[{'sourceCode':r['sourceCode'],'nameEnglish':r['nameEnglish'],'nameArabic':r['nameArabic'],'aliases':r.get('aliases',[]),'notes':'Lead round8 exact resident/headline display; source identities unchanged.'} for r in DIST.values() if r['sourceCode'] in display_audit['coveredDistrictSourceCodes']]
 kept = [r for r in DECISIONS if r['decision'] == 'include']
 
 # District aliases accumulated during starter matching are emitted as reviewed editorial edits.

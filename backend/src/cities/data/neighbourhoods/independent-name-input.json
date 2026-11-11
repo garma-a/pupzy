@@ -652,11 +652,6 @@
         "misspellings": []
       },
       {
-        "english": "El Shams Club",
-        "arabic": "نادي الشمس",
-        "misspellings": []
-      },
-      {
         "english": "Arab El Maadi",
         "arabic": "عرب المعادي",
         "misspellings": []
@@ -1852,6 +1847,9 @@
       "Mostafa Kamel": "Port Said locality not confirmed; Alexandrian district is independent.",
       "El Afrang": "Port Said French-quarter identification not independently confirmed; Ismailia Afrang is retained.",
       "El Shatea Ras El Bar": "Generic beach extent, not residential neighbourhood name. Source OSM:way/1554277916 is natural=beach; Ras El Bar and named El Lessan area retained. https://www.openstreetmap.org/way/1554277916"
+    },
+    "greater-cairo": {
+      "El Shams Club": "Lead round8: standalone sports-club premises, not an independently named residential area; exact-name acceptance cannot demand a facility City."
     }
   }
 }

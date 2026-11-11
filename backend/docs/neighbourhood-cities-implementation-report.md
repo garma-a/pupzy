@@ -1,4 +1,6 @@
-# Neighbourhood Cities — final review, 2026-11-11
+# Neighbourhood Cities — checkpoint cb40dee review, 2026-11-11
+
+**Historical checkpoint report. Superseded by [round8 results](neighbourhood-cities-round8-report.md): 3,149 rows; current local 0066 is REVIEW ONLY with grid/name failures.**
 
 Internet: **available, HTTP/2 302** on the requested Nominatim probe. **3,366 Cities =351 districts +3,015 Neighbourhoods**. Candidate delta: **+27 / −130** from the previous 3,118 Neighbourhoods. All coverage/data gates pass; **186 unit tests and 17 Docker integration tests pass**. Replacement 0066 is **3,593,704 bytes**; measured final local apply **0.954 s**, re-run **0.915 s**. Data directory is **20,914,187 bytes (19.945 MiB)**. Git metadata is read-only: all changes and fetched gzip snapshots are left in the worktree for review/commit. No frontend edits, dependency reinstall, push, PR, production or Railway operation.
 

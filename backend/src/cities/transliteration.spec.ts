@@ -16,25 +16,25 @@ describe('Reviewed Egyptian transliteration alternatives', () => {
       ]),
     );
     for (const [source, alternate] of [
-      ['Qalyub', 'Kalyub'],
-      ['Giza', 'Jiza'],
-      ['Saqiet', 'Sakiet'],
-      ['Mansoureya', 'Mansouriyya'],
+      ['Qalyub', 'Qalyoub'],
+      ['Mansoureya', 'Mansouria'],
       ['Mohandessin', 'Mohandesin'],
-      ['Tharwat', 'Sarwat'],
     ])
       expect(englishAliasCandidates(source)).toContain(alternate);
+    expect(englishAliasCandidates('New Alamein')).not.toContain('New Allamein');
+    expect(englishAliasCandidates('New Alamein').every((alias) => !/([a-z])\1\1/i.test(alias))).toBe(true);
   });
   it('caps generated aliases, deduplicates, and excludes another City canonical name', () => {
     const city = {
       ...root,
       sourceCode: 'PUPZY:test',
-      nameEnglish: 'Qalyub',
-      nameArabic: 'قليوب',
+      nameEnglish: 'Maadi',
+      sourceNameEnglish: 'Maadi',
+      nameArabic: 'المعادي',
       districtSourceCode: root.sourceCode,
       aliases: [],
     };
-    const other = { ...city, sourceCode: 'PUPZY:other', nameEnglish: 'Kalyub', nameArabic: 'كليوب' };
+    const other = { ...city, sourceCode: 'PUPZY:other', nameEnglish: 'Al Maadi', nameArabic: 'كليوب' };
     const review = {
       reviewed: true,
       ruleVersion: 'egyptian-transliteration-v1' as const,
@@ -42,7 +42,7 @@ describe('Reviewed Egyptian transliteration alternatives', () => {
       districtSourceCodes: [root.sourceCode],
     };
     const stats = addReviewedTransliterations([city, other], review);
-    expect(city.aliases).not.toContain('Kalyub');
+    expect(city.aliases).not.toContain('Al Maadi');
     expect(city.aliases.length).toBeLessThanOrEqual(3);
     expect(new Set(city.aliases).size).toBe(city.aliases.length);
     expect(stats.collisionsExcluded).toBeGreaterThan(0);

@@ -1,7 +1,7 @@
 {
   "reviewed": true,
   "ruleVersion": "egyptian-transliteration-v1",
-  "maxPerRow": 12,
+  "maxPerRow": 4,
   "districtSourceCodes": [
     "EG0101",
     "EG0102",
@@ -118,5 +118,5 @@
     "EG3308"
   ],
   "date": "2026-11-11",
-  "method": "Fixed reviewed Egyptian romanization families; no candidate feeds back into generator. Bound12 selected variants per row, canonical name collisions excluded within governorate. Manual lead aliases preserved."
+  "method": "Lead2026-11-11: plausible article, word and doubled-consonant reduction, ee/i, ou/u, -eya/-ia variants only; no new consonant doubling, no triples or Allamein, cap4, canonical collisions excluded."
 }

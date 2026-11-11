@@ -52,6 +52,22 @@ function sources(): NeighbourhoodSources {
   };
 }
 describe('Neighbourhood release pipeline', () => {
+  it('does not restore a separately named neighbourhood alias on its parent through a merge', () => {
+    const input = sources();
+    input.decisions.push({
+      sourceCode: 'PUPZY:old-adm3-merge',
+      decision: 'merge',
+      reviewed: true,
+      notes: 'Historical composite administrative name',
+      mergeInto: district.sourceCode,
+      aliases: ['Test Quarter', 'حي الاختبار', 'Former district spelling'],
+    });
+    const rows = extendDistrictCatalog([district], input);
+    expect(rows.find((r) => r.sourceCode === district.sourceCode)?.aliases).not.toContain('Test Quarter');
+    expect(rows.find((r) => r.sourceCode === district.sourceCode)?.aliases).not.toContain('حي الاختبار');
+    expect(rows.find((r) => r.sourceCode === district.sourceCode)?.aliases).toContain('Former district spelling');
+    expect(rows.find((r) => r.sourceCode === 'OSM:node/123')?.nameEnglish).toBe('Test Quarter');
+  });
   it('uses source points, bilingual labels and a reviewed parent deterministically', () => {
     const rows = extendDistrictCatalog([district], sources());
     expect(extendDistrictCatalog([district], sources())).toEqual(rows);

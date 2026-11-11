@@ -65,7 +65,7 @@ export function englishAliasCandidates(value: string, includeArticle = false): s
   };
   const result = new Set<string>();
   const add = (s: string) => {
-    if (s !== value && s.length <= 100) result.add(s);
+    if (s !== value && s.length <= 100 && !/([a-z])\1\1/i.test(s) && !/\ballamein\b/i.test(s)) result.add(s);
   };
   const article = value.match(/^(El|Al)[ -]+(.+)$/i);
   if (article) {
@@ -89,13 +89,8 @@ export function englishAliasCandidates(value: string, includeArticle = false): s
       if (pattern.test(value)) for (const replacement of family) add(value.replace(pattern, replacement));
     }
   for (const family of [
-    ['ou', 'u', 'o'],
-    ['ee', 'i', 'y'],
-    ['q', 'k'],
-    ['g', 'j'],
-    ['ei', 'ai'],
-    ['th', 's'],
-    ['dh', 'z'],
+    ['ou', 'u'],
+    ['ee', 'i'],
   ]) {
     for (const original of family) {
       // One token at a time prevents a vowel alternation changing every word.
@@ -111,14 +106,11 @@ export function englishAliasCandidates(value: string, includeArticle = false): s
       }
     }
   }
-  for (const match of value.matchAll(/(eya|iyya|ia|eia)\b/gi))
-    for (const ending of ['eya', 'iyya', 'ia', 'eia'])
+  for (const match of value.matchAll(/(eya|ia)\b/gi))
+    for (const ending of ['eya', 'ia'])
       add(value.slice(0, match.index) + ending + value.slice(match.index + match[0].length));
   for (const match of value.matchAll(/([bcdfghjklmnpqrstvwxyz])\1/gi))
     if (mutable(match.index)) add(value.slice(0, match.index) + match[1] + value.slice(match.index + 2));
-  // Doubling a consonant is restricted to a single interior consonant between vowels.
-  for (const match of value.matchAll(/([aeiou])([bcdfghjklmnpqrstvwxyz])(?=[aeiou])/gi))
-    if (mutable(match.index + 1)) add(value.slice(0, match.index + 1) + match[2] + value.slice(match.index + 1));
   return [...result];
 }
 
@@ -143,7 +135,9 @@ export function addReviewedTransliterations(records: CityCatalogRecord[], review
     collisionsExcluded = 0;
   for (const row of records) {
     if (!row.districtSourceCode && !review.districtSourceCodes.includes(row.sourceCode)) continue;
-    const aliases = [...(row.aliases ?? [])];
+    const aliases = (row.aliases ?? []).filter(
+      (a) => !/([a-z])\1\1/i.test(a) && !/\ballamein\b/i.test(a) && !/\bnear\b/i.test(a) && !/قرب/.test(a),
+    );
     const seen = new Set([row.nameEnglish, row.nameArabic, ...aliases].map((s) => s.trim().toLowerCase()));
     let added = 0;
     // Curated spellings are seeds, but no candidate feeds back into this generator.

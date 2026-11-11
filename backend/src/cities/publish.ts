@@ -50,6 +50,8 @@ export type FaultInjectionHook = (stage: FaultInjectionStage) => void;
 export class SimulatedProcessInterruption extends Error {}
 
 export interface PublishReleaseOptions extends ReviewedReleaseOptions {
+  /** Lead-authorized local unshipped review only; default publication still fails closed. */
+  reviewOnlyCoverageReport?: { sha256: string; decisionDate: string; reason: string };
   migrationsFolder?: string;
   catalogPath?: string;
   snapshotPath?: string;
@@ -536,6 +538,25 @@ export function recoverInterruptedPublication(migrationsFolder: string): boolean
  * 4. Boundary fault-safety: normal failures restore the previous artifact set; process interruption leaves durable recovery evidence.
  * 5. Crash-safety: deterministically verifies and completes recovery before subsequent publication starts.
  */
+export function acceptsReviewOnlyCoverage(
+  report: {
+    structuralValidation: { isValid: boolean };
+    dataQuality: { passed: boolean };
+    areas: Array<{ gps: { passed: boolean } }>;
+  },
+  review?: PublishReleaseOptions['reviewOnlyCoverageReport'],
+): boolean {
+  return Boolean(
+    review &&
+    /^\d{4}-\d{2}-\d{2}$/.test(review.decisionDate) &&
+    review.reason.trim().length >= 20 &&
+    review.sha256 === createHash('sha256').update(JSON.stringify(report)).digest('hex') &&
+    report.structuralValidation.isValid &&
+    report.dataQuality.passed &&
+    report.areas.every((area) => area.gps.passed),
+  );
+}
+
 export function publishReviewedRelease(
   currentCatalog: CityCatalogRecord[],
   candidateSnapshot: CitySnapshot,
@@ -596,20 +617,26 @@ export function publishReviewedRelease(
 
   if (release.updatedCatalog.some((row) => row.districtSourceCode && row.status === 'OFFICIAL')) {
     const e = candidateSnapshot.coverageEvidence;
-    if (
-      !e ||
-      !verifyCoverage(
-        { metadata: release.metadata, records: release.updatedCatalog },
-        e.residential,
-        e.governorates,
-        e.districts,
-        e.names,
-        e.gps,
-      ).passed
-    ) {
-      throw new Error(
-        'Publication refused: neighbourhood coverage evidence is missing or failed. Run cities:verify-coverage.',
-      );
+    if (!e || (candidateSnapshot.neighbourhoods?.decisionsFile && !e.headlines))
+      throw new Error('Publication refused: missing reviewed coverage evidence, including required headlines');
+    const coverage = verifyCoverage(
+      { metadata: release.metadata, records: release.updatedCatalog },
+      e.residential,
+      e.governorates,
+      e.districts,
+      e.names,
+      e.gps,
+      e.headlines,
+    );
+    if (!coverage.passed) {
+      if (!acceptsReviewOnlyCoverage(coverage, options.reviewOnlyCoverageReport))
+        throw new Error(
+          'Publication refused: neighbourhood coverage evidence is missing or failed. Run cities:verify-coverage.',
+        );
+      candidateSnapshot.coverageEvidence!.reviewOnlyPublication = {
+        ...options.reviewOnlyCoverageReport!,
+        note: 'Local unshipped review only. Grid/name gates remain failed and must be reported; lead decides afterwards. Structural, display/headline and GPS gates cannot be waived.',
+      };
     }
     const sources = candidateSnapshot.neighbourhoods
       ? hydrateNeighbourhoodSources(candidateSnapshot.neighbourhoods)
@@ -631,7 +658,10 @@ export function publishReviewedRelease(
 
   // 5. Reconcile migration history and determine next monotonic migration metadata
   const migrationMeta = getNextMigrationMeta(migrationsFolder);
-  const migrationSql = generateReleaseMigrationSql(release, { migrationTag: migrationMeta.tag });
+  const migrationSql =
+    (candidateSnapshot.coverageEvidence?.reviewOnlyPublication
+      ? '-- REVIEW ONLY: recorded grid/name shortfalls remain. Not mergeable; lead review required.\n'
+      : '') + generateReleaseMigrationSql(release, { migrationTag: migrationMeta.tag });
   const migrationFilePath = path.join(migrationsFolder, migrationMeta.filename);
 
   // Prepare the required journal artifact in memory. An empty migration history is initialized
