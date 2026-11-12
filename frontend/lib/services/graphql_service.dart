@@ -1240,7 +1240,10 @@ class GraphQLService {
       QueryOptions(
         document: gql(document),
         variables: variables,
-        fetchPolicy: FetchPolicy.networkOnly,
+        // Feed screens keep their own list of posts and always want fresh
+        // pages, so skip the client's normalized cache: writing every page
+        // into it cost memory and CPU on long scrolls for data never read back.
+        fetchPolicy: FetchPolicy.noCache,
       ),
     );
     if (result.hasException) {

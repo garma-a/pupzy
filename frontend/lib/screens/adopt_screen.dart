@@ -24,6 +24,7 @@ import '../widgets/skeleton_loader.dart';
 import '../widgets/top_bar.dart';
 import 'adoption_detail_screen.dart';
 import 'mating_detail_screen.dart';
+import '../widgets/load_more_footer.dart';
 
 class AdoptScreen extends StatefulWidget {
   // Whether this tab is the one currently shown by the bottom nav — see
@@ -113,14 +114,14 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
   }
 
   void _onScroll() {
-    if (_loading || _loadingMore || !_hasNextPage) return;
+    if (_loading || _loadingMore || !_hasNextPage || !feedCanAutoLoad(_posts.length)) return;
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 400) {
       _loadMore();
     }
   }
 
   void _onMatingScroll() {
-    if (_matingLoading || _matingLoadingMore || !_matingHasNextPage) return;
+    if (_matingLoading || _matingLoadingMore || !_matingHasNextPage || !feedCanAutoLoad(_matingPosts.length)) return;
     if (_matingScrollController.position.pixels >= _matingScrollController.position.maxScrollExtent - 400) {
       _loadMoreMating();
     }
@@ -503,13 +504,10 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
                                   return ListView.builder(
                                     controller: _scrollController,
                                     padding: const EdgeInsets.only(bottom: 100),
-                                    itemCount: filtered.length + (_loadingMore ? 1 : 0),
+                                    itemCount: filtered.length + (feedShowsFooter(loadingMore: _loadingMore, hasNextPage: _hasNextPage, loaded: _posts.length) ? 1 : 0),
                                     itemBuilder: (_, i) {
                                       if (i >= filtered.length) {
-                                        return const Padding(
-                                          padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                                          child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-                                        );
+                                        return LoadMoreFooter(hasMore: _hasNextPage, loading: _loadingMore, failed: false, onLoadMore: _loadMore, pagedBeyondFirst: _posts.length > feedPageSize);
                                       }
                                       return _AdoptFeedCard(
                                         key: ValueKey(filtered[i].id),
@@ -591,13 +589,10 @@ class _AdoptScreenState extends State<AdoptScreen> with RouteAware {
                                   return ListView.builder(
                                     controller: _matingScrollController,
                                     padding: const EdgeInsets.only(bottom: 100),
-                                    itemCount: filtered.length + (_matingLoadingMore ? 1 : 0),
+                                    itemCount: filtered.length + (feedShowsFooter(loadingMore: _matingLoadingMore, hasNextPage: _matingHasNextPage, loaded: _matingPosts.length) ? 1 : 0),
                                     itemBuilder: (_, i) {
                                       if (i >= filtered.length) {
-                                        return const Padding(
-                                          padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                                          child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-                                        );
+                                        return LoadMoreFooter(hasMore: _matingHasNextPage, loading: _matingLoadingMore, failed: false, onLoadMore: _loadMoreMating, pagedBeyondFirst: _matingPosts.length > feedPageSize);
                                       }
                                       return _MatingFeedCard(
                                         key: ValueKey(filtered[i].id),

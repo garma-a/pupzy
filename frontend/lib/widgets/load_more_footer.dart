@@ -3,6 +3,25 @@ import 'package:flutter/material.dart';
 import '../localization/lang_provider.dart';
 import '../theme/app_theme.dart';
 
+/// Posts per feed page (the server's default page size).
+const feedPageSize = 20;
+
+/// Feeds load [feedPageSize] posts per page. Scrolling near the end loads
+/// the next page by itself until this many posts are on screen; after that
+/// the list ends with a [LoadMoreFooter] "Show more" button, and each tap
+/// loads one more page. The cap keeps memory, data use and image decoding
+/// bounded on long sessions, and gives the feed a natural stopping point.
+const feedAutoLoadLimit = 60;
+
+/// Whether scrolling may load the next page of a feed by itself.
+bool feedCanAutoLoad(int loaded) => loaded < feedAutoLoadLimit;
+
+/// Whether a feed should end with a [LoadMoreFooter]: while a page loads,
+/// once auto-loading has stopped with more pages left (the button), or at
+/// the very end of a feed longer than one page ("That's everything").
+bool feedShowsFooter({required bool loadingMore, required bool hasNextPage, required int loaded}) =>
+    loadingMore || (hasNextPage ? !feedCanAutoLoad(loaded) : loaded > feedPageSize);
+
 /// The end of a paginated list: loading the next page, a failed page with
 /// Retry, a "Show more" button, or — once more than one page was loaded —
 /// a quiet end-of-list line.
