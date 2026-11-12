@@ -36,6 +36,16 @@ _Avoid_: Google GPS, Verified Location, provider-validated address, raw coordina
 A Vet Clinic initialized from a reviewed offline dataset rather than entered manually by an administrator. Its existing location remains usable, but any administrative location change must replace it with a Mapped Location.
 _Avoid_: Legacy clinic, unverified clinic
 
+**Vet Clinic**:
+A private veterinary clinic, animal hospital, or 24-hour clinic that treats pets at physical premises. Government veterinary units, pet shops, veterinary pharmacies, groomers, boarding, and home-visit-only vets are not Vet Clinics.
+_Avoid_: Vet, pharmacy, vet unit
+
+**Clinic Chain**:
+Vet Clinics proven to be one business because the business's own page or site lists them as its branches. Branches share one brand name plus a place label; clinics that merely have similar names are not a chain and keep their own names.
+
+**Approximate Location**:
+A Vet Clinic location known only to its area (the City centre), not its building. Maps open it by searching its name and address rather than a pin.
+
 **Post**:
 A user-created listing for pet-related help, adoption, commerce, or mating. A Post has one specific listing type and may be shown in location-aware feeds.
 
@@ -75,7 +85,6 @@ _Avoid_: User report, account flag, Post Report
 **Block**:
 A reversible, directional safety relationship initiated and owned by one Pupzy Account that creates mutual visibility and interaction isolation between it and another Pupzy Account. Only the initiating Pupzy Account can remove the Block.
 _Avoid_: Ban, suspension, mute, one-way hide
-
 
 **Terms Acceptance**:
 A Pupzy Account holder's recorded agreement to a specific published version of Pupzy's terms, including when they accepted it. Agreement to an earlier version does not constitute acceptance of a later version.
