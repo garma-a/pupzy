@@ -14,6 +14,7 @@ import '../services/graphql_service.dart';
 import '../services/safety_events.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/distance_label.dart';
 import '../utils/upvote_wording.dart';
 import '../utils/time_format.dart';
 import '../widgets/adaptive_search_bar.dart';
@@ -530,7 +531,10 @@ class _HelpFeedCard extends StatelessWidget {
                     decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(AppRadius.chip)),
                     child: Row(
                       children: [
-                        Text(post.distanceKm!.toStringAsFixed(1), style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+                        Text(
+                          formatDistanceKm(post.distanceKm!),
+                          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, fontFeatures: distanceFontFeatures),
+                        ),
                         const SizedBox(width: 2),
                         Text(t(context, 'km', 'كم'), style: const TextStyle(color: Colors.white70, fontSize: 11)),
                       ],
@@ -546,7 +550,7 @@ class _HelpFeedCard extends StatelessWidget {
               children: [
                 Text(
                   post.distanceKm != null
-                      ? '${post.distanceKm!.toStringAsFixed(1)} ${t(context, 'km away', 'كم')}   ·   ${timeAgo(post.createdAt, lang)}'
+                      ? '${formatDistanceKm(post.distanceKm!)} ${t(context, 'km away', 'كم')}   ·   ${timeAgo(post.createdAt, lang)}'
                       : timeAgo(post.createdAt, lang),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
                 ),
