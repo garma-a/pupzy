@@ -14,6 +14,7 @@ import '../utils/time_format.dart';
 import '../widgets/owner_post_actions.dart';
 import '../widgets/animated_favorite_icon.dart';
 import '../widgets/pet_carousel.dart';
+import '../widgets/price_tag.dart';
 import '../widgets/renew_post_button.dart';
 import '../widgets/safety_actions.dart';
 import '../widgets/skeleton_loader.dart';
@@ -316,10 +317,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         runSpacing: AppSpacing.sm,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          Text(
-                            priceLabel(context, isFree: ext.isFree, amount: ext.priceAmount, currency: ext.priceCurrency),
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: AppColors.primary),
-                          ),
+                          PriceTag(isFree: ext.isFree, amount: ext.priceAmount, currency: ext.priceCurrency, large: true),
                           _Badge(label: _conditionLabel(context, ext.condition), color: AppColors.textSecondary),
                           if (ext.openToOffers) _Badge(label: t(context, 'Negotiable', 'قابل للتفاوض'), color: AppColors.sectionLineGreen),
                         ],
