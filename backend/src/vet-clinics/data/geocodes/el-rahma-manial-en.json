@@ -1,0 +1,8 @@
+{
+  "query": "Ibrahim Baher Zaghloul Street, East Al Manial, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Ibrahim+Baher+Zaghloul+Street%2C+East+Al+Manial%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:16:55.410Z",
+  "httpStatus": 200,
+  "response": []
+}

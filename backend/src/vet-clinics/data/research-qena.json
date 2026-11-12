@@ -1,0 +1,87 @@
+[
+  {
+    "key": "aleef-qena",
+    "nameEnglish": "Aleef Veterinary Clinic",
+    "nameArabic": "عيادة أليف البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Qism Qena, Qena",
+    "addressArabic": "قسم قنا، قنا",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Qina (Kism)",
+    "citySourceCode": "EG2701",
+    "phones": ["01000926169"],
+    "sources": [
+      {
+        "url": "https://buy.com.eg/ar/directory/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A3%D9%84%D9%8A%D9%81-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-1w5ax7",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-01-13",
+    "classificationEvidence": "Read individual Buy Egypt pet-clinic entry with public contact and Qism Qena address; dated clients describe vaccination/exams and veterinary care. No street inferred from plus code, no map coordinates used. Platform not accepting online orders is not evidence of clinic closure."
+  },
+  {
+    "key": "petsico-qena",
+    "nameEnglish": "Petsico Vet Clinic",
+    "nameArabic": "عيادة بيتسيكو البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Opposite main gate of Girls Secondary School, beside Andrew and Hany Pharmacy, Qena",
+    "addressArabic": "أمام الباب الرئيسي لمدرسة الثانوية بنات، بجوار صيدلية أندرو وهاني، قنا",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Qina (Kism)",
+    "citySourceCode": "EG2701",
+    "phones": ["01067956362", "01027026351"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Qena/968931056311029/Petsico-Vet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual pet clinic explicitly offers examinations/vaccinations at this city premises; current posts list both reception phones and current address. Advice/retail dates not promoted as clinical case dates.",
+    "aliases": {
+      "english": ["Petsico Vet clinic"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "veterinary-medical-qena",
+    "nameEnglish": "Veterinary Medical Center",
+    "nameArabic": "المركز الطبي البيطري",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Opposite railway crossing, beside Nour El Din Press and Saeeda Mosque, Hajj Arafa El Aqraa building, Qena",
+    "addressArabic": "أمام المزلقان، بجوار مطبعة نور الدين وجامع سعيدة، عمارة الحاج عرفة الأقرع، قنا",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Qina (Kism)",
+    "citySourceCode": "EG2701",
+    "phones": ["01033929203"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Qena/254640911666492/%D8%A7%D9%84%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D8%B7%D8%A8%D9%8A-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual clinic description explicitly provides examinations/vaccinations for pets as well as livestock. Physical urban address/reception printed; not merely veterinary supplies."
+  }
+]

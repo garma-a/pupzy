@@ -1,0 +1,8 @@
+{
+  "query": "Gil2000 Street, 2nd District, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Gil2000+Street%2C+2nd+District%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:21:39.085Z",
+  "httpStatus": 200,
+  "response": []
+}

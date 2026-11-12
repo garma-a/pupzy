@@ -1,0 +1,113 @@
+{
+  "query": "Street 12, New Cairo, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Street+12%2C+New+Cairo%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:30.632Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50273217,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 392333291,
+      "lat": "30.0566084",
+      "lon": "31.4215054",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Street 12",
+      "display_name": "Street 12, Al Nakhil Resort, New Cairo City, Cairo, 11528, Egypt",
+      "address": {
+        "road": "Street 12",
+        "neighbourhood": "Al Nakhil Resort",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11528",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0560083", "30.0576631", "31.4193718", "31.4238086"]
+    },
+    {
+      "place_id": 50343545,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 534156602,
+      "lat": "30.1008178",
+      "lon": "31.6364353",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Street 12",
+      "display_name": "Street 12, B1, New Cairo City, Cairo, 19519, Egypt",
+      "address": {
+        "road": "Street 12",
+        "neighbourhood": "B1",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "19519",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0984106", "30.1031840", "31.6364278", "31.6375085"]
+    },
+    {
+      "place_id": 50623075,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 391426024,
+      "lat": "29.9996941",
+      "lon": "31.4375738",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Al Naqshabandy Street",
+      "display_name": "Al Naqshabandy Street, Fifth Settlement, New Cairo City, Cairo, 11835, Egypt",
+      "address": {
+        "road": "Al Naqshabandy Street",
+        "neighbourhood": "Fifth Settlement",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11835",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9979308", "30.0014315", "31.4363466", "31.4387660"]
+    },
+    {
+      "place_id": 50562418,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 156546151,
+      "lat": "29.9988131",
+      "lon": "31.4210156",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Abou Al Fadl Al Harthi Street",
+      "display_name": "Abou Al Fadl Al Harthi Street, District 5, New Cairo City, Cairo, 11936, Egypt",
+      "address": {
+        "road": "Abou Al Fadl Al Harthi Street",
+        "neighbourhood": "District 5",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11936",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9986573", "29.9989475", "31.4208929", "31.4211089"]
+    }
+  ]
+}

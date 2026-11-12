@@ -1,0 +1,163 @@
+{
+  "reviewedAt": "2026-11-12",
+  "checkpoint": "e1b2a47",
+  "scope": "E2 individual checklist research; checklist unchanged",
+  "candidates": [
+    {
+      "name": "Island Vet Clinic",
+      "governorate": "Cairo",
+      "searches": ["Island vet clinic Heliopolis phone"],
+      "disposition": "alias",
+      "sourceKey": "WEB:sheraton-veterinary",
+      "evidence": "Sheraton entry explicitly describes Island Veterinary Clinic / عيادة الجزيرة البيطرية with islandveterinaryclinic email, identical 4B Khaled Ibn Al Walid address and 01003455592. Near-place lists Island Veterinary Clinic at the same address next to Sheraton. English alias is the published Island Veterinary Clinic, not a checklist-only invented brand.",
+      "sources": [
+        "https://www.bizmideast.com/EG/sheraton-veterinary-clinic-010-03455592",
+        "https://eg.near-place.com/veterinary_care-nearby-petisland-vet-clinic-5-khaled-ibn-al-walid-sheraton-al-matar-qism-el-nozha/de"
+      ]
+    },
+    {
+      "name": "Pets Care Clinic / عيادة بيتس كير البيطرية",
+      "governorate": "Cairo",
+      "searches": ["\"Pets Care Clinic\" \"Nasr\" clinic"],
+      "disposition": "reactivated-new-dated-evidence",
+      "sourceKey": "WEB:pets-care-nasr-city",
+      "evidence": "Individually read clinic-feed mirror: 31 October 2025 cat recovery and 27 October puppy treatment posts; identical 01001284628, doctor Hilaly and Nasr City/Mostafa El Nahas identity. Dalil140 confirms 82 Othman Buildings and all four phones. lastSeenActive is 2025-10-31, not access date. Mirror is not an independent operating witness.",
+      "sources": [
+        "https://www.petshops1.com/EG/Cairo/128562150992362/صفحة-عيادة-الحيوانات-الاليفة--د-.-هلالى-عبد-الرحمن--Pets-Care-Clinic",
+        "https://dalil140.com/company/en/420809-pets-care-clinic"
+      ]
+    },
+    {
+      "name": "Pet Cure Veterinary Clinic (Sheikh Zayed)",
+      "governorate": "Giza",
+      "searches": ["site:petcureclinics.com branches zayed", "\"Pet Cure\" \"Zayed\" clinic"],
+      "disposition": "inactive",
+      "sourceKey": "WEB:pet-cure-zayed",
+      "evidence": "Current official contact page lists Fifth Settlement and Madinaty; footer also offers Zahraa El Maadi, without a Zayed branch/contact. This omission is not proof of closure. Individual Dalil140 and BizMidEast listings agree 01000280308 at Hayat Mall, El Shabab Street, district 4 Sheikh Zayed. BizMidEast describes pet vaccination, imaging, surgery and the chain email. Clinic-feed mirror has historical 2020-08-09 Zayed number. Two separate current undated directory domains satisfy the existing pre-2022 corroboration rule. lastSeenActive remains 2020-08-09. No current first-party Zayed activity confirmed; lead decision requested in notes, not hidden by nulling date.",
+      "sources": [
+        "https://petcureclinics.com/",
+        "https://petcureclinics.com/contact-us",
+        "https://dalil140.com/company/en/490195-pet-cure-veterinary-clinic",
+        "https://www.bizmideast.com/EG/pet-cure-veterinary-clinic-sheikh-zayed-0100-028-0308",
+        "https://www.voofla.com/EG/Cairo/386067438190091/Pet-Cure-Veterinary-Clinic-New-Cairo"
+      ],
+      "reason": "unconfirmed-branch",
+      "leadDecision": "2026-11-12: official list omits Zayed; newest dated evidence 2020. Keep record and sources for client phone confirmation."
+    },
+    {
+      "name": "Pets Bay Clinic",
+      "governorate": "Giza",
+      "searches": ["\"Pets Bay\" \"clinic\" Mohandessin", "\"Pets Bay Clinic\" phone"],
+      "disposition": "added",
+      "sourceKey": "WEB:pets-bay-mohandessin",
+      "evidence": "Individual Local Egypt entry gives veterinary clinic name, El Hegaz Street Agouza, 01099199184 and directory update 2026-10-30. Own Google Sites URL is 404. Source names district Agouza; do not force Mohandessin neighbourhood from checklist. 24h directory schedule not promoted without stronger operating evidence.",
+      "sources": [
+        "https://localegypt.net/en/business/pets-bay-clinic-agouza",
+        "https://sites.google.com/view/pets-bay/home"
+      ]
+    },
+    {
+      "name": "Cat And Dog Pet Clinic (Hadayek El Ahram)",
+      "governorate": "Giza",
+      "searches": [
+        "\"Cat And Dog Pet Clinic\" \"Ahram\"",
+        "\"Cat And Dog Pet Clinic\"",
+        "\"Cat and Dog Pet Clinic\" phone"
+      ],
+      "disposition": "added-distinct-address-and-phone",
+      "sourceKey": "WEB:cat-and-dog-hadayek",
+      "evidence": "Individual Paijes veterinary clinic entry gives Gate 1, Street 1, Hadayek El Ahram and publicly linked tel/WhatsApp +201064933646. Existing Cats and Dogs clinic is 1 Ali Ibn Abi Taleb Street Taawon with 01026999298. Distinct address and phone; no alias and no common-chain inference. Own Facebook was throttled/login-only. Undated directory evidence, no lastSeenActive invented.",
+      "sources": [
+        "https://paijes.com/giza/veterinary/cat-and-dog-pet-clinic",
+        "https://www.facebook.com/111784165179546"
+      ]
+    },
+    {
+      "name": "Animalista Veterinary Center",
+      "governorate": "Giza",
+      "searches": [
+        "\"Animalista\" \"Veterinary\" October",
+        "\"Animalista Veterinary Center\" phone",
+        "\"Animalista\" \"010\"",
+        "\"Animalista\" \"01151136296\""
+      ],
+      "disposition": "added",
+      "sourceKey": "WEB:animalista-october",
+      "evidence": "Individually read Local Egypt entry explicitly describes pet medical attention and hospital/emergency services, Al Masryeen street 6 October and 01151136296; directory updated 2026-11-07. Besbes individual entry corroborates name/street. Besbes/Paijes/Local Egypt shared-source origins are not independent operational witnesses. Facebook inaccessible; no post date inferred.",
+      "sources": [
+        "https://localegypt.net/business/animalista-veterinary-center-6th-of-october-city",
+        "https://besbes.app/business/e54fba2a-a927-4849-aa35-bb924e926283",
+        "https://www.facebook.com/375026939018013"
+      ]
+    },
+    {
+      "name": "6th Of October Center For Veterinary Services / مركز السادس من أكتوبر للخدمات البيطرية",
+      "governorate": "Giza",
+      "searches": [
+        "\"6th Of October Center For Veterinary Services\"",
+        "\"6th Of October Center For Veterinary Services\" pets",
+        "\"مركز السادس\" \"بيطرية\" أكتوبر الحيوانات"
+      ],
+      "disposition": "held",
+      "reason": "unresolved-pet-treatment",
+      "evidence": "Individually read FindInEgypt entry confirms generic Veterinarians listing, El Mokhtar Village district 6, and 01289009732 / 01229729713. Pet treatment descriptions belong to nearby recommended clinics, not this center. Dalil140 and HealthEG leads repeat contact/category only. BizMidEast individual request returned 429. No confirmed pet-treatment or closure evidence. Not found means qualifying evidence not established, not that the business does not exist.",
+      "sources": [
+        "https://www.findinegypt.com/c/6th-of-october-center-for-veterinary-services-376139",
+        "https://dalil140.com/company/en/420337-6th-october-center-veterinary-services",
+        "https://healtheg.com/en/Item/21198/6th-Of-October-Center-For-Veterinary-Services",
+        "https://www.bizmideast.com/EG/th-of-october-center-for-veterinary-0128-900-9732"
+      ]
+    },
+    {
+      "name": "عيادة الشروق البيطرية (Mohandessin)",
+      "governorate": "Giza",
+      "searches": [
+        "\"عيادة الشروق البيطرية\" \"المهندسين\"",
+        "\"الشروق\" \"بيطرية\" \"المهندسين\"",
+        "\"عيادة الشروق\" \"المهندسين\" بيطرى",
+        "\"الشروق البيطرية\" \"المهندسين\" عيادة",
+        "\"عيادة الشروق البيطرية\" المهندسين الجيزة هاتف",
+        "\"عيادة الشروق البيطرية\" \"15\""
+      ],
+      "disposition": "held",
+      "reason": "unresolved-locality-and-pet-treatment",
+      "evidence": "Searches find Shorouk in Ayat (11 El Madbah St), existing Shorouk City Cairo, and human Shorouk Hospital in Mohandessin. Indexed Ayat listing confirms wrong locality (direct Dalil140 individual fetch failed); do not relabel it. YellowPages category result juxtaposes names; inspected result shows Shorouk at Ayat, not adjacent Mohandessin address. No qualifying Mohandessin pet clinic/contact established; no closure assertion. YellowPages direct automation was already blocked in stage2 and no bypass attempted.",
+      "sources": [
+        "https://dalil140.com/company/ar/420628-el-shorouq-veterinary-clinic",
+        "https://eg.shewaya.com/listing/عيادة-الشروق-البيطرية",
+        "https://yellowpages.com.eg/ar/category/veterinarians/2120/lع"
+      ]
+    },
+    {
+      "name": "Royal Veterinary Clinic (Louran)",
+      "governorate": "Alexandria",
+      "searches": ["\"Royal Veterinary Clinic\" \"Louran\"", "\"Royal\" \"Veterinary\" \"50\" \"Omar\" Alexandria"],
+      "disposition": "added",
+      "sourceKey": "WEB:royal-louran",
+      "evidence": "Individually read Dalili Medical doctor-18930: Dr Shaimaa Elmahdy, pet diagnosis/treatment and surgery, 50 Omar El Mokhtar Louran, valid 035744415. Printed mobile 012062978075 has invalid length and is rejected without guessing. Undated directory entry; no recent post claimed.",
+      "rejectedPhones": ["012062978075"],
+      "sources": ["https://www.dalilimedical.com/en/doctor-18930/ROYAL-VETERINARY-CLINIC"]
+    },
+    {
+      "name": "Portfouad Veterinary Clinic / عيادة بورفؤاد البيطرية",
+      "governorate": "Port Said",
+      "searches": [
+        "\"Portfouad Veterinary Clinic\"",
+        "\"01228106335\" \"Portfouad\"",
+        "\"Portfouad veterinary clinic\" \"Ahmed\""
+      ],
+      "disposition": "held",
+      "reason": "unresolved-shared-phone-identity",
+      "evidence": "Individual Welp entry at Agricultural Professions Syndicate building El Malaha Road gives 01228106335, no pet-treatment description/doctor/post date. Current individually read Modern Pet Center feed dated 2026-09-08 explicitly assigns that phone to its Port Fouad Police Bakery Street branch. Shared number alone is insufficient to assert relocation/former name. Existing Modern remains active; do not add a duplicate or a speculative checklist-matching alias.",
+      "sources": [
+        "https://welpstar.com/en/biz/portfouad-veterinary-clinic-عيادة-بورفؤاد-البيطريه",
+        "https://www.petshops1.com/EG/Port-Said/2816127161751869/Modern-Pet-Center"
+      ]
+    }
+  ],
+  "weaknesses": [
+    "Directory update dates are weak dated evidence, not clinic-authored activity.",
+    "Pet Cure Zayed lacks current first-party corroboration; two-directory exception explicitly disclosed.",
+    "No closure verdicts inferred from absent search results or official branch omissions."
+  ]
+}

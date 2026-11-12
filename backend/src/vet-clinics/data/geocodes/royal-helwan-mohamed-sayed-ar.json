@@ -1,0 +1,59 @@
+{
+  "query": "محمد سيد احمد, حلوان, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%85%D8%AD%D9%85%D8%AF+%D8%B3%D9%8A%D8%AF+%D8%A7%D8%AD%D9%85%D8%AF%2C+%D8%AD%D9%84%D9%88%D8%A7%D9%86%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:40:21.799Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50494998,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 777726933,
+      "lat": "29.8473368",
+      "lon": "31.3296472",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع محمد سيد احمد",
+      "display_name": "شارع محمد سيد احمد, حلوان, القاهرة, 11735, مصر",
+      "address": {
+        "road": "شارع محمد سيد احمد",
+        "city": "حلوان",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11735",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.8471947", "29.8474924", "31.3253072", "31.3339868"]
+    },
+    {
+      "place_id": 50460323,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 706138371,
+      "lat": "29.8476474",
+      "lon": "31.3378271",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع محمد سيد احمد",
+      "display_name": "شارع محمد سيد احمد, حلوان, القاهرة, 11421, مصر",
+      "address": {
+        "road": "شارع محمد سيد احمد",
+        "city": "حلوان",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11421",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.8474924", "29.8477978", "31.3339868", "31.3416673"]
+    }
+  ]
+}

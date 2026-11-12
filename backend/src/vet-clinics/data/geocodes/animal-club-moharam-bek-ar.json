@@ -1,0 +1,43 @@
+{
+  "query": "محرم بك, محرم بك, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%85%D8%AD%D8%B1%D9%85+%D8%A8%D9%83%2C+%D9%85%D8%AD%D8%B1%D9%85+%D8%A8%D9%83%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:52:19.132Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 49019888,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 6989316230,
+      "lat": "31.1910018",
+      "lon": "29.9108711",
+      "category": "amenity",
+      "type": "post_office",
+      "place_rank": 30,
+      "importance": 0.00007615091172651282,
+      "addresstype": "amenity",
+      "name": "الشركة الدولية للخدمات البريدية ايجى سيرف فرع محرم بك",
+      "display_name": "الشركة الدولية للخدمات البريدية ايجى سيرف فرع محرم بك, 15, شارع الظاهر, بوالينو و الاسكندراني, الشاطبى, الإسكندرية, 21522, مصر",
+      "address": {
+        "amenity": "الشركة الدولية للخدمات البريدية ايجى سيرف فرع محرم بك",
+        "house_number": "15",
+        "road": "شارع الظاهر",
+        "neighbourhood": "بوالينو و الاسكندراني",
+        "hamlet": "الشاطبى",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21522",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": [
+        "31.1909518",
+        "31.1910518",
+        "29.9108211",
+        "29.9109211"
+      ]
+    }
+  ]
+}

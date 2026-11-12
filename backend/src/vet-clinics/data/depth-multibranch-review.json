@@ -1,0 +1,325 @@
+[
+  {
+    "brand": "Zoo Planet",
+    "url": "https://www.voofla.com/EG/Zagazig/104169480941776/Zoo-Planet-Pet-Hospital",
+    "reviewedAt": "2026-11-12",
+    "branches": [
+      {
+        "place": "Minya al-Qamh",
+        "status": "retained",
+        "sourceKey": "WEB:zoo-planet-minya-qamh",
+        "evidence": "Two distinct addresses and branch-specific phones."
+      },
+      {
+        "place": "Zagazig",
+        "status": "retained",
+        "sourceKey": "WEB:zoo-planet-zagazig",
+        "evidence": "Two distinct addresses and branch-specific phones."
+      }
+    ]
+  },
+  {
+    "brand": "Pet Espitalia",
+    "url": "https://www.petshops1.com/EG/Mansoura/226570925995326/Pet-Espitalia---Mansoura",
+    "reviewedAt": "2026-11-12",
+    "branches": [
+      {
+        "place": "Mansoura",
+        "status": "retained",
+        "sourceKey": "WEB:pet-espitalia-mansoura",
+        "evidence": "Two addresses and branch-specific phones; Tanta clinical post individually read."
+      },
+      {
+        "place": "Tanta",
+        "status": "retained",
+        "sourceKey": "WEB:pet-espitalia-tanta",
+        "evidence": "Two addresses and branch-specific phones; Tanta clinical post individually read."
+      }
+    ]
+  },
+  {
+    "brand": "Aleet",
+    "url": "https://www.petshops1.com/EG/Tanta/118804339968423/Aleet-Vet-Center---%D9%85%D8%B1%D9%83%D8%B2-%D8%A3%D9%84%D9%8A%D8%B7-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A",
+    "reviewedAt": "2026-11-12",
+    "branches": [
+      {
+        "place": "Tanta",
+        "status": "retained",
+        "sourceKey": "WEB:aleet-tanta",
+        "evidence": "Both full addresses explicitly printed with shared reception; separate chain identities."
+      },
+      {
+        "place": "Nozha",
+        "status": "retained",
+        "sourceKey": "WEB:aleet-nozha",
+        "evidence": "Both full addresses explicitly printed with shared reception; separate chain identities."
+      }
+    ]
+  },
+  {
+    "brand": "Mercy",
+    "url": "https://www.voofla.com/EG/Suez/403829513747807/%D8%B9%D9%8A%D8%A7%D8%AF%D9%87-%D9%85%D8%B1%D8%B3%D9%8A-%D9%81%D9%8A%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87-Mercy-Vet-Clinic",
+    "reviewedAt": "2026-11-12",
+    "branches": [
+      {
+        "place": "Mallaha",
+        "status": "retained",
+        "sourceKey": "WEB:mercy-mallaha",
+        "evidence": "Houd El Dars catalog district unresolved; shared phone does not merge premises."
+      },
+      {
+        "place": "Houd El Dars",
+        "status": "held",
+        "evidence": "Houd El Dars catalog district unresolved; shared phone does not merge premises."
+      }
+    ]
+  },
+  {
+    "brand": "Petzone Suez",
+    "url": null,
+    "reviewedAt": "2026-11-12",
+    "branches": [
+      {
+        "place": "Shohada",
+        "status": "held",
+        "evidence": "D2 existing decision 300593440372247: branch allocation/catalog districts unresolved."
+      },
+      {
+        "place": "Zarayr",
+        "status": "held",
+        "evidence": "D2 existing decision 300593440372247: branch allocation/catalog districts unresolved."
+      }
+    ]
+  },
+  {
+    "brand": "Greek Pet",
+    "url": null,
+    "reviewedAt": "2026-11-12",
+    "branches": [
+      {
+        "place": "Mansoura",
+        "status": "held",
+        "evidence": "D1 existing decision: split districts and branch contact allocation unresolved."
+      },
+      {
+        "place": "Mahalla",
+        "status": "held",
+        "evidence": "D1 existing decision: split districts and branch contact allocation unresolved."
+      }
+    ]
+  },
+  {
+    "brand": "Royal Pets",
+    "url": "https://www.voofla.com/EG/Ismailia/827562230605197/Royal-Pets",
+    "reviewedAt": "2026-11-12",
+    "branches": [
+      {
+        "place": "Ismailia",
+        "status": "retained",
+        "sourceKey": "WEB:royal-pets-ismailia",
+        "evidence": "Shorouk recruitment names branch but no sourced full address/contact allocation; not an invented branch location."
+      },
+      {
+        "place": "Shorouk",
+        "status": "held",
+        "evidence": "Shorouk recruitment names branch but no sourced full address/contact allocation; not an invented branch location."
+      }
+    ]
+  },
+  {
+    "brand": "Petmate",
+    "url": "https://www.petshops1.com/EG/Damanhour/102694867873295/Petmate-Clinic",
+    "reviewedAt": "2026-11-12",
+    "branches": [
+      {
+        "place": "Old Ahmed Orabi",
+        "status": "moved",
+        "evidence": "Explicit relocation notice; old premises are not a second current branch."
+      },
+      {
+        "place": "Ard Edmon",
+        "status": "retained",
+        "sourceKey": "WEB:petmate-damanhour",
+        "evidence": "Explicit relocation notice; old premises are not a second current branch."
+      }
+    ]
+  },
+  {
+    "brand": "Kit Cat",
+    "url": "https://www.petshops1.com/EG/Tanta/1141835735683765/kit-Cat-veterinary-clinic",
+    "reviewedAt": "2026-11-12",
+    "branches": [
+      {
+        "place": "Tanta",
+        "status": "retained",
+        "sourceKey": "WEB:kit-cat-tanta",
+        "evidence": "Opening cat-fish clinic inside pineapple number 6 is a joke; no real physical branch established."
+      },
+      {
+        "place": "Pineapple address",
+        "status": "excluded",
+        "evidence": "Opening cat-fish clinic inside pineapple number 6 is a joke; no real physical branch established."
+      }
+    ]
+  },
+  {
+    "brand": "Arena",
+    "url": "https://www.petshops1.com/EG/Ismailia/284703538065803/Arena-Veterinary-Clinic",
+    "reviewedAt": "2026-11-12",
+    "branches": [
+      {
+        "place": "Ismailia",
+        "status": "retained",
+        "sourceKey": "WEB:arena-ismailia",
+        "evidence": "Recruitment refers to Ismailia branch; no second physical address published in the read page."
+      },
+      {
+        "place": "Unspecified other branch",
+        "status": "held",
+        "evidence": "Recruitment refers to Ismailia branch; no second physical address published in the read page."
+      }
+    ]
+  },
+  {
+    "brand": "Dr Ziad",
+    "reviewedAt": "2026-11-12",
+    "url": null,
+    "branches": [
+      {
+        "place": "Fariskur",
+        "status": "excluded",
+        "sourceKey": "WEB:ziad-hourany",
+        "evidence": "Lead review 2026-11-12: veterinary pharmacy (صيدلية) selling poultry stock; second premises is the doctor's house. See research-damietta-stage3-ledger.json.",
+        "reason": "pharmacy-primary"
+      },
+      {
+        "place": "Kafr Saad",
+        "status": "excluded",
+        "sourceKey": "WEB:ziad-kafr-saad",
+        "evidence": "Lead review 2026-11-12: veterinary pharmacy (صيدلية) selling poultry stock; second premises is the doctor's house. See research-damietta-stage3-ledger.json.",
+        "reason": "pharmacy-primary"
+      }
+    ]
+  },
+  {
+    "brand": "Jungle",
+    "reviewedAt": "2026-11-12",
+    "url": null,
+    "branches": [
+      {
+        "place": "Hurghada",
+        "status": "retained",
+        "sourceKey": "WEB:jungle-hurghada",
+        "evidence": "Safaga named but full branch address unresolved. Touring home visits to other coastal cities do not establish additional clinics."
+      },
+      {
+        "place": "Safaga",
+        "status": "held",
+        "evidence": "Safaga named but full branch address unresolved. Touring home visits to other coastal cities do not establish additional clinics."
+      }
+    ]
+  },
+  {
+    "brand": "Aaber El Sherbiny",
+    "reviewedAt": "2026-11-12",
+    "url": null,
+    "branches": [
+      {
+        "place": "Main Wagih Zahran",
+        "status": "held",
+        "evidence": "Both premises reviewed. Poultry/feed centre; pet treatment not established."
+      },
+      {
+        "place": "Bab El Haras",
+        "status": "held",
+        "evidence": "Both premises reviewed. Poultry/feed centre; pet treatment not established."
+      }
+    ]
+  },
+  {
+    "brand": "Kiwan",
+    "reviewedAt": "2026-11-12",
+    "url": null,
+    "branches": [
+      {
+        "place": "Ezbet El Borg",
+        "status": "held",
+        "evidence": "Both premises reviewed. Feed/poultry services; pet treatment not established."
+      },
+      {
+        "place": "Bab El Haras",
+        "status": "held",
+        "evidence": "Both premises reviewed. Feed/poultry services; pet treatment not established."
+      }
+    ]
+  },
+  {
+    "brand": "Dr Shady",
+    "reviewedAt": "2026-11-12",
+    "url": null,
+    "branches": [
+      {
+        "place": "Al Nosairat",
+        "status": "held",
+        "evidence": "Two physical branches reviewed; no established public pet treatment at either."
+      },
+      {
+        "place": "Ghanayem",
+        "status": "held",
+        "evidence": "Two physical branches reviewed; no established public pet treatment at either."
+      }
+    ]
+  },
+  {
+    "brand": "Al Nour Qena",
+    "reviewedAt": "2026-11-12",
+    "url": null,
+    "branches": [
+      {
+        "place": "Shanhoriya",
+        "status": "held",
+        "evidence": "Pet retail branches mentioned without full other addresses or clinical treatment evidence; no retail clinic inference."
+      },
+      {
+        "place": "Other unspecified retail branches",
+        "status": "held",
+        "evidence": "Pet retail branches mentioned without full other addresses or clinical treatment evidence; no retail clinic inference."
+      }
+    ]
+  },
+  {
+    "brand": "B-Vet",
+    "reviewedAt": "2026-11-12",
+    "url": null,
+    "branches": [
+      {
+        "place": "Rosa Mall clinic",
+        "status": "retained",
+        "sourceKey": "WEB:b-vet-sharm",
+        "evidence": "June 2026 medical posts explicitly distinguish the clinic from the nearby shop; shop is not another medical branch."
+      },
+      {
+        "place": "Nearby pet shop",
+        "status": "excluded",
+        "evidence": "June 2026 medical posts explicitly distinguish the clinic from the nearby shop; shop is not another medical branch."
+      }
+    ]
+  },
+  {
+    "brand": "Bast",
+    "reviewedAt": "2026-11-12",
+    "url": "https://www.petshops1.com/EG/Ismailia/105212725984193/Bast-Veterinary-Pharmacy",
+    "branches": [
+      {
+        "place": "Fouad Aziz Ghali clinic",
+        "status": "held",
+        "evidence": "Pharmacy directs grooming to separate clinic; Bast Center medical/sterilisation services verified, split district unresolved."
+      },
+      {
+        "place": "Pharmacy opposite Montaza Club",
+        "status": "excluded",
+        "evidence": "Explicit pharmacy selling pet medication and supplies; grooming referred to clinic, not evidence of treatment at pharmacy."
+      }
+    ]
+  }
+]

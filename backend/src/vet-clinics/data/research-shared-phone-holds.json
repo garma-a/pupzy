@@ -1,0 +1,58 @@
+[
+  {
+    "phone": "+201227408598",
+    "sourceKeys": ["WEB:abbas-akkad-vet", "WEB:vet-pet-mesaha"],
+    "action": "withhold-phone",
+    "reviewedAt": "2026-11-12",
+    "evidence": "Conflicting single-directory clinic brands in Nasr City and Haram; a third Fifth Settlement lead was already held. Ownership unresolved; withheld from both.",
+    "sources": [
+      "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b9%d8%a8%d8%a7%d8%b3-%d8%a7%d9%84%d8%b9%d9%82%d8%a7%d8%af-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d9%84%d8%b7%d8%a8-%d9%88%d8%ac%d8%b1%d8%a7%d8%ad%d8%a9/",
+      "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%87%d8%b1%d9%85-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-vet-pet/"
+    ]
+  },
+  {
+    "phone": "+201006875254",
+    "sourceKeys": ["WEB:beverly-vet", "WEB:degla-vet-zahraa-maadi"],
+    "action": "withhold-phone",
+    "reviewedAt": "2026-11-12",
+    "evidence": "Beverly Sheikh Zayed and Degla Zahraa Maadi publish the same number under unrelated names; no current owner or simultaneous branch evidence. Withheld from both.",
+    "sources": [
+      "https://www.evcindex.com/item/%d8%a8%d9%8a%d9%81%d8%b1%d9%84%d9%8a-%d9%81%d9%8a%d8%aa-%d9%83%d9%84%d9%8a%d9%86%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+      "https://www.evcindex.com/item/%d8%af%d8%ac%d9%84%d9%87-%d9%81%d9%8a%d8%aa-%d9%83%d9%84%d9%8a%d9%86%d9%83/"
+    ]
+  },
+  {
+    "phone": "+201013242048",
+    "sourceKeys": ["WEB:four-pets-mokattam", "WEB:veto-pets"],
+    "action": "withhold-phone",
+    "reviewedAt": "2026-11-12",
+    "evidence": "4pets Mokattam and Veto Pets Dokki share a number with no ownership/branch proof. Withheld from both; 4pets retains its other published number.",
+    "sources": [
+      "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%81%d9%88%d8%b1%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-4pets-vet-clinic/",
+      "https://www.to-all.com/veterinary-elmokattam/",
+      "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%81%d9%8a%d8%aa%d9%88-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%8c-veto-pets-clinic/"
+    ]
+  },
+  {
+    "phone": "+201008677285",
+    "sourceKeys": ["WEB:prime-vet-shorouk"],
+    "action": "withhold-phone",
+    "reviewedAt": "2026-11-12",
+    "evidence": "Current Pawia own site explicitly publishes this as the Faisal branch contact. Withheld from the conflicting Prime Shorouk directory entry, which retains its other number.",
+    "sources": [
+      "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d8%b1%d8%a7%d9%8a%d9%85-%d9%81%d9%8a%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9%d8%8c-%d8%a7%d9%84%d8%b4%d8%b1%d9%88%d9%82-prime-vet-clinic/",
+      "https://pawiaegy.durable.site/ar"
+    ]
+  },
+  {
+    "phone": "+201021032249",
+    "sourceKeys": ["WEB:pets-choice-hadayek", "WEB:pets-choice-maadi"],
+    "action": "withhold-phone",
+    "reviewedAt": "2026-11-12",
+    "evidence": "Similar Pets Choice brand in Hadayek Al Ahram and Maadi, but no explicit simultaneous branch publication reviewed. Shared number withheld pending ownership confirmation; both retain separate sourced numbers.",
+    "sources": [
+      "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%aa%d8%b4%d9%88%d9%8a%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-pets-choice-animal-hospital/",
+      "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-pets-choice-maadi-%d8%a8%d8%a7%d9%84%d9%85%d8%b9%d8%a7%d8%af%d9%8a/"
+    ]
+  }
+]

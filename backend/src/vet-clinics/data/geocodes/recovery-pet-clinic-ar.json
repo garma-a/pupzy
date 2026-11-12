@@ -1,0 +1,36 @@
+{
+  "query": "عز الدين عيسى, السادس من أكتوبر, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%B9%D8%B2+%D8%A7%D9%84%D8%AF%D9%8A%D9%86+%D8%B9%D9%8A%D8%B3%D9%89%2C+%D8%A7%D9%84%D8%B3%D8%A7%D8%AF%D8%B3+%D9%85%D9%86+%D8%A3%D9%83%D8%AA%D9%88%D8%A8%D8%B1%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:50:24.900Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51571210,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 99584117,
+      "lat": "29.9967945",
+      "lon": "30.9906041",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05338286182955669,
+      "addresstype": "residential",
+      "name": "شارع دكتور عز الدين عيسي",
+      "display_name": "شارع دكتور عز الدين عيسي, القرية السياحية 4, غرينلاند, الشيخ زايد, الجيزة, 33660, مصر",
+      "address": {
+        "road": "شارع دكتور عز الدين عيسي",
+        "neighbourhood": "القرية السياحية 4",
+        "suburb": "غرينلاند",
+        "city": "الشيخ زايد",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "33660",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9940284", "29.9986813", "30.9880390", "30.9915628"]
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "query": "بهجت علي, الزمالك, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A8%D9%87%D8%AC%D8%AA+%D8%B9%D9%84%D9%8A%2C+%D8%A7%D9%84%D8%B2%D9%85%D8%A7%D9%84%D9%83%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:39:45.480Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50128611,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 24986471,
+      "lat": "30.0692343",
+      "lon": "31.2198292",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.05339670634012356,
+      "addresstype": "tertiary",
+      "name": "شارع بهجت علي",
+      "display_name": "شارع بهجت علي, ابو الفدا, الزمالك, القاهرة, 12653, مصر",
+      "address": {
+        "road": "شارع بهجت علي",
+        "neighbourhood": "ابو الفدا",
+        "suburb": "الزمالك",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "12653",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0670227", "30.0711652", "31.2180982", "31.2218417"]
+    }
+  ]
+}

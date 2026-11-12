@@ -1,0 +1,8 @@
+{
+  "query": "Nasr Habib Street, Shubra al Khayma, Kalyoubia, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Nasr+Habib+Street%2C+Shubra+al+Khayma%2C+Kalyoubia%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T12:13:34.252Z",
+  "httpStatus": 200,
+  "response": []
+}

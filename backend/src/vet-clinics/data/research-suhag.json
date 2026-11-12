@@ -1,0 +1,91 @@
+[
+  {
+    "key": "pets-hut-sohag",
+    "nameEnglish": "Pet's Hut Vet Clinic",
+    "nameArabic": "عيادة بتس هت البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Ibn Luqman Street, behind Justice Towers, beside School for the Blind, El Zahraa, Sohag",
+    "addressArabic": "شارع ابن لقمان، خلف أبراج العدالة، بجوار مدرسة المكفوفين، الزهراء، سوهاج",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Suhag (Kism)",
+    "citySourceCode": "EG2601",
+    "phones": ["01551548084"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Sohag/1656280728029872/Pet%27s-Hut-Vet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-23",
+    "classificationEvidence": "Read individual clinic-feed mirror: pet treatment/vaccination, current premises/contact. Malformed doubled 015 in September 15 post rejected, header E.164 and September 23 contact agree. Street administrative assignment independently researched: 2019 police report explicitly places Ibn Luqman Street in first Sohag; it is location evidence only, not a second operating witness.",
+    "aliases": {
+      "english": ["Pets Hut Vet Clinic"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "dog-cat-sohag",
+    "nameEnglish": "Dog and Cat Clinic",
+    "nameArabic": "عيادة دوج آند كات",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Ehab Mekled Street, behind School for the Blind, El Zahraa, Sohag, Suhag",
+    "addressArabic": "شارع إيهاب مقلد، خلف مدرسة المكفوفين، الزهراء، سوهاج",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Suhag-2",
+    "citySourceCode": "EG2602",
+    "phones": ["01225378009"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Sohag/528518637234236/Dog-%26-cat-clinic-%D8%B3%D9%88%D9%87%D8%A7%D8%AC",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-29",
+    "classificationEvidence": "2026-10-29 treated pet case at current Ehab Mekled premises. East Sohag street identified by governorate disinfection statement; El Zahraa Qism 2 police statement independently confirms district. Older Abd El Halim Mahmoud/Awlad Naseer directory address not substituted."
+  },
+  {
+    "key": "vets-for-pets-sohag",
+    "nameEnglish": "Vets for Pets",
+    "nameArabic": "عيادة فيتس فور بيتس البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "13 Abu Simbel Street, before El Nagda, El Hoda bakery corner, Sohag, Suhag",
+    "addressArabic": "13 شارع أبو سمبل، قبلي النجدة، ناصية فرن الهدى، سوهاج",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Suhag-2",
+    "citySourceCode": "EG2602",
+    "phones": ["01200224716"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Sohag/114146793781313/Vets-for-Pets",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-31",
+    "classificationEvidence": "Individual pet medical/surgery clinic publishes current hours/address/phone. Abu Simbel in East Sohag per governorate street disinfection statement (2020-04-04); no coordinates inferred. 24h not claimed from emergency advice.",
+    "aliases": {
+      "english": ["Vets for Pets"],
+      "arabic": []
+    }
+  }
+]

@@ -18,6 +18,10 @@ export const VET_CLINIC_COLUMNS = new Set([
   'address_english',
   'address_arabic',
   'website',
+  'facebook_url',
+  'is_24_hours',
+  'source_key',
+  'location_precision',
   'location_provenance',
   'location_captured_at',
   'source',
@@ -27,6 +31,63 @@ export const VET_CLINIC_COLUMNS = new Set([
   'created_at',
   'updated_at',
 ]);
+
+export const EGYPT_PHONE =
+  /^\+20(1[0125][0-9]{8}|2[0-9]{8}|3[0-9]{7}|(13|40|45|46|47|48|50|55|57|62|64|65|66|68|69|82|84|86|88|92|93|95|96|97)[0-9]{7})$/;
+
+export function normalizeAdminPhone(value) {
+  const p = String(value)
+    .trim()
+    .replace(/[٠-٩]/g, (c) => String(c.charCodeAt(0) - 1632))
+    .replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 1776))
+    .replace(/^tel:/i, '')
+    .replace(/[\s().-]/g, '');
+  const normalized = p.startsWith('0020')
+    ? '+' + p.slice(2)
+    : /^20\d+$/.test(p)
+      ? '+' + p
+      : /^0\d+$/.test(p)
+        ? '+20' + p.slice(1)
+        : p;
+  return EGYPT_PHONE.test(normalized) && !/([0-9])\1{6}/.test(normalized) ? normalized : null;
+}
+
+export function validateClinicContact(payload, existing = null) {
+  const truthy = (value) => value === true || value === 'true' || value === 1 || value === '1' || value === 'on';
+  if (payload.phone_number != null) {
+    const raw = String(payload.phone_number).trim();
+    payload.phone_number = raw ? normalizeAdminPhone(raw) : null;
+    if (raw && !payload.phone_number) {
+      throw new ValidationError({
+        phone_number: { message: 'Use an Egyptian phone, e.g. 010 1234 5678 or +201012345678.' },
+      });
+    }
+  }
+  const phone = payload.phone_number !== undefined ? payload.phone_number : existing?.phone_number;
+  for (const field of ['website', 'facebook_url']) {
+    if (payload[field] === '') payload[field] = null;
+    if (payload[field] != null) {
+      let valid = false;
+      try {
+        const url = new URL(payload[field]);
+        valid = ['http:', 'https:'].includes(url.protocol) && !!url.hostname && !/\s/.test(payload[field]);
+      } catch {}
+      if (!valid) throw new ValidationError({ [field]: { message: 'Use an http(s) URL.' } });
+    }
+  }
+  if (payload.is_24_hours !== undefined) payload.is_24_hours = truthy(payload.is_24_hours);
+  // New clinics without a phone start inactive. Existing active imports remain
+  // editable, but enabling one or removing its phone must satisfy the release bar.
+  if (!existing && payload.is_active === undefined) payload.is_active = EGYPT_PHONE.test(phone ?? '');
+  if (payload.is_active !== undefined) payload.is_active = truthy(payload.is_active);
+  const active = payload.is_active ?? existing?.is_active;
+  if (active && (payload.is_active === true || payload.phone_number !== undefined) && !EGYPT_PHONE.test(phone ?? '')) {
+    throw new ValidationError({
+      phone_number: { message: 'An active Vet Clinic requires an Egyptian phone, e.g. 010 1234 5678.' },
+    });
+  }
+  delete payload.source_key; // Release identity is never administrator-editable.
+}
 
 /**
  * Checks whether an administrator has permission to override City disagreements.
@@ -569,6 +630,7 @@ export async function createVetClinicCommand(persistence, rawPayload, currentAdm
     address: location.address,
     location_provenance: rawPayload.location_provenance === 'NOMINATIM' ? 'NOMINATIM' : 'MANUAL',
     location_captured_at: new Date().toISOString(),
+    location_precision: 'exact',
   };
 
   // Reject any client-supplied protected identity fields
@@ -591,6 +653,7 @@ export async function createVetClinicCommand(persistence, rawPayload, currentAdm
     clinicData.osm_type = String(rawPayload.osm_type).trim();
   }
 
+  validateClinicContact(clinicData);
   const insertedClinic = await adapter.insertClinic(clinicData);
 
   // 8. Write audit log atomically inside the same transaction if discrepant
@@ -663,6 +726,7 @@ export async function updateVetClinicCommand(persistence, recordId, rawPayload, 
     updateData.address = location.address;
     updateData.location_provenance = rawPayload.location_provenance === 'NOMINATIM' ? 'NOMINATIM' : 'MANUAL';
     updateData.location_captured_at = new Date().toISOString();
+    updateData.location_precision = 'exact';
 
     if (rawPayload.osm_id !== undefined && rawPayload.osm_id !== null && rawPayload.osm_id !== '') {
       const rawOsm = String(rawPayload.osm_id).trim();
@@ -715,6 +779,7 @@ export async function updateVetClinicCommand(persistence, recordId, rawPayload, 
     }
   } else {
     // Non-location edit (preserve existing location data as-is)
+    delete updateData.location_precision;
     delete updateData.coordinates;
     delete updateData.location_provenance;
     delete updateData.location_captured_at;
@@ -748,6 +813,7 @@ export async function updateVetClinicCommand(persistence, recordId, rawPayload, 
       updateData.is_active === 'true' || updateData.is_active === '1' || updateData.is_active === 'on';
   }
 
+  validateClinicContact(updateData, existing);
   const updatedClinic = await adapter.updateClinic(recordId, updateData);
 
   if (locationChanged && discrepancy.isDiscrepant) {

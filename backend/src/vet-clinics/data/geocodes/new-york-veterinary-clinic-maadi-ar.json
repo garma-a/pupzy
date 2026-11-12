@@ -1,0 +1,36 @@
+{
+  "query": "أحمد كامل, المعادي الجديدة, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A3%D8%AD%D9%85%D8%AF+%D9%83%D8%A7%D9%85%D9%84%2C+%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%AF%D9%8A+%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:47:28.057Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51552201,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 5119819693,
+      "lat": "29.9718060",
+      "lon": "31.2845309",
+      "category": "office",
+      "type": "yes",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "office",
+      "name": "البريد المصري",
+      "display_name": "البريد المصري, شارع احمد كامل, المعادي الجديدة, حلوان, القاهرة, 11742, مصر",
+      "address": {
+        "office": "البريد المصري",
+        "road": "شارع احمد كامل",
+        "neighbourhood": "المعادي الجديدة",
+        "city": "حلوان",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11742",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9717560", "29.9718560", "31.2844809", "31.2845809"]
+    }
+  ]
+}

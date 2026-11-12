@@ -1,0 +1,35 @@
+{
+  "query": "أحمد عرابي, المهندسين, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A3%D8%AD%D9%85%D8%AF+%D8%B9%D8%B1%D8%A7%D8%A8%D9%8A%2C+%D8%A7%D9%84%D9%85%D9%87%D9%86%D8%AF%D8%B3%D9%8A%D9%86%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:50:29.301Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 49826316,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 5096152,
+      "lat": "30.0627116",
+      "lon": "31.2067002",
+      "category": "highway",
+      "type": "primary",
+      "place_rank": 26,
+      "importance": 0.05339670634012356,
+      "addresstype": "primary",
+      "name": "شارع احمد عرابى",
+      "display_name": "شارع احمد عرابى, ميت عقبة, الجيزة, 12658, مصر",
+      "address": {
+        "road": "شارع احمد عرابى",
+        "suburb": "ميت عقبة",
+        "city": "الجيزة",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12658",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0605584", "30.0644469", "31.2041403", "31.2085560"]
+    }
+  ]
+}

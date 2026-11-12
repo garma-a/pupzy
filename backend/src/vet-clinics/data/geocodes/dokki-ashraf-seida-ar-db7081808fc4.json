@@ -1,0 +1,35 @@
+{
+  "query": "إيران, Dokki, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A5%D9%8A%D8%B1%D8%A7%D9%86%2C+Dokki%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:20:18.380Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50861934,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 29204896,
+      "lat": "30.0380983",
+      "lon": "31.2063038",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05339670634012356,
+      "addresstype": "residential",
+      "name": "شارع ايران",
+      "display_name": "شارع ايران, الدقى, الجيزة, 12311, مصر",
+      "address": {
+        "road": "شارع ايران",
+        "suburb": "الدقى",
+        "city": "الجيزة",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12311",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0370312", "30.0392087", "31.2014818", "31.2111161"]
+    }
+  ]
+}

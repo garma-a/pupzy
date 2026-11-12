@@ -1,0 +1,8 @@
+{
+  "query": "Abdel Aziz Fahmy Street, Heliopolis, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Abdel+Aziz+Fahmy+Street%2C+Heliopolis%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:13:51.686Z",
+  "httpStatus": 200,
+  "response": []
+}

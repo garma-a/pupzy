@@ -1,0 +1,8 @@
+{
+  "query": "زاهر جلال, قسم مرسى مطروح, Matrouh, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%B2%D8%A7%D9%87%D8%B1+%D8%AC%D9%84%D8%A7%D9%84%2C+%D9%82%D8%B3%D9%85+%D9%85%D8%B1%D8%B3%D9%89+%D9%85%D8%B7%D8%B1%D9%88%D8%AD%2C+Matrouh%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:52:18.227Z",
+  "httpStatus": 200,
+  "response": []
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "key": "happy-pets-minya",
+    "nameEnglish": "Happy Pets Clinic",
+    "nameArabic": "عيادة هابي بتس البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "7 Eye Hospital Street, off Adly Yakan Street, south of ambulance station, Minya",
+    "addressArabic": "7 شارع مستشفى الرمد، متفرع من شارع عدلي يكن، قبلي الإسعاف، المنيا",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Kesm Al-minya",
+    "citySourceCode": "EG2401",
+    "phones": ["01029009209"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Minya/1830739216936837/Happy-Pets-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D8%A9-%D8%A8%D8%A7%D9%84%D9%85%D9%86%D9%8A%D8%A7",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.bizmideast.com/EG/happy-pets-عيادة-الحيوانات-الأليفة-0102-900-9209",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-04-14",
+    "classificationEvidence": "Read individual clinic-feed mirror with operating-hours announcement 2026-04-14, physical urban Minya premises and phone; individually read BizMidEast corroborates same address and pet veterinarian identity. Ignore empty September post as dated operation; do not infer 24h from directory schedule.",
+    "aliases": {
+      "english": ["Happy Pets"],
+      "arabic": ["عيادة الحيوانات الاليفة بالمنيا"]
+    }
+  }
+]

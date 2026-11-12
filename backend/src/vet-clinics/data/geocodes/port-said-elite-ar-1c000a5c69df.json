@@ -1,0 +1,63 @@
+{
+  "query": "الصباح, Port Said, Port Said, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B5%D8%A8%D8%A7%D8%AD%2C+Port+Said%2C+Port+Said%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:11:56.395Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 47693170,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 751676285,
+      "lat": "31.2594783",
+      "lon": "32.2915586",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.05339654001678489,
+      "addresstype": "tertiary",
+      "name": "شارع عبد الله سالم الصباح",
+      "display_name": "شارع عبد الله سالم الصباح, العزب, فاروك, بورسعيد, 42519, مصر",
+      "address": {
+        "road": "شارع عبد الله سالم الصباح",
+        "neighbourhood": "العزب",
+        "hamlet": "فاروك",
+        "city": "بورسعيد",
+        "state": "بورسعيد",
+        "ISO3166-2-lvl4": "EG-PTS",
+        "postcode": "42519",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["31.2584296", "31.2605568", "32.2896989", "32.2934353"]
+    },
+    {
+      "place_id": 47767250,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 392693187,
+      "lat": "31.2523025",
+      "lon": "32.2859274",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05339654001678489,
+      "addresstype": "residential",
+      "name": "شارع الصباح",
+      "display_name": "شارع الصباح, العزب, فاروك, بورسعيد, 42519, مصر",
+      "address": {
+        "road": "شارع الصباح",
+        "neighbourhood": "العزب",
+        "hamlet": "فاروك",
+        "city": "بورسعيد",
+        "state": "بورسعيد",
+        "ISO3166-2-lvl4": "EG-PTS",
+        "postcode": "42519",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["31.2512988", "31.2533218", "32.2841242", "32.2877394"]
+    }
+  ]
+}

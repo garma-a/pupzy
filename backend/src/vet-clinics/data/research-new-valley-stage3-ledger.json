@@ -1,0 +1,96 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F4",
+  "governorate": "New Valley",
+  "searches": [
+    "عيادة بيطرية حيوانات أليفة الخارجة الوادي الجديد",
+    "عيادة بيطرية حيوانات أليفة الداخلة الوادي الجديد",
+    "عيادة حيوانات أليفة جامعة الوادي الجديد مستشفى بيطري هاتف",
+    "\"pet clinic\" \"Kharga\"",
+    "\"veterinary\" \"New Valley\" hospital contact",
+    "\"الخارجة\" \"عيادة بيطرية\" -site:facebook.com -مديرية -قافلة",
+    "\"الداخلة\" \"عيادة\" \"قطط\"",
+    "\"الوادي الجديد\" \"مستشفى بيطري\" \"أليفة\"",
+    "site:nvu.edu.eg \"عيادة\" \"بيطري\""
+  ],
+  "sourcesConsulted": [
+    "https://nvu.edu.eg/vet_med/pdf/Graduate.regulations.pdf",
+    "https://www.almasryalyoum.com/news/details/2475383",
+    "https://www.dostor.org/3645739",
+    "https://www.zoolker.com/vets/wadyAmrAttya",
+    "https://www.zoolker.com/vets/wadyDirect",
+    "https://www.zoolker.com/vets/wadyVetCenter1",
+    "https://www.zoolker.com/vets/wadyVetCenter2"
+  ],
+  "candidates": [],
+  "holdsAndExclusions": [
+    {
+      "name": "Directorate pet clinic, Kharga",
+      "reason": "government-unit",
+      "evidence": "Article dated 2021-12-03 describes a pet clinic at directorate headquarters; real pet treatment, but explicitly a government unit, excluded under brief. Zoolker names the Directorate at Hotel Street, not a private clinic.",
+      "sources": [
+        "https://www.almasryalyoum.com/news/details/2475383",
+        "https://www.dostor.org/3645739",
+        "https://www.zoolker.com/vets/wadyDirect"
+      ]
+    },
+    {
+      "name": "Al Qasr veterinary unit",
+      "reason": "government-unit",
+      "evidence": "Individual page names government veterinary unit; generic vaccination text, no private pet clinic established.",
+      "sources": [
+        "https://www.zoolker.com/vets/wadyVetCenter2"
+      ]
+    },
+    {
+      "name": "Al Doctor, Al Kifah village, Farafra",
+      "reason": "unresolved-pet-treatment-and-contact",
+      "evidence": "Individual Zoolker page generic examinations/vaccinations only, no pet species, no public Egyptian clinic contact. Footer UAE WhatsApp belongs to directory, not clinic.",
+      "sources": [
+        "https://www.zoolker.com/vets/wadyVetCenter1"
+      ]
+    },
+    {
+      "name": "Dr Amr Mahmoud Ahmed Attya, Dakhla",
+      "reason": "unresolved-pet-treatment-and-contact",
+      "evidence": "Individual Zoolker page names clinic/area but only same generic examinations/vaccination template, no pet treatment or clinic contact. Do not assign directory support number.",
+      "sources": [
+        "https://www.zoolker.com/vets/wadyAmrAttya"
+      ]
+    },
+    {
+      "name": "New Valley University veterinary faculty",
+      "reason": "faculty-without-clinic-evidence",
+      "evidence": "Searches find faculty regulations and teaching/ethics documents, not public pet-treatment hospital with contact. Faculty presence does not establish a qualifying teaching hospital.",
+      "sources": [
+        "https://nvu.edu.eg/vet_med/pdf/Graduate.regulations.pdf"
+      ]
+    }
+  ],
+  "counts": {
+    "authored": 0,
+    "retained": 0,
+    "active": 0,
+    "inactiveByReason": {},
+    "precision": {}
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "verdict": "2026-11-12: no sourceable qualifying private pet clinic or university pet-treatment hospital found in this search pass. This is not a claim none exists. 0 active/0 retained; final release coverage must fail until evidence meets unchanged bar.",
+  "exclusionsOrHoldsByReason": {
+    "government-unit": 2,
+    "unresolved-pet-treatment-and-contact": 2,
+    "faculty-without-clinic-evidence": 1
+  },
+  "importAccounting": {
+    "candidates": 0,
+    "imported": 0,
+    "excluded": []
+  },
+  "ownerDecision": {
+    "decidedBy": "owner",
+    "decidedAt": "2026-11-12",
+    "decision": "Ship without a New Valley clinic; reviewed coverage exception until qualifying active data exists.",
+    "coverageExceptionsFile": "coverage-exceptions.json",
+    "nearestClinics": "Existing distance-ranked nearest-clinic lookup remains available; no New Valley clinic data added."
+  }
+}

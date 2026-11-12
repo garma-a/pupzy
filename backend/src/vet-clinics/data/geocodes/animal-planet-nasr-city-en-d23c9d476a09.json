@@ -1,0 +1,36 @@
+{
+  "query": "Sayed Taha Street, Nasr City, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Sayed+Taha+Street%2C+Nasr+City%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:15:17.515Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 49877432,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 28582636,
+      "lat": "30.0470370",
+      "lon": "31.3415012",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Sayed Taha Abd Bar Street",
+      "display_name": "Sayed Taha Abd Bar Street, Eigth Area, Nasr City, Cairo, 11765, Egypt",
+      "address": {
+        "road": "Sayed Taha Abd Bar Street",
+        "neighbourhood": "Eigth Area",
+        "suburb": "Nasr City",
+        "city": "Nasr City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11765",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0469169", "30.0471570", "31.3404552", "31.3425472"]
+    }
+  ]
+}

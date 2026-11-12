@@ -1,0 +1,582 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F2",
+  "governorate": "Ismailia",
+  "searches": [
+    "\"pet clinic\" \"Ismailia\"",
+    "\"Royal Pets\" \"Ismailia\" clinic phone",
+    "عيادة رويال بيطرية الإسماعيلية"
+  ],
+  "sourcesConsulted": [
+    "https://buy.com.eg/en/directory/royal-pets-veterinary-clinic-j8e077",
+    "https://www.voofla.com/EG/Ismailia/103237292451486/Aleef-Veterinary-Center-AVC---%D9%85%D8%B1%D9%83%D8%B2-%D8%A3%D9%84%D9%8A%D9%81-%D9%84%D8%B7%D8%A8-%D9%88%D8%AC%D8%B1%D8%A7%D8%AD%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86",
+    "https://www.voofla.com/EG/Ismailia/827562230605197/Royal-Pets"
+  ],
+  "candidates": [
+    {
+      "key": "royal-pets-ismailia",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Ismailia/827562230605197/Royal-Pets",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        },
+        {
+          "url": "https://buy.com.eg/en/directory/royal-pets-veterinary-clinic-j8e077",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror with 2026 pet/avian surgery and Ismailia branch recruitment. Buy Egypt individually confirms third district/Sheikh Zayed/contact. Job-applicant-only Shorouk contact not imported as Ismailia phone. Own linked site DNS failure cached.",
+      "lastSeenActive": "2026-09-14"
+    },
+    {
+      "key": "aleef-ismailia",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Ismailia/103237292451486/Aleef-Veterinary-Center-AVC---%D9%85%D8%B1%D9%83%D8%B2-%D8%A3%D9%84%D9%8A%D9%81-%D9%84%D8%B7%D8%A8-%D9%88%D8%AC%D8%B1%D8%A7%D8%AD%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror: pet diagnostics and bladder surgery; exact named catalog neighbourhood Old University. Two published contacts and physical premises.",
+      "lastSeenActive": "2026-10-29"
+    }
+  ],
+  "holdsAndExclusions": [],
+  "counts": {
+    "authored": 4,
+    "retained": 4,
+    "active": 4,
+    "inactiveByReason": {},
+    "precision": {
+      "street": 2,
+      "area": 2
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {},
+  "importAccounting": {
+    "candidates": 2,
+    "imported": 2,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D2",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D2-decisions.json",
+    "cities": [
+      {
+        "city": "Ismailia",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Ismailia/67698/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Ismailia/67698",
+          "https://www.petshops1.com/EG/Al-Isma%60iliya/67380/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Al-Isma%60iliya/67380",
+          "https://www.petshops1.com/EG/Ismailieh/67699/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Ismailieh/67699"
+        ],
+        "discoveryEntries": 52,
+        "candidates": [
+          {
+            "key": "453270734819878",
+            "city": "Ismailia",
+            "name": "K9 Vet clinic",
+            "url": "https://www.petshops1.com/EG/Ismailieh/453270734819878/K9-Vet-clinic",
+            "status": "retained",
+            "reason": "k9-ismailia",
+            "evidence": "Individual physical pet surgery/imaging clinic explicitly names Ismailia Third; 2026-08-15 canine thyroid tumour surgery."
+          },
+          {
+            "key": "284703538065803",
+            "city": "Ismailia",
+            "name": "Arena Veterinary Clinic",
+            "url": "https://www.petshops1.com/EG/Ismailia/284703538065803/Arena-Veterinary-Clinic",
+            "status": "retained",
+            "reason": "arena-ismailia",
+            "evidence": "2026-09-07 treated feline toxicity case at physical Osmanon clinic. Osmanon assigned Third district using government commercial-register locality reference CRA53; no map coordinates used."
+          },
+          {
+            "key": "103237292451486",
+            "city": "Ismailia",
+            "name": "Aleef Veterinary Center AVC - مركز أليف لطب و",
+            "url": "https://www.petshops1.com/EG/Ismailia/103237292451486/Aleef-Veterinary-Center-AVC---%D9%85%D8%B1%D9%83%D8%B2-%D8%A3%D9%84%D9%8A%D9%81-%D9%84%D8%B7%D8%A8-%D9%88%D8%AC%D8%B1%D8%A7%D8%AD%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "Aleef already retained with current physical old-university address and contact."
+          },
+          {
+            "key": "1245207055348550",
+            "city": "Ismailia",
+            "name": "Bast Veterinary Clinic",
+            "url": "https://www.petshops1.com/EG/Ismailia/1245207055348550/Bast-Veterinary-Clinic",
+            "status": "held",
+            "reason": "unresolved-treatment-current-identity",
+            "evidence": "Bast older page only grooming excerpt; newer Bast Center investigated as separate discovery identity, no duplicate inferred."
+          },
+          {
+            "key": "199539346737184",
+            "city": "Ismailia",
+            "name": "Ismailia Vet Clinic",
+            "url": "https://www.petshops1.com/EG/Ismailia/199539346737184/Ismailia-Vet-Clinic",
+            "status": "held",
+            "reason": "unresolved-catalog-area-and-stale",
+            "evidence": "Ismailia Vet has physical treatment/contact but dated evidence 2013; Mohamed Ali Street split district unresolved."
+          },
+          {
+            "key": "346871748705121",
+            "city": "Ismailia",
+            "name": "Dr. Ahmed Reda Veterinary Clinic - عيادة الدك",
+            "url": "https://www.petshops1.com/EG/Ismailia/346871748705121/Dr.-Ahmed-Reda-Veterinary-Clinic---%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%AF%D9%83%D8%AA%D9%88%D8%B1--%D8%A3%D8%AD%D9%85%D8%AF-%D8%B1%D8%B6%D8%A7-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "poultry-and-farm-services",
+            "evidence": "Ahmed Reda/Al Hoda visible services sell chicks, feed and farm medication; dedicated pet treatment not established."
+          },
+          {
+            "key": "109911491283265",
+            "city": "Ismailia",
+            "name": "Alarif keneel",
+            "url": "https://www.petshops1.com/EG/Ismailia/109911491283265/Alarif-keneel",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "827562230605197",
+            "city": "Ismailia",
+            "name": "Royal Pets",
+            "url": "https://www.petshops1.com/EG/Ismailia/827562230605197/Royal-Pets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "115517306501139",
+            "city": "Ismailia",
+            "name": "Camula1center",
+            "url": "https://www.petshops1.com/EG/Ismailia/115517306501139/Camula1center",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "189271507818999",
+            "city": "Ismailia",
+            "name": "Dr/ Ahmed Reda - د/ أحمد رضا",
+            "url": "https://www.petshops1.com/EG/Ismailia/189271507818999/Dr--Ahmed-Reda---%D8%AF--%D8%A3%D8%AD%D9%85%D8%AF-%D8%B1%D8%B6%D8%A7",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "251905191332026",
+            "city": "Ismailia",
+            "name": "د/محمد عريبه",
+            "url": "https://www.petshops1.com/EG/Ismailia/251905191332026/%D8%AF-%D9%85%D8%AD%D9%85%D8%AF-%D8%B9%D8%B1%D9%8A%D8%A8%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "101350741288750",
+            "city": "Ismailia",
+            "name": "مزارع الإسماعيلية",
+            "url": "https://www.petshops1.com/EG/Ismailia/101350741288750/%D9%85%D8%B2%D8%A7%D8%B1%D8%B9-%D8%A7%D9%84%D8%A5%D8%B3%D9%85%D8%A7%D8%B9%D9%8A%D9%84%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "100975589245997",
+            "city": "Ismailia",
+            "name": "عالم الحيوانات المفترسه 99%",
+            "url": "https://www.petshops1.com/EG/Ismailia/100975589245997/%D8%B9%D8%A7%D9%84%D9%85-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D9%85%D9%81%D8%AA%D8%B1%D8%B3%D9%87-99%25",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "106521432061327",
+            "city": "Ismailia",
+            "name": "Animal club m.a.s",
+            "url": "https://www.petshops1.com/EG/Ismailia/106521432061327/Animal-club-m.a.s",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "108092544845279",
+            "city": "Ismailia",
+            "name": "Boerboel Hub",
+            "url": "https://www.petshops1.com/EG/Ismailia/108092544845279/Boerboel-Hub",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1774793032555271",
+            "city": "Ismailia",
+            "name": "Moussa house kennel",
+            "url": "https://www.petshops1.com/EG/Ismailia/1774793032555271/Moussa-house-kennel",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "226050317249578",
+            "city": "Ismailia",
+            "name": "مربين ارانب الإسماعيلية",
+            "url": "https://www.petshops1.com/EG/Ismailia/226050317249578/%D9%85%D8%B1%D8%A8%D9%8A%D9%86-%D8%A7%D8%B1%D8%A7%D9%86%D8%A8-%D8%A7%D9%84%D8%A5%D8%B3%D9%85%D8%A7%D8%B9%D9%8A%D9%84%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "100319771951477",
+            "city": "Ismailia",
+            "name": "Happy puppy.is",
+            "url": "https://www.petshops1.com/EG/Ismailia/100319771951477/Happy-puppy.is",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1116313634900709",
+            "city": "Ismailia",
+            "name": "مجد الأصاله - Majd Al Asala",
+            "url": "https://www.petshops1.com/EG/Ismailia/1116313634900709/%D9%85%D8%AC%D8%AF-%D8%A7%D9%84%D8%A3%D8%B5%D8%A7%D9%84%D9%87---Majd-Al-Asala",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "687337544452568",
+            "city": "Ismailia",
+            "name": "نداهة الطيور",
+            "url": "https://www.petshops1.com/EG/Ismailia/687337544452568/%D9%86%D8%AF%D8%A7%D9%87%D8%A9-%D8%A7%D9%84%D8%B7%D9%8A%D9%88%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "102381298847593",
+            "city": "Ismailia",
+            "name": "In Safe hands shelter",
+            "url": "https://www.petshops1.com/EG/Ismailia/102381298847593/In-Safe-hands-shelter",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "802843826254938",
+            "city": "Ismailia",
+            "name": "Fawzy Farm",
+            "url": "https://www.petshops1.com/EG/Ismailia/802843826254938/Fawzy-Farm",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "101988391486150",
+            "city": "Ismailia",
+            "name": "تدريب واجمد كلاب في الاسماعيلية",
+            "url": "https://www.petshops1.com/EG/Ismailia/101988391486150/%D8%AA%D8%AF%D8%B1%D9%8A%D8%A8-%D9%88%D8%A7%D8%AC%D9%85%D8%AF-%D9%83%D9%84%D8%A7%D8%A8-%D9%81%D9%8A-%D8%A7%D9%84%D8%A7%D8%B3%D9%85%D8%A7%D8%B9%D9%8A%D9%84%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "109849840914899",
+            "city": "Ismailia",
+            "name": "ali_z8lool",
+            "url": "https://www.petshops1.com/EG/Ismailia/109849840914899/ali_z8lool",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "115875682311519",
+            "city": "Ismailia",
+            "name": "كلاب للبيع",
+            "url": "https://www.petshops1.com/EG/Ismailia/115875682311519/%D9%83%D9%84%D8%A7%D8%A8-%D9%84%D9%84%D8%A8%D9%8A%D8%B9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "152774257923788",
+            "city": "Ismailia",
+            "name": "أليف فوود",
+            "url": "https://www.petshops1.com/EG/Ismailia/152774257923788/%D8%A3%D9%84%D9%8A%D9%81-%D9%81%D9%88%D9%88%D8%AF",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "106690092293859",
+            "city": "Ismailia",
+            "name": "Botox Hair Treatment by shimoo",
+            "url": "https://www.petshops1.com/EG/Ismailia/106690092293859/Botox-Hair-Treatment-by-shimoo",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1257695297429182",
+            "city": "Ismailia",
+            "name": "A feast for pet's - وليمه للحيوانات الأليفه",
+            "url": "https://www.petshops1.com/EG/Ismailia/1257695297429182/A-feast-for-pet%27s---%D9%88%D9%84%D9%8A%D9%85%D9%87-%D9%84%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A3%D9%84%D9%8A%D9%81%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "103556202505640",
+            "city": "Ismailia",
+            "name": "Ismailia dog hotel",
+            "url": "https://www.petshops1.com/EG/Ismailia/103556202505640/Ismailia-dog-hotel",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "106107875591603",
+            "city": "Ismailia",
+            "name": "مربط الصالح للخيول العربيه الاصيله",
+            "url": "https://www.petshops1.com/EG/Ismailia/106107875591603/%D9%85%D8%B1%D8%A8%D8%B7-%D8%A7%D9%84%D8%B5%D8%A7%D9%84%D8%AD-%D9%84%D9%84%D8%AE%D9%8A%D9%88%D9%84-%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D9%87-%D8%A7%D9%84%D8%A7%D8%B5%D9%8A%D9%84%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "107342131012212",
+            "city": "Ismailia",
+            "name": "Ismailawy Zoo",
+            "url": "https://www.petshops1.com/EG/Ismailia/107342131012212/Ismailawy-Zoo",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "109101998898889",
+            "city": "Ismailia",
+            "name": "Bossi Cat",
+            "url": "https://www.petshops1.com/EG/Ismailia/109101998898889/Bossi-Cat",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "109489038659915",
+            "city": "Ismailia",
+            "name": "بريق",
+            "url": "https://www.petshops1.com/EG/Ismailia/109489038659915/%D8%A8%D8%B1%D9%8A%D9%82",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "101727032662892",
+            "city": "Ismailia",
+            "name": "BAST",
+            "url": "https://www.petshops1.com/EG/Al-Isma%60iliya/101727032662892/BAST",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "113311591679065",
+            "city": "Ismailia",
+            "name": "Ravenna Farmes",
+            "url": "https://www.petshops1.com/EG/Al-Isma%60iliya/113311591679065/Ravenna-Farmes",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "120026748688533",
+            "city": "Ismailia",
+            "name": "Nourhan Ahmed Make -Up Artist",
+            "url": "https://www.petshops1.com/EG/Al-Isma%60iliya/120026748688533/Nourhan-Ahmed-Make--Up-Artist",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "347106615397377",
+            "city": "Ismailia",
+            "name": "الشهبندر",
+            "url": "https://www.petshops1.com/EG/Al-Isma%60iliya/347106615397377/%D8%A7%D9%84%D8%B4%D9%87%D8%A8%D9%86%D8%AF%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "103598541598615",
+            "city": "Ismailia",
+            "name": "PeTs Home",
+            "url": "https://www.petshops1.com/EG/Al-Isma%60iliya/103598541598615/PeTs-Home",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1542579839403047",
+            "city": "Ismailia",
+            "name": "Isen House",
+            "url": "https://www.petshops1.com/EG/Al-Isma%60iliya/1542579839403047/Isen-House",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "227155567861847",
+            "city": "Ismailia",
+            "name": "غواه الاسماعيلية لحمام الزينه و الغزار و تعلي",
+            "url": "https://www.petshops1.com/EG/Al-Isma%60iliya/227155567861847/%D8%BA%D9%88%D8%A7%D9%87-%D8%A7%D9%84%D8%A7%D8%B3%D9%85%D8%A7%D8%B9%D9%8A%D9%84%D9%8A%D8%A9-%D9%84%D8%AD%D9%85%D8%A7%D9%85-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D9%87-%D9%88-%D8%A7%D9%84%D8%BA%D8%B2%D8%A7%D8%B1-%D9%88-%D8%AA%D8%B9%D9%84%D9%8A%D9%85-%D8%A7%D9%84%D9%85%D8%A8%D8%AA%D8%AF%D8%A6%D9%8A%D9%86",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "918271671587332",
+            "city": "Ismailia",
+            "name": "German shepherd for sale",
+            "url": "https://www.petshops1.com/EG/Al-Isma%60iliya/918271671587332/German-shepherd-for-sale",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "152780991565996",
+            "city": "Ismailia",
+            "name": "Dogs for sale in ismailia",
+            "url": "https://www.petshops1.com/EG/Ismailieh/152780991565996/Dogs-for-sale-in-ismailia",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "166585940200257",
+            "city": "Ismailia",
+            "name": "طيور الجنة",
+            "url": "https://www.petshops1.com/EG/Ismailieh/166585940200257/%D8%B7%D9%8A%D9%88%D8%B1-%D8%A7%D9%84%D8%AC%D9%86%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "426816994442263",
+            "city": "Ismailia",
+            "name": "4 Cats Esraa Alaa  \"Makeup Artist\"",
+            "url": "https://www.petshops1.com/EG/Ismailieh/426816994442263/4-Cats-Esraa-Alaa--%22Makeup-Artist%22",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "874601286004546",
+            "city": "Ismailia",
+            "name": "Dawoud haus kennel",
+            "url": "https://www.petshops1.com/EG/Ismailieh/874601286004546/Dawoud-haus-kennel",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "998897233563177",
+            "city": "Ismailia",
+            "name": "تريو فيت تريد",
+            "url": "https://www.petshops1.com/EG/Ismailieh/998897233563177/%D8%AA%D8%B1%D9%8A%D9%88-%D9%81%D9%8A%D8%AA-%D8%AA%D8%B1%D9%8A%D8%AF",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "102264702773914",
+            "city": "Ismailia",
+            "name": "Bast Veterinary Center",
+            "url": "https://www.petshops1.com/EG/Ismailia/102264702773914/Bast-Veterinary-Center",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Physical pet clinic/contact at Fouad Aziz Ghali, Fox; pharmacy is separate. Exact split district not securely established.",
+            "snapshot": "web-evidence/depth-3695b74f98fae1d3.json"
+          },
+          {
+            "key": "931215486744769",
+            "city": "Ismailia",
+            "name": "VET PLUS Ismailia",
+            "url": "https://www.petshops1.com/EG/Ismailia/931215486744769/VET-PLUS-Ismailia",
+            "status": "held",
+            "reason": "pharmacy-or-poultry",
+            "evidence": "Page sells poultry/rabbit drugs and pet food, on-site pet treatment not established.",
+            "snapshot": "web-evidence/depth-da11a35b0bc71ee6.json"
+          },
+          {
+            "key": "104858698889119",
+            "city": "Ismailia",
+            "name": "S.V.C",
+            "url": "https://www.petshops1.com/EG/Ismailia/104858698889119/S.V.C",
+            "status": "held",
+            "reason": "pet-supplies",
+            "evidence": "S.V.C page categorizes premises as pet supplies; no pet treatment.",
+            "snapshot": "web-evidence/depth-588d0f22a621cd17.json"
+          },
+          {
+            "key": "105212725984193",
+            "city": "Ismailia",
+            "name": "Bast Veterinary Pharmacy",
+            "url": "https://www.petshops1.com/EG/Ismailia/105212725984193/Bast-Veterinary-Pharmacy",
+            "status": "held",
+            "reason": "pharmacy",
+            "evidence": "Explicit pharmacy; offers grooming via separate Bast clinic, not treatment here.",
+            "snapshot": "web-evidence/depth-db6abfbe5f2869e9.json"
+          },
+          {
+            "key": "129173367097994",
+            "city": "Ismailia",
+            "name": "Faculty Of Veterinary Medicine Of Suez Canal",
+            "url": "https://www.petshops1.com/EG/Ismailia/129173367097994/Faculty-Of-Veterinary-Medicine-Of-Suez-Canal-University",
+            "status": "held",
+            "reason": "faculty-administration",
+            "evidence": "Faculty page, no public pet hospital evidence on this page.",
+            "snapshot": "web-evidence/depth-ecd8b168aa266ecd.json"
+          },
+          {
+            "key": "389492937576774",
+            "city": "Ismailia",
+            "name": "16th Annual Scientific Conference Vet. Med. S",
+            "url": "https://www.petshops1.com/EG/Al-Isma%60iliya/389492937576774/16th-Annual-Scientific-Conference-Vet.-Med.-SCU",
+            "status": "held",
+            "reason": "conference",
+            "evidence": "Scientific conference not treatment premises.",
+            "snapshot": "web-evidence/depth-4e1a24cbefea87e3.json"
+          }
+        ],
+        "retained": 2,
+        "exclusionsByReason": {
+          "already-retained": 1,
+          "unresolved-treatment-current-identity": 1,
+          "unresolved-catalog-area-and-stale": 1,
+          "poultry-and-farm-services": 1,
+          "no-pet-clinic-evidence-in-discovery": 40,
+          "unresolved-catalog-area": 1,
+          "pharmacy-or-poultry": 1,
+          "pet-supplies": 1,
+          "pharmacy": 1,
+          "faculty-administration": 1,
+          "conference": 1
+        },
+        "individualSnapshots": [
+          "web-evidence/depth-3695b74f98fae1d3.json",
+          "web-evidence/depth-da11a35b0bc71ee6.json",
+          "web-evidence/depth-588d0f22a621cd17.json",
+          "web-evidence/depth-db6abfbe5f2869e9.json",
+          "web-evidence/depth-ecd8b168aa266ecd.json",
+          "web-evidence/depth-4e1a24cbefea87e3.json"
+        ]
+      }
+    ]
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

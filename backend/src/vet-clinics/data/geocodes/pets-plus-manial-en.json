@@ -1,0 +1,36 @@
+{
+  "query": "Dr. Mahmoud Kamel Street, Manial, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Dr.+Mahmoud+Kamel+Street%2C+Manial%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:16:23.677Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50440233,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 51750517,
+      "lat": "30.0224998",
+      "lon": "31.2251737",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Al Doctor Mahmoud Kamel Street",
+      "display_name": "Al Doctor Mahmoud Kamel Street, West Al Manial, Al Manyal, Cairo, 11555, Egypt",
+      "address": {
+        "road": "Al Doctor Mahmoud Kamel Street",
+        "neighbourhood": "West Al Manial",
+        "suburb": "Al Manyal",
+        "city": "Cairo",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11555",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0224307", "30.0225689", "31.2245971", "31.2257503"]
+    }
+  ]
+}

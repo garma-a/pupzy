@@ -1,0 +1,8 @@
+{
+  "query": "Ehab Mekled Street, Suhag-2, Suhag, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Ehab+Mekled+Street%2C+Suhag-2%2C+Suhag%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:49:37.296Z",
+  "httpStatus": 200,
+  "response": []
+}

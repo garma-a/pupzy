@@ -1,0 +1,36 @@
+{
+  "query": "أحمد قاسم جودة, Nasr City, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A3%D8%AD%D9%85%D8%AF+%D9%82%D8%A7%D8%B3%D9%85+%D8%AC%D9%88%D8%AF%D8%A9%2C+Nasr+City%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:15:14.215Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50484669,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 652088553,
+      "lat": "30.0575773",
+      "lon": "31.3369204",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع احمد قاسم جودة",
+      "display_name": "شارع احمد قاسم جودة, المنطقة الأولى, مدينة نصر, القاهرة, 11765, مصر",
+      "address": {
+        "road": "شارع احمد قاسم جودة",
+        "neighbourhood": "المنطقة الأولى",
+        "suburb": "مدينة نصر",
+        "city": "مدينة نصر",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11765",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0537846", "30.0611586", "31.3361435", "31.3374221"]
+    }
+  ]
+}

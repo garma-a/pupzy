@@ -1,0 +1,8 @@
+{
+  "query": "ابو الفتوح عبدالله, عين شمس, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D8%A8%D9%88+%D8%A7%D9%84%D9%81%D8%AA%D9%88%D8%AD+%D8%B9%D8%A8%D8%AF%D8%A7%D9%84%D9%84%D9%87%2C+%D8%B9%D9%8A%D9%86+%D8%B4%D9%85%D8%B3%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:15:30.720Z",
+  "httpStatus": 200,
+  "response": []
+}

@@ -1,0 +1,66 @@
+[
+  {
+    "key": "pet-clinic-arish",
+    "nameEnglish": "Pet Clinic",
+    "nameArabic": "عيادة بت البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Cairo Street, beside Islamco Supermarket, opposite El Husseiny Paper Supplies, El Arish",
+    "addressArabic": "شارع القاهرة، بجوار سوبرماركت إسلامكو، أمام الحسيني للورقيات، العريش",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "El Arish 3",
+    "citySourceCode": "EG3403",
+    "phones": ["01000451694", "01030922467"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/El-Arish/113182310603165/Pet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://arishdoctor.com/doctor/pet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://buy.com.eg/ar/directory/pet-clinic-1jfp8u",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-31",
+    "classificationEvidence": "Read individual clinic-feed mirror: 2026-10-31 physical cat treatment with current booking phone 01000451694; ignore adoption-owner contacts. Individual ArishDoctor confirms identical named street/landmarks and older 01030922467. Individual Buy Egypt ties that same number to third Arish, resolving City without guessing from street-wide news. Its boarding category not used as sole clinical evidence."
+  },
+  {
+    "key": "ibn-sina-arish",
+    "nameEnglish": "Ibn Sina Veterinary Clinic",
+    "nameArabic": "عيادة ابن سينا البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "El Maktabat Street, beside El Ganah El Akhdar Supermarket, before Sad El Wadi, El Arish",
+    "addressArabic": "شارع المكتبات، بجوار سوبرماركت الجناح الأخضر، قبل سد الوادي، العريش",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "El Arish 3",
+    "citySourceCode": "EG3403",
+    "phones": ["01016652771"],
+    "sources": [
+      {
+        "url": "https://buy.com.eg/ar/directory/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-%D8%A7%D8%A8%D9%86-%D8%B3%D9%8A%D9%86%D8%A7-km1kbb",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2025-01-21",
+    "classificationEvidence": "Read individual pet-clinic directory entry: public phone, third Arish premises and dated client vaccination/checkup review. Stripped embedded Google Maps URL from textual address and never used its coordinates. Undated templated business description distinguished from dated review evidence; contact confirmation recommended."
+  }
+]

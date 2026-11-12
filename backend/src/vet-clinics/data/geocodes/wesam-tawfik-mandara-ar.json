@@ -1,0 +1,72 @@
+{
+  "query": "النبوي المهندس, المندرة, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%86%D8%A8%D9%88%D9%8A+%D8%A7%D9%84%D9%85%D9%87%D9%86%D8%AF%D8%B3%2C+%D8%A7%D9%84%D9%85%D9%86%D8%AF%D8%B1%D8%A9%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:55:18.832Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 48217101,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 750401945,
+      "lat": "31.2782014",
+      "lon": "30.0164425",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.053409484245059854,
+      "addresstype": "tertiary",
+      "name": "شارع النبوي المهندس",
+      "display_name": "شارع النبوي المهندس, المندرة, الإسكندرية, 21919, مصر",
+      "address": {
+        "road": "شارع النبوي المهندس",
+        "suburb": "المندرة",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21919",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": [
+        "31.2762127",
+        "31.2802602",
+        "30.0157754",
+        "30.0172820"
+      ]
+    },
+    {
+      "place_id": 48241745,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 178126177,
+      "lat": "31.2709373",
+      "lon": "30.0232449",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.053409484245059854,
+      "addresstype": "tertiary",
+      "name": "شارع النبوى المهندس",
+      "display_name": "شارع النبوى المهندس, الملاحة, المندرة, الإسكندرية, 21923, مصر",
+      "address": {
+        "road": "شارع النبوى المهندس",
+        "neighbourhood": "الملاحة",
+        "suburb": "المندرة",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21923",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": [
+        "31.2646168",
+        "31.2762127",
+        "30.0172820",
+        "30.0279026"
+      ]
+    }
+  ]
+}

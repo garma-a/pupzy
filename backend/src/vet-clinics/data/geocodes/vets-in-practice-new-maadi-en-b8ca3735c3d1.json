@@ -1,0 +1,8 @@
+{
+  "query": "24DA Shokry Abdel Halim Street, Taksim Al Laslky, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=24DA+Shokry+Abdel+Halim+Street%2C+Taksim+Al+Laslky%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:49:00.809Z",
+  "httpStatus": 200,
+  "response": []
+}

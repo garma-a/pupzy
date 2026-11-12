@@ -1,0 +1,8 @@
+{
+  "query": "مصطفى حلمي, Almazah, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%85%D8%B5%D8%B7%D9%81%D9%89+%D8%AD%D9%84%D9%85%D9%8A%2C+Almazah%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:25.132Z",
+  "httpStatus": 200,
+  "response": []
+}

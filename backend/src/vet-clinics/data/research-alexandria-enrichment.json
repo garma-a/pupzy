@@ -1,0 +1,433 @@
+[
+  {
+    "key": "alexandria-pet-center-miami",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/589893847769567/Alexandria-Pet-Center-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A7%D8%AA-%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D9%85%D8%AD%D9%85%D8%AF-%D8%B9%D9%84%D9%89-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "Current clinic feed discusses pet care and lists the matching Miami contacts, 01093611154 and 035535902. The newest substantial dated post is 31 October 2026. This page does not establish current activity at Smouha or Toson.",
+    "aliases": {
+      "english": ["Alexandria Pet Center"],
+      "arabic": ["عيادات دكتور محمد على البيطريه"]
+    },
+    "lastSeenActive": "2026-10-31"
+  },
+  {
+    "key": "alexandria-pet-center-abu-youssef",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/589893847769567/Alexandria-Pet-Center-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A7%D8%AA-%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D9%85%D8%AD%D9%85%D8%AF-%D8%B9%D9%84%D9%89-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "Current clinic feed discusses pet care and lists the matching Abu Youssef branch contact, 01024052115. The newest substantial dated post is 31 October 2026. This page does not establish current activity at Smouha or Toson.",
+    "aliases": {
+      "english": ["Alexandria Pet Center"],
+      "arabic": ["عيادات دكتور محمد على البيطريه"]
+    },
+    "lastSeenActive": "2026-10-31"
+  },
+  {
+    "key": "el-horreya-ibrahimia",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/654049931643769/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%AD%D8%B1%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The clinic announcement lists Ibrahimia 01204158536 / 035936382 and Cleopatra 01552118050, confirming both as one chain. The 20 August entry has no visible content; the substantial 31 July 2026 branch-linked announcement supports the recorded date.",
+    "aliases": {
+      "english": ["Freedom Veterinary Clinics"],
+      "arabic": ["عيادة الحرية البيطرية", "عيادات الحرية البيطرية"]
+    },
+    "lastSeenActive": "2026-07-31"
+  },
+  {
+    "key": "el-horreya-cleopatra",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/654049931643769/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%AD%D8%B1%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The clinic announcement lists Ibrahimia 01204158536 / 035936382 and Cleopatra 01552118050, confirming both as one chain. The 20 August entry has no visible content; the substantial 31 July 2026 branch-linked announcement supports the recorded date.",
+    "aliases": {
+      "english": ["Freedom Veterinary Clinics"],
+      "arabic": ["عيادة الحرية البيطرية", "عيادات الحرية البيطرية"]
+    },
+    "lastSeenActive": "2026-07-31"
+  },
+  {
+    "key": "elmasria-kom-el-dikka",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/1594013977557022/Elmasria-vet-clinic%0A%D8%AF.-%D8%A7%D9%86%D8%AC%D9%8A-%D8%AD%D9%85%D9%88%D8%AF%D9%87-%D8%A7%D9%84%D9%85%D8%B5%D8%B1%D9%8A",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 1 September 2025 clinic announcement repeats pet services and opening hours, 5–11 pm except Friday. Clinic name and 01212275303 match the existing record.",
+    "aliases": {
+      "english": ["Elmasria vet clinic"],
+      "arabic": ["د. انجي حموده المصري"]
+    },
+    "lastSeenActive": "2025-09-01"
+  },
+  {
+    "key": "dr-samer-smouha",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/1219307414804562/Dr.-Samer-Veterinary-Center--%D9%85%D8%B1%D9%83%D8%B2-%D8%AF.-%D8%B3%D8%A7%D9%85%D8%B1-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%89",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 29 August 2026 clinic pet-care announcement uses the same clinic name and 01007737701 as the existing record.",
+    "aliases": {
+      "english": ["Dr. Samer Veterinary Center"],
+      "arabic": ["مركز د. سامر البيطرى"]
+    },
+    "lastSeenActive": "2026-08-29"
+  },
+  {
+    "key": "amazon-miami",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/1573808602832347/Amazon-Pets-Clinic---%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A3%D9%85%D8%A7%D8%B2%D9%88%D9%86-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 30 October 2026 clinic case describes a cat treated for intestinal obstruction. The phone 01271751544 and 280 Gamal Abdel Nasser Street, Miami, match the existing record.",
+    "aliases": {
+      "english": ["Amazon Pets Clinic"],
+      "arabic": ["عيادة أمازون البيطرية"]
+    },
+    "lastSeenActive": "2026-10-30"
+  },
+  {
+    "key": "dr-strange-asafra",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/107123467784071/Dr.-Strange-Vet-Clinic---%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 15 September 2026 clinic care announcement repeats the matching contact details and 24 Ahmed Taysir Street, Asafra.",
+    "aliases": {
+      "english": ["Dr. Strange Vet Clinic"],
+      "arabic": ["عيادة دكتور سترينج البيطرية"]
+    },
+    "lastSeenActive": "2026-09-15"
+  },
+  {
+    "key": "el-raml-saba-pasha",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/323201614441414/El-Raml-Vet.-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The latest dated clinic appointment announcement is 28 June 2017. The same 035824210 and Saba Pasha address establish identity. Dated evidence is old; retain that limitation alongside the second directory source.",
+    "aliases": {
+      "english": ["El Raml Vet. Clinic"],
+      "arabic": ["عيادة الرمل البيطرية"]
+    },
+    "lastSeenActive": "2017-06-28"
+  },
+  {
+    "key": "animal-planet-sporting",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/448810875203814/Animal-planet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 18 August 2026 clinic recruitment post gives 194 Port Said Street, Sporting, and matching 01100022210. Its clinic description confirms medical diagnostics and surgery.",
+    "aliases": {
+      "english": ["Animal planet clinic", "Animal Planet Veterinary Clinic"],
+      "arabic": ["عيادة أنيمال بلانت البيطرية"]
+    },
+    "lastSeenActive": "2026-08-18"
+  },
+  {
+    "key": "miami-veterinary",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/110589947532283/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D9%85%D9%8A%D8%A7%D9%85%D9%8A-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-Miami-Vet.-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 30 October 2026 clinic case describes successful pet treatment, with matching 01018250720. Its source address is Kiro Tower behind Pharaonic Cafe, off Iskandar Ibrahim Street.",
+    "aliases": {
+      "english": ["Miami Vet. Clinic"],
+      "arabic": ["عيادة ميامي البيطرية"]
+    },
+    "lastSeenActive": "2026-10-30"
+  },
+  {
+    "key": "kashef-saba-pasha",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/649736831549712/Kashef-Vet-Clinics",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 27 September 2026 turtle examination post shares the existing landline 035822308. Current mobile 01050507217 and 61 Abdel Salam Aref Street differ from the older record. Review these fields; this is the same clinic, not an unrelated new identity.",
+    "aliases": {
+      "english": ["Kashef Vet Clinics", "Kashef Vet Clinic", "Kashif Vet Clinic"],
+      "arabic": ["عيادة كاشف البيطرية"]
+    },
+    "lastSeenActive": "2026-09-27",
+    "suggestedPhones": ["01050507217", "035822308"],
+    "suggestedAddressArabic": "٦١ شارع عبد السلام عارف (ترام النصر)، أمام بنك الإسكندرية، الدور الأول شمال السلم، سابا باشا، الإسكندرية"
+  },
+  {
+    "key": "kashif-saba-pasha",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/649736831549712/Kashef-Vet-Clinics",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 27 September 2026 turtle examination post shares the existing landline 035822308. Current mobile 01050507217 and 61 Abdel Salam Aref Street differ from the older record. Review these fields; this is the same clinic, not an unrelated new identity.",
+    "aliases": {
+      "english": ["Kashef Vet Clinics", "Kashef Vet Clinic", "Kashif Vet Clinic"],
+      "arabic": ["عيادة كاشف البيطرية"]
+    },
+    "lastSeenActive": "2026-09-27",
+    "suggestedPhones": ["01050507217", "035822308"],
+    "suggestedAddressArabic": "٦١ شارع عبد السلام عارف (ترام النصر)، أمام بنك الإسكندرية، الدور الأول شمال السلم، سابا باشا، الإسكندرية"
+  },
+  {
+    "key": "aleefy-bitash",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/101038188611784/Aleefy-Veterinary-Hospital",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The clinic feed identifies Aleefy Veterinary Hospital on Andalous Street, Bitash. Its 31 October 2026 post celebrates eight years of the practice. Current contact 01098959107 differs from the older directory mobile; name and location agree. Do not create another hospital.",
+    "aliases": {
+      "english": ["Aleefy Veterinary Hospital", "Alivi Veterinary Hospital"],
+      "arabic": ["مستشفى أليفي البيطرية"]
+    },
+    "lastSeenActive": "2026-10-31",
+    "suggestedPhones": ["01098959107"],
+    "suggestedWebsite": "https://www.aleefyclinic.com/"
+  },
+  {
+    "key": "pets-plus-ibrahimia",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/1648673325356755/Pets-Plus-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 31 October 2026 clinic announcement repeats 60 El Geish Road, Ibrahimia. Profile 01027712009 remains present, while recent posts direct callers to 035902120 and WhatsApp 01555587825.",
+    "aliases": {
+      "english": ["Pets Plus clinic"],
+      "arabic": ["عيادة بيتس بلس"]
+    },
+    "lastSeenActive": "2026-10-31",
+    "suggestedPhones": ["035902120", "01555587825", "01027712009"]
+  },
+  {
+    "key": "petopia-ibrahimia",
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Alexandria/1452713298081351/Petopia-Vet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 11 February 2026 clinic announcement describes resident veterinary supervision during boarding. A 5 February clinical case describes a cat treated for FIP. The phone 01099777712 and 170 Port Said Street match the existing record.",
+    "aliases": {
+      "english": ["Petopia Vet clinic"],
+      "arabic": ["عيادة بتوبيا البيطرية"]
+    },
+    "lastSeenActive": "2026-02-11"
+  },
+  {
+    "key": "joemany-sidi-bishr",
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Alexandria/101384739107223/Joemany-Vet-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 28 October 2026 clinic care announcement has matching 01113763222. The current profile says El Zorkany Square, Miami, rather than the older Sidi Bishr locality; review location before reimport.",
+    "aliases": {
+      "english": ["Joemany Vet Clinic"],
+      "arabic": ["عيادة جوماني البيطرية"]
+    },
+    "lastSeenActive": "2026-10-28",
+    "reviewFlags": [
+      "Current source address Elzorkany Square Miami, Kokyman Street differs from existing locality; review city/address."
+    ],
+    "suggestedAddressEnglish": "El Zorkany Square, Kokyman Street, Miami, Alexandria",
+    "suggestedAddressArabic": "ميدان الزرقاني، شارع كوكيمان، ميامي، الإسكندرية",
+    "suggestedAddressArabicOrigin": "transliterated",
+    "suggestedArea": "Miami"
+  },
+  {
+    "key": "orca-louran",
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Alexandria/207831312412182/Orca-Vet",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 28 September 2026 clinic client-visit announcement repeats matching 01011618558 and 713 Abou Kir Street, Louran.",
+    "aliases": {
+      "english": ["Orca Vet", "ORCA VET CENTER"],
+      "arabic": ["مركز أوركا البيطري"]
+    },
+    "lastSeenActive": "2026-09-28"
+  },
+  {
+    "key": "facedog-raml",
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Alexandria/102883401313978/FaceDog-Vet-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 29 July 2023 clinic availability announcement shares matching 01096677558. A 24 July post offers free examination. The clinic explicitly announced a 2023 move to 24 Adi Ibn Zeid Street, Zizenia, Riyadh Tower; review the old address.",
+    "aliases": {
+      "english": ["FaceDog Vet Clinic"],
+      "arabic": ["عيادة فيس دوج البيطرية"]
+    },
+    "lastSeenActive": "2023-07-29",
+    "reviewFlags": [
+      "Clinic explicitly moved in2023 to24AdiIbnZeidStreetZizenia,RiyadhTower; old location may be stale."
+    ],
+    "suggestedAddressEnglish": "Riyadh Tower, 24 Adi Ibn Zeid Street (formerly El Amir Halim), ground floor, Zizinia, Alexandria",
+    "suggestedAddressArabic": "برج الرياض، 24 شارع عدي بن زيد (الأمير حليم سابقاً)، الدور الأرضي، زيزنيا، الإسكندرية",
+    "suggestedAddressArabicOrigin": "source",
+    "suggestedArea": "Zizinia"
+  },
+  {
+    "key": "delta-sidi-gaber",
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Alexandria/2336217863101784/%D8%B9%D9%8A%D8%A7%D8%AF%D9%87-%D8%A7%D9%84%D8%AF%D9%84%D8%AA%D8%A7-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87-%D8%A8%D8%A7%D9%84%D8%A7%D8%B3%D9%83%D9%86%D8%AF%D8%B1%D9%8A%D9%87",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 26 May 2023 clinic pet-care post supplies dated clinical activity. Newer July/October posts are greetings or product ads and were not used. Matching 01003056417 and 17 Medhat Seif El Yazal Street, Cleopatra, establish identity.",
+    "aliases": {
+      "english": ["Delta Veterinary Clinic"],
+      "arabic": ["عياده الدلتا البيطريه بالاسكندريه"]
+    },
+    "lastSeenActive": "2023-05-26"
+  },
+  {
+    "key": "vets-for-pets-smouha",
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Alexandria/104985061784352/Vets-for-pets-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 30 October 2026 clinic video concerns geriatric pets. Matching 01551341037 and 20 Mohamed Fawzi Street (formerly 302), Judges Subdivision, Smouha, establish identity.",
+    "aliases": {
+      "english": ["Vets for pets clinic"],
+      "arabic": ["عيادة فيتس فور بيتس البيطرية"]
+    },
+    "lastSeenActive": "2026-10-30"
+  },
+  {
+    "key": "pet-zone-kafr-abdo",
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Alexandria/109006487583588/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D9%83%D9%81%D8%B1-%D8%B9%D8%A8%D8%AF%D9%87-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87---Pet-Zone-veterinary-center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 23 September 2026 ringworm case describes treatment, with matching 01270839965 and Kafr Abdo address.",
+    "aliases": {
+      "english": ["Pet Zone veterinary center"],
+      "arabic": ["عيادة كفر عبده البيطريه"]
+    },
+    "lastSeenActive": "2026-09-23"
+  },
+  {
+    "key": "pet-city-victoria",
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Alexandria/109532220564439/Pet-city",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 15 September 2026 fracture surgery case gives matching 01112467333 and Dr Ahmed El Bayoumi. Its recent address is 724 El Horreya Road, below Health Insurance; review against the existing record.",
+    "aliases": {
+      "english": ["Pet city", "Pet City Veterinary Clinic"],
+      "arabic": ["بت سيتي", "عيادة بت سيتي البيطرية"]
+    },
+    "lastSeenActive": "2026-09-15"
+  },
+  {
+    "key": "petsia-sidi-bishr",
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Alexandria/109503988043584/Petsia-Vet-Clinic-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%AA%D8%B3%D9%8A%D8%A7-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The 5 August 2026 clinic post describes pyometra cases, with matching 01126628801. Its current address is Miami, Jihan Square, above Dubai Phone and Babel Kids Area. This differs from the older 56 Mohamed Naguib, Sidi Bishr address: possible move, not evidence of two branches.",
+    "aliases": {
+      "english": ["Petsia Vet Clinic"],
+      "arabic": ["عيادة بيتسيا البيطرية"]
+    },
+    "lastSeenActive": "2026-08-05",
+    "suggestedPhones": ["01126628801", "01106065877"],
+    "suggestedAddressArabic": "دوران جيهان مباشرة، أمام مطعم شام الزين، بجوار كاريزما للملابس، أعلى دبي فون وبابل كيدز أريا، الدور الأول، ميامي، الإسكندرية",
+    "reviewFlags": ["Current clinic address differs from olderSidiBishraddress; review city/address."],
+    "suggestedArea": "Miami",
+    "suggestedAddressEnglish": "Jihan Square, opposite Sham El Zein Restaurant, beside Charisma clothing, above Dubai Phone and Babel Kids Area, first floor, Miami, Alexandria"
+  },
+  {
+    "key": "almotawakkel-moharam-bek",
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/100732449311691/Dr-Abdallah-Almotawakkel---%D8%AF.-%D8%B9%D8%A8%D8%AF%D8%A7%D9%84%D9%84%D9%87-%D8%A7%D9%84%D9%85%D8%AA%D9%88%D9%83%D9%84",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.bizmideast.com/EG/almotawakkel-pet-center-0111-423-5449",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "evidence": "The physician page matches 01114235449 and explicitly links Almotawakkel Pet Center. Its 2024 posts mostly concern training, so no dated premises activity is asserted. An individually read BizMidEast entry confirms 14 Haret Al Romani, Moharam Bek, the phone and pet medical services; these sources can replace LocalEgypt. BizMidEast hours are 11 am–11 pm except Friday, so the previous 24-hour flag lacks retained support.",
+    "aliases": {
+      "english": ["Almotawakkel Pet Center"],
+      "arabic": ["د. عبدالله المتوكل"]
+    },
+    "suggestedIs24Hours": false
+  }
+]

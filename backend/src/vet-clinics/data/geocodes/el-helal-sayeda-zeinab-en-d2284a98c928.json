@@ -1,0 +1,8 @@
+{
+  "query": "El Selakhana Street, السيدة زينب, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Selakhana+Street%2C+%D8%A7%D9%84%D8%B3%D9%8A%D8%AF%D8%A9+%D8%B2%D9%8A%D9%86%D8%A8%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:15:04.313Z",
+  "httpStatus": 200,
+  "response": []
+}

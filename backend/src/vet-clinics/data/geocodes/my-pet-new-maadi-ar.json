@@ -1,0 +1,35 @@
+{
+  "query": "حسن نصار, المعادي الجديدة, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%AD%D8%B3%D9%86+%D9%86%D8%B5%D8%A7%D8%B1%2C+%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%AF%D9%8A+%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:39:52.081Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51154921,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 36698758,
+      "lat": "29.9752319",
+      "lon": "31.2880269",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع حسن نصار",
+      "display_name": "شارع حسن نصار, المعادي الجديدة, حلوان, القاهرة, 11742, مصر",
+      "address": {
+        "road": "شارع حسن نصار",
+        "neighbourhood": "المعادي الجديدة",
+        "city": "حلوان",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11742",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9751485", "29.9753153", "31.2867884", "31.2892654"]
+    }
+  ]
+}

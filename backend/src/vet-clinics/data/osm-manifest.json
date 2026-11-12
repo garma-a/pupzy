@@ -1,0 +1,10 @@
+{
+  "endpoint": "https://overpass-api.de/api/interpreter",
+  "fetchedAt": "2026-11-11T23:51:13.942721+00:00",
+  "query": "[out:json][timeout:180];\narea[\"ISO3166-1\"=\"EG\"][\"admin_level\"=\"2\"]->.egypt;\n(\n  nwr[\"amenity\"=\"veterinary\"](area.egypt);\n  nwr[\"healthcare\"=\"veterinary\"](area.egypt);\n  nwr[\"shop\"=\"pet\"](area.egypt);\n  nwr[~\"^name(:.*)?$\"~\"بيطر|[Vv][Ee][Tt]|[Aa]nimal [Hh]ospital\"](area.egypt);\n);\nout center tags;\n",
+  "sha256": "934ded5df5b66b6e8a4a932014e4c0581a49dc4d292d40a42b30c828bfc94a96",
+  "elements": 163,
+  "license": "ODbL 1.0",
+  "attribution": "© OpenStreetMap contributors",
+  "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/"
+}

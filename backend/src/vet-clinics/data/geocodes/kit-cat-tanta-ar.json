@@ -1,0 +1,8 @@
+{
+  "query": "مستشفى أم القرى, قسم ثان طنطا, Gharbia, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%85%D8%B3%D8%AA%D8%B4%D9%81%D9%89+%D8%A3%D9%85+%D8%A7%D9%84%D9%82%D8%B1%D9%89%2C+%D9%82%D8%B3%D9%85+%D8%AB%D8%A7%D9%86+%D8%B7%D9%86%D8%B7%D8%A7%2C+Gharbia%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:17:14.992Z",
+  "httpStatus": 200,
+  "response": []
+}

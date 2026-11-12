@@ -1,0 +1,35 @@
+{
+  "query": "خضر التوني, عمارات التوفيق, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%AE%D8%B6%D8%B1+%D8%A7%D9%84%D8%AA%D9%88%D9%86%D9%8A%2C+%D8%B9%D9%85%D8%A7%D8%B1%D8%A7%D8%AA+%D8%A7%D9%84%D8%AA%D9%88%D9%81%D9%8A%D9%82%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:48:04.921Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50903455,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 26194764,
+      "lat": "30.0740641",
+      "lon": "31.3195795",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "tertiary",
+      "name": "شارع خضر التوني",
+      "display_name": "شارع خضر التوني, عمارات التوفيق, مدينة نصر, القاهرة, 11759, مصر",
+      "address": {
+        "road": "شارع خضر التوني",
+        "neighbourhood": "عمارات التوفيق",
+        "city": "مدينة نصر",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11759",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0726579", "30.0754376", "31.3170320", "31.3221330"]
+    }
+  ]
+}

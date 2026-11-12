@@ -1,0 +1,8 @@
+{
+  "query": "El Shaheed Mohamed Abdel Karim Street, Badrashain, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Shaheed+Mohamed+Abdel+Karim+Street%2C+Badrashain%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:20:17.279Z",
+  "httpStatus": 200,
+  "response": []
+}

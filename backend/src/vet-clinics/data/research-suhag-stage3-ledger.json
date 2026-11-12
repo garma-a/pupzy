@@ -1,0 +1,435 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F3",
+  "governorate": "Suhag",
+  "searches": [
+    "عيادة بيطرية سوهاج حيوانات أليفة رقم",
+    "\"Pet's hut\" clinic Sohag address phone",
+    "\"ابن لقمان\" \"سوهاج\" \"قسم\""
+  ],
+  "sourcesConsulted": [
+    "https://www.voofla.com/EG/Sohag/1656280728029872/Pet%27s-Hut-Vet-clinic",
+    "https://www.youm7.com/story/2019/2/3/السيطرة-على-حريقين-منفصلين-فى-سوهاج-دون-حدوث-إصابات/4126987"
+  ],
+  "candidates": [
+    {
+      "key": "pets-hut-sohag",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Sohag/1656280728029872/Pet%27s-Hut-Vet-clinic",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror: pet treatment/vaccination, current premises/contact. Malformed doubled 015 in September 15 post rejected, header E.164 and September 23 contact agree. Street administrative assignment independently researched: 2019 police report explicitly places Ibn Luqman Street in first Sohag; it is location evidence only, not a second operating witness.",
+      "lastSeenActive": "2026-09-23"
+    }
+  ],
+  "holdsAndExclusions": [],
+  "counts": {
+    "authored": 3,
+    "retained": 3,
+    "active": 3,
+    "inactiveByReason": {},
+    "precision": {
+      "area": 3
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "locationSources": [
+    {
+      "url": "https://www.youm7.com/story/2019/2/3/السيطرة-على-حريقين-منفصلين-فى-سوهاج-دون-حدوث-إصابات/4126987",
+      "evidence": "Police report places Ibn Luqman Street in first Sohag. Administrative street assignment only, not clinic operational evidence."
+    }
+  ],
+  "exclusionsOrHoldsByReason": {},
+  "importAccounting": {
+    "candidates": 1,
+    "imported": 1,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D3",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D3-decisions.json",
+    "cities": [
+      {
+        "city": "Sohag",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Sohag/67950/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Sohag/67950"
+        ],
+        "discoveryEntries": 36,
+        "candidates": [
+          {
+            "key": "114227087030364",
+            "city": "Sohag",
+            "name": "Dr Meaw",
+            "url": "https://www.petshops1.com/EG/Sohag/114227087030364/Dr-Meaw",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "986461167873194",
+            "city": "Sohag",
+            "name": "عبدالعزيز الجعفري",
+            "url": "https://www.petshops1.com/EG/Sohag/986461167873194/%D8%B9%D8%A8%D8%AF%D8%A7%D9%84%D8%B9%D8%B2%D9%8A%D8%B2-%D8%A7%D9%84%D8%AC%D8%B9%D9%81%D8%B1%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1163705923740442",
+            "city": "Sohag",
+            "name": "مركز التلقيح الصناعى للماشيةbovine artificial",
+            "url": "https://www.petshops1.com/EG/Sohag/1163705923740442/%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D8%AA%D9%84%D9%82%D9%8A%D8%AD-%D8%A7%D9%84%D8%B5%D9%86%D8%A7%D8%B9%D9%89-%D9%84%D9%84%D9%85%D8%A7%D8%B4%D9%8A%D8%A9bovine-artificial-insemination-center",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "104842832061103",
+            "city": "Sohag",
+            "name": "Modern Furniture",
+            "url": "https://www.petshops1.com/EG/Sohag/104842832061103/Modern-Furniture",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "108523705424037",
+            "city": "Sohag",
+            "name": "Kero Lotfy",
+            "url": "https://www.petshops1.com/EG/Sohag/108523705424037/Kero-Lotfy",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "103807376132307",
+            "city": "Sohag",
+            "name": "El Soury",
+            "url": "https://www.petshops1.com/EG/Sohag/103807376132307/El-Soury",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "103719415333577",
+            "city": "Sohag",
+            "name": "Pets&pets sohag",
+            "url": "https://www.petshops1.com/EG/Sohag/103719415333577/Pets%26pets-sohag",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "405239196969655",
+            "city": "Sohag",
+            "name": "حابى كافية - HABI Cafe",
+            "url": "https://www.petshops1.com/EG/Sohag/405239196969655/%D8%AD%D8%A7%D8%A8%D9%89-%D9%83%D8%A7%D9%81%D9%8A%D8%A9---HABI-Cafe",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "113645597127043",
+            "city": "Sohag",
+            "name": "Healthy pet - د. خالد حافظ",
+            "url": "https://www.petshops1.com/EG/Sohag/113645597127043/Healthy-pet---%D8%AF.-%D8%AE%D8%A7%D9%84%D8%AF-%D8%AD%D8%A7%D9%81%D8%B8",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "564655800544927",
+            "city": "Sohag",
+            "name": "مشتل المهندس",
+            "url": "https://www.petshops1.com/EG/Sohag/564655800544927/%D9%85%D8%B4%D8%AA%D9%84-%D8%A7%D9%84%D9%85%D9%87%D9%86%D8%AF%D8%B3",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1084117351449870",
+            "city": "Sohag",
+            "name": "مركز خيول لطب وتناسل ورعاية الخيول",
+            "url": "https://www.petshops1.com/EG/Sohag/1084117351449870/%D9%85%D8%B1%D9%83%D8%B2-%D8%AE%D9%8A%D9%88%D9%84-%D9%84%D8%B7%D8%A8-%D9%88%D8%AA%D9%86%D8%A7%D8%B3%D9%84-%D9%88%D8%B1%D8%B9%D8%A7%D9%8A%D8%A9-%D8%A7%D9%84%D8%AE%D9%8A%D9%88%D9%84",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "100203862288773",
+            "city": "Sohag",
+            "name": "Pets Tags بيتس تاجز",
+            "url": "https://www.petshops1.com/EG/Sohag/100203862288773/Pets-Tags-%D8%A8%D9%8A%D8%AA%D8%B3-%D8%AA%D8%A7%D8%AC%D8%B2",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "100677278412485",
+            "city": "Sohag",
+            "name": "Nemo_نيمو",
+            "url": "https://www.petshops1.com/EG/Sohag/100677278412485/Nemo_%D9%86%D9%8A%D9%85%D9%88",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "108031285679786",
+            "city": "Sohag",
+            "name": "Happy pets online sohag",
+            "url": "https://www.petshops1.com/EG/Sohag/108031285679786/Happy-pets-online-sohag",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "112528758411871",
+            "city": "Sohag",
+            "name": "Aleef food - أليف فوود",
+            "url": "https://www.petshops1.com/EG/Sohag/112528758411871/Aleef-food---%D8%A3%D9%84%D9%8A%D9%81-%D9%81%D9%88%D9%88%D8%AF",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "113977924112783",
+            "city": "Sohag",
+            "name": "عصافير البادجي - Budgie finches",
+            "url": "https://www.petshops1.com/EG/Sohag/113977924112783/%D8%B9%D8%B5%D8%A7%D9%81%D9%8A%D8%B1-%D8%A7%D9%84%D8%A8%D8%A7%D8%AF%D8%AC%D9%8A---Budgie-finches",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "115227161162428",
+            "city": "Sohag",
+            "name": "Corso black kennel",
+            "url": "https://www.petshops1.com/EG/Sohag/115227161162428/Corso-black-kennel",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "177686905434641",
+            "city": "Sohag",
+            "name": "Antiqatoo- انتيكاتو",
+            "url": "https://www.petshops1.com/EG/Sohag/177686905434641/Antiqatoo--%D8%A7%D9%86%D8%AA%D9%8A%D9%83%D8%A7%D8%AA%D9%88",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "258357754240727",
+            "city": "Sohag",
+            "name": "مزرعة  بادجى  لطيور الزينة",
+            "url": "https://www.petshops1.com/EG/Sohag/258357754240727/%D9%85%D8%B2%D8%B1%D8%B9%D8%A9--%D8%A8%D8%A7%D8%AF%D8%AC%D9%89--%D9%84%D8%B7%D9%8A%D9%88%D8%B1-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "820301184757079",
+            "city": "Sohag",
+            "name": "Selling ornamental fish_ بيع اسماك الزينه",
+            "url": "https://www.petshops1.com/EG/Sohag/820301184757079/Selling-ornamental-fish_-%D8%A8%D9%8A%D8%B9-%D8%A7%D8%B3%D9%85%D8%A7%D9%83-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "821074954741270",
+            "city": "Sohag",
+            "name": "الماعز البور",
+            "url": "https://www.petshops1.com/EG/Sohag/821074954741270/%D8%A7%D9%84%D9%85%D8%A7%D8%B9%D8%B2-%D8%A7%D9%84%D8%A8%D9%88%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "528518637234236",
+            "city": "Sohag",
+            "name": "Dog & cat clinic سوهاج",
+            "url": "https://www.petshops1.com/EG/Sohag/528518637234236/Dog-%26-cat-clinic-%D8%B3%D9%88%D9%87%D8%A7%D8%AC",
+            "status": "retained",
+            "reason": "dog-cat-sohag",
+            "evidence": "2026-10-29 treated pet case at current Ehab Mekled premises. East Sohag street identified by governorate disinfection statement; El Zahraa Qism 2 police statement independently confirms district. Older Abd El Halim Mahmoud/Awlad Naseer directory address not substituted.",
+            "snapshot": "web-evidence/depth-d63a1a282196a6f8.json"
+          },
+          {
+            "key": "114146793781313",
+            "city": "Sohag",
+            "name": "Vets for Pets",
+            "url": "https://www.petshops1.com/EG/Sohag/114146793781313/Vets-for-Pets",
+            "status": "retained",
+            "reason": "vets-for-pets-sohag",
+            "evidence": "Individual pet medical/surgery clinic publishes current hours/address/phone. Abu Simbel in East Sohag per governorate street disinfection statement (2020-04-04); no coordinates inferred. 24h not claimed from emergency advice.",
+            "snapshot": "web-evidence/depth-cd8a4438ff6826de.json"
+          },
+          {
+            "key": "295851737280776",
+            "city": "Sohag",
+            "name": "Vet Clinic Sohag عيادة د مهيتاب مهدى",
+            "url": "https://www.petshops1.com/EG/Sohag/295851737280776/Vet-Clinic-Sohag-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%AF-%D9%85%D9%87%D9%8A%D8%AA%D8%A7%D8%A8-%D9%85%D9%87%D8%AF%D9%89",
+            "status": "held",
+            "reason": "unresolved-current-district",
+            "evidence": "Mahetab clinic explicitly moved to Shoban/Meshanab Street and disclaims old location/branches. Current district needs corroboration; do not import old Nabawi address.",
+            "snapshot": "web-evidence/depth-014e9cb1d3c7e69f.json"
+          },
+          {
+            "key": "654194344448605",
+            "city": "Sohag",
+            "name": "Cera-vet Animal Health",
+            "url": "https://www.petshops1.com/EG/Sohag/654194344448605/Cera-vet-Animal-Health",
+            "status": "held",
+            "reason": "supplier-or-pharmacy",
+            "evidence": "Individual page sells feed/medicines or farm supplies; no on-site pet treatment established.",
+            "snapshot": "web-evidence/depth-3e00b1c1d372059a.json"
+          },
+          {
+            "key": "1110397092359734",
+            "city": "Sohag",
+            "name": "نقابة الأطباء البيطريين بسوهاج",
+            "url": "https://www.petshops1.com/EG/Sohag/1110397092359734/%D9%86%D9%82%D8%A7%D8%A8%D8%A9-%D8%A7%D9%84%D8%A3%D8%B7%D8%A8%D8%A7%D8%A1-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%8A%D9%86-%D8%A8%D8%B3%D9%88%D9%87%D8%A7%D8%AC",
+            "status": "held",
+            "reason": "education-or-administration",
+            "evidence": "Faculty, scientific association or administration page; public pet hospital admission not established.",
+            "snapshot": "web-evidence/depth-e636c790527107d2.json"
+          },
+          {
+            "key": "114745571584617",
+            "city": "Sohag",
+            "name": "مركز الكيان للخدمات البيطرية - روافع القصير",
+            "url": "https://www.petshops1.com/EG/Sohag/114745571584617/%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D9%83%D9%8A%D8%A7%D9%86-%D9%84%D9%84%D8%AE%D8%AF%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9---%D8%B1%D9%88%D8%A7%D9%81%D8%B9-%D8%A7%D9%84%D9%82%D8%B5%D9%8A%D8%B1",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Individual entry reviewed; no sufficiently evidenced pet treatment at physical premises/contact. Not a nonexistence or closure conclusion.",
+            "snapshot": "web-evidence/depth-6599496eaf906a61.json"
+          },
+          {
+            "key": "1974367306018067",
+            "city": "Sohag",
+            "name": "الشركة المتحدة للأطباء البيطريين بسوهاج Svuc",
+            "url": "https://www.petshops1.com/EG/Sohag/1974367306018067/%D8%A7%D9%84%D8%B4%D8%B1%D9%83%D8%A9-%D8%A7%D9%84%D9%85%D8%AA%D8%AD%D8%AF%D8%A9-%D9%84%D9%84%D8%A3%D8%B7%D8%A8%D8%A7%D8%A1-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%8A%D9%86-%D8%A8%D8%B3%D9%88%D9%87%D8%A7%D8%AC-Svuc",
+            "status": "held",
+            "reason": "supplier-or-pharmacy",
+            "evidence": "Individual page sells feed/medicines or farm supplies; no on-site pet treatment established.",
+            "snapshot": "web-evidence/depth-c4d741e6ba3dcbc9.json"
+          },
+          {
+            "key": "100276016320485",
+            "city": "Sohag",
+            "name": "العيادة البيطرية بالدير البحري",
+            "url": "https://www.petshops1.com/EG/Sohag/100276016320485/%D8%A7%D9%84%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D8%A8%D8%A7%D9%84%D8%AF%D9%8A%D8%B1-%D8%A7%D9%84%D8%A8%D8%AD%D8%B1%D9%8A",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Individual entry reviewed; no sufficiently evidenced pet treatment at physical premises/contact. Not a nonexistence or closure conclusion.",
+            "snapshot": "web-evidence/depth-141b5ede590ea432.json"
+          },
+          {
+            "key": "1656280728029872",
+            "city": "Sohag",
+            "name": "Pet's Hut Vet clinic",
+            "url": "https://www.petshops1.com/EG/Sohag/1656280728029872/Pet%27s-Hut-Vet-clinic",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "Existing clinic identity already retained; no duplicate from mirror listing.",
+            "snapshot": "web-evidence/depth-af9afbeb9d3dd6eb.json"
+          },
+          {
+            "key": "994841517050556",
+            "city": "Sohag",
+            "name": "Wolf Vet لتوزيع الأدوية البيطرية",
+            "url": "https://www.petshops1.com/EG/Sohag/994841517050556/Wolf-Vet-%D9%84%D8%AA%D9%88%D8%B2%D9%8A%D8%B9-%D8%A7%D9%84%D8%A3%D8%AF%D9%88%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "supplier-or-pharmacy",
+            "evidence": "Individual page sells feed/medicines or farm supplies; no on-site pet treatment established.",
+            "snapshot": "web-evidence/depth-212396229df2709c.json"
+          },
+          {
+            "key": "112602447857248",
+            "city": "Sohag",
+            "name": "Kalboby Clinic",
+            "url": "https://www.petshops1.com/EG/Sohag/112602447857248/Kalboby-Clinic",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Kalboby current Ibn Taymeya street and new reception 01211391932 read; district unresolved. Old Telephone not silently substituted.",
+            "snapshot": "web-evidence/depth-979849b3a5ce2bb3.json"
+          },
+          {
+            "key": "386925981169931",
+            "city": "Sohag",
+            "name": "PUPS Pets Clinic",
+            "url": "https://www.petshops1.com/EG/Sohag/386925981169931/PUPS-Pets-Clinic",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "PUPS treatment/phone 01202269999 at courts/Avocato street read; district unresolved.",
+            "snapshot": "web-evidence/depth-8a6ec772c58aac78.json"
+          },
+          {
+            "key": "109906471922684",
+            "city": "Sohag",
+            "name": "Reval Vet",
+            "url": "https://www.petshops1.com/EG/Sohag/109906471922684/Reval-Vet",
+            "status": "held",
+            "reason": "supplier-or-pharmacy",
+            "evidence": "Individual page sells feed/medicines or farm supplies; no on-site pet treatment established.",
+            "snapshot": "web-evidence/depth-e6961593b992471d.json"
+          },
+          {
+            "key": "282136328506379",
+            "city": "Sohag",
+            "name": "أسرة رؤيه بكلية الطب البيطرى سوهاج",
+            "url": "https://www.petshops1.com/EG/Sohag/282136328506379/%D8%A3%D8%B3%D8%B1%D8%A9-%D8%B1%D8%A4%D9%8A%D9%87-%D8%A8%D9%83%D9%84%D9%8A%D8%A9-%D8%A7%D9%84%D8%B7%D8%A8-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%89-%D8%B3%D9%88%D9%87%D8%A7%D8%AC",
+            "status": "held",
+            "reason": "education-or-administration",
+            "evidence": "Faculty, scientific association or administration page; public pet hospital admission not established.",
+            "snapshot": "web-evidence/depth-7d5bab7880102f02.json"
+          },
+          {
+            "key": "776801229023483",
+            "city": "Sohag",
+            "name": "Sohag Veterinarians Scientific Association -",
+            "url": "https://www.petshops1.com/EG/Sohag/776801229023483/Sohag-Veterinarians-Scientific-Association---SVSA",
+            "status": "held",
+            "reason": "education-or-administration",
+            "evidence": "Faculty, scientific association or administration page; public pet hospital admission not established.",
+            "snapshot": "web-evidence/depth-4912ae6e5f852c39.json"
+          }
+        ],
+        "retained": 2,
+        "exclusionsByReason": {
+          "no-pet-clinic-evidence-in-discovery": 21,
+          "unresolved-current-district": 1,
+          "supplier-or-pharmacy": 4,
+          "education-or-administration": 3,
+          "unresolved-pet-treatment": 2,
+          "already-retained": 1,
+          "unresolved-catalog-area": 2
+        },
+        "individualSnapshots": [
+          "web-evidence/depth-d63a1a282196a6f8.json",
+          "web-evidence/depth-cd8a4438ff6826de.json",
+          "web-evidence/depth-014e9cb1d3c7e69f.json",
+          "web-evidence/depth-3e00b1c1d372059a.json",
+          "web-evidence/depth-e636c790527107d2.json",
+          "web-evidence/depth-6599496eaf906a61.json",
+          "web-evidence/depth-c4d741e6ba3dcbc9.json",
+          "web-evidence/depth-141b5ede590ea432.json",
+          "web-evidence/depth-af9afbeb9d3dd6eb.json",
+          "web-evidence/depth-212396229df2709c.json",
+          "web-evidence/depth-979849b3a5ce2bb3.json",
+          "web-evidence/depth-8a6ec772c58aac78.json",
+          "web-evidence/depth-e6961593b992471d.json",
+          "web-evidence/depth-7d5bab7880102f02.json",
+          "web-evidence/depth-4912ae6e5f852c39.json"
+        ]
+      }
+    ]
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

@@ -1,0 +1,11 @@
+[
+  {
+    "sourceKeys": ["WEB:royal-helwan-khosro", "WEB:royal-helwan-mohamed-sayed"],
+    "reviewedAt": "2026-11-12",
+    "evidence": "The two pre-existing individually reviewed EVC records publish distinct Helwan streets (Khosro versus Mohamed Sayed Ahmed) and disjoint contacts (01111429882 versus 01224640214 / 01111429881). Both have area centre points; nationwide brand spelling and City qualifiers make their display names identical. Retain both separately as in the reviewed stage2 data; no common ownership is inferred. This decision exempts only the same-name proximity heuristic, never phone, OSM entity or website identities. No simultaneous branch-operation claim beyond the existing undated directory evidence.",
+    "sources": [
+      "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b1%d9%88%d9%8a%d8%a7%d9%84-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%ad%d9%84%d9%88%d8%a7%d9%86/",
+      "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b1%d9%88%d9%8a%d8%a7%d9%84-%d9%83%d9%84%d9%8a%d9%86%d9%83-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/"
+    ]
+  }
+]

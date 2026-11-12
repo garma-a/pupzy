@@ -1,0 +1,8 @@
+{
+  "query": "نادي العمال, Sharq, Port Said, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%86%D8%A7%D8%AF%D9%8A+%D8%A7%D9%84%D8%B9%D9%85%D8%A7%D9%84%2C+Sharq%2C+Port+Said%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:11:50.894Z",
+  "httpStatus": 200,
+  "response": []
+}

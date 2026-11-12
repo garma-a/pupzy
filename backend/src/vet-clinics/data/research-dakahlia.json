@@ -1,0 +1,366 @@
+[
+  {
+    "key": "australian-vet-mansoura",
+    "nameEnglish": "Australian Veterinary Center",
+    "nameArabic": "المركز الأسترالي البيطري",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "20 Mohammad Arafa Street, off Ahmed Maher Street, opposite Baron Palace, Mansoura, Dakahlia",
+    "addressArabic": "20 شارع محمد عرفة، متفرع من شارع أحمد ماهر، أمام قصر البارون، المنصورة، الدقهلية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "E Mansora 2",
+    "citySourceCode": "EG1202",
+    "phones": ["01097999941", "0502386001"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Al-Mansurah/1904657862946808/Australian-Veterinary-Center---AVC",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://australianvetrenarycenter.lovable.app/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-29",
+    "classificationEvidence": "Read individual clinic-feed mirror: 2026-10-29 surgery booking at 20 Mohammad Arafa; older header 21 not used. Own site identifies Mansoura Qism 2 and same streets/contact; client-rendered local fetch recorded, web.open read."
+  },
+  {
+    "key": "petsy-mit-ghamr",
+    "nameEnglish": "Petsy Veterinary Clinic",
+    "nameArabic": "عيادة بيتسي البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Mohamed Hamed Street, off Abu Senna Street, beside Coptic School gate, Mit Ghamr, Dakahlia",
+    "addressArabic": "شارع محمد حامد، متفرع من شارع أبو سنة، بجوار بوابة مدرسة الأقباط، ميت غمر، الدقهلية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Mit Ghamr (Kism)",
+    "citySourceCode": "EG1212",
+    "phones": ["01008393822", "01286491472"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Mit-Ghamr/385043731351270/Petsy-Vet.-Cl.-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%AA%D8%B3%D9%8A-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-11-02",
+    "classificationEvidence": "Read individual clinic-feed mirror: dated examinations, ultrasound and cat/dog blood tests; 2026-11-02 phone/address. Urban Mit Ghamr mapped to Kism, not rural Markaz.",
+    "aliases": {
+      "english": ["Petsy Vet. Cl."],
+      "arabic": ["عيادة بيتسي البيطرية"]
+    }
+  },
+  {
+    "key": "roka-mansoura",
+    "nameEnglish": "Roka Clinic",
+    "nameArabic": "عيادة روكا البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Omar Ibn El Khattab Street, Mansoura Qism 2, Dakahlia",
+    "addressArabic": "شارع عمر بن الخطاب، المنصورة قسم ثان، الدقهلية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "E Mansora 2",
+    "citySourceCode": "EG1202",
+    "phones": ["01066880882"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Mansoura/108320624750918/Roka-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-08-22",
+    "classificationEvidence": "Individual clinic feed explicitly lists Mansoura Qism 2, pet examinations and vaccination packages dated 2026-08-22."
+  },
+  {
+    "key": "my-pets-mansoura",
+    "nameEnglish": "My Pets Vet Center",
+    "nameArabic": "مركز ماي بيتس البيطري",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "9 Masjed El Naqety Street, University Quarter, opposite Olympic Village, Mansoura Qism 1, Dakahlia",
+    "addressArabic": "9 شارع مسجد النقيطي، حي الجامعة، أمام القرية الأولمبية، المنصورة قسم أول، الدقهلية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "El Mansora 1",
+    "citySourceCode": "EG1201",
+    "phones": ["01006033413"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Mansourah/711935935632520/My-Pets-Vet-Center---%D8%AF---%D8%A7%D8%AD%D9%85%D8%AF-%D8%AC%D8%A8%D8%B1",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://besbes.app/business/c98440b3-f202-4355-bf43-1b02dec2eb12",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual entry explicitly states Qesm 1 and physical pet clinic; retail posts not treated as dated clinical evidence."
+  },
+  {
+    "key": "vetalia-mansoura",
+    "nameEnglish": "Vetalia Pet Clinic",
+    "nameArabic": "عيادة فيتاليا للحيوانات الأليفة",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "17 Anas Ibn Malik Street, off Ahmed Maher, behind Baron Palace, Mansoura, Dakahlia",
+    "addressArabic": "17 شارع أنس بن مالك، متفرع من أحمد ماهر، خلف قصر البارون، المنصورة، الدقهلية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "E Mansora 2",
+    "citySourceCode": "EG1202",
+    "phones": ["01068235866", "0502259075"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Mansoura/105237955608039/Vetalia-Pet-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://besbes.app/business/cef2203f-fef4-451b-9dc5-f57f2444ef9e",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-06",
+    "classificationEvidence": "Clinic post on 2026-09-06 reports treated pet and street/contact. Ahmed Maher/Baron Palace locality matches the existing independently sourced AVC Qism 2 address; no coordinates copied. Mobile from clinic posts; landline from Telephone."
+  },
+  {
+    "key": "healthy-pet-mansoura",
+    "nameEnglish": "Healthy Pet Veterinary Clinic",
+    "nameArabic": "عيادة هيلثي بيت البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "9 El Malek El Kamel Street, Touriel, beside El Malek El Kamel School, Mansoura, Dakahlia",
+    "addressArabic": "9 شارع الملك الكامل، توريل، بجوار مدرسة الملك الكامل، المنصورة، الدقهلية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "E Mansora 2",
+    "citySourceCode": "EG1202",
+    "phones": ["01050070427"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Mansoura/109578924527731/Healthy-Pet-Veterinary-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.egnews24.com/294658",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-08-06",
+    "classificationEvidence": "2026-08-06 feline skin treatment. Address and phone from clinic recruitment post. Toriel/El Malek El Kamel is Qism 2 per separately read locality report."
+  },
+  {
+    "key": "peticare18-mansoura",
+    "nameEnglish": "Peticare 18 Pet Clinic",
+    "nameArabic": "عيادة بيتي كير 18 للحيوانات الأليفة",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Street 18, Touriel, Mansoura, Dakahlia",
+    "addressArabic": "شارع 18، توريل، المنصورة، الدقهلية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "E Mansora 2",
+    "citySourceCode": "EG1202",
+    "phones": ["01069936168"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Mansoura/107680998791104/Peticare-18-pet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.egnews24.com/294658",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-07",
+    "classificationEvidence": "2026-09-07 head trauma treatment; clinic number explicitly labelled in 2026-09-21 post, adoption-owner numbers discarded. Toriel is the Qism 2 locality; no evidence establishes a chain with the separate university-quarter Peticare.",
+    "aliases": {
+      "english": ["Peticare 18 pet clinic"]
+    }
+  },
+  {
+    "key": "laclinica-mansoura",
+    "nameEnglish": "LaClinica",
+    "nameArabic": "عيادة لاكلينيكا البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "New Touriel, Al Quds Street 18, opposite BIM Hypermarket, Mansoura, Dakahlia",
+    "addressArabic": "توريل الجديدة، شارع القدس 18، أمام هايبر ماركت بيم، المنصورة، الدقهلية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "E Mansora 2",
+    "citySourceCode": "EG1202",
+    "phones": ["01000605637", "0502339396"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Mansourah/563697300635201/LaClinica",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.egnews24.com/294658",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-24",
+    "classificationEvidence": "2026-10-24 offers clinic medical laboratory diagnostics for pets; specific physical premises/clinic contacts. Toriel is Qism 2; similar street to Peticare18 but disjoint contacts and distinct brand, no identity evidence."
+  },
+  {
+    "key": "pet-espitalia-mansoura",
+    "nameEnglish": "Pet Espitalia",
+    "nameArabic": "مستشفى بيت إسبيتاليا",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Ahmed Maher Street at Street 2, Khattab subdivision, Z Store corner, Mansoura, Dakahlia",
+    "addressArabic": "شارع أحمد ماهر، تقاطع شارع 2 تقسيم خطاب، ناصية زد ستور، المنصورة، الدقهلية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "E Mansora 2",
+    "citySourceCode": "EG1202",
+    "phones": ["01033788455"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Mansoura/226570925995326/Pet-Espitalia---Mansoura",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Physical pet hospital advertises surgery, ultrasound and X-ray. Ahmed Maher locality corroborated by the existing AVC source. Latest visible posts concern grooming, so no clinical operation date assigned."
+  },
+  {
+    "key": "zoo-clinica-mit-ghamr",
+    "nameEnglish": "Zoo Clinica",
+    "nameArabic": "عيادة زوو البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Selekt Street, Abu El Naga Street, near El Bayoumy Pharmacy, opposite Yasmeen Tower entrance, Mit Ghamr, Dakahlia",
+    "addressArabic": "شارع سليكت، شارع أبو النجا، بالقرب من صيدلية البيومي، أمام مدخل برج الياسمين، ميت غمر، الدقهلية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Mit Ghamr (Kism)",
+    "citySourceCode": "EG1212",
+    "phones": ["01121712528"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Mit-Ghamr/1841007142817782/Zoo-clinica--dr.-dalia-ashour",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual page explicitly describes pet treatment, Dr Dalia Ashour and physical urban Mit Ghamr premises. Latest July 2026 posts mention behind Town Team and El Captain Market but do not expressly establish a move; retain published street and flag landmarks for confirmation. Pharmacy retail offers not taken as clinical dates.",
+    "aliases": {
+      "english": ["Zoo clinica"]
+    }
+  },
+  {
+    "key": "pets-house-mit-ghamr",
+    "nameEnglish": "Pets House Veterinary Clinic",
+    "nameArabic": "عيادة بيتس هاوس البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Abu Senna Street off El Geish, El Hayat Tower, opposite El Amana herbalist, beside new Ibrahim Pharmacy, Mit Ghamr, Dakahlia",
+    "addressArabic": "شارع أبو سنة، متفرع من شارع الجيش، برج الحياة، أمام عطارة الأمانة، بجوار صيدلية إبراهيم الجديدة، ميت غمر، الدقهلية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Mit Ghamr (Kism)",
+    "citySourceCode": "EG1212",
+    "phones": ["01062742169", "01107556820"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Mit-Ghamr/1033680459819152/Pets-House-Vetirenary-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-18",
+    "classificationEvidence": "2026-09-18 pet parasite prevention program explicitly pairs booking phones with physical clinic at Abu Senna/El Hayat Tower. Urban Mit Ghamr Kism, not rural Markaz."
+  },
+  {
+    "key": "peticare-mansoura",
+    "nameEnglish": "Peticare Animal Hospital",
+    "nameArabic": "مركز بيتي كير للخدمات الطبية البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglish": "University Quarter, El Hendawy Street, opposite Olympic Village gate, Abu Adel confectioner corner, Mansoura",
+    "addressArabic": "حي الجامعة، شارع الهنداوي، أمام بوابة القرية الأولمبية، ناصية حلواني أبو عادل، المنصورة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "El Mansora 1",
+    "citySourceCode": "EG1201",
+    "phones": ["01555345999"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Mansoura/387162508585170/Peticare-Animal-Hospital.---%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%AA%D9%8A-%D9%83%D9%8A%D8%B1-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Physical veterinary medical centre in university quarter (Qism 1, as independently attested by My Pets clinic locality). Only Telephone clinic contact used; adoption-owner contacts ignored. No dated clinical operation inferred from recent adoption posts."
+  }
+]

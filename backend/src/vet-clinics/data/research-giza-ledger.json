@@ -1,0 +1,310 @@
+[
+  {
+    "url": "https://www.evcindex.com/item/%d8%a7%d8%b3%d8%aa%d8%b6%d8%a7%d9%81%d8%a9-%d8%a7%d9%84%d9%82%d8%b7%d8%b7-%d9%81%d9%8a-%d9%81%d9%8a%d8%b5%d9%84-%d9%88%d8%a7%d9%84%d9%87%d8%b1%d9%85/",
+    "reason": "boarding-only listing; veterinary support is ancillary, no independently named walk-in clinic",
+    "disposition": "excluded",
+    "reasonCode": "boarding-only"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%ad%d8%af%d9%8a%d8%ab%d8%a9-%d8%a8%d8%a7%d9%84%d9%85%d9%86%d8%b5%d9%88%d8%b1%d9%8a%d8%a9/",
+    "reason": "same ModernVeterinaryClinic01110988407 as included pet-specific EVC entry; mergedsource",
+    "disposition": "merged",
+    "reasonCode": "existing-identity"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d9%85%d8%aa%d9%86%d9%82%d9%84%d8%a9-%d9%81%d9%8a-%d8%a7%d9%84%d8%b4%d9%8a%d8%ae-%d8%b2%d8%a7/",
+    "reason": "home-visit-only; no physical clinic address",
+    "disposition": "excluded",
+    "reasonCode": "home-visit-only"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d9%85%d8%aa%d9%86%d9%82%d9%84%d8%a9-%d9%81%d9%8a-%d8%ad%d9%8a-%d8%a7%d9%84%d8%a3%d8%b4%d8%ac/",
+    "reason": "home-visit-only; no physical clinic address",
+    "disposition": "excluded",
+    "reasonCode": "home-visit-only"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d9%84%d9%84%d8%b2%d9%8a%d8%a7%d8%b1%d8%a7%d8%aa-%d8%a7%d9%84%d9%85%d9%86%d8%b2%d9%84%d9%8a%d8%a9-%d8%a7/",
+    "reason": "home-visit-only; no physical clinic address",
+    "disposition": "excluded",
+    "reasonCode": "home-visit-only"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%a3%d9%85%d8%b1%d9%8a%d9%83%d9%8a-%d9%84%d8%ac%d8%b1%d8%a7%d8%ad%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86/",
+    "reason": "same American Veterinary Center Zayed branch as primary input; enrich primary instead",
+    "disposition": "merged",
+    "reasonCode": "existing-identity"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%a5%d9%82%d9%84%d9%8a%d9%85%d9%8a-%d9%84%d9%84%d8%af%d9%88%d8%a7%d8%ac%d9%86/",
+    "reason": "poultry/livestock services only",
+    "disposition": "excluded",
+    "reasonCode": "livestock-only"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%a7%d9%85%d8%b1%d9%8a%d9%83%d9%89-%d9%84%d8%b7%d8%a8-%d9%88-%d8%ac%d8%b1%d8%a7%d8%ad%d9%87-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86/",
+    "reason": "Zamalek address is Cairo; referred to Cairo researcher",
+    "disposition": "excluded",
+    "reasonCode": "outside-target-governorates"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a7%d9%84%d8%a8%d8%b1%d9%8a%d8%b7%d8%a7%d9%86%d9%8a%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%af%d9%82%d9%8a-british/",
+    "reason": "same British Dokki branch as own primary page",
+    "disposition": "merged",
+    "reasonCode": "existing-identity"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a7%d9%84%d8%a8%d8%b1%d9%8a%d8%b7%d8%a7%d9%86%d9%8a%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%b4%d9%8a%d8%ae-%d8%b2/",
+    "reason": "same British Sheikh Zayed branch phone; own primary address preferred over older directory address",
+    "disposition": "merged",
+    "reasonCode": "existing-identity"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b5%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%a7%d9%8a%d8%b7%d8%a7%d9%84%d9%8a%d8%a9-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+    "reason": "Giza only address cannot resolve district; malformed 02-025827065 phone not guessed",
+    "disposition": "held",
+    "reasonCode": "unresolved-specific-area"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d9%83%d8%aa%d8%a8-%d8%a7%d9%84%d8%a7%d8%b3%d8%aa%d8%b4%d8%a7%d8%b1%d9%8a-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+    "reason": "consultancy lacks pet-specific evidence",
+    "disposition": "held",
+    "reasonCode": "unresolved-pet-treatment"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%88%d8%ad%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%ad%d9%83%d9%88%d9%85%d9%8a%d8%a9-%d8%a8%d9%85%d8%af%d9%8a%d9%86%d8%a9-6-%d8%a3%d9%83%d8%aa%d9%88/",
+    "reason": "explicit government veterinary unit",
+    "disposition": "excluded",
+    "reasonCode": "government-unit"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%88%d8%ad%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a8%d8%a7%d9%84%d8%b4%d9%8a%d8%ae-%d8%b2%d8%a7%d9%8a%d8%af/",
+    "reason": "explicit government veterinary unit",
+    "disposition": "excluded",
+    "reasonCode": "government-unit"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%af-%d8%b9%d8%a7%d8%b5%d9%85-%d8%a5%d9%85%d8%a7%d9%85-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+    "reason": "generic all-animal services only; hold for pet-specific evidence",
+    "disposition": "held",
+    "reasonCode": "unresolved-pet-treatment"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b1%d9%81%d9%8a%d9%82-%d9%86%d8%a7%d8%b4%d8%af-%d8%ad%d9%84%d9%85%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+    "reason": "Zamalek physical address belongs to Cairo",
+    "disposition": "excluded",
+    "reasonCode": "outside-target-governorates"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b4%d8%b1%d9%83%d8%a9-%d8%af%d9%84%d8%aa%d8%a7-%d9%85%d8%b5%d8%b1-%d9%84%d9%84%d8%af%d9%88%d8%a7%d8%ac%d9%86/",
+    "reason": "poultry company, no pet clinic",
+    "disposition": "excluded",
+    "reasonCode": "livestock-only"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b5%d9%8a%d8%af%d9%84%d9%8a%d8%a9-%d8%a3%d9%86%d9%8a%d9%85%d9%84%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%b4%d9%8a%d8%ae-%d8%b2%d8%a7%d9%8a%d8%af/",
+    "reason": "veterinary pharmacy only",
+    "disposition": "excluded",
+    "reasonCode": "pharmacy-products-only"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a7%d8%aa-%d9%85%d8%aa%d9%86%d9%82%d9%84%d8%a9-%d9%84%d9%84%d9%83%d8%b4%d9%81-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d8%a7%d9%84%d9%85%d9%86%d8%b2%d9%84%d9%8a/",
+    "reason": "home-visit-only",
+    "disposition": "excluded",
+    "reasonCode": "home-visit-only"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%b2%d9%85%d8%a7%d9%84%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+    "reason": "Zamalek physical address belongs to Cairo",
+    "disposition": "excluded",
+    "reasonCode": "outside-target-governorates"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%87%d8%b1%d9%85-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+    "reason": "same156Faisal address and govetharam page as GoVet; merge sourced phone01156730955 into that record",
+    "disposition": "merged",
+    "reasonCode": "existing-identity"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%85%d8%a8%d8%a7%d8%a8%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+    "reason": "same01068000550 hotline as Pawia Imbaba own site; older97ElTayarFikry address differs; retain primary current address, alias Empapa Vet Clinic",
+    "disposition": "held",
+    "reasonCode": "unresolved-identity-or-ownership"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d9%81%d8%a7%d9%84%d9%8a-%d8%a7%d9%84%d8%b2%d9%85%d8%a7%d9%84%d9%83-pets-valley-zamalek-branch/",
+    "reason": "Zamalek address belongs to Cairo",
+    "disposition": "excluded",
+    "reasonCode": "outside-target-governorates"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa-%d9%87%d9%8a%d9%81%d9%86-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81%d8%a9-%d9%85%d9%86%d9%8a%d9%84/",
+    "reason": "Manial El Roda address belongs to Cairo",
+    "disposition": "excluded",
+    "reasonCode": "outside-target-governorates"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%88%d9%84%d8%a7%d9%82-%d8%a7%d9%84%d8%af%d9%83%d8%b1%d9%88%d8%b1-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+    "reason": "generic veterinary wording only; hold for pet-specific evidence",
+    "disposition": "held",
+    "reasonCode": "unresolved-pet-treatment"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%81%d9%8a%d8%b5%d9%84-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%b4%d8%a7%d8%b1%d8%b9-%d8%a7%d9%84%d8%b9%d8%b4%d8%b1%d9%8a%d9%86%d8%8c-%d9%81%d9%8a%d8%b5/",
+    "reason": "384Faisal overlaps Pawia Faisal own-site current address; old directory brand/phone identity unresolved, avoid duplicate occupant",
+    "disposition": "held",
+    "reasonCode": "unresolved-identity-or-ownership"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%85%d8%a7%d8%b1%d9%8a%d9%88%d8%aa-%d9%81%d9%8a%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+    "reason": "generic veterinary wording only; hold for pet-specific evidence",
+    "disposition": "held",
+    "reasonCode": "unresolved-pet-treatment"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-paws-claws-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+    "reason": "01276077576 shared with DrGoudaEzzat on9GeziratElArab; Paws&Claws at11same street may be trade name or stale contact; unresolved independent ownership, no second row",
+    "disposition": "held",
+    "reasonCode": "unresolved-identity-or-ownership"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-pet-doctors-%d9%84%d8%b7%d8%a8-%d9%88%d8%ac%d8%b1%d8%a7%d8%ad%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86/",
+    "reason": "Zamalek physical address belongs to Cairo",
+    "disposition": "excluded",
+    "reasonCode": "outside-target-governorates"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-pet-lovers-clinic-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+    "reason": "same PetLovers name and OmarIbnElKhattab/Dokki street as DrMohamedAshqar listing, different phone; hold potential duplicate pending primary evidence",
+    "disposition": "held",
+    "reasonCode": "unresolved-identity-or-ownership"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-pet-zone-egypt-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+    "reason": "Zamalek physical address belongs to Cairo",
+    "disposition": "excluded",
+    "reasonCode": "outside-target-governorates"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-vet-for-pet-veterinary-clinic-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+    "reason": "same BritishMohandessin0237626883 phone; own chain address supersedes42Shehab directory address",
+    "disposition": "merged",
+    "reasonCode": "existing-identity"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d9%85%d8%af%d9%8a%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%b7%d8%a8-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%89-%d8%a8%d8%a7%d9%84%d8%ac%d9%8a%d8%b2%d8%a9-%d9%84%d8%b9%d9%84%d8%a7%d8%ac-%d8%a7%d9%84%d8%ad/",
+    "reason": "explicit government veterinary directorate",
+    "disposition": "excluded",
+    "reasonCode": "government-unit"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%b2%d9%85%d8%a7%d9%84%d9%83-%d9%84%d8%b7%d8%a8-%d9%88%d8%ac%d8%b1%d8%a7%d8%ad%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86/",
+    "reason": "SamirZaki Zamalek address belongs to Cairo; samebrand01064814805 shared with Mohandessin, notify Cairo researcher",
+    "disposition": "excluded",
+    "reasonCode": "outside-target-governorates"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a7%d9%84%d8%b7%d8%a8-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d8%a8%d8%a7%d9%84%d8%ac%d9%8a%d8%b2%d8%a9/",
+    "reason": "explicit government veterinary hospital",
+    "disposition": "excluded",
+    "reasonCode": "government-unit"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a7%d9%84%d8%b7%d8%a8-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d9%81%d9%8a-%d8%a5%d9%85%d8%a8%d8%a7%d8%a8%d8%a9/",
+    "reason": "explicit government veterinary hospital",
+    "disposition": "excluded",
+    "reasonCode": "government-unit"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%b7%d8%a8-%d9%88%d8%ac%d8%b1%d8%a7%d8%ad%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86-%d8%a7%d9%84%d8%b2%d9%85%d8%a7%d9%84%d9%83/",
+    "reason": "Zamalek Britishbranch belongs to Cairo",
+    "disposition": "excluded",
+    "reasonCode": "outside-target-governorates"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%b7%d8%a8-%d9%88%d8%ac%d8%b1%d8%a7%d8%ad%d9%87-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86/",
+    "reason": "same0237626883/01006344025 BritishMohandessin primary brand; older42Aden address not added as a separate clinic",
+    "disposition": "merged",
+    "reasonCode": "existing-identity"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d9%83%d8%a7%d8%aa-%d8%af%d9%88%d8%ac-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-6-%d8%a3%d9%83%d8%aa%d9%88%d8%a8%d8%b1-%d8%b7%d9%88%d8%a7%d8%b1%d8%a6/",
+    "reason": "same CatDogHospital address/phone as own primary website; second source added to existing row",
+    "disposition": "merged",
+    "reasonCode": "existing-identity"
+  },
+  {
+    "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-pet-lovers-vet-hospital-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+    "reason": "Zamalek physical address belongs to Cairo",
+    "disposition": "excluded",
+    "reasonCode": "outside-target-governorates"
+  },
+  {
+    "url": "https://www.evcindex.com/item/healthy-pharm-%d9%84%d8%b1%d8%b9%d8%a7%d9%8a%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81%d8%a9/",
+    "reason": "veterinary pharmacy only, no physical medical clinic evidence",
+    "disposition": "excluded",
+    "reasonCode": "pharmacy-products-only"
+  },
+  {
+    "url": "https://www.findglocal.com/EG/6-October-City/628987203631324/%D8%AF.%D9%85%D8%AD%D9%85%D8%AF-%D9%83%D9%85%D8%A7%D9%84--Dr.mohammed-kamal",
+    "reason": "online/homevisitonly",
+    "disposition": "excluded",
+    "reasonCode": "home-visit-only"
+  },
+  {
+    "url": "https://www.findglocal.com/EG/6-October-City/104968162041532/Aster-pharma-delta-area",
+    "reason": "poultrypharmacyproducts; notpetclinic",
+    "disposition": "excluded",
+    "reasonCode": "pharmacy-products-only"
+  },
+  {
+    "url": "https://www.findglocal.com/EG/6-October-City/105554584841763/Pets-Home-Vet-Center",
+    "reason": "only6OctoberCity address, no physicalpremisesspecificity and nameoverlaps existingPetsHome; hold",
+    "disposition": "held",
+    "reasonCode": "unresolved-specific-area"
+  },
+  {
+    "url": "https://www.findglocal.com/EG/6-October-City/340367772990396/Emergency-VET-TAXI-clinic",
+    "reason": "01221948424sharedwithPetLoversDokki; differentEmergencyVetTaxi brand and outdatedwebsite possiblyUS clinic; ownershipunresolved, held",
+    "disposition": "held",
+    "reasonCode": "unresolved-identity-or-ownership"
+  },
+  {
+    "url": "https://www.findglocal.com/EG/6-October-City/523549631002163/Loyal-Friends-vet-clinic-%26-surgery",
+    "reason": "HTTP429rate-limit; stoppedhostrequests",
+    "disposition": "held",
+    "reasonCode": "blocked-rate-limit"
+  },
+  {
+    "url": "https://www.findglocal.com/EG/6-October-City/587196408081655/Pet-Life-Clinic",
+    "reason": "HTTP429rate-limit; stoppedhostrequests",
+    "disposition": "held",
+    "reasonCode": "blocked-rate-limit"
+  },
+  {
+    "url": "https://www.findglocal.com/EG/6-October-City/610080226133535/Elbanhawy-pets-clinic-%26-shop",
+    "reason": "HTTP429rate-limit; stoppedhostrequests",
+    "disposition": "held",
+    "reasonCode": "blocked-rate-limit"
+  },
+  {
+    "url": "https://www.findglocal.com/EG/6-October-City/1666126253613468/Happy-Kennel-Academy",
+    "reason": "HTTP429rate-limit and dogboarding/trainingcategorylead",
+    "disposition": "held",
+    "reasonCode": "blocked-rate-limit"
+  },
+  {
+    "url": "https://www.findglocal.com/EG/6-October-City/1789946217909910/Pets-4-U",
+    "reason": "HTTP429rate-limit; shopscopeunresolved",
+    "disposition": "held",
+    "reasonCode": "blocked-rate-limit"
+  },
+  {
+    "key": "best-for-pets-european",
+    "reviewedAt": "2026-11-12",
+    "url": "https://www.evcindex.com/item/%d8%a8%d9%8a%d8%b3%d8%aa-%d9%81%d9%88%d8%b1-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%b1%d9%8a%d9%81-%d8%a7%d9%84%d8%a3%d9%88%d8%b1%d9%88%d8%a8%d9%8a/",
+    "disposition": "excluded",
+    "reasonCode": "part-time-satellite-in-shop",
+    "reason": "Lead E4: twice-weekly afternoon satellite inside Elreef Pet Shop. Main clinic evidence retained on Best 4 Pets; satellite excluded."
+  }
+]

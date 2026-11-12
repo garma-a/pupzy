@@ -1,0 +1,8 @@
+{
+  "query": "فاروق ثروت من شارع حسن أفلاطون, Ard El Golf, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%81%D8%A7%D8%B1%D9%88%D9%82+%D8%AB%D8%B1%D9%88%D8%AA+%D9%85%D9%86+%D8%B4%D8%A7%D8%B1%D8%B9+%D8%AD%D8%B3%D9%86+%D8%A3%D9%81%D9%84%D8%A7%D8%B7%D9%88%D9%86%2C+Ard+El+Golf%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:12:53.059Z",
+  "httpStatus": 200,
+  "response": []
+}

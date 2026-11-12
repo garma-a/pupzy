@@ -1,0 +1,8 @@
+{
+  "query": "Atlas Street, Asafra, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Atlas+Street%2C+Asafra%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:52:41.142Z",
+  "httpStatus": 200,
+  "response": []
+}

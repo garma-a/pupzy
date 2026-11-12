@@ -1,0 +1,35 @@
+{
+  "query": "Dr. Ahmed Okasha Street, First Settlement, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Dr.+Ahmed+Okasha+Street%2C+First+Settlement%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:15.212Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50651165,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 681403741,
+      "lat": "30.0591870",
+      "lon": "31.4681150",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "tertiary",
+      "name": "Doctor Ahmed Okasha Street",
+      "display_name": "Doctor Ahmed Okasha Street, First Settlement, New Cairo City, Cairo, 11865, Egypt",
+      "address": {
+        "road": "Doctor Ahmed Okasha Street",
+        "neighbourhood": "First Settlement",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11865",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0585243", "30.0592201", "31.4614730", "31.4746705"]
+    }
+  ]
+}

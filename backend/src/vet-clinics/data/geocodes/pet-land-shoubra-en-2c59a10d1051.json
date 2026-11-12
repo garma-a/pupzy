@@ -1,0 +1,8 @@
+{
+  "query": "Sheikh El Shabrawi Street, الخلفاوي, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Sheikh+El+Shabrawi+Street%2C+%D8%A7%D9%84%D8%AE%D9%84%D9%81%D8%A7%D9%88%D9%8A%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:15:45.026Z",
+  "httpStatus": 200,
+  "response": []
+}

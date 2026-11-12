@@ -1,0 +1,37 @@
+{
+  "query": "El Tayaran Street, Nasr City, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Tayaran+Street%2C+Nasr+City%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:15:13.115Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 49880666,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 4584070589,
+      "lat": "30.0547538",
+      "lon": "31.3272804",
+      "category": "office",
+      "type": "estate_agent",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "office",
+      "name": "El kahira CO",
+      "display_name": "El kahira CO, Al Tayaran Street, Al Manteqah Al Oula, Nasr City, Cairo, 11371, Egypt",
+      "address": {
+        "office": "El kahira CO",
+        "road": "Al Tayaran Street",
+        "neighbourhood": "Al Manteqah Al Oula",
+        "suburb": "Nasr City",
+        "city": "Nasr City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11371",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0547038", "30.0548038", "31.3272304", "31.3273304"]
+    }
+  ]
+}

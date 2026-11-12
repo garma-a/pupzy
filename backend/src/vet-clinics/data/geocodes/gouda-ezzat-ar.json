@@ -1,0 +1,90 @@
+{
+  "query": "جزيرة العرب, المهندسين, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%AC%D8%B2%D9%8A%D8%B1%D8%A9+%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%2C+%D8%A7%D9%84%D9%85%D9%87%D9%86%D8%AF%D8%B3%D9%8A%D9%86%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:49:42.922Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 49896793,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 377856791,
+      "lat": "30.0550716",
+      "lon": "31.1995576",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.05339670634012356,
+      "addresstype": "tertiary",
+      "name": "شارع حلمى محمد حسن",
+      "display_name": "شارع حلمى محمد حسن, المهندسين, الجيزة, 12655, مصر",
+      "address": {
+        "road": "شارع حلمى محمد حسن",
+        "suburb": "المهندسين",
+        "city": "الجيزة",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12655",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0514151", "30.0558515", "31.1987908", "31.2034242"]
+    },
+    {
+      "place_id": 49912323,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 11637502470,
+      "lat": "30.0543168",
+      "lon": "31.1987989",
+      "category": "amenity",
+      "type": "clinic",
+      "place_rank": 30,
+      "importance": 0.00006337300679021924,
+      "addresstype": "amenity",
+      "name": "مركز جزيرة العرب للعيون والليزك",
+      "display_name": "مركز جزيرة العرب للعيون والليزك, 24, شارع حلمى محمد حسن, المهندسين, الجيزة, 12655, مصر",
+      "address": {
+        "amenity": "مركز جزيرة العرب للعيون والليزك",
+        "house_number": "24",
+        "road": "شارع حلمى محمد حسن",
+        "suburb": "المهندسين",
+        "city": "الجيزة",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12655",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0542668", "30.0543668", "31.1987489", "31.1988489"]
+    },
+    {
+      "place_id": 49938673,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 4612691190,
+      "lat": "30.0520076",
+      "lon": "31.1991368",
+      "category": "amenity",
+      "type": "bank",
+      "place_rank": 30,
+      "importance": 0.00006337300679021924,
+      "addresstype": "amenity",
+      "name": "hsbc bank فرع جزيرة العرب",
+      "display_name": "hsbc bank فرع جزيرة العرب, شارع حلمى محمد حسن, المهندسين, القاهرة, الجيزة, 12655, مصر",
+      "address": {
+        "amenity": "hsbc bank فرع جزيرة العرب",
+        "road": "شارع حلمى محمد حسن",
+        "suburb": "المهندسين",
+        "city": "القاهرة",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12655",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0519576", "30.0520576", "31.1990868", "31.1991868"]
+    }
+  ]
+}

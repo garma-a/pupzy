@@ -1,0 +1,63 @@
+{
+  "query": "Ahmed El Zomor Street, Nasr City, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Ahmed+El+Zomor+Street%2C+Nasr+City%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:15:19.715Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50413377,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 12206833926,
+      "lat": "30.0455015",
+      "lon": "31.3463850",
+      "category": "railway",
+      "type": "stop",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "railway",
+      "name": "El Musheer Ahmed Ismail",
+      "display_name": "El Musheer Ahmed Ismail, Ahmed Al Zomor Street, Nasr City, Cairo, 11762, Egypt",
+      "address": {
+        "railway": "El Musheer Ahmed Ismail",
+        "road": "Ahmed Al Zomor Street",
+        "suburb": "Nasr City",
+        "city": "Nasr City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11762",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0454515", "30.0455515", "31.3463350", "31.3464350"]
+    },
+    {
+      "place_id": 50484039,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 8010633794,
+      "lat": "30.0469454",
+      "lon": "31.3595639",
+      "category": "highway",
+      "type": "motorway_junction",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "highway",
+      "name": "Kheir Zaman (Ahmed Al Zomor St.)",
+      "display_name": "Kheir Zaman (Ahmed Al Zomor St.), Ahmed Al Zomor Street, Nasr City, Cairo, 11762, Egypt",
+      "address": {
+        "highway": "Kheir Zaman (Ahmed Al Zomor St.)",
+        "road": "Ahmed Al Zomor Street",
+        "suburb": "Nasr City",
+        "city": "Nasr City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11762",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0468954", "30.0469954", "31.3595139", "31.3596139"]
+    }
+  ]
+}

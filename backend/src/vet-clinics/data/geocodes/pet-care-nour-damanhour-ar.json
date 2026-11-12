@@ -1,0 +1,9 @@
+{
+  "query": "ماركت العلياء, قسم دمنهور, Behera, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%85%D8%A7%D8%B1%D9%83%D8%AA+%D8%A7%D9%84%D8%B9%D9%84%D9%8A%D8%A7%D8%A1%2C+%D9%82%D8%B3%D9%85+%D8%AF%D9%85%D9%86%D9%87%D9%88%D8%B1%2C+Behera%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:15:19.764Z",
+  "httpStatus": 503,
+  "response": [],
+  "rawBody": "\n<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html>\n  <head>\n    <title>503 first byte timeout</title>\n  </head>\n  <body>\n    <h1>Error 503 first byte timeout</h1>\n    <p>first byte timeout</p>\n    <h3>Error 54113</h3>\n    <p>Details: cache-mrs1530054-MRS 1794500135 536690941</p>\n    <hr>\n    <p>Varnish cache server</p>\n  </body>\n</html>\n"
+}

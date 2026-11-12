@@ -1,0 +1,65 @@
+{
+  "query": "El Hegaz Street, Heliopolis, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Hegaz+Street%2C+Heliopolis%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:13:14.269Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 429143737,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 1563582626,
+      "lat": "30.1039274",
+      "lon": "31.3301023",
+      "category": "office",
+      "type": "government",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "office",
+      "name": "Real Estate Registration and Documentation Authority Egypt",
+      "display_name": "Real Estate Registration and Documentation Authority Egypt, Al Hegaz Street, Heliopolis, Cairo, 11757, Egypt",
+      "address": {
+        "office": "Real Estate Registration and Documentation Authority Egypt",
+        "road": "Al Hegaz Street",
+        "quarter": "Heliopolis",
+        "suburb": "Heliopolis",
+        "city": "Cairo",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11757",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.1037714", "30.1040858", "31.3299571", "31.3302495"]
+    },
+    {
+      "place_id": 50236437,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 11040164581,
+      "lat": "30.1158084",
+      "lon": "31.3530131",
+      "category": "amenity",
+      "type": "bank",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "amenity",
+      "name": "Al Ahli Bank of Kuwait - Egypt",
+      "display_name": "Al Ahli Bank of Kuwait - Egypt, Al Hegaz Street, Heliopolis, Cairo, 11757, Egypt",
+      "address": {
+        "amenity": "Al Ahli Bank of Kuwait - Egypt",
+        "road": "Al Hegaz Street",
+        "quarter": "Heliopolis",
+        "suburb": "Heliopolis",
+        "city": "Cairo",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11757",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.1157584", "30.1158584", "31.3529631", "31.3530631"]
+    }
+  ]
+}

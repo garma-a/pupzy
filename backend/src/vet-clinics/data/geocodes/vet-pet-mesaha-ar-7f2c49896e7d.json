@@ -1,0 +1,8 @@
+{
+  "query": "الهرم الرئيسي, Al Mesaha al Haram, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%87%D8%B1%D9%85+%D8%A7%D9%84%D8%B1%D8%A6%D9%8A%D8%B3%D9%8A%2C+Al+Mesaha+al+Haram%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:20:27.183Z",
+  "httpStatus": 200,
+  "response": []
+}

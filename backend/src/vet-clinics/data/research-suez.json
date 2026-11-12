@@ -1,0 +1,96 @@
+[
+  {
+    "key": "mercy-mallaha",
+    "nameEnglish": "Mercy Vet Clinic",
+    "nameArabic": "عيادة ميرسي فيت البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "El Mallaha, beside El Shamy Chicken, ground floor, Suez",
+    "addressArabic": "الملاحة، بجوار دجاج الشامي، الدور الأرضي، السويس",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Suez",
+    "citySourceCode": "EG0401",
+    "phones": ["01101015035"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Suez/403829513747807/%D8%B9%D9%8A%D8%A7%D8%AF%D9%87-%D9%85%D8%B1%D8%B3%D9%8A-%D9%81%D9%8A%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87-Mercy-Vet-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-24",
+    "classificationEvidence": "Read dated clinic posts explicitly separate Mallaha and Houd El Dars branches; Mallaha pet vaccination/surgery at fixed premises. Government-linked urban classification confirms Mallaha in Suez district. Houd El Dars held for catalog location, not merged into Mallaha.",
+    "chainKey": "mercy-suez",
+    "branchQualifier": "Mallaha"
+  },
+  {
+    "key": "panda-suez",
+    "nameEnglish": "Panda Vet Clinic",
+    "nameArabic": "عيادة باندا فيت البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Geish Street, El Arbaeen, same side as El Tawhid Wel Nour, above El Zahraa Pharmacy, second floor, Suez",
+    "addressArabic": "الأربعين، شارع الجيش، صف التوحيد والنور، أعلى صيدلية الزهراء، الدور الثاني، السويس",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Al-Arbiin",
+    "citySourceCode": "EG0402",
+    "phones": ["01028803836", "01063799525"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Suez/157052481608497/Panda-vet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Physical pet diagnostics/treatment clinic explicitly locates Arbaeen; latest clinical hours notice and treated puppy case 2026. Emergency by prior call does not establish 24h premises.",
+    "aliases": {
+      "english": ["Panda vet clinic"]
+    }
+  },
+  {
+    "key": "animal-care-suez",
+    "nameEnglish": "Animal Care Vet Center",
+    "nameArabic": "مركز أنيمال كير البيطري",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Gamal Abdel Nasser Street, El Salam 2, Ataqa, Suez",
+    "addressArabic": "شارع جمال عبد الناصر، السلام 2، عتاقة، السويس",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Ataqa",
+    "citySourceCode": "EG0403",
+    "phones": ["01092001759"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Suez/100282575734124/Animal-care-vet-center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://gate.ahram.org.eg/News/2001445.aspx",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2022-10-13",
+    "classificationEvidence": "2022-10-13 pet veterinary examinations/vaccination promotion with clinic contact. El Salam 2 is in Ataqa per separately read governorate report; current unrelated news repost not treated as operation evidence.",
+    "aliases": {
+      "english": ["Animal care vet center"]
+    }
+  }
+]

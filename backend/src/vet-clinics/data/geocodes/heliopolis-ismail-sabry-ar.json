@@ -1,0 +1,35 @@
+{
+  "query": "إسماعيل صبري, مصر الجديدة, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A5%D8%B3%D9%85%D8%A7%D8%B9%D9%8A%D9%84+%D8%B5%D8%A8%D8%B1%D9%8A%2C+%D9%85%D8%B5%D8%B1+%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:46:53.861Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50593326,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 25086435,
+      "lat": "30.1085539",
+      "lon": "31.3419530",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع اسماعيل صبرى",
+      "display_name": "شارع اسماعيل صبرى, الحلمية, القاهرة, 11843, مصر",
+      "address": {
+        "road": "شارع اسماعيل صبرى",
+        "suburb": "الحلمية",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11843",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.1072017", "30.1095046", "31.3401881", "31.3440520"]
+    }
+  ]
+}

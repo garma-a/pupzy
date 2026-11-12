@@ -1,0 +1,111 @@
+{
+  "query": "الجزيرة, الشيخ زايد, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%AC%D8%B2%D9%8A%D8%B1%D8%A9%2C+%D8%A7%D9%84%D8%B4%D9%8A%D8%AE+%D8%B2%D8%A7%D9%8A%D8%AF%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:49:20.895Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 49173382,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 545542488,
+      "lat": "30.0759670",
+      "lon": "30.9734152",
+      "category": "place",
+      "type": "neighbourhood",
+      "place_rank": 24,
+      "importance": 0.08004952849622336,
+      "addresstype": "neighbourhood",
+      "name": "كمبوند تلال الجزيرة",
+      "display_name": "كمبوند تلال الجزيرة, الشيخ زايد, الجيزة, مصر",
+      "address": {
+        "neighbourhood": "كمبوند تلال الجزيرة",
+        "city": "الشيخ زايد",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0738803", "30.0776260", "30.9710981", "30.9751542"]
+    },
+    {
+      "place_id": 50441743,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 267086287,
+      "lat": "30.0198556",
+      "lon": "31.0027653",
+      "category": "building",
+      "type": "commercial",
+      "place_rank": 30,
+      "importance": 0.00004952849622334657,
+      "addresstype": "building",
+      "name": "الجزيرة بلازا",
+      "display_name": "الجزيرة بلازا, Tabali Arkan Delivery area 1, الشيخ زايد, الجيزة, 12593, مصر",
+      "address": {
+        "building": "الجزيرة بلازا",
+        "delivery_area": "Tabali Arkan Delivery area 1",
+        "city": "الشيخ زايد",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12593",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0190937", "30.0204625", "31.0022714", "31.0035352"]
+    },
+    {
+      "place_id": 49229975,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 8267043528,
+      "lat": "30.0250850",
+      "lon": "30.9912568",
+      "category": "junction",
+      "type": "yes",
+      "place_rank": 30,
+      "importance": 0.00004952849622334657,
+      "addresstype": "junction",
+      "name": "ميدان الجزيرة",
+      "display_name": "ميدان الجزيرة, Tabali Arkan Delivery area 1, الشيخ زايد, الجيزة, 12593, مصر",
+      "address": {
+        "junction": "ميدان الجزيرة",
+        "delivery_area": "Tabali Arkan Delivery area 1",
+        "city": "الشيخ زايد",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12593",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0250350", "30.0251350", "30.9912068", "30.9913068"]
+    },
+    {
+      "place_id": 50221271,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 10114233217,
+      "lat": "30.0024248",
+      "lon": "31.0329537",
+      "category": "amenity",
+      "type": "community_centre",
+      "place_rank": 30,
+      "importance": 0.00004952849622334657,
+      "addresstype": "amenity",
+      "name": "نادي الجزيرة الرياضي - فرع اكتوبر",
+      "display_name": "نادي الجزيرة الرياضي - فرع اكتوبر, شارع نيوجيزة, الشيخ زايد, الجيزة, 12573, مصر",
+      "address": {
+        "amenity": "نادي الجزيرة الرياضي - فرع اكتوبر",
+        "road": "شارع نيوجيزة",
+        "city": "الشيخ زايد",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12573",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0023748", "30.0024748", "31.0329037", "31.0330037"]
+    }
+  ]
+}

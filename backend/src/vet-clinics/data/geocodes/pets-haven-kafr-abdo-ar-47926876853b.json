@@ -1,0 +1,8 @@
+{
+  "query": "القدس متفرع من إبراهيم شريف, كفر عبده, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%82%D8%AF%D8%B3+%D9%85%D8%AA%D9%81%D8%B1%D8%B9+%D9%85%D9%86+%D8%A5%D8%A8%D8%B1%D8%A7%D9%87%D9%8A%D9%85+%D8%B4%D8%B1%D9%8A%D9%81%2C+%D9%83%D9%81%D8%B1+%D8%B9%D8%A8%D8%AF%D9%87%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:54:34.813Z",
+  "httpStatus": 200,
+  "response": []
+}

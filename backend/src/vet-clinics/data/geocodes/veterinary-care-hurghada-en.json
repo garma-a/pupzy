@@ -1,0 +1,8 @@
+{
+  "query": "Saad El Said Street, Hurghada 2, Red Sea, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Saad+El+Said+Street%2C+Hurghada+2%2C+Red+Sea%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:53:35.658Z",
+  "httpStatus": 200,
+  "response": []
+}

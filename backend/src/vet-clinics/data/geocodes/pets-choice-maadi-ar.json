@@ -1,0 +1,65 @@
+{
+  "query": "المعادي, المعادي, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%AF%D9%8A%2C+%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%AF%D9%8A%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:40:14.099Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51163242,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 210572241,
+      "lat": "29.9603313",
+      "lon": "31.2630550",
+      "category": "building",
+      "type": "yes",
+      "place_rank": 30,
+      "importance": 0.10540294855860563,
+      "addresstype": "building",
+      "name": "المعادى",
+      "display_name": "المعادى, 70, شارع 14, الفاروقية, القاهرة, 11728, مصر",
+      "address": {
+        "building": "المعادى",
+        "house_number": "70",
+        "road": "شارع 14",
+        "village": "الفاروقية",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11728",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9602001", "29.9604940", "31.2628698", "31.2632403"]
+    },
+    {
+      "place_id": 51457863,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 38658248,
+      "lat": "29.9581850",
+      "lon": "31.2590276",
+      "category": "building",
+      "type": "service",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "building",
+      "name": "سنترال المعادي 1",
+      "display_name": "سنترال المعادي 1, 55, شارع 7, الفاروقية, القاهرة, 11728, مصر",
+      "address": {
+        "building": "سنترال المعادي 1",
+        "house_number": "55",
+        "road": "شارع 7",
+        "village": "الفاروقية",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11728",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9580210", "29.9583489", "31.2588729", "31.2591823"]
+    }
+  ]
+}

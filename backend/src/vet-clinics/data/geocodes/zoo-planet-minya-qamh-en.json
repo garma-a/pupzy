@@ -1,0 +1,9 @@
+{
+  "query": "El Mansi Square, Minya al-Qamh, Sharkia, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Mansi+Square%2C+Minya+al-Qamh%2C+Sharkia%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T12:13:44.791Z",
+  "httpStatus": 503,
+  "response": [],
+  "rawBody": "\n<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html>\n  <head>\n    <title>503 first byte timeout</title>\n  </head>\n  <body>\n    <h1>Error 503 first byte timeout</h1>\n    <p>first byte timeout</p>\n    <h3>Error 54113</h3>\n    <p>Details: cache-mrs1530047-MRS 1794485641 2152529705</p>\n    <hr>\n    <p>Varnish cache server</p>\n  </body>\n</html>\n"
+}

@@ -1,0 +1,8 @@
+{
+  "query": "El Geish Street, Al-Arbiin, Suez, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Geish+Street%2C+Al-Arbiin%2C+Suez%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:37:24.763Z",
+  "httpStatus": 200,
+  "response": []
+}

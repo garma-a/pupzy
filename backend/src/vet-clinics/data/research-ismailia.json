@@ -1,0 +1,123 @@
+[
+  {
+    "key": "royal-pets-ismailia",
+    "nameEnglish": "Royal Pets Veterinary Clinic",
+    "nameArabic": "عيادة رويال بتس البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Main highway, opposite Radio and Television Building, El Sheikh Zayed, Ismailia 3, District El Sheikh Zayed",
+    "addressArabic": "الطريق السريع، أمام مبنى الإذاعة والتلفزيون، الشيخ زايد، الإسماعيلية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "District El Sheikh Zayed",
+    "citySourceCode": "PUPZY:adm3-eg190301",
+    "phones": ["01141616776", "01282226355"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Ismailia/827562230605197/Royal-Pets",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://buy.com.eg/en/directory/royal-pets-veterinary-clinic-j8e077",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-14",
+    "classificationEvidence": "Read individual clinic-feed mirror with 2026 pet/avian surgery and Ismailia branch recruitment. Buy Egypt individually confirms third district/Sheikh Zayed/contact. Job-applicant-only Shorouk contact not imported as Ismailia phone. Own linked site DNS failure cached."
+  },
+  {
+    "key": "aleef-ismailia",
+    "nameEnglish": "Aleef Veterinary Center",
+    "nameArabic": "مركز أليف لطب وجراحة الحيوان",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Street 1, Old University, opposite Al Zahraa Medical Complex, Ismailia",
+    "addressArabic": "شارع 1، الجامعة القديمة، أمام مجمع الزهراء الطبي، بجوار صيدلية د. دينا الشطوري، الإسماعيلية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Hai Al Ghamma'ah Al Kadeema",
+    "citySourceCode": "OSM:way/1054820714",
+    "phones": ["01203952003", "0643207174"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Ismailia/103237292451486/Aleef-Veterinary-Center-AVC---%D9%85%D8%B1%D9%83%D8%B2-%D8%A3%D9%84%D9%8A%D9%81-%D9%84%D8%B7%D8%A8-%D9%88%D8%AC%D8%B1%D8%A7%D8%AD%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-29",
+    "classificationEvidence": "Read individual clinic-feed mirror: pet diagnostics and bladder surgery; exact named catalog neighbourhood Old University. Two published contacts and physical premises."
+  },
+  {
+    "key": "k9-ismailia",
+    "nameEnglish": "K9 Vet Clinic",
+    "nameArabic": "عيادة كيه ناين البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Farik Fouad Aziz Ghaly Street, Fox Square, beside Jotun, Sheikh Zayed, Ismailia",
+    "addressArabic": "شارع الفريق فؤاد عزيز غالي، ميدان فوكس، بجوار توكيل يوتن، الشيخ زايد، الإسماعيلية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Ismailiyya 3",
+    "citySourceCode": "EG1903",
+    "phones": ["01115707872"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Ismailieh/453270734819878/K9-Vet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-08-15",
+    "classificationEvidence": "Individual physical pet surgery/imaging clinic explicitly names Ismailia Third; 2026-08-15 canine thyroid tumour surgery.",
+    "aliases": {
+      "english": ["K9 Vet clinic"]
+    }
+  },
+  {
+    "key": "arena-ismailia",
+    "nameEnglish": "Arena Veterinary Clinic",
+    "nameArabic": "عيادة أرينا البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Naguib Mahfouz Street, Osmanon housing, street opposite Sixty One restaurant, Ismailia",
+    "addressArabic": "شارع نجيب محفوظ، مساكن عثمانون، الشارع المقابل لمطعم سيكستي وان، الإسماعيلية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Ismailiyya 3",
+    "citySourceCode": "EG1903",
+    "phones": ["01503151177"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Ismailia/284703538065803/Arena-Veterinary-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://itda.gov.eg/CRM/883/CRA53.pdf",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-07",
+    "classificationEvidence": "2026-09-07 treated feline toxicity case at physical Osmanon clinic. Osmanon assigned Third district using government commercial-register locality reference CRA53; no map coordinates used."
+  }
+]

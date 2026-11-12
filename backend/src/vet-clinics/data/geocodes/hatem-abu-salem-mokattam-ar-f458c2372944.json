@@ -1,0 +1,65 @@
+{
+  "query": "- المقطم -, Mokattam, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=-+%D8%A7%D9%84%D9%85%D9%82%D8%B7%D9%85+-%2C+Mokattam%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:15:37.321Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50396006,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 4373610089,
+      "lat": "30.0146046",
+      "lon": "31.2766469",
+      "category": "tourism",
+      "type": "attraction",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "tourism",
+      "name": "تلة المقطم",
+      "display_name": "تلة المقطم, محور ياسر رزق, الحى 1, الخليفة, القاهرة, 11575, مصر",
+      "address": {
+        "tourism": "تلة المقطم",
+        "road": "محور ياسر رزق",
+        "neighbourhood": "الحى 1",
+        "suburb": "الخليفة",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11575",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0145546", "30.0146546", "31.2765969", "31.2766969"]
+    },
+    {
+      "place_id": 50401543,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 4214196244,
+      "lat": "30.0161162",
+      "lon": "31.2757109",
+      "category": "tourism",
+      "type": "attraction",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "tourism",
+      "name": "كورنيش المقطم",
+      "display_name": "كورنيش المقطم, محور ياسر رزق, الحى 1, الخليفة, القاهرة, 11575, مصر",
+      "address": {
+        "tourism": "كورنيش المقطم",
+        "road": "محور ياسر رزق",
+        "neighbourhood": "الحى 1",
+        "suburb": "الخليفة",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11575",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0160662", "30.0161662", "31.2756609", "31.2757609"]
+    }
+  ]
+}

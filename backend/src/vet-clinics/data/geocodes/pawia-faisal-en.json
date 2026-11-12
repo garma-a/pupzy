@@ -1,0 +1,90 @@
+{
+  "query": "El Malek Faisal Street, Faisal, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Malek+Faisal+Street%2C+Faisal%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:22:00.848Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51256115,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 6123239696,
+      "lat": "29.9994273",
+      "lon": "31.1620728",
+      "category": "amenity",
+      "type": "bank",
+      "place_rank": 30,
+      "importance": 0.00006337300679021924,
+      "addresstype": "amenity",
+      "name": "National Bank of Egypt",
+      "display_name": "National Bank of Egypt, Al Malek Faisal Street, Kom al Akhdar, Giza, Aj Jiza, 12111, Egypt",
+      "address": {
+        "amenity": "National Bank of Egypt",
+        "road": "Al Malek Faisal Street",
+        "suburb": "Kom al Akhdar",
+        "city": "Giza",
+        "state": "Aj Jiza",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12111",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9993773", "29.9994773", "31.1620228", "31.1621228"]
+    },
+    {
+      "place_id": 427058552,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 14133173110,
+      "lat": "29.9904414",
+      "lon": "31.1347323",
+      "category": "shop",
+      "type": "telecommunication",
+      "place_rank": 30,
+      "importance": 0.00006337300679021924,
+      "addresstype": "shop",
+      "name": "We",
+      "display_name": "We, Al Malek Faisal Street, Kom al Akhdar, Kafrat Nassar, Aj Jiza, 12512, Egypt",
+      "address": {
+        "shop": "We",
+        "road": "Al Malek Faisal Street",
+        "suburb": "Kom al Akhdar",
+        "village": "Kafrat Nassar",
+        "state": "Aj Jiza",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12512",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9903914", "29.9904914", "31.1346823", "31.1347823"]
+    },
+    {
+      "place_id": 432508161,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 14350130701,
+      "lat": "29.9919664",
+      "lon": "31.1413657",
+      "category": "amenity",
+      "type": "bank",
+      "place_rank": 30,
+      "importance": 0.00006337300679021924,
+      "addresstype": "amenity",
+      "name": "EBank",
+      "display_name": "EBank, Al Malek Faisal Street, Kom al Akhdar, Kafrat Nassar, Aj Jiza, 12512, Egypt",
+      "address": {
+        "amenity": "EBank",
+        "road": "Al Malek Faisal Street",
+        "suburb": "Kom al Akhdar",
+        "village": "Kafrat Nassar",
+        "state": "Aj Jiza",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12512",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9919164", "29.9920164", "31.1413157", "31.1414157"]
+    }
+  ]
+}

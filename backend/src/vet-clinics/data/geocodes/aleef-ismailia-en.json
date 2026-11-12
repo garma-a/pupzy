@@ -1,0 +1,35 @@
+{
+  "query": "Street 1, Hai Al Ghamma'ah Al Kadeema, Ismailia, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Street+1%2C+Hai+Al+Ghamma%27ah+Al+Kadeema%2C+Ismailia%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T12:18:09.082Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 47650982,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 348000347,
+      "lat": "30.6038015",
+      "lon": "32.3078909",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05339198367284653,
+      "addresstype": "residential",
+      "name": "Street 1",
+      "display_name": "Street 1, Hai Al Ghamma'ah Al Kadeema, Al Ismailiya, 41526, Egypt",
+      "address": {
+        "road": "Street 1",
+        "neighbourhood": "Hai Al Ghamma'ah Al Kadeema",
+        "city": "Al Ismailiya",
+        "state": "Al Ismailiya",
+        "ISO3166-2-lvl4": "EG-IS",
+        "postcode": "41526",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.6012798", "30.6067231", "32.3057735", "32.3095391"]
+    }
+  ]
+}

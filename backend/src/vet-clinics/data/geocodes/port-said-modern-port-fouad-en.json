@@ -1,0 +1,8 @@
+{
+  "query": "Police Bakery Street, Port Fuad, Port Said, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Police+Bakery+Street%2C+Port+Fuad%2C+Port+Said%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:50:41.304Z",
+  "httpStatus": 200,
+  "response": []
+}

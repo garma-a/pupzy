@@ -1,0 +1,8 @@
+{
+  "query": "El Madrasa Street, Mounib, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Madrasa+Street%2C+Mounib%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:20:53.593Z",
+  "httpStatus": 200,
+  "response": []
+}

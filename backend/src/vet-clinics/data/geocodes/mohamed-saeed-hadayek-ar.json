@@ -1,0 +1,8 @@
+{
+  "query": "الجيش, حدائق الأهرام, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%AC%D9%8A%D8%B4%2C+%D8%AD%D8%AF%D8%A7%D8%A6%D9%82+%D8%A7%D9%84%D8%A3%D9%87%D8%B1%D8%A7%D9%85%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:49:49.525Z",
+  "httpStatus": 200,
+  "response": []
+}

@@ -1,0 +1,8 @@
+{
+  "query": "السلام, قسم شرم الشيخ, South Sinai, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%2C+%D9%82%D8%B3%D9%85+%D8%B4%D8%B1%D9%85+%D8%A7%D9%84%D8%B4%D9%8A%D8%AE%2C+South+Sinai%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:52:15.228Z",
+  "httpStatus": 200,
+  "response": []
+}

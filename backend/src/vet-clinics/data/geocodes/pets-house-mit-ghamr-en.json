@@ -1,0 +1,8 @@
+{
+  "query": "Abu Senna Street, Mit Ghamr (Kism), Dakahlia, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Abu+Senna+Street%2C+Mit+Ghamr+%28Kism%29%2C+Dakahlia%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:16:12.156Z",
+  "httpStatus": 200,
+  "response": []
+}

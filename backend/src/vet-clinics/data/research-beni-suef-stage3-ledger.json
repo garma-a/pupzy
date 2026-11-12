@@ -1,0 +1,460 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F2",
+  "governorate": "Beni Suef",
+  "searches": [
+    "\"pet clinic\" \"Beni Suef\"",
+    "عيادات بيطرية بني سويف حيوانات أليفة",
+    "\"Pinky\" \"pets\" \"بني سويف\" \"012\""
+  ],
+  "sourcesConsulted": [
+    "https://aleefcom.com/pets_health_care/3811/",
+    "https://www.beautynailhairsalons.com/EG/Beni-Suef/326196227253565/Petty-Vet-Clinic",
+    "https://www.bizmideast.com/EG/petsologia-عيادة-بيطرية-0101-877-8157",
+    "https://www.bizmideast.com/EG/vet-pet-dr-amthal-fouad-0128-200-9288"
+  ],
+  "candidates": [
+    {
+      "key": "petty-beni-suef",
+      "sources": [
+        {
+          "url": "https://www.beautynailhairsalons.com/EG/Beni-Suef/326196227253565/Petty-Vet-Clinic",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror: comprehensive pet clinic, 2025 medical exams/vaccination; latest 2026 address first floor supersedes older ground-floor post. Contacts printed in clinic posts, not category templates.",
+      "lastSeenActive": "2026-06-09"
+    },
+    {
+      "key": "pinky-beni-suef",
+      "sources": [
+        {
+          "url": "https://aleefcom.com/pets_health_care/3811/",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual Aleefcom entry: pet treatment/surgery/vaccination/ultrasound, 2024 client reviews and published clinic schedule. No public phone on this individual page. Aggregate database contact not imported without individual confirmation; retained inactive no-phone.",
+      "lastSeenActive": "2024-08-17"
+    }
+  ],
+  "holdsAndExclusions": [
+    {
+      "name": "Petsologia",
+      "reason": "unresolved-pet-treatment",
+      "evidence": "Individual BizMidEast page classifies grooming/boarding; veterinary clinic title alone not enough.",
+      "sources": ["https://www.bizmideast.com/EG/petsologia-عيادة-بيطرية-0101-877-8157"]
+    },
+    {
+      "name": "Vet & PET Dr Amthal",
+      "reason": "wrong-governorate-directory",
+      "evidence": "Directory labels Beni Suef but actual address Hadayek El Ahram is Giza and already imported; do not create a Beni Suef branch.",
+      "sources": ["https://www.bizmideast.com/EG/vet-pet-dr-amthal-fouad-0128-200-9288"]
+    }
+  ],
+  "counts": {
+    "authored": 3,
+    "retained": 3,
+    "active": 2,
+    "inactiveByReason": {
+      "no-phone": 1
+    },
+    "precision": {
+      "area": 3
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {
+    "unresolved-pet-treatment": 1,
+    "wrong-governorate-directory": 1
+  },
+  "importAccounting": {
+    "candidates": 2,
+    "imported": 2,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D2",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D2-decisions.json",
+    "cities": [
+      {
+        "city": "Beni Suef",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Beni-Suef/67470/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Beni-Suef/67470",
+          "https://www.petshops1.com/EG/Bani-Suwayf/67456/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Bani-Suwayf/67456"
+        ],
+        "discoveryEntries": 36,
+        "candidates": [
+          {
+            "key": "103620295971347",
+            "city": "Beni Suef",
+            "name": "Dr.Eman Emad",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/103620295971347/Dr.Eman-Emad",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1204822406257208",
+            "city": "Beni Suef",
+            "name": "عصافير استرالي للبيع في بني سويف _البادجي",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/1204822406257208/%D8%B9%D8%B5%D8%A7%D9%81%D9%8A%D8%B1-%D8%A7%D8%B3%D8%AA%D8%B1%D8%A7%D9%84%D9%8A-%D9%84%D9%84%D8%A8%D9%8A%D8%B9-%D9%81%D9%8A-%D8%A8%D9%86%D9%8A-%D8%B3%D9%88%D9%8A%D9%81-_%D8%A7%D9%84%D8%A8%D8%A7%D8%AF%D8%AC%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "790792620991841",
+            "city": "Beni Suef",
+            "name": "حمام  المهندس للبيع",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/790792620991841/%D8%AD%D9%85%D8%A7%D9%85--%D8%A7%D9%84%D9%85%D9%87%D9%86%D8%AF%D8%B3-%D9%84%D9%84%D8%A8%D9%8A%D8%B9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "116968095568441",
+            "city": "Beni Suef",
+            "name": "Black Horse-BNS",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/116968095568441/Black-Horse-BNS",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "230891720107183",
+            "city": "Beni Suef",
+            "name": "أكاديمية سليمان للفروسية",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/230891720107183/%D8%A3%D9%83%D8%A7%D8%AF%D9%8A%D9%85%D9%8A%D8%A9-%D8%B3%D9%84%D9%8A%D9%85%D8%A7%D9%86-%D9%84%D9%84%D9%81%D8%B1%D9%88%D8%B3%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "106103899249705",
+            "city": "Beni Suef",
+            "name": "4Cats",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/106103899249705/4Cats",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "103639197796539",
+            "city": "Beni Suef",
+            "name": "Fluffy Pet Scan",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/103639197796539/Fluffy-Pet-Scan",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "104278482413602",
+            "city": "Beni Suef",
+            "name": "Al Namir Farms",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/104278482413602/Al-Namir-Farms",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "104312709382749",
+            "city": "Beni Suef",
+            "name": "سكار-scar",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/104312709382749/%D8%B3%D9%83%D8%A7%D8%B1-scar",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "106706235399419",
+            "city": "Beni Suef",
+            "name": "Guinea fowl",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/106706235399419/Guinea-fowl",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "190951521350398",
+            "city": "Beni Suef",
+            "name": "مملكة الطيور واسماك الزينة",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/190951521350398/%D9%85%D9%85%D9%84%D9%83%D8%A9-%D8%A7%D9%84%D8%B7%D9%8A%D9%88%D8%B1-%D9%88%D8%A7%D8%B3%D9%85%D8%A7%D9%83-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "310825975437093",
+            "city": "Beni Suef",
+            "name": "طيور الحب - love brids",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/310825975437093/%D8%B7%D9%8A%D9%88%D8%B1-%D8%A7%D9%84%D8%AD%D8%A8---love-brids",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "362934470527980",
+            "city": "Beni Suef",
+            "name": "Light.horse",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/362934470527980/Light.horse",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1737788189847393",
+            "city": "Beni Suef",
+            "name": "Brave heart kennel",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/1737788189847393/Brave-heart-kennel",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "111617917995702",
+            "city": "Beni Suef",
+            "name": "عشاق الكلاب الروت في بني سويف",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/111617917995702/%D8%B9%D8%B4%D8%A7%D9%82-%D8%A7%D9%84%D9%83%D9%84%D8%A7%D8%A8-%D8%A7%D9%84%D8%B1%D9%88%D8%AA-%D9%81%D9%8A-%D8%A8%D9%86%D9%8A-%D8%B3%D9%88%D9%8A%D9%81",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "106844849172477",
+            "city": "Beni Suef",
+            "name": "بيت السليماني جرومينج استضافة توصيل",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/106844849172477/%D8%A8%D9%8A%D8%AA-%D8%A7%D9%84%D8%B3%D9%84%D9%8A%D9%85%D8%A7%D9%86%D9%8A-%D8%AC%D8%B1%D9%88%D9%85%D9%8A%D9%86%D8%AC-%D8%A7%D8%B3%D8%AA%D8%B6%D8%A7%D9%81%D8%A9-%D8%AA%D9%88%D8%B5%D9%8A%D9%84",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "112214514690479",
+            "city": "Beni Suef",
+            "name": "Musaab Allam Sheep and Goats",
+            "url": "https://www.petshops1.com/EG/Bani-Suwayf/112214514690479/Musaab-Allam-Sheep-and-Goats",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "100758181597379",
+            "city": "Beni Suef",
+            "name": "السويفي للخيول العربية الاصيلة",
+            "url": "https://www.petshops1.com/EG/Bani-Suwayf/100758181597379/%D8%A7%D9%84%D8%B3%D9%88%D9%8A%D9%81%D9%8A-%D9%84%D9%84%D8%AE%D9%8A%D9%88%D9%84-%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-%D8%A7%D9%84%D8%A7%D8%B5%D9%8A%D9%84%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "104392747899541",
+            "city": "Beni Suef",
+            "name": "Novexa",
+            "url": "https://www.petshops1.com/EG/Bani-Suwayf/104392747899541/%D8%A7%D9%84%D8%B1%D9%81%D9%82-%D8%A8%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86-%D8%A8%D9%80-%D8%A7%D9%84%D9%88%D8%A7%D8%AF%D9%8A-%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF-%D8%A7%D9%84%D8%A7%D8%B5%D9%84%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "105680218803035",
+            "city": "Beni Suef",
+            "name": "Al-Najma Company",
+            "url": "https://www.petshops1.com/EG/Bani-Suwayf/105680218803035/Al-Najma-Company",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "186947014506960",
+            "city": "Beni Suef",
+            "name": "Happy Zoon 4UR Pet",
+            "url": "https://www.petshops1.com/EG/Bani-Suwayf/186947014506960/Happy-Zoon-4UR-Pet",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "322114567822107",
+            "city": "Beni Suef",
+            "name": "Sharazy Kittens, Fashion Jewelry & Plants in",
+            "url": "https://www.petshops1.com/EG/Bani-Suwayf/322114567822107/Sharazy-Kittens%2C-Fashion-Jewelry-%26-Plants-in-EGYPT",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1499173943634370",
+            "city": "Beni Suef",
+            "name": "Four cats",
+            "url": "https://www.petshops1.com/EG/Bani-Suwayf/1499173943634370/Four-cats",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1877839869167737",
+            "city": "Beni Suef",
+            "name": "Starvet clinic",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/1877839869167737/Starvet-clinic",
+            "status": "retained",
+            "reason": "starvet-beni-suef",
+            "evidence": "2026-09-24 feline pyometra surgery with ultrasound/labs at explicit New Beni Suef street premises and reception. No map coordinates copied.",
+            "snapshot": "web-evidence/depth-119113231db84c12.json"
+          },
+          {
+            "key": "326196227253565",
+            "city": "Beni Suef",
+            "name": "Petty Vet Clinic",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/326196227253565/Petty-Vet-Clinic",
+            "status": "retained",
+            "reason": "petty-beni-suef",
+            "evidence": "Individually reviewed pet surgery clinic. Appointment/contact 01023043848 appears in clinical posts; 01110620239 refers to another mobile service, not copied as clinic reception. Refreshes existing no-phone record rather than adding a duplicate.",
+            "snapshot": "web-evidence/depth-f2c53eb02c5d92a8.json"
+          },
+          {
+            "key": "102451649294120",
+            "city": "Beni Suef",
+            "name": "سمارت فيت - Smart Vet",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/102451649294120/%D8%B3%D9%85%D8%A7%D8%B1%D8%AA-%D9%81%D9%8A%D8%AA---Smart-Vet",
+            "status": "held",
+            "reason": "pharmaceutical-supplier",
+            "evidence": "Smart Vet veterinary pharmaceutical company, explicitly poultry/livestock manufacturer.",
+            "snapshot": "web-evidence/depth-564107a779bb78ab.json"
+          },
+          {
+            "key": "110222503817124",
+            "city": "Beni Suef",
+            "name": "First veterinary entity_بيطري أمان",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/110222503817124/First-veterinary-entity_%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-%D8%A3%D9%85%D8%A7%D9%86",
+            "status": "held",
+            "reason": "pharmaceutical-supplier",
+            "evidence": "First entity poultry/feed distribution business.",
+            "snapshot": "web-evidence/depth-9126890c827fa69a.json"
+          },
+          {
+            "key": "268032009717156",
+            "city": "Beni Suef",
+            "name": "الإسراء فيت \" Al-Esraa Vet \"",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/268032009717156/%D8%A7%D9%84%D8%A5%D8%B3%D8%B1%D8%A7%D8%A1-%D9%81%D9%8A%D8%AA-%22-Al-Esraa-Vet-%22",
+            "status": "held",
+            "reason": "poultry-supplies",
+            "evidence": "Al Esraa content concerns poultry supplies, no pet clinic proof.",
+            "snapshot": "web-evidence/depth-d60345e6e7e97ccd.json"
+          },
+          {
+            "key": "1024047060796232",
+            "city": "Beni Suef",
+            "name": "El Kholy vet",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/1024047060796232/El-Kholy-vet",
+            "status": "held",
+            "reason": "poultry-supplies",
+            "evidence": "El Kholy sells chicks/feed/drugs; no physical pet treatment established.",
+            "snapshot": "web-evidence/depth-c25b906708239b2c.json"
+          },
+          {
+            "key": "615534708860632",
+            "city": "Beni Suef",
+            "name": "سمارت فـيت - Smart Vet",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/615534708860632/%D8%B3%D9%85%D8%A7%D8%B1%D8%AA-%D9%81%D9%80%D9%8A%D8%AA---Smart-Vet",
+            "status": "held",
+            "reason": "pharmaceutical-supplier",
+            "evidence": "Second Smart Vet listing at Nile tower, no pet clinic proof; not merged into an unrelated clinic.",
+            "snapshot": "web-evidence/depth-53f89da1d943f03a.json"
+          },
+          {
+            "key": "507488512450098",
+            "city": "Beni Suef",
+            "name": "عيادة إبويط البيطرية",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/507488512450098/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A5%D8%A8%D9%88%D9%8A%D8%B7-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "unresolved-locality",
+            "evidence": "Pet-treatment services explicit at Abwit bridge; catalog locality needs independent corroboration before assignment.",
+            "snapshot": "web-evidence/depth-d00a1de95a409228.json"
+          },
+          {
+            "key": "812972142415680",
+            "city": "Beni Suef",
+            "name": "المركز البيطرى الحديث  د/ساره أحمد زكى عزام",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/812972142415680/%D8%A7%D9%84%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%89-%D8%A7%D9%84%D8%AD%D8%AF%D9%8A%D8%AB--%D8%AF-%D8%B3%D8%A7%D8%B1%D9%87-%D8%A3%D8%AD%D9%85%D8%AF-%D8%B2%D9%83%D9%89-%D8%B9%D8%B2%D8%A7%D9%85",
+            "status": "held",
+            "reason": "livestock",
+            "evidence": "Meidum road rural veterinary/livestock services; pet premises not established.",
+            "snapshot": "web-evidence/depth-47ae4d4ac8059262.json"
+          },
+          {
+            "key": "1065374336910385",
+            "city": "Beni Suef",
+            "name": "جى-فيت..G-Vet",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/1065374336910385/%D8%AC%D9%89-%D9%81%D9%8A%D8%AA..G-Vet",
+            "status": "held",
+            "reason": "poultry-drugs",
+            "evidence": "G-Vet poultry/livestock drug promotion, not pet treatment premises.",
+            "snapshot": "web-evidence/depth-a7fa9a8902e98c67.json"
+          },
+          {
+            "key": "1029781323554221",
+            "city": "Beni Suef",
+            "name": "pet by Vet",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/1029781323554221/pet-by-Vet",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "East Nile third district physical location/contact; read page insufficient to establish actual pet medical services.",
+            "snapshot": "web-evidence/depth-0b9c9bb9ad279400.json"
+          },
+          {
+            "key": "109732259118586",
+            "city": "Beni Suef",
+            "name": "Faculty of Veterinary Medicine BSU",
+            "url": "https://www.petshops1.com/EG/Beni-Suef/109732259118586/Faculty-of-Veterinary-Medicine-BSU",
+            "status": "held",
+            "reason": "faculty-administration",
+            "evidence": "Faculty page not evidence of public pet-teaching-hospital admission.",
+            "snapshot": "web-evidence/depth-7887c07f9aa967fb.json"
+          },
+          {
+            "key": "1482563228454642",
+            "city": "Beni Suef",
+            "name": "Pharma Vet",
+            "url": "https://www.petshops1.com/EG/Bani-Suwayf/1482563228454642/Pharma-Vet",
+            "status": "held",
+            "reason": "pharmaceutical-supplier",
+            "evidence": "Pharma Vet veterinary drugs/feed additives company.",
+            "snapshot": "web-evidence/depth-d4d345a850ecd1ee.json"
+          }
+        ],
+        "retained": 2,
+        "exclusionsByReason": {
+          "no-pet-clinic-evidence-in-discovery": 23,
+          "pharmaceutical-supplier": 4,
+          "poultry-supplies": 2,
+          "unresolved-locality": 1,
+          "livestock": 1,
+          "poultry-drugs": 1,
+          "unresolved-pet-treatment": 1,
+          "faculty-administration": 1
+        },
+        "individualSnapshots": [
+          "web-evidence/depth-119113231db84c12.json",
+          "web-evidence/depth-f2c53eb02c5d92a8.json",
+          "web-evidence/depth-564107a779bb78ab.json",
+          "web-evidence/depth-9126890c827fa69a.json",
+          "web-evidence/depth-d60345e6e7e97ccd.json",
+          "web-evidence/depth-c25b906708239b2c.json",
+          "web-evidence/depth-53f89da1d943f03a.json",
+          "web-evidence/depth-d00a1de95a409228.json",
+          "web-evidence/depth-47ae4d4ac8059262.json",
+          "web-evidence/depth-a7fa9a8902e98c67.json",
+          "web-evidence/depth-0b9c9bb9ad279400.json",
+          "web-evidence/depth-7887c07f9aa967fb.json",
+          "web-evidence/depth-d4d345a850ecd1ee.json"
+        ]
+      }
+    ]
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

@@ -1,0 +1,9 @@
+{
+  "query": "El Kawmia Square, Zaqaziq 2, Sharkia, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Kawmia+Square%2C+Zaqaziq+2%2C+Sharkia%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T12:15:04.503Z",
+  "httpStatus": null,
+  "response": [],
+  "error": "TypeError: fetch failed"
+}

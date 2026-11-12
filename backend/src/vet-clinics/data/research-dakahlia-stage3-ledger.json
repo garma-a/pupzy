@@ -1,0 +1,1113 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F1",
+  "governorate": "Dakahlia",
+  "searches": ["عيادة بيطرية المنصورة طلخا ميت غمر حيوانات أليفة", "\"pet clinic\" \"Mansoura\" phone"],
+  "sourcesConsulted": [
+    "https://australianvetrenarycenter.lovable.app/",
+    "https://www.megabizdir.com/EG/Talkha/67964-26/genre/162068413843305/Veterinarians",
+    "https://www.petshops1.com/EG/Al-Mansurah/1904657862946808/Australian-Veterinary-Center---AVC",
+    "https://www.voofla.com/EG/Mit-Ghamr/385043731351270/Petsy-Vet.-Cl.-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%AA%D8%B3%D9%8A-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9"
+  ],
+  "candidates": [
+    {
+      "key": "australian-vet-mansoura",
+      "sources": [
+        {
+          "url": "https://www.petshops1.com/EG/Al-Mansurah/1904657862946808/Australian-Veterinary-Center---AVC",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        },
+        {
+          "url": "https://australianvetrenarycenter.lovable.app/",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror: 2026-10-29 surgery booking at 20 Mohammad Arafa; older header 21 not used. Own site identifies Mansoura Qism 2 and same streets/contact; client-rendered local fetch recorded, web.open read.",
+      "lastSeenActive": "2026-10-29"
+    },
+    {
+      "key": "petsy-mit-ghamr",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Mit-Ghamr/385043731351270/Petsy-Vet.-Cl.-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%AA%D8%B3%D9%8A-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror: dated examinations, ultrasound and cat/dog blood tests; 2026-11-02 phone/address. Urban Mit Ghamr mapped to Kism, not rural Markaz.",
+      "lastSeenActive": "2026-11-02"
+    }
+  ],
+  "holdsAndExclusions": [
+    {
+      "name": "Tag Pharma",
+      "reason": "pharmacy-or-supplier",
+      "evidence": "Talkha discovery page describes poultry/livestock drugs and additives, no pet clinic.",
+      "sources": ["https://www.megabizdir.com/EG/Talkha/67964-26/genre/162068413843305/Veterinarians"]
+    }
+  ],
+  "counts": {
+    "retained": 12,
+    "active": 12,
+    "inactiveByReason": {},
+    "precision": {
+      "area": 12
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {
+    "pharmacy-or-supplier": 1
+  },
+  "importAccounting": {
+    "candidates": 12,
+    "imported": 12,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D1",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D1-decisions.json",
+    "cities": [
+      {
+        "city": "Mansoura",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Al-Mansurah/67388/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Al-Mansurah/67388",
+          "https://www.petshops1.com/EG/Mansoura/67776/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Mansoura/67776",
+          "https://www.petshops1.com/EG/Mansoura/67776/genre/162068413843305/Veterinarian/1",
+          "https://www.petshops1.com/EG/Mansoura/67776/genre/162068413843305/Veterinarian/2",
+          "https://www.petshops1.com/EG/Mansourah/67777/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Mansourah/67777",
+          "https://www.petshops1.com/EG/El-Mansura/67603/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/El-Mansura/67603"
+        ],
+        "discoveryEntries": 99,
+        "individualSnapshots": [
+          "web-evidence/depth-d2598f4d314782cf.json",
+          "web-evidence/depth-93df7565025f4c42.json",
+          "web-evidence/depth-1635f400da62654f.json",
+          "web-evidence/depth-9bac7a897ab6e756.json",
+          "web-evidence/depth-ca494196405d2970.json",
+          "web-evidence/depth-fdaaede41849a590.json",
+          "web-evidence/depth-c03a1d457e6bd889.json",
+          "web-evidence/depth-b6128d6e360218e8.json",
+          "web-evidence/depth-c71e79538e02d39d.json",
+          "web-evidence/depth-37b386e0fece8088.json",
+          "web-evidence/depth-d9a2eaa0bab82110.json",
+          "web-evidence/depth-5c84ee36b76ef8f2.json",
+          "web-evidence/depth-9ec4612aca622fbd.json",
+          "web-evidence/depth-aed598a306f1919f.json",
+          "web-evidence/depth-54dc32fcc5c873b3.json",
+          "web-evidence/depth-3ab1b7739dd1d09f.json",
+          "web-evidence/depth-12c2deb8d70fbd28.json",
+          "web-evidence/depth-ee3dfb267faed084.json",
+          "web-evidence/depth-123d687b98268d3d.json",
+          "web-evidence/depth-0cf793091d480ad0.json",
+          "web-evidence/depth-e7fdac3e5016ce50.json",
+          "web-evidence/depth-bf4d9cef29446478.json",
+          "web-evidence/depth-9885221f2e06b9fa.json",
+          "web-evidence/depth-7c0829b44ca969e9.json",
+          "web-evidence/depth-6176745771fc3167.json",
+          "web-evidence/depth-38139b13ce9f03d7.json",
+          "web-evidence/depth-9cb7aec6ac8a6099.json",
+          "web-evidence/depth-299fa11824fae825.json",
+          "web-evidence/depth-1a0dc08332e450f3.json",
+          "web-evidence/depth-ac7b6da001a21195.json",
+          "web-evidence/depth-7d5e3f813daf5179.json",
+          "web-evidence/depth-0a4a7f22f49cbff1.json",
+          "web-evidence/depth-f5fdd9ffb9f950b9.json",
+          "web-evidence/depth-352ff4e1f4c585c9.json"
+        ],
+        "candidates": [
+          {
+            "city": "Mansoura",
+            "name": "Greek Pet Animal Hospital",
+            "url": "https://www.petshops1.com/EG/Al-Mansurah/858253934193729/Greek-Pet-Animal-Hospital",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Greek hospital explicitly has Mansoura and Mahalla branches; sourced streets/phones, but split districts/branch contacts not confirmed; do not duplicate shared reception."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Australian Veterinary Center - AVC",
+            "url": "https://www.petshops1.com/EG/Al-Mansurah/1904657862946808/Australian-Veterinary-Center---AVC",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Aleef Animal Hospital - مستشفي أليف البيطري",
+            "url": "https://www.petshops1.com/EG/Mansoura/375421462982881/Aleef-Animal-Hospital---%D9%85%D8%B3%D8%AA%D8%B4%D9%81%D9%8A-%D8%A3%D9%84%D9%8A%D9%81-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "International Hospital street current address versus contradictory old Qism 2/El Mansoura 1 directory address; retain hold until resolved."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Ibrahim Ammar-طبيب بيطري",
+            "url": "https://www.petshops1.com/EG/Mansoura/453228241913672/Ibrahim-Ammar-%D8%B7%D8%A8%D9%8A%D8%A8-%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A",
+            "status": "held",
+            "reason": "personal-education-page",
+            "evidence": "Veterinarian content creator, no physical clinic address/contact."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Peticare Animal Hospital.   عيادة بيتي كير ال",
+            "url": "https://www.petshops1.com/EG/Mansoura/387162508585170/Peticare-Animal-Hospital.---%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%AA%D9%8A-%D9%83%D9%8A%D8%B1-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "retained",
+            "reason": "peticare-mansoura",
+            "evidence": "Physical veterinary medical centre in university quarter (Qism 1, as independently attested by My Pets clinic locality). Only Telephone clinic contact used; adoption-owner contacts ignored. No dated clinical operation inferred from recent adoption posts."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Animal House",
+            "url": "https://www.petshops1.com/EG/Mansoura/496124177167543/Animal-House",
+            "status": "held",
+            "reason": "pending-identity-review",
+            "evidence": "Animal House veterinary vaccinations at Hamza Ibn Abd El Mottaleb; compare second Animal House Centre page before retention."
+          },
+          {
+            "city": "Mansoura",
+            "name": "أبشر فيت - Dr. Anwar",
+            "url": "https://www.petshops1.com/EG/Mansoura/1598141413746167/%D8%A3%D8%A8%D8%B4%D8%B1-%D9%81%D9%8A%D8%AA---Dr.-Anwar",
+            "status": "held",
+            "reason": "livestock-only-evidence",
+            "evidence": "Sinbillawin address rather than Mansoura; feed discusses cattle/goats, no established pet premises."
+          },
+          {
+            "city": "Mansoura",
+            "name": "DWAA Company for veterinary products",
+            "url": "https://www.petshops1.com/EG/Mansoura/261864867212303/DWAA-Company-for-veterinary-products",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "DELTA PETS Company",
+            "url": "https://www.petshops1.com/EG/Mansoura/113157771573732/DELTA-PETS-Company",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Animal planet hospital",
+            "url": "https://www.petshops1.com/EG/Mansoura/644165609020523/Animal-planet-hospital",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Physical pet surgery established; Al Galaa/Thanawiya split capital district to verify."
+          },
+          {
+            "city": "Mansoura",
+            "name": "LoKare Pets Store",
+            "url": "https://www.petshops1.com/EG/Mansoura/105268352676061/LoKare-Pets-Store",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "شركة العصر القادم للصناعات الدوائية و أضافات",
+            "url": "https://www.petshops1.com/EG/Mansoura/106896541946906/%D8%B4%D8%B1%D9%83%D8%A9-%D8%A7%D9%84%D8%B9%D8%B5%D8%B1-%D8%A7%D9%84%D9%82%D8%A7%D8%AF%D9%85-%D9%84%D9%84%D8%B5%D9%86%D8%A7%D8%B9%D8%A7%D8%AA-%D8%A7%D9%84%D8%AF%D9%88%D8%A7%D8%A6%D9%8A%D8%A9-%D9%88-%D8%A3%D8%B6%D8%A7%D9%81%D8%A7%D8%AA-%D8%A7%D9%84%D8%A3%D8%B9%D9%84%D8%A7%D9%81",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Peticare 18 pet clinic",
+            "url": "https://www.petshops1.com/EG/Mansoura/107680998791104/Peticare-18-pet-clinic",
+            "status": "retained",
+            "reason": "peticare18-mansoura",
+            "evidence": "2026-09-07 head trauma treatment; clinic number explicitly labelled in 2026-09-21 post, adoption-owner numbers discarded. Toriel is the Qism 2 locality; no evidence establishes a chain with the separate university-quarter Peticare."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Mini diploma Academy",
+            "url": "https://www.petshops1.com/EG/Mansoura/1144298702098425/Mini-diploma-Academy",
+            "status": "excluded-discovery",
+            "reason": "training-or-academy",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "WOOF clinic",
+            "url": "https://www.petshops1.com/EG/Mansoura/108226034321997/WOOF-clinic",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Physical pet clinic at Mubarak City; split capital district not yet sourced."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Esam Vet Store ادوية بيطرى عصام فيت ستور",
+            "url": "https://www.petshops1.com/EG/Mansoura/102355722392423/Esam-Vet-Store-%D8%A7%D8%AF%D9%88%D9%8A%D8%A9-%D8%A8%D9%8A%D8%B7%D8%B1%D9%89-%D8%B9%D8%B5%D8%A7%D9%85-%D9%81%D9%8A%D8%AA-%D8%B3%D8%AA%D9%88%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Vetalia Pet Clinic",
+            "url": "https://www.petshops1.com/EG/Mansoura/105237955608039/Vetalia-Pet-Clinic",
+            "status": "retained",
+            "reason": "vetalia-mansoura",
+            "evidence": "Clinic post on 2026-09-06 reports treated pet and street/contact. Ahmed Maher/Baron Palace locality matches the existing independently sourced AVC Qism 2 address; no coordinates copied. Mobile from clinic posts; landline from Telephone."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Healthy Pet Veterinary Clinic",
+            "url": "https://www.petshops1.com/EG/Mansoura/109578924527731/Healthy-Pet-Veterinary-Clinic",
+            "status": "retained",
+            "reason": "healthy-pet-mansoura",
+            "evidence": "2026-08-06 feline skin treatment. Address and phone from clinic recruitment post. Toriel/El Malek El Kamel is Qism 2 per separately read locality report."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Joe vet Company",
+            "url": "https://www.petshops1.com/EG/Mansoura/1897284760378649/Joe-vet-Company",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Pet Story Clinic",
+            "url": "https://www.petshops1.com/EG/Mansoura/119183161281610/Pet-Story-Clinic",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Physical pet surgery and contacts established, but Kafr Khadra/Khattab address administrative assignment unresolved."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Nala Pet Clinic",
+            "url": "https://www.petshops1.com/EG/Mansoura/1125624687307095/Nala-Pet-Clinic",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Pet-treatment opening post but exact premises and selectable subdistrict need resolution."
+          },
+          {
+            "city": "Mansoura",
+            "name": "عيادة د/ سمر سلاطين للخدمات البيطرية",
+            "url": "https://www.petshops1.com/EG/Mansoura/291434770700381/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%AF--%D8%B3%D9%85%D8%B1-%D8%B3%D9%84%D8%A7%D8%B7%D9%8A%D9%86-%D9%84%D9%84%D8%AE%D8%AF%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Dr Samar Salatin explicitly offers physical pet examination/treatment/vaccination and current 01033145745, Suez Canal Street opposite Koshary El Tahrir; split Mansoura district not confirmed, not a treatment exclusion."
+          },
+          {
+            "city": "Mansoura",
+            "name": "وحدة سندوب البيطرية",
+            "url": "https://www.petshops1.com/EG/Mansoura/1015232711665347/%D9%88%D8%AD%D8%AF%D8%A9-%D8%B3%D9%86%D8%AF%D9%88%D8%A8-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "government-or-institution",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Al- Yasmine Vet clinic",
+            "url": "https://www.petshops1.com/EG/Mansoura/589901517550465/Al--Yasmine-Vet-clinic",
+            "status": "held",
+            "reason": "unresolved-contact-and-treatment",
+            "evidence": "Badway pharmacy/supplies and pet advice; no physical pet clinic treatment/contact."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Vet Seham Abdelrazek",
+            "url": "https://www.petshops1.com/EG/Mansoura/1379682211891207/Vet-Seham-Abdelrazek",
+            "status": "held",
+            "reason": "personal-education-page",
+            "evidence": "Veterinary student/vlogger, not a clinic."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Kepa International",
+            "url": "https://www.petshops1.com/EG/Mansoura/960499840488329/Kepa-International",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Alfa Clinic",
+            "url": "https://www.petshops1.com/EG/Mansoura/102007765366276/Alfa-Clinic",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Pet treatment and contact found, but current Islamic Studies street administrative assignment unverified."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Bolmac-بولماك",
+            "url": "https://www.petshops1.com/EG/Mansoura/103097892317359/Bolmac-%D8%A8%D9%88%D9%84%D9%85%D8%A7%D9%83",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Shreif mashal",
+            "url": "https://www.petshops1.com/EG/Mansoura/103764738312901/Shreif-mashal",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Only commercial description and personal posts; category is insufficient."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Home Pet's Care",
+            "url": "https://www.petshops1.com/EG/Mansoura/124064267449006/Home-Pet%27s-Care",
+            "status": "held",
+            "reason": "unresolved-physical-premises",
+            "evidence": "Generic home-care page with city only, no evidence for physical clinic."
+          },
+          {
+            "city": "Mansoura",
+            "name": "RGT - Reva Global Trade Corporation",
+            "url": "https://www.petshops1.com/EG/Mansoura/516461425117106/RGT---Reva-Global-Trade-Corporation",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "معمل المختبر البيطري بميت سلسيل",
+            "url": "https://www.petshops1.com/EG/Mansoura/677510099050431/%D9%85%D8%B9%D9%85%D9%84-%D8%A7%D9%84%D9%85%D8%AE%D8%AA%D8%A8%D8%B1-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-%D8%A8%D9%85%D9%8A%D8%AA-%D8%B3%D9%84%D8%B3%D9%8A%D9%84",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "معمل الطيار للتفريخ الألى",
+            "url": "https://www.petshops1.com/EG/Mansoura/1114086195328021/%D9%85%D8%B9%D9%85%D9%84-%D8%A7%D9%84%D8%B7%D9%8A%D8%A7%D8%B1-%D9%84%D9%84%D8%AA%D9%81%D8%B1%D9%8A%D8%AE-%D8%A7%D9%84%D8%A3%D9%84%D9%89",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "كنارى",
+            "url": "https://www.petshops1.com/EG/Mansoura/1407832232875627/%D9%83%D9%86%D8%A7%D8%B1%D9%89",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Animal House Centre",
+            "url": "https://www.petshops1.com/EG/Mansoura/105333302340820/Animal-House-Centre",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "الشركة الخليجية للأدوية البيطرية واضافات الاع",
+            "url": "https://www.petshops1.com/EG/Mansoura/115080284953096/%D8%A7%D9%84%D8%B4%D8%B1%D9%83%D8%A9-%D8%A7%D9%84%D8%AE%D9%84%D9%8A%D8%AC%D9%8A%D8%A9-%D9%84%D9%84%D8%A3%D8%AF%D9%88%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D9%88%D8%A7%D8%B6%D8%A7%D9%81%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D8%B9%D9%84%D8%A7%D9%81",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "محمد الخولي - دهب و لولو",
+            "url": "https://www.petshops1.com/EG/Mansoura/139681835894966/%D9%85%D8%AD%D9%85%D8%AF-%D8%A7%D9%84%D8%AE%D9%88%D9%84%D9%8A---%D8%AF%D9%87%D8%A8-%D9%88-%D9%84%D9%88%D9%84%D9%88",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "التوحيد للإنتاج الداجنى",
+            "url": "https://www.petshops1.com/EG/Mansoura/351835218582459/%D8%A7%D9%84%D8%AA%D9%88%D8%AD%D9%8A%D8%AF-%D9%84%D9%84%D8%A5%D9%86%D8%AA%D8%A7%D8%AC-%D8%A7%D9%84%D8%AF%D8%A7%D8%AC%D9%86%D9%89",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "الكوتش K9",
+            "url": "https://www.petshops1.com/EG/Mansoura/466848450516522/%D8%A7%D9%84%D9%83%D9%88%D8%AA%D8%B4-K9",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "كابتن شريف شحاته",
+            "url": "https://www.petshops1.com/EG/Mansoura/113951734894515/%D9%83%D8%A7%D8%A8%D8%AA%D9%86-%D8%B4%D8%B1%D9%8A%D9%81-%D8%B4%D8%AD%D8%A7%D8%AA%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "اسلام مملكه الطيور",
+            "url": "https://www.petshops1.com/EG/Mansoura/120429071023810/%D8%A7%D8%B3%D9%84%D8%A7%D9%85-%D9%85%D9%85%D9%84%D9%83%D9%87-%D8%A7%D9%84%D8%B7%D9%8A%D9%88%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "مزعة سمان تكسس المنصوره ابو كريم",
+            "url": "https://www.petshops1.com/EG/Mansoura/401917173001314/%D9%85%D8%B2%D8%B9%D8%A9-%D8%B3%D9%85%D8%A7%D9%86-%D8%AA%D9%83%D8%B3%D8%B3-%D8%A7%D9%84%D9%85%D9%86%D8%B5%D9%88%D8%B1%D9%87-%D8%A7%D8%A8%D9%88-%D9%83%D8%B1%D9%8A%D9%85",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Dr. KABSHA Parrots",
+            "url": "https://www.petshops1.com/EG/Mansoura/106261850932647/Dr.-KABSHA-Parrots",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Mansoura Animal Rescue Shelter شيلتر المنصورة",
+            "url": "https://www.petshops1.com/EG/Mansoura/1613842608938173/Mansoura-Animal-Rescue-Shelter-%D8%B4%D9%8A%D9%84%D8%AA%D8%B1-%D8%A7%D9%84%D9%85%D9%86%D8%B5%D9%88%D8%B1%D8%A9-%D9%84%D8%A5%D9%86%D9%82%D8%A7%D8%B0-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA",
+            "status": "excluded-discovery",
+            "reason": "shelter-without-clinic",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Amira mamoon Makeup Artist",
+            "url": "https://www.petshops1.com/EG/Mansoura/273944779132069/Amira-mamoon-Makeup-Artist",
+            "status": "excluded-discovery",
+            "reason": "unrelated-business",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "الشركه المصريه لاقفاص العصافير",
+            "url": "https://www.petshops1.com/EG/Mansoura/1019375614823342/%D8%A7%D9%84%D8%B4%D8%B1%D9%83%D9%87-%D8%A7%D9%84%D9%85%D8%B5%D8%B1%D9%8A%D9%87-%D9%84%D8%A7%D9%82%D9%81%D8%A7%D8%B5-%D8%A7%D9%84%D8%B9%D8%B5%D8%A7%D9%81%D9%8A%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "شركاء في الخير_مؤسسة الريان_للعقائق والصدقات",
+            "url": "https://www.petshops1.com/EG/Mansoura/108009838906339/%D8%B4%D8%B1%D9%83%D8%A7%D8%A1-%D9%81%D9%8A-%D8%A7%D9%84%D8%AE%D9%8A%D8%B1_%D9%85%D8%A4%D8%B3%D8%B3%D8%A9-%D8%A7%D9%84%D8%B1%D9%8A%D8%A7%D9%86_%D9%84%D9%84%D8%B9%D9%82%D8%A7%D8%A6%D9%82-%D9%88%D8%A7%D9%84%D8%B5%D8%AF%D9%82%D8%A7%D8%AA-%D8%A8%D8%A3%D9%81%D8%B1%D9%8A%D9%82%D9%8A%D8%A7",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Dany Birds",
+            "url": "https://www.petshops1.com/EG/Mansoura/139889691282846/Dany-Birds",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Aquablue",
+            "url": "https://www.petshops1.com/EG/Mansoura/101360602461625/Aquablue",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "أحباب الله_مؤسسة الريان_للعقائق والصدقات في أ",
+            "url": "https://www.petshops1.com/EG/Mansoura/101442276063352/%D8%A3%D8%AD%D8%A8%D8%A7%D8%A8-%D8%A7%D9%84%D9%84%D9%87_%D9%85%D8%A4%D8%B3%D8%B3%D8%A9-%D8%A7%D9%84%D8%B1%D9%8A%D8%A7%D9%86_%D9%84%D9%84%D8%B9%D9%82%D8%A7%D8%A6%D9%82-%D9%88%D8%A7%D9%84%D8%B5%D8%AF%D9%82%D8%A7%D8%AA-%D9%81%D9%8A-%D8%A3%D9%81%D8%B1%D9%8A%D9%82%D9%8A%D8%A7",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "TROY STUD - للفروسية",
+            "url": "https://www.petshops1.com/EG/Mansoura/105789755470766/TROY-STUD---%D9%84%D9%84%D9%81%D8%B1%D9%88%D8%B3%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "برنامج الفارس",
+            "url": "https://www.petshops1.com/EG/Mansoura/317448758348326/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC-%D8%A7%D9%84%D9%81%D8%A7%D8%B1%D8%B3",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "أبو سلمة للبراهما والحمام الزاجل 01032650519",
+            "url": "https://www.petshops1.com/EG/Mansoura/456150607786775/%D8%A3%D8%A8%D9%88-%D8%B3%D9%84%D9%85%D8%A9-%D9%84%D9%84%D8%A8%D8%B1%D8%A7%D9%87%D9%85%D8%A7-%D9%88%D8%A7%D9%84%D8%AD%D9%85%D8%A7%D9%85-%D8%A7%D9%84%D8%B2%D8%A7%D8%AC%D9%84-01032650519",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "الندي للاستثمار الداجني",
+            "url": "https://www.petshops1.com/EG/Mansoura/111154770365000/%D8%A7%D9%84%D9%86%D8%AF%D9%8A-%D9%84%D9%84%D8%A7%D8%B3%D8%AA%D8%AB%D9%85%D8%A7%D8%B1-%D8%A7%D9%84%D8%AF%D8%A7%D8%AC%D9%86%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Roka Clinic",
+            "url": "https://www.petshops1.com/EG/Mansoura/108320624750918/Roka-Clinic",
+            "status": "retained",
+            "reason": "roka-mansoura",
+            "evidence": "Individual clinic feed explicitly lists Mansoura Qism 2, pet examinations and vaccination packages dated 2026-08-22."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Fpi Animal Health إف بي آي لصحة الحيوان",
+            "url": "https://www.petshops1.com/EG/Mansoura/115547307711699/Fpi-Animal-Health-%D8%A5%D9%81-%D8%A8%D9%8A-%D8%A2%D9%8A-%D9%84%D8%B5%D8%AD%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "vic company",
+            "url": "https://www.petshops1.com/EG/Mansoura/476677842184673/vic-company",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Barkadelo",
+            "url": "https://www.petshops1.com/EG/Mansoura/1136136233221469/Barkadelo",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Ranoza Pets",
+            "url": "https://www.petshops1.com/EG/Mansoura/966720306525972/Ranoza-Pets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "محمد زهران/Apo fahd",
+            "url": "https://www.petshops1.com/EG/Mansoura/656051641231463/%D9%85%D8%AD%D9%85%D8%AF-%D8%B2%D9%87%D8%B1%D8%A7%D9%86-Apo-fahd",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Dr. Shimaa Hany pets clinic",
+            "url": "https://www.petshops1.com/EG/Mansoura/1642192739372176/Dr.-Shimaa-Hany-pets-clinic",
+            "status": "held",
+            "reason": "unresolved-current-address",
+            "evidence": "Clinic surgery/contact established but current courts-area address differs from old El Marwa/Qism2 entry; resolve before importing."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Pet Espitalia / Mansoura",
+            "url": "https://www.petshops1.com/EG/Mansoura/226570925995326/Pet-Espitalia---Mansoura",
+            "status": "retained",
+            "reason": "pet-espitalia-mansoura",
+            "evidence": "Physical pet hospital advertises surgery, ultrasound and X-ray. Ahmed Maher locality corroborated by the existing AVC source. Latest visible posts concern grooming, so no clinical operation date assigned."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Dogs lovers \"eltok kennel \"",
+            "url": "https://www.petshops1.com/EG/Mansoura/102185128764604/Dogs-lovers-%22eltok-kennel-%22",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "رينال للاستثمار الداجنى",
+            "url": "https://www.petshops1.com/EG/Mansoura/421677944352403/%D8%B1%D9%8A%D9%86%D8%A7%D9%84-%D9%84%D9%84%D8%A7%D8%B3%D8%AA%D8%AB%D9%85%D8%A7%D8%B1-%D8%A7%D9%84%D8%AF%D8%A7%D8%AC%D9%86%D9%89",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "عيادة فيت كير للخدمات البيطرية بالحواوشة",
+            "url": "https://www.petshops1.com/EG/Mansoura/445749265293966/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D9%81%D9%8A%D8%AA-%D9%83%D9%8A%D8%B1-%D9%84%D9%84%D8%AE%D8%AF%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D8%A8%D8%A7%D9%84%D8%AD%D9%88%D8%A7%D9%88%D8%B4%D8%A9",
+            "status": "held",
+            "reason": "unresolved-pet-treatment-and-contact",
+            "evidence": "Hawawsha veterinary services template with no phone or pet treatment."
+          },
+          {
+            "city": "Mansoura",
+            "name": "X-Care Pharma Animal Health",
+            "url": "https://www.petshops1.com/EG/Mansoura/105329165893525/X-Care-Pharma-Animal-Health",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Dr. Karim El-Sewedy",
+            "url": "https://www.petshops1.com/EG/Mansoura/275801155621885/Dr.-Karim-El-Sewedy",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Veterinarian template only, no demonstrated pet service or contact."
+          },
+          {
+            "city": "Mansoura",
+            "name": "LaClinica",
+            "url": "https://www.petshops1.com/EG/Mansourah/563697300635201/LaClinica",
+            "status": "retained",
+            "reason": "laclinica-mansoura",
+            "evidence": "2026-10-24 offers clinic medical laboratory diagnostics for pets; specific physical premises/clinic contacts. Toriel is Qism 2; similar street to Peticare18 but disjoint contacts and distinct brand, no identity evidence."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Zootopia.ivsc - المركز المتكامل للخدمات البيط",
+            "url": "https://www.petshops1.com/EG/Mansourah/288720191622379/Zootopia.ivsc---%D8%A7%D9%84%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D9%85%D8%AA%D9%83%D8%A7%D9%85%D9%84-%D9%84%D9%84%D8%AE%D8%AF%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "unresolved-current-identity",
+            "evidence": "2019 Zootopia address is now linked as Nourvet in related feed; hold for rename/contact check."
+          },
+          {
+            "city": "Mansoura",
+            "name": "BioScience pharmaceuticals",
+            "url": "https://www.petshops1.com/EG/Mansourah/295139151168103/BioScience-pharmaceuticals",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "PetCalls",
+            "url": "https://www.petshops1.com/EG/Mansourah/782530925470076/PetCalls",
+            "status": "held",
+            "reason": "home-visit-only",
+            "evidence": "PetCalls provides calls/visits, no public physical premises."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Kati 4pets",
+            "url": "https://www.petshops1.com/EG/Mansourah/1269568203154088/Kati-4pets",
+            "status": "held",
+            "reason": "unresolved-physical-premises",
+            "evidence": "2017 pet advice only, no clinic premises."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Smart vet academy",
+            "url": "https://www.petshops1.com/EG/Mansourah/117006132244176/Smart-vet-academy",
+            "status": "excluded-discovery",
+            "reason": "training-or-academy",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "البرماوي للانتاج الداجني",
+            "url": "https://www.petshops1.com/EG/Mansourah/282412269253649/%D8%A7%D9%84%D8%A8%D8%B1%D9%85%D8%A7%D9%88%D9%8A-%D9%84%D9%84%D8%A7%D9%86%D8%AA%D8%A7%D8%AC-%D8%A7%D9%84%D8%AF%D8%A7%D8%AC%D9%86%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "El Ghamry Riding School",
+            "url": "https://www.petshops1.com/EG/Mansourah/1573206606074305/El-Ghamry-Riding-School",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "ZOO CARE",
+            "url": "https://www.petshops1.com/EG/Mansourah/238095192928535/ZOO-CARE",
+            "status": "held",
+            "reason": "unresolved-branch-localities",
+            "evidence": "Own feed publishes two regular branches, Mashaya/El Shafie and University Quarter/Nagi Abd El Razek. Contacts shared explicitly; district assignments still need checking."
+          },
+          {
+            "city": "Mansoura",
+            "name": "My Pets Vet Center   د / احمد جبر",
+            "url": "https://www.petshops1.com/EG/Mansourah/711935935632520/My-Pets-Vet-Center---%D8%AF---%D8%A7%D8%AD%D9%85%D8%AF-%D8%AC%D8%A8%D8%B1",
+            "status": "retained",
+            "reason": "my-pets-mansoura",
+            "evidence": "Individual entry explicitly states Qesm 1 and physical pet clinic; retail posts not treated as dated clinical evidence."
+          },
+          {
+            "city": "Mansoura",
+            "name": "مركز المنصورة البيطري للحيوانات الاليفة",
+            "url": "https://www.petshops1.com/EG/Mansourah/363254170421922/%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D9%85%D9%86%D8%B5%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-%D9%84%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D8%A9",
+            "status": "held",
+            "reason": "home-visit-only",
+            "evidence": "2026-08-09 post explicitly says there are currently no premises: لا يوجد مقر للمركز حاليا."
+          },
+          {
+            "city": "Mansoura",
+            "name": "CATaZineLive",
+            "url": "https://www.petshops1.com/EG/Mansourah/148069311930048/CATaZineLive",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "كاتى لتصنيع بيوت القطط والكلاب",
+            "url": "https://www.petshops1.com/EG/Mansourah/173751732964258/%D9%83%D8%A7%D8%AA%D9%89-%D9%84%D8%AA%D8%B5%D9%86%D9%8A%D8%B9-%D8%A8%D9%8A%D9%88%D8%AA-%D8%A7%D9%84%D9%82%D8%B7%D8%B7-%D9%88%D8%A7%D9%84%D9%83%D9%84%D8%A7%D8%A8",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "A+ Pets",
+            "url": "https://www.petshops1.com/EG/Mansourah/202286666834150/A%2B-Pets",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "2016 pet photos, no demonstrated veterinary treatment/premises."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Dogs in egypt",
+            "url": "https://www.petshops1.com/EG/Mansourah/299141583457217/Dogs-in-egypt",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Up Side Down  محل الحيوانات الاليفة فى المنصو",
+            "url": "https://www.petshops1.com/EG/Mansourah/381713165185704/Up-Side-Down--%D9%85%D8%AD%D9%84-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D8%A9-%D9%81%D9%89-%D8%A7%D9%84%D9%85%D9%86%D8%B5%D9%88%D8%B1%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Fans of Cats",
+            "url": "https://www.petshops1.com/EG/Mansourah/385789324826533/Fans-of-Cats",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Marvel Animal Health",
+            "url": "https://www.petshops1.com/EG/Mansourah/388447441701866/Marvel-Animal-Health",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Veterinary Field",
+            "url": "https://www.petshops1.com/EG/Mansourah/433835793483206/Veterinary-Field",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "UVERA",
+            "url": "https://www.petshops1.com/EG/Mansourah/577092819069664/UVERA",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Buncky",
+            "url": "https://www.petshops1.com/EG/Mansourah/647067215323753/Buncky",
+            "status": "held",
+            "reason": "grooming-only-evidence",
+            "evidence": "Description offers grooming and comfort; no veterinary treatment evidence."
+          },
+          {
+            "city": "Mansoura",
+            "name": "مينا لطيور الزينة - أشرف إدوار",
+            "url": "https://www.petshops1.com/EG/Mansourah/811998262203713/%D9%85%D9%8A%D9%86%D8%A7-%D9%84%D8%B7%D9%8A%D9%88%D8%B1-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D8%A9---%D8%A3%D8%B4%D8%B1%D9%81-%D8%A5%D8%AF%D9%88%D8%A7%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Next Level Rottweiler Kennel",
+            "url": "https://www.petshops1.com/EG/Mansourah/1162973350462818/Next-Level-Rottweiler-Kennel",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Vom House \"Abo.Eslam\" Gsd Breeder",
+            "url": "https://www.petshops1.com/EG/Mansourah/1203190023116411/Vom-House-%22Abo.Eslam%22-Gsd-Breeder",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "3A للحيوانات الاليفه",
+            "url": "https://www.petshops1.com/EG/Mansourah/1257829814239562/3A-%D9%84%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Pets for sale in mansoura",
+            "url": "https://www.petshops1.com/EG/Mansourah/1596422960589998/Pets-for-sale-in-mansoura",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Steer - Rides & Deals",
+            "url": "https://www.petshops1.com/EG/Mansourah/1776197399309235/Steer---Rides-%26-Deals",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "My-vets Acadmey",
+            "url": "https://www.petshops1.com/EG/El-Mansura/100137908264293/My-vets-Acadmey",
+            "status": "excluded-discovery",
+            "reason": "training-or-academy",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "DR JEMEY",
+            "url": "https://www.petshops1.com/EG/El-Mansura/110067297096193/DR-JEMEY",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Integrated pet clinic and phone established but University Quarter/Ghazaly split district not independently identified."
+          },
+          {
+            "city": "Mansoura",
+            "name": "MONTU Kennel",
+            "url": "https://www.petshops1.com/EG/El-Mansura/101942372268441/MONTU-Kennel",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "المنصورة  بلدى",
+            "url": "https://www.petshops1.com/EG/El-Mansura/152438378189367/%D8%A7%D9%84%D9%85%D9%86%D8%B5%D9%88%D8%B1%D8%A9--%D8%A8%D9%84%D8%AF%D9%89",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mansoura",
+            "name": "Kanna Dogs Pendant",
+            "url": "https://www.petshops1.com/EG/El-Mansura/1535722490023005/Kanna-Dogs-Pendant",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          }
+        ],
+        "retained": [
+          "peticare-mansoura",
+          "peticare18-mansoura",
+          "vetalia-mansoura",
+          "healthy-pet-mansoura",
+          "roka-mansoura",
+          "pet-espitalia-mansoura",
+          "laclinica-mansoura",
+          "my-pets-mansoura"
+        ],
+        "outcomesByReason": {
+          "unresolved-catalog-area": 9,
+          "no-pet-clinic-evidence-in-discovery": 38,
+          "personal-education-page": 2,
+          "pending-identity-review": 1,
+          "livestock-only-evidence": 1,
+          "pharmacy-or-supplier": 10,
+          "shop-grooming-or-boarding": 3,
+          "training-or-academy": 3,
+          "government-or-institution": 1,
+          "unresolved-contact-and-treatment": 1,
+          "unresolved-pet-treatment": 3,
+          "unresolved-physical-premises": 2,
+          "training-or-breeding": 6,
+          "shelter-without-clinic": 1,
+          "unrelated-business": 1,
+          "farming-or-breeding": 2,
+          "unresolved-current-address": 1,
+          "unresolved-pet-treatment-and-contact": 1,
+          "unresolved-current-identity": 1,
+          "home-visit-only": 2,
+          "unresolved-branch-localities": 1,
+          "grooming-only-evidence": 1
+        }
+      },
+      {
+        "city": "Mit Ghamr",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Mit-Ghamr/67816/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Mit-Ghamr/67816"
+        ],
+        "discoveryEntries": 16,
+        "individualSnapshots": [
+          "web-evidence/depth-ce762a2219db0d60.json",
+          "web-evidence/depth-50e06d75ae2c2199.json",
+          "web-evidence/depth-dd2dcb005d25c2f9.json",
+          "web-evidence/depth-975e91539e382358.json",
+          "web-evidence/depth-ea70bc3d2b44c36a.json"
+        ],
+        "candidates": [
+          {
+            "city": "Mit Ghamr",
+            "name": "الوحده البيطريه بكوم النور",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/949261854941522/%D8%A7%D9%84%D9%88%D8%AD%D8%AF%D9%87-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87-%D8%A8%D9%83%D9%88%D9%85-%D8%A7%D9%84%D9%86%D9%88%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "government-or-institution",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mit Ghamr",
+            "name": "فيت كير لمنتجات صحة الحيوان",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/501081266722758/%D9%81%D9%8A%D8%AA-%D9%83%D9%8A%D8%B1-%D9%84%D9%85%D9%86%D8%AA%D8%AC%D8%A7%D8%AA-%D8%B5%D8%AD%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mit Ghamr",
+            "name": "Stoic Trader",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/267746053342984/Stoic-Trader",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mit Ghamr",
+            "name": "Petsy Vet. Cl. عيادة بيتسي البيطرية",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/385043731351270/Petsy-Vet.-Cl.-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%AA%D8%B3%D9%8A-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "Existing Petsy Mit Ghamr, same address/feed."
+          },
+          {
+            "city": "Mit Ghamr",
+            "name": "Zoo clinica  dr. dalia ashour",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/1841007142817782/Zoo-clinica--dr.-dalia-ashour",
+            "status": "retained",
+            "reason": "zoo-clinica-mit-ghamr",
+            "evidence": "Individual page explicitly describes pet treatment, Dr Dalia Ashour and physical urban Mit Ghamr premises. Latest July 2026 posts mention behind Town Team and El Captain Market but do not expressly establish a move; retain published street and flag landmarks for confirmation. Pharmacy retail offers not taken as clinical dates."
+          },
+          {
+            "city": "Mit Ghamr",
+            "name": "غواة حمام المنصورة لاحم فرنسى ورومى",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/100603225400437/%D8%BA%D9%88%D8%A7%D8%A9-%D8%AD%D9%85%D8%A7%D9%85-%D8%A7%D9%84%D9%85%D9%86%D8%B5%D9%88%D8%B1%D8%A9-%D9%84%D8%A7%D8%AD%D9%85-%D9%81%D8%B1%D9%86%D8%B3%D9%89-%D9%88%D8%B1%D9%88%D9%85%D9%89",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mit Ghamr",
+            "name": "TOP DOGS",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/1781696428797993/TOP-DOGS",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mit Ghamr",
+            "name": "لوزه و عيالها",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/301118643089506/%D9%84%D9%88%D8%B2%D9%87-%D9%88-%D8%B9%D9%8A%D8%A7%D9%84%D9%87%D8%A7",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mit Ghamr",
+            "name": "Pets House Vetirenary Clinic",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/1033680459819152/Pets-House-Vetirenary-Clinic",
+            "status": "retained",
+            "reason": "pets-house-mit-ghamr",
+            "evidence": "2026-09-18 pet parasite prevention program explicitly pairs booking phones with physical clinic at Abu Senna/El Hayat Tower. Urban Mit Ghamr Kism, not rural Markaz."
+          },
+          {
+            "city": "Mit Ghamr",
+            "name": "El_ SENDY K-9",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/103302125480011/El_-SENDY-K-9",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mit Ghamr",
+            "name": "Husky dogs",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/107158755563010/Husky-dogs",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mit Ghamr",
+            "name": "3MAAR PET’S STORE",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/169432586549467/3MAAR-PET%E2%80%99S-STORE",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mit Ghamr",
+            "name": "El 3rbawy planet",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/210430945487583/El-3rbawy-planet",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mit Ghamr",
+            "name": "GroOmin PETS",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/247368601802356/GroOmin-PETS",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Mit Ghamr",
+            "name": "Vet Care Centre",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/286907838619528/Vet-Care-Centre",
+            "status": "held",
+            "reason": "unresolved-treatment-and-contact",
+            "evidence": "2018 generic pet advice and no public clinic phone, no demonstrated on-site pet treatment."
+          },
+          {
+            "city": "Mit Ghamr",
+            "name": "Cura Vet Center",
+            "url": "https://www.petshops1.com/EG/Mit-Ghamr/586832744518868/Cura-Vet-Center",
+            "status": "held",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "Cura explicitly describes veterinary drug trade/wholesale and physical large-animal exams; pet drugs alone do not establish on-site pet clinic."
+          }
+        ],
+        "retained": ["zoo-clinica-mit-ghamr", "pets-house-mit-ghamr"],
+        "outcomesByReason": {
+          "government-or-institution": 1,
+          "no-pet-clinic-evidence-in-discovery": 5,
+          "pharmacy-or-supplier": 2,
+          "already-retained": 1,
+          "farming-or-breeding": 1,
+          "training-or-breeding": 1,
+          "shop-grooming-or-boarding": 2,
+          "unresolved-treatment-and-contact": 1
+        }
+      }
+    ],
+    "limitations": "City/category enumeration records every discovered entry; nonclinical retail/farm/personal entries excluded at discovery. Individual pet-clinic candidates read in cached snapshots, with unresolved treatment, contact, identity or catalog district held explicitly. Mirrors are one witness, not independent sources. No claim of market exhaustion; alternate sources/access limitations are recorded in city pages."
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

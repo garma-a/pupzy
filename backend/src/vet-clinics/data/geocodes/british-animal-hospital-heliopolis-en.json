@@ -1,0 +1,8 @@
+{
+  "query": "Mostafa Helmy Street, Almaza, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Mostafa+Helmy+Street%2C+Almaza%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:46:06.362Z",
+  "httpStatus": 200,
+  "response": []
+}

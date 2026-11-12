@@ -1,0 +1,8 @@
+{
+  "query": "Abdallah Ibn Massoud Street, Motamayez October, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Abdallah+Ibn+Massoud+Street%2C+Motamayez+October%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:21:20.350Z",
+  "httpStatus": 200,
+  "response": []
+}

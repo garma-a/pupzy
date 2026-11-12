@@ -1,0 +1,61 @@
+{
+  "query": "233, Maadi, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=233%2C+Maadi%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:44.942Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51379485,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 6616945457,
+      "lat": "29.9785769",
+      "lon": "31.2574872",
+      "category": "place",
+      "type": "house",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "place",
+      "name": "",
+      "display_name": "233, شارع احمد زكي, معادي الخبيري, القاهرة, 11634, مصر",
+      "address": {
+        "house_number": "233",
+        "road": "شارع احمد زكي",
+        "village": "معادي الخبيري",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11634",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9785269", "29.9786269", "31.2574372", "31.2575372"]
+    },
+    {
+      "place_id": 427069793,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 768769535,
+      "lat": "29.9680141",
+      "lon": "31.2491432",
+      "category": "place",
+      "type": "village",
+      "place_rank": 19,
+      "importance": 0.43786060464304577,
+      "addresstype": "village",
+      "name": "معادي الخبيري",
+      "display_name": "معادي الخبيري, القاهرة, 11431, مصر",
+      "address": {
+        "village": "معادي الخبيري",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11431",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9480141", "29.9880141", "31.2291432", "31.2691432"]
+    }
+  ]
+}

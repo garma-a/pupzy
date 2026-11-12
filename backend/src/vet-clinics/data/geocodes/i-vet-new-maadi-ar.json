@@ -1,0 +1,33 @@
+{
+  "query": "258, المعادي الجديدة, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=258%2C+%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%AF%D9%8A+%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:14:12.595Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50415917,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 777522265,
+      "lat": "29.9769248",
+      "lon": "31.3166665",
+      "category": "place",
+      "type": "neighbourhood",
+      "place_rank": 24,
+      "importance": 0.08007960402838175,
+      "addresstype": "neighbourhood",
+      "name": "المعادي الجديدة",
+      "display_name": "المعادي الجديدة, حلوان, القاهرة, مصر",
+      "address": {
+        "neighbourhood": "المعادي الجديدة",
+        "city": "حلوان",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9610532", "29.9928101", "31.2693515", "31.3677671"]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "query": "الجسر البراني, Dar El Salam, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%AC%D8%B3%D8%B1+%D8%A7%D9%84%D8%A8%D8%B1%D8%A7%D9%86%D9%8A%2C+Dar+El+Salam%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:16:26.979Z",
+  "httpStatus": 200,
+  "response": []
+}

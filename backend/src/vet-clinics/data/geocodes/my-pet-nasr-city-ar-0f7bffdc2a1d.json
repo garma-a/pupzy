@@ -1,0 +1,64 @@
+{
+  "query": "النزهة, Nasr City, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%86%D8%B2%D9%87%D8%A9%2C+Nasr+City%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:16:18.175Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 429794420,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 13194568545,
+      "lat": "30.0775347",
+      "lon": "31.3395103",
+      "category": "highway",
+      "type": "traffic_signals",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "highway",
+      "name": "هيئة الرقابه الاداريه (النزهة)",
+      "display_name": "هيئة الرقابه الاداريه (النزهة), شارع النزهه, عمارات رابعة العدويه الاستثمارية, مدينة نصر, القاهرة, 10506, مصر",
+      "address": {
+        "highway": "هيئة الرقابه الاداريه (النزهة)",
+        "road": "شارع النزهه",
+        "neighbourhood": "عمارات رابعة العدويه الاستثمارية",
+        "suburb": "مدينة نصر",
+        "city": "مدينة نصر",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "10506",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0774847", "30.0775847", "31.3394603", "31.3395603"]
+    },
+    {
+      "place_id": 429794421,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 13194568546,
+      "lat": "30.0774217",
+      "lon": "31.3396986",
+      "category": "highway",
+      "type": "traffic_signals",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "highway",
+      "name": "هيئة الرقابه الاداريه (النزهة)",
+      "display_name": "هيئة الرقابه الاداريه (النزهة), شارع النزهه, مساكن المهندسين, مدينة نصر, القاهرة, 10506, مصر",
+      "address": {
+        "highway": "هيئة الرقابه الاداريه (النزهة)",
+        "road": "شارع النزهه",
+        "neighbourhood": "مساكن المهندسين",
+        "city": "مدينة نصر",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "10506",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0773717", "30.0774717", "31.3396486", "31.3397486"]
+    }
+  ]
+}

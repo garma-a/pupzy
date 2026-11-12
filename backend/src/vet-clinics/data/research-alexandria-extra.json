@@ -1,0 +1,915 @@
+[
+  {
+    "key": "elagami-hannoville",
+    "nameEnglish": "El Agami Veterinary Clinic",
+    "nameArabic": "عيادة العجمي البيطرية",
+    "addressEnglish": "Khalil Khair Allah Street beside Mohamed Moussa Mosque, Hannoville, Agami, Alexandria",
+    "addressArabic": "شارع خليل خير الله بجوار مسجد محمد موسى، الهانوفيل، العجمي، الإسكندرية",
+    "area": "الهانوفيل",
+    "phones": ["01227498013"],
+    "sources": [
+      {
+        "url": "https://www.findglocal.com/EG/Alexandria/118383476235960/Elagami-Vet-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/118383476235960/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-03-17",
+    "classificationEvidence": "Business-post mirror describes veterinary medicine, surgery and critical care with physical clinic address. Dated March 2026 fee notice supports operation. First-party Facebook access throttled.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["El Agami Veterinary Clinic"],
+      "arabic": ["عيادة العجمي البيطرية"]
+    }
+  },
+  {
+    "key": "moharam-bek-pets",
+    "nameEnglish": "Moharam Bek Veterinary Clinic",
+    "nameArabic": "عيادة محرم بك البيطرية",
+    "addressEnglish": "37 Mahmoud Salama Street, Health Insurance building, behind Mansha Street, Moharam Bek, Alexandria",
+    "addressArabic": "37 شارع محمود سلامة، عمارة التأمين الصحي خلف شارع منشا، محرم بك، الإسكندرية",
+    "area": "محرم بك",
+    "phones": ["01091401528"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/394850697373485/عياده-محرم-بك-البيطريه-للحيوانات-الاليفه",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://welpstar.com/en/biz/moharam-bek-vet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2025-12-23",
+    "classificationEvidence": "Pet clinic advertises dog/cat vaccinations, surgeries and physical premises. Dated 2025-12-23 treatment invitation supplies same address and contact.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Moharam Bek Veterinary Clinic", "Moharam Bek Vet Clinic"],
+      "arabic": ["عيادة محرم بك البيطرية"]
+    }
+  },
+  {
+    "key": "al-safa-bacous",
+    "nameEnglish": "Al Safa Veterinary Clinic (Bacous)",
+    "nameArabic": "عيادة الصفا البيطرية (باكوس)",
+    "addressEnglish": "Extension of Cinema Laila Street, Othman Moharam Street, Bacous, Alexandria",
+    "addressArabic": "امتداد شارع سينما ليلى، شارع عثمان محرم، باكوس، الإسكندرية",
+    "area": "باكوس",
+    "phones": ["01068152336", "01060224351"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/102302967899275/Al-Safa-Veterinary-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/102302967899275/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2025-10-01",
+    "classificationEvidence": "Dated pet neutering promotion and earlier dog/cat treatment cases; two physical branches explicitly described. Latest Bacous-specific dated offer 2025-10-01.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "chainKey": "al-safa-alex",
+    "branchQualifier": "Bacous",
+    "aliases": {
+      "english": ["Al Safa Veterinary Clinic (Bacous)"],
+      "arabic": ["عيادة الصفا البيطرية (باكوس)"]
+    }
+  },
+  {
+    "key": "al-safa-sidi-bishr",
+    "nameEnglish": "Al Safa Veterinary Clinic (Sidi Bishr)",
+    "nameArabic": "عيادة الصفا البيطرية (سيدي بشر)",
+    "addressEnglish": "Mohamed Naguib Street at Gamal Abdel Nasser Street, first street after Khalil Pharmacy, Sidi Bishr, Alexandria",
+    "addressArabic": "تقاطع شارع محمد نجيب مع شارع جمال عبد الناصر، أول شارع بعد صيدلية خليل، سيدي بشر، الإسكندرية",
+    "area": "سيدي بشر",
+    "phones": ["01068152336", "01060224351"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/102302967899275/Al-Safa-Veterinary-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/102302967899275/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2022-03-28",
+    "classificationEvidence": "2022-03-28 post explicitly locates Sidi Bishr clinic and separate Bacous branch with ultrasound examinations. Branch recency remains weaker than Bacous; no closure indication.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "chainKey": "al-safa-alex",
+    "branchQualifier": "Sidi Bishr",
+    "aliases": {
+      "english": ["Al Safa Veterinary Clinic (Sidi Bishr)"],
+      "arabic": ["عيادة الصفا البيطرية (سيدي بشر)"]
+    }
+  },
+  {
+    "key": "el-youmn-hannoville",
+    "nameEnglish": "El Youmn Veterinary Clinic",
+    "nameArabic": "عيادة اليمن البيطرية",
+    "addressEnglish": "82 Alexandria-Matrouh Desert Road, opposite El Safty Restaurant, Hannoville, Alexandria",
+    "addressArabic": "82 طريق الإسكندرية مطروح الصحراوي، أمام مطعم الصفتي، الهانوفيل، الإسكندرية",
+    "area": "الهانوفيل",
+    "phones": ["033021523", "01275582088"],
+    "sources": [
+      {
+        "url": "https://dalil140.com/company/ar/420635-el-youmn-veterinary-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual named veterinary clinic entry gives fixed street premises and two contacts; no government or livestock-only indication.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["El Youmn Veterinary Clinic"],
+      "arabic": ["عيادة اليمن البيطرية"]
+    }
+  },
+  {
+    "key": "petlinic-hannoville",
+    "nameEnglish": "Petlinic Veterinary Clinic — Dr. Ahmed Younes",
+    "nameArabic": "عيادة بيتلينيك البيطرية — دكتور أحمد يونس",
+    "addressEnglish": "After El Agami Model School, beside Health Unit at Central entrance, Hannoville, Agami, Alexandria",
+    "addressArabic": "بعد مدرسة العجمي النموذجية، بجوار الوحدة الصحية، مدخل السنترال، الهانوفيل، العجمي، الإسكندرية",
+    "area": "الهانوفيل",
+    "phones": ["01110075733"],
+    "sources": [
+      {
+        "url": "https://www.dalilimedical.com/doctor-17915/عيادة-بيتلينيك-البيطرية-دكتور-احمد-يونس",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://welpstar.com/en/biz/عيادة-petlinic-البيطرية",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual private veterinary clinic page names doctor, fixed address and consulting hours. Malformed comma-domain site link was not repaired or treated as a source.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Petlinic Veterinary Clinic — Dr. Ahmed Younes", "Petlinic"],
+      "arabic": ["عيادة بيتلينيك البيطرية — دكتور أحمد يونس", "عيادة بيتلينيك البيطرية دكتور احمد يونس"]
+    }
+  },
+  {
+    "key": "el-emperator-agami",
+    "nameEnglish": "El Emperator Veterinary Clinic",
+    "nameArabic": "عيادة الإمبراطور البيطرية",
+    "addressEnglish": "Second street off El Hadid Wal Solb Street at street opposite B.Tech, Agami, Alexandria",
+    "addressArabic": "تقاطع ثاني شارع من الحديد والصلب مع الشارع أمام بي تك، العجمي، الإسكندرية",
+    "area": "العجمي",
+    "phones": ["01149802382"],
+    "sources": [
+      {
+        "url": "https://www.dalilimedical.com/doctor-17413/عيادة-الامبراطور-البيطرية",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual named veterinary practice page supplies address-embedded clinic phone and consulting hours; page classifies the address in Agami. No government/livestock-only indication.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["El Emperator Veterinary Clinic"],
+      "arabic": ["عيادة الإمبراطور البيطرية", "عيادة الامبراطور البيطرية"]
+    }
+  },
+  {
+    "key": "dr-zizo-bitash",
+    "nameEnglish": "Dr. Zizo Veterinary Clinic",
+    "nameArabic": "عيادة دكتور زيزو البيطرية",
+    "addressEnglish": "Abdel Fattah El Talkhawy Street beside El Saleheen Restaurant, Bitash, Alexandria",
+    "addressArabic": "شارع عبد الفتاح الطلخاوي بجوار مطعم الصالحين، البيطاش، الإسكندرية",
+    "area": "البيطاش",
+    "phones": ["01208208882", "01069766904"],
+    "sources": [
+      {
+        "url": "https://www.dalilimedical.com/doctor-18620/عيادة-دكتور-زيزو-البيطرية",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Dr. Ahmed Abdel Aziz explicitly treats cats, dogs and rabbits alongside poultry. Fixed clinic address and daily consultation hours; mixed practice qualifies.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Zizo Veterinary Clinic"],
+      "arabic": ["عيادة دكتور زيزو البيطرية"]
+    }
+  },
+  {
+    "key": "aleefy-bitash",
+    "nameEnglish": "Aleefy Veterinary Hospital",
+    "nameArabic": "مستشفى أليفي البيطري",
+    "addressEnglish": "El Andalus Street at El Hegaz Street before Banque Misr, Bitash, Agami, Alexandria",
+    "addressArabic": "شارع الأندلس وتقاطع الحجاز قبل بنك مصر، البيطاش، العجمي، الإسكندرية",
+    "area": "البيطاش",
+    "phones": ["01098959107"],
+    "sources": [
+      {
+        "url": "https://www.dalilimedical.com/doctor-18385/مستشفى-أليفي-البيطرية",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.dalilimedical.com/en/doctor-18385/Alivi-Veterinary-Hospital",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/101038188611784/Aleefy-Veterinary-Hospital",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.aleefyclinic.com/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-31",
+    "classificationEvidence": "Private pet hospital explicitly offers animal surgery, diagnostic imaging and therapeutic admission at a fixed address. Published hours are finite; emergency centre does not prove 24-hour operation. Review2026-11-12: The clinic feed identifies Aleefy Veterinary Hospital on Andalous Street, Bitash. Its 31 October 2026 post celebrates eight years of the practice. Current contact 01098959107 differs from the older directory mobile; name and location agree. Do not create another hospital.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Aleefy Veterinary Hospital", "Alivi Veterinary Hospital", "Alevi Veterinary Hospital"],
+      "arabic": ["مستشفى أليفي البيطري", "مستشفى أليفى البيطرية", "مستشفى أليفي البيطرية"]
+    }
+  },
+  {
+    "key": "almotawakkel-moharam-bek",
+    "nameEnglish": "Al Motawakkel Veterinary Center (Al Romany)",
+    "nameArabic": "مركز المتوكل البيطري (الروماني)",
+    "addressEnglish": "14 Al Romany Lane, Moharam Bek, Alexandria",
+    "addressArabic": "14 حارة الروماني، محرم بك، الإسكندرية",
+    "area": "محرم بك",
+    "phones": ["01114235449", "034942890"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/100732449311691/Dr-Abdallah-Almotawakkel---%D8%AF.-%D8%B9%D8%A8%D8%AF%D8%A7%D9%84%D9%84%D9%87-%D8%A7%D9%84%D9%85%D8%AA%D9%88%D9%83%D9%84",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.bizmideast.com/EG/almotawakkel-pet-center-0111-423-5449",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual pet medical centre page describes cardiology, imaging, endoscopy and surgery. Separate Romany/Elrasafa premises are named in distinct entries. Review2026-11-12: The physician page matches 01114235449 and explicitly links Almotawakkel Pet Center. Its 2024 posts mostly concern training, so no dated premises activity is asserted. An individually read BizMidEast entry confirms 14 Haret Al Romani, Moharam Bek, the phone and pet medical services; these sources can replace LocalEgypt. BizMidEast hours are 11 am–11 pm except Friday, so the previous 24-hour flag lacks retained support.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "chainKey": "almotawakkel-alex",
+    "branchQualifier": "Al Romany",
+    "aliases": {
+      "english": ["Al Motawakkel Veterinary Center (Al Romany)", "Almotawakkel Pet Center"],
+      "arabic": ["مركز المتوكل البيطري (الروماني)", "د. عبدالله المتوكل"]
+    }
+  },
+  {
+    "key": "panda-moharam-bek",
+    "nameEnglish": "Panda Veterinary Clinic",
+    "nameArabic": "عيادة باندا البيطرية",
+    "addressEnglish": "22 Al Balyana Street, Moharam Bek, Alexandria",
+    "addressArabic": "22 شارع البلينا، محرم بك، الإسكندرية",
+    "area": "محرم بك",
+    "phones": ["01210779507"],
+    "sources": [
+      {
+        "url": "https://welpstar.com/en/biz/panda-vet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/102122051134990/عياده-باندا-البيطريه-Panda-vet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/102122051134990/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2025-10-19",
+    "classificationEvidence": "Pet clinic with directory address/contact and dated2025 business posts on checkups/vaccination/animal treatment; ancillary retail/boarding do not replace medical practice.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Panda Veterinary Clinic", "panda vet clinic"],
+      "arabic": ["عيادة باندا البيطرية"]
+    }
+  },
+  {
+    "key": "agamy-hospital-bitash",
+    "nameEnglish": "Agamy Veterinary Hospital",
+    "nameArabic": "مستشفى العجمي البيطري",
+    "addressEnglish": "Entrance to Shahr El Assal, El Thawra Tower, ground floor beside El Khouly Pizza, Bitash, Alexandria",
+    "addressArabic": "مدخل شهر العسل، برج الثورة، الدور الأرضي بجوار بيتزا الخولي، البيطاش، الإسكندرية",
+    "area": "البيطاش",
+    "phones": ["01096946149"],
+    "sources": [
+      {
+        "url": "https://welpstar.com/en/biz/agamy-veterinary-hospital-pets-parking",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/550683732049619/Agamy-veterinary-Hospital-pets-parking-عيادة-العجمي-البيطرية",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/550683732049619/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-05-24",
+    "classificationEvidence": "Pet medical/surgical hospital; dated May2026 posts give current Shahr El Assal/El Thawra address and same telephone; older generic Bitash directory locality corroborates identity.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Agamy Veterinary Hospital", "Agamy Veterinary Hospital (pets parking)"],
+      "arabic": ["مستشفى العجمي البيطري"]
+    }
+  },
+  {
+    "key": "el-doctor-abou-talat",
+    "nameEnglish": "El Doctor Veterinary Clinics (Abou Talat)",
+    "nameArabic": "عيادات الدكتور البيطرية (أبو تلات)",
+    "addressEnglish": "Abou Talat branch, Al Dheraa Al Bahri, Amreya, Alexandria",
+    "addressArabic": "فرع أبو تلات، الذراع البحري، العامرية، الإسكندرية",
+    "area": "أبو تلات",
+    "phones": ["01211711571"],
+    "sources": [
+      {
+        "url": "https://welpstar.com/en/biz/عيادات-الدكتور-البيطرية-فرع-أبوتلات",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual veterinary clinic entry explicitly names Abou Talat branch; locality address names Al Dheraa Al Bahri/Amreya. Plus code discarded; no pin used.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "chainKey": "el-doctor-alex",
+    "branchQualifier": "Abou Talat",
+    "aliases": {
+      "english": ["El Doctor Veterinary Clinics (Abou Talat)"],
+      "arabic": [
+        "عيادات الدكتور البيطرية (أبو تلات)",
+        "عيادات الدكتور البيطرية - فرع أبوتلات",
+        "عيادات الدكتور البيطرية",
+        "فرع أبوتلات"
+      ]
+    }
+  },
+  {
+    "key": "el-beitrawy-agami",
+    "nameEnglish": "El Beitrawy Veterinary Clinics (Agami)",
+    "nameArabic": "عيادات البيطراوي البيطرية (العجمي)",
+    "addressEnglish": "Opposite El Qoweiry Mosque, Al Daresa, Agami, Alexandria",
+    "addressArabic": "أمام مسجد القويري، الدرايسة، العجمي، الإسكندرية",
+    "area": "العجمي",
+    "phones": ["01275694717"],
+    "sources": [
+      {
+        "url": "https://welpstar.com/en/biz/عيادات-البيطراوى-البيطرية",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual named veterinary clinic entry gives mosque/street-locality premises and phone. 06:00 to 05:00 is not literally 24-hour operation; hours flag remains false.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["El Beitrawy Veterinary Clinics (Agami)"],
+      "arabic": ["عيادات البيطراوي البيطرية (العجمي)", "عيادات البيطراوى البيطرية"]
+    }
+  },
+  {
+    "key": "veterinary-san-stefano-talaat",
+    "nameEnglish": "Veterinary Clinic (San Stefano)",
+    "nameArabic": "عيادة بيطرية (سان ستيفانو)",
+    "addressEnglish": "3 Talaat Street off El Casino Street, beside Abu Awad, San Stefano, Alexandria",
+    "addressArabic": "3 شارع طلعت من شارع الكازينو، بجوار أبو عوض، سان ستيفانو، الإسكندرية",
+    "area": "سان ستيفانو",
+    "phones": ["01226121622"],
+    "sources": [
+      {
+        "url": "https://welpstar.com/en/biz/عيادة-بيطرية-بالاسكندرية",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually named generic veterinary clinic entry with fixed street address and phone. Area qualifier authored to disambiguate generic name.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Veterinary Clinic (San Stefano)"],
+      "arabic": ["عيادة بيطرية (سان ستيفانو)", "عيادة بيطرية بالاسكندرية"]
+    }
+  },
+  {
+    "key": "veterinary-soyouf-gamal-zaki",
+    "nameEnglish": "Veterinary Clinic (Soyouf Qebli)",
+    "nameArabic": "العيادة البيطرية (السيوف قبلي)",
+    "addressEnglish": "4 El Shaheed Gamal Zaki Ibrahim Street, Soyouf Qebli, Montaza, Alexandria",
+    "addressArabic": "4 شارع الشهيد جمال زكي إبراهيم، السيوف قبلي، المنتزه، الإسكندرية",
+    "area": "السيوف",
+    "phones": ["01221545446"],
+    "sources": [
+      {
+        "url": "https://welpstar.com/en/biz/العيادة-البيطرية",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual generic veterinary clinic entry with street/building and phone; area qualifier authored to disambiguate. No government indication in entry.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Veterinary Clinic (Soyouf Qebli)"],
+      "arabic": ["العيادة البيطرية (السيوف قبلي)", "العيادة البيطرية"]
+    }
+  },
+  {
+    "key": "waleed-el-garhy-borg-el-arab",
+    "nameEnglish": "Dr. Waleed El Garhy Veterinary Clinic",
+    "nameArabic": "عيادة دكتور وليد الجارحي البيطرية",
+    "addressEnglish": "Hod Sakrah Wa Abu Hamad, Borg El Arab, Alexandria",
+    "addressArabic": "حوض سكرة وأبو حمد، برج العرب، الإسكندرية",
+    "area": "برج العرب",
+    "phones": ["01094889248"],
+    "sources": [
+      {
+        "url": "https://welpstar.com/en/biz/عيادة-د-وليد-الجارحي-البيطرية-pets-and-vet",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual doctor-owned practice explicitly named Pets and Vet with fixed Borg El Arab locality and hours; not livestock-only by its pet practice name.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Dr. Waleed El Garhy Veterinary Clinic", "Pets and Vet"],
+      "arabic": ["عيادة د وليد الجارحي البيطرية", "عيادة دكتور وليد الجارحي البيطرية"]
+    }
+  },
+  {
+    "key": "doctor-vet-amreya",
+    "nameEnglish": "Doctor Vet Clinic (Amreya)",
+    "nameArabic": "عيادة دكتور فيت البيطرية (العامرية)",
+    "addressEnglish": "Al Dheraa Al Bahri, Amreya, Alexandria",
+    "addressArabic": "الذراع البحري، العامرية، الإسكندرية",
+    "area": "الذراع البحري",
+    "phones": ["01277393035"],
+    "sources": [
+      {
+        "url": "https://welpstar.com/en/biz/doctor-vet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual named veterinary clinic entry identifies fixed Amreya premises and daytime/evening consulting hours. Distinct phone from Dr Vet in Kafr Abdo.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "citySourceCode": "OSM:way/746652736",
+    "aliases": {
+      "english": ["Doctor Vet Clinic", "Doctor vet clinic"],
+      "arabic": ["عيادة دكتور فيت البيطرية"]
+    }
+  },
+  {
+    "key": "el-beitrawy-roushdy",
+    "nameEnglish": "El Beitrawy Veterinary Clinics (Roushdy)",
+    "nameArabic": "عيادات البيطراوي البيطرية (رشدي)",
+    "addressEnglish": "163 Ahmed Shawky Street opposite Roushdy Tram Station, Roushdy, Alexandria",
+    "addressArabic": "163 شارع أحمد شوقي أمام محطة ترام رشدي، رشدي، الإسكندرية",
+    "area": "رشدي",
+    "phones": ["01221889880"],
+    "sources": [
+      {
+        "url": "https://welpstar.com/en/biz/عيادات-البيطراوى",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual branch premises entry. Same branded clinics and contact appear at three distinct street addresses; branch qualifier authored from each sourced area.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "chainKey": "el-beitrawy-east",
+    "branchQualifier": "Roushdy",
+    "aliases": {
+      "english": ["El Beitrawy Veterinary Clinics (Roushdy)"],
+      "arabic": ["عيادات البيطراوي البيطرية (رشدي)", "عيادات البيطراوى"]
+    }
+  },
+  {
+    "key": "el-beitrawy-smouha",
+    "nameEnglish": "El Beitrawy Veterinary Clinics (Smouha)",
+    "nameArabic": "عيادات البيطراوي البيطرية (سموحة)",
+    "addressEnglish": "22 Victor Emmanuel Square, Smouha, Alexandria",
+    "addressArabic": "22 ميدان فيكتور عمانويل، سموحة، الإسكندرية",
+    "area": "سموحة",
+    "phones": ["01221889880"],
+    "sources": [
+      {
+        "url": "https://welpstar.com/en/biz/البيطراوى",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual branch premises entry. Same branded clinics/contact also listed at Roushdy and Fleming street addresses; retain documented different addresses.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "chainKey": "el-beitrawy-east",
+    "branchQualifier": "Smouha",
+    "aliases": {
+      "english": ["El Beitrawy Veterinary Clinics (Smouha)"],
+      "arabic": ["عيادات البيطراوي البيطرية (سموحة)", "البيطراوى"]
+    }
+  },
+  {
+    "key": "el-beitrawy-fleming",
+    "nameEnglish": "El Beitrawy Veterinary Clinics (Fleming)",
+    "nameArabic": "عيادات البيطراوي البيطرية (فلمنج)",
+    "addressEnglish": "458 Abu Qir Road, Fleming, Alexandria",
+    "addressArabic": "458 طريق أبو قير، فلمنج، الإسكندرية",
+    "area": "فلمنج",
+    "phones": ["01221889880"],
+    "sources": [
+      {
+        "url": "https://welpstar.com/en/biz/عيادات-البيطراوي",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual branch premises entry. Same branded clinics/contact also listed at Roushdy and Smouha street addresses; retain documented different addresses.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "chainKey": "el-beitrawy-east",
+    "branchQualifier": "Fleming",
+    "aliases": {
+      "english": ["El Beitrawy Veterinary Clinics (Fleming)"],
+      "arabic": ["عيادات البيطراوي البيطرية (فلمنج)", "عيادات البيطراوي"]
+    }
+  },
+  {
+    "key": "four-paws-abu-youssef",
+    "nameEnglish": "4 Paws Veterinary Clinic",
+    "nameArabic": "عيادة فور بوز البيطرية",
+    "addressEnglish": "Km 20 Alexandria-Matrouh Road, before Abu Saber Grills, above Calpeda Pumps, second floor, Abu Youssef, Agami, Alexandria",
+    "addressArabic": "الكيلو 20 طريق الإسكندرية مطروح، قبل مشويات أبو صابر، فوق كالبيدا للمواتير، الدور الثاني، أبو يوسف، العجمي، الإسكندرية",
+    "area": "أبو يوسف",
+    "phones": ["01002149334"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/100507771422879/4-PAWS-veterinary-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/100507771422879/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2023-11-07",
+    "classificationEvidence": "Pet surgery practice with dated cat treatment posts. Newer posts consistently say km20/Abu Youssef; older profile says km19, no separate branch inferred.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["4 Paws Veterinary Clinic"],
+      "arabic": ["عيادة فور بوز البيطرية"]
+    }
+  },
+  {
+    "key": "reda-hajjaj-wardian",
+    "nameEnglish": "Dr. Reda Hajjaj Veterinary Clinic",
+    "nameArabic": "عيادة دكتور رضا حجاج البيطرية",
+    "addressEnglish": "62 Ibn Asmar Street off El Aman Street at El Sobky Street, El Metras, Wardian, Alexandria",
+    "addressArabic": "62 شارع ابن أسمر متفرع من شارع الأمان، ناصية شارع السبكي، المتراس، الورديان، الإسكندرية",
+    "area": "الورديان",
+    "phones": ["01206267660"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/عياده-دكتور-رضا-حجاج-البيطريه/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.wslny.com/index.php/company/Dr.-Reda-Hajjaj-veterinary-clinic/33650",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual pet clinic entry explicitly describes medical care/vaccination with fixed address and phone; independent Wslny record confirms. Wslny last-update 2021 is metadata, not a dated clinical operation event.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Reda Hajjaj Veterinary Clinic"],
+      "arabic": ["عيادة دكتور رضا حجاج البيطرية"]
+    }
+  },
+  {
+    "key": "wessam-tawfik-sidi-bishr",
+    "nameEnglish": "Dr. Wessam Tawfik Veterinary Center (Sidi Bishr)",
+    "nameArabic": "مركز دكتورة وسام توفيق للطب البيطري (سيدي بشر)",
+    "addressEnglish": "Behind 25 Hassan Amin Street, Tabarak Tower, beside Nour Al Samaa Education Center, Sidi Bishr tram, Alexandria",
+    "addressArabic": "خلف 25 شارع حسن أمين، برج تبارك، بجوار سنتر نور السماء التعليمي، سيدي بشر ترام، الإسكندرية",
+    "area": "Sidi Bishr",
+    "phones": ["033568069"],
+    "sources": [
+      {
+        "url": "https://www.dalilimedical.com/doctor-19953/%D9%85%D8%B1%D9%83%D8%B2-%D8%AF%D9%83%D8%AA%D9%88%D8%B1%D8%A9-%D9%88%D8%B3%D8%A7%D9%85-%D8%AA%D9%88%D9%81%D9%8A%D9%82-%D9%84%D9%84%D8%B7%D8%A8-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%89",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed entry explicitly describes pet diagnosis, examinations, vaccinations and surgery at the stated physical location.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Wessam Tawfik Veterinary Center"],
+      "arabic": ["مركز دكتورة وسام توفيق للطب البيطرى"]
+    },
+    "chainKey": "wessam-tawfik",
+    "branchQualifier": "Sidi Bishr"
+  },
+  {
+    "key": "kashif-saba-pasha",
+    "nameEnglish": "Kashef Vet Clinic",
+    "nameArabic": "عيادة كاشف البيطرية",
+    "addressEnglish": "61 Abdel Salam Aref Street, Saba Pasha, Alexandria",
+    "addressArabic": "٦١ شارع عبد السلام عارف (ترام النصر)، أمام بنك الإسكندرية، الدور الأول شمال السلم، سابا باشا، الإسكندرية",
+    "area": "Saba Pasha",
+    "phones": ["01050507217", "035822308"],
+    "sources": [
+      {
+        "url": "https://www.dalilimedical.com/en/doctor-19862/Kashif-Vet-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/649736831549712/Kashef-Vet-Clinics",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-27",
+    "classificationEvidence": "Individually reviewed entry explicitly describes pet diagnosis, examinations, vaccinations and surgery at the stated physical location. Review2026-11-12: The 27 September 2026 turtle examination post shares the existing landline 035822308. Current mobile 01050507217 and 61 Abdel Salam Aref Street differ from the older record. Review these fields; this is the same clinic, not an unrelated new identity.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Kashef Veterinary Clinic", "Kashef Vet Clinics", "Kashef Vet Clinic", "Kashif Vet Clinic"],
+      "arabic": ["عيادة كاشف البيطرية"]
+    }
+  },
+  {
+    "key": "dr-green-smouha",
+    "nameEnglish": "Dr Green Animal Hospital",
+    "nameArabic": "مستشفى د. جرين لطب وجراحة الحيوانات الأليفة",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglish": "Victor Emanuel roundabout, behind Bank Audi, Smouha, Alexandria",
+    "addressArabic": "دوران فيكتور عمانويل، خلف بنك عوده، سموحة، الإسكندرية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Smouha",
+    "phones": ["01011990510"],
+    "sources": [
+      {
+        "url": "https://www.bizmideast.com/EG/dr-green-animal-hospital_15-0101-199-0510",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.wslny.com/company/%D9%85%D8%B3%D8%AA%D8%B4%D9%81%D9%89%20%D8%AF.%20%D8%AC%D8%B1%D9%8A%D9%86%20%D9%84%D8%B7%D8%A8%20%D9%88%D8%AC%D8%B1%D8%A7%D8%AD%D8%A9%20%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA%20%D8%A7%D9%84%D8%A3%D9%84%D9%8A%D9%81%D8%A9/33612",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Individual BizMidEast entry explicitly lists open24hours Monday through Sunday. No clinic-owned confirmation found.",
+    "lastSeenActive": "2021-08-30",
+    "classificationEvidence": "Individual directory describes pet medicine and surgery hospital led by Dr Hany Amin. Second independent WSlny entry confirms same phone and pet hospital name; latest explicit listing update30Aug2021 but newer undated entry supplies Smouha location. WSlny older address26RomaniCampStreet Roushdy and landline035231675 are recorded as a conflict rather than a second branch. No first-party site/page found in targeted searches. More than one source prevents single-source stale rule; lastSeenActive reflects only explicit update date.",
+    "aliases": {
+      "english": [
+        "Dr Green Animal Hospital",
+        "Dr. Green For Animals Hospital",
+        "Green For Animals Hospital",
+        "Dr Green Veterinary Hospital"
+      ],
+      "arabic": ["مستشفى د. جرين للحيوانات", "مستشفى د. جرين لطب وجراحة الحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "pet-wellness-camp-shezar",
+    "nameEnglish": "Pet Wellness Clinic",
+    "nameArabic": "عيادة بت ويلنس البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "118 Port Said Street, first floor above QNB Bank, Camp Shezar, Alexandria",
+    "addressArabic": "118 شارع بورسعيد، الدور الأول أعلى بنك كيو إن بي، كامب شيزار، الإسكندرية",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "area": "Camp Shezar",
+    "phones": ["01277790170"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Alexandria/107878491090105/Pet-Wellness-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/107878491090105",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-20",
+    "classificationEvidence": "Individually read current clinic feed identifies owner Dr Diana Matta and medical pet treatment, surgery and diagnostics. Dated20October2026clinic safety announcement,19Octoberbooking announcement repeats phone and118PortSaidStreetaboveQNBBank. No existing Alexandria input matched this phone/name during enrichment. Brand source spelling retained.",
+    "aliases": {
+      "english": ["Pet Wellness Clinic"],
+      "arabic": ["عيادة بت ويلنس البيطرية", "عيادة د. ديانا متى البيطرية"]
+    }
+  },
+  {
+    "key": "royal-louran",
+    "nameEnglish": "Royal Veterinary Clinic",
+    "nameArabic": "عيادة رويال البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "50 Omar El Mokhtar Street, Louran, Alexandria",
+    "addressArabic": "50 شارع عمر المختار، لوران، الإسكندرية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Louran",
+    "phones": ["035744415"],
+    "sources": [
+      {
+        "url": "https://www.dalilimedical.com/en/doctor-18930/ROYAL-VETERINARY-CLINIC",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual Dalili Medical entry explicitly gives Dr Shaimaa Elmahdy pet diagnosis/treatment and surgery at 50 Omar El Mokhtar, Louran. Use valid 035744415 landline; printed 012062978075 mobile is malformed and rejected without guessing. No dated activity claimed."
+  }
+]

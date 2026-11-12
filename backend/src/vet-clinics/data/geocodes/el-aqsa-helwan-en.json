@@ -1,0 +1,8 @@
+{
+  "query": "Nour El Islam Mosque Street, Ezbet El Walda, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Nour+El+Islam+Mosque+Street%2C+Ezbet+El+Walda%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:15:51.625Z",
+  "httpStatus": 200,
+  "response": []
+}

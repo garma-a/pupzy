@@ -1,0 +1,8 @@
+{
+  "query": "سليم الأول, حلمية الزيتون, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%B3%D9%84%D9%8A%D9%85+%D8%A7%D9%84%D8%A3%D9%88%D9%84%2C+%D8%AD%D9%84%D9%85%D9%8A%D8%A9+%D8%A7%D9%84%D8%B2%D9%8A%D8%AA%D9%88%D9%86%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:14:03.791Z",
+  "httpStatus": 200,
+  "response": []
+}

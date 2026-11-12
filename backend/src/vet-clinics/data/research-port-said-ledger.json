@@ -1,0 +1,115 @@
+{
+  "accessedAt": "2026-11-12",
+  "reviewedClinicLikeCandidates": 20,
+  "retained": 12,
+  "phoneEligibleActive": 9,
+  "inactiveNoPhone": 3,
+  "alsoStaleEvidence": ["port-said-sama"],
+  "explicit24HourEmergency": 1,
+  "mergedDiscoveryLeads": [
+    {
+      "name": "Best Friend old page",
+      "into": "port-said-best-friend",
+      "evidence": "Old feed explicitly points to new page in August 2026; same doctor/phone/address."
+    },
+    {
+      "name": "Pet Life Clinics EGYPT Dr Ahmed Eid",
+      "into": "port-said-modern-port-fouad",
+      "evidence": "Same physician name and phone 01228106335; historical address is not counted as an extra active branch."
+    }
+  ],
+  "excluded": [
+    {
+      "name": "Port Said Veterinary Clinic / Dr Howayda",
+      "reason": "closure-evidence",
+      "sources": [
+        {
+          "url": "https://www.bizmideast.com/EG/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%88%D8%B1%D8%B3%D8%B9%D9%8A%D8%AF-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        },
+        {
+          "url": "https://www.evcindex.com/item/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%88%D8%B1%D8%B3%D8%B9%D9%8A%D8%AF-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9/",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        },
+        {
+          "url": "https://www.findinegypt.com/c/port-said-veterinary-clinic-376954",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "BizMidEast explicitly marks closure since 2023-07-31. EVC/FindInEgypt undated phone matches; conflicting Sharq and Port Fouad addresses. Own Facebook vet.pts returned shell only; no new operating evidence."
+    },
+    {
+      "name": "Port Fouad Veterinary Unit",
+      "reason": "government-unit",
+      "sources": [
+        {
+          "url": "https://www.govserv.org/EG/Port-Said/186613995126539/Port-Fouad-Veterinary-Unit",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Explicit veterinary unit offering public low-fee services; not private clinic."
+    },
+    {
+      "name": "Veterinary Unit El Qabouty El Gadida",
+      "reason": "government-unit",
+      "sources": [
+        {
+          "url": "https://dalil140.com/category/en/veterinarians/port-said",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Explicit veterinary unit at km7 ring road; not private pet clinic."
+    },
+    {
+      "name": "Vet Clinic veterinary drug manufacturer",
+      "reason": "manufacturer-not-clinic",
+      "sources": [
+        {
+          "url": "https://www.megabizdir.com/EG/Port-Said/107136994157472/%D9%81%D9%8A%D8%AA-%D9%83%D9%84%D9%8A%D9%86%D9%83-%D9%84%D8%AA%D8%B5%D9%86%D9%8A%D8%B9-%D8%A7%D9%84%D8%A7%D8%AF%D9%88%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9--vet-clinic",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Own business description explicitly manufactures veterinary pharmaceuticals/feed additives in industrial complex; no physical pet medical practice evidence."
+    }
+  ],
+  "held": [
+    {
+      "name": "Mini zoo clinic & store",
+      "reason": "unresolved-current-pet-treatment",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Port-Said/112260013861983/Mini-zoo-clinic-%26-store",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "October 2026 posts describe supplies, grooming, SPA, boarding. Historical 2012 commenter claims upstairs clinic, but no current medical treatment evidence; no activation from name alone."
+    },
+    {
+      "name": "Petco - care&clinic",
+      "reason": "unresolved-pet-treatment",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Port-Said/126714391044749/Petco---care%26clinic",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Physical address and 01221097683 present, but read listing contains no veterinary treatment/medical services. Other lead classifies grooming/boarding. Own Facebook unavailable beyond shell."
+    }
+  ],
+  "sourceLimitations": [
+    "Facebook pages individually requested, returned title-only shells; no automated Facebook crawl.",
+    "Voofla and Petshops1 current fetches may differ from indexed web-reader views; dates chosen from checked-in actual direct response.",
+    "Modern Port Said Voofla/Petshops1 are mirrors of one clinic feed; not two independent witnesses.",
+    "Besbes uses Overture; addresses and labels only were consulted, no map pins. Besbes Modern Port Fouad address wrongly repeats Port Said branch; branch-specific clinic post takes priority.",
+    "No Google Maps or Google-derived business coordinates used.",
+    "Nine active phone records is below owner expectation of at least twelve; twelve retained candidates plus explicit exclusions/holds account for discovered clinic-like entries. No unsupported clinic added to reach quota."
+  ]
+}

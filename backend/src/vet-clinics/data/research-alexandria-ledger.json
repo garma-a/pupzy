@@ -1,0 +1,115 @@
+{
+  "scope": "Alexandria main researcher; extra26 and importer location rejections tracked separately",
+  "retainedInputRecords": 89,
+  "heldGroups": [
+    {
+      "name": "Royal Veterinary Clinic",
+      "reason": "conflicting-address",
+      "detail": "41OmarElMokhtarGanaklis versus50OmarElMokhtarLouran, same035744415; no secondbranchinferred."
+    },
+    {
+      "name": "Fluffy Pets Center2",
+      "reason": "unresolved-specific-area",
+      "detail": "724ElHorreyaRoad mislabeledAbouQuer; need reliable area evidence before catalogcenter assignment."
+    },
+    {
+      "name": "Dr.Green/89KhaledIbnElWalid/criticalcaseclinic",
+      "reason": "conflicting-address",
+      "detail": "Same01113789128 appears at89KhaledIbnElWalid,14MayBridge andDrBorgi; no evidence they are distinct physicalbranches."
+    },
+    {
+      "name": "Wingat/unnamedMandaraEmergency",
+      "reason": "conflicting-address",
+      "detail": "Same01279133936 appears atDrBorgiSidiGaber andStreet5MandaraQebli; do not insert2businesses."
+    },
+    {
+      "name": "FaceDogMandara",
+      "reason": "conflicting-identity",
+      "detail": "Shares01112467070 withKhaledIbnElWalidclinic but differentbrand/address; held, not distinctbranch."
+    },
+    {
+      "name": "Baitareya",
+      "reason": "unresolved-pet-clinic",
+      "detail": "Only veterinarydirectorycategory, genericbusinessname andarea. Needpetclinicalevidence."
+    },
+    {
+      "name": "HollandVeterinaryClinic",
+      "reason": "unresolved-pet-clinic",
+      "detail": "Bahij/BorgElArabarea; noexplicitpetclinicalservices."
+    },
+    {
+      "name": "AbuElAzmCenter",
+      "reason": "unresolved-pet-clinic",
+      "detail": "SecondAmreya/Maryout; noexplicitpetclinicalservices."
+    },
+    {
+      "name": "AnimaliaVeterinaryClinic",
+      "reason": "missing-contact-address",
+      "detail": "Own individualdirectoryentry describescatcare but has nophone/streetaddress; not fabricated."
+    },
+    {
+      "name": "AmericanVetCenterAlexandria",
+      "reason": "unconfirmed-branch",
+      "detail": "OldStanley/SanStefanolistings butcurrentchainprimarysiteonlypublishesCairo/Gizabranches."
+    },
+    {
+      "name": "NairaVetClinic",
+      "reason": "unresolved-address",
+      "detail": "WelpstarElNasrStreet withnoarea; otherdiscoveryindex15ElNasrMansheya vsbusinessmirror20ElNasr. Holdforindividualcorroboration."
+    },
+    {
+      "name": "SportingVetClinic033916356",
+      "reason": "conflicting-identity",
+      "detail": "WelpstarARElRiyadahaddress/phonedifferentfromknownSportingpractice; insufficientindependentbranchidentity."
+    },
+    {
+      "name": "PetSmallAnimals/Vet4Pets/Just4Pets/VetHealth/ElTawfiq/DrMohamedShebl",
+      "reason": "blocked-individual-evidence",
+      "detail": "Discoverydirectoryleads; attemptedindividualentriesreturnedtimeouts/accesscheck, not promotedsolelyfromcategory."
+    }
+  ],
+  "excludedGroups": [
+    {
+      "name": "VeterinaryQuarantine",
+      "reason": "government-or-livestock"
+    },
+    {
+      "name": "ReligiousInstituteVeterinaryUnit",
+      "reason": "government-or-livestock"
+    },
+    {
+      "name": "VeterinaryAdministration/Directorate",
+      "reason": "government-or-livestock"
+    },
+    {
+      "name": "AlliancePharma/AlexVetTrade/DeltaVetTrade/Canavet",
+      "reason": "pharmacy-trade-only"
+    },
+    {
+      "name": "DrSamahMashaly",
+      "reason": "evidence-of-relocation-or-closure"
+    }
+  ],
+  "retainedDistinctSourcePages": {
+    "animalplanet.clinic": 1,
+    "dalil140.com": 7,
+    "sites.google.com": 1,
+    "superpetegy.com": 1,
+    "welpstar.com": 39,
+    "www.dalilimedical.com": 39,
+    "www.findglocal.com": 2,
+    "www.findinegypt.com": 1,
+    "www.voofla.com": 4
+  },
+  "discovery": {
+    "welpstar": "91Alexandria-labelledcategoryleadsincludingrepeats,government,tradeandpreviousrecords;pages1–13read,pages14–17HTTP500",
+    "daliliMedical": "54uniqueindividualdoctor/clinicpageURLsfrom3Alexandriacategorypages;manyaliases/chainbranches",
+    "other": "English/Arabicneighbourhoodqueries:Smouha,SidiBishr,Miami,KafrAbdo,Stanley,Asafra,Maamoura,AbuQir,SanStefano,Alexandriawhole.Individualdirectoryandclinicpagesreadaslisted."
+  },
+  "limits": [
+    "NoYellowPagesaccessattemptorbypass;searchengineYPcategoryshows71results(67Alexandria,4Cairo),notacompletenessbenchmark.",
+    "infoegrobotsblocked;Facebookindividualpagesonlinefetchthrottled;drvet-clinic.com,petshubegypt.com,sportingvetclinic.com502;oldDrVet/AnimalPlanetdomainsinaccessible.",
+    "www.evcindex.comworksviacategory/individualentry(extra);initialnonwww/hometimeoutnotageneralblock.",
+    "NoGoogleMapsrequested,nopinscopied,noNominatimrequests."
+  ]
+}

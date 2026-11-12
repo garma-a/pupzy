@@ -1,0 +1,87 @@
+[
+  {
+    "key": "flamingo-matrouh",
+    "nameEnglish": "Flamingo Pets Clinic",
+    "nameArabic": "عيادة فلامنجو بتس البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Beside National Bank of Egypt, opposite Culture Palace, Marsa Matruh",
+    "addressArabic": "بجوار البنك الأهلي، أمام قصر الثقافة، مرسى مطروح",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Marsa Matruh",
+    "citySourceCode": "EG3301",
+    "phones": ["01008096186"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Marsa-Matruh/292935461418436/Flamingo-pets-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-11-01",
+    "classificationEvidence": "Read individual clinic-feed mirror: current cat/dog medicine, surgery, diagnostics and hospitalization at premises; November 2026 activity and matching clinic contact. Pet store site not assumed an independent operating witness."
+  },
+  {
+    "key": "nadeem-matrouh",
+    "nameEnglish": "Al Nadeem Veterinary Center",
+    "nameArabic": "مركز النديم للخدمات البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Tahreeb Street, opposite Technology Institute, El Qadiseya Tower, Marsa Matrouh",
+    "addressArabic": "شارع التهريب، أمام معهد التكنولوجيا، برج القادسية، مرسى مطروح",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Marsa Matruh",
+    "citySourceCode": "EG3301",
+    "phones": ["01068518078"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Marsa-Matruh/401655260344115/%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D9%86%D8%AF%D9%8A%D9%85-%D9%84%D9%84%D8%AE%D8%AF%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual centre explicitly offers diagnosis/treatment of pets as well as farm animals at physical street premises. Printed spaced +20 106 851 8078 normalized, no digits inferred."
+  },
+  {
+    "key": "lucky-matrouh",
+    "nameEnglish": "Lucky Pets Clinic",
+    "nameArabic": "عيادة لاكي للحيوانات الأليفة",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Zaher Galal Street, building 2, beside Ibn Syria, opposite Dr. Mabrouk Salem clinic, Marsa Matrouh",
+    "addressArabic": "شارع زاهر جلال، عمارة 2، بجوار ابن سوريا، أمام عيادة دكتور مبروك سالم، مرسى مطروح",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Marsa Matruh",
+    "citySourceCode": "EG3301",
+    "phones": ["01019887552", "01554400552"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Marsa-Matruh/112900047056757/Lucky-Pets-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-06",
+    "classificationEvidence": "2026-09-06 pet sterilisation surgery offer explicitly publishes current street premises and 01019887552. Older Telephone retained as additional sourced contact; not an adoption number.",
+    "aliases": {
+      "english": ["Lucky Pets Clinic"],
+      "arabic": []
+    }
+  }
+]

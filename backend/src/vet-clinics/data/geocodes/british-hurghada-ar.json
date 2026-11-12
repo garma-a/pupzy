@@ -1,0 +1,8 @@
+{
+  "query": "ريزورت, قسم أول الغردقة, Red Sea, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%B1%D9%8A%D8%B2%D9%88%D8%B1%D8%AA%2C+%D9%82%D8%B3%D9%85+%D8%A3%D9%88%D9%84+%D8%A7%D9%84%D8%BA%D8%B1%D8%AF%D9%82%D8%A9%2C+Red+Sea%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:52:10.899Z",
+  "httpStatus": 200,
+  "response": []
+}

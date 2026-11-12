@@ -1,0 +1,8 @@
+{
+  "query": "Gamal Abdel Nasser Street, Miami, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Gamal+Abdel+Nasser+Street%2C+Miami%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:44:39.483Z",
+  "httpStatus": 200,
+  "response": []
+}

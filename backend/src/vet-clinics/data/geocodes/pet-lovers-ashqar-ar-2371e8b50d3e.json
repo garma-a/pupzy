@@ -1,0 +1,36 @@
+{
+  "query": "عمر بن الخطاب, Dokki, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%B9%D9%85%D8%B1+%D8%A8%D9%86+%D8%A7%D9%84%D8%AE%D8%B7%D8%A7%D8%A8%2C+Dokki%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:20:01.870Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 49964601,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 48981113,
+      "lat": "30.0399175",
+      "lon": "31.1976504",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05339670634012356,
+      "addresstype": "residential",
+      "name": "شارع عمر بن الخطاب",
+      "display_name": "شارع عمر بن الخطاب, CallZ Telecom & HosterZ.Net, بين السرايات, الجيزة, 12615, مصر",
+      "address": {
+        "road": "شارع عمر بن الخطاب",
+        "residential": "CallZ Telecom & HosterZ.Net",
+        "suburb": "بين السرايات",
+        "city": "الجيزة",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12615",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0395972", "30.0403042", "31.1975893", "31.1978151"]
+    }
+  ]
+}

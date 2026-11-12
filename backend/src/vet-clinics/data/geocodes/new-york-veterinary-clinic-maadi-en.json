@@ -1,0 +1,61 @@
+{
+  "query": "Ahmed Kamel Street, El Maadi El Gadida, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Ahmed+Kamel+Street%2C+El+Maadi+El+Gadida%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:47:29.157Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51160583,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 36689851,
+      "lat": "29.9724327",
+      "lon": "31.2851189",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Ahmed Kamel Street",
+      "display_name": "Ahmed Kamel Street, El Maadi El Gadida, Helwan, Cairo, 11742, Egypt",
+      "address": {
+        "road": "Ahmed Kamel Street",
+        "neighbourhood": "El Maadi El Gadida",
+        "city": "Helwan",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11742",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9723880", "29.9724658", "31.2804195", "31.2898182"]
+    },
+    {
+      "place_id": 51050244,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 1094480257,
+      "lat": "29.9616797",
+      "lon": "31.2950619",
+      "category": "highway",
+      "type": "secondary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "secondary",
+      "name": "Zahraa Al Maadi Street",
+      "display_name": "Zahraa Al Maadi Street, El Maadi El Gadida, Helwan, Cairo, 00007, Egypt",
+      "address": {
+        "road": "Zahraa Al Maadi Street",
+        "neighbourhood": "El Maadi El Gadida",
+        "city": "Helwan",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "00007",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9611587", "29.9624215", "31.2890153", "31.3016882"]
+    }
+  ]
+}

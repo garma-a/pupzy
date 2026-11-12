@@ -1,0 +1,396 @@
+[
+  {
+    "key": "amany-sobhy-damanhour",
+    "nameEnglish": "Dr. Amany Sobhy Veterinary Clinic",
+    "nameArabic": "عيادة د. أماني صبحي البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "El Hoda Street, end of National ID Street, Damanhour, Behera",
+    "addressArabic": "شارع الهدى، آخر شارع الرقم القومي، دمنهور، البحيرة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Damanhur (Kism)",
+    "citySourceCode": "EG1801",
+    "phones": ["01288373205", "0453210337"],
+    "sources": [
+      {
+        "url": "https://misrconnect.com/en/profiles/4133",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Read individual MisrConnect entry: physical pet examination/vaccination/treatment clinic, both contact numbers and address. Undated directory evidence; date remains null. Urban Damanhour mapped to Kism."
+  },
+  {
+    "key": "my-pet-kafr-dawar",
+    "nameEnglish": "My Pet Clinic",
+    "nameArabic": "عيادة ماي بت البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Kafr Al-Dawar, Behera",
+    "addressArabic": "كفر الدوار، البحيرة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Kafr Al-Dawwar (Kism)",
+    "citySourceCode": "EG1811",
+    "phones": ["01000880530"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Kafr-Al-Dawar/676577072355702/My-pet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-01-23",
+    "classificationEvidence": "Read individual mirror explicitly identifies first specialist pet-treatment clinic in Kafr Al-Dawar and publishes contact; dated adoption post 2026-01-23. Only city address published; exact premises not invented, area precision. Pet Store category does not override explicit clinic evidence."
+  },
+  {
+    "key": "pet-care-nour-damanhour",
+    "nameEnglish": "Pet Care Clinic",
+    "nameArabic": "عيادة بيت كير البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Behind Social Club, Al Alia Market Street, opposite Al Hakam Al Adl Mosque, Damanhour",
+    "addressArabic": "خلف النادي الاجتماعي، شارع ماركت العلياء، أمام مسجد الحكم العدل، دمنهور",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Damanhur (Kism)",
+    "citySourceCode": "EG1801",
+    "phones": ["01555409771"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Damanhour/293266610526201/pet-care-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-11-01",
+    "classificationEvidence": "2026-11-01 feline neutering and current booking number at a physical Damanhour clinic under Dr Nour Younes."
+  },
+  {
+    "key": "petco-damanhour",
+    "nameEnglish": "Petco Vet",
+    "nameArabic": "عيادة بيتكو البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Rowiny Street, Damanhour",
+    "addressArabic": "شارع الرويني، دمنهور",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Damanhur (Kism)",
+    "citySourceCode": "EG1801",
+    "phones": ["01041151818"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Damanhour/1273449235842236/Petco-vet",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-28",
+    "classificationEvidence": "2026-09-28 feline vaccination offer at named physical clinic; current posts pair Dr Omar Hany with this clinic booking number.",
+    "aliases": {
+      "english": ["Petco vet"]
+    }
+  },
+  {
+    "key": "elreaya-damanhour",
+    "nameEnglish": "El Reaya Veterinary Clinic",
+    "nameArabic": "عيادة الرعاية البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglish": "El Rawda main Street, opposite Teachers School for Girls, Damanhour",
+    "addressArabic": "أول شارع الروضة الرئيسي، أمام مدرسة المعلمات للبنات، دمنهور",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Damanhur (Kism)",
+    "citySourceCode": "EG1801",
+    "phones": ["01206303021"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Damanhour/106768238898319/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%B1%D8%B9%D8%A7%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual clinic page explicitly offers pet examinations, follow-up and vaccinations as well as poultry work. Printed local contact used; malformed international tel target rejected."
+  },
+  {
+    "key": "misr-pet-damanhour",
+    "nameEnglish": "Misr Pet Center",
+    "nameArabic": "مركز مصر بيت البيطري",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Governorate entrance, beside Bank Audi, Damanhour",
+    "addressArabic": "مدخل المحافظة، بجوار بنك عودة، دمنهور",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Damanhur (Kism)",
+    "citySourceCode": "EG1801",
+    "phones": ["0453361116"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Damanhour/101091349182313/MISR-PET-center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2022-02-17",
+    "classificationEvidence": "2022-02-17 physical pet-clinic opening announcement explicitly offers pet surgery, diagnostics and vaccinations. No closure evidence; not described as recently confirmed.",
+    "aliases": {
+      "english": ["MISR PET center"]
+    }
+  },
+  {
+    "key": "tarzan-damanhour",
+    "nameEnglish": "Tarzan Pet Care",
+    "nameArabic": "عيادة طرزان البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Edmon area, behind El Raai El Saleh Hospital, opposite Milad Pharmacy, Damanhour",
+    "addressArabic": "أرض أدمون، خلف مستشفى الراعي الصالح، أمام صيدلية ميلاد، دمنهور",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Damanhur (Kism)",
+    "citySourceCode": "EG1801",
+    "phones": ["01550113926"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Damanhour/102876845816687/Tarzan-Pet-Care",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2024-08-06",
+    "classificationEvidence": "2024-08-06 discounted physical pet examinations and parasite vaccination at named clinic/address/contact."
+  },
+  {
+    "key": "pet-star-damanhour",
+    "nameEnglish": "Pet Star",
+    "nameArabic": "عيادة بيت ستار البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Galal Street, beside Said Abu Ammar Pharmacy, opposite Gohar Aluminium, Damanhour",
+    "addressArabic": "شارع جلال، بجوار صيدلية سعيد أبو عمار، أمام جوهر للألوميتال، دمنهور",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Damanhur (Kism)",
+    "citySourceCode": "EG1801",
+    "phones": ["01128620486"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Damanhour/904670806314152/Pet-Star",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual clinic feed offers pet clinical appointments and diagnosis with specific address and booking number; generic advice not used as dated operation evidence."
+  },
+  {
+    "key": "damanhour-pet-clinic",
+    "nameEnglish": "Damnhour Pet Clinic and Pet Shop",
+    "nameArabic": "عيادة دمنهور للحيوانات الأليفة",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Shubra, Fatma El Zahraa Street, opposite sewage network, beside Orphan Sponsorship Association, Damanhour",
+    "addressArabic": "شبرا، شارع فاطمة الزهراء، أمام شبكة الصرف الصحي، بجوار جمعية كفالة اليتيم، دمنهور",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Damanhur (Kism)",
+    "citySourceCode": "EG1801",
+    "phones": ["01095225742"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Damanhour/446974259066219/Damnhour-pet-clinic-and-pet-shop",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual page explicitly describes treatment and surgery for pets at physical clinic. Recent nonclinical reposts not used as dated operation evidence.",
+    "aliases": {
+      "english": ["Damnhour pet clinic and pet shop"]
+    }
+  },
+  {
+    "key": "petmate-damanhour",
+    "nameEnglish": "Petmate Clinic",
+    "nameArabic": "عيادة بيتميت البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Edmon area, opposite Mohamed and Amr Bookshop, Damanhour",
+    "addressArabic": "أرض أدمون، أمام مكتبة محمد وعمرو، دمنهور",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Damanhur (Kism)",
+    "citySourceCode": "EG1801",
+    "phones": ["01093573953", "01100991375"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Damanhour/102694867873295/Petmate-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2024-02-03",
+    "classificationEvidence": "2024-02-03 treated respiratory case pairs these phones; latest dated address supersedes older Ahmed Orabi Street header, older third number withheld."
+  },
+  {
+    "key": "raay-pets-kafr-dawar",
+    "nameEnglish": "Raay Pets",
+    "nameArabic": "عيادة الراعي بيتس",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglish": "El Mahkama Street, beside Molouk Chocolate, second floor, Kafr El Dawwar",
+    "addressArabic": "شارع المحكمة، بجوار ملوك للشيكولاتة، الدور الثاني، كفر الدوار",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Kafr Al-Dawwar (Kism)",
+    "citySourceCode": "EG1811",
+    "phones": ["01222790082", "0452183299"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/840306039172515/%D8%A7%D9%84%D8%B1%D8%A7%D8%B9%D9%8A-%D8%A8%D9%8A%D8%AA%D8%B3---Ra3y-Pets",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-04-13",
+    "classificationEvidence": "2026-04-13 recruits veterinary assistant explicitly for physical cats/dogs clinic, separate from Raay poultry supplier. No Maps coordinates used.",
+    "aliases": {
+      "english": ["Ra3y Pets"],
+      "arabic": ["الراعي بيتس"]
+    }
+  },
+  {
+    "key": "petso-kafr-dawar",
+    "nameEnglish": "Petso Vet Clinic",
+    "nameArabic": "عيادة بيتسو البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Kafr El Dawwar entrance, Boulos Street opposite Fathallah, after Layali salon, first right then left",
+    "addressArabic": "مدخل كفر الدوار، الشارع المقابل لفتح الله، شارع بولس، بعد كوافير ليالي، أول يمين ثم شمال",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Kafr Al-Dawwar (Kism)",
+    "citySourceCode": "EG1811",
+    "phones": ["01128818493", "01121218245"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/113670043640745/%D8%AF.%D8%B9%D8%A8%D8%AF%D8%A7%D9%84%D8%B1%D8%AD%D9%85%D9%86-%D9%81%D8%A7%D9%8A%D8%AF---Petso-Vet-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-28",
+    "classificationEvidence": "Current clinical case and 2026-09-26 fracture treatment publish contact/address; latest dated address used rather than older Mohamed Kassab header."
+  },
+  {
+    "key": "your-vet-kafr-dawar",
+    "nameEnglish": "Your Vet Clinic",
+    "nameArabic": "عيادة يور فيت البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Mizana, street opposite El Rehab Hospital, beside El Motamayez real estate, Kafr El Dawwar",
+    "addressArabic": "الميزانة، الشارع المقابل لمستشفى الرحاب، بجوار المتميز للتسويق العقاري، كفر الدوار",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Kafr Al-Dawwar (Kism)",
+    "citySourceCode": "EG1811",
+    "phones": ["01515972779"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/857029287491149/Your-vet-clinic-%D8%AF-%D8%B1%D8%AD%D8%A7%D8%A8-%D8%B9%D8%A8%D8%AF-%D8%A7%D9%84%D8%AD%D9%85%D9%8A%D8%AF",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-11-01",
+    "classificationEvidence": "2026-11-01 treated fungal pet case at physical Dr Rehab Abdel Hamid clinic with explicit clinic booking WhatsApp.",
+    "aliases": {
+      "english": ["Your vet clinic"]
+    }
+  },
+  {
+    "key": "vetopia-kafr-dawar",
+    "nameEnglish": "Vetopia Pet Clinic",
+    "nameArabic": "عيادة فيتوبيا البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Mahkama Street, start of El Edkawy, beside El Nady Pharmacy, Lotus Tower, first floor, Kafr El Dawwar",
+    "addressArabic": "شارع المحكمة، أول الإدكاوي، بجوار صيدلية النادي، برج اللوتس، الدور الأول، كفر الدوار",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Kafr Al-Dawwar (Kism)",
+    "citySourceCode": "EG1811",
+    "phones": [],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/843414722199147/Vetopia-Pet-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-31",
+    "classificationEvidence": "Physical Dr Esraa Marzouk veterinary clinic and dated feline pregnancy examination; no public booking phone found, retain inactive no-phone."
+  }
+]

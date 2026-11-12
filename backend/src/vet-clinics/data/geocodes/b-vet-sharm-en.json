@@ -1,0 +1,67 @@
+{
+  "query": "El Salam Street, Sharm el-Sheikh, South Sinai, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Salam+Street%2C+Sharm+el-Sheikh%2C+South+Sinai%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:52:16.562Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 47671642,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 1000785857,
+      "lat": "27.9641854",
+      "lon": "34.3991547",
+      "category": "tourism",
+      "type": "hotel",
+      "place_rank": 30,
+      "importance": 0.00006053788052181304,
+      "addresstype": "tourism",
+      "name": "Concorde el Salam. Front area",
+      "display_name": "Concorde el Salam. Front area, Madrid Street, Al Nabq, Ras Nasrani, Sharm El Sheikh, Ras Umm Sid, South Sinai, 46628, Egypt",
+      "address": {
+        "tourism": "Concorde el Salam. Front area",
+        "road": "Madrid Street",
+        "neighbourhood": "Al Nabq",
+        "suburb": "Ras Nasrani",
+        "city": "Sharm El Sheikh",
+        "district": "Ras Umm Sid",
+        "state": "South Sinai",
+        "ISO3166-2-lvl4": "EG-JS",
+        "postcode": "46628",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["27.9637249", "27.9646422", "34.3988193", "34.3995975"]
+    },
+    {
+      "place_id": 47907111,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 1013037588,
+      "lat": "27.9698031",
+      "lon": "34.3964833",
+      "category": "tourism",
+      "type": "hotel",
+      "place_rank": 30,
+      "importance": 0.00006053788052181304,
+      "addresstype": "tourism",
+      "name": "Concorde el salam Sport",
+      "display_name": "Concorde el salam Sport, Al Sheikh Zaid Street, Al Nabq, Shark's Bay, Sharm El Sheikh, Ras Umm Sid, South Sinai, 46921, Egypt",
+      "address": {
+        "tourism": "Concorde el salam Sport",
+        "road": "Al Sheikh Zaid Street",
+        "neighbourhood": "Al Nabq",
+        "suburb": "Shark's Bay",
+        "city": "Sharm El Sheikh",
+        "district": "Ras Umm Sid",
+        "state": "South Sinai",
+        "ISO3166-2-lvl4": "EG-JS",
+        "postcode": "46921",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["27.9696728", "27.9699795", "34.3962930", "34.3966658"]
+    }
+  ]
+}

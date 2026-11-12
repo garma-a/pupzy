@@ -1,0 +1,36 @@
+{
+  "query": "عبد العزيز فهمي, Heliopolis, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%B9%D8%A8%D8%AF+%D8%A7%D9%84%D8%B9%D8%B2%D9%8A%D8%B2+%D9%81%D9%87%D9%85%D9%8A%2C+Heliopolis%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:13:50.584Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50256897,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 335322488,
+      "lat": "30.1010836",
+      "lon": "31.3498832",
+      "category": "railway",
+      "type": "tram_stop",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "railway",
+      "name": "عبد العزيز فهمي",
+      "display_name": "عبد العزيز فهمي, شارع عبد العزيز فهمى, مصر الجديدة, القاهرة, 11361, مصر",
+      "address": {
+        "railway": "عبد العزيز فهمي",
+        "road": "شارع عبد العزيز فهمى",
+        "suburb": "مصر الجديدة",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11361",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.1010336", "30.1011336", "31.3498332", "31.3499332"]
+    }
+  ]
+}

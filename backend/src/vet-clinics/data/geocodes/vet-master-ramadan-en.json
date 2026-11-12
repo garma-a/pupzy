@@ -1,0 +1,8 @@
+{
+  "query": "El Asher Men Ramadan Street, 10th of Ramadan City, Sharkia, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Asher+Men+Ramadan+Street%2C+10th+of+Ramadan+City%2C+Sharkia%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:16:40.582Z",
+  "httpStatus": 200,
+  "response": []
+}

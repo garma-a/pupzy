@@ -1,0 +1,63 @@
+{
+  "query": "السباق, Heliopolis, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B3%D8%A8%D8%A7%D9%82%2C+Heliopolis%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:13:04.059Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51030699,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 28496650,
+      "lat": "30.1020685",
+      "lon": "31.3224928",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع السباق",
+      "display_name": "شارع السباق, قسم مصر الجديدة, مصر الجديدة, القاهرة, 11849, مصر",
+      "address": {
+        "road": "شارع السباق",
+        "quarter": "قسم مصر الجديدة",
+        "suburb": "مصر الجديدة",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11849",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.1000503", "30.1028023", "31.3200520", "31.3238453"]
+    },
+    {
+      "place_id": 50929959,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 694201304,
+      "lat": "30.1021354",
+      "lon": "31.3220483",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع السباق الجانبى",
+      "display_name": "شارع السباق الجانبى, قسم مصر الجديدة, مصر الجديدة, القاهرة, 11849, مصر",
+      "address": {
+        "road": "شارع السباق الجانبى",
+        "quarter": "قسم مصر الجديدة",
+        "suburb": "مصر الجديدة",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11849",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.1007206", "30.1026873", "31.3198791", "31.3237284"]
+    }
+  ]
+}

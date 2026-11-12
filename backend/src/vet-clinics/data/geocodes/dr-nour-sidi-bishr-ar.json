@@ -1,0 +1,8 @@
+{
+  "query": "خليل حمادة, سيدي بشر, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%AE%D9%84%D9%8A%D9%84+%D8%AD%D9%85%D8%A7%D8%AF%D8%A9%2C+%D8%B3%D9%8A%D8%AF%D9%8A+%D8%A8%D8%B4%D8%B1%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:52:37.840Z",
+  "httpStatus": 200,
+  "response": []
+}

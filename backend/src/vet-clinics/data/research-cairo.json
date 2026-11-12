@@ -1,0 +1,1173 @@
+[
+  {
+    "key": "vital-pets-safir",
+    "nameEnglish": "Vital Pets Veterinary Center",
+    "nameArabic": "مركز فيتال بيتس البيطري",
+    "addressEnglish": "52 Abu Bakr El Seddiq Street, Safir Square, after McDonalds corner, Heliopolis, Cairo",
+    "addressArabic": "52 شارع أبو بكر الصديق، ميدان سفير، الناصية بعد ماكدونالدز، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["01120776123"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d9%81%d9%8a%d8%aa%d8%a7%d9%84-%d8%a8%d9%8a%d8%aa%d8%b3-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81%d8%a9-vital-pets-center/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%b4%d9%8a%d8%b1%d8%a7%d8%aa%d9%88%d9%86-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d9%84%d8%b1%d8%b9%d8%a7%d9%8a%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2020-06-02",
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity. Reviewed additional EVC identity: مركز شيراتون البيطري لرعاية الحيوان.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "chainKey": "vital-pets",
+    "branchQualifier": "Safir",
+    "aliases": {
+      "english": ["Vital Pets Veterinary Center (Safir)", "Vital Pets Center"],
+      "arabic": [
+        "مركز فيتال بيتس البيطري (سفير)",
+        "مركز فيتال بيتس للحيوانات الأليفة  ، ميدان سفير، مصر الجديدة",
+        "مركز شيراتون البيطري لرعاية الحيوان"
+      ]
+    }
+  },
+  {
+    "key": "harmony-nozha",
+    "nameEnglish": "Harmony Veterinary Clinic (Nozha)",
+    "nameArabic": "عيادة هارموني البيطرية (النزهة)",
+    "addressEnglish": "83 Mohamed Farid Street, beside El Dorra Heart Hospital, Nozha, Cairo",
+    "addressArabic": "83 شارع محمد فريد، بجوار مستشفى الدرة للقلب، النزهة، القاهرة",
+    "area": "Nozha",
+    "phones": ["01550930186", "01551986090"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%87%d8%a7%d8%b1%d9%85%d9%88%d9%86%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9%d8%8c-%d9%87%d9%84%d9%8a%d9%88%d8%a8%d9%84%d8%b3-hvc/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2020-02-13",
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "chainKey": "harmony",
+    "branchQualifier": "Nozha",
+    "aliases": {
+      "english": ["Harmony Veterinary Clinic (Nozha)", "HVC"],
+      "arabic": ["عيادة هارموني البيطرية (النزهة)", "عيادة هارموني البيطرية، هليوبلس"]
+    }
+  },
+  {
+    "key": "pet-vet-heliopolis",
+    "nameEnglish": "Pet Vet Veterinary Clinic (Heliopolis)",
+    "nameArabic": "عيادة بت فيت البيطرية (مصر الجديدة)",
+    "addressEnglish": "20 El Horreya Street, beside El Sabaa Auto Service, Heliopolis, Cairo",
+    "addressArabic": "20 شارع الحرية، بجوار معرض السبع أوتو سيرفس، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["0224170494"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a8%d9%8a%d8%aa-%d9%81%d9%8a%d8%aa-pet-vet/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa-%d9%81%d9%8a%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d9%85%d8%b5%d8%b1-%d8%a7%d9%84%d8%ac%d8%af%d9%8a%d8%af%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "chainKey": "pet-vet",
+    "branchQualifier": "Heliopolis",
+    "aliases": {
+      "english": ["Pet Vet Veterinary Clinic (Heliopolis)", "Pet Vet", "Pet Vet Clinic", "Pet Vet Veterinary Center"],
+      "arabic": ["عيادة بت فيت البيطرية (مصر الجديدة)", "بيت فيت", "عيادة بيت فيت البيطرية مصر الجديدة"]
+    }
+  },
+  {
+    "key": "golf-ard-el-golf",
+    "nameEnglish": "Golf Veterinary Clinic (Ard El Golf)",
+    "nameArabic": "عيادة الجولف البيطرية (أرض الجولف)",
+    "addressEnglish": "5 Esmat El Khodary Street off El Nozha Street, Ard El Golf, Heliopolis, Cairo",
+    "addressArabic": "5 شارع عصمت الخضري متفرع من شارع النزهة، أرض الجولف، مصر الجديدة، القاهرة",
+    "area": "Ard El Golf",
+    "phones": ["01286351114", "0224179865"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%ac%d9%88%d9%84%d9%81-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "chainKey": "golf-vet",
+    "branchQualifier": "Ard El Golf",
+    "aliases": {
+      "english": ["Golf Veterinary Clinic (Ard El Golf)"],
+      "arabic": ["عيادة الجولف البيطرية (أرض الجولف)", "عيادة الجولف البيطرية"]
+    }
+  },
+  {
+    "key": "heliopolis-farouk-tharwat",
+    "nameEnglish": "Heliopolis Veterinary Clinic (Farouk Tharwat)",
+    "nameArabic": "العيادة البيطرية بمصر الجديدة (فاروق ثروت)",
+    "addressEnglish": "3 Farouk Tharwat Street off Hassan Aflaton Street, Ard El Golf, Heliopolis, Cairo",
+    "addressArabic": "3 شارع فاروق ثروت من شارع حسن أفلاطون، أرض الجولف، مصر الجديدة، القاهرة",
+    "area": "Ard El Golf",
+    "phones": ["0224182660"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a8%d9%85%d8%b5%d8%b1-%d8%a7%d9%84%d8%ac%d8%af%d9%8a%d8%af%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Heliopolis Veterinary Clinic (Farouk Tharwat)"],
+      "arabic": ["العيادة البيطرية بمصر الجديدة (فاروق ثروت)", "العيادة البيطرية بمصر الجديدة"]
+    }
+  },
+  {
+    "key": "korba-veterinary",
+    "nameEnglish": "Korba Veterinary Clinic",
+    "nameArabic": "عيادة الكوربة البيطرية",
+    "addressEnglish": "17 Sherif Street, Korba, Heliopolis, Cairo",
+    "addressArabic": "17 شارع شريف، الكوربة، مصر الجديدة، القاهرة",
+    "area": "Korba",
+    "phones": ["01225736791"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%83%d9%88%d8%b1%d8%a8%d8%a9-%d9%81%d9%8a%d8%aa-%d9%83%d9%84%d9%8a%d9%86%d9%8a%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Korba Veterinary Clinic"],
+      "arabic": ["عيادة الكوربة البيطرية", "عيادة الكوربة فيت كلينيك البيطرية"]
+    }
+  },
+  {
+    "key": "animalia-sheraton",
+    "nameEnglish": "Animalia Veterinary Center (Sheraton)",
+    "nameArabic": "مركز أنيماليا البيطري (شيراتون)",
+    "addressEnglish": "11 El Sheikh Ali Gad El Haq Street, Sheraton Residences, Heliopolis, Cairo",
+    "addressArabic": "11 شارع الشيخ علي جاد الحق، مساكن شيراتون، مصر الجديدة، القاهرة",
+    "area": "Sheraton",
+    "phones": ["01002740841"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a3%d9%86%d9%8a%d9%85%d8%a7%d9%84%d9%8a%d8%a7-%d9%81%d9%8a%d8%aa-%d8%b3%d9%86%d8%aa%d8%b1-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "chainKey": "animalia",
+    "branchQualifier": "Sheraton",
+    "aliases": {
+      "english": ["Animalia Veterinary Center (Sheraton)"],
+      "arabic": ["مركز أنيماليا البيطري (شيراتون)", "أنيماليا فيت سنتر للخدمات البيطرية"]
+    }
+  },
+  {
+    "key": "brand-vet-heliopolis",
+    "nameEnglish": "Brand Vet Clinic",
+    "nameArabic": "عيادة براند فيت البيطرية",
+    "addressEnglish": "1 El Montaza Street, Heliopolis, Cairo",
+    "addressArabic": "1 شارع المنتزه، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["0226437108"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d8%b1%d8%a7%d9%86%d8%af-%d9%81%d9%8a%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Brand Vet Veterinary Clinic"],
+      "arabic": ["عيادة براند فيت البيطرية"]
+    }
+  },
+  {
+    "key": "pets-vets-ard-el-golf",
+    "nameEnglish": "Petz&Vetz Animal Hospital",
+    "nameArabic": "مستشفى بيتز أند فيتز البيطري",
+    "addressEnglish": "6 Hassan Mahmoud Street off Nabil El Waqqad, Ard El Golf, Heliopolis, Cairo",
+    "addressArabic": "6 شارع حسن محمود من شارع نبيل الوقاد، أرض الجولف، مصر الجديدة، القاهرة",
+    "area": "Ard El Golf",
+    "phones": ["0224173426", "01009131112"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%86%d8%af-%d9%81%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/petzandvetz/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets and Vets Veterinary Clinic", "Vets and Pets Clinic", "Petz&Vetz Animal Hospital"],
+      "arabic": ["عيادة بيتس آند فيتس البيطرية", "عيادة بيتس اند فيتس البيطرية"]
+    }
+  },
+  {
+    "key": "dalmatian-merryland",
+    "nameEnglish": "Dalmatian Veterinary Clinic",
+    "nameArabic": "عيادة دالميشن البيطرية",
+    "addressEnglish": "4 El Sebaq Street, Merryland, Heliopolis, Cairo",
+    "addressArabic": "4 شارع السباق، الميريلاند، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["0226389236", "01146542306"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%af%d8%a7%d9%84%d9%85%d9%8a%d8%b4%d9%86-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d9%84%d8%b9%d9%84%d8%a7%d8%ac-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dalmatian Veterinary Clinic"],
+      "arabic": ["عيادة دالميشن البيطرية", "دالميشن البيطرية لعلاج الحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "delta-vet-sheraton",
+    "nameEnglish": "Delta Vet Center",
+    "nameArabic": "مركز دلتا فيت البيطري",
+    "addressEnglish": "185 El Orouba Road, Sheraton Residences, Nozha, Heliopolis, Cairo",
+    "addressArabic": "185 طريق العروبة، مساكن شيراتون، النزهة، مصر الجديدة، القاهرة",
+    "area": "Sheraton",
+    "phones": ["0222667401"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%af%d9%84%d8%aa%d8%a7-%d9%81%d9%8a%d8%aa-%d8%b3%d9%86%d8%aa%d8%b1-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Delta Vet Veterinary Center"],
+      "arabic": ["مركز دلتا فيت البيطري", "مركز دلتا فيت سنتر البيطري"]
+    }
+  },
+  {
+    "key": "royal-pet-nozha",
+    "nameEnglish": "Royal Pet Veterinary Clinic",
+    "nameArabic": "عيادة رويال بت البيطرية",
+    "addressEnglish": "3 Salah El Din Fadel Street, behind Military College, Nozha, Heliopolis, Cairo",
+    "addressArabic": "3 شارع صلاح الدين فاضل، خلف الكلية الحربية، النزهة، مصر الجديدة، القاهرة",
+    "area": "Nozha",
+    "phones": ["01227928853", "01002935341"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b1%d9%88%d9%8a%d8%a7%d9%84-%d8%a8%d9%8a%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Royal Pet Veterinary Clinic", "Royal pet veterinary clinic"],
+      "arabic": ["عيادة رويال بت البيطرية", "عيادة رويال بيت البيطرية"]
+    }
+  },
+  {
+    "key": "nozha-hegaz",
+    "nameEnglish": "Nozha Veterinary Clinic",
+    "nameArabic": "عيادة النزهة البيطرية",
+    "addressEnglish": "11 Moaz Ibn Gabal Street, Hegaz Square, Heliopolis, Cairo",
+    "addressArabic": "11 شارع معاذ بن جبل، ميدان الحجاز، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["0226203119", "01222891303", "01011558080"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%86%d8%b2%d9%87%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%86%d8%b2%d9%87%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/NozhaVetClinic",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites. Reviewed additional EVC identity: النزهة البيطرية.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Nozha Veterinary Clinic"],
+      "arabic": ["عيادة النزهة البيطرية", "النزهة البيطرية"]
+    }
+  },
+  {
+    "key": "cats-dogs-heliopolis",
+    "nameEnglish": "Cats and Dogs Veterinary Clinic (Heliopolis)",
+    "nameArabic": "عيادة كاتس آند دوجز البيطرية (مصر الجديدة)",
+    "addressEnglish": "147 El Hegaz Street, Heliopolis Square, Heliopolis, Cairo",
+    "addressArabic": "147 شارع الحجاز، ميدان هليوبوليس، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["0226445878", "01113662433"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%83%d8%a7%d8%aa%d8%b3-%d8%a2%d9%86%d8%af-%d8%af%d9%88%d8%ac%d8%b2-%d9%85%d8%b5%d8%b1-%d8%a7%d9%84%d8%ac%d8%af%d9%8a%d8%af%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "chainKey": "cats-dogs",
+    "branchQualifier": "Heliopolis",
+    "aliases": {
+      "english": [
+        "Cats and Dogs Veterinary Clinic (Heliopolis)",
+        "Cats And Dogs Veterinary Clinic, Misr El Jadida Branch"
+      ],
+      "arabic": ["عيادة كاتس آند دوجز البيطرية (مصر الجديدة)", "عيادة كاتس آند دوجز مصر الجديدة"]
+    }
+  },
+  {
+    "key": "cairo-vet-nozha",
+    "nameEnglish": "Cairo Veterinary Center for Pets",
+    "nameArabic": "مركز القاهرة البيطري للحيوانات الأليفة",
+    "addressEnglish": "Abdel Hay Fathy Street off Mohamed Farid, parallel Farid Semeika, Gad Restaurant corner, Airport, Nozha, Cairo",
+    "addressArabic": "شارع عبد الحي فتحي متفرع من محمد فريد، موازٍ لفريد سميكة، ناصية مطعم جاد، المطار، النزهة، القاهرة",
+    "area": "Nozha",
+    "phones": ["0224517453"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d9%82%d8%a7%d9%87%d8%b1%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Cairo Veterinary Center for Pets"],
+      "arabic": ["مركز القاهرة البيطري للحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "oasis-sheraton",
+    "nameEnglish": "Oasis Veterinary Clinic",
+    "nameArabic": "عيادة أويسز البيطرية",
+    "addressEnglish": "119 Saqr Qoreish, beside Adams Cafe, Sheraton Airport Residences, Cairo",
+    "addressArabic": "119 صقر قريش، بجوار آدمز كافيه، مساكن شيراتون المطار، القاهرة",
+    "area": "Sheraton",
+    "phones": ["01061000992", "01021213388", "0222699698", "01003206162"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%88%d9%8a%d8%b3%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Oasis Veterinary Clinic", "Oasis Vet Clinic"],
+      "arabic": ["عيادة أويسز البيطرية", "عيادة اويسز البيطرية"]
+    }
+  },
+  {
+    "key": "ramy-nabil-heliopolis",
+    "nameEnglish": "Dr. Ramy Nabil Pet Clinic",
+    "nameArabic": "عيادة دكتور رامي نبيل للحيوانات الأليفة",
+    "addressEnglish": "30 Shebin Street off El Imam Ali, Ismailia Square, Heliopolis, Cairo",
+    "addressArabic": "30 شارع شبين من شارع الإمام علي، ميدان الإسماعيلية، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["01004505878"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af%d9%83%d8%aa%d9%88%d8%b1-%d8%b1%d8%a7%d9%85%d9%8a-%d9%86%d8%a8%d9%8a%d9%84-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/drramynabilPsC",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Ramy Nabil Pet Clinic"],
+      "arabic": ["عيادة دكتور رامي نبيل للحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "el-rahma-heliopolis",
+    "nameEnglish": "Mercy Vet Clinic",
+    "nameArabic": "عيادة الرحمة البيطرية",
+    "addressEnglish": "4 Kaab Ibn Malek Street off El Hegaz Street, Heliopolis, Cairo",
+    "addressArabic": "4 شارع كعب بن مالك من شارع الحجاز، هليوبوليس، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["01224006816"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%b1%d8%ad%d9%85%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%af%d9%83%d8%aa%d9%88%d8%b1-%d9%85%d8%ad%d9%85%d8%af-%d8%a7%d9%84%d8%b5%d9%88/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/rahmaVets/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["El Rahma Veterinary Clinic", "Mercy Vet Clinic"],
+      "arabic": ["عيادة الرحمة البيطرية", "عيادة الرحمة البيطرية, دكتور محمد الصواف"]
+    }
+  },
+  {
+    "key": "tabby-heliopolis",
+    "nameEnglish": "Tabby Veterinary Clinic",
+    "nameArabic": "عيادة تابي البيطرية",
+    "addressEnglish": "12 Maahad El Sahary Street, beside Baron Hotel, Heliopolis, Cairo",
+    "addressArabic": "12 شارع معهد الصحاري، بجوار فندق البارون، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["0222915905"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%aa%d8%a7%d8%a8%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://facebook.com/TabbyVeterinaryClinic",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Tabby Veterinary Clinic", "Tabby Vet Clinic"],
+      "arabic": ["عيادة تابي البيطرية", "عيادة تابي البيطرية للحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "remedy-heliopolis",
+    "nameEnglish": "Remedy Veterinary Clinic",
+    "nameArabic": "عيادة رمدي البيطرية",
+    "addressEnglish": "126 El Nozha Street, Heliopolis, Cairo",
+    "addressArabic": "126 شارع النزهة، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["0224193379"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b1%d9%85%d8%af%d9%89-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Remedy Veterinary Clinic"],
+      "arabic": ["عيادة رمدي البيطرية", "عيادة رمدى البيطرية"]
+    }
+  },
+  {
+    "key": "rise-heliopolis",
+    "nameEnglish": "Rise Vet Hospital",
+    "nameArabic": "مستشفى رايز البيطري",
+    "addressEnglish": "6 El Kholafaa Street, Ismailia Square, Heliopolis, Cairo",
+    "addressArabic": "6 شارع الخلفاء، ميدان الإسماعيلية، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["01005302220", "0226428018"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%b1%d8%a7%d9%8a%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-rise-vet-hospital/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Rise Veterinary Hospital", "Rise Vet Hospital"],
+      "arabic": ["مستشفى رايز البيطري"]
+    }
+  },
+  {
+    "key": "pets-town-sheraton",
+    "nameEnglish": "Pets Town Veterinary Clinic",
+    "nameArabic": "عيادة بيتس تاون البيطرية",
+    "addressEnglish": "22 Kamal Hassan Ali Street off El Mosheer Ahmed Ismail, Sheraton Residences, Heliopolis, Cairo",
+    "addressArabic": "22 شارع كمال حسن علي متفرع من المشير أحمد إسماعيل، مساكن شيراتون، مصر الجديدة، القاهرة",
+    "area": "Sheraton",
+    "phones": ["01099277155", "0222692898"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a8%d9%8a%d8%aa%d8%b3-%d8%aa%d8%a7%d9%88%d9%86-%d9%81%d9%8a%d8%aa-%d9%83%d9%84%d9%8a%d9%86%d9%83-pets-town-vet-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/pg/PetTownClinic",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Town Veterinary Clinic", "Pets Town Vet Clinic"],
+      "arabic": ["عيادة بيتس تاون البيطرية", "بيتس تاون فيت كلينك"]
+    }
+  },
+  {
+    "key": "pet-zone-heliopolis",
+    "nameEnglish": "Pet Zone Veterinary Clinic (Heliopolis)",
+    "nameArabic": "عيادة بت زون البيطرية (مصر الجديدة)",
+    "addressEnglish": "Mostafa Mokhtar Street off Ammar Ibn Yasser, Military College, Heliopolis, Cairo",
+    "addressArabic": "شارع مصطفى مختار من شارع عمار بن ياسر، الكلية الحربية، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["01090390071"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa-%d8%b2%d9%88%d9%86%d8%8c-%d9%87%d9%84%d9%8a%d9%88%d8%a8%d9%84%d8%b3%d8%8c-%d9%85%d8%b5%d8%b1-%d8%a7%d9%84%d8%ac%d8%af%d9%8a%d8%af%d8%a9-pet-zone-veter/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "chainKey": "pet-zone",
+    "branchQualifier": "Heliopolis",
+    "aliases": {
+      "english": ["Pet Zone Veterinary Clinic (Heliopolis)", "Pet Zone Veterinary Clinic"],
+      "arabic": ["عيادة بت زون البيطرية (مصر الجديدة)", "عيادة بيت زون، هليوبوليس، مصر الجديدة"]
+    }
+  },
+  {
+    "key": "pet-medic-sheraton",
+    "nameEnglish": "Pet Medic Vet Clinic",
+    "nameArabic": "عيادة بت ميديك البيطرية",
+    "addressEnglish": "Block1285 Building5, ground floor, Abdel Hamid Badawy extension toward Nozha Traffic Department, Sheraton Residences, Heliopolis, Cairo",
+    "addressArabic": "مربع1285 عمارة5 الدور الأرضي، امتداد عبد الحميد بدوي اتجاه مرور النزهة، مساكن شيراتون، مصر الجديدة، القاهرة",
+    "area": "Sheraton",
+    "phones": ["01152157876"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa-%d9%85%d9%8a%d8%af%d9%8a%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-pet-medic-vet-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Medic Veterinary Clinic", "Pet Medic Vet Clinic"],
+      "arabic": ["عيادة بت ميديك البيطرية", "عيادة بيت ميديك البيطرية"]
+    }
+  },
+  {
+    "key": "amazing-pets-heliopolis",
+    "nameEnglish": "Amazing Pets",
+    "nameArabic": "عيادة أميزنج بيتس البيطرية",
+    "addressEnglish": "15 Hosny El Ashmawy Street off Abdel Aziz Fahmy, Heliopolis Square, Heliopolis, Cairo",
+    "addressArabic": "15 شارع حسني العشماوي متفرع من عبد العزيز فهمي، ميدان هليوبوليس، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["01010012356", "0226442410"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-amazing-pets-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Amazing Pets Veterinary Clinic", "Amazing Pets", "Amazing pets"],
+      "arabic": ["عيادة أميزنج بيتس البيطرية"]
+    }
+  },
+  {
+    "key": "provets-nasr-city",
+    "nameEnglish": "Provet's Veterinary Clinic",
+    "nameArabic": "عيادة بروفيت البيطرية",
+    "addressEnglish": "5 Hassan Aflaton Street off El Thawra Street, Nasr City, Cairo",
+    "addressArabic": "5 شارع حسن أفلاطون متفرع من شارع الثورة، مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01018330322", "01065545622"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d8%b1%d9%88%d9%81%d9%8a%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-provets-veterinary-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/justforpets11",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Provets Veterinary Clinic", "Provet’s Veterinary Clinic"],
+      "arabic": ["عيادة بروفيت البيطرية"]
+    }
+  },
+  {
+    "key": "heliopolis-ismail-sabry",
+    "nameEnglish": "Heliopolis Veterinary Clinic (Ismail Sabry)",
+    "nameArabic": "عيادة هليوبوليس البيطرية (إسماعيل صبري)",
+    "addressEnglish": "17 Ismail Sabry Street, Heliopolis, Cairo",
+    "addressArabic": "17 شارع إسماعيل صبري، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["0226433874"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%87%d9%84%d9%8a%d9%88%d8%a8%d9%88%d9%84%d9%8a%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-heliopolis-vet-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Heliopolis Veterinary Clinic (Ismail Sabry)", "Heliopolis Vet. Clinic"],
+      "arabic": ["عيادة هليوبوليس البيطرية (إسماعيل صبري)", "عيادة هليوبوليس البيطرية"]
+    }
+  },
+  {
+    "key": "pets-valley-heliopolis",
+    "nameEnglish": "Pets Valley Veterinary Clinic (Heliopolis)",
+    "nameArabic": "عيادة بيتس فالي البيطرية (مصر الجديدة)",
+    "addressEnglish": "29 Shams El Din El Zahaby Street, Ard El Golf, Heliopolis, Cairo",
+    "addressArabic": "29 شارع شمس الدين الذهبي، أرض الجولف، مصر الجديدة، القاهرة",
+    "area": "Ard El Golf",
+    "phones": ["01065459222"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d9%81%d8%a7%d9%84%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-pets-valley-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.petshops1.com/EG/Cairo/283479361806612/Pets-Valley",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/PetsValley/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-12",
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites. Clinic announcements mirrored12/09/2026 document consultations and both branch addresses/phones.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "chainKey": "pets-valley",
+    "branchQualifier": "Heliopolis",
+    "aliases": {
+      "english": ["Pets Valley Veterinary Clinic (Heliopolis)", "Pets Valley Clinic"],
+      "arabic": ["عيادة بيتس فالي البيطرية (مصر الجديدة)", "عيادة بيتس فالي البيطرية"]
+    }
+  },
+  {
+    "key": "souls-nozha",
+    "nameEnglish": "Souls Veterinary Clinic",
+    "nameArabic": "عيادة سولز البيطرية",
+    "addressEnglish": "42 Nakhla El Motiey Street, Nozha, Heliopolis, Cairo",
+    "addressArabic": "42 شارع نخلة المطيعي، النزهة، مصر الجديدة، القاهرة",
+    "area": "Nozha",
+    "phones": ["01098215215", "01099330749"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b3%d9%88%d9%84%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-souls-veterinary-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/pg/SOULSVET/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Souls Veterinary Clinic"],
+      "arabic": ["عيادة سولز البيطرية"]
+    }
+  },
+  {
+    "key": "al-fares-korba",
+    "nameEnglish": "Al Fares Veterinary Center",
+    "nameArabic": "مركز الفارس البيطري",
+    "addressEnglish": "18 Sherif Street, Korba, Heliopolis, Cairo",
+    "addressArabic": "18 شارع شريف، الكوربة، مصر الجديدة، القاهرة",
+    "area": "Korba",
+    "phones": ["01229633053"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d9%81%d8%a7%d8%b1%d8%b3-%d9%84%d8%b7%d8%a8-%d9%88%d8%ac%d8%b1%d8%a7%d8%ad%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86-al-fares-veterinary-center/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Al Fares Veterinary Center", "Al fares Veterinary Center"],
+      "arabic": ["مركز الفارس البيطري", "مركز الفارس لطب وجراحة الحيوان"]
+    }
+  },
+  {
+    "key": "sheraton-veterinary",
+    "nameEnglish": "Sheraton Veterinary Clinic",
+    "nameArabic": "عيادة شيراتون البيطرية",
+    "addressEnglish": "Khaled Ibn El Walid Street, Sheraton, Heliopolis, Cairo",
+    "addressArabic": "شارع خالد بن الوليد، شيراتون، مصر الجديدة، القاهرة",
+    "area": "Sheraton",
+    "phones": ["01003455592"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b4%d9%8a%d8%b1%d8%a7%d8%aa%d9%88%d9%86-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-sheraton-veterinary-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.bizmideast.com/EG/sheraton-veterinary-clinic-010-03455592",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/Sheraton-Veterinary-Clinic-868165256650402",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites. Reviewed 2026-11-12: BizMidEast Sheraton entry identifies Island Veterinary Clinic in its description and islandveterinaryclinic email at the identical 4B Khaled Ibn Al Walid address/01003455592; former name retained as alias, not an additional clinic.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Sheraton Veterinary Clinic", "Island Veterinary Clinic"],
+      "arabic": ["عيادة شيراتون البيطرية", "عيادة الجزيرة البيطرية"]
+    }
+  },
+  {
+    "key": "bahaa-soliman-heliopolis",
+    "nameEnglish": "Dr. Bahaa Soliman Veterinary Clinic",
+    "nameArabic": "عيادة دكتور بهاء سليمان البيطرية",
+    "addressEnglish": "6 Abdel Wahed Fahmy Street off Mohamed Farid, parallel Farid Semeika, Heliopolis, Cairo",
+    "addressArabic": "6 شارع عبد الواحد فهمي متفرع من محمد فريد وموازٍ لفريد سميكة، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["01223419101"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af%d9%83%d8%aa%d9%88%d8%b1-%d8%a8%d9%87%d8%a7%d8%a1-%d8%b3%d9%84%d9%8a%d9%85%d8%a7%d9%86-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Bahaa Soliman Veterinary Clinic"],
+      "arabic": ["عيادة دكتور بهاء سليمان البيطرية"]
+    }
+  },
+  {
+    "key": "european-heliopolis",
+    "nameEnglish": "European Veterinary Center",
+    "nameArabic": "المركز الأوروبي البيطري",
+    "addressEnglish": "14 Abdel Aziz Fahmy Street, Heliopolis, Cairo",
+    "addressArabic": "14 شارع عبد العزيز فهمي، هليوبوليس، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["01000334665"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%a3%d9%88%d8%b1%d9%88%d8%a8%d9%8a-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-european-veterinary-ce/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "chainKey": "european-veterinary",
+    "branchQualifier": "Heliopolis",
+    "aliases": {
+      "english": ["European Veterinary Center (Heliopolis)", "European Veterinary Center"],
+      "arabic": ["المركز الأوروبي البيطري (مصر الجديدة)", "المركز الأوروبي للخدمات البيطرية"]
+    }
+  },
+  {
+    "key": "paris-heliopolis",
+    "nameEnglish": "Paris Veterinary Clinic",
+    "nameArabic": "عيادة باريس البيطرية",
+    "addressEnglish": "2 Kom Ombo Street off El Hegaz, opposite El Kholafaa El Rashideen Mosque near El Tawheed Wel Nour, Heliopolis, Cairo",
+    "addressArabic": "2 شارع كوم أمبو متفرع من الحجاز، أمام مسجد الخلفاء الراشدين قرب التوحيد والنور، هليوبوليس، مصر الجديدة، القاهرة",
+    "area": "Heliopolis",
+    "phones": ["01276040973", "01144935706"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d8%a7%d8%b1%d9%8a%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-paris-vet-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Paris Veterinary Clinic", "Paris Vet Clinic"],
+      "arabic": ["عيادة باريس البيطرية"]
+    }
+  },
+  {
+    "key": "three-vets-nozha",
+    "nameEnglish": "The Three Vets Pet Clinic",
+    "nameArabic": "عيادة ثري فيتس البيطرية",
+    "addressEnglish": "17 El Sheikh Ali Abdel Razek Street, Nozha, Cairo",
+    "addressArabic": "17 شارع الشيخ علي عبد الرازق، النزهة، القاهرة",
+    "area": "Nozha",
+    "phones": ["01095100311", "0221928174"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%ab%d8%b1%d9%8a-%d9%81%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-the-three-vets-pet-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["The Three Vets Pet Clinic"],
+      "arabic": ["عيادة ثري فيتس البيطرية"]
+    }
+  },
+  {
+    "key": "pets-care-nasr-city",
+    "nameEnglish": "Pets Care Clinic",
+    "nameArabic": "عيادة بيتس كير البيطرية (مدينة نصر)",
+    "addressEnglish": "82 Othman Buildings, Abbas El Akkad / Mostafa El Nahas intersection, seventh district, Nasr City, Cairo",
+    "addressArabic": "82 عمارات عثمان، تقاطع عباس العقاد مع مصطفى النحاس، الحي السابع، مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01001284628", "01226036043", "0223828914", "0223828915"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d9%83%d9%8a%d8%b1-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-2/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.petshops1.com/EG/Cairo/128562150992362/%D8%B5%D9%81%D8%AD%D8%A9-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D8%A9--%D8%AF-.-%D9%87%D9%84%D8%A7%D9%84%D9%89-%D8%B9%D8%A8%D8%AF-%D8%A7%D9%84%D8%B1%D8%AD%D9%85%D9%86--Pets-Care-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://dalil140.com/company/en/420809-pets-care-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2025-10-31",
+    "classificationEvidence": "Individual EVC entry describes a physical private pet veterinary clinic and supplies the listed address and phone. Generic directory/template contact URLs were not treated as clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity. Reviewed 2026-11-12: individually read clinic-feed mirror has 31/10/2025 cat recovery and 27/10/2025 puppy treatment posts; same 01001284628 and Nasr City/Mostafa El Nahas identity. Mirror is not an independent operational witness.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "chainKey": "pets-care-cairo",
+    "branchQualifier": "Nasr City",
+    "aliases": {
+      "english": ["Pets Care Veterinary Clinic (Nasr City)", "Pets Care Clinic"],
+      "arabic": ["عيادة بيتس كير البيطرية (مدينة نصر)", "عيادة بيتس كير البيطرية، عباس العقاد، مدينة نصر"]
+    }
+  },
+  {
+    "key": "aleet-nozha",
+    "nameEnglish": "Aleet Vet Center",
+    "nameArabic": "مركز أليط البيطري",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglish": "155 El Hegaz Street, Nozha, Cairo",
+    "addressArabic": "155 شارع الحجاز، النزهة، القاهرة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Nozha",
+    "citySourceCode": "EG0129",
+    "phones": ["01202222117"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Tanta/118804339968423/Aleet-Vet-Center---%D9%85%D8%B1%D9%83%D8%B2-%D8%A3%D9%84%D9%8A%D8%B7-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-21",
+    "classificationEvidence": "FX multi-branch review: same clinic page lists full Cairo Nozha address and shared reception alongside Tanta. Pet treatment/surgery services explicitly serve both branches. Shared number is chain reception, not grounds to merge.",
+    "chainKey": "aleet",
+    "branchQualifier": "Nozha"
+  }
+]

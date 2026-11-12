@@ -1,0 +1,36 @@
+{
+  "query": "Street 103, Mokattam, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Street+103%2C+Mokattam%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:16:32.480Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50765746,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 1217194799,
+      "lat": "30.0116295",
+      "lon": "31.3032922",
+      "category": "amenity",
+      "type": "hospital",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "amenity",
+      "name": "9th Street Clinics",
+      "display_name": "9th Street Clinics, Al Qods Mosque Street, East Insurance, Cairo, 11571, Egypt",
+      "address": {
+        "amenity": "9th Street Clinics",
+        "road": "Al Qods Mosque Street",
+        "neighbourhood": "East Insurance",
+        "city": "Cairo",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11571",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0113978", "30.0119122", "31.3030482", "31.3035658"]
+    }
+  ]
+}

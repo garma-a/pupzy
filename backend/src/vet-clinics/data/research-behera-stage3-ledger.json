@@ -1,0 +1,685 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F1",
+  "governorate": "Behera",
+  "searches": ["عيادة بيطرية دمنهور كفر الدوار ايتاي البارود حيوانات أليفة"],
+  "sourcesConsulted": [
+    "https://misrconnect.com/en/profiles/4133",
+    "https://www.voofla.com/EG/Kafr-Al-Dawar/676577072355702/My-pet-clinic"
+  ],
+  "candidates": [
+    {
+      "key": "amany-sobhy-damanhour",
+      "sources": [
+        {
+          "url": "https://misrconnect.com/en/profiles/4133",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual MisrConnect entry: physical pet examination/vaccination/treatment clinic, both contact numbers and address. Undated directory evidence; date remains null. Urban Damanhour mapped to Kism.",
+      "lastSeenActive": null
+    },
+    {
+      "key": "my-pet-kafr-dawar",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Kafr-Al-Dawar/676577072355702/My-pet-clinic",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual mirror explicitly identifies first specialist pet-treatment clinic in Kafr Al-Dawar and publishes contact; dated adoption post 2026-01-23. Only city address published; exact premises not invented, area precision. Pet Store category does not override explicit clinic evidence.",
+      "lastSeenActive": "2026-01-23"
+    }
+  ],
+  "holdsAndExclusions": [],
+  "counts": {
+    "retained": 14,
+    "active": 13,
+    "inactiveByReason": {
+      "no-phone": 1
+    },
+    "precision": {
+      "area": 14
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {},
+  "importAccounting": {
+    "candidates": 14,
+    "imported": 14,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D1",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D1-decisions.json",
+    "cities": [
+      {
+        "city": "Damanhour",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Damanhour/67505/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Damanhour/67505",
+          "https://www.petshops1.com/EG/Damanh%C3%BBr/67507/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Damanh%C3%BBr/67507"
+        ],
+        "discoveryEntries": 45,
+        "individualSnapshots": [
+          "web-evidence/depth-0c0f9586bf202ba5.json",
+          "web-evidence/depth-1652001e86d9b50d.json",
+          "web-evidence/depth-b2ed12f89cab9cd8.json",
+          "web-evidence/depth-74219ee045585572.json",
+          "web-evidence/depth-80dee4509a4cbc38.json",
+          "web-evidence/depth-9d41e559ac696696.json",
+          "web-evidence/depth-76114330024d4222.json",
+          "web-evidence/depth-29fe0c97ed3d54b3.json",
+          "web-evidence/depth-e2c90b0312e3591c.json",
+          "web-evidence/depth-132eb24ba2539938.json",
+          "web-evidence/depth-a76dde4a5730e19f.json",
+          "web-evidence/depth-b1f5c5d2e61af663.json",
+          "web-evidence/depth-8cc6d86eba607124.json",
+          "web-evidence/depth-fb7f8e666c49d042.json",
+          "web-evidence/depth-f65f926d1fd3c8a5.json",
+          "web-evidence/depth-e76119e051bb8911.json",
+          "web-evidence/depth-fc09794119dda1f8.json",
+          "web-evidence/depth-6c28fdb7dfeadbbf.json",
+          "web-evidence/depth-4560280ae9ea8b08.json",
+          "web-evidence/depth-c8bd645a520b5cb1.json"
+        ],
+        "candidates": [
+          {
+            "city": "Damanhour",
+            "name": "Khawaga's Cattery",
+            "url": "https://www.petshops1.com/EG/Damanhour/638384572694868/Khawaga%27s-Cattery",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "pet care clinic",
+            "url": "https://www.petshops1.com/EG/Damanhour/293266610526201/pet-care-clinic",
+            "status": "retained",
+            "reason": "pet-care-nour-damanhour",
+            "evidence": "2026-11-01 feline neutering and current booking number at a physical Damanhour clinic under Dr Nour Younes."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Vetoval Group",
+            "url": "https://www.petshops1.com/EG/Damanhour/653214054693036/Vetoval-Group",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Chick Clinic",
+            "url": "https://www.petshops1.com/EG/Damanhour/1020624627976717/Chick-Clinic",
+            "status": "held",
+            "reason": "poultry-only",
+            "evidence": "Chick Clinic poultry-focused discovery, no dedicated pet clinic established."
+          },
+          {
+            "city": "Damanhour",
+            "name": "مركز الاتحاد البيطري EVC",
+            "url": "https://www.petshops1.com/EG/Damanhour/100799765766124/%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D8%A7%D8%AA%D8%AD%D8%A7%D8%AF-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-EVC",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "EVC visible posts advertise farm drugs/recruitment, not a demonstrated pet clinic."
+          },
+          {
+            "city": "Damanhour",
+            "name": "LEO Royal Pets Clinic",
+            "url": "https://www.petshops1.com/EG/Damanhour/892399647278932/LEO-Royal-Pets-Clinic",
+            "status": "held",
+            "reason": "unresolved-treatment",
+            "evidence": "LEO offers pet retail/grooming/boarding; clinic name alone insufficient to establish medical treatment."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Petco vet",
+            "url": "https://www.petshops1.com/EG/Damanhour/1273449235842236/Petco-vet",
+            "status": "retained",
+            "reason": "petco-damanhour",
+            "evidence": "2026-09-28 feline vaccination offer at named physical clinic; current posts pair Dr Omar Hany with this clinic booking number."
+          },
+          {
+            "city": "Damanhour",
+            "name": "عيادة الرعاية البيطرية",
+            "url": "https://www.petshops1.com/EG/Damanhour/106768238898319/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%B1%D8%B9%D8%A7%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "retained",
+            "reason": "elreaya-damanhour",
+            "evidence": "Individual clinic page explicitly offers pet examinations, follow-up and vaccinations as well as poultry work. Printed local contact used; malformed international tel target rejected."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Ahmed ezz clinic",
+            "url": "https://www.petshops1.com/EG/Damanhour/748088421717990/Ahmed-ezz-clinic",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Ahmed Ezz empty veterinarian listing has no pet treatment evidence."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Vet Hint د.كامل ابو زيد",
+            "url": "https://www.petshops1.com/EG/Damanhour/100718759547849/Vet-Hint-%D8%AF.%D9%83%D8%A7%D9%85%D9%84-%D8%A7%D8%A8%D9%88-%D8%B2%D9%8A%D8%AF",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Vet Hint empty veterinarian listing lacks treatment/premises."
+          },
+          {
+            "city": "Damanhour",
+            "name": "MISR PET center",
+            "url": "https://www.petshops1.com/EG/Damanhour/101091349182313/MISR-PET-center",
+            "status": "retained",
+            "reason": "misr-pet-damanhour",
+            "evidence": "2022-02-17 physical pet-clinic opening announcement explicitly offers pet surgery, diagnostics and vaccinations. No closure evidence; not described as recently confirmed."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Tarzan Pet Care",
+            "url": "https://www.petshops1.com/EG/Damanhour/102876845816687/Tarzan-Pet-Care",
+            "status": "retained",
+            "reason": "tarzan-damanhour",
+            "evidence": "2024-08-06 discounted physical pet examinations and parasite vaccination at named clinic/address/contact."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Dr. Kamel Abozeid",
+            "url": "https://www.petshops1.com/EG/Damanhour/105710119041184/Dr.-Kamel-Abozeid",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "مشتل وشركة  فور جرين للنجيل الطبيعي اجودانوع",
+            "url": "https://www.petshops1.com/EG/Damanhour/106168868538136/%D9%85%D8%B4%D8%AA%D9%84-%D9%88%D8%B4%D8%B1%D9%83%D8%A9--%D9%81%D9%88%D8%B1-%D8%AC%D8%B1%D9%8A%D9%86-%D9%84%D9%84%D9%86%D8%AC%D9%8A%D9%84-%D8%A7%D9%84%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A-%D8%A7%D8%AC%D9%88%D8%AF%D8%A7%D9%86%D9%88%D8%B9-%D8%A7%D9%84%D9%86%D8%AC%D9%8A%D9%84-%D8%A8%D8%B3%D8%A8%D9%8A%D9%84%D9%85-10",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Dr Bolt",
+            "url": "https://www.petshops1.com/EG/Damanhour/187803149438630/Dr-Bolt",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "الحكيم للخدمات البيطرية بدمنهور",
+            "url": "https://www.petshops1.com/EG/Damanhour/260396787445650/%D8%A7%D9%84%D8%AD%D9%83%D9%8A%D9%85-%D9%84%D9%84%D8%AE%D8%AF%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D8%A8%D8%AF%D9%85%D9%86%D9%87%D9%88%D8%B1",
+            "status": "held",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "El Hakim stocks veterinary drugs and vaccines; no on-site pet treatment established."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Egypt Arab veterinary company - EAVC",
+            "url": "https://www.petshops1.com/EG/Damanhour/1354224477962979/Egypt-Arab-veterinary-company---EAVC",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Green Leaves",
+            "url": "https://www.petshops1.com/EG/Damanhour/383177164888203/Green-Leaves",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "LEO Royal Pets Clinic and Pet Shop",
+            "url": "https://www.petshops1.com/EG/Damanhour/844490998740529/LEO-Royal-Pets-Clinic-and-Pet-Shop",
+            "status": "held",
+            "reason": "same-identity-discovery",
+            "evidence": "Older LEO same named premises; no separate clinic invented."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Z-pharmacy",
+            "url": "https://www.petshops1.com/EG/Damanhour/349996294873957/Z-pharmacy",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "محبي تربيه الكلاب/ مع كابتن ابونور",
+            "url": "https://www.petshops1.com/EG/Damanhour/106560841940514/%D9%85%D8%AD%D8%A8%D9%8A-%D8%AA%D8%B1%D8%A8%D9%8A%D9%87-%D8%A7%D9%84%D9%83%D9%84%D8%A7%D8%A8--%D9%85%D8%B9-%D9%83%D8%A7%D8%A8%D8%AA%D9%86-%D8%A7%D8%A8%D9%88%D9%86%D9%88%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Dr.amany vet clinic",
+            "url": "https://www.petshops1.com/EG/Damanhour/1606695399556150/Dr.amany-vet-clinic",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "Dr Amany same existing Damanhour clinic identity."
+          },
+          {
+            "city": "Damanhour",
+            "name": "اتعلم تربي كلب / Home.Dogs",
+            "url": "https://www.petshops1.com/EG/Damanhour/115720574722507/%D8%A7%D8%AA%D8%B9%D9%84%D9%85-%D8%AA%D8%B1%D8%A8%D9%8A-%D9%83%D9%84%D8%A8---Home.Dogs",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "المركز المصري العالمي لتجارة وتربية ماعز البو",
+            "url": "https://www.petshops1.com/EG/Damanhour/519830101221007/%D8%A7%D9%84%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D9%85%D8%B5%D8%B1%D9%8A-%D8%A7%D9%84%D8%B9%D8%A7%D9%84%D9%85%D9%8A-%D9%84%D8%AA%D8%AC%D8%A7%D8%B1%D8%A9-%D9%88%D8%AA%D8%B1%D8%A8%D9%8A%D8%A9-%D9%85%D8%A7%D8%B9%D8%B2-%D8%A7%D9%84%D8%A8%D9%88%D8%B1-%D9%88%D8%A7%D8%BA%D9%86%D8%A7%D9%85-%D8%A7%D9%84%D8%AF%D9%88%D8%B1%D8%A8%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "مزرعة ابو اسكندر واياد للحمام الفرنساوي والزي",
+            "url": "https://www.petshops1.com/EG/Damanhour/656903044182989/%D9%85%D8%B2%D8%B1%D8%B9%D8%A9-%D8%A7%D8%A8%D9%88-%D8%A7%D8%B3%D9%83%D9%86%D8%AF%D8%B1-%D9%88%D8%A7%D9%8A%D8%A7%D8%AF-%D9%84%D9%84%D8%AD%D9%85%D8%A7%D9%85-%D8%A7%D9%84%D9%81%D8%B1%D9%86%D8%B3%D8%A7%D9%88%D9%8A-%D9%88%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D9%87",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "عيادات Vet Care",
+            "url": "https://www.petshops1.com/EG/Damanhour/103671164822877/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A7%D8%AA-Vet-Care",
+            "status": "held",
+            "reason": "unresolved-branch-contacts",
+            "evidence": "Vet Care explicitly has two streets and several phones; allocation of branch-specific numbers unresolved, hold both rather than collapse or duplicate."
+          },
+          {
+            "city": "Damanhour",
+            "name": "نقابة الأطباء البيطريين بالبحيرة",
+            "url": "https://www.petshops1.com/EG/Damanhour/111278624046927/%D9%86%D9%82%D8%A7%D8%A8%D8%A9-%D8%A7%D9%84%D8%A3%D8%B7%D8%A8%D8%A7%D8%A1-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%8A%D9%86-%D8%A8%D8%A7%D9%84%D8%A8%D8%AD%D9%8A%D8%B1%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "government-or-institution",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Pet Star",
+            "url": "https://www.petshops1.com/EG/Damanhour/904670806314152/Pet-Star",
+            "status": "retained",
+            "reason": "pet-star-damanhour",
+            "evidence": "Individual clinic feed offers pet clinical appointments and diagnosis with specific address and booking number; generic advice not used as dated operation evidence."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Damnhour pet clinic and pet shop",
+            "url": "https://www.petshops1.com/EG/Damanhour/446974259066219/Damnhour-pet-clinic-and-pet-shop",
+            "status": "retained",
+            "reason": "damanhour-pet-clinic",
+            "evidence": "Individual page explicitly describes treatment and surgery for pets at physical clinic. Recent nonclinical reposts not used as dated operation evidence."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Meow pet store",
+            "url": "https://www.petshops1.com/EG/Damanhour/781113098418974/Meow-pet-store",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "الحمام اللاحم الفرنسي البيور",
+            "url": "https://www.petshops1.com/EG/Damanhour/310533085486997/%D8%A7%D9%84%D8%AD%D9%85%D8%A7%D9%85-%D8%A7%D9%84%D9%84%D8%A7%D8%AD%D9%85-%D8%A7%D9%84%D9%81%D8%B1%D9%86%D8%B3%D9%8A-%D8%A7%D9%84%D8%A8%D9%8A%D9%88%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "cocktail bets",
+            "url": "https://www.petshops1.com/EG/Damanhour/558201487373382/cocktail-bets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "الحرية للأعلاف البديلة",
+            "url": "https://www.petshops1.com/EG/Damanhour/100246892647605/%D8%A7%D9%84%D8%AD%D8%B1%D9%8A%D8%A9-%D9%84%D9%84%D8%A3%D8%B9%D9%84%D8%A7%D9%81-%D8%A7%D9%84%D8%A8%D8%AF%D9%8A%D9%84%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Animal helper in Damanhour",
+            "url": "https://www.petshops1.com/EG/Damanhour/100740832944488/Animal-helper-in-Damanhour",
+            "status": "held",
+            "reason": "unresolved-treatment",
+            "evidence": "Animal helper empty city-level service entry."
+          },
+          {
+            "city": "Damanhour",
+            "name": "شركه نور الفجر للاعلاف",
+            "url": "https://www.petshops1.com/EG/Damanhour/102581464539175/%D8%B4%D8%B1%D9%83%D9%87-%D9%86%D9%88%D8%B1-%D8%A7%D9%84%D9%81%D8%AC%D8%B1-%D9%84%D9%84%D8%A7%D8%B9%D9%84%D8%A7%D9%81",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Petmate Clinic",
+            "url": "https://www.petshops1.com/EG/Damanhour/102694867873295/Petmate-Clinic",
+            "status": "retained",
+            "reason": "petmate-damanhour",
+            "evidence": "2024-02-03 treated respiratory case pairs these phones; latest dated address supersedes older Ahmed Orabi Street header, older third number withheld."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Happy Animals Shelter",
+            "url": "https://www.petshops1.com/EG/Damanhour/103593405781599/Happy-Animals-Shelter",
+            "status": "excluded-discovery",
+            "reason": "shelter-without-clinic",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Koki Fresh Food كوكي فريش فود",
+            "url": "https://www.petshops1.com/EG/Damanhour/106586825676347/Koki-Fresh-Food-%D9%83%D9%88%D9%83%D9%8A-%D9%81%D8%B1%D9%8A%D8%B4-%D9%81%D9%88%D8%AF",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Add-Vet Care",
+            "url": "https://www.petshops1.com/EG/Damanhour/111856864887947/Add-Vet-Care",
+            "status": "held",
+            "reason": "unresolved-treatment",
+            "evidence": "Add-Vet Care has phone/street but no pet medicine evidence."
+          },
+          {
+            "city": "Damanhour",
+            "name": "PRO VET",
+            "url": "https://www.petshops1.com/EG/Damanhour/114410716963186/PRO-VET",
+            "status": "held",
+            "reason": "pet-supplies",
+            "evidence": "PRO VET entry only Pet Supplies, no clinical evidence."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Jumanji Zoo",
+            "url": "https://www.petshops1.com/EG/Damanh%C3%BBr/240863593349743/Jumanji-Zoo",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "مكتب بيطرى مزرعتى",
+            "url": "https://www.petshops1.com/EG/Damanh%C3%BBr/186508871932925/%D9%85%D9%83%D8%AA%D8%A8-%D8%A8%D9%8A%D8%B7%D8%B1%D9%89-%D9%85%D8%B2%D8%B1%D8%B9%D8%AA%D9%89",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "pets lovers club",
+            "url": "https://www.petshops1.com/EG/Damanh%C3%BBr/230550123821076/pets-lovers-club",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "Future Vets",
+            "url": "https://www.petshops1.com/EG/Damanh%C3%BBr/1872728273004142/Future-Vets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Damanhour",
+            "name": "اّفًِرُِيٍكٍاًّنُوٌٌٍِ",
+            "url": "https://www.petshops1.com/EG/Damanh%C3%BBr/1747007125534254/%D8%A7%D9%91%D9%81%D9%90%D9%8B%D8%B1%D9%90%D9%8F%D9%8A%D9%8D%D9%83%D9%8D%D8%A7%D9%91%D9%8B%D9%86%D9%8F%D9%88%D9%8D%D9%90%D9%8C%D9%8C",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          }
+        ],
+        "retained": [
+          "pet-care-nour-damanhour",
+          "petco-damanhour",
+          "elreaya-damanhour",
+          "misr-pet-damanhour",
+          "tarzan-damanhour",
+          "pet-star-damanhour",
+          "damanhour-pet-clinic",
+          "petmate-damanhour"
+        ],
+        "outcomesByReason": {
+          "no-pet-clinic-evidence-in-discovery": 12,
+          "pharmacy-or-supplier": 6,
+          "poultry-only": 1,
+          "unresolved-pet-treatment": 3,
+          "unresolved-treatment": 3,
+          "same-identity-discovery": 1,
+          "already-retained": 1,
+          "farming-or-breeding": 5,
+          "unresolved-branch-contacts": 1,
+          "government-or-institution": 1,
+          "shop-grooming-or-boarding": 1,
+          "shelter-without-clinic": 1,
+          "pet-supplies": 1
+        }
+      },
+      {
+        "city": "Kafr El Dawwar",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Kafr-al-Dawar/67712/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Kafr-al-Dawar/67712"
+        ],
+        "discoveryEntries": 21,
+        "individualSnapshots": [
+          "web-evidence/depth-454e7df1ab3d718f.json",
+          "web-evidence/depth-86cc6927fc074469.json",
+          "web-evidence/depth-8b4b1867ac634e82.json",
+          "web-evidence/depth-14890d934279bd94.json",
+          "web-evidence/depth-eda12e05e5fbb525.json",
+          "web-evidence/depth-bc5777eabc48bd3d.json",
+          "web-evidence/depth-a522d539da125d4e.json",
+          "web-evidence/depth-374a8c2262100c72.json",
+          "web-evidence/depth-f733aa72881446cd.json",
+          "web-evidence/depth-2a145064cebe9ecc.json"
+        ],
+        "candidates": [
+          {
+            "city": "Kafr El Dawwar",
+            "name": "الراعي للخدمات البيطرية",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/134419956417623/%D8%A7%D9%84%D8%B1%D8%A7%D8%B9%D9%8A-%D9%84%D9%84%D8%AE%D8%AF%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "poultry-supplier",
+            "evidence": "Raay main business current posts sell chicks, separate pet clinic reviewed independently."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "الراعي بيتس - Ra3y Pets",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/840306039172515/%D8%A7%D9%84%D8%B1%D8%A7%D8%B9%D9%8A-%D8%A8%D9%8A%D8%AA%D8%B3---Ra3y-Pets",
+            "status": "retained",
+            "reason": "raay-pets-kafr-dawar",
+            "evidence": "2026-04-13 recruits veterinary assistant explicitly for physical cats/dogs clinic, separate from Raay poultry supplier. No Maps coordinates used."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "عيادة انفينيتى البيطرية المتكاملة",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/106123218152389/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%86%D9%81%D9%8A%D9%86%D9%8A%D8%AA%D9%89-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D8%A7%D9%84%D9%85%D8%AA%D9%83%D8%A7%D9%85%D9%84%D8%A9",
+            "status": "held",
+            "reason": "unresolved-current-contact",
+            "evidence": "Infinity has old 2021 clinical advice and street; no contact/current clinic activity established."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "راعى الآغنام",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/101583504603749/%D8%B1%D8%A7%D8%B9%D9%89-%D8%A7%D9%84%D8%A2%D8%BA%D9%86%D8%A7%D9%85",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "مزارع حميده للإنتاج الحيواني وما يخصه",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/137592851063204/%D9%85%D8%B2%D8%A7%D8%B1%D8%B9-%D8%AD%D9%85%D9%8A%D8%AF%D9%87-%D9%84%D9%84%D8%A5%D9%86%D8%AA%D8%A7%D8%AC-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D9%8A-%D9%88%D9%85%D8%A7-%D9%8A%D8%AE%D8%B5%D9%87",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "Pets shop-أليف",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/101707555430757/Pets-shop-%D8%A3%D9%84%D9%8A%D9%81",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "د.عبدالرحمن فايد - Petso Vet Clinic",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/113670043640745/%D8%AF.%D8%B9%D8%A8%D8%AF%D8%A7%D9%84%D8%B1%D8%AD%D9%85%D9%86-%D9%81%D8%A7%D9%8A%D8%AF---Petso-Vet-Clinic",
+            "status": "retained",
+            "reason": "petso-kafr-dawar",
+            "evidence": "Current clinical case and 2026-09-26 fracture treatment publish contact/address; latest dated address used rather than older Mohamed Kassab header."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "My pet clinic",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/676577072355702/My-pet-clinic",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "My Pet already retained same number."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "Your vet clinic د/رحاب عبد الحميد",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/857029287491149/Your-vet-clinic-%D8%AF-%D8%B1%D8%AD%D8%A7%D8%A8-%D8%B9%D8%A8%D8%AF-%D8%A7%D9%84%D8%AD%D9%85%D9%8A%D8%AF",
+            "status": "retained",
+            "reason": "your-vet-kafr-dawar",
+            "evidence": "2026-11-01 treated fungal pet case at physical Dr Rehab Abdel Hamid clinic with explicit clinic booking WhatsApp."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "Vetopia Pet Clinic",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/843414722199147/Vetopia-Pet-Clinic",
+            "status": "retained",
+            "reason": "vetopia-kafr-dawar",
+            "evidence": "Physical Dr Esraa Marzouk veterinary clinic and dated feline pregnancy examination; no public booking phone found, retain inactive no-phone."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "Nour pet clinic",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/143431855524916/Nour-pet-clinic",
+            "status": "held",
+            "reason": "unresolved-treatment",
+            "evidence": "Nour visible feed trades pets and offers grooming; medical treatment not established."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "سيبما بيتس",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/108313355141591/%D8%B3%D9%8A%D8%A8%D9%85%D8%A7-%D8%A8%D9%8A%D8%AA%D8%B3",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "Memo pet home",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/771493449381229/Memo-pet-home",
+            "status": "held",
+            "reason": "pet-shop",
+            "evidence": "Memo sells pets/supplies; no medical evidence."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "El Fowz vet.صيدلية الفوز البيطرية",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/147934705070523/El-Fowz-vet.%D8%B5%D9%8A%D8%AF%D9%84%D9%8A%D8%A9-%D8%A7%D9%84%D9%81%D9%88%D8%B2-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "Memo",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/100386795856333/Memo",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "Elkhateeb vom house",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/100888771771085/Elkhateeb-vom-house",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "مشروع الارنب",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/691876584244456/%D9%85%D8%B4%D8%B1%D9%88%D8%B9-%D8%A7%D9%84%D8%A7%D8%B1%D9%86%D8%A8",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "Amt For Veterinary Services",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/783361678509619/Amt-For-Veterinary-Services",
+            "status": "held",
+            "reason": "unresolved-treatment",
+            "evidence": "AMT empty generic city-level service entry."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "Zezeinyaa",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/1408511889405541/Zezeinyaa",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "You&Nane.",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/113184967937411/You%26Nane.",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Kafr El Dawwar",
+            "name": "طعام الصديق كفر الدوار",
+            "url": "https://www.petshops1.com/EG/Kafr-Al-Dawar/393894273815191/%D8%B7%D8%B9%D8%A7%D9%85-%D8%A7%D9%84%D8%B5%D8%AF%D9%8A%D9%82-%D9%83%D9%81%D8%B1-%D8%A7%D9%84%D8%AF%D9%88%D8%A7%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          }
+        ],
+        "retained": ["raay-pets-kafr-dawar", "petso-kafr-dawar", "your-vet-kafr-dawar", "vetopia-kafr-dawar"],
+        "outcomesByReason": {
+          "poultry-supplier": 1,
+          "unresolved-current-contact": 1,
+          "no-pet-clinic-evidence-in-discovery": 7,
+          "farming-or-breeding": 1,
+          "shop-grooming-or-boarding": 1,
+          "already-retained": 1,
+          "unresolved-treatment": 2,
+          "pet-shop": 1,
+          "pharmacy-or-supplier": 1,
+          "training-or-breeding": 1
+        }
+      }
+    ],
+    "limitations": "City/category enumeration records every discovered entry; nonclinical retail/farm/personal entries excluded at discovery. Individual pet-clinic candidates read in cached snapshots, with unresolved treatment, contact, identity or catalog district held explicitly. Mirrors are one witness, not independent sources. No claim of market exhaustion; alternate sources/access limitations are recorded in city pages."
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

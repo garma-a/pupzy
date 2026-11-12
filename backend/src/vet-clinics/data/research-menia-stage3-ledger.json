@@ -1,0 +1,434 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F3",
+  "governorate": "Menia",
+  "searches": [
+    "عيادة بيطرية المنيا ملوي حيوانات أليفة رقم",
+    "\"pet clinic\" \"Minya\"",
+    "\"عيادة\" \"المنيا\" \"الحيوانات الأليفة\" هاتف"
+  ],
+  "sourcesConsulted": [
+    "https://www.bizmideast.com/EG/happy-pets-عيادة-الحيوانات-الأليفة-0102-900-9209",
+    "https://www.bizmideast.com/EG/pet-home-clinic_1L",
+    "https://www.dawaagate.com/pharmacy/pharmacy-g22531/branches/minya-21820",
+    "https://www.voofla.com/EG/Minya/1830739216936837/Happy-Pets-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D8%A9-%D8%A8%D8%A7%D9%84%D9%85%D9%86%D9%8A%D8%A7"
+  ],
+  "candidates": [
+    {
+      "key": "happy-pets-minya",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Minya/1830739216936837/Happy-Pets-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D8%A9-%D8%A8%D8%A7%D9%84%D9%85%D9%86%D9%8A%D8%A7",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        },
+        {
+          "url": "https://www.bizmideast.com/EG/happy-pets-عيادة-الحيوانات-الأليفة-0102-900-9209",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror with operating-hours announcement 2026-04-14, physical urban Minya premises and phone; individually read BizMidEast corroborates same address and pet veterinarian identity. Ignore empty September post as dated operation; do not infer 24h from directory schedule.",
+      "lastSeenActive": "2026-04-14"
+    }
+  ],
+  "holdsAndExclusions": [
+    {
+      "name": "Pet Home",
+      "reason": "reported-closed",
+      "evidence": "Individual BizMidEast entry explicitly marked closed since 2022-09-30; do not rely on its contradictory default 24h schedule.",
+      "sources": ["https://www.bizmideast.com/EG/pet-home-clinic_1L"]
+    },
+    {
+      "name": "Simba, Mallawi",
+      "reason": "unresolved-contact-and-treatment",
+      "evidence": "Individual DawaaGate entry gives pet-treatment center name and address but pharmacy category, no public clinic phone or actual treatment description; held.",
+      "sources": ["https://www.dawaagate.com/pharmacy/pharmacy-g22531/branches/minya-21820"]
+    }
+  ],
+  "counts": {
+    "authored": 1,
+    "retained": 1,
+    "active": 1,
+    "inactiveByReason": {},
+    "precision": {
+      "area": 1
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {
+    "reported-closed": 1,
+    "unresolved-contact-and-treatment": 1
+  },
+  "importAccounting": {
+    "candidates": 1,
+    "imported": 1,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D3",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D3-decisions.json",
+    "cities": [
+      {
+        "city": "Minya",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Minya/67801/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Minya/67801"
+        ],
+        "discoveryEntries": 32,
+        "candidates": [
+          {
+            "key": "498124993389089",
+            "city": "Minya",
+            "name": "Alpha Omega Animal Health",
+            "url": "https://www.petshops1.com/EG/Minya/498124993389089/Alpha-Omega-Animal-Health",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "376879746084557",
+            "city": "Minya",
+            "name": "Pets Zone",
+            "url": "https://www.petshops1.com/EG/Minya/376879746084557/Pets-Zone",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1753157391595007",
+            "city": "Minya",
+            "name": "Pet home",
+            "url": "https://www.petshops1.com/EG/Minya/1753157391595007/Pet-home",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "108506789813858",
+            "city": "Minya",
+            "name": "خبرات فى عالم الدواجن مع د / أندرو صموئيل",
+            "url": "https://www.petshops1.com/EG/Minya/108506789813858/%D8%AE%D8%A8%D8%B1%D8%A7%D8%AA-%D9%81%D9%89-%D8%B9%D8%A7%D9%84%D9%85-%D8%A7%D9%84%D8%AF%D9%88%D8%A7%D8%AC%D9%86-%D9%85%D8%B9-%D8%AF---%D8%A3%D9%86%D8%AF%D8%B1%D9%88-%D8%B5%D9%85%D9%88%D8%A6%D9%8A%D9%84",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "112577241558688",
+            "city": "Minya",
+            "name": "أليـفك",
+            "url": "https://www.petshops1.com/EG/Minya/112577241558688/%D8%A3%D9%84%D9%8A%D9%80%D9%81%D9%83",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "100159086199518",
+            "city": "Minya",
+            "name": "BLUE BLANC",
+            "url": "https://www.petshops1.com/EG/Minya/100159086199518/BLUE-BLANC",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "100202994935548",
+            "city": "Minya",
+            "name": "DrMohamed R Eltantawy",
+            "url": "https://www.petshops1.com/EG/Minya/100202994935548/DrMohamed-R-Eltantawy",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "339571342570865",
+            "city": "Minya",
+            "name": "مزرعة محمود ابوذيد للماعز البور النقى والمستو",
+            "url": "https://www.petshops1.com/EG/Minya/339571342570865/%D9%85%D8%B2%D8%B1%D8%B9%D8%A9-%D9%85%D8%AD%D9%85%D9%88%D8%AF-%D8%A7%D8%A8%D9%88%D8%B0%D9%8A%D8%AF-%D9%84%D9%84%D9%85%D8%A7%D8%B9%D8%B2-%D8%A7%D9%84%D8%A8%D9%88%D8%B1-%D8%A7%D9%84%D9%86%D9%82%D9%89-%D9%88%D8%A7%D9%84%D9%85%D8%B3%D8%AA%D9%88%D8%B1%D8%AF-%D8%A8%D8%A7%D9%84%D9%85%D9%86%D9%8A%D8%A7",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "245177095890052",
+            "city": "Minya",
+            "name": "Jaguar for pets",
+            "url": "https://www.petshops1.com/EG/Minya/245177095890052/Jaguar-for-pets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "111550988476550",
+            "city": "Minya",
+            "name": "عبـداللهٰ بيـدو  -  Biduo Number 1",
+            "url": "https://www.petshops1.com/EG/Minya/111550988476550/%D8%B9%D8%A8%D9%80%D8%AF%D8%A7%D9%84%D9%84%D9%87%D9%B0-%D8%A8%D9%8A%D9%80%D8%AF%D9%88-----Biduo-Number-1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "116638111346157",
+            "city": "Minya",
+            "name": "Minya animals حيوانات المنيا",
+            "url": "https://www.petshops1.com/EG/Minya/116638111346157/Minya-animals-%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D9%85%D9%86%D9%8A%D8%A7",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "135396126551615",
+            "city": "Minya",
+            "name": "محبى اسماك الزينة بالمنيا",
+            "url": "https://www.petshops1.com/EG/Minya/135396126551615/%D9%85%D8%AD%D8%A8%D9%89-%D8%A7%D8%B3%D9%85%D8%A7%D9%83-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D8%A9-%D8%A8%D8%A7%D9%84%D9%85%D9%86%D9%8A%D8%A7",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "106047018920181",
+            "city": "Minya",
+            "name": "Healthy pets",
+            "url": "https://www.petshops1.com/EG/Minya/106047018920181/Healthy-pets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "810898432112821",
+            "city": "Minya",
+            "name": "Ezz pet  store",
+            "url": "https://www.petshops1.com/EG/Minya/810898432112821/Ezz-pet--store",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "106364969232731",
+            "city": "Minya",
+            "name": "Kero Hnawy Hairstylist",
+            "url": "https://www.petshops1.com/EG/Minya/106364969232731/Kero-Hnawy-Hairstylist",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "204884196044368",
+            "city": "Minya",
+            "name": "Ziad Albrins",
+            "url": "https://www.petshops1.com/EG/Minya/204884196044368/Ziad-Albrins",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "312931315838868",
+            "city": "Minya",
+            "name": "Puppies pet shop",
+            "url": "https://www.petshops1.com/EG/Minya/312931315838868/Puppies-pet-shop",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "556325214753491",
+            "city": "Minya",
+            "name": "Cooper Pets Shop",
+            "url": "https://www.petshops1.com/EG/Minya/556325214753491/Cooper-Pets-Shop",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1403598296424662",
+            "city": "Minya",
+            "name": "Shiny pets center",
+            "url": "https://www.petshops1.com/EG/Minya/1403598296424662/Shiny-pets-center",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1620880074624044",
+            "city": "Minya",
+            "name": "Omar EL-Dab3 Pets",
+            "url": "https://www.petshops1.com/EG/Minya/1620880074624044/Omar-EL-Dab3-Pets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "114445965048413",
+            "city": "Minya",
+            "name": "افريكانو المنيا",
+            "url": "https://www.petshops1.com/EG/Minya/114445965048413/%D8%A7%D9%81%D8%B1%D9%8A%D9%83%D8%A7%D9%86%D9%88-%D8%A7%D9%84%D9%85%D9%86%D9%8A%D8%A7",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "100889433605919",
+            "city": "Minya",
+            "name": "مزرعة رمان",
+            "url": "https://www.petshops1.com/EG/Minya/100889433605919/%D9%85%D8%B2%D8%B1%D8%B9%D8%A9-%D8%B1%D9%85%D8%A7%D9%86",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "569995859521347",
+            "city": "Minya",
+            "name": "Bird Zone",
+            "url": "https://www.petshops1.com/EG/Minya/569995859521347/Bird-Zone",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1830739216936837",
+            "city": "Minya",
+            "name": "Happy Pets عيادة الحيوانات الاليفة بالمنيا",
+            "url": "https://www.petshops1.com/EG/Minya/1830739216936837/Happy-Pets-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D8%A9-%D8%A8%D8%A7%D9%84%D9%85%D9%86%D9%8A%D8%A7",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "Existing clinic identity already retained; no duplicate from mirror listing.",
+            "snapshot": "web-evidence/depth-e1bd73c4aea1b26e.json"
+          },
+          {
+            "key": "131480196717836",
+            "city": "Minya",
+            "name": "عيادة الصفوة البيطرية SAV",
+            "url": "https://www.petshops1.com/EG/Minya/131480196717836/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%B5%D9%81%D9%88%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-SAV",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Individual entry reviewed; no sufficiently evidenced pet treatment at physical premises/contact. Not a nonexistence or closure conclusion.",
+            "snapshot": "web-evidence/depth-ec9d1422e7e2d5f9.json"
+          },
+          {
+            "key": "105517419023054",
+            "city": "Minya",
+            "name": "ZooEtica pet clinic",
+            "url": "https://www.petshops1.com/EG/Minya/105517419023054/ZooEtica-pet-clinic",
+            "status": "held",
+            "reason": "unresolved-premises-phone",
+            "evidence": "ZooEtica pet surgery dated 2023, but city-only address/no validated phone; no fabricated location.",
+            "snapshot": "web-evidence/depth-650e01a738c091ff.json"
+          },
+          {
+            "key": "105549337626310",
+            "city": "Minya",
+            "name": "Vetoval Quena",
+            "url": "https://www.petshops1.com/EG/Minya/105549337626310/Vetoval-Quena",
+            "status": "held",
+            "reason": "mismatched-city-supplier",
+            "evidence": "Vetoval Quena actually names Qena, not Minya; animal-health products, pet treatment not established.",
+            "snapshot": "web-evidence/depth-696da31ab18fc6b2.json"
+          },
+          {
+            "key": "638322969367227",
+            "city": "Minya",
+            "name": "الصيدلية البيطرية بأدمو",
+            "url": "https://www.petshops1.com/EG/Minya/638322969367227/%D8%A7%D9%84%D8%B5%D9%8A%D8%AF%D9%84%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D8%A8%D8%A3%D8%AF%D9%85%D9%88",
+            "status": "held",
+            "reason": "supplier-or-pharmacy",
+            "evidence": "Individual page sells feed/medicines or farm supplies; no on-site pet treatment established.",
+            "snapshot": "web-evidence/depth-1ac2dbd0c19d6de5.json"
+          },
+          {
+            "key": "372528182606360",
+            "city": "Minya",
+            "name": "Nutrichem نيوتري كيم للتنمية الزراعية والبيطر",
+            "url": "https://www.petshops1.com/EG/Minya/372528182606360/Nutrichem-%D9%86%D9%8A%D9%88%D8%AA%D8%B1%D9%8A-%D9%83%D9%8A%D9%85-%D9%84%D9%84%D8%AA%D9%86%D9%85%D9%8A%D8%A9-%D8%A7%D9%84%D8%B2%D8%B1%D8%A7%D8%B9%D9%8A%D8%A9-%D9%88%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "supplier-or-pharmacy",
+            "evidence": "Individual page sells feed/medicines or farm supplies; no on-site pet treatment established.",
+            "snapshot": "web-evidence/depth-b76536c551e14703.json"
+          },
+          {
+            "key": "196358460858277",
+            "city": "Minya",
+            "name": "Holy Vet",
+            "url": "https://www.petshops1.com/EG/Minya/196358460858277/Holy-Vet",
+            "status": "held",
+            "reason": "supplier-or-pharmacy",
+            "evidence": "Individual page sells feed/medicines or farm supplies; no on-site pet treatment established.",
+            "snapshot": "web-evidence/depth-cd080bf9045f7159.json"
+          },
+          {
+            "key": "229172567239192",
+            "city": "Minya",
+            "name": "Veterinary Admin",
+            "url": "https://www.petshops1.com/EG/Minya/229172567239192/Veterinary-Admin",
+            "status": "held",
+            "reason": "education-or-administration",
+            "evidence": "Faculty, scientific association or administration page; public pet hospital admission not established.",
+            "snapshot": "web-evidence/depth-54564b2727f7c835.json"
+          },
+          {
+            "key": "500581113483720",
+            "city": "Minya",
+            "name": "صيدليه دكتور جرجس وليم البيطريه",
+            "url": "https://www.petshops1.com/EG/Minya/500581113483720/%D8%B5%D9%8A%D8%AF%D9%84%D9%8A%D9%87-%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D8%AC%D8%B1%D8%AC%D8%B3-%D9%88%D9%84%D9%8A%D9%85-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87",
+            "status": "held",
+            "reason": "supplier-or-pharmacy",
+            "evidence": "Individual page sells feed/medicines or farm supplies; no on-site pet treatment established.",
+            "snapshot": "web-evidence/depth-f77d6812737702f6.json"
+          },
+          {
+            "key": "minya-pet-home",
+            "city": "Minya",
+            "name": "Pet Home",
+            "url": "https://www.bizmideast.com/EG/pet-home-clinic_1L",
+            "status": "held",
+            "reason": "closure-evidence",
+            "evidence": "Individual page explicitly marked closed since 2022-09-30; not imported."
+          },
+          {
+            "key": "minya-pets-zone",
+            "city": "Minya",
+            "name": "Pets Zone Clinic",
+            "url": "https://dezone.net/place/pets-zone-clinic/",
+            "status": "held",
+            "reason": "individual-page-blocked",
+            "evidence": "Search indexed pet treatment/phone 01030765644; actual individual fetch returned verification page. Cybo city page identifies Adnan El Maleki but actual fetch rate limited. Kept discovery hold rather than import snippets alone."
+          },
+          {
+            "key": "minya-comprehensive",
+            "city": "Minya",
+            "name": "Comprehensive Veterinary Clinic",
+            "url": "https://davidefat.wixsite.com/vetclinic",
+            "status": "held",
+            "reason": "unresolved-city",
+            "evidence": "First-party pet treatment/phone site read; physical Minya address not established, no assumed city from search context."
+          }
+        ],
+        "retained": 0,
+        "exclusionsByReason": {
+          "no-pet-clinic-evidence-in-discovery": 23,
+          "already-retained": 1,
+          "unresolved-pet-treatment": 1,
+          "unresolved-premises-phone": 1,
+          "mismatched-city-supplier": 1,
+          "supplier-or-pharmacy": 4,
+          "education-or-administration": 1,
+          "closure-evidence": 1,
+          "individual-page-blocked": 1,
+          "unresolved-city": 1
+        },
+        "individualSnapshots": [
+          "web-evidence/depth-e1bd73c4aea1b26e.json",
+          "web-evidence/depth-ec9d1422e7e2d5f9.json",
+          "web-evidence/depth-650e01a738c091ff.json",
+          "web-evidence/depth-696da31ab18fc6b2.json",
+          "web-evidence/depth-1ac2dbd0c19d6de5.json",
+          "web-evidence/depth-b76536c551e14703.json",
+          "web-evidence/depth-cd080bf9045f7159.json",
+          "web-evidence/depth-54564b2727f7c835.json",
+          "web-evidence/depth-f77d6812737702f6.json"
+        ]
+      }
+    ]
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

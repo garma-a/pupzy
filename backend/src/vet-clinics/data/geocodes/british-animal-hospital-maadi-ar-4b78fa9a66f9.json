@@ -1,0 +1,58 @@
+{
+  "query": "200, Maadi, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=200%2C+Maadi%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:22.915Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 426857432,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 768769535,
+      "lat": "29.9680141",
+      "lon": "31.2491432",
+      "category": "place",
+      "type": "village",
+      "place_rank": 19,
+      "importance": 0.43786060464304577,
+      "addresstype": "village",
+      "name": "معادي الخبيري",
+      "display_name": "معادي الخبيري, القاهرة, 11431, مصر",
+      "address": {
+        "village": "معادي الخبيري",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11431",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9480141", "29.9880141", "31.2291432", "31.2691432"]
+    },
+    {
+      "place_id": 50784392,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 213130026,
+      "lat": "29.9810904",
+      "lon": "31.3338977",
+      "category": "place",
+      "type": "suburb",
+      "place_rank": 19,
+      "importance": 0.1467462706950484,
+      "addresstype": "suburb",
+      "name": "معادى هايتس",
+      "display_name": "معادى هايتس, حلوان, القاهرة, مصر",
+      "address": {
+        "suburb": "معادى هايتس",
+        "city": "حلوان",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9799303", "29.9821317", "31.3325329", "31.3352979"]
+    }
+  ]
+}

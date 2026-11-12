@@ -1,0 +1,113 @@
+{
+  "query": "314, عزبة سعد, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=314%2C+%D8%B9%D8%B2%D8%A8%D8%A9+%D8%B3%D8%B9%D8%AF%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:10:26.423Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 425118431,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 14073386681,
+      "lat": "31.2078917",
+      "lon": "29.9406772",
+      "category": "place",
+      "type": "square",
+      "place_rank": 25,
+      "importance": 0.06674281757839322,
+      "addresstype": "square",
+      "name": "ميدان عزبة سعد",
+      "display_name": "ميدان عزبة سعد, كامب شيزار, الإسكندرية, 21554, مصر",
+      "address": {
+        "square": "ميدان عزبة سعد",
+        "neighbourhood": "كامب شيزار",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21554",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["31.2078417", "31.2079417", "29.9406272", "29.9407272"]
+    },
+    {
+      "place_id": 48762604,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 235063919,
+      "lat": "31.2067955",
+      "lon": "29.9402240",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.053409484245059854,
+      "addresstype": "residential",
+      "name": "شارع عزبة سعد",
+      "display_name": "شارع عزبة سعد, كامب شيزار, الإسكندرية, 21554, مصر",
+      "address": {
+        "road": "شارع عزبة سعد",
+        "neighbourhood": "كامب شيزار",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21554",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["31.2065049", "31.2070885", "29.9394545", "29.9409945"]
+    },
+    {
+      "place_id": 48760683,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 24450793,
+      "lat": "31.2078762",
+      "lon": "29.9406835",
+      "category": "highway",
+      "type": "secondary",
+      "place_rank": 26,
+      "importance": 0.053409484245059854,
+      "addresstype": "secondary",
+      "name": "ميدان عزبة سعد",
+      "display_name": "ميدان عزبة سعد, كامب شيزار, الإسكندرية, 21554, مصر",
+      "address": {
+        "road": "ميدان عزبة سعد",
+        "neighbourhood": "كامب شيزار",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21554",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["31.2075827", "31.2081929", "29.9403280", "29.9410383"]
+    },
+    {
+      "place_id": 48739471,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 235063892,
+      "lat": "31.2062408",
+      "lon": "29.9397495",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.053409484245059854,
+      "addresstype": "residential",
+      "name": "شارع مسجد عزبة سعد",
+      "display_name": "شارع مسجد عزبة سعد, كامب شيزار, الإسكندرية, 21554, مصر",
+      "address": {
+        "road": "شارع مسجد عزبة سعد",
+        "neighbourhood": "كامب شيزار",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21554",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["31.2060317", "31.2064500", "29.9396191", "29.9398799"]
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "query": "Street 46, Fifth Settlement, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Street+46%2C+Fifth+Settlement%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:17.412Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50099346,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 392149921,
+      "lat": "30.0040223",
+      "lon": "31.4379451",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "tertiary",
+      "name": "Ibrahim Al Mahdy Street",
+      "display_name": "Ibrahim Al Mahdy Street, Fifth Settlement, New Cairo City, Cairo, 11835, Egypt",
+      "address": {
+        "road": "Ibrahim Al Mahdy Street",
+        "neighbourhood": "Fifth Settlement",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11835",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0027115", "30.0057981", "31.4370093", "31.4380688"]
+    },
+    {
+      "place_id": 50295937,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 316191002,
+      "lat": "30.0016488",
+      "lon": "31.4132608",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Al Shahid Ahmed Metwali Street",
+      "display_name": "Al Shahid Ahmed Metwali Street, Fifth Settlement, New Cairo City, Cairo, 11936, Egypt",
+      "address": {
+        "road": "Al Shahid Ahmed Metwali Street",
+        "neighbourhood": "Fifth Settlement",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11936",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0010896", "30.0021406", "31.4121558", "31.4143351"]
+    }
+  ]
+}

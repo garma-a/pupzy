@@ -1,0 +1,8 @@
+{
+  "query": "Street 199, Degla, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Street+199%2C+Degla%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:37.235Z",
+  "httpStatus": 200,
+  "response": []
+}

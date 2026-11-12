@@ -1,0 +1,8 @@
+{
+  "query": "El Horreya Road, Bab Sharqi, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Horreya+Road%2C+Bab+Sharqi%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:53:40.893Z",
+  "httpStatus": 200,
+  "response": []
+}

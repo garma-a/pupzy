@@ -1,0 +1,8 @@
+{
+  "query": "El Madina El Monawara Street, Mohandessin, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Madina+El+Monawara+Street%2C+Mohandessin%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:20:05.173Z",
+  "httpStatus": 200,
+  "response": []
+}

@@ -1,0 +1,36 @@
+{
+  "query": "- التجمع الخامس - القاهرة الجديدة -, Fifth Settlement, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=-+%D8%A7%D9%84%D8%AA%D8%AC%D9%85%D8%B9+%D8%A7%D9%84%D8%AE%D8%A7%D9%85%D8%B3+-+%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9+%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9+-%2C+Fifth+Settlement%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:08.611Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50273914,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 8022166385,
+      "lat": "30.0035594",
+      "lon": "31.4307162",
+      "category": "amenity",
+      "type": "school",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "amenity",
+      "name": "معاهد البخارى التجمع",
+      "display_name": "معاهد البخارى التجمع, شارع عبد الوهاب محمد, الحى 3, مدينة القاهرة الجديدة, القاهرة, 11835, مصر",
+      "address": {
+        "amenity": "معاهد البخارى التجمع",
+        "road": "شارع عبد الوهاب محمد",
+        "neighbourhood": "الحى 3",
+        "city": "مدينة القاهرة الجديدة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11835",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0035094", "30.0036094", "31.4306662", "31.4307662"]
+    }
+  ]
+}

@@ -1,0 +1,788 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F2",
+  "governorate": "Damietta",
+  "searches": [
+    "\"عيادة بيطرية\" \"دمياط\" \"الجديدة\"",
+    "\"Pets Clinic\" \"Damietta\"",
+    "\"Pets Clinic\" \"ميدان سرور\" \"قسم\""
+  ],
+  "sourcesConsulted": [
+    "https://www.voofla.com/EG/Damietta/108258998229694/Pets-Clinic--عيادة-الحيوانات-الأليفة",
+    "https://www.voofla.com/EG/Dumyat-al-Jadidah/107997234293777/Royal-vet-clinic"
+  ],
+  "candidates": [
+    {
+      "key": "royal-new-damietta",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Dumyat-al-Jadidah/107997234293777/Royal-vet-clinic",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror: September 2026 current pet clinic and contact; dated eye surgery, radiography and physical address. No common-chain inference with other Royal names.",
+      "lastSeenActive": "2026-09-23"
+    }
+  ],
+  "holdsAndExclusions": [
+    {
+      "name": "Pets Clinic, Sorour Square",
+      "reason": "move-and-catalog-subdistrict-unresolved",
+      "evidence": "August 1 announced temporary home visits pending move; August 24 gives address/booking but first/second district unresolved. Not counted active from old premises.",
+      "sources": ["https://www.voofla.com/EG/Damietta/108258998229694/Pets-Clinic--عيادة-الحيوانات-الأليفة"],
+      "resolution": "Lead review 2026-11-12: the 2026-08-24 post (after the 2026-08-01 move notice) gives the Sorour Square address opposite Nasser Nursery; retained active as Pets Clinic (Damietta). This hold is historical."
+    },
+    {
+      "name": "صيدلية دكتور زياد البيطرية (Fariskur)",
+      "reason": "pharmacy-primary",
+      "evidence": "Lead review 2026-11-12: the page is titled صيدلية دكتور زياد البيطرية (veterinary pharmacy) for pets, poultry and rabbits; every dated post (Aug-Sep 2026) sells chicks, quail and ducks or veterinary products, with no dated clinical activity. The second premises is منزل الدكتور نايف عوف, a private house, not a clinic building. Pharmacies are excluded.",
+      "sources": [
+        "https://www.petshops1.com/EG/Damietta/289056121794346/%D8%B5%D9%8A%D8%AF%D9%84%D9%8A%D8%A9-%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D8%B2%D9%8A%D8%A7%D8%AF-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9"
+      ],
+      "excludedEntry": {
+        "key": "ziad-hourany",
+        "nameEnglish": "Dr. Ziad Veterinary Clinic",
+        "nameArabic": "عيادة دكتور زياد البيطرية",
+        "nameEnglishOrigin": "authored",
+        "nameArabicOrigin": "transliterated",
+        "addressEnglish": "Main road, Al Hourany, Fariskur, Damietta",
+        "addressArabic": "الطريق العام، الحوراني، فارسكور، دمياط",
+        "addressEnglishOrigin": "authored",
+        "addressArabicOrigin": "authored",
+        "area": "Fariskur",
+        "citySourceCode": "EG1103",
+        "phones": ["01204487240"],
+        "sources": [
+          {
+            "url": "https://www.petshops1.com/EG/Damietta/289056121794346/%D8%B5%D9%8A%D8%AF%D9%84%D9%8A%D8%A9-%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D8%B2%D9%8A%D8%A7%D8%AF-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "accessedAt": "2026-11-12",
+            "kind": "WEB"
+          }
+        ],
+        "website": null,
+        "facebookUrl": null,
+        "is24Hours": false,
+        "hoursEvidence": null,
+        "lastSeenActive": null,
+        "classificationEvidence": "Individual page explicitly describes a pharmacy AND physical clinic treating pets, poultry and rabbits, with two complete premises. Only pharmacy sales posts are dated; no dated clinical activity inferred. Both branches reviewed separately.",
+        "chainKey": "ziad",
+        "branchQualifier": "Fariskur"
+      }
+    },
+    {
+      "name": "صيدلية دكتور زياد البيطرية (Kafr Saad)",
+      "reason": "pharmacy-primary",
+      "evidence": "Lead review 2026-11-12: the page is titled صيدلية دكتور زياد البيطرية (veterinary pharmacy) for pets, poultry and rabbits; every dated post (Aug-Sep 2026) sells chicks, quail and ducks or veterinary products, with no dated clinical activity. The second premises is منزل الدكتور نايف عوف, a private house, not a clinic building. Pharmacies are excluded.",
+      "sources": [
+        "https://www.petshops1.com/EG/Damietta/289056121794346/%D8%B5%D9%8A%D8%AF%D9%84%D9%8A%D8%A9-%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D8%B2%D9%8A%D8%A7%D8%AF-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9"
+      ],
+      "excludedEntry": {
+        "key": "ziad-kafr-saad",
+        "nameEnglish": "Dr. Ziad Veterinary Clinic",
+        "nameArabic": "عيادة دكتور زياد البيطرية",
+        "nameEnglishOrigin": "authored",
+        "nameArabicOrigin": "transliterated",
+        "addressEnglish": "Dr. Nayef Ouf building, Kafr Saad El Balad, Kafr Saad, Damietta",
+        "addressArabic": "منزل دكتور نايف عوف، كفر سعد البلد، كفر سعد، دمياط",
+        "addressEnglishOrigin": "authored",
+        "addressArabicOrigin": "authored",
+        "area": "Kafr Saad",
+        "citySourceCode": "EG1104",
+        "phones": ["01204487240"],
+        "sources": [
+          {
+            "url": "https://www.petshops1.com/EG/Damietta/289056121794346/%D8%B5%D9%8A%D8%AF%D9%84%D9%8A%D8%A9-%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D8%B2%D9%8A%D8%A7%D8%AF-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "accessedAt": "2026-11-12",
+            "kind": "WEB"
+          }
+        ],
+        "website": null,
+        "facebookUrl": null,
+        "is24Hours": false,
+        "hoursEvidence": null,
+        "lastSeenActive": null,
+        "classificationEvidence": "Same explicit pet-treatment clinic description lists second premises at Dr Nayef Ouf building, Kafr Saad El Balad. Shared clinic contact retained as reception for two documented branches.",
+        "chainKey": "ziad",
+        "branchQualifier": "Kafr Saad"
+      }
+    }
+  ],
+  "counts": {
+    "authored": 4,
+    "retained": 4,
+    "active": 3,
+    "inactiveByReason": {
+      "no-phone": 1
+    },
+    "precision": {
+      "area": 4
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {
+    "move-and-catalog-subdistrict-unresolved": 1,
+    "pharmacy-primary": 2
+  },
+  "importAccounting": {
+    "candidates": 1,
+    "imported": 1,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D2",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D2-decisions.json",
+    "cities": [
+      {
+        "city": "Damietta",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Damietta/67510/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Damietta/67510",
+          "https://www.petshops1.com/EG/Damiette/67511/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Damiette/67511",
+          "https://www.petshops1.com/EG/Damiata/67509/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Damiata/67509",
+          "https://www.petshops1.com/EG/Dumyat-al-Jadidah/67532/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Dumyat-al-Jadidah/67532"
+        ],
+        "discoveryEntries": 64,
+        "candidates": [
+          {
+            "key": "410224279388809",
+            "city": "Damietta",
+            "name": "Cane Corso كين كورسو",
+            "url": "https://www.petshops1.com/EG/Damietta/410224279388809/Cane-Corso-%D9%83%D9%8A%D9%86-%D9%83%D9%88%D8%B1%D8%B3%D9%88",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "100469449525248",
+            "city": "Damietta",
+            "name": "Bassam Ghanem",
+            "url": "https://www.petshops1.com/EG/Damietta/100469449525248/Bassam-Ghanem",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "996131250512738",
+            "city": "Damietta",
+            "name": "عشاق غيه الحمام \"علاء أبو سنه\"",
+            "url": "https://www.petshops1.com/EG/Damietta/996131250512738/%D8%B9%D8%B4%D8%A7%D9%82-%D8%BA%D9%8A%D9%87-%D8%A7%D9%84%D8%AD%D9%85%D8%A7%D9%85-%22%D8%B9%D9%84%D8%A7%D8%A1-%D8%A3%D8%A8%D9%88-%D8%B3%D9%86%D9%87%22",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "103225649199475",
+            "city": "Damietta",
+            "name": "مزرعه السلطان للجيرمن شيبرد",
+            "url": "https://www.petshops1.com/EG/Damietta/103225649199475/%D9%85%D8%B2%D8%B1%D8%B9%D9%87-%D8%A7%D9%84%D8%B3%D9%84%D8%B7%D8%A7%D9%86-%D9%84%D9%84%D8%AC%D9%8A%D8%B1%D9%85%D9%86-%D8%B4%D9%8A%D8%A8%D8%B1%D8%AF",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "309548223325576",
+            "city": "Damietta",
+            "name": "دوري لأسماك وطيور الزينة",
+            "url": "https://www.petshops1.com/EG/Damietta/309548223325576/%D8%AF%D9%88%D8%B1%D9%8A-%D9%84%D8%A3%D8%B3%D9%85%D8%A7%D9%83-%D9%88%D8%B7%D9%8A%D9%88%D8%B1-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "758932803969375",
+            "city": "Damietta",
+            "name": "ارانب جدو عبده",
+            "url": "https://www.petshops1.com/EG/Damietta/758932803969375/%D8%A7%D8%B1%D8%A7%D9%86%D8%A8-%D8%AC%D8%AF%D9%88-%D8%B9%D8%A8%D8%AF%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "103641503096080",
+            "city": "Damietta",
+            "name": "ايمن قطب",
+            "url": "https://www.petshops1.com/EG/Damietta/103641503096080/%D8%A7%D9%8A%D9%85%D9%86-%D9%82%D8%B7%D8%A8",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "106471515721406",
+            "city": "Damietta",
+            "name": "كلاب روت وايلر للبيع في دمياط",
+            "url": "https://www.petshops1.com/EG/Damietta/106471515721406/%D9%83%D9%84%D8%A7%D8%A8-%D8%B1%D9%88%D8%AA-%D9%88%D8%A7%D9%8A%D9%84%D8%B1-%D9%84%D9%84%D8%A8%D9%8A%D8%B9-%D9%81%D9%8A-%D8%AF%D9%85%D9%8A%D8%A7%D8%B7",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "284598171888860",
+            "city": "Damietta",
+            "name": "العصامي للاستثمار الداجني",
+            "url": "https://www.petshops1.com/EG/Damietta/284598171888860/%D8%A7%D9%84%D8%B9%D8%B5%D8%A7%D9%85%D9%8A-%D9%84%D9%84%D8%A7%D8%B3%D8%AA%D8%AB%D9%85%D8%A7%D8%B1-%D8%A7%D9%84%D8%AF%D8%A7%D8%AC%D9%86%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "338864063246601",
+            "city": "Damietta",
+            "name": "تربيه وتسمين مواشي",
+            "url": "https://www.petshops1.com/EG/Damietta/338864063246601/%D8%AA%D8%B1%D8%A8%D9%8A%D9%87-%D9%88%D8%AA%D8%B3%D9%85%D9%8A%D9%86-%D9%85%D9%88%D8%A7%D8%B4%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "103180498152942",
+            "city": "Damietta",
+            "name": "German shepherd kennel egypt",
+            "url": "https://www.petshops1.com/EG/Damietta/103180498152942/German-shepherd-kennel-egypt",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "199334650512188",
+            "city": "Damietta",
+            "name": "Dogs In Damietta",
+            "url": "https://www.petshops1.com/EG/Damietta/199334650512188/Dogs-In-Damietta",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "110428135480649",
+            "city": "Damietta",
+            "name": "Alsahm stud",
+            "url": "https://www.petshops1.com/EG/Damietta/110428135480649/Alsahm-stud",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1666358893583740",
+            "city": "Damietta",
+            "name": "مركز تنمية الثروة الحيوانية",
+            "url": "https://www.petshops1.com/EG/Damietta/1666358893583740/%D9%85%D8%B1%D9%83%D8%B2-%D8%AA%D9%86%D9%85%D9%8A%D8%A9-%D8%A7%D9%84%D8%AB%D8%B1%D9%88%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "102946335287041",
+            "city": "Damietta",
+            "name": "Happy Pets New Demietta",
+            "url": "https://www.petshops1.com/EG/Damietta/102946335287041/Happy-Pets-New-Demietta",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "955260524625619",
+            "city": "Damietta",
+            "name": "القطط الشرازي،CatS",
+            "url": "https://www.petshops1.com/EG/Damietta/955260524625619/%D8%A7%D9%84%D9%82%D8%B7%D8%B7-%D8%A7%D9%84%D8%B4%D8%B1%D8%A7%D8%B2%D9%8A%D8%8CCatS",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "113089473932374",
+            "city": "Damietta",
+            "name": "Lili pets",
+            "url": "https://www.petshops1.com/EG/Damietta/113089473932374/Lili-pets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "108235978341520",
+            "city": "Damietta",
+            "name": "السقا لمستلزمات الدواجن.والارانب",
+            "url": "https://www.petshops1.com/EG/Damietta/108235978341520/%D8%A7%D9%84%D8%B3%D9%82%D8%A7-%D9%84%D9%85%D8%B3%D8%AA%D9%84%D8%B2%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%AF%D9%88%D8%A7%D8%AC%D9%86.%D9%88%D8%A7%D9%84%D8%A7%D8%B1%D8%A7%D9%86%D8%A8",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "522744287590001",
+            "city": "Damietta",
+            "name": "Budgico - بادجيكو",
+            "url": "https://www.petshops1.com/EG/Damietta/522744287590001/Budgico---%D8%A8%D8%A7%D8%AF%D8%AC%D9%8A%D9%83%D9%88",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "611889685346553",
+            "city": "Damietta",
+            "name": "WooZy Petshop",
+            "url": "https://www.petshops1.com/EG/Damietta/611889685346553/WooZy-Petshop",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "108704157709634",
+            "city": "Damietta",
+            "name": "محمد التهامي_Mohamed Eltohamy",
+            "url": "https://www.petshops1.com/EG/Damietta/108704157709634/%D9%85%D8%AD%D9%85%D8%AF-%D8%A7%D9%84%D8%AA%D9%87%D8%A7%D9%85%D9%8A_Mohamed-Eltohamy",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1072664479271037",
+            "city": "Damietta",
+            "name": "OZOO",
+            "url": "https://www.petshops1.com/EG/Damietta/1072664479271037/OZOO",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "445565962525117",
+            "city": "Damietta",
+            "name": "اكل كلاب وقطط فراخ نافق طازجه",
+            "url": "https://www.petshops1.com/EG/Damietta/445565962525117/%D8%A7%D9%83%D9%84-%D9%83%D9%84%D8%A7%D8%A8-%D9%88%D9%82%D8%B7%D8%B7-%D9%81%D8%B1%D8%A7%D8%AE-%D9%86%D8%A7%D9%81%D9%82-%D8%B7%D8%A7%D8%B2%D8%AC%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "106721755066311",
+            "city": "Damietta",
+            "name": "سيزار لطيور الزينه والأسماك  بتفتيش كفر سعد",
+            "url": "https://www.petshops1.com/EG/Damietta/106721755066311/%D8%B3%D9%8A%D8%B2%D8%A7%D8%B1-%D9%84%D8%B7%D9%8A%D9%88%D8%B1-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D9%87-%D9%88%D8%A7%D9%84%D8%A3%D8%B3%D9%85%D8%A7%D9%83--%D8%A8%D8%AA%D9%81%D8%AA%D9%8A%D8%B4-%D9%83%D9%81%D8%B1-%D8%B3%D8%B9%D8%AF",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "215816491621956",
+            "city": "Damietta",
+            "name": "Pet Pulse",
+            "url": "https://www.petshops1.com/EG/Damietta/215816491621956/Pet-Pulse",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "362598050260623",
+            "city": "Damietta",
+            "name": "الماعز المالطي كما يجب أن يكون",
+            "url": "https://www.petshops1.com/EG/Damietta/362598050260623/%D8%A7%D9%84%D9%85%D8%A7%D8%B9%D8%B2-%D8%A7%D9%84%D9%85%D8%A7%D9%84%D8%B7%D9%8A-%D9%83%D9%85%D8%A7-%D9%8A%D8%AC%D8%A8-%D8%A3%D9%86-%D9%8A%D9%83%D9%88%D9%86",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1078390902035237",
+            "city": "Damietta",
+            "name": "مربط دار العدوي للخيول العربيه",
+            "url": "https://www.petshops1.com/EG/Damietta/1078390902035237/%D9%85%D8%B1%D8%A8%D8%B7-%D8%AF%D8%A7%D8%B1-%D8%A7%D9%84%D8%B9%D8%AF%D9%88%D9%8A-%D9%84%D9%84%D8%AE%D9%8A%D9%88%D9%84-%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "945632861971627",
+            "city": "Damietta",
+            "name": "SAQAR صقار",
+            "url": "https://www.petshops1.com/EG/Damietta/945632861971627/SAQAR-%D8%B5%D9%82%D8%A7%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "261362594311347",
+            "city": "Damietta",
+            "name": "Abo Elnaga for Ornamental Fish",
+            "url": "https://www.petshops1.com/EG/Damietta/261362594311347/Abo-Elnaga-for-Ornamental-Fish",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "508015896070453",
+            "city": "Damietta",
+            "name": "ابناء الجمال للاستثمار الداجنى",
+            "url": "https://www.petshops1.com/EG/Damiette/508015896070453/%D8%A7%D8%A8%D9%86%D8%A7%D8%A1-%D8%A7%D9%84%D8%AC%D9%85%D8%A7%D9%84-%D9%84%D9%84%D8%A7%D8%B3%D8%AA%D8%AB%D9%85%D8%A7%D8%B1-%D8%A7%D9%84%D8%AF%D8%A7%D8%AC%D9%86%D9%89",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1440521526241261",
+            "city": "Damietta",
+            "name": "Damietta pets comunity",
+            "url": "https://www.petshops1.com/EG/Damiette/1440521526241261/Damietta-pets-comunity",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1662776817310222",
+            "city": "Damietta",
+            "name": "كلاب الجيرمن الاصيلة",
+            "url": "https://www.petshops1.com/EG/Damiette/1662776817310222/%D9%83%D9%84%D8%A7%D8%A8-%D8%A7%D9%84%D8%AC%D9%8A%D8%B1%D9%85%D9%86-%D8%A7%D9%84%D8%A7%D8%B5%D9%8A%D9%84%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "267791334081720",
+            "city": "Damietta",
+            "name": "Mercy for pets",
+            "url": "https://www.petshops1.com/EG/Damiata/267791334081720/Mercy-for-pets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "107746800820743",
+            "city": "Damietta",
+            "name": "مشروعات صغيره وتربية الحمام",
+            "url": "https://www.petshops1.com/EG/Damiata/107746800820743/%D9%85%D8%B4%D8%B1%D9%88%D8%B9%D8%A7%D8%AA-%D8%B5%D8%BA%D9%8A%D8%B1%D9%87-%D9%88%D8%AA%D8%B1%D8%A8%D9%8A%D8%A9-%D8%A7%D9%84%D8%AD%D9%85%D8%A7%D9%85",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "232628450177829",
+            "city": "Damietta",
+            "name": "Zon",
+            "url": "https://www.petshops1.com/EG/Damiata/232628450177829/Zon",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "136943223127828",
+            "city": "Damietta",
+            "name": "Mr.bird",
+            "url": "https://www.petshops1.com/EG/Damiata/136943223127828/Mr.bird",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1448162328769865",
+            "city": "Damietta",
+            "name": "Tree-Furniture",
+            "url": "https://www.petshops1.com/EG/Damiata/1448162328769865/Tree-Furniture",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "114862867035873",
+            "city": "Damietta",
+            "name": "Pet Paradise Center - Damietta branch",
+            "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/114862867035873/Pet-Paradise-Center---Damietta-branch",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "972088056158900",
+            "city": "Damietta",
+            "name": "Premium",
+            "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/972088056158900/Premium",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "107519887837387",
+            "city": "Damietta",
+            "name": "Pet By Pet",
+            "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/107519887837387/Pet-By-Pet",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "574610439070884",
+            "city": "Damietta",
+            "name": "Cowboys Country Club",
+            "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/574610439070884/Cowboys-Country-Club",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "104551251320706",
+            "city": "Damietta",
+            "name": "Pro Performance dry food Egypt",
+            "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/104551251320706/Pro-Performance-dry-food-Egypt",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "101946405282070",
+            "city": "Damietta",
+            "name": "City Petsسيتى بيتس دمياط الجديده",
+            "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/101946405282070/City-Pets%D8%B3%D9%8A%D8%AA%D9%89-%D8%A8%D9%8A%D8%AA%D8%B3-%D8%AF%D9%85%D9%8A%D8%A7%D8%B7-%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "105054155640135",
+            "city": "Damietta",
+            "name": "Africano STORE",
+            "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/105054155640135/Africano-STORE",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "100484475281755",
+            "city": "Damietta",
+            "name": "D.H.P - Dammitta Homeless Pets Shelter -مآوي",
+            "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/100484475281755/D.H.P---Dammitta-Homeless-Pets-Shelter--%D9%85%D8%A2%D9%88%D9%8A-%D8%AF%D9%85%D9%8A%D8%A7%D8%B7-%D9%84%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D9%85%D8%B4%D8%B1%D8%AF%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "106323452328349",
+            "city": "Damietta",
+            "name": "بيت السعادة",
+            "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/106323452328349/%D8%A8%D9%8A%D8%AA-%D8%A7%D9%84%D8%B3%D8%B9%D8%A7%D8%AF%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "101449018619532",
+            "city": "Damietta",
+            "name": "Bark Avenue",
+            "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/101449018619532/Bark-Avenue",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "113915634657766",
+            "city": "Damietta",
+            "name": "Dry Dainty",
+            "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/113915634657766/Dry-Dainty",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1825822407693592",
+            "city": "Damietta",
+            "name": "مصنع بلاك هورس للصق جميع انواع القشرBLack hor",
+            "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/1825822407693592/%D9%85%D8%B5%D9%86%D8%B9-%D8%A8%D9%84%D8%A7%D9%83-%D9%87%D9%88%D8%B1%D8%B3-%D9%84%D9%84%D8%B5%D9%82-%D8%AC%D9%85%D9%8A%D8%B9-%D8%A7%D9%86%D9%88%D8%A7%D8%B9-%D8%A7%D9%84%D9%82%D8%B4%D8%B1BLack-horse",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "289056121794346",
+            "city": "Damietta",
+            "name": "صيدلية دكتور زياد البيطرية",
+            "url": "https://www.petshops1.com/EG/Damietta/289056121794346/%D8%B5%D9%8A%D8%AF%D9%84%D9%8A%D8%A9-%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D8%B2%D9%8A%D8%A7%D8%AF-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "retained",
+            "reason": "ziad-hourany",
+            "evidence": "Individual page explicitly describes a pharmacy AND physical clinic treating pets, poultry and rabbits, with two complete premises. Only pharmacy sales posts are dated; no dated clinical activity inferred. Both branches reviewed separately.",
+            "snapshot": "web-evidence/depth-3f7c2f5996cbf716.json"
+          },
+          {
+            "key": "289056121794346-ziad-kafr-saad",
+            "city": "Damietta",
+            "name": "صيدلية دكتور زياد البيطرية",
+            "url": "https://www.petshops1.com/EG/Damietta/289056121794346/%D8%B5%D9%8A%D8%AF%D9%84%D9%8A%D8%A9-%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D8%B2%D9%8A%D8%A7%D8%AF-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "retained",
+            "reason": "ziad-kafr-saad",
+            "evidence": "Same explicit pet-treatment clinic description lists second premises at Dr Nayef Ouf building, Kafr Saad El Balad. Shared clinic contact retained as reception for two documented branches.",
+            "snapshot": "web-evidence/depth-3f7c2f5996cbf716.json"
+          },
+          {
+            "key": "117446396757514",
+            "city": "Damietta",
+            "name": "Pet Heaven  veterinary clinic",
+            "url": "https://www.petshops1.com/EG/Damietta/117446396757514/Pet-Heaven--veterinary-clinic",
+            "status": "retained",
+            "reason": "pet-heaven-damietta",
+            "evidence": "Individual clinic feed reports treated cat skin infection on 2026-10-20. Address/contact in clinic posts. El Galaa Qism 1 corroborated by independently read locality report https://www.elwatannews.com/news/details/652703 ; no Google map used.",
+            "snapshot": "web-evidence/depth-c74f3c843c367b2b.json"
+          },
+          {
+            "key": "108258998229694",
+            "city": "Damietta",
+            "name": "Pets Clinic  عيادة الحيوانات الأليفة",
+            "url": "https://www.petshops1.com/EG/Damietta/108258998229694/Pets-Clinic--%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A3%D9%84%D9%8A%D9%81%D8%A9",
+            "status": "retained",
+            "reason": "pets-clinic-damietta",
+            "evidence": "Individual pet vaccination/treatment clinic at Sorour Square. Main reception from appointment posts; adoption personal numbers omitted. Sorour Square Qism 1 corroborated by National Election Authority polling list https://www.elections.eg/images/pdfs/qrar-tashkel/30%20%202023.pdf .",
+            "snapshot": "web-evidence/depth-c12c0f7d28dbc40a.json"
+          },
+          {
+            "key": "106280155672476",
+            "city": "Damietta",
+            "name": "The Vet Hospital المستشفى البيطرى",
+            "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/106280155672476/The-Vet-Hospital-%D8%A7%D9%84%D9%85%D8%B3%D8%AA%D8%B4%D9%81%D9%89-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%89",
+            "status": "retained",
+            "reason": "the-vet-new-damietta",
+            "evidence": "Individual feed documents pet imaging, surgery and blood tests at physical fifth-district premises. No qualifying phone found; retain inactive no-phone rather than borrowing another clinic contact.",
+            "snapshot": "web-evidence/depth-0c7adf81a4f2eb21.json"
+          },
+          {
+            "key": "421806728418215",
+            "city": "Damietta",
+            "name": "مركز د.عابر الشربينى للرعاية البيطرية",
+            "url": "https://www.petshops1.com/EG/Damietta/421806728418215/%D9%85%D8%B1%D9%83%D8%B2-%D8%AF.%D8%B9%D8%A7%D8%A8%D8%B1-%D8%A7%D9%84%D8%B4%D8%B1%D8%A8%D9%8A%D9%86%D9%89-%D9%84%D9%84%D8%B1%D8%B9%D8%A7%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "poultry-feed",
+            "evidence": "Two premises reviewed: main ice-factory/Wagih Zahran and Bab El Haras. Poultry/feed content, public pet treatment not established at either.",
+            "snapshot": "web-evidence/depth-4fd3695e78cf9e85.json"
+          },
+          {
+            "key": "1141808905955544",
+            "city": "Damietta",
+            "name": "عيادة الشعراء البيطرية",
+            "url": "https://www.petshops1.com/EG/Damietta/1141808905955544/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%B4%D8%B9%D8%B1%D8%A7%D8%A1-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Pet treatment/contact established; Al Shoaraa road cannot be assumed to be separate catalog Shat Al Shoaara without district corroboration.",
+            "snapshot": "web-evidence/depth-c339f3f385aa4090.json"
+          },
+          {
+            "key": "104810916035903",
+            "city": "Damietta",
+            "name": "المركز التجاري البيطري V.T.C",
+            "url": "https://www.petshops1.com/EG/Damietta/104810916035903/%D8%A7%D9%84%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D8%AA%D8%AC%D8%A7%D8%B1%D9%8A-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-V.T.C",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Veterinary supplies/service description without pet clinical treatment evidence or precise street.",
+            "snapshot": "web-evidence/depth-ab9c3107d6155bd5.json"
+          },
+          {
+            "key": "1280160708799639",
+            "city": "Damietta",
+            "name": "4 vet clinic - عيادة فور فيت البيطرية",
+            "url": "https://www.petshops1.com/EG/Damietta/1280160708799639/4-vet-clinic---%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D9%81%D9%88%D8%B1-%D9%81%D9%8A%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "poultry-stale",
+            "evidence": "Poultry content dated 2020, city-only premises, no validated contact.",
+            "snapshot": "web-evidence/depth-d9939d0cbc520c60.json"
+          },
+          {
+            "key": "612028138953367",
+            "city": "Damietta",
+            "name": "Vet egypt",
+            "url": "https://www.petshops1.com/EG/Damiette/612028138953367/Vet-egypt",
+            "status": "held",
+            "reason": "online-retail",
+            "evidence": "Vet Egypt online products, no clinical premises.",
+            "snapshot": "web-evidence/depth-009dae71a4665fa8.json"
+          },
+          {
+            "key": "1928042300769899",
+            "city": "Damietta",
+            "name": "مركز كيوان البيطري",
+            "url": "https://www.petshops1.com/EG/Damiette/1928042300769899/%D9%85%D8%B1%D9%83%D8%B2-%D9%83%D9%8A%D9%88%D8%A7%D9%86-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A",
+            "status": "held",
+            "reason": "poultry-and-supplies",
+            "evidence": "Both Ezbet El Borg and Bab El Haras premises reviewed; poultry/feed business, pet treatment not established.",
+            "snapshot": "web-evidence/depth-d968a682026c72ed.json"
+          },
+          {
+            "key": "209772852942560",
+            "city": "Damietta",
+            "name": "Al_Ahram for veterinary services",
+            "url": "https://www.petshops1.com/EG/Damiette/209772852942560/Al_Ahram-for-veterinary-services",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Veterinary services label without pet clinical evidence.",
+            "snapshot": "web-evidence/depth-f80f887964d191f4.json"
+          },
+          {
+            "key": "1501076890197352",
+            "city": "Damietta",
+            "name": "المركز التجاري البيطري V.T.C",
+            "url": "https://www.petshops1.com/EG/Damiette/1501076890197352/%D8%A7%D9%84%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D8%AA%D8%AC%D8%A7%D8%B1%D9%8A-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-V.T.C",
+            "status": "held",
+            "reason": "veterinary-supplies",
+            "evidence": "Bab El Haras VTC supplies business, no pet clinic proof.",
+            "snapshot": "web-evidence/depth-6b4d3e705a266fea.json"
+          },
+          {
+            "key": "780593388671772",
+            "city": "Damietta",
+            "name": "عيادة دمياط البيطرية الشاملة",
+            "url": "https://www.petshops1.com/EG/Damiata/780593388671772/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%AF%D9%85%D9%8A%D8%A7%D8%B7-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D8%A7%D9%84%D8%B4%D8%A7%D9%85%D9%84%D8%A9",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "General veterinary clinic label; inspected posts insufficient for dedicated pet treatment.",
+            "snapshot": "web-evidence/depth-07282ffc962f36e0.json"
+          },
+          {
+            "key": "1016200041572970",
+            "city": "Damietta",
+            "name": "vet salah hany",
+            "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/1016200041572970/vet-salah-hany",
+            "status": "held",
+            "reason": "personal-page",
+            "evidence": "Veterinarian personal/social content, no physical pet clinic.",
+            "snapshot": "web-evidence/depth-472472e2abae9971.json"
+          },
+          {
+            "key": "107997234293777",
+            "city": "Damietta",
+            "name": "Royal vet clinic",
+            "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/107997234293777/Royal-vet-clinic",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "Royal New Damietta already retained with independently sourced street/contact.",
+            "snapshot": "web-evidence/depth-36ab30fe77036b2a.json"
+          }
+        ],
+        "retained": 5,
+        "exclusionsByReason": {
+          "no-pet-clinic-evidence-in-discovery": 49,
+          "poultry-feed": 1,
+          "unresolved-catalog-area": 1,
+          "unresolved-pet-treatment": 3,
+          "poultry-stale": 1,
+          "online-retail": 1,
+          "poultry-and-supplies": 1,
+          "veterinary-supplies": 1,
+          "personal-page": 1,
+          "already-retained": 1
+        },
+        "individualSnapshots": [
+          "web-evidence/depth-3f7c2f5996cbf716.json",
+          "web-evidence/depth-3f7c2f5996cbf716.json",
+          "web-evidence/depth-c74f3c843c367b2b.json",
+          "web-evidence/depth-c12c0f7d28dbc40a.json",
+          "web-evidence/depth-0c7adf81a4f2eb21.json",
+          "web-evidence/depth-4fd3695e78cf9e85.json",
+          "web-evidence/depth-c339f3f385aa4090.json",
+          "web-evidence/depth-ab9c3107d6155bd5.json",
+          "web-evidence/depth-d9939d0cbc520c60.json",
+          "web-evidence/depth-009dae71a4665fa8.json",
+          "web-evidence/depth-d968a682026c72ed.json",
+          "web-evidence/depth-f80f887964d191f4.json",
+          "web-evidence/depth-6b4d3e705a266fea.json",
+          "web-evidence/depth-07282ffc962f36e0.json",
+          "web-evidence/depth-472472e2abae9971.json",
+          "web-evidence/depth-36ab30fe77036b2a.json"
+        ]
+      }
+    ]
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

@@ -1,0 +1,8 @@
+{
+  "query": "1/2 El Laselki Street, El Maadi El Gadida, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=1%2F2+El+Laselki+Street%2C+El+Maadi+El+Gadida%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:47:03.763Z",
+  "httpStatus": 200,
+  "response": []
+}

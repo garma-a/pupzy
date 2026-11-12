@@ -1,0 +1,67 @@
+[
+  {
+    "reviewedAt": "2026-11-12",
+    "reason": "part-time-satellite-in-shop",
+    "entry": {
+      "key": "best-for-pets-european",
+      "nameEnglish": "Best For Pets Veterinary Clinic (European Countryside)",
+      "nameArabic": "عيادة بيست فور بيتس البيطرية (الريف الأوروبي)",
+      "addressEnglish": "Main road beside administration building and Dr Ahmed Farid pharmacy, European Countryside, New Sphinx, Giza",
+      "addressArabic": "الريف الأوروبي، الطريق الرئيسي بجوار مبنى الإدارة وصيدلية د.أحمد فريد",
+      "area": "New Sphinx",
+      "phones": [
+        "01111187925",
+        "Contact Disabled by Owner",
+        "ساعات العمل",
+        "الإثنين",
+        "مغلق",
+        "الثلاثاء",
+        "مغلق",
+        "الأربعاء",
+        "12 ظهرا",
+        "3 عصرا",
+        "الخميس",
+        "مغلق",
+        "الجمعة",
+        "مغلق",
+        "السبت",
+        "مغلق",
+        "الأحد",
+        "12 ظهرا",
+        "3 عصرا",
+        "اضغط هنا للحصول على عنوان وهاتف عيادة بيست فور بيتس البيطرية، فرع الريف الأوروبي El-reef Alouroby Branch",
+        "العنوان",
+        "العنوان:",
+        "الريف الأوروبي، الطريق الرئيسي بجوار مبنى الإدارة وصيدلية د.أحمد فريد"
+      ],
+      "sources": [
+        {
+          "url": "https://www.evcindex.com/item/%d8%a8%d9%8a%d8%b3%d8%aa-%d9%81%d9%88%d8%b1-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%b1%d9%8a%d9%81-%d8%a7%d9%84%d8%a3%d9%88%d8%b1%d9%88%d8%a8%d9%8a/",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "website": null,
+      "facebookUrl": null,
+      "is24Hours": false,
+      "hoursEvidence": null,
+      "lastSeenActive": null,
+      "classificationEvidence": "Individual EVC entry describes a physical twice-weekly satellite pet clinic inside Elreef Pet Shop; veterinarian Emile Saber Sundays/Wednesdays12–15. Explicit24/7 claim applies ONLY to main Zayed clinic, so satellite not24h. New Sphinx is explicitly named serving locality; exact compound absent from catalog.",
+      "nameEnglishOrigin": "authored",
+      "nameArabicOrigin": "authored",
+      "addressEnglishOrigin": "authored",
+      "addressArabicOrigin": "source",
+      "aliases": {
+        "english": [
+          "عيادة بيست فور بيتس البيطرية، فرع الريف الأوروبي El-reef Alouroby Branch",
+          "El-reef Alouroby Branch"
+        ],
+        "arabic": ["عيادة بيست فور بيتس البيطرية، فرع الريف الأوروبي El-reef Alouroby Branch"]
+      },
+      "chainKey": "best-for-pets",
+      "branchQualifier": "European Countryside"
+    },
+    "mainClinicKey": "best-for-pets-zayed",
+    "mainClinicSourceDecision": "Keep satellite URL on Best 4 Pets: page explicitly gives Zayed main clinic reception and 24h/7day hours; it is evidence about that clinic as well as the excluded satellite."
+  }
+]

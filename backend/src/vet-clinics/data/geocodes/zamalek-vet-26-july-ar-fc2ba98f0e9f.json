@@ -1,0 +1,8 @@
+{
+  "query": "26يوليو, Zamalek, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=26%D9%8A%D9%88%D9%84%D9%8A%D9%88%2C+Zamalek%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:52.643Z",
+  "httpStatus": 200,
+  "response": []
+}

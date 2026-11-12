@@ -1,0 +1,8 @@
+{
+  "query": "Malak Hefny Street, Sidi Bishr, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Malak+Hefny+Street%2C+Sidi+Bishr%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:52:36.739Z",
+  "httpStatus": 200,
+  "response": []
+}

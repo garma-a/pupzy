@@ -1,0 +1,8 @@
+{
+  "query": "رئيسي 10, Port Fouad, Port Said, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%B1%D8%A6%D9%8A%D8%B3%D9%8A+10%2C+Port+Fouad%2C+Port+Said%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:11:58.595Z",
+  "httpStatus": 200,
+  "response": []
+}

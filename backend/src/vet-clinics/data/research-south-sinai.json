@@ -1,0 +1,130 @@
+[
+  {
+    "key": "ark-dahab",
+    "nameEnglish": "The Ark Animal Clinic",
+    "nameArabic": "عيادة ذا آرك البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Blue Hole Plaza, commercial unit 105, ground floor, Banks and Agencies Building 3 repeated, El Mashraba, Dahab",
+    "addressArabic": "بلو هول بلازا، الوحدة التجارية 105، الدور الأرضي، مبنى البنوك والتوكيلات التجارية 3 مكرر، المركز السياحي التجاري، المشربة، دهب",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Dahab",
+    "citySourceCode": "EG3506",
+    "phones": ["0693642935"],
+    "sources": [
+      {
+        "url": "https://www.findglocal.com/EG/Cairo/134731390018611/The-Ark-animal-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://ae.linkedin.com/company/thearkanimalclinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-02-19",
+    "classificationEvidence": "Read clinic-feed mirror explicitly publishes separate Garden City and Dahab physical branches and Dahab landline. 2023 recruitment says vets rotate both branches; 2026 chain clinic-hours announcements. Current own LinkedIn corroborates Dahab expansion; no Cairo-only WhatsApp phone imported. Latest date specific to chain, not represented as branch-specific visit.",
+    "chainKey": "ark-garden-dahab",
+    "branchQualifier": "Dahab"
+  },
+  {
+    "key": "sinai-vet-sharm",
+    "nameEnglish": "Sinai Vet Clinic",
+    "nameArabic": "عيادة سيناء البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Dahab Centre, Hadaba, Sharm el-Sheikh",
+    "addressArabic": "مركز دهب، الهضبة، شرم الشيخ",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Sharm el-Sheikh",
+    "citySourceCode": "EG3505",
+    "phones": ["01007067508"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Sharm-el-Sheikh/1596992510616484/Sinai-Vet-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.egypt-business.com/company/details/sinai-vet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2020-01-11",
+    "classificationEvidence": "Read individual clinic-feed mirror: physical Dahab Centre Hadaba practice, pet treatment, dated 2020-01-11 reservation contact. Egypt Business individual listing corroborates same pet clinic and phone on separate domain. Active under unchanged multi-source stale rule, current branch operation not directly dated; flag for phone confirmation. Dahab Centre is a building in Sharm, not Dahab city."
+  },
+  {
+    "key": "domina-sharm",
+    "nameEnglish": "Domina Vet Clinic",
+    "nameArabic": "عيادة دومينا البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Domina Coral Bay, Sharm El Sheikh, South Sinai",
+    "addressArabic": "دومينا كورال باي، شرم الشيخ، جنوب سيناء",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Sharm el-Sheikh",
+    "citySourceCode": "EG3505",
+    "phones": [],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Sharm-el-Sheikh/268473186345726/Domina-vet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2024-11-13",
+    "classificationEvidence": "2024-11-13 rescued street cat treated with dental extraction and skin-flap surgery; physical Domina Coral Bay premises. No validated reception phone on read page; inactive no-phone.",
+    "aliases": {
+      "english": ["Domina vet clinic"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "b-vet-sharm",
+    "nameEnglish": "B-Vet Clinic",
+    "nameArabic": "عيادة بي فيت",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Rosa Mall, El Salam Street, Naama Bay, Sharm El Sheikh, South Sinai",
+    "addressArabic": "روزا مول، شارع السلام، خليج نعمة، شرم الشيخ، جنوب سيناء",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Sharm el-Sheikh",
+    "citySourceCode": "EG3505",
+    "phones": ["01007033567"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Sharm-el-Sheikh/109095391219717/Dr.-Badr-Moursi---Veterinary-Surgeon",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-06-09",
+    "classificationEvidence": "2026-06-09 first-party feed explicitly offers fixed-premises Color Doppler echocardiography at B-VET Clinic Rosa Mall, with booking number. 2026-06-01 states B-Vet Pet Shop is NEAR the clinic, not the clinic itself. Old home-visit header superseded by specific physical diagnostic/surgical premises; not a part-time satellite in a shop.",
+    "aliases": {
+      "english": ["Dr. Badr Moursi - Veterinary Surgeon"],
+      "arabic": []
+    }
+  }
+]

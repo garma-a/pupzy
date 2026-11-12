@@ -1,0 +1,33 @@
+{
+  "query": "محمد مظهر, الزمالك, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%85%D8%AD%D9%85%D8%AF+%D9%85%D8%B8%D9%87%D8%B1%2C+%D8%A7%D9%84%D8%B2%D9%85%D8%A7%D9%84%D9%83%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:40:00.894Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50389778,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 702246212,
+      "lat": "30.0660914",
+      "lon": "31.2236553",
+      "category": "place",
+      "type": "neighbourhood",
+      "place_rank": 24,
+      "importance": 0.08007960402838175,
+      "addresstype": "neighbourhood",
+      "name": "محمد مظهر",
+      "display_name": "محمد مظهر, الزمالك, القاهرة, مصر",
+      "address": {
+        "neighbourhood": "محمد مظهر",
+        "suburb": "الزمالك",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0572745", "30.0752359", "31.2187860", "31.2284987"]
+    }
+  ]
+}

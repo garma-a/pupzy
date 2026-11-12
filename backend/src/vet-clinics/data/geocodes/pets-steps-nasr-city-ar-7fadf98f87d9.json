@@ -1,0 +1,38 @@
+{
+  "query": "مكرم عبيد, Nasr City, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%85%D9%83%D8%B1%D9%85+%D8%B9%D8%A8%D9%8A%D8%AF%2C+Nasr+City%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:15:09.813Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50064338,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 37716878,
+      "lat": "30.0590776",
+      "lon": "31.3459629",
+      "category": "shop",
+      "type": "car",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "shop",
+      "name": "National Motors Egypt",
+      "display_name": "National Motors Egypt, 39, شارع مكرم عبيد, المنطقة السادسة, مدينة نصر, القاهرة, 11765, مصر",
+      "address": {
+        "shop": "National Motors Egypt",
+        "house_number": "39",
+        "road": "شارع مكرم عبيد",
+        "neighbourhood": "المنطقة السادسة",
+        "suburb": "مدينة نصر",
+        "city": "مدينة نصر",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11765",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0589788", "30.0591763", "31.3457990", "31.3461267"]
+    }
+  ]
+}

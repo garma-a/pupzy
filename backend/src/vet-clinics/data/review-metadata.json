@@ -1,0 +1,6 @@
+{
+  "sourceSha256": "934ded5df5b66b6e8a4a932014e4c0581a49dc4d292d40a42b30c828bfc94a96",
+  "reviewedAt": "2026-11-11T23:51:13.942721+00:00",
+  "reviewer": "implementer",
+  "method": "All 163 OSM elements inspected; individual named clinic inclusions and unresolved candidates reviewed against their complete source tags. Lead signoff pending."
+}

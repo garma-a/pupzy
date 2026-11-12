@@ -1,0 +1,36 @@
+{
+  "query": "23B Ismail Mohamed Street, Zamalek, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=23B+Ismail+Mohamed+Street%2C+Zamalek%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:21.814Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50016957,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 964318318,
+      "lat": "30.0634598",
+      "lon": "31.2193037",
+      "category": "building",
+      "type": "apartments",
+      "place_rank": 30,
+      "importance": 0.00006337300679021924,
+      "addresstype": "building",
+      "name": "",
+      "display_name": "23B, Ismail Mohamed Street, Abo El Feda, Zamalek, Cairo, 11568, Egypt",
+      "address": {
+        "house_number": "23B",
+        "road": "Ismail Mohamed Street",
+        "neighbourhood": "Abo El Feda",
+        "suburb": "Zamalek",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11568",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0633300", "30.0635869", "31.2191466", "31.2194711"]
+    }
+  ]
+}

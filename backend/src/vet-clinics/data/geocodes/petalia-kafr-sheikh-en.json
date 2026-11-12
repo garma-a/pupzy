@@ -1,0 +1,8 @@
+{
+  "query": "El Estad Street, Kafr Al-Shaykh (Kism), Kafr El-Shikh, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Estad+Street%2C+Kafr+Al-Shaykh+%28Kism%29%2C+Kafr+El-Shikh%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:44:48.098Z",
+  "httpStatus": 200,
+  "response": []
+}

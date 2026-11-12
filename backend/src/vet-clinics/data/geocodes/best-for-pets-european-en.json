@@ -1,0 +1,8 @@
+{
+  "query": "Main road, New Sphinx, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Main+road%2C+New+Sphinx%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:20:07.374Z",
+  "httpStatus": 200,
+  "response": []
+}

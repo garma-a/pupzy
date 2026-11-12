@@ -1,0 +1,92 @@
+[
+  {
+    "key": "ghamry-fayoum",
+    "nameEnglish": "El Ghamry Veterinary Center",
+    "nameArabic": "مركز الغمري البيطري",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Mohammed Kameal Street, Qesm Al Fayoum, Faiyum",
+    "addressArabic": "شارع محمد كميل، قسم الفيوم، الفيوم",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Fayyum (Kism)",
+    "citySourceCode": "EG2301",
+    "phones": ["01028012627"],
+    "sources": [
+      {
+        "url": "https://www.findhealthclinics.org/EG/Faiyum/1361104720681838/El_Ghamry-Veterinary-Center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.bizmideast.com/EG/el-ghamry-veterinary-center-0102-801-2627",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-07-09",
+    "classificationEvidence": "Read individual clinic-feed mirror with physical pet chemotherapy, surgery and current contact July 2026. Individual BizMidEast identifies Mohammed Kameal, Qesm Al Fayoum and same contact; not new Fayoum City. Meazak header not treated as a new catalog area."
+  },
+  {
+    "key": "pet-care-fayoum",
+    "nameEnglish": "Pet Care Veterinary Clinic",
+    "nameArabic": "عيادة بيت كير البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Mesalla, behind Wali El Saleheen Mosque, Fayoum",
+    "addressArabic": "المسلة، خلف مسجد ولي الصالحين، الفيوم",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Fayyum (Kism)",
+    "citySourceCode": "EG2301",
+    "phones": ["01276051767"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Faiyum/2363983566979197/Pet-Care--Veterinary-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-25",
+    "classificationEvidence": "2026-10-25 emergency canine Caesarean at clinic, current address and reception. Emergency care does not imply 24h premises.",
+    "aliases": {
+      "english": ["Pet Care  Veterinary Clinic"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "amn-fayoum",
+    "nameEnglish": "Amn Veterinary Clinic",
+    "nameArabic": "عيادة آمن البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Sheikh Hassan, opposite Sheikh Hassan School, Fayoum",
+    "addressArabic": "الشيخ حسن، أمام مدرسة الشيخ حسن، الفيوم",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Fayyum (Kism)",
+    "citySourceCode": "EG2301",
+    "phones": ["01023012078"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Faiyum/101131938258341/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A2%D9%85%D9%86-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-07-05",
+    "classificationEvidence": "2026-07-05 offers on-site pet examinations and treatment at Sheikh Hassan school address, with appointment phone explicitly printed."
+  }
+]

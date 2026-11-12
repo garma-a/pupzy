@@ -1,0 +1,8 @@
+{
+  "query": "End of Airport Street, Aswan (Kism), Aswan, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=End+of+Airport+Street%2C+Aswan+%28Kism%29%2C+Aswan%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:49:44.677Z",
+  "httpStatus": 200,
+  "response": []
+}

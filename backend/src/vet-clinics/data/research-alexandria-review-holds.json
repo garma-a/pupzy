@@ -1,0 +1,228 @@
+[
+  {
+    "key": "el-morshedy-sidi-bishr",
+    "reason": "conflicting-brand-at-same-address-phone",
+    "entry": {
+      "key": "el-morshedy-sidi-bishr",
+      "nameEnglish": "El Morshedy Veterinary Clinics (Sidi Bishr)",
+      "nameArabic": "عيادات المرشدي البيطرية (سيدي بشر)",
+      "addressEnglish": "Behind 25 Hassan Amin Street, Tabarak Building, beside Nour El Sama Center, Sidi Bishr El Tram, Alexandria",
+      "addressArabic": "خلف 25 شارع حسن أمين، عمارة تبارك، بجوار مركز نور السماء، سيدي بشر الترام، الإسكندرية",
+      "area": "Sidi Bishr",
+      "phones": ["033568069", "01224788666", "01099523440", "01025337966"],
+      "sources": [
+        {
+          "url": "https://dalil140.com/company/en/420591-el-morshedy-vet-clinics",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "website": null,
+      "facebookUrl": null,
+      "is24Hours": false,
+      "hoursEvidence": null,
+      "lastSeenActive": null,
+      "classificationEvidence": "Individual veterinary clinic entry with a physical address and telephone; no government or livestock-only indication.",
+      "chainKey": "el-morshedy",
+      "branchQualifier": "Sidi Bishr",
+      "nameEnglishOrigin": "source",
+      "nameArabicOrigin": "transliterated",
+      "addressEnglishOrigin": "source",
+      "addressArabicOrigin": "authored",
+      "aliases": {
+        "english": ["El Morshedy Veterinary Clinics (Sidi Bishr)"],
+        "arabic": ["عيادات المرشدي البيطرية (سيدي بشر)"]
+      }
+    },
+    "evidence": "Dalil140 lists El Morshedy at exactly behind25HassanAmin/Tabarak with033568069, while the detailed Wessam Tawfik page assigns that premises/phone to its SidiBishr branch. Cannot establish current ElMorshedy identity; hold instead of inventing shared ownership or merging names. Wessam branch retained on its specific current page.",
+    "sources": [
+      "https://dalil140.com/company/en/420591-el-morshedy-vet-clinics",
+      "https://www.dalilimedical.com/doctor-19953/مركز-دكتورة-وسام-توفيق-للطب-البيطرى"
+    ],
+    "reviewedAt": "2026-11-12"
+  },
+  {
+    "key": "pet-flix-smouha",
+    "reason": "current-source-shop-medical-on-call-only",
+    "entry": {
+      "key": "pet-flix-smouha",
+      "nameEnglish": "Pet Flix Veterinary Center (Smouha)",
+      "nameArabic": "مركز بت فليكس البيطري (سموحة)",
+      "addressEnglish": "Fawzy Moaz Street, Health Insurance Street, opposite Smile Cafe, Smouha, Alexandria",
+      "addressArabic": "شارع فوزي معاذ، شارع التأمين الصحي، أمام كافيه سمايل، سموحة، الإسكندرية",
+      "area": "Smouha",
+      "phones": ["01012323212", "034212859"],
+      "sources": [
+        {
+          "url": "https://www.dalilimedical.com/doctor-8835/%D8%A8%D9%8A%D8%AA-%D9%81%D9%84%D9%83%D8%B3-pet-flix",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "website": null,
+      "facebookUrl": null,
+      "is24Hours": false,
+      "hoursEvidence": null,
+      "lastSeenActive": null,
+      "classificationEvidence": "Explicit veterinary examination, treatment and follow-up alongside grooming/boarding at these two physical branches.",
+      "nameEnglishOrigin": "authored",
+      "nameArabicOrigin": "transliterated",
+      "addressEnglishOrigin": "authored",
+      "addressArabicOrigin": "authored",
+      "chainKey": "pet-flix",
+      "branchQualifier": "Smouha",
+      "aliases": {
+        "english": ["Pet Flix Veterinary Center (Smouha)", "بيت فلكس pet flix"],
+        "arabic": ["مركز بت فليكس البيطري (سموحة)", "بيت فلكس pet flix"]
+      }
+    },
+    "evidence": "Current individually read clinic feed says shop, grooming, boarding and medical services on call only; earlier directory on-site clinic description conflicts. Hold pending current physical clinic evidence.",
+    "sources": ["https://www.voofla.com/EG/Alexandria/110599564536629/Pet-Flix"],
+    "reviewedAt": "2026-11-12"
+  },
+  {
+    "key": "pet-flix-gleem",
+    "reason": "current-source-shop-medical-on-call-only",
+    "entry": {
+      "key": "pet-flix-gleem",
+      "nameEnglish": "Pet Flix Veterinary Center (Gleem)",
+      "nameArabic": "مركز بت فليكس البيطري (جليم)",
+      "addressEnglish": "7 Mokbel Pasha Street, beside Kheir Zaman, Gleem, Alexandria",
+      "addressArabic": "7 شارع مقبل باشا، بجوار خير زمان، جليم، الإسكندرية",
+      "area": "Gleem",
+      "phones": ["01505388042"],
+      "sources": [
+        {
+          "url": "https://www.dalilimedical.com/doctor-8835/%D8%A8%D9%8A%D8%AA-%D9%81%D9%84%D9%83%D8%B3-pet-flix",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "website": null,
+      "facebookUrl": null,
+      "is24Hours": false,
+      "hoursEvidence": null,
+      "lastSeenActive": null,
+      "classificationEvidence": "Explicit veterinary examination, treatment and follow-up alongside grooming/boarding at these two physical branches.",
+      "nameEnglishOrigin": "authored",
+      "nameArabicOrigin": "transliterated",
+      "addressEnglishOrigin": "authored",
+      "addressArabicOrigin": "authored",
+      "chainKey": "pet-flix",
+      "branchQualifier": "Gleem",
+      "aliases": {
+        "english": ["Pet Flix Veterinary Center (Gleem)", "بيت فلكس pet flix"],
+        "arabic": ["مركز بت فليكس البيطري (جليم)", "بيت فلكس pet flix"]
+      }
+    },
+    "evidence": "Current individually read clinic feed says shop, grooming, boarding and medical services on call only; earlier directory on-site clinic description conflicts. Hold pending current physical clinic evidence.",
+    "sources": ["https://www.voofla.com/EG/Alexandria/110599564536629/Pet-Flix"],
+    "reviewedAt": "2026-11-12"
+  },
+  {
+    "key": "petcare-moharam-bek",
+    "reason": "no-independent-pet-clinic-evidence",
+    "entry": {
+      "key": "petcare-moharam-bek",
+      "nameEnglish": "Petcare Veterinary Clinic (Moharam Bek)",
+      "nameArabic": "عيادة بت كير البيطرية (محرم بك)",
+      "addressEnglish": "103 Ibn Al Anbari Street, Moharam Bek, Alexandria",
+      "addressArabic": "103 شارع ابن العنبري، محرم بك، الإسكندرية",
+      "area": "محرم بك",
+      "phones": ["01553124800"],
+      "sources": [
+        {
+          "url": "https://localegypt.net/business/petcare-moharam-bek",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "website": null,
+      "facebookUrl": null,
+      "is24Hours": false,
+      "hoursEvidence": null,
+      "lastSeenActive": null,
+      "classificationEvidence": "Individual veterinary clinic entry explicitly lists examinations, laboratory work and surgery; ancillary grooming does not make it retail-only.",
+      "nameEnglishOrigin": "transliterated",
+      "nameArabicOrigin": "transliterated",
+      "addressEnglishOrigin": "authored",
+      "addressArabicOrigin": "source",
+      "aliases": {
+        "english": ["Petcare Veterinary Clinic"],
+        "arabic": ["عيادة بت كير البيطرية"]
+      }
+    },
+    "evidence": "Only LocalEgypt entry available and no alternate clinic evidence after exact phone/name/street searches. Hold rather than rely on a Google-derived directory.",
+    "sources": ["https://localegypt.net/business/petcare-moharam-bek"],
+    "reviewedAt": "2026-11-12"
+  },
+  {
+    "key": "almotawakkel-elrasafa",
+    "reason": "no-independent-pet-clinic-evidence",
+    "entry": {
+      "key": "almotawakkel-elrasafa",
+      "nameEnglish": "Al Motawakkel Veterinary Center (El Rasafa)",
+      "nameArabic": "مركز المتوكل البيطري (الرصافة)",
+      "addressEnglish": "3 Ahmed Fayed Lane, El Rasafa Square, Moharam Bek, Alexandria",
+      "addressArabic": "3 حارة أحمد فايد، ميدان الرصافة، محرم بك، الإسكندرية",
+      "area": "محرم بك",
+      "phones": ["01110466298"],
+      "sources": [
+        {
+          "url": "https://localegypt.net/business/almotawakkel-pet-center-elrasafa-square-branch-moharam-bek",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "website": null,
+      "facebookUrl": null,
+      "is24Hours": true,
+      "hoursEvidence": "Individual branch description explicitly states خدمة ٢٤ ساعة; daily hours also show 24 hours.",
+      "lastSeenActive": null,
+      "classificationEvidence": "Individually named Elrasafa branch advertises a fully equipped veterinary centre and explicit 24-hour service.",
+      "nameEnglishOrigin": "transliterated",
+      "nameArabicOrigin": "source",
+      "addressEnglishOrigin": "authored",
+      "addressArabicOrigin": "source",
+      "chainKey": "almotawakkel-alex",
+      "branchQualifier": "El Rasafa",
+      "aliases": {
+        "english": ["Al Motawakkel Veterinary Center (El Rasafa)"],
+        "arabic": ["مركز المتوكل البيطري (الرصافة)"]
+      }
+    },
+    "evidence": "Only LocalEgypt entry available and no alternate clinic evidence after exact phone/name/street searches. Hold rather than rely on a Google-derived directory.",
+    "sources": ["https://localegypt.net/business/almotawakkel-pet-center-elrasafa-square-branch-moharam-bek"],
+    "reviewedAt": "2026-11-12"
+  },
+  {
+    "key": "animal-club-moharam-bek",
+    "reason": "duplicate-discovery-source-without-independent-evidence",
+    "entry": {
+      "key": "animal-club-moharam-bek",
+      "nameEnglish": "Animal Club Veterinary Clinic",
+      "nameArabic": "عيادة أنيمال كلوب البيطرية",
+      "addressEnglish": "109 Moharam Bek Street at El Rasafa Square, Moharam Bek, Alexandria",
+      "addressArabic": "109 شارع محرم بك، ميدان الرصافة، محرم بك، الإسكندرية",
+      "area": "محرم بك",
+      "phones": ["01273764046"],
+      "sources": [],
+      "website": null,
+      "facebookUrl": null,
+      "is24Hours": false,
+      "hoursEvidence": null,
+      "lastSeenActive": null,
+      "classificationEvidence": "Business named as veterinary clinic plus retail store; individual page specifically describes cat vaccinations, neutering and medical follow-up. Not excluded solely for ancillary retail.",
+      "nameEnglishOrigin": "transliterated",
+      "nameArabicOrigin": "transliterated",
+      "addressEnglishOrigin": "authored",
+      "addressArabicOrigin": "source",
+      "aliases": {
+        "english": ["Animal Club Veterinary Clinic"],
+        "arabic": ["عيادة أنيمال كلوب البيطرية"]
+      }
+    },
+    "reviewedAt": "2026-11-12",
+    "evidence": "LocalEgypt-only duplicate row removed; separately sourced AnimalClubMoharamBek row already retained under same natural key."
+  }
+]

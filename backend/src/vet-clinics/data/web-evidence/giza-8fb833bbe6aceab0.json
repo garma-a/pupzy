@@ -1,0 +1,11 @@
+{
+  "url": "https://www.findglocal.com/EG/6-October-City/587196408081655/Pet-Life-Clinic",
+  "accessedAt": "2026-11-12",
+  "httpStatus": 429,
+  "text": "Access denied | www.findglocal.com used Cloudflare to restrict access | www.findglocal.com | Cloudflare\nPlease enable cookies.\nError\n1015\nRay ID: a592f515eb891d81 •\n2026-11-12 04:57:42 UTC\nYou are being rate limited\nWhat happened?\nThe owner of this website (www.findglocal.com) has banned you temporarily from accessing this website.\nPlease see\nthis troubleshooting page\nfor more details.\nWas this page helpful?\nYes\nNo\nThank you for your feedback!\nCloudflare Ray ID: a592f515eb891d81\n•\nYour IP:\nClick to reveal\n156.221.167.113\n•\nPerformance & security by Cloudflare",
+  "links": [
+    "/cdn-cgi/styles/main.css",
+    "https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1015/",
+    "https://www.cloudflare.com/5xx-error-landing"
+  ]
+}

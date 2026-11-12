@@ -1,0 +1,348 @@
+[
+  {
+    "key": "dr-ninja-october",
+    "nameEnglish": "Dr. Ninja Animal Hospital",
+    "nameArabic": "مستشفى دكتور نينجا للحيوانات",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Plaza5 Mall, beside El Sultan hypermarket, Motamayez October, 6th of October, Giza",
+    "addressArabic": "مول بلازا خمسة بجوار السلطان هايبر ماركت، الحي المتميز، السادس من أكتوبر، الجيزة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Motamayez October",
+    "phones": ["01018787570", "01221577706"],
+    "sources": [
+      {
+        "url": "https://www.findglocal.com/EG/6-October-City/108327260717506/DrNinja---Animal-Hospital",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-23",
+    "classificationEvidence": "Public clinic-page mirror publishes23September2026recruitment for onsitepetclinic atMotamayez, earlier medicalpost exactPlaza5address and bookingphones01018787570/01221577706. Recruitment01123081932 is not treated as patientcontact. Same mall asKMT but no sharedphones/name; no merger guessed.",
+    "aliases": {
+      "english": ["DrNinja - Animal Hospital", "Dr. Ninja Animal Hospital"],
+      "arabic": ["دكتور نينجا"]
+    }
+  },
+  {
+    "key": "elite-blue-october",
+    "nameEnglish": "Elite Blue Veterinary Center",
+    "nameArabic": "مركز إيليت بلو البيطري",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "302 Central Spine, opposite El Abd, 7th District, 6th of October, Giza",
+    "addressArabic": "302 المحور المركزي أمام العبد، الحي السابع، السادس من أكتوبر، الجيزة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "7th District",
+    "phones": ["01020511166"],
+    "sources": [
+      {
+        "url": "https://www.findglocal.com/EG/6-October-City/101375249041821/Elite-Blue-Veterinary-Center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-08-22",
+    "classificationEvidence": "Individually read public clinic page describes physical pet veterinary care, gives address/contact and dated operating posts. Public social-post mirrors are not direct Facebook retrieval.",
+    "aliases": {
+      "english": ["Elite Blue Veterinary Center"],
+      "arabic": ["إيليت بلو"]
+    }
+  },
+  {
+    "key": "kmt-motamayez",
+    "nameEnglish": "KMT Pet Clinics (Motamayez)",
+    "nameArabic": "عيادات كمت للحيوانات الأليفة (المتميز)",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Plaza5 Mall, Motamayez October, 6th of October, Giza",
+    "addressArabic": "مول بلازا خمسة، الحي المتميز، السادس من أكتوبر، الجيزة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Motamayez October",
+    "phones": ["01552219880"],
+    "sources": [
+      {
+        "url": "https://linktr.ee/kmtpetclinics",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.findglocal.com/EG/6-October-City/858923693963267/KMT-Pet-Clinics",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Mirror post24October2026explicitly statesKMT provides24/7veterinary routine/emergency care; physicalbranches onownLinktree.",
+    "lastSeenActive": "2026-10-30",
+    "classificationEvidence": "Clinic own Linktree gives hotline01552219880 and two physicalbranches (Plaza5Motamayez/OctoberGardens). Read public clinic-post mirror describes current diagnostics/surgery and24hcare. kmtvets.com currently unrelated creative-workflow landing page, not used asclinicwebsite. No Googlelinks opened or pinscopied; HadayekOctober namedarea used.",
+    "aliases": {
+      "english": ["KMT Pet Clinics", "KMT Animal Hospital"],
+      "arabic": ["كمت", "عيادات كمت"]
+    },
+    "chainKey": "kmt-pet-clinics",
+    "branchQualifier": "Motamayez"
+  },
+  {
+    "key": "kmt-hadayek-october",
+    "nameEnglish": "KMT Pet Clinics (Hadayek October)",
+    "nameArabic": "عيادات كمت للحيوانات الأليفة (حدائق أكتوبر)",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Hadayek October, Giza",
+    "addressArabic": "حدائق أكتوبر، الجيزة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Hadayek October",
+    "phones": ["01552219880"],
+    "sources": [
+      {
+        "url": "https://linktr.ee/kmtpetclinics",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.findglocal.com/EG/6-October-City/858923693963267/KMT-Pet-Clinics",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Mirror post24October2026explicitly statesKMT provides24/7veterinary routine/emergency care; physicalbranches onownLinktree.",
+    "lastSeenActive": "2026-10-30",
+    "classificationEvidence": "Clinic own Linktree gives hotline01552219880 and two physicalbranches (Plaza5Motamayez/OctoberGardens). Read public clinic-post mirror describes current diagnostics/surgery and24hcare. kmtvets.com currently unrelated creative-workflow landing page, not used asclinicwebsite. No Googlelinks opened or pinscopied; HadayekOctober namedarea used.",
+    "aliases": {
+      "english": ["KMT Pet Clinics", "KMT Animal Hospital"],
+      "arabic": ["كمت", "عيادات كمت"]
+    },
+    "chainKey": "kmt-pet-clinics",
+    "branchQualifier": "Hadayek October"
+  },
+  {
+    "key": "golden-vet-october",
+    "nameEnglish": "Golden Vet Clinic for Pets",
+    "nameArabic": "عيادة جولدن البيطرية للحيوانات الأليفة",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "221 Central Spine, 6th of October, Giza",
+    "addressArabic": "221 المحور المركزي، السادس من أكتوبر، الجيزة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "6th of October",
+    "phones": ["01145188527"],
+    "sources": [
+      {
+        "url": "https://www.findglocal.com/EG/6-October-City/113840847041201/Golden-vet-clinic-for-pets",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual current directory page names physical petveterinary clinic and publishes221CentralSpine address and validphone; undated, no claim of datedactivity. Historicalbusiness.site URL was not followed and is not clinicwebsite.",
+    "aliases": {
+      "english": ["Golden vet clinic for pets"],
+      "arabic": ["عيادة جولدن فيت البيطرية"]
+    }
+  },
+  {
+    "key": "pawfect-october",
+    "nameEnglish": "Pawfect Vet. Clinic",
+    "nameArabic": "عيادة باوفكت البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Plot32/4, Gil2000 Street, FourthNeighbourhood, 2nd District, beside Om El Moameneen school, 6th of October, Giza",
+    "addressArabic": "قطعة32/4 شارع جيل2000، المجاورة الرابعة، الحي الثاني، بجوار مدرسة أم المؤمنين، السادس من أكتوبر، الجيزة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "2nd District",
+    "phones": ["01153104213"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/6-October-City/101265827891944/Pawfect-vet.-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-13",
+    "classificationEvidence": "Individual public-post mirror includes30April2026relocation announcement,01Mayreopening,10Septembermedical/surgicalservices,13Septembercurrentstock/bookingpost all atnew32/4Gil2000Street address andsame01153104213. Current newaddress used; Googlemaps link not followed.",
+    "aliases": {
+      "english": ["Pawfect vet. clinic", "Pawfect Veterinary Center", "Pawfect"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "legacy-pets-imbaba",
+    "nameEnglish": "Legacy Pets Clinic",
+    "nameArabic": "عيادة ليجاسي للحيوانات الأليفة",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "148 Talaat Harb, El Tahrir City, Imbaba, Giza",
+    "addressArabic": "148 شارع طلعت حرب، مدينة التحرير، إمبابة، الجيزة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Tahrir",
+    "phones": ["01202723495"],
+    "sources": [
+      {
+        "url": "https://worldcarepet.com/pet-transport-to-cairo-egypt-pet-friendly-resources/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "International petrelocationcompany independently recommends this physicalpetclinic underVets in itsCairoguide, with148TalaatHarbElTahrirCityImbaba and01202723495. Source printedTalaatHard transliterated toHarb inauthoredaddress. No datedoperation inferred fromsitecopyright.",
+    "aliases": {
+      "english": ["Legacy Pets Clinic"],
+      "arabic": ["ليجاسي بيتس"]
+    }
+  },
+  {
+    "key": "pets-bay-mohandessin",
+    "nameEnglish": "Pets Bay Clinic",
+    "nameArabic": "عيادة بيتس باي",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Hegaz Street, Agouza, Giza",
+    "addressArabic": "شارع الحجاز، العجوزة، الجيزة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Agouza",
+    "phones": ["01099199184"],
+    "sources": [
+      {
+        "url": "https://localegypt.net/en/business/pets-bay-clinic-agouza",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-30",
+    "classificationEvidence": "Individual Local Egypt entry identifies veterinary clinic, telephone and El Hegaz Street in Agouza. Its 2026-10-30 listing update is dated directory evidence, not a confirmed clinic post. Own Google Sites home returned 404. No map point copied."
+  },
+  {
+    "key": "animalista-october",
+    "nameEnglish": "Animalista Veterinary Center",
+    "nameArabic": "مركز انيماليستا البيطري",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Al Masryeen Street, 6th of October, Giza",
+    "addressArabic": "شارع المصريين، السادس من أكتوبر، الجيزة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "6th of October",
+    "phones": ["01151136296"],
+    "sources": [
+      {
+        "url": "https://localegypt.net/business/animalista-veterinary-center-6th-of-october-city",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://besbes.app/business/e54fba2a-a927-4849-aa35-bb924e926283",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-11-07",
+    "classificationEvidence": "Individual Local Egypt entry gives pet medical attention, veterinary hospital services, Al Masryeen street and phone. Besbes corroborates name and street; shared Overture origins are not counted as independent operating evidence. Listing update 2026-11-07; own Facebook returned a login shell."
+  },
+  {
+    "key": "cat-and-dog-hadayek",
+    "nameEnglish": "Cat and Dog Pet Clinic",
+    "nameArabic": "عيادة كات آند دوج للحيوانات الأليفة",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Gate 1, Street 1, Hadayek El Ahram, Haram, Giza",
+    "addressArabic": "البوابة الأولى، شارع 1، حدائق الأهرام، الهرم، الجيزة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Hadayek El Ahram",
+    "phones": ["01064933646"],
+    "sources": [
+      {
+        "url": "https://paijes.com/giza/veterinary/cat-and-dog-pet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually read Paijes veterinary-clinic entry; public telephone/WhatsApp link contains +201064933646 and Gate 1 Street 1 Hadayek El Ahram address. Own Facebook inaccessible. Different phone and address from Cats and Dogs at 1 Ali Ibn Abi Taleb, Taawon (+201026999298); no identity alias or chain assertion."
+  },
+  {
+    "key": "pet-cure-zayed",
+    "nameEnglish": "Pet Cure Veterinary Clinic",
+    "nameArabic": "عيادة بت كيور البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Hayat Mall, El Shabab Street, 4th District (Sheikh Zayed), Giza",
+    "addressArabic": "مول الحياة، شارع الشباب، الحي الرابع، الشيخ زايد، الجيزة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "4th District (Sheikh Zayed)",
+    "phones": ["01000280308"],
+    "sources": [
+      {
+        "url": "https://dalil140.com/company/en/490195-pet-cure-veterinary-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.bizmideast.com/EG/pet-cure-veterinary-clinic-sheikh-zayed-0100-028-0308",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.voofla.com/EG/Cairo/386067438190091/Pet-Cure-Veterinary-Clinic-New-Cairo",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2020-08-09",
+    "classificationEvidence": "Individually read Dalil140 and BizMidEast entries agree Zayed address and 01000280308. BizMidEast explicitly describes pet vaccinations, diagnostic imaging and surgery; email petcureclinics@gmail.com agrees current chain site. Official contact page presently lists Fifth Settlement/Madinaty and a Zahraa El Maadi CTA, not Zayed. Historical chain post 2020-08-09 still lists Zayed. Retained under the existing two-domain corroboration rule, with branch-status uncertainty in E ledger. Lead decision 2026-11-12: inactive unconfirmed-branch; official branch list omits Zayed, newest dated evidence 2020. Retain contacts and sources for client phone confirmation.",
+    "chainKey": "pet-cure",
+    "branchQualifier": "Sheikh Zayed",
+    "inactiveReason": "unconfirmed-branch"
+  }
+]

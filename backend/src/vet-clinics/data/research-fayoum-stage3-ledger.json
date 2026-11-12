@@ -1,0 +1,435 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F2",
+  "governorate": "Fayoum",
+  "searches": [
+    "\"pet clinic\" \"Fayoum\"",
+    "عيادات بيطرية الفيوم حيوانات أليفة",
+    "\"El_Ghamry Veterinary Center\" address"
+  ],
+  "sourcesConsulted": [
+    "https://www.bizmideast.com/EG/el-ghamry-veterinary-center-0102-801-2627",
+    "https://www.findhealthclinics.org/EG/Faiyum/1361104720681838/El_Ghamry-Veterinary-Center",
+    "https://www.findhealthclinics.org/EG/الفيوم/1398125233792153/عيادة-المتحدة-البيطرية-الفيوم"
+  ],
+  "candidates": [
+    {
+      "key": "ghamry-fayoum",
+      "sources": [
+        {
+          "url": "https://www.findhealthclinics.org/EG/Faiyum/1361104720681838/El_Ghamry-Veterinary-Center",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        },
+        {
+          "url": "https://www.bizmideast.com/EG/el-ghamry-veterinary-center-0102-801-2627",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror with physical pet chemotherapy, surgery and current contact July 2026. Individual BizMidEast identifies Mohammed Kameal, Qesm Al Fayoum and same contact; not new Fayoum City. Meazak header not treated as a new catalog area.",
+      "lastSeenActive": "2026-07-09"
+    }
+  ],
+  "holdsAndExclusions": [
+    {
+      "name": "United Veterinary Clinic",
+      "reason": "livestock-only-evidence",
+      "evidence": "Individual search entry explicitly describes farm-animal examinations; pet treatment not established.",
+      "sources": ["https://www.findhealthclinics.org/EG/الفيوم/1398125233792153/عيادة-المتحدة-البيطرية-الفيوم"]
+    }
+  ],
+  "counts": {
+    "authored": 3,
+    "retained": 3,
+    "active": 3,
+    "inactiveByReason": {},
+    "precision": {
+      "area": 3
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {
+    "livestock-only-evidence": 1
+  },
+  "importAccounting": {
+    "candidates": 1,
+    "imported": 1,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D2",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D2-decisions.json",
+    "cities": [
+      {
+        "city": "Fayoum",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Faiyum/408030/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Faiyum/408030"
+        ],
+        "discoveryEntries": 36,
+        "candidates": [
+          {
+            "key": "771354053199204",
+            "city": "Fayoum",
+            "name": "مدرسة الرواد لتعليم الفروسية",
+            "url": "https://www.petshops1.com/EG/Faiyum/771354053199204/%D9%85%D8%AF%D8%B1%D8%B3%D8%A9-%D8%A7%D9%84%D8%B1%D9%88%D8%A7%D8%AF-%D9%84%D8%AA%D8%B9%D9%84%D9%8A%D9%85-%D8%A7%D9%84%D9%81%D8%B1%D9%88%D8%B3%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "745231032154684",
+            "city": "Fayoum",
+            "name": "Misha Waheed Diaries",
+            "url": "https://www.petshops1.com/EG/Faiyum/745231032154684/Misha-Waheed-Diaries",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "115270114991908",
+            "city": "Fayoum",
+            "name": "مزرعه الفهد للخيول العربيه",
+            "url": "https://www.petshops1.com/EG/Faiyum/115270114991908/%D9%85%D8%B2%D8%B1%D8%B9%D9%87-%D8%A7%D9%84%D9%81%D9%87%D8%AF-%D9%84%D9%84%D8%AE%D9%8A%D9%88%D9%84-%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "318339364987795",
+            "city": "Fayoum",
+            "name": "محل نيمو بالفيوم",
+            "url": "https://www.petshops1.com/EG/Faiyum/318339364987795/%D9%85%D8%AD%D9%84-%D9%86%D9%8A%D9%85%D9%88-%D8%A8%D8%A7%D9%84%D9%81%D9%8A%D9%88%D9%85",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "983348094857534",
+            "city": "Fayoum",
+            "name": "أكاديمية الصفوة للفروسيه",
+            "url": "https://www.petshops1.com/EG/Faiyum/983348094857534/%D8%A3%D9%83%D8%A7%D8%AF%D9%8A%D9%85%D9%8A%D8%A9-%D8%A7%D9%84%D8%B5%D9%81%D9%88%D8%A9-%D9%84%D9%84%D9%81%D8%B1%D9%88%D8%B3%D9%8A%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1939227529689694",
+            "city": "Fayoum",
+            "name": "من قلب الطبيعه مع بلوشي",
+            "url": "https://www.petshops1.com/EG/Faiyum/1939227529689694/%D9%85%D8%B9%D8%B1%D8%B6-%D8%A8%D9%84%D9%88%D8%B4%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "100174701603938",
+            "city": "Fayoum",
+            "name": "محمد غاوي حمام",
+            "url": "https://www.petshops1.com/EG/Faiyum/100174701603938/%D9%85%D8%AD%D9%85%D8%AF-%D8%BA%D8%A7%D9%88%D9%8A-%D8%AD%D9%85%D8%A7%D9%85",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "100853149352879",
+            "city": "Fayoum",
+            "name": "The best homing pigeon breeds",
+            "url": "https://www.petshops1.com/EG/Faiyum/100853149352879/The-best-homing-pigeon-breeds",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "358566771205803",
+            "city": "Fayoum",
+            "name": "M&E parrots",
+            "url": "https://www.petshops1.com/EG/Faiyum/358566771205803/M%26E-parrots",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "104827775263042",
+            "city": "Fayoum",
+            "name": "لوفت ايمن الصعيدي",
+            "url": "https://www.petshops1.com/EG/Faiyum/104827775263042/%D9%84%D9%88%D9%81%D8%AA-%D8%A7%D9%8A%D9%85%D9%86-%D8%A7%D9%84%D8%B5%D8%B9%D9%8A%D8%AF%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "271288940050336",
+            "city": "Fayoum",
+            "name": "New puppy center",
+            "url": "https://www.petshops1.com/EG/Faiyum/271288940050336/New-puppy-center",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "103822335293641",
+            "city": "Fayoum",
+            "name": "باتسيPatsy",
+            "url": "https://www.petshops1.com/EG/Faiyum/103822335293641/%D8%A8%D8%A7%D8%AA%D8%B3%D9%8APatsy",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "111173948555719",
+            "city": "Fayoum",
+            "name": "نـــعامـــــة NaӠama I",
+            "url": "https://www.petshops1.com/EG/Faiyum/111173948555719/%D9%86%D9%80%D9%80%D9%80%D8%B9%D8%A7%D9%85%D9%80%D9%80%D9%80%D9%80%D9%80%D8%A9-Na%D3%A0ama-I",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1238988772638735",
+            "city": "Fayoum",
+            "name": "إسطبل الفرسان بالفيوم",
+            "url": "https://www.petshops1.com/EG/Faiyum/1238988772638735/%D8%A5%D8%B3%D8%B7%D8%A8%D9%84-%D8%A7%D9%84%D9%81%D8%B1%D8%B3%D8%A7%D9%86-%D8%A8%D8%A7%D9%84%D9%81%D9%8A%D9%88%D9%85",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "986734124531014",
+            "city": "Fayoum",
+            "name": "Pigeon Storeريش و لون",
+            "url": "https://www.petshops1.com/EG/Faiyum/986734124531014/Pigeon-Store%D8%B1%D9%8A%D8%B4-%D9%88-%D9%84%D9%88%D9%86",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "100278875470521",
+            "city": "Fayoum",
+            "name": "Family House in Tunis Village",
+            "url": "https://www.petshops1.com/EG/Faiyum/100278875470521/Family-House-in-Tunis-Village",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "100828375614749",
+            "city": "Fayoum",
+            "name": "لوفت الامبراطور",
+            "url": "https://www.petshops1.com/EG/Faiyum/100828375614749/%D9%84%D9%88%D9%81%D8%AA-%D8%A7%D9%84%D8%A7%D9%85%D8%A8%D8%B1%D8%A7%D8%B7%D9%88%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "101481038200750",
+            "city": "Fayoum",
+            "name": "نعام الفيوم",
+            "url": "https://www.petshops1.com/EG/Faiyum/101481038200750/%D9%86%D8%B9%D8%A7%D9%85-%D8%A7%D9%84%D9%81%D9%8A%D9%88%D9%85",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "102130105459391",
+            "city": "Fayoum",
+            "name": "Captain Yasser",
+            "url": "https://www.petshops1.com/EG/Faiyum/102130105459391/Captain-Yasser",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "103856818792246",
+            "city": "Fayoum",
+            "name": "مزارع الخال - Al-khal Farms",
+            "url": "https://www.petshops1.com/EG/Faiyum/103856818792246/%D9%85%D8%B2%D8%A7%D8%B1%D8%B9-%D8%A7%D9%84%D8%AE%D8%A7%D9%84---Al-khal-Farms",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "105934805662336",
+            "city": "Fayoum",
+            "name": "pigeon Loft",
+            "url": "https://www.petshops1.com/EG/Faiyum/105934805662336/pigeon-Loft",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "134115093116075",
+            "city": "Fayoum",
+            "name": "Mina Emad Hair Styel",
+            "url": "https://www.petshops1.com/EG/Faiyum/134115093116075/Mina-Emad-Hair-Styel",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "137178442808828",
+            "city": "Fayoum",
+            "name": "Arab's Cavalry - الفرسان العرب",
+            "url": "https://www.petshops1.com/EG/Faiyum/137178442808828/Arab%27s-Cavalry---%D8%A7%D9%84%D9%81%D8%B1%D8%B3%D8%A7%D9%86-%D8%A7%D9%84%D8%B9%D8%B1%D8%A8",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "150515778472103",
+            "city": "Fayoum",
+            "name": "بازار إنچي ومنار Enjy & Manar Shopping Bazaar",
+            "url": "https://www.petshops1.com/EG/Faiyum/150515778472103/%D8%A8%D8%A7%D8%B2%D8%A7%D8%B1-%D8%A5%D9%86%DA%86%D9%8A-%D9%88%D9%85%D9%86%D8%A7%D8%B1-Enjy-%26-Manar-Shopping-Bazaar",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "217630308700599",
+            "city": "Fayoum",
+            "name": "Stable Tunis & Family House Beit El Ayla",
+            "url": "https://www.petshops1.com/EG/Faiyum/217630308700599/Stable-Tunis-%26-Family-House-Beit-El-Ayla",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "277424662606669",
+            "city": "Fayoum",
+            "name": "Angry Birds Pets Shop",
+            "url": "https://www.petshops1.com/EG/Faiyum/277424662606669/Angry-Birds-Pets-Shop",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "2363983566979197",
+            "city": "Fayoum",
+            "name": "Pet Care  Veterinary Clinic",
+            "url": "https://www.petshops1.com/EG/Faiyum/2363983566979197/Pet-Care--Veterinary-Clinic",
+            "status": "retained",
+            "reason": "pet-care-fayoum",
+            "evidence": "2026-10-25 emergency canine Caesarean at clinic, current address and reception. Emergency care does not imply 24h premises.",
+            "snapshot": "web-evidence/depth-25d83bd40b1cfee7.json"
+          },
+          {
+            "key": "101131938258341",
+            "city": "Fayoum",
+            "name": "عيادة آمن البيطرية",
+            "url": "https://www.petshops1.com/EG/Faiyum/101131938258341/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A2%D9%85%D9%86-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "retained",
+            "reason": "amn-fayoum",
+            "evidence": "2026-07-05 offers on-site pet examinations and treatment at Sheikh Hassan school address, with appointment phone explicitly printed.",
+            "snapshot": "web-evidence/depth-e955ef1526e3f75a.json"
+          },
+          {
+            "key": "104421212550746",
+            "city": "Fayoum",
+            "name": "شركة زودياك للأدوية البيطرية - Zodiac  Vet",
+            "url": "https://www.petshops1.com/EG/Faiyum/104421212550746/%D8%B4%D8%B1%D9%83%D8%A9-%D8%B2%D9%88%D8%AF%D9%8A%D8%A7%D9%83-%D9%84%D9%84%D8%A3%D8%AF%D9%88%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9---Zodiac--Vet",
+            "status": "held",
+            "reason": "pharmaceutical-supplier",
+            "evidence": "Zodiac drug company, not pet treatment premises.",
+            "snapshot": "web-evidence/depth-11967cbf37171adf.json"
+          },
+          {
+            "key": "373353445859825",
+            "city": "Fayoum",
+            "name": "معمل الوفاء للتحاليل البيطرية وتحاليل الاعلاف",
+            "url": "https://www.petshops1.com/EG/Faiyum/373353445859825/%D9%85%D8%B9%D9%85%D9%84-%D8%A7%D9%84%D9%88%D9%81%D8%A7%D8%A1-%D9%84%D9%84%D8%AA%D8%AD%D8%A7%D9%84%D9%8A%D9%84-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D9%88%D8%AA%D8%AD%D8%A7%D9%84%D9%8A%D9%84-%D8%A7%D9%84%D8%A7%D8%B9%D9%84%D8%A7%D9%81",
+            "status": "held",
+            "reason": "laboratory",
+            "evidence": "Feed/veterinary analysis lab without pet treatment clinic.",
+            "snapshot": "web-evidence/depth-267ef65e6d92839a.json"
+          },
+          {
+            "key": "556117927586494",
+            "city": "Fayoum",
+            "name": "عيادة الدكتور البيطرية بالفيوم",
+            "url": "https://www.petshops1.com/EG/Faiyum/556117927586494/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D8%A8%D8%A7%D9%84%D9%81%D9%8A%D9%88%D9%85",
+            "status": "held",
+            "reason": "livestock",
+            "evidence": "Sheep/goat insemination and farm service, no pet clinic evidence.",
+            "snapshot": "web-evidence/depth-1e9962bd7096acc1.json"
+          },
+          {
+            "key": "105866427430895",
+            "city": "Fayoum",
+            "name": "العيادة",
+            "url": "https://www.petshops1.com/EG/Faiyum/105866427430895/%D8%A7%D9%84%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9",
+            "status": "held",
+            "reason": "unresolved-premises",
+            "evidence": "Web.Vet city-only listing, no physical pet clinic evidence.",
+            "snapshot": "web-evidence/depth-5345812269cd0210.json"
+          },
+          {
+            "key": "1546580402316839",
+            "city": "Fayoum",
+            "name": "عيادة النخبة البيطرية التخصصية  Elnokhba Vete",
+            "url": "https://www.petshops1.com/EG/Faiyum/1546580402316839/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D9%86%D8%AE%D8%A8%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D8%A7%D9%84%D8%AA%D8%AE%D8%B5%D8%B5%D9%8A%D8%A9--Elnokhba-Veterinary-clinic",
+            "status": "held",
+            "reason": "unresolved-premises-phone",
+            "evidence": "Generic animal treatment, city-only location and no validated clinic phone.",
+            "snapshot": "web-evidence/depth-79f08350f79a76a9.json"
+          },
+          {
+            "key": "917301668129235",
+            "city": "Fayoum",
+            "name": "Pet Paw vet",
+            "url": "https://www.petshops1.com/EG/Faiyum/917301668129235/Pet-Paw-vet",
+            "status": "held",
+            "reason": "home-visit-premises-unconfirmed",
+            "evidence": "Pet Paw advertises home visits/online advice; physical treatment at QNB-side address not established.",
+            "snapshot": "web-evidence/depth-53065306ef349c4f.json"
+          },
+          {
+            "key": "105356312336915",
+            "city": "Fayoum",
+            "name": "National Vet For Animal Health.ناشيونال فيت ل",
+            "url": "https://www.petshops1.com/EG/Faiyum/105356312336915/National-Vet-For-Animal-Health.%D9%86%D8%A7%D8%B4%D9%8A%D9%88%D9%86%D8%A7%D9%84-%D9%81%D9%8A%D8%AA-%D9%84%D9%85%D9%86%D8%AA%D8%AC%D8%A7%D8%AA-%D8%B5%D8%AD%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86",
+            "status": "held",
+            "reason": "pharmaceutical-supplier",
+            "evidence": "National Vet animal-health products, not treatment premises.",
+            "snapshot": "web-evidence/depth-909328ab7329cefc.json"
+          },
+          {
+            "key": "100470412619528",
+            "city": "Fayoum",
+            "name": "مركز البرج للرعاية البيطرية",
+            "url": "https://www.petshops1.com/EG/Faiyum/100470412619528/%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D8%A8%D8%B1%D8%AC-%D9%84%D9%84%D8%B1%D8%B9%D8%A7%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "poultry",
+            "evidence": "Al Borg feed conversion/PCR poultry content, no pet clinic proof.",
+            "snapshot": "web-evidence/depth-3b7062cf56d84110.json"
+          }
+        ],
+        "retained": 2,
+        "exclusionsByReason": {
+          "no-pet-clinic-evidence-in-discovery": 26,
+          "pharmaceutical-supplier": 2,
+          "laboratory": 1,
+          "livestock": 1,
+          "unresolved-premises": 1,
+          "unresolved-premises-phone": 1,
+          "home-visit-premises-unconfirmed": 1,
+          "poultry": 1
+        },
+        "individualSnapshots": [
+          "web-evidence/depth-25d83bd40b1cfee7.json",
+          "web-evidence/depth-e955ef1526e3f75a.json",
+          "web-evidence/depth-11967cbf37171adf.json",
+          "web-evidence/depth-267ef65e6d92839a.json",
+          "web-evidence/depth-1e9962bd7096acc1.json",
+          "web-evidence/depth-5345812269cd0210.json",
+          "web-evidence/depth-79f08350f79a76a9.json",
+          "web-evidence/depth-53065306ef349c4f.json",
+          "web-evidence/depth-909328ab7329cefc.json",
+          "web-evidence/depth-3b7062cf56d84110.json"
+        ]
+      }
+    ]
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

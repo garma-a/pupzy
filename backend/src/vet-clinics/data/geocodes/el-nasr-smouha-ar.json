@@ -1,0 +1,82 @@
+{
+  "query": "11, سموحة, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=11%2C+%D8%B3%D9%85%D9%88%D8%AD%D8%A9%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:10:18.720Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 427288433,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 849495094,
+      "lat": "31.2168562",
+      "lon": "29.9462878",
+      "category": "highway",
+      "type": "footway",
+      "place_rank": 27,
+      "importance": 0.040076150911726546,
+      "addresstype": "road",
+      "name": "اشارة عبور مشاة نادي سموحة",
+      "display_name": "اشارة عبور مشاة نادي سموحة, الإسكندرية, 26215, مصر",
+      "address": {
+        "road": "اشارة عبور مشاة نادي سموحة",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "26215",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["31.2168392", "31.2168731", "29.9461707", "29.9464048"]
+    },
+    {
+      "place_id": 428532259,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 987592169,
+      "lat": "31.2132485",
+      "lon": "29.9482041",
+      "category": "place",
+      "type": "locality",
+      "place_rank": 25,
+      "importance": 0.06674281757839322,
+      "addresstype": "locality",
+      "name": "ابراج الصفوة",
+      "display_name": "ابراج الصفوة, الإسكندرية, مصر",
+      "address": {
+        "locality": "ابراج الصفوة",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["31.2126899", "31.2138164", "29.9469147", "29.9494922"]
+    },
+    {
+      "place_id": 428532482,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 1559834937,
+      "lat": "31.2137574",
+      "lon": "29.9465761",
+      "category": "place",
+      "type": "locality",
+      "place_rank": 25,
+      "importance": 0.06674281757839322,
+      "addresstype": "locality",
+      "name": "ابراج القطن",
+      "display_name": "ابراج القطن, الإسكندرية, مصر",
+      "address": {
+        "locality": "ابراج القطن",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["31.2134000", "31.2140734", "29.9460990", "29.9470176"]
+    }
+  ]
+}

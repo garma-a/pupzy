@@ -1,0 +1,60 @@
+[
+  {
+    "key": "bavaria-aswan",
+    "nameEnglish": "Bavaria Animal Hospital",
+    "nameArabic": "مستشفى بافاريا البيطري",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "El Akkad district, behind El Raya Hypermarket, beside Language School and Al Quds Library, Aswan",
+    "addressArabic": "حي العقاد، خلف هايبر الراية، بجوار مدرسة اللغات ومكتبة القدس، أسوان",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Aswan (Kism)",
+    "citySourceCode": "EG2801",
+    "phones": ["01007066324"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Aswan/104080458239135/Bavaria-Animal-Hospital-Dr-Mohamed-Kamal",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-07-21",
+    "classificationEvidence": "Read individual clinic-feed mirror: full pet examinations, surgery and vaccination at physical urban Aswan premises, current July 2026 contact. Third-party adoption phone excluded. Latest post varies hypermarket wording; preserve repeated header/July13 El Raya identity, no new branch.",
+    "aliases": {
+      "english": ["Bavaria Animal Hospital-Dr Mohamed Kamal"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "mai-salem-aswan",
+    "nameEnglish": "Dr. Mai Salem Veterinary Clinic",
+    "nameArabic": "عيادة دكتورة مي سالم البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "End of Airport Street extension, behind Veterinary Directorate beside railway crossing, Aswan",
+    "addressArabic": "آخر امتداد شارع المطار، خلف مديرية الطب البيطري بجوار المزلقان، أسوان",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Aswan (Kism)",
+    "citySourceCode": "EG2801",
+    "phones": ["01227186221"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Aswan/107481645543836/Dr.Mai-Salem_Vet-Doctor",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-07-30",
+    "classificationEvidence": "Dr Mai Salem own clinic page identifies private pet medicine/surgery and offers vaccinations at separate premises behind directorate. Government landmark is not clinic operator. Phone and precise street read; no inferred coordinates."
+  }
+]

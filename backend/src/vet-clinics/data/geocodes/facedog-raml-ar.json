@@ -1,0 +1,8 @@
+{
+  "query": "عدي بن زيد, زيزينيا, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%B9%D8%AF%D9%8A+%D8%A8%D9%86+%D8%B2%D9%8A%D8%AF%2C+%D8%B2%D9%8A%D8%B2%D9%8A%D9%86%D9%8A%D8%A7%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:10:24.224Z",
+  "httpStatus": 200,
+  "response": []
+}

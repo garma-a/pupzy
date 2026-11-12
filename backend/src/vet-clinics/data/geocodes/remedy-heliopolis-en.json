@@ -1,0 +1,36 @@
+{
+  "query": "El Nozha Street, Heliopolis, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Nozha+Street%2C+Heliopolis%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:13:25.274Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 427875801,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 14170454824,
+      "lat": "30.0965567",
+      "lon": "31.3431198",
+      "category": "amenity",
+      "type": "language_school",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "amenity",
+      "name": "Yehia el Rafie Official Language School",
+      "display_name": "Yehia el Rafie Official Language School, Al Nozha Street, Heliopolis, Cairo, 11736, Egypt",
+      "address": {
+        "amenity": "Yehia el Rafie Official Language School",
+        "road": "Al Nozha Street",
+        "suburb": "Heliopolis",
+        "city": "Cairo",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11736",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0965067", "30.0966067", "31.3430698", "31.3431698"]
+    }
+  ]
+}

@@ -1,0 +1,423 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F2",
+  "governorate": "Kafr El-Shikh",
+  "searches": ["\"pet clinic\" \"Kafr El Sheikh\"", "\"Desouk\" \"pet\" clinic", "\"Pet On Spot\" clinic كفر الشيخ"],
+  "sourcesConsulted": [
+    "https://www.bizmideast.com/EG/pet-on-spot-pet-clinic-0102-720-2910",
+    "https://www.voofla.com/EG/Kafr-Al-Sheikh/310569695691203/Pet-On-Spot-Pet-Paradise"
+  ],
+  "candidates": [
+    {
+      "key": "pet-on-spot-kafr",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Kafr-Al-Sheikh/310569695691203/Pet-On-Spot-Pet-Paradise",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        },
+        {
+          "url": "https://www.bizmideast.com/EG/pet-on-spot-pet-clinic-0102-720-2910",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror: cat bladder stone surgery and fracture care 2026. Current mirror address takes precedence over directory street wording. Same brand/phone directory corroborates urban Kafr El Sheikh Kism. No extra branch invented.",
+      "lastSeenActive": "2026-09-10"
+    }
+  ],
+  "holdsAndExclusions": [],
+  "counts": {
+    "authored": 5,
+    "retained": 6,
+    "active": 5,
+    "inactiveByReason": {
+      "no-phone": 1
+    },
+    "precision": {
+      "exact": 1,
+      "area": 5
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {},
+  "importAccounting": {
+    "candidates": 1,
+    "imported": 1,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D2",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D2-decisions.json",
+    "cities": [
+      {
+        "city": "Kafr El-Sheikh",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Kafr-el-Sheikh/67717/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Kafr-el-Sheikh/67717"
+        ],
+        "discoveryEntries": 36,
+        "candidates": [
+          {
+            "key": "408335189029539",
+            "city": "Kafr El-Sheikh",
+            "name": "El safwa Pharma",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/408335189029539/El-safwa-Pharma",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "2134694590097542",
+            "city": "Kafr El-Sheikh",
+            "name": "4M For Pets",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/2134694590097542/4M-For-Pets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "464008323455323",
+            "city": "Kafr El-Sheikh",
+            "name": "نباتات وفاء",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/464008323455323/%D9%86%D8%A8%D8%A7%D8%AA%D8%A7%D8%AA-%D9%88%D9%81%D8%A7%D8%A1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "444625629263335",
+            "city": "Kafr El-Sheikh",
+            "name": "معمل الدكتور محمد الشافعي لصحة الدواجن",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/444625629263335/%D9%85%D8%B9%D9%85%D9%84-%D8%A7%D9%84%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D9%85%D8%AD%D9%85%D8%AF-%D8%A7%D9%84%D8%B4%D8%A7%D9%81%D8%B9%D9%8A-%D9%84%D8%B5%D8%AD%D8%A9-%D8%A7%D9%84%D8%AF%D9%88%D8%A7%D8%AC%D9%86",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1122213934557225",
+            "city": "Kafr El-Sheikh",
+            "name": "International Pet Center",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/1122213934557225/International-Pet-Center",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1126565370548159",
+            "city": "Kafr El-Sheikh",
+            "name": "عالم المواشي واصف الحارون 2",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/1126565370548159/%D8%B9%D8%A7%D9%84%D9%85-%D8%A7%D9%84%D9%85%D9%88%D8%A7%D8%B4%D9%8A-%D9%88%D8%A7%D8%B5%D9%81-%D8%A7%D9%84%D8%AD%D8%A7%D8%B1%D9%88%D9%86-2",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "124749507207770",
+            "city": "Kafr El-Sheikh",
+            "name": "أكاديمية أجاويد",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/124749507207770/%D8%A3%D9%83%D8%A7%D8%AF%D9%8A%D9%85%D9%8A%D8%A9-%D8%A3%D8%AC%D8%A7%D9%88%D9%8A%D8%AF",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "110891620617622",
+            "city": "Kafr El-Sheikh",
+            "name": "أرانب كفر الشيخ",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/110891620617622/%D8%A3%D8%B1%D8%A7%D9%86%D8%A8-%D9%83%D9%81%D8%B1-%D8%A7%D9%84%D8%B4%D9%8A%D8%AE",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1321878597672931",
+            "city": "Kafr El-Sheikh",
+            "name": "فريق الرفق للحيوانات",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/1321878597672931/%D9%81%D8%B1%D9%8A%D9%82-%D8%A7%D9%84%D8%B1%D9%81%D9%82-%D9%84%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "109424930412350",
+            "city": "Kafr El-Sheikh",
+            "name": "معرض الغابة  KSG",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/109424930412350/%D9%85%D8%B9%D8%B1%D8%B6-%D8%A7%D9%84%D8%BA%D8%A7%D8%A8%D8%A9--KSG",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "113896664913699",
+            "city": "Kafr El-Sheikh",
+            "name": "Kholoud gaber",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/113896664913699/Kholoud-gaber",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "102706642654357",
+            "city": "Kafr El-Sheikh",
+            "name": "المهر للحيوانات الاليفه",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/102706642654357/%D8%A7%D9%84%D9%85%D9%87%D8%B1-%D9%84%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "105970527815070",
+            "city": "Kafr El-Sheikh",
+            "name": "3asfora online _ عصفوره أون لاين",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/105970527815070/3asfora-online-_-%D8%B9%D8%B5%D9%81%D9%88%D8%B1%D9%87-%D8%A3%D9%88%D9%86-%D9%84%D8%A7%D9%8A%D9%86",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "110085227305356",
+            "city": "Kafr El-Sheikh",
+            "name": "مكتب كتكوتي للدواجن ومستلزمات المزارع",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/110085227305356/%D9%85%D9%83%D8%AA%D8%A8-%D9%83%D8%AA%D9%83%D9%88%D8%AA%D9%8A-%D9%84%D9%84%D8%AF%D9%88%D8%A7%D8%AC%D9%86-%D9%88%D9%85%D8%B3%D8%AA%D9%84%D8%B2%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D9%85%D8%B2%D8%A7%D8%B1%D8%B9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "109304734804864",
+            "city": "Kafr El-Sheikh",
+            "name": "Herbal For Animal health",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/109304734804864/Herbal-For-Animal-health",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "128778866985377",
+            "city": "Kafr El-Sheikh",
+            "name": "Khaled seada stud",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/128778866985377/Khaled-seada-stud",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "109367588056472",
+            "city": "Kafr El-Sheikh",
+            "name": "دولفين",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/109367588056472/%D8%AF%D9%88%D9%84%D9%81%D9%8A%D9%86",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "101389698589162",
+            "city": "Kafr El-Sheikh",
+            "name": "Petalia",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/101389698589162/Petalia",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "107641162069734",
+            "city": "Kafr El-Sheikh",
+            "name": "فلسطين درينك كفر الشيخ-Palestine Drinks kfs",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/107641162069734/%D9%81%D9%84%D8%B3%D8%B7%D9%8A%D9%86-%D8%AF%D8%B1%D9%8A%D9%86%D9%83-%D9%83%D9%81%D8%B1-%D8%A7%D9%84%D8%B4%D9%8A%D8%AE-Palestine-Drinks-kfs",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "108128333972902",
+            "city": "Kafr El-Sheikh",
+            "name": "hesham_desha_official",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/108128333972902/hesham_desha_official",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "110909804885602",
+            "city": "Kafr El-Sheikh",
+            "name": "Vom_ future mafia _ kennel",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/110909804885602/Vom_-future-mafia-_-kennel",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "111468075182530",
+            "city": "Kafr El-Sheikh",
+            "name": "Esraa Mohamed \"Hair Care\"",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/111468075182530/Esraa-Mohamed-%22Hair-Care%22",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "113135070073131",
+            "city": "Kafr El-Sheikh",
+            "name": "Zoo animal center",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/113135070073131/Zoo-animal-center",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "113337844615043",
+            "city": "Kafr El-Sheikh",
+            "name": "دكتور اينو- Dr ino",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/113337844615043/%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D8%A7%D9%8A%D9%86%D9%88--Dr-ino",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "351338401672407",
+            "city": "Kafr El-Sheikh",
+            "name": "الإتحاد المصرى للزاجل \"فرع مدينه بيلا\" تحت ال",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/351338401672407/%D8%A7%D9%84%D8%A5%D8%AA%D8%AD%D8%A7%D8%AF-%D8%A7%D9%84%D9%85%D8%B5%D8%B1%D9%89-%D9%84%D9%84%D8%B2%D8%A7%D8%AC%D9%84-%22%D9%81%D8%B1%D8%B9-%D9%85%D8%AF%D9%8A%D9%86%D9%87-%D8%A8%D9%8A%D9%84%D8%A7%22-%D8%AA%D8%AD%D8%AA-%D8%A7%D9%84%D8%A7%D9%86%D8%B4%D8%A7%D8%A1.",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "781856511965871",
+            "city": "Kafr El-Sheikh",
+            "name": "فور إم فيت",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/781856511965871/%D9%81%D9%88%D8%B1-%D8%A5%D9%85-%D9%81%D9%8A%D8%AA",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "113302816761440",
+            "city": "Kafr El-Sheikh",
+            "name": "Maka pet clinic and store",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/113302816761440/Maka-pet-clinic-and-store",
+            "status": "retained",
+            "reason": "maka-kafr-sheikh",
+            "evidence": "Individual city clinic explicitly offers veterinary pet care alongside retail; complete urban street, phone and physical clinic read. No operation date inferred from retail feed.",
+            "snapshot": "web-evidence/depth-400e55b686843c01.json"
+          },
+          {
+            "key": "101631585977337",
+            "city": "Kafr El-Sheikh",
+            "name": "Petalia clinic.  Dr/Fatma Emad",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/101631585977337/Petalia-clinic.--Dr-Fatma-Emad",
+            "status": "retained",
+            "reason": "petalia-kafr-sheikh",
+            "evidence": "2026-10-27 pet dental scaling post explicitly gives current El Estad address/phone; heading has only city, detailed post resolves actual premises.",
+            "snapshot": "web-evidence/depth-62fcb64536073fc4.json"
+          },
+          {
+            "key": "109101707225155",
+            "city": "Kafr El-Sheikh",
+            "name": "Alpha  pets clinic عيادة ألفا بيتس للحيوانات",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/109101707225155/Alpha--pets-clinic-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A3%D9%84%D9%81%D8%A7-%D8%A8%D9%8A%D8%AA%D8%B3-%D9%84%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A3%D9%84%D9%8A%D9%81%D9%87",
+            "status": "retained",
+            "reason": "alpha-kafr-sheikh",
+            "evidence": "Individual pet clinic describes medical examinations, vaccination and pet surgery training with fixed Montaza premises. Reception from Telephone; different adoption number excluded.",
+            "snapshot": "web-evidence/depth-31f6a430fe452d8a.json"
+          },
+          {
+            "key": "1236531886217180",
+            "city": "Kafr El-Sheikh",
+            "name": "Kapu Pets Clinic",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/1236531886217180/Kapu-Pets-Clinic",
+            "status": "retained",
+            "reason": "kapu-sidi-salim",
+            "evidence": "2026-09-20 cat vaccinated at premises; 2026-09-08 lists examinations, lab tests and pet surgery. No clinic phone on read page; inactive no-phone, WhatsApp group not a phone.",
+            "snapshot": "web-evidence/depth-6fc86b69ac64c5ed.json"
+          },
+          {
+            "key": "107379132086640",
+            "city": "Kafr El-Sheikh",
+            "name": "مركز الخدمة العامة للعلاج بكلية الطب البيطري",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/107379132086640/%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D8%AE%D8%AF%D9%85%D8%A9-%D8%A7%D9%84%D8%B9%D8%A7%D9%85%D8%A9-%D9%84%D9%84%D8%B9%D9%84%D8%A7%D8%AC-%D8%A8%D9%83%D9%84%D9%8A%D8%A9-%D8%A7%D9%84%D8%B7%D8%A8-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-%D8%AC%D8%A7%D9%85%D8%B9%D8%A9-%D9%83%D9%81%D8%B1-%D8%A7%D9%84%D8%B4%D9%8A%D8%AE",
+            "status": "held",
+            "reason": "unresolved-public-pet-hospital",
+            "evidence": "University public-service centre page lacks phone and specific pet hospital admission evidence; not inferred from faculty title.",
+            "snapshot": "web-evidence/depth-cf7f9f07010612ca.json"
+          },
+          {
+            "key": "164761344218029",
+            "city": "Kafr El-Sheikh",
+            "name": "National Veterinary Center",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/164761344218029/National-Veterinary-Center",
+            "status": "held",
+            "reason": "unresolved-treatment",
+            "evidence": "National veterinary centre lead lacks verified on-site pet treatment/premises.",
+            "snapshot": "web-evidence/depth-314c709a96ac811e.json"
+          },
+          {
+            "key": "100922472753067",
+            "city": "Kafr El-Sheikh",
+            "name": "صيدلية د/مني عبدالله حفينه.للخدمات البيطرية",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/100922472753067/%D8%B5%D9%8A%D8%AF%D9%84%D9%8A%D8%A9-%D8%AF-%D9%85%D9%86%D9%8A-%D8%B9%D8%A8%D8%AF%D8%A7%D9%84%D9%84%D9%87-%D8%AD%D9%81%D9%8A%D9%86%D9%87.%D9%84%D9%84%D8%AE%D8%AF%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "pharmacy",
+            "evidence": "Qallin pharmacy, no pet treatment premises established.",
+            "snapshot": "web-evidence/depth-766668cab6a675bd.json"
+          },
+          {
+            "key": "112084895635162",
+            "city": "Kafr El-Sheikh",
+            "name": "عيادة العفاف البيطرية",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/112084895635162/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%B9%D9%81%D8%A7%D9%81-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "unresolved-treatment-premises",
+            "evidence": "Afaf city-only listing, no validated physical pet clinic/contact.",
+            "snapshot": "web-evidence/depth-0a8ea17a6cfa4b27.json"
+          },
+          {
+            "key": "423413418007413",
+            "city": "Kafr El-Sheikh",
+            "name": "Pet shop & clinic",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/423413418007413/Pet-shop-%26-clinic",
+            "status": "held",
+            "reason": "placeholder-address",
+            "evidence": "Address literally contains zero placeholders; do not invent premises.",
+            "snapshot": "web-evidence/depth-7dfd62dee2954368.json"
+          },
+          {
+            "key": "1571822866465523",
+            "city": "Kafr El-Sheikh",
+            "name": "الرحمه لتجاره الاعلاف  والخدمات البيطريه",
+            "url": "https://www.petshops1.com/EG/Kafr-el-Sheikh/1571822866465523/%D8%A7%D9%84%D8%B1%D8%AD%D9%85%D9%87-%D9%84%D8%AA%D8%AC%D8%A7%D8%B1%D9%87-%D8%A7%D9%84%D8%A7%D8%B9%D9%84%D8%A7%D9%81--%D9%88%D8%A7%D9%84%D8%AE%D8%AF%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87",
+            "status": "held",
+            "reason": "feed-and-supplies",
+            "evidence": "Feed/veterinary supplies, no qualifying pet treatment verified.",
+            "snapshot": "web-evidence/depth-3fe75be3ffa6917f.json"
+          }
+        ],
+        "retained": 4,
+        "exclusionsByReason": {
+          "no-pet-clinic-evidence-in-discovery": 26,
+          "unresolved-public-pet-hospital": 1,
+          "unresolved-treatment": 1,
+          "pharmacy": 1,
+          "unresolved-treatment-premises": 1,
+          "placeholder-address": 1,
+          "feed-and-supplies": 1
+        },
+        "individualSnapshots": [
+          "web-evidence/depth-400e55b686843c01.json",
+          "web-evidence/depth-62fcb64536073fc4.json",
+          "web-evidence/depth-31f6a430fe452d8a.json",
+          "web-evidence/depth-6fc86b69ac64c5ed.json",
+          "web-evidence/depth-cf7f9f07010612ca.json",
+          "web-evidence/depth-314c709a96ac811e.json",
+          "web-evidence/depth-766668cab6a675bd.json",
+          "web-evidence/depth-0a8ea17a6cfa4b27.json",
+          "web-evidence/depth-7dfd62dee2954368.json",
+          "web-evidence/depth-3fe75be3ffa6917f.json"
+        ]
+      }
+    ]
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

@@ -1,0 +1,87 @@
+{
+  "query": "المنتزه, مصر الجديدة, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%85%D9%86%D8%AA%D8%B2%D9%87%2C+%D9%85%D8%B5%D8%B1+%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:46:03.061Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50214242,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 589716825,
+      "lat": "30.1157300",
+      "lon": "31.3396357",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "tertiary",
+      "name": "شارع المنتزه",
+      "display_name": "شارع المنتزه, الحلمية, القاهرة, 11777, مصر",
+      "address": {
+        "road": "شارع المنتزه",
+        "suburb": "الحلمية",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11777",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.1129757", "30.1184466", "31.3391695", "31.3401386"]
+    },
+    {
+      "place_id": 50196990,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 24848564,
+      "lat": "30.1103649",
+      "lon": "31.3384466",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "tertiary",
+      "name": "شارع المنتزه",
+      "display_name": "شارع المنتزه, الحلمية, القاهرة, 11843, مصر",
+      "address": {
+        "road": "شارع المنتزه",
+        "suburb": "الحلمية",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11843",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.1084420", "30.1125682", "31.3377638", "31.3388108"]
+    },
+    {
+      "place_id": 50225315,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 307906568,
+      "lat": "30.1068215",
+      "lon": "31.3382263",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "tertiary",
+      "name": "شارع المنتزه",
+      "display_name": "شارع المنتزه, الحلمية, القاهرة, 11757, مصر",
+      "address": {
+        "road": "شارع المنتزه",
+        "suburb": "الحلمية",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11757",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.1055766", "30.1077256", "31.3380487", "31.3387615"]
+    }
+  ]
+}

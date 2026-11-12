@@ -1,0 +1,40 @@
+{
+  "query": "مقبل باشا, جليم, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%85%D9%82%D8%A8%D9%84+%D8%A8%D8%A7%D8%B4%D8%A7%2C+%D8%AC%D9%84%D9%8A%D9%85%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:54:15.003Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 48854754,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 42299339,
+      "lat": "31.2397594",
+      "lon": "29.9579714",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.053409484245059854,
+      "addresstype": "residential",
+      "name": "شارع مقبل باشا",
+      "display_name": "شارع مقبل باشا, فلمنج, الإسكندرية, 21531, مصر",
+      "address": {
+        "road": "شارع مقبل باشا",
+        "neighbourhood": "فلمنج",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21531",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": [
+        "31.2389853",
+        "31.2405952",
+        "29.9572569",
+        "29.9585562"
+      ]
+    }
+  ]
+}

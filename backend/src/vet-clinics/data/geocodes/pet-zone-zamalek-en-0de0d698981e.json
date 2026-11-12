@@ -1,0 +1,35 @@
+{
+  "query": "Mohamed Mazhar Street, Zamalek, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Mohamed+Mazhar+Street%2C+Zamalek%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:58.146Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 49600702,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 691416558,
+      "lat": "30.0674852",
+      "lon": "31.2222017",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.05339670634012356,
+      "addresstype": "tertiary",
+      "name": "Mohamed Mazhar Street",
+      "display_name": "Mohamed Mazhar Street, Mohamed Mazhar, Zamalek, Cairo, 11568, Egypt",
+      "address": {
+        "road": "Mohamed Mazhar Street",
+        "neighbourhood": "Mohamed Mazhar",
+        "suburb": "Zamalek",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11568",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0622132", "30.0728439", "31.2217873", "31.2233041"]
+    }
+  ]
+}

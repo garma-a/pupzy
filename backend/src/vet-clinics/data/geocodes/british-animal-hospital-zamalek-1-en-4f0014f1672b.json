@@ -1,0 +1,36 @@
+{
+  "query": "21A Bahgat Ali Street, Abo El Feda, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=21A+Bahgat+Ali+Street%2C+Abo+El+Feda%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:46:12.965Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50028740,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 6589224535,
+      "lat": "30.0703590",
+      "lon": "31.2211302",
+      "category": "place",
+      "type": "house",
+      "place_rank": 30,
+      "importance": 0.00006337300679021924,
+      "addresstype": "place",
+      "name": "",
+      "display_name": "21A, Bahgat Ali Street, Mohamed Mazhar, Zamalek, Cairo, 11568, Egypt",
+      "address": {
+        "house_number": "21A",
+        "road": "Bahgat Ali Street",
+        "neighbourhood": "Mohamed Mazhar",
+        "suburb": "Zamalek",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11568",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0703090", "30.0704090", "31.2210802", "31.2211802"]
+    }
+  ]
+}

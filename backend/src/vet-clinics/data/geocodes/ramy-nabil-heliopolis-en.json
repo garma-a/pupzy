@@ -1,0 +1,36 @@
+{
+  "query": "Shebin Street, Heliopolis, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Shebin+Street%2C+Heliopolis%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:40:20.699Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50681204,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 24926472,
+      "lat": "30.0968738",
+      "lon": "31.3317477",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Shebin Street",
+      "display_name": "Shebin Street, Heliopolis, Cairo, 11757, Egypt",
+      "address": {
+        "road": "Shebin Street",
+        "quarter": "Heliopolis",
+        "suburb": "Heliopolis",
+        "city": "Cairo",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11757",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0951664", "30.0977461", "31.3302106", "31.3338954"]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "query": "Tiba Street, Dokki, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Tiba+Street%2C+Dokki%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:22:03.048Z",
+  "httpStatus": 200,
+  "response": []
+}

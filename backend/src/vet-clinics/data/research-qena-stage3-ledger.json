@@ -1,0 +1,223 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F3",
+  "governorate": "Qena",
+  "searches": ["عيادة بيطرية قنا حيوانات أليفة"],
+  "sourcesConsulted": [
+    "https://buy.com.eg/ar/directory/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A3%D9%84%D9%8A%D9%81-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-1w5ax7"
+  ],
+  "candidates": [
+    {
+      "key": "aleef-qena",
+      "sources": [
+        {
+          "url": "https://buy.com.eg/ar/directory/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A3%D9%84%D9%8A%D9%81-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-1w5ax7",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual Buy Egypt pet-clinic entry with public contact and Qism Qena address; dated clients describe vaccination/exams and veterinary care. No street inferred from plus code, no map coordinates used. Platform not accepting online orders is not evidence of clinic closure.",
+      "lastSeenActive": "2026-01-13"
+    }
+  ],
+  "holdsAndExclusions": [],
+  "counts": {
+    "authored": 3,
+    "retained": 3,
+    "active": 3,
+    "inactiveByReason": {},
+    "precision": {
+      "area": 3
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {},
+  "importAccounting": {
+    "candidates": 1,
+    "imported": 1,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D3",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D3-decisions.json",
+    "cities": [
+      {
+        "city": "Qena",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Qena/67869/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Qena/67869"
+        ],
+        "discoveryEntries": 15,
+        "candidates": [
+          {
+            "key": "821415101269865",
+            "city": "Qena",
+            "name": "Alhabeeb Farm - مزارع الحبيب",
+            "url": "https://www.petshops1.com/EG/Qena/821415101269865/Alhabeeb-Farm---%D9%85%D8%B2%D8%A7%D8%B1%D8%B9-%D8%A7%D9%84%D8%AD%D8%A8%D9%8A%D8%A8",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "796046773600056",
+            "city": "Qena",
+            "name": "بيت الرفق",
+            "url": "https://www.petshops1.com/EG/Qena/796046773600056/%D8%A8%D9%8A%D8%AA-%D8%A7%D9%84%D8%B1%D9%81%D9%82",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "366305367364708",
+            "city": "Qena",
+            "name": "Jungle Qena",
+            "url": "https://www.petshops1.com/EG/Qena/366305367364708/Jungle-Qena",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "628933810293728",
+            "city": "Qena",
+            "name": "إسمع مني - esm3 meny",
+            "url": "https://www.petshops1.com/EG/Qena/628933810293728/%D8%A5%D8%B3%D9%85%D8%B9-%D9%85%D9%86%D9%8A---esm3-meny",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "111822265296628",
+            "city": "Qena",
+            "name": "تحديق باور جريت _Power GRit",
+            "url": "https://www.petshops1.com/EG/Qena/111822265296628/%D8%AA%D8%AD%D8%AF%D9%8A%D9%82-%D8%A8%D8%A7%D9%88%D8%B1-%D8%AC%D8%B1%D9%8A%D8%AA-_Power-GRit",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "109117085310292",
+            "city": "Qena",
+            "name": "قائد السرب",
+            "url": "https://www.petshops1.com/EG/Qena/109117085310292/%D9%82%D8%A7%D8%A6%D8%AF-%D8%A7%D9%84%D8%B3%D8%B1%D8%A8",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "968931056311029",
+            "city": "Qena",
+            "name": "Petsico Vet clinic",
+            "url": "https://www.petshops1.com/EG/Qena/968931056311029/Petsico-Vet-clinic",
+            "status": "retained",
+            "reason": "petsico-qena",
+            "evidence": "Individual pet clinic explicitly offers examinations/vaccinations at this city premises; current posts list both reception phones and current address. Advice/retail dates not promoted as clinical case dates.",
+            "snapshot": "web-evidence/depth-40e576c67111c50c.json"
+          },
+          {
+            "key": "254640911666492",
+            "city": "Qena",
+            "name": "المركز الطبي البيطري",
+            "url": "https://www.petshops1.com/EG/Qena/254640911666492/%D8%A7%D9%84%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D8%B7%D8%A8%D9%8A-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A",
+            "status": "retained",
+            "reason": "veterinary-medical-qena",
+            "evidence": "Individual clinic description explicitly provides examinations/vaccinations for pets as well as livestock. Physical urban address/reception printed; not merely veterinary supplies.",
+            "snapshot": "web-evidence/depth-5ec6d6394cc397b0.json"
+          },
+          {
+            "key": "110312998227625",
+            "city": "Qena",
+            "name": "ميديكا فيت للخدمات البيطرية",
+            "url": "https://www.petshops1.com/EG/Qena/110312998227625/%D9%85%D9%8A%D8%AF%D9%8A%D9%83%D8%A7-%D9%81%D9%8A%D8%AA-%D9%84%D9%84%D8%AE%D8%AF%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "veterinary-products",
+            "evidence": "Medica veterinary products/services page without public pet clinic premises.",
+            "snapshot": "web-evidence/depth-74853ed1680a23bc.json"
+          },
+          {
+            "key": "100702886181350",
+            "city": "Qena",
+            "name": "National Veterinarian Abu khalid",
+            "url": "https://www.petshops1.com/EG/Qena/100702886181350/National-Veterinarian-Abu-khalid",
+            "status": "held",
+            "reason": "unresolved-premises",
+            "evidence": "Abu Khalid general veterinarian city-only listing, no qualifying physical pet treatment.",
+            "snapshot": "web-evidence/depth-2e5874ceb6facf04.json"
+          },
+          {
+            "key": "105024889328415",
+            "city": "Qena",
+            "name": "جمعية كيو ڤيت للرفق بالحيوان - Q Vet Associat",
+            "url": "https://www.petshops1.com/EG/Qena/105024889328415/%D8%AC%D9%85%D8%B9%D9%8A%D8%A9-%D9%83%D9%8A%D9%88-%DA%A4%D9%8A%D8%AA-%D9%84%D9%84%D8%B1%D9%81%D9%82-%D8%A8%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86---Q-Vet-Association-For-Animal-Welfare",
+            "status": "held",
+            "reason": "welfare-association",
+            "evidence": "Q Vet welfare association not evidence of publicly accessible treatment premises.",
+            "snapshot": "web-evidence/depth-118b934e3105eefe.json"
+          },
+          {
+            "key": "566078136589392",
+            "city": "Qena",
+            "name": "Vet solve-حل بيطري",
+            "url": "https://www.petshops1.com/EG/Qena/566078136589392/Vet-solve-%D8%AD%D9%84-%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A",
+            "status": "held",
+            "reason": "education-page",
+            "evidence": "Vet Solve educational animal/livestock advice, no physical clinic evidenced.",
+            "snapshot": "web-evidence/depth-4cc453bd8dc42a90.json"
+          },
+          {
+            "key": "890136851062641",
+            "city": "Qena",
+            "name": "مركز النور البيطري al-Nour vet center",
+            "url": "https://www.petshops1.com/EG/Qena/890136851062641/%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D9%86%D9%88%D8%B1-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-al-Nour-vet-center",
+            "status": "held",
+            "reason": "unresolved-pet-treatment-branches",
+            "evidence": "Al Nour publishes pet retail at Shanhoriya and unspecified other branches; clinical treatment not established at each. Do not import retail as pet clinic.",
+            "snapshot": "web-evidence/depth-01b9f13737d44ec2.json"
+          },
+          {
+            "key": "259716293886231",
+            "city": "Qena",
+            "name": "عيادة أليف البيطرية",
+            "url": "https://www.petshops1.com/EG/Qena/259716293886231/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A3%D9%84%D9%8A%D9%81-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Individual entry reviewed; no sufficiently evidenced pet treatment at physical premises/contact. Not a nonexistence or closure conclusion.",
+            "snapshot": "web-evidence/depth-a29368d0e3eac734.json"
+          },
+          {
+            "key": "101052689507406",
+            "city": "Qena",
+            "name": "مركز المروة البيطري بقنا_Al Marwa vet. center",
+            "url": "https://www.petshops1.com/EG/Qena/101052689507406/%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D9%85%D8%B1%D9%88%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-%D8%A8%D9%82%D9%86%D8%A7_Al-Marwa-vet.-center",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Al Marwa at Dendera bridge read; general veterinary supply content insufficient for on-site pet treatment.",
+            "snapshot": "web-evidence/depth-9d87a46bee067893.json"
+          }
+        ],
+        "retained": 2,
+        "exclusionsByReason": {
+          "no-pet-clinic-evidence-in-discovery": 6,
+          "veterinary-products": 1,
+          "unresolved-premises": 1,
+          "welfare-association": 1,
+          "education-page": 1,
+          "unresolved-pet-treatment-branches": 1,
+          "unresolved-pet-treatment": 2
+        },
+        "individualSnapshots": [
+          "web-evidence/depth-40e576c67111c50c.json",
+          "web-evidence/depth-5ec6d6394cc397b0.json",
+          "web-evidence/depth-74853ed1680a23bc.json",
+          "web-evidence/depth-2e5874ceb6facf04.json",
+          "web-evidence/depth-118b934e3105eefe.json",
+          "web-evidence/depth-4cc453bd8dc42a90.json",
+          "web-evidence/depth-01b9f13737d44ec2.json",
+          "web-evidence/depth-a29368d0e3eac734.json",
+          "web-evidence/depth-9d87a46bee067893.json"
+        ]
+      }
+    ]
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

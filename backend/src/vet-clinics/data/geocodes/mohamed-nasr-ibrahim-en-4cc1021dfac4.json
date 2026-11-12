@@ -1,0 +1,8 @@
+{
+  "query": "Abdel Hafez Ahmed Street, Nasr City, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Abdel+Hafez+Ahmed+Street%2C+Nasr+City%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:15:27.419Z",
+  "httpStatus": 200,
+  "response": []
+}

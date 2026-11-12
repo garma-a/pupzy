@@ -1,0 +1,28 @@
+{
+  "url": "https://www.petshops1.com/EG/Damanh%C3%BBr/67507/genre/162068413843305/Veterinarian",
+  "accessedAt": "2026-11-12",
+  "error": "HTTP Error 404: Not Found",
+  "responseHeaders": {
+    "Date": "Thu, 12 Nov 2026 12:46:38 GMT",
+    "Content-Type": "text/html; charset=UTF-8",
+    "Transfer-Encoding": "chunked",
+    "Connection": "close",
+    "Server": "cloudflare",
+    "Nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "X-Powered-By": "PHP/7.3.33",
+    "Accept-CH": "Viewport-Width",
+    "Accept-CH-Lifetime": "30",
+    "Vary": "Viewport-Width,User-Agent",
+    "X-Frame-Options": "SAMEORIGIN",
+    "X-XSS-Protection": "1; mode=block",
+    "Link": "</assets/css.css>; rel=\"preload\"; as=\"style\", </assets/js.js>; rel=\"preload\"; as=\"script\", </css/font-awesome.4.7.0.min.css>; rel=\"preload\"; as=\"style\", </img/petshops1/h30/logo.png>; rel=\"preload\"; as=\"image\"",
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "Expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "cf-cache-status": "DYNAMIC",
+    "Server-Timing": "cfCacheStatus;desc=\"DYNAMIC\"",
+    "Report-To": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=TsS1gBsZ3q7RFfmQUr4DQ305wYQgH7dVNv3ZASzSo00Yzk1gZpnppEIC%2FqlXoyEjtmg%2FqgM8KDwc7zDfO0Ne9ZhSHqXzR8NxYlbKgAnb0knt7omvE3wjqTpplrcxRh1vvcmLXA%3D%3D\"}]}",
+    "CF-RAY": "a595a404cbb7e1ac-MRS",
+    "alt-svc": "h3=\":443\"; ma=86400"
+  }
+}

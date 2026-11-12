@@ -1,0 +1,37 @@
+{
+  "query": "163 10th Street, 5th District, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=163+10th+Street%2C+5th+District%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:21:52.049Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51808099,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 10762253693,
+      "lat": "29.9661333",
+      "lon": "30.8987041",
+      "category": "amenity",
+      "type": "post_office",
+      "place_rank": 30,
+      "importance": 0.00004952849622334657,
+      "addresstype": "amenity",
+      "name": "11th District Post Office",
+      "display_name": "11th District Post Office, Gamal Abd Al Naser Street, Tiba Gardens, 1st District, 6th of October, Aj Jiza, 12591, Egypt",
+      "address": {
+        "amenity": "11th District Post Office",
+        "road": "Gamal Abd Al Naser Street",
+        "neighbourhood": "Tiba Gardens",
+        "suburb": "1st District",
+        "city": "6th of October",
+        "state": "Aj Jiza",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12591",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9660833", "29.9661833", "30.8986541", "30.8987541"]
+    }
+  ]
+}

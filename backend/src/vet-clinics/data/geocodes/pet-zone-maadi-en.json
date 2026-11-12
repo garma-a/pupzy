@@ -1,0 +1,8 @@
+{
+  "query": "2/4 El Laselki Street, Maadi, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=2%2F4+El+Laselki+Street%2C+Maadi%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:48:08.222Z",
+  "httpStatus": 200,
+  "response": []
+}

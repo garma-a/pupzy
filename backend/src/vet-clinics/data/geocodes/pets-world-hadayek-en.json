@@ -1,0 +1,8 @@
+{
+  "query": "Alf Leila Wa Leila CoffeeShop Street, Hadayek El Ahram, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Alf+Leila+Wa+Leila+CoffeeShop+Street%2C+Hadayek+El+Ahram%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:21:24.751Z",
+  "httpStatus": 200,
+  "response": []
+}

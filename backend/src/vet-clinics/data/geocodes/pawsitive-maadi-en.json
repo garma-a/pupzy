@@ -1,0 +1,113 @@
+{
+  "query": "Street 77, Maadi, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Street+77%2C+Maadi%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:39:57.588Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 431547467,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 28916538,
+      "lat": "29.9674626",
+      "lon": "31.2642294",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "tertiary",
+      "name": "Street 77",
+      "display_name": "Street 77, Maadi al Khahiri, Cairo, 11431, Egypt",
+      "address": {
+        "road": "Street 77",
+        "village": "Maadi al Khahiri",
+        "city": "Cairo",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11431",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9647931", "29.9701322", "31.2609176", "31.2675411"]
+    },
+    {
+      "place_id": 50757647,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 564912415,
+      "lat": "29.9630107",
+      "lon": "31.2578318",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Street 77",
+      "display_name": "Street 77, Maadi al Khahiri, Cairo, 11431, Egypt",
+      "address": {
+        "road": "Street 77",
+        "village": "Maadi al Khahiri",
+        "city": "Cairo",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11431",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9623961", "29.9636241", "31.2567352", "31.2589290"]
+    },
+    {
+      "place_id": 50758000,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 709225349,
+      "lat": "29.9623510",
+      "lon": "31.2565490",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Street 77",
+      "display_name": "Street 77, Maadi al Khahiri, Cairo, 11728, Egypt",
+      "address": {
+        "road": "Street 77",
+        "village": "Maadi al Khahiri",
+        "city": "Cairo",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11728",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9622674", "29.9624346", "31.2563905", "31.2567075"]
+    },
+    {
+      "place_id": 431547530,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 1572425654,
+      "lat": "29.9701769",
+      "lon": "31.2675974",
+      "category": "highway",
+      "type": "tertiary_link",
+      "place_rank": 27,
+      "importance": 0.040079604028381774,
+      "addresstype": "road",
+      "name": "Street 77",
+      "display_name": "Street 77, Maadi al Khahiri, Cairo, 11431, Egypt",
+      "address": {
+        "road": "Street 77",
+        "village": "Maadi al Khahiri",
+        "city": "Cairo",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11431",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9701322", "29.9702215", "31.2675411", "31.2676536"]
+    }
+  ]
+}

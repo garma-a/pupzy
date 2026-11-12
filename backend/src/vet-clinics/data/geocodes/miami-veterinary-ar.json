@@ -1,0 +1,40 @@
+{
+  "query": "العمروسي, ميامي, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B9%D9%85%D8%B1%D9%88%D8%B3%D9%8A%2C+%D9%85%D9%8A%D8%A7%D9%85%D9%8A%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:53:57.400Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 48197455,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 691965201,
+      "lat": "31.2683563",
+      "lon": "29.9961278",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.053409484245059854,
+      "addresstype": "residential",
+      "name": "شارع العمروسى",
+      "display_name": "شارع العمروسى, ميامي, الإسكندرية, 21614, مصر",
+      "address": {
+        "road": "شارع العمروسى",
+        "suburb": "ميامي",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21614",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": [
+        "31.2679126",
+        "31.2688007",
+        "29.9954707",
+        "29.9967844"
+      ]
+    }
+  ]
+}

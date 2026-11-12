@@ -1,0 +1,35 @@
+{
+  "query": "ابو المحاسن الشاذلى, المهندسين, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D8%A8%D9%88+%D8%A7%D9%84%D9%85%D8%AD%D8%A7%D8%B3%D9%86+%D8%A7%D9%84%D8%B4%D8%A7%D8%B0%D9%84%D9%89%2C+%D8%A7%D9%84%D9%85%D9%87%D9%86%D8%AF%D8%B3%D9%8A%D9%86%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:49:24.213Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50725334,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 32108636,
+      "lat": "30.0560096",
+      "lon": "31.2059527",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05339670634012356,
+      "addresstype": "residential",
+      "name": "ميدان بورسعيد",
+      "display_name": "ميدان بورسعيد, العجوزة, الجيزة, 12411, مصر",
+      "address": {
+        "road": "ميدان بورسعيد",
+        "suburb": "العجوزة",
+        "city": "الجيزة",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12411",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0551330", "30.0568861", "31.2051517", "31.2067538"]
+    }
+  ]
+}

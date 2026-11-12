@@ -1,0 +1,71 @@
+{
+  "query": "خليل الخياط, كفر عبده, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%AE%D9%84%D9%8A%D9%84+%D8%A7%D9%84%D8%AE%D9%8A%D8%A7%D8%B7%2C+%D9%83%D9%81%D8%B1+%D8%B9%D8%A8%D8%AF%D9%87%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:52:44.444Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 48692097,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 34602796,
+      "lat": "31.2242338",
+      "lon": "29.9498350",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.053409484245059854,
+      "addresstype": "residential",
+      "name": "شارع مسجد مصطفى كامل",
+      "display_name": "شارع مسجد مصطفى كامل, كفر عبده, الإسكندرية, 25221, مصر",
+      "address": {
+        "road": "شارع مسجد مصطفى كامل",
+        "neighbourhood": "كفر عبده",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "25221",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": [
+        "31.2236264",
+        "31.2248374",
+        "29.9472798",
+        "29.9523892"
+      ]
+    },
+    {
+      "place_id": 48671888,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 34618315,
+      "lat": "31.2235863",
+      "lon": "29.9545231",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.053409484245059854,
+      "addresstype": "residential",
+      "name": "شارع مسجد مصطفى كامل",
+      "display_name": "شارع مسجد مصطفى كامل, كفر عبده, الإسكندرية, 21529, مصر",
+      "address": {
+        "road": "شارع مسجد مصطفى كامل",
+        "neighbourhood": "كفر عبده",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21529",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": [
+        "31.2235622",
+        "31.2236231",
+        "29.9526544",
+        "29.9563916"
+      ]
+    }
+  ]
+}

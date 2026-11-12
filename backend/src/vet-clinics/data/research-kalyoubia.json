@@ -1,0 +1,221 @@
+[
+  {
+    "key": "pet-planet-benha",
+    "nameEnglish": "Pet Planet Hospital",
+    "nameArabic": "مستشفى بت بلانيت البيطري",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "El Nagda Street, opposite Fever Hospital gate, beside Viola Pharmacy, Banha, Kalyoubia",
+    "addressArabic": "شارع النجدة، مقابل بوابة مستشفى الحميات، بجوار صيدلية فيولا، بنها، القليوبية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Banha (Kism)",
+    "citySourceCode": "EG1401",
+    "phones": ["01030059765", "01225965225", "01204624898"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Benha/101452682076028/Pet-Planet-hospital-%D8%A7%D9%84%D9%85%D8%B3%D8%AA%D8%B4%D9%81%D9%89-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%89-%D8%A8%D9%86%D9%87%D8%A7",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-04",
+    "classificationEvidence": "Read mirror of clinic posts: pet diagnostics, surgery, transfusion; current contacts in July posts. Urban Banha mapped to Banha Kism rather than surrounding rural Markaz. No 24h inference from emergency contact."
+  },
+  {
+    "key": "dome-pets-shubra",
+    "nameEnglish": "Dome Pets Clinic",
+    "nameArabic": "عيادة دوم بتس البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "103 Nasr Habib Street, El Malaf station, Shubra El Kheima, Kalyoubia",
+    "addressArabic": "103 شارع نصر حبيب، محطة الملف، بجوار كنتاكي، شبرا الخيمة، القليوبية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Shubra al Khayma",
+    "citySourceCode": "OSM:node/768591737",
+    "phones": ["01285589171"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Shubra-el-Kheima/538653056271275/Dome-pets-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D8%A8%D8%B4%D8%A8%D8%B1%D8%A7-%D8%A7%D9%84%D8%AE%D9%8A%D9%85%D8%A9-%D9%A0%D9%A1%D9%A2%D9%A8%D9%A5%D9%A5%D9%A8%D9%A9%D9%A1%D9%A7%D9%A1",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-25",
+    "classificationEvidence": "Read individual clinic-feed mirror: cat wound treatment 2026-09-25, dog surgery 2026-07-03. Physical premises and phone. Select city-level Shubra neighbourhood, do not invent first/second district."
+  },
+  {
+    "key": "pet-vet-banha",
+    "nameEnglish": "Pet&Vet Clinic",
+    "nameArabic": "عيادة بيت آند فيت البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Bus Station Street, beside Cleopatra Hospital, Banha, Kalyoubia",
+    "addressArabic": "شارع الموقف، بجوار مستشفى كليوباترا، بنها، القليوبية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Banha (Kism)",
+    "citySourceCode": "EG1401",
+    "phones": ["01068615984"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Benha/111525818355581/Pet%26Vet-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-29",
+    "classificationEvidence": "2026-10-29 clinic checkup/vaccination post; 2026-10-31 states temporary voice-network fault, WhatsApp contact remains 01068615984. Urban Banha Kism, not rural Markaz."
+  },
+  {
+    "key": "zahra-banha",
+    "nameEnglish": "Zahra Pet Clinic",
+    "nameArabic": "عيادة زهرة للحيوانات الأليفة",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Al Ansar Street, beside Second Police Station, opposite Foul El Zohour restaurant, Banha, Kalyoubia",
+    "addressArabic": "شارع الأنصار، بجوار قسم تاني، مقابل مطعم فول الزهور، بنها، القليوبية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Banha (Kism)",
+    "citySourceCode": "EG1401",
+    "phones": ["01205356410"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Benha/115983991502981/Zahra-Pet-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-06-07",
+    "classificationEvidence": "2026-06-07 feline bilateral hip surgery at physical urban Banha clinic; current catalog has one urban Banha Kism and rural Markaz, not two selectable urban districts."
+  },
+  {
+    "key": "elreaya-banha",
+    "nameEnglish": "Elreaya Pet Clinic",
+    "nameArabic": "عيادة الرعاية للحيوانات الأليفة",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglish": "El Teraa Street, beside Mohamed Mostafa buildings, El Fellal, Banha, Kalyoubia",
+    "addressArabic": "شارع الترعة، بجوار عمارات محمد مصطفى، الفلل، بنها، القليوبية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Banha (Kism)",
+    "citySourceCode": "EG1401",
+    "phones": ["01007208827"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Benha/777815805661188/Elre3aya-pet-clinic-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%B1%D8%B9%D8%A7%D9%8A%D8%A9-%D9%84%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A3%D9%84%D9%8A%D9%81%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Explicit veterinary care for pets with physical street/urban Fellal address and clinic Telephone. General pet advice not converted into dated clinical activity."
+  },
+  {
+    "key": "royal-pet-banha",
+    "nameEnglish": "Royal Pet Clinic",
+    "nameArabic": "عيادة رويال للحيوانات الأليفة",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Fellal, first street right after El Fahs bridge, beside El Sharkawy restaurant and Bini Bunny nursery, Banha, Kalyoubia",
+    "addressArabic": "الفلل، أول شارع يمين بعد كوبري الفحص، بجوار مطعم الشرقاوي وحضانة بيني باني، بنها، القليوبية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Banha (Kism)",
+    "citySourceCode": "EG1401",
+    "phones": ["01064595914", "01040789550"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Benha/529840953536674/Royal-pet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-23",
+    "classificationEvidence": "2026-09-23 on-site pet examination post pairs detailed physical urban Fellal address and main clinic phone; 2026-09-06 publishes second booking phone. No unrelated adoption-owner contacts used."
+  },
+  {
+    "key": "pets-well-obour",
+    "nameEnglish": "Pets Well",
+    "nameArabic": "عيادة بيتس ويل البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Neom Mall, above Hyper Express, Sixth District, Obour City, Kalyoubia",
+    "addressArabic": "نيوم مول، أعلى هايبر إكسبريس، الحي السادس، مدينة العبور، القليوبية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Obour",
+    "citySourceCode": "EG1413",
+    "phones": ["01113067170"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/%D8%A7%D9%84%D8%B9%D8%A8%D9%88%D8%B1/103472895871506/Pets-well",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2024-01-07",
+    "classificationEvidence": "Individual page explicitly identifies specialist physical pet clinic and booking contact, repeated in 2024 clinic visit notice. No evidence of closure.",
+    "aliases": {
+      "english": ["Pets well"]
+    }
+  },
+  {
+    "key": "qasaby-banha",
+    "nameEnglish": "Dr. Abdel Halim El Qasaby Pet Center",
+    "nameArabic": "مركز دكتور عبد الحليم القصبي للحيوانات الأليفة",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglish": "3 Awlad Heykal Street, behind Ibrahim Morsi Mosque, Banha",
+    "addressArabic": "3 شارع أولاد هيكل، خلف مسجد إبراهيم مرسي، بنها",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Banha (Kism)",
+    "citySourceCode": "EG1401",
+    "phones": ["01003127565"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Benha/387419118418284/%D9%85%D8%B1%D9%83%D8%B2-%D8%AF--%D8%B9%D8%A8%D8%AF-%D8%A7%D9%84%D8%AD%D9%84%D9%8A%D9%85-%D8%A7%D9%84%D9%82%D8%B5%D8%A8%D9%8A-%D9%84%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-23",
+    "classificationEvidence": "2026-10-23 physical pet-clinic hours notice; explicit surgical, imaging, laboratory and vaccination services at this street/contact."
+  }
+]

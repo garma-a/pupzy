@@ -1,0 +1,29 @@
+[
+  {
+    "key": "petcare-luxor",
+    "nameEnglish": "Pet Care Center",
+    "nameArabic": "مركز بت كير البيطري",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Television Street, opposite Islamic Banque Misr and Abu Nokhra Centre, Luxor",
+    "addressArabic": "شارع التليفزيون، أمام بنك مصر الإسلامي وسنتر أبو نخرة، الأقصر",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Luxor (Kism)",
+    "citySourceCode": "EG2901",
+    "phones": ["01129950429"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Luxor/104348668916783/Pet-Care-Center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2024-10-11",
+    "classificationEvidence": "Read individual clinic-feed mirror: explicit physical pet clinic, examinations, vaccination, surgery and lab work at address; dated 2024-10-11 booking contact and daily 7-10pm hours. Not home-visit-only Happy Tail. No invented 24h status."
+  }
+]

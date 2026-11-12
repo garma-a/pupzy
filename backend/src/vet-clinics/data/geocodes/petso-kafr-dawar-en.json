@@ -1,0 +1,8 @@
+{
+  "query": "Boulos Street, Kafr Al-Dawwar (Kism), Behera, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Boulos+Street%2C+Kafr+Al-Dawwar+%28Kism%29%2C+Behera%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:15:43.099Z",
+  "httpStatus": 200,
+  "response": []
+}

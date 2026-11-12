@@ -1,0 +1,3079 @@
+[
+  {
+    "key": "comprehensive-veterinary-clinic-nazlet",
+    "nameEnglish": "Comprehensive Veterinary Clinic",
+    "nameArabic": "العيادة البيطرية الشاملة",
+    "addressEnglish": "Nazlet El Samman, Haram, Giza",
+    "addressArabic": "نزلة السمان، الهرم، الجيزة",
+    "area": "Nazlet el-Samman",
+    "phones": ["01225797903"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%b4%d8%a7%d9%85%d9%84%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["العيادة البيطرية الشاملة"]
+    }
+  },
+  {
+    "key": "faisal-veterinary-clinic-tawabeq",
+    "nameEnglish": "Faisal Veterinary Clinic",
+    "nameArabic": "عيادة فيصل البيطرية",
+    "addressEnglish": "80 Abbas Abdel Razek Street, off Kaabish Street, Al Tawabeq Faisal, Giza",
+    "addressArabic": "80 شارع عباس عبدالرازق متفرع من شارع كعبيش، الطوابق، فيصل - بالقرب من المعداوي للدواجن واللحوم - الجيزة",
+    "area": "Al Tawabeq Faisal",
+    "phones": ["01277503883", "01094508570"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a8%d8%b4%d8%a7%d8%b1%d8%b9-%d9%81%d9%8a%d8%b5%d9%84/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Faisal Veterinary Clinic (Tawabeq)"],
+      "arabic": ["العيادة البيطرية بشارع فيصل", "عيادة فيصل البيطرية (الطوابق)"]
+    }
+  },
+  {
+    "key": "vet-and-pet-hadayek",
+    "nameEnglish": "Vet and Pet Clinic",
+    "nameArabic": "عيادة فيت أند بيت البيطرية",
+    "addressEnglish": "321A El Tharwa El Maadaneya Street, corner El Daght El Aaly, Gate One, Hadayek El Ahram, Giza",
+    "addressArabic": "321 أ - شارع الثروة المعدنية - تقاطع شارع الضغط العالي، حدائق الأهرام، الجيزة. البوابة الأولى أعلى بن المعبود",
+    "area": "Hadayek El Ahram",
+    "phones": ["01282009288"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d9%81%d9%8a%d8%aa-%d8%a3%d9%86%d8%af-%d8%a8%d9%8a%d8%aa/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/Vet-PET-DrAmthal-Fouad-441264695983246",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["العيادة البيطرية فيت أند بيت"]
+    }
+  },
+  {
+    "key": "go-vet-faisal",
+    "nameEnglish": "Go Vet Veterinary Clinic",
+    "nameArabic": "عيادة جو فيت البيطرية",
+    "addressEnglish": "156 Main Faisal Street, above Brazilian Coffee, opposite Sahl Hamza Street, Kom El Akhdar, Faisal, Giza",
+    "addressArabic": "156 شارع فيصل الرئيسي، فوق البن البرازيلي، امام شارع سهل حمزة، الكوم الأخضر، فيصل",
+    "area": "Kom al Akhdar",
+    "phones": ["01033670022", "01156730955"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-go-vet-%d9%81%d9%8a%d8%b5%d9%84-%d8%b3%d9%87%d9%84-%d8%ad%d9%85%d8%b2%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%87%d8%b1%d9%85-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/govetharam/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Go Vet"],
+      "arabic": ["العيادة البيطرية  ، فيصل ، سهل حمزة", "عيادة الهرم البيطرية بالكوم الأخضر، شارع سهل حمزة"]
+    }
+  },
+  {
+    "key": "recovery-pet-clinic",
+    "nameEnglish": "Recovery Pet Clinic",
+    "nameArabic": "عيادة ريكفري للحيوانات الأليفة",
+    "addressEnglish": "24 Ezz El Din Eissa Street, Fourth Tourist Area, beside sports club, 6th of October, Giza",
+    "addressArabic": "السياحية الرابعة، شارع عز الدين عيسى، رقم 24 بجوار النادي الرياضي",
+    "area": "6th of October",
+    "phones": ["01067028737"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-recovery-pet-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/RecoveryVetClinic",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Recovery Pet Clinic"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "main-vet-hadayek",
+    "nameEnglish": "Main Veterinary Center",
+    "nameArabic": "المركز البيطري الرئيسي",
+    "addressEnglish": "218A beside El Menoufi restaurant, opposite MBC educational center, Gate One, Hadayek El Ahram, Giza",
+    "addressArabic": "بوابة خوفو، ، 218 أ بجوار كبابجي المنوفي، أمام سنتر MBC التعليمي، ، البوابه الاولى، حدائق الأهرام، الجيزة",
+    "area": "Hadayek El Ahram",
+    "phones": ["01062331146"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d8%a7%d9%84%d8%b1%d8%a6%d9%8a%d8%b3%d9%8a-%d8%ad%d8%af%d8%a7%d8%a6%d9%82-%d8%a7%d9%84%d8%a3%d9%87%d8%b1%d8%a7%d9%85/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["المركز البيطري الرئيسي، حدائق الأهرام، البوابة الأولى"]
+    }
+  },
+  {
+    "key": "omraniya-veterinary-center",
+    "nameEnglish": "Omraniya Veterinary Center",
+    "nameArabic": "المركز البيطري بالعمرانية",
+    "addressEnglish": "444 El Haram Street, Western Omraniya, Giza",
+    "addressArabic": "444 شارع الهرم، العمرانية الغربية، الجيزة",
+    "area": "Western Al Omraneya",
+    "phones": ["01001530169", "01122457745"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d8%a8%d8%a7%d9%84%d8%b9%d9%85%d8%b1%d8%a7%d9%86%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["المركز البيطري بالعمرانية"]
+    }
+  },
+  {
+    "key": "dokki-veterinary-medical-center",
+    "nameEnglish": "Pet Vet - Veterinary Medical Center",
+    "nameArabic": "مركز بت فيت الطبي البيطري",
+    "addressEnglish": "18 Kambiz Street, off Mossadak Street, opposite Shooting Club Gate10, Dokki, Giza",
+    "addressArabic": "18 شارع قمبيز، متفرع من شارع مصدق، الدقي، الجيزة. أمام نادي الصيد بوابة 10",
+    "area": "Dokki",
+    "phones": ["0233377369", "01144480809", "01144480807", "01001600659"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%b7%d8%a8%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d8%a8%d8%a7%d9%84%d8%af%d9%82%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.findinegypt.com/c/pet-vet-veterinary-medical-center-376882",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Vet - Veterinary Medical Center"],
+      "arabic": ["المركز الطبي البيطري بالدقي", "مركز بت فيت الطبي البيطري"]
+    }
+  },
+  {
+    "key": "canadian-veterinary-center",
+    "nameEnglish": "Canadian Veterinary Center",
+    "nameArabic": "المركز الكندي البيطري",
+    "addressEnglish": "6 El Amal Street, Small Investor, Sheikh Zayed, Giza",
+    "addressArabic": "6 شارع الأمل، المستثمر الصغير، الشيخ زايد، الجيزة",
+    "area": "El Moustasmer El Saghir",
+    "phones": ["01201985555"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d9%83%d9%86%d8%af%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-canadian-vet-center/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/cvc.egy",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Canadian Vet Center"],
+      "arabic": ["المركز الكندي البيطري"]
+    }
+  },
+  {
+    "key": "scientific-veterinary-office",
+    "nameEnglish": "Scientific Veterinary Office",
+    "nameArabic": "المكتب العلمي البيطري",
+    "addressEnglish": "El Karnak Street, off El Geish Street, Saf, Giza",
+    "addressArabic": "شارع الكرنك، متفرع من شارع الجيش. الصف، الجيزة",
+    "area": "Saf",
+    "phones": ["02-38620734"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d9%83%d8%aa%d8%a8-%d8%a7%d9%84%d8%b9%d9%84%d9%85%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["المكتب العلمي البيطري"]
+    }
+  },
+  {
+    "key": "egyvet-faisal",
+    "nameEnglish": "Egyvet Veterinary Services",
+    "nameArabic": "إيجافيت للخدمات البيطرية",
+    "addressEnglish": "106 Faisal Street, Maryouteya, Faisal, above Anwar El Haram El Sherif supermarket, Giza",
+    "addressArabic": "106 شارع فيصل، المريوطية، فيصل، الجيزة",
+    "area": "Faisal",
+    "phones": ["0233840920", "0233847172", "0233861486", "0233837138"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%8a%d8%ac%d8%a7%d9%81%d9%8a%d8%aa-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["ايجافيت للخدمات البيطرية"]
+    }
+  },
+  {
+    "key": "pet-lovers-ashqar",
+    "nameEnglish": "Pet Lovers Clinic",
+    "nameArabic": "عيادة بت لفرز",
+    "addressEnglish": "23 Omar Ibn El Khattab Street, behind Starbucks, Dokki, Giza",
+    "addressArabic": "23 شارع عمر بن الخطاب، الدقي، الجيزة - خلف كافيه ستار بكس",
+    "area": "Dokki",
+    "phones": ["01221948424", "01096792270"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a8%d8%aa-%d9%84%d9%81%d8%b1%d8%b2-%d9%83%d9%84%d9%8a%d9%86%d9%83-%d8%af-%d9%85%d8%ad%d9%85%d8%af-%d8%a7%d9%84%d8%a7%d8%b4%d9%82%d8%b1/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Lovers Clinic", "Pet Lovers Vet Clinic"],
+      "arabic": ["بت لفرز كلينك – د محمد الاشقر"]
+    }
+  },
+  {
+    "key": "pets-island-october",
+    "nameEnglish": "Pets Island Vet Center (October)",
+    "nameArabic": "مركز بيتس آيلاند البيطري (أكتوبر)",
+    "addressEnglish": "Central Spine, 4th District, behind Housing and Development Bank, 6th of October, Giza",
+    "addressArabic": "المحور المركزي، الحي الرابع، السادس من اكتوبر، الجيزة. خلف بنك التعمير والإسكان",
+    "area": "4th District",
+    "phones": ["01011772189", "01014710710"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%8a%d9%84%d8%a7%d9%86%d8%af-%d9%81%d9%8a%d8%aa-%d8%b3%d9%86%d8%aa%d8%b1-%d8%af%d9%83%d8%aa%d9%88%d8%b1-%d9%85%d8%ad%d9%85%d9%88%d8%af-%d8%b4%d9%83%d8%b1%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/pages/Pets-island-vet-center/245160902204777",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Island Vet Center"],
+      "arabic": ["بيتس ايلاند فيت سنتر – دكتور محمود شكري"]
+    },
+    "chainKey": "pets-island",
+    "branchQualifier": "October"
+  },
+  {
+    "key": "pet-zone-mohandessin",
+    "nameEnglish": "Pet Zone Vet Clinics",
+    "nameArabic": "عيادات بت زون البيطرية",
+    "addressEnglish": "15 El Madina El Monawara Street, off Mohie El Din Abo El Ezz, Mohandessin, Giza",
+    "addressArabic": "15 شارع المدينه المنوره متفرع من محي الدين ابو العز - المهندسين - الجيزة - مصر",
+    "area": "Mohandessin",
+    "phones": ["01099975999"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a8%d9%8a%d8%aa-%d8%b2%d9%88%d9%86-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://petzoneclinics.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://petzoneclinics.com/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence. Own site confirms15ElMadinaElMonawara address and currentDokki phone01099975999. HistoricalEVC0225606590 is explicitly assigned toNewCairo on own page and removed here;01001656451 historical additional number uncorroborated and not imported.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet zone", "Pet Zone Veterinary Clinic (Mohandessin)", "Pet Zone", "PETZONE VET CLINICS"],
+      "arabic": ["بيت زون البيطرية", "عيادة بت زون البيطرية (المهندسين)"]
+    },
+    "chainKey": "pet-zone",
+    "branchQualifier": "Dokki"
+  },
+  {
+    "key": "beverly-vet",
+    "nameEnglish": "Beverly Vet Clinic",
+    "nameArabic": "عيادة بيفرلي البيطرية",
+    "addressEnglish": "The Walk Mall, Building7, Floor3, services area, Beverly Hills, Sheikh Zayed, Giza",
+    "addressArabic": "بيفرلي هيلز - منطقة الخدمات - الشيخ زايد - السادس من أكتوبر، الجيزة. داخل ذا ووك مول - مبنى 7 - الدور الثالث",
+    "area": "Beverly Hills",
+    "phones": [],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a8%d9%8a%d9%81%d8%b1%d9%84%d9%8a-%d9%81%d9%8a%d8%aa-%d9%83%d9%84%d9%8a%d9%86%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence. Contact ownership review 2026-11-12: Beverly Sheikh Zayed and Degla Zahraa Maadi publish the same number under unrelated names; no current owner or simultaneous branch evidence. Withheld from both.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Beverly Vet Clinic"],
+      "arabic": ["بيفرلي فيت كلينك البيطرية"]
+    }
+  },
+  {
+    "key": "just-pets-ahmed-ali",
+    "nameEnglish": "Just Pets Vet Clinic",
+    "nameArabic": "عيادة جاست بيتس البيطرية",
+    "addressEnglish": "38 El Nozha Street, Third Neighbourhood, 1st District (Sheikh Zayed), apartment1, Sheikh Zayed, Giza",
+    "addressArabic": "38 شارع النزهة، المجاورة الثالثة، الحي الأول، شقة 1 - الشيخ زايد - السادس من اكتوبر - الجيزة",
+    "area": "1st District (Sheikh Zayed)",
+    "phones": ["01016165165", "01151515118"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%ac%d8%a7%d8%b3%d8%aa-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%af-%d8%a3%d8%ad%d9%85%d8%af-%d8%b9%d9%84%d9%8a-%d8%a7%d9%85%d9%8a%d9%86/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Just Pets Vet Clinic"],
+      "arabic": ["جاست بيتس – د. أحمد علي امين"]
+    }
+  },
+  {
+    "key": "yasser-abousaada",
+    "nameEnglish": "Dr. Yasser Abousaada Veterinary Clinic",
+    "nameArabic": "عيادة دكتور ياسر أبو سعدة البيطرية",
+    "addressEnglish": "El Gameya El Shareya Street, Shabramant, Giza",
+    "addressArabic": "شارع الجمعية الشرعية - شبرامنت 6 اكتوبر - الجيزة",
+    "area": "Shabramant",
+    "phones": ["0233811775"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%af%d9%83%d8%aa%d9%88%d8%b1-%d9%8a%d8%a7%d8%b3%d8%b1-%d8%a7%d8%a8%d9%88%d8%b3%d9%8a%d8%a7%d8%af%d8%a9-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["دكتور ياسر ابوسعدة للخدمات البيطرية"]
+    }
+  },
+  {
+    "key": "youssef-hamdy",
+    "nameEnglish": "Dr. Youssef Hamdy Veterinary Clinic",
+    "nameArabic": "عيادة دكتور يوسف حمدي البيطرية",
+    "addressEnglish": "El Heita El Hamra Street, Shabramant, Giza",
+    "addressArabic": "شارع الحيطة الحمراء، شبرامنت الهرم، الجيزة",
+    "area": "Shabramant",
+    "phones": ["01204157749"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%af%d9%83%d8%aa%d9%88%d8%b1-%d9%8a%d9%88%d8%b3%d9%81-%d8%ad%d9%85%d8%af%d9%8a-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["دكتور يوسف حمدي للخدمات البيطرية"]
+    }
+  },
+  {
+    "key": "new-york-veterinary-october",
+    "nameEnglish": "New York Veterinary Clinics",
+    "nameArabic": "عيادات نيويورك البيطرية",
+    "addressEnglish": "Agyad View Mall, beside Panda supermarket, Cityscape Square, 6th of October, Giza",
+    "addressArabic": "مول أجياد فيو، بجوار سوبر ماركت بنده، ميدان مول سيتي سكيب، 6 أكتوبر",
+    "area": "6th of October",
+    "phones": ["01101160688"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a7%d8%aa-%d9%86%d9%8a%d9%88%d9%8a%d9%88%d8%b1%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-6-%d8%a3%d9%83%d8%aa%d9%88%d8%a8%d8%b1/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.nyvetclinic.com/%D8%AA%D9%88%D8%A7%D8%B5%D9%84-%D9%85%D8%B9%D9%86%D8%A7/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.nyvetclinic.com/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence. Own New York clinic contact page explicitly publishes both Maadi and October branches, with the October Agyad View/Cityscape address matching this directory entry. Shared reception phone is intentional; preserve both branches.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادات نيويورك البيطرية 6 أكتوبر"]
+    },
+    "chainKey": "new-york-veterinary-clinic",
+    "branchQualifier": "6 October"
+  },
+  {
+    "key": "al-baghdady",
+    "nameEnglish": "Al Baghdady Veterinary Clinic",
+    "nameArabic": "عيادة البغدادي البيطرية",
+    "addressEnglish": "El Shaheed Mohamed Abdel Karim Street, Badrashain, Giza",
+    "addressArabic": "شارع الشهيد محمد عبدالكريم، البدرشين، الجيزة",
+    "area": "Badrashain",
+    "phones": ["02-38029488"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d8%ba%d8%af%d8%a7%d8%af%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة البغدادي البيطرية"]
+    }
+  },
+  {
+    "key": "dokki-ashraf-seida",
+    "nameEnglish": "Dokki Veterinary Clinic",
+    "nameArabic": "عيادة الدقي البيطرية",
+    "addressEnglish": "57 Iran Street, off Mohie El Din Abo El Ezz, beside Abu Zekri supermarket, Dokki, Giza",
+    "addressArabic": "57 شارع إيران، متفرع من شارع محي الدين أبو العز بجوار سوبر ماركت أبو ذكري، الدقي، الجيزة",
+    "area": "Dokki",
+    "phones": ["0237485606", "01001997359"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%af%d9%82%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%af%d9%83%d8%aa%d9%88%d8%b1-%d8%a3%d8%b4%d8%b1%d9%81-%d8%b3%d8%b9%d8%af%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/ashraf.seida",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة الدقي البيطرية, دكتور أشرف سعدة"]
+    }
+  },
+  {
+    "key": "just-for-pets-howeida",
+    "nameEnglish": "Just For Pets",
+    "nameArabic": "عيادة جست فور بتس",
+    "addressEnglish": "Seven Center Mall, Floor1, 7th District (Sheikh Zayed), Sheikh Zayed, Giza",
+    "addressArabic": "الشيخ زايد، الحي السابع، مول سفن سنتر، الدور الأول",
+    "area": "7th District (Sheikh Zayed)",
+    "phones": ["01116655514"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%af%d9%83%d8%aa%d9%88%d8%b1%d8%a9-%d9%87%d9%88%d9%8a%d8%af%d8%a7-%d8%a7%d8%b3%d9%85%d8%a7%d8%b9%d9%8a%d9%84-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Just For Pets"],
+      "arabic": ["عيادة الدكتورة هويدا اسماعيل البيطرية"]
+    }
+  },
+  {
+    "key": "khaled-ali-veterinary",
+    "nameEnglish": "Dr. Khaled Ali Veterinary Clinic",
+    "nameArabic": "عيادة الدكتور خالد علي البيطرية",
+    "addressEnglish": "126 Hyper One-El Nozha Street, Floor2, opposite Moon Land Compound, Sheikh Zayed, Giza",
+    "addressArabic": "الشيخ زايد، شارع هايبر وان - النزهة، أمام كومباوند مون لاند. عمار رقم 126 الدور الثاني. الجيزة",
+    "area": "Sheikh Zayed",
+    "phones": ["01008233425", "01111200798"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%af%d9%83%d8%aa%d9%88%d8%b1-%d8%ae%d8%a7%d9%84%d8%af-%d8%b9%d9%84%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة الدكتور خالد علي البيطرية, الشيخ زايد"]
+    }
+  },
+  {
+    "key": "fardous-veterinary-hospital",
+    "nameEnglish": "Fardous Veterinary Hospital and Hotel",
+    "nameArabic": "المستشفى والفندق البيطري بالفردوس",
+    "addressEnglish": "Villa4H behind El Hoda Mosque, Khaled Ibn El Walid Street, First Neighbourhood, investment sector, Fardous City, opposite Dreamland, 6th of October, Giza",
+    "addressArabic": "فيلا 4 ح خلف مسجد الهدى، شارع خالد بن الوليد، المجاورة الأولى، القطاع الإستثمارى، مدينة الفردوس امام دريم لاند، 6 أكتوبر الجيزة",
+    "area": "Al Fardous",
+    "phones": ["01010429149", "01005285350", "01119496227"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%af%d9%83%d8%aa%d9%88%d8%b1-%d8%b9%d8%a7%d9%85%d8%b1-%d9%84%d8%b9%d9%84%d8%a7%d8%ac-%d9%88%d8%b1%d8%b9%d8%a7%d9%8a%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["المستشفى والفندق البيطري بالفردوس، 6 أكتوبر"]
+    }
+  },
+  {
+    "key": "el-rawda-veterinary",
+    "nameEnglish": "El Rawda Veterinary Clinic",
+    "nameArabic": "عيادة الروضة البيطرية",
+    "addressEnglish": "16 Mohamed Abdel Meguid Sallam Street, opposite Cairo Hospital, Talbeya Faisal, Giza",
+    "addressArabic": "16 ش محمد عبد المجيد سلم - أمام مستشفى القاهره - بجوار موقف المساكن - الطالبيه فيصل - جيزه",
+    "area": "Al Talbeya Faisal",
+    "phones": ["01143160718", "01009725887"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%b1%d9%88%d8%b6%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة الروضة البيطرية"]
+    }
+  },
+  {
+    "key": "tourist-veterinary-october",
+    "nameEnglish": "Tourist Veterinary Clinic",
+    "nameArabic": "عيادة السياحية البيطرية",
+    "addressEnglish": "Villa68, Intelligence Compound, Northern Tourist Area, behind Shooting Club, 7th District, 6th of October, Giza",
+    "addressArabic": "الحي السابع خلف نادي الصيد، السياحية الشمالية، كومباوند المخابرات، فيلا 68، 6 أكتوبر",
+    "area": "7th District",
+    "phones": ["01024779743"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%b3%d9%8a%d8%a7%d8%ad%d9%8a%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9%d8%8c-%d8%a7%d9%84%d8%ad%d9%8a-%d8%a7%d9%84%d8%b3%d8%a7%d8%a8%d8%b9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة السياحية البيطرية، الحي السابع، 6 أكتوبر"]
+    }
+  },
+  {
+    "key": "pet-paradise-hadayek",
+    "nameEnglish": "Pet Paradise Veterinary Care",
+    "nameArabic": "عيادة العناية البيطرية",
+    "addressEnglish": "158Ayn Hadayek El Ahram, first right from Mina Gate, behind El Madina Mosque, Haram, Giza",
+    "addressArabic": "158 ع حدائق الأهرام-أول يمين من مدخل مينا خلف مسجد المدينه، الهرم، الجيزه",
+    "area": "Hadayek El Ahram",
+    "phones": [
+      "01007718215",
+      "01204430151",
+      "Contact Disabled by Owner",
+      "ساعات العمل",
+      "الإثنين",
+      "10 صباحا",
+      "10 مساءا",
+      "الثلاثاء",
+      "10 صباحا",
+      "10 مساءا",
+      "الأربعاء",
+      "10 صباحا",
+      "10 مساءا",
+      "الخميس",
+      "10 صباحا",
+      "10 مساءا",
+      "الجمعة",
+      "10 صباحا",
+      "10 مساءا",
+      "السبت",
+      "10 صباحا",
+      "10 مساءا",
+      "الأحد",
+      "10 صباحا",
+      "10 مساءا",
+      "اضغط هنا للحصول على عنوان وهاتف عيادة العنايه البيطريه &#8211; حدائق الأهرام",
+      "العنوان",
+      "العنوان:",
+      "158 ع حدائق الأهرام-أول يمين من مدخل مينا خلف مسجد المدينه, الهرم, الجيزه"
+    ],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%b9%d9%86%d8%a7%d9%8a%d9%87-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d9%87-%d8%ad%d8%af%d8%a7%d8%a6%d9%82-%d8%a7%d9%84%d8%a3%d9%87%d8%b1%d8%a7%d9%85/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة العنايه البيطريه – حدائق الأهرام"]
+    }
+  },
+  {
+    "key": "fardous-pets-clinic",
+    "nameEnglish": "Fardous Pets Clinic",
+    "nameArabic": "عيادة الفردوس البيطرية",
+    "addressEnglish": "104B apartment1, Al Fardous City For Armed Forces Officers, beside security office opposite main gate, 6th of October, Giza",
+    "addressArabic": "عمارة 104 ب شقة 1 - مدينة الفردوس للقوات المسلحة، بجوار مكتب الأمن أمام البوابة الرئيسية، السادس من أكتوبر، الجيزة",
+    "area": "Al Fardous City For Armed Forces Officers",
+    "phones": ["01017476390", "01065949868"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%81%d8%b1%d8%af%d9%88%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-6-%d8%a3%d9%83%d8%aa%d9%88%d8%a8%d8%b1/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/fardouspetsclinic",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة الفردوس البيطرية, 6 أكتوبر"]
+    }
+  },
+  {
+    "key": "vet-pet-mesaha",
+    "nameEnglish": "Vet Pet Veterinary Clinic",
+    "nameArabic": "عيادة فيت بت البيطرية",
+    "addressEnglish": "Main Haram Street, Al Mesaha al Haram, Giza",
+    "addressArabic": "شارع الهرم الرئيسي، المساحة، الجيزة",
+    "area": "Al Mesaha al Haram",
+    "phones": [
+      "Contact Disabled by Owner",
+      "ساعات العمل",
+      "الإثنين",
+      "12 ظهرا",
+      "10 مساءا",
+      "الثلاثاء",
+      "12 ظهرا",
+      "10 مساءا",
+      "الأربعاء",
+      "12 ظهرا",
+      "10 مساءا",
+      "الخميس",
+      "12 ظهرا",
+      "10 مساءا",
+      "الجمعة",
+      "12 ظهرا",
+      "10 مساءا",
+      "السبت",
+      "12 ظهرا",
+      "10 مساءا",
+      "الأحد",
+      "12 ظهرا",
+      "10 مساءا",
+      "اضغط هنا للحصول على عنوان وهاتف عيادة الهرم البيطرية Vet Pet المساحة ، الهرم",
+      "العنوان",
+      "العنوان:",
+      "شارع الهرم الرئيسي، المساحة، الجيزة"
+    ],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%87%d8%b1%d9%85-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-vet-pet/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence. Contact ownership review 2026-11-12: Conflicting single-directory clinic brands in Nasr City and Haram; a third Fifth Settlement lead was already held. Ownership unresolved; withheld from both.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Vet Pet"],
+      "arabic": ["عيادة الهرم البيطرية  المساحة ، الهرم"]
+    }
+  },
+  {
+    "key": "animal-care-agouza",
+    "nameEnglish": "Animal Care Clinic",
+    "nameArabic": "عيادة أنيمال كير",
+    "addressEnglish": "23 El Montasser Street, off El Gheith Street, behind British Council, Agouza, Giza",
+    "addressArabic": "23 شارع المنتصر، متفرع من شارع الغيث - خلف British Council - العجوزة، الدقي، الجيزة",
+    "area": "Agouza",
+    "phones": ["01227007428"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%86%d9%8a%d9%85%d8%a7%d9%84-%d9%83%d9%8a%d8%b1-%d9%83%d9%84%d9%8a%d9%86%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/AnimalCareClinicEgypt",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Animal Care Clinic"],
+      "arabic": ["عيادة انيمال كير كلينك البيطرية"]
+    }
+  },
+  {
+    "key": "oscar-faisal",
+    "nameEnglish": "Oscar Veterinary Clinic",
+    "nameArabic": "عيادة أوسكار البيطرية",
+    "addressEnglish": "El Ekhlas Tower3, Al Talbeya Faisal, opposite Haram district office, Giza",
+    "addressArabic": "برج الإخلاص 3، فيصل، الطالبية، أمام حي الهرم",
+    "area": "Al Talbeya Faisal",
+    "phones": ["01013585246"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%88%d8%b3%d9%83%d8%a7%d8%b1-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-oscar-veterinary-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Oscar veterinary clinic"],
+      "arabic": ["عيادة اوسكار البيطرية"]
+    }
+  },
+  {
+    "key": "pets-and-pets",
+    "nameEnglish": "Pets and Pets Vet Clinic",
+    "nameArabic": "عيادة بيتس آند بيتس البيطرية",
+    "addressEnglish": "Ali El Din City Mall, BuildingC, 7th District, 6th of October, Giza",
+    "addressArabic": "الحي السابع، السادس من اكتوبر، الجيزة",
+    "area": "7th District",
+    "phones": ["01111120746"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%86%d8%af-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets and Pets Vet Clinic"],
+      "arabic": ["عيادة بيتس اند بيتس البيطرية"]
+    }
+  },
+  {
+    "key": "pets-planet-october",
+    "nameEnglish": "Pets Planet Clinic",
+    "nameArabic": "عيادة بيتس بلانت",
+    "addressEnglish": "Five Stars Mall, above Awlad Ragab, 8th District, 6th of October, Giza",
+    "addressArabic": "مول فايف ستارز، الحي الثامن، فوق أولاد رجب، السادس من أكتوبر، الجيزة",
+    "area": "8th District",
+    "phones": ["01009782040", "01027453496", "01288145499", "01066622910", "01287711178"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a8%d9%84%d8%a7%d9%86%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%8c-%d8%a7%d9%84%d8%ad%d9%8a-%d8%a7%d9%84%d8%ab%d8%a7%d9%85/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Planet Clinic"],
+      "arabic": ["عيادة بيتس بلانت البيطرية، الحي الثامن، 6 أكتوبر"]
+    }
+  },
+  {
+    "key": "pets-story-zayed",
+    "nameEnglish": "Pet’s Story Vet Clinic",
+    "nameArabic": "عيادة بيتس ستوري البيطرية",
+    "addressEnglish": "5B El Gehaz Street, Sheikh Zayed, Giza",
+    "addressArabic": "شارع الجهاز، 5ب، الشيخ زايد، الجيزة",
+    "area": "Sheikh Zayed",
+    "phones": ["01152279787", "01286855641", "01097002529"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%b3%d8%aa%d9%88%d8%b1%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-pets-story-vet-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/pstoryclinic",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet’s Story Vet Clinic"],
+      "arabic": ["عيادة بيتس ستوري البيطرية"]
+    }
+  },
+  {
+    "key": "pets-care-october",
+    "nameEnglish": "Pets Care Clinic",
+    "nameArabic": "عيادة بيتس كير البيطرية",
+    "addressEnglish": "Ali El Din complex, BuildingC, 6th of October, Giza",
+    "addressArabic": "داخل مجمع علي الدين، مبنى ج، مدينة السادس من أكتوبر، الجيزة",
+    "area": "6th of October",
+    "phones": ["01020076494"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d9%83%d9%8a%d8%b1-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Care Clinic"],
+      "arabic": ["عيادة بيتس كير البيطرية, 6 أكتوبر"]
+    }
+  },
+  {
+    "key": "pets-home-october",
+    "nameEnglish": "Pets Home Veterinary Clinic",
+    "nameArabic": "عيادة بيتس هوم البيطرية",
+    "addressEnglish": "El Khazzan Street, between4th and5th Districts, 6th of October, Giza",
+    "addressArabic": "شارع الخزان، بين الحي الرابع والخامس، 6 أكتوبر، الجيزة",
+    "area": "4th District",
+    "phones": ["01021920883", "01154492235"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d9%87%d9%88%d9%85-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9%d8%8c-%d8%a7%d9%84%d8%ad%d9%8a-%d8%a7%d9%84%d8%b1%d8%a7%d8%a8%d8%b9%d8%8c-6/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة بيتس هوم البيطرية، الحي الرابع، 6 أكتوبر"]
+    }
+  },
+  {
+    "key": "aco-pyramids",
+    "nameEnglish": "ACO Pyramids Veterinary Clinic",
+    "nameArabic": "عيادة بيراميدز البيطرية",
+    "addressEnglish": "13 Khaled Ibn El Walid Street, off El Wafaa Wel Amal Street, Mashaal al Haram, Giza",
+    "addressArabic": "13 شارع خالد بن الوليد متفرع من شارع الوفاء والأمل، مشعل، الهرم",
+    "area": "Mashaal al Haram",
+    "phones": ["01067784948"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%b1%d8%a7%d9%85%d9%8a%d8%af%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-aco-pyramids/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["ACO Pyramids"],
+      "arabic": ["عيادة بيراميدز البيطرية"]
+    }
+  },
+  {
+    "key": "cats-and-dogs-haram",
+    "nameEnglish": "Cats and Dogs Veterinary Clinic",
+    "nameArabic": "عيادة كاتس آند دوجز البيطرية",
+    "addressEnglish": "1 Ali Ibn Abi Taleb Street, Taawon, Haram, Giza",
+    "addressArabic": "1 شارع على ابن ابي طالب- التعاون -الهرم - الجيزة",
+    "area": "Al Taawon al Haram",
+    "phones": ["01026999298"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-cats-and-dogs/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Cats and Dogs"],
+      "arabic": ["عيادة بيطرية ، الهرم"]
+    }
+  },
+  {
+    "key": "pets-island-beverly",
+    "nameEnglish": "Pets Island Vet (Beverly Hills)",
+    "nameArabic": "عيادة بيتس آيلاند البيطرية (بيفرلي هيلز)",
+    "addressEnglish": "Compound5Beverly Hills, opposite Beverly Hills club, Office20, Sheikh Zayed, Giza",
+    "addressArabic": "مجمع 5 بيفرلى هيلز السادس من اكتوبر امام نادى بيفرلى هيلز - مكتب رقم 20",
+    "area": "Beverly Hills",
+    "phones": ["01063600999"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-pets-island-vet/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Island Vet"],
+      "arabic": ["عيادة بيطرية"]
+    },
+    "chainKey": "pets-island",
+    "branchQualifier": "Beverly Hills"
+  },
+  {
+    "key": "trustivet-zayed",
+    "nameEnglish": "Trustivet Pets Clinic",
+    "nameArabic": "عيادة تراستيفيت للحيوانات الأليفة",
+    "addressEnglish": "Badr El Din Center, Floor2, 16th District, Sheikh Zayed, Giza",
+    "addressArabic": "الشيبخ زايد، الحي 16، سنتر بدر الدين، الدور الثاني",
+    "area": "16th District",
+    "phones": [
+      "01032125100",
+      "Contact Disabled by Owner",
+      "ساعات العمل",
+      "الإثنين",
+      "5 مساءا",
+      "11 مساءا",
+      "الثلاثاء",
+      "5 مساءا",
+      "11 مساءا",
+      "الأربعاء",
+      "5 مساءا",
+      "11 مساءا",
+      "الخميس",
+      "5 مساءا",
+      "11 مساءا",
+      "الجمعة",
+      "5 مساءا",
+      "11 مساءا",
+      "السبت",
+      "5 مساءا",
+      "11 مساءا",
+      "الأحد",
+      "5 مساءا",
+      "11 مساءا",
+      "اضغط هنا للحصول على عنوان وهاتف عيادة تراستيفيت للحيوانات الأليفة Trustivet Pets Clinic",
+      "العنوان",
+      "العنوان:",
+      "الشيبخ زايد، الحي 16، سنتر بدر الدين، الدور الثاني"
+    ],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%aa%d8%b1%d8%a7%d8%b3%d8%aa%d9%8a%d9%81%d9%8a%d8%aa-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81%d8%a9-trustivet-pets-c/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Trustivet Pets Clinic"],
+      "arabic": ["عيادة تراستيفيت للحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "khufu-zayed",
+    "nameEnglish": "Khufu Pets Clinic (Sheikh Zayed)",
+    "nameArabic": "عيادة خوفو البيطرية (الشيخ زايد)",
+    "addressEnglish": "Seven Mall, 7th District (Sheikh Zayed) center, behind El Goman2 beside El Sahaba mosque, Floor1, Sheikh Zayed, Giza",
+    "addressArabic": "سفن مول، سنتر الحي السابع، خلف الجمان 2 بجوار مسجد الصحابة، الدور الأول، الشيخ زايد",
+    "area": "7th District (Sheikh Zayed)",
+    "phones": ["01285592995"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%ae%d9%88%d9%81%d9%88-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a-%d8%a7%d9%84%d8%b3%d8%a7%d8%a8%d8%b9-%d8%a7%d9%84%d8%b4/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Khufu Pets Clinic"],
+      "arabic": ["عيادة خوفو البيطرية، الحي السابع، الشيخ زايد"]
+    },
+    "chainKey": "khufu-pets",
+    "branchQualifier": "Sheikh Zayed"
+  },
+  {
+    "key": "khufu-hadayek",
+    "nameEnglish": "Khufu Pets Clinic (Hadayek El Ahram)",
+    "nameArabic": "عيادة خوفو البيطرية (حدائق الأهرام)",
+    "addressEnglish": "121C, Floor2, second building left from Khufu Gate, El Mokhtabar laboratory building, GateOne, Hadayek El Ahram, Giza",
+    "addressArabic": "121ج حدائق الاهرام، البوابة الاولي (بوابة خوفو) تاني عمارة علي الشمال، عمارة معمل المختبر، الدور الثاني",
+    "area": "Hadayek El Ahram",
+    "phones": ["01005575402"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%ae%d9%88%d9%81%d9%88-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-khufu-pets-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Individual EVC entry explicitly states خدمة طوارئ24ساعة for this clinic.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Khufu Pets Clinic"],
+      "arabic": ["عيادة خوفو البيطرية  ، حدائق الأهرام"]
+    },
+    "chainKey": "khufu-pets",
+    "branchQualifier": "Hadayek El Ahram"
+  },
+  {
+    "key": "nevin-hosny-hammad",
+    "nameEnglish": "Dr. Nevin Hosny Hammad Veterinary Clinic",
+    "nameArabic": "عيادة دكتورة نيفين حسني حماد البيطرية",
+    "addressEnglish": "City Center, 1st District (Sheikh Zayed), beside Zayed General Hospital, Sheikh Zayed, Giza",
+    "addressArabic": "سيتى سنتر الحى الاول الشيخ زايد بجوار مستشفي زايد العام. الشيخ زايد. مصر",
+    "area": "1st District (Sheikh Zayed)",
+    "phones": ["0238524037", "01001630151"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af%d9%83%d8%aa%d9%88%d8%b1%d8%a9-%d9%86%d9%8a%d9%81%d9%8a%d9%86-%d8%ad%d8%b3%d9%86%d9%8a-%d8%ad%d9%85%d8%a7%d8%af-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة دكتورة نيفين حسني حماد البيطرية"]
+    }
+  },
+  {
+    "key": "osama-el-far-agouza",
+    "nameEnglish": "Dr. Osama El Far Veterinary Clinic (Agouza)",
+    "nameArabic": "عيادة دكتور أسامة الفار البيطرية (العجوزة)",
+    "addressEnglish": "23 Mohamed Shoukry Street, Agouza, Giza",
+    "addressArabic": "23 شارع محمد شكري، العجوزة، الدقي، الجيزة.",
+    "area": "Agouza",
+    "phones": ["0237495413", "01147386000"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af%d9%83%d8%aa%d9%88%d8%b1-%d8%a3%d8%b3%d8%a7%d9%85%d8%a9-%d9%85%d8%ad%d9%85%d9%88%d8%af-%d8%a7%d9%84%d9%81%d8%a7%d8%b1-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة دكتور أسامة محمود الفار البيطرية"]
+    },
+    "chainKey": "osama-el-far",
+    "branchQualifier": "Agouza"
+  },
+  {
+    "key": "mohamed-saeed-hadayek",
+    "nameEnglish": "Dr. Mohamed Saeed Veterinary Clinic",
+    "nameArabic": "عيادة دكتور محمد سعيد البيطرية",
+    "addressEnglish": "428Lam El Geish Street, GateFour, Hadayek El Ahram, Haram, Giza",
+    "addressArabic": "428 ل شارع الجيش، حدائق الأهرام، الهرم، الجيزة. البوابة الرابعة",
+    "area": "Hadayek El Ahram",
+    "phones": [
+      "01003713676",
+      "Contact Disabled by Owner",
+      "ساعات العمل",
+      "الإثنين",
+      "10:00",
+      "22:00",
+      "الثلاثاء",
+      "10:00",
+      "22:00",
+      "الأربعاء",
+      "10:00",
+      "22:00",
+      "الخميس",
+      "10:00",
+      "22:00",
+      "الجمعة",
+      "Off",
+      "السبت",
+      "10:00",
+      "22:00",
+      "الأحد",
+      "10:00",
+      "22:00",
+      "اضغط هنا للحصول على عنوان وهاتف عيادة دكتور محمد سعيد البيطرية",
+      "العنوان",
+      "العنوان:",
+      "428 ل شارع الجيش, حدائق الأهرام, الهرم, الجيزة. البوابة الرابعة"
+    ],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af%d9%83%d8%aa%d9%88%d8%b1-%d9%85%d8%ad%d9%85%d8%af-%d8%b3%d8%b9%d9%8a%d8%af-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة دكتور محمد سعيد البيطرية"]
+    }
+  },
+  {
+    "key": "ahmed-gad-el-mawla",
+    "nameEnglish": "Dr. Ahmed Gad El Mawla Veterinary Clinic",
+    "nameArabic": "عيادة د. أحمد جاد المولى البيطرية",
+    "addressEnglish": "205 Teraat El Zomor Street, Eastern Omraniya, beside RingRoad, Giza",
+    "addressArabic": "205 شارع ترعة الزمر، العمرانية الشرقية، بجوار الطريق الدائري. الهرم، الجيزة",
+    "area": "Eastern Al Omraneya",
+    "phones": ["01150979848"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af-%d8%a3%d8%ad%d9%85%d8%af-%d8%ac%d8%a7%d8%af-%d8%a7%d9%84%d9%85%d9%88%d9%84%d9%89-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة د. أحمد جاد المولى البيطرية"]
+    }
+  },
+  {
+    "key": "osama-el-far-faisal",
+    "nameEnglish": "Dr. Osama El Far Veterinary Clinic (Faisal)",
+    "nameArabic": "عيادة دكتور أسامة الفار البيطرية (فيصل)",
+    "addressEnglish": "227 Faisal Street, Taawon, Floor6, beside Cado studio, Faisal, Giza",
+    "addressArabic": "227 شارع فيصل، التعاون، الدور 6، بجوار ستوديو كادو. الجيزة",
+    "area": "Faisal",
+    "phones": ["0237803722", "01147386000"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af-%d8%a3%d8%b3%d8%a7%d9%85%d8%a9-%d8%a7%d9%84%d9%81%d8%a7%d8%b1-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d9%81%d9%8a%d8%b5%d9%84/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة د. أسامة الفار البيطرية – فيصل"]
+    },
+    "chainKey": "osama-el-far",
+    "branchQualifier": "Faisal"
+  },
+  {
+    "key": "polaris-pet-clinic",
+    "nameEnglish": "Polaris Pet Clinic",
+    "nameArabic": "عيادة بولاريس للحيوانات الأليفة",
+    "addressEnglish": "El Mokhtar Mall, 6th of October, Giza",
+    "addressArabic": "مول المختار السادس من اكتوبر",
+    "area": "6th of October",
+    "phones": ["01015915824"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%88%d9%84%d8%a7%d8%b1%d9%8a%d8%b3-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81%d8%a9-6-%d8%a3%d9%83%d8%aa%d9%88/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/Polaris-Pet-Clinic-1965925590301241/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Polaris Pet Clinic"],
+      "arabic": ["عيادة بولاريس للحيوانات الأليفة, 6 أكتوبر"]
+    }
+  },
+  {
+    "key": "petsy-care-omraniya",
+    "nameEnglish": "Petsy Care Veterinary Center",
+    "nameArabic": "مركز بيتسي كير البيطري",
+    "addressEnglish": "446 El Haram Street, Eastern Al Omraneya, Giza",
+    "addressArabic": "446 Al Haram، Al Omraneyah Ash Sharqeyah، El Omraniya، Giza Governorate",
+    "area": "Eastern Al Omraneya",
+    "phones": [
+      "01022094326",
+      "Contact Disabled by Owner",
+      "ساعات العمل",
+      "الإثنين",
+      "2 ظهرا",
+      "10 مساءا",
+      "الثلاثاء",
+      "2 ظهرا",
+      "10 مساءا",
+      "الأربعاء",
+      "2 ظهرا",
+      "10 مساءا",
+      "الخميس",
+      "2 ظهرا",
+      "10 مساءا",
+      "الجمعة",
+      "2 ظهرا",
+      "10 مساءا",
+      "السبت",
+      "2 ظهرا",
+      "10 مساءا",
+      "الأحد",
+      "2 ظهرا",
+      "10 مساءا",
+      "اضغط هنا للحصول على عنوان وهاتف عيادة بيتسي كير Petsy Care Veterinary Center",
+      "العنوان",
+      "العنوان:",
+      "446 Al Haram, Al Omraneyah Ash Sharqeyah, El Omraniya, Giza Governorate"
+    ],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3%d9%8a-%d9%83%d9%8a%d8%b1-petsy-care-veterinary-center/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Petsy Care Veterinary Center"],
+      "arabic": ["عيادة بيتسي كير"]
+    }
+  },
+  {
+    "key": "omaima-haggag",
+    "nameEnglish": "Dr. Omaima Haggag Veterinary Clinic",
+    "nameArabic": "عيادة د. أميمة حجاج البيطرية",
+    "addressEnglish": "Taawon, Faisal, Giza",
+    "addressArabic": "فيصل، التعاون",
+    "area": "Faisal",
+    "phones": ["01097694048"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af-%d8%a3%d9%85%d9%8a%d9%85%d8%a9-%d8%ad%d8%ac%d8%a7%d8%ac-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة د. أميمة حجاج البيطرية"]
+    }
+  },
+  {
+    "key": "gouda-ezzat",
+    "nameEnglish": "Dr. Gouda Ezzat Veterinary Clinic",
+    "nameArabic": "عيادة د. جودة عزت البيطرية",
+    "addressEnglish": "9 Gezirat El Arab Street, Mohandessin, Giza",
+    "addressArabic": "9 شارع جزيرة العرب، المهندسين، الجيزة",
+    "area": "Mohandessin",
+    "phones": ["01276077576", "01005661304"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af-%d8%ac%d9%88%d8%af%d8%a9-%d8%b9%d8%b2%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة د. جودة عزت البيطرية"]
+    }
+  },
+  {
+    "key": "raymond-nabih",
+    "nameEnglish": "Dr. Raymond Nabih Veterinary Clinic",
+    "nameArabic": "عيادة د. ريمون نبيه البيطرية",
+    "addressEnglish": "Inside Tiba Center, Motamayez October, 6th of October, Giza",
+    "addressArabic": "الحي المتميز، السادس من اكتوبر، الجيزة",
+    "area": "Motamayez October",
+    "phones": ["01221746549"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af-%d8%b1%d9%8a%d9%85%d9%88%d9%86-%d9%86%d8%a8%d9%8a%d9%87-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة د. ريمون نبيه البيطرية"]
+    }
+  },
+  {
+    "key": "mohie-mekkawy-ragab",
+    "nameEnglish": "Dr. Mohie Mekkawy Ragab Veterinary Clinic",
+    "nameArabic": "عيادة د. محي مكاوي رجب البيطرية",
+    "addressEnglish": "89 El Madrasa Street, Mounib, Giza",
+    "addressArabic": "89 شارع المدرسة، المنيب، الجيزة",
+    "area": "Mounib",
+    "phones": ["01005111563"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af-%d9%85%d8%ad%d9%8a-%d9%85%d9%83%d8%a7%d9%88%d9%8a-%d8%b1%d8%ac%d8%a8-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة د. محي مكاوي رجب البيطرية"]
+    }
+  },
+  {
+    "key": "mostafa-el-gaafary",
+    "nameEnglish": "Dr. Mostafa El Gaafary Veterinary Clinic",
+    "nameArabic": "عيادة د. مصطفى الجعفري البيطرية",
+    "addressEnglish": "81 El Tharwa El Maadaneya Street, First Gate, Hadayek El Ahram, Giza",
+    "addressArabic": "81 شارع الثروة المعدنية، حدائق الأهرام، الهرم، الجيزة. البوابة الأولى",
+    "area": "Hadayek El Ahram",
+    "phones": ["01225482977"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af-%d9%85%d8%b5%d8%b7%d9%81%d9%89-%d8%a7%d9%84%d8%ac%d8%b9%d9%81%d8%b1%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة د.مصطفى الجعفري البيطرية"]
+    }
+  },
+  {
+    "key": "rakha-veterinary",
+    "nameEnglish": "Rakha Veterinary Clinic",
+    "nameArabic": "عيادة رخا البيطرية الشاملة",
+    "addressEnglish": "Mahmoud El Zaky Street, off Khatem El Morsaleen Street, beside Sayed Darwish Hall, Haram, Giza",
+    "addressArabic": "شارع محمود الزكي، متفرع من شارع خاتم المرسلين، الهرم، الجيزة - بجوار قاعة سيد درويش",
+    "area": "Haram",
+    "phones": ["01283321026"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b1%d8%ae%d8%a7-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%b4%d8%a7%d9%85%d9%84%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/alirakhavetclinic",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة رخا البيطرية الشاملة"]
+    }
+  },
+  {
+    "key": "soul-veterinary",
+    "nameEnglish": "Soul Veterinary Clinic",
+    "nameArabic": "عيادة سول البيطرية",
+    "addressEnglish": "23 Khatem El Morsaleen Street, opposite Eastern Tobacco Club, Haram, Giza",
+    "addressArabic": "23 شارع خاتم المرسلين، أمام نادي الشرقية للدخان، الهرم، الجيزة",
+    "area": "Haram",
+    "phones": ["01069874554"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b3%d9%88%d9%84-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-soul-veterinary-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Soul Veterinary Clinic"],
+      "arabic": ["عيادة سول البيطرية، العمرانية، خاتم المرسلين"]
+    }
+  },
+  {
+    "key": "shepherd-pets",
+    "nameEnglish": "Shepherd Pets Clinic",
+    "nameArabic": "عيادة شيبرد للحيوانات الأليفة",
+    "addressEnglish": "El Nada Commercial Center, Floor2, above Banque Misr, Sheikh Zayed, Giza",
+    "addressArabic": "مدينة الشيخ زايد - مركز الندى التجاري، الدور الثاني، أعلى بنك مصر",
+    "area": "Sheikh Zayed",
+    "phones": ["01000528593"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b4%d9%8a%d8%a8%d8%b1%d8%af-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Shepherd pets clinic"],
+      "arabic": ["عيادة شيبرد للحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "veto-pets",
+    "nameEnglish": "Veto Pets Clinic",
+    "nameArabic": "عيادة فيتو البيطرية",
+    "addressEnglish": "17 El Tobgy Street, off Sudan Street, beside Traffic Administration, Dokki, Giza",
+    "addressArabic": "17 شارع الطوبجى من شارع السودان، بجوار ادارة المرور- الدقى- الجيزة",
+    "area": "Dokki",
+    "phones": [],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%81%d9%8a%d8%aa%d9%88-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%8c-veto-pets-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence. Contact ownership review 2026-11-12: 4pets Mokattam and Veto Pets Dokki share a number with no ownership/branch proof. Withheld from both; 4pets retains its other published number.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Veto Pets Clinic"],
+      "arabic": ["عيادة فيتو البيطرية"]
+    }
+  },
+  {
+    "key": "vetzootopia",
+    "nameEnglish": "Vetzootopia Animal Clinic",
+    "nameArabic": "عيادة فيت زووتوبيا البيطرية",
+    "addressEnglish": "6 El Nabawy El Mohandes Street, behind Balloon Theater, Agouza, Giza",
+    "addressArabic": "6 شارع النبوي المهندس، خلف مسرح البالون، العجوزة",
+    "area": "Agouza",
+    "phones": [
+      "01100720446",
+      "Contact Disabled by Owner",
+      "Tweet",
+      "اترك تقييمك",
+      "السعر",
+      "سهولة الوصول",
+      "فريق العمل",
+      "الخدمات",
+      "كفاءة الطبيب",
+      "Send Rating",
+      "Publishing ...",
+      "Your rating has been successfully sent",
+      "Please fill out all fields",
+      "تصنيفات",
+      "أنواع القطط (170)",
+      "أنواع الكلاب (229)",
+      "القطط (768)",
+      "امراض القطط (488)",
+      "الكلاب (916)",
+      "أمراض الكلاب (710)",
+      "تربية الحيوانات الأليفة في المنزل (26)",
+      "تربية السلاحف (17)",
+      "تربية الهامستر (8)",
+      "تربية طيور الزينة (21)",
+      "غير مصنف (12)",
+      "دليل العيادات البيطرية هو أول دليل بيطري عربي يهتم بتصنيف العيادات البيطرية. التصنيف يشمل جميع العيادات البيطرية في مصر و المملكة العربية السعودية. اذا كنت ترغب في إضافة عيادة بيطرية",
+      "تواصل معنا",
+      "أحدث المقالات",
+      "الاسهال المزمن عند القطط وافضل طرق علاجه",
+      "اشكال تشوه عظام الصدر عند القطط",
+      "اسباب تليف الكبد عند القطط",
+      "مقال عن الفشل الكلوى المزمن عند القطط",
+      "تشخيص الطبيب لنقص تجلط الدم الوراقى عند القطط",
+      "حلول البقع السوداء فى عيون القطط",
+      "خطورة امراض جلد الانف عند القطط",
+      "تفاصيل حول التفاعلات الغذائية عند القطط",
+      "كل ما يخص داء السكرى عند القطط",
+      "المقال الشامل عن اخصاء الكلاب",
+      "أقسام الموقع",
+      "أمراض الكلاب",
+      "أنواع القطط",
+      "أنواع الكلاب",
+      "القطط",
+      "الكلاب",
+      "امراض القطط",
+      "تربية الحيوانات الأليفة في المنزل",
+      "تربية السلاحف",
+      "تربية الهامستر",
+      "تربية طيور الزينة",
+      "غير مصنف",
+      "ابحث في الموقع",
+      "ابحث عن:",
+      "انضم لمحبي الحيوانات الأليفة على فيس بوك",
+      "الصفحة الرئيسية",
+      "إضافة عيادة بيطرية",
+      "عيادة بيطرية في مصر",
+      "عيادة بيطرية في السعودية",
+      "اتصل بنا",
+      "© 2015 Evcindex.com",
+      "دليل العيادات البيطرية. جميع الحقوق محفوظة."
+    ],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%81%d9%8a%d8%aa-%d8%b2%d9%88%d9%88%d8%aa%d9%88%d8%a8%d9%8a%d8%a7-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-vetzootopia-animal-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Vetzootopia animal clinic"],
+      "arabic": ["عيادة فيت زووتوبيا البيطرية، العجوزة، المهندسين"]
+    }
+  },
+  {
+    "key": "nour-vet",
+    "nameEnglish": "Nour Vet Veterinary Clinic",
+    "nameArabic": "عيادة نور فيت البيطرية",
+    "addressEnglish": "2 Saeed Abdo Street, El Talateeny, Talbeya, Faisal, opposite South Valley University office, Giza",
+    "addressArabic": "2 ش سعيد عبده - التلاتيني - طالبية - فيصل - أمام مكتب جامعة جنوب الوادي - الجيزة",
+    "area": "Al Talbeya Faisal",
+    "phones": ["01110203159", "01110028268"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%86%d9%88%d8%b1-%d9%81%d9%8a%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9%d8%8c-%d8%b4%d8%a7%d8%b1%d8%b9-%d9%81%d9%8a%d8%b5%d9%84%d8%8c-%d8%a7%d9%84%d8%ac/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة نور فيت البيطرية"]
+    }
+  },
+  {
+    "key": "happy-pets-mohandessin",
+    "nameEnglish": "Happy Pets Vet Clinic",
+    "nameArabic": "عيادة هابي بيتس البيطرية",
+    "addressEnglish": "64 Lebanon Square, beside Maroush cafe, Mohandessin, Giza",
+    "addressArabic": "64 ميدان لبنان، المهندسين، بجوار كافية مروش، الجيزة",
+    "area": "Lebanon Square",
+    "phones": ["01201204050", "01224050891", "01144445952"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%87%d8%a7%d8%a8%d9%8a-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%af-%d9%85%d8%ad%d9%85%d9%88%d8%af-%d8%ad%d9%85%d8%af%d9%8a-%d8%a7%d9%84%d9%85%d9%87%d9%86%d8%af%d8%b3%d9%8a%d9%86/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/happy.pets.egypt",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence. Cross-governorate branch review: two individual entries explicitly identify Dr Mahmoud Hamdy Happy Pets in Nasr City and Mohandessin with distinct full addresses, the same three reception numbers and the same happy.pets.egypt page. Preserve both documented branches.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Happy Pets Vet Clinic – Dr. Mahmoud Hamdy"],
+      "arabic": ["عيادة هابي بيتس د. محمود حمدي, المهندسين"]
+    },
+    "chainKey": "happy-pets",
+    "branchQualifier": "Mohandessin"
+  },
+  {
+    "key": "high-care-october",
+    "nameEnglish": "High Care Clinic",
+    "nameArabic": "عيادة هاي كير البيطرية",
+    "addressEnglish": "Hamis Mall, above Alwan bookshop, beside Misr University, Motamayez October, 6th of October, Giza",
+    "addressArabic": "مول هاميس، اعلي مكتبة الوان، بجوار جامعة مصر، الحي المتميز",
+    "area": "Motamayez October",
+    "phones": ["01027086262", "01155272704"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%87%d8%a7%d9%8a-%d9%83%d9%8a%d8%b1-%d9%83%d9%84%d9%8a%d9%86%d9%83%d8%8c-%d8%a7%d9%84%d8%ad%d9%8a-%d8%a7%d9%84%d9%85%d8%aa%d9%85%d9%8a%d8%b2%d8%8c-6-%d8%a3%d9%83%d8%aa/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["عيادة هاي كير كلينك البيطرية، الحي المتميز، 6 أكتوبر"]
+    }
+  },
+  {
+    "key": "best-for-pets-zayed",
+    "nameEnglish": "Best 4 Pets Veterinary Clinic (Sheikh Zayed)",
+    "nameArabic": "عيادة بيست فور بيتس البيطرية (الشيخ زايد)",
+    "addressEnglish": "11th District (Sheikh Zayed), opposite Orman College School Gate5, Sheikh Zayed, Giza",
+    "addressArabic": "الشيخ زايد، الحي الحادي عشر امام مدرسة الأورمان كولدج بوابة 5.",
+    "area": "11th District (Sheikh Zayed)",
+    "phones": ["01111187925", "01063120541", "01202700118"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-best-4-pets-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%a8%d9%8a%d8%b3%d8%aa-%d9%81%d9%88%d8%b1-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%b1%d9%8a%d9%81-%d8%a7%d9%84%d8%a3%d9%88%d8%b1%d9%88%d8%a8%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Related European branch page explicitly states main Zayed clinic operates24hours7days; this page confirms same01111187925 phone and main address.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Best 4 pets", "El-reef Alouroby Branch"],
+      "arabic": [
+        "عيادة  البيطرية لعلاج الحيوانات الأليفة والطيور والزواحف",
+        "عيادة بيست فور بيتس البيطرية، فرع الريف الأوروبي"
+      ]
+    },
+    "chainKey": "best-for-pets",
+    "branchQualifier": "Sheikh Zayed"
+  },
+  {
+    "key": "cairo-vet-october",
+    "nameEnglish": "Cairo Vet Clinic (October)",
+    "nameArabic": "عيادة كايرو فيت البيطرية (أكتوبر)",
+    "addressEnglish": "345 Central Spine, 6th of October, Giza",
+    "addressArabic": "345 المحور المركزي. 6 أكتوبر. الجيزة",
+    "area": "6th of October",
+    "phones": ["02-38376747"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-cairo-vet-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Cairo Vet"],
+      "arabic": []
+    },
+    "chainKey": "cairo-vet",
+    "branchQualifier": "October"
+  },
+  {
+    "key": "high-vet",
+    "nameEnglish": "High Vet Clinic",
+    "nameArabic": "عيادة هاي فيت البيطرية",
+    "addressEnglish": "18Taa Hadayek El Ahram, opposite club main gate, Giza",
+    "addressArabic": "18 ط حدائق الأهرام، أمام البوابة الرئيسية للنادي، الجيزة",
+    "area": "Hadayek El Ahram",
+    "phones": ["01028865506"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-high-vet-clinic-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/highvet",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["High Vet Clinic"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "loyal-friends",
+    "nameEnglish": "Loyal Friends Vet Clinic",
+    "nameArabic": "عيادة لويال فريندز البيطرية",
+    "addressEnglish": "Motamayez October, above Salama El Motamayez restaurant, beside El Shaer supermarket, 6th of October, Giza",
+    "addressArabic": "الحي المتميز فوق مطعم سلامة المتميز و بجوار سوبر ماركت الشاعر. ٦ أكتوبر.",
+    "area": "Motamayez October",
+    "phones": ["01007226786"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-loyal-friends-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Loyal Friends", "Loyal friends vet clinic"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "modern-veterinary-mansoureya",
+    "nameEnglish": "Modern Veterinary Clinic",
+    "nameArabic": "العيادة البيطرية الحديثة",
+    "addressEnglish": "Mansoureya, Haram, Giza",
+    "addressArabic": "المنصورية، الهرم، الجيزة",
+    "area": "Haram",
+    "phones": ["01110988407"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-modern-veterinary-clinic-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%ad%d8%af%d9%8a%d8%ab%d8%a9-%d8%a8%d8%a7%d9%84%d9%85%d9%86%d8%b5%d9%88%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Modern Veterinary Clinic"],
+      "arabic": ["العيادة البيطرية الحديثة بالمنصورية"]
+    }
+  },
+  {
+    "key": "pet-zienia",
+    "nameEnglish": "Pet Zienia Veterinary Clinic",
+    "nameArabic": "عيادة بت زينيا البيطرية",
+    "addressEnglish": "20 El Taawon Street, beside Cairo educational institute, Al Taawon al Haram, Giza",
+    "addressArabic": "٢٠ ش التعاون بجوار معهد القاهرة التعليمي، الهرم، الجيزة",
+    "area": "Al Taawon al Haram",
+    "phones": [
+      "01142841835",
+      "Contact Disabled by Owner",
+      "ساعات العمل",
+      "الإثنين",
+      "3 عصرا",
+      "10 مساءا",
+      "الثلاثاء",
+      "3 عصرا",
+      "10 مساءا",
+      "الأربعاء",
+      "3 عصرا",
+      "10 مساءا",
+      "الخميس",
+      "3 عصرا",
+      "10 مساءا",
+      "الجمعة",
+      "3 عصرا",
+      "10 مساءا",
+      "السبت",
+      "3 عصرا",
+      "10 مساءا",
+      "الأحد",
+      "3 عصرا",
+      "10 مساءا",
+      "اضغط هنا للحصول على عنوان وهاتف عيادة pet- zienia البيطرية ، الهرم ، التعاون",
+      "العنوان",
+      "العنوان:",
+      "٢٠ ش التعاون بجوار معهد القاهرة التعليمي، الهرم، الجيزة"
+    ],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-pet-zienia-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%8c-%d8%a7%d9%84%d9%87%d8%b1%d9%85-%d8%8c-%d8%a7%d9%84%d8%aa%d8%b9%d8%a7%d9%88%d9%86/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["pet- zienia"],
+      "arabic": ["عيادة  البيطرية ، الهرم ، التعاون"]
+    }
+  },
+  {
+    "key": "pure-pets",
+    "nameEnglish": "Pure Pets Clinic",
+    "nameArabic": "عيادة بيور بتس البيطرية",
+    "addressEnglish": "Building75, Street5Alf, FirstGate, ground floor, Hadayek El Ahram, Giza",
+    "addressArabic": "عماره ٧٥ شارع ٥ الف البوابه الاولي حدائق الاهرام  الدور الارضي",
+    "area": "Hadayek El Ahram",
+    "phones": ["01092944564"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-pure-pets-clinic-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pure pets clinic"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "al-ahram-veterinary",
+    "nameEnglish": "Al Ahram Veterinary Services Center",
+    "nameArabic": "مركز الأهرام للخدمات البيطرية",
+    "addressEnglish": "15 Ibrahim Soliman Street, off Faisal Street, beside El Taawon gas station, Giza",
+    "addressArabic": "15 شارع ابراهيم سليمان متفرع من شارع فيصل. بجوار بنزينة التعاون. الجيزة",
+    "area": "Faisal",
+    "phones": ["01223993575", "02-37403716"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%a3%d9%87%d8%b1%d8%a7%d9%85-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/Dr-Ahmed-Mokhtar-Vet-Surgeon-191274380895735",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["مركز الأهرام للخدمات البيطرية"]
+    }
+  },
+  {
+    "key": "el-banhawy",
+    "nameEnglish": "El Banhawy Pet Services Center",
+    "nameArabic": "مركز البنهاوي لخدمات الحيوانات الأليفة",
+    "addressEnglish": "El Esraa Plaza Center, Central Spine, 6th of October, Giza",
+    "addressArabic": "6 أكتوبر، المحور المركزي، سنتر الإسراء بلازا، الجيزة",
+    "area": "6th of October",
+    "phones": [
+      "01003586966",
+      "01009859557",
+      "Contact Disabled by Owner",
+      "ساعات العمل",
+      "الإثنين",
+      "10 صباحا",
+      "10 مساءا",
+      "الثلاثاء",
+      "10 صباحا",
+      "10 مساءا",
+      "الأربعاء",
+      "10 صباحا",
+      "10 مساءا",
+      "الخميس",
+      "10 صباحا",
+      "10 مساءا",
+      "الجمعة",
+      "مغلق",
+      "السبت",
+      "10 صباحا",
+      "10 مساءا",
+      "الأحد",
+      "10 صباحا",
+      "10 مساءا",
+      "اضغط هنا للحصول على عنوان وهاتف مركز البنهاوي لخدمات الحيوانات الأليفة, 6 أكتوبر",
+      "العنوان",
+      "العنوان:",
+      "6 أكتوبر, المحور المركزي, سنتر الإسراء بلازا, الجيزة"
+    ],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%a8%d9%86%d9%87%d8%a7%d9%88%d9%8a-%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["مركز البنهاوي لخدمات الحيوانات الأليفة, 6 أكتوبر"]
+    }
+  },
+  {
+    "key": "giza-vet-faisal",
+    "nameEnglish": "Giza Vet Center",
+    "nameArabic": "مركز الجيزة البيطري",
+    "addressEnglish": "17 Hassan Saleh Street, off Nasser al Thawra Faisal, Madkour, opposite Awlad Ragab supermarket, Giza",
+    "addressArabic": "17 شارع حسن صالح متفرع من شارع ناصر الثورة، مدكور، فيصل، الجيزة أمام سوبر ماركت أولاد رجب",
+    "area": "Nasser al Thawra Faisal",
+    "phones": ["01225800979", "0233929573"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%ac%d9%8a%d8%b2%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%8c-%d9%81%d9%8a%d8%b5%d9%84/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["مركز الجيزة البيطري، فيصل"]
+    }
+  },
+  {
+    "key": "zamalek-vet-mohandessin",
+    "nameEnglish": "Zamalek Vet Center",
+    "nameArabic": "مركز الزمالك البيطري",
+    "addressEnglish": "35 El Hegaz Street, off Lebanon Street, opposite Seoudi Market, Mohandessin, Giza",
+    "addressArabic": "35 شارع الحجاز متفرع من شارع لبنان، أمام سعودي ماركت، المهندسين، الجيزة",
+    "area": "Mohandessin",
+    "phones": ["01064814805"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%b2%d9%85%d8%a7%d9%84%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-zamalek-vet-center/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Zamalek Vet Center"],
+      "arabic": ["مركز الزمالك البيطري"]
+    }
+  },
+  {
+    "key": "el-safwa-veterinary",
+    "nameEnglish": "El Safwa Veterinary Services Center",
+    "nameArabic": "مركز الصفوة للخدمات البيطرية",
+    "addressEnglish": "Auseem City, Giza",
+    "addressArabic": "مدينة أوسيم، أوسيم، الجيزة",
+    "area": "Auseem",
+    "phones": ["02-38916375"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%b5%d9%81%d9%88%d8%a9-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["مركز الصفوة للخدمات البيطرية"]
+    }
+  },
+  {
+    "key": "family-vet-center",
+    "nameEnglish": "Family Vet Center",
+    "nameArabic": "مركز فاملي البيطري",
+    "addressEnglish": "Block15/7, Villa1, Abdallah Ibn Massoud Street, Third Neighbourhood, West Somid, Motamayez October, 6th of October, Giza",
+    "addressArabic": "بلوك 15/7 - فيلا1 - شارع عبدالله بن مسعود - المجاورة الثالثة - غرب سوميد - السادس من اكتوبر - الحي المتميز - الجيزة",
+    "area": "Motamayez October",
+    "phones": ["02388834776", "01005200319"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%b9%d8%a7%d8%a6%d9%84%d8%a9-%d9%84%d8%b7%d8%a8-%d9%88%d8%ac%d8%b1%d8%a7%d8%ad%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.findglocal.com/EG/6-October-City/154647818217561/Family-Vet-Center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "http://familyvetcenter.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "http://familyvetcenter.com/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Ownfamilyvetcenter.com explicitly says clinic available24hours daily for treatment/emergencysurgery;26July2026matchingmirrorpost states24hour emergency department.",
+    "lastSeenActive": "2026-07-27",
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence. Public clinicpostmirror has dated activity 2026-07-27 matchingclinicphone/address.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Family Vet Center"],
+      "arabic": ["مركز العائلة لطب وجراحة الحيوان", "فاملي فت سنتر", "عياده فاملى فت سنتر"]
+    }
+  },
+  {
+    "key": "orange-veterinary",
+    "nameEnglish": "Orange Veterinary Center",
+    "nameArabic": "مركز أورانج البيطري",
+    "addressEnglish": "11 Gamal Salem Street, Mossadak Street, Dokki, Giza",
+    "addressArabic": "11 شارع جمال سالم، شارع مصدق، الدقي، الجيزة",
+    "area": "Dokki",
+    "phones": ["01022951414", "01010670670"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%88%d8%b1%d8%a7%d9%86%d8%ac-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-orange-veterinary-center/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.findhealthclinics.org/EG/Giza/117901038563635/Orange-veterinary-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-07-29",
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence. FindHealthClinics individual public social-post mirror shows2026-07-29 appointment invitation atsame11GamalSalem and01010670670; dated activity is mirror-postdate, not directFacebook retrieval.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Orange Veterinary Center", "Orange veterinary clinic", "Orange Vet Center"],
+      "arabic": ["مركز اورانج البيطري للحيوانات الأليفة، الدقي، الجيزة"]
+    }
+  },
+  {
+    "key": "pets-world-hadayek",
+    "nameEnglish": "Pets World Vet Center",
+    "nameArabic": "مركز بيتس وورلد البيطري",
+    "addressEnglish": "46Haa, Alf Leila Wa Leila CoffeeShop Street, GateTwo, Hadayek El Ahram, Giza",
+    "addressArabic": "46 هـ - شارع كوفى شوب ألف ليلة وليلة - البوابة الثانية - حدائق الاهرام -الجيزة",
+    "area": "Hadayek El Ahram",
+    "phones": ["01001933619", "01149391165"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a8%d9%8a%d8%aa%d8%b3-%d9%88%d9%88%d8%b1%d9%84%d8%af-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d8%ad%d8%af%d8%a7%d8%a6%d9%82-%d8%a7%d9%84%d8%a3%d9%87%d8%b1%d8%a7%d9%85/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/petsworldeg/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets World Vet Center"],
+      "arabic": ["مركز بيتس وورلد البيطري, حدائق الأهرام"]
+    }
+  },
+  {
+    "key": "pet-paradise-haram",
+    "nameEnglish": "Pet Paradise Center",
+    "nameArabic": "مركز بت بارادايز البيطري",
+    "addressEnglish": "10 Ahmed Lotfy El Sayed Street, Haram, Giza",
+    "addressArabic": "10 شارع أحمد لطفي السيد الهرم",
+    "area": "Haram",
+    "phones": [
+      "01063110363",
+      "01558805763",
+      "Contact Disabled by Owner",
+      "ساعات العمل",
+      "الإثنين",
+      "5 عصرا",
+      "12 مساءا",
+      "الثلاثاء",
+      "5 عصرا",
+      "12 مساءا",
+      "الأربعاء",
+      "5 عصرا",
+      "12 مساءا",
+      "الخميس",
+      "5 عصرا",
+      "12 مساءا",
+      "الجمعة",
+      "5 عصرا",
+      "12 مساءا",
+      "السبت",
+      "5 عصرا",
+      "12 مساءا",
+      "الأحد",
+      "5 عصرا",
+      "12 مساءا",
+      "اضغط هنا للحصول على عنوان وهاتف مركز بيت بارادايز البيطري Pet Paradise center",
+      "العنوان",
+      "العنوان:",
+      "10 شارع أحمد لطفي السيد الهرم"
+    ],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a8%d9%8a%d8%aa-%d8%a8%d8%a7%d8%b1%d8%a7%d8%af%d8%a7%d9%8a%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-pet-paradise-center/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Paradise center"],
+      "arabic": ["مركز بيت بارادايز البيطري"]
+    }
+  },
+  {
+    "key": "lights-veterinary",
+    "nameEnglish": "Light’s Veterinary Center",
+    "nameArabic": "مركز لايتس البيطري",
+    "addressEnglish": "4th District, Neighbourhood5, opposite El Kholafaa El Rashideen mosque, 6th of October, Giza",
+    "addressArabic": "الحي الرابع؛ مجاورة 5؛ امام مسجد الخلفاء الراشدين، 6 أكتوبر، الجيزة",
+    "area": "4th District",
+    "phones": ["01146557299"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d9%84%d8%a7%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-lights-veterinary-center/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/LightsVeterinaryCenter/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Light’s Veterinary Center"],
+      "arabic": ["مركز لايتس البيطري"]
+    }
+  },
+  {
+    "key": "bobbie-veterinary",
+    "nameEnglish": "Bobbie Veterinary Center",
+    "nameArabic": "مركز بوبي البيطري",
+    "addressEnglish": "160 Abdel Moneim Riad-Abdel Khalek Tharwat, 6th of October, Giza",
+    "addressArabic": "160 عبدالمنعم رياض - عبدالخالق ثروت. 6 اكتوبر. الجيزة",
+    "area": "6th of October",
+    "phones": ["01152352926"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-bobbie-veterinary-center-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Bobbie veterinary center"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "healthy-pet-center",
+    "nameEnglish": "Healthy Pet Center",
+    "nameArabic": "مركز هيلثي بت البيطري",
+    "addressEnglish": "El Bostan Street, Sheikh Zayed, Giza",
+    "addressArabic": "شارع البستان، الشيخ زايد. الجيزة",
+    "area": "Sheikh Zayed",
+    "phones": ["01114014011"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-healthy-pet-center-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/healthypetcenter.HPC/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Healthy Pet Center"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "el-hadaba-veterinary",
+    "nameEnglish": "El Hadaba Veterinary Hospital",
+    "nameArabic": "مستشفى الهضبة البيطرية",
+    "addressEnglish": "270Haa, beside El Nour Mosque, GateTwo, Hadayek El Ahram, Giza",
+    "addressArabic": "حدائق الأهرام، الجيزة - البوابة الثانية - 270 هـ بجوار مسجد النور",
+    "area": "Hadayek El Ahram",
+    "phones": ["01223703448", "01000061575"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a7%d9%84%d9%87%d8%b6%d8%a8%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/Prestige.Animal.Hospital",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["مستشفى الهضبة البيطرية"]
+    }
+  },
+  {
+    "key": "pets-choice-hadayek",
+    "nameEnglish": "Pets Choice Animal Hospital",
+    "nameArabic": "مستشفى بيتس تشويس البيطري",
+    "addressEnglish": "273Noon, El Khazzan Street, off El Geish Street, FourthGate Mina, Hadayek El Ahram, Giza",
+    "addressArabic": "حدائق الأهرام، البوابة الرابعة (مينا)، 273 ن شارع الخزان، متفرع من شارع الجيش",
+    "area": "Hadayek El Ahram",
+    "phones": ["01288786836"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%aa%d8%b4%d9%88%d9%8a%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-pets-choice-animal-hospital/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Individual EVC entry explicitly states veterinary team present around the clock and طوارئ24ساعة; call first.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence. Contact ownership review 2026-11-12: Similar Pets Choice brand in Hadayek Al Ahram and Maadi, but no explicit simultaneous branch publication reviewed. Shared number withheld pending ownership confirmation; both retain separate sourced numbers.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Choice Animal Hospital"],
+      "arabic": ["مستشفى بيتس تشويس البيطري، حدائق الأهرام، البوابة الرابعة"]
+    }
+  },
+  {
+    "key": "cairo-vet-mohandessin",
+    "nameEnglish": "Cairo Vet Hospital (Mohandessin)",
+    "nameArabic": "مستشفى كايرو فيت البيطري (المهندسين)",
+    "addressEnglish": "16B Abou El Mahasen El Shazly Street, Mohandessin, Giza",
+    "addressArabic": "16 ب ش ابو المحاسن الشاذلى، المهندسين، الجيزة",
+    "area": "Mohandessin",
+    "phones": ["02-33036581"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d9%83%d8%a7%d9%8a%d8%b1%d9%88-%d9%81%d9%8a%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-cairo-vet-hospital/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Cairo Vet Hospital"],
+      "arabic": ["مستشفى كايرو فيت البيطرية"]
+    },
+    "chainKey": "cairo-vet",
+    "branchQualifier": "Mohandessin"
+  },
+  {
+    "key": "pets-beat-hospital",
+    "nameEnglish": "Pets Beat Animal Hospital",
+    "nameArabic": "مستشفى نبض أليف",
+    "addressEnglish": "Street off El Shabrawy restaurant, fifth building right, beside Specialized Hospital, Sheikh Zayed, Giza",
+    "addressArabic": "مدينة الشيخ زايد، المستشفى التخصصي، الشارع المتفرع من مطعم الشبراوي، المبنى الخامس يمين",
+    "area": "Sheikh Zayed",
+    "phones": ["01026565923"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d9%86%d8%a8%d8%b6-%d8%a3%d9%84%d9%8a%d9%81-pets-beat-animal-hospital/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Beat Animal Hospital"],
+      "arabic": ["مستشفى نبض أليف"]
+    }
+  },
+  {
+    "key": "pets-hospital-mall",
+    "nameEnglish": "Pets Mall (October)",
+    "nameArabic": "بيتس مول (أكتوبر)",
+    "addressEnglish": "686, 3rd District, 6th of October, Giza",
+    "addressArabic": "686 الحي الثالث، السادس من أكتوبر، الجيزة",
+    "area": "3rd District",
+    "phones": ["01111629639", "01111696946"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d9%88%d9%85%d9%88%d9%84-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://pets-mall.net/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://pets-mall.net/",
+    "facebookUrl": "https://www.facebook.com/petsmall.hospital/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Own pet store explicitly offers qualified-vet checkups, vaccinations and surgical procedures at both physical branches, so qualifies as combined clinic/store. Current own address686ThirdDistrict and9am–10pm hours supersede historical EVCVilla25Street17 and24h claim.01111629639 links identities. Other old sourcephones retained only in cache, uncorroborated.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Pets Hospital And Mall", "Pets Hospital and Mall", "Pets Mall"],
+      "arabic": ["مستشفى ومول بيتس البيطري", "بيتس مول"]
+    },
+    "chainKey": "pets-mall",
+    "branchQualifier": "October"
+  },
+  {
+    "key": "healthy-bird-faisal",
+    "nameEnglish": "Healthy Bird",
+    "nameArabic": "هيلثي بيرد لعلاج الطيور والزواحف",
+    "addressEnglish": "37 El Matbaa Street, Faisal, Giza",
+    "addressArabic": "37 شارع المطبعه - فيصل - الجيزة - مصر",
+    "area": "Al Matbaa Faisal",
+    "phones": ["01222148785"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%87%d9%8a%d9%84%d8%ab%d9%89-%d8%a8%d9%8a%d8%b1%d8%af/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [],
+      "arabic": ["هيلثى بيرد لعلاج الطيور والزواحف"]
+    }
+  },
+  {
+    "key": "abdelwahab-animal-clinic",
+    "nameEnglish": "Dr Abdelwahab Animal Clinic and Pet Shop",
+    "nameArabic": "عيادة دكتور عبد الوهاب البيطرية",
+    "addressEnglish": "Badr El Din Mall, Floor2, above El Fayoumi supermarket, 16th District, Sheikh Zayed, Giza",
+    "addressArabic": "مول بدر الدين، الحي 16، الشيخ زايد، الدور الثاني، اعلى سوبر ماركت الفيومي",
+    "area": "16th District",
+    "phones": ["01000113877"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/dr-abdelwahab-animal-clinic-and-pet-shop/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr Abdelwahab Animal Clinic and pet shop"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "pet-care-hospital-zayed",
+    "nameEnglish": "Pet Care Hospital",
+    "nameArabic": "المستشفى البيطري الشيخ زايد",
+    "addressEnglish": "El Moez Center, behind Canadian University and Jasmine Compound, 12th District, Sheikh Zayed, Giza",
+    "addressArabic": "سنتر المعز، خلف الجامعة الكندية وكمبوند الياسمين، الحي 12، الشيخ زايد، الجيزة",
+    "area": "12th District (Sheikh Zayed)",
+    "phones": ["01140093913", "01004740482"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/pet-care-hospital-%d8%a7%d9%84%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d8%a7%d9%84%d8%b4%d9%8a%d8%ae-%d8%b2%d8%a7%d9%8a%d8%af/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.findglocal.com/EG/6-October-City/736144806397816/Pet-Care-Hospital---Dr-Ahmed-Ramadan",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Individual EVC entry explicitly states طوارئ24ساعة (call first to confirm attendance).",
+    "lastSeenActive": "2026-10-30",
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence. Public clinicpostmirror has dated activity 2026-10-30 matchingclinicphone/address.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Care Hospital"],
+      "arabic": ["المستشفى البيطري الشيخ زايد"]
+    }
+  },
+  {
+    "key": "tail-and-tails",
+    "nameEnglish": "Tail & Tails Animal Hospital",
+    "nameArabic": "مستشفى تيل آند تيلز البيطري",
+    "addressEnglish": "Building159, Floor1, apartment1, Third Neighbourhood, 8th District (Sheikh Zayed), Sheikh Zayed, Giza",
+    "addressArabic": "الشيخ زايد، الحي الثامن، المجاورة الثالثة، عمارة 159، الدور الأول، شقة 1",
+    "area": "8th District (Sheikh Zayed)",
+    "phones": ["01112022283"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/tail-tails-animal-hospital/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes physical pet veterinary medical care and provides the listed address and contact. Directory default opening times and template contact URLs are not treated as primary clinic evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Tail & Tails Animal Hospital"],
+      "arabic": ["العيادة البيطرية  ، الحي الثامن ، الشيخ زايد"]
+    }
+  }
+]

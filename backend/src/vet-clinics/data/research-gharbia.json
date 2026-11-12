@@ -1,0 +1,373 @@
+[
+  {
+    "key": "pet-na-tanta",
+    "nameEnglish": "Pet-Na Veterinary Clinic",
+    "nameArabic": "عيادة بيتنا البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "12 Al Amany Building, El Nahas Street, beside Panorama Hotel, Tanta, Gharbia",
+    "addressArabic": "عمارة الأماني 12، شارع النحاس، بجوار فندق بانوراما، طنطا، الغربية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Tanta 2",
+    "citySourceCode": "EG1602",
+    "phones": ["01226268963", "01552440576", "0403763558"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Tanta/110143698544536/Pet-Na-Veterinary-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.bizmideast.com/EG/pet-na-veterinary-clinic-د-مي-طيبة-د-0155-244-0576",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-23",
+    "classificationEvidence": "Read individual clinic-feed mirror: veterinary medicine/surgery, 2026-09-23 extended clinic hours. Three contacts in dated posts. BizMidEast individual entry identifies Tanta Qism 2; no use of its plus code or pin."
+  },
+  {
+    "key": "elzera-mahalla",
+    "nameEnglish": "Elzera Pet Clinic",
+    "nameArabic": "عيادة إلزيرا البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Zeraa Square, opposite Veterinary Administration, beside Ramadan El Domany Laboratory, El Mahalla El Kubra Part 2, Gharbia",
+    "addressArabic": "ميدان الزراعة، أمام الإدارة البيطرية، بجوار معمل رمضان الدوماني، المحلة الكبرى قسم ثان، الغربية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "El Mahalla El Kobra 2",
+    "citySourceCode": "EG1606",
+    "phones": ["01036462595"],
+    "sources": [
+      {
+        "url": "https://linktr.ee/elzera_petclinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://linktr.ee/elzera_petclinic",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Read first-party Linktree via web.open (terminal 403 retained): explicit pet treatment, address Part 2; published WhatsApp target wa.me/201036462595. Clinic is opposite government administration, not itself a government unit. Linktree join month not treated as dated operation. Depth review: first-party handle attests Elzera and El Mahalla El Kubra, not Tanta. Arabic الزراعة occurs only in the square address, not as an attested brand. Arabic display is a marked faithful transliteration إلزيرا; the earlier invented brand الزراعة is removed."
+  },
+  {
+    "key": "aleet-tanta",
+    "nameEnglish": "Aleet Vet Center",
+    "nameArabic": "مركز أليط البيطري",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglish": "1 El Baha Street, off El Safa Street, behind Abu Farha Hospital, Stadium, Tanta Second, Gharbia",
+    "addressArabic": "1 شارع البهاء من شارع الصفا، خلف مستشفى أبو فرحة، الاستاد، طنطا ثان، الغربية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Tanta 2",
+    "citySourceCode": "EG1602",
+    "phones": ["01202222117"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Tanta/118804339968423/Aleet-Vet-Center---%D9%85%D8%B1%D9%83%D8%B2-%D8%A3%D9%84%D9%8A%D8%B7-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-21",
+    "classificationEvidence": "Individual feed explicitly identifies Tanta Second and physical pet medicine/surgery; 2026-09-21 veterinary eye advice accompanies current two-branch notices. Hotline explicitly shared with Cairo branch, which is not currently in the dataset.",
+    "chainKey": "aleet",
+    "branchQualifier": "Tanta"
+  },
+  {
+    "key": "reda-shalaby-tanta",
+    "nameEnglish": "Dr. Reda Shalaby Veterinary Center",
+    "nameArabic": "مركز الدكتورة رضا شلبي لعلاج وجراحة الحيوانات الأليفة",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglish": "El Fateh Street, opposite wholesale market wall, beside Asmak Misr restaurant, Tanta, Gharbia",
+    "addressArabic": "شارع الفاتح، أمام سور سوق الجملة، بجانب مطعم أسماك مصر، طنطا، الغربية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Tanta 2",
+    "citySourceCode": "EG1602",
+    "phones": ["01062232534"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Tanta/179956975466762/Dr-reda-shalaby-%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D8%AF%D9%83%D8%AA%D9%88%D8%B1%D8%A9-%D8%B1%D8%B6%D8%A7-%D8%B4%D9%84%D8%A8%D9%8A-%D9%84%D8%B9%D9%84%D8%A7%D8%AC-%D9%88%D8%AC%D8%B1%D8%A7%D8%AD%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A3%D9%84%D9%8A%D9%81%D8%A9-%D8%A8%D8%B7%D9%86%D8%B7%D8%A7",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://aiesec.org/opportunity/global-volunteer/1331200",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual page explicitly offers pet surgery/internal medicine at physical address. AIESEC individual placement identifies this centre as Tanta Qism 2; undated listing not treated as operation date."
+  },
+  {
+    "key": "animal-care-seberbay",
+    "nameEnglish": "Animal Care Center",
+    "nameArabic": "مركز أنيمال كير البيطري",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Seberbay, Tanta Mall road, beside Sharia College and El Sobehy Pharmacy, Tanta district, Gharbia",
+    "addressArabic": "سبرباي، طريق مول طنطا، بجوار كلية الشريعة وصيدلية الصبيحي، مركز طنطا، الغربية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Tanta",
+    "citySourceCode": "EG1603",
+    "phones": ["01123705047"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Tanta/108811591925462/Animal-Care-Center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-08-16",
+    "classificationEvidence": "2026-08-16 post describes feline pyometra surgery and names Dr Noha El Mokhlesawy with number. Physical address is Seberbay outside urban Tanta Kisms, assigned rural Tanta Markaz; no Maps link followed."
+  },
+  {
+    "key": "pet-space-tanta",
+    "nameEnglish": "Pet Space Veterinary Clinic",
+    "nameArabic": "عيادة بيت سبيس البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Helw Street, opposite Faculty of Commerce, beside KFC, Tanta, Gharbia",
+    "addressArabic": "شارع الحلو، أمام كلية التجارة، بجوار كنتاكي، طنطا، الغربية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Tanta 2",
+    "citySourceCode": "EG1602",
+    "phones": ["01550716713", "01284378495"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Tanta/103257745425549/Pet-Space-Veterinary-Clinic---%D8%AF.-%D8%A8%D8%A7%D8%B3%D9%85-%D9%85%D8%B1%D8%A7%D8%AF",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.bizmideast.com/EG/pet-space-veterinary-clinic-د-باسم-مراد-0155-071-6713",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.elwatannews.com/news/details/5752645",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-03-28",
+    "classificationEvidence": "Physical pet medicine/surgery clinic; dated hours/contact post 2026-03-28. Helw Street is Qism 2 according to separately read locality news. BizMidEast independently confirms main contact/address."
+  },
+  {
+    "key": "pet-ville-tanta",
+    "nameEnglish": "Pet Ville Clinic",
+    "nameArabic": "عيادة بيت فيل البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Mohab at El Helw, Abdel Hamid Street, beside El Sheikh Gamal, Tanta, Gharbia",
+    "addressArabic": "محب مع الحلو، شارع عبد الحميد، بجوار الشيخ جمال، طنطا، الغربية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Tanta 2",
+    "citySourceCode": "EG1602",
+    "phones": ["01508213883", "0403292916"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Tanta/897588796771505/Pet-Ville-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.elwatannews.com/news/details/5752645",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-21",
+    "classificationEvidence": "2026-10-21 puppy vaccinations at physical address; 2026-10-12 esophageal obstruction case. Helw locality assigned Qism 2 per cited locality report."
+  },
+  {
+    "key": "kit-cat-tanta",
+    "nameEnglish": "Kit Cat Veterinary Clinic",
+    "nameArabic": "عيادة كيت كات البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Stadium area, Om El Qora Hospital Street, first right beside Abu El Kheir Market, Tanta, Gharbia",
+    "addressArabic": "الاستاد، شارع مستشفى أم القرى، أول يمين، بجوار ماركت أبو الخير، طنطا، الغربية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Tanta 2",
+    "citySourceCode": "EG1602",
+    "phones": ["01223846320", "01019317339"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Tanta/1141835735683765/kit-Cat-veterinary-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-26",
+    "classificationEvidence": "2026-10-26 offers pet sterilization surgery paired with physical Stadium area address and contacts. Stadium is the same Tanta Second locality explicitly identified by Aleet, with no generic directory schedule promotion.",
+    "aliases": {
+      "english": ["kit Cat veterinary clinic"]
+    }
+  },
+  {
+    "key": "be-gory-tanta",
+    "nameEnglish": "Be Gory Veterinary Clinic",
+    "nameArabic": "عياده بي جوري البيطريه",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglish": "Bonaparte Street off El Nahas, opposite Vodafone, Tanta, Gharbia",
+    "addressArabic": "شارع بونابرت من النحاس، أمام شركة فودافون، طنطا، الغربية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Tanta 2",
+    "citySourceCode": "EG1602",
+    "phones": [],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Tanta/110052212142918/%D8%B9%D9%8A%D8%A7%D8%AF%D9%87-%D8%A8%D9%8A-%D8%AC%D9%88%D8%B1%D9%8A-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual listing explicitly treats pets/birds/rabbits at physical address off Nahas. Nahas is the same Qism2 locality explicitly sourced by Pet-Na. No public phone in entry; retained inactive no-phone."
+  },
+  {
+    "key": "petopia-mahalla",
+    "nameEnglish": "Petopia Clinic",
+    "nameArabic": "عيادة بيتوبيا البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Sekket Zifta Street, opposite El Taqwa confectioner, El Mahalla El Kubra, Gharbia",
+    "addressArabic": "شارع سكة زفتى، أمام حلواني التقوى، المحلة الكبرى، الغربية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "El Mahalla El Kobra 2",
+    "citySourceCode": "EG1606",
+    "phones": ["01557800514"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/181718208606054/Petopia-Clinic----%D8%A7%D9%84%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.elwatannews.com/news/details/1481456",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-04-06",
+    "classificationEvidence": "2026-04-06 cryptorchid cat surgery; clinic posts pair physical street and phone. Sekket Zifta/Taqwa locality assigned Second district from separately consulted locality report."
+  },
+  {
+    "key": "nano-mahalla",
+    "nameEnglish": "Nano Vet",
+    "nameArabic": "عيادة نانو ڤيت",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglish": "Galal El Din Street, opposite El Qady Center, El Mahalla El Kubra, Gharbia",
+    "addressArabic": "شارع جلال الدين، أمام سنتر القاضي، المحلة الكبرى، الغربية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "El Mahalla El Kobra 1",
+    "citySourceCode": "EG1605",
+    "phones": ["01065468958"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/109726815175356/Nano-Vet-%D9%86%D8%A7%D9%86%D9%88-%DA%A4%D9%8A%D8%AA",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.smsarko.com/details/152046/المحلة-الكبري-شارع-جلال-الدين-المتفرع-من-شارع-نعمان-الاعصر-قسم-اول-المحله-الكبرى-الغربية-للبيع",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual page explicitly identifies a veterinary clinic caring for dogs/cats with physical street and contact. Galal El Din street locality assigned First district from separately read property address; current retail posts not treated as dated clinical activity."
+  },
+  {
+    "key": "pet-espitalia-tanta",
+    "nameEnglish": "Pet Espitalia",
+    "nameArabic": "مستشفى بيت إسبيتاليا",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Sedky Street at El Helw, Tanta, Gharbia",
+    "addressArabic": "شارع صدقي مع الحلو، طنطا، الغربية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Tanta 2",
+    "citySourceCode": "EG1602",
+    "phones": ["01066518877", "0403280569"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Mansoura/226570925995326/Pet-Espitalia---Mansoura",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.petshops1.com/EG/Tanta/106115828194823/Pet-Espitalia---Tanta",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-07-22",
+    "classificationEvidence": "FX: individually reviewed branch on same multi-branch page; separate physical premises and branch-specific phone. Pet surgery evidence dated 2026-07-22. Catalog district corroborated by separately reviewed locality source; no coordinates inferred.",
+    "chainKey": "pet-espitalia",
+    "branchQualifier": "Tanta"
+  }
+]

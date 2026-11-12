@@ -1,0 +1,75 @@
+{
+  "lint": {
+    "command": ["npm", "run", "lint"],
+    "exitCode": 0,
+    "seconds": 22.1
+  },
+  "build": {
+    "command": ["npm", "run", "build"],
+    "exitCode": 0,
+    "seconds": 7.7
+  },
+  "unit": {
+    "command": ["npm", "run", "test:unit", "--", "--runInBand"],
+    "exitCode": 0,
+    "seconds": 41.8,
+    "suites": 106,
+    "tests": 1360
+  },
+  "admin": {
+    "command": ["npm", "--prefix", "admin-service", "test"],
+    "exitCode": 0,
+    "seconds": 7.2,
+    "tests": 449
+  },
+  "drizzle": {
+    "command": ["./node_modules/.bin/drizzle-kit", "generate"],
+    "exitCode": 0,
+    "seconds": 0.6,
+    "result": "No schema changes, nothing to migrate; no new migration files."
+  },
+  "clinicSuite": {
+    "command": [
+      "./node_modules/.bin/jest",
+      "--runInBand",
+      "--runTestsByPath",
+      "src/vet-clinics/catalog.spec.ts",
+      "src/vet-clinics/coverage.spec.ts",
+      "src/vet-clinics/data-quality.spec.ts",
+      "src/vet-clinics/geocoding.spec.ts",
+      "src/vet-clinics/schema.spec.ts",
+      "src/vet-clinics/vet-clinics.repository.spec.ts",
+      "src/vet-clinics/vet-clinics.resolver.spec.ts",
+      "src/vet-clinics/vet-clinics.service.spec.ts"
+    ],
+    "exitCode": 0,
+    "suites": 8,
+    "tests": 114
+  },
+  "offlineReproduction": {
+    "command": ["all 26 nonempty research governorates imported serially, then build.ts"],
+    "exitCode": 0,
+    "offlineImportAndBuild": "byte-identical",
+    "sha256": {
+      "src/vet-clinics/data/egypt-vet-clinics.json": "7dbe1bc9869e7f33a7d73a8feedca7e1af510ecdac8d83ac152e6ff59b8716fc",
+      "src/vet-clinics/data/baseline-report.json": "6c9e483a190a5826660f1d958b0040f628af108a2371118bc6f52492d964de68",
+      "drizzle/migrations/0068_release_egypt_vet_clinics.sql": "ff29191397acdc44f6601abde0c510a8cfb0789dee9d1eeeafad1b46d4b32d52"
+    }
+  },
+  "protectedFiles": {
+    "leadChecklist": "unchanged",
+    "coverageException": "unchanged",
+    "newValleyDataAndLedger": "unchanged",
+    "originalD2Decisions": 12
+  },
+  "formatting": {
+    "command": ["python3", "backend/.tmp/vets-depth/format-changed.py", "check"],
+    "exitCode": 0,
+    "files": 402,
+    "note": "Checked changed and new backend TS/JS/JSON/Markdown files with existing Prettier; temporary helper removed after verification."
+  },
+  "diffCheck": {
+    "command": ["git", "diff", "--check"],
+    "exitCode": 0
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "query": "كوم أمبو, مصر الجديدة, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%83%D9%88%D9%85+%D8%A3%D9%85%D8%A8%D9%88%2C+%D9%85%D8%B5%D8%B1+%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:39:54.282Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50856321,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 24926497,
+      "lat": "30.1005300",
+      "lon": "31.3257924",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع كوم امبو",
+      "display_name": "شارع كوم امبو, قسم مصر الجديدة, مصر الجديدة, القاهرة, 11757, مصر",
+      "address": {
+        "road": "شارع كوم امبو",
+        "quarter": "قسم مصر الجديدة",
+        "suburb": "مصر الجديدة",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11757",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.1001545", "30.1009055", "31.3253161", "31.3262687"]
+    }
+  ]
+}

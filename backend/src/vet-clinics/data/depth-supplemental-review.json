@@ -1,0 +1,118 @@
+{
+  "reviewedAt": "2026-11-12",
+  "method": "Serial individual web reads and indexed search results; an indexed snippet alone was never imported. Source mirrors are not independent witnesses. Maps links and coordinates were not used.",
+  "pages": [
+    {
+      "url": "https://www.bizmideast.com/EG/بنك-دم-مستشفى-جاويش-0101-594-3394",
+      "read": "individual page",
+      "evidence": "Hospital blood bank address explicitly locates Sheikh Mahmoud Hashem / El Sayadeen in Zagazig Qism 2. Locality evidence only; no medical-human facility imported."
+    },
+    {
+      "url": "https://www.elections.eg/images/pdfs/qrar-tashkel/30%20%202023.pdf",
+      "read": "indexed official document text",
+      "evidence": "Sorour Square polling school is Damietta Qism 1; Khadija school on Riyad Street is Assiut Qism 2; Airport/Kawther Saint Joseph school is Hurghada Qism 1. Used for locality, not clinic evidence."
+    },
+    {
+      "url": "https://www.elwatannews.com/news/details/652703",
+      "read": "indexed locality report",
+      "evidence": "El Galaa street described as Damietta First. No coordinates copied."
+    },
+    {
+      "url": "https://www.abdulaziz-stores.com/ar/our-stores",
+      "read": "individual first-party page",
+      "evidence": "Assiut store gives 34 Salah El Din El Ayouby (formerly El Nemis), Qism 2. Locality only."
+    },
+    {
+      "url": "https://www.d2020.net/public/index.php/details/1045881",
+      "read": "individual page",
+      "evidence": "Golden Technology locality: Feryal, Mahmoud Rashwan Street, Walidiya Qibliya, Qism 2 Assiut. Locality only."
+    },
+    {
+      "url": "https://www.elwatannews.com/news/details/1739237/",
+      "read": "indexed locality report",
+      "evidence": "Feryal is Assiut Qism 2; street evidence cross-checked against the separately read business entry."
+    },
+    {
+      "url": "https://www.youm7.online/story/2020/4/4/محافظة-سوهاج-استمرار-تطهير-المصالح-الحكومية-ودور-العبادة-والشوارع/4705718",
+      "read": "indexed governorate statement; individual open rate limited",
+      "evidence": "East Sohag street-disinfection list explicitly includes Ehab Mekled and Abu Simbel. El Zahraa Qism 2 independently corroborated by a police-statement report. No coordinates used."
+    },
+    {
+      "url": "https://www.elwatannews.com/news/details/395303",
+      "read": "indexed police statement",
+      "evidence": "El Zahraa is Sohag Qism 2. Locality only."
+    },
+    {
+      "url": "https://www.itda.gov.eg/CRM/875/CRA44.pdf",
+      "read": "indexed official register",
+      "evidence": "Airport/Kawther Metro main street is Hurghada Qism 1. Locality only."
+    },
+    {
+      "url": "https://dalil140.com/category/ar/veterinarians/hurghada",
+      "read": "individual category page in web tool; local fetch verification page preserved",
+      "evidence": "Reviewed Markos Elia, Sameh Shata, Veterinary Care Center and C & D clinic. Individual entry attempts/holds in D4 decisions."
+    },
+    {
+      "url": "https://dalil140.com/company/ar/420901-veterinary-care-center",
+      "read": "individual page",
+      "evidence": "429 Saad El Said Street, El Wafaa, Dahar, opposite Beirut Hotel; 01010169129 and 01129029790. Matches clinic feed, resolves district; added as another source on same retained clinic."
+    },
+    {
+      "url": "https://dalil140.com/category/ar/veterinarians/sharm-el-sheikh",
+      "read": "individual category page in web tool; local fetch verification page preserved",
+      "evidence": "Reviewed Pet Home 127 Hadaba; Sharm Vet villa 52C Hadaba; Sharm Animal Rowaysat entrance 1 villa 5. Individual reads/attempts are explicit holds in D4 decisions, without assuming generic vet listings prove pet treatment."
+    },
+    {
+      "url": "https://dalil140.com/company/ar/420855-sharm-animal-clinic",
+      "read": "individual page",
+      "evidence": "Rowaysat entrance 1 villa 5, near police station; 01115666799. On-site pet treatment unestablished; held."
+    },
+    {
+      "url": "https://www.bizmideast.com/EG/pet-home-clinic_1L",
+      "read": "individual page",
+      "evidence": "Explicitly marked closed since 2022-09-30. Minya Pet Home excluded from additions."
+    },
+    {
+      "url": "https://dezone.net/place/pets-zone-clinic/",
+      "read": "individual fetch verification page; indexed search text",
+      "evidence": "Indexed pet-treatment listing/01030765644, but individual content could not be reliably read; held."
+    },
+    {
+      "url": "https://www.cybo.com/EG/minya-egypt/animal-and-pet-stores",
+      "read": "indexed category text; actual open 429",
+      "evidence": "Indexed Pets Zone Adnan El Maleki locality/contact. Not imported from category text alone."
+    },
+    {
+      "url": "https://davidefat.wixsite.com/vetclinic",
+      "read": "individual first-party page",
+      "evidence": "Pet care and phone 01551698506; physical Minya premises unestablished. Held; no assignment from search context."
+    }
+  ],
+  "searches": [
+    "مستشفى جاويش قسم الزقازيق",
+    "شارع صدقي قسم ثان طنطا",
+    "شارع الجلاء دمياط قسم",
+    "ميدان سرور قسم دمياط",
+    "فوكس الإسماعيلية قسم",
+    "عيادات بيطرية بني سويف فيوم pet clinic phone",
+    "عيادات بيطرية المنيا ZooEtica pet clinic هاتف",
+    "Aswan veterinary clinic",
+    "بني سويف pet by Vet",
+    "دمياط عيادة الشعراء بيطرية",
+    "شارع رياض قسم أسيوط",
+    "فريال قسم أسيوط",
+    "سوهاج الزهراء قسم",
+    "سوهاج شارع بن تيمية قسم",
+    "أسيوط شارع النميس قسم ثان",
+    "أسيوط محمود رشوان قسم",
+    "Vets for Pets Sohag قسم",
+    "Kalboby قسم",
+    "سوهاج ابو سمبل قسم",
+    "Pets Zone Clinic المنيا تليفون",
+    "Minya veterinary clinic phone",
+    "الكوثر قسم أول الغردقة",
+    "site:susyutzinger.ch Hurghada address",
+    "عيادات بيطرية الغردقة dalilimedical",
+    "عيادات بيطرية شرم الشيخ dalilimedical"
+  ]
+}

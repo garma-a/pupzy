@@ -71,6 +71,9 @@ describe('VetClinicsResolver & VetClinicsPostResolver', () => {
     addressEnglish: '10 Road 9, Maadi',
     addressArabic: '١٠ شارع ٩، المعادي',
     website: 'https://maadivet.eg',
+    facebookUrl: null,
+    is24Hours: false,
+    isApproximateLocation: false,
     latitude: 29.9602,
     longitude: 31.2569,
     distanceKm: 1.2,
@@ -79,6 +82,15 @@ describe('VetClinicsResolver & VetClinicsPostResolver', () => {
     cityId: '01916327-0000-7000-8000-000000000001',
   };
 
+  it('preserves the additive approximate flag and text Maps handoff from the service', async () => {
+    const approximate = {
+      ...mockClinicDto,
+      isApproximateLocation: true,
+      googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Clinic',
+    };
+    mockVetClinicsService.nearbyVetClinicsForCity = jest.fn().mockResolvedValue([approximate]);
+    expect(await resolver.nearbyVetClinics(mockClinicDto.cityId!)).toEqual([approximate]);
+  });
   beforeEach(() => {
     mockVetClinicsService = {
       nearbyVetClinicsForCity: jest.fn().mockResolvedValue([mockClinicDto]),

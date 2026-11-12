@@ -1,0 +1,35 @@
+{
+  "query": "Ismail Sabry Street, Heliopolis, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Ismail+Sabry+Street%2C+Heliopolis%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:13:38.479Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50917685,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 25086435,
+      "lat": "30.1085539",
+      "lon": "31.3419530",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Ismail Sabry Street",
+      "display_name": "Ismail Sabry Street, Al-Helmeya, Cairo, 11843, Egypt",
+      "address": {
+        "road": "Ismail Sabry Street",
+        "suburb": "Al-Helmeya",
+        "city": "Cairo",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11843",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.1072017", "30.1095046", "31.3401881", "31.3440520"]
+    }
+  ]
+}

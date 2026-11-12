@@ -1,0 +1,35 @@
+{
+  "query": "كمال حسن علي, مصر الجديدة للإسكان و التعمير, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%83%D9%85%D8%A7%D9%84+%D8%AD%D8%B3%D9%86+%D8%B9%D9%84%D9%8A%2C+%D9%85%D8%B5%D8%B1+%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9+%D9%84%D9%84%D8%A5%D8%B3%D9%83%D8%A7%D9%86+%D9%88+%D8%A7%D9%84%D8%AA%D8%B9%D9%85%D9%8A%D8%B1%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:48:22.523Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50161203,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 25085390,
+      "lat": "30.1030672",
+      "lon": "31.3688302",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع كمال حسن على",
+      "display_name": "شارع كمال حسن على, شيراتون, القاهرة, 11799, مصر",
+      "address": {
+        "road": "شارع كمال حسن على",
+        "neighbourhood": "شيراتون",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11799",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.1015757", "30.1044830", "31.3671404", "31.3705581"]
+    }
+  ]
+}

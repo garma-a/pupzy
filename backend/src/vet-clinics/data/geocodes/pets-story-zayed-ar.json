@@ -1,0 +1,62 @@
+{
+  "query": "الجهاز, الشيخ زايد, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%AC%D9%87%D8%A7%D8%B2%2C+%D8%A7%D9%84%D8%B4%D9%8A%D8%AE+%D8%B2%D8%A7%D9%8A%D8%AF%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:50:20.498Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 49828639,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 45242889,
+      "lat": "30.0670158",
+      "lon": "31.0215653",
+      "category": "office",
+      "type": "government",
+      "place_rank": 30,
+      "importance": 0.00004952849622334657,
+      "addresstype": "office",
+      "name": "الجهاز القومي لتنظيم الاتصالات",
+      "display_name": "الجهاز القومي لتنظيم الاتصالات, B4, طريق القاهرة, الاسكندرية الصحراوي الجانبي, الشيخ زايد, الجيزة, 12511, مصر",
+      "address": {
+        "office": "الجهاز القومي لتنظيم الاتصالات",
+        "house_number": "B4",
+        "road": "طريق القاهرة, الاسكندرية الصحراوي الجانبي",
+        "city": "الشيخ زايد",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12511",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0666886", "30.0673762", "31.0209383", "31.0218858"]
+    },
+    {
+      "place_id": 49815153,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 574323567,
+      "lat": "30.0670171",
+      "lon": "31.0215735",
+      "category": "office",
+      "type": "government",
+      "place_rank": 30,
+      "importance": 0.00004952849622334657,
+      "addresstype": "office",
+      "name": "الجهاز القومي لتنظيم الاتصالات",
+      "display_name": "الجهاز القومي لتنظيم الاتصالات, طريق القاهرة, الاسكندرية الصحراوي الجانبي, الشيخ زايد, الجيزة, 12511, مصر",
+      "address": {
+        "office": "الجهاز القومي لتنظيم الاتصالات",
+        "road": "طريق القاهرة, الاسكندرية الصحراوي الجانبي",
+        "city": "الشيخ زايد",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12511",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0669671", "30.0670671", "31.0215235", "31.0216235"]
+    }
+  ]
+}

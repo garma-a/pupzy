@@ -1,0 +1,8 @@
+{
+  "query": "Mokbel Pasha Street, Gleem, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Mokbel+Pasha+Street%2C+Gleem%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:54:16.104Z",
+  "httpStatus": 200,
+  "response": []
+}

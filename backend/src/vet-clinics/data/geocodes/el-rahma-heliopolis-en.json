@@ -1,0 +1,35 @@
+{
+  "query": "Kaab Ibn Malek Street, Heliopolis, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Kaab+Ibn+Malek+Street%2C+Heliopolis%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:13:20.872Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50608451,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 24846828,
+      "lat": "30.1138522",
+      "lon": "31.3511620",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Kaab Ibn Malek Street",
+      "display_name": "Kaab Ibn Malek Street, Al-Helmeya, Cairo, 11311, Egypt",
+      "address": {
+        "road": "Kaab Ibn Malek Street",
+        "suburb": "Al-Helmeya",
+        "city": "Cairo",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11311",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.1132135", "30.1144902", "31.3506075", "31.3517156"]
+    }
+  ]
+}

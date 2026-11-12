@@ -1,0 +1,35 @@
+{
+  "query": "شكري عبد الحليم, المعادي الجديدة, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%B4%D9%83%D8%B1%D9%8A+%D8%B9%D8%A8%D8%AF+%D8%A7%D9%84%D8%AD%D9%84%D9%8A%D9%85%2C+%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%AF%D9%8A+%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:14:41.208Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 54318132,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 36697865,
+      "lat": "29.9751958",
+      "lon": "31.2837307",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع شكري عبد الحليم",
+      "display_name": "شارع شكري عبد الحليم, المعادي الجديدة, حلوان, القاهرة, 11742, مصر",
+      "address": {
+        "road": "شارع شكري عبد الحليم",
+        "neighbourhood": "المعادي الجديدة",
+        "city": "حلوان",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11742",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9735782", "29.9757243", "31.2816411", "31.2867075"]
+    }
+  ]
+}

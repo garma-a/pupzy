@@ -1,0 +1,37 @@
+{
+  "query": "12, الحي الثالث عشر, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=12%2C+%D8%A7%D9%84%D8%AD%D9%8A+%D8%A7%D9%84%D8%AB%D8%A7%D9%84%D8%AB+%D8%B9%D8%B4%D8%B1%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:49:14.754Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 55110947,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 6505759588,
+      "lat": "29.9615720",
+      "lon": "30.8989291",
+      "category": "place",
+      "type": "house",
+      "place_rank": 30,
+      "importance": 0.00004952849622334657,
+      "addresstype": "place",
+      "name": "",
+      "display_name": "12, شارع جمال عبد الناصر, منطقة 16, الحى الأول, أكتوبر هيلز, الجيزة, 15555, مصر",
+      "address": {
+        "house_number": "12",
+        "road": "شارع جمال عبد الناصر",
+        "neighbourhood": "منطقة 16",
+        "suburb": "الحى الأول",
+        "village": "أكتوبر هيلز",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "15555",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9615220", "29.9616220", "30.8988791", "30.8989791"]
+    }
+  ]
+}

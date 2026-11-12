@@ -1,0 +1,35 @@
+{
+  "query": "معاذ بن جبل, Heliopolis, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%85%D8%B9%D8%A7%D8%B0+%D8%A8%D9%86+%D8%AC%D8%A8%D9%84%2C+Heliopolis%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:13:10.968Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50258062,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 24846829,
+      "lat": "30.1141168",
+      "lon": "31.3528635",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع معاذ بن جبل",
+      "display_name": "شارع معاذ بن جبل, الحلمية, القاهرة, 11311, مصر",
+      "address": {
+        "road": "شارع معاذ بن جبل",
+        "suburb": "الحلمية",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11311",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.1135303", "30.1147032", "31.3523561", "31.3533708"]
+    }
+  ]
+}

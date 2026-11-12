@@ -1,0 +1,150 @@
+[
+  {
+    "key": "assiut-teaching-hospital",
+    "nameEnglish": "Assiut University Veterinary Teaching Hospital",
+    "nameArabic": "المستشفى البيطري التعليمي بجامعة أسيوط",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Assiut University, Faculty of Veterinary Medicine, El Gamaa Street, Nayla Khatoun, Gharb district, Assiut",
+    "addressArabic": "جامعة أسيوط، كلية الطب البيطري، شارع الجامعة، نايلة خاتون، حي غرب، أسيوط",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Kesm Awal Assuit",
+    "citySourceCode": "EG2501",
+    "phones": ["0882340064", "0882340058"],
+    "sources": [
+      {
+        "url": "https://www.aun.edu.eg/veterinary_medicine/sites/default/files/%D8%AF%D9%84%D9%8A%D9%84%20%D8%A7%D9%84%D9%85%D8%B3%D8%AA%D8%B4%D9%81%D9%8A%20.pdf",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://yellowpages.com.eg/en/profile/veterinary-medicine-faculty-hospital/351030",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.aun.edu.eg/veterinary_medicine/hospital/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Read official hospital guide PDF: explicit public clinical services for cats/dogs including obstetrics and surgery, contact page supplies hospital switchboard (fax and director mobile not imported). University teaching hospital permitted by stage3 brief. Individual location listing says Gharb district: urban first Assiut, not rural Markaz. Guide publication date not inferred from crawl."
+  },
+  {
+    "key": "modern-assiut",
+    "nameEnglish": "Modern Veterinary Center",
+    "nameArabic": "المركز البيطري الحديث",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Riyad Street, Basta Tower passage, beside Dr. Heba El Tayeb Pharmacy, Assiut",
+    "addressArabic": "شارع رياض، برج بسطا داخل الممر، بجوار صيدلية دكتورة هبة الطيب، أسيوط",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Kesm Than Assuit",
+    "citySourceCode": "EG2502",
+    "phones": ["01006561069", "01272817161"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Asyut/728254960690609/%D8%A7%D9%84%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-%D8%A7%D9%84%D8%AD%D8%AF%D9%8A%D8%AB-%D8%A8%D8%A7%D8%B3%D9%8A%D9%88%D8%B7---%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-08-19",
+    "classificationEvidence": "Pet-treatment clinic explicitly printed; 2026-08-19 pet vaccination availability. Riyad is Qism 2 per National Election Authority 2023 polling-location list. Phone/address from clinic own feed, not faculty or livestock business."
+  },
+  {
+    "key": "civa-assiut",
+    "nameEnglish": "Civa Clinic for Pet Animals",
+    "nameArabic": "عيادة سيفا للحيوانات الأليفة",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "First left off El Nemis Street after Archangel Hospital, beside El Forsan Eye Center, Assiut",
+    "addressArabic": "أول شارع شمال من النميس بعد مستشفى رئيس الملائكة، بجوار مركز الفرسان للعيون، أسيوط",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Kesm Than Assuit",
+    "citySourceCode": "EG2502",
+    "phones": ["01210401002"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Asyut/340383983105837/Civa-Clinic-for-pet-animal",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Physical pet clinic explicitly offers vaccination, treatment and ultrasound. 2026-10-26 post supplies exact premises and reception; retail post not a clinical case date. Nemis Qism 2 corroborated by first-party Abdulaziz Stores street address and ITDA CRA53 register.",
+    "aliases": {
+      "english": ["Civa Clinic for pet animal"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "aleefak-assiut",
+    "nameEnglish": "Aleefak Veterinary Clinic",
+    "nameArabic": "عيادة أليفك البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Mahmoud Rashwan intersection, ground floor opposite El Ezaby Pharmacy and La Pasta, Assiut",
+    "addressArabic": "تقاطع محمود رشوان، الدور الأرضي أمام صيدلية العزبي ولا باستا، أسيوط",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Kesm Than Assuit",
+    "citySourceCode": "EG2502",
+    "phones": ["01147474320"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Asyut/100616615869471/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A3%D9%84%D9%8A%D9%81%D9%83-%D8%A7%D8%B3%D9%8A%D9%88%D8%B7",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-20",
+    "classificationEvidence": "2026-10-20 pet jaw surgery, current address and clinic phone. Mahmoud Rashwan/Feryal Qism 2 corroborated by independently read street business locality entry https://www.d2020.net/public/index.php/details/1045881; no coordinate copied."
+  },
+  {
+    "key": "total-pet-assiut",
+    "nameEnglish": "Total Pet Care Center",
+    "nameArabic": "مركز رعاية الحيوانات الأليفة الشامل",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "American subdivision street, Feryal, beside El Salam School and Aswaq El Aela, Assiut",
+    "addressArabic": "شارع تقسيم الأمريكان، فريال، بجوار مدرسة السلام وأسواق العائلة، أسيوط",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Kesm Than Assuit",
+    "citySourceCode": "EG2502",
+    "phones": ["01093593085"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Asyut/383950928143006/Total-pet-care-center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-08-23",
+    "classificationEvidence": "2026-08-23 postoperative feline fracture rehabilitation; clinic explicitly gives Feryal premises/reception. Feryal Qism 2 independently corroborated by https://www.elwatannews.com/news/details/1739237/ . Physical care and online advice distinguished.",
+    "aliases": {
+      "english": ["Total pet care center"],
+      "arabic": []
+    }
+  }
+]

@@ -24,6 +24,9 @@ export interface VetClinicDto {
   addressEnglish: string | null;
   addressArabic: string | null;
   website: string | null;
+  facebookUrl: string | null;
+  is24Hours: boolean;
+  isApproximateLocation: boolean;
   latitude: number;
   longitude: number;
   distanceKm: number;
@@ -318,10 +321,27 @@ export class VetClinicsService {
       addressEnglish: row.addressEnglish ?? null,
       addressArabic: row.addressArabic ?? null,
       website: row.website,
+      facebookUrl: row.facebookUrl,
+      is24Hours: row.is24Hours,
+      isApproximateLocation: row.locationPrecision === 'area',
       latitude: row.latitude,
       longitude: row.longitude,
       distanceKm: row.distanceKm,
-      googleMapsUrl: buildGoogleMapsUrl(row.latitude, row.longitude),
+      googleMapsUrl:
+        row.locationPrecision === 'area'
+          ? 'https://www.google.com/maps/search/?api=1&query=' +
+            encodeURIComponent(
+              [
+                row.nameArabic ?? row.nameEnglish,
+                row.nameArabic
+                  ? (row.addressArabic ?? row.address ?? row.addressEnglish)
+                  : (row.addressEnglish ?? row.address ?? row.addressArabic),
+                row.nameArabic ? (row.governorateArabic ?? row.governorate) : row.governorate,
+              ]
+                .filter(Boolean)
+                .join(', '),
+            )
+          : buildGoogleMapsUrl(row.latitude, row.longitude),
       whatsappPhoneUrl: row.phoneNumber ? `https://wa.me/${row.phoneNumber.replace(/^\+/, '')}` : null,
       cityId: row.cityId ?? null,
     };

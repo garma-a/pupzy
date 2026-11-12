@@ -1,0 +1,136 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F3",
+  "governorate": "Aswan",
+  "searches": ["عيادة بيطرية أسوان حيوانات أليفة"],
+  "sourcesConsulted": ["https://www.voofla.com/EG/Aswan/104080458239135/Bavaria-Animal-Hospital-Dr-Mohamed-Kamal"],
+  "candidates": [
+    {
+      "key": "bavaria-aswan",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Aswan/104080458239135/Bavaria-Animal-Hospital-Dr-Mohamed-Kamal",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror: full pet examinations, surgery and vaccination at physical urban Aswan premises, current July 2026 contact. Third-party adoption phone excluded. Latest post varies hypermarket wording; preserve repeated header/July13 El Raya identity, no new branch.",
+      "lastSeenActive": "2026-07-21"
+    }
+  ],
+  "holdsAndExclusions": [],
+  "counts": {
+    "authored": 2,
+    "retained": 2,
+    "active": 2,
+    "inactiveByReason": {},
+    "precision": {
+      "area": 2
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {},
+  "importAccounting": {
+    "candidates": 1,
+    "imported": 1,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D3",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D3-decisions.json",
+    "cities": [
+      {
+        "city": "Aswan",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Aswan/67428/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Aswan/67428"
+        ],
+        "discoveryEntries": 8,
+        "candidates": [
+          {
+            "key": "106874073996722",
+            "city": "Aswan",
+            "name": "زوتوبيا - zootopia",
+            "url": "https://www.petshops1.com/EG/Aswan/106874073996722/%D8%B2%D9%88%D8%AA%D9%88%D8%A8%D9%8A%D8%A7---zootopia",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "847017421838264",
+            "city": "Aswan",
+            "name": "النجار",
+            "url": "https://www.petshops1.com/EG/Aswan/847017421838264/%D8%A7%D9%84%D9%86%D8%AC%D8%A7%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "176601432208295",
+            "city": "Aswan",
+            "name": "Simba Toys",
+            "url": "https://www.petshops1.com/EG/Aswan/176601432208295/Simba-Toys",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "132002930818771",
+            "city": "Aswan",
+            "name": "الأبطال   The largest dogs in Aswan سيزر . ال",
+            "url": "https://www.petshops1.com/EG/Aswan/132002930818771/%D8%A7%D9%84%D8%A3%D8%A8%D8%B7%D8%A7%D9%84---The-largest-dogs-in-Aswan-%D8%B3%D9%8A%D8%B2%D8%B1-.-%D8%A7%D9%84%D9%81%D9%83-%D8%A7%D9%84%D9%83%D8%B3%D8%A7%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1178034005656414",
+            "city": "Aswan",
+            "name": "Fishes",
+            "url": "https://www.petshops1.com/EG/Aswan/1178034005656414/Fishes",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "381716555888672",
+            "city": "Aswan",
+            "name": "Dogs my friend",
+            "url": "https://www.petshops1.com/EG/Aswan/381716555888672/Dogs-my-friend",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "107481645543836",
+            "city": "Aswan",
+            "name": "Dr.Mai Salem_Vet Doctor",
+            "url": "https://www.petshops1.com/EG/Aswan/107481645543836/Dr.Mai-Salem_Vet-Doctor",
+            "status": "retained",
+            "reason": "mai-salem-aswan",
+            "evidence": "Dr Mai Salem own clinic page identifies private pet medicine/surgery and offers vaccinations at separate premises behind directorate. Government landmark is not clinic operator. Phone and precise street read; no inferred coordinates.",
+            "snapshot": "web-evidence/depth-1062c27bdc3f34b7.json"
+          },
+          {
+            "key": "104080458239135",
+            "city": "Aswan",
+            "name": "Bavaria Animal Hospital-Dr Mohamed Kamal",
+            "url": "https://www.petshops1.com/EG/Aswan/104080458239135/Bavaria-Animal-Hospital-Dr-Mohamed-Kamal",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "Existing clinic identity already retained; no duplicate from mirror listing.",
+            "snapshot": "web-evidence/depth-8e4934a7ae2d3b96.json"
+          }
+        ],
+        "retained": 1,
+        "exclusionsByReason": {
+          "no-pet-clinic-evidence-in-discovery": 6,
+          "already-retained": 1
+        },
+        "individualSnapshots": ["web-evidence/depth-1062c27bdc3f34b7.json", "web-evidence/depth-8e4934a7ae2d3b96.json"]
+      }
+    ]
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

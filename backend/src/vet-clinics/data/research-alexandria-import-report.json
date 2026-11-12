@@ -1,0 +1,16 @@
+{
+  "candidates": 114,
+  "imported": 112,
+  "excluded": [
+    {
+      "key": "sabry-abdel-gawad-wingat",
+      "reason": "no-catalog-area",
+      "area": "Winget"
+    },
+    {
+      "key": "salwa-refaey-shalalat",
+      "reason": "no-catalog-area",
+      "area": "Shalalat"
+    }
+  ]
+}

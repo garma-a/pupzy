@@ -1,0 +1,8 @@
+{
+  "query": "Mohamed El Maqrifi Street, Moqately Ramadan Buildings, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Mohamed+El+Maqrifi+Street%2C+Moqately+Ramadan+Buildings%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:47:02.663Z",
+  "httpStatus": 200,
+  "response": []
+}

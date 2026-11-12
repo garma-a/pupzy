@@ -1,0 +1,164 @@
+[
+  {
+    "key": "ark-hurghada",
+    "nameEnglish": "The Ark Veterinary Clinic",
+    "nameArabic": "عيادة ذا آرك البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Hurghada 1, Red Sea",
+    "addressArabic": "الغردقة أول، البحر الأحمر",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Hurghada 1",
+    "citySourceCode": "EG3101",
+    "phones": ["01064693169"],
+    "sources": [
+      {
+        "url": "https://the-ark-clinic-hurghada.com/de/kontakt",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Read own current contact page via web.open: same contact as existing reviewed OSM clinic, Hurghada 1. Input consolidates source evidence, not a second clinic. Plus code/map not decoded or copied; existing OSM exact point survives merge. Terminal fetch network failure retained."
+  },
+  {
+    "key": "fourgive-marsa-alam",
+    "nameEnglish": "FourGive Vet Clinic Marsa Alam",
+    "nameArabic": "عيادة فور جيف البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Marsa Alam, Red Sea",
+    "addressArabic": "مرسى علم، البحر الأحمر",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Marsa Alam",
+    "citySourceCode": "EG3104",
+    "phones": ["01070763685"],
+    "sources": [
+      {
+        "url": "https://www.fourgive.org/vetclinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.fourgive.org/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.fourgive.org/vetclinic/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Read first-party clinic page: non-government charity runs physical clinic open to private pets, check-ups, surgery/TNVR, vaccination and emergencies. Explicit FAQ invites visits with published Egyptian clinic number. Counts as clinical premises, not shelter-only. Swiss foundation address is not Egyptian clinic address; only published Marsa Alam locality used. Dated monthly reports lack exact day, so no fabricated lastSeenActive."
+  },
+  {
+    "key": "jungle-hurghada",
+    "nameEnglish": "Jungle Veterinary Clinic",
+    "nameArabic": "عيادة جانجل البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Metro main street, El Kawther, opposite Tiger Store, beside Sofra Shamia, Hurghada, Red Sea",
+    "addressArabic": "شارع مترو الرئيسي، الكوثر، أمام تايجر ستور، بجوار سفرة شامية، الغردقة، البحر الأحمر",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Hurghada 1",
+    "citySourceCode": "EG3101",
+    "phones": ["01060390171"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Hurghada/109971720618144/Jungle-Veterinary-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-29",
+    "classificationEvidence": "Clinic own feed lists fixed Hurghada premises and clinical/travel vaccination service at this address. El Kawther Metro Street is Qism 1 per ITDA CRA44/875 and 2023 National Election Authority list. Safaga branch is a separate candidate held for full address; touring home visits do not establish branches.",
+    "aliases": {
+      "english": ["Jungle Veterinary clinic"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "british-hurghada",
+    "nameEnglish": "British Animal Clinic",
+    "nameArabic": "العيادة البريطانية للحيوانات",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Kawther, opposite British Resort, beside Electric, Hurghada, Red Sea",
+    "addressArabic": "الكوثر، أمام بريتش ريزورت، بجوار إلكتريك، الغردقة، البحر الأحمر",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Hurghada 1",
+    "citySourceCode": "EG3101",
+    "phones": ["01094244418", "01002218112"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Hurghada/909451355755736/British-Animal-Clinic-Hurghada",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.petshops1.com/EG/Hurghada/168205009950356/British-Animal-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Two individual pages identify same British clinic opposite British Resort, El Kawther. Older full-services page explicitly provides pet examinations, surgery, X-ray and lab; official-titled page confirms same premises and another reception. One clinic retained, not invented two branches. Kawther Qism 1 independently corroborated.",
+    "aliases": {
+      "english": ["British Animal Clinic Hurghada"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "veterinary-care-hurghada",
+    "nameEnglish": "Veterinary Care Center",
+    "nameArabic": "مركز الرعاية البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "429 Saad El Said Street, El Wafaa, Dahar, opposite Beirut Hotel, Hurghada, Red Sea",
+    "addressArabic": "429 شارع سعد السيد، حي الوفاء، الدهار، أمام فندق بيروت، الغردقة، البحر الأحمر",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Hurghada 2",
+    "citySourceCode": "EG3108",
+    "phones": ["01129029790", "01010169129"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Hurghada/492680820932982/Veterinary-Care-Center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://dalil140.com/company/ar/420901-veterinary-care-center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2023-07-19",
+    "classificationEvidence": "Individual clinic feed explicitly accepts pets for clinical care. Dalil140 individual entry confirms exact same 429 street and reception, resolves Dahar district (Hurghada Qism 2). 2023-07-19 vaccination/certification post; no point copied from maps.",
+    "aliases": {
+      "english": ["Veterinary Care Center"],
+      "arabic": []
+    }
+  }
+]

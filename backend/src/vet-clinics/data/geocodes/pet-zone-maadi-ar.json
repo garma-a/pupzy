@@ -1,0 +1,88 @@
+{
+  "query": "اللاسلكي, المعادي, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%84%D8%A7%D8%B3%D9%84%D9%83%D9%8A%2C+%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%AF%D9%8A%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:14:32.403Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51159441,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 701558941,
+      "lat": "29.9721381",
+      "lon": "31.2800791",
+      "category": "highway",
+      "type": "secondary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "secondary",
+      "name": "شارع اللاسلكي",
+      "display_name": "شارع اللاسلكي, المعادي الجديدة, حلوان, القاهرة, 11742, مصر",
+      "address": {
+        "road": "شارع اللاسلكي",
+        "neighbourhood": "المعادي الجديدة",
+        "city": "حلوان",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11742",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9687335", "29.9755420", "31.2785197", "31.2816395"]
+    },
+    {
+      "place_id": 51156989,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 777726930,
+      "lat": "29.9738168",
+      "lon": "31.2802638",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع اللاسلكي",
+      "display_name": "شارع اللاسلكي, المعادي الجديدة, حلوان, القاهرة, 11742, مصر",
+      "address": {
+        "road": "شارع اللاسلكي",
+        "neighbourhood": "المعادي الجديدة",
+        "city": "حلوان",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11742",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9722431", "29.9753984", "31.2795539", "31.2809558"]
+    },
+    {
+      "place_id": 429794491,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 1564457079,
+      "lat": "29.9677038",
+      "lon": "31.2780118",
+      "category": "highway",
+      "type": "secondary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "secondary",
+      "name": "شارع اللاسلكي",
+      "display_name": "شارع اللاسلكي, المعادي الجديدة, الفاروقية, القاهرة, 11431, مصر",
+      "address": {
+        "road": "شارع اللاسلكي",
+        "neighbourhood": "المعادي الجديدة",
+        "village": "الفاروقية",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11431",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9667814", "29.9685779", "31.2777121", "31.2784531"]
+    }
+  ]
+}

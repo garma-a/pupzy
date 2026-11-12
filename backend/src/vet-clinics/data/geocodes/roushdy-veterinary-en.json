@@ -1,0 +1,8 @@
+{
+  "query": "El Horreya Road, Roushdy, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Horreya+Road%2C+Roushdy%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:54:44.717Z",
+  "httpStatus": 200,
+  "response": []
+}

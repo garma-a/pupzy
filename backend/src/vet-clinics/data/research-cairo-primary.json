@@ -1,0 +1,894 @@
+[
+  {
+    "key": "british-animal-hospital-zamalek-1",
+    "nameEnglish": "British Animal Hospital",
+    "nameArabic": "المستشفى البريطاني للحيوانات",
+    "addressEnglish": "21A Bahgat Ali Street, Zamalek, Cairo",
+    "addressArabic": "21أ شارع بهجت علي، الزمالك، القاهرة",
+    "area": "Zamalek",
+    "phones": ["01224935654", "01006491666", "0227370785"],
+    "sources": [
+      {
+        "url": "https://www.britishanimalhospital.com/branches/zamalek-1-branch",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.britishanimalhospital.com/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Own chain branch page publishes this physical clinic address and branch phones; chain homepage describes small-animal/exotic medical, surgical and dental care. Branches retained separately, including two different Zamalek premises.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "british-animal-hospital",
+    "branchQualifier": "Zamalek 1",
+    "aliases": {
+      "english": ["British Animal Hospital (Zamalek 1)"],
+      "arabic": ["المستشفى البريطاني للحيوانات (الزمالك 1)"]
+    }
+  },
+  {
+    "key": "british-animal-hospital-zamalek-2",
+    "nameEnglish": "British Animal Hospital",
+    "nameArabic": "المستشفى البريطاني للحيوانات",
+    "addressEnglish": "23B Ismail Mohamed Street, ground floor apartment 5, opposite Faculty of Applied Arts, Zamalek, Cairo",
+    "addressArabic": "23ب شارع إسماعيل محمد، الدور الأرضي شقة 5، أمام كلية الفنون التطبيقية، الزمالك، القاهرة",
+    "area": "Zamalek",
+    "phones": ["01032260586", "01026441196", "01066585134"],
+    "sources": [
+      {
+        "url": "https://www.britishanimalhospital.com/branches/zamalek-2-branch",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://vet-trust.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.britishanimalhospital.com/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Own chain branch page publishes this physical clinic address and branch phones; chain homepage describes small-animal/exotic medical, surgical and dental care. Branches retained separately, including two different Zamalek premises. Vet Trust identifies itself as the same British Zamalek branch at23B, not a separate clinic. Its malformed +020... footer number is not repaired; valid01066585134 from page body retained.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "british-animal-hospital",
+    "branchQualifier": "Zamalek 2",
+    "aliases": {
+      "english": ["British Animal Hospital (Zamalek 2)"],
+      "arabic": ["المستشفى البريطاني للحيوانات (الزمالك 2)"]
+    }
+  },
+  {
+    "key": "british-animal-hospital-maadi",
+    "nameEnglish": "British Animal Hospital (Maadi)",
+    "nameArabic": "المستشفى البريطاني للحيوانات (المعادي)",
+    "addressEnglish": "Road 200, Building 38/40, Maadi, Cairo",
+    "addressArabic": "شارع 200، عمارة 38/40، المعادي، القاهرة",
+    "area": "Maadi",
+    "phones": ["01024446423", "01003381597"],
+    "sources": [
+      {
+        "url": "https://www.britishanimalhospital.com/branches/maadi-branch",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%b7%d8%a8-%d9%88%d8%ac%d8%b1%d8%a7%d8%ad%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86-%d8%a7%d9%84%d9%85%d8%b9%d8%a7%d8%af%d9%8a-british-animal-hospital/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.britishanimalhospital.com/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Own chain branch page publishes this physical clinic address and branch phones; chain homepage describes small-animal/exotic medical, surgical and dental care. Branches retained separately, including two different Zamalek premises. Reviewed additional EVC identity: مستشفى طب وجراحة الحيوان – المعادي British Animal Hospital.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "british-animal-hospital",
+    "branchQualifier": "Maadi",
+    "aliases": {
+      "english": ["British Animal Hospital (Maadi)", "British Animal Hospital"],
+      "arabic": ["المستشفى البريطاني للحيوانات (المعادي)", "مستشفى طب وجراحة الحيوان  المعادي"]
+    },
+    "citySourceCode": "EG0104"
+  },
+  {
+    "key": "british-animal-hospital-heliopolis",
+    "nameEnglish": "British Animal Hospital (Heliopolis)",
+    "nameArabic": "المستشفى البريطاني للحيوانات (مصر الجديدة)",
+    "addressEnglish": "8 Mostafa Helmy Street, Almazah, Heliopolis, Cairo",
+    "addressArabic": "8 شارع مصطفى حلمي، ألماظة، مصر الجديدة، القاهرة",
+    "area": "Almazah",
+    "phones": ["01005443533", "01147527280"],
+    "sources": [
+      {
+        "url": "https://www.britishanimalhospital.com/branches/heliopolis-branch",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.britishanimalhospital.com/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Own chain branch page publishes this physical clinic address and branch phones; chain homepage describes small-animal/exotic medical, surgical and dental care. Branches retained separately, including two different Zamalek premises.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "british-animal-hospital",
+    "branchQualifier": "Heliopolis",
+    "aliases": {
+      "english": ["British Animal Hospital (Heliopolis)"],
+      "arabic": ["المستشفى البريطاني للحيوانات (مصر الجديدة)"]
+    }
+  },
+  {
+    "key": "british-animal-hospital-madinaty",
+    "nameEnglish": "British Animal Hospital (Madinaty)",
+    "nameArabic": "المستشفى البريطاني للحيوانات (مدينتي)",
+    "addressEnglish": "Craft Zone, Madinaty, New Cairo",
+    "addressArabic": "كرافت زون، مدينتي، القاهرة الجديدة",
+    "area": "Madinaty",
+    "phones": ["01022515392", "01552525532"],
+    "sources": [
+      {
+        "url": "https://www.britishanimalhospital.com/branches/madinty-branch",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.britishanimalhospital.com/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Own chain branch page publishes this physical clinic address and branch phones; chain homepage describes small-animal/exotic medical, surgical and dental care. Branches retained separately, including two different Zamalek premises.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "british-animal-hospital",
+    "branchQualifier": "Madinaty",
+    "aliases": {
+      "english": ["British Animal Hospital (Madinaty)"],
+      "arabic": ["المستشفى البريطاني للحيوانات (مدينتي)"]
+    }
+  },
+  {
+    "key": "british-animal-hospital-garden-city",
+    "nameEnglish": "British Animal Hospital (Garden City)",
+    "nameArabic": "المستشفى البريطاني للحيوانات (جاردن سيتي)",
+    "addressEnglish": "3 Aiysha El Taymouria Street, first floor, Garden City, Cairo",
+    "addressArabic": "3 شارع عائشة التيمورية، الدور الأول، جاردن سيتي، القاهرة",
+    "area": "Garden City",
+    "phones": ["01009331899", "01009588282"],
+    "sources": [
+      {
+        "url": "https://www.britishanimalhospital.com/branches/garden-city-branch",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.britishanimalhospital.com/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Own chain branch page publishes this physical clinic address and branch phones; chain homepage describes small-animal/exotic medical, surgical and dental care. Branches retained separately, including two different Zamalek premises.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "british-animal-hospital",
+    "branchQualifier": "Garden City",
+    "aliases": {
+      "english": ["British Animal Hospital (Garden City)"],
+      "arabic": ["المستشفى البريطاني للحيوانات (جاردن سيتي)"]
+    }
+  },
+  {
+    "key": "british-animal-hospital-new-cairo",
+    "nameEnglish": "British Animal Hospital (New Cairo)",
+    "nameArabic": "المستشفى البريطاني للحيوانات (القاهرة الجديدة)",
+    "addressEnglish": "415 Street 12, Core Mall, Fifth Settlement, New Cairo",
+    "addressArabic": "415 شارع 12، كور مول، التجمع الخامس، القاهرة الجديدة",
+    "area": "New Cairo",
+    "phones": ["01094485511"],
+    "sources": [
+      {
+        "url": "https://www.britishanimalhospital.com/branches/new-cairo-branch",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.findglocal.com/EG/Cairo/101322001590387/British-Animal-Hospital-New-Cairo",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.britishanimalhospital.com/",
+    "facebookUrl": "https://www.facebook.com/101322001590387/",
+    "is24Hours": true,
+    "hoursEvidence": "Branch social post mirrored2025-04-16 explicitly says the New Cairo branch is open24/7; emergency-shift recruitment2026-06-09 confirms operating branch.",
+    "lastSeenActive": "2026-06-09",
+    "classificationEvidence": "Own chain branch page publishes this physical clinic address and branch phones; chain homepage describes small-animal/exotic medical, surgical and dental care. Branches retained separately, including two different Zamalek premises.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "british-animal-hospital",
+    "branchQualifier": "New Cairo",
+    "aliases": {
+      "english": ["British Animal Hospital (New Cairo)"],
+      "arabic": ["المستشفى البريطاني للحيوانات (القاهرة الجديدة)"]
+    }
+  },
+  {
+    "key": "british-animal-hospital-sheraton",
+    "nameEnglish": "British Animal Hospital (Sheraton)",
+    "nameArabic": "المستشفى البريطاني للحيوانات (شيراتون)",
+    "addressEnglish": "5 Gad El Haq Street, Sheraton Residences, Heliopolis, Cairo",
+    "addressArabic": "5 شارع جاد الحق، مساكن شيراتون، مصر الجديدة، القاهرة",
+    "area": "Sheraton",
+    "phones": ["01277778947"],
+    "sources": [
+      {
+        "url": "https://www.britishanimalhospital.com/branches/sheraton",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.britishanimalhospital.com/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Own chain branch page publishes this physical clinic address and branch phones; chain homepage describes small-animal/exotic medical, surgical and dental care. Branches retained separately, including two different Zamalek premises.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "british-animal-hospital",
+    "branchQualifier": "Sheraton",
+    "aliases": {
+      "english": ["British Animal Hospital (Sheraton)"],
+      "arabic": ["المستشفى البريطاني للحيوانات (شيراتون)"]
+    }
+  },
+  {
+    "key": "american-vet-center-zamalek",
+    "nameEnglish": "American Veterinary Center (Zamalek)",
+    "nameArabic": "المركز البيطري الأمريكي (الزمالك)",
+    "addressEnglish": "30 El Gezira El Wosta Street, Zamalek, Cairo",
+    "addressArabic": "30 شارع الجزيرة الوسطى، الزمالك، القاهرة",
+    "area": "Zamalek",
+    "phones": ["01110801801", "0227376664"],
+    "sources": [
+      {
+        "url": "https://www.americanvetcenter.com/copy-of-services",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.americanvetcenter.com/about-6",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.americanvetcenter.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.americanvetcenter.com/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Current own website states opening hours24HOURS7DAYS and overnight emergency care10pm–10am alongside currently listed branches; individual page confirms branch address/phone.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Private clinic first-party page describes physical premises and pet medical/surgical care.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "american-vet-center",
+    "branchQualifier": "Zamalek",
+    "aliases": {
+      "english": ["American Veterinary Center (Zamalek)"],
+      "arabic": ["المركز البيطري الأمريكي (الزمالك)"]
+    }
+  },
+  {
+    "key": "american-vet-center-maadi",
+    "nameEnglish": "American Veterinary Center (Maadi)",
+    "nameArabic": "المركز البيطري الأمريكي (المعادي)",
+    "addressEnglish": "11C Street 199, Degla, Maadi, Cairo",
+    "addressArabic": "11ج شارع 199، دجلة، المعادي، القاهرة",
+    "area": "Degla",
+    "phones": ["01110803803", "01210814356", "0225177266"],
+    "sources": [
+      {
+        "url": "https://www.americanvetcenter.com/copy-of-zamalek",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.americanvetcenter.com/about-6",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.americanvetcenter.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%a3%d9%85%d8%b1%d9%8a%d9%83%d9%8a-%d9%84%d8%b7%d8%a8-%d9%88%d8%ac%d8%b1%d8%a7%d8%ad%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86-%d8%a7%d9%84/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.americanvetcenter.com/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Current own website states opening hours24HOURS7DAYS and overnight emergency care10pm–10am alongside currently listed branches; individual page confirms branch address/phone.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Private clinic first-party page describes physical premises and pet medical/surgical care. Reviewed additional EVC identity: المركز الأمريكي لطب وجراحة الحيوان – المعادي.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "american-vet-center",
+    "branchQualifier": "Maadi",
+    "aliases": {
+      "english": ["American Veterinary Center (Maadi)"],
+      "arabic": ["المركز البيطري الأمريكي (المعادي)", "المركز الأمريكي لطب وجراحة الحيوان – المعادي"]
+    }
+  },
+  {
+    "key": "american-vet-center-sheraton",
+    "nameEnglish": "American Veterinary Center (Sheraton)",
+    "nameArabic": "المركز البيطري الأمريكي (شيراتون)",
+    "addressEnglish": "2 El Shaheed Mahmoud Esmat Hamdy Street, Masaken Sheraton, Cairo",
+    "addressArabic": "2 شارع الشهيد محمود عصمت حمدي، مساكن شيراتون، القاهرة",
+    "area": "Sheraton",
+    "phones": ["01060300853", "01210813549", "0222666996"],
+    "sources": [
+      {
+        "url": "https://www.americanvetcenter.com/copy-of-alexandria",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.americanvetcenter.com/about-6",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.americanvetcenter.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.americanvetcenter.com/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Current own website states opening hours24HOURS7DAYS and overnight emergency care10pm–10am alongside currently listed branches; individual page confirms branch address/phone.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Private clinic first-party page describes physical premises and pet medical/surgical care.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "american-vet-center",
+    "branchQualifier": "Sheraton",
+    "aliases": {
+      "english": ["American Veterinary Center (Sheraton)"],
+      "arabic": ["المركز البيطري الأمريكي (شيراتون)"]
+    }
+  },
+  {
+    "key": "american-vet-center-rehab",
+    "nameEnglish": "American Veterinary Center (Rehab)",
+    "nameArabic": "المركز البيطري الأمريكي (الرحاب)",
+    "addressEnglish": "B60 Eastern Market, Rehab 2, New Cairo",
+    "addressArabic": "ب60 السوق الشرقي، الرحاب 2، القاهرة الجديدة",
+    "area": "Rehab",
+    "phones": ["01118848190", "01210813687"],
+    "sources": [
+      {
+        "url": "https://www.americanvetcenter.com/copy-of-sheraton",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.americanvetcenter.com/about-6",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.americanvetcenter.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.americanvetcenter.com/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Current own website states opening hours24HOURS7DAYS and overnight emergency care10pm–10am alongside currently listed branches; individual page confirms branch address/phone.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Private clinic first-party page describes physical premises and pet medical/surgical care.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "american-vet-center",
+    "branchQualifier": "Rehab",
+    "aliases": {
+      "english": ["American Veterinary Center (Rehab)"],
+      "arabic": ["المركز البيطري الأمريكي (الرحاب)"]
+    }
+  },
+  {
+    "key": "new-york-veterinary-clinic-maadi",
+    "nameEnglish": "New York Veterinary Clinic",
+    "nameArabic": "عيادة نيويورك البيطرية",
+    "addressEnglish": "25 Ahmed Kamel Street off El Laselki Street, New Maadi, Cairo",
+    "addressArabic": "25 شارع أحمد كامل متفرع من اللاسلكي، المعادي الجديدة، القاهرة",
+    "area": "New Maadi",
+    "phones": ["01101160688", "01101160644"],
+    "sources": [
+      {
+        "url": "https://www.nyvetclinic.com/%D8%AA%D9%88%D8%A7%D8%B5%D9%84-%D9%85%D8%B9%D9%86%D8%A7/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%86%d9%8a%d9%88%d9%8a%d9%88%d8%b1%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.nyvetclinic.com/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Own clinic website identifies medicine and surgery for pets, Maadi street address and current telephone contacts; schedule10am–10pm every day, not24hours. Reviewed additional EVC identity: عيادة نيويورك البيطرية.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "new-york-veterinary-clinic",
+    "branchQualifier": "Maadi",
+    "aliases": {
+      "english": ["New York Veterinary Clinic (Maadi)"],
+      "arabic": ["عيادة نيويورك البيطرية (المعادي)", "عيادة نيويورك البيطرية"]
+    }
+  },
+  {
+    "key": "pet-cure-fifth-settlement",
+    "nameEnglish": "Pet Cure Veterinary Clinic (Fifth Settlement)",
+    "nameArabic": "عيادة بت كيور البيطرية (التجمع الخامس)",
+    "addressEnglish": "Zahraa Mall, 50 Street, First District, Fifth Settlement, New Cairo",
+    "addressArabic": "زهراء مول، شارع 50، الحي الأول، التجمع الخامس، القاهرة الجديدة",
+    "area": "Fifth Settlement",
+    "phones": ["01090980050"],
+    "sources": [
+      {
+        "url": "https://petcureclinics.com/contact-us",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://petcureclinics.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d8%aa-%d9%83%d9%8a%d9%88%d8%b1-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-pet-cure-vet/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://petcureclinics.com/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Own homepage explicitly labels opening hours24/7 and says medical team available24/7; contact page identifies this branch.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Private clinic first-party page describes physical premises and pet medical/surgical care. Reviewed additional EVC identity: عيادة بت كيور البيطرية Pet cure vet.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "pet-cure",
+    "branchQualifier": "Fifth Settlement",
+    "aliases": {
+      "english": ["Pet Cure Veterinary Clinic (Fifth Settlement)", "Pet cure vet"],
+      "arabic": ["عيادة بت كيور البيطرية (التجمع الخامس)", "عيادة بت كيور البيطرية"]
+    }
+  },
+  {
+    "key": "pet-cure-madinaty",
+    "nameEnglish": "Pet Cure Veterinary Clinic (Madinaty)",
+    "nameArabic": "عيادة بت كيور البيطرية (مدينتي)",
+    "addressEnglish": "Craft Zone, Madinaty, Second New Cairo",
+    "addressArabic": "كرافت زون، مدينتي، القاهرة الجديدة الثانية",
+    "area": "Madinaty",
+    "phones": ["01011396672"],
+    "sources": [
+      {
+        "url": "https://petcureclinics.com/contact-us",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://petcureclinics.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://petcureclinics.com/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Own homepage explicitly labels opening hours24/7 and says medical team available24/7; contact page identifies this branch.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Private clinic first-party page describes physical premises and pet medical/surgical care.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "pet-cure",
+    "branchQualifier": "Madinaty",
+    "aliases": {
+      "english": ["Pet Cure Veterinary Clinic (Madinaty)"],
+      "arabic": ["عيادة بت كيور البيطرية (مدينتي)"]
+    }
+  },
+  {
+    "key": "dr-paws-new-cairo",
+    "nameEnglish": "Dr. Paws Animal Hospital",
+    "nameArabic": "مستشفى دكتور باوز البيطري",
+    "addressEnglish": "Al Farouk Mall, Banafseg9, opposite Iqraa Bookshop, First Settlement, New Cairo (Banafseg 9)",
+    "addressArabic": "الفاروق مول، البنفسج9، أمام مكتبة إقرأ، التجمع الأول، القاهرة الجديدة",
+    "area": "Al Banafseg 9",
+    "phones": ["01117873666", "01008886446"],
+    "sources": [
+      {
+        "url": "https://drpaws.com.eg/ar/branches/new-cairo/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://drpaws.com.eg/ar/contact/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%af%d9%83%d8%aa%d9%88%d8%b1-%d8%a8%d9%88%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-dr-paws-hospital/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://drpaws.com.eg/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Own individual branch page states مفتوح24ساعة and24-hour emergency support.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Private clinic first-party page describes physical premises and pet medical/surgical care. Reviewed additional EVC identity: مستشفى دكتور بوز البيطرية Dr Paws hospital.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "chainKey": "dr-paws",
+    "branchQualifier": "New Cairo",
+    "aliases": {
+      "english": ["Dr. Paws Animal Hospital (New Cairo)", "Dr Paws hospital"],
+      "arabic": ["مستشفى دكتور باوز البيطري (القاهرة الجديدة)", "مستشفى دكتور بوز البيطرية"]
+    }
+  },
+  {
+    "key": "mojo-veterinary-care-maadi",
+    "nameEnglish": "Mojo Veterinary Care",
+    "nameArabic": "موجو للرعاية البيطرية",
+    "addressEnglish": "Road233, Maadi Sarayat, Cairo",
+    "addressArabic": "شارع233، سرايات المعادي، القاهرة",
+    "area": "Maadi",
+    "phones": ["01003454200"],
+    "sources": [
+      {
+        "url": "https://www.mojovetcare.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.mojovetcare.com/",
+    "facebookUrl": "https://www.facebook.com/mojoVetcare/",
+    "is24Hours": true,
+    "hoursEvidence": "Own website repeatedly states open24/7,365days, always staffed at Road233 main clinic.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Own clinic website identifies full pet diagnostics, surgery, wellness and physical main clinic atRoad233. Street200 second site explicitly boarding-only and excluded as a separate clinic.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Mojo Veterinary Care (Maadi)"],
+      "arabic": ["موجو للرعاية البيطرية (المعادي)"]
+    },
+    "citySourceCode": "EG0104"
+  },
+  {
+    "key": "moon-pets-new-maadi",
+    "nameEnglish": "Moon Pets Veterinary Clinic",
+    "nameArabic": "عيادة مون بيتس البيطرية",
+    "addressEnglish": "2 Road277 off Road263, beside H2O Gym and NBK, New Maadi, Cairo",
+    "addressArabic": "2 شارع277 من شارع263، بجوار جيمH2O والبنك الوطني الكويتي، المعادي الجديدة، القاهرة",
+    "area": "New Maadi",
+    "phones": ["01010550969"],
+    "sources": [
+      {
+        "url": "https://moonpetsclinic.com/contact/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://moonpetsclinic.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://moonpetsclinic.com/",
+    "facebookUrl": "https://www.facebook.com/DrPetsMagico/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-05-21",
+    "classificationEvidence": "Own clinic contact page and homepage publish examinations, vaccinations, surgery, phone and premises. Dated own-site21May2026 shop posts establish website activity; no exact medical-post date inferred.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Moon Pets Veterinary Clinic"],
+      "arabic": ["عيادة مون بيتس البيطرية"]
+    }
+  },
+  {
+    "key": "pet-shine-nasr-city",
+    "nameEnglish": "Pet Shine Veterinary Clinic",
+    "nameArabic": "عيادة بت شاين البيطرية",
+    "addressEnglish": "12 Dr. Ezzat Salama Street off Abbas El Akkad, corner of Gad Restaurant, Nasr City, Cairo",
+    "addressArabic": "12 شارع دكتور عزت سلامة من عباس العقاد، ناصية مطعم جاد، مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01015164841"],
+    "sources": [
+      {
+        "url": "https://petshineclinic.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://petshineclinic.com/",
+    "facebookUrl": "https://www.facebook.com/petshineclinic",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Own clinic website publishes physical premises, phone and veterinary medical and surgical services for pets.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Pet Shine Veterinary Clinic"],
+      "arabic": ["عيادة بت شاين البيطرية"]
+    }
+  },
+  {
+    "key": "rafiki-maadi",
+    "nameEnglish": "Rafiki Veterinary Hospital (Maadi)",
+    "nameArabic": "مستشفى رافيكي البيطري (المعادي)",
+    "addressEnglish": "Road232, Degla, Maadi, Cairo",
+    "addressArabic": "شارع232، دجلة، المعادي، القاهرة",
+    "area": "Degla",
+    "phones": ["01061444996"],
+    "sources": [
+      {
+        "url": "https://rafikivet.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://rafikivet.com/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Own chain website explicitly lists two physical pet/exotics clinics and Road232Degla address; published general reception number intentionally shared by its two branches. FAQ restricts24hour emergency toNewCairo, so Maadi is24Hours false.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Rafiki Veterinary Hospital (Maadi)"],
+      "arabic": ["مستشفى رافيكي البيطري (المعادي)"]
+    },
+    "chainKey": "rafiki",
+    "branchQualifier": "Maadi"
+  },
+  {
+    "key": "rafiki-fifth",
+    "nameEnglish": "Rafiki Veterinary Hospital (Fifth Settlement)",
+    "nameArabic": "مستشفى رافيكي البيطري (التجمع الخامس)",
+    "addressEnglish": "One Golden Square Mall, beside Royal Sports Club, Fifth Settlement, Cairo",
+    "addressArabic": "مول وان جولدن سكوير، بجوار نادي رويال الرياضي، التجمع الخامس، القاهرة",
+    "area": "Fifth Settlement",
+    "phones": ["01061444996"],
+    "sources": [
+      {
+        "url": "https://rafikivet.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://rafikivet.com/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Own clinic FAQ explicitly states طوارئ24/7في فرع التجمع with resident doctors.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Own chain website explicitly lists thisOneGoldenSquare clinic and Road232Degla branch; published general reception number intentionally shared by two branches, not unrelated brands.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Rafiki Veterinary Hospital (Fifth Settlement)"],
+      "arabic": ["مستشفى رافيكي البيطري (التجمع الخامس)"]
+    },
+    "chainKey": "rafiki",
+    "branchQualifier": "Fifth Settlement"
+  },
+  {
+    "key": "infinity-pet-care-fifth",
+    "nameEnglish": "Infinity Pet Care",
+    "nameArabic": "إنفينيتي بت كير",
+    "addressEnglish": "Platinum Mall, Street48, first floor, Fifth Settlement, Cairo",
+    "addressArabic": "بلاتينيوم مول، شارع48، الدور الأول، التجمع الخامس، القاهرة",
+    "area": "Fifth Settlement",
+    "phones": ["01010306620"],
+    "sources": [
+      {
+        "url": "https://infinity-petcare.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://usepetbook.com/service-provider/infinity-pet-care-tagamoa/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://infinity-petcare.com/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Own contact section explicitly states Open24hours.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Own website names this physical clinic and branch phone; separately published PetBook clinic listing corroborates same phone/premises. Own services explicitly include examination, vaccinations, diagnostics and surgery; unrelated template testimonials were disregarded.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Infinity Pet Care"],
+      "arabic": ["إنفينيتي بت كير"]
+    },
+    "chainKey": "infinity-pet-care",
+    "branchQualifier": "Fifth Settlement"
+  },
+  {
+    "key": "zamalek-vet-26-july",
+    "nameEnglish": "Zamalek Veterinary Clinic",
+    "nameArabic": "عيادة الزمالك البيطرية",
+    "addressEnglish": "106 26July Street, Zamalek, Cairo",
+    "addressArabic": "106 شارع26يوليو، الزمالك، القاهرة",
+    "area": "Zamalek",
+    "phones": ["0227353294"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/عيادة-الزمالك-البيطرية/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually read EVC entry explicitly describes physical private pet treatment/veterinary services with listed address and phone. Listed in Giza discovery category but actual premises areZamalek,Cairo; governorate follows address and catalog.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Zamalek Veterinary Clinic"],
+      "arabic": ["عيادة الزمالك البيطرية"]
+    }
+  },
+  {
+    "key": "pet-doctors-zamalek",
+    "nameEnglish": "Pet Doctors Animal Clinic",
+    "nameArabic": "عيادة بت دوكتورز لطب وجراحة الحيوان",
+    "addressEnglish": "Mohamed Mazhar Street, Zamalek, Cairo",
+    "addressArabic": "شارع محمد مظهر، الزمالك، القاهرة",
+    "area": "Zamalek",
+    "phones": ["01119792949"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/عيادة-pet-doctors-لطب-وجراحة-الحيوان/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Individual entry lists24ساعة for all seven days.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually read EVC entry explicitly describes physical private pet treatment/veterinary services with listed address and phone. Listed in Giza discovery category but actual premises areZamalek,Cairo; governorate follows address and catalog. EVC also lists01020405694, omitted after currentColumbiaAnimalHospitalZayed ownsite and29Oct2026clinic post publish that number for anotherbrand. Number ownership atPetDoctors is unverified; remaining01119792949 comes from its specificEVC listing.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Pet Doctors Animal Clinic", "Pet Doctors"],
+      "arabic": ["عيادة بت دوكتورز لطب وجراحة الحيوان", "عيادة  لطب وجراحة الحيوان"]
+    }
+  },
+  {
+    "key": "pet-zone-zamalek",
+    "nameEnglish": "Pet Zone Egypt",
+    "nameArabic": "عيادة بت زون إيجيبت البيطرية",
+    "addressEnglish": "1 Mohamed Mazhar Street, opposite Nagy Pharmacy, Zamalek, Cairo",
+    "addressArabic": "1 شارع محمد مظهر، أمام صيدلية ناجي، الزمالك، القاهرة",
+    "area": "Zamalek",
+    "phones": ["01025376944"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/عيادة-pet-zone-egypt-البيطرية/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually read EVC entry explicitly describes physical private pet treatment/veterinary services with listed address and phone. Listed in Giza discovery category but actual premises areZamalek,Cairo; governorate follows address and catalog.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Pet Zone Egypt", "pet zone egypt", "Pet Zone Egypt (Zamalek)"],
+      "arabic": ["عيادة بت زون إيجيبت البيطرية", "عيادة بت زون إيجيبت البيطرية (الزمالك)"]
+    },
+    "chainKey": "pet-zone",
+    "branchQualifier": "Zamalek"
+  }
+]

@@ -1,0 +1,451 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F3",
+  "governorate": "Assiut",
+  "searches": [
+    "عيادة بيطرية اسيوط حيوانات أليفة رقم",
+    "\"Vet for pet\" \"Assiut\" clinic",
+    "\"Veterinary Medicine Faculty Hospital\" \"Assyout\""
+  ],
+  "sourcesConsulted": [
+    "https://www.aun.edu.eg/veterinary_medicine/sites/default/files/%D8%AF%D9%84%D9%8A%D9%84%20%D8%A7%D9%84%D9%85%D8%B3%D8%AA%D8%B4%D9%81%D9%8A%20.pdf",
+    "https://www.megabizdir.com/EG/Asyut/396336380377414/Vet-for-pet-clinic-عيادة-طب-وجراحة-الحيوان-بأسيوط",
+    "https://yellowpages.com.eg/en/profile/veterinary-medicine-faculty-hospital/351030"
+  ],
+  "candidates": [
+    {
+      "key": "assiut-teaching-hospital",
+      "sources": [
+        {
+          "url": "https://www.aun.edu.eg/veterinary_medicine/sites/default/files/%D8%AF%D9%84%D9%8A%D9%84%20%D8%A7%D9%84%D9%85%D8%B3%D8%AA%D8%B4%D9%81%D9%8A%20.pdf",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        },
+        {
+          "url": "https://yellowpages.com.eg/en/profile/veterinary-medicine-faculty-hospital/351030",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read official hospital guide PDF: explicit public clinical services for cats/dogs including obstetrics and surgery, contact page supplies hospital switchboard (fax and director mobile not imported). University teaching hospital permitted by stage3 brief. Individual location listing says Gharb district: urban first Assiut, not rural Markaz. Guide publication date not inferred from crawl.",
+      "lastSeenActive": null
+    }
+  ],
+  "holdsAndExclusions": [
+    {
+      "name": "Vet for Pet, Mahmoud Rashwan",
+      "reason": "source-access-and-location-unresolved",
+      "evidence": "Individual Megabizdir request 403; alternate public mirror 404. Search shows current pet care but do not import from snippets without read entry and City match.",
+      "sources": [
+        "https://www.megabizdir.com/EG/Asyut/396336380377414/Vet-for-pet-clinic-عيادة-طب-وجراحة-الحيوان-بأسيوط"
+      ]
+    }
+  ],
+  "counts": {
+    "authored": 5,
+    "retained": 5,
+    "active": 5,
+    "inactiveByReason": {},
+    "precision": {
+      "area": 5
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {
+    "source-access-and-location-unresolved": 1
+  },
+  "importAccounting": {
+    "candidates": 1,
+    "imported": 1,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D3",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D3-decisions.json",
+    "cities": [
+      {
+        "city": "Assiut",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Asyut/67430/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Asyut/67430"
+        ],
+        "discoveryEntries": 36,
+        "candidates": [
+          {
+            "key": "1436733433292821",
+            "city": "Assiut",
+            "name": "مربين  وتجار الارانب في اسيوط وسوهاج",
+            "url": "https://www.petshops1.com/EG/Asyut/1436733433292821/%D9%85%D8%B1%D8%A8%D9%8A%D9%86--%D9%88%D8%AA%D8%AC%D8%A7%D8%B1-%D8%A7%D9%84%D8%A7%D8%B1%D8%A7%D9%86%D8%A8-%D9%81%D9%8A-%D8%A7%D8%B3%D9%8A%D9%88%D8%B7-%D9%88%D8%B3%D9%88%D9%87%D8%A7%D8%AC",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1154516934605012",
+            "city": "Assiut",
+            "name": "Moon tomas",
+            "url": "https://www.petshops1.com/EG/Asyut/1154516934605012/Moon-tomas",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "101163795953855",
+            "city": "Assiut",
+            "name": "سر السعادة لمستلزمات الحيوانات الاليفة",
+            "url": "https://www.petshops1.com/EG/Asyut/101163795953855/%D8%B3%D8%B1-%D8%A7%D9%84%D8%B3%D8%B9%D8%A7%D8%AF%D8%A9-%D9%84%D9%85%D8%B3%D8%AA%D9%84%D8%B2%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "776051402521517",
+            "city": "Assiut",
+            "name": "Pets&Pets Assuit",
+            "url": "https://www.petshops1.com/EG/Asyut/776051402521517/Pets%26Pets-Assuit",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "106170788366784",
+            "city": "Assiut",
+            "name": "Karizma pets",
+            "url": "https://www.petshops1.com/EG/Asyut/106170788366784/Karizma-pets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1147372848458862",
+            "city": "Assiut",
+            "name": "تربية حمامك وعصافيرك وزراعة نبتاتك بمنزلك",
+            "url": "https://www.petshops1.com/EG/Asyut/1147372848458862/%D8%AA%D8%B1%D8%A8%D9%8A%D8%A9-%D8%AD%D9%85%D8%A7%D9%85%D9%83-%D9%88%D8%B9%D8%B5%D8%A7%D9%81%D9%8A%D8%B1%D9%83-%D9%88%D8%B2%D8%B1%D8%A7%D8%B9%D8%A9-%D9%86%D8%A8%D8%AA%D8%A7%D8%AA%D9%83-%D8%A8%D9%85%D9%86%D8%B2%D9%84%D9%83",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "340792759115635",
+            "city": "Assiut",
+            "name": "Dr.Claws",
+            "url": "https://www.petshops1.com/EG/Asyut/340792759115635/Dr.Claws",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "107516768933615",
+            "city": "Assiut",
+            "name": "Abram Adel",
+            "url": "https://www.petshops1.com/EG/Asyut/107516768933615/Abram-Adel",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "687543114684774",
+            "city": "Assiut",
+            "name": "Kaza loon honey - عسل كذا لون",
+            "url": "https://www.petshops1.com/EG/Asyut/687543114684774/Kaza-loon-honey---%D8%B9%D8%B3%D9%84-%D9%83%D8%B0%D8%A7-%D9%84%D9%88%D9%86",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "107242735240346",
+            "city": "Assiut",
+            "name": "Pets Home - Assiut",
+            "url": "https://www.petshops1.com/EG/Asyut/107242735240346/Pets-Home---Assiut",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "122707180915643",
+            "city": "Assiut",
+            "name": "Toona Store",
+            "url": "https://www.petshops1.com/EG/Asyut/122707180915643/Toona-Store",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "104296379012443",
+            "city": "Assiut",
+            "name": "Share Location",
+            "url": "https://www.petshops1.com/EG/Asyut/104296379012443/Share-Location",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "100153648758428",
+            "city": "Assiut",
+            "name": "Fast Horse",
+            "url": "https://www.petshops1.com/EG/Asyut/100153648758428/Fast-Horse",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "102425986105441",
+            "city": "Assiut",
+            "name": "Hoor academy for equestrian",
+            "url": "https://www.petshops1.com/EG/Asyut/102425986105441/Hoor-academy-for-equestrian",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "103052381685447",
+            "city": "Assiut",
+            "name": "Mp Malino_أم بي مالينو",
+            "url": "https://www.petshops1.com/EG/Asyut/103052381685447/Mp-Malino_%D8%A3%D9%85-%D8%A8%D9%8A-%D9%85%D8%A7%D9%84%D9%8A%D9%86%D9%88",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "105521802589400",
+            "city": "Assiut",
+            "name": "yassa gerges",
+            "url": "https://www.petshops1.com/EG/Asyut/105521802589400/yassa-gerges",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "110538858541989",
+            "city": "Assiut",
+            "name": "Fur-Ball",
+            "url": "https://www.petshops1.com/EG/Asyut/110538858541989/Fur-Ball",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "129739222356229",
+            "city": "Assiut",
+            "name": "HAPPY PETS assuit",
+            "url": "https://www.petshops1.com/EG/Asyut/129739222356229/HAPPY-PETS-assuit",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "728254960690609",
+            "city": "Assiut",
+            "name": "المركز البيطري الحديث باسيوط - عيادة بيطرية",
+            "url": "https://www.petshops1.com/EG/Asyut/728254960690609/%D8%A7%D9%84%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-%D8%A7%D9%84%D8%AD%D8%AF%D9%8A%D8%AB-%D8%A8%D8%A7%D8%B3%D9%8A%D9%88%D8%B7---%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "retained",
+            "reason": "modern-assiut",
+            "evidence": "Pet-treatment clinic explicitly printed; 2026-08-19 pet vaccination availability. Riyad is Qism 2 per National Election Authority 2023 polling-location list. Phone/address from clinic own feed, not faculty or livestock business.",
+            "snapshot": "web-evidence/depth-9f4fbc9b0a6ac62a.json"
+          },
+          {
+            "key": "340383983105837",
+            "city": "Assiut",
+            "name": "Civa Clinic for pet animal",
+            "url": "https://www.petshops1.com/EG/Asyut/340383983105837/Civa-Clinic-for-pet-animal",
+            "status": "retained",
+            "reason": "civa-assiut",
+            "evidence": "Physical pet clinic explicitly offers vaccination, treatment and ultrasound. 2026-10-26 post supplies exact premises and reception; retail post not a clinical case date. Nemis Qism 2 corroborated by first-party Abdulaziz Stores street address and ITDA CRA53 register.",
+            "snapshot": "web-evidence/depth-2db58646060e7331.json"
+          },
+          {
+            "key": "100616615869471",
+            "city": "Assiut",
+            "name": "عيادة أليفك اسيوط",
+            "url": "https://www.petshops1.com/EG/Asyut/100616615869471/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A3%D9%84%D9%8A%D9%81%D9%83-%D8%A7%D8%B3%D9%8A%D9%88%D8%B7",
+            "status": "retained",
+            "reason": "aleefak-assiut",
+            "evidence": "2026-10-20 pet jaw surgery, current address and clinic phone. Mahmoud Rashwan/Feryal Qism 2 corroborated by independently read street business locality entry https://www.d2020.net/public/index.php/details/1045881; no coordinate copied.",
+            "snapshot": "web-evidence/depth-d0733f58901c7ed7.json"
+          },
+          {
+            "key": "383950928143006",
+            "city": "Assiut",
+            "name": "Total pet care center",
+            "url": "https://www.petshops1.com/EG/Asyut/383950928143006/Total-pet-care-center",
+            "status": "retained",
+            "reason": "total-pet-assiut",
+            "evidence": "2026-08-23 postoperative feline fracture rehabilitation; clinic explicitly gives Feryal premises/reception. Feryal Qism 2 independently corroborated by https://www.elwatannews.com/news/details/1739237/ . Physical care and online advice distinguished.",
+            "snapshot": "web-evidence/depth-ba47481ae86cc973.json"
+          },
+          {
+            "key": "109905472193829",
+            "city": "Assiut",
+            "name": "Vano Vet فانو فيت",
+            "url": "https://www.petshops1.com/EG/Asyut/109905472193829/Vano-Vet-%D9%81%D8%A7%D9%86%D9%88-%D9%81%D9%8A%D8%AA",
+            "status": "held",
+            "reason": "poultry-supplies",
+            "evidence": "Vano services in Manqabad mention pets but observed activity sells chicks/feed; on-site pet treatment not established.",
+            "snapshot": "web-evidence/depth-be3b635107ad1c70.json"
+          },
+          {
+            "key": "108078571010928",
+            "city": "Assiut",
+            "name": "Pet smile Clinic",
+            "url": "https://www.petshops1.com/EG/Asyut/108078571010928/Pet-smile-Clinic",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Pet Smile physical pet clinic and phone; El Nasr towers/Ibrahimia split district unestablished. Political posts do not refresh 2021 clinical case.",
+            "snapshot": "web-evidence/depth-2a73bc1587839e1b.json"
+          },
+          {
+            "key": "956629767524902",
+            "city": "Assiut",
+            "name": "Faculty of Veterinary Medicine - Sphinx Unive",
+            "url": "https://www.petshops1.com/EG/Asyut/956629767524902/Faculty-of-Veterinary-Medicine---Sphinx-University",
+            "status": "held",
+            "reason": "education-or-administration",
+            "evidence": "Faculty, scientific association or administration page; public pet hospital admission not established.",
+            "snapshot": "web-evidence/depth-c0bc4b51f2d1efc6.json"
+          },
+          {
+            "key": "110961730309715",
+            "city": "Assiut",
+            "name": "HoPe pets Clinic",
+            "url": "https://www.petshops1.com/EG/Asyut/110961730309715/HoPe-pets-Clinic",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Hope pet castration 2022-03-10 and contact verified. Imam Ali Street precise split district unconfirmed.",
+            "snapshot": "web-evidence/depth-4bc20af5e165d7f2.json"
+          },
+          {
+            "key": "102991906213277",
+            "city": "Assiut",
+            "name": "Rova vet",
+            "url": "https://www.petshops1.com/EG/Asyut/102991906213277/Rova-vet",
+            "status": "held",
+            "reason": "supplier-or-pharmacy",
+            "evidence": "Individual page sells feed/medicines or farm supplies; no on-site pet treatment established.",
+            "snapshot": "web-evidence/depth-3a8adf4a54dc06b8.json"
+          },
+          {
+            "key": "1271552499377124",
+            "city": "Assiut",
+            "name": "Bio Vet Lab",
+            "url": "https://www.petshops1.com/EG/Asyut/1271552499377124/Bio-Vet-Lab",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Individual entry reviewed; no sufficiently evidenced pet treatment at physical premises/contact. Not a nonexistence or closure conclusion.",
+            "snapshot": "web-evidence/depth-2f648732f65c4a85.json"
+          },
+          {
+            "key": "1476381559262774",
+            "city": "Assiut",
+            "name": "مكتب المروة للخدمات البيطرية ومستلزمات مزارع",
+            "url": "https://www.petshops1.com/EG/Asyut/1476381559262774/%D9%85%D9%83%D8%AA%D8%A8-%D8%A7%D9%84%D9%85%D8%B1%D9%88%D8%A9-%D9%84%D9%84%D8%AE%D8%AF%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D9%88%D9%85%D8%B3%D8%AA%D9%84%D8%B2%D9%85%D8%A7%D8%AA-%D9%85%D8%B2%D8%A7%D8%B1%D8%B9-%D8%A7%D9%84%D8%AF%D9%88%D8%A7%D8%AC%D9%86-%D8%A8%D8%A3%D8%B3%D9%8A%D9%88%D8%B7",
+            "status": "held",
+            "reason": "supplier-or-pharmacy",
+            "evidence": "Individual page sells feed/medicines or farm supplies; no on-site pet treatment established.",
+            "snapshot": "web-evidence/depth-c2d31144ee38e001.json"
+          },
+          {
+            "key": "103820705430202",
+            "city": "Assiut",
+            "name": "الرائد للخدمات البيطريه ومستلزمات المزارع",
+            "url": "https://www.petshops1.com/EG/Asyut/103820705430202/%D8%A7%D9%84%D8%B1%D8%A7%D8%A6%D8%AF-%D9%84%D9%84%D8%AE%D8%AF%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87-%D9%88%D9%85%D8%B3%D8%AA%D9%84%D8%B2%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D9%85%D8%B2%D8%A7%D8%B1%D8%B9",
+            "status": "held",
+            "reason": "supplier-or-pharmacy",
+            "evidence": "Individual page sells feed/medicines or farm supplies; no on-site pet treatment established.",
+            "snapshot": "web-evidence/depth-19360c62cc0f7906.json"
+          },
+          {
+            "key": "159299267589917",
+            "city": "Assiut",
+            "name": "شركة سما فيت للأدوية البيطرية",
+            "url": "https://www.petshops1.com/EG/Asyut/159299267589917/%D8%B4%D8%B1%D9%83%D8%A9-%D8%B3%D9%85%D8%A7-%D9%81%D9%8A%D8%AA-%D9%84%D9%84%D8%A3%D8%AF%D9%88%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "supplier-or-pharmacy",
+            "evidence": "Individual page sells feed/medicines or farm supplies; no on-site pet treatment established.",
+            "snapshot": "web-evidence/depth-548a4b35c9f53d05.json"
+          },
+          {
+            "key": "100679328076243",
+            "city": "Assiut",
+            "name": "توتال  للأدويه البيطرية ومستلزمات المزارع",
+            "url": "https://www.petshops1.com/EG/Asyut/100679328076243/%D8%AA%D9%88%D8%AA%D8%A7%D9%84--%D9%84%D9%84%D8%A3%D8%AF%D9%88%D9%8A%D9%87-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D9%88%D9%85%D8%B3%D8%AA%D9%84%D8%B2%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D9%85%D8%B2%D8%A7%D8%B1%D8%B9",
+            "status": "held",
+            "reason": "supplier-or-pharmacy",
+            "evidence": "Individual page sells feed/medicines or farm supplies; no on-site pet treatment established.",
+            "snapshot": "web-evidence/depth-88f19cd941fc1721.json"
+          },
+          {
+            "key": "106508008474300",
+            "city": "Assiut",
+            "name": "العياده البيطريه - د/انجي كميل بموشا",
+            "url": "https://www.petshops1.com/EG/Asyut/106508008474300/%D8%A7%D9%84%D8%B9%D9%8A%D8%A7%D8%AF%D9%87-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87---%D8%AF-%D8%A7%D9%86%D8%AC%D9%8A-%D9%83%D9%85%D9%8A%D9%84-%D8%A8%D9%85%D9%88%D8%B4%D8%A7",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Individual entry reviewed; no sufficiently evidenced pet treatment at physical premises/contact. Not a nonexistence or closure conclusion.",
+            "snapshot": "web-evidence/depth-fdcb3d284278bc73.json"
+          },
+          {
+            "key": "983583178182751",
+            "city": "Assiut",
+            "name": "Sphinx Vet QA",
+            "url": "https://www.petshops1.com/EG/Asyut/983583178182751/Sphinx-Vet-QA",
+            "status": "held",
+            "reason": "education-or-administration",
+            "evidence": "Faculty, scientific association or administration page; public pet hospital admission not established.",
+            "snapshot": "web-evidence/depth-815b1ba2d31f0f4d.json"
+          },
+          {
+            "key": "1030451740162314",
+            "city": "Assiut",
+            "name": "D. Mina Vet Clinic",
+            "url": "https://www.petshops1.com/EG/Asyut/1030451740162314/D.-Mina-Vet-Clinic",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Individual entry reviewed; no sufficiently evidenced pet treatment at physical premises/contact. Not a nonexistence or closure conclusion.",
+            "snapshot": "web-evidence/depth-8d83264ee565d60d.json"
+          },
+          {
+            "key": "102793152792878",
+            "city": "Assiut",
+            "name": "عيادة د. شادى البيطرية  dr shady's vet clinic",
+            "url": "https://www.petshops1.com/EG/Asyut/102793152792878/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%AF.-%D8%B4%D8%A7%D8%AF%D9%89-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9--dr-shady%27s-vet-clinic",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Dr Shady two branches individually reviewed: Al Nosairat and Ghanayem railway square, no dedicated pet treatment demonstrated.",
+            "snapshot": "web-evidence/depth-13f882c864320ce0.json"
+          }
+        ],
+        "retained": 4,
+        "exclusionsByReason": {
+          "no-pet-clinic-evidence-in-discovery": 18,
+          "poultry-supplies": 1,
+          "unresolved-catalog-area": 2,
+          "education-or-administration": 2,
+          "supplier-or-pharmacy": 5,
+          "unresolved-pet-treatment": 4
+        },
+        "individualSnapshots": [
+          "web-evidence/depth-9f4fbc9b0a6ac62a.json",
+          "web-evidence/depth-2db58646060e7331.json",
+          "web-evidence/depth-d0733f58901c7ed7.json",
+          "web-evidence/depth-ba47481ae86cc973.json",
+          "web-evidence/depth-be3b635107ad1c70.json",
+          "web-evidence/depth-2a73bc1587839e1b.json",
+          "web-evidence/depth-c0bc4b51f2d1efc6.json",
+          "web-evidence/depth-4bc20af5e165d7f2.json",
+          "web-evidence/depth-3a8adf4a54dc06b8.json",
+          "web-evidence/depth-2f648732f65c4a85.json",
+          "web-evidence/depth-c2d31144ee38e001.json",
+          "web-evidence/depth-19360c62cc0f7906.json",
+          "web-evidence/depth-548a4b35c9f53d05.json",
+          "web-evidence/depth-88f19cd941fc1721.json",
+          "web-evidence/depth-fdcb3d284278bc73.json",
+          "web-evidence/depth-815b1ba2d31f0f4d.json",
+          "web-evidence/depth-8d83264ee565d60d.json",
+          "web-evidence/depth-13f882c864320ce0.json"
+        ]
+      }
+    ]
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

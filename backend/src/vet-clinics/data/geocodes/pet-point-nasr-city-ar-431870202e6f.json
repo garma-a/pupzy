@@ -1,0 +1,8 @@
+{
+  "query": "عبدالحكيم الرفاعي, Nasr City, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%B9%D8%A8%D8%AF%D8%A7%D9%84%D8%AD%D9%83%D9%8A%D9%85+%D8%A7%D9%84%D8%B1%D9%81%D8%A7%D8%B9%D9%8A%2C+Nasr+City%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:16:04.969Z",
+  "httpStatus": 200,
+  "response": []
+}

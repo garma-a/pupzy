@@ -1,0 +1,87 @@
+{
+  "query": "199, دجلة, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=199%2C+%D8%AF%D8%AC%D9%84%D8%A9%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:45:52.061Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 427499793,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 1559202714,
+      "lat": "29.9555998",
+      "lon": "31.2711050",
+      "category": "place",
+      "type": "square",
+      "place_rank": 25,
+      "importance": 0.06674627069504845,
+      "addresstype": "square",
+      "name": "ميدان دجلة",
+      "display_name": "ميدان دجلة, الفاروقية, القاهرة, مصر",
+      "address": {
+        "square": "ميدان دجلة",
+        "village": "الفاروقية",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9554479", "29.9557588", "31.2709258", "31.2712839"]
+    },
+    {
+      "place_id": 51436668,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 51363625,
+      "lat": "29.9555998",
+      "lon": "31.2711050",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "ميدان دجلة",
+      "display_name": "ميدان دجلة, الفاروقية, القاهرة, 11728, مصر",
+      "address": {
+        "road": "ميدان دجلة",
+        "village": "الفاروقية",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11728",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9554479", "29.9557588", "31.2709258", "31.2712839"]
+    },
+    {
+      "place_id": 51438748,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 51479953,
+      "lat": "29.9628938",
+      "lon": "31.2783472",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع 233",
+      "display_name": "شارع 233, مساكن نيركو, الفاروقية, القاهرة, 11728, مصر",
+      "address": {
+        "road": "شارع 233",
+        "neighbourhood": "مساكن نيركو",
+        "village": "الفاروقية",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11728",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9626157", "29.9631719", "31.2783371", "31.2783573"]
+    }
+  ]
+}

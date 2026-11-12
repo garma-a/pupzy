@@ -1,0 +1,8 @@
+{
+  "query": "American subdivision street, Kesm Than Assuit, Assiut, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=American+subdivision+street%2C+Kesm+Than+Assuit%2C+Assiut%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:49:34.271Z",
+  "httpStatus": 200,
+  "response": []
+}

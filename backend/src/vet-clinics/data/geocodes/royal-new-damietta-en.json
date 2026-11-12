@@ -1,0 +1,8 @@
+{
+  "query": "Abu El Kheir Street, New Damietta, Damietta, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Abu+El+Kheir+Street%2C+New+Damietta%2C+Damietta%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T12:18:19.325Z",
+  "httpStatus": 200,
+  "response": []
+}

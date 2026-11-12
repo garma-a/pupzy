@@ -1,0 +1,87 @@
+{
+  "query": "النبوي المهندس, العجوزة, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%86%D8%A8%D9%88%D9%8A+%D8%A7%D9%84%D9%85%D9%87%D9%86%D8%AF%D8%B3%2C+%D8%A7%D9%84%D8%B9%D8%AC%D9%88%D8%B2%D8%A9%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:50:32.603Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50062559,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 32590765,
+      "lat": "30.0630632",
+      "lon": "31.2107370",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05339670634012356,
+      "addresstype": "residential",
+      "name": "شارع النبوى المهندس",
+      "display_name": "شارع النبوى المهندس, العجوزة, الجيزة, 12658, مصر",
+      "address": {
+        "road": "شارع النبوى المهندس",
+        "suburb": "العجوزة",
+        "city": "الجيزة",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12658",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0619310", "30.0640367", "31.2102392", "31.2110269"]
+    },
+    {
+      "place_id": 50356253,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 32125064,
+      "lat": "30.0603062",
+      "lon": "31.2114329",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05339670634012356,
+      "addresstype": "residential",
+      "name": "شارع النبوى المهندس",
+      "display_name": "شارع النبوى المهندس, العجوزة, الجيزة, 12411, مصر",
+      "address": {
+        "road": "شارع النبوى المهندس",
+        "suburb": "العجوزة",
+        "city": "الجيزة",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12411",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0593049", "30.0613035", "31.2111798", "31.2116706"]
+    },
+    {
+      "place_id": 50218441,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 722140657,
+      "lat": "30.0644379",
+      "lon": "31.2095883",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05339670634012356,
+      "addresstype": "residential",
+      "name": "شارع النبوى المهندس",
+      "display_name": "شارع النبوى المهندس, كيت كات, الجيزة, 12658, مصر",
+      "address": {
+        "road": "شارع النبوى المهندس",
+        "suburb": "كيت كات",
+        "city": "الجيزة",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12658",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0640777", "30.0648111", "31.2090314", "31.2101536"]
+    }
+  ]
+}

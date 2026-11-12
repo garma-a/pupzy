@@ -1,0 +1,35 @@
+{
+  "query": "Dr. Hassan Ibrahim Street, Nasr City, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Dr.+Hassan+Ibrahim+Street%2C+Nasr+City%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:15:24.120Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 55165121,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 24887659,
+      "lat": "30.0793770",
+      "lon": "31.3442317",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Hassan Ibrahim Street",
+      "display_name": "Hassan Ibrahim Street, Masaken Al Mohandeseen, Nasr City, Cairo, 11834, Egypt",
+      "address": {
+        "road": "Hassan Ibrahim Street",
+        "neighbourhood": "Masaken Al Mohandeseen",
+        "city": "Nasr City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11834",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0789012", "30.0798528", "31.3441864", "31.3442770"]
+    }
+  ]
+}

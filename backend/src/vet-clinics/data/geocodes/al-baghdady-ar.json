@@ -1,0 +1,8 @@
+{
+  "query": "الشهيد محمد عبدالكريم, مركز البدرشين, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%B4%D9%87%D9%8A%D8%AF+%D9%85%D8%AD%D9%85%D8%AF+%D8%B9%D8%A8%D8%AF%D8%A7%D9%84%D9%83%D8%B1%D9%8A%D9%85%2C+%D9%85%D8%B1%D9%83%D8%B2+%D8%A7%D9%84%D8%A8%D8%AF%D8%B1%D8%B4%D9%8A%D9%86%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:49:13.652Z",
+  "httpStatus": 200,
+  "response": []
+}

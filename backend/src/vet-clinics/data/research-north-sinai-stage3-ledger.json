@@ -1,0 +1,176 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F4",
+  "governorate": "North Sinai",
+  "searches": [
+    "عيادة بيطرية حيوانات أليفة العريش شمال سيناء",
+    "\"Pet clinic\" \"العريش\" \"قسم ثان\"",
+    "\"Pet clinic\" \"العريش\" \"قسم ثالث\"",
+    "\"عيادة بيطري ابن سينا\" العريش"
+  ],
+  "sourcesConsulted": [
+    "https://arishdoctor.com/doctor/pet-clinic",
+    "https://buy.com.eg/ar/directory/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-%D8%A7%D8%A8%D9%86-%D8%B3%D9%8A%D9%86%D8%A7-km1kbb",
+    "https://buy.com.eg/ar/directory/pet-clinic-1jfp8u",
+    "https://www.voofla.com/EG/El-Arish/113182310603165/Pet-clinic"
+  ],
+  "candidates": [
+    {
+      "key": "pet-clinic-arish",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/El-Arish/113182310603165/Pet-clinic",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        },
+        {
+          "url": "https://arishdoctor.com/doctor/pet-clinic",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        },
+        {
+          "url": "https://buy.com.eg/ar/directory/pet-clinic-1jfp8u",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror: 2026-10-31 physical cat treatment with current booking phone 01000451694; ignore adoption-owner contacts. Individual ArishDoctor confirms identical named street/landmarks and older 01030922467. Individual Buy Egypt ties that same number to third Arish, resolving City without guessing from street-wide news. Its boarding category not used as sole clinical evidence.",
+      "lastSeenActive": "2026-10-31"
+    },
+    {
+      "key": "ibn-sina-arish",
+      "sources": [
+        {
+          "url": "https://buy.com.eg/ar/directory/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-%D8%A7%D8%A8%D9%86-%D8%B3%D9%8A%D9%86%D8%A7-km1kbb",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual pet-clinic directory entry: public phone, third Arish premises and dated client vaccination/checkup review. Stripped embedded Google Maps URL from textual address and never used its coordinates. Undated templated business description distinguished from dated review evidence; contact confirmation recommended.",
+      "lastSeenActive": "2025-01-21"
+    }
+  ],
+  "holdsAndExclusions": [],
+  "counts": {
+    "authored": 2,
+    "retained": 2,
+    "active": 2,
+    "inactiveByReason": {},
+    "precision": {
+      "area": 2
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {},
+  "importAccounting": {
+    "candidates": 2,
+    "imported": 2,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D4",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D4-decisions.json",
+    "cities": [
+      {
+        "city": "El Arish",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/El-Arish/67542/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/El-Arish/67542"
+        ],
+        "discoveryEntries": 9,
+        "candidates": [
+          {
+            "key": "102222741464356",
+            "city": "El Arish",
+            "name": "كلاب لتبني بمجانا",
+            "url": "https://www.petshops1.com/EG/El-Arish/102222741464356/%D9%83%D9%84%D8%A7%D8%A8-%D9%84%D8%AA%D8%A8%D9%86%D9%8A-%D8%A8%D9%85%D8%AC%D8%A7%D9%86%D8%A7",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "107583617527609",
+            "city": "El Arish",
+            "name": "مؤسسة العطار للانتاج الداجنى والتنمية الزراعي",
+            "url": "https://www.petshops1.com/EG/El-Arish/107583617527609/%D9%85%D8%A4%D8%B3%D8%B3%D8%A9-%D8%A7%D9%84%D8%B9%D8%B7%D8%A7%D8%B1-%D9%84%D9%84%D8%A7%D9%86%D8%AA%D8%A7%D8%AC-%D8%A7%D9%84%D8%AF%D8%A7%D8%AC%D9%86%D9%89-%D9%88%D8%A7%D9%84%D8%AA%D9%86%D9%85%D9%8A%D8%A9-%D8%A7%D9%84%D8%B2%D8%B1%D8%A7%D8%B9%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "102685619593921",
+            "city": "El Arish",
+            "name": "فرسان شمال سيناء  North Sinai horsemen",
+            "url": "https://www.petshops1.com/EG/El-Arish/102685619593921/%D9%81%D8%B1%D8%B3%D8%A7%D9%86-%D8%B4%D9%85%D8%A7%D9%84-%D8%B3%D9%8A%D9%86%D8%A7%D8%A1--North-Sinai-horsemen",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "105690142346056",
+            "city": "El Arish",
+            "name": "Salon adham Freska",
+            "url": "https://www.petshops1.com/EG/El-Arish/105690142346056/Salon-adham-Freska",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "207802046510294",
+            "city": "El Arish",
+            "name": "Sinawy Lofts",
+            "url": "https://www.petshops1.com/EG/El-Arish/207802046510294/Sinawy-Lofts",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "227010570489951",
+            "city": "El Arish",
+            "name": "كلاب لتبني",
+            "url": "https://www.petshops1.com/EG/El-Arish/227010570489951/%D9%83%D9%84%D8%A7%D8%A8-%D9%84%D8%AA%D8%A8%D9%86%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "592049763992585",
+            "city": "El Arish",
+            "name": "OSHA hair treatment",
+            "url": "https://www.petshops1.com/EG/El-Arish/592049763992585/OSHA-hair-treatment",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "103191972718377",
+            "city": "El Arish",
+            "name": "جولدن فيش لطيور الزينة",
+            "url": "https://www.petshops1.com/EG/El-Arish/103191972718377/%D8%AC%D9%88%D9%84%D8%AF%D9%86-%D9%81%D9%8A%D8%B4-%D9%84%D8%B7%D9%8A%D9%88%D8%B1-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "113182310603165",
+            "city": "El Arish",
+            "name": "Pet clinic",
+            "url": "https://www.petshops1.com/EG/El-Arish/113182310603165/Pet-clinic",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "Already retained identity; current individual source reviewed without adding duplicate.",
+            "snapshot": "web-evidence/depth-08ac024452425ec6.json"
+          }
+        ],
+        "retained": 0,
+        "exclusionsByReason": {
+          "no-pet-clinic-evidence-in-discovery": 8,
+          "already-retained": 1
+        },
+        "individualSnapshots": ["web-evidence/depth-08ac024452425ec6.json"]
+      }
+    ]
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

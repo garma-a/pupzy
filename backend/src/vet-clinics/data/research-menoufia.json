@@ -1,0 +1,115 @@
+[
+  {
+    "key": "pets-corner-shebin",
+    "nameEnglish": "Pets Corner Clinic",
+    "nameArabic": "عيادة بتس كورنر البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Gamal Abdel Nasser Street, end of Eye Hospital wall, behind El Taqwa Mosque, Shebin El Kom, Menoufia",
+    "addressArabic": "شارع جمال عبد الناصر، آخر سور مستشفى الرمد، خلف مسجد التقوى، شبين الكوم، المنوفية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Shibin al-Kum (Kism)",
+    "citySourceCode": "EG1701",
+    "phones": ["01025280709"],
+    "sources": [
+      {
+        "url": "https://www.findglocal.com/EG/Shebin-Al-Kom/606540489539127/Pets-corner-clinic-%D8%AF.%D9%85%D8%AD%D9%85%D8%AF-%D8%B4%D9%84%D8%A8%D9%8A",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2023-02-13",
+    "classificationEvidence": "Read individual mirror explicitly calls this a pet clinic; dated clinic clients February 2023, contact and city address. Urban Shebin maps to Kism; no claim the mirror is an independent witness."
+  },
+  {
+    "key": "vetcare-menouf",
+    "nameEnglish": "Vet Care Hospital",
+    "nameArabic": "مستشفى فيت كير البيطري",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Beside National Bank of Egypt, Menouf, Menoufia",
+    "addressArabic": "بجوار البنك الأهلي المصري، منوف، المنوفية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Minuf City",
+    "citySourceCode": "EG1712",
+    "phones": ["01091446591", "01501532301"],
+    "sources": [
+      {
+        "url": "https://ae.linkedin.com/posts/vet-care-hospital_%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D8%A8%D9%8A%D8%B7%D8%B1%D9%89-vet-activity-6912464199990349824-95GV",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://egmaps.com/place?id=01c402f6-3e62-4b94-91ee-d067fd6c110b",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Read own LinkedIn opening announcement: pet examinations and animal medicine/surgery, both phones/address; corroborating individual directory entry same contact/location. Relative 4-year timestamp has no exact day: date left null. Ignore directory generic human-hospital 24h templates."
+  },
+  {
+    "key": "smiley-shebin",
+    "nameEnglish": "Smiley Pets Clinic",
+    "nameArabic": "عيادة سمايلي للحيوانات الأليفة",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Sabri Abu Alam Street, beside Bear Academy Center, opposite Al Othaim Market, Shebin El Kom, Menoufia",
+    "addressArabic": "شارع صبري أبو علم، بجوار سنتر بير أكاديمي، أمام العثيم ماركت، شبين الكوم، المنوفية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Shibin al-Kum (Kism)",
+    "citySourceCode": "EG1701",
+    "phones": [],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Shebin-Al-Kom/546351978551519/Smiley-Pets-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual listing explicitly offers pet medicine and surgery under Dr Mostafa El Hamouly at physical urban Shebin premises. No clinic phone visible; retained inactive no-phone."
+  },
+  {
+    "key": "sultan-shebin",
+    "nameEnglish": "Sultan Veterinary Clinic",
+    "nameArabic": "عيادة دكتور محمد سلطان البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglish": "Sharaf Square, street opposite Menoufia Pharmacy, Shebin El Kom, Menoufia",
+    "addressArabic": "ميدان شرف، الشارع أمام صيدلية المنوفية، شبين الكوم، المنوفية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Shibin al-Kum (Kism)",
+    "citySourceCode": "EG1701",
+    "phones": ["01276061798"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Shebin-Al-Kom/2208794556062509/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9--%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D9%85%D8%AD%D9%85%D8%AF-%D8%B3%D9%84%D8%B7%D8%A7%D9%86-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-Sultan-Veterinary-Clinic---SVC",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-04-04",
+    "classificationEvidence": "2026-04-04 canine fracture surgery and explicit small-animal diagnosis/surgery services. Physical urban Shebin Kism premises. Older Silvia page has same landmark; held rather than silently treating it as another current clinic."
+  }
+]

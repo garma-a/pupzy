@@ -1,0 +1,4177 @@
+[
+  {
+    "key": "pets-health-zeitoun",
+    "nameEnglish": "Pets Health Veterinary Clinic",
+    "nameArabic": "عيادة بتس هيلث البيطرية",
+    "addressEnglish": "26 El Matariya Street beside Housing and Development Bank, West Zeitoun, Cairo",
+    "addressArabic": "26 شارع المطرية، بجوار بنك التعمير والإسكان، الزيتون الغربية، القاهرة",
+    "area": "الزيتون",
+    "phones": ["01011352602", "01119921330"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-pets-health-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81%d8%a9-%d8%a7/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/pets.health.90/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2018-05-21",
+    "classificationEvidence": "Named pet practice offers cat/dog surgery, ultrasound and vaccinations; same26ElMatariya address and phone in second EVC item confirm duplicate identity. Dated directory customer rating(s) used for lastSeenActive; access date is not activity.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Health Veterinary Clinic", "Pets Health Clinic", "Pet’s Health Clinic"],
+      "arabic": ["عيادة بتس هيلث البيطرية"]
+    }
+  },
+  {
+    "key": "main-vet-alf-maskan",
+    "nameEnglish": "Main Veterinary Center",
+    "nameArabic": "المركز البيطري الرئيسي",
+    "addressEnglish": "92A Gesr El Suez Street opposite Alf Maskan Metro, beside Etoile, Alf Maskan, Cairo",
+    "addressArabic": "92 أ شارع جسر السويس، ميدان الألف مسكن، أمام محطة المترو وبجوار إيتوال، القاهرة",
+    "area": "Alf Maskan",
+    "phones": ["01146626789", "01033855100", "01003192951"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d8%a7%d9%84%d8%b1%d8%a6%d9%8a%d8%b3%d9%8a%d8%8c-%d8%ac%d8%b3%d8%b1-%d8%a7%d9%84%d8%b3%d9%88%d9%8a%d8%b3%d8%8c-%d8%a7/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b1%d9%88%d9%8a%d8%a7%d9%84-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%ac%d8%b3%d8%b1-%d8%a7%d9%84%d8%b3%d9%88%d9%8a%d8%b3-royal-vets-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "This specific private pet practice at92AGesrElSuez is distinct from government Abbassia centre. Entry explicitly offers pet consultations, imaging, surgery and vaccinations. Reviewed additional EVC identity: عيادة رويال البيطرية, جسر السويس Royal Vets Clinic.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Main Veterinary Center (Alf Maskan)", "Royal Vets Clinic", "Pet Shop)"],
+      "arabic": ["المركز البيطري الرئيسي (الألف مسكن)", "عيادة رويال البيطرية جسر السويس", "عيادة رويال البيطرية"]
+    }
+  },
+  {
+    "key": "islam-matariya",
+    "nameEnglish": "Islam Veterinary Clinic (Matariya)",
+    "nameArabic": "عيادة إسلام البيطرية (المطرية)",
+    "addressEnglish": "2 Said Awad Street, Old Obelisk Square, opposite Abu Samra Koshary, Matariya, Cairo",
+    "addressArabic": "2 شارع سعيد عواد، ميدان المسلة القديمة، أمام كشري أبو سمرة، المطرية، القاهرة",
+    "area": "المطرية",
+    "phones": ["01007366654"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a5%d8%b3%d9%84%d8%a7%d9%85-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%b9%d9%8a%d9%86-%d8%b4%d9%85%d8%b3/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Entry title says AinShams chain branch; actual recorded address explicitly saysMatariya. Area assignment follows address, branch qualifier authored to match it.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Islam Veterinary Clinic (Matariya)"],
+      "arabic": ["عيادة إسلام البيطرية (المطرية)"]
+    },
+    "chainKey": "islam",
+    "branchQualifier": "Matariya"
+  },
+  {
+    "key": "veterinary-center-helmeyet-zeitoun",
+    "nameEnglish": "The Veterinary Center",
+    "nameArabic": "المركز البيطري المتكامل",
+    "addressEnglish": "81A Selim El Awal Street, El Faheem Tower, Helmeyet El Zeitoun, Cairo",
+    "addressArabic": "81 أ شارع سليم الأول، برج الفهيم، ميدان حلمية الزيتون، القاهرة",
+    "area": "حلمية الزيتون",
+    "phones": ["01228979454", "01119779717"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d9%85%d8%aa%d9%83%d8%a7%d9%85%d9%84%d8%a9%d8%8c-%d8%ad%d9%84%d9%85%d9%8a%d8%a9-%d8%a7%d9%84/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/pg/theveterinarycenterpetclinic",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["The Veterinary Center"],
+      "arabic": ["المركز البيطري المتكامل"]
+    }
+  },
+  {
+    "key": "harmony-zahraa-maadi",
+    "nameEnglish": "Harmony Veterinary Clinic (Zahraa Maadi)",
+    "nameArabic": "عيادة هارموني البيطرية (زهراء المعادي)",
+    "addressEnglish": "Tanfeez El Ahkam Street, Zahraa El Maadi, Cairo",
+    "addressArabic": "شارع تنفيذ الأحكام، زهراء المعادي، القاهرة",
+    "area": "زهراء المعادي",
+    "phones": ["01090788948", "01014846909"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%87%d8%a7%d8%b1%d9%85%d9%88%d9%86%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9%d8%8c-%d8%a7%d9%84%d9%85%d8%b9%d8%a7%d8%af%d9%8a-harmony-vet-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Individual entry explicitly says خدمة طواري 24 ساعة (يرجى الاتصال على الهاتف اولا).",
+    "lastSeenActive": "2018-05-14",
+    "classificationEvidence": "Pet clinic explicitly offers examinations, surgery, imaging, lab work and24-hour emergency service; telephone first is requested. Dated directory customer rating(s) used for lastSeenActive; access date is not activity.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Harmony Veterinary Clinic", "Harmony Vet Clinic"],
+      "arabic": ["عيادة هارموني البيطرية"]
+    },
+    "chainKey": "harmony",
+    "branchQualifier": "Zahraa Maadi"
+  },
+  {
+    "key": "el-helal-basateen",
+    "nameEnglish": "El Helal Veterinary Clinic (Basateen)",
+    "nameArabic": "عيادة الهلال البيطرية (البساتين)",
+    "addressEnglish": "El Gazzareen Street beside El Hafez Mosque and Orange Boutique, West Basateen, Cairo",
+    "addressArabic": "شارع الجزارين بجوار مسجد الحافظ وأورنج بوتيك، البساتين الغربية، القاهرة",
+    "area": "البساتين الغربية",
+    "phones": ["01114057374"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%87%d9%84%d8%a7%d9%84-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%a8%d8%b3%d8%a7%d8%aa%d9%8a%d9%86/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2020-08-05",
+    "classificationEvidence": "Pet practice explicitly treats cats,dogs and birds with ultrasound and surgery. Distinct from other ElHelal locations. Dated directory customer rating(s) used for lastSeenActive; access date is not activity. Same El Helal name at distinct recorded branch premises; Basateen and Sayeda Aisha share the reception number published in their individual entries.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["El Helal Veterinary Clinic (Basateen)"],
+      "arabic": ["عيادة الهلال البيطرية (البساتين)"]
+    },
+    "branchQualifier": "Basateen",
+    "chainKey": "el-helal"
+  },
+  {
+    "key": "degla-vet-zahraa-maadi",
+    "nameEnglish": "Degla Veterinary Clinic",
+    "nameArabic": "عيادة دجلة البيطرية",
+    "addressEnglish": "1 El Khamsin Street, Zahraa El Maadi, Cairo",
+    "addressArabic": "1 شارع الخمسين، زهراء المعادي، القاهرة",
+    "area": "زهراء المعادي",
+    "phones": [],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%af%d8%ac%d9%84%d9%87-%d9%81%d9%8a%d8%aa-%d9%83%d9%84%d9%8a%d9%86%d9%83/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address. Contact ownership review 2026-11-12: Beverly Sheikh Zayed and Degla Zahraa Maadi publish the same number under unrelated names; no current owner or simultaneous branch evidence. Withheld from both.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Degla Veterinary Clinic"],
+      "arabic": ["عيادة دجلة البيطرية"]
+    }
+  },
+  {
+    "key": "i-vet-new-maadi",
+    "nameEnglish": "I Vet Veterinary Clinic",
+    "nameArabic": "عيادة آي فيت البيطرية",
+    "addressEnglish": "1 Road258 at Road276, apartment1, New Maadi, Cairo",
+    "addressArabic": "1 شارع 258 تقاطع شارع 276، شقة 1، المعادي الجديدة، القاهرة",
+    "area": "المعادي الجديدة",
+    "phones": ["01006895894", "0227538802", "01000883766"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%89-%d9%81%d9%8a%d8%aa-%d9%83%d9%84%d9%8a%d9%86%d9%8a%d9%83/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/I.VET.CLINIC/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["I Vet Veterinary Clinic"],
+      "arabic": ["عيادة آي فيت البيطرية"]
+    }
+  },
+  {
+    "key": "petco-maadi",
+    "nameEnglish": "Petco Veterinary Center",
+    "nameArabic": "مركز بتكو البيطري",
+    "addressEnglish": "3 El Mashtal Street, Maadi, Cairo",
+    "addressArabic": "3 شارع المشتل، المعادي، القاهرة",
+    "area": "المعادي",
+    "phones": ["01003030043", "01001257700"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a8%d9%8a%d8%aa%d9%83%d9%88-%d9%84%d9%84%d8%b7%d8%a8-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Petco Veterinary Center"],
+      "arabic": ["مركز بتكو البيطري", "مركز بيتكو للطب البيطري"]
+    }
+  },
+  {
+    "key": "sayed-el-zomor-degla",
+    "nameEnglish": "Dr. Sayed El Zomor Veterinary Clinic",
+    "nameArabic": "عيادة دكتور سيد الزمر البيطرية",
+    "addressEnglish": "9/5 Road216 beside Daniel Hechter, Degla, Maadi, Cairo",
+    "addressArabic": "9/5 شارع 216 بجوار دانيال هشتر، دجلة، المعادي، القاهرة",
+    "area": "دجلة",
+    "phones": ["0225198939", "01223720298"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af%d9%83%d8%aa%d9%88%d8%b1-%d8%b3%d9%8a%d8%af-%d8%a7%d9%84%d8%b2%d9%85%d8%b1-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Sayed El Zomor Veterinary Clinic"],
+      "arabic": ["عيادة دكتور سيد الزمر البيطرية"]
+    }
+  },
+  {
+    "key": "pets-park-zahraa-maadi",
+    "nameEnglish": "Pets Park Veterinary Clinic",
+    "nameArabic": "عيادة بتس بارك البيطرية",
+    "addressEnglish": "58 Abdel Hamid Gouda Street, Sector6, Zahraa El Maadi, Cairo",
+    "addressArabic": "58 شارع عبد الحميد جودة، الشطر السادس، زهراء المعادي، القاهرة",
+    "area": "زهراء المعادي",
+    "phones": ["01002000871", "01000088662"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a8%d8%a7%d8%b1%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Park Veterinary Clinic"],
+      "arabic": ["عيادة بتس بارك البيطرية"]
+    }
+  },
+  {
+    "key": "advance-care-degla",
+    "nameEnglish": "Advance Care Veterinary Clinic",
+    "nameArabic": "عيادة أدفانس كير البيطرية",
+    "addressEnglish": "6C Road199, Degla, Maadi, Cairo",
+    "addressArabic": "6 ج شارع 199، دجلة، المعادي، القاهرة",
+    "area": "دجلة",
+    "phones": ["01005058650", "0227544267"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a3%d8%af%d9%81%d8%a7%d9%86%d8%b3-%d9%83%d9%8a%d8%b1-%d9%81%d9%8a%d8%aa-%d9%83%d9%84%d9%8a%d9%86%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Advance Care Veterinary Clinic", "Advance Care Vet Clinic"],
+      "arabic": ["عيادة أدفانس كير البيطرية", "أدفانس كير فيت كلينك البيطرية"]
+    }
+  },
+  {
+    "key": "modern-vet-hadayek-maadi",
+    "nameEnglish": "Modern Veterinary Center (Hadayek Maadi)",
+    "nameArabic": "المركز البيطري الحديث (حدائق المعادي)",
+    "addressEnglish": "1 El Nabi Ali Street off Abdel Hamid Makki Street, Hadayek El Maadi, Cairo",
+    "addressArabic": "1 شارع النبي علي متفرع من شارع عبد الحميد مكي، حدائق المعادي، القاهرة",
+    "area": "حدائق المعادي",
+    "phones": ["01005081475"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d8%a7%d9%84%d8%ad%d8%af%d9%8a%d8%ab/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/المركز-البيطري-الحديث-2/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address. Same brand/phone also listed at56EzzatMatarDarElSalam; that alternate premise is held because no evidence establishes simultaneousbranches. Do not duplicate phone/clinic.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Modern Veterinary Center"],
+      "arabic": ["المركز البيطري الحديث", "المركز البيطري الحديث، دار السلام"]
+    },
+    "chainKey": "modern",
+    "branchQualifier": "Hadayek Maadi"
+  },
+  {
+    "key": "veterinary-clinic-degla-233",
+    "nameEnglish": "Veterinary Clinic (Degla, Road233)",
+    "nameArabic": "العيادة البيطرية (دجلة، شارع 233)",
+    "addressEnglish": "6 Police Buildings, Road233, Degla, Maadi, Cairo",
+    "addressArabic": "6 عمارات الشرطة، شارع 233، دجلة، المعادي، القاهرة",
+    "area": "دجلة",
+    "phones": ["01005197583", "01003702205"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Pet clinic entry has generic name; address qualifier authored for disambiguation. Two valid mobile contacts.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Veterinary Clinic (Degla, Road233)"],
+      "arabic": ["العيادة البيطرية (دجلة، شارع 233)", "العيادة البيطرية – المعادي"]
+    }
+  },
+  {
+    "key": "maadi-vet-laselki",
+    "nameEnglish": "Maadi Veterinary Clinic",
+    "nameArabic": "عيادة المعادي البيطرية",
+    "addressEnglish": "1/2 El Laselki Street, New Maadi, Cairo",
+    "addressArabic": "1/2 شارع اللاسلكي، المعادي الجديدة، القاهرة",
+    "area": "المعادي الجديدة",
+    "phones": ["0225194934"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%85%d8%b9%d8%a7%d8%af%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Maadi Veterinary Clinic"],
+      "arabic": ["عيادة المعادي البيطرية"]
+    }
+  },
+  {
+    "key": "my-pet-new-maadi",
+    "nameEnglish": "My Pet Veterinary Clinic (New Maadi)",
+    "nameArabic": "عيادة ماي بت البيطرية (المعادي الجديدة)",
+    "addressEnglish": "2/8 Hassan Nassar Street, El Laselki Division, New Maadi, Cairo",
+    "addressArabic": "2/8 شارع حسن نصار، تقسيم اللاسلكي، المعادي الجديدة، القاهرة",
+    "area": "المعادي الجديدة",
+    "phones": ["0225171454", "01111927722"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%85%d8%a7%d9%8a-%d8%a8%d9%8a%d8%aa-%d9%83%d9%84%d9%8a%d9%86%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["My Pet Veterinary Clinic"],
+      "arabic": ["عيادة ماي بت البيطرية", "عيادة ماي بيت كلينك البيطرية"]
+    },
+    "branchQualifier": "New Maadi"
+  },
+  {
+    "key": "el-mona-hadayek-maadi",
+    "nameEnglish": "El Mona Veterinary Center",
+    "nameArabic": "مركز المنى البيطري",
+    "addressEnglish": "2 Farouk El Shamy Street, Hadayek El Maadi, Cairo",
+    "addressArabic": "2 شارع فاروق الشامي، حدائق المعادي، القاهرة",
+    "area": "حدائق المعادي",
+    "phones": ["01141035012", "01004692944"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d9%85%d9%86%d9%89-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["El Mona Veterinary Center"],
+      "arabic": ["مركز المنى البيطري"]
+    }
+  },
+  {
+    "key": "paws-claws-new-maadi",
+    "nameEnglish": "Paws and Claws Veterinary Center",
+    "nameArabic": "مركز بوز أند كلوز البيطري",
+    "addressEnglish": "30 Road301, New Maadi, Cairo",
+    "addressArabic": "30 شارع 301، المعادي الجديدة، القاهرة",
+    "area": "المعادي الجديدة",
+    "phones": ["0227021142", "01005087120", "01090036500"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a8%d8%a7%d9%88%d8%b2-%d8%a7%d9%86%d8%af-%d9%83%d9%84%d8%a7%d9%88%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d8%a7%d9%84%d9%85%d8%b9%d8%a7%d8%af%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/PawsNClawsVetclinic",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Paws and Claws Veterinary Center (Maadi)", "Paws And Claws Vet"],
+      "arabic": ["مركز بوز أند كلوز البيطري (المعادي)", "مركز باوز اند كلاوز البيطري – المعادي"]
+    }
+  },
+  {
+    "key": "pets-lovers-thakanat-maadi",
+    "nameEnglish": "Pets Lovers Veterinary Clinic",
+    "nameArabic": "عيادة بتس لوفرز البيطرية",
+    "addressEnglish": "16 Road9, Thakanat El Maadi, Cairo",
+    "addressArabic": "16 شارع 9، ثكنات المعادي، القاهرة",
+    "area": "المعادي",
+    "phones": ["01222188303"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d9%84%d9%88%d9%81%d8%b1%d8%b2-%d9%83%d9%84%d9%8a%d9%86%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Lovers Veterinary Clinic", "Pets Lovers Clinic"],
+      "arabic": ["عيادة بتس لوفرز البيطرية"]
+    }
+  },
+  {
+    "key": "pet-zone-maadi",
+    "nameEnglish": "Pet Zone Veterinary Clinic (Maadi)",
+    "nameArabic": "عيادة بت زون البيطرية (المعادي)",
+    "addressEnglish": "2/4 El Laselki Street beside Mashreq Bank, Maadi, Cairo",
+    "addressArabic": "2/4 شارع اللاسلكي بجوار بنك المشرق، المعادي، القاهرة",
+    "area": "المعادي",
+    "phones": ["01003050573"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a8%d8%aa-%d8%b2%d9%88%d9%86-%d8%a7%d9%8a%d8%ac%d8%a8%d8%aa-%d8%a7%d9%84%d9%85%d8%b9%d8%a7%d8%af%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Zone Veterinary Clinic (Maadi)", "Pet Zone Egypt"],
+      "arabic": ["عيادة بت زون البيطرية (المعادي)"]
+    },
+    "chainKey": "pet-zone",
+    "branchQualifier": "Maadi"
+  },
+  {
+    "key": "animal-care-house-maadi",
+    "nameEnglish": "Animal Care House Veterinary Clinic",
+    "nameArabic": "عيادة دار رعاية الحيوان البيطرية",
+    "addressEnglish": "21 Road103, Maadi, Cairo",
+    "addressArabic": "21 شارع 103، المعادي، القاهرة",
+    "area": "المعادي",
+    "phones": ["0224822195", "01005670915", "01001473535"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%af%d8%a7%d8%b1-%d8%b1%d8%b9%d8%a7%d9%8a%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86-%d8%a7%d9%84%d9%85%d8%b9%d8%a7%d8%af%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Animal Care House Veterinary Clinic"],
+      "arabic": ["عيادة دار رعاية الحيوان البيطرية", "دار رعاية الحيوان – المعادي"]
+    }
+  },
+  {
+    "key": "farouk-bahgat-new-maadi",
+    "nameEnglish": "Dr. Farouk Bahgat Veterinary Clinic",
+    "nameArabic": "عيادة دكتور فاروق بهجت البيطرية",
+    "addressEnglish": "4/6 Sector7, behind Arab Organization for Industrialization Hospital, New Maadi, Cairo",
+    "addressArabic": "4/6 الشطر السابع، خلف مستشفى الهيئة العربية للتصنيع، المعادي الجديدة، القاهرة",
+    "area": "المعادي الجديدة",
+    "phones": [],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%af-%d9%81%d8%a7%d8%b1%d9%88%d9%82-%d8%a8%d9%87%d8%ac%d8%aa-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "http://faroukbahgat.com/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual pet medical practice page supplies fixed address and own website but no phone. Kept inactive-no-phone pending verifiable contact.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Farouk Bahgat Veterinary Clinic"],
+      "arabic": ["عيادة دكتور فاروق بهجت البيطرية"]
+    }
+  },
+  {
+    "key": "smart-vet-zahraa-maadi",
+    "nameEnglish": "Smart Vet Care Center",
+    "nameArabic": "مركز سمارت فيت كير البيطري",
+    "addressEnglish": "32 Darna Towers, Zahraa El Maadi, Cairo",
+    "addressArabic": "32 أبراج دارنا، زهراء المعادي، القاهرة",
+    "area": "زهراء المعادي",
+    "phones": ["0229702349", "01066352605"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b3%d9%85%d8%a7%d8%b1%d8%aa-%d9%81%d9%8a%d8%aa-%d9%83%d9%8a%d8%b1-%d8%b3%d9%86%d8%aa%d8%b1/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Smart Vet Care Center"],
+      "arabic": ["مركز سمارت فيت كير البيطري"]
+    }
+  },
+  {
+    "key": "golf-maadi",
+    "nameEnglish": "Golf Veterinary Clinic (Maadi)",
+    "nameArabic": "عيادة الجولف البيطرية (المعادي)",
+    "addressEnglish": "23 El Golf Street beside El Safa Mosque, Maadi, Cairo",
+    "addressArabic": "23 شارع الجولف بجوار مسجد الصفا، المعادي، القاهرة",
+    "area": "المعادي",
+    "phones": ["01005111956"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%ac%d9%88%d9%84%d9%81-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a8%d8%a7%d9%84%d9%85%d8%b9%d8%a7%d8%af%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Golf Veterinary Clinic"],
+      "arabic": ["عيادة الجولف البيطرية"]
+    },
+    "chainKey": "golf-vet",
+    "branchQualifier": "Maadi"
+  },
+  {
+    "key": "new-maadi-vet-278",
+    "nameEnglish": "New Maadi Veterinary Clinic",
+    "nameArabic": "عيادة المعادي الجديدة البيطرية",
+    "addressEnglish": "5 Road278 off El Nasr Street, New Maadi, Cairo",
+    "addressArabic": "5 شارع 278 متفرع من شارع النصر، المعادي الجديدة، القاهرة",
+    "area": "المعادي الجديدة",
+    "phones": ["0225164247", "01222202490"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%85%d8%b9%d8%a7%d8%af%d9%8a-%d8%a7%d9%84%d8%ac%d8%af%d9%8a%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["New Maadi Veterinary Clinic"],
+      "arabic": ["عيادة المعادي الجديدة البيطرية"]
+    }
+  },
+  {
+    "key": "nile-zahraa-maadi",
+    "nameEnglish": "Nile Veterinary Clinic",
+    "nameArabic": "عيادة النيل البيطرية",
+    "addressEnglish": "5B Tiba Towers, apartment1, Zahraa El Maadi, Cairo",
+    "addressArabic": "5 ب أبراج طيبة، شقة 1، زهراء المعادي، القاهرة",
+    "area": "زهراء المعادي",
+    "phones": ["0225199849", "01227875965", "01001959388"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%86%d9%8a%d9%84-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d9%85%d8%b9%d8%a7%d8%af%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Nile Veterinary Clinic (Maadi)"],
+      "arabic": ["عيادة النيل البيطرية (المعادي)"]
+    }
+  },
+  {
+    "key": "care-cure-degla",
+    "nameEnglish": "Care and Cure Veterinary Clinic",
+    "nameArabic": "عيادة كير أند كيور البيطرية",
+    "addressEnglish": "13C Road198 beside El Diwan Center, Degla, Maadi, Cairo",
+    "addressArabic": "13 ج شارع 198 بجوار مركز الديوان، دجلة، المعادي، القاهرة",
+    "area": "دجلة",
+    "phones": ["0227548196"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%83%d9%8a%d8%b1-%d8%a7%d9%86%d8%af-%d9%83%d9%8a%d9%88%d8%b1-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Care and Cure Veterinary Clinic", "Care and Cure Vet Clinic"],
+      "arabic": ["عيادة كير أند كيور البيطرية"]
+    }
+  },
+  {
+    "key": "vets-in-practice-new-maadi",
+    "nameEnglish": "Vets in Practice Veterinary Clinic",
+    "nameArabic": "عيادة فيتس إن براكتس البيطرية",
+    "addressEnglish": "24DA Shokry Abdel Halim Street off El Nasr Street, New Maadi, Cairo",
+    "addressArabic": "24 د أ شارع شكري عبد الحليم متفرع من شارع النصر، المعادي الجديدة، القاهرة",
+    "area": "المعادي الجديدة",
+    "phones": ["0225164428", "01006205694"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%81%d9%8a%d8%aa%d8%b3-%d8%a7%d9%86-%d8%a8%d8%b1%d8%a7%d9%83%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed private pet clinic entry explicitly describes medical care, treatment and vaccinations at a fixed consulting address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Vets in Practice Veterinary Clinic", "Vets In Practice Clinic"],
+      "arabic": ["عيادة فيتس إن براكتس البيطرية"]
+    }
+  },
+  {
+    "key": "ghareeb-mansi-maadi",
+    "nameEnglish": "Dr. Ghareeb Mansi Veterinary Clinic",
+    "nameArabic": "عيادة دكتور غريب منسي البيطرية",
+    "addressEnglish": "Maadi, Cairo",
+    "addressArabic": "المعادي، القاهرة",
+    "area": "المعادي",
+    "phones": ["022525423", "0100346715"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af-%d8%ba%d8%b1%d9%8a%d8%a8-%d9%85%d9%86%d8%b3%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Pet clinic entry has only obsolete/invalid-length phone strings; no digits/prefixes invented. Retain inactive-no-phone.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Ghareeb Mansi Veterinary Clinic"],
+      "arabic": ["عيادة دكتور غريب منسي البيطرية"]
+    }
+  },
+  {
+    "key": "pets-valley-zamalek",
+    "nameEnglish": "Pets Valley Clinic (Zamalek)",
+    "nameArabic": "عيادة بيتس فالي (الزمالك)",
+    "addressEnglish": "26 Shagaret El Dorr Street, Zamalek, Cairo",
+    "addressArabic": "26 شارع شجرة الدر، الزمالك، القاهرة",
+    "area": "Zamalek",
+    "phones": ["01063068081", "01095911201"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d9%81%d8%a7%d9%84%d9%8a-%d8%a7%d9%84%d8%b2%d9%85%d8%a7%d9%84%d9%83-pets-valley-zamalek-branch/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.petshops1.com/EG/Cairo/283479361806612/Pets-Valley",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-12",
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity. Clinic announcements mirrored12/09/2026 document consultations and both branch addresses/phones.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Valley Clinic", "Pets Valley Zamalek Branch", "Pet Grooming Services", "Pets Valley"],
+      "arabic": ["عيادة بيتس فالي، الزمالك", "عيادة بيتس فالي"]
+    },
+    "chainKey": "pets-valley",
+    "branchQualifier": "Zamalek"
+  },
+  {
+    "key": "pet-haven-manial",
+    "nameEnglish": "Pet Haven Clinic",
+    "nameArabic": "عيادة بيت هيفن للحيوانات الأليفة",
+    "addressEnglish": "Abdel Aziz Al Saud Street, Manial El Roda, Cairo",
+    "addressArabic": "شارع عبدالعزيز آل سعود، منيل الروضة، محافظة القاهرة",
+    "area": "Manyal El Roda",
+    "phones": ["01062989899", "01000467805"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa-%d9%87%d9%8a%d9%81%d9%86-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81%d8%a9-%d9%85%d9%86%d9%8a%d9%84/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.wslny.com/index.php/company/Pet-Heaven-Vet.-Clinic/32979",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2017-11-13",
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity.24-hour on-call response requires phoning first; is24Hours remains false because routine hours differ.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Haven Clinic", "Pet Heaven Veterinary Clinic"],
+      "arabic": ["عيادة بيت هيفن للحيوانات الأليفة ، منيل الروضة", "عيادة بيت هيفن للحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "cairo-pets-mokattam",
+    "nameEnglish": "Cairo Pets Clinic",
+    "nameArabic": "عيادة القاهرة البيطرية",
+    "addressEnglish": "Plot 1286, Street 49 off Street 53, Diplomatic District, behind Samir and Aly, off Road 9, Mokattam, Cairo",
+    "addressArabic": "خلف مكتبة سمير وعلي، شارع 9، شارع 49 من شارع 53، الحي الدبلوماسي. قطعة رقم 1286، المقطم، القاهرة",
+    "area": "Mokattam",
+    "phones": ["01007777132", "01119033674", "025080330"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%82%d8%a7%d9%87%d8%b1%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9%d8%8c-%d8%a7%d9%84%d9%85%d9%82%d8%b7%d9%85%d8%8c-%d8%b4%d8%a7%d8%b1%d8%b9-9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.to-all.com/veterinary-elmokattam/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2019-09-10",
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Cairo Pets Clinic"],
+      "arabic": ["عيادة القاهرة البيطرية، المقطم، شارع 9", "عيادة القاهرة البيطرية"]
+    }
+  },
+  {
+    "key": "perfect-amiriya",
+    "nameEnglish": "Perfect Veterinary Clinic (Amiriya)",
+    "nameArabic": "عيادة بيرفكت البيطرية (الأميرية)",
+    "addressEnglish": "63 Dr. Aida Street off El Tahrir Street, Amiriya, Cairo",
+    "addressArabic": "63 شارع الدكتورة عايدة متفرع من شارع التحرير، الأميرية، القاهرة",
+    "area": "الأميرية",
+    "phones": ["01017048036", "01129299965"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%b1%d9%81%d9%83%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%a3%d9%85%d9%8a%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.voofla.com/EG/Cairo/1914879055404824/عيادة-بيرفكت-البيطرية",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-27",
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity. Dated27/09/2026 clinic post and14/09/2026 branch contacts resolve branch identities.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Perfect Veterinary Clinic"],
+      "arabic": ["عيادة بيرفكت البيطرية، الأميرية والوايلي", "عيادة بيرفكت البيطرية"]
+    },
+    "chainKey": "perfect",
+    "branchQualifier": "Amiriya"
+  },
+  {
+    "key": "el-helal-sayeda-aisha",
+    "nameEnglish": "El Helal Veterinary Clinics (Sayeda Aisha)",
+    "nameArabic": "عيادات الهلال البيطرية (السيدة عائشة)",
+    "addressEnglish": "Pet and Pigeon Market Street, El Kharta El Adima, Sayeda Aisha, Old Cairo (Old Cairo)",
+    "addressArabic": "مصر القديمة، السيدة عائشة، شارع سوق الحمام والحيوانات الأليفة، الخارطة القديمه، أمام دار المناسبات.، القاهرة",
+    "area": "مصر القديمة",
+    "phones": ["01114057374"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a7%d8%aa-%d8%a7%d9%84%d9%87%d9%84%d8%a7%d9%84-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a8%d8%a7%d9%84%d8%b3%d9%8a%d8%af%d8%a9-%d8%b9%d8%a7%d8%a6%d8%b4%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Same El Helal name at distinct recorded branch premises; Basateen and Sayeda Aisha share the reception number published in their individual entries.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["El Helal Veterinary Clinics"],
+      "arabic": ["عيادات الهلال البيطرية بالسيدة عائشة", "عيادات الهلال البيطرية"]
+    },
+    "branchQualifier": "Sayeda Aisha",
+    "chainKey": "el-helal"
+  },
+  {
+    "key": "shoubra-pet",
+    "nameEnglish": "Shoubra Veterinary Clinic",
+    "nameArabic": "عيادة شبرا البيطرية للحيوانات الأليفة",
+    "addressEnglish": "4 Hussein Wali Street off Sheikh El Zohari Street, off Shoubra Street, Cairo",
+    "addressArabic": "4 شارع حسين والي متفرع من شارع الشيخ الظوهري شاورما ابو مازن شارع شبرا، القاهرة",
+    "area": "Shoubra",
+    "phones": ["01125425210"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b4%d8%a8%d8%b1%d8%a7-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2018-01-12",
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Shoubra Veterinary Clinic"],
+      "arabic": ["عيادة شبرا البيطرية للحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "lovely-pets-nasr-city",
+    "nameEnglish": "Lovely Pets Clinic",
+    "nameArabic": "عيادة لفلي بيتس البيطرية",
+    "addressEnglish": "Building 34, El Tawfikia Buildings, Eighth District, Nasr City, Cairo",
+    "addressArabic": "مدينة نصر، الحي الثامن، عمارات التوفيقية - عماره 34، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01001570290", "01016238248"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-lovely-pets-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a7%d9%84%d8%af%d9%88%d9%84%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d8%a8%d9%85%d8%af%d9%8a%d9%86%d8%a9-%d9%86%d8%b5%d8%b1/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%84%d9%81%d9%84%d9%8a-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%b9%d9%85%d8%a7%d8%af-%d8%a7%d9%84%d9%86%d8%ad%d8%a7%d8%b3-%d9%85/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.lafamiliaeg.com/listings/lovely-pets-clinic-in-nasr-city/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Entry explicitly offers خدمة طوارئ24ساعة.",
+    "lastSeenActive": "2017-10-31",
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity. Reviewed additional EVC identity: المستشفى الدولي البيطري بمدينة نصر. Reviewed additional EVC identity: عيادة لفلي بيتس البيطرية ، عماد النحاس ، مدينة نصر. Specific independentdirectoryentry corroborates34TawfikiaEighthDistrict and01001570290; nearbyEVC22MisrConstruction address held asoldervariant, not anewbranch.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Lovely Pets Clinic", "lovely pets clinic", "Pet shop", "lovely pets"],
+      "arabic": [
+        "عيادة بيطرية  ، الحي الثامن، مدينة نصر",
+        "عيادة لفلي بيتس البيطرية",
+        "المستشفى الدولي البيطري بمدينة نصر",
+        "عيادة لفلي بيتس البيطرية ، عماد النحاس ، مدينة نصر"
+      ]
+    }
+  },
+  {
+    "key": "vetology-banafseg",
+    "nameEnglish": "Vetology Veterinary Clinic",
+    "nameArabic": "عيادة فيتولوجي البيطرية",
+    "addressEnglish": "22 Dr. Ahmed Okasha Street, Banafseg Services, First Settlement, New Cairo",
+    "addressArabic": "القاهرة الجديدة، 22 شارع دكتور أحمد عكاشة، منطقة خدمات البنفسج، التجمع الأول، بجوار فيت ماب جيم",
+    "area": "First Settlement",
+    "phones": ["01000024966", "01066689707"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%81%d9%8a%d8%aa%d9%88%d9%84%d9%88%d8%ac%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-vetology-veterinary-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%89-%d8%a8%d8%a7%d9%84%d8%aa%d8%ac%d9%85%d8%b9-%d8%a7%d9%84%d8%a7%d9%88%d9%84-%d8%b0%d8%a7-%d9%81%d9%8a%d8%aa-vet/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.to-all.com/veterinary-altagamoa/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Entry explicitly offers طوارئ24ساعة.",
+    "lastSeenActive": "2020-04-09",
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity. Reviewed additional EVC identity: المركز البيطرى بالتجمع الاول – ذا فيت ( The Vet ). Read individualVetologysection, corroborates22DrAhmedOkashaaddress; pageoverallpublicationdate notassignedasclinicactivity.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Vetology Veterinary Clinic", "The Vet"],
+      "arabic": [
+        "عيادة فيتولوجي البيطرية، التجمع الأول",
+        "عيادة فيتولوجي البيطرية",
+        "المركز البيطرى بالتجمع الاول  ذا فيت"
+      ]
+    }
+  },
+  {
+    "key": "pet-care-hospital-khalafawy",
+    "nameEnglish": "Pet Care Hospital",
+    "nameArabic": "مستشفى عناية الحيوانات الأليفة",
+    "addressEnglish": "13A Hussein Wali Street, beside Dr. Nasser Abu Khalil Pharmacy and El Nour El Mohamadi Mosque, Khalafawy, Cairo",
+    "addressArabic": "الخلفاوي، 13أ ش حسين والي، بجوار صيدلية د. ناصر ابو خليل ومسجد النور المحمدي، الخلفاوي، القاهرة",
+    "area": "الخلفاوي",
+    "phones": ["01221370001", "01143197126", "01065535232"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%b9%d9%86%d8%a7%d9%8a%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.wslny.com/company/مستشفى%20عناية%20الحيوانات%20الأليفة/33344",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Entry explicitly offers خدمات طوارئ24ساعة.",
+    "lastSeenActive": "2021-08-24",
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity. Specificdirectoryentryupdate24Aug2021 corroborates13AHusseinWali andallthreephones.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Care Hospital"],
+      "arabic": ["مستشفى عناية الحيوانات الأليفة ، منية السيرج، شبرا", "مستشفى عناية الحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "vipets-nasr-city",
+    "nameEnglish": "VIPets Clinic",
+    "nameArabic": "عيادة في أي بيتس البيطرية",
+    "addressEnglish": "16 Gamal El Din Wasel Street off Anwar El Mofti, behind Tiba Mall, Nasr City, Cairo",
+    "addressArabic": "خلف طيبة مول، 16 ش جمال الدين واصل متفرع من شارع انور المفتي. أمام مدرسة عباس العقاد التجريبية. مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01121109111", "01121105111"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%81%d9%8a-%d8%a3%d9%8a-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-vipets-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.voofla.com/EG/Cairo/357136321376214/VIPets-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2021-09-24",
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["VIPets Clinic"],
+      "arabic": ["عيادة في أي بيتس البيطرية  ، طيبة مول ، مدينة نصر", "عيادة في أي بيتس البيطرية"]
+    }
+  },
+  {
+    "key": "el-helal-sayeda-zeinab",
+    "nameEnglish": "El Helal Veterinary Clinic (Sayeda Zeinab)",
+    "nameArabic": "عيادة الهلال البيطرية (السيدة زينب)",
+    "addressEnglish": "7 El Selakhana Street, beside Zein El Abidin Mosque, opposite Hospital 57 treatment building, Sayeda Zeinab, Cairo",
+    "addressArabic": "السيده زينب، 7شارع السلخانه بجوار مسجد زين العابدين وأمام مبنى علاجي مستشفى 57، القاهرة",
+    "area": "السيدة زينب",
+    "phones": ["01157451261"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%87%d9%84%d8%a7%d9%84-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%b3%d9%8a%d8%af%d8%a9-%d8%b2%d9%8a%d9%86%d8%a8/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2020-09-17",
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity. Same El Helal name at distinct recorded branch premises; Basateen and Sayeda Aisha share the reception number published in their individual entries.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["El Helal Veterinary Clinic"],
+      "arabic": ["عيادة الهلال البيطرية، السيدة زينب", "عيادة الهلال البيطرية"]
+    },
+    "branchQualifier": "Sayeda Zeinab",
+    "chainKey": "el-helal"
+  },
+  {
+    "key": "lotus-new-cairo",
+    "nameEnglish": "Lotus Veterinary Hospital",
+    "nameArabic": "مستشفى اللوتس البيطري",
+    "addressEnglish": "Zizinia Compound, beside the American University, Fifth Settlement, New Cairo",
+    "addressArabic": "كومباوند زيزنيا، بجوار الجامعة الأمريكية، التجمع الخامس، القاهرة الجديدة",
+    "area": "Fifth Settlement",
+    "phones": ["01068688646"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a7%d9%84%d9%84%d9%88%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d8%8c-%d8%a7%d9%84%d8%aa%d8%ac%d9%85%d8%b9-%d8%a7%d9%84%d8%ae%d8%a7%d9%85%d8%b3/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.to-all.com/veterinary-altagamoa/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2019-05-06",
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity.24-hour on-call response requires phoning first; is24Hours remains false because routine hours differ. Read individualLotussectioncorroboratesZiziniaCompoundand01068688646; nodateinferredfromarticlepublication.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Lotus Veterinary Hospital"],
+      "arabic": ["مستشفى اللوتس البيطري ، التجمع الخامس", "مستشفى اللوتس البيطري"]
+    }
+  },
+  {
+    "key": "pets-center-mokattam",
+    "nameEnglish": "Pets Center Veterinary Clinic",
+    "nameArabic": "عيادة بيتس سنتر البيطرية",
+    "addressEnglish": "Building 36, Madinet El Forsan, behind Baron Mall, Mokattam, Cairo",
+    "addressArabic": "المقطم، مدينة الفرسان، خلف مول البارون، عماره رقم 36، بالقرب من الهضبة الوسطى، القاهرة",
+    "area": "Mokattam",
+    "phones": ["01226988627"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%b3%d9%86%d8%aa%d8%b1-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-pets-center-veterinary-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.to-all.com/veterinary-elmokattam/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2018-02-28",
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity. Second directory gives building39 versus EVC36; street point must not imply building confirmation.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Center Veterinary Clinic", "pets center veterinary clinic"],
+      "arabic": ["عيادة بيتس سنتر البيطرية، المقطم", "عيادة بيتس سنتر البيطرية"]
+    }
+  },
+  {
+    "key": "el-raai-shoubra",
+    "nameEnglish": "El Raai Veterinary Clinic",
+    "nameArabic": "عيادة الراعى البيطريه",
+    "addressEnglish": "6 Abdel Latif El Faham Street, intersection with Minyet El Serg Street, Shoubra, Cairo",
+    "addressArabic": "6 شارع عبد اللطيف الفحام - متقاطع مع شارع منية السيرج. شبرا - القاهره - مصر",
+    "area": "Shoubra",
+    "phones": ["0224302016", "01120969165"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b1%d8%a7%d8%b9%d9%89-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d9%87/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["El Raai Veterinary Clinic"],
+      "arabic": ["عيادة الراعى البيطريه"]
+    }
+  },
+  {
+    "key": "pet-welfare-center-nasr",
+    "nameEnglish": "Pet Welfare Center",
+    "nameArabic": "مركز بي دبليو سي البيطري",
+    "addressEnglish": "1 El Dawa Street, Embassy District, Nasr City, Cairo",
+    "addressArabic": "1 ش الدعوة، حي السفارات، مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01000141455", "01000161455", "0223523501", "0223523502"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a8%d9%8a-%d8%af%d8%a8%d9%84%d9%8a%d9%88-%d8%b3%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a8%d9%8a-%d8%af%d8%a8%d9%84%d9%8a%d9%88-%d8%b3%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Entry explicitly states resident veterinarians available على مدار24ساعة and daily24-hour service.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Reviewed additional EVC identity: مركز بي دبليو سي البيطري.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Welfare Center", "PWC"],
+      "arabic": ["مركز بي دبليو سي البيطري للخدمات البيطرية", "مركز بي دبليو سي البيطري"]
+    }
+  },
+  {
+    "key": "pets-steps-nasr-city",
+    "nameEnglish": "Pets Steps Veterinary Center",
+    "nameArabic": "مركز بيتس ستيبس البيطري",
+    "addressEnglish": "90 Makram Ebeid Street, Nasr City, Cairo",
+    "addressArabic": "90 شارع مكرم عبيد، مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01224438083", "01022727027"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%b3%d8%aa%d9%8a%d8%a8%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Steps Veterinary Center"],
+      "arabic": ["مركز بيتس ستيبس البيطري"]
+    }
+  },
+  {
+    "key": "nasr-vet-tayaran",
+    "nameEnglish": "Nasr City Veterinary Clinic",
+    "nameArabic": "العيادة البيطرية بمدينة نصر",
+    "addressEnglish": "60 El Tayaran Street, First Zone, Nasr City, Cairo",
+    "addressArabic": "60 شارع الطيران، المنطقة الأولى، مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01005121191"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a8%d9%85%d8%af%d9%8a%d9%86%d8%a9-%d9%86%d8%b5%d8%b1/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Nasr City Veterinary Clinic"],
+      "arabic": ["العيادة البيطرية بمدينة نصر"]
+    }
+  },
+  {
+    "key": "pet-medical-nasr-city",
+    "nameEnglish": "Pet Medical Center",
+    "nameArabic": "المركز الطبي للحيوانات الأليفة",
+    "addressEnglish": "22 Ahmed Qassem Gouda Street, behind Koueider Abbas El Akkad, Nasr City, Cairo",
+    "addressArabic": "22 شارع أحمد قاسم جودة، خلف قويدر عباس العقاد، مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["0224036603"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%b7%d8%a8%d9%8a-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Medical Center"],
+      "arabic": ["المركز الطبي للحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "animal-planet-nasr-city",
+    "nameEnglish": "Animal Planet Veterinary Clinic",
+    "nameArabic": "عيادة أنيمل بلانيت البيطرية",
+    "addressEnglish": "11 Sayed Taha Street off Abbas El Akkad, Nasr City, Cairo",
+    "addressArabic": "11 شارع سيد طه، من شارع عباس العقاد، مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01012245885"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a3%d9%86%d9%8a%d9%85%d9%84-%d8%a8%d9%84%d8%a7%d9%86%d9%8a%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Animal Planet Veterinary Clinic"],
+      "arabic": ["عيادة أنيمل بلانيت البيطرية"]
+    }
+  },
+  {
+    "key": "pet-vet-nasr-city",
+    "nameEnglish": "Pet Vet Clinic (Nasr City)",
+    "nameArabic": "عيادة بيت فيت كلينك البيطرية (مدينة نصر)",
+    "addressEnglish": "28 Ahmed El Zomor Street, Nasr City, Cairo",
+    "addressArabic": "28 شارع أحمد الزمر، مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01208303133"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa-%d9%81%d9%8a%d8%aa-%d9%83%d9%84%d9%8a%d9%86%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Vet Clinic"],
+      "arabic": ["عيادة بيت فيت كلينك البيطرية"]
+    },
+    "chainKey": "pet-vet",
+    "branchQualifier": "Nasr City"
+  },
+  {
+    "key": "pet-care-center-nasr",
+    "nameEnglish": "Pet Care Center",
+    "nameArabic": "مركز بيت كير البيطري",
+    "addressEnglish": "17 El Batrawi Street, Nasr City, Cairo",
+    "addressArabic": "17 شارع البطراوي - مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01112957774", "0224702388"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a8%d9%8a%d8%aa-%d9%83%d9%8a%d8%b1-%d8%b3%d9%86%d8%aa%d8%b1-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Care Center"],
+      "arabic": ["مركز بيت كير سنتر البيطري"]
+    }
+  },
+  {
+    "key": "happy-pets-nasr",
+    "nameEnglish": "Happy Pets Clinic",
+    "nameArabic": "عيادة هابي بيتس د. محمود حمدي",
+    "addressEnglish": "36 Dr. Hassan Ibrahim Street off Makram Ebeid, Nasr City, Cairo",
+    "addressArabic": "36 شارع د. حسن إبراهيم، من شارع مكرم عبيد، مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01144445952", "01201204050", "01224050891"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%87%d8%a7%d8%a8%d9%8a-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Cross-governorate branch review: two individual entries explicitly identify Dr Mahmoud Hamdy Happy Pets in Nasr City and Mohandessin with distinct full addresses, the same three reception numbers and the same happy.pets.egypt page. Preserve both documented branches.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Happy Pets Clinic"],
+      "arabic": ["عيادة هابي بيتس د. محمود حمدي, مدينة نصر", "عيادة هابي بيتس د. محمود حمدي"]
+    },
+    "chainKey": "happy-pets",
+    "branchQualifier": "Nasr City"
+  },
+  {
+    "key": "mvc-mokattam",
+    "nameEnglish": "MVC El Mokattam Vet Center",
+    "nameArabic": "مركز المقطم البيطري",
+    "addressEnglish": "8149 Street103 parallel to Road9, behind Banque Misr and Dominos Pizza, Mokattam, Cairo",
+    "addressArabic": "8149 شارع 103 موازي لشارع 9، خلف بنك مصر ودومينوز بيتزا، المقطم، القاهرة",
+    "area": "Mokattam",
+    "phones": ["01006474666", "01061630300"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%85%d9%82%d8%b7%d9%85-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.findhealthclinics.org/EG/Cairo/1738703213028866/MVC-El-Mokattam-Vet-Center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Entry explicitly states treatment of emergencies على مدار24ساعة.",
+    "lastSeenActive": "2023-06-14",
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.14/06/2023 clinic announcement and header supply current8149Street103 address; supersedes old160Road9.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["MVC El Mokattam Vet Center"],
+      "arabic": ["عيادة المقطم البيطرية", "مركز المقطم البيطري"]
+    }
+  },
+  {
+    "key": "mohamed-nasr-ibrahim",
+    "nameEnglish": "Dr. Mohamed Nasr Ibrahim Pet Clinic",
+    "nameArabic": "عيادة د. محمد نصر إبراهيم للحيوانات الأليفة",
+    "addressEnglish": "6 Abdel Hafez Ahmed Street, beside El Serag Mall, Nasr City, Cairo",
+    "addressArabic": "6 شارع عبد الحافظ أحمد، بجوار السراج مول، مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01001333975", "0222874717"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af-%d9%85%d8%ad%d9%85%d8%af-%d9%86%d8%b5%d8%b1-%d8%a5%d8%a8%d8%b1%d8%a7%d9%87%d9%8a%d9%85-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Mohamed Nasr Ibrahim Pet Clinic"],
+      "arabic": ["عيادة د. محمد نصر إبراهيم للحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "el-abbassi-ain-shams",
+    "nameEnglish": "El Abbassi Veterinary Clinic",
+    "nameArabic": "عيادة العباسي البيطرية",
+    "addressEnglish": "3 Abdel Aziz Gomaa Street off Mohamed Attia off Ain Shams Street, Cairo",
+    "addressArabic": "3 شارع عبدالعزيز جمعة متفرع من شارع محمد عطية، من شارع عين شمس - ناصية أسواق المصري. عين شمس، القاهرة",
+    "area": "عين شمس",
+    "phones": ["01143690025", "01063606947"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%b9%d8%a8%d8%a7%d8%b3%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["El Abbassi Veterinary Clinic"],
+      "arabic": ["عيادة العباسي البيطرية"]
+    }
+  },
+  {
+    "key": "el-zahraa-ain-shams",
+    "nameEnglish": "El Zahraa Veterinary Clinic",
+    "nameArabic": "عيادة الزهراء البيطرية",
+    "addressEnglish": "12 Abu El Fotouh Abdallah Street, intersection of El Zahraa and El Eshreen, Ain Shams, Cairo",
+    "addressArabic": "12 شارع ابو الفتوح عبدالله، عين شمس، تقاطع شارع الزهراء مع شارع العشرين. القاهرة -",
+    "area": "عين شمس",
+    "phones": ["01006592494"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%b2%d9%87%d8%b1%d8%a7%d8%a1-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["El Zahraa Veterinary Clinic"],
+      "arabic": ["عيادة الزهراء البيطرية"]
+    }
+  },
+  {
+    "key": "my-pets-center-mokattam",
+    "nameEnglish": "My Pets Center",
+    "nameArabic": "ماي بيتس سنتر البيطري",
+    "addressEnglish": "1 Amer Street off Road 9, Mokattam, Cairo",
+    "addressArabic": "1 شارع عامر، متفرع من شارع 9 - المقطم، القاهرة",
+    "area": "Mokattam",
+    "phones": ["01122223056"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%a7%d9%8a-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%b3%d9%86%d8%aa%d8%b1-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["My Pets Center", "My pets center"],
+      "arabic": ["ماي بيتس سنتر البيطري"]
+    }
+  },
+  {
+    "key": "pets-vets-mokattam",
+    "nameEnglish": "Pets and Vets",
+    "nameArabic": "عيادة بيتس اند فيتس البيطرية",
+    "addressEnglish": "El Narges Buildings, Plot 7122, Road 9, beside Ragab Sons Supermarket, Mokattam, Cairo",
+    "addressArabic": "عمارات النرجس - القطعة 7122 - شارع 9، المقطم، القاهرة - بجوار سوبر ماركت أولاد رجب",
+    "area": "Mokattam",
+    "phones": ["01148491123"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%86%d8%af-%d9%81%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-2/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.to-all.com/veterinary-elmokattam/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets and Vets"],
+      "arabic": ["عيادة بيتس اند فيتس البيطرية"]
+    }
+  },
+  {
+    "key": "hatem-abu-salem-mokattam",
+    "nameEnglish": "Dr. Hatem Abu Salem Veterinary Clinic",
+    "nameArabic": "عيادة د. حاتم ابو سالم البيطرية",
+    "addressEnglish": "Plot 9091, Road 9, beside El Andalus Garden, Mokattam, Cairo",
+    "addressArabic": "القطعة 9091 - شارع 9 - المقطم - بجوار حديقة الأندلس. القاهرة",
+    "area": "Mokattam",
+    "phones": ["01111020006"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af-%d8%ad%d8%a7%d8%aa%d9%85-%d8%a7%d8%a8%d9%88-%d8%b3%d8%a7%d9%84%d9%85-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Hatem Abu Salem Veterinary Clinic"],
+      "arabic": ["عيادة د. حاتم ابو سالم البيطرية"]
+    }
+  },
+  {
+    "key": "healthy-pet-mokattam",
+    "nameEnglish": "Healthy Pet Vet Clinic",
+    "nameArabic": "عيادة هيلثي بيت البيطرية",
+    "addressEnglish": "3 El Ahram Street, Mokattam, Cairo",
+    "addressArabic": "3 شارع الأهرام، المقطم، القاهرة",
+    "area": "Mokattam",
+    "phones": ["01100430810"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%87%d9%8a%d9%84%d8%ab%d9%8a-%d8%a8%d9%8a%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.to-all.com/veterinary-elmokattam/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Healthy Pet Vet Clinic"],
+      "arabic": ["عيادة هيلثي بيت البيطرية"]
+    }
+  },
+  {
+    "key": "my-vet-sohila-mokattam",
+    "nameEnglish": "My Vet Clinic - Dr. Sohila Saeed",
+    "nameArabic": "عيادة ماي فيت كلينك البيطرية د. سهيلة سعيد",
+    "addressEnglish": "3 El Nasr El Gedida Buildings, Road 9, Mokattam, Cairo",
+    "addressArabic": "3 عمارات النصر الجديدة، شارع 9، المقطم، القاهرة",
+    "area": "Mokattam",
+    "phones": ["01150183333", "02-28444051"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%85%d8%a7%d9%8a-%d9%81%d9%8a%d8%aa-%d9%83%d9%84%d9%8a%d9%86%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%af-%d8%b3%d9%87%d9%8a%d9%84%d8%a9-%d8%b3%d8%b9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.to-all.com/veterinary-elmokattam/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["My Vet Clinic - Dr. Sohila Saeed", "My Vet Clinic"],
+      "arabic": ["عيادة ماي فيت كلينك البيطرية د. سهيلة سعيد"]
+    }
+  },
+  {
+    "key": "happy-paws-mokattam",
+    "nameEnglish": "Happy Paws Egypt",
+    "nameArabic": "عيادة هابي بوز ايجيبت البيطرية",
+    "addressEnglish": "Plot 5637, Fourth District, Middle Plateau, Mokattam, Cairo",
+    "addressArabic": "القطعة 5637 - الهضبة الوسطى - الحي الرابع - المقطم - القاهرة",
+    "area": "Mokattam",
+    "phones": ["01222778721", "01061519262"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%87%d8%a7%d8%a8%d9%8a-%d8%a8%d9%88%d8%b2-%d8%a7%d9%8a%d8%ac%d9%8a%d8%a8%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Happy Paws Egypt"],
+      "arabic": ["عيادة هابي بوز ايجيبت البيطرية"]
+    }
+  },
+  {
+    "key": "pet-land-shoubra",
+    "nameEnglish": "Pet Land Vet Clinic",
+    "nameArabic": "بت لاند",
+    "addressEnglish": "14 Sheikh El Shabrawi Street off Gesr El Bahr, Khalafawy, Shoubra, Cairo",
+    "addressArabic": "14 شارع الشيخ الشبراوي، متفرع من شارع جسر البحر، الخلفاوي، شبرا، القاهرة",
+    "area": "الخلفاوي",
+    "phones": ["01009058116"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a8%d8%aa-%d9%84%d8%a7%d9%86%d8%af-%d8%b4%d8%a8%d8%b1%d8%a7/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Land Vet Clinic"],
+      "arabic": ["بت لاند – شبرا", "بت لاند"]
+    }
+  },
+  {
+    "key": "ahmed-abdel-latif-shoubra",
+    "nameEnglish": "Dr. Ahmed Abdel Latif Veterinary Clinic",
+    "nameArabic": "عيادة د. أحمد عبداللطيف البيطرية",
+    "addressEnglish": "10 Bassiouni Street off El Teraa El Boulakia, near Ramses Language School, Shoubra, Cairo",
+    "addressArabic": "10 شارع بسيوني، متفرع من شارع الترعة البولاقية، شبرا، القاهرة. بالقرب من مدرسة رمسيس الخاصة للغات",
+    "area": "Shoubra",
+    "phones": ["01001224761", "01159219052"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af-%d8%a3%d8%ad%d9%85%d8%af-%d8%b9%d8%a8%d8%af%d8%a7%d9%84%d9%84%d8%b7%d9%8a%d9%81-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Ahmed Abdel Latif Veterinary Clinic"],
+      "arabic": ["عيادة د. أحمد عبداللطيف البيطرية"]
+    }
+  },
+  {
+    "key": "milad-boulos-shoubra",
+    "nameEnglish": "Dr. Milad Boulos Barsoum Veterinary Clinic",
+    "nameArabic": "عيادة د. ميلاد بولس برسوم البيطرية",
+    "addressEnglish": "32 Ahmed El Bakly Street, Shoubra, Cairo",
+    "addressArabic": "32 شارع أحمد البقلي، شبرا، القاهرة",
+    "area": "Shoubra",
+    "phones": ["01227403618"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af-%d9%85%d9%8a%d9%84%d8%a7%d8%af-%d8%a8%d9%88%d9%84%d8%b3-%d8%a8%d8%b1%d8%b3%d9%88%d9%85-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Milad Boulos Barsoum Veterinary Clinic"],
+      "arabic": ["عيادة د. ميلاد بولس برسوم البيطرية"]
+    }
+  },
+  {
+    "key": "el-aqsa-helwan",
+    "nameEnglish": "Al Aqsa Veterinary Clinic",
+    "nameArabic": "عيادة الأقصى للخدمات البيطرية",
+    "addressEnglish": "Nour El Islam Mosque Street, Ezbet El Walda, Helwan, Cairo",
+    "addressArabic": "شارع مسجد نور الإسلام، عزبة الوالدة، حلوان، القاهرة",
+    "area": "Ezbet El Walda",
+    "phones": ["01223402162", "01119290811"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a3%d9%82%d8%b5%d9%89-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Al Aqsa Veterinary Clinic"],
+      "arabic": ["عيادة الأقصى للخدمات البيطرية"]
+    }
+  },
+  {
+    "key": "sherif-kamel-helwan",
+    "nameEnglish": "Dr. Sherif Kamel Veterinary Clinic",
+    "nameArabic": "عيادة دكتور شريف كامل البيطرية",
+    "addressEnglish": "Ragheb Street at El Maraghy Street, Helwan, Cairo",
+    "addressArabic": "شارع راغب، تقاطع شارع المراغي، حلوان، القاهرة",
+    "area": "Helwan",
+    "phones": ["01224143318", "01148894917"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af%d9%83%d8%aa%d9%88%d8%b1-%d8%b4%d8%b1%d9%8a%d9%81-%d9%83%d8%a7%d9%85%d9%84-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Sherif Kamel Veterinary Clinic"],
+      "arabic": ["عيادة دكتور شريف كامل البيطرية"]
+    }
+  },
+  {
+    "key": "marwa-roshdy-helwan",
+    "nameEnglish": "Dr. Marwa Roshdy Veterinary Clinic",
+    "nameArabic": "عيادة دكتورة مروة رشدي البيطرية",
+    "addressEnglish": "1 El Hoda Towers, Latif Street off Rail Street, Helwan, Cairo",
+    "addressArabic": "1 أبراج الهدى، شارع لطيف، متفرع من شارع رايل، حلوان، القاهرة",
+    "area": "Helwan",
+    "phones": ["01129727787"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af%d9%83%d8%aa%d9%88%d8%b1%d8%a9-%d9%85%d8%b1%d9%88%d8%a9-%d8%b1%d8%b4%d8%af%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Marwa Roshdy Veterinary Clinic"],
+      "arabic": ["عيادة دكتورة مروة رشدي البيطرية"]
+    }
+  },
+  {
+    "key": "youssef-kamal-helwan",
+    "nameEnglish": "Dr. Youssef Kamal Veterinary Clinic",
+    "nameArabic": "عيادة د. يوسف كمال البيطرية",
+    "addressEnglish": "28A Ragheb Street, Helwan, Cairo",
+    "addressArabic": "28 أ، شارع راغب، حلوان، القاهرة",
+    "area": "Helwan",
+    "phones": ["01001749380"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af-%d9%8a%d9%88%d8%b3%d9%81-%d9%83%d9%85%d8%a7%d9%84-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Youssef Kamal Veterinary Clinic"],
+      "arabic": ["عيادة د. يوسف كمال البيطرية"]
+    }
+  },
+  {
+    "key": "royal-helwan-mohamed-sayed",
+    "nameEnglish": "Royal Clinic (Mohamed Sayed Ahmed Street)",
+    "nameArabic": "عيادة رويال كلينك للخدمات البيطرية (شارع محمد سيد أحمد)",
+    "addressEnglish": "Mohamed Sayed Ahmed Street, Helwan, Cairo",
+    "addressArabic": "شارع محمد سيد احمد، حلوان، القاهرة",
+    "area": "Helwan",
+    "phones": ["01224640214", "01111429881"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b1%d9%88%d9%8a%d8%a7%d9%84-%d9%83%d9%84%d9%8a%d9%86%d9%83-%d9%84%d9%84%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Royal Clinic"],
+      "arabic": ["عيادة رويال كلينك للخدمات البيطرية"]
+    }
+  },
+  {
+    "key": "royal-helwan-khosro",
+    "nameEnglish": "Royal Veterinary Clinic (Khosro Street)",
+    "nameArabic": "عيادة رويال البيطرية (شارع خسرو)",
+    "addressEnglish": "Khosro Street, Helwan, Cairo",
+    "addressArabic": "شارع خسرو، حلوان، القاهرة",
+    "area": "Helwan",
+    "phones": ["01111429882"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b1%d9%88%d9%8a%d8%a7%d9%84-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%ad%d9%84%d9%88%d8%a7%d9%86/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Royal Veterinary Clinic"],
+      "arabic": ["عيادة رويال البيطرية – حلوان", "عيادة رويال البيطرية"]
+    }
+  },
+  {
+    "key": "pet-life-nasr-city",
+    "nameEnglish": "Pet Life Center",
+    "nameArabic": "مركز بيت لايف للحيوانات الأليفة",
+    "addressEnglish": "El Batrawi Street, beside Hardees and Genena Mall, Abbas El Akkad, Nasr City, Cairo",
+    "addressArabic": "البطراوي -بجوار هارديز وجنينة مول-عباس العقاد - مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01277506326", "01006043510"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b1%d9%83%d8%b2-%d8%a8%d9%8a%d8%aa-%d9%84%d8%a7%d9%8a%d9%81-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81%d8%a9-%d9%85%d8%af%d9%8a%d9%86%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Life Center", "Pet Life Animal Center"],
+      "arabic": ["مركز بيت لايف للحيوانات الأليفة, مدينة نصر", "مركز بيت لايف للحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "pet-point-nasr-city",
+    "nameEnglish": "Pet Point Vet Clinic",
+    "nameArabic": "عيادة بيت بوينت البيطرية",
+    "addressEnglish": "14 Abdel Hakim El Refai Street off Abbas El Akkad Extension, parallel to Mostafa El Nahas, Nasr City, Cairo",
+    "addressArabic": "14 شارع عبدالحكيم الرفاعي، متفرع من امتداد عباس العقاد وموازي لشارع مصطفى النحاس، مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01016229132"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa-%d8%a8%d9%88%d9%8a%d9%86%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Point Vet Clinic"],
+      "arabic": ["عيادة بيت بوينت البيطرية"]
+    }
+  },
+  {
+    "key": "house-vet-zahraa-nasr",
+    "nameEnglish": "House Veterinary Clinic",
+    "nameArabic": "عيادة هاوس البيطرية",
+    "addressEnglish": "2086 Apartment 4B, beside Tolip Armed Forces Club, behind Sports Yard 2, Zahraa Nasr City, Cairo",
+    "addressArabic": "2086 شقة (4ب) بجوار نادي توليب القوات المسلحة، خلف الساحة الرياضية 2، زهراء مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01061575644", "01282623064"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%87%d8%a7%d9%88%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%b2%d9%87%d8%b1%d8%a7%d8%a1-%d9%85%d8%af%d9%8a%d9%86%d8%a9-%d9%86%d8%b5%d8%b1/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["House Veterinary Clinic"],
+      "arabic": ["عيادة هاوس البيطرية, زهراء مدينة نصر", "عيادة هاوس البيطرية"]
+    }
+  },
+  {
+    "key": "beloved-pets-new-nozha",
+    "nameEnglish": "Beloved Pets Clinic",
+    "nameArabic": "عيادة بيلوفد بيتس البيطرية",
+    "addressEnglish": "3 Street 27, New Nozha 2, behind Bavaria Fire Fighting Systems, Gesr El Suez, Cairo",
+    "addressArabic": "3 شارع ال 27 - النزهة الجديدة (2) خلف شركة بافاريا لنظم مكافحة الحريق - جسر السويس - القاهرة",
+    "area": "New Nozha",
+    "phones": ["01016851713"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-beloved-pets-clinic-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Beloved Pets Clinic"],
+      "arabic": ["عيادة بيلوفد بيتس البيطرية"]
+    }
+  },
+  {
+    "key": "mina-shoubra",
+    "nameEnglish": "Mina Veterinary Clinic",
+    "nameArabic": "عيادة مينا البيطرية",
+    "addressEnglish": "15 El Montazah 5 Street, Sainte Therese, Shoubra, behind Pizza King, Cairo",
+    "addressArabic": "15 ش المتنزه 5، شبرا، سانت تريز خلف بيتزا كينج، القاهرة",
+    "area": "Shoubra",
+    "phones": ["01000258300"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%85%d9%8a%d9%86%d8%a7-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Mina Veterinary Clinic"],
+      "arabic": ["عيادة مينا البيطرية"]
+    }
+  },
+  {
+    "key": "pets-home-nozha",
+    "nameEnglish": "Pets Home Clinic",
+    "nameArabic": "عيادة بيتس هوم البيطرية",
+    "addressEnglish": "30 Sheikh Ahmed Ibrahim Street, Nozha, Heliopolis, Cairo",
+    "addressArabic": "30 شارع الشيخ أحمد إبراهيم، النزهة، مصر الجديدة، القاهرة",
+    "area": "Nozha",
+    "phones": ["01019612354", "01004930901"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d9%87%d9%88%d9%85-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Home Clinic", "Pets Home Clinic (Nozha)"],
+      "arabic": ["عيادة بيتس هوم البيطرية", "عيادة بيتس هوم البيطرية (النزهة)"]
+    },
+    "branchQualifier": "Nozha"
+  },
+  {
+    "key": "yoo-pets-rod-farag",
+    "nameEnglish": "Yoo Pets Clinic",
+    "nameArabic": "عيادة يوو للحيوانات الأليفة",
+    "addressEnglish": "2 Abdel Nabi Hassanein Street, beside Makarem El Akhlaq Medical Center, Geziret Badran, Rod El Farag, Shoubra, Cairo",
+    "addressArabic": "2ش عبدالنبى حسنين بجوار مركز مكارم الاخلاق الطبى - جزيرة بدران - روض الفرج، شبرا، القاهرة",
+    "area": "Rod El Farag",
+    "phones": ["01099524277", "01207240853"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%8a%d9%88%d9%88-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81%d8%a9%d8%8c-%d8%af%d9%83%d8%aa%d9%88%d8%b1%d8%a9-%d8%a2/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Yoo Pets Clinic"],
+      "arabic": ["عيادة يوو للحيوانات الأليفة، دكتورة آية كمال", "عيادة يوو للحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "vet-care-yakout-ain-shams",
+    "nameEnglish": "Vet Care Clinic - Dr. Yakout El Deeb",
+    "nameArabic": "عيادة فيت كير البيطرية د. ياقوت الديب",
+    "addressEnglish": "41 Ali El Abbadi Street off El Mashrou Street, El Wensh Station, West Ain Shams, Cairo",
+    "addressArabic": "القاهرة - عين شمس الغربية - شارع علي العبادي رقم 41  من شارع المشروع - محطة الونش / بجوار مخبز الجوهرة الأفرنجي - الدور الأرضي (محطة مترو عين شمس)",
+    "area": "Ain Shams",
+    "phones": ["01008284181", "01120040369", "0226522353"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%81%d9%8a%d8%aa-%d9%83%d9%8a%d8%b1-%d9%83%d9%84%d9%8a%d9%86%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%af%d9%83%d8%aa%d9%88%d8%b1-%d9%8a%d8%a7%d9%82%d9%88%d8%aa-%d8%a7%d9%84%d8%af/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Vet Care Clinic - Dr. Yakout El Deeb"],
+      "arabic": ["فيت كير كلينك البيطرية, دكتور ياقوت الديب", "عيادة فيت كير البيطرية د. ياقوت الديب"]
+    }
+  },
+  {
+    "key": "my-pet-nasr-city",
+    "nameEnglish": "My Pet Vet Clinic (Nasr City)",
+    "nameArabic": "عيادة ماي بيت البيطرية (مدينة نصر)",
+    "addressEnglish": "17 Saudi Company Buildings, El Nozha Street, Nasr City, Cairo",
+    "addressArabic": "17 عمارات الشركة السعودية، شارع النزهة، مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["0224536801", "0224199110", "01147437056"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%85%d8%a7%d9%8a-%d8%a8%d9%8a%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%a8%d9%8a%d8%b1%d8%ac%d9%8a-%d9%8a%d8%b9%d9%82%d9%88%d8%a8-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d9%85%d8%b5%d8%b1-%d8%a7%d9%84%d8%ac%d8%af%d9%8a%d8%af%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://healtheg.com/Ar/Item/21278/د-برج-يعقوب",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Reviewed phone collision: HealthEg identifiesDrBergeYakoub at17SaudiBuildingsNozha with BOTH0224199110/0224536801; merged old44ElAhram practitioner listing as an alias ofMyPet, not an unrelated clinic. District naming differsHeliopolis/NasrCity across directories; location remains area-level from fullMyPet source address.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["My Pet Vet Clinic", "Dr. Birgi Yacoub Veterinary Clinic", "Dr. Berge Yakoub.", "Dr. Berge Yakoub"],
+      "arabic": [
+        "عيادة ماي بيت البيطرية",
+        "عيادة دكتور بيرجي يعقوب البيطرية",
+        "عيادة دكتور بيرجي يعقوب البيطرية, مصر الجديدة",
+        "د برج يعقوب"
+      ]
+    },
+    "branchQualifier": "Nasr City"
+  },
+  {
+    "key": "the-ark-garden-city",
+    "nameEnglish": "The Ark Animal Care",
+    "nameArabic": "عيادة آرك البيطرية",
+    "addressEnglish": "Aisha El Taymouria Street, Garden City, Cairo",
+    "addressArabic": "شارع عائشة التيمورية، جاردن سيتي، القاهرة",
+    "area": "Garden City",
+    "phones": ["0227963389"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a2%d8%b1%d9%83-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-ark-animal-care/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%b7%d8%a8-%d9%88%d8%ac%d8%b1%d8%a7%d8%ad%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%8c-%d9%88%d8%b3%d8%b7-%d8%a7%d9%84%d8%a8%d9%84%d8%af/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Reviewed additional EVC identity: مستشفى طب وجراحة الحيوان، وسط البلد.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["The Ark Animal Care", "The Ark animal care"],
+      "arabic": ["عيادة آرك البيطرية", "مستشفى طب وجراحة الحيوان، وسط البلد"]
+    }
+  },
+  {
+    "key": "pets-plus-manial",
+    "nameEnglish": "Pets Plus Vet",
+    "nameArabic": "عيادة بيتس بلس البيطرية",
+    "addressEnglish": "Dr. Mahmoud Kamel Street, Manial, Cairo",
+    "addressArabic": "شارع دكتور محمود كامل، المنيل، القاهرة",
+    "area": "Manial",
+    "phones": ["01144490790"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a8%d9%84%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9%d8%8c-%d8%a7%d9%84%d9%85%d9%86%d9%8a%d9%84-pets-plus-vet/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Plus Vet"],
+      "arabic": ["عيادة بيتس بلس البيطرية، المنيل", "عيادة بيتس بلس البيطرية"]
+    }
+  },
+  {
+    "key": "consulting-vet-dar-salam",
+    "nameEnglish": "Veterinary Consulting Office",
+    "nameArabic": "المكتب الاستشاري البيطري",
+    "addressEnglish": "Saleh Abdin Street, Dar El Salam, Cairo",
+    "addressArabic": "شارع صالح عابدين، دار السلام، القاهرة",
+    "area": "Dar El Salam",
+    "phones": ["01003395181"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d9%83%d8%aa%d8%a8-%d8%a7%d9%84%d8%a7%d8%b3%d8%aa%d8%b4%d8%a7%d8%b1%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%8c-%d8%af%d8%a7%d8%b1-%d8%a7%d9%84%d8%b3%d9%84%d8%a7%d9%85/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Veterinary Consulting Office"],
+      "arabic": ["المكتب الاستشاري البيطري، دار السلام", "المكتب الاستشاري البيطري"]
+    }
+  },
+  {
+    "key": "awad-mohamed-ismail",
+    "nameEnglish": "Dr. Awad Mohamed Ismail Veterinary Clinic",
+    "nameArabic": "عيادة د. عوض محمد إسماعيل البيطرية",
+    "addressEnglish": "127 El Gesr El Barrani Street, El Matbaa Square, Dar El Salam, Cairo",
+    "addressArabic": "127 شارع الجسر البراني، ميدان المطبعة، دار السلام، القاهرة",
+    "area": "Dar El Salam",
+    "phones": ["01225350766", "01116532795"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af-%d8%b9%d9%88%d8%b6-%d9%85%d8%ad%d9%85%d8%af-%d8%a5%d8%b3%d9%85%d8%a7%d8%b9%d9%8a%d9%84-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Awad Mohamed Ismail Veterinary Clinic"],
+      "arabic": ["عيادة د. عوض محمد إسماعيل البيطرية"]
+    }
+  },
+  {
+    "key": "vet-clinic-sayeda-zeinab",
+    "nameEnglish": "Veterinary Clinic",
+    "nameArabic": "العيادة البيطرية",
+    "addressEnglish": "Yehia Ibn Zeid Street, Sayeda Zeinab, Cairo",
+    "addressArabic": "شارع يحيى بن زيد، السيدة زينب، القاهرة",
+    "area": "Sayeda Zeinab",
+    "phones": ["01224796138"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9%d8%8c-%d8%a7%d9%84%d8%b3%d9%8a%d8%af%d8%a9-%d8%b2%d9%8a%d9%86%d8%a8/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Veterinary Clinic"],
+      "arabic": ["العيادة البيطرية، السيدة زينب", "العيادة البيطرية"]
+    }
+  },
+  {
+    "key": "four-pets-mokattam",
+    "nameEnglish": "4pets Vet Clinic",
+    "nameArabic": "عيادة فوربيتس البيطرية",
+    "addressEnglish": "8450 Street 103 off Karim Banouna off Road 9, Mokattam, Cairo",
+    "addressArabic": "رقم8450 شارع 103 متفرع من كريم بنونه متفرع من شارع 9، المقطم، القاهرة",
+    "area": "Mokattam",
+    "phones": ["01286998859"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%81%d9%88%d8%b1%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-4pets-vet-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.to-all.com/veterinary-elmokattam/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Contact ownership review 2026-11-12: 4pets Mokattam and Veto Pets Dokki share a number with no ownership/branch proof. Withheld from both; 4pets retains its other published number.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["4pets Vet Clinic", "pets Vet Clinic"],
+      "arabic": ["عيادة فوربيتس البيطرية 4", "عيادة فوربيتس البيطرية"]
+    }
+  },
+  {
+    "key": "petsology-zaher",
+    "nameEnglish": "Petsology Veterinary Clinic",
+    "nameArabic": "عيادة بتسولوجي البيطرية",
+    "addressEnglish": "28 Gamil Street off El Zaher Street, beside Kheir Zaman, near College de la Salle, Cairo",
+    "addressArabic": "28 ش جميل متفرع من ش الظاهر بجوار خير زمان - قريبة من مدرسة College de la salle، القاهرة",
+    "area": "Zaher",
+    "phones": ["01552709985"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-petsology/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Petsology Veterinary Clinic", "Petsology"],
+      "arabic": ["عيادة بتسولوجي البيطرية"]
+    }
+  },
+  {
+    "key": "london-pet-nasr-city",
+    "nameEnglish": "London Pet Clinic",
+    "nameArabic": "عيادة لندن البيطرية",
+    "addressEnglish": "17 Mohamed El Maqrifi Street, parallel to Hassan El Maamoun, behind El Taysir Medical Center, Nasr City, Cairo",
+    "addressArabic": "17 شارع محمد المقريف، موازي لشارع حسن المأمون (شارع النادي الأهلي)، خلف مركز التيسير الطبي، مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01119990328", "01119990327"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-london-pet-clinic-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["London Pet Clinic", "London pet clinic"],
+      "arabic": ["عيادة لندن البيطرية"]
+    }
+  },
+  {
+    "key": "egy-pets-new-nozha",
+    "nameEnglish": "Egy Pets Clinic",
+    "nameArabic": "العيادة البيطرية الحديثة إيجي بتس",
+    "addressEnglish": "41 Historian Mohamed Refaat Street, New Nozha, beside El Fargany Supermarket, Cairo",
+    "addressArabic": "41 شارع المؤرخ محمد رفعت، النزهة الجديدة، بجوار سوبر ماركت الفرجاني، القاهرة",
+    "area": "New Nozha",
+    "phones": ["01201385160"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%ad%d8%af%d9%8a%d8%ab%d8%a9-egy-pets-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Egy Pets Clinic"],
+      "arabic": ["العيادة البيطرية الحديثة", "العيادة البيطرية الحديثة إيجي بتس"]
+    }
+  },
+  {
+    "key": "pet-zinia-nasr-city",
+    "nameEnglish": "Pet Zinia Veterinary Center",
+    "nameArabic": "مركز بت زينيا البيطري",
+    "addressEnglish": "Khedr El Touni Street, beside Stadium Metro Station, Nasr City, Cairo",
+    "addressArabic": "مدينة نصر، شارع خضر التوني، بجوار محطة مترو الاستاد. القاهرة",
+    "area": "Nasr City",
+    "phones": ["01022035445"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81%d8%a9-pet-zinia-veterinary-center/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Zinia Veterinary Center"],
+      "arabic": ["عيادة الحيوانات الأليفة", "مركز بت زينيا البيطري"]
+    }
+  },
+  {
+    "key": "abbas-akkad-vet",
+    "nameEnglish": "Abbas El Akkad Veterinary Clinic",
+    "nameArabic": "عيادة عباس العقاد البيطرية لطب وجراحة الحيوانات الأليفة",
+    "addressEnglish": "Abbas El Akkad Street, Nasr City, Cairo",
+    "addressArabic": "عباس العقاد، مدينة نصر، القاهرة",
+    "area": "Nasr City",
+    "phones": [],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b9%d8%a8%d8%a7%d8%b3-%d8%a7%d9%84%d8%b9%d9%82%d8%a7%d8%af-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d9%84%d8%b7%d8%a8-%d9%88%d8%ac%d8%b1%d8%a7%d8%ad%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Contact ownership review 2026-11-12: Conflicting single-directory clinic brands in Nasr City and Haram; a third Fifth Settlement lead was already held. Ownership unresolved; withheld from both.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Abbas El Akkad Veterinary Clinic"],
+      "arabic": ["عيادة عباس العقاد البيطرية لطب وجراحة الحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "canadian-shoubra",
+    "nameEnglish": "Canadian Veterinary Clinic",
+    "nameArabic": "العيادة الكندية البيطرية",
+    "addressEnglish": "110 Gesr El Bahr Street, Shoubra Misr, Cairo",
+    "addressArabic": "١١٠ شارع جسر البحر، شبرا مصر، القاهره",
+    "area": "Shoubra",
+    "phones": ["01284333587"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%83%d9%86%d8%af%d9%8a%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%b4%d8%a8%d8%b1%d8%a7-%d9%85%d8%b5%d8%b1/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Canadian Veterinary Clinic"],
+      "arabic": ["العيادة الكندية البيطرية شبرا مصر", "العيادة الكندية البيطرية"]
+    }
+  },
+  {
+    "key": "pawsitive-maadi",
+    "nameEnglish": "Pawsitive Veterinary Clinic",
+    "nameArabic": "عيادة بوسيتيڨـ البيطرية",
+    "addressEnglish": "Building 6, Street 77, Maadi, Cairo",
+    "addressArabic": "شارع 77، عمارة رقم 6، المعادي، القاهرة",
+    "area": "Maadi",
+    "phones": ["01067190492", "01017346255"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%88%d8%b3%d9%8a%d8%aa%d9%8a%da%a8%d9%80-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-pawsitive-veterinary-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pawsitive Veterinary Clinic"],
+      "arabic": ["عيادة بوسيتيڨـ البيطرية"]
+    },
+    "citySourceCode": "EG0104"
+  },
+  {
+    "key": "pet-secrets-nasr-city",
+    "nameEnglish": "Pet Secrets Clinic",
+    "nameArabic": "عيادة بيت سيكريتس البيطرية",
+    "addressEnglish": "54 Gamal El Din Doweidar Street, beside Al Alsun Language School, Nasr City, Cairo",
+    "addressArabic": "54 شارع جمال الدين دويدار، مدينة نصر، بجوار مدرسة الألسن للغات، القاهرة",
+    "area": "Nasr City",
+    "phones": ["01094040077"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa-%d8%b3%d9%8a%d9%83%d8%b1%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-pet-secrets-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Secrets Clinic"],
+      "arabic": ["عيادة بيت سيكريتس البيطرية"]
+    }
+  },
+  {
+    "key": "zoofix-maadi",
+    "nameEnglish": "Zoofix Veterinary Center",
+    "nameArabic": "عيادة زوو فيكس البيطرية",
+    "addressEnglish": "Building 7053, Seventh Neighbourhood, Lower Merag, Maadi, Cairo",
+    "addressArabic": "عمارة 7053، المجاورة السابعة، المعراج السفلي، المعادي، القاهرة",
+    "area": "Maadi",
+    "phones": ["01012937293"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%b2%d9%88%d9%88-%d9%81%d9%8a%d9%83%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-zoofix-veterinary-center/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Zoofix Veterinary Center"],
+      "arabic": ["عيادة زوو فيكس البيطرية"]
+    },
+    "citySourceCode": "EG0104"
+  },
+  {
+    "key": "perfect-hadayek-zeitoun",
+    "nameEnglish": "Perfect Veterinary Clinic (Hadayek El Zeitoun)",
+    "nameArabic": "عيادة بيرفكت البيطرية (حدائق الزيتون)",
+    "addressEnglish": "47B Sinan Street, first floor, second left lane from Gesr El Suez, Hadayek El Zeitoun, Cairo",
+    "addressArabic": "47ب شارع سنان، الدور الأول، ثاني حارة شمال من دخلة جسر السويس، حدائق الزيتون، القاهرة",
+    "area": "Zeitoun",
+    "phones": ["01129299965"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%b1%d9%81%d9%83%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9%d8%8c-%d8%ad%d8%af%d8%a7%d8%a6%d9%82-%d8%a7%d9%84%d8%b2%d9%8a%d8%aa%d9%88%d9%86/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.voofla.com/EG/Cairo/1914879055404824/عيادة-بيرفكت-البيطرية",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-27",
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity. Dated27/09/2026 clinic post and14/09/2026 branch contacts resolve branch identities.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Perfect Veterinary Clinic"],
+      "arabic": ["عيادة بيرفكت البيطرية، حدائق الزيتون", "عيادة بيرفكت البيطرية"]
+    },
+    "chainKey": "perfect",
+    "branchQualifier": "Hadayek El Zeitoun"
+  },
+  {
+    "key": "el-rahma-manial",
+    "nameEnglish": "El Rahma Pet Clinic",
+    "nameArabic": "عيادة الرحمة للحيوانات الأليفة",
+    "addressEnglish": "18 Ibrahim Baher Zaghloul Street, East Al Manial, Old Cairo, opposite Manial Health Office, Cairo",
+    "addressArabic": "18 شارع ابراهيم باهر زغلول، المنيل شرق، مصر القديمة، القاهرة",
+    "area": "East Al Manial",
+    "phones": ["01098931993", "01097112486"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%b1%d8%ad%d9%85%d8%a9-%d9%84%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a3%d9%84%d9%8a%d9%81%d8%a9-%d8%a8%d8%a7%d9%84%d9%85%d9%86/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["El Rahma Pet Clinic"],
+      "arabic": ["عيادة الرحمة للحيوانات الأليفة بالمنيل", "عيادة الرحمة للحيوانات الأليفة"]
+    }
+  },
+  {
+    "key": "flamingo-malek-saleh",
+    "nameEnglish": "Flamingo Veterinary Clinic",
+    "nameArabic": "عيادة فلامنجو البيطرية",
+    "addressEnglish": "40 El Malek El Saleh, Cairo",
+    "addressArabic": "٤٠، الملك الصالح، محافظة القاهرة",
+    "area": "الملك الصالح",
+    "phones": ["01006654455"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%81%d9%84%d8%a7%d9%85%d9%86%d8%ac%d9%88-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Flamingo Veterinary Clinic"],
+      "arabic": ["عيادة فلامنجو البيطرية"]
+    }
+  },
+  {
+    "key": "nile-pet-manial",
+    "nameEnglish": "Nile Pet Clinic",
+    "nameArabic": "عيادة النيل البيطرية",
+    "addressEnglish": "7 Mahmoud Ramzi Nazim Street, Manial, Cairo",
+    "addressArabic": "7 شارع محمود رمزي نظيم، المنيل، القاهرة",
+    "area": "Manial",
+    "phones": ["01501015755"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%86%d9%8a%d9%84-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a8%d8%a7%d9%84%d9%85%d9%86%d9%8a%d9%84-npc/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Nile Pet Clinic", "NPC"],
+      "arabic": ["عيادة النيل البيطرية بالمنيل", "عيادة النيل البيطرية"]
+    }
+  },
+  {
+    "key": "pets-home-dalia-shoubra",
+    "nameEnglish": "Pets Home - Dr. Dalia Mikhail",
+    "nameArabic": "عيادة بيتس هوم د. داليا ميخائيل",
+    "addressEnglish": "17 Qashqoush Street off Gesr El Bahr, Sainte Therese, Shoubra, Cairo",
+    "addressArabic": "17 شارع قشقوش من شارع جسر البحر، سانت تريز، شبرا، القاهرة",
+    "area": "Shoubra",
+    "phones": ["01203666427"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa%d8%b3-%d9%87%d9%88%d9%85-%d8%af-%d8%af%d8%a7%d9%84%d9%8a%d8%a7-%d9%85%d9%8a%d8%ae%d8%a7%d8%a6%d9%8a%d9%84/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Home - Dr. Dalia Mikhail", "Pets Home - Dr. Dalia Mikhail (Shoubra)"],
+      "arabic": [
+        "عيادة بيتس هوم – د. داليا ميخائيل",
+        "عيادة بيتس هوم د. داليا ميخائيل",
+        "عيادة بيتس هوم د. داليا ميخائيل (شبرا)"
+      ]
+    },
+    "branchQualifier": "Shoubra"
+  },
+  {
+    "key": "pets-choice-maadi",
+    "nameEnglish": "Pet's Choice Maadi",
+    "nameArabic": "المستشفى البيطري بتس تشويس المعادي",
+    "addressEnglish": "91 Misr Helwan El Zerai, Maadi Corniche, Cairo",
+    "addressArabic": "91 مصر حلوان الزراعي، كورنيش المعادي، القاهرة",
+    "area": "Maadi",
+    "phones": ["01507304535"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-pets-choice-maadi-%d8%a8%d8%a7%d9%84%d9%85%d8%b9%d8%a7%d8%af%d9%8a/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Contact ownership review 2026-11-12: Similar Pets Choice brand in Hadayek Al Ahram and Maadi, but no explicit simultaneous branch publication reviewed. Shared number withheld pending ownership confirmation; both retain separate sourced numbers.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet's Choice Maadi", "Pet&", "Pet’s Choice Maadi"],
+      "arabic": ["المستشفى البيطري  بالمعادي", "المستشفى البيطري بتس تشويس المعادي"]
+    },
+    "citySourceCode": "EG0104"
+  },
+  {
+    "key": "prime-vet-shorouk",
+    "nameEnglish": "Prime Vet Clinic",
+    "nameArabic": "عيادة برايم فيت البيطرية",
+    "addressEnglish": "Administrative Entrance 2, Panorama El Shorouk Mall, first floor above Metro Market, Shorouk, Cairo",
+    "addressArabic": "الشروق، مدخل ٢ اداري، بانورما الشروق مول الدور الأول، أعلي مترو ماركت، القاهرة",
+    "area": "Shorouk",
+    "phones": ["01001053180"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d8%b1%d8%a7%d9%8a%d9%85-%d9%81%d9%8a%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9%d8%8c-%d8%a7%d9%84%d8%b4%d8%b1%d9%88%d9%82-prime-vet-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2021-01-10",
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Dated directory customer rating(s) used for lastSeenActive; access date is not activity. Contact ownership review 2026-11-12: Current Pawia own site explicitly publishes this as the Faisal branch contact. Withheld from the conflicting Prime Shorouk directory entry, which retains its other number.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Prime Vet Clinic", "Prime Vet"],
+      "arabic": ["عيادة برايم فيت البيطرية، الشروق", "عيادة برايم فيت البيطرية"]
+    }
+  },
+  {
+    "key": "pet-palace-new-cairo",
+    "nameEnglish": "Pet Palace",
+    "nameArabic": "بيت بالاس",
+    "addressEnglish": "Mercato Mall, Fifth District, beside Qobaa Mosque, Fifth Settlement, New Cairo",
+    "addressArabic": "الحى الخامس - التجمع الخامس - مركاتو مول - بجوار مسجد قباء - القاهره الجديده - القاهره - مصر",
+    "area": "Fifth Settlement",
+    "phones": ["02-26160567", "01126778882", "01126778883"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a8%d9%8a%d8%aa-%d8%a8%d8%a7%d9%84%d8%a7%d8%b3-pet-palace/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Palace"],
+      "arabic": ["بيت بالاس"]
+    }
+  },
+  {
+    "key": "pet-republic-new-cairo",
+    "nameEnglish": "Pet Republic",
+    "nameArabic": "بت ريبابلك",
+    "addressEnglish": "British School Street, New Cairo, Cairo",
+    "addressArabic": "شارع المدرسه البريطانيه - القاهره الجديده - القاهره - مصر",
+    "area": "New Cairo",
+    "phones": ["01286999900"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a8%d8%aa-%d8%b1%d9%8a%d8%a8%d8%a7-%d8%a8%d9%84%d9%83-%d9%85%d8%b3%d8%aa%d9%84%d8%b2%d9%85%d8%a7%d8%aa-%d9%88%d8%ae%d8%af%d9%85%d8%a7%d8%aa-%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Republic"],
+      "arabic": ["بت ريبابلك – مستلزمات وخدمات حيوانات اليفة", "بت ريبابلك"]
+    }
+  },
+  {
+    "key": "biovi-badr",
+    "nameEnglish": "Biovi Veterinary Clinic",
+    "nameArabic": "عيادة بيوفي البيطرية",
+    "addressEnglish": "Behind the water tank, opposite El Shabrawi, Badr City, Cairo",
+    "addressArabic": "مدينة بدر، القاهرة - خلف الخزان امام الشبراوي",
+    "area": "Badr",
+    "phones": ["01007779952"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d9%88%d9%81%d9%8a-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d9%85%d8%af%d9%8a%d9%86%d8%a9-%d8%a8%d8%af%d8%b1/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Biovi Veterinary Clinic"],
+      "arabic": ["عيادة بيوفي البيطرية – مدينة بدر", "عيادة بيوفي البيطرية"]
+    }
+  },
+  {
+    "key": "international-center-fifth",
+    "nameEnglish": "International Veterinary Center",
+    "nameArabic": "المركز البيطري الدولي",
+    "addressEnglish": "Street 55 off Street 77, Second District, Fifth Zone, Fifth Settlement, New Cairo",
+    "addressArabic": "شارع 55 متفرع من شارع 77 - الحي الثاني - المنطقة الخامسة، التجمع الخامس، القاهرة الجديد",
+    "area": "Fifth Settlement",
+    "phones": ["01110220111", "01159077500", "0225648119"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d8%a7%d9%84%d8%af%d9%88%d9%84%d9%8a-%d8%a7%d9%84%d8%aa%d8%ac%d9%85%d8%b9-%d8%a7%d9%84%d8%ae%d8%a7%d9%85%d8%b3/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["International Veterinary Center"],
+      "arabic": ["المركز البيطري الدولي, التجمع الخامس", "المركز البيطري الدولي"]
+    }
+  },
+  {
+    "key": "modern-vet-fifth",
+    "nameEnglish": "Modern Veterinary Clinic (Fifth Settlement)",
+    "nameArabic": "العيادة البيطرية الحديثة (التجمع الخامس)",
+    "addressEnglish": "Plot 18, Fifth Settlement Services Zone, Fifth Settlement, New Cairo",
+    "addressArabic": "القطعة 18 - منطقة خدمات التجمع الخامس - التجمع الخامس - القاهرة الجديدة",
+    "area": "Fifth Settlement",
+    "phones": ["01223042229", "01111141122"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%ad%d8%af%d9%8a%d8%ab%d8%a9-%d8%a7%d9%84%d8%aa%d8%ac%d9%85%d8%b9-%d8%a7%d9%84%d8%ae%d8%a7/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Modern Veterinary Clinic"],
+      "arabic": ["العيادة البيطرية الحديثة – التجمع الخامس", "العيادة البيطرية الحديثة"]
+    },
+    "chainKey": "modern",
+    "branchQualifier": "Fifth Settlement"
+  },
+  {
+    "key": "pets-club-banafseg",
+    "nameEnglish": "Pets Club",
+    "nameArabic": "بيتس كلوب",
+    "addressEnglish": "Banafseg 3, New Cairo, Cairo",
+    "addressArabic": "حي البنفسج 3، البنفسج، القاهرة الجديدة",
+    "area": "Al Banafseg 3",
+    "phones": ["01125950513", "01111911936", "01005153370"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a8%d9%8a%d8%aa%d8%b3-%d9%83%d9%84%d9%88%d8%a8-%d9%86%d8%a7%d8%af%d9%8a-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pets Club"],
+      "arabic": ["بيتس كلوب – نادي الحيوانات البيطرية", "بيتس كلوب"]
+    }
+  },
+  {
+    "key": "islam-fifth",
+    "nameEnglish": "Islam Veterinary Clinic (Fifth Settlement)",
+    "nameArabic": "عيادة إسلام البيطرية (التجمع الخامس)",
+    "addressEnglish": "Dana Mall 1, first floor, opposite El Maayergy Bookshop, behind Cairo Court, Fifth Settlement, New Cairo",
+    "addressArabic": "مول دانا 1، الدور الأول، أمام مكتبة المعايرجي، خلف محكمة القاهرة، التجمع الخامس",
+    "area": "Fifth Settlement",
+    "phones": ["01007366654"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a5%d8%b3%d9%84%d8%a7%d9%85-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Islam Veterinary Clinic"],
+      "arabic": ["عيادة إسلام البيطرية"]
+    },
+    "chainKey": "islam",
+    "branchQualifier": "Fifth Settlement"
+  },
+  {
+    "key": "golf-vet-fifth",
+    "nameEnglish": "Golf Veterinary Clinic (Fifth Settlement)",
+    "nameArabic": "عيادة الجولف البيطرية (التجمع الخامس)",
+    "addressEnglish": "Street 36 off Road 90, First District, Fourth Zone, inside Medical Mall, Fifth Settlement, New Cairo",
+    "addressArabic": "شارع 36 متفرع من شارع التسعين، الحي الأول، المنطقة الرابعة، التجمع الخامس، داخل المول الطبي، القاهرة",
+    "area": "Fifth Settlement",
+    "phones": ["01277904798"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%ac%d9%88%d9%84%d9%81-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%aa%d8%ac%d9%85%d8%b9-%d8%a7%d9%84%d8%ae%d8%a7%d9%85%d8%b3/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Golf Veterinary Clinic"],
+      "arabic": ["عيادة الجولف البيطرية – التجمع الخامس", "عيادة الجولف البيطرية"]
+    },
+    "chainKey": "golf-vet",
+    "branchQualifier": "Fifth Settlement"
+  },
+  {
+    "key": "pet-zone-fifth",
+    "nameEnglish": "Pet Zone Veterinary Clinic (Fifth Settlement)",
+    "nameArabic": "عيادة بيت زون البيطرية (التجمع الخامس)",
+    "addressEnglish": "259 Fifth Zone, Fifth District, behind Akhenaten Language Schools, Fifth Settlement, New Cairo",
+    "addressArabic": "259 المنطقة الخامسة، الحي الخامس، التجمع الخامس، القاهرة الجديدة خلف مدارس اخناتون المصرية للغات",
+    "area": "Fifth Settlement",
+    "phones": ["02-25606590", "01111123633"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa-%d8%b2%d9%88%d9%86-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%aa%d8%ac%d9%85%d8%b9-%d8%a7%d9%84%d8%ae%d8%a7%d9%85%d8%b3/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Zone Veterinary Clinic"],
+      "arabic": ["عيادة بيت زون البيطرية – التجمع الخامس", "عيادة بيت زون البيطرية"]
+    },
+    "chainKey": "pet-zone",
+    "branchQualifier": "Fifth Settlement"
+  },
+  {
+    "key": "pet-friends-fifth",
+    "nameEnglish": "Pet Friends",
+    "nameArabic": "عيادة بيت فريندز البيطرية",
+    "addressEnglish": "Plot 18, Fifth Settlement Services Zone, Dana Mall, first floor, Shop 13, Fifth Settlement, New Cairo",
+    "addressArabic": "القطعة 18 - منطقة خدمات التجمع الخامس، التجمع الخامس، القاهرة الجديدة، داخل مول دانا - الدول الأول - محل رقم 13",
+    "area": "Fifth Settlement",
+    "phones": ["01127087327", "01003584044"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a8%d9%8a%d8%aa-%d9%81%d8%b1%d9%8a%d9%86%d8%af%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Pet Friends"],
+      "arabic": ["عيادة بيت فريندز البيطرية"]
+    }
+  },
+  {
+    "key": "grand-vet-fifth",
+    "nameEnglish": "Grand Vet Clinic (Fifth Settlement)",
+    "nameArabic": "عيادة جراند فيت البيطرية (التجمع الخامس)",
+    "addressEnglish": "Villa 28, Street 4, opposite Seoudi Market, Fifth Settlement, New Cairo",
+    "addressArabic": "فيلا 28 - شارع 4 - التجمع الخامس - القاهرة الجديدة - أمام سعودي ماركت",
+    "area": "Fifth Settlement",
+    "phones": ["01097773681"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%ac%d8%b1%d8%a7%d9%86%d8%af-%d9%81%d9%8a%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Grand Vet Clinic", "Grand vet clinic"],
+      "arabic": ["عيادة جراند فيت البيطرية"]
+    },
+    "chainKey": "grand-vet",
+    "branchQualifier": "Fifth Settlement"
+  },
+  {
+    "key": "cats-dogs-fifth",
+    "nameEnglish": "Cats and Dogs Vet Clinic (Fifth Settlement)",
+    "nameArabic": "عيادة كاتس أند دوجز البيطرية (التجمع الخامس)",
+    "addressEnglish": "Twins Mall, ground floor, Fifth Settlement, New Cairo",
+    "addressArabic": "التجمع الخامس، القاهرة الجديدة، داخل توينز مول - الدور الأرضي",
+    "area": "Fifth Settlement",
+    "phones": ["01113662433", "01001636787"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%83%d8%a7%d8%aa%d8%b3-%d8%a3%d9%86%d8%af-%d8%af%d9%88%d8%ac%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%aa%d8%ac%d9%85%d8%b9-%d8%a7%d9%84%d8%ae%d8%a7%d9%85%d8%b3/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Cats and Dogs Vet Clinic"],
+      "arabic": ["كاتس أند دوجز البيطرية – التجمع الخامس", "عيادة كاتس أند دوجز البيطرية"]
+    },
+    "chainKey": "cats-dogs",
+    "branchQualifier": "Fifth Settlement"
+  },
+  {
+    "key": "care-vet-yasmeen",
+    "nameEnglish": "Care Vet Egypt",
+    "nameArabic": "كير فيت ايجبت",
+    "addressEnglish": "Villa15, Yasmeen Districts, New Cairo, Cairo",
+    "addressArabic": "فيلا 15 - حي الياسمين - القاهرة الجديدة",
+    "area": "أحياء الياسمين",
+    "phones": ["01001623485", "01001623482"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%83%d9%8a%d8%b1-%d9%81%d9%8a%d8%aa-%d8%a7%d9%8a%d8%ac%d8%a8%d8%aa-care-vet-egypt/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Care Vet Egypt"],
+      "arabic": ["كير فيت ايجبت"]
+    }
+  },
+  {
+    "key": "k9-vet-fifth",
+    "nameEnglish": "K9 Vet Clinic and Spa",
+    "nameArabic": "عيادة وسبا كيه ناين البيطرية",
+    "addressEnglish": "Second Zone, First District, beside Cook Door and Emarat Misr Station, Fifth Settlement, New Cairo",
+    "addressArabic": "التجمع الخامس، المنطقة الثانية، الحي الأول، بجوار كوك دور وبنزينة الإمارات مصر - القاهرة الجديدة",
+    "area": "Fifth Settlement",
+    "phones": ["01065590601"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%88%d8%b3%d8%a8%d8%a7-k9-vet-clinic-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["K9 Vet Clinic and Spa", "k9 vet clinic"],
+      "arabic": ["عيادة وسبا  البيطرية", "عيادة وسبا كيه ناين البيطرية"]
+    }
+  },
+  {
+    "key": "noha-emam-third",
+    "nameEnglish": "Dr. Noha Emam Veterinary Clinic",
+    "nameArabic": "عيادة دكتورة نهى إمام البيطرية",
+    "addressEnglish": "Mega Mall, third floor, Third Settlement, New Cairo",
+    "addressArabic": "الدور الثالث - ميجا مول - التجمع الثالث - القاهره الجديده",
+    "area": "Third Settlement",
+    "phones": ["01200084708", "01200084707"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%af%d9%83%d8%aa%d9%88%d8%b1%d8%a9-%d9%86%d9%87%d9%89-%d8%a5%d9%85%d8%a7%d9%85-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Dr. Noha Emam Veterinary Clinic"],
+      "arabic": ["عيادة دكتورة نهى إمام البيطرية"]
+    }
+  },
+  {
+    "key": "egypuppy-fifth",
+    "nameEnglish": "Egypt Puppy Clinic",
+    "nameArabic": "عيادة ايجيبت البيطرية",
+    "addressEnglish": "Dana Mall 1, opposite El Maayergy Bookshop Mall, Fifth Settlement, New Cairo",
+    "addressArabic": "دانا مول 1، أمام مول مكتبات المعايرجي، التجمع الخامس. القاهرة الجديدة",
+    "area": "Fifth Settlement",
+    "phones": ["01060010204"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%8a%d8%ac%d9%8a%d8%a8%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-egypt-puppy/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Egypt Puppy Clinic", "Egypt Puppy clinic", "Egypt Puppy"],
+      "arabic": ["عيادة ايجيبت البيطرية"]
+    }
+  },
+  {
+    "key": "alpha-vet-rehab",
+    "nameEnglish": "Alpha Vet Clinic",
+    "nameArabic": "عيادة الفا فيت البيطرية",
+    "addressEnglish": "Behind Medical Center, opposite Restaurant Area, Rehab, New Cairo",
+    "addressArabic": "الرحاب، خلف المركز الطبي، أمام منطقة المطاعم، القاهرة الجديدة",
+    "area": "Rehab",
+    "phones": ["0226072594", "01110626207"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d9%81%d8%a7-%d9%81%d9%8a%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%b1%d8%ad%d8%a7%d8%a8/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Alpha Vet Clinic"],
+      "arabic": ["عيادة الفا فيت البيطرية, الرحاب, القاهرة الجديدة", "عيادة الفا فيت البيطرية"]
+    }
+  },
+  {
+    "key": "cats-dogs-shorouk",
+    "nameEnglish": "Cats and Dogs Vet Clinic (Shorouk)",
+    "nameArabic": "عيادة كاتس اند دوجز البيطرية (الشروق)",
+    "addressEnglish": "Apartment 18, Panorama Mall, Shorouk, Cairo",
+    "addressArabic": "شقة 18 - مول بانوراما، الشروق، القاهرة الجديدة",
+    "area": "Shorouk",
+    "phones": ["01001352828"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%83%d8%a7%d8%aa%d8%b3-%d8%a7%d9%86%d8%af-%d8%af%d9%88%d8%ac%d8%b2-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%b4%d8%b1%d9%88%d9%82/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Cats and Dogs Vet Clinic", "Cats & Dogs Vet Clinic"],
+      "arabic": ["عيادة كاتس اند دوجز البيطرية, الشروق", "عيادة كاتس اند دوجز البيطرية"]
+    },
+    "chainKey": "cats-dogs",
+    "branchQualifier": "Shorouk"
+  },
+  {
+    "key": "vets-for-pets-first",
+    "nameEnglish": "Vets for Pets",
+    "nameArabic": "عيادة فيتس فور بيتس البيطرية",
+    "addressEnglish": "8 Dr. Ahmed Okasha Street, Banafseg 8, First Settlement, Cairo",
+    "addressArabic": "8 شارع دكتور احمد عكاشة، البنفسج 8، التجمع الأول، القاهرة",
+    "area": "Al Banafseg 8",
+    "phones": ["01025242342"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%81%d9%8a%d8%aa%d8%b3-%d9%81%d9%88%d8%b1-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Vets for Pets", "Vets 4 Pets"],
+      "arabic": ["عيادة فيتس فور بيتس البيطرية"]
+    }
+  },
+  {
+    "key": "international-hospital-katameya",
+    "nameEnglish": "International Veterinary Hospital and Pet Motel",
+    "nameArabic": "المستشفى البيطري الدولي",
+    "addressEnglish": "Ring Road, 2 km after Carrefour Maadi City Center, Katameya, Cairo",
+    "addressArabic": "الطريق الدائري - 2 كم بعد كارفور المعادي سيتي سنتر، القاهرة",
+    "area": "Katameya",
+    "phones": ["0229826829", "01118211181"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a-%d8%a7%d9%84%d8%af%d9%88%d9%84%d9%8a-%d8%a7%d9%84%d9%82%d8%b7%d8%a7%d9%85%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%89-%d8%a7%d9%84%d8%af%d9%88%d9%84%d9%89/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites. Reviewed additional EVC identity: المستشفى البيطرى الدولى.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["International Veterinary Hospital and Pet Motel"],
+      "arabic": [
+        "المستشفى البيطري الدولي, القطامية, التجمع الخامس",
+        "المستشفى البيطري الدولي",
+        "المستشفى البيطرى الدولى"
+      ]
+    }
+  },
+  {
+    "key": "ozone-narges",
+    "nameEnglish": "Ozone Pets Clinic",
+    "nameArabic": "عيادة أوزون البيطرية",
+    "addressEnglish": "Family Mall, first floor above Beano, Narges Villas Services beside Al Mostafa Mosque and Virgin Mary Church, Fifth Settlement, New Cairo",
+    "addressArabic": "فاميلى مول الدور الاول أعلى بينى - خدمات النرجس فيلات - بجوار مسجد المصطفى و كنيسة العذراء -  التجمع الخامس - القاهرة الجديدة",
+    "area": "Fifth Settlement",
+    "phones": ["01004614648", "01277129696"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a3%d9%88%d8%b2%d9%88%d9%86-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-ozone-pets-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Ozone Pets Clinic"],
+      "arabic": ["عيادة أوزون البيطرية"]
+    }
+  },
+  {
+    "key": "grand-vet-rehab",
+    "nameEnglish": "Grand Vet Center (Rehab)",
+    "nameArabic": "مركز جراند فيت البيطري (الرحاب)",
+    "addressEnglish": "B26 Eastern Market, above Seif Pet Store, Rehab 2, New Cairo",
+    "addressArabic": "الرحاب٢، السوق الشرقي، B26 اعلى سيف بيت ستور، القاهرة الجديدة",
+    "area": "Rehab",
+    "phones": ["01097773688", "01097773681"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%ac%d8%b1%d8%a7%d9%86%d8%af-%d9%81%d9%8a%d8%aa-%d8%b3%d9%86%d8%aa%d8%b1-%d8%a7%d9%84%d8%b1%d8%ad%d8%a7%d8%a8-grand-vet-center/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Grand Vet Center"],
+      "arabic": ["جراند فيت سنتر ، الرحاب", "مركز جراند فيت البيطري"]
+    },
+    "chainKey": "grand-vet",
+    "branchQualifier": "Rehab"
+  },
+  {
+    "key": "aleef-shorouk",
+    "nameEnglish": "Aleef Veterinary Clinic",
+    "nameArabic": "عيادة أليف البيطرية",
+    "addressEnglish": "74 Foundation Stone Buildings, beside New Shorouk Vehicle Licensing Unit, Shorouk, Cairo",
+    "addressArabic": "74 عمارات حجر الأساس مدينة الشروق بجوار وحدة تراخيص الشروق الجديدة، القاهرة الجديدة",
+    "area": "Shorouk",
+    "phones": ["01229391567", "0226063339"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a3%d9%84%d9%8a%d9%81-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Aleef Veterinary Clinic"],
+      "arabic": ["عيادة أليف البيطرية"]
+    }
+  },
+  {
+    "key": "animalia-fifth",
+    "nameEnglish": "Animalia Veterinary Center (Fifth Settlement)",
+    "nameArabic": "مركز انيماليا البيطري (التجمع الخامس)",
+    "addressEnglish": "Mall 66, ground floor, Fifth Settlement Services Center, Fifth Settlement, New Cairo",
+    "addressArabic": "مركز خدمات التجمع الخامس، القاهرة الجديدة، داخل مول 66، الدور الأرضي",
+    "area": "Fifth Settlement",
+    "phones": ["01211385133", "01005148118"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%86%d9%8a%d9%85%d8%a7%d9%84%d9%8a%d8%a7-%d8%a7%d9%84%d8%aa%d8%ac%d9%85%d8%b9-%d8%a7%d9%84%d8%ae%d8%a7%d9%85%d8%b3/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Animalia Veterinary Center"],
+      "arabic": ["مركز الطب البيطري – انيماليا التجمع الخامس", "مركز انيماليا البيطري"]
+    },
+    "chainKey": "animalia",
+    "branchQualifier": "Fifth Settlement"
+  },
+  {
+    "key": "shery-vet-third",
+    "nameEnglish": "Shery Vet Surgery",
+    "nameArabic": "شيري فيت لجراحة الحيوان",
+    "addressEnglish": "Third Locality, beside German University, Third Settlement, New Cairo",
+    "addressArabic": "القاهرة الجديدة، المحلية الثالثة، بجوار الجامعة الألمانية، التجمع الثالث",
+    "area": "Third Settlement",
+    "phones": ["01003655549", "01286508621"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b4%d9%8a%d8%b1%d9%89-%d9%81%d9%8a%d8%aa-%d9%84%d8%ac%d8%b1%d8%a7%d8%ad%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86-shery-vet-surgery/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Entry explicitly states استقبال حالات الطوارىء24ساعه.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Shery Vet Surgery", "Shery Vet. Surgery"],
+      "arabic": ["شيرى فيت لجراحة الحيوان", "شيري فيت لجراحة الحيوان"]
+    }
+  },
+  {
+    "key": "animal-care-shorouk",
+    "nameEnglish": "Animal Care Clinic",
+    "nameArabic": "عيادة أنيمال كير",
+    "addressEnglish": "El Gawhara Mall, opposite British University Dentistry Faculty, Shorouk, Cairo",
+    "addressArabic": "الجوهرة مول، أمام طب أسنان الجامعة البريطانية، الشروق، القاهرة الجديدة",
+    "area": "Shorouk",
+    "phones": ["01221721324", "01016255023"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a3%d9%86%d9%8a%d9%85%d8%a7%d9%84-%d9%83%d9%8a%d8%b1%d8%8c-%d8%a7%d9%84%d8%b4%d8%b1%d9%88%d9%82-animal-care-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Animal Care Clinic"],
+      "arabic": ["عيادة أنيمال كير، الشروق", "عيادة أنيمال كير"]
+    }
+  },
+  {
+    "key": "mega-vet-shorouk",
+    "nameEnglish": "Mega Veterinary and Pet Care Clinic",
+    "nameArabic": "عيادة ميجا البيطرية",
+    "addressEnglish": "Doctors Tower, beside El Borg Laboratory and Parnassus Bookshop, Shorouk, Cairo",
+    "addressArabic": "مدينة الشروق، برج الأطباء، بجوار معمل البرج و مكتبة برناسوس. القاهرة الجديدة",
+    "area": "Shorouk",
+    "phones": ["01003216224", "01111280000"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d9%85%d9%8a%d8%ac%d8%a7-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-mega-veterinary-pet-care-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": [
+        "Mega Veterinary and Pet Care Clinic",
+        "Mega Veterinary &",
+        "pet care clinic",
+        "Mega Veterinary & pet care clinic"
+      ],
+      "arabic": ["عيادة ميجا البيطرية"]
+    }
+  },
+  {
+    "key": "vital-pets-first",
+    "nameEnglish": "Vital Pets Veterinary Hospital",
+    "nameArabic": "مستشفى فيتال بيتس",
+    "addressEnglish": "Dr. Ahmed Okasha Street, First Settlement, Cairo",
+    "addressArabic": "شاع دكتور أحمد عكاشة، التجمع الأول، القاهرة",
+    "area": "First Settlement",
+    "phones": ["01120776123"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d9%81%d9%8a%d8%aa%d8%a7%d9%84-%d8%a8%d9%8a%d8%aa%d8%b3-%d8%a7%d9%84%d8%aa%d8%ac%d9%85%d8%b9-%d8%a7%d9%84%d8%a3%d9%88%d9%84-vital-pets-new-cairo/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Vital Pets New Cairo", "Vital Pets New Cairo (First Settlement)"],
+      "arabic": ["مستشفى فيتال بيتس، التجمع الأول", "مستشفى فيتال بيتس", "مستشفى فيتال بيتس (التجمع الأول)"]
+    },
+    "chainKey": "vital-pets",
+    "branchQualifier": "First Settlement"
+  },
+  {
+    "key": "hello-pets-fifth",
+    "nameEnglish": "Hello Pets Clinic",
+    "nameArabic": "عيادة هالو بتس البيطرية",
+    "addressEnglish": "Platinum Mall, Third District, Sixth Zone off Street 46, Fifth Settlement, New Cairo",
+    "addressArabic": "مول بلاتنيوم التجمع الخامس الحى الثالث منطقة 6  متفرع من شارع 46  مول بلاتنيوم، القاهرة",
+    "area": "Fifth Settlement",
+    "phones": ["01017045380"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-hello-pets-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Hello Pets Clinic", "Hello Pets"],
+      "arabic": ["عيادة هالو بتس البيطرية"]
+    }
+  },
+  {
+    "key": "shorouk-vet",
+    "nameEnglish": "Shorouk Veterinary Clinic",
+    "nameArabic": "عيادة الشروق البيطرية",
+    "addressEnglish": "El Gohary Mall, beside Police Station, third floor, Clinic 64, Shorouk, Cairo",
+    "addressArabic": "مول الجوهري، بجوار قسم الشرطة، الدور الثالث، عيادة رقم 64، الشروق، القاهرة",
+    "area": "Shorouk",
+    "phones": ["01000161458"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%a7%d9%84%d8%b4%d8%b1%d9%88%d9%82-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Shorouk Veterinary Clinic"],
+      "arabic": ["عيادة الشروق البيطرية"]
+    }
+  },
+  {
+    "key": "town-vet-shorouk",
+    "nameEnglish": "Town Vet Clinic",
+    "nameArabic": "عيادة تاون فيت البيطرية",
+    "addressEnglish": "El Gawhara Mall, opposite British University, Shorouk, Cairo",
+    "addressArabic": "مول الجوهرة، امام الجامعة البيرطانية، مدينة الشروق، القاهرة",
+    "area": "Shorouk",
+    "phones": ["01550000135"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-%d8%aa%d8%a7%d9%88%d9%86-%d9%81%d9%8a%d8%aa-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-town-vet-clinic/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "All seven daily opening entries explicitly say24ساعة.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually reviewed EVC entry describes a physical pet clinic with veterinary examination/treatment and publishes its address and phone. Directory template websites are not clinic websites.",
+    "nameEnglishOrigin": "transliterated",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["Town Vet Clinic", "Town vet clinic"],
+      "arabic": ["عيادة تاون فيت البيطرية"]
+    }
+  }
+]

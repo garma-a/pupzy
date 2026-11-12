@@ -1,0 +1,41 @@
+{
+  "query": "مسجد سيدي بشر, سيدي بشر, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%85%D8%B3%D8%AC%D8%AF+%D8%B3%D9%8A%D8%AF%D9%8A+%D8%A8%D8%B4%D8%B1%2C+%D8%B3%D9%8A%D8%AF%D9%8A+%D8%A8%D8%B4%D8%B1%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:54:52.421Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 49071138,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 3880430918,
+      "lat": "31.2615998",
+      "lon": "29.9852374",
+      "category": "amenity",
+      "type": "place_of_worship",
+      "place_rank": 30,
+      "importance": 0.37441119788714866,
+      "addresstype": "amenity",
+      "name": "مسجد سيدي بشر",
+      "display_name": "مسجد سيدي بشر, شارع مسجد سيدى بشر, المندرة, الإسكندرية, 21221, مصر",
+      "address": {
+        "amenity": "مسجد سيدي بشر",
+        "road": "شارع مسجد سيدى بشر",
+        "suburb": "المندرة",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21221",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": [
+        "31.2615498",
+        "31.2616498",
+        "29.9851874",
+        "29.9852874"
+      ]
+    }
+  ]
+}

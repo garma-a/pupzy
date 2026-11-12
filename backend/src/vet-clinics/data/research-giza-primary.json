@@ -1,0 +1,611 @@
+[
+  {
+    "key": "british-animal-hospital-mohandessin",
+    "nameEnglish": "British Animal Hospital (Mohandessin)",
+    "nameArabic": "المستشفى البريطاني للحيوانات (المهندسين)",
+    "addressEnglish": "74 Gamaat El Dowal El Arabia Street, before Kaddoura, Mohandessin, Giza",
+    "addressArabic": "74 شارع جامعة الدول العربية قبل قدورة، المهندسين، الجيزة",
+    "area": "Mohandessin",
+    "phones": ["01006344025", "01023330252", "0237626883"],
+    "sources": [
+      {
+        "url": "https://www.britishanimalhospital.com/branches/mohandessin-branch",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%b9%d9%8a%d8%a7%d8%af%d8%a9-vet-for-pet-veterinary-clinic-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%b7%d8%a8-%d9%88%d8%ac%d8%b1%d8%a7%d8%ad%d9%87-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.al-makan.com/veterinary/مستشفى-الحيوان-البريطاني-المهندسين/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.britishanimalhospital.com",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2025-05-04",
+    "classificationEvidence": "Clinic own website describes physical pet veterinary care and publishes this address and contact. Footer copyright date is not dated activity evidence. Individual AlMakan listing last updated2025-05-04 corroborates brand/contact. Own branch page wins address conflicts (Dokki45Ansar vs84Mossadak in directory).",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["British Animal Hospital", "Vet For Pet  Veterinary Clinic"],
+      "arabic": ["مستشفى طب وجراحه الحيوان"]
+    },
+    "chainKey": "british-animal-hospital",
+    "branchQualifier": "Mohandessin"
+  },
+  {
+    "key": "british-animal-hospital-dokki",
+    "nameEnglish": "British Animal Hospital (Dokki)",
+    "nameArabic": "المستشفى البريطاني للحيوانات (الدقي)",
+    "addressEnglish": "45 Al Ansar Street, off Mohie El Din Abo El Ezz, Dokki, Giza",
+    "addressArabic": "45 شارع الأنصار متفرع من محي الدين أبو العز، الدقي، الجيزة",
+    "area": "Dokki",
+    "phones": ["01026441196", "01005796478"],
+    "sources": [
+      {
+        "url": "https://www.britishanimalhospital.com/branches/dokki-branch",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a7%d9%84%d8%a8%d8%b1%d9%8a%d8%b7%d8%a7%d9%86%d9%8a%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%af%d9%82%d9%8a-british/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.al-makan.com/veterinary/مستشفى-الحيوان-البريطاني-الدقى/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.britishanimalhospital.com",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2025-05-04",
+    "classificationEvidence": "Clinic own website describes physical pet veterinary care and publishes this address and contact. Footer copyright date is not dated activity evidence. Individual AlMakan listing last updated2025-05-04 corroborates brand/contact. Own branch page wins address conflicts (Dokki45Ansar vs84Mossadak in directory).",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["British Animal Hospital"],
+      "arabic": ["المستشفى البريطانية البيطرية، الدقي"]
+    },
+    "chainKey": "british-animal-hospital",
+    "branchQualifier": "Dokki"
+  },
+  {
+    "key": "british-animal-hospital-beverly-hills",
+    "nameEnglish": "British Animal Hospital (Beverly Hills)",
+    "nameArabic": "المستشفى البريطاني للحيوانات (بيفرلي هيلز)",
+    "addressEnglish": "4 Mix Mall, Beverly Hills, Sheikh Zayed, Giza",
+    "addressArabic": "مول فور ميكس، بيفرلي هيلز، الشيخ زايد، الجيزة",
+    "area": "Beverly Hills",
+    "phones": ["01101010474", "01277778947"],
+    "sources": [
+      {
+        "url": "https://www.britishanimalhospital.com/branches/beverly-hills-branch",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.al-makan.com/veterinary/مستشفى-الحيوان-البريطاني-بيفرلي-هيلز/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.britishanimalhospital.com",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Independent AlMakan individual listing explicitly gives all-day opening all7days and lastupdate2025-05-04.",
+    "lastSeenActive": "2025-05-04",
+    "classificationEvidence": "Clinic own website describes physical pet veterinary care and publishes this address and contact. Footer copyright date is not dated activity evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["British Animal Hospital - Beverly Hills", "British Animal Hospital"],
+      "arabic": ["مستشفى الحيوان البريطاني - بيفرلي هيلز"]
+    },
+    "chainKey": "british-animal-hospital",
+    "branchQualifier": "Beverly Hills"
+  },
+  {
+    "key": "british-animal-hospital-palm-hills",
+    "nameEnglish": "British Animal Hospital (Palm Hills)",
+    "nameArabic": "المستشفى البريطاني للحيوانات (بالم هيلز)",
+    "addressEnglish": "Palladium Mall, Palm Hills, 6th of October, Giza",
+    "addressArabic": "مول بلاديوم، بالم هيلز، السادس من أكتوبر، الجيزة",
+    "area": "Palm Hills",
+    "phones": ["01032224922", "01007000443"],
+    "sources": [
+      {
+        "url": "https://www.britishanimalhospital.com/branches/palm-hills-branch",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.al-makan.com/veterinary/مستشفى-الحيوان-البريطاني-بالم-هيلز/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.britishanimalhospital.com",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2025-05-04",
+    "classificationEvidence": "Clinic own website describes physical pet veterinary care and publishes this address and contact. Footer copyright date is not dated activity evidence. Individual AlMakan listing last updated2025-05-04 corroborates brand/contact. Own branch page wins address conflicts (Dokki45Ansar vs84Mossadak in directory).",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["British Animal Hospital"],
+      "arabic": []
+    },
+    "chainKey": "british-animal-hospital",
+    "branchQualifier": "Palm Hills"
+  },
+  {
+    "key": "british-animal-hospital-sheikh-zayed",
+    "nameEnglish": "British Animal Hospital (Sheikh Zayed)",
+    "nameArabic": "المستشفى البريطاني للحيوانات (الشيخ زايد)",
+    "addressEnglish": "Business Point, beside Rosto, Rawdet Zayed, Sheikh Zayed, Giza",
+    "addressArabic": "بزنس بوينت بجوار روستو، روضة زايد، الشيخ زايد، الجيزة",
+    "area": "Rawdet Zayed",
+    "phones": ["01224708702", "01023330245"],
+    "sources": [
+      {
+        "url": "https://www.britishanimalhospital.com/branches/sheikh-zayed-branch",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d8%a7%d9%84%d8%a8%d8%b1%d9%8a%d8%b7%d8%a7%d9%86%d9%8a%d8%a9-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-%d8%a7%d9%84%d8%b4%d9%8a%d8%ae-%d8%b2/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.al-makan.com/veterinary/مستشفى-الحيوان-البريطاني-الشيخ-زايد/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.britishanimalhospital.com",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "AlMakan individual branch entry explicitly states open24hours every day, lastupdate2025-05-04.",
+    "lastSeenActive": "2025-05-04",
+    "classificationEvidence": "Clinic own website describes physical pet veterinary care and publishes this address and contact. Footer copyright date is not dated activity evidence. Individual AlMakan listing last updated2025-05-04 corroborates brand/contact. Own branch page wins address conflicts (Dokki45Ansar vs84Mossadak in directory).",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["British Animal Hospital"],
+      "arabic": ["المستشفى البريطانية البيطرية- الشيخ زايد"]
+    },
+    "chainKey": "british-animal-hospital",
+    "branchQualifier": "Sheikh Zayed"
+  },
+  {
+    "key": "british-animal-hospital-eden-plaza",
+    "nameEnglish": "British Animal Hospital (Eden Plaza)",
+    "nameArabic": "المستشفى البريطاني للحيوانات (إيدن بلازا)",
+    "addressEnglish": "Eden Plaza Mall, El Gezira Street, Sheikh Zayed, Giza",
+    "addressArabic": "إيدن بلازا مول، شارع الجزيرة، الشيخ زايد، الجيزة",
+    "area": "Sheikh Zayed",
+    "phones": ["01226457321"],
+    "sources": [
+      {
+        "url": "https://www.britishanimalhospital.com/branches/eden-plaza-branch",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.findglocal.com/EG/6-October-City/1621401828123768/British-Animal-Hospital-Sheikh-Zayed-2",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.britishanimalhospital.com",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2025-11-02",
+    "classificationEvidence": "Clinic own website describes physical pet veterinary care and publishes this address and contact. Footer copyright date is not dated activity evidence. Public clinicpostmirror has dated activity 2025-11-02 matchingclinicphone/address.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["British Animal Hospital", "British Animal Hospital Sheikh Zayed 2"],
+      "arabic": []
+    },
+    "chainKey": "british-animal-hospital",
+    "branchQualifier": "Eden Plaza"
+  },
+  {
+    "key": "american-veterinary-center-zayed",
+    "nameEnglish": "American Veterinary Center",
+    "nameArabic": "المركز الأمريكي البيطري",
+    "addressEnglish": "District 13, 1st Neighbourhood, Street 12, Sheikh Zayed, Giza",
+    "addressArabic": "الحي الثالث عشر، المجاورة الأولى، شارع 12، الشيخ زايد، الجيزة",
+    "area": "13th District",
+    "phones": ["01110802802", "01210813869", "0238956948"],
+    "sources": [
+      {
+        "url": "https://www.americanvetcenter.com/about-6",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d8%a7%d9%84%d9%85%d8%b1%d9%83%d8%b2-%d8%a7%d9%84%d8%a3%d9%85%d8%b1%d9%8a%d9%83%d9%8a-%d9%84%d8%ac%d8%b1%d8%a7%d8%ad%d8%a9-%d8%a7%d9%84%d8%ad%d9%8a%d9%88%d8%a7%d9%86/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.americanvetcenter.com/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Own homepage explicitly states OPENING HOURS 24 HOURS 7 DAYS, with emergency care 10pm–10am.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Clinic own website describes physical pet veterinary care and publishes this address and contact. Footer copyright date is not dated activity evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["American Vet Center"],
+      "arabic": ["المركز الامريكي لطب وجراحة الحيوان", "المركز الأمريكي لطب وجراحة الحيوان, الشيخ زايد"]
+    }
+  },
+  {
+    "key": "catdog-hospital-october",
+    "nameEnglish": "CatDog Hospital",
+    "nameArabic": "مستشفى كات دوج",
+    "addressEnglish": "163 10th Street, 5th District, 6th of October, Giza",
+    "addressArabic": "163 شارع 10، الحي الخامس، السادس من أكتوبر، الجيزة",
+    "area": "5th District",
+    "phones": ["01032288638"],
+    "sources": [
+      {
+        "url": "https://www.catdoghospital6oct.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.evcindex.com/item/%d9%85%d8%b3%d8%aa%d8%b4%d9%81%d9%89-%d9%83%d8%a7%d8%aa-%d8%af%d9%88%d8%ac-%d8%a7%d9%84%d8%a8%d9%8a%d8%b7%d8%b1%d9%8a%d8%a9-6-%d8%a3%d9%83%d8%aa%d9%88%d8%a8%d8%b1-%d8%b7%d9%88%d8%a7%d8%b1%d8%a6/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.catdoghospital6oct.com/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Own homepage explicitly states EMERGENCY CARE SERVICES Available 24/7.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Clinic own website describes physical pet veterinary care and publishes this address and contact. Footer copyright date is not dated activity evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["CATDOG Hospital"],
+      "arabic": ["مستشفى كات دوج البيطرية", "مستشفى كات دوج البيطرية ، 6 أكتوبر ، طوارئ 24 ساعة"]
+    }
+  },
+  {
+    "key": "elite-veterinary-center-october",
+    "nameEnglish": "Elite Veterinary Center",
+    "nameArabic": "مركز إيليت البيطري",
+    "addressEnglish": "Al Yasmine Mall, above Metro Supermarket, First Tourist Al Nassayem Road, Motamayez October, 6th of October, Giza",
+    "addressArabic": "مول الياسمين فوق مترو ماركت، طريق النسايم السياحية الأولى، الحي المتميز، السادس من أكتوبر، الجيزة",
+    "area": "Motamayez October",
+    "phones": ["01099010555"],
+    "sources": [
+      {
+        "url": "https://www.elitevetcenter.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.elitevetcenter.com/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Own website publishes clinic address, phone and dog/cat vaccination and spay/neuter services. 24/7 emergency LINE alone is not proof of a 24h physical clinic.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": [],
+      "arabic": []
+    }
+  },
+  {
+    "key": "vet-help-mohandessin",
+    "nameEnglish": "Vet Help Clinic",
+    "nameArabic": "عيادة فيت هيلب",
+    "addressEnglish": "45 Ahmed Orabi Street, beside TotalEnergies Gas Station, Mohandiseen, Giza",
+    "addressArabic": "45 شارع أحمد عرابي بجوار محطة توتال إنرجيز، المهندسين، الجيزة",
+    "area": "Mohandessin",
+    "phones": ["01126291657"],
+    "sources": [
+      {
+        "url": "https://www.vethelpclinic.com/en",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.vethelpclinic.com/",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Clinic own website describes physical pet veterinary care and publishes this address and contact. Footer copyright date is not dated activity evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Vet Help"],
+      "arabic": ["عيادة فيت هيلب البيطرية"]
+    }
+  },
+  {
+    "key": "pawia-imbaba",
+    "nameEnglish": "Pawia Veterinary Care (Imbaba)",
+    "nameArabic": "باويا للرعاية البيطرية (إمبابة)",
+    "addressEnglish": "38 Street 20, Madinet El Tahrir, Imbaba, Giza",
+    "addressArabic": "38 شارع 20، مدينة التحرير، إمبابة، الجيزة",
+    "area": "Imbaba",
+    "phones": ["01068000550", "0233126612"],
+    "sources": [
+      {
+        "url": "https://pawiaegy.durable.site/ar",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://pawiaegy.durable.site/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Own website explicitly states طوارئ 24 ساعة and استقبال الحالات الطارئة على مدار اليوم; Imbaba hours 24/7.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Clinic own website describes physical pet veterinary care and publishes this address and contact. Footer copyright date is not dated activity evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Pawia"],
+      "arabic": ["باويا للرعاية البيطرية", "عيادات باويا للرعاية البيطرية"]
+    },
+    "chainKey": "pawia",
+    "branchQualifier": "Imbaba"
+  },
+  {
+    "key": "pawia-faisal",
+    "nameEnglish": "Pawia Veterinary Care (Faisal)",
+    "nameArabic": "باويا للرعاية البيطرية (فيصل)",
+    "addressEnglish": "384 El Malek Faisal Street, beside Ragheef Shawarma, Faisal, Giza",
+    "addressArabic": "384 شارع الملك فيصل، بجوار رغيف شاورما، فيصل، الجيزة",
+    "area": "Faisal",
+    "phones": ["01068000550", "01008677285"],
+    "sources": [
+      {
+        "url": "https://pawiaegy.durable.site/ar",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://pawiaegy.durable.site/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Own website explicitly states طوارئ 24 ساعة and استقبال الحالات الطارئة على مدار اليوم; Imbaba hours 24/7.",
+    "lastSeenActive": null,
+    "classificationEvidence": "Clinic own website describes physical pet veterinary care and publishes this address and contact. Footer copyright date is not dated activity evidence.",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Pawia"],
+      "arabic": ["باويا للرعاية البيطرية", "عيادات باويا للرعاية البيطرية"]
+    },
+    "chainKey": "pawia",
+    "branchQualifier": "Faisal"
+  },
+  {
+    "key": "dr-paws-sheikh-zayed",
+    "nameEnglish": "Dr. Paws Animal Hospital (Sheikh Zayed)",
+    "nameArabic": "مستشفى دكتور باوز البيطري (الشيخ زايد)",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Sheikh Zayed, Giza",
+    "addressArabic": "الشيخ زايد، الجيزة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Sheikh Zayed",
+    "phones": ["01030795778"],
+    "sources": [
+      {
+        "url": "https://drpaws.com.eg/en/branches/sheikh-zayed/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://drpaws.com.eg/en/24-hour-emergency-veterinary-clinic-in-new-giza/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://drpaws.com.eg/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Own Zayed branch explicitly gives Open24hours. Own updated2026-07-19 emergency article identifies B1First6October as the24hour clinic and states doors open around the clock.",
+    "lastSeenActive": "2026-07-19",
+    "classificationEvidence": "Own chain branch page identifies staffed physical pet veterinary clinic with treatment/surgery/diagnostics. Own dated article publishes current emergency operation andB1First6October site. Branch contact used; generic hotline not duplicated across rows.",
+    "chainKey": "dr-paws",
+    "branchQualifier": "Sheikh Zayed",
+    "aliases": {
+      "english": ["Dr. Paws", "Dr Paws", "Dr. Paws Sheikh Zayed"],
+      "arabic": ["دكتور باوز", "مستشفى دكتور باوز"]
+    }
+  },
+  {
+    "key": "dr-paws-new-giza",
+    "nameEnglish": "Dr. Paws Animal Hospital (October – New Giza)",
+    "nameArabic": "مستشفى دكتور باوز البيطري (أكتوبر – نيو جيزة)",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Midtown Clinics, B1, New Giza, First6th of October, Giza",
+    "addressArabic": "ميدتاون كلينكس، بي1، نيو جيزة، السادس من أكتوبر، الجيزة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "6th of October",
+    "phones": ["01060504468"],
+    "sources": [
+      {
+        "url": "https://drpaws.com.eg/en/branches/new-giza/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://drpaws.com.eg/en/24-hour-emergency-veterinary-clinic-in-new-giza/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://drpaws.com.eg/",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Own Zayed branch explicitly gives Open24hours. Own updated2026-07-19 emergency article identifies B1First6October as the24hour clinic and states doors open around the clock.",
+    "lastSeenActive": "2026-07-19",
+    "classificationEvidence": "Own chain branch page identifies staffed physical pet veterinary clinic with treatment/surgery/diagnostics. Own dated article publishes current emergency operation andB1First6October site. Branch contact used; generic hotline not duplicated across rows.",
+    "chainKey": "dr-paws",
+    "branchQualifier": "October – New Giza",
+    "aliases": {
+      "english": ["Dr. Paws", "Dr Paws", "Dr. Paws October – New Giza"],
+      "arabic": ["دكتور باوز", "مستشفى دكتور باوز"]
+    }
+  },
+  {
+    "key": "pets-mall-dokki",
+    "nameEnglish": "Pets Mall (Mohandseen)",
+    "nameArabic": "بيتس مول (المهندسين)",
+    "addressEnglish": "13 Tiba Street, Dokki, Giza",
+    "addressArabic": "13 شارع طيبة، الدقي، الجيزة",
+    "area": "Dokki",
+    "phones": ["01111629639", "01111696946"],
+    "sources": [
+      {
+        "url": "https://pets-mall.net/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://pets-mall.net/",
+    "facebookUrl": "https://www.facebook.com/petsmall.hospital/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Own pet store explicitly offers qualified-vet checkups, vaccinations and surgical procedures at both physical branches, so qualifies as combined clinic/store. Current own address686ThirdDistrict and9am–10pm hours supersede historical EVCVilla25Street17 and24h claim.01111629639 links identities. Other old sourcephones retained only in cache, uncorroborated.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "aliases": {
+      "english": ["Pets Mall"],
+      "arabic": ["بيتس مول"]
+    },
+    "chainKey": "pets-mall",
+    "branchQualifier": "Mohandseen"
+  },
+  {
+    "key": "columbia-animal-hospital-zayed",
+    "nameEnglish": "Columbia Animal Hospital",
+    "nameArabic": "مستشفى كولومبيا للحيوانات الأليفة",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "source",
+    "addressEnglish": "Icon Mall Gate9, opposite Golds Gym, Beverly Hills, Sheikh Zayed, Giza",
+    "addressArabic": "أيكون مول بوابة 9 أمام جولدز جيم، بيفرلي هيلز، الشيخ زايد، الجيزة",
+    "addressEnglishOrigin": "source",
+    "addressArabicOrigin": "authored",
+    "area": "Beverly Hills",
+    "phones": ["01020405694"],
+    "sources": [
+      {
+        "url": "https://columbiaanimalhosp.wixsite.com/columbia-animal-hosp",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.voofla.com/EG/El-Shikh-Zaid/153563034517400/Columbia-Animal-Hospital---Sheikh-zayed",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://columbiaanimalhosp.wixsite.com/columbia-animal-hosp",
+    "facebookUrl": null,
+    "is24Hours": true,
+    "hoursEvidence": "Own Wix site explicitly states Our Doors Are Always Open Available24/7, matched2026-10-29 socialpost mirror explicitly24hour emergency team onsite.",
+    "lastSeenActive": "2026-10-29",
+    "classificationEvidence": "Own hospital site publishes physical pet medical/surgical care, IconMallGate9 address and01020405694; dated socialpost mirror corroborates ongoing operation. EVC oldPetDoctorsZamalek differently named record shares this phone; current own Columbia ownership preferred and Cairo researcher notified to remove that disputed old contact.",
+    "aliases": {
+      "english": ["Columbia Animal Hospital - Sheikh zayed", "Colombia Animal Hospital"],
+      "arabic": ["مستشفى كولومبيا"]
+    }
+  },
+  {
+    "key": "british-animal-hospital-hadayek",
+    "nameEnglish": "British Animal Hospital (Hadayek El Ahram)",
+    "nameArabic": "المستشفى البريطاني للحيوانات (حدائق الأهرام)",
+    "addressEnglish": "256 Street2, behind Monginis, Hadayek El Ahram, Giza",
+    "addressArabic": "256 شارع2 خلف مونجيني، حدائق الأهرام، الجيزة",
+    "area": "Hadayek El Ahram",
+    "phones": ["01277778947"],
+    "sources": [
+      {
+        "url": "https://www.al-makan.com/veterinary/مستشفى-الحيوان-حدائق-الاهرام/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.britishanimalhospital.com",
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2025-05-04",
+    "classificationEvidence": "Individual AlMakan branch entry updated2025-05-04 publishes distinct256Street2HadayekElAhram physicalclinic and sharedBritishchain hotline01277778947, withpetmedical/surgicalservices. Currentownchainbranchlistomits thisbranch; kept onpermittedone-source2025evidence, flagforbranchverification, no24hclaim. Website fromsameBritishbrand; no maplink opened.",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "aliases": {
+      "english": ["British Animal Hospital"],
+      "arabic": ["مستشفى الحيوان البريطاني حدائق الاهرام", "مستشفى الحيوان حدائق الاهرام"]
+    },
+    "chainKey": "british-animal-hospital",
+    "branchQualifier": "Hadayek El Ahram"
+  }
+]

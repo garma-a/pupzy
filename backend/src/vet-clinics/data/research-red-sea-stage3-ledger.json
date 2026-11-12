@@ -1,0 +1,504 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F4",
+  "governorate": "Red Sea",
+  "searches": [
+    "\"عيادة بيطرية\" \"الغردقة\" \"سفاجا\"",
+    "\"veterinary clinic\" \"Hurghada\" contact",
+    "\"vet clinic\" \"Safaga\"",
+    "\"vet clinic\" \"Marsa Alam\""
+  ],
+  "sourcesConsulted": [
+    "https://the-ark-clinic-hurghada.com/de/kontakt",
+    "https://www.fourgive.org/",
+    "https://www.fourgive.org/vetclinic/"
+  ],
+  "candidates": [
+    {
+      "key": "ark-hurghada",
+      "sources": [
+        {
+          "url": "https://the-ark-clinic-hurghada.com/de/kontakt",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read own current contact page via web.open: same contact as existing reviewed OSM clinic, Hurghada 1. Input consolidates source evidence, not a second clinic. Plus code/map not decoded or copied; existing OSM exact point survives merge. Terminal fetch network failure retained.",
+      "lastSeenActive": null
+    },
+    {
+      "key": "fourgive-marsa-alam",
+      "sources": [
+        {
+          "url": "https://www.fourgive.org/vetclinic/",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        },
+        {
+          "url": "https://www.fourgive.org/",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read first-party clinic page: non-government charity runs physical clinic open to private pets, check-ups, surgery/TNVR, vaccination and emergencies. Explicit FAQ invites visits with published Egyptian clinic number. Counts as clinical premises, not shelter-only. Swiss foundation address is not Egyptian clinic address; only published Marsa Alam locality used. Dated monthly reports lack exact day, so no fabricated lastSeenActive.",
+      "lastSeenActive": null
+    }
+  ],
+  "holdsAndExclusions": [],
+  "counts": {
+    "authored": 5,
+    "retained": 5,
+    "active": 5,
+    "inactiveByReason": {},
+    "precision": {
+      "exact": 1,
+      "area": 4
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {},
+  "importAccounting": {
+    "candidates": 2,
+    "imported": 2,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D4",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D4-decisions.json",
+    "cities": [
+      {
+        "city": "Hurghada",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Hurghada/67686/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Hurghada/67686",
+          "https://dalil140.com/category/ar/veterinarians/hurghada"
+        ],
+        "discoveryEntries": 43,
+        "candidates": [
+          {
+            "key": "102823984616020",
+            "city": "Hurghada",
+            "name": "Lucky Horses Stable at Hurghada",
+            "url": "https://www.petshops1.com/EG/Hurghada/102823984616020/Lucky-Horses-Stable-at-Hurghada",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "223408887519354",
+            "city": "Hurghada",
+            "name": "Refat Asem",
+            "url": "https://www.petshops1.com/EG/Hurghada/223408887519354/Refat-Asem",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1100236480004901",
+            "city": "Hurghada",
+            "name": "X pets",
+            "url": "https://www.petshops1.com/EG/Hurghada/1100236480004901/X-pets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "194591498099805",
+            "city": "Hurghada",
+            "name": "Arabian Nights Horse riding",
+            "url": "https://www.petshops1.com/EG/Hurghada/194591498099805/Arabian-Nights-Horse-riding",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "149667828739780",
+            "city": "Hurghada",
+            "name": "Pluto",
+            "url": "https://www.petshops1.com/EG/Hurghada/149667828739780/Pluto",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "694016677701211",
+            "city": "Hurghada",
+            "name": "Hurghada Horses Riding",
+            "url": "https://www.petshops1.com/EG/Hurghada/694016677701211/Hurghada-Horses-Riding",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1130436426809789",
+            "city": "Hurghada",
+            "name": "Diva puppy House",
+            "url": "https://www.petshops1.com/EG/Hurghada/1130436426809789/Diva-puppy-House",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "103209294573011",
+            "city": "Hurghada",
+            "name": "Sunset Horse Ranch Hurghada",
+            "url": "https://www.petshops1.com/EG/Hurghada/103209294573011/Sunset-Horse-Ranch-Hurghada",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "101524728651916",
+            "city": "Hurghada",
+            "name": "Equest Resort Egypt",
+            "url": "https://www.petshops1.com/EG/Hurghada/101524728651916/Equest-Resort-Egypt",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "460926524050038",
+            "city": "Hurghada",
+            "name": "Horseriding Hurghada At Sunny Horse Stable",
+            "url": "https://www.petshops1.com/EG/Hurghada/460926524050038/Horseriding-Hurghada-At-Sunny-Horse-Stable",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "115283593657363",
+            "city": "Hurghada",
+            "name": "Doody camel riding",
+            "url": "https://www.petshops1.com/EG/Hurghada/115283593657363/Doody-camel-riding",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "124080487932210",
+            "city": "Hurghada",
+            "name": "Funny animal clips",
+            "url": "https://www.petshops1.com/EG/Hurghada/124080487932210/Funny-animal-clips",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "103778261751609",
+            "city": "Hurghada",
+            "name": "Kotta george_hairdresser",
+            "url": "https://www.petshops1.com/EG/Hurghada/103778261751609/Kotta-george_hairdresser",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "102782548595855",
+            "city": "Hurghada",
+            "name": "Nazar Stud",
+            "url": "https://www.petshops1.com/EG/Hurghada/102782548595855/Nazar-Stud",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "892597177276400",
+            "city": "Hurghada",
+            "name": "Zazou Pets Shop",
+            "url": "https://www.petshops1.com/EG/Hurghada/892597177276400/Zazou-Pets-Shop",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "353615028726888",
+            "city": "Hurghada",
+            "name": "The Dalmatians 101",
+            "url": "https://www.petshops1.com/EG/Hurghada/353615028726888/The-Dalmatians-101",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1494131410883839",
+            "city": "Hurghada",
+            "name": "Dubieland - Pet Center",
+            "url": "https://www.petshops1.com/EG/Hurghada/1494131410883839/Dubieland---Pet-Center",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "625851771084612",
+            "city": "Hurghada",
+            "name": "Monalisa Stable Horseriding Egypt",
+            "url": "https://www.petshops1.com/EG/Hurghada/625851771084612/Monalisa-Stable-Horseriding-Egypt",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "336753736191628",
+            "city": "Hurghada",
+            "name": "Horse & Animal Park Hurghada",
+            "url": "https://www.petshops1.com/EG/Hurghada/336753736191628/Horse-%26-Animal-Park-Hurghada",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "101784888600923",
+            "city": "Hurghada",
+            "name": "Pet Center",
+            "url": "https://www.petshops1.com/EG/Hurghada/101784888600923/Pet-Center",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "110306038288912",
+            "city": "Hurghada",
+            "name": "Horse Riding hurghada",
+            "url": "https://www.petshops1.com/EG/Hurghada/110306038288912/Horse-Riding-hurghada",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "110119941412508",
+            "city": "Hurghada",
+            "name": "Bully Gang",
+            "url": "https://www.petshops1.com/EG/Hurghada/110119941412508/Bully-Gang",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "343775245732442",
+            "city": "Hurghada",
+            "name": "Royal Zone",
+            "url": "https://www.petshops1.com/EG/Hurghada/343775245732442/Royal-Zone",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1412774055664806",
+            "city": "Hurghada",
+            "name": "Horseriding Hurghada",
+            "url": "https://www.petshops1.com/EG/Hurghada/1412774055664806/Horseriding-Hurghada",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "167386823595548",
+            "city": "Hurghada",
+            "name": "Amy Pet-Shop",
+            "url": "https://www.petshops1.com/EG/Hurghada/167386823595548/Amy-Pet-Shop",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "180781698694700",
+            "city": "Hurghada",
+            "name": "ZOO FOOD Pet Shop Hurghada",
+            "url": "https://www.petshops1.com/EG/Hurghada/180781698694700/ZOO-FOOD-Pet-Shop-Hurghada",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "115399116983512",
+            "city": "Hurghada",
+            "name": "Hero Pets Fresh Food",
+            "url": "https://www.petshops1.com/EG/Hurghada/115399116983512/Hero-Pets-Fresh-Food",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "109715177433749",
+            "city": "Hurghada",
+            "name": "Captain joe’s horse stable",
+            "url": "https://www.petshops1.com/EG/Hurghada/109715177433749/Captain-joe%E2%80%99s-horse-stable",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "106412228375470",
+            "city": "Hurghada",
+            "name": "Rescue Animal's Soul in Egypt - إنقاذ روح الح",
+            "url": "https://www.petshops1.com/EG/Hurghada/106412228375470/Rescue-Animal%27s-Soul-in-Egypt---%D8%A5%D9%86%D9%82%D8%A7%D8%B0-%D8%B1%D9%88%D8%AD-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D9%81%D9%8A-%D9%85%D8%B5%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "106125534472471",
+            "city": "Hurghada",
+            "name": "Mizu Pets ميزو بتس",
+            "url": "https://www.petshops1.com/EG/Hurghada/106125534472471/Mizu-Pets-%D9%85%D9%8A%D8%B2%D9%88-%D8%A8%D8%AA%D8%B3",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1801710483457567",
+            "city": "Hurghada",
+            "name": "Shadows K9",
+            "url": "https://www.petshops1.com/EG/Hurghada/1801710483457567/Shadows-K9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "101515878963339",
+            "city": "Hurghada",
+            "name": "Anastasia Arabians",
+            "url": "https://www.petshops1.com/EG/Hurghada/101515878963339/Anastasia-Arabians",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "112439174765613",
+            "city": "Hurghada",
+            "name": "The Pet Mart",
+            "url": "https://www.petshops1.com/EG/Hurghada/112439174765613/The-Pet-Mart",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "109971720618144",
+            "city": "Hurghada",
+            "name": "Jungle Veterinary clinic",
+            "url": "https://www.petshops1.com/EG/Hurghada/109971720618144/Jungle-Veterinary-clinic",
+            "status": "retained",
+            "reason": "jungle-hurghada",
+            "evidence": "Clinic own feed lists fixed Hurghada premises and clinical/travel vaccination service at this address. El Kawther Metro Street is Qism 1 per ITDA CRA44/875 and 2023 National Election Authority list. Safaga branch is a separate candidate held for full address; touring home visits do not establish branches.",
+            "snapshot": "web-evidence/depth-b88015b0c9650fdb.json"
+          },
+          {
+            "key": "909451355755736",
+            "city": "Hurghada",
+            "name": "British Animal Clinic Hurghada",
+            "url": "https://www.petshops1.com/EG/Hurghada/909451355755736/British-Animal-Clinic-Hurghada",
+            "status": "retained",
+            "reason": "british-hurghada",
+            "evidence": "Two individual pages identify same British clinic opposite British Resort, El Kawther. Older full-services page explicitly provides pet examinations, surgery, X-ray and lab; official-titled page confirms same premises and another reception. One clinic retained, not invented two branches. Kawther Qism 1 independently corroborated.",
+            "snapshot": "web-evidence/depth-7ed785c274424a10.json"
+          },
+          {
+            "key": "113301950487775",
+            "city": "Hurghada",
+            "name": "Top vets hurghada animal center",
+            "url": "https://www.petshops1.com/EG/Hurghada/113301950487775/Top-vets-hurghada-animal-center",
+            "status": "held",
+            "reason": "unresolved-street-district",
+            "evidence": "Top Vets city-only premises, no secure split district; do not assign city centre arbitrarily.",
+            "snapshot": "web-evidence/depth-4d5ef40a187ed142.json"
+          },
+          {
+            "key": "168205009950356",
+            "city": "Hurghada",
+            "name": "British Animal Clinic",
+            "url": "https://www.petshops1.com/EG/Hurghada/168205009950356/British-Animal-Clinic",
+            "status": "held",
+            "reason": "same-premises-reviewed",
+            "evidence": "Same British Resort/Kawther premises as retained British Animal Clinic; source and contact added to single identity.",
+            "snapshot": "web-evidence/depth-a0228efdf63017ff.json"
+          },
+          {
+            "key": "492680820932982",
+            "city": "Hurghada",
+            "name": "Veterinary Care Center",
+            "url": "https://www.petshops1.com/EG/Hurghada/492680820932982/Veterinary-Care-Center",
+            "status": "retained",
+            "reason": "veterinary-care-hurghada",
+            "evidence": "Individual clinic feed explicitly accepts pets for clinical care. Dalil140 individual entry confirms exact same 429 street and reception, resolves Dahar district (Hurghada Qism 2). 2023-07-19 vaccination/certification post; no point copied from maps.",
+            "snapshot": "web-evidence/depth-006d5c43249bbfbf.json"
+          },
+          {
+            "key": "106831131641475",
+            "city": "Hurghada",
+            "name": "SUST Orphan Animal Hospital Hurghada",
+            "url": "https://www.petshops1.com/EG/Hurghada/106831131641475/SUST-Orphan-Animal-Hospital-Hurghada",
+            "status": "held",
+            "reason": "unresolved-premises",
+            "evidence": "SUST hospital treats stray pets professionally, but page only locates Hurghada; full physical address/district not established.",
+            "snapshot": "web-evidence/depth-d8e11051b7a6f2ba.json"
+          },
+          {
+            "key": "jungle-safaga",
+            "city": "Hurghada",
+            "name": "Jungle Veterinary Clinic Safaga branch",
+            "url": "https://www.petshops1.com/EG/Hurghada/109971720618144/Jungle-Veterinary-clinic",
+            "status": "held",
+            "reason": "unresolved-full-branch-address",
+            "evidence": "Safaga branch explicit in clinic description. Full physical address/contact allocation not published on read page. Marsa Alam/Port Ghalib/Quseir/Soma/Makadi/El Gouna visits explicitly mobile, not new branches."
+          },
+          {
+            "key": "dalil-420466",
+            "city": "Hurghada",
+            "name": "Dr. Markos Elia Naeem",
+            "url": "https://dalil140.com/company/ar/420466-dr-markos-elia-naeem",
+            "status": "held",
+            "reason": "individual-page-unavailable",
+            "evidence": "Category entry reviewed, individual entry attempted via web: timeout/verification page. General veterinary label without independently verified pet treatment; held rather than imported from snippets."
+          },
+          {
+            "key": "dalil-420494",
+            "city": "Hurghada",
+            "name": "Dr. Sameh Shata",
+            "url": "https://dalil140.com/company/ar/420494-dr-sameh-shata",
+            "status": "held",
+            "reason": "individual-page-unavailable",
+            "evidence": "Category entry reviewed, individual entry attempted via web: timeout/verification page. General veterinary label without independently verified pet treatment; held rather than imported from snippets."
+          },
+          {
+            "key": "dalil-420901",
+            "city": "Hurghada",
+            "name": "Veterinary Care Center",
+            "url": "https://dalil140.com/company/ar/420901-veterinary-care-center",
+            "status": "held",
+            "reason": "same-candidate-retained-from-feed",
+            "evidence": "Individually read page resolves existing candidate to Dahar, matching street/phone; retained as WEB:veterinary-care-hurghada."
+          },
+          {
+            "key": "dalil-490170",
+            "city": "Hurghada",
+            "name": "C & D Vet Clinic",
+            "url": "https://dalil140.com/company/ar/490170-c-d-vet-clinic",
+            "status": "held",
+            "reason": "individual-page-unavailable",
+            "evidence": "Category entry reviewed, individual entry attempted via web: timeout/verification page. General veterinary label without independently verified pet treatment; held rather than imported from snippets."
+          }
+        ],
+        "retained": 3,
+        "exclusionsByReason": {
+          "no-pet-clinic-evidence-in-discovery": 33,
+          "unresolved-street-district": 1,
+          "same-premises-reviewed": 1,
+          "unresolved-premises": 1,
+          "unresolved-full-branch-address": 1,
+          "individual-page-unavailable": 3,
+          "same-candidate-retained-from-feed": 1
+        },
+        "individualSnapshots": [
+          "web-evidence/depth-b88015b0c9650fdb.json",
+          "web-evidence/depth-7ed785c274424a10.json",
+          "web-evidence/depth-4d5ef40a187ed142.json",
+          "web-evidence/depth-a0228efdf63017ff.json",
+          "web-evidence/depth-006d5c43249bbfbf.json",
+          "web-evidence/depth-d8e11051b7a6f2ba.json"
+        ]
+      }
+    ]
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

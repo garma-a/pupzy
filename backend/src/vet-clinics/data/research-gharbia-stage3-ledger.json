@@ -1,0 +1,1043 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F1",
+  "governorate": "Gharbia",
+  "searches": [
+    "عيادة بيطرية طنطا المحلة الكبرى حيوانات أليفة رقم",
+    "\"Pet-Na\" \"Clinic\" طنطا",
+    "\"عيادة الزراعة\" \"المحلة\" بيطرية"
+  ],
+  "sourcesConsulted": [
+    "https://linktr.ee/elzera_petclinic",
+    "https://www.bizmideast.com/EG/pet-na-veterinary-clinic-د-مي-طيبة-د-0155-244-0576",
+    "https://www.voofla.com/EG/Tanta/110143698544536/Pet-Na-Veterinary-Clinic"
+  ],
+  "candidates": [
+    {
+      "key": "pet-na-tanta",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Tanta/110143698544536/Pet-Na-Veterinary-Clinic",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        },
+        {
+          "url": "https://www.bizmideast.com/EG/pet-na-veterinary-clinic-د-مي-طيبة-د-0155-244-0576",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror: veterinary medicine/surgery, 2026-09-23 extended clinic hours. Three contacts in dated posts. BizMidEast individual entry identifies Tanta Qism 2; no use of its plus code or pin.",
+      "lastSeenActive": "2026-09-23"
+    },
+    {
+      "key": "elzera-mahalla",
+      "sources": [
+        {
+          "url": "https://linktr.ee/elzera_petclinic",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read first-party Linktree via web.open (terminal 403 retained): explicit pet treatment, address Part 2; published WhatsApp target wa.me/201036462595. Clinic is opposite government administration, not itself a government unit. Linktree join month not treated as dated operation.",
+      "lastSeenActive": null
+    }
+  ],
+  "holdsAndExclusions": [],
+  "counts": {
+    "retained": 12,
+    "active": 11,
+    "inactiveByReason": {
+      "no-phone": 1
+    },
+    "precision": {
+      "area": 12
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {},
+  "importAccounting": {
+    "candidates": 11,
+    "imported": 11,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D1",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D1-decisions.json",
+    "cities": [
+      {
+        "city": "Tanta",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Tanta/67969/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Tanta/67969",
+          "https://www.petshops1.com/EG/Tanta/67969/genre/162068413843305/Veterinarian/1",
+          "https://www.petshops1.com/EG/Tanta/67969/genre/162068413843305/Veterinarian/2"
+        ],
+        "discoveryEntries": 73,
+        "individualSnapshots": [
+          "web-evidence/depth-32a5e8fcdc12e2f1.json",
+          "web-evidence/depth-0fa02343c70f6fbb.json",
+          "web-evidence/depth-fde2f7273c8fdbe8.json",
+          "web-evidence/depth-173f12fd8fbfaf27.json",
+          "web-evidence/depth-3d4c4a3f456c38fa.json",
+          "web-evidence/depth-f38aece580fa963e.json",
+          "web-evidence/depth-173a11393c5af3da.json",
+          "web-evidence/depth-314c11788659e1da.json",
+          "web-evidence/depth-f48cc930455535f9.json",
+          "web-evidence/depth-a6d9dc1ad0ecb0a5.json",
+          "web-evidence/depth-15f6f3ec5e47a7d8.json",
+          "web-evidence/depth-149143ad50a1e14a.json",
+          "web-evidence/depth-caf69e38b6fbb12a.json",
+          "web-evidence/depth-a388a0bf6bca3eec.json",
+          "web-evidence/depth-b57511f604e810a2.json",
+          "web-evidence/depth-0edfb871f6a2662a.json",
+          "web-evidence/depth-12a9e24191efb82f.json",
+          "web-evidence/depth-9a2a82da68340b98.json",
+          "web-evidence/depth-13ca4988d9e46448.json",
+          "web-evidence/depth-9a8c1ac47411018d.json",
+          "web-evidence/depth-c858a593e8a4e90c.json",
+          "web-evidence/depth-e014ddaed6c272b1.json",
+          "web-evidence/depth-e287696a0fffcfe1.json"
+        ],
+        "candidates": [
+          {
+            "city": "Tanta",
+            "name": "Dawaa. care experts - دواء. خبراء الرعاية",
+            "url": "https://www.petshops1.com/EG/Tanta/227303004018575/Dawaa.-care-experts---%D8%AF%D9%88%D8%A7%D8%A1.-%D8%AE%D8%A8%D8%B1%D8%A7%D8%A1-%D8%A7%D9%84%D8%B1%D8%B9%D8%A7%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Dr/reda shalaby مركز الدكتورة رضا شلبي لعلاج",
+            "url": "https://www.petshops1.com/EG/Tanta/179956975466762/Dr-reda-shalaby-%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D8%AF%D9%83%D8%AA%D9%88%D8%B1%D8%A9-%D8%B1%D8%B6%D8%A7-%D8%B4%D9%84%D8%A8%D9%8A-%D9%84%D8%B9%D9%84%D8%A7%D8%AC-%D9%88%D8%AC%D8%B1%D8%A7%D8%AD%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A3%D9%84%D9%8A%D9%81%D8%A9-%D8%A8%D8%B7%D9%86%D8%B7%D8%A7",
+            "status": "retained",
+            "reason": "reda-shalaby-tanta",
+            "evidence": "Individual page explicitly offers pet surgery/internal medicine at physical address. AIESEC individual placement identifies this centre as Tanta Qism 2; undated listing not treated as operation date."
+          },
+          {
+            "city": "Tanta",
+            "name": "Pet Space Veterinary Clinic - د. باسم مراد",
+            "url": "https://www.petshops1.com/EG/Tanta/103257745425549/Pet-Space-Veterinary-Clinic---%D8%AF.-%D8%A8%D8%A7%D8%B3%D9%85-%D9%85%D8%B1%D8%A7%D8%AF",
+            "status": "retained",
+            "reason": "pet-space-tanta",
+            "evidence": "Physical pet medicine/surgery clinic; dated hours/contact post 2026-03-28. Helw Street is Qism 2 according to separately read locality news. BizMidEast independently confirms main contact/address."
+          },
+          {
+            "city": "Tanta",
+            "name": "إيجيبت لاند للتنمية الزراعية",
+            "url": "https://www.petshops1.com/EG/Tanta/344772973531891/%D8%A5%D9%8A%D8%AC%D9%8A%D8%A8%D8%AA-%D9%84%D8%A7%D9%86%D8%AF-%D9%84%D9%84%D8%AA%D9%86%D9%85%D9%8A%D8%A9-%D8%A7%D9%84%D8%B2%D8%B1%D8%A7%D8%B9%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Aleet Vet Center - مركز أليط البيطري",
+            "url": "https://www.petshops1.com/EG/Tanta/118804339968423/Aleet-Vet-Center---%D9%85%D8%B1%D9%83%D8%B2-%D8%A3%D9%84%D9%8A%D8%B7-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A",
+            "status": "retained",
+            "reason": "aleet-tanta",
+            "evidence": "Individual feed explicitly identifies Tanta Second and physical pet medicine/surgery; 2026-09-21 veterinary eye advice accompanies current two-branch notices. Hotline explicitly shared with Cairo branch, which is not currently in the dataset."
+          },
+          {
+            "city": "Tanta",
+            "name": "Pet Espitalia / Tanta",
+            "url": "https://www.petshops1.com/EG/Tanta/106115828194823/Pet-Espitalia---Tanta",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Physical veterinary procedures and phone found but Tanta address contains brand only; do not invent district."
+          },
+          {
+            "city": "Tanta",
+            "name": "Pet-Na Veterinary Clinic",
+            "url": "https://www.petshops1.com/EG/Tanta/110143698544536/Pet-Na-Veterinary-Clinic",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "Pet-Na already retained with current sourced contacts."
+          },
+          {
+            "city": "Tanta",
+            "name": "فالي فارما تريد - Valley Pharma Trade",
+            "url": "https://www.petshops1.com/EG/Tanta/939221299282562/%D9%81%D8%A7%D9%84%D9%8A-%D9%81%D8%A7%D8%B1%D9%85%D8%A7-%D8%AA%D8%B1%D9%8A%D8%AF---Valley-Pharma-Trade",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "BIO-D animal health",
+            "url": "https://www.petshops1.com/EG/Tanta/112540435061423/BIO-D-animal-health",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "مزرعه الخير",
+            "url": "https://www.petshops1.com/EG/Tanta/363222084478274/%D9%85%D8%B2%D8%B1%D8%B9%D9%87-%D8%A7%D9%84%D8%AE%D9%8A%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Juba Vet",
+            "url": "https://www.petshops1.com/EG/Tanta/900407289830694/Juba-Vet",
+            "status": "held",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "Juba feed markets poultry antitoxins/imported animal-health products; no pet clinic."
+          },
+          {
+            "city": "Tanta",
+            "name": "One Alpha Veterinary solutions",
+            "url": "https://www.petshops1.com/EG/Tanta/282523251620588/One-Alpha-Veterinary-solutions",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "New HOP Vet - نيو هوب فيت",
+            "url": "https://www.petshops1.com/EG/Tanta/472686939454152/New-HOP-Vet---%D9%86%D9%8A%D9%88-%D9%87%D9%88%D8%A8-%D9%81%D9%8A%D8%AA",
+            "status": "held",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "New HOP explicitly sole agent/distributor of veterinary pharmaceuticals/feed additives."
+          },
+          {
+            "city": "Tanta",
+            "name": "Hi protec",
+            "url": "https://www.petshops1.com/EG/Tanta/224142191668782/Hi-protec",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Animal Care Center",
+            "url": "https://www.petshops1.com/EG/Tanta/108811591925462/Animal-Care-Center",
+            "status": "retained",
+            "reason": "animal-care-seberbay",
+            "evidence": "2026-08-16 post describes feline pyometra surgery and names Dr Noha El Mokhlesawy with number. Physical address is Seberbay outside urban Tanta Kisms, assigned rural Tanta Markaz; no Maps link followed."
+          },
+          {
+            "city": "Tanta",
+            "name": "Caliber Egypt",
+            "url": "https://www.petshops1.com/EG/Tanta/110749110328404/Caliber-Egypt",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Pet Ville Clinic",
+            "url": "https://www.petshops1.com/EG/Tanta/897588796771505/Pet-Ville-Clinic",
+            "status": "retained",
+            "reason": "pet-ville-tanta",
+            "evidence": "2026-10-21 puppy vaccinations at physical address; 2026-10-12 esophageal obstruction case. Helw locality assigned Qism 2 per cited locality report."
+          },
+          {
+            "city": "Tanta",
+            "name": "عياده بي جوري البيطريه",
+            "url": "https://www.petshops1.com/EG/Tanta/110052212142918/%D8%B9%D9%8A%D8%A7%D8%AF%D9%87-%D8%A8%D9%8A-%D8%AC%D9%88%D8%B1%D9%8A-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87",
+            "status": "retained",
+            "reason": "be-gory-tanta",
+            "evidence": "Individual listing explicitly treats pets/birds/rabbits at physical address off Nahas. Nahas is the same Qism2 locality explicitly sourced by Pet-Na. No public phone in entry; retained inactive no-phone."
+          },
+          {
+            "city": "Tanta",
+            "name": "Revive pet clinic",
+            "url": "https://www.petshops1.com/EG/Tanta/776839145502436/Revive-pet-clinic",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Revive physical veterinary treatment of kitten at Tarek Ibn Ziyad Street and 01039199825; split district still needs corroboration."
+          },
+          {
+            "city": "Tanta",
+            "name": "سوتير تريد - Souteer Trade",
+            "url": "https://www.petshops1.com/EG/Tanta/107037027306459/%D8%B3%D9%88%D8%AA%D9%8A%D8%B1-%D8%AA%D8%B1%D9%8A%D8%AF---Souteer-Trade",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Mera vet",
+            "url": "https://www.petshops1.com/EG/Tanta/102361231832455/Mera-vet",
+            "status": "held",
+            "reason": "poultry-only",
+            "evidence": "Mera page offers chicks/bird booking and poultry vaccination, no pet clinic demonstrated."
+          },
+          {
+            "city": "Tanta",
+            "name": "kit Cat veterinary clinic",
+            "url": "https://www.petshops1.com/EG/Tanta/1141835735683765/kit-Cat-veterinary-clinic",
+            "status": "retained",
+            "reason": "kit-cat-tanta",
+            "evidence": "2026-10-26 offers pet sterilization surgery paired with physical Stadium area address and contacts. Stadium is the same Tanta Second locality explicitly identified by Aleet, with no generic directory schedule promotion."
+          },
+          {
+            "city": "Tanta",
+            "name": "Vet Care Center \"Dr Ahmed Rashed\"",
+            "url": "https://www.petshops1.com/EG/Tanta/110169970739692/Vet-Care-Center-%22Dr-Ahmed-Rashed%22",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Ahmed Rashed at Menyet Ebyar: generic veterinary care/festive contacts; no demonstrated on-site pet treatment."
+          },
+          {
+            "city": "Tanta",
+            "name": "Royal Pharm  رويال فارم",
+            "url": "https://www.petshops1.com/EG/Tanta/102518135285584/Royal-Pharm--%D8%B1%D9%88%D9%8A%D8%A7%D9%84-%D9%81%D8%A7%D8%B1%D9%85",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Medicare",
+            "url": "https://www.petshops1.com/EG/Tanta/345105625357497/Medicare",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Onyx pharma",
+            "url": "https://www.petshops1.com/EG/Tanta/838856812655417/Onyx-pharma",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "معمل MEM للخدمات البيطرية",
+            "url": "https://www.petshops1.com/EG/Tanta/100341104709670/%D9%85%D8%B9%D9%85%D9%84-MEM-%D9%84%D9%84%D8%AE%D8%AF%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "ِِأجرو فارما للأدوية البيطرية - Agro Farma",
+            "url": "https://www.petshops1.com/EG/Tanta/101705341423211/%D9%90%D9%90%D8%A3%D8%AC%D8%B1%D9%88-%D9%81%D8%A7%D8%B1%D9%85%D8%A7-%D9%84%D9%84%D8%A3%D8%AF%D9%88%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9---Agro-Farma",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "SOS Pets Clinic - Tanta",
+            "url": "https://www.petshops1.com/EG/Tanta/105033039254855/SOS-Pets-Clinic---Tanta",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Physical examinations/vaccinations and phone; Ibn Malik/Ibn El Fared address needs split district corroboration."
+          },
+          {
+            "city": "Tanta",
+            "name": "DrSameh PeT HosPital",
+            "url": "https://www.petshops1.com/EG/Tanta/105115255764060/DrSameh-PeT-HosPital",
+            "status": "held",
+            "reason": "home-visit-only",
+            "evidence": "Latest BOLT/DrSameh post explicitly describes mobile veterinary home visits."
+          },
+          {
+            "city": "Tanta",
+            "name": "Veto Clinic",
+            "url": "https://www.petshops1.com/EG/Tanta/111000155013720/Veto-Clinic",
+            "status": "held",
+            "reason": "unresolved-treatment-premises-contact",
+            "evidence": "Veto entry only generic veterinarian category and city, no phone or premises."
+          },
+          {
+            "city": "Tanta",
+            "name": "Omar pharm - عمر فارم",
+            "url": "https://www.petshops1.com/EG/Tanta/111914737239349/Omar-pharm---%D8%B9%D9%85%D8%B1-%D9%81%D8%A7%D8%B1%D9%85",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "عيادة ومعرض أبو النجا للأدوية البيطرية",
+            "url": "https://www.petshops1.com/EG/Tanta/118822379513560/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D9%88%D9%85%D8%B9%D8%B1%D8%B6-%D8%A3%D8%A8%D9%88-%D8%A7%D9%84%D9%86%D8%AC%D8%A7-%D9%84%D9%84%D8%A3%D8%AF%D9%88%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "Veterinary medicine pharmacy/showroom, no pet-clinic premises established."
+          },
+          {
+            "city": "Tanta",
+            "name": "Emil German",
+            "url": "https://www.petshops1.com/EG/Tanta/168064333865270/Emil-German",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "مركز بربره لتجاره الأعلاف والحيوانات وطيور ال",
+            "url": "https://www.petshops1.com/EG/Tanta/168348676903323/%D9%85%D8%B1%D9%83%D8%B2-%D8%A8%D8%B1%D8%A8%D8%B1%D9%87-%D9%84%D8%AA%D8%AC%D8%A7%D8%B1%D9%87-%D8%A7%D9%84%D8%A3%D8%B9%D9%84%D8%A7%D9%81-%D9%88%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D9%88%D8%B7%D9%8A%D9%88%D8%B1-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D9%87",
+            "status": "held",
+            "reason": "feed-and-pet-retail",
+            "evidence": "Feed and animals/birds trader, no medical premises."
+          },
+          {
+            "city": "Tanta",
+            "name": "بيت الريف المصري bayt alriyf almisri",
+            "url": "https://www.petshops1.com/EG/Tanta/100144468849034/%D8%A8%D9%8A%D8%AA-%D8%A7%D9%84%D8%B1%D9%8A%D9%81-%D8%A7%D9%84%D9%85%D8%B5%D8%B1%D9%8A-bayt-alriyf-almisri",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Rahal Academy",
+            "url": "https://www.petshops1.com/EG/Tanta/102629428533646/Rahal-Academy",
+            "status": "excluded-discovery",
+            "reason": "training-or-academy",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "التاجر الحر رضا شرباش",
+            "url": "https://www.petshops1.com/EG/Tanta/238705816001606/%D8%A7%D9%84%D8%AA%D8%A7%D8%AC%D8%B1-%D8%A7%D9%84%D8%AD%D8%B1-%D8%B1%D8%B6%D8%A7-%D8%B4%D8%B1%D8%A8%D8%A7%D8%B4",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Zootopia Animal Center - ZAC",
+            "url": "https://www.petshops1.com/EG/Tanta/127295427786396/Zootopia-Animal-Center---ZAC",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Zootopia physical address/contact established but read visible description/feed does not establish veterinary pet treatment."
+          },
+          {
+            "city": "Tanta",
+            "name": "حياه الفلاح المصري hayaah alfalah almisriu",
+            "url": "https://www.petshops1.com/EG/Tanta/658920727293776/%D8%AD%D9%8A%D8%A7%D9%87-%D8%A7%D9%84%D9%81%D9%84%D8%A7%D8%AD-%D8%A7%D9%84%D9%85%D8%B5%D8%B1%D9%8A-hayaah-alfalah-almisriu",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "مزرعة النشار ابوإلياس للحمام اللاحم الفرنسي",
+            "url": "https://www.petshops1.com/EG/Tanta/101790049414609/%D9%85%D8%B2%D8%B1%D8%B9%D8%A9-%D8%A7%D9%84%D9%86%D8%B4%D8%A7%D8%B1-%D8%A7%D8%A8%D9%88%D8%A5%D9%84%D9%8A%D8%A7%D8%B3-%D9%84%D9%84%D8%AD%D9%85%D8%A7%D9%85-%D8%A7%D9%84%D9%84%D8%A7%D8%AD%D9%85-%D8%A7%D9%84%D9%81%D8%B1%D9%86%D8%B3%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "التاجر المبدع عبدالله نصر",
+            "url": "https://www.petshops1.com/EG/Tanta/854817861054876/%D8%A7%D9%84%D8%AA%D8%A7%D8%AC%D8%B1-%D8%A7%D9%84%D9%85%D8%A8%D8%AF%D8%B9-%D8%B9%D8%A8%D8%AF%D8%A7%D9%84%D9%84%D9%87-%D9%86%D8%B5%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "مزرعه Hani El Almy",
+            "url": "https://www.petshops1.com/EG/Tanta/101772136057529/%D9%85%D8%B2%D8%B1%D8%B9%D9%87-Hani-El-Almy",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Botchy",
+            "url": "https://www.petshops1.com/EG/Tanta/104863629082392/Botchy",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "الفهد للسفريات  El fahd For Travel",
+            "url": "https://www.petshops1.com/EG/Tanta/111722801780298/%D8%A7%D9%84%D9%81%D9%87%D8%AF-%D9%84%D9%84%D8%B3%D9%81%D8%B1%D9%8A%D8%A7%D8%AA--El-fahd-For-Travel",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "مراح البركة للماعز الحجازي والسلالات بمصر",
+            "url": "https://www.petshops1.com/EG/Tanta/104612731544601/%D9%85%D8%B1%D8%A7%D8%AD-%D8%A7%D9%84%D8%A8%D8%B1%D9%83%D8%A9-%D9%84%D9%84%D9%85%D8%A7%D8%B9%D8%B2-%D8%A7%D9%84%D8%AD%D8%AC%D8%A7%D8%B2%D9%8A-%D9%88%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%84%D8%A7%D8%AA-%D8%A8%D9%85%D8%B5%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "مزرعة كلاب و فراخ هندي و حمام و عصافير",
+            "url": "https://www.petshops1.com/EG/Tanta/153130221425831/%D9%85%D8%B2%D8%B1%D8%B9%D8%A9-%D9%83%D9%84%D8%A7%D8%A8-%D9%88-%D9%81%D8%B1%D8%A7%D8%AE-%D9%87%D9%86%D8%AF%D9%8A-%D9%88-%D8%AD%D9%85%D8%A7%D9%85-%D9%88-%D8%B9%D8%B5%D8%A7%D9%81%D9%8A%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Dr.m vet clinic",
+            "url": "https://www.petshops1.com/EG/Tanta/102086734853497/Dr.m-vet-clinic",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Dr M confirmed feline surgery and phone; El Tokhy/Ali Mubarak street split Tanta district unresolved."
+          },
+          {
+            "city": "Tanta",
+            "name": "سعيد أبوأحمد لطيور الزينة",
+            "url": "https://www.petshops1.com/EG/Tanta/691524584033351/%D8%B3%D8%B9%D9%8A%D8%AF-%D8%A3%D8%A8%D9%88%D8%A3%D8%AD%D9%85%D8%AF-%D9%84%D8%B7%D9%8A%D9%88%D8%B1-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "ديل على السريع : Quick Deal",
+            "url": "https://www.petshops1.com/EG/Tanta/174396526602005/%D8%AF%D9%8A%D9%84-%D8%B9%D9%84%D9%89-%D8%A7%D9%84%D8%B3%D8%B1%D9%8A%D8%B9-%3A-Quick-Deal",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "M&R",
+            "url": "https://www.petshops1.com/EG/Tanta/103890459396282/M%26R",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "قطط كيوت",
+            "url": "https://www.petshops1.com/EG/Tanta/150931893772179/%D9%82%D8%B7%D8%B7-%D9%83%D9%8A%D9%88%D8%AA",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Jungle pets tanta",
+            "url": "https://www.petshops1.com/EG/Tanta/112528657768779/Jungle-pets-tanta",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "NENO STORE 2",
+            "url": "https://www.petshops1.com/EG/Tanta/100919935746280/NENO-STORE-2",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Moubo Store",
+            "url": "https://www.petshops1.com/EG/Tanta/261292054366979/Moubo-Store",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Vom Titivation GSD Kennel",
+            "url": "https://www.petshops1.com/EG/Tanta/101926528010566/Vom-Titivation-GSD-Kennel",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Egy-vac",
+            "url": "https://www.petshops1.com/EG/Tanta/105971814430410/Egy-vac",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "عياده بيطرية بطنطا - مركز د عاصم عبيد لطب وجر",
+            "url": "https://www.petshops1.com/EG/Tanta/192815097780672/%D8%B9%D9%8A%D8%A7%D8%AF%D9%87-%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D8%A8%D8%B7%D9%86%D8%B7%D8%A7---%D9%85%D8%B1%D9%83%D8%B2-%D8%AF-%D8%B9%D8%A7%D8%B5%D9%85-%D8%B9%D8%A8%D9%8A%D8%AF-%D9%84%D8%B7%D8%A8-%D9%88%D8%AC%D8%B1%D8%A7%D8%AD%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Dr Assem Obeid physical surgery centre with current phone, El Nady Street split capital district unresolved."
+          },
+          {
+            "city": "Tanta",
+            "name": "New H.O.P VET",
+            "url": "https://www.petshops1.com/EG/Tanta/230452656826756/New-H.O.P-VET",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "طبيب بيطري محمد الطوخي-veterinarian M. AL-Tou",
+            "url": "https://www.petshops1.com/EG/Tanta/384050808851892/%D8%B7%D8%A8%D9%8A%D8%A8-%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-%D9%85%D8%AD%D9%85%D8%AF-%D8%A7%D9%84%D8%B7%D9%88%D8%AE%D9%8A-veterinarian-M.-AL-Toukhy",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "مزارع الدكتور للارانب",
+            "url": "https://www.petshops1.com/EG/Tanta/457318774412205/%D9%85%D8%B2%D8%A7%D8%B1%D8%B9-%D8%A7%D9%84%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D9%84%D9%84%D8%A7%D8%B1%D8%A7%D9%86%D8%A8",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Asha mohammed/أشا محمد",
+            "url": "https://www.petshops1.com/EG/Tanta/695967997121931/Asha-mohammed-%D8%A3%D8%B4%D8%A7-%D9%85%D8%AD%D9%85%D8%AF",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "The dog in tanta",
+            "url": "https://www.petshops1.com/EG/Tanta/1490098044334192/The-dog-in-tanta",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "مزراعه الفهد لجميع انواع الارانب",
+            "url": "https://www.petshops1.com/EG/Tanta/1706741622874081/%D9%85%D8%B2%D8%B1%D8%A7%D8%B9%D9%87-%D8%A7%D9%84%D9%81%D9%87%D8%AF-%D9%84%D8%AC%D9%85%D9%8A%D8%B9-%D8%A7%D9%86%D9%88%D8%A7%D8%B9-%D8%A7%D9%84%D8%A7%D8%B1%D8%A7%D9%86%D8%A8",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "مشروع الارنب بصناديد",
+            "url": "https://www.petshops1.com/EG/Tanta/1858714604399613/%D9%85%D8%B4%D8%B1%D9%88%D8%B9-%D8%A7%D9%84%D8%A7%D8%B1%D9%86%D8%A8-%D8%A8%D8%B5%D9%86%D8%A7%D8%AF%D9%8A%D8%AF",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "معرض أبو النجا للأدوية البيطرية Abo al-Naga V",
+            "url": "https://www.petshops1.com/EG/Tanta/2317883888279817/%D9%85%D8%B9%D8%B1%D8%B6-%D8%A3%D8%A8%D9%88-%D8%A7%D9%84%D9%86%D8%AC%D8%A7-%D9%84%D9%84%D8%A3%D8%AF%D9%88%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-Abo-al-Naga-Veterinary-Drugs-Exhibition",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Vaxxivac International",
+            "url": "https://www.petshops1.com/EG/Tanta/936242789575372/Vaxxivac-International",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Cura Pharma Group",
+            "url": "https://www.petshops1.com/EG/Tanta/498644536657297/Cura-Pharma-Group",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Onyx Pharma",
+            "url": "https://www.petshops1.com/EG/Tanta/103448418921715/Onyx-Pharma",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "Y&M scientific team",
+            "url": "https://www.petshops1.com/EG/Tanta/117483934792195/Y%26M-scientific-team",
+            "status": "excluded-discovery",
+            "reason": "training-or-academy",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "شتلات دراجون فروت - مشروع مربح من البيت",
+            "url": "https://www.petshops1.com/EG/Tanta/697258933471617/%D8%B4%D8%AA%D9%84%D8%A7%D8%AA-%D8%AF%D8%B1%D8%A7%D8%AC%D9%88%D9%86-%D9%81%D8%B1%D9%88%D8%AA---%D9%85%D8%B4%D8%B1%D9%88%D8%B9-%D9%85%D8%B1%D8%A8%D8%AD-%D9%85%D9%86-%D8%A7%D9%84%D8%A8%D9%8A%D8%AA",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "قناه أسال طبيب بيطرى واحد",
+            "url": "https://www.petshops1.com/EG/Tanta/434685389736497/%D9%82%D9%86%D8%A7%D9%87-%D8%A3%D8%B3%D8%A7%D9%84-%D8%B7%D8%A8%D9%8A%D8%A8-%D8%A8%D9%8A%D8%B7%D8%B1%D9%89-%D9%88%D8%A7%D8%AD%D8%AF",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Tanta",
+            "name": "الراسخ فيت للأدويه البيطريه",
+            "url": "https://www.petshops1.com/EG/Tanta/116084508200418/%D8%A7%D9%84%D8%B1%D8%A7%D8%B3%D8%AE-%D9%81%D9%8A%D8%AA-%D9%84%D9%84%D8%A3%D8%AF%D9%88%D9%8A%D9%87-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          }
+        ],
+        "retained": [
+          "reda-shalaby-tanta",
+          "pet-space-tanta",
+          "aleet-tanta",
+          "animal-care-seberbay",
+          "pet-ville-tanta",
+          "be-gory-tanta",
+          "kit-cat-tanta"
+        ],
+        "outcomesByReason": {
+          "no-pet-clinic-evidence-in-discovery": 32,
+          "unresolved-catalog-area": 5,
+          "already-retained": 1,
+          "pharmacy-or-supplier": 10,
+          "farming-or-breeding": 7,
+          "poultry-only": 1,
+          "unresolved-pet-treatment": 2,
+          "home-visit-only": 1,
+          "unresolved-treatment-premises-contact": 1,
+          "feed-and-pet-retail": 1,
+          "training-or-academy": 2,
+          "shop-grooming-or-boarding": 2,
+          "training-or-breeding": 1
+        }
+      },
+      {
+        "city": "El Mahalla El Kubra",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/67598/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/67598"
+        ],
+        "discoveryEntries": 36,
+        "individualSnapshots": [
+          "web-evidence/depth-c2dbc9c2663595fa.json",
+          "web-evidence/depth-1d3480982373f2de.json",
+          "web-evidence/depth-235edc7238e7f000.json",
+          "web-evidence/depth-f10afefdcff0f7f7.json",
+          "web-evidence/depth-edbc57708f599c0a.json",
+          "web-evidence/depth-bf9ca7b315880e32.json",
+          "web-evidence/depth-0e7595082befe46b.json",
+          "web-evidence/depth-05a0804ac92114dc.json",
+          "web-evidence/depth-21b8f4a6cbd3c01d.json",
+          "web-evidence/depth-18b221fb06c1dc15.json"
+        ],
+        "candidates": [
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "101 Pets",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/106442264198002/101-Pets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Petopia Clinic  - العيادة البيطرية",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/181718208606054/Petopia-Clinic----%D8%A7%D9%84%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "retained",
+            "reason": "petopia-mahalla",
+            "evidence": "2026-04-06 cryptorchid cat surgery; clinic posts pair physical street and phone. Sekket Zifta/Taqwa locality assigned Second district from separately consulted locality report."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Animal House",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/1942491015981295/Animal-House",
+            "status": "held",
+            "reason": "online-only",
+            "evidence": "Animal House address explicitly says online medical service, no physical clinic."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Nano Vet نانو ڤيت",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/109726815175356/Nano-Vet-%D9%86%D8%A7%D9%86%D9%88-%DA%A4%D9%8A%D8%AA",
+            "status": "retained",
+            "reason": "nano-mahalla",
+            "evidence": "Individual page explicitly identifies a veterinary clinic caring for dogs/cats with physical street and contact. Galal El Din street locality assigned First district from separately read property address; current retail posts not treated as dated clinical activity."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Groza Pet Clinic",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/109933204664975/Groza-Pet-Clinic",
+            "status": "held",
+            "reason": "unresolved-premises-and-contact",
+            "evidence": "Groza feed contains pet advice only and city address; compare second Groza page."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "AI VET",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/776227328918186/AI-VET",
+            "status": "held",
+            "reason": "education-page",
+            "evidence": "AI VET explicitly veterinary/AI education channel; no physical clinic."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Alzahraa Vet Medical",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/102379018720446/Alzahraa-Vet-Medical",
+            "status": "held",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "Alzahraa explicitly manufactures/distributes veterinary drugs and feed additives."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "فيت فارم للأدوية البيطرية والمطهرات",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/703587032984866/%D9%81%D9%8A%D8%AA-%D9%81%D8%A7%D8%B1%D9%85-%D9%84%D9%84%D8%A3%D8%AF%D9%88%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D9%88%D8%A7%D9%84%D9%85%D8%B7%D9%87%D8%B1%D8%A7%D8%AA",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "نعام",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/1002331416527684/%D9%86%D8%B9%D8%A7%D9%85",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "عن حب الحمام .",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/109231950851170/%D8%B9%D9%86-%D8%AD%D8%A8-%D8%A7%D9%84%D8%AD%D9%85%D8%A7%D9%85-.",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "El Nidy pet store /محل النيدي",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/160165407924000/El-Nidy-pet-store--%D9%85%D8%AD%D9%84-%D8%A7%D9%84%D9%86%D9%8A%D8%AF%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Royal Cat Egypt",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/109015550449561/Royal-Cat-Egypt",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "MY Zoo Clinic",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/322536294771267/MY-Zoo-Clinic",
+            "status": "held",
+            "reason": "conflicting-subdistricts",
+            "evidence": "My Zoo current clinic at Shokry/Abdelhamid Salem, Biz lists old Ahmed Rashid/Part2 with different phone. First-party distinguishes clinic and store branches; do not import shops as clinic branches. Locality sources disagree First/Second."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "High Horse Stud هاي هورس لتعليم الفروسية وركو",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/447159118480695/High-Horse-Stud-%D9%87%D8%A7%D9%8A-%D9%87%D9%88%D8%B1%D8%B3-%D9%84%D8%AA%D8%B9%D9%84%D9%8A%D9%85-%D8%A7%D9%84%D9%81%D8%B1%D9%88%D8%B3%D9%8A%D8%A9-%D9%88%D8%B1%D9%83%D9%88%D8%A8-%D8%A7%D9%84%D8%AE%D9%8A%D9%84",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Pet's LanD",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/1447209428916446/Pet%27s-LanD",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Idpco(Animal Health) Egypt",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/115908518494311/Idpco%28Animal-Health%29-Egypt",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Ghazala Store",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/110901563633884/Ghazala-Store",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "موسي المحلاوي ستور / Mousa El Mahlawy store",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/103026058570848/%D9%85%D9%88%D8%B3%D9%8A-%D8%A7%D9%84%D9%85%D8%AD%D9%84%D8%A7%D9%88%D9%8A-%D8%B3%D8%AA%D9%88%D8%B1---Mousa-El-Mahlawy-store",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "بادجي عز",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/105308748613000/%D8%A8%D8%A7%D8%AF%D8%AC%D9%8A-%D8%B9%D8%B2",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Alfalfa elmostafa",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/1718113518406061/Alfalfa-elmostafa",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "GROZA PET CLiniC",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/100340766400761/GROZA-PET-CLiniC",
+            "status": "held",
+            "reason": "unresolved-physical-premises",
+            "evidence": "Groza second page has phone and pet clinic identity but no specific premises beyond city."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Vener Vet",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/104080585613569/Vener-Vet",
+            "status": "held",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "Vener Vet markets poultry supplies/drugs, no pet premises."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "بوبي كات - booby cat",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/363916216815476/%D8%A8%D9%88%D8%A8%D9%8A-%D9%83%D8%A7%D8%AA---booby-cat",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "alzaeem.pet",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/1263484990171763/alzaeem.pet",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Maws_and _paws",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/100360105391901/Maws_and-_paws",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Mona abdelhamid veil $hair dresser",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/102118542966052/Mona-abdelhamid-veil-%24hair-dresser",
+            "status": "excluded-discovery",
+            "reason": "unrelated-business",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Ruzila stor",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/104919758793739/Ruzila-stor",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "AR vet's",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/107607525371727/AR-vet%27s",
+            "status": "held",
+            "reason": "unresolved-pet-treatment-and-subdistrict",
+            "evidence": "AR vets physical Manshiet El Salam premises/contact but no explicit on-site pet treatment evidence in read entry."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Hitler for dogs",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/108600551699500/Hitler-for-dogs",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Dr/ahmed khaled",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/109077120686576/Dr-ahmed-khaled",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Galaxy Pets Online",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/111353614703760/Galaxy-Pets-Online",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Green ZOO",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/114835096742660/Green-ZOO",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "Pawz",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/115702881527598/Pawz",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "ElGold kennel",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/182903112472803/ElGold-kennel",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "WWE-World Fans",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/184147994994666/WWE-World-Fans",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "El Mahalla El Kubra",
+            "name": "badgy for pet store",
+            "url": "https://www.petshops1.com/EG/El-Mahalla-el-Kubra/204238242774766/badgy-for-pet-store",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          }
+        ],
+        "retained": ["petopia-mahalla", "nano-mahalla"],
+        "outcomesByReason": {
+          "no-pet-clinic-evidence-in-discovery": 16,
+          "online-only": 1,
+          "unresolved-premises-and-contact": 1,
+          "education-page": 1,
+          "pharmacy-or-supplier": 3,
+          "farming-or-breeding": 2,
+          "shop-grooming-or-boarding": 4,
+          "conflicting-subdistricts": 1,
+          "training-or-breeding": 2,
+          "unresolved-physical-premises": 1,
+          "unrelated-business": 1,
+          "unresolved-pet-treatment-and-subdistrict": 1
+        }
+      }
+    ],
+    "limitations": "City/category enumeration records every discovered entry; nonclinical retail/farm/personal entries excluded at discovery. Individual pet-clinic candidates read in cached snapshots, with unresolved treatment, contact, identity or catalog district held explicitly. Mirrors are one witness, not independent sources. No claim of market exhaustion; alternate sources/access limitations are recorded in city pages."
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

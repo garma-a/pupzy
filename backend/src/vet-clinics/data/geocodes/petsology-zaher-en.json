@@ -1,0 +1,36 @@
+{
+  "query": "Gamil Street, Zaher, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Gamil+Street%2C+Zaher%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:16:34.680Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 54257115,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 702478698,
+      "lat": "30.0592236",
+      "lon": "31.2485329",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Al Gamil Street",
+      "display_name": "Al Gamil Street, Klot Bek, Al-Azbakeya, Cairo, 11523, Egypt",
+      "address": {
+        "road": "Al Gamil Street",
+        "neighbourhood": "Klot Bek",
+        "suburb": "Al-Azbakeya",
+        "city": "Cairo",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11523",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0591018", "30.0593454", "31.2484435", "31.2486222"]
+    }
+  ]
+}

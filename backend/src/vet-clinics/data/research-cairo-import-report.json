@@ -1,0 +1,11 @@
+{
+  "candidates": 194,
+  "imported": 193,
+  "excluded": [
+    {
+      "key": "flamingo-malek-saleh",
+      "reason": "no-catalog-area",
+      "area": "الملك الصالح"
+    }
+  ]
+}

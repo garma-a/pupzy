@@ -1,0 +1,35 @@
+{
+  "query": "النزهة, 1st District (Sheikh Zayed), Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%86%D8%B2%D9%87%D8%A9%2C+1st+District+%28Sheikh+Zayed%29%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:20:08.475Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 48438753,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 860960863,
+      "lat": "30.0874606",
+      "lon": "30.9731438",
+      "category": "highway",
+      "type": "secondary",
+      "place_rank": 26,
+      "importance": 0.05338286182955669,
+      "addresstype": "secondary",
+      "name": "شارع النزهة",
+      "display_name": "شارع النزهة, الحى 17, الشيخ زايد, الجيزة, 12593, مصر",
+      "address": {
+        "road": "شارع النزهة",
+        "neighbourhood": "الحى 17",
+        "city": "الشيخ زايد",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12593",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0871632", "30.0877313", "30.9727199", "30.9735496"]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "query": "El Farik Fouad Aziz Ghaly Street, Ismailiyya 3, Ismailia, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Farik+Fouad+Aziz+Ghaly+Street%2C+Ismailiyya+3%2C+Ismailia%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:37:55.589Z",
+  "httpStatus": 200,
+  "response": []
+}

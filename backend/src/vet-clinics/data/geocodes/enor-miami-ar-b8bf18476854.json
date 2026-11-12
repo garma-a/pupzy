@@ -1,0 +1,8 @@
+{
+  "query": "بجوار مستشفى الصفوة الملكي, ميامي, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A8%D8%AC%D9%88%D8%A7%D8%B1+%D9%85%D8%B3%D8%AA%D8%B4%D9%81%D9%89+%D8%A7%D9%84%D8%B5%D9%81%D9%88%D8%A9+%D8%A7%D9%84%D9%85%D9%84%D9%83%D9%8A%2C+%D9%85%D9%8A%D8%A7%D9%85%D9%8A%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:53:27.364Z",
+  "httpStatus": 200,
+  "response": []
+}

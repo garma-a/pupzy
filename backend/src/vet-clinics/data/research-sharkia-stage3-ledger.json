@@ -1,0 +1,974 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F1",
+  "governorate": "Sharkia",
+  "searches": [
+    "عيادة بيطرية الزقازيق العاشر من رمضان بلبيس حيوانات أليفة",
+    "\"Zoo Planet\" Zagazig veterinary address"
+  ],
+  "sourcesConsulted": [
+    "https://www.bizmideast.com/EG/dr-meow-pets-clinic-العيادة-البيطرية-0100-198-7999",
+    "https://www.voofla.com/EG/10Th-of-Ramadan-City/568223680262816/Vet-Corner",
+    "https://www.voofla.com/EG/Zagazig/104169480941776/Zoo-Planet-Pet-Hospital",
+    "https://www.voofla.com/EG/Zagazig/249226251919159/Dr.-Meow-Pets-Clinic-Zagazig",
+    "https://yellowpages.com.eg/en/profile/Dr.-Meow-Pets-Clinic/680466"
+  ],
+  "candidates": [
+    {
+      "key": "vet-corner-ramadan",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/10Th-of-Ramadan-City/568223680262816/Vet-Corner",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual mirror: kitten panleukopenia treatment 2026-09-19 with these booking contacts/address. Header 01121791410 differs and is withheld in favor of current dated posts.",
+      "lastSeenActive": "2026-09-19"
+    },
+    {
+      "key": "zoo-planet-minya-qamh",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Zagazig/104169480941776/Zoo-Planet-Pet-Hospital",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read clinic-feed mirror explicitly identifies both branches, branch-specific contacts, pet treatment and current dated cases. Only Minya branch imported until Zagazig subdistrict is resolved.",
+      "lastSeenActive": "2026-10-31"
+    },
+    {
+      "key": "dr-meow-zagazig",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Zagazig/249226251919159/Dr.-Meow-Pets-Clinic-Zagazig",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        },
+        {
+          "url": "https://www.bizmideast.com/EG/dr-meow-pets-clinic-العيادة-البيطرية-0100-198-7999",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        },
+        {
+          "url": "https://yellowpages.com.eg/en/profile/Dr.-Meow-Pets-Clinic/680466",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual pet-clinic page with contact/physical location; BizMidEast explicitly identifies Zagazig 2, same contact. Mixed retail/boarding categories are not relied on alone: dedicated pet-clinic identity and veterinary category corroborated by individual Yellow Pages entry. No 24h promotion from directory default schedule.",
+      "lastSeenActive": null
+    }
+  ],
+  "holdsAndExclusions": [
+    {
+      "name": "Zoo Planet Zagazig branch",
+      "reason": "unresolved-catalog-subdistrict",
+      "evidence": "Same individual branch page as Minya branch; known address/phone, but city split 1/2 not established. Do not choose a district from memory.",
+      "sources": ["https://www.voofla.com/EG/Zagazig/104169480941776/Zoo-Planet-Pet-Hospital"]
+    }
+  ],
+  "counts": {
+    "retained": 8,
+    "active": 8,
+    "inactiveByReason": {},
+    "precision": {
+      "area": 8
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {
+    "unresolved-catalog-subdistrict": 1
+  },
+  "importAccounting": {
+    "candidates": 7,
+    "imported": 7,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D1",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D1-decisions.json",
+    "cities": [
+      {
+        "city": "Zagazig",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Zagazig/67988/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Zagazig/67988",
+          "https://www.petshops1.com/EG/Az-Zagazig/67436/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Az-Zagazig/67436"
+        ],
+        "discoveryEntries": 65,
+        "individualSnapshots": [
+          "web-evidence/depth-ad423092380e4bb4.json",
+          "web-evidence/depth-8c85d7429a354262.json",
+          "web-evidence/depth-22869e451927b9fc.json",
+          "web-evidence/depth-cb002d7df7feca4c.json",
+          "web-evidence/depth-b179af5428ac34f7.json",
+          "web-evidence/depth-ac550b53d6ea81e5.json",
+          "web-evidence/depth-1f873f3e726d8066.json",
+          "web-evidence/depth-1918986913136284.json",
+          "web-evidence/depth-71e8fe0cea74f219.json",
+          "web-evidence/depth-2bce24b6a5ee0f82.json",
+          "web-evidence/depth-51821b33be74a0c9.json",
+          "web-evidence/depth-7ea08b73caeb59c9.json",
+          "web-evidence/depth-2b88217de4b3d77f.json",
+          "web-evidence/depth-4241885c95f2fef6.json",
+          "web-evidence/depth-b5f6a165a0dda0b3.json",
+          "web-evidence/depth-f929062306af83cc.json",
+          "web-evidence/depth-24d1cfa6cc8afc98.json",
+          "web-evidence/depth-f5f79099b5abb1b3.json",
+          "web-evidence/depth-158ec8128232b3f7.json",
+          "web-evidence/depth-9117f8a112d16d0c.json",
+          "web-evidence/depth-27cd8d7e2ef1b111.json"
+        ],
+        "candidates": [
+          {
+            "city": "Zagazig",
+            "name": "خبرات عملية في مزارع الدواجن",
+            "url": "https://www.petshops1.com/EG/Zagazig/474886776038501/%D8%AE%D8%A8%D8%B1%D8%A7%D8%AA-%D8%B9%D9%85%D9%84%D9%8A%D8%A9-%D9%81%D9%8A-%D9%85%D8%B2%D8%A7%D8%B1%D8%B9-%D8%A7%D9%84%D8%AF%D9%88%D8%A7%D8%AC%D9%86",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Dr. Meow Pets Clinic Zagazig",
+            "url": "https://www.petshops1.com/EG/Zagazig/249226251919159/Dr.-Meow-Pets-Clinic-Zagazig",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "Existing Dr Meow record, same phone/location; no duplicate imported."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Zoo Planet Pet Hospital",
+            "url": "https://www.petshops1.com/EG/Zagazig/104169480941776/Zoo-Planet-Pet-Hospital",
+            "status": "held",
+            "reason": "already-retained-and-held-branch",
+            "evidence": "Minya al Qamh branch already retained; Zagazig branch still needs split district."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Pet Resort Clinic - عيادة بيت ريزورت",
+            "url": "https://www.petshops1.com/EG/Zagazig/343423753699925/Pet-Resort-Clinic---%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%AA-%D8%B1%D9%8A%D8%B2%D9%88%D8%B1%D8%AA",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Pet Resort clinic treatment/contacts established; Zeraa/Tagneed address needs split district evidence."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Diamond Pet Clinic",
+            "url": "https://www.petshops1.com/EG/Zagazig/105252541070168/Diamond-Pet-Clinic",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Diamond pet medicine and phone established; Shaibet An Nakareyah locality split urban/rural not yet independently resolved."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Safari Mart",
+            "url": "https://www.petshops1.com/EG/Zagazig/1309979839095784/Safari-Mart",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "ElFath for Trading & Distribution - FTD",
+            "url": "https://www.petshops1.com/EG/Zagazig/360794547292746/ElFath-for-Trading-%26-Distribution---FTD",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Safari Animal's Centre",
+            "url": "https://www.petshops1.com/EG/Zagazig/102598365161503/Safari-Animal%27s-Centre",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Safari on-site canine parvo treatment 2026-09-21; Al Mohafza/Bank Ahly address split district unresolved."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Petica Clinic - دكتورة آية على",
+            "url": "https://www.petshops1.com/EG/Zagazig/110912148073267/Petica-Clinic---%D8%AF%D9%83%D8%AA%D9%88%D8%B1%D8%A9-%D8%A2%D9%8A%D8%A9-%D8%B9%D9%84%D9%89",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Petica reptile treatment and clinical services established; Al Zohour/Naseriya district unresolved."
+          },
+          {
+            "city": "Zagazig",
+            "name": "ايجيبت كير للصناعات الدوائية Egypt Care for a",
+            "url": "https://www.petshops1.com/EG/Zagazig/114690269918185/%D8%A7%D9%8A%D8%AC%D9%8A%D8%A8%D8%AA-%D9%83%D9%8A%D8%B1-%D9%84%D9%84%D8%B5%D9%86%D8%A7%D8%B9%D8%A7%D8%AA-%D8%A7%D9%84%D8%AF%D9%88%D8%A7%D8%A6%D9%8A%D8%A9-Egypt-Care-for-animal-health",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "العيادة البيطرية",
+            "url": "https://www.petshops1.com/EG/Zagazig/101700921583077/%D8%A7%D9%84%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "livestock-only-evidence",
+            "evidence": "Actual address El Mogaffaf, Ibrahimia; poultry/cattle medicines and vaccination, not Zagazig pet premises."
+          },
+          {
+            "city": "Zagazig",
+            "name": "BEST Lab for Animal Health Services",
+            "url": "https://www.petshops1.com/EG/Zagazig/110576001806222/BEST-Lab-for-Animal-Health-Services",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Zohor Pets clinic & shop",
+            "url": "https://www.petshops1.com/EG/Zagazig/112267446988676/Zohor-Pets-clinic-%26-shop",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Zohor dedicated clinic established at El Sayed Zaher/Teachers subdivision; split district unresolved."
+          },
+          {
+            "city": "Zagazig",
+            "name": "عماد أديب ـ معا نطور ـ",
+            "url": "https://www.petshops1.com/EG/Zagazig/886122301257558/%D8%B9%D9%85%D8%A7%D8%AF-%D8%A3%D8%AF%D9%8A%D8%A8-%D9%80-%D9%85%D8%B9%D8%A7-%D9%86%D8%B7%D9%88%D8%B1-%D9%80",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Vetmark",
+            "url": "https://www.petshops1.com/EG/Zagazig/102316475984503/Vetmark",
+            "status": "held",
+            "reason": "marketing-company",
+            "evidence": "Vetmark explicitly supplies strategic and digital marketing services to animal-health businesses."
+          },
+          {
+            "city": "Zagazig",
+            "name": "DEMA VET",
+            "url": "https://www.petshops1.com/EG/Zagazig/785693521304968/DEMA-VET",
+            "status": "held",
+            "reason": "poultry-only",
+            "evidence": "DEMA VET offers chick orders, production-cycle vaccines and poultry feed, no pet clinic."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Dr Amr Emad Romia",
+            "url": "https://www.petshops1.com/EG/Zagazig/863283833528607/Dr-Amr-Emad-Romia",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Alakhlaa for marketing chicks",
+            "url": "https://www.petshops1.com/EG/Zagazig/100882752764982/Alakhlaa-for-marketing-chicks",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Hero",
+            "url": "https://www.petshops1.com/EG/Zagazig/104162084852978/Hero",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Mounir Vet.Surg.Theater",
+            "url": "https://www.petshops1.com/EG/Zagazig/113120045010271/Mounir-Vet.Surg.Theater",
+            "status": "held",
+            "reason": "unresolved-physical-premises",
+            "evidence": "Surgeon shows cases at other clinics including Tanta Pet Espitalia; own permanent Tolba Owida premises not demonstrated."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Florist Feed",
+            "url": "https://www.petshops1.com/EG/Zagazig/125918693012068/Florist-Feed",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "وآﮬ̷ــے ذگـــّـريـآآت",
+            "url": "https://www.petshops1.com/EG/Zagazig/308550859292761/%D9%88%D8%A2%EF%AE%AC%CC%B7%D9%80%D9%80%DB%92-%D8%B0%DA%AF%D9%80%D9%80%D9%80%D9%91%D9%80%D8%B1%D9%8A%D9%80%D8%A2%D8%A2%D8%AA",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Pets vet at zagazig",
+            "url": "https://www.petshops1.com/EG/Zagazig/1094014703989755/Pets-vet-at-zagazig",
+            "status": "held",
+            "reason": "unresolved-current-identity",
+            "evidence": "Manal Mamdouh feed uses Pets House name; phone differs from current Pets House. Do not silently infer branch/rename or duplicate."
+          },
+          {
+            "city": "Zagazig",
+            "name": "علف هيرو - إداره التسويق",
+            "url": "https://www.petshops1.com/EG/Zagazig/111678761574120/%D8%B9%D9%84%D9%81-%D9%87%D9%8A%D8%B1%D9%88---%D8%A5%D8%AF%D8%A7%D8%B1%D9%87-%D8%A7%D9%84%D8%AA%D8%B3%D9%88%D9%8A%D9%82",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "عيادة النبات-Plant Clinic",
+            "url": "https://www.petshops1.com/EG/Zagazig/374632492410742/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D9%86%D8%A8%D8%A7%D8%AA-Plant-Clinic",
+            "status": "held",
+            "reason": "plant-clinic",
+            "evidence": "Plant care clinic is outside veterinary scope."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Gouda Usama - جوده أسامة",
+            "url": "https://www.petshops1.com/EG/Zagazig/393707047152017/Gouda-Usama---%D8%AC%D9%88%D8%AF%D9%87-%D8%A3%D8%B3%D8%A7%D9%85%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Pet Care at Home  Dr. Ahmed",
+            "url": "https://www.petshops1.com/EG/Zagazig/719980204529036/Pet-Care-at-Home--Dr.-Ahmed",
+            "status": "held",
+            "reason": "home-visit-only",
+            "evidence": "Named home pet-care service; qualifying public treatment premises unestablished."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Top Dog's",
+            "url": "https://www.petshops1.com/EG/Zagazig/124397324085007/Top-Dog%27s",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "قط وكلب",
+            "url": "https://www.petshops1.com/EG/Zagazig/371202826071629/%D9%82%D8%B7-%D9%88%D9%83%D9%84%D8%A8",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "ابو تيتو لتدريب كلاب الحرب",
+            "url": "https://www.petshops1.com/EG/Zagazig/104634411487947/%D8%A7%D8%A8%D9%88-%D8%AA%D9%8A%D8%AA%D9%88-%D9%84%D8%AA%D8%AF%D8%B1%D9%8A%D8%A8-%D9%83%D9%84%D8%A7%D8%A8-%D8%A7%D9%84%D8%AD%D8%B1%D8%A8",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Tiger Packaging & Printing",
+            "url": "https://www.petshops1.com/EG/Zagazig/103762371777966/Tiger-Packaging-%26-Printing",
+            "status": "excluded-discovery",
+            "reason": "unrelated-business",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "حمامه 4 pets",
+            "url": "https://www.petshops1.com/EG/Zagazig/419785714748600/%D8%AD%D9%85%D8%A7%D9%85%D9%87-4-pets",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Mickey's Pets Store",
+            "url": "https://www.petshops1.com/EG/Zagazig/101431885212839/Mickey%27s-Pets-Store",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "المركز البيطري  د/ جمال فاضل",
+            "url": "https://www.petshops1.com/EG/Zagazig/100260438036861/%D8%A7%D9%84%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A--%D8%AF--%D8%AC%D9%85%D8%A7%D9%84-%D9%81%D8%A7%D8%B6%D9%84",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Gamal Fadel physical pet clinic/phone confirmed; Mansoura bus-station road split district unresolved."
+          },
+          {
+            "city": "Zagazig",
+            "name": "El Marwa Farm boer goat",
+            "url": "https://www.petshops1.com/EG/Zagazig/180243172123940/El-Marwa-Farm-boer-goat",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "كابتن محمد مدرب خيل",
+            "url": "https://www.petshops1.com/EG/Zagazig/664775290656300/%D9%83%D8%A7%D8%A8%D8%AA%D9%86-%D9%85%D8%AD%D9%85%D8%AF-%D9%85%D8%AF%D8%B1%D8%A8-%D8%AE%D9%8A%D9%84",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Tom tom the cat",
+            "url": "https://www.petshops1.com/EG/Zagazig/457109920811936/Tom-tom-the-cat",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "El3alamy for pets",
+            "url": "https://www.petshops1.com/EG/Zagazig/112347317779309/El3alamy-for-pets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Egyptian Husky Club",
+            "url": "https://www.petshops1.com/EG/Zagazig/107467594229549/Egyptian-Husky-Club",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Cross Vom House",
+            "url": "https://www.petshops1.com/EG/Zagazig/113463290514917/Cross-Vom-House",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Key Vet Cooperation KVC شركة كي فيت كوبريشن ل",
+            "url": "https://www.petshops1.com/EG/Zagazig/101549278022285/Key-Vet-Cooperation-KVC-%D8%B4%D8%B1%D9%83%D8%A9-%D9%83%D9%8A-%D9%81%D9%8A%D8%AA-%D9%83%D9%88%D8%A8%D8%B1%D9%8A%D8%B4%D9%86-%D9%84%D8%A5%D8%B6%D8%A7%D9%81%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D8%B9%D9%84%D8%A7%D9%81-%D9%88%D8%A7%D9%84%D8%AE%D8%A7%D9%85%D8%A7%D8%AA",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "بلبل لعصافير البادجى واسماك الزينه با أبوحماد",
+            "url": "https://www.petshops1.com/EG/Zagazig/1929805860567206/%D8%A8%D9%84%D8%A8%D9%84-%D9%84%D8%B9%D8%B5%D8%A7%D9%81%D9%8A%D8%B1-%D8%A7%D9%84%D8%A8%D8%A7%D8%AF%D8%AC%D9%89-%D9%88%D8%A7%D8%B3%D9%85%D8%A7%D9%83-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D9%87-%D8%A8%D8%A7-%D8%A3%D8%A8%D9%88%D8%AD%D9%85%D8%A7%D8%AF-%D8%B4%D8%B1%D9%82%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "هيثم حلاوه ومحترفي الحمام - hithame halawa",
+            "url": "https://www.petshops1.com/EG/Zagazig/1804580982905063/%D9%87%D9%8A%D8%AB%D9%85-%D8%AD%D9%84%D8%A7%D9%88%D9%87-%D9%88%D9%85%D8%AD%D8%AA%D8%B1%D9%81%D9%8A-%D8%A7%D9%84%D8%AD%D9%85%D8%A7%D9%85---hithame-halawa",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Moon light",
+            "url": "https://www.petshops1.com/EG/Zagazig/469198693487382/Moon-light",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "قطط ليو في الزقازيق",
+            "url": "https://www.petshops1.com/EG/Zagazig/194824097039919/%D9%82%D8%B7%D8%B7-%D9%84%D9%8A%D9%88-%D9%81%D9%8A-%D8%A7%D9%84%D8%B2%D9%82%D8%A7%D8%B2%D9%8A%D9%82",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "تغليفات وهدايا في الزقازيق",
+            "url": "https://www.petshops1.com/EG/Zagazig/100755752685112/%D8%AA%D8%BA%D9%84%D9%8A%D9%81%D8%A7%D8%AA-%D9%88%D9%87%D8%AF%D8%A7%D9%8A%D8%A7-%D9%81%D9%8A-%D8%A7%D9%84%D8%B2%D9%82%D8%A7%D8%B2%D9%8A%D9%82",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "تحديق حمام وعصافيرالفاجريت فرع توزيع الشرقية",
+            "url": "https://www.petshops1.com/EG/Zagazig/107095921625613/%D8%AA%D8%AD%D8%AF%D9%8A%D9%82-%D8%AD%D9%85%D8%A7%D9%85-%D9%88%D8%B9%D8%B5%D8%A7%D9%81%D9%8A%D8%B1%D8%A7%D9%84%D9%81%D8%A7%D8%AC%D8%B1%D9%8A%D8%AA-%D9%81%D8%B1%D8%B9-%D8%AA%D9%88%D8%B2%D9%8A%D8%B9-%D8%A7%D9%84%D8%B4%D8%B1%D9%82%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "BOB Beauty Salon",
+            "url": "https://www.petshops1.com/EG/Zagazig/442472552278753/BOB-Beauty-Salon",
+            "status": "excluded-discovery",
+            "reason": "unrelated-business",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Royal Veterinary Hospital",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/316951549236264/Royal-Veterinary-Hospital",
+            "status": "retained",
+            "reason": "royal-zagazig",
+            "evidence": "2026-10-31 parasite vaccination notice paired with physical Qawmia/Tolba Owida premises and contact; Qawmia locality corroborated as Qism2 by existing Dr Meow source."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Pets House Veterinary Clinic",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/643187339195695/Pets-House-Veterinary-Clinic",
+            "status": "retained",
+            "reason": "pets-house-zagazig",
+            "evidence": "Individual page explicitly describes public physical pet hospital with surgery/X-ray/ultrasound; Qawmia matches existing independently sourced Qism2 locality. Generic emergency 24/7 notice not converted into opening hours. No evidence establishes common ownership with the different Mit Ghamr clinic."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Allam pet's clinic",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/850692491773819/Allam-pet%27s-clinic",
+            "status": "held",
+            "reason": "unresolved-catalog-area",
+            "evidence": "Allam on-site pet caesarean evidence and current landline 0552310057 established; eye hospital locality needs split district."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Al-Qady Veterinary Center",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/388058467911913/Al-Qady-Veterinary-Center",
+            "status": "held",
+            "reason": "poultry-only",
+            "evidence": "Al Qady feed discusses poultry-house disease and feed, no demonstrated pet treatment."
+          },
+          {
+            "city": "Zagazig",
+            "name": "ismbydr",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/101750881609753/ismbydr",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Pets clinic",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/407435449604467/Pets-clinic",
+            "status": "held",
+            "reason": "unresolved-treatment-and-area",
+            "evidence": "Pets clinic page latest 2022 accessories posts and Al Fatih address; insufficient on-site medicine/district evidence."
+          },
+          {
+            "city": "Zagazig",
+            "name": "نماء للمشروعات البيطرية",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/2429696670589768/%D9%86%D9%85%D8%A7%D8%A1-%D9%84%D9%84%D9%85%D8%B4%D8%B1%D9%88%D8%B9%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Haus Osko kennel",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/816546381700796/Haus-Osko-kennel",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "الصفحة الرسمية لـ أ.د / طارق البرمبلي - Prof.",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/173834689364959/%D8%A7%D9%84%D8%B5%D9%81%D8%AD%D8%A9-%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A%D8%A9-%D9%84%D9%80-%D8%A3.%D8%AF---%D8%B7%D8%A7%D8%B1%D9%82-%D8%A7%D9%84%D8%A8%D8%B1%D9%85%D8%A8%D9%84%D9%8A---Prof.-Tarek-Elbromboly",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "الشامى لطيور الزينه",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/287348748038425/%D8%A7%D9%84%D8%B4%D8%A7%D9%85%D9%89-%D9%84%D8%B7%D9%8A%D9%88%D8%B1-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Salhy Group Companies - مجموعة شركات الصالحي",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/209245754057/Salhy-Group-Companies---%D9%85%D8%AC%D9%85%D9%88%D8%B9%D8%A9-%D8%B4%D8%B1%D9%83%D8%A7%D8%AA-%D8%A7%D9%84%D8%B5%D8%A7%D9%84%D8%AD%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Marvel Animal Clinic",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/106766860760882/Marvel-Animal-Clinic",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Marvel directory template and contact/address only, pet service category does not establish clinic treatment."
+          },
+          {
+            "city": "Zagazig",
+            "name": "ملتقى عشاق طيور الزينة - Forum Lovers Pet bir",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/388282107978407/%D9%85%D9%84%D8%AA%D9%82%D9%89-%D8%B9%D8%B4%D8%A7%D9%82-%D8%B7%D9%8A%D9%88%D8%B1-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D8%A9---Forum-Lovers-Pet-birds",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "حمام وعصافير بودي",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/472788429436145/%D8%AD%D9%85%D8%A7%D9%85-%D9%88%D8%B9%D8%B5%D8%A7%D9%81%D9%8A%D8%B1-%D8%A8%D9%88%D8%AF%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "الصالح للأعلاف",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/757058937669750/%D8%A7%D9%84%D8%B5%D8%A7%D9%84%D8%AD-%D9%84%D9%84%D8%A3%D8%B9%D9%84%D8%A7%D9%81",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "Sale and training dogs",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/1387448344916706/Sale-and-training-dogs",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Zagazig",
+            "name": "مزرعة الامير لطيور الزينة والحيوانات الالي",
+            "url": "https://www.petshops1.com/EG/Az-Zagazig/1528312414078334/%D9%85%D8%B2%D8%B1%D8%B9%D8%A9-%D8%A7%D9%84%D8%A7%D9%85%D9%8A%D8%B1-%D9%84%D8%B7%D9%8A%D9%88%D8%B1-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D8%A9-%D9%88%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          }
+        ],
+        "retained": ["royal-zagazig", "pets-house-zagazig"],
+        "outcomesByReason": {
+          "farming-or-breeding": 10,
+          "already-retained": 1,
+          "already-retained-and-held-branch": 1,
+          "unresolved-catalog-area": 7,
+          "no-pet-clinic-evidence-in-discovery": 25,
+          "livestock-only-evidence": 1,
+          "marketing-company": 1,
+          "poultry-only": 2,
+          "unresolved-physical-premises": 1,
+          "unresolved-current-identity": 1,
+          "plant-clinic": 1,
+          "home-visit-only": 1,
+          "training-or-breeding": 4,
+          "unrelated-business": 2,
+          "shop-grooming-or-boarding": 1,
+          "pharmacy-or-supplier": 2,
+          "unresolved-treatment-and-area": 1,
+          "unresolved-pet-treatment": 1
+        }
+      },
+      {
+        "city": "10th of Ramadan",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/10th-of-Ramadan-City/67330/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/10th-of-Ramadan-City/67330"
+        ],
+        "discoveryEntries": 34,
+        "individualSnapshots": [
+          "web-evidence/depth-bf3a13ab0e5e81ae.json",
+          "web-evidence/depth-98ff6e5a112a2ad0.json",
+          "web-evidence/depth-68fe6a5d6ef604dd.json",
+          "web-evidence/depth-6b66f5f8bd1cd32a.json",
+          "web-evidence/depth-b997d4f3cbf1d64c.json"
+        ],
+        "candidates": [
+          {
+            "city": "10th of Ramadan",
+            "name": "Pharma Swede Egypt",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/441270999281030/Pharma-Swede-Egypt",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Vet Master Clinic",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/108780898492224/Vet-Master-Clinic",
+            "status": "retained",
+            "reason": "vet-master-ramadan",
+            "evidence": "Dedicated pet medicine clinic with physical published street and selectable whole new-city catalog match. No unsupported split to First/Second district; latest grooming posts not treated as dated clinical evidence."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "مستلزمات الحيوانات الاليفه بسعرالجمله",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/430325737717452/%D9%85%D8%B3%D8%AA%D9%84%D8%B2%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D9%87-%D8%A8%D8%B3%D8%B9%D8%B1%D8%A7%D9%84%D8%AC%D9%85%D9%84%D9%87",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Vet Planet Care Pharmaceuticals",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/228435293683688/Vet-Planet-Care-Pharmaceuticals",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "بيرد لصحة الحيوان Bird Vet Products",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/109443734851083/%D8%A8%D9%8A%D8%B1%D8%AF-%D9%84%D8%B5%D8%AD%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86-Bird-Vet-Products",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "كابتن اسلام القاضي - Cap Eslam Elkady",
+            "url": "https://www.petshops1.com/EG/10th-of-Ramadan-City/1682971158588942/%D9%83%D8%A7%D8%A8%D8%AA%D9%86-%D8%A7%D8%B3%D9%84%D8%A7%D9%85-%D8%A7%D9%84%D9%82%D8%A7%D8%B6%D9%8A---Cap-Eslam-Elkady",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "عالم أليف",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/101843988508676/%D8%B9%D8%A7%D9%84%D9%85-%D8%A3%D9%84%D9%8A%D9%81",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Mera Egypt",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/249423155192483/Mera-Egypt",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "International Pack",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/297005793765455/International-Pack",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Rottweiler 10th K9",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/104860841656588/Rottweiler-10th-K9",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Jungle Pet Clinic",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/1780959522126056/Jungle-Pet-Clinic",
+            "status": "retained",
+            "reason": "jungle-ramadan",
+            "evidence": "Individual feed explicitly describes medical care for cats and dogs at neighbourhood 29 block 102; introductory Arabic contact plus Telephone contact retained. Directory maps not opened."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Pawlo pets",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/2247586322192993/Pawlo-pets",
+            "status": "held",
+            "reason": "shop-without-clinic",
+            "evidence": "Pawlo explicitly pet shop at Sky Mall; no clinical treatment evidence."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "OZZO",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/109395518538956/OZZO",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Vet Corner",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/568223680262816/Vet-Corner",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "Existing Vet Corner; current dated post contacts used instead of old header."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Tag pets",
+            "url": "https://www.petshops1.com/EG/10th-of-Ramadan-City/726383094135742/Tag-pets",
+            "status": "held",
+            "reason": "shop-without-clinic",
+            "evidence": "Tag pet food/accessories retailer; no medical premises."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "مربط السُفيان . Al Sofyan Stud",
+            "url": "https://www.petshops1.com/EG/10th-of-Ramadan-City/100856339747448/%D9%85%D8%B1%D8%A8%D8%B7-%D8%A7%D9%84%D8%B3%D9%8F%D9%81%D9%8A%D8%A7%D9%86-.-Al-Sofyan-Stud",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "RAM For Feed Manufacturing",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/742511192269941/RAM-For-Feed-Manufacturing",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "مزرعة الفك المفترس",
+            "url": "https://www.petshops1.com/EG/10th-of-Ramadan-City/680363878485625/%D9%85%D8%B2%D8%B1%D8%B9%D8%A9-%D8%A7%D9%84%D9%81%D9%83-%D8%A7%D9%84%D9%85%D9%81%D8%AA%D8%B1%D8%B3",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Zooline",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/900067456529936/Zooline",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Pico Birds & More",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/1277176198812301/Pico-Birds-%26-More",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Petzy stor",
+            "url": "https://www.petshops1.com/EG/10th-of-Ramadan-City/995395700318469/Petzy-stor",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "الشركة التجارية المتحدة UTC",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/104187260947737/%D8%A7%D9%84%D8%B4%D8%B1%D9%83%D8%A9-%D8%A7%D9%84%D8%AA%D8%AC%D8%A7%D8%B1%D9%8A%D8%A9-%D8%A7%D9%84%D9%85%D8%AA%D8%AD%D8%AF%D8%A9-UTC",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "مربط صروح للخيول العربية الأصيلة",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/104757638705458/%D9%85%D8%B1%D8%A8%D8%B7-%D8%B5%D8%B1%D9%88%D8%AD-%D9%84%D9%84%D8%AE%D9%8A%D9%88%D9%84-%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-%D8%A7%D9%84%D8%A3%D8%B5%D9%8A%D9%84%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "EGYPT RIDER",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/104870055321465/EGYPT-RIDER",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Quiko Egypt",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/105689724521744/Quiko-Egypt",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Nutrinova Pet Food",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/106390721275999/Nutrinova-Pet-Food",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Dog Lovers 10th of Ramadan",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/108201438464205/Dog-Lovers-10th-of-Ramadan",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Discus Pets Shop",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/109314831608916/Discus-Pets-Shop",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "Wensho Kennel",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/114154735932890/Wensho-Kennel",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "PET For Packaging Materials",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/162013687294844/PET-For-Packaging-Materials",
+            "status": "excluded-discovery",
+            "reason": "unrelated-business",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "RAM for feed manufacturing",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/175761585786343/RAM-for-feed-manufacturing",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "NilePets",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/279248091931619/NilePets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "King's photographer",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/287286001394954/King%27s-photographer",
+            "status": "excluded-discovery",
+            "reason": "unrelated-business",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "10th of Ramadan",
+            "name": "مكتب النور والبركة للاعلاف والانتاج الداجنى ب",
+            "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/1250207114994265/%D9%85%D9%83%D8%AA%D8%A8-%D8%A7%D9%84%D9%86%D9%88%D8%B1-%D9%88%D8%A7%D9%84%D8%A8%D8%B1%D9%83%D8%A9-%D9%84%D9%84%D8%A7%D8%B9%D9%84%D8%A7%D9%81-%D9%88%D8%A7%D9%84%D8%A7%D9%86%D8%AA%D8%A7%D8%AC-%D8%A7%D9%84%D8%AF%D8%A7%D8%AC%D9%86%D9%89-%D8%A8%D8%A7%D9%84%D8%B9%D8%A7%D8%B4%D8%B1-%D9%85%D9%86-%D8%B1%D9%85%D8%B6%D8%A7%D9%86",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          }
+        ],
+        "retained": ["vet-master-ramadan", "jungle-ramadan"],
+        "outcomesByReason": {
+          "pharmacy-or-supplier": 3,
+          "no-pet-clinic-evidence-in-discovery": 12,
+          "farming-or-breeding": 6,
+          "training-or-breeding": 4,
+          "shop-without-clinic": 2,
+          "already-retained": 1,
+          "shop-grooming-or-boarding": 2,
+          "unrelated-business": 2
+        }
+      }
+    ],
+    "limitations": "City/category enumeration records every discovered entry; nonclinical retail/farm/personal entries excluded at discovery. Individual pet-clinic candidates read in cached snapshots, with unresolved treatment, contact, identity or catalog district held explicitly. Mirrors are one witness, not independent sources. No claim of market exhaustion; alternate sources/access limitations are recorded in city pages."
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

@@ -407,6 +407,7 @@ describe('Vet Clinic Mutation Boundary & Persistence Adapters', () => {
       city_id: 'city-cairo-uuid',
       source: 'OSM',
       location_provenance: 'OSM',
+      location_precision: 'area',
       coordinates: 'SRID=4326;POINT(32.6537 25.6792)',
       address_english: 'Luxor Road',
       address_arabic: 'طريق الأقصر',
@@ -431,6 +432,7 @@ describe('Vet Clinic Mutation Boundary & Persistence Adapters', () => {
     assert.equal(updated.phone_number, '+201001234567');
     // Location attributes remain intact
     assert.equal(updated.coordinates, 'SRID=4326;POINT(32.6537 25.6792)');
+    assert.equal(updated.location_precision, 'area');
   });
 
   it('updateVetClinicCommand enforces full Mapped Location confirmation and logs audit on discrepant relocation', async () => {
@@ -850,5 +852,60 @@ describe('Vet Clinic Mutation Boundary & Persistence Adapters', () => {
       is_active: true,
     });
     assert.ok(created);
+  });
+});
+
+describe('Vet Clinic contact activation validation', () => {
+  async function adapter(existing) {
+    let saved;
+    return {
+      persistence: Object.assign(new PostgresVetClinicPersistenceAdapter(null), {
+        acquireCityCatalogRevisionFence: async () => {},
+        findClinicById: async () => existing,
+        updateClinic: async (_id, data) => {
+          saved = data;
+          return { ...existing, ...data };
+        },
+        advanceCatalogRevision: async () => {},
+      }),
+      saved: () => saved,
+    };
+  }
+  it('rejects activation without a phone before persistence', async () => {
+    const mock = await adapter({ id: 'clinic', is_active: false, phone_number: null });
+    await assert.rejects(
+      () => updateVetClinicCommand(mock.persistence, 'clinic', { is_active: 'true' }, {}),
+      ValidationError,
+    );
+    assert.equal(mock.saved(), undefined);
+  });
+  it('accepts activation and validates the submitted phone in the same command', async () => {
+    const mock = await adapter({ id: 'clinic', is_active: false, phone_number: null });
+    const result = await updateVetClinicCommand(
+      mock.persistence,
+      'clinic',
+      {
+        is_active: 'true',
+        phone_number: '010 1234 5678',
+        is_24_hours: 'true',
+        facebook_url: 'https://www.facebook.com/clinic',
+      },
+      {},
+    );
+    assert.equal(result.is_active, true);
+    assert.equal(result.is_24_hours, true);
+    assert.equal(result.phone_number, '+201012345678');
+    assert.equal(result.facebook_url, 'https://www.facebook.com/clinic');
+  });
+  it('rejects removing the phone of an active clinic and rejects unsafe URLs', async () => {
+    for (const payload of [
+      { phone_number: '' },
+      { phone_number: '010123' },
+      { facebook_url: 'javascript:alert(1)' },
+      { website: 'ftp://clinic.example' },
+    ]) {
+      const mock = await adapter({ id: 'clinic', is_active: true, phone_number: '+201012345678' });
+      await assert.rejects(() => updateVetClinicCommand(mock.persistence, 'clinic', payload, {}), ValidationError);
+    }
   });
 });

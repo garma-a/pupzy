@@ -1,0 +1,35 @@
+{
+  "query": "200, المعادي, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=200%2C+%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%AF%D9%8A%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:46:07.464Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51180515,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 6597000019,
+      "lat": "29.9898894",
+      "lon": "31.2831885",
+      "category": "place",
+      "type": "house",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "place",
+      "name": "",
+      "display_name": "200, مساكن صقر قريش, القاهرة, 11742, مصر",
+      "address": {
+        "house_number": "200",
+        "neighbourhood": "مساكن صقر قريش",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11742",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9898394", "29.9899394", "31.2831385", "31.2832385"]
+    }
+  ]
+}

@@ -1,0 +1,232 @@
+[
+  {
+    "key": "vet-corner-ramadan",
+    "nameEnglish": "Vet Corner",
+    "nameArabic": "عيادة فيت كورنر البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "District 11, neighbourhood 79, beside new bus station, behind Misr El Hegaz buildings, 10th of Ramadan City, Sharkia",
+    "addressArabic": "الحي 11، مجاورة 79، بجوار الموقف الجديد، خلف عمارات مصر الحجاز، العاشر من رمضان، الشرقية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "10th of Ramadan City",
+    "citySourceCode": "OSM:node/768766246",
+    "phones": ["01006121879", "01280053899"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/10Th-of-Ramadan-City/568223680262816/Vet-Corner",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-19",
+    "classificationEvidence": "Read individual mirror: kitten panleukopenia treatment 2026-09-19 with these booking contacts/address. Header 01121791410 differs and is withheld in favor of current dated posts."
+  },
+  {
+    "key": "zoo-planet-minya-qamh",
+    "nameEnglish": "Zoo Planet Pet Hospital",
+    "nameArabic": "مستشفى زو بلانيت البيطري",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "El Mansi Square, beside Alaa El Hallaby butcher and Crepe El Thawra, Minya al-Qamh, Sharkia",
+    "addressArabic": "ميدان الشهيد المنسي، بجوار جزارة علاء الحلابي وكريب الثورة، منيا القمح، الشرقية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Minya al-Qamh",
+    "citySourceCode": "EG1314",
+    "phones": ["01006291221"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Zagazig/104169480941776/Zoo-Planet-Pet-Hospital",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-31",
+    "classificationEvidence": "Read clinic-feed mirror explicitly identifies both branches, branch-specific contacts, pet treatment and current dated cases. Only Minya branch imported until Zagazig subdistrict is resolved.",
+    "chainKey": "zoo-planet",
+    "branchQualifier": "Minya al-Qamh"
+  },
+  {
+    "key": "dr-meow-zagazig",
+    "nameEnglish": "Dr. Meow Pets Clinic",
+    "nameArabic": "عيادة د. مياو للحيوانات الأليفة",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "El Kawmia Square, As Sayadin, Zaqaziq 2, Sharkia",
+    "addressArabic": "ميدان القومية، الصيادين، الزقازيق ثان، الشرقية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Zaqaziq 2",
+    "citySourceCode": "EG1302",
+    "phones": ["01001987999"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Zagazig/249226251919159/Dr.-Meow-Pets-Clinic-Zagazig",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.bizmideast.com/EG/dr-meow-pets-clinic-العيادة-البيطرية-0100-198-7999",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://yellowpages.com.eg/en/profile/Dr.-Meow-Pets-Clinic/680466",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Read individual pet-clinic page with contact/physical location; BizMidEast explicitly identifies Zagazig 2, same contact. Mixed retail/boarding categories are not relied on alone: dedicated pet-clinic identity and veterinary category corroborated by individual Yellow Pages entry. No 24h promotion from directory default schedule."
+  },
+  {
+    "key": "jungle-ramadan",
+    "nameEnglish": "Jungle Pet Clinic",
+    "nameArabic": "عيادة جانجل للحيوانات الأليفة",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Neighbourhood 29, block 102, 10th of Ramadan City, Sharkia",
+    "addressArabic": "مجاورة 29، بلوك 102، العاشر من رمضان، الشرقية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "10th of Ramadan City",
+    "citySourceCode": "OSM:node/768766246",
+    "phones": ["01150042317", "01003973675"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/1780959522126056/Jungle-Pet-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-30",
+    "classificationEvidence": "Individual feed explicitly describes medical care for cats and dogs at neighbourhood 29 block 102; introductory Arabic contact plus Telephone contact retained. Directory maps not opened."
+  },
+  {
+    "key": "vet-master-ramadan",
+    "nameEnglish": "Vet Master Clinic",
+    "nameArabic": "عيادة فيت ماستر البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Asher Men Ramadan Street, 10th of Ramadan City, Sharkia",
+    "addressArabic": "شارع العاشر من رمضان، مدينة العاشر من رمضان، الشرقية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "10th of Ramadan City",
+    "citySourceCode": "OSM:node/768766246",
+    "phones": ["01111147555"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/10Th-of-Ramadan-City/108780898492224/Vet-Master-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Dedicated pet medicine clinic with physical published street and selectable whole new-city catalog match. No unsupported split to First/Second district; latest grooming posts not treated as dated clinical evidence."
+  },
+  {
+    "key": "royal-zagazig",
+    "nameEnglish": "Royal Veterinary Hospital",
+    "nameArabic": "مستشفى رويال البيطري",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Qawmia, Tolba Owida Street extension, after Salah Salem Hospital, Tag Bassam corner, Zagazig, Sharkia",
+    "addressArabic": "القومية، امتداد شارع طلبة عويضة، بعد مستشفى صلاح سالم، ناصية تاج بسام، الزقازيق، الشرقية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Zaqaziq 2",
+    "citySourceCode": "EG1302",
+    "phones": ["01030330305"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Az-Zagazig/316951549236264/Royal-Veterinary-Hospital",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-31",
+    "classificationEvidence": "2026-10-31 parasite vaccination notice paired with physical Qawmia/Tolba Owida premises and contact; Qawmia locality corroborated as Qism2 by existing Dr Meow source."
+  },
+  {
+    "key": "pets-house-zagazig",
+    "nameEnglish": "Pets House Veterinary Clinic",
+    "nameArabic": "عيادة بيتس هاوس البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Qawmia, Gamal Abd El Nasser Secondary Girls School Street off El Amn El Ghezai Street, Zagazig, Sharkia",
+    "addressArabic": "القومية، شارع مدرسة جمال عبد الناصر الثانوية بنات، من شارع الأمن الغذائي، الزقازيق، الشرقية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Zaqaziq 2",
+    "citySourceCode": "EG1302",
+    "phones": ["01018877176"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Az-Zagazig/643187339195695/Pets-House-Veterinary-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual page explicitly describes public physical pet hospital with surgery/X-ray/ultrasound; Qawmia matches existing independently sourced Qism2 locality. Generic emergency 24/7 notice not converted into opening hours. No evidence establishes common ownership with the different Mit Ghamr clinic."
+  },
+  {
+    "key": "zoo-planet-zagazig",
+    "nameEnglish": "Zoo Planet Pet Hospital",
+    "nameArabic": "مستشفى زو بلانيت البيطري",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Gawish Hospital Street, opposite Gehazy, above Hi Brost, Zagazig, Sharkia",
+    "addressArabic": "شارع مستشفى جاويش، أمام جهازي، أعلى هاي بروست، الزقازيق، الشرقية",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Zaqaziq 2",
+    "citySourceCode": "EG1302",
+    "phones": ["01038989270"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Zagazig/104169480941776/Zoo-Planet-Pet-Hospital",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-07-15",
+    "classificationEvidence": "FX: individually reviewed branch on same multi-branch page; separate physical premises and branch-specific phone. Pet surgery evidence dated 2026-07-15. Catalog district corroborated by separately reviewed locality source; no coordinates inferred. Gawish Hospital is in Qism 2 per individually read Bizmideast hospital blood-bank locality entry (clinic coordinates not copied).",
+    "chainKey": "zoo-planet",
+    "branchQualifier": "Zagazig"
+  }
+]

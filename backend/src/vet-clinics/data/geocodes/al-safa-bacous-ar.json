@@ -1,0 +1,41 @@
+{
+  "query": "سينما ليلى, باكوس, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%B3%D9%8A%D9%86%D9%85%D8%A7+%D9%84%D9%8A%D9%84%D9%89%2C+%D8%A8%D8%A7%D9%83%D9%88%D8%B3%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:51:57.125Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 48946770,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 30661086,
+      "lat": "31.2325812",
+      "lon": "29.9672421",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.053409484245059854,
+      "addresstype": "tertiary",
+      "name": "شارع سينما ليلى",
+      "display_name": "شارع سينما ليلى, باكوس, الزاهرية, الإسكندرية, 21527, مصر",
+      "address": {
+        "road": "شارع سينما ليلى",
+        "neighbourhood": "باكوس",
+        "hamlet": "الزاهرية",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21527",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": [
+        "31.2311955",
+        "31.2339610",
+        "29.9661934",
+        "29.9682831"
+      ]
+    }
+  ]
+}

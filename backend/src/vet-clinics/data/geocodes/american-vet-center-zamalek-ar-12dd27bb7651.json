@@ -1,0 +1,35 @@
+{
+  "query": "الجزيرة الوسطى, أبو الفدا, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%AC%D8%B2%D9%8A%D8%B1%D8%A9+%D8%A7%D9%84%D9%88%D8%B3%D8%B7%D9%89%2C+%D8%A3%D8%A8%D9%88+%D8%A7%D9%84%D9%81%D8%AF%D8%A7%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:45:54.260Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50184727,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 24986454,
+      "lat": "30.0689914",
+      "lon": "31.2187060",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05339670634012356,
+      "addresstype": "residential",
+      "name": "شارع الجزيرة الوسطى",
+      "display_name": "شارع الجزيرة الوسطى, ابو الفدا, الزمالك, القاهرة, 12653, مصر",
+      "address": {
+        "road": "شارع الجزيرة الوسطى",
+        "neighbourhood": "ابو الفدا",
+        "suburb": "الزمالك",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "12653",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0665320", "30.0713184", "31.2167917", "31.2207782"]
+    }
+  ]
+}

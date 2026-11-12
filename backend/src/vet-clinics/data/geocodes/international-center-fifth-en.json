@@ -1,0 +1,61 @@
+{
+  "query": "Street 55, Fifth Settlement, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Street+55%2C+Fifth+Settlement%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:05.312Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51010344,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 156568240,
+      "lat": "30.0130143",
+      "lon": "31.4182368",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Al Batani Street",
+      "display_name": "Al Batani Street, Fifth Settlement, New Cairo City, Cairo, 11936, Egypt",
+      "address": {
+        "road": "Al Batani Street",
+        "neighbourhood": "Fifth Settlement",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11936",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0112077", "30.0145006", "31.4155642", "31.4212351"]
+    },
+    {
+      "place_id": 51081555,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 87349207,
+      "lat": "30.0114761",
+      "lon": "31.4325143",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Abd Al Latif Keshk Street",
+      "display_name": "Abd Al Latif Keshk Street, Fifth Settlement, New Cairo City, Cairo, 11835, Egypt",
+      "address": {
+        "road": "Abd Al Latif Keshk Street",
+        "neighbourhood": "Fifth Settlement",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11835",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0114698", "30.0114859", "31.4310828", "31.4339457"]
+    }
+  ]
+}

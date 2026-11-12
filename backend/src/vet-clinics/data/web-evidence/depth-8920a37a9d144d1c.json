@@ -1,0 +1,21 @@
+{
+  "url": "https://linktr.ee/elzera_petclinic",
+  "accessedAt": "2026-11-12",
+  "error": "HTTP Error 403: Forbidden",
+  "responseHeaders": {
+    "Connection": "close",
+    "Content-Length": "0",
+    "Server": "Varnish",
+    "Retry-After": "0",
+    "Accept-Ranges": "bytes",
+    "Date": "Thu, 12 Nov 2026 12:40:20 GMT",
+    "Via": "1.1 varnish",
+    "X-Served-By": "cache-mrs1530039-MRS",
+    "X-Cache": "MISS",
+    "X-Cache-Hits": "0",
+    "X-Timer": "S1794487221.815243,VS0,VE0",
+    "X-LT-Cache": "E-ERR",
+    "Server-Timing": "ltcache;desc=\"E-ERR\"",
+    "Referrer-Policy": "origin-when-cross-origin"
+  }
+}

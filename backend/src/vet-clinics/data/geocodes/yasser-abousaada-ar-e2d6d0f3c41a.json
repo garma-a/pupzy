@@ -1,0 +1,8 @@
+{
+  "query": "الجمعية الشرعية - شبرامنت 6 اكتوبر - الجيزة, Shabramant, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%AC%D9%85%D8%B9%D9%8A%D8%A9+%D8%A7%D9%84%D8%B4%D8%B1%D8%B9%D9%8A%D8%A9+-+%D8%B4%D8%A8%D8%B1%D8%A7%D9%85%D9%86%D8%AA+6+%D8%A7%D9%83%D8%AA%D9%88%D8%A8%D8%B1+-+%D8%A7%D9%84%D8%AC%D9%8A%D8%B2%D8%A9%2C+Shabramant%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:20:10.676Z",
+  "httpStatus": 200,
+  "response": []
+}

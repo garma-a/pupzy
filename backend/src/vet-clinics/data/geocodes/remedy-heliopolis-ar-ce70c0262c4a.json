@@ -1,0 +1,62 @@
+{
+  "query": "النزهة, Heliopolis, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%86%D8%B2%D9%87%D8%A9%2C+Heliopolis%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:13:24.173Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50636290,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 885410096,
+      "lat": "30.0956007",
+      "lon": "31.3422796",
+      "category": "highway",
+      "type": "primary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "primary",
+      "name": "كوبري النزهة",
+      "display_name": "كوبري النزهة, قسم مصر الجديدة, مصر الجديدة, القاهرة, 11736, مصر",
+      "address": {
+        "road": "كوبري النزهة",
+        "quarter": "قسم مصر الجديدة",
+        "suburb": "مصر الجديدة",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11736",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0925984", "30.0986029", "31.3418220", "31.3427372"]
+    },
+    {
+      "place_id": 430012678,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 1565551914,
+      "lat": "30.0988601",
+      "lon": "31.3429140",
+      "category": "highway",
+      "type": "primary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "primary",
+      "name": "كوبري النزهة",
+      "display_name": "كوبري النزهة, مصر الجديدة, القاهرة, 11361, مصر",
+      "address": {
+        "road": "كوبري النزهة",
+        "suburb": "مصر الجديدة",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11361",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0985857", "30.0991344", "31.3428727", "31.3429554"]
+    }
+  ]
+}

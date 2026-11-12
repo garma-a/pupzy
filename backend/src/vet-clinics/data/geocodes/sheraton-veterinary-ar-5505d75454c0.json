@@ -1,0 +1,35 @@
+{
+  "query": "خالد بن الوليد, Sheraton, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%AE%D8%A7%D9%84%D8%AF+%D8%A8%D9%86+%D8%A7%D9%84%D9%88%D9%84%D9%8A%D8%AF%2C+Sheraton%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:13:46.181Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50248635,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 877566603,
+      "lat": "30.1018166",
+      "lon": "31.3755557",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "tertiary",
+      "name": "شارع خالد بن الوليد",
+      "display_name": "شارع خالد بن الوليد, شيراتون, القاهرة, 11799, مصر",
+      "address": {
+        "road": "شارع خالد بن الوليد",
+        "neighbourhood": "شيراتون",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11799",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0992608", "30.1044130", "31.3727389", "31.3783053"]
+    }
+  ]
+}

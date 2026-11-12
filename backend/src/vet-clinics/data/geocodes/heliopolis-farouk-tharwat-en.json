@@ -1,0 +1,8 @@
+{
+  "query": "Farouk Tharwat Street, Ard El Golf, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Farouk+Tharwat+Street%2C+Ard+El+Golf%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:12:54.160Z",
+  "httpStatus": 200,
+  "response": []
+}

@@ -1,0 +1,36 @@
+{
+  "query": "جميل, الظاهر, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%AC%D9%85%D9%8A%D9%84%2C+%D8%A7%D9%84%D8%B8%D8%A7%D9%87%D8%B1%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:48:29.123Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 53781094,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 686119469,
+      "lat": "30.0622419",
+      "lon": "31.2561130",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "حارة جميل",
+      "display_name": "حارة جميل, الظاهر, القاهرة, 11563, مصر",
+      "address": {
+        "road": "حارة جميل",
+        "neighbourhood": "الظاهر",
+        "suburb": "الظاهر",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11563",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0621807", "30.0623026", "31.2557847", "31.2564412"]
+    }
+  ]
+}

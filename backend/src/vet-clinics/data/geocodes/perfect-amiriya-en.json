@@ -1,0 +1,36 @@
+{
+  "query": "Dr. Aida Street, Amiriya, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Dr.+Aida+Street%2C+Amiriya%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:47:37.185Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50690728,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 30081103,
+      "lat": "30.1008905",
+      "lon": "31.2891426",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Al Doctor Aida Street",
+      "display_name": "Al Doctor Aida Street, Al Qobba Al Gadida, Amiriya, Cairo, 11715, Egypt",
+      "address": {
+        "road": "Al Doctor Aida Street",
+        "neighbourhood": "Al Qobba Al Gadida",
+        "suburb": "Amiriya",
+        "city": "Cairo",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11715",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0990054", "30.1027773", "31.2884858", "31.2897958"]
+    }
+  ]
+}

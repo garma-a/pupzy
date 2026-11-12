@@ -1,0 +1,114 @@
+[
+  {
+    "key": "royal-new-damietta",
+    "nameEnglish": "Royal Vet Clinic",
+    "nameArabic": "عيادة رويال البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Abu El Kheir Street, Stadium Road, El Bady Tower basement, New Damietta",
+    "addressArabic": "شارع أبو الخير، طريق الاستاد، برج البادي، البدروم، دمياط الجديدة",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "New Damietta",
+    "citySourceCode": "EG1105",
+    "phones": ["01010749354"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Dumyat-al-Jadidah/107997234293777/Royal-vet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-23",
+    "classificationEvidence": "Read individual clinic-feed mirror: September 2026 current pet clinic and contact; dated eye surgery, radiography and physical address. No common-chain inference with other Royal names."
+  },
+  {
+    "key": "pet-heaven-damietta",
+    "nameEnglish": "Pet Heaven Veterinary Clinic",
+    "nameArabic": "عيادة بيت هيفن البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Galaa Street, beside new Bank of Alexandria, opposite Misr Insurance, Damietta",
+    "addressArabic": "شارع الجلاء، بجوار بنك الإسكندرية الجديد، أمام مصر للتأمين، دمياط",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Damietta First",
+    "citySourceCode": "EG1101",
+    "phones": ["01098589294"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Damietta/117446396757514/Pet-Heaven--veterinary-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-20",
+    "classificationEvidence": "Individual clinic feed reports treated cat skin infection on 2026-10-20. Address/contact in clinic posts. El Galaa Qism 1 corroborated by independently read locality report https://www.elwatannews.com/news/details/652703 ; no Google map used.",
+    "aliases": {
+      "english": ["Pet Heaven  veterinary clinic"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "pets-clinic-damietta",
+    "nameEnglish": "Pets Clinic",
+    "nameArabic": "عيادة الحيوانات الأليفة",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Sorour Square, Damietta",
+    "addressArabic": "ميدان سرور، دمياط",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Damietta First",
+    "citySourceCode": "EG1101",
+    "phones": ["01025268399"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Damietta/108258998229694/Pets-Clinic--%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A3%D9%84%D9%8A%D9%81%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-07",
+    "classificationEvidence": "Individual pet vaccination/treatment clinic at Sorour Square. Main reception from appointment posts; adoption personal numbers omitted. Sorour Square Qism 1 corroborated by National Election Authority polling list https://www.elections.eg/images/pdfs/qrar-tashkel/30%20%202023.pdf ."
+  },
+  {
+    "key": "the-vet-new-damietta",
+    "nameEnglish": "The Vet Hospital",
+    "nameArabic": "المستشفى البيطري",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Shop 1, plot 226, neighbourhood 26, 5th District, New Damietta, Damietta",
+    "addressArabic": "محل 1، قطعة 226، مجاورة 26، الحي الخامس، دمياط الجديدة، دمياط",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "5th District",
+    "citySourceCode": "OSM:way/793510797",
+    "phones": [],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Dumyat-al-Jadidah/106280155672476/The-Vet-Hospital-%D8%A7%D9%84%D9%85%D8%B3%D8%AA%D8%B4%D9%81%D9%89-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%89",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individual feed documents pet imaging, surgery and blood tests at physical fifth-district premises. No qualifying phone found; retain inactive no-phone rather than borrowing another clinic contact."
+  }
+]

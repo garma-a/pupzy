@@ -1,0 +1,61 @@
+{
+  "query": "الأمل, El Moustasmer El Saghir, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%A3%D9%85%D9%84%2C+El+Moustasmer+El+Saghir%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:19:55.268Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 48482499,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 392689119,
+      "lat": "30.0364294",
+      "lon": "30.9726215",
+      "category": "highway",
+      "type": "secondary",
+      "place_rank": 26,
+      "importance": 0.05338286182955669,
+      "addresstype": "secondary",
+      "name": "شارع الأمل",
+      "display_name": "شارع الأمل, المستثمر الصغير, الشيخ زايد, الجيزة, 12588, مصر",
+      "address": {
+        "road": "شارع الأمل",
+        "neighbourhood": "المستثمر الصغير",
+        "city": "الشيخ زايد",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12588",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0347241", "30.0384934", "30.9665714", "30.9785586"]
+    },
+    {
+      "place_id": 48525034,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 674861805,
+      "lat": "30.0366360",
+      "lon": "30.9727474",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05338286182955669,
+      "addresstype": "residential",
+      "name": "شارع الأمل الجانبي",
+      "display_name": "شارع الأمل الجانبي, المستثمر الصغير, الشيخ زايد, الجيزة, 12588, مصر",
+      "address": {
+        "road": "شارع الأمل الجانبي",
+        "neighbourhood": "المستثمر الصغير",
+        "city": "الشيخ زايد",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12588",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0347361", "30.0383373", "30.9671744", "30.9783966"]
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "query": "British School Street, New Cairo, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=British+School+Street%2C+New+Cairo%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:03.112Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50319588,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 156619597,
+      "lat": "30.0060113",
+      "lon": "31.4233424",
+      "category": "amenity",
+      "type": "school",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "amenity",
+      "name": "British School",
+      "display_name": "British School, Ibn Gelgel Street, Fifth Settlement, New Cairo City, Cairo, 11936, Egypt",
+      "address": {
+        "amenity": "British School",
+        "road": "Ibn Gelgel Street",
+        "neighbourhood": "Fifth Settlement",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11936",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0050122", "30.0069313", "31.4219680", "31.4246019"]
+    },
+    {
+      "place_id": 50142955,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 4243965092,
+      "lat": "30.0588881",
+      "lon": "31.4939839",
+      "category": "amenity",
+      "type": "school",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "amenity",
+      "name": "The British School Al Rehab",
+      "display_name": "The British School Al Rehab, Talaat Mostafa Street, Group 5, New Cairo City, Cairo, 11841, Egypt",
+      "address": {
+        "amenity": "The British School Al Rehab",
+        "road": "Talaat Mostafa Street",
+        "neighbourhood": "Group 5",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11841",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0588381", "30.0589381", "31.4939339", "31.4940339"]
+    }
+  ]
+}

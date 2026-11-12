@@ -1,0 +1,40 @@
+{
+  "query": "Al Iman Mosque Street, Miami, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Al+Iman+Mosque+Street%2C+Miami%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:52:07.026Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 48500038,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 745341694,
+      "lat": "31.2659676",
+      "lon": "29.9959574",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.053409484245059854,
+      "addresstype": "residential",
+      "name": "Al Iman Mosque Street",
+      "display_name": "Al Iman Mosque Street, Miami, Alexandria, 21614, Egypt",
+      "address": {
+        "road": "Al Iman Mosque Street",
+        "suburb": "Miami",
+        "city": "Alexandria",
+        "state": "Alexandria",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21614",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": [
+        "31.2654400",
+        "31.2664680",
+        "29.9952573",
+        "29.9966375"
+      ]
+    }
+  ]
+}

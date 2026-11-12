@@ -1,0 +1,104 @@
+{
+  "query": "أبو قير, فلمنج, Alexandria, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A3%D8%A8%D9%88+%D9%82%D9%8A%D8%B1%2C+%D9%81%D9%84%D9%85%D9%86%D8%AC%2C+Alexandria%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T04:52:55.448Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 48317130,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 1428996100,
+      "lat": "31.2322539",
+      "lon": "29.9567682",
+      "category": "highway",
+      "type": "primary",
+      "place_rank": 26,
+      "importance": 0.053409484245059854,
+      "addresstype": "primary",
+      "name": "شارع جمال عبد الناصر",
+      "display_name": "شارع جمال عبد الناصر, فلمنج, الزاهرية, الإسكندرية, 21531, مصر",
+      "address": {
+        "road": "شارع جمال عبد الناصر",
+        "neighbourhood": "فلمنج",
+        "hamlet": "الزاهرية",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21531",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": [
+        "31.2286446",
+        "31.2361248",
+        "29.9528437",
+        "29.9604411"
+      ]
+    },
+    {
+      "place_id": 420755010,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 1530512714,
+      "lat": "31.2395632",
+      "lon": "29.9641410",
+      "category": "highway",
+      "type": "primary",
+      "place_rank": 26,
+      "importance": 0.053409484245059854,
+      "addresstype": "primary",
+      "name": "شارع جمال عبد الناصر",
+      "display_name": "شارع جمال عبد الناصر, فلمنج, الزاهرية, الإسكندرية, 21532, مصر",
+      "address": {
+        "road": "شارع جمال عبد الناصر",
+        "neighbourhood": "فلمنج",
+        "hamlet": "الزاهرية",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21532",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": [
+        "31.2368748",
+        "31.2417073",
+        "29.9611108",
+        "29.9676027"
+      ]
+    },
+    {
+      "place_id": 48263393,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 387293217,
+      "lat": "31.2308783",
+      "lon": "29.9555255",
+      "category": "highway",
+      "type": "primary",
+      "place_rank": 26,
+      "importance": 0.053409484245059854,
+      "addresstype": "primary",
+      "name": "شارع جمال عبد الناصر",
+      "display_name": "شارع جمال عبد الناصر, فلمنج, الإسكندرية, 21531, مصر",
+      "address": {
+        "road": "شارع جمال عبد الناصر",
+        "neighbourhood": "فلمنج",
+        "city": "الإسكندرية",
+        "state": "الإسكندرية",
+        "ISO3166-2-lvl4": "EG-ALX",
+        "postcode": "21531",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": [
+        "31.2298130",
+        "31.2320056",
+        "29.9543289",
+        "29.9566643"
+      ]
+    }
+  ]
+}

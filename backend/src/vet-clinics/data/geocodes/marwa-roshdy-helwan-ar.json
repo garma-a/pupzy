@@ -1,0 +1,111 @@
+{
+  "query": "لطيف, حلوان, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%84%D8%B7%D9%8A%D9%81%2C+%D8%AD%D9%84%D9%88%D8%A7%D9%86%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:47:05.999Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51367116,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 47475916,
+      "lat": "29.8415335",
+      "lon": "31.3286053",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع لطيف باشا",
+      "display_name": "شارع لطيف باشا, حلوان, القاهرة, 11735, مصر",
+      "address": {
+        "road": "شارع لطيف باشا",
+        "city": "حلوان",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11735",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.8413522", "29.8417145", "31.3254230", "31.3317874"]
+    },
+    {
+      "place_id": 420066695,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 706446637,
+      "lat": "29.8423039",
+      "lon": "31.3381238",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "tertiary",
+      "name": "شارع لطيف باشا",
+      "display_name": "شارع لطيف باشا, حلوان البحريه, حلوان, القاهرة, 11723, مصر",
+      "address": {
+        "road": "شارع لطيف باشا",
+        "neighbourhood": "حلوان البحريه",
+        "city": "حلوان",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11723",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.8421986", "29.8424272", "31.3342964", "31.3419507"]
+    },
+    {
+      "place_id": 50891224,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 29222499,
+      "lat": "29.8425040",
+      "lon": "31.3442572",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع لطيف البراوي",
+      "display_name": "شارع لطيف البراوي, مدينة الطيران, حلوان, القاهرة, 11722, مصر",
+      "address": {
+        "road": "شارع لطيف البراوي",
+        "neighbourhood": "مدينة الطيران",
+        "city": "حلوان",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11722",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.8424272", "29.8425841", "31.3419507", "31.3465636"]
+    },
+    {
+      "place_id": 51155389,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 712043845,
+      "lat": "29.8421888",
+      "lon": "31.3339713",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "tertiary",
+      "name": "شارع لطيف باشا",
+      "display_name": "شارع لطيف باشا, حلوان, القاهرة, 11421, مصر",
+      "address": {
+        "road": "شارع لطيف باشا",
+        "city": "حلوان",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11421",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.8421784", "29.8421991", "31.3336462", "31.3342964"]
+    }
+  ]
+}

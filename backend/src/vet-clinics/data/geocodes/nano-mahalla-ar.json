@@ -1,0 +1,8 @@
+{
+  "query": "جلال الدين, قسم أول المحلة الكبرى, Gharbia, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%AC%D9%84%D8%A7%D9%84+%D8%A7%D9%84%D8%AF%D9%8A%D9%86%2C+%D9%82%D8%B3%D9%85+%D8%A3%D9%88%D9%84+%D8%A7%D9%84%D9%85%D8%AD%D9%84%D8%A9+%D8%A7%D9%84%D9%83%D8%A8%D8%B1%D9%89%2C+Gharbia%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:17:21.617Z",
+  "httpStatus": 200,
+  "response": []
+}

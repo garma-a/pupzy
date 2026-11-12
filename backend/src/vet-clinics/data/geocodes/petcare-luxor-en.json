@@ -1,0 +1,8 @@
+{
+  "query": "Television Street, Luxor (Kism), Luxor, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Television+Street%2C+Luxor+%28Kism%29%2C+Luxor%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T12:22:08.295Z",
+  "httpStatus": 200,
+  "response": []
+}

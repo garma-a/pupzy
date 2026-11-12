@@ -1,0 +1,35 @@
+{
+  "query": "Zaher Galal Street, Marsa Matruh, Matrouh, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Zaher+Galal+Street%2C+Marsa+Matruh%2C+Matrouh%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:52:19.326Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51254974,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 609586683,
+      "lat": "31.3528912",
+      "lon": "27.2433608",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.0533877935454337,
+      "addresstype": "residential",
+      "name": "Zaher Galal Street",
+      "display_name": "Zaher Galal Street, Madara, Marsa Matruh, Matruh, 51511, Egypt",
+      "address": {
+        "road": "Zaher Galal Street",
+        "suburb": "Madara",
+        "city": "Marsa Matruh",
+        "state": "Matruh",
+        "ISO3166-2-lvl4": "EG-MT",
+        "postcode": "51511",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["31.3489615", "31.3568582", "27.2423602", "27.2444377"]
+    }
+  ]
+}

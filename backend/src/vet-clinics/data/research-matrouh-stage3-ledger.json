@@ -1,0 +1,259 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F4",
+  "governorate": "Matrouh",
+  "searches": ["\"عيادة بيطرية\" \"مطروح\" \"حيوانات\"", "\"veterinary clinic\" \"Marsa Matrouh\""],
+  "sourcesConsulted": [
+    "https://drpaws.ai/",
+    "https://www.voofla.com/EG/Marsa-Matruh/292935461418436/Flamingo-pets-clinic"
+  ],
+  "candidates": [
+    {
+      "key": "flamingo-matrouh",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Marsa-Matruh/292935461418436/Flamingo-pets-clinic",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror: current cat/dog medicine, surgery, diagnostics and hospitalization at premises; November 2026 activity and matching clinic contact. Pet store site not assumed an independent operating witness.",
+      "lastSeenActive": "2026-11-01"
+    }
+  ],
+  "holdsAndExclusions": [
+    {
+      "name": "pet.spot, Amwaj Gate 1",
+      "reason": "unresolved-catalog-area",
+      "evidence": "Own drpaws.ai site explicitly supplies clinic care and 24/7 at Sidi Abdel Rahman beside Amwaj gate 1, clinic 01280833332, call center 01201568888, WhatsApp 01000059085. Specific locality absent from catalog; do not substitute North Coast district from generic region wording.",
+      "sources": ["https://drpaws.ai/"]
+    }
+  ],
+  "counts": {
+    "authored": 3,
+    "retained": 3,
+    "active": 3,
+    "inactiveByReason": {},
+    "precision": {
+      "area": 2,
+      "street": 1
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {
+    "unresolved-catalog-area": 1
+  },
+  "importAccounting": {
+    "candidates": 1,
+    "imported": 1,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D4",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D4-decisions.json",
+    "cities": [
+      {
+        "city": "Marsa Matrouh",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Marsa-Matruh/67783/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Marsa-Matruh/67783"
+        ],
+        "discoveryEntries": 19,
+        "candidates": [
+          {
+            "key": "125203877643110",
+            "city": "Marsa Matrouh",
+            "name": "OmMuslimPets",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/125203877643110/OmMuslimPets",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "114985600231795",
+            "city": "Marsa Matrouh",
+            "name": "آل منسي للتجارة والإستيراد",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/114985600231795/%D8%A2%D9%84-%D9%85%D9%86%D8%B3%D9%8A-%D9%84%D9%84%D8%AA%D8%AC%D8%A7%D8%B1%D8%A9-%D9%88%D8%A7%D9%84%D8%A5%D8%B3%D8%AA%D9%8A%D8%B1%D8%A7%D8%AF",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "508262745707504",
+            "city": "Marsa Matrouh",
+            "name": "ابدا حياتك",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/508262745707504/%D8%A7%D8%A8%D8%AF%D8%A7-%D8%AD%D9%8A%D8%A7%D8%AA%D9%83",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "975949718932382",
+            "city": "Marsa Matrouh",
+            "name": "خيالة مطروح بحديقة النصر",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/975949718932382/%D8%AE%D9%8A%D8%A7%D9%84%D8%A9-%D9%85%D8%B7%D8%B1%D9%88%D8%AD-%D8%A8%D8%AD%D8%AF%D9%8A%D9%82%D8%A9-%D8%A7%D9%84%D9%86%D8%B5%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "111968468569485",
+            "city": "Marsa Matrouh",
+            "name": "Togo-Pet-Shop",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/111968468569485/Togo-Pet-Shop",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "502852939585701",
+            "city": "Marsa Matrouh",
+            "name": "Refk & Aleefy",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/502852939585701/Refk-%26-Aleefy",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "664131623448672",
+            "city": "Marsa Matrouh",
+            "name": "مزرعة ارانب البنجر",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/664131623448672/%D9%85%D8%B2%D8%B1%D8%B9%D8%A9-%D8%A7%D8%B1%D8%A7%D9%86%D8%A8-%D8%A7%D9%84%D8%A8%D9%86%D8%AC%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "102377565536424",
+            "city": "Marsa Matrouh",
+            "name": "العمده . nabr 1",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/102377565536424/%D8%A7%D9%84%D8%B9%D9%85%D8%AF%D9%87-.-nabr-1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "104540911051095",
+            "city": "Marsa Matrouh",
+            "name": "امازون لتجاره طيور وأسماك الزينه ومستلزماتها",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/104540911051095/%D8%A7%D9%85%D8%A7%D8%B2%D9%88%D9%86-%D9%84%D8%AA%D8%AC%D8%A7%D8%B1%D9%87-%D8%B7%D9%8A%D9%88%D8%B1-%D9%88%D8%A3%D8%B3%D9%85%D8%A7%D9%83-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D9%87-%D9%88%D9%85%D8%B3%D8%AA%D9%84%D8%B2%D9%85%D8%A7%D8%AA%D9%87%D8%A7",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "107449028785234",
+            "city": "Marsa Matrouh",
+            "name": "Pet spot amwaj",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/107449028785234/Pet-spot-amwaj",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "201062090045631",
+            "city": "Marsa Matrouh",
+            "name": "MALTI CLEAN COM",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/201062090045631/MALTI-CLEAN-COM",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1644352695836542",
+            "city": "Marsa Matrouh",
+            "name": "MooN. f ish",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/1644352695836542/MooN.-f-ish",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "664502946749394",
+            "city": "Marsa Matrouh",
+            "name": "Petto Castle",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/664502946749394/Petto-Castle",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "107165481040070",
+            "city": "Marsa Matrouh",
+            "name": "سوق الحيوانات الاليفه بمرسي مطروح",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/107165481040070/%D8%B3%D9%88%D9%82-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D9%87-%D8%A8%D9%85%D8%B1%D8%B3%D9%8A-%D9%85%D8%B7%D8%B1%D9%88%D8%AD",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "401655260344115",
+            "city": "Marsa Matrouh",
+            "name": "مركز النديم للخدمات البيطرية",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/401655260344115/%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D9%86%D8%AF%D9%8A%D9%85-%D9%84%D9%84%D8%AE%D8%AF%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "retained",
+            "reason": "nadeem-matrouh",
+            "evidence": "Individual centre explicitly offers diagnosis/treatment of pets as well as farm animals at physical street premises. Printed spaced +20 106 851 8078 normalized, no digits inferred.",
+            "snapshot": "web-evidence/depth-7b50cde68f82a015.json"
+          },
+          {
+            "key": "112900047056757",
+            "city": "Marsa Matrouh",
+            "name": "Lucky Pets Clinic",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/112900047056757/Lucky-Pets-Clinic",
+            "status": "retained",
+            "reason": "lucky-matrouh",
+            "evidence": "2026-09-06 pet sterilisation surgery offer explicitly publishes current street premises and 01019887552. Older Telephone retained as additional sourced contact; not an adoption number.",
+            "snapshot": "web-evidence/depth-a6996e32523b8a15.json"
+          },
+          {
+            "key": "292935461418436",
+            "city": "Marsa Matrouh",
+            "name": "Flamingo pets clinic",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/292935461418436/Flamingo-pets-clinic",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "Already retained identity; current individual source reviewed without adding duplicate.",
+            "snapshot": "web-evidence/depth-19c27052bfaed663.json"
+          },
+          {
+            "key": "113187516993163",
+            "city": "Marsa Matrouh",
+            "name": "الكاسح للخدمات البيطريه ورعايه الحيوان الصفحة",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/113187516993163/%D8%A7%D9%84%D9%83%D8%A7%D8%B3%D8%AD-%D9%84%D9%84%D8%AE%D8%AF%D9%85%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87-%D9%88%D8%B1%D8%B9%D8%A7%D9%8A%D9%87-%D8%A7%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86-%D8%A7%D9%84%D8%B5%D9%81%D8%AD%D8%A9-%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A%D8%A9-kasseh-vet-care",
+            "status": "held",
+            "reason": "operation-unconfirmed-owner-away",
+            "evidence": "Kasseh says in April/July 2025 that doctor moved away and only gives WhatsApp advice, refers clinical cases to others. Later greetings do not prove reopened physical clinic.",
+            "snapshot": "web-evidence/depth-a9769c70b160708d.json"
+          },
+          {
+            "key": "368563756335888",
+            "city": "Marsa Matrouh",
+            "name": "MENA VET",
+            "url": "https://www.petshops1.com/EG/Marsa-Matruh/368563756335888/MENA-VET",
+            "status": "held",
+            "reason": "home-visit-only",
+            "evidence": "Mena Vet explicitly visits clients chalets in North Coast and says pet does not leave home; no physical clinic demonstrated.",
+            "snapshot": "web-evidence/depth-587cd2c9639a7e67.json"
+          }
+        ],
+        "retained": 2,
+        "exclusionsByReason": {
+          "no-pet-clinic-evidence-in-discovery": 14,
+          "already-retained": 1,
+          "operation-unconfirmed-owner-away": 1,
+          "home-visit-only": 1
+        },
+        "individualSnapshots": [
+          "web-evidence/depth-7b50cde68f82a015.json",
+          "web-evidence/depth-a6996e32523b8a15.json",
+          "web-evidence/depth-19c27052bfaed663.json",
+          "web-evidence/depth-a9769c70b160708d.json",
+          "web-evidence/depth-587cd2c9639a7e67.json"
+        ]
+      }
+    ]
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

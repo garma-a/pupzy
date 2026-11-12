@@ -1,0 +1,8 @@
+{
+  "query": "Abdel Latif El Faham Street, Shoubra, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Abdel+Latif+El+Faham+Street%2C+Shoubra%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:15:06.514Z",
+  "httpStatus": 200,
+  "response": []
+}

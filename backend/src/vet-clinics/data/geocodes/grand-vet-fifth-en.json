@@ -1,0 +1,113 @@
+{
+  "query": "Street 4, Fifth Settlement, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Street+4%2C+Fifth+Settlement%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:09.711Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51462700,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 338687620,
+      "lat": "29.9972208",
+      "lon": "31.4293153",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Al Asmaey Street",
+      "display_name": "Al Asmaey Street, Fifth Settlement, New Cairo City, Cairo, 11936, Egypt",
+      "address": {
+        "road": "Al Asmaey Street",
+        "neighbourhood": "Fifth Settlement",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11936",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9969049", "29.9983513", "31.4270365", "31.4316300"]
+    },
+    {
+      "place_id": 51044292,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 394682537,
+      "lat": "30.0153148",
+      "lon": "31.4411938",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Al Shahid Ahmed Bedir Street",
+      "display_name": "Al Shahid Ahmed Bedir Street, Fifth Settlement, New Cairo City, Cairo, 11835, Egypt",
+      "address": {
+        "road": "Al Shahid Ahmed Bedir Street",
+        "neighbourhood": "Fifth Settlement",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11835",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0145531", "30.0160157", "31.4409748", "31.4411966"]
+    },
+    {
+      "place_id": 51006826,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 156568265,
+      "lat": "30.0145052",
+      "lon": "31.4261959",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Al Shamakhi Street",
+      "display_name": "Al Shamakhi Street, Fifth Settlement, New Cairo City, Cairo, 11835, Egypt",
+      "address": {
+        "road": "Al Shamakhi Street",
+        "neighbourhood": "Fifth Settlement",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11835",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0138430", "30.0151885", "31.4260387", "31.4262059"]
+    },
+    {
+      "place_id": 51050735,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 156546115,
+      "lat": "30.0024227",
+      "lon": "31.4204236",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Sibawayh Elmasry Street",
+      "display_name": "Sibawayh Elmasry Street, District 5, New Cairo City, Cairo, 11936, Egypt",
+      "address": {
+        "road": "Sibawayh Elmasry Street",
+        "neighbourhood": "District 5",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11936",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0012318", "30.0035227", "31.4180472", "31.4227633"]
+    }
+  ]
+}

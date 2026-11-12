@@ -1,0 +1,8 @@
+{
+  "query": "جيل2000, 2nd District, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%AC%D9%8A%D9%842000%2C+2nd+District%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:21:37.985Z",
+  "httpStatus": 200,
+  "response": []
+}

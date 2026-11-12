@@ -1,0 +1,8 @@
+{
+  "query": "المتفرع من مطعم الشبراوي, الشيخ زايد, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%85%D8%AA%D9%81%D8%B1%D8%B9+%D9%85%D9%86+%D9%85%D8%B7%D8%B9%D9%85+%D8%A7%D9%84%D8%B4%D8%A8%D8%B1%D8%A7%D9%88%D9%8A%2C+%D8%A7%D9%84%D8%B4%D9%8A%D8%AE+%D8%B2%D8%A7%D9%8A%D8%AF%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:50:16.098Z",
+  "httpStatus": 200,
+  "response": []
+}

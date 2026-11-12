@@ -1,0 +1,8 @@
+{
+  "query": "5B El Gehaz Street, Sheikh Zayed, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=5B+El+Gehaz+Street%2C+Sheikh+Zayed%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:20:32.684Z",
+  "httpStatus": 200,
+  "response": []
+}

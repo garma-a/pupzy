@@ -1,0 +1,25 @@
+{
+  "accessedAt": "2026-11-12",
+  "retrieval": "targeted Arabic/English web search review",
+  "queries": [
+    "\"01110466298\" -site:localegypt.net -site:roaya-eg.com -site:egmaps.com",
+    "\"01553124800\" -site:localegypt.net -site:roaya-eg.com -site:egmaps.com",
+    "\"Petcare\" \"ابن العنبري\"",
+    "\"Almotawakkel\" \"Rasafa\"",
+    "\"المتوكل\" \"البيطري\" \"الرصافة\"",
+    "\"عيادة بيطرية petcare\" \"محرم\"",
+    "\"Petcare\" \"Moharam Bek\" vet"
+  ],
+  "findings": [
+    {
+      "key": "petcare-moharam-bek",
+      "decision": "hold-no-permitted-source",
+      "evidence": "Searches returned LocalEgypt only for this phone/name/address, or unrelated other PetCare locations. No qualifying alternative found. Do not copy contact details from another PetCare clinic."
+    },
+    {
+      "key": "almotawakkel-elrasafa",
+      "decision": "hold-no-permitted-source",
+      "evidence": "Exact-phone and branch-name searches found no individually verifiable non-LocalEgypt clinic entry. Dr Abdallah page and BizMidEast confirm Al Romani branch only. Do not infer a second physical branch."
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "query": "سيد طه, Nasr City, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%B3%D9%8A%D8%AF+%D8%B7%D9%87%2C+Nasr+City%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:15:16.415Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50551170,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 28582636,
+      "lat": "30.0470370",
+      "lon": "31.3415012",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع سيد طه عبد البر",
+      "display_name": "شارع سيد طه عبد البر, المنطقة الثامنة, مدينة نصر, القاهرة, 11765, مصر",
+      "address": {
+        "road": "شارع سيد طه عبد البر",
+        "neighbourhood": "المنطقة الثامنة",
+        "suburb": "مدينة نصر",
+        "city": "مدينة نصر",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11765",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0469169", "30.0471570", "31.3404552", "31.3425472"]
+    }
+  ]
+}

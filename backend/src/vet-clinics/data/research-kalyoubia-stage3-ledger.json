@@ -1,0 +1,824 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F1",
+  "governorate": "Kalyoubia",
+  "searches": ["عيادة بيطرية حيوانات أليفة بنها شبرا الخيمة قليوب رقم", "\"عيادة\" \"بنها\" \"Pet Planet\" عنوان"],
+  "sourcesConsulted": [
+    "https://www.voofla.com/EG/Benha/101452682076028/Pet-Planet-hospital-%D8%A7%D9%84%D9%85%D8%B3%D8%AA%D8%B4%D9%81%D9%89-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%89-%D8%A8%D9%86%D9%87%D8%A7",
+    "https://www.voofla.com/EG/Shubra-el-Kheima/538653056271275/Dome-pets-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D8%A8%D8%B4%D8%A8%D8%B1%D8%A7-%D8%A7%D9%84%D8%AE%D9%8A%D9%85%D8%A9-%D9%A0%D9%A1%D9%A2%D9%A8%D9%A5%D9%A5%D9%A8%D9%A9%D9%A1%D9%A7%D9%A1"
+  ],
+  "candidates": [
+    {
+      "key": "pet-planet-benha",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Benha/101452682076028/Pet-Planet-hospital-%D8%A7%D9%84%D9%85%D8%B3%D8%AA%D8%B4%D9%81%D9%89-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%89-%D8%A8%D9%86%D9%87%D8%A7",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read mirror of clinic posts: pet diagnostics, surgery, transfusion; current contacts in July posts. Urban Banha mapped to Banha Kism rather than surrounding rural Markaz. No 24h inference from emergency contact.",
+      "lastSeenActive": "2026-09-04"
+    },
+    {
+      "key": "dome-pets-shubra",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Shubra-el-Kheima/538653056271275/Dome-pets-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D8%A8%D8%B4%D8%A8%D8%B1%D8%A7-%D8%A7%D9%84%D8%AE%D9%8A%D9%85%D8%A9-%D9%A0%D9%A1%D9%A2%D9%A8%D9%A5%D9%A5%D9%A8%D9%A9%D9%A1%D9%A7%D9%A1",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror: cat wound treatment 2026-09-25, dog surgery 2026-07-03. Physical premises and phone. Select city-level Shubra neighbourhood, do not invent first/second district.",
+      "lastSeenActive": "2026-09-25"
+    }
+  ],
+  "holdsAndExclusions": [],
+  "counts": {
+    "retained": 8,
+    "active": 8,
+    "inactiveByReason": {},
+    "precision": {
+      "area": 8
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {},
+  "importAccounting": {
+    "candidates": 8,
+    "imported": 8,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D1",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D1-decisions.json",
+    "cities": [
+      {
+        "city": "Banha",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Benha/67466/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Benha/67466",
+          "https://www.petshops1.com/EG/Banha/67454/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Banha/67454"
+        ],
+        "discoveryEntries": 43,
+        "individualSnapshots": [
+          "web-evidence/depth-76ee933f7b0c387e.json",
+          "web-evidence/depth-cc93df5be5741e03.json",
+          "web-evidence/depth-974441de6d65ddec.json",
+          "web-evidence/depth-128fda9457272e5c.json",
+          "web-evidence/depth-b5ebc8faaa19be23.json",
+          "web-evidence/depth-ec841cad9ac0698b.json",
+          "web-evidence/depth-5d260073a1261f46.json",
+          "web-evidence/depth-7a03af3b07dbdbd7.json",
+          "web-evidence/depth-7c0d753948e6ac19.json",
+          "web-evidence/depth-1d941ac26edd6a43.json"
+        ],
+        "candidates": [
+          {
+            "city": "Banha",
+            "name": "شركة فور ايه لتجارة وتوزيع الزيوت النباتية",
+            "url": "https://www.petshops1.com/EG/Benha/1163996020281475/%D8%B4%D8%B1%D9%83%D8%A9-%D9%81%D9%88%D8%B1-%D8%A7%D9%8A%D9%87-%D9%84%D8%AA%D8%AC%D8%A7%D8%B1%D8%A9-%D9%88%D8%AA%D9%88%D8%B2%D9%8A%D8%B9-%D8%A7%D9%84%D8%B2%D9%8A%D9%88%D8%AA-%D8%A7%D9%84%D9%86%D8%A8%D8%A7%D8%AA%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "HuskVet للاستشارات البيطريه للقطط والكلاب دكت",
+            "url": "https://www.petshops1.com/EG/Benha/102107134965906/HuskVet-%D9%84%D9%84%D8%A7%D8%B3%D8%AA%D8%B4%D8%A7%D8%B1%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87-%D9%84%D9%84%D9%82%D8%B7%D8%B7-%D9%88%D8%A7%D9%84%D9%83%D9%84%D8%A7%D8%A8-%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A-%D9%87%D8%B4%D8%A7%D9%85-%D8%B9%D8%B2%D8%AA",
+            "status": "held",
+            "reason": "unresolved-physical-clinic",
+            "evidence": "HuskVet describes veterinary consultations, address/contact present but on-site physical practice not demonstrated."
+          },
+          {
+            "city": "Banha",
+            "name": "مركز د/ عبد الحليم القصبي للحيوانات الاليفة",
+            "url": "https://www.petshops1.com/EG/Benha/387419118418284/%D9%85%D8%B1%D9%83%D8%B2-%D8%AF--%D8%B9%D8%A8%D8%AF-%D8%A7%D9%84%D8%AD%D9%84%D9%8A%D9%85-%D8%A7%D9%84%D9%82%D8%B5%D8%A8%D9%8A-%D9%84%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D8%A9",
+            "status": "retained",
+            "reason": "qasaby-banha",
+            "evidence": "2026-10-23 physical pet-clinic hours notice; explicit surgical, imaging, laboratory and vaccination services at this street/contact."
+          },
+          {
+            "city": "Banha",
+            "name": "مشتل الفيروز",
+            "url": "https://www.petshops1.com/EG/Benha/1011054705432174/%D9%85%D8%B4%D8%AA%D9%84-%D8%A7%D9%84%D9%81%D9%8A%D8%B1%D9%88%D8%B2",
+            "status": "excluded-discovery",
+            "reason": "unrelated-business",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "Pet&Vet Clinic",
+            "url": "https://www.petshops1.com/EG/Benha/111525818355581/Pet%26Vet-Clinic",
+            "status": "retained",
+            "reason": "pet-vet-banha",
+            "evidence": "2026-10-29 clinic checkup/vaccination post; 2026-10-31 states temporary voice-network fault, WhatsApp contact remains 01068615984. Urban Banha Kism, not rural Markaz."
+          },
+          {
+            "city": "Banha",
+            "name": "Dr.Ameera Alkhayat",
+            "url": "https://www.petshops1.com/EG/Benha/144706948731579/Dr.Ameera-Alkhayat",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "عيادة الرؤى البيطرية",
+            "url": "https://www.petshops1.com/EG/Benha/349941985870540/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%B1%D8%A4%D9%89-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "unresolved-pet-treatment",
+            "evidence": "Al Roaa offers consultations including pets but visible on-site procedures concern poultry necropsy; no explicit on-site pet treatment."
+          },
+          {
+            "city": "Banha",
+            "name": "Zahra Pet Clinic",
+            "url": "https://www.petshops1.com/EG/Benha/115983991502981/Zahra-Pet-Clinic",
+            "status": "retained",
+            "reason": "zahra-banha",
+            "evidence": "2026-06-07 feline bilateral hip surgery at physical urban Banha clinic; current catalog has one urban Banha Kism and rural Markaz, not two selectable urban districts."
+          },
+          {
+            "city": "Banha",
+            "name": "Pet clinic - Dr.Ameera AlKhayat",
+            "url": "https://www.petshops1.com/EG/Benha/100980039200965/Pet-clinic---Dr.Ameera-AlKhayat",
+            "status": "held",
+            "reason": "unresolved-premises-and-treatment",
+            "evidence": "Ameera entry city-only template with phone, not enough evidence for premises/treatment."
+          },
+          {
+            "city": "Banha",
+            "name": "Merck Poultry Academy - أكاديمية ميرك للدواجن",
+            "url": "https://www.petshops1.com/EG/Benha/103302801375273/Merck-Poultry-Academy---%D8%A3%D9%83%D8%A7%D8%AF%D9%8A%D9%85%D9%8A%D8%A9-%D9%85%D9%8A%D8%B1%D9%83-%D9%84%D9%84%D8%AF%D9%88%D8%A7%D8%AC%D9%86",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "Poultry International magazine مجلة بولتري ان",
+            "url": "https://www.petshops1.com/EG/Benha/436901076689949/Poultry-International-magazine-%D9%85%D8%AC%D9%84%D8%A9-%D8%A8%D9%88%D9%84%D8%AA%D8%B1%D9%8A-%D8%A7%D9%86%D8%AA%D8%B1%D9%86%D8%A7%D8%B4%D9%8A%D9%88%D9%86%D8%A7%D9%84-%D8%AC%D8%B1%D9%88",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "أعلاف الجبر",
+            "url": "https://www.petshops1.com/EG/Benha/243901508808495/%D8%A3%D8%B9%D9%84%D8%A7%D9%81-%D8%A7%D9%84%D8%AC%D8%A8%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "اصل الريف Eloquent",
+            "url": "https://www.petshops1.com/EG/Benha/121795560887969/%D8%A7%D8%B5%D9%84-%D8%A7%D9%84%D8%B1%D9%8A%D9%81-Eloquent",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "ابو شام مع الحمام.Abo sham with Pigeons",
+            "url": "https://www.petshops1.com/EG/Benha/107098468260305/%D8%A7%D8%A8%D9%88-%D8%B4%D8%A7%D9%85-%D9%85%D8%B9-%D8%A7%D9%84%D8%AD%D9%85%D8%A7%D9%85.Abo-sham-with-Pigeons",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "King Boer Farm مزرعه كنج بور",
+            "url": "https://www.petshops1.com/EG/Benha/100539224697813/King-Boer-Farm-%D9%85%D8%B2%D8%B1%D8%B9%D9%87-%D9%83%D9%86%D8%AC-%D8%A8%D9%88%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "Pet Shop",
+            "url": "https://www.petshops1.com/EG/Benha/106374180879201/Pet-Shop",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "Elre3aya pet-clinic عيادة الرعاية للحيوانات ا",
+            "url": "https://www.petshops1.com/EG/Benha/777815805661188/Elre3aya-pet-clinic-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%B1%D8%B9%D8%A7%D9%8A%D8%A9-%D9%84%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A3%D9%84%D9%8A%D9%81%D8%A9",
+            "status": "retained",
+            "reason": "elreaya-banha",
+            "evidence": "Explicit veterinary care for pets with physical street/urban Fellal address and clinic Telephone. General pet advice not converted into dated clinical activity."
+          },
+          {
+            "city": "Banha",
+            "name": "Hazaa stable",
+            "url": "https://www.petshops1.com/EG/Benha/159226450603503/Hazaa-stable",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "ابراهيم الريان لتصنيع اقفاص وسلاكات الطيور",
+            "url": "https://www.petshops1.com/EG/Benha/1184823964998724/%D8%A7%D8%A8%D8%B1%D8%A7%D9%87%D9%8A%D9%85-%D8%A7%D9%84%D8%B1%D9%8A%D8%A7%D9%86-%D9%84%D8%AA%D8%B5%D9%86%D9%8A%D8%B9-%D8%A7%D9%82%D9%81%D8%A7%D8%B5-%D9%88%D8%B3%D9%84%D8%A7%D9%83%D8%A7%D8%AA-%D8%A7%D9%84%D8%B7%D9%8A%D9%88%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "Al Mortagez Stud Egypt   مربط المرتجز مصر",
+            "url": "https://www.petshops1.com/EG/Benha/108280590613998/Al-Mortagez-Stud-Egypt---%D9%85%D8%B1%D8%A8%D8%B7-%D8%A7%D9%84%D9%85%D8%B1%D8%AA%D8%AC%D8%B2-%D9%85%D8%B5%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "Friends Farm - مزرعة الأصدقاء",
+            "url": "https://www.petshops1.com/EG/Benha/251753498031354/Friends-Farm---%D9%85%D8%B2%D8%B1%D8%B9%D8%A9-%D8%A7%D9%84%D8%A3%D8%B5%D8%AF%D9%82%D8%A7%D8%A1",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "Vom shiko Haus",
+            "url": "https://www.petshops1.com/EG/Benha/103393271820326/Vom-shiko-Haus",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "PetHup",
+            "url": "https://www.petshops1.com/EG/Benha/711146642283667/PetHup",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "Pet Planet hospital المستشفى البيطرى بنها",
+            "url": "https://www.petshops1.com/EG/Benha/101452682076028/Pet-Planet-hospital-%D8%A7%D9%84%D9%85%D8%B3%D8%AA%D8%B4%D9%81%D9%89-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%89-%D8%A8%D9%86%D9%87%D8%A7",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "Pet Planet Banha already retained, no duplicate."
+          },
+          {
+            "city": "Banha",
+            "name": "Alaa El-Basha",
+            "url": "https://www.petshops1.com/EG/Benha/991635420689952/Alaa-El-Basha",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "بريما فيت للإنتاج الدوائى - Prima Vet Pharmac",
+            "url": "https://www.petshops1.com/EG/Benha/979046765623583/%D8%A8%D8%B1%D9%8A%D9%85%D8%A7-%D9%81%D9%8A%D8%AA-%D9%84%D9%84%D8%A5%D9%86%D8%AA%D8%A7%D8%AC-%D8%A7%D9%84%D8%AF%D9%88%D8%A7%D8%A6%D9%89---Prima-Vet-Pharmaceutical-Production",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "ODD petshop",
+            "url": "https://www.petshops1.com/EG/Benha/391180044639620/ODD-petshop",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "BoBa Pet's",
+            "url": "https://www.petshops1.com/EG/Benha/101777264808048/BoBa-Pet%27s",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "Royal pet clinic",
+            "url": "https://www.petshops1.com/EG/Benha/529840953536674/Royal-pet-clinic",
+            "status": "retained",
+            "reason": "royal-pet-banha",
+            "evidence": "2026-09-23 on-site pet examination post pairs detailed physical urban Fellal address and main clinic phone; 2026-09-06 publishes second booking phone. No unrelated adoption-owner contacts used."
+          },
+          {
+            "city": "Banha",
+            "name": "حورسيات",
+            "url": "https://www.petshops1.com/EG/Benha/105017865654651/%D8%AD%D9%88%D8%B1%D8%B3%D9%8A%D8%A7%D8%AA",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "Vom haus Ellzaaem",
+            "url": "https://www.petshops1.com/EG/Benha/116525298517888/Vom-haus-Ellzaaem",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "محبي سلاحف النينجا",
+            "url": "https://www.petshops1.com/EG/Benha/654375284406252/%D9%85%D8%AD%D8%A8%D9%8A-%D8%B3%D9%84%D8%A7%D8%AD%D9%81-%D8%A7%D9%84%D9%86%D9%8A%D9%86%D8%AC%D8%A7",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "العيادة البيطرية - Vet Land",
+            "url": "https://www.petshops1.com/EG/Benha/108557155285464/%D8%A7%D9%84%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9---Vet-Land",
+            "status": "held",
+            "reason": "livestock-and-poultry-only",
+            "evidence": "Vet Land latest posts sell chicks/feed/vaccines; broad all-animal description does not establish pet premises."
+          },
+          {
+            "city": "Banha",
+            "name": "Pet Food - Banha",
+            "url": "https://www.petshops1.com/EG/Benha/106622195708348/Pet-Food---Banha",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "مزرعة حجاج للخيول العربية وتعليم الفروسية",
+            "url": "https://www.petshops1.com/EG/Benha/113729285030088/%D9%85%D8%B2%D8%B1%D8%B9%D8%A9-%D8%AD%D8%AC%D8%A7%D8%AC-%D9%84%D9%84%D8%AE%D9%8A%D9%88%D9%84-%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-%D9%88%D8%AA%D8%B9%D9%84%D9%8A%D9%85-%D8%A7%D9%84%D9%81%D8%B1%D9%88%D8%B3%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "Vome Doggy Life",
+            "url": "https://www.petshops1.com/EG/Benha/1102308156302417/Vome-Doggy-Life",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "عشاق الرويال بلاك ابو عدي",
+            "url": "https://www.petshops1.com/EG/Benha/101063619162513/%D8%B9%D8%B4%D8%A7%D9%82-%D8%A7%D9%84%D8%B1%D9%88%D9%8A%D8%A7%D9%84-%D8%A8%D9%84%D8%A7%D9%83-%D8%A7%D8%A8%D9%88-%D8%B9%D8%AF%D9%8A",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "Ajyad أجياد",
+            "url": "https://www.petshops1.com/EG/Benha/101948419418931/Ajyad-%D8%A3%D8%AC%D9%8A%D8%A7%D8%AF",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "Vom Horas Kennel",
+            "url": "https://www.petshops1.com/EG/Banha/796215677120986/Vom-Horas-Kennel",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "الشركة الوطنية للأدوية البيطرية",
+            "url": "https://www.petshops1.com/EG/Banha/900329256815741/%D8%A7%D9%84%D8%B4%D8%B1%D9%83%D8%A9-%D8%A7%D9%84%D9%88%D8%B7%D9%86%D9%8A%D8%A9-%D9%84%D9%84%D8%A3%D8%AF%D9%88%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "NZ collection",
+            "url": "https://www.petshops1.com/EG/Banha/205033772978275/NZ-collection",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "ODDfish products",
+            "url": "https://www.petshops1.com/EG/Banha/275320869307822/ODDfish-products",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Banha",
+            "name": "horse.cons",
+            "url": "https://www.petshops1.com/EG/Banha/989752854382979/horse.cons",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          }
+        ],
+        "retained": ["qasaby-banha", "pet-vet-banha", "zahra-banha", "elreaya-banha", "royal-pet-banha"],
+        "outcomesByReason": {
+          "pharmacy-or-supplier": 3,
+          "unresolved-physical-clinic": 1,
+          "unrelated-business": 1,
+          "no-pet-clinic-evidence-in-discovery": 14,
+          "unresolved-pet-treatment": 1,
+          "unresolved-premises-and-treatment": 1,
+          "farming-or-breeding": 7,
+          "shop-grooming-or-boarding": 3,
+          "training-or-breeding": 5,
+          "already-retained": 1,
+          "livestock-and-poultry-only": 1
+        }
+      },
+      {
+        "city": "Shubra El Kheima",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Shubra-El-Kheima/432881/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Shubra-El-Kheima/432881"
+        ],
+        "discoveryEntries": 34,
+        "individualSnapshots": [
+          "web-evidence/depth-0a303d796cfafda4.json",
+          "web-evidence/depth-08d64f29e3247e24.json",
+          "web-evidence/depth-f2abe595e01f1481.json",
+          "web-evidence/depth-d45ce50fcee35419.json",
+          "web-evidence/depth-00a92c116f9416d8.json",
+          "web-evidence/depth-e9704b46747b68be.json",
+          "web-evidence/depth-06e95cb1b37a0d7b.json"
+        ],
+        "candidates": [
+          {
+            "city": "Shubra El Kheima",
+            "name": "العيادة البيطرية",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/104863328950442/%D8%A7%D9%84%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "pending-locality-review",
+            "evidence": "Mostorod physical clinic explicitly has pet department/treatment and phone. Locality sources place old Virgin Church in Shubra Second; archive direct corroboration before import."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "Pet Home Clinic",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/120843795280451/Pet-Home-Clinic",
+            "status": "held",
+            "reason": "pending-branch-review",
+            "evidence": "Pet Home explicitly lists two physical branches: 183 Ahmed Orabi, Shubra and Shabab Obour bldg30. Shared reception reviewed as chain; Shubra locality still needs corroboration."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "عيادة المنار البيطرية",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/195299184350264/%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D9%85%D9%86%D8%A7%D8%B1-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "poultry-only",
+            "evidence": "Al Manar page sells chicks and poultry remedies; broad all-animal claim alone insufficient."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "ادب خيل مصر",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/423002920885952/%D8%A7%D8%AF%D8%A8-%D8%AE%D9%8A%D9%84-%D9%85%D8%B5%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "ميلاد الخواجة لتجاره الكلاب",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/130419468863758/%D9%85%D9%8A%D9%84%D8%A7%D8%AF-%D8%A7%D9%84%D8%AE%D9%88%D8%A7%D8%AC%D8%A9-%D9%84%D8%AA%D8%AC%D8%A7%D8%B1%D9%87-%D8%A7%D9%84%D9%83%D9%84%D8%A7%D8%A8",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "Cane Corso Afroto",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/108065081974676/Cane-Corso-Afroto",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "Russia Perfume",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/129891180218038/Russia-Perfume",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "مؤسسه أفصنا المتحده لمستلزمات صناعه الدواجن",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/106637744577793/%D9%85%D8%A4%D8%B3%D8%B3%D9%87-%D8%A3%D9%81%D8%B5%D9%86%D8%A7-%D8%A7%D9%84%D9%85%D8%AA%D8%AD%D8%AF%D9%87-%D9%84%D9%85%D8%B3%D8%AA%D9%84%D8%B2%D9%85%D8%A7%D8%AA-%D8%B5%D9%86%D8%A7%D8%B9%D9%87-%D8%A7%D9%84%D8%AF%D9%88%D8%A7%D8%AC%D9%86",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "Dome pets عيادة بيطرية بشبرا الخيمة ٠١٢٨٥٥٨٩١",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/538653056271275/Dome-pets-%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D8%A8%D8%B4%D8%A8%D8%B1%D8%A7-%D8%A7%D9%84%D8%AE%D9%8A%D9%85%D8%A9-%D9%A0%D9%A1%D9%A2%D9%A8%D9%A5%D9%A5%D9%A8%D9%A9%D9%A1%D9%A7%D9%A1",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "Existing Dome Pets record, unchanged contact/address."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "كلاب روت وايلر فى الوطن العربى",
+            "url": "https://www.petshops1.com/EG/Shubra-El-Kheima/106837188576746/%D9%83%D9%84%D8%A7%D8%A8-%D8%B1%D9%88%D8%AA-%D9%88%D8%A7%D9%8A%D9%84%D8%B1-%D9%81%D9%89-%D8%A7%D9%84%D9%88%D8%B7%D9%86-%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%89",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "cat food plus اكل قطط",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/610388472151350/cat-food-plus-%D8%A7%D9%83%D9%84-%D9%82%D8%B7%D8%B7",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "محل سيمبا للطيور الزينه و حيوانات الاليفه",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/104941808796855/%D9%85%D8%AD%D9%84-%D8%B3%D9%8A%D9%85%D8%A8%D8%A7-%D9%84%D9%84%D8%B7%D9%8A%D9%88%D8%B1-%D8%A7%D9%84%D8%B2%D9%8A%D9%86%D9%87-%D9%88-%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D9%87",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "Black Horse Adv",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/106600765827086/Black-Horse-Adv",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "العيادة البيطرية شبرا الخيمة poula pets cente",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/1105985899260815/%D8%A7%D9%84%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D8%B4%D8%A8%D8%B1%D8%A7-%D8%A7%D9%84%D8%AE%D9%8A%D9%85%D8%A9-poula-pets-center",
+            "status": "held",
+            "reason": "unresolved-subdistrict",
+            "evidence": "Poula pet vaccination/grooming packages at El Bakry/El Wehda/Manshiet AbdelMoneim address; exact district and phone review pending."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "Royal Birds رويال بيردز",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/100477699500629/Royal-Birds-%D8%B1%D9%88%D9%8A%D8%A7%D9%84-%D8%A8%D9%8A%D8%B1%D8%AF%D8%B2",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "اجمد كلاب مالينو",
+            "url": "https://www.petshops1.com/EG/Shubra-El-Kheima/912666338594455/%D8%A7%D8%AC%D9%85%D8%AF-%D9%83%D9%84%D8%A7%D8%A8-%D9%85%D8%A7%D9%84%D9%8A%D9%86%D9%88",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "PawsPlug Egypt",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/765011356706773/PawsPlug-Egypt",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "Cat&Dog clinic",
+            "url": "https://www.petshops1.com/EG/Shubra-El-Kheima/100126025196914/Cat%26Dog-clinic",
+            "status": "held",
+            "reason": "unresolved-subdistrict-and-freshness",
+            "evidence": "Cat&Dog has 2021 clinical cases, later 2022 pet photos and Al Ammar Street; subdistrict unresolved."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "ElKhawaja Kennel",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/101727672208576/ElKhawaja-Kennel",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "Platinum kennel  golden retriever",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/101729561970249/Platinum-kennel--golden-retriever",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "Re di Dolci ريدي دوتشي -كافيه",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/106289178314319/Re-di-Dolci-%D8%B1%D9%8A%D8%AF%D9%8A-%D8%AF%D9%88%D8%AA%D8%B4%D9%8A--%D9%83%D8%A7%D9%81%D9%8A%D9%87",
+            "status": "excluded-discovery",
+            "reason": "unrelated-business",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "حماَمة سلاَم",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/107723408580637/%D8%AD%D9%85%D8%A7%D9%8E%D9%85%D8%A9-%D8%B3%D9%84%D8%A7%D9%8E%D9%85",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "Mostafa  vom  Hause",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/256615566242325/Mostafa--vom--Hause",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "المهندس للرعاية البيطرية",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/1121981094528132/%D8%A7%D9%84%D9%85%D9%87%D9%86%D8%AF%D8%B3-%D9%84%D9%84%D8%B1%D8%B9%D8%A7%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+            "status": "held",
+            "reason": "livestock-only",
+            "evidence": "El Mohandes farm consultancy/supplies, no pet clinic."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "مكة لتجارة الكتاكيت والاعلاف",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/1996485460622012/%D9%85%D9%83%D8%A9-%D9%84%D8%AA%D8%AC%D8%A7%D8%B1%D8%A9-%D8%A7%D9%84%D9%83%D8%AA%D8%A7%D9%83%D9%8A%D8%AA-%D9%88%D8%A7%D9%84%D8%A7%D8%B9%D9%84%D8%A7%D9%81",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "أكوا بريميوم رمل خشب قطط",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/451498594722165/%D8%A3%D9%83%D9%88%D8%A7-%D8%A8%D8%B1%D9%8A%D9%85%D9%8A%D9%88%D9%85-%D8%B1%D9%85%D9%84-%D8%AE%D8%B4%D8%A8-%D9%82%D8%B7%D8%B7",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "ادب خيل-Adab kheel",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/666321606560291/%D8%A7%D8%AF%D8%A8-%D8%AE%D9%8A%D9%84-Adab-kheel",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "Protego for Veterinary Pharmaceuticals",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/1038619192673745/Protego-for-Veterinary-Pharmaceuticals",
+            "status": "excluded-discovery",
+            "reason": "pharmacy-or-supplier",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "BERGO",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/1677696839212005/BERGO",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "عالم الطبيعة",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/101620341446367/%D8%B9%D8%A7%D9%84%D9%85-%D8%A7%D9%84%D8%B7%D8%A8%D9%8A%D8%B9%D8%A9",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "عصافير وحمام بهتيم",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/102168996068159/%D8%B9%D8%B5%D8%A7%D9%81%D9%8A%D8%B1-%D9%88%D8%AD%D9%85%D8%A7%D9%85-%D8%A8%D9%87%D8%AA%D9%8A%D9%85",
+            "status": "excluded-discovery",
+            "reason": "farming-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "أليف ماركت",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/103075581511380/%D8%A3%D9%84%D9%8A%D9%81-%D9%85%D8%A7%D8%B1%D9%83%D8%AA",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "أليف ماركت",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/435157676358405/%D8%A3%D9%84%D9%8A%D9%81-%D9%85%D8%A7%D8%B1%D9%83%D8%AA",
+            "status": "excluded-discovery",
+            "reason": "shop-grooming-or-boarding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Shubra El Kheima",
+            "name": "The Best Friend For The Human - اوفى صديق للا",
+            "url": "https://www.petshops1.com/EG/Shubra-el-Kheima/2546318878840569/The-Best-Friend-For-The-Human---%D8%A7%D9%88%D9%81%D9%89-%D8%B5%D8%AF%D9%8A%D9%82-%D9%84%D9%84%D8%A7%D9%86%D8%B3%D8%A7%D9%86",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          }
+        ],
+        "retained": [],
+        "outcomesByReason": {
+          "pending-locality-review": 1,
+          "pending-branch-review": 1,
+          "poultry-only": 1,
+          "no-pet-clinic-evidence-in-discovery": 12,
+          "shop-grooming-or-boarding": 5,
+          "farming-or-breeding": 4,
+          "already-retained": 1,
+          "training-or-breeding": 4,
+          "unresolved-subdistrict": 1,
+          "unresolved-subdistrict-and-freshness": 1,
+          "unrelated-business": 1,
+          "livestock-only": 1,
+          "pharmacy-or-supplier": 1
+        }
+      },
+      {
+        "city": "Obour",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/%D8%A7%D9%84%D8%B9%D8%A8%D9%88%D8%B1/302615/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/%D8%A7%D9%84%D8%B9%D8%A8%D9%88%D8%B1/302615"
+        ],
+        "discoveryEntries": 7,
+        "individualSnapshots": ["web-evidence/depth-5bb488e4069f087f.json", "web-evidence/depth-10433dd971185145.json"],
+        "candidates": [
+          {
+            "city": "Obour",
+            "name": "Ahmed Gamal kennel / مملكه الكوكيجن في مصر",
+            "url": "https://www.petshops1.com/EG/%D8%A7%D9%84%D8%B9%D8%A8%D9%88%D8%B1/103798818110136/Ahmed-Gamal-kennel---%D9%85%D9%85%D9%84%D9%83%D9%87-%D8%A7%D9%84%D9%83%D9%88%D9%83%D9%8A%D8%AC%D9%86-%D9%81%D9%8A-%D9%85%D8%B5%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "training-or-breeding",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Obour",
+            "name": "Puppzy Academy",
+            "url": "https://www.petshops1.com/EG/%D8%A7%D9%84%D8%B9%D8%A8%D9%88%D8%B1/112579898339664/Puppzy-Academy",
+            "status": "excluded-discovery",
+            "reason": "training-or-academy",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Obour",
+            "name": "Floki & Bianca",
+            "url": "https://www.petshops1.com/EG/%D8%A7%D9%84%D8%B9%D8%A8%D9%88%D8%B1/976140488926048/Floki-%26-Bianca",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Obour",
+            "name": "Parrot Zone",
+            "url": "https://www.petshops1.com/EG/%D8%A7%D9%84%D8%B9%D8%A8%D9%88%D8%B1/1184693428064339/Parrot-Zone",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Obour",
+            "name": "Pets well",
+            "url": "https://www.petshops1.com/EG/%D8%A7%D9%84%D8%B9%D8%A8%D9%88%D8%B1/103472895871506/Pets-well",
+            "status": "retained",
+            "reason": "pets-well-obour",
+            "evidence": "Individual page explicitly identifies specialist physical pet clinic and booking contact, repeated in 2024 clinic visit notice. No evidence of closure."
+          },
+          {
+            "city": "Obour",
+            "name": "mahmoud_fady_academy",
+            "url": "https://www.petshops1.com/EG/%D8%A7%D9%84%D8%B9%D8%A8%D9%88%D8%B1/113691913700595/mahmoud_fady_academy",
+            "status": "excluded-discovery",
+            "reason": "training-or-academy",
+            "evidence": "City/category entry reviewed in discovery; no public pet treatment premises established. Not represented as a closure or proof of nonexistence. Individual clinical candidates separately reviewed below."
+          },
+          {
+            "city": "Obour",
+            "name": "Africano vet &pets",
+            "url": "https://www.petshops1.com/EG/%D8%A7%D9%84%D8%B9%D8%A8%D9%88%D8%B1/987777647948646/Africano-vet-%26pets",
+            "status": "held",
+            "reason": "shop-without-dedicated-clinic",
+            "evidence": "Africano supplies full vaccines and a vet at a shop; regular dedicated medical clinic/premises not established."
+          }
+        ],
+        "retained": ["pets-well-obour"],
+        "outcomesByReason": {
+          "training-or-breeding": 1,
+          "training-or-academy": 2,
+          "no-pet-clinic-evidence-in-discovery": 2,
+          "shop-without-dedicated-clinic": 1
+        }
+      }
+    ],
+    "limitations": "City/category enumeration records every discovered entry; nonclinical retail/farm/personal entries excluded at discovery. Individual pet-clinic candidates read in cached snapshots, with unresolved treatment, contact, identity or catalog district held explicitly. Mirrors are one witness, not independent sources. No claim of market exhaustion; alternate sources/access limitations are recorded in city pages."
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

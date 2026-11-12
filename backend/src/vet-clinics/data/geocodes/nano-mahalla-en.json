@@ -1,0 +1,8 @@
+{
+  "query": "Galal El Din Street, El Mahalla El Kobra 1, Gharbia, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Galal+El+Din+Street%2C+El+Mahalla+El+Kobra+1%2C+Gharbia%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:17:22.717Z",
+  "httpStatus": 200,
+  "response": []
+}

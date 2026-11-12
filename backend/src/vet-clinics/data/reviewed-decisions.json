@@ -1,0 +1,837 @@
+[
+  {
+    "sourceKey": "OSM:node/768762814",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:node/2185265914",
+    "decision": "exclude",
+    "reason": "unresolved-pet-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/2196966246",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/2207957273",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/2228492242",
+    "decision": "include",
+    "reason": "Named veterinary clinic, physical OSM node; no government, retail-only or home-only evidence.",
+    "category": "private-clinic",
+    "nameArabic": "عيادة المعادي البيطرية",
+    "nameArabicOrigin": "transliterated"
+  },
+  {
+    "sourceKey": "OSM:node/2571558867",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:node/3118523494",
+    "decision": "exclude",
+    "reason": "government-or-livestock"
+  },
+  {
+    "sourceKey": "OSM:node/3232911647",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/4390836689",
+    "decision": "exclude",
+    "reason": "unresolved-pet-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/4487356494",
+    "decision": "exclude",
+    "reason": "faculty-administration"
+  },
+  {
+    "sourceKey": "OSM:node/4691714190",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/4691726093",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/4711812993",
+    "decision": "exclude",
+    "reason": "government-or-livestock"
+  },
+  {
+    "sourceKey": "OSM:node/5012527622",
+    "decision": "exclude",
+    "reason": "shop-grooming-or-boarding"
+  },
+  {
+    "sourceKey": "OSM:node/5126194795",
+    "decision": "exclude",
+    "reason": "government-or-livestock"
+  },
+  {
+    "sourceKey": "OSM:node/5188677952",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/5239489424",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/5279599823",
+    "decision": "exclude",
+    "reason": "unresolved-government-hospital"
+  },
+  {
+    "sourceKey": "OSM:node/5503724260",
+    "decision": "include",
+    "reason": "Named veterinary hospital; veterinarian speciality, named private doctor operator and street address.",
+    "category": "animal-hospital",
+    "nameArabic": "المستشفى البيطري الألماني بمصر",
+    "nameArabicOrigin": "transliterated"
+  },
+  {
+    "sourceKey": "OSM:node/5617442828",
+    "decision": "include",
+    "reason": "Named private veterinary clinic and doctor with a phone, distinct from veterinary government units.",
+    "category": "private-clinic"
+  },
+  {
+    "sourceKey": "OSM:node/6073544385",
+    "decision": "include",
+    "reason": "Named veterinary doctor practice mapped as a physical veterinary amenity; no home-visit-only indication.",
+    "category": "private-clinic",
+    "nameEnglish": "Veterinarian: Magdy Samir",
+    "nameEnglishOrigin": "transliterated"
+  },
+  {
+    "sourceKey": "OSM:node/6373641082",
+    "decision": "exclude",
+    "reason": "government-or-livestock"
+  },
+  {
+    "sourceKey": "OSM:node/6691724991",
+    "decision": "include",
+    "reason": "Named veterinary clinic with street address, phone, hours and business Facebook URL.",
+    "category": "private-clinic",
+    "nameArabic": "ألترا للرعاية البيطرية",
+    "nameArabicOrigin": "transliterated"
+  },
+  {
+    "sourceKey": "OSM:node/6848027187",
+    "decision": "exclude",
+    "reason": "faculty-administration"
+  },
+  {
+    "sourceKey": "OSM:node/7639846210",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/8261978317",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:node/8328807450",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:node/9729262017",
+    "decision": "exclude",
+    "reason": "shop-grooming-or-boarding"
+  },
+  {
+    "sourceKey": "OSM:node/9859114389",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/9871770518",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/10184100223",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/10768434505",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/11224507005",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/11225521437",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/11335822785",
+    "decision": "exclude",
+    "reason": "faculty-administration"
+  },
+  {
+    "sourceKey": "OSM:node/11483325780",
+    "decision": "exclude",
+    "reason": "faculty-administration"
+  },
+  {
+    "sourceKey": "OSM:node/11783601816",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/11783601817",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/11898182030",
+    "decision": "exclude",
+    "reason": "government-or-livestock"
+  },
+  {
+    "sourceKey": "OSM:node/11914166245",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/11941414446",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:node/11952554702",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/12014576592",
+    "decision": "include",
+    "reason": "Named veterinary clinic with phone and payment/accessibility tags supporting physical customer premises.",
+    "category": "private-clinic",
+    "nameArabic": "عيادة ذا آرك البيطرية",
+    "nameArabicOrigin": "transliterated"
+  },
+  {
+    "sourceKey": "OSM:node/12020574345",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/12099229302",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/12741642252",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/13016279207",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/13016280203",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/13114786734",
+    "decision": "include",
+    "reason": "Named animal clinic with house/street address; malformed +010 phone retained only in rejection report.",
+    "category": "private-clinic"
+  },
+  {
+    "sourceKey": "OSM:node/13153088152",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/13185702181",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/13186113407",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/13186140603",
+    "decision": "include",
+    "reason": "Named veterinary clinic with street address, phone/mobile and doctor clinic Facebook URL.",
+    "category": "private-clinic",
+    "nameArabic": "العيادة البيطرية الحديثة",
+    "nameArabicOrigin": "transliterated"
+  },
+  {
+    "sourceKey": "OSM:node/13205472184",
+    "decision": "exclude",
+    "reason": "government-or-livestock"
+  },
+  {
+    "sourceKey": "OSM:node/13234994764",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/13242764924",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/13243981870",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/13528650892",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/13686191803",
+    "decision": "exclude",
+    "reason": "faculty-administration"
+  },
+  {
+    "sourceKey": "OSM:node/13727426503",
+    "decision": "exclude",
+    "reason": "government-or-livestock"
+  },
+  {
+    "sourceKey": "OSM:node/14136593498",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:node/14184875493",
+    "decision": "exclude",
+    "reason": "government-or-livestock"
+  },
+  {
+    "sourceKey": "OSM:node/14185446008",
+    "decision": "exclude",
+    "reason": "pet-shop-without-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:node/14324423881",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:node/14324451828",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:node/14324468161",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:node/14324476410",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:node/14324476563",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/97505867",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/337477127",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/412500549",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/433594528",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/433696528",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/433704141",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/433704394",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/433763738",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/433862436",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/434039724",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/668408511",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/690220669",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/690220679",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/718431495",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/719387225",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/719387269",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/725404736",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/726837116",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/727543225",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/729890043",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/729960648",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/729960738",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/732936613",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/734819915",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/735234318",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/739823152",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/743277891",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/745323067",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/751592536",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/757876265",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/757876272",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/760145557",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/763101441",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/766013014",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/766296739",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/766485692",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/767913574",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/768607254",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/768608910",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/769165197",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/772490475",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/792484490",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/905401958",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/905401962",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/905401968",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/905401975",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/905401980",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906025643",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906025645",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906025647",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906025691",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906025692",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906025693",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906025694",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906025695",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906025696",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906037114",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906055981",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906055993",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906055997",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906056001",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906056004",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906056007",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906056011",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906056026",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906056027",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906056028",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906056029",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906056030",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906068315",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906068319",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906068323",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906068327",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906068331",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906068335",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906068379",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906068382",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906068385",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906068388",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906068391",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/906068394",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/920686234",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/934954133",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/936321079",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/941367103",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/944287240",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/952703022",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/978761460",
+    "decision": "exclude",
+    "reason": "road-not-clinic"
+  },
+  {
+    "sourceKey": "OSM:way/1006167351",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/1070498805",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/1236847962",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:way/1247276583",
+    "decision": "exclude",
+    "reason": "unresolved-pet-clinic-evidence"
+  },
+  {
+    "sourceKey": "OSM:way/1474236143",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:relation/9323456",
+    "decision": "exclude",
+    "reason": "unrelated-name-match"
+  },
+  {
+    "sourceKey": "OSM:relation/17024449",
+    "decision": "exclude",
+    "reason": "faculty-administration"
+  }
+]

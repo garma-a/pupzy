@@ -1,0 +1,350 @@
+{
+  "reviewedAt": "2026-11-12",
+  "group": "F3",
+  "governorate": "Luxor",
+  "searches": [
+    "عيادة بيطرية الأقصر حيوانات أليفة",
+    "\"Happy Tail Veterinary Clinic\" Luxor phone",
+    "Animal Care Egypt Luxor hospital cats dogs contact",
+    "\"Pet Care Center\" \"Luxor\" clinic"
+  ],
+  "sourcesConsulted": [
+    "https://thebrookeegypt.org/contact-us/",
+    "https://www.bizmideast.com/EG/عيادة-المنار-البيطرية",
+    "https://www.voofla.com/EG/Luxor/100206514891699/Happy-Tail-Veterinary-Clinic",
+    "https://www.voofla.com/EG/Luxor/104348668916783/Pet-Care-Center"
+  ],
+  "candidates": [
+    {
+      "key": "petcare-luxor",
+      "sources": [
+        {
+          "url": "https://www.voofla.com/EG/Luxor/104348668916783/Pet-Care-Center",
+          "accessedAt": "2026-11-12",
+          "kind": "WEB"
+        }
+      ],
+      "evidence": "Read individual clinic-feed mirror: explicit physical pet clinic, examinations, vaccination, surgery and lab work at address; dated 2024-10-11 booking contact and daily 7-10pm hours. Not home-visit-only Happy Tail. No invented 24h status.",
+      "lastSeenActive": "2024-10-11"
+    }
+  ],
+  "holdsAndExclusions": [
+    {
+      "name": "Happy Tail",
+      "reason": "home-visit-only",
+      "evidence": "Individual clinic page explicitly describes mobile service; multiple dated treatment accounts say doctor comes home. Directory street address does not establish public clinic premises.",
+      "sources": ["https://www.voofla.com/EG/Luxor/100206514891699/Happy-Tail-Veterinary-Clinic"]
+    },
+    {
+      "name": "Al Manar",
+      "reason": "reported-closed",
+      "evidence": "Individual BizMidEast entry explicitly closed; historical phone. Buy listing not sufficient to reactivate.",
+      "sources": ["https://www.bizmideast.com/EG/عيادة-المنار-البيطرية"]
+    },
+    {
+      "name": "Brooke",
+      "reason": "equine-only",
+      "evidence": "Official contact FAQ explicitly says no cat/dog treatment facilities.",
+      "sources": ["https://thebrookeegypt.org/contact-us/"]
+    }
+  ],
+  "counts": {
+    "authored": 1,
+    "retained": 1,
+    "active": 1,
+    "inactiveByReason": {},
+    "precision": {
+      "area": 1
+    }
+  },
+  "limitations": "Targeted capital/large-city research, not exhaustive market enumeration. Mirrors preserve dated clinic posts, are not independent witnesses. Canonical English urban City labels are authored translations; rural Markaz is not substituted for urban Kism. Explicit holds are not nonexistence verdicts. Additional search-result/category leads not individually verified remain discovery only.",
+  "exclusionsOrHoldsByReason": {
+    "home-visit-only": 1,
+    "reported-closed": 1,
+    "equine-only": 1
+  },
+  "importAccounting": {
+    "candidates": 1,
+    "imported": 1,
+    "excluded": []
+  },
+  "depthPass": {
+    "group": "D3",
+    "reviewedAt": "2026-11-12",
+    "decisionFile": "depth-D3-decisions.json",
+    "cities": [
+      {
+        "city": "Luxor",
+        "pagesRead": [
+          "https://www.petshops1.com/EG/Luxor/67748/genre/162068413843305/Veterinarian",
+          "https://www.petshops1.com/EG/Luxor/67748"
+        ],
+        "discoveryEntries": 27,
+        "candidates": [
+          {
+            "key": "102703648965020",
+            "city": "Luxor",
+            "name": "VIP Riding Luxor",
+            "url": "https://www.petshops1.com/EG/Luxor/102703648965020/VIP-Riding-Luxor",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "102032555236051",
+            "city": "Luxor",
+            "name": "My cat loxur",
+            "url": "https://www.petshops1.com/EG/Luxor/102032555236051/My-cat-loxur",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "243131940932514",
+            "city": "Luxor",
+            "name": "My cat in luxor",
+            "url": "https://www.petshops1.com/EG/Luxor/243131940932514/My-cat-in-luxor",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "269750166437844",
+            "city": "Luxor",
+            "name": "Animal Welfare of Luxor - AWOL.",
+            "url": "https://www.petshops1.com/EG/Luxor/269750166437844/Animal-Welfare-of-Luxor---AWOL.",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "104340405191919",
+            "city": "Luxor",
+            "name": "Fe el3asha",
+            "url": "https://www.petshops1.com/EG/Luxor/104340405191919/Fe-el3asha",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "2041014702808445",
+            "city": "Luxor",
+            "name": "Solo Pet Store Luxor",
+            "url": "https://www.petshops1.com/EG/Luxor/2041014702808445/Solo-Pet-Store-Luxor",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "636663383157846",
+            "city": "Luxor",
+            "name": "PAWS & CLAWS",
+            "url": "https://www.petshops1.com/EG/Luxor/636663383157846/PAWS-%26-CLAWS",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "111586161526219",
+            "city": "Luxor",
+            "name": "كلاب جيرمن الاقصر",
+            "url": "https://www.petshops1.com/EG/Luxor/111586161526219/%D9%83%D9%84%D8%A7%D8%A8-%D8%AC%D9%8A%D8%B1%D9%85%D9%86-%D8%A7%D9%84%D8%A7%D9%82%D8%B5%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "344880706601056",
+            "city": "Luxor",
+            "name": "Horses & Hieroglyphs - Horse Riding Tours in",
+            "url": "https://www.petshops1.com/EG/Luxor/344880706601056/Horses-%26-Hieroglyphs---Horse-Riding-Tours-in-Egypt",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1044231335450415",
+            "city": "Luxor",
+            "name": "lary hairstyles",
+            "url": "https://www.petshops1.com/EG/Luxor/1044231335450415/lary-hairstyles",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "617345928139029",
+            "city": "Luxor",
+            "name": "Lala Land Luxor",
+            "url": "https://www.petshops1.com/EG/Luxor/617345928139029/Lala-Land-Luxor",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "146857308504114",
+            "city": "Luxor",
+            "name": "Walaa's Around The World Adoptions Cats",
+            "url": "https://www.petshops1.com/EG/Luxor/146857308504114/Walaa%27s-Around-The-World-Adoptions-Cats",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "373821815810089",
+            "city": "Luxor",
+            "name": "Pola for dogs kennel",
+            "url": "https://www.petshops1.com/EG/Luxor/373821815810089/Pola-for-dogs-kennel",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "112383121738951",
+            "city": "Luxor",
+            "name": "Het huis van Bastet",
+            "url": "https://www.petshops1.com/EG/Luxor/112383121738951/Het-huis-van-Bastet",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "104863734406372",
+            "city": "Luxor",
+            "name": "Blue Lotus Stables, Farm & Kitchen",
+            "url": "https://www.petshops1.com/EG/Luxor/104863734406372/Blue-Lotus-Stables%2C-Farm-%26-Kitchen",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "173650022488589",
+            "city": "Luxor",
+            "name": "Chip Munk Pet",
+            "url": "https://www.petshops1.com/EG/Luxor/173650022488589/Chip-Munk-Pet",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "225095447357947",
+            "city": "Luxor",
+            "name": "Animal Shelter Luxor",
+            "url": "https://www.petshops1.com/EG/Luxor/225095447357947/Animal-Shelter-Luxor",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "523688854697918",
+            "city": "Luxor",
+            "name": "Habu Stable",
+            "url": "https://www.petshops1.com/EG/Luxor/523688854697918/Habu-Stable",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1028350720513923",
+            "city": "Luxor",
+            "name": "سولو للحيوانات الاليفه الاقصر-Solo Pet Store",
+            "url": "https://www.petshops1.com/EG/Luxor/1028350720513923/%D8%B3%D9%88%D9%84%D9%88-%D9%84%D9%84%D8%AD%D9%8A%D9%88%D8%A7%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%84%D9%8A%D9%81%D9%87-%D8%A7%D9%84%D8%A7%D9%82%D8%B5%D8%B1-Solo-Pet-Store-Luxor",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "1547724388868414",
+            "city": "Luxor",
+            "name": "Pharaohs Stables",
+            "url": "https://www.petshops1.com/EG/Luxor/1547724388868414/Pharaohs-Stables",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "634714376396612",
+            "city": "Luxor",
+            "name": "مربط اشرقت بالاقصر",
+            "url": "https://www.petshops1.com/EG/Luxor/634714376396612/%D9%85%D8%B1%D8%A8%D8%B7-%D8%A7%D8%B4%D8%B1%D9%82%D8%AA-%D8%A8%D8%A7%D9%84%D8%A7%D9%82%D8%B5%D8%B1",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "230103263530054",
+            "city": "Luxor",
+            "name": "The golden horse",
+            "url": "https://www.petshops1.com/EG/Luxor/230103263530054/The-golden-horse",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "423040134919934",
+            "city": "Luxor",
+            "name": "Animal Extra Care",
+            "url": "https://www.petshops1.com/EG/Luxor/423040134919934/Animal-Extra-Care",
+            "status": "excluded-discovery",
+            "reason": "no-pet-clinic-evidence-in-discovery",
+            "evidence": "Reviewed city/category listing; no pet-treatment premises identified. Category membership does not establish clinic eligibility."
+          },
+          {
+            "key": "102145782969322",
+            "city": "Luxor",
+            "name": "شركة العز للمنتجات البيطرية والفيتامينات واضا",
+            "url": "https://www.petshops1.com/EG/Luxor/102145782969322/%D8%B4%D8%B1%D9%83%D8%A9-%D8%A7%D9%84%D8%B9%D8%B2-%D9%84%D9%84%D9%85%D9%86%D8%AA%D8%AC%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-%D9%88%D8%A7%D9%84%D9%81%D9%8A%D8%AA%D8%A7%D9%85%D9%8A%D9%86%D8%A7%D8%AA-%D9%88%D8%A7%D8%B6%D8%A7%D9%81%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D8%B9%D9%84%D8%A7%D9%81",
+            "status": "held",
+            "reason": "supplier-or-pharmacy",
+            "evidence": "Individual page sells feed/medicines or farm supplies; no on-site pet treatment established.",
+            "snapshot": "web-evidence/depth-7758ae014a4943d3.json"
+          },
+          {
+            "key": "100206514891699",
+            "city": "Luxor",
+            "name": "Happy Tail Veterinary Clinic",
+            "url": "https://www.petshops1.com/EG/Luxor/100206514891699/Happy-Tail-Veterinary-Clinic",
+            "status": "held",
+            "reason": "unresolved-premises",
+            "evidence": "Happy Tail in Luxor has pet surgery/phone, but city-only physical premises unestablished; distinct from Matrouh clinic.",
+            "snapshot": "web-evidence/depth-4519df138820f684.json"
+          },
+          {
+            "key": "104348668916783",
+            "city": "Luxor",
+            "name": "Pet Care Center",
+            "url": "https://www.petshops1.com/EG/Luxor/104348668916783/Pet-Care-Center",
+            "status": "held",
+            "reason": "already-retained",
+            "evidence": "Existing clinic identity already retained; no duplicate from mirror listing.",
+            "snapshot": "web-evidence/depth-31e33110303b25bc.json"
+          },
+          {
+            "key": "2093742284179321",
+            "city": "Luxor",
+            "name": "Luxor West Bank Pet Care Services",
+            "url": "https://www.petshops1.com/EG/Luxor/2093742284179321/Luxor-West-Bank-Pet-Care-Services",
+            "status": "held",
+            "reason": "unresolved-treatment-contact",
+            "evidence": "Ramla West Bank pet-care service lacks validated phone/physical treatment premises; no guessed catalog assignment.",
+            "snapshot": "web-evidence/depth-9af06d5c08c4b79c.json"
+          }
+        ],
+        "retained": 0,
+        "exclusionsByReason": {
+          "no-pet-clinic-evidence-in-discovery": 23,
+          "supplier-or-pharmacy": 1,
+          "unresolved-premises": 1,
+          "already-retained": 1,
+          "unresolved-treatment-contact": 1
+        },
+        "individualSnapshots": [
+          "web-evidence/depth-7758ae014a4943d3.json",
+          "web-evidence/depth-4519df138820f684.json",
+          "web-evidence/depth-31e33110303b25bc.json",
+          "web-evidence/depth-9af06d5c08c4b79c.json"
+        ]
+      }
+    ]
+  },
+  "multibranchReview": "depth-multibranch-review.json"
+}

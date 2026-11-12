@@ -1,0 +1,8 @@
+{
+  "query": "Tanta Mall road, Tanta, Gharbia, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Tanta+Mall+road%2C+Tanta%2C+Gharbia%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:17:11.691Z",
+  "httpStatus": 200,
+  "response": []
+}

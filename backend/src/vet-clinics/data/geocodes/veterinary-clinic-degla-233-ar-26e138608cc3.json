@@ -1,0 +1,35 @@
+{
+  "query": "233, نيركو, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=233%2C+%D9%86%D9%8A%D8%B1%D9%83%D9%88%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:48:56.406Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50508444,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 9334652728,
+      "lat": "29.9628400",
+      "lon": "31.2834824",
+      "category": "place",
+      "type": "neighbourhood",
+      "place_rank": 24,
+      "importance": 0.08007960402838175,
+      "addresstype": "neighbourhood",
+      "name": "مساكن نيركو",
+      "display_name": "مساكن نيركو, الفاروقية, القاهرة, 11742, مصر",
+      "address": {
+        "neighbourhood": "مساكن نيركو",
+        "village": "الفاروقية",
+        "city": "القاهرة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11742",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9528400", "29.9728400", "31.2734824", "31.2934824"]
+    }
+  ]
+}

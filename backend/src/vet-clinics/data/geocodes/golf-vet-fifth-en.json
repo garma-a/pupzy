@@ -1,0 +1,61 @@
+{
+  "query": "Street 36, Fifth Settlement, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Street+36%2C+Fifth+Settlement%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:07.512Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50765859,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 392350320,
+      "lat": "30.0112240",
+      "lon": "31.4212442",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "Saeid Al Shakhami Street",
+      "display_name": "Saeid Al Shakhami Street, Fifth Settlement, New Cairo City, Cairo, 11936, Egypt",
+      "address": {
+        "road": "Saeid Al Shakhami Street",
+        "neighbourhood": "Fifth Settlement",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11936",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0108272", "30.0138312", "31.4183024", "31.4223808"]
+    },
+    {
+      "place_id": 50575462,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 684182896,
+      "lat": "30.0013647",
+      "lon": "31.4319190",
+      "category": "highway",
+      "type": "tertiary",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "tertiary",
+      "name": "Ibn Timiah Street",
+      "display_name": "Ibn Timiah Street, Fifth Settlement, New Cairo City, Cairo, 11835, Egypt",
+      "address": {
+        "road": "Ibn Timiah Street",
+        "neighbourhood": "Fifth Settlement",
+        "city": "New Cairo City",
+        "state": "Cairo",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11835",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0005477", "30.0013826", "31.4299175", "31.4340921"]
+    }
+  ]
+}

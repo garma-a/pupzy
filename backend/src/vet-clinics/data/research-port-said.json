@@ -1,0 +1,459 @@
+[
+  {
+    "key": "port-said-fishara",
+    "nameEnglish": "Fishara Pets Clinic",
+    "nameArabic": "عيادة فشارة للحيوانات الأليفة",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "El Talateny Street, beside El Waheby Restaurant, Arab, Port Said",
+    "addressArabic": "شارع الثلاثيني، بجوار مطعم الوهابي، العرب، بورسعيد",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Arab",
+    "phones": ["01003987987"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Port-Said/123219601067327/Fishara-Pets-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.fisharapets.com/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://besbes.app/business/32c346ea-db82-4c7f-84a2-879d9584f576",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": "https://www.fisharapets.com/",
+    "facebookUrl": "https://www.facebook.com/123219601067327",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-03-29",
+    "classificationEvidence": "Clinic own website confirms pet treatment, diagnostic and surgical services and matching phone; dated 29 March 2026 mirrored announcement gives hours 11 am–11 pm. Besbes supplies Arab district. Conflicting 24-hour directory hours rejected in favor of the clinic announcement.",
+    "aliases": {
+      "english": ["Fishara Pets Clinic", "Fishara pets clinic", "Fishara Pets Veterinary Clinic"],
+      "arabic": ["عيادة فشارة للحيوانات الأليفة", "عيادة فشارة البيطرية"]
+    }
+  },
+  {
+    "key": "port-said-youssef-eldesoky",
+    "nameEnglish": "Dr. Youssef Eldesoky Vet Clinic",
+    "nameArabic": "عيادة دكتور يوسف الدسوقي البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Workers Club Street, beside Sahar El Layali Hall, side entrance of Port Said Court telephone exchange; El Wakeel, Sharq, Port Said",
+    "addressArabic": "شارع نادي العمال، بجوار قاعة سهر الليالي، بوابة سنترال محكمة بورسعيد الجانبية؛ شارع الوكيل، الشرق، بورسعيد",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Sharq",
+    "phones": ["01221888065"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Port-Said/108735338246667/Dr-Youssef-ELDesoky-vet-clinic-%D8%B9%D9%8A%D8%A7%D8%AF%D9%87-%D8%AF%D9%83%D8%AA%D9%88%D8%B1-%D9%8A%D9%88%D8%B3%D9%81-%D8%A7%D9%84%D8%AF%D8%B3%D9%88%D9%82%D9%8A-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D9%87",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://besbes.app/business/6f0855b1-f2ad-4ed0-91c3-f8a365666b20",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/108735338246667",
+    "is24Hours": true,
+    "hoursEvidence": "Dated 2025-12-02 clinic announcement mirrored at the source explicitly states emergency cases: متواجدون 24 ساعة يوميًا للاستجابة لأي حالة طوارئ أو تدخل سريع. Regular clinic hours 10 am–2 am; 24 hours refers to emergency availability.",
+    "lastSeenActive": "2025-12-02",
+    "classificationEvidence": "Clinic announcement lists pet vaccinations, surgery, Caesareans, ultrasound and X-ray; matching phone. Sharq is explicit in entry address header; Besbes classifies it under Arab, recorded as a directory district conflict. Current written street/landmarks retained without copying any map point.",
+    "aliases": {
+      "english": [
+        "Dr. Youssef Eldesoky Vet Clinic",
+        "Dr Youssef ELDesoky vet clinic",
+        "Dr. Youssef Eldesoky Veterinary Clinic"
+      ],
+      "arabic": [
+        "عيادة دكتور يوسف الدسوقي البيطرية",
+        "عياده دكتور يوسف الدسوقي البيطريه",
+        "عيادات دكتور يوسف الدسوقي البيطريه",
+        "عيادة د. يوسف الدسوقي"
+      ]
+    }
+  },
+  {
+    "key": "port-said-modern-port-said",
+    "nameEnglish": "Modern Pet Center (Port Said)",
+    "nameArabic": "مركز مودرن للحيوانات الأليفة (بورسعيد)",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Memphis and El Taef Streets, opposite Ismail Market, behind El Gomhoureya petrol station, beside Diet and Fat, Port Said",
+    "addressArabic": "شارع ممفيس والطائف، أمام إسماعيل ماركت، خلف بنزينة الجمهورية، بجوار دايت آند فات، بورسعيد",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Port Said",
+    "phones": ["01030152250"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Port-Said/2816127161751869/Modern-Pet-Center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.voofla.com/EG/Port-Said/2816127161751869/Modern-Pet-Center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/2816127161751869",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-08",
+    "classificationEvidence": "Individually reviewed dated clinic announcement describes emergency Caesarean treatment of a pet dog and explicitly lists separate Port Said and Port Fouad branches and their respective phones. Source mirrors are the same underlying clinic feed, not independent confirmation.",
+    "aliases": {
+      "english": [
+        "Modern Pet Center (Port Said)",
+        "Modern Pet Center",
+        "Modern Pet Center Veterinary Clinics",
+        "modern pet center"
+      ],
+      "arabic": ["مركز مودرن للحيوانات الأليفة (بورسعيد)", "مودرن بيت سنتر", "د. أحمد عيد"]
+    },
+    "chainKey": "modern-pet-port-said",
+    "branchQualifier": "Port Said"
+  },
+  {
+    "key": "port-said-modern-port-fouad",
+    "nameEnglish": "Modern Pet Center (Port Fouad)",
+    "nameArabic": "مركز مودرن للحيوانات الأليفة (بورفؤاد)",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Police Bakery Street, beside Hydra Pharmacy, Port Fouad, Port Said",
+    "addressArabic": "شارع فرن الشرطة، بجوار صيدلية هيدرا، بورفؤاد، بورسعيد",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Port Fouad",
+    "phones": ["01228106335"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Port-Said/2816127161751869/Modern-Pet-Center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://besbes.app/business/84afaf56-ad55-4d97-97dc-7eba664533ff",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://egypt.worldplaces.me/medical-and-health-in-port-said/59334874-pet-life-clinics-egypt.html",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/2816127161751869",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-08",
+    "classificationEvidence": "Clinic feed explicitly lists Port Fouad branch at Police Bakery Street and this phone. Besbes incorrectly repeats Port Said street address under Port Fouad; current branch-specific announcement takes priority. Pet Life Clinics older lead has the same Dr Ahmed Eid and phone; kept as former source alias, not a third clinic.",
+    "aliases": {
+      "english": [
+        "Modern Pet Center (Port Fouad)",
+        "Modern Pet Center",
+        "Modern Pet Center Veterinary Clinics",
+        "Pet Life Clinics EGYPT",
+        "Pet Life Clinics Egypt",
+        "modern pet center"
+      ],
+      "arabic": ["مركز مودرن للحيوانات الأليفة (بورفؤاد)", "مودرن بيت سنتر", "د. أحمد عيد", "بت لايف كلينكس"]
+    },
+    "chainKey": "modern-pet-port-said",
+    "branchQualifier": "Port Fouad"
+  },
+  {
+    "key": "port-said-my-pets",
+    "nameEnglish": "My Pets Vet Center",
+    "nameArabic": "مركز ماي بيتس البيطري",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "El Taawonyat, near El Nasr Hospital, behind El Borg Laboratory, opposite El Sawaf Pharmacy, Port Said",
+    "addressArabic": "التعاونيات، مستشفى النصر، خلف معمل البرج، أمام صيدلية الصواف، بورسعيد",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Port Said",
+    "phones": ["01019590144", "01202387712"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Port-Said/103037605942285/my-pets-vet-center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/103037605942285",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-17",
+    "classificationEvidence": "Dated clinic feed describes cat surgery, urinary obstruction diagnostics and equipped pet treatment; 17 September 2026 post repeats both phones. No street or district invented for the Taawonyat landmark address.",
+    "aliases": {
+      "english": [
+        "My Pets Vet Center",
+        "my pets vet center",
+        "My Pets Veterinary Clinic",
+        "My Pets Vet Center Dr Mohamed El Mogy",
+        "my pets"
+      ],
+      "arabic": ["مركز ماي بيتس البيطري", "عيادة ماي بيتس البيطرية", "د محمد الموجي"]
+    }
+  },
+  {
+    "key": "port-said-elite",
+    "nameEnglish": "Golden Elite Veterinary Center",
+    "nameArabic": "مركز جولدن إيليت البيطري",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "El Sabah Street, beside Basala Cafe and El Kiki Pharmacy, opposite the new fish market, Port Said",
+    "addressArabic": "شارع الصباح، بجوار قهوة بصلة وصيدلية الكيكي، أمام سوق السمك الجديد، بورسعيد",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Port Said",
+    "phones": ["01022208884"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Port-Said/172871795909369/Elite-Veterinary-Center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.jobs-arab.com/eg/jobs/714282/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/172871795909369",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-07",
+    "classificationEvidence": "Current clinic feed uses Golden Elite Veterinary Center and describes pet surgery/clinical cases and matching phone/address. Independently dated February 2026 recruitment advert confirms a physical Elite clinic in Port Said; no 24h claim inferred from emergency language.",
+    "aliases": {
+      "english": [
+        "Golden Elite Veterinary Center",
+        "Elite Veterinary Center",
+        "Elite Veterinary Clinic",
+        "Golden Elite Vet Center",
+        "Golden elite"
+      ],
+      "arabic": ["مركز جولدن إيليت البيطري", "عيادة ايليت", "عيادة إيليت البيطرية", "مركز إيليت البيطري"]
+    }
+  },
+  {
+    "key": "port-said-best-friend",
+    "nameEnglish": "Best Friend Pet's Clinic & Store",
+    "nameArabic": "عيادة بيست فريند البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Behind the three girls preparatory schools, beside El Fayrouz Nursery, Saad Zaghloul Tower, Port Fouad, Port Said",
+    "addressArabic": "خلف الثلاث مدارس إعدادي للبنات، بجوار حضانة الفيروز، برج سعد زغلول، بورفؤاد، بورسعيد",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Port Fouad",
+    "phones": ["01018895078", "01224831412"],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Port-Said/1358887300631128/Best-Friend--%D8%A7%D9%84%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.voofla.com/EG/Port-Said/140843306525673/Best-Friend-%D8%A7%D9%84%D8%B9%D9%8A%D8%A7%D8%AF%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://www.bizmideast.com/EG/best-friend-vet-clinic-011-15757536",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/1358887300631128",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-10-28",
+    "classificationEvidence": "Old clinic page explicitly directs users to the new clinic page in August 2026; same doctors/phone/address establishes one clinic. New October 2026 clinic feed describes pet vaccination/treatment. Keep published current phones from clinic feed; older directory 01115757536 not added without current ownership confirmation. Only Monday has 24-hour directory hours, insufficient for is24Hours.",
+    "aliases": {
+      "english": [
+        "Best Friend Pet's Clinic & Store",
+        "Best Friend",
+        "Best Friend vet.clinic",
+        "Best Friend pets clinic &store"
+      ],
+      "arabic": ["عيادة بيست فريند البيطرية"]
+    }
+  },
+  {
+    "key": "port-said-vet-care-point",
+    "nameEnglish": "Vet Care Point",
+    "nameArabic": "مركز الرعاية البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Rakese 10, Port Fouad, Port Said",
+    "addressArabic": "شارع رئيسي 10، بورفؤاد، بورسعيد",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Port Fouad",
+    "phones": ["01276763276"],
+    "sources": [
+      {
+        "url": "https://www.bizmideast.com/EG/%D9%85%D8%B1%D9%83%D8%B2-%D8%A7%D9%84%D8%B1%D8%B9%D8%A7%D9%8A%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%8A%D8%A9-vet-care-point-%D8%AF-012-76763276",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://besbes.app/business/a285bb21-1245-402a-93c1-9f62e425fb0c",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/613394502139373",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "Individually read BizMidEast entry describes a specialist private pet treatment center and explicit phone/address; Besbes confirms veterinary clinic at same road in Port Fouad. Physician also works in public animal welfare; the separately branded physical clinic is not the government unit.",
+    "aliases": {
+      "english": ["Vet Care Point", "Vet Care Point Dr Mohamed Issa", "Veterinary Care Center"],
+      "arabic": ["مركز الرعاية البيطرية", "مركز الرعاية البيطرية -  د محمد عيسى", "مركز الرعاية البيطرية د. محمد عيسى"]
+    }
+  },
+  {
+    "key": "port-said-pet-center",
+    "nameEnglish": "Port Said Pet Center",
+    "nameArabic": "مركز بورسعيد البيطري",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "3 El Nour Buildings, behind Super Jet, shops 7 and 8, Dawahy, Port Said",
+    "addressArabic": "3 عمارات النور، خلف السوبر جيت، محل 7 و8، الضواحي، بورسعيد",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Dawahy",
+    "phones": ["01222476476", "01224159421", "0663730500"],
+    "sources": [
+      {
+        "url": "https://www.evcindex.com/item/%D9%85%D8%B1%D9%83%D8%B2-%D8%A8%D9%88%D8%B1%D8%B3%D8%B9%D9%8A%D8%AF-%D8%A7%D9%84%D8%A8%D9%8A%D8%B7%D8%B1%D9%89/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      },
+      {
+        "url": "https://dalil140.com/company/ar/420832-port-said-pet-center",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": null,
+    "classificationEvidence": "EVC individual entry explicitly describes pet dogs/cats treatment by veterinarians at this address and both mobile numbers. Dalil140 confirms same street address/phones and landline, under Dawahy. Website template haytham.site/evcindex and directory email deliberately omitted.",
+    "aliases": {
+      "english": ["Port Said Pet Center", "Port Said Veterinary Center"],
+      "arabic": ["مركز بورسعيد البيطري", "مركز بورسعيد البيطرى"]
+    }
+  },
+  {
+    "key": "port-said-pet-zone-sara",
+    "nameEnglish": "Pet Zone",
+    "nameArabic": "عيادة بت زون البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "El Nour Towers, opposite the old Super Jet station, beside El Sengedy Sweets, Port Said",
+    "addressArabic": "أبراج النور، أمام موقف مصر السوبرجيت القديم، بجوار حلواني السنجيدي، بورسعيد",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Al Nour Towers",
+    "phones": [],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Port-Said/104224861815780/Pet-Zone----%D8%AF.%D8%B3%D8%A7%D8%B1%D8%A9-%D8%A7%D9%84%D9%86%D8%AC%D8%A7%D8%B1",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/104224861815780/",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2023-08-08",
+    "classificationEvidence": "Individual clinic feed explicitly describes veterinary medical services and vaccination at El Nour Towers; no phone published in the read source, retained inactive. Do not borrow Port Said Pet Center phone merely because the locality is nearby.",
+    "aliases": {
+      "english": ["Pet Zone", "Pet Zone Dr Sara El Naggar"],
+      "arabic": ["عيادة بت زون البيطرية", "د سارة النجار", "عيادة د. سارة النجار البيطرية"]
+    }
+  },
+  {
+    "key": "port-said-pet-care",
+    "nameEnglish": "Pet Care Vet Clinic",
+    "nameArabic": "عيادة بت كير البيطرية",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Port Said",
+    "addressArabic": "بورسعيد",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Port Said",
+    "phones": [],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Port-Said/114823603540112/Pet-Care-Vet-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/114823603540112",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-03-31",
+    "classificationEvidence": "Dated clinic feed describes cat sterilization and vaccination appointments at its clinic, but publishes only city-wide address and no phone. Retained inactive no-phone; city-wide area point must not be presented as a precise premises location.",
+    "aliases": {
+      "english": ["Pet Care Vet Clinic", "Pet Care Veterinary Clinic"],
+      "arabic": ["عيادة بت كير البيطرية"]
+    }
+  },
+  {
+    "key": "port-said-sama",
+    "nameEnglish": "Sama Pet Clinic",
+    "nameArabic": "عيادة سما للحيوانات الأليفة",
+    "nameEnglishOrigin": "source",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Port Said",
+    "addressArabic": "بورسعيد",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Port Said",
+    "phones": [],
+    "sources": [
+      {
+        "url": "https://www.voofla.com/EG/Port-Said/1905525796370047/Sama-Pet-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": "https://www.facebook.com/1905525796370047",
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2018-02-23",
+    "classificationEvidence": "Historical pet clinic feed only; newest dated evidence 23 February 2018, no phone or street, no second source. Retained inactive no-phone; also stale-evidence and city-wide location only. A human medical clinic phone in a shared article is unrelated and was not copied.",
+    "aliases": {
+      "english": ["Sama Pet Clinic", "Sama Veterinary Clinic"],
+      "arabic": ["عيادة سما للحيوانات الأليفة"]
+    }
+  }
+]

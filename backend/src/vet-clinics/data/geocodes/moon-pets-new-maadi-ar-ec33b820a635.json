@@ -1,0 +1,8 @@
+{
+  "query": "من شارع263, New Maadi, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D9%85%D9%86+%D8%B4%D8%A7%D8%B1%D8%B9263%2C+New+Maadi%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:46.043Z",
+  "httpStatus": 200,
+  "response": []
+}

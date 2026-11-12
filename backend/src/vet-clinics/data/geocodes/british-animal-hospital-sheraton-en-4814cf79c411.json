@@ -1,0 +1,8 @@
+{
+  "query": "Gad El Haq Street, Sheraton, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Gad+El+Haq+Street%2C+Sheraton%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:17:32.834Z",
+  "httpStatus": 200,
+  "response": []
+}

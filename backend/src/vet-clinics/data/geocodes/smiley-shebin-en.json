@@ -1,0 +1,8 @@
+{
+  "query": "Sabri Abu Alam Street, Shibin al-Kum (Kism), Menoufia, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Sabri+Abu+Alam+Street%2C+Shibin+al-Kum+%28Kism%29%2C+Menoufia%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:18:24.229Z",
+  "httpStatus": 200,
+  "response": []
+}

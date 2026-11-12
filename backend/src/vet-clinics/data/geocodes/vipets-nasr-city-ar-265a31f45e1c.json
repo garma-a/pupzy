@@ -1,0 +1,36 @@
+{
+  "query": "جمال الدين واصل, Nasr City, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%AC%D9%85%D8%A7%D9%84+%D8%A7%D9%84%D8%AF%D9%8A%D9%86+%D9%88%D8%A7%D8%B5%D9%84%2C+Nasr+City%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:15:01.013Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 50836083,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 182371948,
+      "lat": "30.0655082",
+      "lon": "31.3314154",
+      "category": "highway",
+      "type": "residential",
+      "place_rank": 26,
+      "importance": 0.05341293736171508,
+      "addresstype": "residential",
+      "name": "شارع جمال الدين واصل",
+      "display_name": "شارع جمال الدين واصل, المنطقة الأولى, مدينة نصر, القاهرة, 11371, مصر",
+      "address": {
+        "road": "شارع جمال الدين واصل",
+        "neighbourhood": "المنطقة الأولى",
+        "suburb": "مدينة نصر",
+        "city": "مدينة نصر",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11371",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0652653", "30.0657088", "31.3293354", "31.3335001"]
+    }
+  ]
+}

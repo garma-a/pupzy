@@ -1,0 +1,90 @@
+{
+  "query": "الملك فيصل, فيصل, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%85%D9%84%D9%83+%D9%81%D9%8A%D8%B5%D9%84%2C+%D9%81%D9%8A%D8%B5%D9%84%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:50:02.609Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 426120943,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 14133173110,
+      "lat": "29.9904414",
+      "lon": "31.1347323",
+      "category": "shop",
+      "type": "telecommunication",
+      "place_rank": 30,
+      "importance": 0.00006337300679021924,
+      "addresstype": "shop",
+      "name": "وي",
+      "display_name": "وي, شارع الملك فيصل, كوم الأخضر, كفرة نصار, الجيزة, 12512, مصر",
+      "address": {
+        "shop": "وي",
+        "road": "شارع الملك فيصل",
+        "suburb": "كوم الأخضر",
+        "village": "كفرة نصار",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12512",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9903914", "29.9904914", "31.1346823", "31.1347823"]
+    },
+    {
+      "place_id": 431565925,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 14350130701,
+      "lat": "29.9919664",
+      "lon": "31.1413657",
+      "category": "amenity",
+      "type": "bank",
+      "place_rank": 30,
+      "importance": 0.00006337300679021924,
+      "addresstype": "amenity",
+      "name": "البنك المصري لتنمية الصادرات",
+      "display_name": "البنك المصري لتنمية الصادرات, شارع الملك فيصل, كوم الأخضر, كفرة نصار, الجيزة, 12512, مصر",
+      "address": {
+        "amenity": "البنك المصري لتنمية الصادرات",
+        "road": "شارع الملك فيصل",
+        "suburb": "كوم الأخضر",
+        "village": "كفرة نصار",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12512",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9919164", "29.9920164", "31.1413157", "31.1414157"]
+    },
+    {
+      "place_id": 51213652,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 6123239696,
+      "lat": "29.9994273",
+      "lon": "31.1620728",
+      "category": "amenity",
+      "type": "bank",
+      "place_rank": 30,
+      "importance": 0.00006337300679021924,
+      "addresstype": "amenity",
+      "name": "البنك الأهلي المصري",
+      "display_name": "البنك الأهلي المصري, شارع الملك فيصل, كوم الأخضر, الجيزة, 12111, مصر",
+      "address": {
+        "amenity": "البنك الأهلي المصري",
+        "road": "شارع الملك فيصل",
+        "suburb": "كوم الأخضر",
+        "city": "الجيزة",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12111",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9993773", "29.9994773", "31.1620228", "31.1621228"]
+    }
+  ]
+}

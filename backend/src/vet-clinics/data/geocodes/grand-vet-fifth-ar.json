@@ -1,0 +1,62 @@
+{
+  "query": "- التجمع الخامس - القاهرة الجديدة -, التجمع الخامس, Cairo, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=-+%D8%A7%D9%84%D8%AA%D8%AC%D9%85%D8%B9+%D8%A7%D9%84%D8%AE%D8%A7%D9%85%D8%B3+-+%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9+%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9+-%2C+%D8%A7%D9%84%D8%AA%D8%AC%D9%85%D8%B9+%D8%A7%D9%84%D8%AE%D8%A7%D9%85%D8%B3%2C+Cairo%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:46:44.888Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51028197,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 213140407,
+      "lat": "29.9899667",
+      "lon": "31.4202972",
+      "category": "amenity",
+      "type": "school",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "amenity",
+      "name": "Egypt British International School",
+      "display_name": "Egypt British International School, محور جمال عبد الناصر الجانبى, مدينة القاهرة الجديدة, القاهرة, 11936, مصر",
+      "address": {
+        "amenity": "Egypt British International School",
+        "road": "محور جمال عبد الناصر الجانبى",
+        "city": "مدينة القاهرة الجديدة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11936",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9893307", "29.9906142", "31.4195962", "31.4208166"]
+    },
+    {
+      "place_id": 50702157,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 2589739628,
+      "lat": "30.0168925",
+      "lon": "31.4272707",
+      "category": "office",
+      "type": "company",
+      "place_rank": 30,
+      "importance": 0.00007960402838173521,
+      "addresstype": "office",
+      "name": "شركة سامسونج الكترونيكس مصر",
+      "display_name": "شركة سامسونج الكترونيكس مصر, 81, شارع التسعين الجنوبي, مدينة القاهرة الجديدة, القاهرة, 11865, مصر",
+      "address": {
+        "office": "شركة سامسونج الكترونيكس مصر",
+        "house_number": "81",
+        "road": "شارع التسعين الجنوبي",
+        "city": "مدينة القاهرة الجديدة",
+        "state": "القاهرة",
+        "ISO3166-2-lvl4": "EG-C",
+        "postcode": "11865",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0168425", "30.0169425", "31.4272207", "31.4273207"]
+    }
+  ]
+}

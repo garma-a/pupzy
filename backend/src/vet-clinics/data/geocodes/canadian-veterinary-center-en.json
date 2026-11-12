@@ -1,0 +1,36 @@
+{
+  "query": "El Amal Street, El Moustasmer El Saghir, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=El+Amal+Street%2C+El+Moustasmer+El+Saghir%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:19:56.368Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 428165529,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 14188848316,
+      "lat": "30.0386808",
+      "lon": "30.9778622",
+      "category": "amenity",
+      "type": "restaurant",
+      "place_rank": 30,
+      "importance": 0.00004952849622334657,
+      "addresstype": "amenity",
+      "name": "El Mohamady",
+      "display_name": "El Mohamady, Side Al Amal Street, El Moustasmer El Saghir, Sheikh Zayed, Aj Jiza, 12588, Egypt",
+      "address": {
+        "amenity": "El Mohamady",
+        "road": "Side Al Amal Street",
+        "neighbourhood": "El Moustasmer El Saghir",
+        "city": "Sheikh Zayed",
+        "state": "Aj Jiza",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12588",
+        "country": "Egypt",
+        "country_code": "eg"
+      },
+      "boundingbox": ["30.0386308", "30.0387308", "30.9778122", "30.9779122"]
+    }
+  ]
+}

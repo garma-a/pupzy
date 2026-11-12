@@ -1,0 +1,8 @@
+{
+  "query": "Omar Ibn El Khattab Street, E Mansora 2, Dakahlia, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=Omar+Ibn+El+Khattab+Street%2C+E+Mansora+2%2C+Dakahlia%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=en",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:16:14.358Z",
+  "httpStatus": 200,
+  "response": []
+}

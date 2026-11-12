@@ -1,0 +1,91 @@
+[
+  {
+    "key": "petty-beni-suef",
+    "nameEnglish": "Petty Vet Clinic",
+    "nameArabic": "عيادة بيتي فيت",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "El Abasiry Street, beside El Abasiry Mosque, opposite Paris Perfumes, Beni Suef",
+    "addressArabic": "شارع الأباصيري، بجوار مسجد الأباصيري، أمام عطور باريس، بني سويف",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Bani Swayf (Kism)",
+    "citySourceCode": "EG2201",
+    "phones": ["01023043848", "01110620239"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Beni-Suef/326196227253565/Petty-Vet-Clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2025-09-11",
+    "classificationEvidence": "2025-09-11 cat/dog examination and vaccination packages at current Abasiry premises; surgical services explicitly stated. Both appointment contacts printed together in 2025-10-29 post; no duplicate record added.",
+    "aliases": {
+      "english": ["Petty Vet Clinic"],
+      "arabic": []
+    }
+  },
+  {
+    "key": "pinky-beni-suef",
+    "nameEnglish": "Pinky Pets Clinic",
+    "nameArabic": "عيادة بينكي بتس البيطرية",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "authored",
+    "addressEnglish": "Muqbil district, street beside Banque Misr, Beni Suef",
+    "addressArabic": "حي مقبل، الشارع المجاور لبنك مصر، بني سويف",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "source",
+    "area": "Bani Swayf (Kism)",
+    "citySourceCode": "EG2201",
+    "phones": [],
+    "sources": [
+      {
+        "url": "https://aleefcom.com/pets_health_care/3811/",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2024-08-17",
+    "classificationEvidence": "Read individual Aleefcom entry: pet treatment/surgery/vaccination/ultrasound, 2024 client reviews and published clinic schedule. No public phone on this individual page. Aggregate database contact not imported without individual confirmation; retained inactive no-phone."
+  },
+  {
+    "key": "starvet-beni-suef",
+    "nameEnglish": "Starvet Clinic",
+    "nameArabic": "عيادة ستارفيت",
+    "nameEnglishOrigin": "authored",
+    "nameArabicOrigin": "transliterated",
+    "addressEnglish": "Street 11, opposite Sharm Clean and El Demashky Restaurant, New Beni Suef, Beni Suef",
+    "addressArabic": "شارع 11، أمام مغسلة شرم كلين والدمشقي، بني سويف الجديدة، بنى سويف",
+    "addressEnglishOrigin": "authored",
+    "addressArabicOrigin": "authored",
+    "area": "Bani Swayf City",
+    "citySourceCode": "EG2203",
+    "phones": ["01003349506"],
+    "sources": [
+      {
+        "url": "https://www.petshops1.com/EG/Beni-Suef/1877839869167737/Starvet-clinic",
+        "accessedAt": "2026-11-12",
+        "kind": "WEB"
+      }
+    ],
+    "website": null,
+    "facebookUrl": null,
+    "is24Hours": false,
+    "hoursEvidence": null,
+    "lastSeenActive": "2026-09-24",
+    "classificationEvidence": "2026-09-24 feline pyometra surgery with ultrasound/labs at explicit New Beni Suef street premises and reception. No map coordinates copied.",
+    "aliases": {
+      "english": ["Starvet clinic"],
+      "arabic": []
+    }
+  }
+]

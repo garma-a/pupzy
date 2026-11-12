@@ -1,0 +1,65 @@
+{
+  "query": "الخزان, 4th District, Giza, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D8%AE%D8%B2%D8%A7%D9%86%2C+4th+District%2C+Giza%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T11:20:33.785Z",
+  "httpStatus": 200,
+  "response": [
+    {
+      "place_id": 51255444,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 8295622517,
+      "lat": "29.9449285",
+      "lon": "30.9302335",
+      "category": "amenity",
+      "type": "fountain",
+      "place_rank": 30,
+      "importance": 0.00004952849622334657,
+      "addresstype": "amenity",
+      "name": "شارع الخزان من الكفراوي",
+      "display_name": "شارع الخزان من الكفراوي, شارع عبد السلام أمين, الحى 4, الحى الرابع, السادس من أكتوبر, الجيزة, 12563, مصر",
+      "address": {
+        "amenity": "شارع الخزان من الكفراوي",
+        "road": "شارع عبد السلام أمين",
+        "neighbourhood": "الحى 4",
+        "suburb": "الحى الرابع",
+        "city": "السادس من أكتوبر",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12563",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9448785", "29.9449785", "30.9301835", "30.9302835"]
+    },
+    {
+      "place_id": 51758042,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+      "osm_type": "node",
+      "osm_id": 8295622418,
+      "lat": "29.9564786",
+      "lon": "30.9205426",
+      "category": "amenity",
+      "type": "fountain",
+      "place_rank": 30,
+      "importance": 0.00004952849622334657,
+      "addresstype": "amenity",
+      "name": "شارع الخزان من المحور المركزي",
+      "display_name": "شارع الخزان من المحور المركزي, المحور المركزى الجانبى, المجاورة 1, الحى الخامس, السادس من أكتوبر, الجيزة, 12566, مصر",
+      "address": {
+        "amenity": "شارع الخزان من المحور المركزي",
+        "road": "المحور المركزى الجانبى",
+        "neighbourhood": "المجاورة 1",
+        "suburb": "الحى الخامس",
+        "city": "السادس من أكتوبر",
+        "state": "الجيزة",
+        "ISO3166-2-lvl4": "EG-GZ",
+        "postcode": "12566",
+        "country": "مصر",
+        "country_code": "eg"
+      },
+      "boundingbox": ["29.9564286", "29.9565286", "30.9204926", "30.9205926"]
+    }
+  ]
+}

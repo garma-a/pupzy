@@ -1,0 +1,8 @@
+{
+  "query": "الفريق فؤاد عزيز غالي, الإسماعيلية ثالث, Ismailia, Egypt",
+  "url": "https://nominatim.openstreetmap.org/search?q=%D8%A7%D9%84%D9%81%D8%B1%D9%8A%D9%82+%D9%81%D8%A4%D8%A7%D8%AF+%D8%B9%D8%B2%D9%8A%D8%B2+%D8%BA%D8%A7%D9%84%D9%8A%2C+%D8%A7%D9%84%D8%A5%D8%B3%D9%85%D8%A7%D8%B9%D9%8A%D9%84%D9%8A%D8%A9+%D8%AB%D8%A7%D9%84%D8%AB%2C+Ismailia%2C+Egypt&format=jsonv2&addressdetails=1&countrycodes=eg&limit=5&accept-language=ar",
+  "userAgent": "PupzyDataReview/1.0",
+  "fetchedAt": "2026-11-12T16:37:54.489Z",
+  "httpStatus": 200,
+  "response": []
+}
