@@ -18,12 +18,35 @@ class FormGraphQL extends FakeSafetyGraphQL {
       ];
 }
 
+/// A gallery and camera that always return a photo. Each pick is its own
+/// file, as on a phone, so the form doesn't treat it as a duplicate.
 class OnePhotoPicker extends ImagePickerPlatform {
   OnePhotoPicker(this.path);
   final String path;
+  int _picks = 0;
+
+  XFile _next() {
+    _picks++;
+    final file = _picks == 1 ? path : File(path).copySync('$path.$_picks.jpg').path;
+    return XFile(file, mimeType: 'image/jpeg');
+  }
+
   @override
   Future<XFile?> getImageFromSource({required ImageSource source, ImagePickerOptions options = const ImagePickerOptions()}) async =>
-      XFile(path, mimeType: 'image/jpeg');
+      _next();
+
+  @override
+  Future<List<XFile>> getMultiImageWithOptions({MultiImagePickerOptions options = const MultiImagePickerOptions()}) async => [_next()];
+}
+
+/// Opens the photo menu from [box] and picks one photo from the gallery.
+Future<void> addPhotoFromGallery(WidgetTester tester, Finder box) async {
+  await tester.ensureVisible(box);
+  await tester.pumpAndSettle();
+  await tester.tap(box);
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Choose from gallery'));
+  await tester.pumpAndSettle();
 }
 
 const _tall = Size(1000, 1800);
@@ -188,7 +211,7 @@ void main() {
     expect(find.text('Fill in the field marked in red above'), findsOneWidget);
     expect(onScreen(tester, find.text('Add at least one photo')), isTrue);
 
-    await tapVisible(tester, find.text('Add pet photos'));
+    await addPhotoFromGallery(tester, find.text('Add pet photos'));
     expect(find.byIcon(Icons.error_outline), findsNothing);
     expect(find.text('Fill in the field marked in red above'), findsNothing);
     expect(ready(tester), isTrue);
@@ -199,7 +222,7 @@ void main() {
     ImagePickerPlatform.instance = OnePhotoPicker(photo.path);
     await pumpForm(tester, PostType.rescue, 'URGENT');
 
-    await tapVisible(tester, find.text('Add photos of the animal'));
+    await addPhotoFromGallery(tester, find.text('Add photos of the animal'));
     await tapVisible(tester, find.text('Dog').first);
     await tester.enterText(find.widgetWithText(TextField, "Describe the animal's visible condition..."), 'Limping on its back leg');
     await tester.enterText(find.widgetWithText(TextField, 'e.g. Maadi area'), 'Maadi');
@@ -240,7 +263,7 @@ void main() {
     ImagePickerPlatform.instance = OnePhotoPicker(photo.path);
     await pumpForm(tester, PostType.rescue, 'LOST');
 
-    await tapVisible(tester, find.text('Add photos of your pet'));
+    await addPhotoFromGallery(tester, find.text('Add photos of your pet'));
     await tapVisible(tester, find.text('Dog').first);
     await tester.enterText(find.widgetWithText(TextField, 'e.g. Max'), 'Luna');
     await tapVisible(tester, find.text('Select date'));

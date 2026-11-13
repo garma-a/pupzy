@@ -14,7 +14,7 @@ import 'package:pupzy/screens/post_form_screen.dart';
 import 'package:pupzy/services/safety_events.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'post_form_validation_test.dart' show FormGraphQL, OnePhotoPicker;
+import 'post_form_validation_test.dart' show FormGraphQL, OnePhotoPicker, addPhotoFromGallery;
 import 'safety_test_support.dart';
 
 const _uploadError = 'Your photos could not be uploaded. Your post was not published. Please try again.';
@@ -142,13 +142,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Qasr Al-Nile').last);
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Add pet photos'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Add pet photos'));
-    await tester.pumpAndSettle();
+    await addPhotoFromGallery(tester, find.text('Add pet photos'));
     for (var i = 1; i < photos; i++) {
-      await tester.tap(find.byIcon(Icons.add_a_photo_outlined));
-      await tester.pumpAndSettle();
+      await addPhotoFromGallery(tester, find.byKey(const Key('addMorePostPhotos')));
     }
     await tester.ensureVisible(find.widgetWithText(ElevatedButton, 'Post Mating Listing'));
     await tester.pumpAndSettle();
